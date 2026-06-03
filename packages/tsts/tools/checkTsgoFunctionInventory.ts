@@ -75,6 +75,7 @@ interface ModuleSummary {
 interface FunctionInventoryReport {
   readonly tsgoRepo: string;
   readonly mappingFile: string | null;
+  readonly renameMapFile: string | null;
   readonly totals: {
     readonly upstreamSymbols: number;
     readonly matched: number;
@@ -111,6 +112,7 @@ const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const MAPPING_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "function-inventory-map.json");
+const RENAMES_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "renames.json");
 
 // Keep the module list aligned with checkLogicalParity.ts so the two Wave-0
 // tools report on the same surface. Drift between the two lists would make the
@@ -250,6 +252,95 @@ function stripLineComment(line: string): string {
   return index < 0 ? line : line.slice(0, index);
 }
 
+// Single-pass strip of line/block comments and the CONTENTS of string / char /
+// template (backtick / Go raw-string) literals, preserving delimiters and all
+// newlines so the line-numbering of subsequent line-by-line symbol scanning is
+// unchanged.
+//
+// Defect 1: the symbol scanners run per line with no cross-line string state. A
+// backtick INSIDE a string or comment (e.g. `"\`"`) has no close on the same
+// line; naive backtick tracking would then treat every following line as inside
+// a template literal and HIDE every later function. A genuine multi-line
+// template whose interior starts with `func`/`function`/`const` would also be
+// mis-scanned as a declaration. Blanking literal interiors makes the scanner
+// template-literal aware on BOTH the Go and TS sides. The `${ ... }`
+// interpolation handling uses a precise template-stack + brace-depth so nested
+// template ternaries (`${a ? `=${b}` : ""}`) stay in sync.
+function stripCommentsAndStrings(text: string): string {
+  const out: string[] = [];
+  const n = text.length;
+  let i = 0;
+  type State = "code" | "line" | "block" | "dquote" | "squote" | "backtick";
+  let state: State = "code";
+  const templateStack: number[] = [];
+  let braceDepth = 0;
+  while (i < n) {
+    const c = text[i];
+    if (c === undefined) break;
+    const next = i + 1 < n ? text[i + 1] ?? "" : "";
+    if (state === "code") {
+      if (c === "/" && next === "/") { state = "line"; out.push("  "); i += 2; continue; }
+      if (c === "/" && next === "*") { state = "block"; out.push("  "); i += 2; continue; }
+      if (c === '"') { state = "dquote"; out.push('"'); i += 1; continue; }
+      if (c === "'") { state = "squote"; out.push("'"); i += 1; continue; }
+      if (c === "`") { state = "backtick"; out.push("`"); i += 1; continue; }
+      if (c === "{") { braceDepth += 1; out.push(c); i += 1; continue; }
+      if (c === "}") {
+        if (templateStack.length > 0 && braceDepth === templateStack[templateStack.length - 1]) {
+          templateStack.pop();
+          braceDepth = Math.max(0, braceDepth - 1);
+          state = "backtick";
+          out.push("}");
+          i += 1;
+          continue;
+        }
+        braceDepth = Math.max(0, braceDepth - 1);
+        out.push(c);
+        i += 1;
+        continue;
+      }
+      out.push(c);
+      i += 1;
+      continue;
+    }
+    if (state === "line") {
+      if (c === "\n") { state = "code"; out.push("\n"); }
+      else out.push(" ");
+      i += 1;
+      continue;
+    }
+    if (state === "block") {
+      if (c === "*" && next === "/") { state = "code"; out.push("  "); i += 2; continue; }
+      out.push(c === "\n" ? "\n" : " ");
+      i += 1;
+      continue;
+    }
+    if (state === "dquote" || state === "squote") {
+      const quote = state === "dquote" ? '"' : "'";
+      if (c === "\\") { out.push("  "); i += 2; continue; }
+      if (c === quote) { state = "code"; out.push(quote); i += 1; continue; }
+      if (c === "\n") { state = "code"; out.push("\n"); i += 1; continue; } // unterminated; recover
+      out.push(" ");
+      i += 1;
+      continue;
+    }
+    // state === "backtick"
+    if (c === "\\") { out.push("  "); i += 2; continue; }
+    if (c === "$" && next === "{") {
+      braceDepth += 1;
+      templateStack.push(braceDepth);
+      out.push("${");
+      state = "code";
+      i += 2;
+      continue;
+    }
+    if (c === "`") { state = "code"; out.push("`"); i += 1; continue; }
+    out.push(c === "\n" ? "\n" : " ");
+    i += 1;
+  }
+  return out.join("");
+}
+
 function normalizeName(name: string): string {
   return name.replace(/^#/, "").replace(/^_+/, "").toLowerCase();
 }
@@ -270,7 +361,9 @@ function extractGoSymbols(files: readonly SourceFile[]): readonly GoSymbol[] {
   const symbols: GoSymbol[] = [];
   const seen = new Set<string>();
   for (const file of files) {
-    for (const rawLine of file.text.split("\n")) {
+    // Blank string/comment/raw-string interiors first so a backtick inside a
+    // Go raw string or comment cannot hide later `func` declarations (defect 1).
+    for (const rawLine of stripCommentsAndStrings(file.text).split("\n")) {
       const line = stripLineComment(rawLine);
       if (!line.startsWith("func ")) continue;
 
@@ -315,7 +408,9 @@ function extractGoSymbols(files: readonly SourceFile[]): readonly GoSymbol[] {
 function extractLocalSymbols(files: readonly SourceFile[]): readonly LocalSymbol[] {
   const symbols: LocalSymbol[] = [];
   for (const file of files) {
-    for (const rawLine of file.text.split("\n")) {
+    // Blank template-literal/string/comment interiors first so a backtick inside
+    // a string or comment cannot hide every function after it (defect 1).
+    for (const rawLine of stripCommentsAndStrings(file.text).split("\n")) {
       const line = stripLineComment(rawLine);
 
       const fn = /^\s*(?:export\s+)?(?:declare\s+)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\b/.exec(line);
@@ -374,6 +469,58 @@ function mappingLookup(
 }
 
 /**
+ * Rename map (parity-maps/renames.json). Records intentional TS renames so a
+ * case-insensitive-only match is classified `renamed` (intentional) rather than
+ * folded into `matched`. The dominant rename is the uniform casing convention
+ * (PascalCase TS-Go -> lower-camel TSTS, unexported Go method -> `#private`),
+ * captured by `casingConvention`; rare deeper renames live in `renames.entries`.
+ */
+interface RenameEntry {
+  readonly localName?: string;
+  readonly localNames?: readonly string[];
+  readonly reason?: string;
+}
+
+interface RenameMap {
+  readonly path: string | null;
+  readonly casingConventionEnabled: boolean;
+  readonly entries: Record<string, RenameEntry>;
+}
+
+interface RenamesFile {
+  readonly casingConvention?: { readonly enabled?: boolean };
+  readonly renames?: { readonly entries?: Record<string, RenameEntry> };
+}
+
+function loadRenameMap(): RenameMap {
+  if (!existsSync(RENAMES_PATH)) return { path: null, casingConventionEnabled: false, entries: {} };
+  try {
+    const parsed = JSON.parse(readFileSync(RENAMES_PATH, "utf8")) as RenamesFile;
+    return {
+      path: relative(REPO_ROOT, RENAMES_PATH).replace(/\\/g, "/"),
+      casingConventionEnabled: parsed.casingConvention?.enabled ?? false,
+      entries: parsed.renames?.entries ?? {},
+    };
+  } catch (error) {
+    console.error(`Failed to parse rename map ${RENAMES_PATH}: ${(error as Error).message}`);
+    return { path: null, casingConventionEnabled: false, entries: {} };
+  }
+}
+
+function renameLookup(
+  entries: Record<string, RenameEntry>,
+  module: string,
+  upstreamFile: string,
+  symbol: string,
+  name: string,
+): RenameEntry | undefined {
+  return entries[`${upstreamFile}#${symbol}`]
+    ?? entries[`${module}:${symbol}`]
+    ?? entries[symbol]
+    ?? entries[name];
+}
+
+/**
  * Build the per-symbol inventory entry for a single upstream Go function/method
  * by matching it against the local symbol index.
  *
@@ -392,6 +539,7 @@ function inventoryEntry(
   byName: ReadonlyMap<string, readonly LocalSymbol[]>,
   byLowerName: ReadonlyMap<string, readonly LocalSymbol[]>,
   mapping: Record<string, MappingEntry>,
+  renames: RenameMap,
 ): InventoryEntry {
   const override = mappingLookup(mapping, module, go.file, go.symbol);
 
@@ -437,6 +585,28 @@ function inventoryEntry(
   const fuzzy = byLowerName.get(go.name.toLowerCase()) ?? [];
   if (fuzzy.length > 0) {
     const candidates = [...new Set(fuzzy.map((s) => `${s.file}:${s.name}`))];
+    // A case-insensitive-only match is an intentional TS rename when the rename
+    // map's casing convention is enabled (PascalCase TS-Go -> lower-camel TSTS,
+    // unexported Go method -> `#private`) or an explicit rename entry exists.
+    // Classify it `renamed` (intentional) rather than `matched` (exact 1:1
+    // name), so the per-symbol classification stays honest while still crediting
+    // coverage (renamed counts as represented locally).
+    const explicitRename = renameLookup(renames.entries, module, go.file, go.symbol, go.name);
+    const isIntentionalRename = renames.casingConventionEnabled || explicitRename !== undefined;
+    const renameNote = explicitRename?.reason !== undefined
+      ? `intentional rename: ${explicitRename.reason}`
+      : "intentional casing rename (parity-maps/renames.json casingConvention)";
+    if (isIntentionalRename && candidates.length === 1) {
+      return {
+        module,
+        upstreamFile: go.file,
+        upstreamSymbol: go.symbol,
+        localCandidates: candidates,
+        status: "renamed",
+        confidence: "case-insensitive",
+        notes: [renameNote],
+      };
+    }
     return {
       module,
       upstreamFile: go.file,
@@ -444,7 +614,9 @@ function inventoryEntry(
       localCandidates: candidates,
       status: candidates.length > 1 ? "split" : "matched",
       confidence: "case-insensitive",
-      notes: ["matched by case-insensitive name; verify this is the same function"],
+      notes: isIntentionalRename
+        ? [renameNote, "case-insensitive match across multiple local files; confirm split ownership"]
+        : ["matched by case-insensitive name; verify this is the same function"],
     };
   }
 
@@ -509,6 +681,7 @@ function moduleEntries(
   tstsSrc: string,
   spec: ModuleSpec,
   mapping: Record<string, MappingEntry>,
+  renames: RenameMap,
 ): readonly InventoryEntry[] {
   const scope = includeDeferred() ? "required" : spec.scope;
   const upstreamFiles = collectFiles(tsgoInternal, [spec.upstream], isGoSource, EXCLUDED_TSGO_FILES);
@@ -518,7 +691,7 @@ function moduleEntries(
   const byLowerName = indexByLowerName(localSymbols);
   const goSymbols = extractGoSymbols(upstreamFiles);
   return goSymbols.map((go) =>
-    inventoryEntry(spec.upstream, scope, go, isGeneratedGoFile(join(tsgoInternal, go.file)), byName, byLowerName, mapping),
+    inventoryEntry(spec.upstream, scope, go, isGeneratedGoFile(join(tsgoInternal, go.file)), byName, byLowerName, mapping, renames),
   );
 }
 
@@ -526,9 +699,12 @@ function summarize(module: string, scope: Scope, entries: readonly InventoryEntr
   const count = (status: Status): number => entries.filter((entry) => entry.status === status).length;
   const matched = count("matched");
   const split = count("split");
+  const renamed = count("renamed");
   const upstreamSymbols = entries.length;
-  // Coverage credits matched + split (a split is still represented locally).
-  const coverage = upstreamSymbols === 0 ? 1 : (matched + split) / upstreamSymbols;
+  // Coverage credits matched + split + renamed: each is represented locally (a
+  // split spans multiple files; a renamed symbol is the same function under the
+  // intentional TS casing convention).
+  const coverage = upstreamSymbols === 0 ? 1 : (matched + split + renamed) / upstreamSymbols;
   return {
     module,
     scope,
@@ -552,6 +728,7 @@ function renderText(report: FunctionInventoryReport): string {
   lines.push("TSTS / TS-Go Function Inventory");
   lines.push(`tsgo_repo=${report.tsgoRepo}`);
   lines.push(`mapping_file=${report.mappingFile ?? "(none)"}`);
+  lines.push(`rename_map=${report.renameMapFile ?? "(none)"}`);
   lines.push(
     `upstream_symbols=${report.totals.upstreamSymbols} matched=${report.totals.matched} split=${report.totals.split} `
     + `missing=${report.totals.missing} renamed=${report.totals.renamed} generated=${report.totals.generated} `
@@ -594,11 +771,12 @@ function main(): void {
   }
 
   const mapping = loadMappingFile();
+  const renames = loadRenameMap();
   const specs = includeDeferred() ? MODULES : MODULES.filter((spec) => spec.scope === "required");
   const moduleResults = specs.map((spec) => ({
     spec,
     scope: includeDeferred() ? ("required" as Scope) : spec.scope,
-    entries: moduleEntries(tsgoInternal, tstsSrc, spec, mapping.functions),
+    entries: moduleEntries(tsgoInternal, tstsSrc, spec, mapping.functions, renames),
   }));
 
   const entries = moduleResults.flatMap((result) => result.entries);
@@ -607,21 +785,23 @@ function main(): void {
   const countStatus = (status: Status): number => entries.filter((entry) => entry.status === status).length;
   const matched = countStatus("matched");
   const split = countStatus("split");
+  const renamed = countStatus("renamed");
   const upstreamSymbols = entries.length;
   const totals = {
     upstreamSymbols,
     matched,
     missing: countStatus("missing"),
-    renamed: countStatus("renamed"),
+    renamed,
     split,
     generated: countStatus("generated"),
     deferred: countStatus("deferred"),
-    coverage: upstreamSymbols === 0 ? 1 : (matched + split) / upstreamSymbols,
+    coverage: upstreamSymbols === 0 ? 1 : (matched + split + renamed) / upstreamSymbols,
   };
 
   const report: FunctionInventoryReport = {
     tsgoRepo,
     mappingFile: mapping.path,
+    renameMapFile: renames.path,
     totals,
     modules,
     entries,

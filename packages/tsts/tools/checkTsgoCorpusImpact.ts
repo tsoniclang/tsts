@@ -259,9 +259,13 @@ interface StructuralGap {
 
 // A gap is anything that is not a clean, fully-aligned match. Generated and
 // deferred records are explicitly NOT treated as drift (per guardrails: keep
-// generated surfaces out of hand-port drift accounting).
-const INVENTORY_GAP_STATUSES = new Set(["missing", "split", "renamed", "split-needs-manual-review"]);
-const INVENTORY_IGNORED_STATUSES = new Set(["matched", "generated", "deferred"]);
+// generated surfaces out of hand-port drift accounting). `renamed` is an
+// intentional TS casing rename (PascalCase TS-Go -> lower-camel TSTS): the
+// function IS represented locally, so it is ignored like `matched` and NOT a
+// corpus-impacting structural gap. `split` still warrants review (ownership
+// must be confirmed), so it remains a gap.
+const INVENTORY_GAP_STATUSES = new Set(["missing", "split", "split-needs-manual-review"]);
+const INVENTORY_IGNORED_STATUSES = new Set(["matched", "renamed", "generated", "deferred"]);
 const SKELETON_GAP_STATUSES = new Set([
   "minor-shape-drift",
   "major-shape-drift",

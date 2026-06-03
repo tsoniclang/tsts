@@ -29,6 +29,22 @@ interface SplitOwnership {
   readonly tstsRoot?: string;
   readonly splits: Readonly<Record<string, readonly string[]>>;
   readonly barrels?: { readonly files?: readonly string[] };
+  // Confirmed 1:1 file ports (one upstream .go -> exactly one TSTS .ts). These
+  // are NOT splits, but recording them lets the undeclared-local scan recognize
+  // a file in a split-hosting dir as a verified 1:1 port rather than perpetually
+  // re-flagging it. Each value is the single upstream .go path (relative to
+  // tsgoRoot) the file ports; the validator confirms it resolves upstream.
+  readonly oneToOne?: { readonly mappings?: Readonly<Record<string, string>> };
+  // Enum-definition surface: hand-authored / codegen enum pairs under src/enums
+  // (e.g. `scriptKind.enum.ts` + `scriptKind.ts`) that mirror an upstream enum
+  // .go file. They are enum surface, not hand-port algorithm splits, so they are
+  // declared here and excluded from undeclared-split detection.
+  readonly enumSurface?: { readonly files?: readonly string[] };
+  // TSTS files that port from MORE THAN ONE upstream .go file. Documented as
+  // explicit cross-references; their `local` is treated as declared.
+  readonly multiUpstreamLocals?: {
+    readonly entries?: readonly { readonly local: string; readonly upstream: readonly string[] }[];
+  };
 }
 
 interface Finding {
@@ -72,6 +88,18 @@ function isTstsSource(path: string): boolean {
   return true;
 }
 
+// Canonical "Code generated ... DO NOT EDIT." marker emitted by both TS-Go and
+// TSTS generators (e.g. the Herebyfile generate:enums output under src/enums).
+// Generated surfaces are the job of checkGenerated.ts / checkSchema.ts, NOT the
+// hand-port split map, so they must be excluded from undeclared-split detection
+// on the same terms as the README and checkLogicalParity. Detecting them by
+// header (not just by `.generated.ts` suffix) closes the gap where generated
+// files use a plain `.ts` / `.enum.ts` name.
+function hasGeneratedHeader(text: string): boolean {
+  const head = text.slice(0, 512);
+  return /Code generated\b[\s\S]*?DO NOT EDIT\./.test(head);
+}
+
 function walk(dir: string): readonly string[] {
   if (!existsSync(dir)) return [];
   const out: string[] = [];
@@ -87,6 +115,42 @@ function validate(map: SplitOwnership, tsgoRoot: string, tstsSrc: string): reado
   const barrels = new Set(map.barrels?.files ?? []);
   const declaredLocals = new Set<string>();
   const findings: Finding[] = [];
+
+  // Confirmed 1:1 ports: validate each side resolves, and register the local as
+  // declared (a recognized 1:1 port is not an undeclared split).
+  const oneToOne = map.oneToOne?.mappings ?? {};
+  for (const [local, upstream] of Object.entries(oneToOne)) {
+    if (!existsSync(join(tstsSrc, local))) {
+      findings.push({ kind: "missing-local", detail: `${local} (oneToOne -> ${upstream}) not found in ${tstsSrc}` });
+    }
+    if (!existsSync(join(tsgoRoot, upstream))) {
+      findings.push({ kind: "missing-upstream", detail: `${upstream} (oneToOne <- ${local}) not found under ${tsgoRoot}` });
+    }
+    declaredLocals.add(local);
+  }
+
+  // Enum-definition surface files (src/enums pairs): register as declared.
+  const enumSurface = new Set(map.enumSurface?.files ?? []);
+  for (const local of enumSurface) {
+    if (!existsSync(join(tstsSrc, local))) {
+      findings.push({ kind: "missing-local", detail: `${local} (enumSurface) not found in ${tstsSrc}` });
+    }
+    declaredLocals.add(local);
+  }
+
+  // Multi-upstream locals: a documented file that ports from >=2 upstream .go
+  // files. Validate each upstream resolves and register the local as declared.
+  for (const entry of map.multiUpstreamLocals?.entries ?? []) {
+    if (!existsSync(join(tstsSrc, entry.local))) {
+      findings.push({ kind: "missing-local", detail: `${entry.local} (multiUpstreamLocals) not found in ${tstsSrc}` });
+    }
+    for (const upstream of entry.upstream) {
+      if (!existsSync(join(tsgoRoot, upstream))) {
+        findings.push({ kind: "missing-upstream", detail: `${upstream} (multiUpstreamLocals <- ${entry.local}) not found under ${tsgoRoot}` });
+      }
+    }
+    declaredLocals.add(entry.local);
+  }
 
   for (const [upstream, locals] of Object.entries(map.splits)) {
     if (!existsSync(join(tsgoRoot, upstream))) {
@@ -120,6 +184,9 @@ function validate(map: SplitOwnership, tsgoRoot: string, tstsSrc: string): reado
     if (barrels.has(rel)) continue;
     // Skip generated and nested test fixtures: not hand-port splits.
     if (rel.includes("/generated/") || /(?:^|\/)[a-z]+tests?\//.test(rel)) continue;
+    // Skip header-marked generated files (e.g. src/enums/*.ts from
+    // generate:enums): generated-surface parity is checked elsewhere.
+    if (hasGeneratedHeader(readFileSync(full, "utf8"))) continue;
     // Only audit the immediate split-hosting directory, not deeper sub-packages
     // (e.g. transformers/estransforms/*) which are their own port surfaces.
     if (rel.split("/").length > 2) continue;
@@ -151,7 +218,11 @@ function main(): void {
   const findings = existsSync(tsgoRoot) && existsSync(tstsSrc)
     ? validate(map, tsgoRoot, tstsSrc)
     : [];
-  const localFiles = new Set(Object.values(map.splits).flat()).size;
+  const localFiles = new Set([
+    ...Object.values(map.splits).flat(),
+    ...Object.keys(map.oneToOne?.mappings ?? {}),
+    ...(map.enumSurface?.files ?? []),
+  ]).size;
   const report: Report = {
     mapPath: relative(REPO_ROOT, MAP_PATH),
     tsgoRoot,

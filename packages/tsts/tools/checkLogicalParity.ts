@@ -94,6 +94,10 @@ interface FalsePositives {
   readonly renamedEnumMembers: readonly string[];
   // Names absent from this module but present in another local module.
   readonly movedToOtherModule: readonly string[];
+  // Upstream names matched locally only after a case difference: the intentional
+  // TS casing rename (PascalCase TS-Go -> lower-camel TSTS). Recorded so the
+  // classification distinguishes intentional-casing-rename from exact matches.
+  readonly intentionalCasingRenames: readonly string[];
 }
 
 interface ModuleReport {
@@ -140,6 +144,26 @@ const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const DEFAULT_DECLARATION_THRESHOLD = 0.9;
 const DEFAULT_SHAPE_THRESHOLD = 0.65;
+const RENAMES_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "renames.json");
+
+interface RenamesFile {
+  readonly casingConvention?: { readonly enabled?: boolean };
+}
+
+// True when the rename map enables the casing convention (PascalCase TS-Go ->
+// lower-camel TSTS, unexported Go method -> `#private`). Consulted so a
+// declaration matched only by a case difference is classified as an intentional
+// casing rename rather than silently folded into the exact-match count.
+function loadCasingConventionEnabled(): boolean {
+  if (!existsSync(RENAMES_PATH)) return false;
+  try {
+    const parsed = JSON.parse(readFileSync(RENAMES_PATH, "utf8")) as RenamesFile;
+    return parsed.casingConvention?.enabled ?? false;
+  } catch (error) {
+    console.error(`Failed to parse rename map ${RENAMES_PATH}: ${(error as Error).message}`);
+    return false;
+  }
+}
 
 const MODULES: readonly ModuleSpec[] = [
   { upstream: "api", local: ["api"], scope: "required" },
@@ -347,6 +371,111 @@ function stripLineComment(line: string): string {
   return index < 0 ? line : line.slice(0, index);
 }
 
+// Single-pass strip of line comments, block comments, and the CONTENTS of
+// string / char / template (backtick / Go raw-string) literals, preserving the
+// delimiters and all newlines so that subsequent line-by-line declaration
+// scanning sees the same line numbering.
+//
+// Why this matters (defect 1): the declaration scanners run per line and have no
+// cross-line string state. A backtick that appears INSIDE a double/single-quoted
+// string or a comment (e.g. `"\`"`, or a doc comment mentioning a `template`)
+// has no matching close on the same line. Any naive backtick tracking would then
+// treat every following line as "inside a template literal" and HIDE every
+// declaration after it. Equally, a genuine MULTI-LINE template literal whose
+// interior happens to begin with `function`/`const`/`type` would be mis-scanned
+// as a declaration. Blanking literal interiors with this proven state machine
+// (shared with checkTsgoControlSkeleton.ts) makes the scanner template-literal
+// aware on BOTH the Go and TS sides, so functions after a template literal are
+// still counted and template interiors never produce phantom declarations.
+function stripCommentsAndStrings(text: string): string {
+  const out: string[] = [];
+  const n = text.length;
+  let i = 0;
+  type State = "code" | "line" | "block" | "dquote" | "squote" | "backtick";
+  let state: State = "code";
+  // Stack of template-literal contexts we are nested in via `${ ... }`
+  // interpolations. Each frame holds the code-brace depth at which the
+  // interpolation began; when depth returns to it on a `}` we pop back into the
+  // enclosing template (backtick) literal. Tracking this precisely is essential:
+  // a naive "re-enter code at ${" approximation flips backtick parity, so the
+  // template's CLOSING backtick is mistaken for an OPENING one and every
+  // declaration after the template is blanked (defect 1 regression).
+  const templateStack: number[] = [];
+  let braceDepth = 0;
+  while (i < n) {
+    const c = text[i];
+    if (c === undefined) break;
+    const next = i + 1 < n ? text[i + 1] ?? "" : "";
+    if (state === "code") {
+      if (c === "/" && next === "/") { state = "line"; out.push("  "); i += 2; continue; }
+      if (c === "/" && next === "*") { state = "block"; out.push("  "); i += 2; continue; }
+      if (c === '"') { state = "dquote"; out.push('"'); i += 1; continue; }
+      if (c === "'") { state = "squote"; out.push("'"); i += 1; continue; }
+      // Backtick covers JS/TS template literals and Go raw string literals.
+      if (c === "`") { state = "backtick"; out.push("`"); i += 1; continue; }
+      if (c === "{") { braceDepth += 1; out.push(c); i += 1; continue; }
+      if (c === "}") {
+        // Closing the innermost `${ ... }` interpolation returns to its template.
+        // The matching `${` incremented braceDepth, so decrement it here too;
+        // otherwise braceDepth accumulates and later interpolation closes (and
+        // nested-template ternaries like `${a ? `=${b}` : ""}`) desync.
+        if (templateStack.length > 0 && braceDepth === templateStack[templateStack.length - 1]) {
+          templateStack.pop();
+          braceDepth = Math.max(0, braceDepth - 1);
+          state = "backtick";
+          out.push("}");
+          i += 1;
+          continue;
+        }
+        braceDepth = Math.max(0, braceDepth - 1);
+        out.push(c);
+        i += 1;
+        continue;
+      }
+      out.push(c);
+      i += 1;
+      continue;
+    }
+    if (state === "line") {
+      if (c === "\n") { state = "code"; out.push("\n"); }
+      else out.push(" ");
+      i += 1;
+      continue;
+    }
+    if (state === "block") {
+      if (c === "*" && next === "/") { state = "code"; out.push("  "); i += 2; continue; }
+      out.push(c === "\n" ? "\n" : " ");
+      i += 1;
+      continue;
+    }
+    if (state === "dquote" || state === "squote") {
+      const quote = state === "dquote" ? '"' : "'";
+      if (c === "\\") { out.push("  "); i += 2; continue; }
+      if (c === quote) { state = "code"; out.push(quote); i += 1; continue; }
+      if (c === "\n") { state = "code"; out.push("\n"); i += 1; continue; } // unterminated; recover
+      out.push(" ");
+      i += 1;
+      continue;
+    }
+    // state === "backtick"
+    if (c === "\\") { out.push("  "); i += 2; continue; }
+    if (c === "$" && next === "{") {
+      // Enter the interpolation as real code, remembering the brace depth so the
+      // matching `}` pops us back into this template literal.
+      braceDepth += 1;
+      templateStack.push(braceDepth);
+      out.push("${");
+      state = "code";
+      i += 2;
+      continue;
+    }
+    if (c === "`") { state = "code"; out.push("`"); i += 1; continue; }
+    out.push(c === "\n" ? "\n" : " ");
+    i += 1;
+  }
+  return out.join("");
+}
+
 function normalizeName(name: string): string {
   return name.replace(/^_+/, "").toLowerCase();
 }
@@ -378,7 +507,9 @@ function extractGoDeclarations(files: readonly SourceFile[]): readonly Declarati
   const decls: Declaration[] = [];
   for (const file of files) {
     let block: "const" | "var" | "type" | undefined;
-    for (const rawLine of file.text.split("\n")) {
+    // Blank string/comment/raw-string interiors first so a backtick inside a
+    // literal/comment cannot derail later-line scanning (defect 1).
+    for (const rawLine of stripCommentsAndStrings(file.text).split("\n")) {
       const line = stripLineComment(rawLine).trim();
       if (line === "" || line.startsWith("/*") || line.startsWith("*")) continue;
       if (block !== undefined) {
@@ -409,8 +540,18 @@ function extractGoDeclarations(files: readonly SourceFile[]): readonly Declarati
 function extractTsDeclarations(files: readonly SourceFile[]): readonly Declaration[] {
   const decls: Declaration[] = [];
   for (const file of files) {
-    for (const rawLine of file.text.split("\n")) {
-      const line = stripLineComment(rawLine);
+    // Two views of each line, line-numbers aligned (the strip preserves
+    // newlines): the STRIPPED view blanks template-literal/string/comment
+    // interiors so a stray backtick can never hide later declarations (defect
+    // 1); the ORIGINAL view keeps string content for the generate:enums enum
+    // members, whose names live INSIDE string literals (e.g. `["Member"]`).
+    // Enum members are single-line patterns, immune to the function-hiding bug,
+    // so reading them from the original line is safe and necessary.
+    const strippedLines = stripCommentsAndStrings(file.text).split("\n");
+    const originalLines = file.text.split("\n");
+    for (let index = 0; index < strippedLines.length; index += 1) {
+      const line = stripLineComment(strippedLines[index] ?? "");
+      const originalLine = originalLines[index] ?? "";
       const functionName = /^\s*(?:export\s+)?(?:declare\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\b/.exec(line)?.[1];
       if (functionName !== undefined) decls.push({ name: functionName, kind: "function" });
       const typeName = /^\s*(?:export\s+)?(?:declare\s+)?(?:abstract\s+)?(?:class|interface|type|enum)\s+([A-Za-z_$][\w$]*)\b/.exec(line)?.[1];
@@ -423,9 +564,9 @@ function extractTsDeclarations(files: readonly SourceFile[]): readonly Declarati
       const enumMember = /^\s{2,}([A-Za-z_$][\w$]*)\s*:\s*[^,;{}()]*\bas\s+[A-Za-z_$][\w$]*\s*,?\s*$/.exec(line)?.[1];
       if (enumMember !== undefined) decls.push({ name: enumMember, kind: "value" });
       // Members of TS-emitted enums (Herebyfile generate:enums output):
-      // `  Foo[Foo["Member"] = 0] = "Member";`. These also correspond to Go
-      // flat-prefix enum members.
-      const jsEnumMember = /^\s*[A-Za-z_$][\w$]*\[[A-Za-z_$][\w$]*\["([A-Za-z_$][\w$]*)"\]\s*=/.exec(line)?.[1];
+      // `  Foo[Foo["Member"] = 0] = "Member";`. The member name lives inside a
+      // string literal, so this MUST read the original (un-blanked) line.
+      const jsEnumMember = /^\s*[A-Za-z_$][\w$]*\[[A-Za-z_$][\w$]*\["([A-Za-z_$][\w$]*)"\]\s*=/.exec(originalLine)?.[1];
       if (jsEnumMember !== undefined) decls.push({ name: jsEnumMember, kind: "value" });
       // `export var NodeBuilderFlags: any;` — the enum container declared by
       // generate:enums output. Capture as a type container.
@@ -446,11 +587,18 @@ function countWord(lines: readonly string[], word: string): number {
 }
 
 function shape(files: readonly SourceFile[], decls: readonly Declaration[], language: "go" | "ts"): Shape {
-  const lines = files.flatMap((file) => file.text.split("\n"));
+  // Blank string/comment/template interiors so keywords quoted inside literals
+  // (e.g. a diagnostics message containing "return") never inflate the shape.
+  const lines = files.flatMap((file) => stripCommentsAndStrings(file.text).split("\n"));
   if (language === "go") {
     return {
       ifCount: countWord(lines, "if"),
-      forCount: countWord(lines, "for") + countWord(lines, "range"),
+      // Defect 2: a Go `for ... := range x` loop is ONE loop that uses TWO
+      // keywords (`for` + `range`). `range` only ever appears inside a `for`
+      // clause, so `for` alone already counts every Go loop. Adding `range`
+      // double-counts every range loop and inflates loop drift versus a TS
+      // `for...of`, which is a single `for`. Count Go loops by `for` only.
+      forCount: countWord(lines, "for"),
       switchCount: countWord(lines, "switch") + countWord(lines, "select"),
       caseCount: countWord(lines, "case") + countWord(lines, "default"),
       returnCount: countWord(lines, "return"),
@@ -461,7 +609,9 @@ function shape(files: readonly SourceFile[], decls: readonly Declaration[], lang
   }
   return {
     ifCount: countWord(lines, "if"),
-    forCount: countWord(lines, "for"),
+    // TS loops: `for` (covers for/for-of/for-in) plus `while`. This mirrors the
+    // Go side, which counts every loop via its single `for` keyword.
+    forCount: countWord(lines, "for") + countWord(lines, "while"),
     switchCount: countWord(lines, "switch"),
     caseCount: countWord(lines, "case") + countWord(lines, "default"),
     returnCount: countWord(lines, "return"),
@@ -490,6 +640,11 @@ function findStubMarkers(files: readonly SourceFile[]): readonly StubMarker[] {
   const markers: StubMarker[] = [];
   for (const file of files) {
     if (file.generated) continue;
+    // NB: scan the ORIGINAL text here, not the string-blanked text. A stub
+    // marker is a single-line `throw new Error("... not supported ...")`; the
+    // unsupported-path keyword we key on lives INSIDE that thrown string, so
+    // blanking string interiors would hide real stubs. Comment lines are still
+    // skipped below, and `stripLineComment` drops trailing `//` comments.
     file.text.split("\n").forEach((rawLine, index) => {
       const code = stripLineComment(rawLine);
       const trimmed = code.trim();
@@ -533,6 +688,12 @@ interface ComparisonInput {
   readonly upstreamTypeNames: ReadonlySet<string>;
   readonly localEnumMemberNames: ReadonlySet<string>;
   readonly globalLocalNames: ReadonlySet<string>;
+  // Local declaration names with their exact case preserved (only a leading `#`
+  // private marker stripped). Used to tell an EXACT-name match apart from a
+  // case-only (intentional rename) match.
+  readonly localExactNames: ReadonlySet<string>;
+  // True when the rename map enables the PascalCase->camelCase casing convention.
+  readonly casingConventionEnabled: boolean;
 }
 
 interface ComparisonResult {
@@ -559,12 +720,19 @@ function declarationComparison(input: ComparisonInput): ComparisonResult {
   const generatedOnly: string[] = [];
   const renamedEnumMembers: string[] = [];
   const movedToOtherModule: string[] = [];
+  const intentionalCasingRenames: string[] = [];
   const trulyMissing: Declaration[] = [];
   const directlyMatchedNames: string[] = [];
 
   for (const decl of input.upstreamHand) {
     if (localNames.has(normalizeName(decl.name))) {
       directlyMatchedNames.push(decl.name);
+      // Distinguish an exact-name match from a case-only (intentional rename)
+      // match: if the convention is enabled and the upstream name is NOT present
+      // locally with identical case, it was matched only by the casing rename.
+      if (input.casingConventionEnabled && !input.localExactNames.has(decl.name)) {
+        intentionalCasingRenames.push(decl.name);
+      }
       continue;
     }
 
@@ -611,6 +779,7 @@ function declarationComparison(input: ComparisonInput): ComparisonResult {
       generatedOnly: uniqueSorted(generatedOnly).slice(0, 24),
       renamedEnumMembers: uniqueSorted(renamedEnumMembers).slice(0, 24),
       movedToOtherModule: uniqueSorted(movedToOtherModule).slice(0, 24),
+      intentionalCasingRenames: uniqueSorted(intentionalCasingRenames).slice(0, 24),
     },
   };
 }
@@ -645,6 +814,8 @@ function moduleReport(
   globalLocalNames: ReadonlySet<string>,
   globalLocalEnumMembers: ReadonlySet<string>,
   globalLocalTypeContainers: ReadonlySet<string>,
+  globalLocalExactNames: ReadonlySet<string>,
+  casingConventionEnabled: boolean,
   declarationThreshold: number,
   shapeThreshold: number,
 ): ModuleReport {
@@ -676,6 +847,15 @@ function moduleReport(
     ...upstreamGenerated.filter((d) => d.kind === "type").map((d) => d.name),
   ]);
 
+  // Exact-case local declaration names (leading `#` stripped) for this module
+  // and globally. A directly-matched upstream name absent from this set was
+  // matched only by a case difference — the intentional TS casing rename.
+  const localExactNames = new Set<string>([
+    ...localHand.map((d) => d.name.replace(/^#/, "")),
+    ...localGenerated.map((d) => d.name.replace(/^#/, "")),
+    ...globalLocalExactNames,
+  ]);
+
   const comparison = declarationComparison({
     upstreamHand,
     localHand,
@@ -684,6 +864,8 @@ function moduleReport(
     upstreamTypeNames,
     localEnumMemberNames,
     globalLocalNames,
+    localExactNames,
+    casingConventionEnabled,
   });
 
   const declarationCoverage = upstreamHand.length === 0 ? 1 : comparison.matched / upstreamHand.length;
@@ -751,13 +933,14 @@ function renderText(report: LogicalParityReport): string {
     + item.falsePositives.generatedOnly.length
     + item.falsePositives.renamedEnumMembers.length
     + item.falsePositives.movedToOtherModule.length, 0);
+  const totalCasingRenames = required.reduce((sum, item) => sum + item.falsePositives.intentionalCasingRenames.length, 0);
   const lines: string[] = [];
   lines.push("TSTS / TS-Go Logical Parity (hardened)");
   lines.push(`tsgo_repo=${report.tsgoRepo}`);
   lines.push(`thresholds declaration_coverage>=${percent(report.declarationThreshold)} shape_score>=${percent(report.shapeThreshold)} stubs=0`);
   lines.push(`required_modules=${required.length} failing_modules=${failing.length}`);
   lines.push(`hand_declarations=${matchedDeclarations}/${upstreamDeclarations} coverage=${percent(upstreamDeclarations === 0 ? 1 : matchedDeclarations / upstreamDeclarations)}`);
-  lines.push(`weighted_shape_score=${percent(weightedShapeWeight === 0 ? 1 : weightedShape / weightedShapeWeight)} stub_markers=${stubs} false_positive_candidates=${totalFalsePositives}`);
+  lines.push(`weighted_shape_score=${percent(weightedShapeWeight === 0 ? 1 : weightedShape / weightedShapeWeight)} stub_markers=${stubs} false_positive_candidates=${totalFalsePositives} intentional_casing_renames=${totalCasingRenames}`);
   lines.push("");
   lines.push("status module hand_decl=matched/upstream cov fn/type/val shape stubs gen=local/upstream local");
   for (const item of report.reports) {
@@ -779,6 +962,7 @@ function renderText(report: LogicalParityReport): string {
       if (fp.generatedOnly.length > 0) fpParts.push(`generated_only=${fp.generatedOnly.length}`);
       if (fp.renamedEnumMembers.length > 0) fpParts.push(`renamed_enum=${fp.renamedEnumMembers.length}`);
       if (fp.movedToOtherModule.length > 0) fpParts.push(`moved=${fp.movedToOtherModule.length}`);
+      if (fp.intentionalCasingRenames.length > 0) fpParts.push(`casing_renames=${fp.intentionalCasingRenames.length}`);
       if (fpParts.length > 0) lines.push(`  false_positives ${fpParts.join(" ")}`);
     }
     if (item.status === "fail" && item.stubMarkers.length > 0) {
@@ -828,6 +1012,9 @@ function main(): void {
   const allLocalFiles = collected.flatMap((c) => c.localFiles).concat(sharedEnumFiles);
   const allLocalDecls = extractTsDeclarations(allLocalFiles.filter((f) => !f.generated));
   const globalLocalNames = new Set(allLocalDecls.map((d) => normalizeName(d.name)));
+  // Exact-case global local names (leading `#` stripped) for casing-rename
+  // detection on moved-to-other-module matches.
+  const globalLocalExactNames = new Set(allLocalDecls.map((d) => d.name.replace(/^#/, "")));
   const globalLocalEnumMembers = new Set([
     ...sharedEnumMembers,
     ...extractTsDeclarations(allLocalFiles).filter((d) => d.kind === "value").map((d) => d.name.toLowerCase()),
@@ -836,6 +1023,7 @@ function main(): void {
     ...sharedEnumContainers,
     ...extractTsDeclarations(allLocalFiles).filter((d) => d.kind === "type").map((d) => d.name),
   ]);
+  const casingConventionEnabled = loadCasingConventionEnabled();
 
   const reports = collected.map((c) =>
     moduleReport(
@@ -845,6 +1033,8 @@ function main(): void {
       globalLocalNames,
       globalLocalEnumMembers,
       globalLocalTypeContainers,
+      globalLocalExactNames,
+      casingConventionEnabled,
       declarationThreshold,
       shapeThreshold,
     ),

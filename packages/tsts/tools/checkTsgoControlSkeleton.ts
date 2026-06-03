@@ -211,6 +211,16 @@ const NOISE_CALLEES = new Set([
   "string", "number", "boolean", "int", "true", "false", "nil", "undefined",
 ]);
 
+// Control-flow keywords whose `(` opens a CONDITION/value, not a call. On both
+// the Go and TS sides `if (`, `for (`, `while (`, `switch (`, `return (`,
+// `catch (` etc. must never be treated as a call to a callee. They are also in
+// NOISE_CALLEES, but listing them here documents the defect-3 contract: the
+// callee extractor must not emit these (nor a fragment of them) as helper calls.
+const CONTROL_FLOW_KEYWORDS = new Set([
+  "if", "for", "while", "switch", "return", "catch", "else", "do", "case",
+  "select", "go", "defer", "range",
+]);
+
 // ────────────────────────────────────────────────────────────────────────────
 // CLI / config
 // ────────────────────────────────────────────────────────────────────────────
@@ -289,7 +299,16 @@ function stripCommentsAndStrings(text: string): string {
   const out: string[] = [];
   const n = text.length;
   let i = 0;
-  let state: "code" | "line" | "block" | "dquote" | "squote" | "backtick" = "code";
+  type State = "code" | "line" | "block" | "dquote" | "squote" | "backtick";
+  let state: State = "code";
+  // Stack of template-literal contexts entered via `${ ... }` interpolations,
+  // each remembering the code-brace depth where it began so the matching `}`
+  // pops us back into the enclosing template. This keeps backtick parity correct
+  // through interpolations; a naive "re-enter code at ${" flip makes the
+  // template's closing backtick look like an OPENING one, blanking subsequent
+  // code and (in declaration scanners) hiding every later function (defect 1).
+  const templateStack: number[] = [];
+  let braceDepth = 0;
   while (i < n) {
     const c = text[i];
     if (c === undefined) break;
@@ -301,6 +320,24 @@ function stripCommentsAndStrings(text: string): string {
       if (c === "'") { state = "squote"; out.push("'"); i += 1; continue; }
       // Backtick covers both JS/TS template literals and Go raw string literals.
       if (c === "`") { state = "backtick"; out.push("`"); i += 1; continue; }
+      if (c === "{") { braceDepth += 1; out.push(c); i += 1; continue; }
+      if (c === "}") {
+        // The matching `${` incremented braceDepth; decrement it on close so
+        // braceDepth does not accumulate across interpolations / nested-template
+        // ternaries (e.g. `${a ? `=${b}` : ""}`).
+        if (templateStack.length > 0 && braceDepth === templateStack[templateStack.length - 1]) {
+          templateStack.pop();
+          braceDepth = Math.max(0, braceDepth - 1);
+          state = "backtick";
+          out.push("}");
+          i += 1;
+          continue;
+        }
+        braceDepth = Math.max(0, braceDepth - 1);
+        out.push(c);
+        i += 1;
+        continue;
+      }
       out.push(c);
       i += 1;
       continue;
@@ -326,18 +363,18 @@ function stripCommentsAndStrings(text: string): string {
       i += 1;
       continue;
     }
-    if (state === "backtick") {
-      // JS/TS template literal. We keep ${...} interpolations as code because
-      // they can contain real calls; but to keep the strip simple and robust we
-      // blank the literal text and treat ${ } as code boundaries.
-      if (c === "\\") { out.push("  "); i += 2; continue; }
-      if (c === "$" && next === "{") { out.push("${"); state = "code"; i += 2; continue; } // re-enter code (approx)
-      if (c === "`") { state = "code"; out.push("`"); i += 1; continue; }
-      out.push(c === "\n" ? "\n" : " ");
-      i += 1;
+    // state === "backtick"
+    if (c === "\\") { out.push("  "); i += 2; continue; }
+    if (c === "$" && next === "{") {
+      braceDepth += 1;
+      templateStack.push(braceDepth);
+      out.push("${");
+      state = "code";
+      i += 2;
       continue;
     }
-    out.push(c);
+    if (c === "`") { state = "code"; out.push("`"); i += 1; continue; }
+    out.push(c === "\n" ? "\n" : " ");
     i += 1;
   }
   return out.join("");
@@ -485,15 +522,26 @@ function countWord(body: string, word: string): number {
 
 /** Distinct callee names invoked in a body, minus structural noise. */
 function extractCallees(body: string): readonly string[] {
-  // Match `name(` and `recv.name(` / `recv?.name(` call sites. We take the final
-  // segment (the method/function name) so `p.parseIfStatement()` -> parseifstatement.
-  const callPattern = /(?:[A-Za-z_$][\w$]*\s*[.?]?\.?\s*)?([A-Za-z_$][\w$]*)\s*(?:<[^>;{}()]*>)?\s*\(/g;
+  // Match a callee identifier immediately followed by `(`, optionally preceded by
+  // a `recv.` / `recv?.` receiver chain. The callee is the final segment, so
+  // `p.parseIfStatement()` -> parseifstatement.
+  //
+  // Defect 3: the callee must be a WHOLE identifier token. The whole match
+  // begins at `(?<![\w$.])` (a word/dot boundary) and the first identifier is
+  // matched in full, optionally followed by a `.method` / `?.method` chain whose
+  // FINAL segment is the callee. This prevents the engine from splitting a
+  // control keyword — previously `if (` backtracked into receiver `i` + callee
+  // `f`, emitting a phantom helper `f`. Now `if (` yields the whole token `if`,
+  // which is then dropped as a control-flow keyword below.
+  const callPattern = /(?<![\w$.])([A-Za-z_$][\w$]*)(?:\s*[?]?\.\s*([A-Za-z_$][\w$]*))*\s*(?:<[^>;{}()]*>)?\s*\(/g;
   const names = new Set<string>();
   for (const m of body.matchAll(callPattern)) {
-    const captured = m[1];
+    // The callee is the final chain segment (m[2]) when there is a receiver
+    // chain, otherwise the leading identifier (m[1]).
+    const captured = m[2] ?? m[1];
     if (captured === undefined) continue;
     const normalized = normalizeName(captured);
-    if (normalized === "" || NOISE_CALLEES.has(normalized)) continue;
+    if (normalized === "" || NOISE_CALLEES.has(normalized) || CONTROL_FLOW_KEYWORDS.has(normalized)) continue;
     names.add(normalized);
   }
   return [...names].sort();
@@ -506,7 +554,11 @@ function computeSkeleton(name: string, body: string, language: "go" | "ts"): { r
   if (language === "go") {
     const skeleton: Skeleton = {
       ifCount: countWord(body, "if"),
-      loopCount: countWord(body, "for") + countWord(body, "range"),
+      // Defect 2: `range` only occurs inside a `for ... range` clause, so a Go
+      // `for`-count already counts every loop. Adding `range` double-counts
+      // every range loop relative to a TS `for...of` (a single `for`). Count Go
+      // loops by `for` only so equivalent loops match.
+      loopCount: countWord(body, "for"),
       switchCount: countWord(body, "switch") + countWord(body, "select"),
       caseCount: countWord(body, "case") + countWord(body, "default"),
       returnCount: countWord(body, "return"),
