@@ -13,11 +13,13 @@ import {
   ensureTrailingDirectorySeparator,
   getDirectoryPath,
   getNormalizedAbsolutePath,
+  hasExtension,
   normalizePath,
   pathIsAbsolute,
   toPath,
   type ComparePathsOptions,
 } from "../tspath/index.js";
+import { newSpecMatcher, Usage } from "../vfs/vfsmatch/vfsMatch.js";
 
 export const defaultIncludeSpec = "**/*";
 
@@ -122,11 +124,25 @@ export function matchesExclude(
   fileName: string,
   comparePathsOptions: ComparePathsOptions,
 ): boolean {
-  if (specs.validatedExcludeSpecs.length === 0) return false;
-  const normalized = normalizePath(fileName);
-  for (const spec of specs.validatedExcludeSpecs) {
-    if (globLikeSpecMatches(spec, normalized, comparePathsOptions)) return true;
-    if (globLikeSpecMatches(spec, ensureTrailingDirectorySeparator(normalized), comparePathsOptions)) return true;
+  if (specs.validatedExcludeSpecs.length === 0) {
+    return false;
+  }
+  const excludeMatcher = newSpecMatcher(
+    specs.validatedExcludeSpecs,
+    comparePathsOptions.currentDirectory,
+    Usage.Exclude,
+    comparePathsOptions.useCaseSensitiveFileNames,
+  );
+  if (excludeMatcher === undefined) {
+    return false;
+  }
+  if (excludeMatcher.matchString(fileName)) {
+    return true;
+  }
+  if (!hasExtension(fileName)) {
+    if (excludeMatcher.matchString(ensureTrailingDirectorySeparator(fileName))) {
+      return true;
+    }
   }
   return false;
 }
@@ -136,12 +152,19 @@ export function getMatchedIncludeSpec(
   fileName: string,
   comparePathsOptions: ComparePathsOptions,
 ): string {
-  if (specs.validatedIncludeSpecs.length === 0) return "";
-  const normalized = normalizePath(fileName);
+  if (specs.validatedIncludeSpecs.length === 0) {
+    return "";
+  }
   for (let index = 0; index < specs.validatedIncludeSpecs.length; index += 1) {
     const spec = specs.validatedIncludeSpecs[index]!;
-    if (globLikeSpecMatches(spec, normalized, comparePathsOptions)) {
-      return specs.validatedIncludeSpecsBeforeSubstitution[index] ?? spec;
+    const includeMatcher = newSpecMatcher(
+      [spec],
+      comparePathsOptions.currentDirectory,
+      Usage.Files,
+      comparePathsOptions.useCaseSensitiveFileNames,
+    );
+    if (includeMatcher !== undefined && includeMatcher.matchString(fileName)) {
+      return specs.validatedIncludeSpecsBeforeSubstitution[index]!;
     }
   }
   return "";
@@ -215,27 +238,4 @@ function firstWildcardIndex(spec: string): number {
 function removeTrailingSpecSeparator(path: string): string {
   if (path.endsWith("/") && path.length > 1) return path.slice(0, -1);
   return path;
-}
-
-function globLikeSpecMatches(
-  spec: string,
-  candidate: string,
-  comparePathsOptions: ComparePathsOptions,
-): boolean {
-  const normalizedSpec = comparePathsOptions.useCaseSensitiveFileNames ? spec : spec.toLowerCase();
-  const normalizedCandidate = comparePathsOptions.useCaseSensitiveFileNames ? candidate : candidate.toLowerCase();
-  if (normalizedSpec === normalizedCandidate) return true;
-  if (normalizedSpec.endsWith(defaultIncludeSpec.slice(2))) {
-    const base = normalizedSpec.slice(0, -defaultIncludeSpec.length);
-    return normalizedCandidate.startsWith(base);
-  }
-  if (normalizedSpec.includes("*")) {
-    const escaped = normalizedSpec
-      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-      .replaceAll("**", ".*")
-      .replaceAll("*", "[^/]*")
-      .replaceAll("?", "[^/]");
-    return new RegExp(`^${escaped}$`).test(normalizedCandidate);
-  }
-  return normalizedCandidate === normalizedSpec || normalizedCandidate.startsWith(ensureTrailingDirectorySeparator(normalizedSpec));
 }

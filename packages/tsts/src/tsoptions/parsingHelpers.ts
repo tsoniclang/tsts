@@ -25,29 +25,43 @@ import type { CommandLineOptionNameMap } from "./tsconfigParsing.js";
 // ---------------------------------------------------------------------------
 
 export function parseTristate(value: unknown): Tristate {
-  if (value === undefined || value === null) return Tristate.Unknown;
-  if (typeof value === "number") return value as Tristate;
-  if (value === true) return Tristate.True;
-  return Tristate.False;
+  if (value === undefined || value === null) {
+    return Tristate.Unknown;
+  }
+  if (typeof value === "number") {
+    return value as Tristate;
+  }
+  if (value === true) {
+    return Tristate.True;
+  } else {
+    return Tristate.False;
+  }
 }
 
 export function parseStringArray(value: unknown): readonly string[] {
-  if (!Array.isArray(value)) return [];
-  const result: string[] = [];
-  for (const v of value as readonly unknown[]) {
-    if (typeof v === "string") result.push(v);
+  if (Array.isArray(value)) {
+    const arr = value as readonly unknown[];
+    const result: string[] = [];
+    for (const v of arr) {
+      if (typeof v === "string") {
+        result.push(v);
+      }
+    }
+    return result;
   }
-  return result;
+  return [];
 }
 
 export function parseStringMap(value: unknown): ReadonlyMap<string, readonly string[]> | undefined {
-  if (value === null || typeof value !== "object") return undefined;
-  if (Array.isArray(value)) return undefined;
-  const map = new Map<string, readonly string[]>();
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    map.set(k, parseStringArray(v));
+  if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+    const m = value as Record<string, unknown>;
+    const result = new Map<string, readonly string[]>();
+    for (const [k, v] of Object.entries(m)) {
+      result.set(k, parseStringArray(v));
+    }
+    return result;
   }
-  return map;
+  return undefined;
 }
 
 export function parseString(value: unknown): string {
