@@ -42,16 +42,22 @@ import {
   exportAssignmentExpression,
   exportAssignmentIsExportEquals,
   exportDeclarationExportClause,
+  findAncestor,
   getCombinedModifierFlags,
   getNodeLocals,
   getSymbolExports,
   getSymbolMembers,
   getSymbolParent,
   hasSyntacticModifier,
+  isAccessExpression,
+  isAutoAccessorPropertyDeclaration,
   isBigIntLiteral,
+  isBinaryExpression,
   isBindingPattern,
   isBlockOrCatchScoped,
+  isCallExpression,
   isClassExpression,
+  isConditionalTypeNode,
   isEntityNameExpression,
   isExportAssignment,
   isExportSpecifier,
@@ -61,6 +67,7 @@ import {
   isFunctionLike,
   isIdentifier,
   isModuleBlock,
+  isModuleDeclaration,
   isNamespaceExport,
   isNoSubstitutionTemplateLiteral,
   isNumericLiteral,
@@ -77,6 +84,7 @@ import {
   nodeInitializer,
   nodeName,
   nodeParameters,
+  nodeParent,
   nodeQuestionToken,
   nodeSymbol,
   setNodeFlags,
@@ -116,6 +124,8 @@ const InternalSymbolNameMissing = "__missing";
 const InternalSymbolNameDefault = "default";
 const InternalSymbolNameExportEquals = "export=";
 const InternalSymbolNameExportStar = "__export";
+const InternalSymbolNameType = "__type";
+const InternalSymbolNameJSXAttributes = "__jsxAttributes";
 
 // Container-flag bitset (binder.go:17-43). The single source of truth for which
 // nodes establish a container / block-scope / control-flow / locals boundary.
@@ -267,11 +277,20 @@ class Binder {
     return { name, flags, declarations: [] };
   }
 
+  // tsgo binder.go:536-538 — newSingleDeclaration: a fresh one-element declaration
+  // slice for a symbol's first declaration (the Go arena allocation collapses to a
+  // single-element array here).
+  #newSingleDeclaration(declaration: Node): Node[] {
+    return [declaration];
+  }
+
   // tsgo binder.go:2530-2546 — addDeclarationToSymbol(symbol, node, symbolFlags).
   #addDeclarationToSymbol(symbol: Symbol, node: Node, symbolFlags: SymbolFlags): void {
     symbol.flags = (symbol.flags ?? SymbolFlags.None) | symbolFlags;
     setNodeSymbol(node, symbol);
-    if (!symbol.declarations.includes(node)) {
+    if (symbol.declarations.length === 0) {
+      symbol.declarations = this.#newSingleDeclaration(node);
+    } else if (!symbol.declarations.includes(node)) {
       symbol.declarations.push(node);
     }
     if ((symbolFlags & SymbolFlags.Value) !== 0) {
@@ -524,7 +543,7 @@ class Binder {
         break;
       case Kind.PropertyDeclaration:
       case Kind.PropertySignature:
-        this.#bindPropertyOrMethodOrAccessor(node, SymbolFlags.Property | optionalFlag(node), SymbolFlags.PropertyExcludes);
+        this.#bindPropertyWorker(node);
         break;
       case Kind.PropertyAssignment:
       case Kind.ShorthandPropertyAssignment:
@@ -542,7 +561,7 @@ class Binder {
       case Kind.MethodSignature:
         this.#bindPropertyOrMethodOrAccessor(
           node,
-          SymbolFlags.Method | optionalFlag(node),
+          SymbolFlags.Method | getOptionalSymbolFlagForNode(node),
           isObjectLiteralMethod(node) ? SymbolFlags.PropertyExcludes : SymbolFlags.MethodExcludes,
         );
         break;
@@ -558,9 +577,13 @@ class Binder {
       case Kind.SetAccessor:
         this.#bindPropertyOrMethodOrAccessor(node, SymbolFlags.SetAccessor, SymbolFlags.SetAccessorExcludes);
         break;
+      case Kind.FunctionType:
+      case Kind.ConstructorType:
+        this.#bindFunctionOrConstructorType(node);
+        break;
       case Kind.TypeLiteral:
       case Kind.MappedType:
-        this.#bindAnonymousDeclaration(node, SymbolFlags.TypeLiteral, "__type");
+        this.#bindAnonymousDeclaration(node, SymbolFlags.TypeLiteral, InternalSymbolNameType);
         break;
       case Kind.ObjectLiteralExpression:
         this.#bindAnonymousDeclaration(node, SymbolFlags.ObjectLiteral, "__object");
@@ -602,6 +625,12 @@ class Binder {
         break;
       case Kind.SourceFile:
         this.#bindSourceFileIfExternalModule();
+        break;
+      case Kind.JsxAttributes:
+        this.#bindJsxAttributes(node);
+        break;
+      case Kind.JsxAttribute:
+        this.#bindJsxAttribute(node, SymbolFlags.Property, SymbolFlags.PropertyExcludes);
         break;
       case Kind.TypeParameter:
         this.#bindTypeParameter(node);
@@ -757,6 +786,16 @@ class Binder {
     }
   }
 
+  // bindPropertyWorker (binder.go:754-759) — an auto-accessor property declares
+  // an Accessor symbol; a plain property declares a Property symbol. Either way
+  // the optional `?` postfix contributes the Optional flag.
+  #bindPropertyWorker(node: Node): void {
+    const isAutoAccessor = isAutoAccessorPropertyDeclaration(node);
+    const includes = isAutoAccessor ? SymbolFlags.Accessor : SymbolFlags.Property;
+    const excludes = isAutoAccessor ? SymbolFlags.AccessorExcludes : SymbolFlags.PropertyExcludes;
+    this.#bindPropertyOrMethodOrAccessor(node, includes | getOptionalSymbolFlagForNode(node), excludes);
+  }
+
   // bindPropertyOrMethodOrAccessor (binder.go:985) — M4b form: route through the
   // table router (computed-name late binding is deferred).
   #bindPropertyOrMethodOrAccessor(node: Node, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
@@ -771,6 +810,31 @@ class Binder {
       bindingName = name.text;
     }
     this.#bindAnonymousDeclaration(node, SymbolFlags.Function, bindingName);
+  }
+
+  // bindFunctionOrConstructorType (binder.go:999-1012) — for a function/
+  // constructor type "<...>(...) => T" generate a symbol identical to the one for
+  // `{ <...>(...): T }`: an anonymous TypeLiteral symbol whose sole member is the
+  // signature symbol.
+  #bindFunctionOrConstructorType(node: Node): void {
+    const name = getDeclarationName(node);
+    const symbol = this.#newSymbol(SymbolFlags.Signature, name);
+    this.#addDeclarationToSymbol(symbol, node, SymbolFlags.Signature);
+    const typeLiteralSymbol = this.#newSymbol(SymbolFlags.TypeLiteral, InternalSymbolNameType);
+    this.#addDeclarationToSymbol(typeLiteralSymbol, node, SymbolFlags.TypeLiteral);
+    getSymbolMembers(typeLiteralSymbol).set(name, symbol);
+  }
+
+  // bindJsxAttributes (binder.go:885-887) — a JSX attributes node is an anonymous
+  // object-literal symbol.
+  #bindJsxAttributes(node: Node): void {
+    this.#bindAnonymousDeclaration(node, SymbolFlags.ObjectLiteral, InternalSymbolNameJSXAttributes);
+  }
+
+  // bindJsxAttribute (binder.go:889-891) — a single JSX attribute routes through
+  // the table router (onto the JsxAttributes members table).
+  #bindJsxAttribute(node: Node, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
+    this.#declareSymbolAndAddToSymbolTable(node, symbolFlags, symbolExcludes);
   }
 
   // bindClassLikeDeclaration (binder.go:953). Adds the implicit `prototype`
@@ -898,20 +962,63 @@ class Binder {
     }
   }
 
-  // bindTypeParameter (binder.go:1269) — M4b non-infer form: route through the
-  // table router (locals of the function/class container).
+  // getInferTypeContainer (binder.go:1235-1244) — for an `infer T` type parameter,
+  // find the enclosing conditional type whose `extends` clause the parameter sits
+  // inside, and return that conditional type's parent as the locals container.
+  #getInferTypeContainer(node: Node): Node | undefined {
+    const extendsType = findAncestor(node, (n) => {
+      const parent = nodeParent(n);
+      return parent !== undefined && isConditionalTypeNode(parent) && parent.extendsType === n;
+    });
+    if (extendsType !== undefined) {
+      return nodeParent(extendsType);
+    }
+    return undefined;
+  }
+
+  // bindTypeParameter (binder.go:1269-1280) — an `infer T` parameter binds into
+  // the enclosing conditional type's locals (or anonymously when there is no such
+  // container); any other type parameter routes through the table router.
   #bindTypeParameter(node: Node): void {
-    this.#declareSymbolAndAddToSymbolTable(node, SymbolFlags.TypeParameter, SymbolFlags.TypeParameterExcludes);
+    const parent = node.parent;
+    if (parent.kind === Kind.InferType) {
+      const container = this.#getInferTypeContainer(parent);
+      if (container !== undefined) {
+        this.#declareSymbol(getOrCreateLocals(container), undefined, node, SymbolFlags.TypeParameter, SymbolFlags.TypeParameterExcludes);
+      } else {
+        this.#bindAnonymousDeclaration(node, SymbolFlags.TypeParameter, getDeclarationName(node));
+      }
+    } else {
+      this.#declareSymbolAndAddToSymbolTable(node, SymbolFlags.TypeParameter, SymbolFlags.TypeParameterExcludes);
+    }
   }
 }
 
 // tsgo binder.go:2548-2557 — SetValueDeclaration (pure: writes the symbol's
 // value declaration slot). Non-assignment declarations take precedence over
-// assignment declarations; the M4b substrate only needs the first-writer rule.
+// assignment declarations and non-namespace declarations take precedence over
+// namespace declarations, matching the upstream three-arm guard exactly.
 function setValueDeclaration(symbol: Symbol, node: Node): void {
-  if (symbol.valueDeclaration === undefined) {
+  const valueDeclaration = symbol.valueDeclaration;
+  if (
+    valueDeclaration === undefined
+    || (isAssignmentDeclaration(valueDeclaration) && !isAssignmentDeclaration(node))
+    || (valueDeclaration.kind !== node.kind && isEffectiveModuleDeclaration(valueDeclaration))
+  ) {
     symbol.valueDeclaration = node;
   }
+}
+
+// tsgo binder.go:2799-2801 — isAssignmentDeclaration: a binary expression,
+// access expression, identifier, or call expression that participates in a
+// JavaScript-style assignment declaration.
+function isAssignmentDeclaration(decl: Node): boolean {
+  return isBinaryExpression(decl) || isAccessExpression(decl) || isIdentifier(decl) || isCallExpression(decl);
+}
+
+// tsgo binder.go:2803-2805 — isEffectiveModuleDeclaration.
+function isEffectiveModuleDeclaration(node: Node): boolean {
+  return isModuleDeclaration(node) || isIdentifier(node);
 }
 
 // ast.IsLocalsContainer (ast.go:1528) — a node that owns a locals table
@@ -997,10 +1104,12 @@ function isPropertyNameLiteralLike(name: Node): name is PropertyNameTextNode {
   );
 }
 
-// getOptionalSymbolFlagForNode (binder.go) — an optional `?` member contributes
-// the Optional symbol flag.
-function optionalFlag(node: Node): SymbolFlags {
-  return nodeQuestionToken(node) !== undefined ? SymbolFlags.Optional : SymbolFlags.None;
+// getOptionalSymbolFlagForNode (binder.go:2759-2762) — a member whose postfix
+// token is `?` contributes the Optional symbol flag. The questionToken slot is
+// the postfix token for property/method/accessor declarations.
+function getOptionalSymbolFlagForNode(node: Node): SymbolFlags {
+  const postfixToken = nodeQuestionToken(node);
+  return postfixToken !== undefined && postfixToken.kind === Kind.QuestionToken ? SymbolFlags.Optional : SymbolFlags.None;
 }
 
 // isObjectLiteralMethod (binder.go uses ast.IsObjectLiteralMethod) — a method
