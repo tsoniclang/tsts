@@ -1876,15 +1876,22 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
   return undefined;
 }
 
-// `const` preserves a primitive-literal initializer; `let`/`var` widen it
-// (getWidenedTypeForVariableLikeDeclaration widens only non-const block-scoped
-// declarations). The stored type also drops object-literal freshness.
+// Mirrors TS-Go getWidenedTypeForVariableLikeDeclaration's two-stage widening of
+// an inferred initializer type (checker.go:16508):
+//   1. widenTypeInferredFromInitializer → getWidenedLiteralTypeForInitializer:
+//      `const`/`readonly` keep the FRESH literal type unchanged (so `const c =
+//      "hello"` stores the *widening* literal `"hello"`); `let`/`var` collapse a
+//      fresh primitive literal to its base via getWidenedLiteralType. Preserving
+//      freshness on a `const` is what makes a downstream `let v = c` widen `v` to
+//      the base type (literalTypeWidening.types: `let v1 = c1` → `v1 : string`).
+//   2. getWidenedType then widens object/array literals (and drops object-literal
+//      freshness via getRegularTypeOfObjectLiteral) for the stored type.
+// A primitive-literal `const` therefore stays fresh and never reaches step 1's
+// widening, matching TS-Go (a fresh primitive literal is not RequiresWidening).
 function widenedVariableType(initializerType: Type, declaration: AstNode, state: CheckState): Type {
   const declarationList = nodeParent(declaration);
   const isConst = declarationList !== undefined && ((declarationList.flags ?? 0) & NodeFlags.Const) !== 0;
-  const literalAdjusted = isConst
-    ? getRegularTypeOfLiteralType(initializerType, state)
-    : getWidenedType(initializerType, state);
+  const literalAdjusted = isConst ? initializerType : getWidenedLiteralType(initializerType);
   return getRegularTypeOfObjectLiteral(literalAdjusted, state);
 }
 

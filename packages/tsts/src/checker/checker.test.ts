@@ -1123,6 +1123,37 @@ test("getTypeAtLocation reports an un-annotated un-initialized variable as impli
   assert.strictEqual(typeStringByIdentifier("var v; v;", "v"), "any");
 });
 
+// Slice B (initializer inference + widening handoff) — an un-annotated variable
+// with an initializer infers its type FROM the initializer, then applies TS-Go's
+// getWidenedTypeForVariableLikeDeclaration widening: a `const` keeps the FRESH
+// primitive-literal type (the *widening* literal), while `let`/`var` collapse it
+// to the base primitive. The fresh-vs-regular distinction is observable when the
+// const flows into a `let` initializer: that `let` widens to the base, mirroring
+// literalTypeWidening.types (`const c1 = "hello"; let v1 = c1` → `v1 : string`).
+test("getTypeAtLocation keeps a const primitive-literal initializer as the literal", () => {
+  assert.strictEqual(typeStringByIdentifier("const n = 1; n;", "n"), "1");
+  assert.strictEqual(typeStringByIdentifier('const s = "lit"; s;', "s"), "\"lit\"");
+  assert.strictEqual(typeStringByIdentifier("const b = true; b;", "b"), "true");
+  assert.strictEqual(typeStringByIdentifier("const g = 1n; g;", "g"), "1n");
+});
+
+test("getTypeAtLocation widens a let/var primitive-literal initializer to the base", () => {
+  assert.strictEqual(typeStringByIdentifier("let m = 1; m;", "m"), "number");
+  assert.strictEqual(typeStringByIdentifier("var v = 1; v;", "v"), "number");
+  assert.strictEqual(typeStringByIdentifier('let s = "lit"; s;', "s"), "string");
+  assert.strictEqual(typeStringByIdentifier("let b = true; b;", "b"), "boolean");
+});
+
+test("getTypeAtLocation widens a let initialized from a const widening-literal to the base", () => {
+  assert.strictEqual(typeStringByIdentifier('const c1 = "hello"; let v1 = c1; v1;', "v1"), "string");
+  assert.strictEqual(typeStringByIdentifier("const c2 = 1; let v2 = c2; v2;", "v2"), "number");
+  assert.strictEqual(typeStringByIdentifier("const c3 = true; let v3 = c3; v3;", "v3"), "boolean");
+});
+
+test("getTypeAtLocation keeps a const initialized from another const widening-literal as the literal", () => {
+  assert.strictEqual(typeStringByIdentifier('const c1 = "hello"; const c2 = c1; c2;', "c2"), "\"hello\"");
+});
+
 // G2 (signature display) — a callable displays as its real `(p: T) => R`
 // signature (not the literal token "function"), matching TS-Go signatureToString
 // (e.g. `() => void`, `(_condition: boolean) => ...`, `(...data: any[]) => void`).
