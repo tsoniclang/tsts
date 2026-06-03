@@ -43,9 +43,13 @@ export function newSyntheticRecursiveVisitor(): SyntheticRecursiveVisitor {
       return visitor.visitEachChild(node);
     },
     visitEachChild(node: AstNode): AstNode {
+      // Collect every child: the generated visitor treats any non-`undefined`
+      // return as "stop and propagate", so a continue/collect callback MUST
+      // return `undefined`. Returning `false` here would stop after the first
+      // child, leaving siblings unmarked.
       forEachChild(node, child => {
         visitor.visitNode(child);
-        return false;
+        return undefined;
       });
       return node;
     },
