@@ -1562,7 +1562,7 @@ export class Parser {
     // `await` is a declaration name, not a top-level await expression. (Member names are
     // covered by #parsePropertyName's own save/restore.)
     const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
-    const name = this.#current().kind === Kind.Identifier ? this.#parseIdentifier() : undefined;
+    const name = this.#parseNameOfClassDeclarationOrExpression();
     this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
     const typeParameters = this.#parseOptionalTypeParameters();
     const heritageClauses = this.#parseHeritageClauses();
@@ -1576,6 +1576,23 @@ export class Parser {
     this.#expect(Kind.CloseBraceToken);
     // M3 6a: tsgo withJSDoc(result, jsdoc) (parser.go:1774).
     return this.#withJSDoc(this.#finishNode(createClassDeclaration(modifiers, name, typeParameters, heritageClauses, members), pos), jsdoc);
+  }
+
+  // tsgo parseNameOfClassDeclarationOrExpression (parser.go:1790-1803).
+  // `implements` is a future reserved word, so `class implements` might mean either
+  // a class expression with omitted name (where `implements` starts a heritage
+  // clause) or a class named `implements`. `isImplementsClause` disambiguates: a
+  // binding identifier that is NOT the start of an implements clause is the name;
+  // otherwise there is no name (undefined). The inner save/restore keeps a name
+  // identifier named `await` from marking the enclosing statement for reparse.
+  #parseNameOfClassDeclarationOrExpression(): Identifier | undefined {
+    if (this.#isBindingIdentifier() && !this.#isImplementsClause()) {
+      const saveHasAwaitIdentifier = this.#statementHasAwaitIdentifier;
+      const id = this.#createIdentifier(this.#isBindingIdentifier());
+      this.#statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+      return id;
+    }
+    return undefined;
   }
 
   #parseInterfaceDeclaration(pos: number, jsdoc: JSDocScannerInfo, modifiers: NodeArray<ModifierLike> | undefined): Statement {
@@ -5218,6 +5235,117 @@ export class Parser {
       return this.#canParseSemicolon();
     }
     return false;
+  }
+
+  // tsgo isLetDeclaration (parser.go:1193-1197). In ES6 'let' always starts a
+  // lexical declaration if followed by an identifier or `{` or `[`.
+  #isLetDeclaration(): boolean {
+    return this.#lookAhead(() => this.#nextTokenIsBindingIdentifierOrStartOfDestructuring());
+  }
+
+  // tsgo nextTokenIsBindingIdentifierOrStartOfDestructuring (parser.go:1199-1202).
+  #nextTokenIsBindingIdentifierOrStartOfDestructuring(): boolean {
+    this.#nextToken();
+    return this.#isBindingIdentifier()
+      || this.#current().kind === Kind.OpenBraceToken
+      || this.#current().kind === Kind.OpenBracketToken;
+  }
+
+  // tsgo isImplementsClause (parser.go:1805-1807).
+  #isImplementsClause(): boolean {
+    return this.#current().kind === Kind.ImplementsKeyword
+      && this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeyword());
+  }
+
+  // tsgo nextTokenIsIdentifierOrKeyword (parser.go:3998-4000).
+  #nextTokenIsIdentifierOrKeyword(): boolean {
+    this.#nextToken();
+    return tokenIsIdentifierOrKeyword(this.#current().kind);
+  }
+
+  // tsgo nextTokenIsNewKeyword (parser.go:3808-3810).
+  #nextTokenIsNewKeyword(): boolean {
+    this.#nextToken();
+    return this.#current().kind === Kind.NewKeyword;
+  }
+
+  // tsgo canParseModuleExportName (parser.go:2480-2482).
+  #canParseModuleExportName(): boolean {
+    return tokenIsIdentifierOrKeyword(this.#current().kind)
+      || this.#current().kind === Kind.StringLiteral;
+  }
+
+  // tsgo isParameterNameStart (parser.go:3356-3361). Be permissive about await
+  // and yield by calling isBindingIdentifier instead of isIdentifier; disallowing
+  // them during a speculative parse leads to many more follow-on errors than
+  // allowing the function to parse then later complaining about the keywords.
+  #isParameterNameStart(): boolean {
+    return this.#isBindingIdentifier()
+      || this.#current().kind === Kind.OpenBracketToken
+      || this.#current().kind === Kind.OpenBraceToken;
+  }
+
+  // tsgo isYieldExpression (parser.go:4151-4176).
+  #isYieldExpression(): boolean {
+    if (this.#current().kind === Kind.YieldKeyword) {
+      // If we have a 'yield' keyword, and this is a context where yield
+      // expressions are allowed, then definitely parse out a yield expression.
+      if (this.#inYieldContext()) {
+        return true;
+      }
+      // We're in a context where 'yield expr' is not allowed. However, if we can
+      // definitely tell that the user was trying to parse a 'yield expr' and not
+      // just a normal expr that start with a 'yield' identifier, then parse out a
+      // 'yield expr'. We just check if the next token is an identifier/keyword/
+      // literal on the same line.
+      return this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeywordOrLiteralOnSameLine());
+    }
+    return false;
+  }
+
+  // tsgo isStartOfExpressionStatement (parser.go:4492-4495). As per the grammar,
+  // none of '{' or 'function' or 'class' or '@' can start an expression statement.
+  #isStartOfExpressionStatement(): boolean {
+    return this.#current().kind !== Kind.OpenBraceToken
+      && this.#current().kind !== Kind.FunctionKeyword
+      && this.#current().kind !== Kind.ClassKeyword
+      && this.#current().kind !== Kind.AtToken
+      && this.#isStartOfExpression();
+  }
+
+  // tsgo isTemplateStartOfTaggedTemplate (parser.go:5225-5227).
+  #isTemplateStartOfTaggedTemplate(): boolean {
+    return this.#current().kind === Kind.NoSubstitutionTemplateLiteral
+      || this.#current().kind === Kind.TemplateHead;
+  }
+
+  // tsgo isStartOfOptionalPropertyOrElementAccessChain (parser.go:5369-5371).
+  #isStartOfOptionalPropertyOrElementAccessChain(): boolean {
+    return this.#current().kind === Kind.QuestionDotToken
+      && this.#lookAhead(() => this.#nextTokenIsIdentifierOrKeywordOrOpenBracketOrTemplate());
+  }
+
+  // tsgo nextTokenIsIdentifierOrKeywordOrOpenBracketOrTemplate (parser.go:5373-5376).
+  #nextTokenIsIdentifierOrKeywordOrOpenBracketOrTemplate(): boolean {
+    this.#nextToken();
+    return tokenIsIdentifierOrKeyword(this.#current().kind)
+      || this.#current().kind === Kind.OpenBracketToken
+      || this.#isTemplateStartOfTaggedTemplate();
+  }
+
+  // tsgo isStartOfFunctionTypeOrConstructorType (parser.go:3770-3775).
+  #isStartOfFunctionTypeOrConstructorType(): boolean {
+    return this.#current().kind === Kind.LessThanToken
+      || (this.#current().kind === Kind.OpenParenToken
+        && this.#lookAhead(() => this.#nextIsUnambiguouslyStartOfFunctionType()))
+      || this.#current().kind === Kind.NewKeyword
+      || (this.#current().kind === Kind.AbstractKeyword
+        && this.#lookAhead(() => this.#nextTokenIsNewKeyword()));
+  }
+
+  // tsgo inDecoratorContext (parser.go:6382-6384).
+  #inDecoratorContext(): boolean {
+    return (this.#contextFlags & NodeFlags.DecoratorContext) !== 0;
   }
 
   // ==========================================================================
