@@ -285,16 +285,26 @@ interface TokenSnapshot extends ScannedToken {
   // M3 6a: whether the preceding JSDoc contained an @deprecated tag (tsgo
   // jsdocScannerInfoHasDeprecated). Drives NodeFlags.PossiblyContainsDeprecatedTag.
   readonly hasPrecedingJSDocDeprecated: boolean;
+  // whether the preceding JSDoc contained an @see/@link tag (tsgo
+  // jsdocScannerInfoHasSeeOrLink, parser.go:61/422 — read from
+  // p.scanner.HasPrecedingJSDocWithSeeOrLink()). Captured at scan time parallel to
+  // hasPrecedingJSDocDeprecated; feeds #jsdocScannerInfo().hasSeeOrLink which gates
+  // withJSDoc's eager @see/@link parse (jsdoc.go:70-73).
+  readonly hasPrecedingJSDocSeeOrLink: boolean;
 }
 
 // M3 6a: tsgo jsdocScannerInfo (parser.go:56-62), the preceding-JSDoc state
 // captured at a declaration-start point and threaded into #withJSDoc. Modeled as
-// a plain record (NOT an enum/bitset) carrying only the two TS-reachable bits;
-// jsdocScannerInfoHasSeeOrLink is omitted because its only effect is the eager
-// @see/@link parse, which is lazy/checker-owned here.
+// a plain record (NOT an enum/bitset) carrying the three preceding-JSDoc bits of
+// the upstream jsdocScannerInfo iota set (HasJSDoc / HasDeprecated / HasSeeOrLink).
 interface JSDocScannerInfo {
   readonly hasJSDoc: boolean;
   readonly hasDeprecated: boolean;
+  // tsgo jsdocScannerInfoHasSeeOrLink (parser.go:61). In tsgo this gates the eager
+  // @see/@link JSDoc parse in withJSDoc (jsdoc.go:70-73); tsonic parses JSDoc
+  // lazily (checker-owned), so the bit is carried for parity but its only reachable
+  // consumer — the eager-parse fall-through — is not exercised here.
+  readonly hasSeeOrLink: boolean;
 }
 
 // wave 4b-swap: a speculative parse-state snapshot (tsgo ParserState,
@@ -655,6 +665,16 @@ export class Parser {
   // for every top-level statement that contained an `await` identifier (outside
   // AwaitContext). Consumed by #reparseTopLevelAwait. Same parse-state category.
   #possibleAwaitSpans: int[] = [];
+  // tsgo p.identifiers (parser.go:84) + p.identifierCount (parser.go:86): the
+  // string-intern table that de-duplicates identifier text across the parse, and
+  // a running count of identifiers built. internIdentifier reads/populates the
+  // map; newIdentifier bumps the count. Same controlled mutable parse-state
+  // category as #token/#contextFlags (the map is mutated in place). tsgo stamps
+  // both onto the SourceFile in finishSourceFile (result.Identifiers /
+  // result.IdentifierCount, parser.go:475/478) — that post-parse stamp needs the
+  // AST SourceFile slots and is tracked separately from this parser-local state.
+  readonly #identifiers: Map<string, string> = new Map<string, string>();
+  #identifierCount: number = 0;
 
   constructor(sourceText: string, options: ParseSourceFileOptions = {}) {
     this.#sourceText = sourceText;
@@ -678,7 +698,7 @@ export class Parser {
     // Seed #token with the EOF placeholder so #nextToken's `this.#token.end`
     // read is well-typed; #nextToken immediately overwrites it with the first
     // real token (and #prevTokenEnd stays 0 because the placeholder end is 0).
-    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "", hasPrecedingLineBreak: false, fullStart: 0, hasPrecedingJSDoc: false, hasPrecedingJSDocDeprecated: false };
+    this.#token = { kind: Kind.EndOfFile, pos: 0, end: 0, text: "", hasPrecedingLineBreak: false, fullStart: 0, hasPrecedingJSDoc: false, hasPrecedingJSDocDeprecated: false, hasPrecedingJSDocSeeOrLink: false };
     this.#nextToken();
   }
 
@@ -709,10 +729,12 @@ export class Parser {
       fullStart: this.#scanner.getTokenFullStart() | 0,
       // M3 6a: capture the scanner's preceding-JSDoc state at the moment this
       // token is scanned (tsgo p.scanner.HasPrecedingJSDocComment() /
-      // HasPrecedingJSDocWithDeprecatedTag(), read by jsdocScannerInfo at
-      // parser.go:414-426). #jsdocScannerInfo() reads this snapshot.
+      // HasPrecedingJSDocWithDeprecatedTag() / HasPrecedingJSDocWithSeeOrLink(),
+      // read by jsdocScannerInfo at parser.go:414-426). #jsdocScannerInfo() reads
+      // this snapshot.
       hasPrecedingJSDoc: this.#scanner.hasPrecedingJSDocComment(),
       hasPrecedingJSDocDeprecated: this.#scanner.hasPrecedingJSDocWithDeprecatedTag(),
+      hasPrecedingJSDocSeeOrLink: this.#scanner.hasPrecedingJSDocWithSeeOrLink(),
     };
   }
 
@@ -739,6 +761,7 @@ export class Parser {
       // the scanner, parallel to hasPrecedingLineBreak.
       hasPrecedingJSDoc: this.#scanner.hasPrecedingJSDocComment(),
       hasPrecedingJSDocDeprecated: this.#scanner.hasPrecedingJSDocWithDeprecatedTag(),
+      hasPrecedingJSDocSeeOrLink: this.#scanner.hasPrecedingJSDocWithSeeOrLink(),
     };
   }
 
@@ -3221,16 +3244,41 @@ export class Parser {
 
   // M3 6b: tsgo newIdentifier (parser.go:2967-2974). The SINGLE identifier factory:
   // every identifier the parser builds from token text routes through here so the
-  // top-level-await detector observes them. When the text is exactly "await" (i.e.
-  // with AwaitContext OFF, a leading `await x` mis-parsed `await` as an Identifier),
-  // flip #statementHasAwaitIdentifier so #parseToplevelStatement records the span and
-  // #reparseTopLevelAwait can re-run the statement with AwaitContext ON. tsts has no
-  // identifier-intern table, so the identifierCount bump is omitted (not part of 6b).
+  // top-level-await detector observes them. tsgo bumps p.identifierCount first,
+  // builds the identifier, then flips p.statementHasAwaitIdentifier when the text is
+  // exactly "await" (with AwaitContext OFF, a leading `await x` mis-parsed `await` as
+  // an Identifier) so #parseToplevelStatement records the span and
+  // #reparseTopLevelAwait can re-run the statement with AwaitContext ON.
   #newIdentifier(text: string): Identifier {
+    this.#identifierCount++;
+    const id = createIdentifier(text);
     if (text === "await") {
       this.#statementHasAwaitIdentifier = true;
     }
-    return createIdentifier(text);
+    return id;
+  }
+
+  // tsgo internIdentifier (parser.go:5882-5892): de-duplicate identifier text via
+  // the parser-local intern map. On a hit return the canonical interned string; on
+  // a miss store the text as its own canonical entry and return it. tsgo's call
+  // sites (createIdentifierWithDiagnostic parser.go:5845, parsePrivateIdentifier
+  // parser.go:2984, the literal-argument interning at parser.go:5426-5430) pass the
+  // raw token text through here before building the node.
+  #internIdentifier(text: string): string {
+    const existing = this.#identifiers.get(text);
+    if (existing !== undefined) {
+      return existing;
+    }
+    this.#identifiers.set(text, text);
+    return text;
+  }
+
+  // tsgo isJavaScript (parser.go:153-155): true for a JS/JSX script kind. tsonic
+  // only emits TS/TSX, so this is structurally false, but the predicate is ported
+  // 1:1 so the JS-gated branches (withJSDoc eager-parse fall-through, reparseTags)
+  // read it faithfully rather than inlining the script-kind comparison.
+  #isJavaScript(): boolean {
+    return this.#scriptKind === ScriptKind.JS || this.#scriptKind === ScriptKind.JSX;
   }
 
   // tsgo createMissingIdentifier (parser.go:2974-2976): a zero-width Identifier at the
@@ -3432,7 +3480,9 @@ export class Parser {
       case Kind.PrivateIdentifier: {
         const pos = this.#nodePos();
         this.#advance();
-        return this.#finishNode(createPrivateIdentifier(token.text), pos);
+        // tsgo parsePrivateIdentifier (parser.go:2984): the token text is interned
+        // before the PrivateIdentifier node is built.
+        return this.#finishNode(createPrivateIdentifier(this.#internIdentifier(token.text)), pos);
       }
       case Kind.FalseKeyword:
       case Kind.NullKeyword:
@@ -3762,7 +3812,8 @@ export class Parser {
     if (token.kind === Kind.PrivateIdentifier) {
       const pos = this.#nodePos();
       this.#advance();
-      return this.#finishNode(createPrivateIdentifier(token.text), pos);
+      // tsgo parsePrivateIdentifier (parser.go:2984): intern the token text.
+      return this.#finishNode(createPrivateIdentifier(this.#internIdentifier(token.text)), pos);
     }
     return this.#parseIdentifier();
   }
@@ -3771,7 +3822,8 @@ export class Parser {
     if (this.#current().kind === Kind.PrivateIdentifier) {
       const pos = this.#nodePos();
       const token = this.#advance();
-      return this.#finishNode(createPrivateIdentifier(token.text), pos);
+      // tsgo parsePrivateIdentifier (parser.go:2984): intern the token text.
+      return this.#finishNode(createPrivateIdentifier(this.#internIdentifier(token.text)), pos);
     }
     return this.#parseIdentifier();
   }
@@ -3812,7 +3864,11 @@ export class Parser {
     if (isIdentifier) {
       const pos = this.#nodePos();
       this.#advance();
-      return this.#finishNode(this.#newIdentifier(token.text), pos);
+      // tsgo createIdentifierWithDiagnostic (parser.go:5845):
+      // p.newIdentifier(p.internIdentifier(text)) — the token text is interned
+      // BEFORE the identifier node is built so repeated identifiers share one
+      // canonical string.
+      return this.#finishNode(this.#newIdentifier(this.#internIdentifier(token.text)), pos);
     }
     if (token.kind === Kind.PrivateIdentifier) {
       this.#parseErrorAtCurrentToken(privateIdentifierDiagnosticMessage ?? Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
@@ -4618,34 +4674,51 @@ export class Parser {
   // token's preceding-JSDoc state at the declaration-start point (where #nodePos
   // is taken), so it reflects the token that STARTED the declaration — not a
   // later token reached by the time #withJSDoc runs. tsgo reads the LIVE scanner
-  // there (HasPrecedingJSDocComment/HasPrecedingJSDocWithDeprecatedTag); tsts
-  // reads the #token snapshot for the same reason as #hasPrecedingLineBreak (the
-  // live scanner may have advanced via a peek/lookahead since the token scan).
-  // jsdocScannerInfoHasSeeOrLink is intentionally absent: it only drives the
-  // eager @see/@link parse path (jsdoc.go:70-73), which is lazy/checker-owned
-  // here and out of 6a scope.
+  // there (HasPrecedingJSDocComment/HasPrecedingJSDocWithDeprecatedTag/
+  // HasPrecedingJSDocWithSeeOrLink); tsts reads the #token snapshot for the same
+  // reason as #hasPrecedingLineBreak (the live scanner may have advanced via a
+  // peek/lookahead since the token scan).
+  // tsgo jsdocScannerInfo short-circuits to 0 (no bits) when
+  // the scanner has no preceding JSDoc comment; otherwise it ORs in HasDeprecated
+  // and HasSeeOrLink. The TS record mirrors that: with hasJSDoc false the other
+  // bits are forced false (faithful to the early `return 0`); the HasSeeOrLink bit
+  // is carried though its only consumer (the eager @see/@link parse fall-through in
+  // withJSDoc, jsdoc.go:70-73) is checker-owned/lazy here.
   #jsdocScannerInfo(): JSDocScannerInfo {
+    if (!this.#token.hasPrecedingJSDoc) {
+      return { hasJSDoc: false, hasDeprecated: false, hasSeeOrLink: false };
+    }
     return {
-      hasJSDoc: this.#token.hasPrecedingJSDoc,
+      hasJSDoc: true,
       hasDeprecated: this.#token.hasPrecedingJSDocDeprecated,
+      hasSeeOrLink: this.#token.hasPrecedingJSDocSeeOrLink,
     };
   }
 
-  // M3 6a: tsgo withJSDoc (jsdoc.go:56-74), TS/TSX slice only. For a non-JS file
-  // tsgo stamps NodeFlagsHasJSDoc (+ NodeFlagsPossiblyContainsDeprecatedTag when
-  // the preceding JSDoc has @deprecated) and returns nil — NO eager JSDoc child
-  // node (JSDoc is parsed lazily on checker access). tsonic is always TS/TSX, so
-  // this is the whole reachable behavior. RANGE-NEUTRAL: it ORs flag bits onto an
-  // already-finished node; it never touches node.pos/node.end, so the leading
-  // JSDoc stays in trivia [node.pos, firstTokenStart) and the host span is
-  // unchanged.
+  // M3 6a: tsgo withJSDoc (jsdoc.go:56-74). Mirrors the upstream control skeleton:
+  // bail when the preceding-JSDoc bit is clear; then, for a NON-JS file, stamp
+  // NodeFlagsHasJSDoc (+ NodeFlagsPossiblyContainsDeprecatedTag when @deprecated)
+  // and short-circuit unless the comment had @see/@link (the only case that falls
+  // through to the eager JSDoc parse). tsonic is always TS/TSX so #isJavaScript()
+  // is false; the eager-parse fall-through (GetJSDocCommentRanges + parseJSDocComment)
+  // is checker-owned/lazy here, so the hasSeeOrLink branch returns the node
+  // unchanged. RANGE-NEUTRAL: only flag bits are ORed onto an already-finished node;
+  // node.pos/node.end are never touched, so the leading JSDoc stays in trivia
+  // [node.pos, firstTokenStart) and the host span is unchanged.
   #withJSDoc<T extends Node>(node: T, info: JSDocScannerInfo): T {
     if (!info.hasJSDoc) {
       return node;
     }
-    node.flags |= NodeFlags.HasJSDoc;
-    if (info.hasDeprecated) {
-      node.flags |= NodeFlags.PossiblyContainsDeprecatedTag;
+    if (!this.#isJavaScript()) {
+      node.flags |= NodeFlags.HasJSDoc;
+      if (info.hasDeprecated) {
+        node.flags |= NodeFlags.PossiblyContainsDeprecatedTag;
+      }
+      if (!info.hasSeeOrLink) {
+        return node;
+      }
+      // Fall through to eager parse for @see/@link — not ported (JSDoc is parsed
+      // lazily on checker access), so there is no eager-parse work to do here.
     }
     return node;
   }
