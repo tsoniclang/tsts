@@ -19,10 +19,12 @@ import type {
   TextRange,
 } from "./generated/types.js";
 import type {
+  AccessorDeclaration,
   BinaryExpression,
   ExpressionStatement,
   ForInStatement,
   ForOfStatement,
+  GetAccessorDeclaration,
   Identifier,
   JsxNamespacedName,
   LabeledStatement,
@@ -34,6 +36,7 @@ import type {
   ModifierLike,
   PropertyAccessExpression,
   PropertyAssignment,
+  SetAccessorDeclaration,
   ShorthandPropertyAssignment,
 } from "./generated/nodes.js";
 import {
@@ -836,4 +839,205 @@ export function isBlockOrCatchScoped(declaration: Node): boolean {
 // IsPartOfParameterDeclaration (utilities.go:1736).
 export function isPartOfParameterDeclaration(node: Node): boolean {
   return getRootDeclaration(node).kind === Kind.Parameter;
+}
+
+// IsAccessor (utilities.go:256).
+export function isAccessor(node: Node): boolean {
+  return node.kind === Kind.GetAccessor || node.kind === Kind.SetAccessor;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CanHave… predicates (continued)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// CanHaveSymbol (utilities.go:1019).
+export function canHaveSymbol(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.ArrowFunction:
+    case Kind.BinaryExpression:
+    case Kind.BindingElement:
+    case Kind.CallExpression:
+    case Kind.CallSignature:
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.ClassStaticBlockDeclaration:
+    case Kind.Constructor:
+    case Kind.ConstructorType:
+    case Kind.ConstructSignature:
+    case Kind.ElementAccessExpression:
+    case Kind.EnumDeclaration:
+    case Kind.EnumMember:
+    case Kind.ExportAssignment:
+    case Kind.ExportDeclaration:
+    case Kind.ExportSpecifier:
+    case Kind.FunctionDeclaration:
+    case Kind.FunctionExpression:
+    case Kind.FunctionType:
+    case Kind.GetAccessor:
+    case Kind.ImportClause:
+    case Kind.ImportEqualsDeclaration:
+    case Kind.ImportSpecifier:
+    case Kind.IndexSignature:
+    case Kind.InterfaceDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.JsxAttribute:
+    case Kind.JsxAttributes:
+    case Kind.JsxSpreadAttribute:
+    case Kind.MappedType:
+    case Kind.MethodDeclaration:
+    case Kind.MethodSignature:
+    case Kind.ModuleDeclaration:
+    case Kind.NamedTupleMember:
+    case Kind.NamespaceExport:
+    case Kind.NamespaceExportDeclaration:
+    case Kind.NamespaceImport:
+    case Kind.NewExpression:
+    case Kind.NoSubstitutionTemplateLiteral:
+    case Kind.NumericLiteral:
+    case Kind.ObjectLiteralExpression:
+    case Kind.Parameter:
+    case Kind.PropertyAccessExpression:
+    case Kind.PropertyAssignment:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.SetAccessor:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.SourceFile:
+    case Kind.SpreadAssignment:
+    case Kind.StringLiteral:
+    case Kind.TypeAliasDeclaration:
+    case Kind.TypeLiteral:
+    case Kind.TypeParameter:
+    case Kind.VariableDeclaration:
+      return true;
+  }
+  return false;
+}
+
+// Node.CanHaveStatements (ast.go:592).
+export function canHaveStatements(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.SourceFile:
+    case Kind.Block:
+    case Kind.ModuleBlock:
+    case Kind.CaseClause:
+    case Kind.DefaultClause:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Access kind (read / write / read-write)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// AccessKind (ast.go:1503-1509).
+export type AccessKind = number;
+
+export const AccessKind = {
+  Read: 0, // Only reads from a variable
+  Write: 1, // Only writes to a variable without ever reading it. E.g.: `x=1;`.
+  ReadWrite: 2, // Reads from and writes to a variable. E.g.: `f(x++);`, `x/=1`.
+} as const;
+
+// accessKind (ast.go:1430).
+function accessKind(node: Node): AccessKind {
+  const parent = node.parent;
+  if (parent === undefined) {
+    return AccessKind.Read;
+  }
+  switch (parent.kind) {
+    case Kind.ParenthesizedExpression:
+      return accessKind(parent);
+    case Kind.PrefixUnaryExpression: {
+      const operator = (parent as PrefixUnaryExpression).operator;
+      if (operator === Kind.PlusPlusToken || operator === Kind.MinusMinusToken) {
+        return AccessKind.ReadWrite;
+      }
+      return AccessKind.Read;
+    }
+    case Kind.PostfixUnaryExpression: {
+      const operator = (parent as PostfixUnaryExpression).operator;
+      if (operator === Kind.PlusPlusToken || operator === Kind.MinusMinusToken) {
+        return AccessKind.ReadWrite;
+      }
+      return AccessKind.Read;
+    }
+    case Kind.BinaryExpression:
+      if ((parent as BinaryExpression).left === node) {
+        const operator = (parent as BinaryExpression).operatorToken;
+        if (isAssignmentOperator(operator.kind)) {
+          if (operator.kind === Kind.EqualsToken) {
+            return AccessKind.Write;
+          }
+          return AccessKind.ReadWrite;
+        }
+      }
+      return AccessKind.Read;
+    case Kind.PropertyAccessExpression:
+      if ((parent as PropertyAccessExpression).name !== node) {
+        return AccessKind.Read;
+      }
+      return accessKind(parent);
+    case Kind.PropertyAssignment: {
+      const parentAccess = accessKind(parent.parent);
+      // In `({ x: varname }) = { x: 1 }`, the left `x` is a read, the right `x` is a write.
+      if (node === (parent as PropertyAssignment).name) {
+        return reverseAccessKind(parentAccess);
+      }
+      return parentAccess;
+    }
+    case Kind.ShorthandPropertyAssignment:
+      // Assume it's the local variable being accessed, since we don't check public properties for --noUnusedLocals.
+      if (node === (parent as ShorthandPropertyAssignment).objectAssignmentInitializer) {
+        return AccessKind.Read;
+      }
+      return accessKind(parent.parent);
+    case Kind.ArrayLiteralExpression:
+      return accessKind(parent);
+    case Kind.ForInStatement:
+    case Kind.ForOfStatement:
+      if (node === (parent as ForInStatement | ForOfStatement).initializer) {
+        return AccessKind.Write;
+      }
+      return AccessKind.Read;
+    default:
+      return AccessKind.Read;
+  }
+}
+
+// reverseAccessKind (ast.go:1491).
+function reverseAccessKind(a: AccessKind): AccessKind {
+  switch (a) {
+    case AccessKind.Read:
+      return AccessKind.Write;
+    case AccessKind.Write:
+      return AccessKind.Read;
+    case AccessKind.ReadWrite:
+      return AccessKind.ReadWrite;
+  }
+  throw new Error("Unhandled case in reverseAccessKind");
+}
+
+// IsWriteOnlyAccess (ast.go:1268).
+export function isWriteOnlyAccess(node: Node): boolean {
+  return accessKind(node) === AccessKind.Write;
+}
+
+// IsWriteAccess (ast.go:1272).
+export function isWriteAccess(node: Node): boolean {
+  return accessKind(node) !== AccessKind.Read;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Accessor declarations
+// ─────────────────────────────────────────────────────────────────────────────
+
+// AllAccessorDeclarations (utilities.go:4321).
+export interface AllAccessorDeclarations {
+  firstAccessor: AccessorDeclaration | undefined;
+  secondAccessor: AccessorDeclaration | undefined;
+  setAccessor: SetAccessorDeclaration | undefined;
+  getAccessor: GetAccessorDeclaration | undefined;
 }
