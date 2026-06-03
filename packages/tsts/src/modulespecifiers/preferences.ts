@@ -11,6 +11,7 @@
  */
 
 import type { StringLiteralLike } from "../ast/index.js";
+import { assertNever } from "../debug/index.js";
 
 import {
   type ImportModuleSpecifierEndingPreference,
@@ -307,9 +308,9 @@ export function getAllowedEndingsInPreferredOrder(
       }
       return [MSE.Minimal, MSE.Index, MSE.JsExtension];
     default:
-      // Mirrors TS-Go `debug.AssertNever(preferredEnding)`.
-      throw new Error("unhandled preferredEnding: " + String(preferredEnding));
+      assertNever(preferredEnding);
   }
+  return [MSE.Minimal];
 }
 
 /**
@@ -348,8 +349,10 @@ export function getModuleSpecifierPreferences(
     }
   }
 
-  const getAllowed = (syntaxImpliedNodeFormat: ResolutionMode): readonly ModuleSpecifierEnding[] =>
-    getAllowedEndingsInPreferredOrder(
+  const getAllowedEndingsInPreferredOrderClosure = (
+    syntaxImpliedNodeFormat: ResolutionMode,
+  ): readonly ModuleSpecifierEnding[] => {
+    return getAllowedEndingsInPreferredOrder(
       prefs,
       host,
       compilerOptions,
@@ -358,10 +361,11 @@ export function getModuleSpecifierPreferences(
       syntaxImpliedNodeFormat,
       tspath,
     );
+  };
 
   return {
     excludeRegexes: excludes,
     relativePreference,
-    getAllowedEndingsInPreferredOrder: getAllowed,
+    getAllowedEndingsInPreferredOrder: getAllowedEndingsInPreferredOrderClosure,
   };
 }

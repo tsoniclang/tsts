@@ -264,7 +264,7 @@ export function tryGetRealFileNameForNonJSDeclarationFileName(
 export function extensionFromPath(path: string): string {
   const ext = tryGetExtensionFromPath(path);
   if (ext.length === 0) {
-    throw new Error(`File ${path} has unknown extension.`);
+    throw new Error("File " + path + " has unknown extension.");
   }
   return ext;
 }

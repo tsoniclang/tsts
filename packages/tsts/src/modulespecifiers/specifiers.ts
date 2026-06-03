@@ -54,17 +54,9 @@ import {
 import {
   getDeclarationFileExtension, changeAnyExtension, changeFullExtension,
 } from "../tspath/extension.js";
-import { hasPrefixAndSuffixWithoutOverlap } from "../stringutil/compare.js";
+import { hasPrefix, hasPrefixAndSuffixWithoutOverlap, hasSuffix } from "../stringutil/compare.js";
 import { every as coreEvery, find as coreFind, indexAfter, map as coreMap, some as coreSome } from "../core/core.js";
-
-function stringHasPrefix(s: string, prefix: string, caseSensitive: boolean): boolean {
-  if (caseSensitive) return s.startsWith(prefix);
-  return s.toLowerCase().startsWith(prefix.toLowerCase());
-}
-function stringHasSuffix(s: string, suffix: string, caseSensitive: boolean): boolean {
-  if (caseSensitive) return s.endsWith(suffix);
-  return s.toLowerCase().endsWith(suffix.toLowerCase());
-}
+import { assertNever } from "../debug/index.js";
 
 import {
   comparePathsByRedirect,
@@ -877,7 +869,8 @@ export function processEnding(
       return fileName;
     }
     default:
-      throw new Error("unhandled ending: " + String(allowedEndings[0]));
+      assertNever(allowedEndings[0]);
+      return "";
   }
 }
 
@@ -985,8 +978,8 @@ export function tryGetModuleNameAsNodeModule(
   const globalTypingsCacheLocation = host.getGlobalTypingsCacheLocation();
   const pathToTopLevelNodeModules = moduleSpecifier.slice(0, parts.topLevelNodeModulesIndex);
 
-  if (!stringHasPrefix(info.sourceDirectory, pathToTopLevelNodeModules, caseSensitive) ||
-    (globalTypingsCacheLocation.length > 0 && stringHasPrefix(globalTypingsCacheLocation, pathToTopLevelNodeModules, caseSensitive))) {
+  if (!hasPrefix(info.sourceDirectory, pathToTopLevelNodeModules, caseSensitive) ||
+    (globalTypingsCacheLocation.length > 0 && hasPrefix(globalTypingsCacheLocation, pathToTopLevelNodeModules, caseSensitive))) {
     return "";
   }
 
@@ -1113,7 +1106,7 @@ function tryDirectoryWithPackageJson(
     if (
       (packageJsonContent === undefined || packageJsonContent.type.value !== "module") &&
       !fileExtensionIsOneOf(moduleFileToTry, ExtensionsNotSupportingExtensionlessResolution) &&
-      stringHasPrefix(moduleFileToTry, mainExportFile, host.useCaseSensitiveFileNames()) &&
+      hasPrefix(moduleFileToTry, mainExportFile, host.useCaseSensitiveFileNames()) &&
       comparePaths(getDirectoryPath(moduleFileToTry), removeTrailingDirectorySeparator(mainExportFile), compareOpt) === 0 &&
       removeFileExtension(getBaseFileName(moduleFileToTry)) === "index"
     ) {
@@ -1248,8 +1241,8 @@ export function tryGetModuleNameFromPaths(
         for (const c of candidates) {
           const value = c.value;
           if (value.length >= prefix.length + suffix.length &&
-            stringHasPrefix(value, prefix, caseSensitive) &&
-            stringHasSuffix(value, suffix, caseSensitive) &&
+            hasPrefix(value, prefix, caseSensitive) &&
+            hasSuffix(value, suffix, caseSensitive) &&
             validateEnding(c, relativeToBaseUrl, compilerOptions, host, tspath)) {
             const matchedStar = value.slice(prefix.length, value.length - suffix.length);
             if (!tspath.pathIsRelative(matchedStar)) {
@@ -1800,7 +1793,7 @@ function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost, path: string
 function getJSExtensionForFile(fileName: string, options: CompilerOptions): string {
   const result = tryGetJSExtensionForFile(fileName, options);
   if (result.length === 0) {
-    throw new Error(`Extension ${extensionFromPath(fileName)} is unsupported:: FileName:: ${fileName}`);
+    throw new Error("Extension " + extensionFromPath(fileName) + " is unsupported:: FileName:: " + fileName);
   }
   return result;
 }
