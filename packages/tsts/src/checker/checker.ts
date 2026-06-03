@@ -61,6 +61,7 @@ import { inferExpression } from "./checker.expressions.js";
 import { checkStatements } from "./checker.statements.js";
 import { createCheckerCoreState } from "./checkerInitialization.js";
 import type { CheckerCoreState, CheckerProgram } from "./checkerCore.js";
+import { emptyCompilerOptions } from "../core/compilerOptions.js";
 import { checkSourceElements } from "./sourceElements.js";
 import {
   getPropertySymbolOfType,
@@ -85,7 +86,7 @@ export class Checker {
   constructor(program?: Program) {
     this.program = program;
     this.state = newCheckState();
-    this.core = createCheckerCoreState(program as unknown as CheckerProgram | undefined);
+    this.core = createCheckerCoreState(program === undefined ? undefined : adaptProgramForChecker(program));
     wireBinderSymbolResolution(this.state);
   }
 
@@ -276,6 +277,37 @@ function getBaseTypeOfLiteralTypeLocal(type: Type): Type {
     return type;
   }
   return type;
+}
+
+// Adapt the program/program.ts `Program` (a plain data shape with bound source
+// files) into the method-shaped `CheckerProgram` the checker core expects. The
+// program path binds every source file during createProgram, so bindSourceFiles
+// is a no-op here; the remaining host queries are not exercised by the current
+// program-driven check and return benign empties.
+function adaptProgramForChecker(program: Program): CheckerProgram {
+  const sourceFiles = program.sourceFiles.map(file => file.sourceFile as unknown as AstNode);
+  return {
+    options: () => emptyCompilerOptions,
+    sourceFiles: () => sourceFiles,
+    bindSourceFiles: () => {},
+    fileExists: () => false,
+    getSourceFile: () => undefined,
+    getSourceFileForResolvedModule: () => undefined,
+    getEmitModuleFormatOfFile: () => 0,
+    getEmitSyntaxForUsageLocation: () => 0,
+    getImpliedNodeFormatForEmit: () => 0,
+    getResolvedModule: () => undefined,
+    getResolvedModules: () => new Map(),
+    getPackagesMap: () => new Map(),
+    getSourceFileMetaData: () => undefined,
+    getJSXRuntimeImportSpecifier: () => ["", undefined],
+    getImportHelpersImportSpecifier: () => undefined,
+    sourceFileMayBeEmitted: () => false,
+    isSourceFileDefaultLibrary: () => false,
+    getProjectReferenceFromOutputDts: () => undefined,
+    getRedirectForResolution: () => undefined,
+    commonSourceDirectory: () => "",
+  };
 }
 
 export function newChecker(program?: Program): Checker {

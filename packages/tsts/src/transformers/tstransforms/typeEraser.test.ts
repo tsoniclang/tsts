@@ -31,8 +31,8 @@
 // binder-computed `modifierFlags` the faithful predicates read — no
 // escape-hatch cast.
 
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import {
   Kind,
@@ -59,46 +59,39 @@ function parameterProperty(modifierKinds: readonly ModifierSyntaxKind[], name: s
   });
 }
 
-export class TypeEraserParameterPropertyParityTests {
-  // `class C { constructor(public x: number) {} }` — the public modifier on a
-  // constructor parameter now drives the type-eraser's preserve branch (was
-  // dead/always-erased before the migration).
-  constructor_public_parameter_is_a_parameter_property(): void {
-    const param = parameterProperty([Kind.PublicKeyword], "x");
-    const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
+// `class C { constructor(public x: number) {} }` — the public modifier on a
+// constructor parameter now drives the type-eraser's preserve branch (was
+// dead/always-erased before the migration).
+test("constructor public parameter is a parameter property", () => {
+  const param = parameterProperty([Kind.PublicKeyword], "x");
+  const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
 
-    // LIVE: the gating predicate selects extractModifiers(...) rather than undefined.
-    Assert.True(isParameterPropertyDeclaration(param, ctor));
-    // The ParameterPropertyModifier set the type-eraser extracts includes Public.
-    Assert.True(hasSyntacticModifier(param, ModifierFlags.ParameterPropertyModifier));
-  }
+  // LIVE: the gating predicate selects extractModifiers(...) rather than undefined.
+  assert.ok(isParameterPropertyDeclaration(param, ctor));
+  // The ParameterPropertyModifier set the type-eraser extracts includes Public.
+  assert.ok(hasSyntacticModifier(param, ModifierFlags.ParameterPropertyModifier));
+});
 
-  // `public readonly` — both bits live in ParameterPropertyModifier.
-  constructor_public_readonly_parameter_is_a_parameter_property(): void {
-    const param = parameterProperty([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
-    const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
-    Assert.True(isParameterPropertyDeclaration(param, ctor));
-  }
+// `public readonly` — both bits live in ParameterPropertyModifier.
+test("constructor public readonly parameter is a parameter property", () => {
+  const param = parameterProperty([Kind.PublicKeyword, Kind.ReadonlyKeyword], "x");
+  const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([param]) });
+  assert.ok(isParameterPropertyDeclaration(param, ctor));
+});
 
-  // A plain `constructor(x: number)` parameter has no parameter-property
-  // modifiers, so the type-eraser keeps taking the erase (`undefined`) branch.
-  constructor_plain_parameter_is_not_a_parameter_property(): void {
-    const plainParam = new NodeObject(Kind.Parameter, { name: createIdentifier("x") });
-    const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([plainParam]) });
-    Assert.False(isParameterPropertyDeclaration(plainParam, ctor));
-  }
+// A plain `constructor(x: number)` parameter has no parameter-property
+// modifiers, so the type-eraser keeps taking the erase (`undefined`) branch.
+test("constructor plain parameter is not a parameter property", () => {
+  const plainParam = new NodeObject(Kind.Parameter, { name: createIdentifier("x") });
+  const ctor = new NodeObject(Kind.Constructor, { parameters: createNodeArray([plainParam]) });
+  assert.ok(!isParameterPropertyDeclaration(plainParam, ctor));
+});
 
-  // Same modifiers, but the parent is a method, not a Constructor: not a
-  // parameter property (proves the stub's always-false regression is gone in
-  // both directions — true under Constructor, false otherwise).
-  public_parameter_under_non_constructor_parent_is_not_a_parameter_property(): void {
-    const param = parameterProperty([Kind.PublicKeyword], "x");
-    const method = new NodeObject(Kind.MethodDeclaration, { parameters: createNodeArray([param]) });
-    Assert.False(isParameterPropertyDeclaration(param, method));
-  }
-}
-
-A<TypeEraserParameterPropertyParityTests>().method((t) => t.constructor_public_parameter_is_a_parameter_property).add(FactAttribute);
-A<TypeEraserParameterPropertyParityTests>().method((t) => t.constructor_public_readonly_parameter_is_a_parameter_property).add(FactAttribute);
-A<TypeEraserParameterPropertyParityTests>().method((t) => t.constructor_plain_parameter_is_not_a_parameter_property).add(FactAttribute);
-A<TypeEraserParameterPropertyParityTests>().method((t) => t.public_parameter_under_non_constructor_parent_is_not_a_parameter_property).add(FactAttribute);
+// Same modifiers, but the parent is a method, not a Constructor: not a
+// parameter property (proves the stub's always-false regression is gone in
+// both directions — true under Constructor, false otherwise).
+test("public parameter under non constructor parent is not a parameter property", () => {
+  const param = parameterProperty([Kind.PublicKeyword], "x");
+  const method = new NodeObject(Kind.MethodDeclaration, { parameters: createNodeArray([param]) });
+  assert.ok(!isParameterPropertyDeclaration(param, method));
+});

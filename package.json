@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} build --project tsts",
-    "test": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} test --project tsts",
+    "test": "npm run test:node",
+    "test:tsonic": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} test --project tsts",
     "generate": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} generate --project tsts",
     "restore": "node ${TSONIC_CLI:-../tsonic/packages/cli/dist/index.js} restore",
     "ast:generate": "cd packages/tsts && node --import ./tools/register.mjs tools/generateAst.ts",
@@ -26,8 +27,10 @@
     "parity": "node packages/tsts/tools/checkParity.ts",
     "parity:json": "node packages/tsts/tools/checkParity.ts --json",
     "typecheck": "node ../tsonic/node_modules/typescript/bin/tsc --noEmit -p packages/tsts/tsconfig.json --pretty false",
-    "build:tsc": "node ../tsonic/node_modules/typescript/bin/tsc -p packages/tsts/tsconfig.json --outDir .temp/tsc-dist --pretty false",
-    "test:node": "npm run build:tsc && node --test \".temp/tsc-dist/src/extensions/**/*.test.js\"",
+    "build:tsc": "node ../tsonic/node_modules/typescript/bin/tsc -p packages/tsts/tsconfig.json --outDir .temp/tsc-dist --pretty false && rm -rf .temp/tsc-dist/src/bundled/libs && cp -R packages/tsts/src/bundled/libs .temp/tsc-dist/src/bundled/libs",
+    "test:node": "npm run build:tsc && node --test \".temp/tsc-dist/src/**/*.test.js\"",
+    "test:tsgo": "npm run build:tsc && node --test \".temp/tsc-dist/src/runner/tsgoConformance.test.js\"",
+    "test:tsgo:required": "npm run build:tsc && TSGO_REQUIRED=1 node --test \".temp/tsc-dist/src/runner/tsgoConformance.test.js\"",
     "verify": "npm run typecheck && npm run test:node && npm run ast:schema-check && npm run ast:generated-check && npm run naming && npm run parity"
   },
   "devDependencies": {

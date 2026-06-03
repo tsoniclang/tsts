@@ -1,25 +1,19 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import * as protocol from "./binary-ast/protocol.js";
 
-export class BinaryAstProtocolTests {
-  preserves_header_and_node_layout_constants(): void {
-    Assert.Equal(5, protocol.PROTOCOL_VERSION);
-    Assert.Equal(44, protocol.HEADER_SIZE);
-    Assert.Equal(28, protocol.NODE_LEN);
-    Assert.Equal(40, protocol.HEADER_OFFSET_NODES);
-    Assert.Equal(0, protocol.NODE_OFFSET_KIND);
-    Assert.Equal(4, protocol.NODE_OFFSET_POS);
-    Assert.Equal(8, protocol.NODE_OFFSET_END);
-    Assert.Equal(12, protocol.NODE_OFFSET_NEXT);
-    Assert.Equal(16, protocol.NODE_OFFSET_PARENT);
-    Assert.Equal(20, protocol.NODE_OFFSET_DATA);
-    Assert.Equal(24, protocol.NODE_OFFSET_FLAGS);
-    Assert.Equal(0xffffffff, protocol.KIND_NODE_LIST);
-  }
-}
-
-A<BinaryAstProtocolTests>()
-  .method((t) => t.preserves_header_and_node_layout_constants)
-  .add(FactAttribute);
+test("preserves header and node layout constants", () => {
+  assert.strictEqual(protocol.PROTOCOL_VERSION, 5);
+  assert.strictEqual(protocol.HEADER_SIZE, 44);
+  assert.strictEqual(protocol.NODE_LEN, 28);
+  assert.strictEqual(protocol.HEADER_OFFSET_NODES, 40);
+  assert.strictEqual(protocol.NODE_OFFSET_KIND, 0);
+  assert.strictEqual(protocol.NODE_OFFSET_POS, 4);
+  assert.strictEqual(protocol.NODE_OFFSET_END, 8);
+  assert.strictEqual(protocol.NODE_OFFSET_NEXT, 12);
+  assert.strictEqual(protocol.NODE_OFFSET_PARENT, 16);
+  assert.strictEqual(protocol.NODE_OFFSET_DATA, 20);
+  assert.strictEqual(protocol.NODE_OFFSET_FLAGS, 24);
+  assert.strictEqual(protocol.KIND_NODE_LIST, 0xffffffff);
+});

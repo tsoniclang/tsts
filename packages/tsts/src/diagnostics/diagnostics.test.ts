@@ -1,5 +1,5 @@
-import { attributes as A } from "@tsonic/core/lang.js";
-import { Assert, FactAttribute } from "xunit-types/Xunit.js";
+import test from "node:test";
+import assert from "node:assert/strict";
 
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import { categoryName, format, localize, stringifyArgs, type LocaleMessages, type LocaleProvider } from "./diagnostics.js";
@@ -52,132 +52,99 @@ const localeProvider: LocaleProvider = (loc) => {
 
 const lookupByKey = (key: string): DiagnosticMessage | undefined => STUB_CATALOG.get(key);
 
-export class DiagnosticsCategoryTests {
-  category_name_returns_canonical_lowercase_names(): void {
-    Assert.Equal("warning", categoryName(DiagnosticCategory.Warning));
-    Assert.Equal("error", categoryName(DiagnosticCategory.Error));
-    Assert.Equal("suggestion", categoryName(DiagnosticCategory.Suggestion));
-    Assert.Equal("message", categoryName(DiagnosticCategory.Message));
-  }
-}
+test("category name returns canonical lowercase names", () => {
+  assert.strictEqual(categoryName(DiagnosticCategory.Warning), "warning");
+  assert.strictEqual(categoryName(DiagnosticCategory.Error), "error");
+  assert.strictEqual(categoryName(DiagnosticCategory.Suggestion), "suggestion");
+  assert.strictEqual(categoryName(DiagnosticCategory.Message), "message");
+});
 
-export class DiagnosticsFormatTests {
-  format_returns_text_unchanged_when_no_args(): void {
-    Assert.Equal("Identifier expected.", format("Identifier expected.", []));
-  }
+test("format returns text unchanged when no args", () => {
+  assert.strictEqual(format("Identifier expected.", []), "Identifier expected.");
+});
 
-  format_replaces_single_placeholder(): void {
-    Assert.Equal("')' expected.", format("'{0}' expected.", [")"]));
-  }
+test("format replaces single placeholder", () => {
+  assert.strictEqual(format("'{0}' expected.", [")"]), "')' expected.");
+});
 
-  format_replaces_multiple_placeholders(): void {
-    Assert.Equal(
-      "The parser expected to find a '}' to match the '{' token here.",
-      format("The parser expected to find a '{1}' to match the '{0}' token here.", ["{", "}"]),
-    );
-  }
-}
+test("format replaces multiple placeholders", () => {
+  assert.strictEqual(
+    format("The parser expected to find a '{1}' to match the '{0}' token here.", ["{", "}"]),
+    "The parser expected to find a '}' to match the '{' token here.",
+  );
+});
 
-export class DiagnosticsStringifyArgsTests {
-  string_args_pass_through(): void {
-    Assert.Equal<readonly string[]>(["a", "b"], stringifyArgs(["a", "b"]));
-  }
+test("string args pass through", () => {
+  assert.deepStrictEqual(stringifyArgs(["a", "b"]), ["a", "b"]);
+});
 
-  non_string_args_get_stringified(): void {
-    Assert.Equal<readonly string[]>(["42", "true"], stringifyArgs([42, true]));
-  }
+test("non string args get stringified", () => {
+  assert.deepStrictEqual(stringifyArgs([42, true]), ["42", "true"]);
+});
 
-  empty_args_return_empty_array(): void {
-    Assert.Equal<readonly string[]>([], stringifyArgs([]));
-  }
-}
+test("empty args return empty array", () => {
+  assert.deepStrictEqual(stringifyArgs([]), []);
+});
 
-export class DiagnosticsLocalizeTests {
-  english_default_returns_message_text(): void {
-    Assert.Equal("Identifier expected.", localize("en", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("english default returns message text", () => {
+  assert.strictEqual(localize("en", Identifier_expected, "", [], lookupByKey, localeProvider), "Identifier expected.");
+});
 
-  undefined_locale_uses_english(): void {
-    Assert.Equal("Identifier expected.", localize("", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("undefined locale uses english", () => {
+  assert.strictEqual(localize("", Identifier_expected, "", [], lookupByKey, localeProvider), "Identifier expected.");
+});
 
-  with_single_argument(): void {
-    Assert.Equal("')' expected.", localize("en", X_0_expected, "", [")"], lookupByKey, localeProvider));
-  }
+test("with single argument", () => {
+  assert.strictEqual(localize("en", X_0_expected, "", [")"], lookupByKey, localeProvider), "')' expected.");
+});
 
-  with_multiple_arguments(): void {
-    Assert.Equal(
-      "The parser expected to find a '}' to match the '{' token here.",
-      localize("en", Parser_expected_close, "", ["{", "}"], lookupByKey, localeProvider),
-    );
-  }
+test("with multiple arguments", () => {
+  assert.strictEqual(
+    localize("en", Parser_expected_close, "", ["{", "}"], lookupByKey, localeProvider),
+    "The parser expected to find a '}' to match the '{' token here.",
+  );
+});
 
-  unknown_locale_falls_back_to_english(): void {
-    Assert.Equal("Identifier expected.", localize("af-ZA", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("unknown locale falls back to english", () => {
+  assert.strictEqual(localize("af-ZA", Identifier_expected, "", [], lookupByKey, localeProvider), "Identifier expected.");
+});
 
-  german_localization(): void {
-    Assert.Equal("Es wurde ein Bezeichner erwartet.", localize("de-DE", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("german localization", () => {
+  assert.strictEqual(localize("de-DE", Identifier_expected, "", [], lookupByKey, localeProvider), "Es wurde ein Bezeichner erwartet.");
+});
 
-  french_localization(): void {
-    Assert.Equal("Identificateur attendu.", localize("fr-FR", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("french localization", () => {
+  assert.strictEqual(localize("fr-FR", Identifier_expected, "", [], lookupByKey, localeProvider), "Identificateur attendu.");
+});
 
-  spanish_localization(): void {
-    Assert.Equal("Se esperaba un identificador.", localize("es-ES", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("spanish localization", () => {
+  assert.strictEqual(localize("es-ES", Identifier_expected, "", [], lookupByKey, localeProvider), "Se esperaba un identificador.");
+});
 
-  japanese_localization(): void {
-    Assert.Equal("識別子が必要です。", localize("ja-JP", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("japanese localization", () => {
+  assert.strictEqual(localize("ja-JP", Identifier_expected, "", [], lookupByKey, localeProvider), "識別子が必要です。");
+});
 
-  chinese_simplified_localization(): void {
-    Assert.Equal("应为标识符。", localize("zh-CN", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("chinese simplified localization", () => {
+  assert.strictEqual(localize("zh-CN", Identifier_expected, "", [], lookupByKey, localeProvider), "应为标识符。");
+});
 
-  korean_localization(): void {
-    Assert.Equal("식별자가 필요합니다.", localize("ko-KR", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("korean localization", () => {
+  assert.strictEqual(localize("ko-KR", Identifier_expected, "", [], lookupByKey, localeProvider), "식별자가 필요합니다.");
+});
 
-  russian_localization(): void {
-    Assert.Equal("Ожидался идентификатор.", localize("ru-RU", Identifier_expected, "", [], lookupByKey, localeProvider));
-  }
+test("russian localization", () => {
+  assert.strictEqual(localize("ru-RU", Identifier_expected, "", [], lookupByKey, localeProvider), "Ожидался идентификатор.");
+});
 
-  german_with_argument(): void {
-    Assert.Equal("\")\" wurde erwartet.", localize("de-DE", X_0_expected, "", [")"], lookupByKey, localeProvider));
-  }
-}
+test("german with argument", () => {
+  assert.strictEqual(localize("de-DE", X_0_expected, "", [")"], lookupByKey, localeProvider), "\")\" wurde erwartet.");
+});
 
-export class DiagnosticsLocalizeByKeyTests {
-  by_key_without_args(): void {
-    Assert.Equal("Identifier expected.", localize("en", undefined, "Identifier_expected_1003", [], lookupByKey, localeProvider));
-  }
+test("by key without args", () => {
+  assert.strictEqual(localize("en", undefined, "Identifier_expected_1003", [], lookupByKey, localeProvider), "Identifier expected.");
+});
 
-  by_key_with_args(): void {
-    Assert.Equal("')' expected.", localize("en", undefined, "_0_expected_1005", [")"], lookupByKey, localeProvider));
-  }
-}
-
-A<DiagnosticsCategoryTests>().method((t) => t.category_name_returns_canonical_lowercase_names).add(FactAttribute);
-A<DiagnosticsFormatTests>().method((t) => t.format_returns_text_unchanged_when_no_args).add(FactAttribute);
-A<DiagnosticsFormatTests>().method((t) => t.format_replaces_single_placeholder).add(FactAttribute);
-A<DiagnosticsFormatTests>().method((t) => t.format_replaces_multiple_placeholders).add(FactAttribute);
-A<DiagnosticsStringifyArgsTests>().method((t) => t.string_args_pass_through).add(FactAttribute);
-A<DiagnosticsStringifyArgsTests>().method((t) => t.non_string_args_get_stringified).add(FactAttribute);
-A<DiagnosticsStringifyArgsTests>().method((t) => t.empty_args_return_empty_array).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.english_default_returns_message_text).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.undefined_locale_uses_english).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.with_single_argument).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.with_multiple_arguments).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.unknown_locale_falls_back_to_english).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.german_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.french_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.spanish_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.japanese_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.chinese_simplified_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.korean_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.russian_localization).add(FactAttribute);
-A<DiagnosticsLocalizeTests>().method((t) => t.german_with_argument).add(FactAttribute);
-A<DiagnosticsLocalizeByKeyTests>().method((t) => t.by_key_without_args).add(FactAttribute);
-A<DiagnosticsLocalizeByKeyTests>().method((t) => t.by_key_with_args).add(FactAttribute);
+test("by key with args", () => {
+  assert.strictEqual(localize("en", undefined, "_0_expected_1005", [")"], lookupByKey, localeProvider), "')' expected.");
+});
