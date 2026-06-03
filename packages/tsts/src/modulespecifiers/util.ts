@@ -1,13 +1,39 @@
 /**
  * Utility helpers for specifier generation.
  *
- * Port of TS-Go `internal/modulespecifiers/util.go`. Many helpers depend
- * on `tspath` functions whose names in TSTS may differ slightly; the
- * port uses the upstream names verbatim. See TSTS `tspath/index.ts` for
- * what's currently exported.
+ * Port of TS-Go `internal/modulespecifiers/util.go`. This is a mechanical
+ * 1:1 port: same functions, same control flow, same helper decomposition.
+ * It imports the real `tspath`/`core` helpers (rather than receiving them
+ * as injected parameters) so the call graph matches upstream.
  */
 
-import type { SourceFile, StringLiteralLike } from "../ast/index.js";
+import { indexAfter } from "../core/core.js";
+import type { OrderedMap } from "../collections/orderedMap.js";
+import {
+  comparePaths,
+  getBaseFileName,
+  getRelativePathToDirectoryOrUrl,
+  isExternalModuleNameRelative,
+  isRootedDiskPath,
+  pathIsAbsolute,
+  pathIsRelative,
+} from "../tspath/index.js";
+import {
+  extensionCjs,
+  extensionDcts,
+  extensionDmts,
+  extensionDts,
+  extensionJs,
+  extensionMjs,
+  extensionsNotSupportingExtensionlessResolution,
+  extensionTs,
+  fileExtensionIsOneOf,
+  hasJSFileExtension,
+  hasTSFileExtension,
+  isDeclarationFileName,
+  removeExtension,
+  tryGetExtensionFromPath,
+} from "../tspath/extension.js";
 
 import { countPathComponents } from "./compare.js";
 import {
@@ -16,6 +42,7 @@ import {
   ModuleSpecifierEnding as MSE,
   type ModuleSpecifierGenerationHost,
   type ModuleSpecifierOptions,
+  type SourceFileForSpecifierGeneration,
   type UserPreferences,
 } from "./types.js";
 
@@ -23,19 +50,25 @@ import {
 export { countPathComponents };
 
 /**
- * Regex pattern cache. Mirrors TS-Go's `regexPatternCache` (a
- * `sync.Map`-backed memoization keyed on pattern + case-sensitivity).
+ * Cache key for compiled regex patterns. Mirrors TS-Go
+ * `regexPatternCacheKey`.
  */
-const regexPatternCache = new Map<string, RegExp | null>();
-const REGEX_CACHE_MAX = 1000;
-
-interface RegexCacheKey {
+export interface regexPatternCacheKey {
   readonly pattern: string;
   readonly caseInsensitive: boolean;
 }
 
-function cacheKeyOf(k: RegexCacheKey): string {
-  return (k.caseInsensitive ? "i:" : "s:") + k.pattern;
+/**
+ * Regex pattern cache, mirroring TS-Go's `regexPatternCache`
+ * (`map[regexPatternCacheKey]*regexp.Regexp` guarded by
+ * `regexPatternCacheMu`). The single-threaded JS runtime needs no mutex,
+ * but the cache itself is preserved verbatim.
+ */
+const regexPatternCacheMu = { lock: false };
+const regexPatternCache = new Map<string, RegExp | null>();
+
+function cacheKeyString(key: regexPatternCacheKey): string {
+  return (key.caseInsensitive ? "i:" : "s:") + key.pattern;
 }
 
 /**
@@ -46,24 +79,22 @@ export function comparePathsByRedirect(
   a: ModulePath,
   b: ModulePath,
   useCaseSensitiveFileNames: boolean,
-  comparePathsFn: (a: string, b: string, useCaseSensitive: boolean) => number,
 ): number {
   if (a.isRedirect === b.isRedirect) {
-    return comparePathsFn(a.fileName, b.fileName, useCaseSensitiveFileNames);
+    return comparePaths(a.fileName, b.fileName, { useCaseSensitiveFileNames, currentDirectory: "" });
   }
-  return a.isRedirect ? 1 : -1;
+  if (a.isRedirect) {
+    return 1;
+  }
+  return -1;
 }
 
 /**
  * Returns true if the path is a bare module specifier (neither absolute
  * nor relative). Mirrors TS-Go `PathIsBareSpecifier`.
  */
-export function pathIsBareSpecifier(
-  path: string,
-  pathIsAbsoluteFn: (p: string) => boolean,
-  pathIsRelativeFn: (p: string) => boolean,
-): boolean {
-  return !pathIsAbsoluteFn(path) && !pathIsRelativeFn(path);
+export function pathIsBareSpecifier(path: string): boolean {
+  return !pathIsAbsolute(path) && !pathIsRelative(path);
 }
 
 /**
@@ -74,8 +105,12 @@ export function pathIsBareSpecifier(
 export function isExcludedByRegex(moduleSpecifier: string, excludes: readonly string[]): boolean {
   for (const pattern of excludes) {
     const re = stringToRegex(pattern);
-    if (re === null) continue;
-    if (re.test(moduleSpecifier)) return true;
+    if (re === null) {
+      continue;
+    }
+    if (re.test(moduleSpecifier)) {
+      return true;
+    }
   }
   return false;
 }
@@ -87,57 +122,83 @@ export function isExcludedByRegex(moduleSpecifier: string, excludes: readonly st
  */
 export function stringToRegex(pattern: string): RegExp | null {
   let caseInsensitive = false;
-  let body = pattern;
 
   if (pattern.length > 2 && pattern[0] === "/") {
     const lastSlash = pattern.lastIndexOf("/");
     if (lastSlash > 0) {
       let hasUnescapedMiddleSlash = false;
       for (let i = 1; i < lastSlash; i += 1) {
-        if (pattern[i] === "/" && pattern[i - 1] !== "\\") {
+        if (pattern[i] === "/" && (i === 0 || pattern[i - 1] !== "\\")) {
           hasUnescapedMiddleSlash = true;
           break;
         }
       }
+
       if (!hasUnescapedMiddleSlash) {
         const flags = pattern.slice(lastSlash + 1);
-        body = pattern.slice(1, lastSlash);
+        pattern = pattern.slice(1, lastSlash);
+
         for (const flag of flags) {
-          if (flag === "i") caseInsensitive = true;
+          switch (flag) {
+            case "i":
+              caseInsensitive = true;
+              break;
+          }
         }
       }
     }
   }
+  const key: regexPatternCacheKey = { pattern, caseInsensitive };
 
-  const key = cacheKeyOf({ pattern: body, caseInsensitive });
-  const cached = regexPatternCache.get(key);
-  if (cached !== undefined) return cached;
+  regexPatternCacheMu.lock = false;
+  const cached = regexPatternCache.get(cacheKeyString(key));
+  if (cached !== undefined) {
+    return cached;
+  }
 
-  if (regexPatternCache.size > REGEX_CACHE_MAX) {
+  regexPatternCacheMu.lock = true;
+
+  if (regexPatternCache.size > 1000) {
     regexPatternCache.clear();
   }
 
+  const compilePattern = caseInsensitive ? "(?i:" + pattern + ")" : pattern;
+
   try {
-    const compiled = new RegExp(body, caseInsensitive ? "i" : "");
-    regexPatternCache.set(key, compiled);
+    const compiled = new RegExp(jsRegexFromGo(compilePattern, caseInsensitive));
+    regexPatternCache.set(cacheKeyString(key), compiled);
     return compiled;
   } catch {
-    regexPatternCache.set(key, null);
+    regexPatternCache.set(cacheKeyString(key), null);
     return null;
   }
+}
+
+// Go's regexp uses `(?i:...)` inline case-insensitive groups; JS expresses
+// case insensitivity with the `i` flag. Translate the compile string back to
+// the JS surface while preserving the cache key shape above.
+function jsRegexFromGo(compilePattern: string, caseInsensitive: boolean): RegExp {
+  if (caseInsensitive && compilePattern.startsWith("(?i:") && compilePattern.endsWith(")")) {
+    return new RegExp(compilePattern.slice("(?i:".length, compilePattern.length - 1), "i");
+  }
+  return new RegExp(compilePattern);
 }
 
 /**
  * Ensures a path is either absolute (prefixed with `/` or `c:`) or
  * dot-relative (prefixed with `./` or `../`) so as not to be confused
- * with a bare module name. Mirrors TS-Go `ensurePathIsNonModuleName`.
+ * with an unprefixed module name. Mirrors TS-Go
+ * `ensurePathIsNonModuleName`.
+ *
+ * ```ts
+ * ensurePathIsNonModuleName("/path/to/file.ext") === "/path/to/file.ext"
+ * ensurePathIsNonModuleName("./path/to/file.ext") === "./path/to/file.ext"
+ * ensurePathIsNonModuleName("../path/to/file.ext") === "../path/to/file.ext"
+ * ensurePathIsNonModuleName("path/to/file.ext") === "./path/to/file.ext"
+ * ```
  */
-export function ensurePathIsNonModuleName(
-  path: string,
-  pathIsAbsoluteFn: (p: string) => boolean,
-  pathIsRelativeFn: (p: string) => boolean,
-): string {
-  if (pathIsBareSpecifier(path, pathIsAbsoluteFn, pathIsRelativeFn)) {
+export function ensurePathIsNonModuleName(path: string): string {
+  if (pathIsBareSpecifier(path)) {
     return "./" + path;
   }
   return path;
@@ -153,40 +214,59 @@ export function ensurePathIsNonModuleName(
  */
 export function getJSExtensionForDeclarationFileExtension(ext: string): string {
   switch (ext) {
-    case ".d.ts":
-      return ".js";
-    case ".d.mts":
-      return ".mjs";
-    case ".d.cts":
-      return ".cjs";
+    case extensionDts:
+      return extensionJs;
+    case extensionDmts:
+      return extensionMjs;
+    case extensionDcts:
+      return extensionCjs;
     default:
-      // `.d.json.ts` → `.json`, etc.
-      return ext.slice(".d".length, ext.length - ".ts".length);
+      // .d.json.ts and the like
+      return ext.slice(".d".length, ext.length - extensionTs.length);
   }
 }
 
 /**
- * Remaps a declaration-asset filename like `foo.d.json.ts` back to its
- * underlying non-JS asset name (`foo.json`). Returns the empty string
- * if the input is a regular `.d.ts` file.
+ * Remaps files like `foo.d.json.ts` or `foo.module.d.css.ts` back to
+ * their real non-JS names. Mirrors TS-Go
+ * `TryGetRealFileNameForNonJSDeclarationFileName`.
  *
- * Mirrors TS-Go `TryGetRealFileNameForNonJSDeclarationFileName`.
+ * The `getBaseFileNameFn`/`removeExtensionFn` parameters default to the
+ * real `tspath` helpers (which is what the upstream Go body calls); they
+ * remain overridable so unit tests can supply minimal stand-ins.
  */
 export function tryGetRealFileNameForNonJSDeclarationFileName(
   fileName: string,
-  getBaseFileNameFn: (p: string) => string,
-  removeExtensionFn: (p: string, ext: string) => string,
+  getBaseFileNameFn: (p: string) => string = getBaseFileName,
+  removeExtensionFn: (p: string, ext: string) => string = removeExtension,
 ): string {
   const baseName = getBaseFileNameFn(fileName);
-  if (!fileName.endsWith(".ts") || !baseName.includes(".d.") || baseName.endsWith(".d.ts")) {
+  // Ends with .ts, contains ".d.", and is NOT a standard .d.ts file
+  if (
+    !fileName.endsWith(extensionTs) ||
+    !baseName.includes(".d.") ||
+    baseName.endsWith(extensionDts)
+  ) {
     return "";
   }
-  const noExtension = removeExtensionFn(fileName, ".ts");
+  const noExtension = removeExtensionFn(fileName, extensionTs);
   const lastDotIndex = noExtension.lastIndexOf(".");
   const ext = noExtension.slice(lastDotIndex);
   const cutIndex = noExtension.indexOf(".d.");
   const before = cutIndex === -1 ? noExtension : noExtension.slice(0, cutIndex);
   return before + ext;
+}
+
+/**
+ * Gets the extension from a path. Path must have a valid extension.
+ * Mirrors TS-Go `extensionFromPath`.
+ */
+export function extensionFromPath(path: string): string {
+  const ext = tryGetExtensionFromPath(path);
+  if (ext.length === 0) {
+    throw new Error(`File ${path} has unknown extension.`);
+  }
+  return ext;
 }
 
 /**
@@ -197,7 +277,6 @@ export function prefersTsExtension(allowedEndings: readonly ModuleSpecifierEndin
   const jsPriority = allowedEndings.indexOf(MSE.JsExtension);
   const tsPriority = allowedEndings.indexOf(MSE.TsExtension);
   if (tsPriority > -1) {
-    if (jsPriority === -1) return true;
     return tsPriority < jsPriority;
   }
   return false;
@@ -209,9 +288,7 @@ export function prefersTsExtension(allowedEndings: readonly ModuleSpecifierEndin
  * `replaceFirstStar`.
  */
 export function replaceFirstStar(s: string, replacement: string): string {
-  const index = s.indexOf("*");
-  if (index === -1) return s;
-  return s.slice(0, index) + replacement + s.slice(index + 1);
+  return s.replace("*", replacement);
 }
 
 /**
@@ -227,11 +304,22 @@ export interface NodeModulePathParts {
   readonly fileNameIndex: number;
 }
 
-type NodeModulesPathParseState =
-  | "before-node-modules"
-  | "node-modules"
-  | "scope"
-  | "package-content";
+/**
+ * Parse states for `getNodeModulePathParts`. Mirrors TS-Go
+ * `nodeModulesPathParseState` iota constants.
+ */
+export type nodeModulesPathParseState = 0 | 1 | 2 | 3;
+export const nodeModulesPathParseState: {
+  readonly BeforeNodeModules: nodeModulesPathParseState;
+  readonly NodeModules: nodeModulesPathParseState;
+  readonly Scope: nodeModulesPathParseState;
+  readonly PackageContent: nodeModulesPathParseState;
+} = {
+  BeforeNodeModules: 0 as nodeModulesPathParseState,
+  NodeModules: 1 as nodeModulesPathParseState,
+  Scope: 2 as nodeModulesPathParseState,
+  PackageContent: 3 as nodeModulesPathParseState,
+};
 
 /**
  * Parses a `node_modules` path into its constituent indices. Returns
@@ -244,45 +332,45 @@ export function getNodeModulePathParts(fullPath: string): NodeModulePathParts | 
   let topLevelNodeModulesIndex = 0;
   let topLevelPackageNameIndex = 0;
   let packageRootIndex = 0;
+  let fileNameIndex = 0;
 
   let partStart = 0;
   let partEnd = 0;
-  let state: NodeModulesPathParseState = "before-node-modules";
+  let state: nodeModulesPathParseState = nodeModulesPathParseState.BeforeNodeModules;
 
   while (partEnd >= 0) {
     partStart = partEnd;
-    partEnd = fullPath.indexOf("/", partStart + 1);
+    partEnd = indexAfter(fullPath, "/", partStart + 1);
     switch (state) {
-      case "before-node-modules": {
-        if (fullPath.slice(partStart).startsWith("/node_modules/")) {
+      case nodeModulesPathParseState.BeforeNodeModules:
+        if (fullPath.slice(partStart).indexOf("/node_modules/") === 0) {
           topLevelNodeModulesIndex = partStart;
           topLevelPackageNameIndex = partEnd;
-          state = "node-modules";
+          state = nodeModulesPathParseState.NodeModules;
         }
         break;
-      }
-      case "node-modules":
-      case "scope": {
-        if (state === "node-modules" && fullPath[partStart + 1] === "@") {
-          state = "scope";
+      case nodeModulesPathParseState.NodeModules:
+      case nodeModulesPathParseState.Scope:
+        if (state === nodeModulesPathParseState.NodeModules && fullPath[partStart + 1] === "@") {
+          state = nodeModulesPathParseState.Scope;
         } else {
           packageRootIndex = partEnd;
-          state = "package-content";
+          state = nodeModulesPathParseState.PackageContent;
         }
         break;
-      }
-      case "package-content": {
-        if (fullPath.slice(partStart).startsWith("/node_modules/")) {
-          state = "node-modules";
+      case nodeModulesPathParseState.PackageContent:
+        if (fullPath.slice(partStart).indexOf("/node_modules/") === 0) {
+          state = nodeModulesPathParseState.NodeModules;
+        } else {
+          state = nodeModulesPathParseState.PackageContent;
         }
         break;
-      }
     }
   }
 
-  const fileNameIndex = partStart;
+  fileNameIndex = partStart;
 
-  if (state !== "before-node-modules" && state !== "node-modules") {
+  if (state > nodeModulesPathParseState.NodeModules) {
     return {
       topLevelNodeModulesIndex,
       topLevelPackageNameIndex,
@@ -294,30 +382,90 @@ export function getNodeModulePathParts(fullPath: string): NodeModulePathParts | 
 }
 
 /**
+ * Public API: returns the bare node-modules package name a file can be
+ * imported as, or "" if none. Mirrors TS-Go `GetNodeModulesPackageName`.
+ */
+export function getNodeModulesPackageName(
+  compilerOptions: CompilerOptionsForUtil,
+  importingSourceFile: SourceFileForSpecifierGeneration,
+  nodeModulesFileName: string,
+  host: ModuleSpecifierGenerationHost,
+  preferences: UserPreferences,
+  options: ModuleSpecifierOptions,
+): string {
+  const info = getInfo(importingSourceFile.fileName(), host);
+  const modulePaths = getAllModulePaths(
+    info,
+    nodeModulesFileName,
+    host,
+    compilerOptions,
+    preferences,
+    options,
+    tspathHelpers,
+  );
+  for (const modulePath of modulePaths) {
+    const result = tryGetModuleNameAsNodeModule(
+      modulePath,
+      info,
+      importingSourceFile,
+      host,
+      compilerOptions,
+      preferences,
+      true /*packageNameOnly*/,
+      options.overrideImportMode,
+      tspathHelpers,
+    );
+    if (result.length > 0) {
+      return result;
+    }
+  }
+  return "";
+}
+
+/**
+ * Returns true when every key of the exports/imports object begins with
+ * `.`. Mirrors TS-Go `allKeysStartWithDot`.
+ */
+export function allKeysStartWithDot(obj: OrderedMap<string, ExportsOrImportsForUtil>): boolean {
+  for (const k of obj.keys()) {
+    if (!k.startsWith(".")) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Extracts the package name from a path under `node_modules`. Handles
  * scoped packages (`@scope/pkg`). Returns the empty string if the path
- * is not under `node_modules`.
- *
- * Mirrors TS-Go `GetPackageNameFromDirectory`.
+ * is not under `node_modules`. Mirrors TS-Go `GetPackageNameFromDirectory`.
  */
 export function getPackageNameFromDirectory(fileOrDirectoryPath: string): string {
   const idx = fileOrDirectoryPath.lastIndexOf("/node_modules/");
-  if (idx === -1) return "";
+  if (idx === -1) {
+    return "";
+  }
 
   const basename = fileOrDirectoryPath.slice(idx + "/node_modules/".length);
-  if (basename[0] === ".") return "";
+  if (basename[0] === ".") {
+    return "";
+  }
 
   const nextSlash = basename.indexOf("/");
-  if (nextSlash === -1) return basename;
+  if (nextSlash === -1) {
+    return basename;
+  }
 
   if (basename[0] !== "@" || nextSlash === basename.length - 1) {
     return basename.slice(0, nextSlash);
   }
 
-  const secondSlash = basename.indexOf("/", nextSlash + 1);
-  if (secondSlash === -1) return basename;
+  const secondSlash = basename.slice(nextSlash + 1).indexOf("/");
+  if (secondSlash === -1) {
+    return basename;
+  }
 
-  return basename.slice(0, secondSlash);
+  return basename.slice(0, nextSlash + 1 + secondSlash);
 }
 
 /**
@@ -329,20 +477,6 @@ export function isPathRelativeToParent(path: string): boolean {
 }
 
 /**
- * Returns true if two paths are equal under the given comparison
- * options. Mirrors TS-Go `packageJsonPathsAreEqual`.
- */
-export function packageJsonPathsAreEqual(
-  a: string,
-  b: string,
-  comparePathsFn: (a: string, b: string) => number,
-): boolean {
-  if (a === b) return true;
-  if (a.length === 0 || b.length === 0) return false;
-  return comparePathsFn(a, b) === 0;
-}
-
-/**
  * For each root, returns the path-relative form if the file is inside
  * that root and not in an ancestor. Mirrors TS-Go
  * `getPathsRelativeToRootDirs`.
@@ -351,67 +485,93 @@ export function getPathsRelativeToRootDirs(
   path: string,
   rootDirs: readonly string[],
   useCaseSensitiveFileNames: boolean,
-  getRelativeFn: (root: string, p: string, useCaseSensitive: boolean) => string,
-  isRootedFn: (p: string) => boolean,
 ): readonly string[] {
   const results: string[] = [];
   for (const rootDir of rootDirs) {
-    const relativePath = getRelativeIfInSameVolume(path, rootDir, useCaseSensitiveFileNames, getRelativeFn, isRootedFn);
-    if (relativePath !== "" && !isPathRelativeToParent(relativePath)) {
+    const relativePath = getRelativePathIfInSameVolume(path, rootDir, useCaseSensitiveFileNames);
+    if (!isPathRelativeToParent(relativePath)) {
       results.push(relativePath);
     }
   }
   return results;
 }
 
-function getRelativeIfInSameVolume(
+/**
+ * Returns the path relative to `directoryPath`, or "" if it crosses a
+ * volume boundary. Mirrors TS-Go `getRelativePathIfInSameVolume`.
+ */
+export function getRelativePathIfInSameVolume(
   path: string,
   directoryPath: string,
   useCaseSensitiveFileNames: boolean,
-  getRelativeFn: (root: string, p: string, useCaseSensitive: boolean) => string,
-  isRootedFn: (p: string) => boolean,
 ): string {
-  const relativePath = getRelativeFn(directoryPath, path, useCaseSensitiveFileNames);
-  if (isRootedFn(relativePath)) return "";
+  const relativePath = getRelativePathToDirectoryOrUrl(directoryPath, path, false, {
+    useCaseSensitiveFileNames,
+    currentDirectory: directoryPath,
+  });
+  if (isRootedDiskPath(relativePath)) {
+    return "";
+  }
   return relativePath;
 }
 
+/**
+ * Returns true if two paths are equal under the given comparison
+ * options. Mirrors TS-Go `packageJsonPathsAreEqual`.
+ */
+export function packageJsonPathsAreEqual(
+  a: string,
+  b: string,
+  options: ComparePathsOptionsForUtil,
+): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a.length === 0 || b.length === 0) {
+    return false;
+  }
+  return comparePaths(a, b, options) === 0;
+}
+
 // ---------------------------------------------------------------------------
-// Forward-declarations for cross-module callers that this file references
-// indirectly via the specifier-generation pipeline. The implementations
-// arrive when the corresponding TS-Go subsystems land in TSTS.
+// Cross-module surface used by util.ts. These mirror the
+// `internal/modulespecifiers` package members that live in specifiers.ts and
+// the broader `core`/`packagejson` ports; util.go references them directly as
+// same-package symbols.
 // ---------------------------------------------------------------------------
 
-/**
- * Forward declaration: `module.ResolvedEntrypoint` shape, used by
- * `ProcessEntrypointEnding` (see specifiers.ts). The full shape lands
- * with the `module` port; this captures the surface needed here.
- */
+import {
+  getAllModulePaths,
+  getInfo,
+  tryGetModuleNameAsNodeModule,
+  type CompilerOptions as CompilerOptionsForUtil,
+  type ExportsOrImports as ExportsOrImportsForUtil,
+} from "./specifiers.js";
+import type { TspathHelpers } from "./preferences.js";
+
+interface ComparePathsOptionsForUtil {
+  readonly useCaseSensitiveFileNames: boolean;
+  readonly currentDirectory: string;
+}
+
+// Real `tspath` surface bound to the upstream helpers. The specifier
+// generator still threads `TspathHelpers` through its call graph (a
+// pre-existing shape); `getNodeModulesPackageName` supplies the genuine
+// implementations rather than stubs.
+const tspathHelpers: TspathHelpers = {
+  isDeclarationFileName,
+  pathIsRelative,
+  pathIsAbsolute,
+  hasTSFileExtension,
+  hasJSFileExtension,
+  fileExtensionIsOneOf,
+  extensionsNotSupportingExtensionlessResolution,
+  isExternalModuleNameRelative,
+};
+
+// Forward declaration: `module.ResolvedEntrypoint` shape, used by
+// `processEntrypointEnding` (see specifiers.ts).
 export interface ResolvedEntrypoint {
   readonly moduleSpecifier: string;
   readonly ending: "fixed" | "changeable" | "extension-changeable";
 }
-
-/**
- * Forward declaration: minimal source-file shape passed to entry-point
- * processing. The full shape is the AST `SourceFile`; this captures
- * only the surface needed here.
- */
-export type EntrypointSourceFile = SourceFile;
-
-/**
- * Forward declaration: an `import "..."` literal that the generator
- * inspects to infer extension preferences.
- */
-export type EntrypointSpecifier = StringLiteralLike;
-
-/**
- * Forward declaration: parametrize ProcessEntrypointEnding etc. with
- * `host`, `preferences`, `options` parameters that satisfy the broader
- * generator contract.
- */
-export type GenerationContext = {
-  readonly host: ModuleSpecifierGenerationHost;
-  readonly preferences: UserPreferences;
-  readonly options: ModuleSpecifierOptions;
-};

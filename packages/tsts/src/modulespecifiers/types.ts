@@ -44,12 +44,12 @@ export const ResultKind: {
   readonly Relative: ResultKind;
   readonly Ambient: ResultKind;
 } = {
-  None: 0,
-  NodeModules: 1,
-  Paths: 2,
-  Redirect: 3,
-  Relative: 4,
-  Ambient: 5,
+  None: 0 as ResultKind,
+  NodeModules: 1 as ResultKind,
+  Paths: 2 as ResultKind,
+  Redirect: 3 as ResultKind,
+  Relative: 4 as ResultKind,
+  Ambient: 5 as ResultKind,
 };
 
 /** A candidate file path during specifier generation. */
@@ -97,9 +97,9 @@ export const ResolutionMode: {
   readonly CommonJS: ResolutionMode;
   readonly ESM: ResolutionMode;
 } = {
-  None: 0,
-  CommonJS: 1,
-  ESM: 2,
+  None: 0 as ResolutionMode,
+  CommonJS: 1 as ResolutionMode,
+  ESM: 2 as ResolutionMode,
 };
 
 /**
@@ -119,11 +119,11 @@ export const ImportModuleSpecifierPreference: {
   readonly Relative: ImportModuleSpecifierPreference;
   readonly NonRelative: ImportModuleSpecifierPreference;
 } = {
-  None: "",
-  Shortest: "shortest",
-  ProjectRelative: "project-relative",
-  Relative: "relative",
-  NonRelative: "non-relative",
+  None: "" as ImportModuleSpecifierPreference,
+  Shortest: "shortest" as ImportModuleSpecifierPreference,
+  ProjectRelative: "project-relative" as ImportModuleSpecifierPreference,
+  Relative: "relative" as ImportModuleSpecifierPreference,
+  NonRelative: "non-relative" as ImportModuleSpecifierPreference,
 };
 
 export type ImportModuleSpecifierEndingPreference =
@@ -140,11 +140,11 @@ export const ImportModuleSpecifierEndingPreference: {
   readonly Index: ImportModuleSpecifierEndingPreference;
   readonly Js: ImportModuleSpecifierEndingPreference;
 } = {
-  None: "",
-  Auto: "auto",
-  Minimal: "minimal",
-  Index: "index",
-  Js: "js",
+  None: "" as ImportModuleSpecifierEndingPreference,
+  Auto: "auto" as ImportModuleSpecifierEndingPreference,
+  Minimal: "minimal" as ImportModuleSpecifierEndingPreference,
+  Index: "index" as ImportModuleSpecifierEndingPreference,
+  Js: "js" as ImportModuleSpecifierEndingPreference,
 };
 
 export interface UserPreferences {
@@ -157,18 +157,29 @@ export interface ModuleSpecifierOptions {
   readonly overrideImportMode: ResolutionMode;
 }
 
-/** Internal preference resolved from user preferences + project config. */
+/**
+ * Internal preference resolved from user preferences + project config.
+ *
+ * Mirrors TS-Go `RelativePreferenceKind` iota constants. The Go member
+ * names drop the trailing `Kind`, so they are exported here verbatim
+ * (`RelativePreferenceRelative` etc.) and the namespaced accessor object
+ * references them.
+ */
 export type RelativePreferenceKind = 0 | 1 | 2 | 3;
+export const RelativePreferenceRelative = 0 as RelativePreferenceKind;
+export const RelativePreferenceNonRelative = 1 as RelativePreferenceKind;
+export const RelativePreferenceShortest = 2 as RelativePreferenceKind;
+export const RelativePreferenceExternalNonRelative = 3 as RelativePreferenceKind;
 export const RelativePreferenceKind: {
   readonly Relative: RelativePreferenceKind;
   readonly NonRelative: RelativePreferenceKind;
   readonly Shortest: RelativePreferenceKind;
   readonly ExternalNonRelative: RelativePreferenceKind;
 } = {
-  Relative: 0,
-  NonRelative: 1,
-  Shortest: 2,
-  ExternalNonRelative: 3,
+  Relative: RelativePreferenceRelative,
+  NonRelative: RelativePreferenceNonRelative,
+  Shortest: RelativePreferenceShortest,
+  ExternalNonRelative: RelativePreferenceExternalNonRelative,
 };
 
 /** Ending shape applied to the generated specifier. */
@@ -179,10 +190,10 @@ export const ModuleSpecifierEnding: {
   readonly JsExtension: ModuleSpecifierEnding;
   readonly TsExtension: ModuleSpecifierEnding;
 } = {
-  Minimal: 0,
-  Index: 1,
-  JsExtension: 2,
-  TsExtension: 3,
+  Minimal: 0 as ModuleSpecifierEnding,
+  Index: 1 as ModuleSpecifierEnding,
+  JsExtension: 2 as ModuleSpecifierEnding,
+  TsExtension: 3 as ModuleSpecifierEnding,
 };
 
 /** Matching mode used by paths/baseUrl resolution. */
@@ -192,7 +203,7 @@ export const MatchingMode: {
   readonly Directory: MatchingMode;
   readonly Pattern: MatchingMode;
 } = {
-  Exact: 0,
-  Directory: 1,
-  Pattern: 2,
+  Exact: 0 as MatchingMode,
+  Directory: 1 as MatchingMode,
+  Pattern: 2 as MatchingMode,
 };

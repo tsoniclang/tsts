@@ -58,11 +58,11 @@ export const ModuleResolutionKind: {
   readonly NodeNext: ModuleResolutionKind;
   readonly Bundler: ModuleResolutionKind;
 } = {
-  Classic: "classic",
-  Node10: "node10",
-  Node16: "node16",
-  NodeNext: "nodenext",
-  Bundler: "bundler",
+  Classic: "classic" as ModuleResolutionKind,
+  Node10: "node10" as ModuleResolutionKind,
+  Node16: "node16" as ModuleResolutionKind,
+  NodeNext: "nodenext" as ModuleResolutionKind,
+  Bundler: "bundler" as ModuleResolutionKind,
 };
 
 function moduleResolutionIsNodeNextFamily(k: ModuleResolutionKind): boolean {

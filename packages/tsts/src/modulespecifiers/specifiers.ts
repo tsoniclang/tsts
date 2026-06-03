@@ -22,6 +22,23 @@ import type {
   StringLiteralLike,
   Symbol as AstSymbol,
 } from "../ast/index.js";
+import {
+  findAncestor,
+  getSourceFileOfNode,
+  isExternalModuleAugmentation,
+  isGlobalScopeAugmentation,
+  isModuleAugmentationExternal,
+  isModuleDeclaration,
+  isModuleWithStringLiteralName,
+  isSourceFile,
+  Kind,
+  nodeExpression,
+  nodeName,
+  nodeParent,
+  nodeSymbol,
+  nodeText,
+} from "../ast/index.js";
+import { SymbolFlags } from "../enums/symbolFlags.enum.js";
 
 import {
   getDirectoryPath, ensureTrailingDirectorySeparator,
@@ -31,19 +48,15 @@ import {
   getBaseFileName, isDeclarationFileName, isRootedDiskPath,
   tryGetExtensionFromPath, changeExtension, resolvePath,
   getNormalizedAbsolutePath, toPath, comparePaths,
-  getRelativePathFromDirectory,
+  getRelativePathFromDirectory, isExternalModuleNameRelative,
+  pathIsRelative,
 } from "../tspath/index.js";
 import {
   getDeclarationFileExtension, changeAnyExtension, changeFullExtension,
 } from "../tspath/extension.js";
 import { hasPrefixAndSuffixWithoutOverlap } from "../stringutil/compare.js";
-import { indexAfter as _indexAfter } from "../core/core.js";
+import { every as coreEvery, find as coreFind, indexAfter, map as coreMap, some as coreSome } from "../core/core.js";
 
-function comparePathsSimple(a: string, b: string, useCaseSensitive: boolean): number {
-  return useCaseSensitive
-    ? (a < b ? -1 : a > b ? 1 : 0)
-    : (a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0);
-}
 function stringHasPrefix(s: string, prefix: string, caseSensitive: boolean): boolean {
   if (caseSensitive) return s.startsWith(prefix);
   return s.toLowerCase().startsWith(prefix.toLowerCase());
@@ -54,11 +67,14 @@ function stringHasSuffix(s: string, suffix: string, caseSensitive: boolean): boo
 }
 
 import {
+  comparePathsByRedirect,
   countPathComponents,
   ensurePathIsNonModuleName,
+  extensionFromPath,
   getJSExtensionForDeclarationFileExtension,
   getNodeModulePathParts,
   getPathsRelativeToRootDirs,
+  getRelativePathIfInSameVolume,
   isExcludedByRegex,
   isPathRelativeToParent,
   type NodeModulePathParts,
@@ -66,7 +82,6 @@ import {
   pathIsBareSpecifier,
   prefersTsExtension,
   replaceFirstStar,
-  stringToRegex,
   tryGetRealFileNameForNonJSDeclarationFileName,
   type ResolvedEntrypoint,
 } from "./util.js";
@@ -207,7 +222,7 @@ export function getModuleSpecifiersWithInfo(
   forAutoImports: boolean,
   tspath: TspathHelpers,
 ): readonly [readonly string[], ResultKind] {
-  const ambient = tryGetModuleNameFromAmbientModule(moduleSymbol, checker, tspath);
+  const ambient = tryGetModuleNameFromAmbientModule(moduleSymbol, checker);
   if (ambient.length > 0) {
     if (forAutoImports && isExcludedByRegex(ambient, userPreferences.autoImportSpecifierExcludeRegexes)) {
       return [[], RK.Ambient];
@@ -283,14 +298,13 @@ export function getModuleSpecifiersForFileWithInfo(
 export function tryGetModuleNameFromAmbientModule(
   moduleSymbol: AstSymbol,
   checker: CheckerShape,
-  tspath: TspathHelpers,
 ): string {
   for (const decl of moduleSymbol.declarations ?? []) {
     if (
       isModuleWithStringLiteralName(decl) &&
-      (!isModuleAugmentationExternal(decl) || !tspath.isExternalModuleNameRelative(declName(decl)))
+      (!isModuleAugmentationExternal(decl) || !isExternalModuleNameRelative(nodeText(nodeName(decl))))
     ) {
-      return declName(decl);
+      return nodeText(nodeName(decl));
     }
   }
 
@@ -308,24 +322,27 @@ export function tryGetModuleNameFromAmbientModule(
     if (!isModuleDeclaration(d)) continue;
 
     const possibleContainer = findAncestor(d, isModuleWithStringLiteralName);
-    if (possibleContainer === undefined || possibleContainer.parent === undefined || !isSourceFile(possibleContainer.parent)) {
+    const containerParent = possibleContainer === undefined ? undefined : nodeParent(possibleContainer);
+    if (possibleContainer === undefined || containerParent === undefined || !isSourceFile(containerParent)) {
       continue;
     }
 
-    const sym = symbolExports(possibleContainer)?.get(InternalSymbolNameExportEquals);
+    const containerSymbol = nodeSymbol(possibleContainer);
+    const sym = containerSymbol?.exports?.get(internalSymbolNameExportEquals);
     if (sym === undefined) continue;
     const exportAssignmentDecl = sym.valueDeclaration;
-    if (exportAssignmentDecl === undefined || exportAssignmentDecl.kind !== KindExportAssignment) {
+    if (exportAssignmentDecl === undefined || exportAssignmentDecl.kind !== Kind.ExportAssignment) {
       continue;
     }
-    let exportSymbol = checker.getSymbolAtLocation(exportAssignmentDeclExpression(exportAssignmentDecl));
+    let exportSymbol = checker.getSymbolAtLocation(nodeExpression(exportAssignmentDecl));
     if (exportSymbol === undefined) continue;
-    if (((exportSymbol.flags ?? 0) & SymbolFlagsAlias) !== 0) {
+    if (((exportSymbol.flags ?? 0) & SymbolFlags.Alias) !== 0) {
       const aliased = checker.getAliasedSymbol(exportSymbol);
       if (aliased !== undefined) exportSymbol = aliased;
     }
-    if (exportSymbol === declSymbol(d)) {
-      return declName(possibleContainer);
+    // TODO: Possible strada bug - isn't this insufficient in the presence of merge symbols?
+    if (exportSymbol === nodeSymbol(d)) {
+      return nodeText(nodeName(possibleContainer));
     }
   }
   return "";
@@ -372,7 +389,7 @@ export function getAllModulePathsWorker(
 
   const useCaseSensitiveFileNames = info.useCaseSensitiveFileNames;
   const compareModulePaths = (a: ModulePath, b: ModulePath): number =>
-    comparePathsByRedirectInternal(a, b, useCaseSensitiveFileNames);
+    comparePathsByRedirect(a, b, useCaseSensitiveFileNames);
 
   // Sort by paths closest to importing file Name directory.
   const sortedPaths: ModulePath[] = [];
@@ -400,13 +417,6 @@ export function getAllModulePathsWorker(
     sortedPaths.push(...remainingPaths);
   }
   return sortedPaths;
-}
-
-function comparePathsByRedirectInternal(a: ModulePath, b: ModulePath, useCaseSensitiveFileNames: boolean): number {
-  if (a.isRedirect === b.isRedirect) {
-    return comparePathsSimple(a.fileName, b.fileName, useCaseSensitiveFileNames);
-  }
-  return a.isRedirect ? 1 : -1;
 }
 
 /**
@@ -449,8 +459,8 @@ export function getEachFileNameOfModule(
   if (referenceRedirect.length > 0) importedFileNames.push(referenceRedirect);
   importedFileNames.push(importedFileName);
   importedFileNames.push(...redirects);
-  const targets = importedFileNames.map((f) => getNormalizedAbsolutePath(f, cwd));
-  let shouldFilterIgnoredPaths = !targets.every(containsIgnoredPath);
+  const targets = coreMap(importedFileNames, (f) => getNormalizedAbsolutePath(f, cwd));
+  let shouldFilterIgnoredPaths = !coreEvery(targets, containsIgnoredPath);
 
   const results: ModulePath[] = [];
   if (!preferSymlinks) {
@@ -585,7 +595,7 @@ export function computeModuleSpecifiers(
     return [[existingSpecifier], RK.None];
   }
 
-  const importedFileIsInNodeModules = modulePaths.some((p) => p.isInNodeModules);
+  const importedFileIsInNodeModules = coreSome(modulePaths, (p) => p.isInNodeModules);
 
   // Priority:
   //   1. Bare package specifiers via package.json types entry
@@ -638,7 +648,7 @@ export function computeModuleSpecifiers(
     }
     if (modulePath.isRedirect) {
       redirectPathsSpecifiers.push(local);
-    } else if (pathIsBareSpecifier(local, tspath.pathIsAbsolute ?? ((p) => p.startsWith("/")), tspath.pathIsRelative)) {
+    } else if (pathIsBareSpecifier(local)) {
       if (containsNodeModules(local)) {
         relativeSpecifiers.push(local);
       } else {
@@ -695,8 +705,6 @@ export function getLocalModuleSpecifier(
           useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
           currentDirectory: host.getCurrentDirectory(),
         }),
-        tspath.pathIsAbsolute ?? ((p) => p.startsWith("/")),
-        tspath.pathIsRelative,
       ),
       allowedEndings,
       compilerOptions,
@@ -774,10 +782,23 @@ export function getLocalModuleSpecifier(
     const nearestTargetPackageJson = host.getNearestAncestorDirectoryWithPackageJson(getDirectoryPath(modulePath));
     const nearestSourcePackageJson = host.getNearestAncestorDirectoryWithPackageJson(sourceDirectory);
 
-    if (!packageJsonPathsAreEqual(nearestTargetPackageJson, nearestSourcePackageJson, (a, b) => comparePathsSimple(a, b, host.useCaseSensitiveFileNames()))) {
+    if (!packageJsonPathsAreEqual(nearestTargetPackageJson, nearestSourcePackageJson, {
+      useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
+      currentDirectory: host.getCurrentDirectory(),
+    })) {
+      // 2. The importing and imported files are part of different packages.
+      //
+      //      packages/a/
+      //        package.json
+      //        index.ts --------
+      //      packages/b/        | (path crosses package.json)
+      //        package.json     |
+      //        component.ts <---
+      //
       return maybeNonRelative;
     }
-    if (fromPackageJsonImports.length > 0) return relativePath;
+
+    return relativePath;
   }
 
   // Prefer a relative import over a baseUrl import if it has fewer components.
@@ -876,28 +897,10 @@ export function tryGetModuleNameFromRootDirs(
   host: ModuleSpecifierGenerationHost,
   tspath: TspathHelpers,
 ): string {
-  const normalizedTargetPaths = getPathsRelativeToRootDirs(
-    moduleFileName,
-    rootDirs,
-    host.useCaseSensitiveFileNames(),
-    (root, p, useCaseSensitive) => getRelativePathFromDirectory(root, p, {
-      useCaseSensitiveFileNames: useCaseSensitive,
-      currentDirectory: root,
-    }),
-    isRootedDiskPath,
-  );
+  const normalizedTargetPaths = getPathsRelativeToRootDirs(moduleFileName, rootDirs, host.useCaseSensitiveFileNames());
   if (normalizedTargetPaths.length === 0) return "";
 
-  const normalizedSourcePaths = getPathsRelativeToRootDirs(
-    sourceDirectory,
-    rootDirs,
-    host.useCaseSensitiveFileNames(),
-    (root, p, useCaseSensitive) => getRelativePathFromDirectory(root, p, {
-      useCaseSensitiveFileNames: useCaseSensitive,
-      currentDirectory: root,
-    }),
-    isRootedDiskPath,
-  );
+  const normalizedSourcePaths = getPathsRelativeToRootDirs(sourceDirectory, rootDirs, host.useCaseSensitiveFileNames());
   let shortest = "";
   let shortestSepCount = 0;
   for (const sourcePath of normalizedSourcePaths) {
@@ -907,11 +910,9 @@ export function tryGetModuleNameFromRootDirs(
           useCaseSensitiveFileNames: host.useCaseSensitiveFileNames(),
           currentDirectory: host.getCurrentDirectory(),
         }),
-        tspath.pathIsAbsolute ?? ((p) => p.startsWith("/")),
-        tspath.pathIsRelative,
       );
       let candidateSepCount = 0;
-      for (let i = 0; i < candidate.length; i += 1) if (candidate[i] === "/") candidateSepCount += 1;
+      for (const ch of candidate) if (ch === "/") candidateSepCount += 1;
       if (shortest.length === 0 || candidateSepCount < shortestSepCount) {
         shortest = candidate;
         shortestSepCount = candidateSepCount;
@@ -1257,8 +1258,8 @@ export function tryGetModuleNameFromPaths(
           }
         }
       } else if (
-        candidates.some((c) => c.ending !== MSE.Minimal && pattern === c.value) ||
-        candidates.some((c) => c.ending === MSE.Minimal && pattern === c.value && validateEnding(c, relativeToBaseUrl, compilerOptions, host, tspath))
+        coreSome(candidates, (c) => c.ending !== MSE.Minimal && pattern === c.value) ||
+        coreSome(candidates, (c) => c.ending === MSE.Minimal && pattern === c.value && validateEnding(c, relativeToBaseUrl, compilerOptions, host, tspath))
       ) {
         return key;
       }
@@ -1412,12 +1413,15 @@ export function tryGetModuleNameFromExportsOrImports(
 // ---------------------------------------------------------------------------
 
 /**
- * Mirrors TS-Go `GetModuleSpecifier`.
+ * Mirrors TS-Go `GetModuleSpecifier`. Upstream types `importingSourceFile`
+ * as `*ast.SourceFile` (`// !!! | FutureSourceFile`); since `*ast.SourceFile`
+ * satisfies the `SourceFileForSpecifierGeneration` interface in Go, TSTS
+ * accepts that interface directly (the contract the body consumes).
  */
 export function getModuleSpecifier(
   compilerOptions: CompilerOptions,
   host: ModuleSpecifierGenerationHost,
-  importingSourceFile: SourceFile,
+  importingSourceFile: SourceFileForSpecifierGeneration,
   importingSourceFileName: string,
   oldImportSpecifier: string,
   toFileName: string,
@@ -1443,7 +1447,7 @@ export function getModuleSpecifier(
 export function updateModuleSpecifier(
   compilerOptions: CompilerOptions,
   host: ModuleSpecifierGenerationHost,
-  importingSourceFile: SourceFile,
+  importingSourceFile: SourceFileForSpecifierGeneration,
   importingSourceFileName: string,
   oldImportSpecifier: string,
   toFileName: string,
@@ -1467,7 +1471,7 @@ export function updateModuleSpecifier(
 function getModuleSpecifierWithPreferences(
   compilerOptions: CompilerOptions,
   host: ModuleSpecifierGenerationHost,
-  importingSourceFile: SourceFile,
+  importingSourceFile: SourceFileForSpecifierGeneration,
   importingSourceFileName: string,
   oldImportSpecifier: string,
   toFileName: string,
@@ -1476,12 +1480,12 @@ function getModuleSpecifierWithPreferences(
   tspath: TspathHelpers,
 ): string {
   const info = getInfo(importingSourceFileName, host);
-  const modulePaths = getAllModulePathsInternal(info, toFileName, host, compilerOptions, userPreferences, options, tspath);
+  const modulePaths = getAllModulePaths(info, toFileName, host, compilerOptions, userPreferences, options, tspath);
   const preferences = getModuleSpecifierPreferences(
     userPreferences,
     host,
     compilerOptions,
-    importingSourceFile as unknown as SourceFileForSpecifierGeneration,
+    importingSourceFile,
     oldImportSpecifier,
     tspath,
   );
@@ -1495,7 +1499,7 @@ function getModuleSpecifierWithPreferences(
     const firstDefined = tryGetModuleNameAsNodeModule(
       modulePath,
       info,
-      importingSourceFile as unknown as SourceFileForSpecifierGeneration,
+      importingSourceFile,
       host,
       compilerOptions,
       userPreferences,
@@ -1514,7 +1518,7 @@ function getModuleSpecifierWithPreferences(
  * `getAllModulePathsWorker` only in that this version caches via the
  * eventual module-specifier cache (commented out until cache port lands).
  */
-function getAllModulePathsInternal(
+export function getAllModulePaths(
   info: Info,
   importedFileName: string,
   host: ModuleSpecifierGenerationHost,
@@ -1523,7 +1527,14 @@ function getAllModulePathsInternal(
   options: ModuleSpecifierOptions,
   tspath: TspathHelpers,
 ): readonly ModulePath[] {
-  return getAllModulePathsWorker(info, importedFileName, host, compilerOptions, options, tspath);
+  // !!! use new cache model
+  // importingFilePath := tspath.ToPath(info.ImportingSourceFileName, ...)
+  // importedFilePath := tspath.ToPath(importedFileName, ...)
+  // cache := host.getModuleSpecifierCache()
+  // if cache != nil { cached := cache.get(...); if cached.modulePaths { return cached.modulePaths } }
+  const modulePaths = getAllModulePathsWorker(info, importedFileName, host, compilerOptions, options, tspath);
+  // if cache != nil { cache.setModulePaths(...) }
+  return modulePaths;
 }
 
 // ---------------------------------------------------------------------------
@@ -1636,72 +1647,30 @@ export function processEntrypointEnding(
 // these imports come from the right places.
 // ---------------------------------------------------------------------------
 
-// `ast` surface — local implementations.
-const KindExportAssignment = 276;
-const InternalSymbolNameExportEquals = "export=";
-const SymbolFlagsAlias = 1 << 21;
+// `ast` surface — `ast.InternalSymbolNameExportEquals` (ast/symbol.go); the
+// ast port hasn't surfaced this constant yet, so it is mirrored locally.
+const internalSymbolNameExportEquals = "export=";
 
-function isModuleWithStringLiteralName(node: AstNode | undefined): boolean {
-  if (node === undefined) return false;
-  if ((node as { kind?: number }).kind !== 272 /* ModuleDeclaration */) return false;
-  const name = (node as unknown as { name?: { kind?: number } }).name;
-  return name?.kind === 10 /* StringLiteral */;
-}
-function isModuleAugmentationExternal(node: AstNode | undefined): boolean {
-  if (!isModuleWithStringLiteralName(node)) return false;
-  const parent = (node as unknown as { parent?: AstNode }).parent;
-  const parentKind = (parent as { kind?: number } | undefined)?.kind;
-  return parentKind === 305 /* SourceFile */ || parentKind === 273 /* ModuleBlock */;
-}
-function isModuleDeclaration(node: AstNode | undefined): boolean {
-  return node !== undefined && (node as { kind?: number }).kind === 272;
-}
-function isSourceFile(node: AstNode | undefined): boolean {
-  return node !== undefined && (node as { kind?: number }).kind === 305;
-}
-function findAncestor<T extends AstNode>(node: AstNode | undefined, predicate: (n: AstNode) => boolean): T | undefined {
-  let cur = node;
-  while (cur !== undefined) {
-    if (predicate(cur)) return cur as T;
-    cur = (cur as unknown as { parent?: AstNode }).parent;
+// Mirrors TS-Go `ast.GetSourceFileOfModule`.
+function getSourceFileOfModule(moduleSymbol: AstSymbol): SourceFile | undefined {
+  let declaration = moduleSymbol.valueDeclaration;
+  if (declaration === undefined) {
+    declaration = getNonAugmentationDeclaration(moduleSymbol);
   }
-  return undefined;
+  const sourceFile = getSourceFileOfNode(declaration);
+  return sourceFile === undefined ? undefined : (sourceFile as SourceFile);
 }
-function declName(node: AstNode | undefined): string {
-  if (node === undefined) return "";
-  const name = (node as unknown as { name?: { text?: string } }).name;
-  return name?.text ?? "";
-}
-function declSymbol(node: AstNode | undefined): AstSymbol | undefined {
-  return (node as unknown as { symbol?: AstSymbol })?.symbol;
-}
-function symbolExports(node: AstNode | undefined): ReadonlyMap<string, AstSymbol> | undefined {
-  return (node as unknown as { exports?: ReadonlyMap<string, AstSymbol> })?.exports;
-}
-function exportAssignmentDeclExpression(node: AstNode): AstNode {
-  return (node as unknown as { expression: AstNode }).expression;
-}
-function getSourceFileOfModule(symbol: AstSymbol): SourceFile | undefined {
-  const decls = (symbol as unknown as { declarations?: readonly AstNode[] }).declarations ?? [];
-  for (const d of decls) {
-    let cur: AstNode | undefined = d;
-    while (cur !== undefined) {
-      if ((cur as { kind?: number }).kind === 305) return cur as unknown as SourceFile;
-      cur = (cur as unknown as { parent?: AstNode }).parent;
-    }
-  }
-  return undefined;
+
+// Mirrors TS-Go `ast.GetNonAugmentationDeclaration`.
+function getNonAugmentationDeclaration(symbol: AstSymbol): AstNode | undefined {
+  return coreFind(
+    symbol.declarations ?? [],
+    (d) => !isExternalModuleAugmentation(d) && !isGlobalScopeAugmentation(d),
+  );
 }
 
 // `tspath` surface — additional helpers.
 const ExtensionsNotSupportingExtensionlessResolution: readonly string[] = [".mts", ".cts", ".mjs", ".cjs"];
-function getRelativePathIfInSameVolume(path: string, directoryPath: string, useCaseSensitive: boolean): string {
-  return getRelativePathFromDirectory(directoryPath, path, { useCaseSensitiveFileNames: useCaseSensitive, currentDirectory: "" });
-}
-function indexAfter(s: string, search: string, position: number): number {
-  const idx = s.indexOf(search, position);
-  return idx === -1 ? -1 : idx + search.length;
-}
 
 interface ComparePathsOptions {
   readonly useCaseSensitiveFileNames: boolean;
@@ -1826,10 +1795,12 @@ function tryGetAnyFileFromPath(host: ModuleSpecifierGenerationHost, path: string
   return false;
 }
 
+// Mirrors TS-Go `getJSExtensionForFile`. The empty-result branch is a
+// faithful invariant panic (upstream `panic(...)`), not a TODO stub.
 function getJSExtensionForFile(fileName: string, options: CompilerOptions): string {
   const result = tryGetJSExtensionForFile(fileName, options);
-  if (result === "") {
-    throw new Error(`Extension ${tryGetExtensionFromPath(fileName)} is unsupported. FileName: ${fileName}`);
+  if (result.length === 0) {
+    throw new Error(`Extension ${extensionFromPath(fileName)} is unsupported:: FileName:: ${fileName}`);
   }
   return result;
 }

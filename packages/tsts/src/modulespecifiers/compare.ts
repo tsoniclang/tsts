@@ -12,10 +12,23 @@
  * Mirrors TS-Go `CountPathComponents`.
  */
 export function countPathComponents(path: string): number {
-  const start = path.startsWith("./") ? 2 : 0;
+  let initial = 0;
+  if (path.startsWith("./")) {
+    initial = 2;
+  }
+  return stringsCount(path.slice(initial), "/");
+}
+
+/** Mirrors Go `strings.Count`: number of non-overlapping `substr` in `s`. */
+function stringsCount(s: string, substr: string): number {
+  if (substr.length === 0) {
+    return s.length + 1;
+  }
   let count = 0;
-  for (let i = start; i < path.length; i += 1) {
-    if (path[i] === "/") count += 1;
+  let index = s.indexOf(substr);
+  while (index !== -1) {
+    count += 1;
+    index = s.indexOf(substr, index + substr.length);
   }
   return count;
 }
