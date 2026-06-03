@@ -109,6 +109,7 @@ import {
   neverType,
   type ObjectProperty,
   getWidenedType,
+  getRegularTypeOfLiteralType,
   checkAssignable,
   displayType,
   typeFromTypeNode,
@@ -116,7 +117,7 @@ import {
   setInitializerInferrer,
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
-import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
+import { getPropertyNameFromType, isConstTypeReference, isTypeUsableAsPropertyName } from "./utilities.js";
 import { SignatureFlags, SignatureKind, TypeFlags, type IndexInfo, type Signature } from "./types.js";
 
 type SignatureKindValue = SignatureKind;
@@ -224,7 +225,17 @@ export function inferExpression(expression: Expression, state: CheckState, conte
     return anyType;
   }
   if (isAsExpression(expression)) {
-    inferExpression(expression.expression, state);
+    // `expr as const`: the const-type reference is not a real type node —
+    // TS-Go's checkAssertion returns getRegularTypeOfLiteralType(exprType),
+    // i.e. the (non-fresh) literal type of the operand (checker.go:12248). For a
+    // primitive literal that is the literal itself (`1 as const` -> `1`,
+    // `"x" as const` -> `"x"`). Deep object/array const-context (readonly
+    // members / tuples) needs contextual-const propagation and is deferred — the
+    // operand's regular type is the honest result for those until then.
+    const exprType = inferExpression(expression.expression, state);
+    if (isConstTypeReference(expression.type)) {
+      return getRegularTypeOfLiteralType(exprType, state);
+    }
     return typeFromTypeNode(expression.type, state);
   }
   if (isSatisfiesExpression(expression)) {
