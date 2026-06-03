@@ -40,17 +40,23 @@ import {
   ModuleKind as MK,
   getEffectiveTypeRoots,
   getPathsBasePath,
-  getResolvePackageJsonExports,
-  getResolvePackageJsonImports,
+  getModuleResolutionKind,
 } from "../core/compilerOptions.js";
 import { Tristate } from "../core/tristate.js";
 import type { Diagnostic } from "../ast/index.js";
 import {
   combinePaths, getDirectoryPath, normalizePath, isRootedDiskPath,
   hasTrailingDirectorySeparator, getBaseFileName, comparePaths,
+  forEachAncestorDirectoryStoppingAtGlobalCache,
   type ComparePathsOptions,
 } from "../tspath/path.js";
-import { removeFileExtension, changeFullExtension } from "../tspath/extension.js";
+import {
+  removeFileExtension, changeFullExtension,
+  extensionIsOneOf, supportedTSExtensionsWithJsonFlat,
+  extensionJs, extensionJsx, extensionMjs, extensionCjs,
+  extensionTs, extensionTsx, extensionMts, extensionCts,
+  extensionDts, extensionDmts, extensionDcts, extensionJson,
+} from "../tspath/extension.js";
 import { hasPrefixAndSuffixWithoutOverlap } from "../stringutil/compare.js";
 import {
   parseNodeModuleFromPath, parsePackageName, mangleScopedPackageName,
@@ -85,14 +91,22 @@ export interface PackageId {
 
 export type ResolutionMode = number;
 
+// Mirrors TS-Go `NodeResolutionFeatures` (an `int32` flag set defined via iota).
 export type NodeResolutionFeatures = number;
 export const NodeResolutionFeatures = {
+  Imports: 1 << 0,
+  SelfName: 1 << 1,
+  Exports: 1 << 2,
+  ExportsPatternTrailers: 1 << 3,
+  // allowing `#/` root imports in package.json imports field
+  // not supported until mass adoption - https://github.com/nodejs/node/pull/60864
+  ImportsPatternRoot: 1 << 4,
+
   None: 0,
-  Imports: 1 << 1,
-  SelfName: 1 << 2,
-  Exports: 1 << 3,
-  ExportsPatternTrailers: 1 << 4,
-  AllFeatures: (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+  All: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+  Node16Default: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3),
+  NodeNextDefault: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
+  BundlerDefault: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4),
 } as const;
 
 type Extensions = number;
@@ -200,6 +214,10 @@ interface ResolvedInternal {
   readonly originalPath: string | undefined;
   readonly resolvedUsingTsExtension: boolean;
   packageId: PackageId | undefined;
+  // Set by resolveNodeLike when a non-relative library would have resolved with
+  // modern Node resolution (exports) disabled. Mirrors TS-Go
+  // `ResolvedModule.AlternateResult` threaded back through resolution.
+  alternateResult?: string;
 }
 
 // Mirrors TS-Go `(*resolved).shouldContinueSearching`. In TS-Go a nil
@@ -220,6 +238,8 @@ interface ResolutionState {
   readonly isTypeReferenceDirective: boolean;
   readonly compilerOptions: CompilerOptions;
   readonly resolver: Resolver;
+  isConfigLookup: boolean;
+  resolvedPackageDirectory: boolean;
   extensions: Extensions;
   esmMode: boolean;
   features: NodeResolutionFeatures;
@@ -251,15 +271,22 @@ function newResolutionState(
 
   let features: NodeResolutionFeatures = NodeResolutionFeatures.None;
   let esmMode = false;
-  const resolutionKind = getModuleResolutionKind(compilerOptions);
-  if (resolutionKind === MRK.Node16) {
-    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.Imports | NodeResolutionFeatures.SelfName | NodeResolutionFeatures.Exports);
-    esmMode = resolutionMode === MK.ESNext;
-  } else if (resolutionKind === MRK.NodeNext) {
-    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.AllFeatures);
-    esmMode = resolutionMode === MK.ESNext;
-  } else if (resolutionKind === MRK.Bundler) {
-    features = getNodeResolutionFeatures(compilerOptions, NodeResolutionFeatures.AllFeatures);
+  let conditions: readonly string[] = [];
+  switch (getModuleResolutionKind(compilerOptions)) {
+    case MRK.Node16:
+      features = NodeResolutionFeatures.Node16Default;
+      esmMode = resolutionMode === MK.ESNext;
+      conditions = getConditions(compilerOptions, resolutionMode);
+      break;
+    case MRK.NodeNext:
+      features = NodeResolutionFeatures.NodeNextDefault;
+      esmMode = resolutionMode === MK.ESNext;
+      conditions = getConditions(compilerOptions, resolutionMode);
+      break;
+    case MRK.Bundler:
+      features = getNodeResolutionFeatures(compilerOptions);
+      conditions = getConditions(compilerOptions, resolutionMode);
+      break;
   }
 
   return {
@@ -268,61 +295,80 @@ function newResolutionState(
     isTypeReferenceDirective,
     compilerOptions,
     resolver,
+    isConfigLookup: false,
+    resolvedPackageDirectory: false,
     extensions,
     esmMode,
     features,
-    conditions: getConditions(compilerOptions, resolutionMode),
+    conditions,
     failedLookupLocations: [],
     affectingLocations: [],
     diagnostics: [],
   };
 }
 
-function getModuleResolutionKind(opts: CompilerOptions): ModuleResolutionKind {
-  const k = (opts as { moduleResolution?: ModuleResolutionKind }).moduleResolution;
-  if (k !== undefined && k !== MRK.Unknown) return k;
-  // Default by module:
-  const mod = (opts as { module?: number }).module;
-  if (mod === MK.Node16) return MRK.Node16;
-  if (mod === MK.NodeNext) return MRK.NodeNext;
-  if (mod === MK.CommonJS) return MRK.Node10;
-  return MRK.Classic;
-}
-
-function getConditions(opts: CompilerOptions, resolutionMode: ResolutionMode | undefined): readonly string[] {
-  const moduleResolution = getModuleResolutionKind(opts);
-  const effectiveMode = resolutionMode === MK.None && moduleResolution === MRK.Bundler
-    ? MK.ESNext
-    : resolutionMode;
-  const conditions: string[] = [];
-  conditions.push(effectiveMode === MK.ESNext ? "import" : "require");
-  if (opts.noDtsResolution !== Tristate.True) conditions.push("types");
-  if (moduleResolution !== MRK.Bundler) conditions.push("node");
-  const custom = (opts as { customConditions?: readonly string[] }).customConditions;
-  if (custom !== undefined) {
-    for (const c of custom) if (!conditions.includes(c)) conditions.push(c);
+// Mirrors TS-Go `GetConditions`.
+function getConditions(options: CompilerOptions, resolutionMode: ResolutionMode | undefined): readonly string[] {
+  const moduleResolution = getModuleResolutionKind(options);
+  let effectiveMode = resolutionMode;
+  if (resolutionMode === MK.None && moduleResolution === MRK.Bundler) {
+    effectiveMode = MK.ESNext;
   }
-  return conditions;
+  const conditions: string[] = [];
+  if (effectiveMode === MK.ESNext) {
+    conditions.push("import");
+  } else {
+    conditions.push("require");
+  }
+
+  if (options.noDtsResolution !== Tristate.True) {
+    conditions.push("types");
+  }
+  if (moduleResolution !== MRK.Bundler) {
+    conditions.push("node");
+  }
+  const custom = (options as { customConditions?: readonly string[] }).customConditions;
+  return custom !== undefined ? [...conditions, ...custom] : conditions;
 }
 
-function getNodeResolutionFeatures(opts: CompilerOptions, defaults: NodeResolutionFeatures): NodeResolutionFeatures {
-  let features = defaults;
-  if (getResolvePackageJsonExports(opts)) {
+// Mirrors TS-Go `getNodeResolutionFeatures`.
+function getNodeResolutionFeatures(options: CompilerOptions): NodeResolutionFeatures {
+  let features: NodeResolutionFeatures = NodeResolutionFeatures.None;
+
+  switch (getModuleResolutionKind(options)) {
+    case MRK.Node16:
+      features = NodeResolutionFeatures.Node16Default;
+      break;
+    case MRK.NodeNext:
+      features = NodeResolutionFeatures.NodeNextDefault;
+      break;
+    case MRK.Bundler:
+      features = NodeResolutionFeatures.BundlerDefault;
+      break;
+  }
+  if (options.resolvePackageJsonExports === Tristate.True) {
     features |= NodeResolutionFeatures.Exports;
-  } else {
+  } else if (options.resolvePackageJsonExports === Tristate.False) {
     features &= ~NodeResolutionFeatures.Exports;
   }
-  if (getResolvePackageJsonImports(opts)) {
+  if (options.resolvePackageJsonImports === Tristate.True) {
     features |= NodeResolutionFeatures.Imports;
-  } else {
+  } else if (options.resolvePackageJsonImports === Tristate.False) {
     features &= ~NodeResolutionFeatures.Imports;
   }
   return features;
 }
 
+// Mirrors TS-Go `(*resolutionState).conditionMatches`.
 function conditionMatches(conditions: readonly string[], condition: string): boolean {
-  if (condition === "default" || conditions.includes(condition)) return true;
-  return conditions.includes("types") && isApplicableVersionedTypesKey(condition);
+  if (condition === "default" || conditions.includes(condition)) {
+    return true;
+  }
+  if (!conditions.includes("types")) {
+    // only apply versioned types conditions if the types condition is applied
+    return false;
+  }
+  return isApplicableVersionedTypesKey(condition);
 }
 
 // ---------------------------------------------------------------------------
@@ -372,28 +418,25 @@ export class Resolver {
       resolutionMode,
       this,
     );
-    const resolutionKind = getModuleResolutionKind(this.compilerOptions);
+
+    const moduleResolution = getModuleResolutionKind(this.compilerOptions);
     let result: ResolvedInternal | undefined;
-    switch (resolutionKind) {
-      case MRK.Classic:
-        result = classicNameResolver(state);
-        break;
-      case MRK.Node10:
-      case MRK.Node16:
-      case MRK.NodeNext:
-      case MRK.Bundler:
-        result = nodeModuleNameResolver(state);
+    switch (moduleResolution) {
+      case MRK.Node16: case MRK.NodeNext: case MRK.Bundler:
+        result = resolveNodeLike(state);
         break;
       default:
-        result = nodeModuleNameResolver(state);
+        throw new Error(`Unexpected moduleResolution: ${moduleResolution}`);
     }
-    return {
-      resolvedModule: result === undefined ? undefined : createResolvedModule(result, this.host),
+
+    const resolved = result === undefined ? undefined : createResolvedModule(result, this.host);
+    return tryResolveFromTypingsLocation(this, moduleName, containingDirectory, {
+      resolvedModule: resolved,
       failedLookupLocations: state.failedLookupLocations,
       affectingLocations: state.affectingLocations,
       resolutionDiagnostics: state.diagnostics,
       alternateResult: undefined,
-    };
+    });
   }
 
   resolveTypeReferenceDirective(
@@ -471,8 +514,9 @@ export class Resolver {
       MK.CommonJS,
       this,
     );
+    state.isConfigLookup = true;
     state.extensions = Extensions.Json;
-    const result = nodeModuleNameResolver(state);
+    const result = resolveNodeLike(state);
     return result === undefined ? undefined : createResolvedModule(result, this.host);
   }
 
@@ -487,7 +531,7 @@ export class Resolver {
     enableDirectorySearch: boolean,
   ): readonly ResolvedEntrypoint[] {
     const state = newResolutionState(packageName, packageDirectory, false, undefined, this);
-    state.features = NodeResolutionFeatures.AllFeatures;
+    state.features = NodeResolutionFeatures.All;
     state.extensions = Extensions.TypeScript | Extensions.Declaration;
     const packageJson = readPackageJson(state, combinePaths(packageDirectory, "package.json"));
     if (packageJson === undefined) return [];
@@ -723,34 +767,45 @@ function normalizePathForCjsResolution(containingDirectory: string, moduleName: 
 }
 
 // ---------------------------------------------------------------------------
-// Classic resolution (legacy `--moduleResolution classic`)
-// ---------------------------------------------------------------------------
-
-function classicNameResolver(state: ResolutionState): ResolvedInternal | undefined {
-  // Classic resolution: walk up the directory chain from the containing
-  // file, trying to resolve at each level. Mirrors TS-Go
-  // `classicNameResolver`.
-  if (isExternalModuleNameRelative(state.name)) {
-    const candidate = normalizePath(combinePaths(state.containingDirectory, state.name));
-    return loadModuleFromFile(state, candidate);
-  }
-  let directory: string | undefined = state.containingDirectory;
-  while (directory !== undefined && directory !== "") {
-    const candidate = normalizePath(combinePaths(directory, state.name));
-    const result = loadModuleFromFile(state, candidate);
-    if (result !== undefined) return result;
-    const parent = getDirectoryPath(directory);
-    if (parent === directory) break;
-    directory = parent;
-  }
-  return undefined;
-}
-
-// ---------------------------------------------------------------------------
 // Node-style resolution
 // ---------------------------------------------------------------------------
 
-function nodeModuleNameResolver(state: ResolutionState): ResolvedInternal | undefined {
+// Mirrors TS-Go `(*resolutionState).resolveNodeLike`. Wraps the worker with the
+// "modern Node resolution disabled" retry that records an alternate result when
+// a non-relative library would have resolved with `exports` (and `import`
+// condition) disabled.
+function resolveNodeLike(state: ResolutionState): ResolvedInternal | undefined {
+  const result = resolveNodeLikeWorker(state);
+  if (
+    state.resolvedPackageDirectory &&
+    !state.isConfigLookup &&
+    (state.features & NodeResolutionFeatures.Exports) !== 0 &&
+    (state.extensions & (Extensions.TypeScript | Extensions.Declaration)) !== 0 &&
+    !isExternalModuleNameRelative(state.name) &&
+    result !== undefined &&
+    result.path !== "" &&
+    result.path.includes("/node_modules/") &&
+    !extensionIsOk(Extensions.TypeScript | Extensions.Declaration, result.extension) &&
+    state.conditions.includes("import")
+  ) {
+    state.features = state.features & ~NodeResolutionFeatures.Exports;
+    state.extensions = state.extensions & (Extensions.TypeScript | Extensions.Declaration);
+    const diagnosticsCount = state.diagnostics.length;
+    const diagnosticResult = resolveNodeLikeWorker(state);
+    if (
+      diagnosticResult !== undefined &&
+      diagnosticResult.path !== "" &&
+      diagnosticResult.path.includes("/node_modules/")
+    ) {
+      result.alternateResult = diagnosticResult.path;
+    }
+    state.diagnostics.length = diagnosticsCount;
+  }
+  return result;
+}
+
+// Mirrors TS-Go `(*resolutionState).resolveNodeLikeWorker`.
+function resolveNodeLikeWorker(state: ResolutionState): ResolvedInternal | undefined {
   const optional = tryLoadModuleUsingOptionalResolutionSettings(state);
   if (optional !== undefined) return optional;
 
@@ -776,6 +831,47 @@ function nodeModuleNameResolver(state: ResolutionState): ResolvedInternal | unde
     return resolveFromTypeRoot(state);
   }
   return undefined;
+}
+
+// Mirrors TS-Go `(*Resolver).tryResolveFromTypingsLocation`. After a primary
+// resolution, if a `typingsLocation` (global typings cache) is configured and
+// the module did not resolve to a first-party TS/JSON file, retry the lookup
+// against the typings cache's node_modules for a declaration file.
+function tryResolveFromTypingsLocation(
+  resolver: Resolver,
+  moduleName: string,
+  containingDirectory: string,
+  originalResult: ResolvedModuleWithFailedLookupLocations,
+): ResolvedModuleWithFailedLookupLocations {
+  const resolved = originalResult.resolvedModule;
+  if (
+    resolver.typingsLocation === "" ||
+    isExternalModuleNameRelative(moduleName) ||
+    (resolved !== undefined && resolved.resolvedFileName !== "" &&
+      extensionIsOneOf(resolved.extension, supportedTSExtensionsWithJsonFlat))
+  ) {
+    return originalResult;
+  }
+
+  const state = newResolutionState(
+    moduleName,
+    containingDirectory,
+    false,
+    MK.None,
+    resolver,
+  );
+  state.extensions = Extensions.Declaration;
+  const globalResolved = loadModuleFromImmediateNodeModulesDirectory(state, resolver.typingsLocation, false);
+  if (globalResolved === undefined) {
+    return originalResult;
+  }
+  return {
+    resolvedModule: createResolvedModule(globalResolved, resolver.host),
+    failedLookupLocations: state.failedLookupLocations,
+    affectingLocations: state.affectingLocations,
+    resolutionDiagnostics: [...originalResult.resolutionDiagnostics, ...state.diagnostics],
+    alternateResult: undefined,
+  };
 }
 
 function tryLoadModuleUsingOptionalResolutionSettings(state: ResolutionState): ResolvedInternal | undefined {
@@ -1084,19 +1180,32 @@ interface PackageScope {
   readonly packageJson: PackageJsonLike;
 }
 
+// Mirrors TS-Go `(*resolutionState).getPackageScopeForPath`. Walks ancestor
+// directories from `directory` outward (stopping at the global typings cache),
+// returning the nearest enclosing package.json scope.
 function getPackageScopeForPath(state: ResolutionState, directory: string): PackageScope | undefined {
-  let current: string | undefined = normalizePath(directory);
-  while (current !== undefined && current !== "") {
-    if (getBaseFileName(current) === "node_modules") return undefined;
-    const packageJsonPath = combinePaths(current, "package.json");
-    const packageJson = readPackageJson(state, packageJsonPath);
-    if (packageJson !== undefined) {
-      state.affectingLocations.push(packageJsonPath);
-      return { packageDirectory: current, packageJsonPath, packageJson };
-    }
-    const parent = getDirectoryPath(current);
-    if (parent === current) break;
-    current = parent;
+  return forEachAncestorDirectoryStoppingAtGlobalCache<PackageScope | undefined>(
+    state.resolver.typingsLocation,
+    directory,
+    (current) => {
+      const result = getPackageJsonInfo(state, current);
+      if (result !== undefined) {
+        return { result, stop: true };
+      }
+      return { result: undefined, stop: false };
+    },
+  );
+}
+
+// Mirrors TS-Go `(*resolutionState).getPackageJsonInfo`. Reads the package.json
+// at `packageDirectory`, recording an affecting location on hit. The local port
+// has no separate package.json info cache, so this reads through the host FS.
+function getPackageJsonInfo(state: ResolutionState, packageDirectory: string): PackageScope | undefined {
+  const packageJsonPath = combinePaths(packageDirectory, "package.json");
+  const packageJson = readPackageJson(state, packageJsonPath);
+  if (packageJson !== undefined) {
+    state.affectingLocations.push(packageJsonPath);
+    return { packageDirectory, packageJsonPath, packageJson };
   }
   return undefined;
 }
@@ -1255,7 +1364,7 @@ function loadPackageTarget(
     affectingLocations: state.affectingLocations,
     diagnostics: state.diagnostics,
   };
-  return nodeModuleNameResolver(nestedState);
+  return resolveNodeLike(nestedState);
 }
 
 function loadEntrypointsFromExportMap(
@@ -1616,6 +1725,13 @@ function loadModuleFromSpecificNodeModulesDirectory(
     ? packageDirectory
     : combinePaths(packageDirectory, rest);
 
+  // Mirrors TS-Go: the resolver records that it descended into a package
+  // directory (a package.json was found) so resolveNodeLike's modern-Node
+  // retry can fire for library imports that resolved to a JS file.
+  if (state.resolver.host.fileExists(combinePaths(packageDirectory, "package.json"))) {
+    state.resolvedPackageDirectory = true;
+  }
+
   if ((state.features & NodeResolutionFeatures.Exports) !== 0) {
     const packageJson = readPackageJson(state, combinePaths(packageDirectory, "package.json"));
     if (packageJson !== undefined) {
@@ -1808,6 +1924,19 @@ function matchesPatternWithTrailer(target: string, name: string): boolean {
   const before = target.slice(0, starIndex);
   const after = target.slice(starIndex + 1);
   return name.startsWith(before) && name.endsWith(after);
+}
+
+/** True if `extension` is one of the supported `extensions`. Mirrors TS-Go `extensionIsOk`. */
+function extensionIsOk(extensions: Extensions, extension: string): boolean {
+  return (
+    ((extensions & Extensions.JavaScript) !== 0 &&
+      (extension === extensionJs || extension === extensionJsx || extension === extensionMjs || extension === extensionCjs)) ||
+    ((extensions & Extensions.TypeScript) !== 0 &&
+      (extension === extensionTs || extension === extensionTsx || extension === extensionMts || extension === extensionCts)) ||
+    ((extensions & Extensions.Declaration) !== 0 &&
+      (extension === extensionDts || extension === extensionDmts || extension === extensionDcts)) ||
+    ((extensions & Extensions.Json) !== 0 && extension === extensionJson)
+  );
 }
 
 // ---------------------------------------------------------------------------
