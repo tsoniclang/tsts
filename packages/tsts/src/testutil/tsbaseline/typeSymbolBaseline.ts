@@ -281,9 +281,20 @@ export class TypeWriterWalker {
       if (isOmittedExpression(node)) return undefined;
       const type = this.program.getTypeAtLocation?.(node, sourceFile);
       if (type === undefined || type.length === 0) return undefined;
-      if (!this.hadErrorBaseline && type === "any" && !shouldPrintAnyType(node, sourceFile)) {
-        return undefined;
-      }
+      // TS-Go's writeTypeOrSymbol (type_symbol_baseline.go:380) does NOT suppress
+      // a node when the type is `any` — the `shouldPrintAnyType`-style condition
+      // there only SELECTS the rendering path: an `any` in a "normal" position is
+      // printed via `t.AsIntrinsicType().IntrinsicName()` ("any"), and any other
+      // position (binding element, property-access/qualified name, label, import/
+      // export statement name, meta property, global augmentation, intrinsic JSX
+      // tag) is rendered through the node builder. For the intrinsic `any` type
+      // both paths produce the identical string "any", so the branch is purely
+      // cosmetic. Our producer already returns the final `typeToString` string, so
+      // there is nothing to choose between — and crucially TS-Go ALWAYS returns a
+      // typeWriterResult here. Emitting unconditionally is what makes a binding-
+      // pattern element name (destructuring / rest) print its `>name : any` line,
+      // e.g. catchClauseRestProperties.ts `>rest : any` and circularDestructuring's
+      // LHS `>c : any` / `>f : any`.
       return { line, sourceText, type, symbol: "", underline: "" };
     }
 
