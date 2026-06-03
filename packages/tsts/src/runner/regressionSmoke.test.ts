@@ -73,6 +73,7 @@ function compileSmokeCase(fileName: string, source: string): readonly { readonly
     const baseline: CompilerBaseline = {
       kind: kind as CompilerBaseline["kind"],
       testName: baseName,
+      testPath: fileName,
       suiteName: smokeSuite,
       isSubmodule: false,
       files,

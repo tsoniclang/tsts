@@ -78,6 +78,14 @@ export interface CompilerBaseline {
     | "union-ordering"
     | "parent-pointers";
   readonly testName: string;
+  /**
+   * The corpus test file path (absolute, as enumerated). The baseline header
+   * line `//// [<path>] ////` that TS-Go writes is this path made portable via
+   * `removeTestPathPrefixes` (e.g. `tests/cases/conformance/simpleTest.ts`),
+   * NOT the per-config `testName`. Carried here so the `.types`/`.symbols`
+   * producer can reproduce the header exactly.
+   */
+  readonly testPath: string;
   readonly suiteName: string;
   readonly isSubmodule: boolean;
   readonly files: readonly TestFile[];
@@ -341,7 +349,7 @@ class CompilerTest {
   }
 
   private baseline(kind: CompilerBaseline["kind"], suiteName: string, isSubmodule: boolean, files: readonly TestFile[]): CompilerBaseline {
-    return { kind, testName: this.configuredName, suiteName, isSubmodule, files, result: this.result };
+    return { kind, testName: this.configuredName, testPath: this.fileName, suiteName, isSubmodule, files, result: this.result };
   }
 }
 

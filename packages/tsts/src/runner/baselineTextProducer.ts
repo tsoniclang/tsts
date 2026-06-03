@@ -186,13 +186,16 @@ function produceTypesAndSymbolsBaseline(baseline: CompilerBaseline, result: Harn
 }
 
 /**
- * The baseline header is the first compiled input's portable file name, matching
- * the `//// [<path>] ////` line TS-Go writes at the top of a `.types`/`.symbols`
- * baseline. Falls back to the configured test name when there is no input file.
+ * The baseline header is the corpus test path made portable, matching the
+ * `//// [<path>] ////` line TS-Go writes at the top of a `.types`/`.symbols`
+ * baseline (e.g. `tests/cases/conformance/simpleTest.ts`). TS-Go uses the test
+ * file path here — NOT the per-config test name and NOT the virtual `/.src/`
+ * unit name — so we render `baseline.testPath` through `removeTestPathPrefixes`.
+ * Falls back to the configured test name when no test path is available.
  */
 function typesAndSymbolsHeader(baseline: CompilerBaseline, result: HarnessCompilationResult): string {
-  const firstInput = result.inputFiles[0];
-  if (firstInput !== undefined) return removeTestPathPrefixes(firstInput.unitName, false);
+  void result;
+  if (baseline.testPath.length > 0) return removeTestPathPrefixes(baseline.testPath, false);
   return baseline.testName;
 }
 

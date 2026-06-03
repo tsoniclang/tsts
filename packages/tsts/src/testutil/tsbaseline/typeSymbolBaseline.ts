@@ -103,10 +103,25 @@ export function iterateBaseline(
   return baselines;
 }
 
+/**
+ * The fixed virtual-directory prefixes the harness mounts test inputs under,
+ * mirroring TS-Go's `testPathPrefixReplacer` (internal/testutil/tsbaseline/util.go).
+ * `/.src/` is the harness current directory (`srcFolder`); the others cover the
+ * lib/ts/bundled virtual mounts. TS-Go strips these from the rendered
+ * `.types`/`.symbols` section so the `=== <path> ===` line is relative
+ * (e.g. `src1/main.ts`, not `/.src/src1/main.ts`). Applied here only — the
+ * error/output baselines keep their own (vendored) path rendering.
+ */
+const virtualMountPrefixes: readonly string[] = ["/.ts/", "/.lib/", "/.src/", "bundled:///libs/"];
+
+function stripVirtualMountPrefixes(path: string): string {
+  return virtualMountPrefixes.reduce((acc, prefix) => acc.replaceAll(prefix, ""), path);
+}
+
 function generateFileBaseline(file: NamedSource, entries: readonly TypeSymbolEntry[], isSymbolBaseline: boolean): string {
   const lines = splitLines(file.content);
   const out: string[] = [];
-  out.push(`=== ${removeTestPathPrefixes(file.name, false)} ===`);
+  out.push(`=== ${stripVirtualMountPrefixes(removeTestPathPrefixes(file.name, false))} ===`);
   let lastLine = -1;
   for (const entry of entries) {
     if (entry.line < 0 || entry.line >= lines.length) continue;
@@ -134,6 +149,11 @@ function generateFileBaseline(file: NamedSource, entries: readonly TypeSymbolEnt
 }
 
 function groupEntriesByFile(entries: readonly TypeSymbolEntry[], isSymbolBaseline: boolean): ReadonlyMap<string, readonly TypeSymbolEntry[]> {
+  // Preserve walker (document) order: TS-Go's iterateBaseline writes the
+  // typeWriterResults in the exact order getTypes/getSymbols returns them (a
+  // pre-order AST traversal) and never reorders them. Grouping here keeps each
+  // file's entries in insertion order; we deliberately do NOT sort by line or
+  // sourceText, which would diverge from TS-Go (e.g. emit `1` before `1 + 2`).
   const grouped = new Map<string, TypeSymbolEntry[]>();
   for (const entry of entries) {
     if (isSymbolBaseline && (entry.symbol ?? "") === "") continue;
@@ -142,9 +162,6 @@ function groupEntriesByFile(entries: readonly TypeSymbolEntry[], isSymbolBaselin
     const list = grouped.get(key) ?? [];
     list.push(entry);
     grouped.set(key, list);
-  }
-  for (const list of grouped.values()) {
-    list.sort((left, right) => left.line - right.line || left.sourceText.localeCompare(right.sourceText));
   }
   return grouped;
 }
