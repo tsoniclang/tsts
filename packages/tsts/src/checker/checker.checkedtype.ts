@@ -2112,6 +2112,16 @@ function displaySignature(signature: Signature, construct: boolean): string {
   return `${construct ? "new " : ""}(${parameters}) => ${displaySignatureReturn(signature)}`;
 }
 
+// A signature rendered as a TYPE MEMBER inside `{ ... }`: TS-Go uses the colon
+// form here (`(): void`, `new (): K`) rather than the arrow form used for a
+// bare callable/newable type (typePrinter signatureToStringWorker with the
+// member-separator). Used by the object-type display when the type carries
+// other members alongside its signatures.
+function displaySignatureMember(signature: Signature, construct: boolean): string {
+  const parameters = signature.parameters.map(displaySignatureParameter).join(", ");
+  return `${construct ? "new " : ""}(${parameters}): ${displaySignatureReturn(signature)}`;
+}
+
 export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Union) !== 0) {
     const constituents = unionConstituents(type) ?? [];
@@ -2150,9 +2160,22 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if ((type.flags & TypeFlags.TypeParameter) !== 0) return type.symbol?.name ?? "T";
-  if (isFunctionType(type)) {
-    const signature = getCallSignature(type);
-    if (signature !== undefined) return displaySignature(signature, false);
+  if ((type.flags & TypeFlags.Object) !== 0) {
+    const data = type.data as ObjectType | undefined;
+    const callSignatures = data?.declaredCallSignatures ?? [];
+    const constructSignatures = data?.declaredConstructSignatures ?? [];
+    const memberCount = objectTypeMembers(type)?.size ?? 0;
+    const indexCount = getIndexInfos(type)?.length ?? 0;
+    const hasNonSignatureMembers = memberCount > 0 || indexCount > 0;
+    // A type with exactly one signature and no other members renders bare in
+    // the arrow form: `() => R` for a call signature, `new () => R` for a
+    // construct signature (TS-Go signatureToString without the member braces).
+    if (!hasNonSignatureMembers && callSignatures.length === 1 && constructSignatures.length === 0) {
+      return displaySignature(callSignatures[0]!, false);
+    }
+    if (!hasNonSignatureMembers && constructSignatures.length === 1 && callSignatures.length === 0) {
+      return displaySignature(constructSignatures[0]!, true);
+    }
   }
   const elementType = getArrayElementType(type);
   if (elementType !== undefined) {
@@ -2166,13 +2189,20 @@ export function displayType(type: Type): string {
     }
     const members = objectTypeMembers(type);
     if (members !== undefined) {
-      const entries = [...members.values()].map(
-        (m) => `${m.name}${isOptionalSymbol(m as unknown as AstSymbol) ? "?" : ""}: ${displayType(m.syntheticType)}`,
-      );
+      // Member order mirrors TS-Go createTypeNodesFromResolvedType: call
+      // signatures, then construct signatures, then index signatures, then
+      // properties. Signatures inside braces use the colon form (`(): void`,
+      // `new (): K`), distinct from the bare arrow form handled above.
+      const data = type.data as ObjectType | undefined;
+      const callEntries = (data?.declaredCallSignatures ?? []).map((signature) => displaySignatureMember(signature, false));
+      const constructEntries = (data?.declaredConstructSignatures ?? []).map((signature) => displaySignatureMember(signature, true));
       const indexEntries = (getIndexInfos(type) ?? []).map(
         (info) => `[${indexSignatureParameterName(info)}: ${displayType(info.keyType)}]: ${displayType(info.valueType)}`,
       );
-      const all = [...entries, ...indexEntries];
+      const propertyEntries = [...members.values()].map(
+        (m) => `${m.name}${isOptionalSymbol(m as unknown as AstSymbol) ? "?" : ""}: ${displayType(m.syntheticType)}`,
+      );
+      const all = [...callEntries, ...constructEntries, ...indexEntries, ...propertyEntries];
       // TS-Go (typePrinter) terminates EVERY member with `;`, including the last,
       // so a member list renders as `{ a: number; b: string; }` (an empty type is
       // the bare `{}`). Both the `.types` baseline and assignability error messages
