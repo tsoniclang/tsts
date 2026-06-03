@@ -11,7 +11,21 @@
 import type { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
 /**
+ * Stable lookup key for a diagnostic message.
+ *
+ * Mirrors TS-Go `type Key string` in `internal/diagnostics/diagnostics.go`.
+ */
+export type Key = string;
+
+/**
  * A diagnostic message template, indexed by stable key and code.
+ *
+ * Mirrors TS-Go `type Message struct { ... }`. The Go struct keeps its fields
+ * private and exposes them through getter methods (`Code()`, `Category()`,
+ * `Key()`, `ReportsUnnecessary()`, `ElidedInCompatibilityPyramid()`,
+ * `ReportsDeprecated()`, and the debug-only `String()` which returns `text`).
+ * In TS the fields are directly readable, so the getter idiom collapses to the
+ * `readonly` properties below; `message` is the analogue of upstream `text`.
  *
  * Code numbering follows TypeScript convention:
  *   1001-9999: upstream TypeScript diagnostics
@@ -21,7 +35,7 @@ import type { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
  * at diagnostic-emit time.
  */
 export interface DiagnosticMessage {
-  readonly key: string;
+  readonly key: Key;
   readonly code: number;
   readonly category: DiagnosticCategory;
   readonly message: string;

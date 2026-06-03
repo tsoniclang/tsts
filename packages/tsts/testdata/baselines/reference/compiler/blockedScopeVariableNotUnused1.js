@@ -1,6 +1,6 @@
 //// [blockedScopeVariableNotUnused1.ts] ////
 
-//// [/.src/blockedScopeVariableNotUnused1.ts] ////
+//// [blockedScopeVariableNotUnused1.ts]
 export function foo() {
   const _fn = () => {
     ;(() => numFilesSelected)()

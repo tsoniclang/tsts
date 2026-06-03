@@ -4,16 +4,23 @@ import {
   binaryLeft,
   binaryOperatorKind,
   blockStatements,
+  catchClauseVariableDeclaration,
+  forEachChild,
   functionAsteriskToken,
   getCombinedModifierFlags,
   isFunctionLike,
   isIdentifier,
+  isLabeledStatement,
   isNumericLiteral,
+  labeledStatementLabel,
   nodeExpression,
   nodeName,
   nodeParameters,
   nodeParent,
+  nodeText,
+  postfixUnaryOperandRO,
   prefixUnaryOperandRO,
+  prefixUnaryOperator,
   sourceFileStatementsRO,
   stringLiteralText,
 } from "../ast/index.js";
@@ -73,7 +80,7 @@ export function checkStrictModeBinaryExpression(node: Node): StrictModeDiagnosti
 
 export function checkStrictModeCatchClause(node: Node): StrictModeDiagnostic | undefined {
   if (node.kind !== Kind.CatchClause) return undefined;
-  const variableDeclaration = field<Node>(node, "variableDeclaration");
+  const variableDeclaration = catchClauseVariableDeclaration(node);
   const name = nodeName(variableDeclaration);
   if (name === undefined) return undefined;
   return checkStrictModeEvalOrArguments(node, name);
@@ -93,8 +100,7 @@ export function checkStrictModeDeleteExpression(node: Node): StrictModeDiagnosti
 
 export function checkStrictModePostfixUnaryExpression(node: Node): StrictModeDiagnostic | undefined {
   if (node.kind !== Kind.PostfixUnaryExpression) return undefined;
-  const operand = field<Node>(node, "operand");
-  if (operand === undefined) return undefined;
+  const operand = postfixUnaryOperandRO(node);
   return checkStrictModeEvalOrArguments(node, operand);
 }
 
@@ -115,9 +121,9 @@ export function checkStrictModeWithStatement(node: Node): StrictModeDiagnostic |
 }
 
 export function checkStrictModeLabeledStatement(node: Node): StrictModeDiagnostic | undefined {
-  if (node.kind !== Kind.LabeledStatement) return undefined;
-  const label = field<Node>(node, "label");
-  if (label === undefined || !isEvalOrArgumentsIdentifier(label)) return undefined;
+  if (!isLabeledStatement(node)) return undefined;
+  const label = labeledStatementLabel(node);
+  if (!isEvalOrArgumentsIdentifier(label)) return undefined;
   return {
     node: label,
     message: Diagnostics.Invalid_use_of_0_in_strict_mode,
@@ -174,7 +180,7 @@ export function isStrictModeSignedNumericLiteral(node: Node | undefined): boolea
   if (node === undefined) return false;
   if (isNumericLiteral(node)) return true;
   if (node.kind !== Kind.PrefixUnaryExpression) return false;
-  const operator = field<Kind>(node, "operator");
+  const operator = prefixUnaryOperator(node);
   if (operator !== Kind.PlusToken && operator !== Kind.MinusToken) return false;
   return isNumericLiteral(prefixUnaryOperandRO(node));
 }
@@ -218,7 +224,10 @@ export function collectStrictModeDiagnostics(sourceFile: SourceFile): readonly S
     for (const diagnostic of checks) {
       if (diagnostic !== undefined) diagnostics.push(diagnostic);
     }
-    for (const child of childrenOf(node)) visit(child);
+    forEachChild(node, (child) => {
+      visit(child);
+      return undefined;
+    });
   };
   for (const statement of sourceFileStatementsRO(sourceFile)) visit(statement);
   return diagnostics;
@@ -245,29 +254,6 @@ export function blockContainsUseStrict(node: Node): boolean {
   });
 }
 
-function childrenOf(node: Node): readonly Node[] {
-  const result: Node[] = [];
-  const push = (value: unknown): void => {
-    if (isNode(value)) result.push(value);
-    else if (Array.isArray(value)) {
-      for (const item of value) push(item);
-    }
-  };
-  for (const value of Object.values(node as unknown as Record<string, unknown>)) {
-    push(value);
-  }
-  return result;
-}
-
-function isNode(value: unknown): value is Node {
-  return typeof value === "object" && value !== null && typeof (value as { kind?: unknown }).kind === "number";
-}
-
 function identifierText(node: Node): string {
-  return field<string>(node, "text") ?? "";
-}
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
+  return nodeText(node);
 }

@@ -17,7 +17,9 @@ import {
   hasModifier,
   isArrayTypeNode,
   isBigIntLiteral,
+  isBinaryExpression,
   isBindingElement,
+  isBlock,
   isCallSignatureDeclaration,
   isClassDeclaration,
   isComputedPropertyName,
@@ -25,6 +27,8 @@ import {
   isConstructorDeclaration,
   isFunctionTypeNode,
   isConstructSignatureDeclaration,
+  isEnumDeclaration,
+  isEnumMember,
   isFunctionDeclaration,
   isGetAccessorDeclaration,
   isIdentifier,
@@ -39,23 +43,30 @@ import {
   isObjectBindingPattern,
   isArrayBindingPattern,
   isParameterDeclaration,
+  isParenthesizedExpression,
   isParenthesizedTypeNode,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
+  isPropertyAssignment,
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
+  isShorthandPropertyAssignment,
   isQualifiedName,
+  isReturnStatement,
   isPrivateIdentifier,
   isNoSubstitutionTemplateLiteral,
   isSetAccessorDeclaration,
   isStringLiteral,
+  isThisTypeNode,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeOperatorNode,
+  isTypePredicateNode,
   isTypeReferenceNode,
   isTypeParameterDeclaration,
   isUnionTypeNode,
   isVariableDeclaration,
+  type BinaryExpression,
   type BindingElement,
   type ClassDeclaration,
   type ClassElement,
@@ -74,11 +85,13 @@ import {
   type TypeLiteralNode,
   type TypeNode,
   type TypeParameterDeclaration,
+  type TypePredicateNode,
   type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
 import type { int } from "@tsonic/core/types.js";
-import { nodeParent, nodeSymbol } from "../ast/index.js";
+import { forEachChild, nodeParent, nodeSymbol } from "../ast/index.js";
+import { FunctionFlags, getFunctionFlags } from "../ast/functionFlags.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { NameResolver } from "../binder/index.js";
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
@@ -89,6 +102,7 @@ import {
   type LiteralType,
   type ObjectType,
   type Signature,
+  type TypePredicate,
   type UnionType,
   type UnionOrIntersectionType,
   TypeFlags,
@@ -257,7 +271,7 @@ export interface FunctionParameter {
   readonly rest?: boolean;
 }
 
-export function makeCallSignature(returnType: Type, parameters: readonly FunctionParameter[] = []): Signature {
+export function makeCallSignature(returnType: Type, parameters: readonly FunctionParameter[] = [], predicate?: TypePredicate): Signature {
   const parameterSymbols = parameters.map((parameter) =>
     ({
       name: parameter.name,
@@ -279,15 +293,62 @@ export function makeCallSignature(returnType: Type, parameters: readonly Functio
     parameters: parameterSymbols,
     minArgumentCount,
     resolvedReturnType: returnType,
+    ...(predicate === undefined ? {} : { resolvedTypePredicate: predicate }),
   };
 }
 
-export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = []): Type {
+export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = [], predicate?: TypePredicate): Type {
   const data: ObjectType = {
     objectFlags: ObjectFlags.Anonymous,
-    declaredCallSignatures: [makeCallSignature(returnType, parameters)],
+    declaredCallSignatures: [makeCallSignature(returnType, parameters, predicate)],
   };
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data };
+}
+
+// Local mirror of signatureRelations.TypePredicateKind. Defined here (not
+// imported) because signatureRelations imports from this module — importing it
+// back would close a cycle. The numeric values are identical so any consumer
+// reading `signature.resolvedTypePredicate.kind` (e.g. signatureRelations)
+// interprets the predicate consistently.
+const TypePredicateKindLocal = {
+  This: 0,
+  Identifier: 1,
+  AssertsThis: 2,
+  AssertsIdentifier: 3,
+} as const;
+
+// Resolve a function/method/call-signature return-type node into the signature's
+// return type plus an optional type predicate. A `TypePredicateNode` carries the
+// predicate (`x is T`, `asserts x`, `asserts x is T`); the underlying return type
+// is `boolean` for a narrowing predicate and `void` for a bare assertion
+// (mirrors TS-Go getTypePredicateOfSignature / a predicate signature's
+// declared return type).
+function signatureReturnFromTypeNode(typeNode: TypeNode | undefined, parameters: readonly FunctionParameter[], state: CheckState): { readonly returnType: Type; readonly predicate?: TypePredicate } {
+  if (typeNode !== undefined && isTypePredicateNode(typeNode)) {
+    return predicateSignatureReturn(typeNode, parameters, state);
+  }
+  return { returnType: typeNode === undefined ? anyType : typeFromTypeNode(typeNode, state) };
+}
+
+function predicateSignatureReturn(node: TypePredicateNode, parameters: readonly FunctionParameter[], state: CheckState): { readonly returnType: Type; readonly predicate: TypePredicate } {
+  const asserts = node.assertsModifier !== undefined;
+  const isThis = isThisTypeNode(node.parameterName);
+  const parameterName = isThis ? "this" : (node.parameterName as { readonly text: string }).text;
+  const parameterIndex = isThis ? -1 : Math.max(0, parameters.findIndex((parameter) => parameter.name === parameterName));
+  const predicateType = node.type === undefined ? undefined : typeFromTypeNode(node.type, state);
+  const kind = asserts
+    ? (isThis ? TypePredicateKindLocal.AssertsThis : TypePredicateKindLocal.AssertsIdentifier)
+    : (isThis ? TypePredicateKindLocal.This : TypePredicateKindLocal.Identifier);
+  const predicate: TypePredicate = {
+    kind,
+    parameterIndex,
+    parameterName,
+    ...(predicateType === undefined ? {} : { type: predicateType }),
+  };
+  // An `asserts x` (no narrowed-to type) signature returns `void`; every other
+  // predicate (`x is T`, `asserts x is T`) returns `boolean`.
+  const returnType = asserts && predicateType === undefined ? voidType : booleanType;
+  return { returnType, predicate };
 }
 
 export function isFunctionType(type: Type): boolean {
@@ -870,7 +931,9 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
     return typeFromTypeNode(type.type, state);
   }
   if (isFunctionTypeNode(type)) {
-    return makeFunctionType(type.type === undefined ? anyType : typeFromTypeNode(type.type, state), state, functionParametersFromNode(type.parameters, state));
+    const parameters = functionParametersFromNode(type.parameters, state);
+    const { returnType, predicate } = signatureReturnFromTypeNode(type.type, parameters, state);
+    return makeFunctionType(returnType, state, parameters, predicate);
   }
   if (isConstructorTypeNode(type)) {
     const returnType = type.type === undefined ? anyType : typeFromTypeNode(type.type, state);
@@ -892,6 +955,14 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   }
   if (isTypeReferenceNode(type)) {
     return typeFromTypeReferenceNode(type, state);
+  }
+  if (isTypePredicateNode(type)) {
+    // A predicate node is only authored as a function's return-type annotation,
+    // where the callable sites route it through signatureReturnFromTypeNode (so
+    // the signature carries the predicate). Resolved as a bare type it has no
+    // signature to attach to: it is `void` for a bare `asserts x` and `boolean`
+    // for every narrowing predicate (`x is T`, `asserts x is T`).
+    return type.assertsModifier !== undefined && type.type === undefined ? voidType : booleanType;
   }
   return anyType;
 }
@@ -950,6 +1021,9 @@ function getDeclaredTypeOfTypeSymbol(symbol: AstSymbol, typeArguments: readonly 
   if ((flags & (SymbolFlags.Interface | SymbolFlags.Class)) !== 0) {
     return getDeclaredTypeOfClassOrInterface(symbol, typeArguments, state);
   }
+  if ((flags & SymbolFlags.Enum) !== 0) {
+    return getDeclaredTypeOfEnum(symbol, state);
+  }
   if ((flags & SymbolFlags.TypeParameter) !== 0) {
     return lookupTypeParameterSubstitution(symbol, state) ?? makeTypeParameterType(symbol, state);
   }
@@ -958,6 +1032,22 @@ function getDeclaredTypeOfTypeSymbol(symbol: AstSymbol, typeArguments: readonly 
   }
   state.diagnostics.push({ message: `Symbol '${declarationName(symbol)}' does not refer to a type.` });
   return unresolvedType;
+}
+
+// getDeclaredTypeOfSymbol (checker.go) — the TYPE-side of a symbol, used by the
+// type-writer walker for a type-declaration NAME node. Mirrors TS-Go
+// getTypeOfNode's IsTypeDeclarationName branch: the class name displays as the
+// instance type `C`, the enum name as the enum type `E` — distinct from a value
+// reference which displays `typeof C`. Scoped to class/interface/enum (the G3
+// leaf); type-alias and type-parameter name display is a separate slice, so those
+// keep their existing path. Returns undefined for a symbol with no type-side
+// meaning here so the caller falls back to the value type.
+export function getDeclaredTypeOfSymbolForName(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const flags = symbol.flags ?? 0;
+  if ((flags & (SymbolFlags.Interface | SymbolFlags.Class | SymbolFlags.Enum)) === 0) {
+    return undefined;
+  }
+  return getDeclaredTypeOfTypeSymbol(symbol, undefined, state);
 }
 
 // Resolve an alias declaration to its target type, with cycle protection and
@@ -1032,6 +1122,168 @@ function reportCyclicTypeAlias(symbol: AstSymbol, state: CheckState): void {
     state.reportedCyclicTypeAliases.add(symbol);
     state.diagnostics.push({ message: `Type alias '${declarationName(symbol)}' circularly references itself.` });
   }
+}
+
+// getDeclaredTypeOfEnum (checker.go:23738) — the type-side of an enum symbol.
+// TS-Go's declared type is the UNION of the members' fresh enum-literal types,
+// but it displays as the bare enum name (`E`) via the enum symbol. As a side
+// effect of resolving the enum, the loop also assigns each MEMBER symbol its
+// fresh enum-literal declared type (so a member reference / declaration name
+// resolves to `E.A`). We keep the enum's own declared type as the nominal
+// `{ Enum, aliasSymbol }` (it already displays as `E`) and only add the
+// member-typing side effect; the display path renders `E.A` for a member
+// enum-literal type via its enum-member symbol (nodebuilderimpl.go:3205).
+function getDeclaredTypeOfEnum(symbol: AstSymbol, state: CheckState): Type {
+  const cached = state.declaredTypeResolutions.get(symbol);
+  if (cached !== undefined) return cached;
+  const type: Type = { flags: TypeFlags.Enum, id: state.nextTypeId(), aliasSymbol: symbol };
+  state.declaredTypeResolutions.set(symbol, type);
+  // Populate each member symbol's declared type (E.A, E.B, …). Auto-incremented
+  // members carry forward the previous member's numeric value + 1 (TS-Go
+  // computeEnumMemberValue), and a non-constant value collapses the member to
+  // the enum type itself. A single value→type cache is shared across an enum's
+  // (possibly merged) declarations, mirroring TS-Go's per-enum getEnumLiteralType.
+  const byValue = new Map<string, Type>();
+  for (const declaration of symbol.declarations ?? []) {
+    if (!isEnumDeclaration(declaration)) continue;
+    populateEnumMemberDeclaredTypes(declaration, type, byValue, state);
+  }
+  return type;
+}
+
+// Assign each enum member symbol a FRESH enum-literal declared type carrying the
+// member symbol (so display renders `E.A`). Mirrors TS-Go's getDeclaredTypeOfEnum
+// member loop + getEnumLiteralType value caching: members sharing a value share a
+// type (so `B` after a NaN-valued `A` displays as `E.A`).
+function populateEnumMemberDeclaredTypes(declaration: AstNode, enumType: Type, byValue: Map<string, Type>, state: CheckState): void {
+  const members = (declaration as { readonly members?: readonly AstNode[] }).members ?? [];
+  let autoValue: number | undefined = 0;
+  for (const member of members) {
+    if (!isEnumMember(member)) continue;
+    const memberSymbol = nodeSymbol(member);
+    if (memberSymbol === undefined) continue;
+    const value = computeEnumMemberConstantValue(member, autoValue);
+    const memberType = enumMemberLiteralType(memberSymbol, value, enumType, byValue, state);
+    state.declaredTypeResolutions.set(memberSymbol, memberType);
+    autoValue = typeof value === "number" ? value + 1 : undefined;
+  }
+}
+
+// The constant value of an enum member: its initializer when present (a literal
+// or constant expression), otherwise the carried auto-increment value. A
+// non-constant initializer yields `undefined` (a computed member).
+function computeEnumMemberConstantValue(member: AstNode, autoValue: number | undefined): string | number | undefined {
+  const initializer = (member as { readonly initializer?: Expression }).initializer;
+  if (initializer === undefined) return autoValue;
+  return evaluateConstantEnumExpression(initializer);
+}
+
+// Evaluate a constant enum-member initializer to its number/string value
+// (mirrors TS-Go's evaluator: literals, the `NaN`/`Infinity` globals, and
+// arithmetic over them — non-finite results like NaN/Infinity are still values).
+// Returns undefined for a genuinely non-constant expression.
+function evaluateConstantEnumExpression(node: Expression): string | number | undefined {
+  if (isNumericLiteral(node)) {
+    const value = Number((node as { readonly text: string }).text);
+    return Number.isNaN(value) ? undefined : value;
+  }
+  if (isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node)) {
+    return (node as { readonly text: string }).text;
+  }
+  if (isIdentifier(node)) {
+    if (node.text === "NaN") return NaN;
+    if (node.text === "Infinity") return Infinity;
+    return undefined;
+  }
+  if (isPrefixUnaryExpression(node)) {
+    const operand = evaluateConstantEnumExpression(node.operand);
+    if (typeof operand !== "number") return undefined;
+    if (node.operator === Kind.MinusToken) return -operand;
+    if (node.operator === Kind.PlusToken) return operand;
+    if (node.operator === Kind.TildeToken) return ~operand;
+    return undefined;
+  }
+  if (isBinaryExpression(node)) {
+    return evaluateBinaryConstantEnumExpression(node);
+  }
+  if (isParenthesizedExpression(node)) {
+    return evaluateConstantEnumExpression(node.expression);
+  }
+  return undefined;
+}
+
+function evaluateBinaryConstantEnumExpression(node: BinaryExpression): string | number | undefined {
+  const left = evaluateConstantEnumExpression(node.left);
+  const right = evaluateConstantEnumExpression(node.right);
+  const operator = node.operatorToken.kind;
+  if (operator === Kind.PlusToken && typeof left === "string" && typeof right === "string") return left + right;
+  if (typeof left !== "number" || typeof right !== "number") return undefined;
+  switch (operator) {
+    case Kind.PlusToken: return left + right;
+    case Kind.MinusToken: return left - right;
+    case Kind.AsteriskToken: return left * right;
+    case Kind.SlashToken: return left / right;
+    case Kind.PercentToken: return left % right;
+    case Kind.AsteriskAsteriskToken: return left ** right;
+    case Kind.LessThanLessThanToken: return left << right;
+    case Kind.GreaterThanGreaterThanToken: return left >> right;
+    case Kind.GreaterThanGreaterThanGreaterThanToken: return left >>> right;
+    case Kind.BarToken: return left | right;
+    case Kind.AmpersandToken: return left & right;
+    case Kind.CaretToken: return left ^ right;
+    default: return undefined;
+  }
+}
+
+// A FRESH enum-literal type for a member. For a non-constant (computed) member,
+// TS-Go collapses to the enum type itself (so the member displays as the enum
+// name); for a constant member it is keyed by (enumSymbol, value) so members
+// sharing a value share one type. The member symbol is recorded on the type so
+// the display path renders `EnumName.MemberName`.
+function enumMemberLiteralType(
+  memberSymbol: AstSymbol,
+  value: string | number | undefined,
+  enumType: Type,
+  byValue: Map<string, Type>,
+  state: CheckState,
+): Type {
+  if (value === undefined) return enumType;
+  const key = `${typeof value}:${value}`;
+  const cached = byValue.get(key);
+  if (cached !== undefined) return cached;
+  const literalFlags = typeof value === "number" ? TypeFlags.NumberLiteral : TypeFlags.StringLiteral;
+  const type: Type = {
+    flags: TypeFlags.EnumLiteral | literalFlags,
+    id: state.nextTypeId(),
+    symbol: memberSymbol,
+    data: { value },
+  };
+  byValue.set(key, type);
+  return type;
+}
+
+// getTypeOfEnumMember (checker.go:18364) — an enum member symbol used as a value
+// (or its declaration name). Resolving the parent enum's declared type assigns
+// every member symbol its fresh enum-literal type as a side effect; this reads
+// it back. Falls back to the enum type if the parent can't be resolved.
+function getTypeOfEnumMember(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const cached = state.declaredTypeResolutions.get(symbol);
+  if (cached !== undefined) return cached;
+  const enumSymbol = enumSymbolOfMember(symbol);
+  if (enumSymbol === undefined) return undefined;
+  getDeclaredTypeOfEnum(enumSymbol, state);
+  return state.declaredTypeResolutions.get(symbol);
+}
+
+// The owning enum symbol of an enum-member symbol: the binder sets symbol.parent,
+// but fall back to the member declaration's parent enum.
+function enumSymbolOfMember(symbol: AstSymbol): AstSymbol | undefined {
+  if (symbol.parent !== undefined && ((symbol.parent.flags ?? 0) & SymbolFlags.Enum) !== 0) {
+    return symbol.parent;
+  }
+  const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
+  const parent = declaration === undefined ? undefined : nodeParent(declaration);
+  return parent !== undefined && isEnumDeclaration(parent) ? nodeSymbol(parent) : undefined;
 }
 
 function getDeclaredTypeOfClassOrInterface(
@@ -1342,16 +1594,29 @@ function collectTypeMembers(
     } else if (isMethodSignatureDeclaration(member) || isMethodDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const annotated = signatureReturnFromTypeNode(member.type, parameters, state);
+      // A method DECLARATION (which has a body) with no return annotation infers
+      // its return type from the body (getReturnTypeFromBody), just like a
+      // free function; a method SIGNATURE has no body and stays `any`. An
+      // annotation or predicate always wins.
+      const returnType = member.type === undefined && annotated.predicate === undefined && isMethodDeclaration(member)
+        ? inferredBlockReturnType(member, state) ?? annotated.returnType
+        : annotated.returnType;
       properties.push({
         name,
-        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
+        type: makeFunctionType(returnType, state, parameters, annotated.predicate),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else if (isGetAccessorDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      // A getter's property type IS its return type: the annotation when present,
+      // else inferred from the body (getReturnTypeFromBody), matching how TS-Go
+      // types `get x()`-derived members. With neither, it is `any`.
+      const returnType = member.type !== undefined
+        ? typeFromTypeNode(member.type, state)
+        : inferredBlockReturnType(member, state) ?? anyType;
       properties.push({ name, type: returnType });
     } else if (isSetAccessorDeclaration(member)) {
       const name = propertyNameText(member.name, state);
@@ -1379,8 +1644,9 @@ function collectTypeMemberExtras(
   for (const member of members) {
     if (!includeMember(member)) continue;
     if (isCallSignatureDeclaration(member)) {
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
-      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
+      callSignatures.push(makeCallSignature(returnType, parameters, predicate));
     } else if (isConstructSignatureDeclaration(member)) {
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
       constructSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
@@ -1432,16 +1698,18 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
     } else if (isMethodSignatureDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
       properties.push({
         name,
-        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
+        type: makeFunctionType(returnType, state, parameters, predicate),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else if (isCallSignatureDeclaration(member)) {
       // `{ (args): R }` — an object type carrying a bare call signature.
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
-      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
+      callSignatures.push(makeCallSignature(returnType, parameters, predicate));
     } else if (isConstructSignatureDeclaration(member)) {
       // `{ new (args): R }` — object type carrying a construct signature.
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
@@ -1572,6 +1840,12 @@ function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | und
   if ((flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module)) !== 0) {
     return getTypeOfFuncClassEnumModule(symbol, state);
   }
+  // An enum MEMBER symbol resolves to its fresh enum-literal type (e.g. `E.A`),
+  // populated as a side effect of resolving the parent enum's declared type
+  // (getTypeOfEnumMember → getDeclaredTypeOfEnum). Mirrors checker.go:16376.
+  if ((flags & SymbolFlags.EnumMember) !== 0) {
+    return getTypeOfEnumMember(symbol, state);
+  }
   if ((flags & SymbolFlags.Alias) !== 0) {
     return getTypeOfAlias(symbol, state);
   }
@@ -1603,10 +1877,30 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
         ? widenedVariableType(initializerType, declaration, state)
         : getWidenedType(initializerType, state);
     }
-    // A parameter with neither annotation nor initializer is an implicit-any
-    // position the checker does not yet model precisely — the error type keeps
-    // it from cascading (matching the prior unresolvedType binding).
-    return isParameterDeclaration(declaration) ? unresolvedType : anyType;
+    // A parameter (or variable) with neither annotation nor initializer is an
+    // implicit-any position: getWidenedTypeForVariableLikeDeclaration falls back
+    // to `any` (checker.go), which the type walker then emits as `>x : any`
+    // (matching TS-Go, e.g. catchClauseRestProperties.ts `>rest : any`).
+    return anyType;
+  }
+  // An object-literal member symbol (`{ bar: 42 }`) — its value declaration is the
+  // PropertyAssignment / ShorthandPropertyAssignment. TS-Go computes the member
+  // type from the member's value expression and widens it like a property
+  // (getWidenedType: a fresh primitive literal collapses to its base, e.g.
+  // `{ bar: 42 }` → `bar : number`, mirroring the widened member shown inside the
+  // object-type display `{ bar: number; }`). A contextual/`as const` member that
+  // keeps the fresh literal needs the parent object's contextual type threaded to
+  // the symbol resolution (a later slice), so this un-contextual widening is the
+  // honest common case. Without it the property-NAME reference resolves to
+  // `unknown` (awaitObjectLiteral.ts `>bar : number`, importAttributesWithValueComments.ts `>a : string`).
+  if (isPropertyAssignment(declaration) && inferInitializerType !== undefined) {
+    if (declaration.type !== undefined) return typeFromTypeNode(declaration.type, state);
+    return resolveObjectLiteralMemberType(symbol, state, () => getWidenedType(inferInitializerType!(declaration.initializer, state), state));
+  }
+  if (isShorthandPropertyAssignment(declaration) && inferInitializerType !== undefined) {
+    const reference = declaration.objectAssignmentInitializer ?? declaration.name;
+    if (reference === undefined) return undefined;
+    return resolveObjectLiteralMemberType(symbol, state, () => getWidenedType(inferInitializerType!(reference as Expression, state), state));
   }
   // A destructured binding element resolves through its annotated parent for now
   // (pattern element typing is a later slice). The prior model bound the whole
@@ -1618,15 +1912,41 @@ function getTypeOfVariableOrParameterOrProperty(symbol: AstSymbol, state: CheckS
   return undefined;
 }
 
-// `const` preserves a primitive-literal initializer; `let`/`var` widen it
-// (getWidenedTypeForVariableLikeDeclaration widens only non-const block-scoped
-// declarations). The stored type also drops object-literal freshness.
+// Resolve an object-literal member symbol's type under the per-check
+// re-entrancy guard. A shorthand `{ a }` (and, transitively, a self-referential
+// property initializer) resolves the member's value through the binder, whose
+// name node can resolve back to this very member symbol — re-entering this
+// resolver in an unbounded cycle. Mirroring TS-Go's resolution-in-progress
+// handling (a symbol caught mid-resolution yields the any/error type rather
+// than recursing forever), a member already on the shared typeResolutionStack
+// short-circuits to `any`. The stack is the same per-CheckState set used for
+// type-alias cycle detection, so it is naturally empty between queries.
+function resolveObjectLiteralMemberType(symbol: AstSymbol, state: CheckState, compute: () => Type): Type {
+  if (state.typeResolutionStack.has(symbol)) return anyType;
+  state.typeResolutionStack.add(symbol);
+  try {
+    return compute();
+  } finally {
+    state.typeResolutionStack.delete(symbol);
+  }
+}
+
+// Mirrors TS-Go getWidenedTypeForVariableLikeDeclaration's two-stage widening of
+// an inferred initializer type (checker.go:16508):
+//   1. widenTypeInferredFromInitializer → getWidenedLiteralTypeForInitializer:
+//      `const`/`readonly` keep the FRESH literal type unchanged (so `const c =
+//      "hello"` stores the *widening* literal `"hello"`); `let`/`var` collapse a
+//      fresh primitive literal to its base via getWidenedLiteralType. Preserving
+//      freshness on a `const` is what makes a downstream `let v = c` widen `v` to
+//      the base type (literalTypeWidening.types: `let v1 = c1` → `v1 : string`).
+//   2. getWidenedType then widens object/array literals (and drops object-literal
+//      freshness via getRegularTypeOfObjectLiteral) for the stored type.
+// A primitive-literal `const` therefore stays fresh and never reaches step 1's
+// widening, matching TS-Go (a fresh primitive literal is not RequiresWidening).
 function widenedVariableType(initializerType: Type, declaration: AstNode, state: CheckState): Type {
   const declarationList = nodeParent(declaration);
   const isConst = declarationList !== undefined && ((declarationList.flags ?? 0) & NodeFlags.Const) !== 0;
-  const literalAdjusted = isConst
-    ? getRegularTypeOfLiteralType(initializerType, state)
-    : getWidenedType(initializerType, state);
+  const literalAdjusted = isConst ? initializerType : getWidenedLiteralType(initializerType);
   return getRegularTypeOfObjectLiteral(literalAdjusted, state);
 }
 
@@ -1658,7 +1978,10 @@ function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | un
     if (owner.initializer !== undefined && inferInitializerType !== undefined) {
       return getWidenedType(inferInitializerType(owner.initializer, state), state);
     }
-    return isParameterDeclaration(owner) ? unresolvedType : anyType;
+    // An un-annotated, un-initialized binding pattern owner is implicit-any
+    // (getWidenedTypeForVariableLikeDeclaration), so its elements resolve to
+    // `any` rather than the error type.
+    return anyType;
   }
   if (isBindingElement(owner)) {
     return getTypeOfDestructuredBindingElement(owner, state);
@@ -1672,13 +1995,89 @@ function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | un
 // is a later slice, so these resolve to `any` value placeholders (NOT the error
 // type — a class name IS a known value), with functions kept callable so a
 // direct `f()` call still type-checks.
+// Mirror the non-async/non-generator arms of getReturnTypeFromBody
+// (checker.go:20032). For a function/method/getter with a BLOCK body that is
+// neither async nor a generator, the inferred return type is the union of every
+// expression-bearing `return <expr>` type (UnionReductionSubtype), then widened
+// (getWidenedType); a body with NO `return <expr>` (only bare `return;` or none)
+// falls back to `void` (the `len(types) == 0` branch). An expression (concise)
+// body infers directly from the body expression. Async/generator bodies still
+// need Promise/Generator wrapping (deferred), so they keep the `any` placeholder.
+// Strict-null `| undefined` from a bare `return;` mixed with value-returns is a
+// recorded fork (strictNullChecks) and intentionally not added here.
+export function inferredBlockReturnType(declaration: AstNode, state: CheckState): Type | undefined {
+  const body = (declaration as { readonly body?: AstNode }).body;
+  if (body === undefined || inferInitializerType === undefined) return undefined;
+  const functionFlags = getFunctionFlags(declaration);
+  if ((functionFlags & (FunctionFlags.Async | FunctionFlags.Generator)) !== 0) return undefined;
+  if (!isBlock(body)) {
+    // Concise arrow-style body (an expression): the return type IS that
+    // expression's type, widened (getReturnTypeFromBody's `!IsBlock` arm).
+    return getWidenedType(inferInitializerType(body as Expression, state), state);
+  }
+  const returnTypes = collectReturnExpressionTypes(body, state);
+  if (returnTypes.length === 0) return voidType;
+  return getWidenedType(getUnionTypeEx(returnTypes, UnionReduction.Subtype, state), state);
+}
+
+// Collect the types of every expression-bearing `return <expr>` in the block,
+// WITHOUT descending into nested function-like declarations whose own returns
+// bind to them (mirrors ast.ForEachReturnStatement's pruning at function-like
+// boundaries). Mirrors checkAndAggregateReturnExpressionTypes' aggregation; each
+// return expression is inferred with the injected inferExpression. Traversal
+// uses the generated forEachChild so every statement form is covered faithfully.
+function collectReturnExpressionTypes(node: AstNode, state: CheckState): Type[] {
+  const collected: Type[] = [];
+  const visit = (child: AstNode): undefined => {
+    if (isReturnStatement(child)) {
+      const expression = (child as { readonly expression?: AstNode }).expression;
+      if (expression !== undefined && inferInitializerType !== undefined) {
+        collected.push(inferInitializerType(expression as Expression, state));
+      }
+      return undefined;
+    }
+    // A nested function/class scope owns its own returns — do not descend.
+    if (startsNewReturnScope(child)) return undefined;
+    forEachChild(child, visit);
+    return undefined;
+  };
+  forEachChild(node, visit);
+  return collected;
+}
+
+// A node that begins a fresh return scope (its `return` statements belong to it,
+// not the enclosing function). Mirrors ast.ForEachReturnStatement, which stops at
+// function-like boundaries; class bodies are also pruned since their methods are
+// independent functions.
+function startsNewReturnScope(node: AstNode): boolean {
+  return isFunctionDeclaration(node)
+    || isMethodDeclaration(node)
+    || node.kind === Kind.FunctionExpression
+    || node.kind === Kind.ArrowFunction
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isConstructorDeclaration(node)
+    || isClassDeclaration(node)
+    || node.kind === Kind.ClassExpression;
+}
+
 function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Type | undefined {
   const flags = symbol.flags ?? 0;
   if ((flags & (SymbolFlags.Function | SymbolFlags.Method)) !== 0) {
     const declaration = symbol.valueDeclaration;
     if (declaration !== undefined && (isFunctionDeclaration(declaration) || isMethodDeclaration(declaration) || isMethodSignatureDeclaration(declaration))) {
-      const returnType = declaration.type === undefined ? anyType : typeFromTypeNode(declaration.type, state);
-      return makeFunctionType(returnType, state, functionParametersFromNode(declaration.parameters, state));
+      const parameters = functionParametersFromNode(declaration.parameters, state);
+      const annotated = signatureReturnFromTypeNode(declaration.type, parameters, state);
+      // With no return-type annotation, TS-Go infers the return type from the
+      // body (getReturnTypeFromBody): the union (subtype-reduced, widened) of the
+      // expression-bearing `return <expr>` types, or `void` when the body returns
+      // no value (checker.go:20032). Async/generator bodies keep the `any`
+      // placeholder (Promise/Generator wrapping is deferred); an annotation always
+      // wins.
+      const returnType = declaration.type === undefined && annotated.predicate === undefined
+        ? inferredBlockReturnType(declaration, state) ?? annotated.returnType
+        : annotated.returnType;
+      return makeFunctionType(returnType, state, parameters, annotated.predicate);
     }
     return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
   }
@@ -1696,7 +2095,38 @@ function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Typ
       collectTypeMembers(classMembers, staticProperties, state, isStaticClassMember);
     }
     const parameters = constructor === undefined ? [] : functionParametersFromNode(constructor.parameters, state);
-    return makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
+    const constructorType = makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
+    // The class VALUE (its constructor) displays as `typeof C`, distinct from the
+    // class INSTANCE type `C` (the declared type) — TS-Go renders the static side
+    // with the QueryKeyword (nodebuilderimpl.go shouldWriteTypeOfFunctionSymbol).
+    constructorType.typeofSymbol = symbol;
+    return constructorType;
+  }
+  if ((flags & SymbolFlags.Enum) !== 0) {
+    // The enum VALUE (the enum object) displays as `typeof E`. Enum-MEMBER typing
+    // (the `A: E.A` static properties) is a later slice, so member access on the
+    // enum object must stay permissive — a string index signature returning the
+    // enum declared type lets `E.A` resolve to `E` (matching TS-Go's member-access
+    // result) without a spurious "property does not exist" error. The index info
+    // is never displayed: the type renders as `typeof E` via typeofSymbol.
+    const enumDeclaredType = getDeclaredTypeOfEnum(symbol, state);
+    const enumValueType = makeObjectType([], state, false, {
+      indexInfos: [{ keyType: stringType, valueType: enumDeclaredType }],
+    });
+    enumValueType.typeofSymbol = symbol;
+    return enumValueType;
+  }
+  if ((flags & SymbolFlags.Module) !== 0) {
+    // A namespace/module value has no instance type; its value displays as
+    // `typeof N`. Namespace-MEMBER typing is a later slice, so member access stays
+    // permissive via a string index signature returning `any` (the prior value
+    // model), letting `N.x` resolve without a spurious error. The index info is
+    // never displayed: the type renders as `typeof N` via typeofSymbol.
+    const moduleValueType = makeObjectType([], state, false, {
+      indexInfos: [{ keyType: stringType, valueType: anyType }],
+    });
+    moduleValueType.typeofSymbol = symbol;
+    return moduleValueType;
   }
   void state;
   return anyType;
@@ -1715,6 +2145,51 @@ function getTypeOfAlias(symbol: AstSymbol, state: CheckState): Type | undefined 
 function indexSignatureParameterName(info: IndexInfo): string {
   const parameter = (info.declaration as { parameters?: readonly ParameterDeclaration[] } | undefined)?.parameters?.[0];
   return parameter !== undefined && isIdentifier(parameter.name) ? parameter.name.text : "x";
+}
+
+// Render one signature parameter as `name: T`, with a leading `...` for a rest
+// parameter and a trailing `?` on the name for an optional one (mirrors TS-Go
+// signatureToString parameter formatting).
+function displaySignatureParameter(parameter: AstSymbol): string {
+  const name = (parameter as unknown as { readonly name?: string }).name ?? "arg";
+  const restPrefix = isRestSymbol(parameter) ? "..." : "";
+  const optionalSuffix = isOptionalSymbol(parameter) ? "?" : "";
+  const parameterType = getTypeOfSymbol(parameter) ?? anyType;
+  return `${restPrefix}${name}${optionalSuffix}: ${displayType(parameterType)}`;
+}
+
+// Render the `=> R` (or `=> x is T` / `=> asserts x`) right-hand side of a
+// signature. A type predicate displaces the return type in TS-Go's display.
+function displaySignatureReturn(signature: Signature): string {
+  const predicate = signature.resolvedTypePredicate as TypePredicate | undefined;
+  if (predicate !== undefined) return displayTypePredicate(predicate);
+  return displayType(signature.resolvedReturnType ?? anyType);
+}
+
+// `x is T`, `this is T`, `asserts x`, `asserts x is T`, `asserts this[ is T]`.
+// `asserts` is signalled by the kind (AssertsThis / AssertsIdentifier).
+function displayTypePredicate(predicate: TypePredicate): string {
+  const asserts = predicate.kind === TypePredicateKindLocal.AssertsThis || predicate.kind === TypePredicateKindLocal.AssertsIdentifier;
+  const prefix = asserts ? "asserts " : "";
+  const target = predicate.type === undefined ? "" : ` is ${displayType(predicate.type)}`;
+  return `${prefix}${predicate.parameterName}${target}`;
+}
+
+// `(p: T, ...rest: U[]) => R` for a call signature, `new (...) => R` for a
+// construct signature (mirrors TS-Go signatureToString).
+function displaySignature(signature: Signature, construct: boolean): string {
+  const parameters = signature.parameters.map(displaySignatureParameter).join(", ");
+  return `${construct ? "new " : ""}(${parameters}) => ${displaySignatureReturn(signature)}`;
+}
+
+// A signature rendered as a TYPE MEMBER inside `{ ... }`: TS-Go uses the colon
+// form here (`(): void`, `new (): K`) rather than the arrow form used for a
+// bare callable/newable type (typePrinter signatureToStringWorker with the
+// member-separator). Used by the object-type display when the type carries
+// other members alongside its signatures.
+function displaySignatureMember(signature: Signature, construct: boolean): string {
+  const parameters = signature.parameters.map(displaySignatureParameter).join(", ");
+  return `${construct ? "new " : ""}(${parameters}): ${displaySignatureReturn(signature)}`;
 }
 
 export function displayType(type: Type): string {
@@ -1738,12 +2213,40 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Intersection) !== 0) {
     return (unionConstituents(type) ?? []).map(displayType).join(" & ");
   }
+  // The value-side ("typeof X") of a named class/enum/namespace/function symbol
+  // renders with the QueryKeyword, e.g. `typeof E` (TS-Go nodebuilderimpl.go).
+  if (type.typeofSymbol !== undefined) return `typeof ${declarationName(type.typeofSymbol)}`;
+  // An enum's DECLARED type renders as the bare enum name, e.g. `E`.
+  if ((type.flags & TypeFlags.EnumLike) !== 0 && type.aliasSymbol !== undefined) return declarationName(type.aliasSymbol);
+  // An enum-LITERAL member type renders as `EnumName.MemberName` (TS-Go
+  // nodebuilderimpl.go:3205). Its `symbol` is the enum-member symbol; its owning
+  // enum is the symbol's parent (or the member declaration's parent enum).
+  if ((type.flags & TypeFlags.EnumLiteral) !== 0 && type.symbol !== undefined && ((type.symbol.flags ?? 0) & SymbolFlags.EnumMember) !== 0) {
+    const enumSymbol = enumSymbolOfMember(type.symbol);
+    if (enumSymbol !== undefined) return `${declarationName(enumSymbol)}.${declarationName(type.symbol)}`;
+  }
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(String((type.data as LiteralType).value));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if ((type.flags & TypeFlags.TypeParameter) !== 0) return type.symbol?.name ?? "T";
-  if (isFunctionType(type)) return "function";
+  if ((type.flags & TypeFlags.Object) !== 0) {
+    const data = type.data as ObjectType | undefined;
+    const callSignatures = data?.declaredCallSignatures ?? [];
+    const constructSignatures = data?.declaredConstructSignatures ?? [];
+    const memberCount = objectTypeMembers(type)?.size ?? 0;
+    const indexCount = getIndexInfos(type)?.length ?? 0;
+    const hasNonSignatureMembers = memberCount > 0 || indexCount > 0;
+    // A type with exactly one signature and no other members renders bare in
+    // the arrow form: `() => R` for a call signature, `new () => R` for a
+    // construct signature (TS-Go signatureToString without the member braces).
+    if (!hasNonSignatureMembers && callSignatures.length === 1 && constructSignatures.length === 0) {
+      return displaySignature(callSignatures[0]!, false);
+    }
+    if (!hasNonSignatureMembers && constructSignatures.length === 1 && callSignatures.length === 0) {
+      return displaySignature(constructSignatures[0]!, true);
+    }
+  }
   const elementType = getArrayElementType(type);
   if (elementType !== undefined) {
     const rendered = displayType(elementType);
@@ -1756,12 +2259,25 @@ export function displayType(type: Type): string {
     }
     const members = objectTypeMembers(type);
     if (members !== undefined) {
-      const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.syntheticType)}`);
+      // Member order mirrors TS-Go createTypeNodesFromResolvedType: call
+      // signatures, then construct signatures, then index signatures, then
+      // properties. Signatures inside braces use the colon form (`(): void`,
+      // `new (): K`), distinct from the bare arrow form handled above.
+      const data = type.data as ObjectType | undefined;
+      const callEntries = (data?.declaredCallSignatures ?? []).map((signature) => displaySignatureMember(signature, false));
+      const constructEntries = (data?.declaredConstructSignatures ?? []).map((signature) => displaySignatureMember(signature, true));
       const indexEntries = (getIndexInfos(type) ?? []).map(
         (info) => `[${indexSignatureParameterName(info)}: ${displayType(info.keyType)}]: ${displayType(info.valueType)}`,
       );
-      const all = [...entries, ...indexEntries];
-      return all.length === 0 ? "{}" : `{ ${all.join("; ")} }`;
+      const propertyEntries = [...members.values()].map(
+        (m) => `${m.name}${isOptionalSymbol(m as unknown as AstSymbol) ? "?" : ""}: ${displayType(m.syntheticType)}`,
+      );
+      const all = [...callEntries, ...constructEntries, ...indexEntries, ...propertyEntries];
+      // TS-Go (typePrinter) terminates EVERY member with `;`, including the last,
+      // so a member list renders as `{ a: number; b: string; }` (an empty type is
+      // the bare `{}`). Both the `.types` baseline and assignability error messages
+      // share this exact format.
+      return all.length === 0 ? "{}" : `{ ${all.map((entry) => `${entry};`).join(" ")} }`;
     }
     return "object";
   }

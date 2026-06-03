@@ -1,6 +1,7 @@
 import type { Client } from "./client.js";
 import type { CompilerOptions } from "../program/index.js";
 import {
+  FileChangeKind,
   fileChangeSummaryIsEmpty,
   newFileChangeSummary,
   mergeFileChangeSummary,
@@ -183,7 +184,7 @@ export class Session {
     this.scheduleIdleCacheClean();
     this.cancelScheduledSnapshotUpdate();
     this.fs.openFile(fileName, content, version);
-    this.pendingFileChanges.push({ kind: "open", uri: fileName, version, content });
+    this.pendingFileChanges.push({ kind: FileChangeKind.Open, uri: fileName, version, content });
     this.updateSnapshot(UpdateReason.DidOpenFile);
   }
 
@@ -192,7 +193,7 @@ export class Session {
     this.cancelWarmAutoImportCache();
     this.scheduleIdleCacheClean();
     this.fs.openFile(fileName, content, version);
-    this.pendingFileChanges.push({ kind: "change", uri: fileName, version, content });
+    this.pendingFileChanges.push({ kind: FileChangeKind.Change, uri: fileName, version, content });
     this.scheduleSnapshotUpdate(UpdateReason.RequestedLanguageServicePendingChanges);
   }
 
@@ -200,13 +201,13 @@ export class Session {
     this.cancelWarmAutoImportCache();
     this.scheduleIdleCacheClean();
     this.fs.closeFile(fileName);
-    this.pendingFileChanges.push({ kind: "close", uri: fileName });
+    this.pendingFileChanges.push({ kind: FileChangeKind.Close, uri: fileName });
     this.scheduleSnapshotUpdate(UpdateReason.DidCloseFile);
   }
 
   saveFile(fileName: string): void {
     this.scheduleIdleCacheClean();
-    this.pendingFileChanges.push({ kind: "save", uri: fileName });
+    this.pendingFileChanges.push({ kind: FileChangeKind.Save, uri: fileName });
     this.scheduleSnapshotUpdate(UpdateReason.RequestedLanguageServicePendingChanges);
   }
 
@@ -214,13 +215,13 @@ export class Session {
     for (const change of changes) {
       switch (change.type) {
         case "created":
-          this.pendingFileChanges.push({ kind: "watch-create", uri: change.uri });
+          this.pendingFileChanges.push({ kind: FileChangeKind.WatchCreate, uri: change.uri });
           break;
         case "changed":
-          this.pendingFileChanges.push({ kind: "watch-change", uri: change.uri });
+          this.pendingFileChanges.push({ kind: FileChangeKind.WatchChange, uri: change.uri });
           break;
         case "deleted":
-          this.pendingFileChanges.push({ kind: "watch-delete", uri: change.uri });
+          this.pendingFileChanges.push({ kind: FileChangeKind.WatchDelete, uri: change.uri });
           break;
       }
     }
@@ -730,24 +731,24 @@ export class Session {
     const summary = newFileChangeSummary();
     for (const change of this.pendingFileChanges) {
       switch (change.kind) {
-        case "open":
+        case FileChangeKind.Open:
           summary.opened = change.uri;
           summary.changed.add(change.uri);
           break;
-        case "close":
+        case FileChangeKind.Close:
           summary.closed.add(change.uri);
           break;
-        case "change":
-        case "save":
+        case FileChangeKind.Change:
+        case FileChangeKind.Save:
           summary.changed.add(change.uri);
           break;
-        case "watch-create":
+        case FileChangeKind.WatchCreate:
           summary.created.add(change.uri);
           break;
-        case "watch-change":
+        case FileChangeKind.WatchChange:
           summary.changed.add(change.uri);
           break;
-        case "watch-delete":
+        case FileChangeKind.WatchDelete:
           summary.deleted.add(change.uri);
           break;
       }
@@ -803,18 +804,7 @@ export class Session {
   }
 
   private collectPerformanceTelemetry(): SessionTelemetry {
-    const processLike = (globalThis as unknown as {
-      process?: {
-        memoryUsage?: () => {
-          heapUsed: number;
-          heapTotal: number;
-          external?: number;
-          rss?: number;
-          arrayBuffers?: number;
-        };
-        cpuUsage?: () => { user: number; system: number };
-      };
-    }).process;
+    const processLike = readGlobalProcess();
     const memory = processLike?.memoryUsage?.()
       ?? { heapUsed: 0, heapTotal: 0, external: 0, rss: 0, arrayBuffers: 0 };
     const cpu = processLike?.cpuUsage?.() ?? { user: 0, system: 0 };
@@ -933,4 +923,23 @@ function normalizePathSegments(path: string): string {
     else parts.push(part);
   }
   return path.startsWith("/") ? `/${parts.join("/")}` : parts.join("/");
+}
+
+interface ProcessLike {
+  readonly memoryUsage?: () => {
+    readonly heapUsed: number;
+    readonly heapTotal: number;
+    readonly external?: number;
+    readonly rss?: number;
+    readonly arrayBuffers?: number;
+  };
+  readonly cpuUsage?: () => { readonly user: number; readonly system: number };
+}
+
+// Reads the host `process` object (Node) for telemetry without a fixed type
+// dependency on the runtime: the value is narrowed structurally so callers can
+// safely probe `memoryUsage`/`cpuUsage`.
+function readGlobalProcess(): ProcessLike | undefined {
+  const candidate: unknown = Reflect.get(globalThis, "process");
+  return candidate !== null && typeof candidate === "object" ? candidate as ProcessLike : undefined;
 }

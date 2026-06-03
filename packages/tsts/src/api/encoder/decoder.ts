@@ -39,7 +39,7 @@ export class ASTDecoder {
   extData = 0;
   nodeOff = 0;
   nodeCount = 0;
-  nodes: AstNode[] = [];
+  nodes: (AstNode | undefined)[] = [];
   nodeLists: (NodeList | undefined)[] = [];
   childBuf: number[] = [];
   readonly decoder = new TextDecoder();
@@ -93,8 +93,8 @@ export class ASTDecoder {
     if (this.nodeCount < 2) {
       return undefined;
     }
-    this.nodes = Array.from({ length: this.nodeCount }, () => undefined as unknown as AstNode);
-    this.nodeLists = Array.from({ length: this.nodeCount }, () => undefined);
+    this.nodes = new Array<AstNode | undefined>(this.nodeCount).fill(undefined);
+    this.nodeLists = new Array<NodeList | undefined>(this.nodeCount).fill(undefined);
     for (let index = this.nodeCount - 1; index >= 1; index -= 1) {
       const kind = this.nodeField(index, NodeOffsetKind);
       const pos = this.nodeField(index, NodeOffsetPos);
@@ -105,22 +105,20 @@ export class ASTDecoder {
         const childNodes = childIndices
           .map((childIndex) => this.nodes[childIndex])
           .filter((node): node is AstNode => node !== undefined);
-        const nodeList = childNodes as unknown as NodeArray<AstNode>;
-        assignRange(nodeList, pos, end);
-        (nodeList as unknown as { transformFlags: number }).transformFlags = 0;
-        this.nodeLists[index] = nodeList;
+        this.nodeLists[index] = makeNodeArray(childNodes, pos, end);
         continue;
       }
       const node = this.createNode(kind, data, childIndices);
       assignRange(node, pos, end);
-      node.flags = this.nodeField(index, NodeOffsetFlags);
+      setNodeFlags(node, this.nodeField(index, NodeOffsetFlags));
       this.nodes[index] = node;
     }
     return this.nodes[1];
   }
 
   getModifierList(ci: number): ModifierList | undefined {
-    return this.nodeLists[ci] as unknown as ModifierList | undefined;
+    const nodeList = this.nodeLists[ci];
+    return nodeList === undefined ? undefined : (nodeList as ModifierList);
   }
 
   nodeAt(ci: number): AstNode | undefined {
@@ -183,16 +181,75 @@ export class ASTDecoder {
     });
   }
 
-  decodeExtendedData_TemplateHead(data: number, childIndices: readonly number[], commonData: number): AstNode {
-    return this.decodeTemplateLiteralLike(Kind.TemplateHead, data, childIndices, commonData);
+  decodeExtendedData_TemplateHead(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const rawTextIdx = readLE32(this.data, extOff + 4);
+    const flags = readLE32(this.data, extOff + 8);
+    return createDecodedNode(Kind.TemplateHead, {
+      text: this.getString(textIdx),
+      rawText: this.getString(rawTextIdx),
+      templateFlags: flags,
+    });
   }
 
-  decodeExtendedData_TemplateMiddle(data: number, childIndices: readonly number[], commonData: number): AstNode {
-    return this.decodeTemplateLiteralLike(Kind.TemplateMiddle, data, childIndices, commonData);
+  decodeExtendedData_TemplateMiddle(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const rawTextIdx = readLE32(this.data, extOff + 4);
+    const flags = readLE32(this.data, extOff + 8);
+    return createDecodedNode(Kind.TemplateMiddle, {
+      text: this.getString(textIdx),
+      rawText: this.getString(rawTextIdx),
+      templateFlags: flags,
+    });
   }
 
-  decodeExtendedData_TemplateTail(data: number, childIndices: readonly number[], commonData: number): AstNode {
-    return this.decodeTemplateLiteralLike(Kind.TemplateTail, data, childIndices, commonData);
+  decodeExtendedData_TemplateTail(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const rawTextIdx = readLE32(this.data, extOff + 4);
+    const flags = readLE32(this.data, extOff + 8);
+    return createDecodedNode(Kind.TemplateTail, {
+      text: this.getString(textIdx),
+      rawText: this.getString(rawTextIdx),
+      templateFlags: flags,
+    });
+  }
+
+  decodeExtendedData_StringLiteral(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const flags = readLE32(this.data, extOff + 4);
+    return createDecodedNode(Kind.StringLiteral, { text: this.getString(textIdx), tokenFlags: flags });
+  }
+
+  decodeExtendedData_NumericLiteral(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const flags = readLE32(this.data, extOff + 4);
+    return createDecodedNode(Kind.NumericLiteral, { text: this.getString(textIdx), tokenFlags: flags });
+  }
+
+  decodeExtendedData_BigIntLiteral(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const flags = readLE32(this.data, extOff + 4);
+    return createDecodedNode(Kind.BigIntLiteral, { text: this.getString(textIdx), tokenFlags: flags });
+  }
+
+  decodeExtendedData_RegularExpressionLiteral(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const flags = readLE32(this.data, extOff + 4);
+    return createDecodedNode(Kind.RegularExpressionLiteral, { text: this.getString(textIdx), tokenFlags: flags });
+  }
+
+  decodeExtendedData_NoSubstitutionTemplateLiteral(data: number, _childIndices: readonly number[], _commonData: number): AstNode {
+    const extOff = this.extData + (data & NodeDataStringIndexMask);
+    const textIdx = readLE32(this.data, extOff);
+    const flags = readLE32(this.data, extOff + 4);
+    return createDecodedNode(Kind.NoSubstitutionTemplateLiteral, { text: this.getString(textIdx), templateFlags: flags });
   }
 
   singleChild(childIndices: readonly number[]): AstNode | undefined {
@@ -217,12 +274,15 @@ export class ASTDecoder {
   createExtendedNode(kind: number, data: number, childIndices: readonly number[], commonData: number): AstNode {
     switch (kind) {
       case Kind.StringLiteral:
+        return this.decodeExtendedData_StringLiteral(data, childIndices, commonData);
       case Kind.NumericLiteral:
+        return this.decodeExtendedData_NumericLiteral(data, childIndices, commonData);
       case Kind.BigIntLiteral:
+        return this.decodeExtendedData_BigIntLiteral(data, childIndices, commonData);
       case Kind.RegularExpressionLiteral:
-        return this.decodeLiteralLike(kind, data, "tokenFlags");
+        return this.decodeExtendedData_RegularExpressionLiteral(data, childIndices, commonData);
       case Kind.NoSubstitutionTemplateLiteral:
-        return this.decodeLiteralLike(kind, data, "templateFlags");
+        return this.decodeExtendedData_NoSubstitutionTemplateLiteral(data, childIndices, commonData);
       case Kind.TemplateHead:
         return this.decodeExtendedData_TemplateHead(data, childIndices, commonData);
       case Kind.TemplateMiddle:
@@ -232,7 +292,7 @@ export class ASTDecoder {
       case Kind.SourceFile:
         return this.decodeExtendedData_SourceFile(data, childIndices, commonData);
       default:
-        throw new Error(`unknown extended-data node kind ${kind}`);
+        throw new Error(`unknown extended data node kind ${kind}`);
     }
   }
 
@@ -262,22 +322,6 @@ export class ASTDecoder {
     return createDecodedNode(kind, decodedProperties);
   }
 
-  decodeLiteralLike(kind: number, data: number, flagsProperty: "tokenFlags" | "templateFlags"): AstNode {
-    const extOff = this.extData + (data & NodeDataStringIndexMask);
-    return createDecodedNode(kind, {
-      text: this.getString(readLE32(this.data, extOff)),
-      [flagsProperty]: readLE32(this.data, extOff + 4),
-    });
-  }
-
-  decodeTemplateLiteralLike(kind: number, data: number, _childIndices: readonly number[], _commonData: number): AstNode {
-    const extOff = this.extData + (data & NodeDataStringIndexMask);
-    return createDecodedNode(kind, {
-      text: this.getString(readLE32(this.data, extOff)),
-      rawText: this.getString(readLE32(this.data, extOff + 4)),
-      templateFlags: readLE32(this.data, extOff + 8),
-    });
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -346,32 +390,53 @@ export function newChildIter(indices: readonly number[]): ChildIterator {
   return new ChildIterator(indices);
 }
 
+// A decoded node is a plain object with mutable pos/end/flags plus dynamic
+// child properties, supporting the AST Node traversal surface (forEachChild /
+// getSourceFile). Its mutable fields let the decoder patch ranges/flags in
+// place; structurally it satisfies the AST `Node` contract.
+// The decoder builds plain objects that satisfy the AST `Node` contract with
+// mutable pos/end/flags (patched in place as the tree is decoded) plus
+// arbitrary decoded child properties read back via `Reflect.get`.
+interface DecodedNode extends AstNode {
+  pos: number;
+  end: number;
+  flags: number;
+  parent: AstNode;
+}
+
 function assignRange(target: { pos: number; end: number }, pos: number, end: number): void {
   target.pos = pos;
   target.end = end;
 }
 
+function setNodeFlags(node: AstNode, flags: number): void {
+  (node as DecodedNode).flags = flags;
+}
+
+// makeNodeArray turns a plain child array into a NodeArray by attaching the
+// pos/end range and a zeroed transformFlags, mirroring the NodeList/NodeArray
+// shape the rest of the AST expects.
+function makeNodeArray(nodes: AstNode[], pos: number, end: number): NodeArray<AstNode> {
+  return Object.assign(nodes, { pos, end, transformFlags: 0 });
+}
+
 function emptyNodeArray(): NodeList {
-  const array = [] as unknown as NodeArray<AstNode>;
-  assignRange(array, 0, 0);
-  (array as unknown as { transformFlags: number }).transformFlags = 0;
-  return array;
+  return makeNodeArray([], 0, 0);
 }
 
 function createDecodedNode(kind: number, properties: Record<string, unknown> = {}): AstNode {
-  const node = {
+  const base: Omit<DecodedNode, "parent"> = {
     kind,
     flags: 0,
     pos: 0,
     end: 0,
-    parent: undefined,
     ...properties,
-    forEachChild(visitor: (node: AstNode) => boolean | undefined, visitArray?: (nodes: NodeArray<AstNode>) => boolean | undefined): boolean | undefined {
+    forEachChild<T>(this: DecodedNode, visitor: (node: AstNode) => T, visitArray?: (nodes: NodeArray<AstNode>) => T): T | undefined {
       const childProperties = GeneratedChildPropertiesByKind.get(kind as Kind) ?? [];
       for (const property of childProperties) {
-        const value = (this as unknown as Record<string, unknown>)[property];
-        if (Array.isArray(value)) {
-          const result = visitArray?.(value as unknown as NodeArray<AstNode>);
+        const value: unknown = Reflect.get(this, property);
+        if (isDecodedNodeArray(value)) {
+          const result = visitArray?.(value);
           if (result !== undefined) {
             return result;
           }
@@ -384,19 +449,40 @@ function createDecodedNode(kind: number, properties: Record<string, unknown> = {
       }
       return undefined;
     },
-    getSourceFile(): SourceFile {
-      let current: AstNode = this as unknown as AstNode;
+    getSourceFile(this: DecodedNode): SourceFile {
+      let current: AstNode = this;
       while (current.kind !== Kind.SourceFile && current.parent !== undefined && current.parent !== current) {
         current = current.parent;
       }
       return current as SourceFile;
     },
-  } as unknown as AstNode;
+  };
+  // A freshly decoded node is its own parent until the decoder links the tree,
+  // satisfying the non-optional `parent` slot without a placeholder cast.
+  const node: DecodedNode = Object.assign(base, { parent: base as AstNode });
   return node;
+}
+
+// isDecodedNodeArray narrows a dynamic child value to a NodeArray. Decoded
+// child arrays carry the numeric pos/end range attached by makeNodeArray.
+function isDecodedNodeArray(value: unknown): value is NodeArray<AstNode> {
+  return Array.isArray(value)
+    && typeof (value as { pos?: unknown }).pos === "number"
+    && typeof (value as { end?: unknown }).end === "number";
+}
+
+// Hand-written commonData decoding functions. Each extracts the original values
+// from the 6-bit commonData that were packed by the corresponding
+// getNodeCommonData_* function.
+
+export function decodeNodeCommonData_SyntheticExpression(_commonData: number): never {
+  throw new Error("SyntheticExpression should never be decoded");
 }
 
 function decodeCommonDataProperties(kind: number, commonData: number): Record<string, unknown> {
   switch (kind) {
+    case Kind.SyntheticExpression:
+      return decodeNodeCommonData_SyntheticExpression(commonData);
     case Kind.Block:
     case Kind.ArrayLiteralExpression:
     case Kind.ObjectLiteralExpression:

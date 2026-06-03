@@ -19,28 +19,12 @@ import type { RawSourceMap } from "./generator.js";
 import type { ECMALineInfo } from "./lineInfo.js";
 import { tryGetSourceMappingURL } from "./util.js";
 import { unmarshal, isJsonObject, isJsonArray, type JsonValue } from "../json/json.js";
-import { getDirectoryPath, getNormalizedAbsolutePath } from "../tspath/path.js";
-import { computePositionOfLineAndUTF16Character as scannerComputePositionOfLineAndUTF16Character } from "../scanner/index.js";
+import { getCanonicalFileName, getDirectoryPath, getNormalizedAbsolutePath } from "../tspath/path.js";
+import { computePositionOfLineAndUTF16Character } from "../scanner/index.js";
+import * as core from "../core/core.js";
 
-function computePositionOfLineAndUTF16Character(
-  lineInfo: ECMALineInfo | undefined,
-  line: number,
-  character: number,
-): number {
-  // Mirrors source_mapper.go: position is -1 unless the file has line info,
-  // in which case it is computed via the faithful scanner helper with
-  // allowEdits=true.
-  if (lineInfo === undefined) return -1;
-  return scannerComputePositionOfLineAndUTF16Character(
-    lineInfo.lineStarts,
-    line,
-    character,
-    lineInfo.text,
-    true /*allowEdits*/,
-  );
-}
-
-const MISSING_POSITION = -1;
+// TS-Go: `const ( missingPosition = -1 )`.
+const missingPosition = -1;
 
 export interface Host {
   useCaseSensitiveFileNames(): boolean;
@@ -58,7 +42,7 @@ export interface MappedPosition {
 export type SourceMappedPosition = MappedPosition;
 
 function isSourceMappedPosition(m: MappedPosition): boolean {
-  return m.sourceIndex !== MissingSource && m.sourcePosition !== MISSING_POSITION;
+  return m.sourceIndex !== MissingSource && m.sourcePosition !== missingPosition;
 }
 
 export interface DocumentPosition {
@@ -103,8 +87,7 @@ export class DocumentPositionMapper {
   }
 
   getGeneratedPosition(loc: DocumentPosition): DocumentPosition | undefined {
-    const canonical = this.useCaseSensitiveFileNames ? loc.fileName : loc.fileName.toLowerCase();
-    const sourceIndex = this.sourceToSourceIndexMap.get(canonical);
+    const sourceIndex = this.sourceToSourceIndexMap.get(getCanonicalFileName(loc.fileName, this.useCaseSensitiveFileNames));
     if (sourceIndex === undefined || sourceIndex < 0) return undefined;
     const sourceMappings = this.sourceMappings.get(sourceIndex);
     if (sourceMappings === undefined) return undefined;
@@ -144,28 +127,55 @@ export function createDocumentPositionMapper(
   mapPath: string,
 ): DocumentPositionMapper {
   const mapDirectory = getDirectoryPath(mapPath);
-  const sourceRoot = sourceMap.sourceRoot !== undefined && sourceMap.sourceRoot !== ""
-    ? getNormalizedAbsolutePath(sourceMap.sourceRoot, mapDirectory)
-    : mapDirectory;
+  let sourceRoot: string;
+  if (sourceMap.sourceRoot !== undefined && sourceMap.sourceRoot !== "") {
+    sourceRoot = getNormalizedAbsolutePath(sourceMap.sourceRoot, mapDirectory);
+  } else {
+    sourceRoot = mapDirectory;
+  }
   const generatedAbsoluteFilePath = getNormalizedAbsolutePath(sourceMap.file, mapDirectory);
-  const sourceFileAbsolutePaths = sourceMap.sources.map((s) => getNormalizedAbsolutePath(s, sourceRoot));
+  const sourceFileAbsolutePaths = core.map(sourceMap.sources, (source) => getNormalizedAbsolutePath(source, sourceRoot));
   const useCaseSensitiveFileNames = host.useCaseSensitiveFileNames();
   const sourceToSourceIndexMap = new Map<string, SourceIndex>();
   for (let i = 0; i < sourceFileAbsolutePaths.length; i++) {
-    const path = sourceFileAbsolutePaths[i]!;
-    sourceToSourceIndexMap.set(useCaseSensitiveFileNames ? path : path.toLowerCase(), i);
+    const source = sourceFileAbsolutePaths[i]!;
+    sourceToSourceIndexMap.set(getCanonicalFileName(source, useCaseSensitiveFileNames), i);
   }
 
-  const decodedMappings: MappedPosition[] = [];
+  let decodedMappings: MappedPosition[] = [];
+  const sourceMappings = new Map<SourceIndex, SourceMappedPosition[]>();
+
+  // getDecodedMappings()
   const decoder = decodeMappings(sourceMap.mappings);
   for (const mapping of decoder.values()) {
-    const genLineInfo = host.getECMALineInfo(generatedAbsoluteFilePath);
-    const generatedPosition = computePositionOfLineAndUTF16Character(genLineInfo, mapping.generatedLine, mapping.generatedCharacter);
-    let sourcePosition = MISSING_POSITION;
-    if (isSourceMapping(mapping)) {
-      const srcLineInfo = host.getECMALineInfo(sourceFileAbsolutePaths[mapping.sourceIndex]!);
-      sourcePosition = computePositionOfLineAndUTF16Character(srcLineInfo, mapping.sourceLine, mapping.sourceCharacter);
+    // processMapping()
+    let generatedPosition = missingPosition;
+    const lineInfo = host.getECMALineInfo(generatedAbsoluteFilePath);
+    if (lineInfo !== undefined) {
+      generatedPosition = computePositionOfLineAndUTF16Character(
+        lineInfo.lineStarts,
+        mapping.generatedLine,
+        mapping.generatedCharacter,
+        lineInfo.text,
+        true /*allowEdits*/,
+      );
     }
+
+    let sourcePosition = missingPosition;
+    if (isSourceMapping(mapping)) {
+      const sourceLineInfo = host.getECMALineInfo(sourceFileAbsolutePaths[mapping.sourceIndex]!);
+      if (sourceLineInfo !== undefined) {
+        const pos = computePositionOfLineAndUTF16Character(
+          sourceLineInfo.lineStarts,
+          mapping.sourceLine,
+          mapping.sourceCharacter,
+          sourceLineInfo.text,
+          true /*allowEdits*/,
+        );
+        sourcePosition = pos;
+      }
+    }
+
     decodedMappings.push({
       generatedPosition,
       sourceIndex: mapping.sourceIndex,
@@ -174,45 +184,46 @@ export function createDocumentPositionMapper(
     });
   }
   if (decoder.getError() !== undefined) {
-    return new DocumentPositionMapper(
-      useCaseSensitiveFileNames,
-      sourceFileAbsolutePaths,
-      sourceToSourceIndexMap,
-      generatedAbsoluteFilePath,
-      [],
-      new Map(),
-    );
+    decodedMappings = [];
   }
 
-  const sourceMappings = new Map<SourceIndex, SourceMappedPosition[]>();
-  for (const m of decodedMappings) {
-    if (!isSourceMappedPosition(m)) continue;
-    const list = sourceMappings.get(m.sourceIndex) ?? [];
-    list.push({ ...m });
-    sourceMappings.set(m.sourceIndex, list);
+  // getSourceMappings()
+  for (const mapping of decodedMappings) {
+    if (!isSourceMappedPosition(mapping)) {
+      continue;
+    }
+    const sourceIndex = mapping.sourceIndex;
+    const list = sourceMappings.get(sourceIndex) ?? [];
+    list.push({
+      generatedPosition: mapping.generatedPosition,
+      sourceIndex,
+      sourcePosition: mapping.sourcePosition,
+      nameIndex: mapping.nameIndex,
+    });
+    sourceMappings.set(sourceIndex, list);
   }
-  for (const [k, list] of sourceMappings.entries()) {
+  for (const [i, list] of sourceMappings.entries()) {
     list.sort((a, b) => a.sourcePosition - b.sourcePosition);
-    sourceMappings.set(k, dedupeSorted(list, (a, b) =>
+    sourceMappings.set(i, dedupeSorted(list, (a, b) =>
       a.generatedPosition === b.generatedPosition &&
       a.sourceIndex === b.sourceIndex &&
-      a.sourcePosition === b.sourcePosition,
-    ));
+      a.sourcePosition === b.sourcePosition));
   }
 
-  const generatedMappings = decodedMappings.slice().sort((a, b) => a.generatedPosition - b.generatedPosition);
-  const deduped = dedupeSorted(generatedMappings, (a, b) =>
+  // getGeneratedMappings()
+  let generatedMappings = decodedMappings;
+  generatedMappings.sort((a, b) => a.generatedPosition - b.generatedPosition);
+  generatedMappings = dedupeSorted(generatedMappings, (a, b) =>
     a.generatedPosition === b.generatedPosition &&
     a.sourceIndex === b.sourceIndex &&
-    a.sourcePosition === b.sourcePosition,
-  );
+    a.sourcePosition === b.sourcePosition);
 
   return new DocumentPositionMapper(
     useCaseSensitiveFileNames,
     sourceFileAbsolutePaths,
     sourceToSourceIndexMap,
     generatedAbsoluteFilePath,
-    deduped,
+    generatedMappings,
     sourceMappings,
   );
 }
@@ -349,7 +360,15 @@ function tryGetSourceMappingURLFromHost(host: Host, fileName: string): string {
   return tryGetSourceMappingURL(lineInfo);
 }
 
-function tryParseBase64Url(url: string): { base64Object: string; matched: boolean } {
+// TS-Go returns `(parseableUrl string, isBase64Url bool)`; modeled as a named
+// pair so the signature carries no inline brace.
+interface ParseBase64UrlResult {
+  readonly base64Object: string;
+  readonly matched: boolean;
+}
+
+// Equivalent to /^data:(?:application\/json;(?:charset=[uU][tT][fF]-8;)?base64,([A-Za-z0-9+/=]+)$)?/
+function tryParseBase64Url(url: string): ParseBase64UrlResult {
   if (!url.startsWith("data:")) return { base64Object: "", matched: false };
   let rest = url.slice(5);
   if (!rest.startsWith("application/json;")) return { base64Object: "", matched: true };

@@ -1,5 +1,14 @@
 import type { FlowLabel, FlowNode, Node } from "../ast/index.js";
-import { Kind, nodeName, nodeParent } from "../ast/index.js";
+import {
+  Kind,
+  isBreakOrContinueStatement,
+  isLabeledStatement,
+  labeledStatementLabel,
+  labeledStatementStatement,
+  nodeName,
+  nodeParent,
+  nodeText,
+} from "../ast/index.js";
 import { createBranchLabel } from "./flow.js";
 
 export interface BinderActiveLabel {
@@ -104,25 +113,24 @@ export function statementCanHaveContinueTarget(statement: Node): boolean {
 
 export function isContinueTargetStatement(statement: Node): boolean {
   if (statementCanHaveContinueTarget(statement)) return true;
-  if (statement.kind !== Kind.LabeledStatement) return false;
-  const inner = field<Node>(statement, "statement");
-  return inner !== undefined && isContinueTargetStatement(inner);
+  if (!isLabeledStatement(statement)) return false;
+  const inner = labeledStatementStatement(statement);
+  return isContinueTargetStatement(inner);
 }
 
 export function labelText(node: Node | undefined): string {
   if (node === undefined) return "";
-  if (node.kind === Kind.LabeledStatement) {
-    const label = field<Node>(node, "label");
-    return labelText(label);
+  if (isLabeledStatement(node)) {
+    return labelText(labeledStatementLabel(node));
   }
   const name = nodeName(node) ?? node;
-  return field<string>(name, "text") ?? "";
+  return nodeText(name);
 }
 
 export function parentLabel(statement: Node): Node | undefined {
   let current = nodeParent(statement);
-  while (current !== undefined && current.kind === Kind.LabeledStatement) {
-    const inner = field<Node>(current, "statement");
+  while (current !== undefined && isLabeledStatement(current)) {
+    const inner = labeledStatementStatement(current);
     if (inner === statement) return current;
     current = nodeParent(current);
   }
@@ -130,8 +138,8 @@ export function parentLabel(statement: Node): Node | undefined {
 }
 
 export function breakOrContinueLabel(node: Node): Node | undefined {
-  if (node.kind !== Kind.BreakStatement && node.kind !== Kind.ContinueStatement) return undefined;
-  return field<Node>(node, "label");
+  if (!isBreakOrContinueStatement(node)) return undefined;
+  return node.label;
 }
 
 export function resolveBreakOrContinueTarget(
@@ -188,9 +196,4 @@ export function nearestLabelForStatement(
     if (labelTargetsStatement(label, statement)) return label;
   }
   return undefined;
-}
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
 }

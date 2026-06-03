@@ -638,6 +638,12 @@ export interface Type {
   aliasTypeArguments?: readonly Type[];
   pattern?: AstNode;
   data?: TypeData;
+  // The value-side ("typeof X") of a named class/enum/namespace/function symbol.
+  // When set on an anonymous object type, the display renders `typeof <name>`
+  // (mirroring TS-Go's anonymous-object-with-value-symbol → QueryKeyword path in
+  // nodebuilderimpl.go). The enum DECLARED type instead carries `aliasSymbol` and
+  // renders the bare enum name.
+  typeofSymbol?: AstSymbol;
 }
 
 export type TypeData =

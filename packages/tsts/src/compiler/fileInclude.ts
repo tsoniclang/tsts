@@ -7,31 +7,51 @@
  */
 
 import type { Node as AstNode, FileReference, Diagnostic, SourceFile } from "../ast/index.js";
+import { nodeIsSynthesized, nodeText } from "../ast/index.js";
+import { skipTrivia } from "../scanner/index.js";
+import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 
 // ---------------------------------------------------------------------------
-// FileIncludeKind constant-union
+// fileIncludeKind enum
 // ---------------------------------------------------------------------------
 
-export type FileIncludeKind = number;
-export const FileIncludeKind = {
-  RootFile: 0 as FileIncludeKind,
-  SourceFromProjectReference: 1 as FileIncludeKind,
-  OutputFromProjectReference: 2 as FileIncludeKind,
-  Import: 3 as FileIncludeKind,
-  ReferenceFile: 4 as FileIncludeKind,
-  TypeReferenceDirective: 5 as FileIncludeKind,
-  LibFile: 6 as FileIncludeKind,
-  LibReferenceDirective: 7 as FileIncludeKind,
-  AutomaticTypeDirectiveFile: 8 as FileIncludeKind,
-} as const;
+// 1:1 port of TS-Go `internal/compiler/fileInclude.go`:
+//   type fileIncludeKind int
+//   const (
+//     // References from file
+//     fileIncludeKindImport = iota
+//     fileIncludeKindReferenceFile
+//     fileIncludeKindTypeReferenceDirective
+//     fileIncludeKindLibReferenceDirective
+//
+//     fileIncludeKindRootFile
+//     fileIncludeKindLibFile
+//     fileIncludeKindAutomaticTypeDirectiveFile
+//   )
+// The first four kinds are "referenced from file" (see isReferencedFile,
+// which tests kind <= LibReferenceDirective); the iota order is load-bearing.
+// TS-convention member names strip the `fileIncludeKind` prefix.
+export const enum FileIncludeKind {
+  Import = 0,
+  ReferenceFile = 1,
+  TypeReferenceDirective = 2,
+  LibReferenceDirective = 3,
+  RootFile = 4,
+  LibFile = 5,
+  AutomaticTypeDirectiveFile = 6,
+}
 
 export interface FileIncludeReason {
   kind: FileIncludeKind;
   fileName?: string;
   referencingFile?: string;
   ref?: FileReference;
-  packageId?: string;
+  // Carries the resolution `module.PackageId` (or its already-stringified
+  // form) for import / type-reference reasons; stringified on read via
+  // packageIdString. Upstream keeps this inside the kind-specific data struct;
+  // TSTS flattens it onto the reason.
+  packageId?: PackageIdLike | string;
   index?: number;
   libFileIndex?: number;
   isReferencedFile?: boolean;
@@ -45,6 +65,10 @@ export interface ReferencedFileData {
   text: string;
   position: number;
   length: number;
+  // Port of TS-Go `referencedFileData.synthetic *ast.Node`: a synthesized
+  // module specifier (importHelpers / jsx-factory) when there is no
+  // source-text import node at `index`.
+  synthetic?: AstNode;
 }
 
 export interface ReferenceFileLocation {
@@ -78,7 +102,7 @@ export function fileIncludeAsLibFileIndex(r: FileIncludeReason): { index: number
 }
 
 export function fileIncludeIsReferencedFile(r: FileIncludeReason): boolean {
-  return r.kind === FileIncludeKind.ReferenceFile;
+  return r.kind <= FileIncludeKind.LibReferenceDirective;
 }
 
 export function fileIncludeAsReferencedFileData(r: FileIncludeReason): ReferencedFileData | undefined {
@@ -98,13 +122,17 @@ export function referenceLocationText(loc: ReferenceFileLocation): string {
 }
 
 export function referenceLocationDiagnosticAt(
-  loc: ReferenceFileLocation, message: { code: number; message: string }, ...args: unknown[]
+  loc: ReferenceFileLocation, message: DiagnosticMessage, ...args: unknown[]
 ): Diagnostic {
-  void args;
   return {
-    file: undefined as unknown as SourceFile, start: loc.position, length: loc.length,
-    messageText: message.message, category: 1, code: message.code,
-  } as unknown as Diagnostic;
+    message,
+    ...(loc.file === undefined ? {} : { file: { fileName: loc.file.fileName, text: loc.file.text } }),
+    start: loc.position,
+    length: loc.length,
+    category: message.category,
+    code: message.code,
+    text: formatMessage(message.message, args),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +148,7 @@ export function getReferencedLocation(reason: FileIncludeReason, program: Progra
   switch (reason.kind) {
     case FileIncludeKind.Import: {
       const specifier = ref !== undefined ? importSpecifierAt(file, ref.index) : undefined;
-      const synthetic = (ref as unknown as { synthetic?: AstNode } | undefined)?.synthetic;
+      const synthetic = ref?.synthetic;
       const node = synthetic ?? specifier;
       const resolved = node === undefined ? undefined : program.getResolvedModuleFromModuleSpecifier?.(file, node);
       const location: ReferenceFileLocation = {
@@ -160,11 +188,9 @@ export function computeDiagnostic(
     case FileIncludeKind.AutomaticTypeDirectiveFile: {
       const data = fileIncludeAsAutomaticTypeDirectiveFileData(reason);
       const typeReference = data?.typeReference ?? reason.fileName ?? "";
-      const packageId = data?.packageId ?? reason.packageId ?? "";
+      const packageId = data?.packageId ?? packageIdText(reason.packageId);
       const options = program.options?.();
-      const usesWildcardTypes = (options as unknown as { usesWildcardTypes?: () => boolean; UsesWildcardTypes?: () => boolean } | undefined)?.usesWildcardTypes?.()
-        ?? (options as unknown as { UsesWildcardTypes?: () => boolean } | undefined)?.UsesWildcardTypes?.()
-        ?? false;
+      const usesWildcardTypes = options?.usesWildcardTypes?.() ?? false;
       if (!usesWildcardTypes) {
         return packageId !== ""
           ? compilerDiagnostic(Diagnostics.Entry_point_of_type_library_0_specified_in_compilerOptions_with_packageId_1, typeReference, packageId)
@@ -177,9 +203,7 @@ export function computeDiagnostic(
     case FileIncludeKind.LibFile: {
       const { index, ok } = fileIncludeAsLibFileIndex(reason);
       const options = program.options?.();
-      const lib = (options as unknown as { lib?: readonly string[]; Lib?: readonly string[] } | undefined)?.lib
-        ?? (options as unknown as { Lib?: readonly string[] } | undefined)?.Lib
-        ?? [];
+      const lib = options?.lib ?? [];
       if (ok && lib[index] !== undefined) {
         return compilerDiagnostic(Diagnostics.Library_0_specified_in_compilerOptions, lib[index]);
       }
@@ -188,12 +212,9 @@ export function computeDiagnostic(
         ? compilerDiagnostic(Diagnostics.Default_library_for_target_0, target)
         : compilerDiagnostic(Diagnostics.Default_library);
     }
-    case FileIncludeKind.SourceFromProjectReference:
-      return compilerDiagnostic({ code: 0, category: 1, message: "Source from project reference '{0}'." }, toFileName(reason.fileName ?? ""));
-    case FileIncludeKind.OutputFromProjectReference:
-      return compilerDiagnostic({ code: 0, category: 1, message: "Output from project reference '{0}'." }, toFileName(reason.fileName ?? ""));
     default:
-      return compilerDiagnostic({ code: 0, category: 1, message: "Unknown file include reason." });
+      // Mirrors upstream `panic(fmt.Sprintf("unknown reason: %v", r.kind))`.
+      throw new Error(`unknown reason: ${reason.kind}`);
   }
 }
 
@@ -203,7 +224,7 @@ export function computeReferenceFileDiagnostic(
   const loc = getReferencedLocation(reason, program);
   const referenceTextValue = loc === undefined ? reason.fileName ?? "" : referenceLocationText(loc);
   const containingFile = loc?.fileName ?? reason.referencingFile ?? "";
-  const packageId = loc?.packageId ?? reason.packageId ?? "";
+  const packageId = loc?.packageId ?? packageIdText(reason.packageId);
   switch (reason.kind) {
     case FileIncludeKind.Import:
       if (packageId !== "") {
@@ -220,7 +241,8 @@ export function computeReferenceFileDiagnostic(
     case FileIncludeKind.LibReferenceDirective:
       return compilerDiagnostic(Diagnostics.Library_referenced_via_0_from_file_1, referenceTextValue, toFileName(containingFile));
     default:
-      return compilerDiagnostic({ code: 0, category: 1, message: "Unknown reference file include reason." });
+      // Mirrors upstream `panic(fmt.Sprintf("unknown reason: %v", r.kind))`.
+      throw new Error(`unknown reason: ${reason.kind}`);
   }
 }
 
@@ -254,13 +276,31 @@ function toAbsoluteName(name: string): string { return name; }
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
 
+// Forward-declared subset of the compiler Program surface that
+// FileIncludeReason diagnostics read. Each accessor is properly typed so the
+// switch bodies below need no `as`-casts.
+interface CompilerOptionsLike {
+  usesWildcardTypes?(): boolean;
+  lib?: readonly string[];
+  getEmitScriptTarget?(): unknown;
+  target?: unknown;
+}
+interface ResolvedModuleLike {
+  packageId?: PackageIdLike;
+  resolvedFileName?: string;
+  isExternalLibraryImport?: boolean;
+}
+interface PackageIdLike {
+  name?: string;
+  toString?(): string;
+}
 interface Program {
   readonly _p?: unknown;
   getSourceFile?(fileName: string): SourceFile | undefined;
   getSourceFileByPath?(path: string): SourceFile | undefined;
-  getResolvedModuleFromModuleSpecifier?(file: SourceFile, moduleSpecifier: AstNode): unknown;
+  getResolvedModuleFromModuleSpecifier?(file: SourceFile, moduleSpecifier: AstNode): ResolvedModuleLike | undefined;
   getCurrentDirectory?(): string;
-  options?(): unknown;
+  options?(): CompilerOptionsLike | undefined;
 }
 export type _Ast = AstNode;
 
@@ -293,46 +333,53 @@ function referenceFileLocation(file: SourceFile, ref: FileReference | undefined)
   };
 }
 
+// 1:1 port of TS-Go `(*referenceFileLocation).text()`. A real source-text node
+// yields the trivia-skipped source slice; a synthesized node yields its quoted
+// text; otherwise the file-reference range slice.
 function referenceText(file: SourceFile, node: AstNode | undefined, ref: FileReference | undefined): string {
   if (node !== undefined) {
-    const text = (node as unknown as { text?: string }).text;
-    if (text !== undefined) return JSON.stringify(text);
-    return file.text.slice(node.pos, node.end);
+    if (!nodeIsSynthesized(node)) {
+      return file.text.slice(skipTrivia(file.text, node.pos), node.end);
+    }
+    return `"${nodeText(node)}"`;
   }
   if (ref !== undefined) return file.text.slice(ref.pos, ref.end);
   return "";
 }
 
-function packageIdString(resolved: unknown): string {
-  const packageId = (resolved as { packageId?: unknown; PackageId?: unknown } | undefined)?.packageId
-    ?? (resolved as { PackageId?: unknown } | undefined)?.PackageId;
-  if (packageId === undefined || packageId === null) return "";
-  if (typeof packageId === "string") return packageId;
-  const stringer = packageId as { toString?: () => string; String?: () => string; name?: string; Name?: string };
-  if (typeof stringer.String === "function") return stringer.String();
-  if (typeof stringer.toString === "function" && stringer.toString !== Object.prototype.toString) return stringer.toString();
-  return stringer.name ?? stringer.Name ?? "";
+function packageIdString(resolved: ResolvedModuleLike | undefined): string {
+  return packageIdValueString(resolved?.packageId);
 }
 
-function emitScriptTargetName(options: unknown): string {
-  const target = (options as { target?: unknown; Target?: unknown; getEmitScriptTarget?: () => unknown; GetEmitScriptTarget?: () => unknown } | undefined)?.getEmitScriptTarget?.()
-    ?? (options as { GetEmitScriptTarget?: () => unknown } | undefined)?.GetEmitScriptTarget?.()
-    ?? (options as { target?: unknown; Target?: unknown } | undefined)?.target
-    ?? (options as { Target?: unknown } | undefined)?.Target;
+// Stringify a flattened `FileIncludeReason.packageId` (a module.PackageId-like
+// struct or an already-stringified name), matching upstream `PackageId.String()`.
+function packageIdText(value: PackageIdLike | string | undefined): string {
+  if (value === undefined) return "";
+  if (typeof value === "string") return value;
+  return packageIdValueString(value);
+}
+
+function packageIdValueString(packageId: PackageIdLike | undefined): string {
+  if (packageId === undefined) return "";
+  if (typeof packageId.toString === "function" && packageId.toString !== Object.prototype.toString) {
+    return packageId.toString();
+  }
+  return packageId.name ?? "";
+}
+
+function emitScriptTargetName(options: CompilerOptionsLike | undefined): string {
+  const target = options?.getEmitScriptTarget?.() ?? options?.target;
   if (target === undefined || target === null) return "";
   return typeof target === "string" ? target : String(target);
 }
 
-function compilerDiagnostic(message: { code?: number; category?: number; message?: string }, ...args: unknown[]): Diagnostic {
+function compilerDiagnostic(message: DiagnosticMessage, ...args: unknown[]): Diagnostic {
   return {
-    file: undefined,
-    start: 0,
-    length: 0,
-    messageText: formatMessage(message.message ?? "diagnostic", args),
-    category: message.category ?? 1,
-    code: message.code ?? 0,
-    args,
-  } as unknown as Diagnostic;
+    message,
+    category: message.category,
+    code: message.code,
+    text: formatMessage(message.message, args),
+  };
 }
 
 function formatMessage(text: string, args: readonly unknown[]): string {

@@ -1,16 +1,22 @@
 export const excessiveChangeThreshold = 1000;
 
-export type FileChangeKind =
-  | "open"
-  | "close"
-  | "change"
-  | "save"
-  | "watch-create"
-  | "watch-change"
-  | "watch-delete";
+// Port of TS-Go `FileChangeKind int` (`iota` constants in
+// internal/project/filechange.go). The numeric ordering mirrors the upstream
+// iota sequence: Open, Close, Change, Save, WatchCreate, WatchChange,
+// WatchDelete.
+export enum FileChangeKind {
+  Open,
+  Close,
+  Change,
+  Save,
+  WatchCreate,
+  WatchChange,
+  WatchDelete,
+}
 
-export function isWatchFileChangeKind(kind: FileChangeKind): boolean {
-  return kind === "watch-create" || kind === "watch-change" || kind === "watch-delete";
+// Port of TS-Go `(k FileChangeKind) IsWatchKind()`.
+export function isWatchKind(kind: FileChangeKind): boolean {
+  return kind === FileChangeKind.WatchCreate || kind === FileChangeKind.WatchChange || kind === FileChangeKind.WatchDelete;
 }
 
 export interface FileChange {

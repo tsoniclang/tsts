@@ -21,6 +21,7 @@ import {
   isEmptyStatement,
   isEnumDeclaration,
   isExpressionStatement,
+  isExportAssignment,
   isExportDeclaration,
   isFunctionExpression,
   isForInStatement,
@@ -34,6 +35,8 @@ import {
   isIdentifier,
   isImportDeclaration,
   isMissingDeclaration,
+  isModuleBlock,
+  isModuleDeclaration,
   isNamedExports,
   isNamedImports,
   isNamespaceImport,
@@ -69,6 +72,8 @@ import {
   isVoidExpression,
   isWhileStatement,
   isArrayBindingPattern,
+  isExternalModuleReference,
+  isImportEqualsDeclaration,
   hasSyntacticModifier,
   type BindingElement,
   type BinaryOperatorToken,
@@ -78,6 +83,7 @@ import {
   type ConstructorDeclaration,
   type EnumDeclaration,
   type Expression,
+  type ExportAssignment,
   type ExportDeclaration,
   type ForInitializer,
   type FunctionDeclaration,
@@ -85,9 +91,11 @@ import {
   type IfStatement,
   type ImportClause,
   type ImportDeclaration,
+  type ImportEqualsDeclaration,
   type ImportSpecifier,
   type MethodDeclaration,
   type ModifierLike,
+  type ModuleDeclaration,
   type ModuleExportName,
   type NamedExportBindings,
   type NamedImportBindings,
@@ -106,6 +114,28 @@ import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 
 function kindDebugName(kind: Kind): string {
   return String(kind);
+}
+
+/**
+ * Lexical scope captured while emitting the body of a single `namespace` /
+ * `module` declaration.
+ *
+ * TypeScript lowers a namespace into an IIFE whose single parameter shadows the
+ * namespace variable (`(function (N) { ... })(N || (N = {}))`). Inside that body
+ * every reference to an *exported* member of the namespace is qualified with the
+ * parameter name (`x` becomes `N.x`), because exported members live as
+ * properties on `N` rather than as free variables. This context carries the
+ * parameter name and the set of exported member names so expression printing can
+ * perform that qualification.
+ *
+ * The set is collected purely lexically from the single declaration's body (no
+ * symbol resolution), so it is correct for non-merged namespaces. Cross-merge
+ * member references (a name exported in another declaration of the same
+ * namespace) are intentionally out of scope and rejected upstream.
+ */
+interface NamespaceContext {
+  readonly name: string;
+  readonly exportedNames: ReadonlySet<string>;
 }
 
 const binaryOperatorText = new Map<Kind, string>([
@@ -177,21 +207,21 @@ export function printSourceFile(sourceFile: SourceFile, options: PrintOptions = 
     indentText: options.indentText ?? "  ",
   };
   return sourceFile.statements.flatMap(statement => {
-    const printed = printStatement(statement, context, 0);
+    const printed = printStatement(statement, context, 0, undefined);
     return printed === undefined ? [] : [printed];
   }).join(context.newline);
 }
 
 export function printNode(node: Node): string {
   if (isExpressionStatement(node)) {
-    return printStatement(node, { newline: "\n", indentText: "  " }, 0) ?? "";
+    return printStatement(node, { newline: "\n", indentText: "  " }, 0, undefined) ?? "";
   }
-  return printExpression(node as Expression);
+  return printExpression(node as Expression, undefined);
 }
 
-function printStatement(statement: Statement, context: PrintContext, depth: number): string | undefined {
+function printStatement(statement: Statement, context: PrintContext, depth: number, ns: NamespaceContext | undefined): string | undefined {
   if (isExpressionStatement(statement)) {
-    return `${printExpression(statement.expression)};`;
+    return `${printExpression(statement.expression, ns)};`;
   }
   if (isEmptyStatement(statement)) {
     // A standalone empty statement (a bare `;`) is preserved verbatim, matching
@@ -199,43 +229,52 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
     return ";";
   }
   if (isVariableStatement(statement)) {
-    return printVariableStatement(statement.modifiers, statement.declarationList);
+    return printVariableStatement(statement.modifiers, statement.declarationList, ns);
   }
   if (isImportDeclaration(statement)) {
     return printImportDeclaration(statement);
   }
+  if (isImportEqualsDeclaration(statement)) {
+    return printImportEqualsDeclaration(statement);
+  }
   if (isExportDeclaration(statement)) {
     return printExportDeclaration(statement);
   }
+  if (isExportAssignment(statement)) {
+    return printExportAssignment(statement);
+  }
   if (isFunctionDeclaration(statement)) {
-    return printFunctionDeclaration(statement, context, depth);
+    return printFunctionDeclaration(statement, context, depth, false);
   }
   if (isClassDeclaration(statement)) {
-    return printClassDeclaration(statement, context, depth);
+    return printClassDeclaration(statement, context, depth, false);
   }
   if (isEnumDeclaration(statement)) {
     return printEnumDeclaration(statement);
+  }
+  if (isModuleDeclaration(statement)) {
+    return printModuleDeclaration(statement, context, depth);
   }
   if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
     return undefined;
   }
   if (isIfStatement(statement)) {
-    return printIfStatement(statement, context, depth);
+    return printIfStatement(statement, context, depth, ns);
   }
   if (isWhileStatement(statement)) {
-    return printWhileStatement(statement, context, depth);
+    return printWhileStatement(statement, context, depth, ns);
   }
   if (isDoStatement(statement)) {
-    return `do ${printEmbeddedStatement(statement.statement, context, depth)} while (${printExpression(statement.expression)});`;
+    return `do ${printEmbeddedStatement(statement.statement, context, depth, ns)} while (${printExpression(statement.expression, ns)});`;
   }
   if (isForStatement(statement)) {
-    return `for (${printForInitializer(statement.initializer)}; ${statement.condition === undefined ? "" : printExpression(statement.condition)}; ${statement.incrementor === undefined ? "" : printExpression(statement.incrementor)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+    return `for (${printForInitializer(statement.initializer, ns)}; ${statement.condition === undefined ? "" : printExpression(statement.condition, ns)}; ${statement.incrementor === undefined ? "" : printExpression(statement.incrementor, ns)}) ${printEmbeddedStatement(statement.statement, context, depth, ns)}`;
   }
   if (isForInStatement(statement)) {
-    return `for (${printForInitializer(statement.initializer)} in ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+    return `for (${printForInitializer(statement.initializer, ns)} in ${printExpression(statement.expression, ns)}) ${printEmbeddedStatement(statement.statement, context, depth, ns)}`;
   }
   if (isForOfStatement(statement)) {
-    return `for (${printForInitializer(statement.initializer)} of ${printExpression(statement.expression)}) ${printEmbeddedStatement(statement.statement, context, depth)}`;
+    return `for (${printForInitializer(statement.initializer, ns)} of ${printExpression(statement.expression, ns)}) ${printEmbeddedStatement(statement.statement, context, depth, ns)}`;
   }
   if (isBreakStatement(statement)) {
     return statement.label === undefined ? "break;" : `break ${statement.label.text};`;
@@ -244,39 +283,86 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
     return statement.label === undefined ? "continue;" : `continue ${statement.label.text};`;
   }
   if (isReturnStatement(statement)) {
-    return statement.expression === undefined ? "return;" : `return ${printExpression(statement.expression)};`;
+    return statement.expression === undefined ? "return;" : `return ${printExpression(statement.expression, ns)};`;
   }
   if (isThrowStatement(statement)) {
-    return `throw ${printExpression(statement.expression)};`;
+    return `throw ${printExpression(statement.expression, ns)};`;
   }
   if (isTryStatement(statement)) {
-    const catchClause = statement.catchClause === undefined ? "" : ` catch${statement.catchClause.variableDeclaration === undefined ? "" : ` (${printVariableDeclaration(statement.catchClause.variableDeclaration)})`} ${printBlock(statement.catchClause.block.statements, context, depth)}`;
-    const finallyBlock = statement.finallyBlock === undefined ? "" : ` finally ${printBlock(statement.finallyBlock.statements, context, depth)}`;
-    return `try ${printBlock(statement.tryBlock.statements, context, depth)}${catchClause}${finallyBlock}`;
+    const catchClause = statement.catchClause === undefined ? "" : ` catch${statement.catchClause.variableDeclaration === undefined ? "" : ` (${printVariableDeclaration(statement.catchClause.variableDeclaration, ns)})`} ${printBlock(statement.catchClause.block.statements, context, depth, ns)}`;
+    const finallyBlock = statement.finallyBlock === undefined ? "" : ` finally ${printBlock(statement.finallyBlock.statements, context, depth, ns)}`;
+    return `try ${printBlock(statement.tryBlock.statements, context, depth, ns)}${catchClause}${finallyBlock}`;
   }
   if (isSwitchStatement(statement)) {
     const childIndent = context.indentText.repeat(depth + 1);
     const currentIndent = context.indentText.repeat(depth);
     const clauses = statement.caseBlock.clauses.map(clause => {
-      const header = clause.kind === Kind.CaseClause ? `case ${printExpression(clause.expression)}:` : "default:";
-      const body = clause.statements.map(child => `${context.indentText.repeat(depth + 2)}${printStatement(child, context, depth + 2) ?? ""}`).join(context.newline);
+      const header = clause.kind === Kind.CaseClause ? `case ${printExpression(clause.expression, ns)}:` : "default:";
+      const body = clause.statements.map(child => `${context.indentText.repeat(depth + 2)}${printStatement(child, context, depth + 2, ns) ?? ""}`).join(context.newline);
       return body.length === 0 ? `${childIndent}${header}` : `${childIndent}${header}${context.newline}${body}`;
     }).join(context.newline);
-    return `switch (${printExpression(statement.expression)}) {${context.newline}${clauses}${context.newline}${currentIndent}}`;
+    return `switch (${printExpression(statement.expression, ns)}) {${context.newline}${clauses}${context.newline}${currentIndent}}`;
   }
   if (isBlock(statement)) {
-    return printBlock(statement.statements, context, depth);
+    return printBlock(statement.statements, context, depth, ns);
   }
   throw new Error(`Unsupported statement kind ${kindDebugName(statement.kind)}`);
 }
 
 function printImportDeclaration(importDeclaration: ImportDeclaration): string | undefined {
-  const moduleSpecifier = printExpression(importDeclaration.moduleSpecifier);
+  const moduleSpecifier = printExpression(importDeclaration.moduleSpecifier, undefined);
   if (importDeclaration.importClause === undefined) {
     return `import ${moduleSpecifier};`;
   }
   const importClause = printImportClause(importDeclaration.importClause);
   return importClause === undefined ? undefined : `import ${importClause} from ${moduleSpecifier};`;
+}
+
+/**
+ * Print an `ImportEqualsDeclaration` node (SyntaxKind 272), i.e. an
+ * `import <name> = <moduleReference>` declaration.
+ *
+ * Bounded scope (matches TS-Go's CommonJS lowering exactly):
+ *
+ *   - A type-only declaration (`import type a = require("m")`) carries no value
+ *     and is erased (TS-Go's typeEraser elides it), so it produces no JS.
+ *   - A plain (non-`export`) external-module form `import a = require("m")`
+ *     lowers to the CommonJS `const a = require("m");` (TS-Go's
+ *     `visitTopLevelImportEqualsDeclaration` emits a `const` variable statement
+ *     whose initializer is `require(<specifier>)` — see e.g.
+ *     `exportAssignmentMerging1` → `b.js`: `const a = require("./a");`). The
+ *     module specifier string literal is reproduced verbatim.
+ *
+ * Honestly out of scope (rejected via the unsupported-statement error so no
+ * malformed output is produced):
+ *
+ *   - The `export import a = require("m")` form, whose lowering is
+ *     `exports.a = require("m");` plus re-export wiring — module-target `exports`
+ *     work (the same category as `export namespace`).
+ *   - The entity-name (alias) form `import a = N.B`, whose emit-vs-elide
+ *     decision and `var a = N.B;` lowering are symbol/alias-reference driven
+ *     (TS-Go's `isReferencedAliasDeclaration` /
+ *     `isTopLevelValueImportEqualsWithEntityName`), which cannot be decided
+ *     syntactically.
+ */
+function printImportEqualsDeclaration(importEquals: ImportEqualsDeclaration): string | undefined {
+  // A type-only `import type a = …` is type-space only: no JS emit.
+  if (importEquals.isTypeOnly) {
+    return undefined;
+  }
+  // The entity-name (alias) form `import a = N.B` requires alias-reference
+  // resolution to decide emit-vs-elide and its `var a = N.B;` lowering; out of
+  // scope (rejected so no malformed output is produced).
+  if (!isExternalModuleReference(importEquals.moduleReference)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(importEquals.kind)}`);
+  }
+  // `export import a = require("m")` lowers to `exports.a = require("m");`,
+  // which needs module-target `exports` wiring; out of scope.
+  if (hasModifier(importEquals.modifiers, Kind.ExportKeyword)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(importEquals.kind)}`);
+  }
+  const moduleSpecifier = printExpression(importEquals.moduleReference.expression, undefined);
+  return `const ${importEquals.name.text} = require(${moduleSpecifier});`;
 }
 
 function printImportClause(importClause: ImportClause): string | undefined {
@@ -316,8 +402,35 @@ function printImportSpecifier(specifier: ImportSpecifier): string {
 
 function printExportDeclaration(exportDeclaration: ExportDeclaration): string {
   const exportClause = exportDeclaration.exportClause === undefined ? "*" : printNamedExportBindings(exportDeclaration.exportClause);
-  const moduleSpecifier = exportDeclaration.moduleSpecifier === undefined ? "" : ` from ${printExpression(exportDeclaration.moduleSpecifier)}`;
+  const moduleSpecifier = exportDeclaration.moduleSpecifier === undefined ? "" : ` from ${printExpression(exportDeclaration.moduleSpecifier, undefined)}`;
   return `export ${exportClause}${moduleSpecifier};`;
+}
+
+/**
+ * Print an `ExportAssignment` node (SyntaxKind 278).
+ *
+ * The kind covers two distinct source forms, discriminated by `isExportEquals`:
+ *
+ *   - `export = <expr>` (`isExportEquals === true`). This is a TypeScript
+ *     export-equals assignment. TypeScript only permits it when targeting a
+ *     CommonJS-style module (`export =` is a hard error under ES module targets,
+ *     so it never reaches JS emit there); the canonical lowering for every
+ *     emitting case is `module.exports = <expr>;`, matching TS-Go's CommonJS
+ *     transform (see e.g. `exportAssignmentMerging1` → `a.js`:
+ *     `module.exports = { a: 1, b: "hello" };`).
+ *
+ *   - `export default <expr>` (`isExportEquals === false`). This printer
+ *     preserves ES-module syntax (it keeps `export const` / `import ... from`
+ *     verbatim), so the consistent emit is the verbatim `export default <expr>;`.
+ *
+ * The type annotation (`export = expr` carries no value-level type) is erased.
+ */
+function printExportAssignment(exportAssignment: ExportAssignment): string {
+  const expression = printExpression(exportAssignment.expression, undefined);
+  if (exportAssignment.isExportEquals) {
+    return `module.exports = ${expression};`;
+  }
+  return `export default ${expression};`;
 }
 
 function printNamedExportBindings(namedBindings: NamedExportBindings): string {
@@ -332,13 +445,198 @@ function printNamedExportBindings(namedBindings: NamedExportBindings): string {
   throw new Error(`Unsupported named export bindings kind ${kindDebugName(namedBindings.kind)}`);
 }
 
-function printVariableStatement(modifiers: NodeArray<ModifierLike> | undefined, declarationList: VariableDeclarationList): string {
-  const prefix = printModifierPrefix(modifiers);
-  return `${prefix}${printVariableDeclarationList(declarationList)};`;
+/**
+ * Print a `ModuleDeclaration` node (SyntaxKind 268), i.e. a `namespace N {}` or
+ * `module N {}` declaration, lowering it to TypeScript's canonical namespace
+ * IIFE.
+ *
+ * Bounded scope (matches TS-Go exactly):
+ *
+ *   - A `declare` namespace, or a namespace that is not "instantiated" (its body
+ *     contains only type-level declarations: interfaces, type aliases, and
+ *     type-only nested namespaces), produces no JS and is elided.
+ *   - An instantiated, non-merged, non-exported namespace with a plain
+ *     identifier name lowers to
+ *     `var N;\n(function (N) { <body> })(N || (N = {}));` at the top level, and
+ *     to the same wrapper preceded by `let N;` when nested inside another
+ *     namespace.
+ *   - Inside the body: `export const/let/var <name> = <init>` becomes
+ *     `N.<name> = <init>`, `export function f(){}` becomes `function f(){}`
+ *     followed by `N.f = f;`, and `export class C {}` becomes `class C {}`
+ *     followed by `N.C = C;`. References to the namespace's own exported members
+ *     are qualified as `N.<name>`.
+ *
+ * Honestly out of scope (rejected via the unsupported-statement error so no
+ * malformed output is produced):
+ *
+ *   - Merged namespaces, and namespaces merged with a class/function/enum of the
+ *     same name (these change whether `var N;` is emitted and require resolving
+ *     member references across declarations — symbol-level work).
+ *   - Exported namespaces (`export namespace`), which require module-target
+ *     `exports.N` wiring.
+ *   - String-literal module names (`module "foo" {}`) and dotted names
+ *     (`namespace A.B {}`).
+ *   - Exported `enum` / nested `namespace` members, whose lowering uses the
+ *     `N.E` IIFE-argument form.
+ */
+function printModuleDeclaration(moduleDeclaration: ModuleDeclaration, context: PrintContext, depth: number): string | undefined {
+  // `declare namespace` / `declare module` is type-space only: no JS emit.
+  if (hasModifier(moduleDeclaration.modifiers, Kind.DeclareKeyword)) {
+    return undefined;
+  }
+  // `export namespace` requires module-target `exports.N` wiring; out of scope.
+  if (hasModifier(moduleDeclaration.modifiers, Kind.ExportKeyword)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(moduleDeclaration.kind)}`);
+  }
+  // Dotted (`namespace A.B {}`) names parse as a nested ModuleDeclaration body;
+  // string-literal module names use a different lowering. Only a plain
+  // identifier name is in scope.
+  if (!isIdentifier(moduleDeclaration.name)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(moduleDeclaration.kind)}`);
+  }
+  if (moduleDeclaration.body === undefined || !isModuleBlock(moduleDeclaration.body)) {
+    throw new Error(`Unsupported statement kind ${kindDebugName(moduleDeclaration.kind)}`);
+  }
+  const statements = moduleDeclaration.body.statements;
+  // A namespace with no value-level declarations is not instantiated and is
+  // elided entirely (matches TS-Go, which emits nothing for type-only modules).
+  if (!isInstantiatedModuleBody(statements)) {
+    return undefined;
+  }
+
+  const name = moduleDeclaration.name.text;
+  const exportedNames = collectExportedValueNames(statements);
+  // Member references that cannot be faithfully qualified without symbol
+  // resolution (exported enum/namespace members, exported-name collisions with
+  // unsupported lowerings) are rejected so no malformed output is produced.
+  rejectUnsupportedModuleMembers(statements);
+  const ns: NamespaceContext = { name, exportedNames };
+
+  const bodyLines = statements.flatMap(statement => printModuleBodyStatement(statement, context, depth + 1, ns));
+  const childIndent = context.indentText.repeat(depth + 1);
+  const currentIndent = context.indentText.repeat(depth);
+  const body = bodyLines.map(line => `${childIndent}${line}`).join(context.newline);
+  const iife = `(function (${name}) {${context.newline}${body}${context.newline}${currentIndent}})(${name} || (${name} = {}));`;
+  // A nested namespace declares its variable with `let` (block scope inside the
+  // enclosing IIFE); a top-level namespace uses `var`.
+  const declarationKeyword = depth === 0 ? "var" : "let";
+  return `${declarationKeyword} ${name};${context.newline}${currentIndent}${iife}`;
 }
 
-function printVariableDeclarationList(declarationList: VariableDeclarationList): string {
-  return `${printVariableDeclarationKind(declarationList)} ${declarationList.declarations.map(printVariableDeclaration).join(", ")}`;
+/**
+ * Whether a module body contains at least one value-level (instantiated)
+ * declaration. Interfaces, type aliases, and nested type-only namespaces are
+ * type-space only and do not, on their own, instantiate the namespace.
+ */
+function isInstantiatedModuleBody(statements: NodeArray<Statement>): boolean {
+  return statements.some(isInstantiatedModuleStatement);
+}
+
+function isInstantiatedModuleStatement(statement: Statement): boolean {
+  if (isInterfaceDeclaration(statement) || isTypeAliasDeclaration(statement)) {
+    return false;
+  }
+  if (isModuleDeclaration(statement)) {
+    // A `declare` nested namespace never instantiates; otherwise it instantiates
+    // only if its own body does.
+    if (hasModifier(statement.modifiers, Kind.DeclareKeyword)) {
+      return false;
+    }
+    return statement.body !== undefined
+      && isModuleBlock(statement.body)
+      && isInstantiatedModuleBody(statement.body.statements);
+  }
+  return true;
+}
+
+/**
+ * Collect the names exported as value members of a single namespace
+ * declaration's body (purely lexical; no symbol resolution).
+ */
+function collectExportedValueNames(statements: NodeArray<Statement>): ReadonlySet<string> {
+  const names = statements.flatMap(statement => {
+    if (!hasModifier(getStatementModifiers(statement), Kind.ExportKeyword)) {
+      return [];
+    }
+    if (isVariableStatement(statement)) {
+      return statement.declarationList.declarations.flatMap(declaration =>
+        isIdentifier(declaration.name) ? [declaration.name.text] : []);
+    }
+    if (isFunctionDeclaration(statement) && statement.name !== undefined) {
+      return [statement.name.text];
+    }
+    if (isClassDeclaration(statement) && statement.name !== undefined) {
+      return [statement.name.text];
+    }
+    return [];
+  });
+  return new Set(names);
+}
+
+function getStatementModifiers(statement: Statement): NodeArray<ModifierLike> | undefined {
+  return (statement as { readonly modifiers?: NodeArray<ModifierLike> }).modifiers;
+}
+
+/**
+ * Reject namespace member forms whose faithful lowering needs more than the
+ * bounded lexical transform (exported enums/nested namespaces use the `N.E`
+ * IIFE-argument form, which is symbol-driven). This keeps emit honest: an
+ * unsupported member triggers the standard unsupported-statement error rather
+ * than producing malformed output.
+ */
+function rejectUnsupportedModuleMembers(statements: NodeArray<Statement>): void {
+  for (const statement of statements) {
+    const exported = hasModifier(getStatementModifiers(statement), Kind.ExportKeyword);
+    if (exported && (isEnumDeclaration(statement) || isModuleDeclaration(statement))) {
+      throw new Error(`Unsupported statement kind ${kindDebugName(statement.kind)}`);
+    }
+  }
+}
+
+/**
+ * Print one statement of a namespace body, lowering exported value members to
+ * assignments on the namespace object.
+ */
+function printModuleBodyStatement(statement: Statement, context: PrintContext, depth: number, ns: NamespaceContext): readonly string[] {
+  const exported = hasModifier(getStatementModifiers(statement), Kind.ExportKeyword);
+
+  if (exported && isVariableStatement(statement)) {
+    // `export const a = 1, b = 2;` => `N.a = 1, N.b = 2;`
+    const assignments = statement.declarationList.declarations.flatMap(declaration => {
+      if (!isIdentifier(declaration.name)) {
+        throw new Error(`Unsupported statement kind ${kindDebugName(statement.kind)}`);
+      }
+      const target = `${ns.name}.${declaration.name.text}`;
+      return declaration.initializer === undefined
+        ? [target]
+        : [`${target} = ${printExpression(declaration.initializer, ns)}`];
+    });
+    return [`${assignments.join(", ")};`];
+  }
+
+  if (exported && isFunctionDeclaration(statement) && statement.name !== undefined) {
+    // The function keeps its own declaration (with `export` suppressed) and is
+    // additionally assigned onto the namespace object.
+    const declaration = printFunctionDeclaration(statement, context, depth, true);
+    return [declaration, `${ns.name}.${statement.name.text} = ${statement.name.text};`];
+  }
+
+  if (exported && isClassDeclaration(statement) && statement.name !== undefined) {
+    const declaration = printClassDeclaration(statement, context, depth, true);
+    return [declaration, `${ns.name}.${statement.name.text} = ${statement.name.text};`];
+  }
+
+  const printed = printStatement(statement, context, depth, ns);
+  return printed === undefined ? [] : [printed];
+}
+
+function printVariableStatement(modifiers: NodeArray<ModifierLike> | undefined, declarationList: VariableDeclarationList, ns: NamespaceContext | undefined): string {
+  const prefix = printModifierPrefix(modifiers);
+  return `${prefix}${printVariableDeclarationList(declarationList, ns)};`;
+}
+
+function printVariableDeclarationList(declarationList: VariableDeclarationList, ns: NamespaceContext | undefined): string {
+  return `${printVariableDeclarationKind(declarationList)} ${declarationList.declarations.map(declaration => printVariableDeclaration(declaration, ns)).join(", ")}`;
 }
 
 function printVariableDeclarationKind(declarationList: VariableDeclarationList): string {
@@ -351,9 +649,9 @@ function printVariableDeclarationKind(declarationList: VariableDeclarationList):
   return "var";
 }
 
-function printVariableDeclaration(declaration: VariableDeclaration): string {
+function printVariableDeclaration(declaration: VariableDeclaration, ns: NamespaceContext | undefined): string {
   const name = printBindingName(declaration.name);
-  return declaration.initializer === undefined ? name : `${name} = ${printExpression(declaration.initializer)}`;
+  return declaration.initializer === undefined ? name : `${name} = ${printExpression(declaration.initializer, ns)}`;
 }
 
 function printEnumDeclaration(enumDeclaration: EnumDeclaration): string {
@@ -385,20 +683,20 @@ function printEnumInitializer(expression: Expression, enumName: string, memberNa
   if (isParenthesizedExpression(expression)) {
     return `(${printEnumInitializer(expression.expression, enumName, memberNames)})`;
   }
-  return printExpression(expression);
+  return printExpression(expression, undefined);
 }
 
-function printFunctionDeclaration(functionDeclaration: FunctionDeclaration, context: PrintContext, depth: number): string {
-  const prefix = printModifierPrefix(functionDeclaration.modifiers);
+function printFunctionDeclaration(functionDeclaration: FunctionDeclaration, context: PrintContext, depth: number, omitExport: boolean): string {
+  const prefix = printModifierPrefix(functionDeclaration.modifiers, omitExport);
   const asterisk = functionDeclaration.asteriskToken === undefined ? "" : "*";
   const name = functionDeclaration.name === undefined ? "" : ` ${functionDeclaration.name.text}`;
   const parameters = functionDeclaration.parameters.map(printParameterDeclaration).join(", ");
-  const body = functionDeclaration.body === undefined ? ";" : ` ${printBlock(functionDeclaration.body.statements, context, depth)}`;
+  const body = functionDeclaration.body === undefined ? ";" : ` ${printBlock(functionDeclaration.body.statements, context, depth, undefined)}`;
   return `${prefix}function${asterisk}${name}(${parameters})${body}`;
 }
 
-function printClassDeclaration(classDeclaration: ClassDeclaration, context: PrintContext, depth: number): string {
-  const prefix = printDeclarationModifierPrefix(classDeclaration.modifiers);
+function printClassDeclaration(classDeclaration: ClassDeclaration, context: PrintContext, depth: number, omitExport: boolean): string {
+  const prefix = printDeclarationModifierPrefix(classDeclaration.modifiers, omitExport);
   const name = classDeclaration.name === undefined ? "" : ` ${classDeclaration.name.text}`;
   const heritage = printClassHeritage(classDeclaration.heritageClauses);
   return `${prefix}class${name}${heritage} ${printClassBlock(classDeclaration.members, context, depth)}`;
@@ -412,7 +710,7 @@ function printClassHeritage(heritageClauses: NodeArray<HeritageClause> | undefin
   if (extendsClause === undefined || extendsClause.types.length === 0) {
     return "";
   }
-  return ` extends ${printExpression(extendsClause.types[0]!.expression)}`;
+  return ` extends ${printExpression(extendsClause.types[0]!.expression, undefined)}`;
 }
 
 function printClassBlock(members: NodeArray<ClassElement>, context: PrintContext, depth: number): string {
@@ -440,13 +738,13 @@ function printClassElement(member: ClassElement, context: PrintContext, depth: n
   }
   if (isGetAccessorDeclaration(member)) {
     const prefix = printMemberModifierPrefix(member.modifiers);
-    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth);
+    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth, undefined);
     return `${prefix}get ${printPropertyName(member.name)}() ${body}`;
   }
   if (isSetAccessorDeclaration(member)) {
     const prefix = printMemberModifierPrefix(member.modifiers);
     const parameters = member.parameters.map(printParameterDeclaration).join(", ");
-    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth);
+    const body = member.body === undefined ? "{}" : printBlock(member.body.statements, context, depth, undefined);
     return `${prefix}set ${printPropertyName(member.name)}(${parameters}) ${body}`;
   }
   if (member.kind === Kind.SemicolonClassElement) {
@@ -499,11 +797,11 @@ function printConstructorBody(constructorDeclaration: ConstructorDeclaration, co
   });
 
   if (assignments.length === 0) {
-    return printBlock(constructorDeclaration.body.statements, context, depth);
+    return printBlock(constructorDeclaration.body.statements, context, depth, undefined);
   }
 
   const statementLines = constructorDeclaration.body.statements.flatMap(statement => {
-    const printed = printStatement(statement, context, depth + 1);
+    const printed = printStatement(statement, context, depth + 1, undefined);
     return printed === undefined ? [] : [printed];
   });
 
@@ -542,7 +840,7 @@ function printSyntheticBlock(lines: readonly string[], context: PrintContext, de
 function printMethodDeclaration(methodDeclaration: MethodDeclaration, context: PrintContext, depth: number): string {
   const prefix = printMemberModifierPrefix(methodDeclaration.modifiers);
   const parameters = methodDeclaration.parameters.map(printParameterDeclaration).join(", ");
-  const body = methodDeclaration.body === undefined ? "{}" : printBlock(methodDeclaration.body.statements, context, depth);
+  const body = methodDeclaration.body === undefined ? "{}" : printBlock(methodDeclaration.body.statements, context, depth, undefined);
   return `${prefix}${printPropertyName(methodDeclaration.name)}(${parameters}) ${body}`;
 }
 
@@ -551,52 +849,52 @@ function printPropertyDeclaration(propertyDeclaration: PropertyDeclaration): str
     return undefined;
   }
   const prefix = printMemberModifierPrefix(propertyDeclaration.modifiers);
-  const initializer = propertyDeclaration.initializer === undefined ? "" : ` = ${printExpression(propertyDeclaration.initializer)}`;
+  const initializer = propertyDeclaration.initializer === undefined ? "" : ` = ${printExpression(propertyDeclaration.initializer, undefined)}`;
   return `${prefix}${printPropertyName(propertyDeclaration.name)}${initializer};`;
 }
 
-function printIfStatement(ifStatement: IfStatement, context: PrintContext, depth: number): string {
-  const thenStatement = printEmbeddedStatement(ifStatement.thenStatement, context, depth);
-  const elseStatement = ifStatement.elseStatement === undefined ? "" : ` else ${printEmbeddedStatement(ifStatement.elseStatement, context, depth)}`;
-  return `if (${printExpression(ifStatement.expression)}) ${thenStatement}${elseStatement}`;
+function printIfStatement(ifStatement: IfStatement, context: PrintContext, depth: number, ns: NamespaceContext | undefined): string {
+  const thenStatement = printEmbeddedStatement(ifStatement.thenStatement, context, depth, ns);
+  const elseStatement = ifStatement.elseStatement === undefined ? "" : ` else ${printEmbeddedStatement(ifStatement.elseStatement, context, depth, ns)}`;
+  return `if (${printExpression(ifStatement.expression, ns)}) ${thenStatement}${elseStatement}`;
 }
 
-function printWhileStatement(whileStatement: WhileStatement, context: PrintContext, depth: number): string {
-  return `while (${printExpression(whileStatement.expression)}) ${printEmbeddedStatement(whileStatement.statement, context, depth)}`;
+function printWhileStatement(whileStatement: WhileStatement, context: PrintContext, depth: number, ns: NamespaceContext | undefined): string {
+  return `while (${printExpression(whileStatement.expression, ns)}) ${printEmbeddedStatement(whileStatement.statement, context, depth, ns)}`;
 }
 
-function printForInitializer(initializer: ForInitializer | undefined): string {
+function printForInitializer(initializer: ForInitializer | undefined, ns: NamespaceContext | undefined): string {
   if (initializer === undefined) {
     return "";
   }
   if (isVariableDeclarationList(initializer)) {
-    return printVariableDeclarationList(initializer);
+    return printVariableDeclarationList(initializer, ns);
   }
   if (isMissingDeclaration(initializer)) {
     return "";
   }
-  return printExpression(initializer);
+  return printExpression(initializer, ns);
 }
 
-function printEmbeddedStatement(statement: Statement, context: PrintContext, depth: number): string {
+function printEmbeddedStatement(statement: Statement, context: PrintContext, depth: number, ns: NamespaceContext | undefined): string {
   if (isBlock(statement)) {
-    return printBlock(statement.statements, context, depth);
+    return printBlock(statement.statements, context, depth, ns);
   }
-  const printed = printStatement(statement, context, depth + 1);
+  const printed = printStatement(statement, context, depth + 1, ns);
   if (printed === undefined) {
     return "{}";
   }
   return `{${context.newline}${context.indentText.repeat(depth + 1)}${printed}${context.newline}${context.indentText.repeat(depth)}}`;
 }
 
-function printBlock(statements: NodeArray<Statement>, context: PrintContext, depth: number): string {
+function printBlock(statements: NodeArray<Statement>, context: PrintContext, depth: number, ns: NamespaceContext | undefined): string {
   if (statements.length === 0) {
     return "{}";
   }
   const childIndent = context.indentText.repeat(depth + 1);
   const currentIndent = context.indentText.repeat(depth);
   const body = statements.flatMap(statement => {
-    const printed = printStatement(statement, context, depth + 1);
+    const printed = printStatement(statement, context, depth + 1, ns);
     return printed === undefined ? [] : [`${childIndent}${printed}`];
   }).join(context.newline);
   return `{${context.newline}${body}${context.newline}${currentIndent}}`;
@@ -604,19 +902,22 @@ function printBlock(statements: NodeArray<Statement>, context: PrintContext, dep
 
 function printParameterDeclaration(parameter: ParameterDeclaration): string {
   const rest = parameter.dotDotDotToken === undefined ? "" : "...";
-  const initializer = parameter.initializer === undefined ? "" : ` = ${printExpression(parameter.initializer)}`;
+  const initializer = parameter.initializer === undefined ? "" : ` = ${printExpression(parameter.initializer, undefined)}`;
   return `${rest}${printBindingName(parameter.name)}${initializer}`;
 }
 
-function printModifierPrefix(modifiers: NodeArray<ModifierLike> | undefined): string {
-  return printDeclarationModifierPrefix(modifiers);
+function printModifierPrefix(modifiers: NodeArray<ModifierLike> | undefined, omitExport = false): string {
+  return printDeclarationModifierPrefix(modifiers, omitExport);
 }
 
-function printDeclarationModifierPrefix(modifiers: NodeArray<ModifierLike> | undefined): string {
+function printDeclarationModifierPrefix(modifiers: NodeArray<ModifierLike> | undefined, omitExport = false): string {
   if (modifiers === undefined || modifiers.length === 0) {
     return "";
   }
   const printed = modifiers.flatMap(modifier => {
+    if (omitExport && modifier.kind === Kind.ExportKeyword) {
+      return [];
+    }
     const text = printDeclarationModifier(modifier);
     return text === undefined ? [] : [text];
   });
@@ -686,7 +987,7 @@ function printBindingElement(element: BindingElement): string {
   const rest = element.dotDotDotToken === undefined ? "" : "...";
   const propertyName = element.propertyName === undefined ? "" : `${printPropertyName(element.propertyName)}: `;
   const name = element.name === undefined ? "" : printBindingName(element.name);
-  const initializer = element.initializer === undefined ? "" : ` = ${printExpression(element.initializer)}`;
+  const initializer = element.initializer === undefined ? "" : ` = ${printExpression(element.initializer, undefined)}`;
   return `${rest}${propertyName}${name}${initializer}`;
 }
 
@@ -704,13 +1005,16 @@ function printPropertyName(name: Node): string {
     return name.text;
   }
   if (isComputedPropertyName(name)) {
-    return `[${printExpression(name.expression)}]`;
+    return `[${printExpression(name.expression, undefined)}]`;
   }
   throw new Error(`Unsupported property name kind ${kindDebugName(name.kind)}`);
 }
 
-function printExpression(expression: Expression): string {
+function printExpression(expression: Expression, ns: NamespaceContext | undefined): string {
   if (isIdentifier(expression)) {
+    if (ns !== undefined && ns.exportedNames.has(expression.text)) {
+      return `${ns.name}.${expression.text}`;
+    }
     return expression.text;
   }
   if (isPrivateIdentifier(expression)) {
@@ -732,7 +1036,7 @@ function printExpression(expression: Expression): string {
     return `\`${expression.text}\``;
   }
   if (isTemplateExpression(expression)) {
-    return `\`${expression.head.text}${expression.templateSpans.map(span => `\${${printExpression(span.expression)}}${span.literal.text}`).join("")}\``;
+    return `\`${expression.head.text}${expression.templateSpans.map(span => `\${${printExpression(span.expression, ns)}}${span.literal.text}`).join("")}\``;
   }
   if (expression.kind === Kind.TrueKeyword) {
     return "true";
@@ -750,90 +1054,90 @@ function printExpression(expression: Expression): string {
     return "super";
   }
   if (isParenthesizedExpression(expression)) {
-    return `(${printExpression(expression.expression)})`;
+    return `(${printExpression(expression.expression, ns)})`;
   }
   if (isArrayLiteralExpression(expression)) {
-    return `[${expression.elements.map(printExpression).join(", ")}]`;
+    return `[${expression.elements.map(element => printExpression(element, ns)).join(", ")}]`;
   }
   if (isSpreadElement(expression)) {
-    return `...${printExpression(expression.expression)}`;
+    return `...${printExpression(expression.expression, ns)}`;
   }
   if (isObjectLiteralExpression(expression)) {
-    return `{ ${expression.properties.map(printObjectLiteralElement).join(", ")} }`;
+    return `{ ${expression.properties.map(property => printObjectLiteralElement(property, ns)).join(", ")} }`;
   }
   if (isPropertyAccessExpression(expression)) {
-    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "." : "?."}${expression.name.text}`;
+    return `${printExpression(expression.expression, ns)}${expression.questionDotToken === undefined ? "." : "?."}${expression.name.text}`;
   }
   if (isElementAccessExpression(expression)) {
-    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "" : "?."}[${printExpression(expression.argumentExpression)}]`;
+    return `${printExpression(expression.expression, ns)}${expression.questionDotToken === undefined ? "" : "?."}[${printExpression(expression.argumentExpression, ns)}]`;
   }
   if (isCallExpression(expression)) {
-    return `${printExpression(expression.expression)}${expression.questionDotToken === undefined ? "" : "?."}(${expression.arguments.map(printExpression).join(", ")})`;
+    return `${printExpression(expression.expression, ns)}${expression.questionDotToken === undefined ? "" : "?."}(${expression.arguments.map(argument => printExpression(argument, ns)).join(", ")})`;
   }
   if (isFunctionExpression(expression)) {
     const asterisk = expression.asteriskToken === undefined ? "" : "*";
     const name = expression.name === undefined ? "" : ` ${expression.name.text}`;
     const parameters = expression.parameters.map(printParameterDeclaration).join(", ");
-    return `function${asterisk}${name}(${parameters}) ${printBlock(expression.body.statements, { newline: "\n", indentText: "  " }, 0)}`;
+    return `function${asterisk}${name}(${parameters}) ${printBlock(expression.body.statements, { newline: "\n", indentText: "  " }, 0, ns)}`;
   }
   if (isNewExpression(expression)) {
     const typeArguments = "";
-    const argumentsText = expression.arguments === undefined ? "" : `(${expression.arguments.map(printExpression).join(", ")})`;
-    return `new ${printExpression(expression.expression)}${typeArguments}${argumentsText}`;
+    const argumentsText = expression.arguments === undefined ? "" : `(${expression.arguments.map(argument => printExpression(argument, ns)).join(", ")})`;
+    return `new ${printExpression(expression.expression, ns)}${typeArguments}${argumentsText}`;
   }
   if (isPrefixUnaryExpression(expression)) {
-    return `${printPrefixUnaryOperator(expression.operator)}${printExpression(expression.operand)}`;
+    return `${printPrefixUnaryOperator(expression.operator)}${printExpression(expression.operand, ns)}`;
   }
   if (isDeleteExpression(expression)) {
-    return `delete ${printExpression(expression.expression)}`;
+    return `delete ${printExpression(expression.expression, ns)}`;
   }
   if (isTypeOfExpression(expression)) {
-    return `typeof ${printExpression(expression.expression)}`;
+    return `typeof ${printExpression(expression.expression, ns)}`;
   }
   if (isVoidExpression(expression)) {
-    return `void ${printExpression(expression.expression)}`;
+    return `void ${printExpression(expression.expression, ns)}`;
   }
   if (isAwaitExpression(expression)) {
-    return `await ${printExpression(expression.expression)}`;
+    return `await ${printExpression(expression.expression, ns)}`;
   }
   if (isPostfixUnaryExpression(expression)) {
-    return `${printExpression(expression.operand)}${expression.operator === Kind.PlusPlusToken ? "++" : "--"}`;
+    return `${printExpression(expression.operand, ns)}${expression.operator === Kind.PlusPlusToken ? "++" : "--"}`;
   }
   if (isNonNullExpression(expression)) {
-    return printExpression(expression.expression);
+    return printExpression(expression.expression, ns);
   }
   if (isAsExpression(expression) || isSatisfiesExpression(expression)) {
-    return printExpression(expression.expression);
+    return printExpression(expression.expression, ns);
   }
   if (isConditionalExpression(expression)) {
-    return `${printExpression(expression.condition)} ? ${printExpression(expression.whenTrue)} : ${printExpression(expression.whenFalse)}`;
+    return `${printExpression(expression.condition, ns)} ? ${printExpression(expression.whenTrue, ns)} : ${printExpression(expression.whenFalse, ns)}`;
   }
   if (isArrowFunction(expression)) {
-    return printArrowFunction(expression);
+    return printArrowFunction(expression, ns);
   }
   if (isBinaryExpression(expression)) {
-    return `${printExpression(expression.left)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right)}`;
+    return `${printExpression(expression.left, ns)} ${printBinaryOperator(expression.operatorToken)} ${printExpression(expression.right, ns)}`;
   }
   throw new Error(`Unsupported expression kind ${kindDebugName(expression.kind)}`);
 }
 
-function printArrowFunction(arrowFunction: ArrowFunction): string {
+function printArrowFunction(arrowFunction: ArrowFunction, ns: NamespaceContext | undefined): string {
   const parameters = arrowFunction.parameters.length === 1
     ? printParameterDeclaration(arrowFunction.parameters[0]!)
     : `(${arrowFunction.parameters.map(printParameterDeclaration).join(", ")})`;
-  const body = isBlock(arrowFunction.body) ? printBlock(arrowFunction.body.statements, { newline: "\n", indentText: "  " }, 0) : printExpression(arrowFunction.body);
+  const body = isBlock(arrowFunction.body) ? printBlock(arrowFunction.body.statements, { newline: "\n", indentText: "  " }, 0, ns) : printExpression(arrowFunction.body, ns);
   return `${parameters} => ${body}`;
 }
 
-function printObjectLiteralElement(element: ObjectLiteralElementLike): string {
+function printObjectLiteralElement(element: ObjectLiteralElementLike, ns: NamespaceContext | undefined): string {
   if (isPropertyAssignment(element)) {
-    return `${printPropertyName(element.name)}: ${printExpression(element.initializer)}`;
+    return `${printPropertyName(element.name)}: ${printExpression(element.initializer, ns)}`;
   }
   if (isShorthandPropertyAssignment(element)) {
     return printPropertyName(element.name);
   }
   if (isSpreadAssignment(element)) {
-    return `...${printExpression(element.expression)}`;
+    return `...${printExpression(element.expression, ns)}`;
   }
   throw new Error(`Unsupported object literal element kind ${kindDebugName(element.kind)}`);
 }

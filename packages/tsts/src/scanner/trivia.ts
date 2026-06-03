@@ -23,6 +23,8 @@ import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import { isLineBreak, isWhiteSpaceLike } from "../stringutil/util.js";
 import type { TextPos, UTF16Offset } from "../core/index.js";
+import { Kind } from "../ast/generated/kind.js";
+import type { CommentRange } from "../ast/aliases.js";
 
 const mergeConflictMarkerEncountered: DiagnosticMessage = Diagnostics.Merge_conflict_marker_encountered;
 
@@ -336,6 +338,21 @@ export function getECMALineAndUTF16CharacterOfPosition(
   return { line, character };
 }
 
+// GetECMAEndLinePosition — scanner.go:2664-2673. Returns the position of the
+// last character on the given line (the position just before its line break),
+// scanning forward from the line start until a line break or end-of-text.
+export function getECMAEndLinePosition(sourceFile: SourceFileLike, line: int): number {
+  const text = sourceFile.text();
+  let pos = getECMALineStarts(sourceFile)[line] as number;
+  for (;;) {
+    const ch = text.codePointAt(pos);
+    if (ch === undefined || isLineBreak(ch)) {
+      return (pos - 1) | 0;
+    }
+    pos += ch > 0xffff ? 2 : 1;
+  }
+}
+
 /**
  * GetECMALineAndByteOffsetOfPosition returns the 0-based line number and the
  * raw offset from the start of that line for the given position.
@@ -422,4 +439,180 @@ export function computePositionOfLineAndUTF16Character(
   }
   debugAssert(res <= text.length); // Allow single character overflow for trailing newline
   return res;
+}
+
+// GetECMAPositionOfLineAndUTF16Character — scanner.go:2678-2681. Converts a
+// 0-based line number and UTF-16 code unit character offset back to an absolute
+// position in the source text, using ECMAScript line separators.
+export function getECMAPositionOfLineAndUTF16Character(
+  sourceFile: SourceFileLike,
+  line: int,
+  character: UTF16Offset,
+): number {
+  const lineStarts = getECMALineStarts(sourceFile);
+  return computePositionOfLineAndUTF16Character(lineStarts, line, character, sourceFile.text(), false);
+}
+
+// GetECMAPositionOfLineAndByteOffset — scanner.go:2686-2688. Converts a 0-based
+// line number and offset from the line start back to an absolute position in the
+// source text, using ECMAScript line separators.
+export function getECMAPositionOfLineAndByteOffset(
+  sourceFile: SourceFileLike,
+  line: int,
+  byteOffset: number,
+): number {
+  return computePositionOfLineAndByteOffset(getECMALineStarts(sourceFile), line, byteOffset);
+}
+
+// ComputePositionOfLineAndByteOffset — scanner.go:2692-2697. Computes a position
+// from a line and raw offset from the line start. This is a simple addition with
+// validation.
+export function computePositionOfLineAndByteOffset(
+  lineStarts: readonly TextPos[],
+  line: int,
+  byteOffset: number,
+): number {
+  if (line < 0 || line >= lineStarts.length) {
+    debugFail(`Bad line number. Line: ${line}, lineStarts.length: ${lineStarts.length}.`);
+  }
+  return (lineStarts[line] as number) + byteOffset;
+}
+
+// ---------------------------------------------------------------------------
+// Comment ranges (scanner.go:2761-2882)
+//
+// iterateCommentRanges is the faithful port of TS-Go's iter.Seq[ast.CommentRange]
+// generator: a single-pass pull iterator over the comment ranges at/after `pos`.
+// The Go `f *ast.NodeFactory` receiver of NewCommentRange carries no state (it is
+// a pure value constructor, ast.go:2936-2942), so the TS port constructs the
+// CommentRange objects inline and omits the factory parameter. JS strings are
+// natively UTF-16; the byte-oriented utf8.DecodeRuneInString iteration is mirrored
+// as UTF-16 code-unit / code-point iteration.
+// ---------------------------------------------------------------------------
+
+function newCommentRange(kind: number, pos: number, end: number, hasTrailingNewLine: boolean): CommentRange {
+  return { kind, pos, end, hasTrailingNewLine };
+}
+
+// GetLeadingCommentRanges — scanner.go:2761-2763.
+export function getLeadingCommentRanges(text: string, pos: number): Generator<CommentRange> {
+  return iterateCommentRanges(text, pos, false);
+}
+
+// GetTrailingCommentRanges — scanner.go:2765-2767.
+export function getTrailingCommentRanges(text: string, pos: number): Generator<CommentRange> {
+  return iterateCommentRanges(text, pos, true);
+}
+
+/**
+ * Returns an iterator over each comment range following the provided position.
+ * Single-line comment ranges include the leading double-slash characters but not
+ * the ending line break. Multi-line comment ranges include the leading
+ * slash-asterisk and trailing asterisk-slash characters.
+ */
+export function* iterateCommentRanges(text: string, pos: number, trailing: boolean): Generator<CommentRange> {
+  let pendingPos = 0;
+  let pendingEnd = 0;
+  let pendingKind: number = Kind.Unknown;
+  let pendingHasTrailingNewLine = false;
+  let hasPendingCommentRange = false;
+  let collecting = trailing;
+  if (pos === 0) {
+    collecting = true;
+    if (isShebangTrivia(text, pos)) {
+      pos = scanShebangTrivia(text, pos);
+    }
+  }
+  scan:
+  while (pos >= 0 && pos < text.length) {
+    const ch = text.codePointAt(pos)!;
+    const size = ch > 0xffff ? 2 : 1;
+    switch (ch) {
+      case 0x0d /* \r */:
+        if (pos + 1 < text.length && text.charCodeAt(pos + 1) === 0x0a /* \n */) {
+          pos++;
+        }
+      // fallthrough
+      // eslint-disable-next-line no-fallthrough
+      case 0x0a /* \n */: {
+        pos++;
+        if (trailing) {
+          break scan;
+        }
+
+        collecting = true;
+        if (hasPendingCommentRange) {
+          pendingHasTrailingNewLine = true;
+        }
+
+        continue;
+      }
+      case 0x09 /* \t */:
+      case 0x0b /* \v */:
+      case 0x0c /* \f */:
+      case 0x20 /* space */:
+        pos++;
+        continue;
+      case 0x2f /* / */: {
+        let nextChar = 0;
+        if (pos + 1 < text.length) {
+          nextChar = text.charCodeAt(pos + 1);
+        }
+        let hasTrailingNewLine = false;
+        if (nextChar === 0x2f /* / */ || nextChar === 0x2a /* * */) {
+          const kind = nextChar === 0x2f /* / */ ? Kind.SingleLineCommentTrivia : Kind.MultiLineCommentTrivia;
+
+          const startPos = pos;
+          pos += 2;
+          if (nextChar === 0x2f /* / */) {
+            while (pos < text.length) {
+              const c = text.codePointAt(pos)!;
+              if (isLineBreak(c)) {
+                hasTrailingNewLine = true;
+                break;
+              }
+              pos += c > 0xffff ? 2 : 1;
+            }
+          } else {
+            while (pos < text.length) {
+              const c = text.codePointAt(pos)!;
+              if (c === 0x2a /* * */ && pos + 1 < text.length && text.charCodeAt(pos + 1) === 0x2f /* / */) {
+                pos += 2;
+                break;
+              }
+              pos += c > 0xffff ? 2 : 1;
+            }
+          }
+
+          if (collecting) {
+            if (hasPendingCommentRange) {
+              yield newCommentRange(pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine);
+            }
+
+            pendingPos = startPos;
+            pendingEnd = pos;
+            pendingKind = kind;
+            pendingHasTrailingNewLine = hasTrailingNewLine;
+            hasPendingCommentRange = true;
+          }
+
+          continue;
+        }
+        break scan;
+      }
+      default:
+        if (ch > maxAsciiCharacter && isWhiteSpaceLike(ch)) {
+          if (hasPendingCommentRange && isLineBreak(ch)) {
+            pendingHasTrailingNewLine = true;
+          }
+          pos += size;
+          continue;
+        }
+        break scan;
+    }
+  }
+
+  if (hasPendingCommentRange) {
+    yield newCommentRange(pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine);
+  }
 }

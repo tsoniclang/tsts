@@ -6,22 +6,30 @@ export interface CheckerPoolOptions {
   readonly log?: (message: string) => void;
 }
 
+export interface CheckerLease {
+  readonly checker: CheckerSlot;
+  readonly release: () => void;
+}
+
 export class CheckerPool {
   readonly options: CheckerPoolOptions;
+  private readonly maxCheckers: number;
   private program: Program | undefined;
   private readonly checkers: (CheckerSlot | undefined)[];
   private readonly inUse = new Set<CheckerSlot>();
-  private readonly fileAssociations = new Map<string, number>();
+  private fileAssociations = new Map<string, number>();
   private readonly requestAssociations = new Map<string, number>();
-  private readonly globalDiagnostics: ProgramDiagnostic[] = [];
-  private readonly globalDiagnosticCheckerCount: number[];
-  private globalDiagnosticsChanged = false;
+  private readonly log: (message: string) => void;
+  private readonly globalDiagAccumulated: ProgramDiagnostic[] = [];
+  private globalDiagChanged = false;
+  private readonly globalDiagCheckerCount: number[];
 
   constructor(options: CheckerPoolOptions = {}) {
     this.options = options;
-    const maxWorkers = Math.max(1, Math.trunc(options.maxWorkers ?? 4));
-    this.checkers = new Array(maxWorkers);
-    this.globalDiagnosticCheckerCount = new Array(maxWorkers).fill(0);
+    this.maxCheckers = Math.max(1, Math.trunc(options.maxWorkers ?? 4));
+    this.checkers = new Array(this.maxCheckers);
+    this.log = options.log ?? ((): void => {});
+    this.globalDiagCheckerCount = new Array(this.maxCheckers).fill(0);
   }
 
   checkProgram(program: Program): readonly ProgramDiagnostic[] {
@@ -36,104 +44,187 @@ export class CheckerPool {
         release();
       }
     }
-    this.globalDiagnostics.length = 0;
-    this.globalDiagnostics.push(...diagnostics);
-    this.globalDiagnosticsChanged = diagnostics.length > 0;
+    this.globalDiagAccumulated.length = 0;
+    this.globalDiagAccumulated.push(...diagnostics);
+    this.globalDiagChanged = diagnostics.length > 0;
     return diagnostics;
   }
 
-  getChecker(requestId: string | undefined, fileName: string | undefined): { checker: CheckerSlot; release: () => void } {
-    if (requestId !== undefined) {
-      const requestChecker = this.getRequestChecker(requestId);
-      if (requestChecker !== undefined) return requestChecker;
+  // GetChecker acquires a checker for the given request/file, creating one if the
+  // pool is not yet full and reusing an existing one otherwise. The returned
+  // release callback must be invoked when the caller is done with the checker.
+  getChecker(requestId: string | undefined, fileName: string | undefined): CheckerLease {
+    if (requestId !== undefined && requestId !== "") {
+      const [requestChecker, requestRelease] = this.getRequestCheckerLocked(requestId);
+      if (requestChecker !== undefined) {
+        return { checker: requestChecker, release: requestRelease };
+      }
     }
 
     if (fileName !== undefined) {
-      const associatedIndex = this.fileAssociations.get(fileName);
-      if (associatedIndex !== undefined) {
-        const checker = this.checkers[associatedIndex];
-        if (checker !== undefined && !this.inUse.has(checker)) {
-          return this.acquireAtIndex(checker, associatedIndex, requestId);
+      const index = this.fileAssociations.get(fileName);
+      if (index !== undefined) {
+        const checker = this.checkers[index];
+        if (checker !== undefined) {
+          if (!this.inUse.has(checker)) {
+            this.inUse.add(checker);
+            if (requestId !== undefined && requestId !== "") this.requestAssociations.set(requestId, index);
+            return { checker, release: this.createRelease(requestId, index, checker) };
+          }
         }
       }
     }
 
-    const { checker, index } = this.getAvailableOrCreateChecker();
+    const [checker, index] = this.getCheckerLocked(requestId);
     if (fileName !== undefined) this.fileAssociations.set(fileName, index);
-    return this.acquireAtIndex(checker, index, requestId);
+    return { checker, release: this.createRelease(requestId, index, checker) };
   }
 
   getGlobalDiagnostics(): readonly ProgramDiagnostic[] {
-    return [...this.globalDiagnostics];
+    return [...this.globalDiagAccumulated];
   }
 
   takeNewGlobalDiagnostics(): boolean {
-    const changed = this.globalDiagnosticsChanged;
-    this.globalDiagnosticsChanged = false;
+    const changed = this.globalDiagChanged;
+    this.globalDiagChanged = false;
     return changed;
   }
 
   close(): void {
-    this.globalDiagnostics.length = 0;
-    this.fileAssociations.clear();
+    this.globalDiagAccumulated.length = 0;
+    this.fileAssociations = new Map();
     this.requestAssociations.clear();
     this.inUse.clear();
     this.checkers.fill(undefined);
-    this.globalDiagnosticCheckerCount.fill(0);
-    this.globalDiagnosticsChanged = false;
+    this.globalDiagCheckerCount.fill(0);
+    this.globalDiagChanged = false;
   }
 
-  private getRequestChecker(requestId: string): { checker: CheckerSlot; release: () => void } | undefined {
+  private getCheckerLocked(requestId: string | undefined): readonly [CheckerSlot, number] {
+    const [available, availableIndex] = this.getImmediatelyAvailableChecker();
+    if (available !== undefined) {
+      this.inUse.add(available);
+      if (requestId !== undefined && requestId !== "") this.requestAssociations.set(requestId, availableIndex);
+      return [available, availableIndex];
+    }
+
+    if (!this.isFullLocked()) {
+      const [created, createdIndex] = this.createCheckerLocked();
+      this.inUse.add(created);
+      if (requestId !== undefined && requestId !== "") this.requestAssociations.set(requestId, createdIndex);
+      return [created, createdIndex];
+    }
+
+    const [waited, waitedIndex] = this.waitForAvailableChecker();
+    this.inUse.add(waited);
+    if (requestId !== undefined && requestId !== "") this.requestAssociations.set(requestId, waitedIndex);
+    return [waited, waitedIndex];
+  }
+
+  private getRequestCheckerLocked(requestId: string): readonly [CheckerSlot | undefined, () => void] {
     const index = this.requestAssociations.get(requestId);
-    if (index === undefined) return undefined;
-    const checker = this.checkers[index];
-    if (checker === undefined) return undefined;
-    if (this.inUse.has(checker)) return { checker, release: noop };
-    return this.acquireAtIndex(checker, index, requestId);
-  }
-
-  private getAvailableOrCreateChecker(): { checker: CheckerSlot; index: number } {
-    for (let index = 0; index < this.checkers.length; index += 1) {
+    if (index !== undefined) {
       const checker = this.checkers[index];
-      if (checker !== undefined && !this.inUse.has(checker)) return { checker, index };
+      if (checker !== undefined) {
+        if (!this.inUse.has(checker)) {
+          this.inUse.add(checker);
+          return [checker, this.createRelease(requestId, index, checker)];
+        }
+        // Checker is in use, but by the same request - assume it's the
+        // same goroutine or is managing its own synchronization
+        return [checker, noop];
+      }
     }
-    for (let index = 0; index < this.checkers.length; index += 1) {
-      if (this.checkers[index] !== undefined) continue;
-      const checker = this.createChecker(index);
-      return { checker, index };
-    }
-    this.options.log?.("checkerpool: all checkers are busy; reusing slot 0 in single-threaded fallback");
-    return { checker: this.checkers[0]!, index: 0 };
+    return [undefined, noop];
   }
 
-  private createChecker(index: number): CheckerSlot {
-    const slot = new CheckerSlot(this.program);
-    this.checkers[index] = slot;
-    return slot;
+  private getImmediatelyAvailableChecker(): readonly [CheckerSlot | undefined, number] {
+    for (let i = 0; i < this.checkers.length; i += 1) {
+      const checker = this.checkers[i];
+      if (checker === undefined) {
+        continue;
+      }
+      if (!this.inUse.has(checker)) {
+        return [checker, i];
+      }
+    }
+
+    return [undefined, -1];
   }
 
-  private acquireAtIndex(checker: CheckerSlot, index: number, requestId: string | undefined): { checker: CheckerSlot; release: () => void } {
-    this.inUse.add(checker);
-    if (requestId !== undefined) this.requestAssociations.set(requestId, index);
-    return {
-      checker,
-      release: once(() => {
-        if (requestId !== undefined) this.requestAssociations.delete(requestId);
-        this.mergeGlobalDiagnosticsFromChecker(index, checker);
+  private waitForAvailableChecker(): readonly [CheckerSlot, number] {
+    this.log("checkerpool: Waiting for an available checker");
+    // TS-Go blocks on p.cond.Wait() until another goroutine releases a checker, then
+    // loops calling getImmediatelyAvailableChecker until one is free. TSTS runs
+    // single-threaded, so a full pool with nothing available cannot be unblocked by
+    // waiting; the loop instead reuses slot 0 (the single-threaded equivalent of being
+    // handed the next freed checker).
+    for (;;) {
+      const [checker, index] = this.getImmediatelyAvailableChecker();
+      if (checker !== undefined) {
+        return [checker, index];
+      }
+      const slot0 = this.checkers[0];
+      if (slot0 !== undefined) {
+        return [slot0, 0];
+      }
+      return [this.createCheckerLocked()[0], 0];
+    }
+  }
+
+  private createRelease(requestId: string | undefined, index: number, checker: CheckerSlot): () => void {
+    return once(() => {
+      if (requestId !== undefined && requestId !== "") this.requestAssociations.delete(requestId);
+      if (checker.wasCanceled()) {
+        // Canceled checkers must be disposed
+        this.log(`checkerpool: Checker for request ${requestId ?? ""} was canceled, disposing it`);
+        this.checkers[index] = undefined;
         this.inUse.delete(checker);
-      }),
-    };
+        this.globalDiagCheckerCount[index] = 0;
+      } else {
+        this.mergeGlobalDiagnosticsFromCheckerLocked(index, checker);
+        this.inUse.delete(checker);
+      }
+    });
   }
 
-  private mergeGlobalDiagnosticsFromChecker(index: number, checker: CheckerSlot): void {
+  // mergeGlobalDiagnosticsFromCheckerLocked checks if the given checker has produced new
+  // global diagnostics since the last time we looked, and if so merges them into the
+  // accumulated set.
+  private mergeGlobalDiagnosticsFromCheckerLocked(index: number, checker: CheckerSlot): void {
     const globals = checker.getGlobalDiagnostics();
-    if (globals.length === this.globalDiagnosticCheckerCount[index]) return;
-    this.globalDiagnosticCheckerCount[index] = globals.length;
-    const before = this.globalDiagnostics.length;
-    const merged = sortAndDeduplicateProgramDiagnostics([...this.globalDiagnostics, ...globals]);
-    this.globalDiagnostics.length = 0;
-    this.globalDiagnostics.push(...merged);
-    if (this.globalDiagnostics.length !== before) this.globalDiagnosticsChanged = true;
+    if (globals.length === this.globalDiagCheckerCount[index]) {
+      return;
+    }
+    this.globalDiagCheckerCount[index] = globals.length;
+    const before = this.globalDiagAccumulated.length;
+    const merged = sortAndDeduplicateProgramDiagnostics([...this.globalDiagAccumulated, ...globals]);
+    this.globalDiagAccumulated.length = 0;
+    this.globalDiagAccumulated.push(...merged);
+    if (this.globalDiagAccumulated.length !== before) {
+      this.globalDiagChanged = true;
+    }
+  }
+
+  private isFullLocked(): boolean {
+    for (const checker of this.checkers) {
+      if (checker === undefined) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private createCheckerLocked(): readonly [CheckerSlot, number] {
+    for (let i = 0; i < this.checkers.length; i += 1) {
+      const existing = this.checkers[i];
+      if (existing === undefined) {
+        const checker = new CheckerSlot(this.program);
+        this.checkers[i] = checker;
+        return [checker, i];
+      }
+    }
+    throw new Error("called createCheckerLocked when pool is full");
   }
 }
 

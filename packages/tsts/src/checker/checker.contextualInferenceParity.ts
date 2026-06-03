@@ -9,19 +9,27 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import { Kind, SymbolFlags } from "../ast/index.js";
+import { Kind, SymbolFlags, forEachChild, setNodeParent } from "../ast/index.js";
+import { createSyntheticExpression as createSyntheticExpressionNode } from "../ast/generated/factory.js";
 import type { InferenceContext, InferenceInfo } from "./inference.js";
 import { InferencePriority } from "./inference.js";
 import type { IndexInfo, Signature, Type, TypeParameter } from "./types.js";
 import { ContextFlags, ObjectFlags, SignatureFlags, SignatureKind, TypeFlags, getTypeOfSymbol } from "./types.js";
+import { newSymbol } from "./symbolResolution.js";
+import { newTypeParameter } from "./checker.typeAlgebra.js";
+import { newTypeMapper } from "./mapper.js";
 
 export type CheckMode = number;
 export const CheckMode = {
-  Normal: 0 as CheckMode,
-  Contextual: (1 << 0) as CheckMode,
-  Inferential: (1 << 1) as CheckMode,
-  SkipContextSensitive: (1 << 2) as CheckMode,
-  SkipGenericFunctions: (1 << 3) as CheckMode,
+  Normal: 0 as CheckMode, // Normal type checking
+  Contextual: (1 << 0) as CheckMode, // Explicitly assigned contextual type, therefore not cacheable
+  Inferential: (1 << 1) as CheckMode, // Inferential typing
+  SkipContextSensitive: (1 << 2) as CheckMode, // Skip context sensitive function expressions
+  SkipGenericFunctions: (1 << 3) as CheckMode, // Skip single signature generic functions
+  IsForSignatureHelp: (1 << 4) as CheckMode, // Call resolution for purposes of signature help
+  RestBindingElement: (1 << 5) as CheckMode, // Checking a type that is going to be used to determine the type of a rest binding element
+  TypeOnly: (1 << 6) as CheckMode, // Called from getTypeOfExpression, diagnostics may be omitted
+  ForceTuple: (1 << 7) as CheckMode,
 } as const;
 
 export interface ContextualTypingHost {
@@ -326,13 +334,9 @@ export function getSpreadIndices(node: AstNode): readonly [number, number] {
 }
 
 export function createSyntheticExpression(parent: AstNode, type: Type, isSpread: boolean, tupleNameSource?: AstNode): AstNode {
-  const expression = {
-    kind: isSpread ? Kind.SpreadElement : Kind.SyntheticExpression,
-    parent,
-    type,
-    tupleNameSource,
-  } as unknown as AstNode;
-  return expression;
+  const result = createSyntheticExpressionNode(type, isSpread, tupleNameSource);
+  setNodeParent(result, parent);
+  return result;
 }
 
 export function getContextualSignatureForFunctionLikeDeclaration(node: AstNode | undefined, state: ContextualTypingState, host: ContextualTypingHost): Signature | undefined {
@@ -440,31 +444,55 @@ export function hasContextSensitiveYieldExpression(node: AstNode): boolean {
   return body !== undefined && nodeTree(body).some(child => child.kind === Kind.YieldExpression && expressionOf(child) !== undefined);
 }
 
-export function getUniqueTypeParameters(context: InferenceContext | undefined, typeParameters: readonly TypeParameter[]): readonly TypeParameter[] {
-  const seen = new Set<string>();
-  const result: TypeParameter[] = [];
-  for (const typeParameter of typeParameters) {
-    const name = typeParameterName(typeParameter);
-    const key = seen.has(name) ? getUniqueTypeParameterName(result, name) : name;
-    seen.add(key);
-    result.push(typeParameter);
+export function getUniqueTypeParameters(context: InferenceContext, typeParameters: readonly Type[]): readonly Type[] {
+  const oldTypeParameters: Type[] = [];
+  const newTypeParameters: Type[] = [];
+  const result: Type[] = [];
+  const inferredTypeParameters = context.inferredTypeParameters ?? [];
+  for (const tp of typeParameters) {
+    const name = typeParameterName(tp);
+    if (hasTypeParameterByName(inferredTypeParameters, name) || hasTypeParameterByName(result, name)) {
+      const newName = getUniqueTypeParameterName([...inferredTypeParameters, ...result], name);
+      const symbol = newSymbol(SymbolFlags.TypeParameter, newName);
+      const newTypeParam = newTypeParameter(symbol);
+      const newTypeParamData = newTypeParam.data as TypeParameter;
+      newTypeParamData.target = tp.data as TypeParameter;
+      oldTypeParameters.push(tp);
+      newTypeParameters.push(newTypeParam);
+      result.push(newTypeParam);
+    } else {
+      result.push(tp);
+    }
   }
-  if (context !== undefined) (context as unknown as { inferredTypeParameters?: readonly TypeParameter[] }).inferredTypeParameters = result;
+  if (newTypeParameters.length !== 0) {
+    const mapper = newTypeMapper(oldTypeParameters, newTypeParameters);
+    for (const tp of newTypeParameters) {
+      (tp.data as TypeParameter).mapper = mapper;
+    }
+  }
+  context.inferredTypeParameters = result;
   return result;
 }
 
-export function hasTypeParameterByName(typeParameters: readonly TypeParameter[], name: string): boolean {
-  return typeParameters.some(typeParameter => typeParameterName(typeParameter) === name);
+export function hasTypeParameterByName(typeParameters: readonly Type[], name: string): boolean {
+  return typeParameters.some(tp => typeParameterName(tp) === name);
 }
 
-export function getUniqueTypeParameterName(typeParameters: readonly TypeParameter[], baseName: string): string {
-  let candidate = baseName;
-  let suffix = 1;
-  while (hasTypeParameterByName(typeParameters, candidate)) {
-    candidate = `${baseName}_${suffix}`;
-    suffix += 1;
+export function getUniqueTypeParameterName(typeParameters: readonly Type[], baseName: string): string {
+  let trimmed = baseName;
+  while (trimmed.length > 1) {
+    const lastChar = trimmed.charCodeAt(trimmed.length - 1);
+    if (lastChar < 0x30 || lastChar > 0x39) break;
+    trimmed = trimmed.slice(0, trimmed.length - 1);
   }
-  return candidate;
+  let index = 1;
+  while (true) {
+    const augmentedName = `${trimmed}${index}`;
+    if (!hasTypeParameterByName(typeParameters, augmentedName)) {
+      return augmentedName;
+    }
+    index += 1;
+  }
 }
 
 function getResolvedSignatureLike(node: AstNode, host: ContextualTypingHost): Signature | undefined {
@@ -701,10 +729,10 @@ function annotatedType(node: AstNode | undefined): Type | undefined {
   return (node as { readonly type?: Type } | undefined)?.type;
 }
 
-function typeParameterName(typeParameter: TypeParameter): string {
-  return (typeParameter as { readonly symbol?: AstSymbol }).symbol?.name
-    ?? (typeParameter as { readonly name?: string }).name
-    ?? String((typeParameter as { readonly id?: number }).id ?? "");
+function typeParameterName(typeParameter: Type): string {
+  return typeParameter.symbol?.name
+    ?? (typeParameter.data as { readonly name?: string } | undefined)?.name
+    ?? String(typeParameter.id ?? "");
 }
 
 function isNumericName(name: string): boolean {
@@ -718,30 +746,15 @@ function lastIndexOf<T>(values: readonly T[], predicate: (value: T) => boolean):
 
 function nodeTree(root: AstNode): readonly AstNode[] {
   const out: AstNode[] = [];
-  const visit = (node: AstNode | undefined): void => {
-    if (node === undefined) return;
+  const visit = (node: AstNode): void => {
     out.push(node);
-    for (const child of childNodes(node)) visit(child);
+    forEachChild(node, (child) => {
+      visit(child);
+      return undefined;
+    });
   };
   visit(root);
   return out;
-}
-
-function childNodes(node: AstNode): readonly AstNode[] {
-  const children: AstNode[] = [];
-  for (const key of ["statements", "members", "parameters", "arguments", "elements", "properties"] as const) {
-    const value = (node as unknown as Record<string, unknown>)[key];
-    if (Array.isArray(value)) children.push(...value.filter(isNode));
-  }
-  for (const key of ["body", "expression", "left", "right", "initializer", "name", "whenTrue", "whenFalse"] as const) {
-    const value = (node as unknown as Record<string, unknown>)[key];
-    if (isNode(value)) children.push(value);
-  }
-  return children;
-}
-
-function isNode(value: unknown): value is AstNode {
-  return typeof value === "object" && value !== null && "kind" in value;
 }
 
 function nodeKind(node: AstNode | undefined): Kind | undefined {

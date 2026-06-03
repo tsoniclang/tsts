@@ -7,7 +7,7 @@
  */
 
 import type { Node as AstNode, Symbol as AstSymbol } from "../ast/index.js";
-import { Kind, SymbolFlags } from "../ast/index.js";
+import { Kind, SymbolFlags, findAncestor, importEqualsModuleReference } from "../ast/index.js";
 import type { IndexInfo, ObjectType, Signature, Type, TypeAlias, TypeParameter } from "./types.js";
 import { AccessFlags, IndexFlags, ObjectFlags, TypeFlags, getTypeOfSymbol, getPropertyTypeOfType } from "./types.js";
 import { Ternary, type TypeComparer } from "./signatureRelations.js";
@@ -604,7 +604,23 @@ export function markIdentifierAliasReferenced(host: IndexedAccessHost, node: Ast
   markAliasReferenced(host, nodeSymbol(node), node);
 }
 
+export function isPartOfImportEqualsModuleReference(location: AstNode | undefined): boolean {
+  const importEquals = findAncestor(location, candidate => candidate.kind === Kind.ImportEqualsDeclaration);
+  if (importEquals === undefined) {
+    return false;
+  }
+  for (let node: AstNode | undefined = location; node !== undefined && node !== importEquals; node = node.parent) {
+    if (node === importEqualsModuleReference(importEquals)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function markPropertyAliasReferenced(host: IndexedAccessHost, symbol: AstSymbol | undefined, node?: AstNode): void {
+  if (isPartOfImportEqualsModuleReference(node)) {
+    return;
+  }
   markAliasReferenced(host, symbol, node);
 }
 
@@ -968,9 +984,21 @@ function linkedSymbols(node: AstNode | undefined): readonly AstSymbol[] {
 
 function childTypeNodes(node: AstNode | undefined): readonly AstNode[] {
   if (node === undefined) return [];
+  const fields = node as {
+    readonly type?: unknown;
+    readonly typeName?: unknown;
+    readonly typeArguments?: unknown;
+    readonly types?: unknown;
+    readonly elementType?: unknown;
+    readonly indexType?: unknown;
+    readonly objectType?: unknown;
+    readonly checkType?: unknown;
+    readonly extendsType?: unknown;
+    readonly trueType?: unknown;
+    readonly falseType?: unknown;
+  };
   const out: AstNode[] = [];
-  for (const key of ["type", "typeName", "typeArguments", "types", "elementType", "indexType", "objectType", "checkType", "extendsType", "trueType", "falseType"]) {
-    const value = (node as unknown as Record<string, unknown>)[key];
+  for (const value of [fields.type, fields.typeName, fields.typeArguments, fields.types, fields.elementType, fields.indexType, fields.objectType, fields.checkType, fields.extendsType, fields.trueType, fields.falseType]) {
     if (isNode(value)) out.push(value);
     else out.push(...nodeArray(value));
   }

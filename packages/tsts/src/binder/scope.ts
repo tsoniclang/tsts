@@ -18,6 +18,7 @@ import {
   moduleExportNameIsDefault,
   nodeName,
   nodeSymbol,
+  nodeText,
   setNodeLocalSymbol,
   setNodeSymbol,
   setSymbolExportSymbol,
@@ -214,7 +215,7 @@ export function getDeclarationName(node: Node, parent: Symbol | undefined = unde
   const name = nodeName(node);
   if (name !== undefined) {
     if (isDefaultExportLike(node) && parent !== undefined) return internalSymbolNameDefault;
-    if (isPropertyNameLiteralLike(name)) return field<string>(name, "text") ?? internalSymbolNameMissing;
+    if (isPropertyNameLiteralLike(name)) return nodeText(name);
     return internalSymbolNameMissing;
   }
   switch (node.kind) {
@@ -238,7 +239,7 @@ export function getDeclarationName(node: Node, parent: Symbol | undefined = unde
 
 export function getDisplayName(node: Node): string {
   const name = nodeName(node);
-  if (name !== undefined && isPropertyNameLiteralLike(name)) return field<string>(name, "text") ?? "(Missing)";
+  if (name !== undefined && isPropertyNameLiteralLike(name)) return nodeText(name);
   const declarationName = getDeclarationName(node);
   return declarationName === internalSymbolNameMissing ? "(Missing)" : declarationName;
 }
@@ -274,8 +275,3 @@ export const internalSymbolNameDefault = "default";
 export const internalSymbolNameExportEquals = "export=";
 export const internalSymbolNameExportStar = "__export";
 const NodeFlagsExportContext = 1 << 7;
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
-}

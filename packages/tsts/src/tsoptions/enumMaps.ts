@@ -191,6 +191,11 @@ export const targetToLibMap: ReadonlyMap<number, string> = new Map([
   [2, "lib.es6.d.ts"],
 ]);
 
+/** Port of TS-Go `enummaps.go#TargetToLibMap`. */
+export function TargetToLibMap(): ReadonlyMap<number, string> {
+  return targetToLibMap;
+}
+
 export function getDefaultLibFileName(target: number): string {
   return targetToLibMap.get(target) ?? "lib.d.ts";
 }

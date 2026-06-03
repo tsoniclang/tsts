@@ -22,6 +22,14 @@ import {
   getJSXImplicitImportBase,
   getJSXRuntimeImport,
   isExternalModule,
+  isImportDeclaration,
+  isExportDeclaration,
+  isImportEqualsDeclaration,
+  isExternalModuleReference,
+  importDeclarationModuleSpecifier,
+  importEqualsModuleReference,
+  nodeExpression,
+  nodeText,
 } from "../ast/index.js";
 import { parseSourceFile } from "../parser/parser.js";
 import {
@@ -53,6 +61,13 @@ import {
 } from "../core/compilerOptions.js";
 import { Tristate, tristateIsTrue } from "../core/tristate.js";
 import { libs, getDefaultLibFileName, getLibFileName } from "../tsoptions/enumMaps.js";
+import { FileIncludeKind, type FileIncludeReason } from "./fileInclude.js";
+
+// Re-export the canonical FileInclude surface (owned by ./fileInclude.ts, the
+// 1:1 port of fileInclude.go) so existing `./fileLoader.js` importers keep
+// working without a second, divergent definition.
+export { FileIncludeKind } from "./fileInclude.js";
+export type { FileIncludeReason } from "./fileInclude.js";
 
 // ---------------------------------------------------------------------------
 // Lib resolution
@@ -75,34 +90,6 @@ export interface LibFile {
 export interface SourceFileFromReferenceDiagnostic {
   file: SourceFile;
   reason: string;
-}
-
-// ---------------------------------------------------------------------------
-// FileInclude reason
-// ---------------------------------------------------------------------------
-
-/**
- * Why a file is included in the program. Mirrors TS-Go `FileIncludeKind`.
- */
-export const FileIncludeKind = {
-  RootFile: 0,
-  SourceFromProjectReference: 1,
-  OutputFromProjectReference: 2,
-  Import: 3,
-  ReferenceFile: 4,
-  TypeReferenceDirective: 5,
-  LibFile: 6,
-  LibReferenceDirective: 7,
-  AutomaticTypeDirectiveFile: 8,
-} as const;
-export type FileIncludeKind = typeof FileIncludeKind[keyof typeof FileIncludeKind];
-
-export interface FileIncludeReason {
-  kind: FileIncludeKind;
-  fileName?: string;
-  referencingFile?: string;
-  ref?: FileReference;
-  packageId?: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +118,14 @@ export interface JsxRuntimeImportSpecifier {
 
 export interface DuplicateSourceFile { file: SourceFile; reason: string }
 export interface PackageNamesInfo { unresolvedImports: Set<string>; packagesMap: Map<string, boolean> }
-export interface ResolvedModule { resolvedFileName?: string; isExternalLibraryImport?: boolean }
+export interface ResolvedModule {
+  resolvedFileName?: string;
+  isExternalLibraryImport?: boolean;
+  // Mirrors TS-Go `module.ResolvedModule` PackageId + Extension fields used by
+  // the program's packages-map construction.
+  packageId?: { readonly name?: string };
+  extension?: string;
+}
 export interface ResolvedTypeReferenceDirective {
   resolvedFileName?: string;
   isExternalLibraryImport?: boolean;
@@ -214,7 +208,7 @@ export class FileLoader {
     this.host = host;
     this.defaultLibraryPath = getNormalizedAbsolutePath(combinePaths(host.getCurrentDirectory(), "libs"), host.getCurrentDirectory());
     this.resolver = new Resolver(
-      host as unknown as ConstructorParameters<typeof Resolver>[0],
+      this.resolverHost(),
       options,
       undefined,
       undefined,
@@ -229,6 +223,24 @@ export class FileLoader {
   toPath(file: string): string {
     const normalized = getNormalizedAbsolutePath(file, this.host.getCurrentDirectory());
     return this.host.useCaseSensitiveFileNames() ? normalized : normalized.toLowerCase();
+  }
+
+  // Adapt the compiler `CompilerHost` to the module `ResolverHost` contract:
+  // the resolver requires `directoryExists` and `getAccessibleEntries` as
+  // total methods, while CompilerHost exposes them optionally, so supply
+  // conservative defaults when the host omits them.
+  private resolverHost(): ResolverHost {
+    const host = this.host;
+    const realpath = host.realpath;
+    return {
+      useCaseSensitiveFileNames: () => host.useCaseSensitiveFileNames(),
+      getCurrentDirectory: () => host.getCurrentDirectory(),
+      fileExists: (path) => host.fileExists(path),
+      directoryExists: (path) => host.directoryExists?.(path) ?? false,
+      readFile: (path) => host.readFile(path),
+      getAccessibleEntries: (path) => host.getAccessibleEntries?.(path) ?? { files: [], directories: [] },
+      ...(realpath === undefined ? {} : { realpath: (path: string) => realpath(path) }),
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -262,7 +274,7 @@ export class FileLoader {
     resolutions: Map<string, ResolvedTypeReferenceDirective>;
     diagnostics: readonly Diagnostic[];
   } {
-    const automaticTypeDirectiveNames = getAutomaticTypeDirectiveNames(this.options, this.host as unknown as ResolverHost);
+    const automaticTypeDirectiveNames = getAutomaticTypeDirectiveNames(this.options, this.resolverHost());
     const directives: ResolvedRef[] = [];
     const resolutions = new Map<string, ResolvedTypeReferenceDirective>();
     for (const name of automaticTypeDirectiveNames) {
@@ -288,16 +300,13 @@ export class FileLoader {
   }
 
   addProjectReferenceTasks(singleThreaded: boolean): void {
+    // 1:1 with TS-Go `(*fileLoader).addProjectReferenceTasks`: when there are
+    // no resolved project references there is nothing to enqueue. This loader
+    // is constructed from CompilerOptions alone and does not yet carry the
+    // ParsedCommandLine's ResolvedProjectReferencePaths, so it currently has no
+    // references to walk (project-reference parsing via projectReferenceParser
+    // is driven elsewhere). Keep the early-return shape of the upstream method.
     void singleThreaded;
-    const references = (this.options as { projectReferences?: readonly string[] }).projectReferences ?? [];
-    for (let index = 0; index < references.length; index++) {
-      const reference = references[index]!;
-      this.addRootTask(reference, undefined, {
-        kind: FileIncludeKind.SourceFromProjectReference,
-        fileName: reference,
-        packageId: index,
-      });
-    }
   }
 
   private createParseTask(
@@ -343,7 +352,7 @@ export class FileLoader {
           queue.push(this.createParseTask(
             ref.fileName,
             undefined,
-            { kind: FileIncludeKind.AutomaticTypeDirectiveFile, fileName: ref.fileName, packageId: ref.packageId },
+            { kind: FileIncludeKind.AutomaticTypeDirectiveFile, fileName: ref.fileName, packageId: packageIdReasonValue(ref.packageId) },
             false,
             ref.increaseDepth === true ? task.depth + 1 : task.depth,
             ref.elideOnDepth === true,
@@ -370,9 +379,8 @@ export class FileLoader {
       this.files.push(file);
       if (task.libFile !== undefined) this.libFiles.set(key, task.libFile);
 
-      const refs = (file as unknown as { referencedFiles?: readonly FileReference[] }).referencedFiles ?? [];
-      for (let index = 0; index < refs.length; index++) {
-        const ref = refs[index]!;
+      const refs = file.referencedFiles;
+      refs.forEach((ref, index) => {
         const resolved = this.resolveTripleslashPathReference(ref.fileName, task.fileName, index);
         if (resolved.resolved !== undefined && resolved.resolved.fileName !== "") {
           queue.push(this.createParseTask(
@@ -389,7 +397,7 @@ export class FileLoader {
             undefined,
           ));
         }
-      }
+      });
 
       this.resolveTypeReferenceDirectives(task, queue);
       this.resolveImportsForFile(file, task.fileName, queue);
@@ -477,7 +485,7 @@ export class FileLoader {
   }
 
   getDefaultLibFilePriority(a: SourceFile): number {
-    const name = (a as unknown as { fileName?: string }).fileName ?? "";
+    const name = a.fileName;
     const defaultLibraryPath = this.defaultLibraryPath.endsWith("/")
       ? this.defaultLibraryPath.slice(0, -1)
       : this.defaultLibraryPath;
@@ -531,7 +539,7 @@ export class FileLoader {
     origin: SourceFile | undefined, ref: FileReference,
   ): { file: SourceFile | undefined; ok: boolean } {
     const containingFile = origin !== undefined
-      ? ((origin as unknown as { fileName?: string }).fileName ?? "")
+      ? origin.fileName
       : this.host.getCurrentDirectory();
     const resolved = this.resolveTripleslashPathReference(ref.fileName, containingFile, 0);
     if (resolved.resolved === undefined || resolved.resolved.fileName === "") {
@@ -576,7 +584,7 @@ export class FileLoader {
       queue?.push(this.createParseTask(
         directive.resolvedFileName,
         undefined,
-        { kind: FileIncludeKind.TypeReferenceDirective, referencingFile: file.fileName, ref, packageId: directive.packageId },
+        { kind: FileIncludeKind.TypeReferenceDirective, referencingFile: file.fileName, ref, packageId: packageIdReasonValue(directive.packageId) },
         false,
         directive.isExternalLibraryImport ? t.depth + 1 : t.depth,
         false,
@@ -657,6 +665,19 @@ export class FileLoader {
   }
 }
 
+// Stringify a resolution package id for the flattened
+// `FileIncludeReason.packageId` field (upstream `module.PackageId.String()`):
+// either an explicit name string or a PackageId-like `{ name }` struct.
+function packageIdReasonValue(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && "name" in value) {
+    const name = (value as { name?: unknown }).name;
+    if (typeof name === "string") return name;
+  }
+  return "";
+}
+
 /**
  * Collects every external module specifier (`import`, `export from`,
  * `import = require(...)`, dynamic `import(...)`, `require(...)`)
@@ -664,18 +685,17 @@ export class FileLoader {
  */
 function collectModuleSpecifiers(file: SourceFile): readonly string[] {
   const out: string[] = [];
-  const statements = (file as unknown as { statements?: { nodes?: readonly AstNode[] } | readonly AstNode[] }).statements;
-  if (statements === undefined) return out;
-  const list = (statements as { nodes?: readonly AstNode[] }).nodes ?? (statements as readonly AstNode[]);
-  for (const stmt of list) {
-    const k = (stmt as { kind?: number }).kind;
-    // 271 ImportDeclaration, 277 ExportDeclaration, 270 ImportEqualsDeclaration
-    if (k === 271 || k === 277) {
-      const spec = (stmt as unknown as { moduleSpecifier?: { text?: string } }).moduleSpecifier;
-      if (spec !== undefined && typeof spec.text === "string") out.push(spec.text);
-    } else if (k === 270) {
-      const mr = (stmt as unknown as { moduleReference?: { kind?: number; expression?: { text?: string } } }).moduleReference;
-      if (mr?.expression?.text !== undefined) out.push(mr.expression.text);
+  for (const stmt of file.statements) {
+    if (isImportDeclaration(stmt) || isExportDeclaration(stmt)) {
+      const spec = importDeclarationModuleSpecifier(stmt);
+      const text = nodeText(spec);
+      if (text !== "") out.push(text);
+    } else if (isImportEqualsDeclaration(stmt)) {
+      const moduleReference = importEqualsModuleReference(stmt);
+      if (isExternalModuleReference(moduleReference)) {
+        const text = nodeText(nodeExpression(moduleReference));
+        if (text !== "") out.push(text);
+      }
     }
   }
   void isExternalModuleNameRelative;

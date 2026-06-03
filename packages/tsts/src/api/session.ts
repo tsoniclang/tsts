@@ -32,7 +32,7 @@ const HandlePrefix = {
   Type: "t",
   Signature: "g",
 } as const;
-let sessionIdCounter = 0;
+let sessionIDCounter = 0;
 let objectHandleCounter = 0;
 const objectHandleIds = new WeakMap<object, number>();
 
@@ -170,7 +170,8 @@ export class Session {
   readonly useBinaryResponses: boolean;
 
   constructor(projectSession: ProjectSession, options: SessionOptions) {
-    this.id = generateSessionId();
+    sessionIDCounter += 1;
+    this.id = formatSessionID(sessionIDCounter);
     this.projectSession = projectSession;
     this.options = options;
     this.useBinaryResponses = options.useBinaryResponses === true;
@@ -249,6 +250,8 @@ export class Session {
         return { result: this.handleGetSymbolOfType(ctx, params as GetSymbolOfTypeParams) };
       case "getSignaturesOfType":
         return { result: this.handleGetSignaturesOfType(ctx, params as GetSignaturesOfTypeParams) };
+      case "getResolvedSignature":
+        return { result: this.handleGetResolvedSignature(ctx, params as GetResolvedSignatureParams) };
       case "getTypeAtLocation":
         return { result: this.handleGetTypeAtLocation(ctx, params as GetTypeAtLocationParams) };
       case "getTypeAtLocations":
@@ -573,6 +576,18 @@ export class Session {
       ?? callMethod(setup.checker, "GetSignaturesOfType", targetType, params.kind)
       ?? readArray<SignatureType>(targetType, params.kind === 1 ? "constructSignatures" : "callSignatures");
     return arrayFromUnknown<SignatureType>(signatures).map((signature) => setup.snapshotData!.registerSignature(signature));
+  }
+  // handleGetResolvedSignature returns the resolved signature of a call-like expression.
+  // Port of TS-Go `func (s *Session) handleGetResolvedSignature`.
+  handleGetResolvedSignature(ctx: Context, params: GetResolvedSignatureParams): SignatureResponse | undefined {
+    const setup = this.setupChecker(ctx, params.snapshot, params.project);
+    if (setup.checker === undefined || setup.program === undefined || setup.snapshotData === undefined) return undefined;
+    const node = resolveNodeHandle(setup.program, params.location);
+    if (node === undefined) return undefined;
+    const signature = callMethod(setup.checker, "getResolvedSignature", node)
+      ?? callMethod(setup.checker, "GetResolvedSignature", node);
+    if (signature === undefined) return undefined;
+    return setup.snapshotData.registerSignature(signature as SignatureType);
   }
   handleGetTypeAtLocation(ctx: Context, params: GetTypeAtLocationParams): TypeResponse | undefined {
     const setup = this.setupChecker(ctx, params.snapshot, params.project);
@@ -912,13 +927,14 @@ export function snapshotHandle(snapshot: Snapshot): Handle<Snapshot> {
   return prefixedHandle<Snapshot>(HandlePrefix.Snapshot, readProperty(snapshot, "id") ?? readProperty(snapshot, "ID") ?? snapshot);
 }
 
-function generateSessionId(): string {
-  sessionIdCounter += 1;
-  return `s-${sessionIdCounter.toString(16).padStart(16, "0")}`;
+// formatSessionID renders a session counter value into its handle string.
+// Port of TS-Go `func formatSessionID(id uint64) string`.
+function formatSessionID(id: number): string {
+  return `api-session-${id}`;
 }
 
 function parseProjectHandle(handle: Handle<Project>): string {
-  const text = handle as unknown as string;
+  const text: string = handle;
   if (text.startsWith(`${HandlePrefix.Project}.`)) return text.slice(2);
   if (text.startsWith(HandlePrefix.Project)) return text.slice(1);
   return text;
@@ -1130,7 +1146,8 @@ function resolveNodeHandle(program: Program, handle: Handle<AstNode>): AstNode |
 }
 
 function parseNodeHandle(handle: Handle<AstNode>): { pos: number; end: number; kind: number; path: string } | undefined {
-  const parts = (handle as unknown as string).split(".", 4);
+  const text: string = handle;
+  const parts = text.split(".", 4);
   if (parts.length !== 4) return undefined;
   const pos = Number.parseInt(parts[0]!, 10);
   const end = Number.parseInt(parts[1]!, 10);
@@ -1142,9 +1159,8 @@ function parseNodeHandle(handle: Handle<AstNode>): { pos: number; end: number; k
 function findNodeByRangeAndKind(node: AstNode, pos: number, end: number, kind: number): AstNode | undefined {
   if (node.pos === pos && node.end === end && node.kind === kind) return node;
   const childProperties = ChildPropertiesByKind.get(node.kind) ?? [];
-  const record = node as unknown as Record<string, unknown>;
   for (const property of childProperties) {
-    const value = record[property];
+    const value: unknown = Reflect.get(node, property);
     if (Array.isArray(value)) {
       for (const child of value) {
         if (isAstNode(child)) {
@@ -1310,6 +1326,7 @@ interface GetExportsOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<
 interface GetExportSymbolOfSymbolParams { snapshot: Handle<Snapshot>; symbol: Handle<SymbolType> }
 interface GetSymbolOfTypeParams { snapshot: Handle<Snapshot>; type: Handle<TypeType> }
 interface GetSignaturesOfTypeParams { snapshot: Handle<Snapshot>; project: Handle<Project>; type: Handle<TypeType>; kind: number }
+interface GetResolvedSignatureParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
 interface GetTypeAtLocationParams { snapshot: Handle<Snapshot>; project: Handle<Project>; location: Handle<AstNode> }
 interface GetTypeAtLocationsParams { snapshot: Handle<Snapshot>; project: Handle<Project>; locations: readonly Handle<AstNode>[] }
 interface GetTypeAtPositionParams { snapshot: Handle<Snapshot>; project: Handle<Project>; file: DocumentIdentifier; position: number }

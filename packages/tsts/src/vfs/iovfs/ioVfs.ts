@@ -59,26 +59,54 @@ export class IOFS implements FS {
     }
   }
 
-  writeFile(path: string, data: string): void {
+  // Mirrors iofs.go `(vfs *ioFS) writeFileEnsuringDir`: try the write; on
+  // failure, ensure the parent directory exists and retry. `write` returns the
+  // caught error, or undefined on success (Go's `error` return).
+  private writeFileEnsuringDir(path: string, content: string, write: (path: string, content: string) => unknown): unknown {
+    if (write(path, content) === undefined) {
+      return undefined;
+    }
+    if (this.fs.mkdirSync === undefined) {
+      return new VfsError("invalid", "mkdirAll not supported");
+    }
+    const dir = path.slice(0, path.lastIndexOf("/"));
     try {
-      this.fs.writeFileSync(path, data);
-    } catch {
-      // Try to create parent dir then retry
-      if (this.fs.mkdirSync !== undefined) {
-        const dir = path.slice(0, path.lastIndexOf("/"));
-        this.fs.mkdirSync(dir, { recursive: true });
-        this.fs.writeFileSync(path, data);
-      } else {
-        throw new VfsError("invalid", "writeFile failed");
-      }
+      this.fs.mkdirSync(dir, { recursive: true });
+    } catch (error) {
+      return error;
+    }
+    return write(path, content);
+  }
+
+  private writeFileImpl(path: string, content: string): unknown {
+    try {
+      this.fs.writeFileSync(path, content);
+      return undefined;
+    } catch (error) {
+      return error;
     }
   }
 
-  appendFile(path: string, data: string): void {
+  private appendFileImpl(path: string, content: string): unknown {
     if (this.fs.appendFileSync === undefined) {
-      throw new VfsError("invalid", "appendFile unsupported");
+      return new VfsError("invalid", "appendFile unsupported");
     }
-    this.fs.appendFileSync(path, data);
+    try {
+      this.fs.appendFileSync(path, content);
+      return undefined;
+    } catch (error) {
+      return error;
+    }
+  }
+
+  writeFile(path: string, data: string): void {
+    const err = this.writeFileEnsuringDir(path, data, (p, c) => this.writeFileImpl(p, c));
+    if (err !== undefined) throw err;
+  }
+
+  appendFile(path: string, data: string): void {
+    const err = this.writeFileEnsuringDir(path, data, (p, c) => this.appendFileImpl(p, c));
+    if (err !== undefined) throw err;
   }
 
   realpath(path: string): string {

@@ -6,13 +6,16 @@ import {
   binaryLeft,
   binaryOperatorKind,
   binaryRight,
+  bindingPatternElements,
   callExpressionArguments,
   callExpressionExpression,
   elementAccessExpressionOf,
   elementArgumentExpression,
+  forCondition,
   nodeExpression,
   nodeInitializer,
   nodeName,
+  nodeParent,
   parenthesizedExpressionRO,
   prefixUnaryOperandRO,
   propertyAccessExpressionOf,
@@ -358,15 +361,15 @@ export function isLogicalAssignmentExpression(node: Node): boolean {
 }
 
 export function isStatementCondition(node: Node | undefined): boolean {
-  const parent = field<Node>(node, "parent");
+  const parent = nodeParent(node);
   if (parent === undefined) return false;
   switch (parent.kind) {
     case Kind.IfStatement:
     case Kind.WhileStatement:
     case Kind.DoStatement:
-      return field<Node>(parent, "expression") === node;
+      return nodeExpression(parent) === node;
     case Kind.ForStatement:
-      return field<Node>(parent, "condition") === node;
+      return forCondition(parent) === node;
   }
   return false;
 }
@@ -375,7 +378,7 @@ export function isTopLevelLogicalExpression(node: Node): boolean {
   if (node.kind !== Kind.BinaryExpression) return false;
   const operator = binaryOperatorKind(node);
   if (operator !== Kind.AmpersandAmpersandToken && operator !== Kind.BarBarToken && operator !== Kind.QuestionQuestionToken) return false;
-  const parent = field<Node>(node, "parent");
+  const parent = nodeParent(node);
   return parent === undefined || parent.kind !== Kind.BinaryExpression || !isLogicalOperator(binaryOperatorKind(parent));
 }
 
@@ -387,7 +390,7 @@ export function isLogicalOperator(operator: Kind): boolean {
 
 export function forEachBindingTarget(node: Node, cb: (target: Node) => void): void {
   if (node.kind === Kind.ArrayBindingPattern || node.kind === Kind.ObjectBindingPattern) {
-    for (const element of field<readonly Node[]>(node, "elements") ?? []) {
+    for (const element of bindingPatternElements(node)) {
       forEachBindingTarget(element, cb);
     }
     return;
@@ -421,9 +424,4 @@ function isStringLiteralLike(node: Node | undefined): boolean {
     node.kind === Kind.StringLiteral ||
     node.kind === Kind.NoSubstitutionTemplateLiteral
   );
-}
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
 }

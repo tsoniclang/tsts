@@ -25,12 +25,21 @@
 import type { Diagnostic } from "../diagnostics/index.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 
+import type { Node as AstNode, SourceFile, Symbol as AstSymbol } from "../ast/index.js";
+import type { Program } from "../compiler/program.js";
+import type { Checker } from "../checker/index.js";
 import { getBaseFileName } from "../tspath/index.js";
 import type { CompilationResult as HarnessCompilationResult, NamedSource, TestFile } from "../testutil/harnessutil/index.js";
 import { noContent } from "../testutil/baseline/baseline.js";
 import { getErrorBaseline, type BaselineDiagnostic } from "../testutil/tsbaseline/errorBaseline.js";
 import { buildJSEmitBaseline } from "../testutil/tsbaseline/jsEmitBaseline.js";
-import { lineAndCharacterOfPosition } from "../testutil/tsbaseline/util.js";
+import {
+  entriesFromTypeWriterWalker,
+  generateBaseline,
+  newTypeWriterWalker,
+  type TypeWriterProgram,
+} from "../testutil/tsbaseline/typeSymbolBaseline.js";
+import { lineAndCharacterOfPosition, removeTestPathPrefixes } from "../testutil/tsbaseline/util.js";
 
 import type { CompilerBaseline } from "./compilerRunner.js";
 import type { GeneratedBaseline } from "./baselineSink.js";
@@ -95,8 +104,18 @@ export function produceBaselineText(baseline: CompilerBaseline): readonly Genera
     // The harness could not compile this case. Surface the failure as the
     // artifact text for the requested kind so it is recorded as a divergence
     // against the TS-Go reference rather than aborting the whole run.
+    const text = `${compileFailurePrefix}${failure.message}`;
+    if (baseline.kind === "types-and-symbols") {
+      // Keep the `.types`/`.symbols` split consistent with the success path so
+      // the channel names line up and each failure compares against its own
+      // reference extension instead of a spurious `.errors.txt`.
+      return [
+        { kind: "types-and-symbols (types) (compile-failed)", extension: ".types", text },
+        { kind: "types-and-symbols (symbols) (compile-failed)", extension: ".symbols", text },
+      ];
+    }
     const extension = baseline.kind === "output" ? ".js" : ".errors.txt";
-    return [{ kind: `${baseline.kind} (compile-failed)`, extension, text: `${compileFailurePrefix}${failure.message}` }];
+    return [{ kind: `${baseline.kind} (compile-failed)`, extension, text }];
   }
   const result = harnessResultFromRunnerResult(baseline.result.program);
   switch (baseline.kind) {
@@ -104,6 +123,8 @@ export function produceBaselineText(baseline: CompilerBaseline): readonly Genera
       return [produceErrorBaseline(baseline, result)];
     case "output":
       return [produceOutputBaseline(baseline, result)];
+    case "types-and-symbols":
+      return produceTypesAndSymbolsBaseline(baseline, result);
     default:
       throw new UnsupportedBaselineKindError(baseline.kind);
   }
@@ -118,6 +139,19 @@ function produceErrorBaseline(baseline: CompilerBaseline, result: HarnessCompila
 }
 
 function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompilationResult): GeneratedBaseline {
+  // JS emit is attempted separately from the checker (see `compileFilesEx`). When
+  // it throws (e.g. an unsupported statement kind the JS printer does not yet
+  // handle), only this js/output channel records the failure; the errors/types/
+  // symbols channels above still produce real comparisons. We mark it with the
+  // ` (compile-failed)` channel suffix so the divergence report attributes the
+  // failure to the js channel honestly instead of fabricating emit output.
+  if (result.emitFailure !== undefined) {
+    return {
+      kind: "output (compile-failed)",
+      extension: ".js",
+      text: `${compileFailurePrefix}${result.emitFailure}`,
+    };
+  }
   const js = mapToNamedSources(result.js);
   const dts = mapToNamedSources(result.dts);
   const diagnostics = result.diagnostics.map(toBaselineDiagnostic);
@@ -126,7 +160,12 @@ function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompil
     : buildJSEmitBaseline(
       {
         baselinePath: baseline.testName,
-        header: baseline.testName,
+        // The `//// [<path>] ////` header line TS-Go writes at the top of a `.js`
+        // output baseline is the corpus test file path made portable (e.g.
+        // `tests/cases/compiler/foo.ts`), NOT the per-config basename. Use the
+        // same `baselineHeader` helper as the `.types`/`.symbols` channels so the
+        // output channel header matches the TS-Go reference exactly.
+        header: baselineHeader(baseline),
         result: { js, dts, diagnostics },
         toBeCompiled: toNamedSources(baseline.files),
         options: { baselineRoot: "" },
@@ -134,6 +173,93 @@ function produceOutputBaseline(baseline: CompilerBaseline, result: HarnessCompil
       diagnostics,
     );
   return { kind: "output", extension: ".js", text };
+}
+
+/**
+ * Produce the `.types` and `.symbols` baseline artifacts for one case.
+ *
+ * The real `TypeWriterWalker` (the producer that already exists in
+ * `tsbaseline/typeSymbolBaseline`) walks each source file's expression /
+ * identifier nodes and asks a `TypeWriterProgram` for the type/symbol string at
+ * each node. We back that `TypeWriterProgram` with the REAL checker from the
+ * harness `Program`: type strings come from
+ * `checker.typeToString(checker.getTypeAtLocation(node))` and symbols from
+ * `checker.getSymbolAtLocation(node)`. No placeholder text is invented — when
+ * the checker yields no type/symbol for a node, the walker simply omits it (the
+ * same shape TS-Go uses for an unresolved node), so the conformance diff is an
+ * honest match/changed count.
+ */
+function produceTypesAndSymbolsBaseline(baseline: CompilerBaseline, result: HarnessCompilationResult): readonly GeneratedBaseline[] {
+  const files = toNamedSources(baseline.files);
+  const header = baselineHeader(baseline);
+  const hadErrorBaseline = result.diagnostics.length > 0;
+  const writerProgram = newTypeWriterProgram(result.program);
+  const walker = newTypeWriterWalker(writerProgram, hadErrorBaseline);
+  const typeEntries = entriesFromTypeWriterWalker(files, walker, false);
+  const symbolEntries = entriesFromTypeWriterWalker(files, walker, true);
+  return [
+    { kind: "types-and-symbols (types)", extension: ".types", text: generateBaseline(files, typeEntries, header, false) },
+    { kind: "types-and-symbols (symbols)", extension: ".symbols", text: generateBaseline(files, symbolEntries, header, true) },
+  ];
+}
+
+/**
+ * The baseline header is the corpus test path made portable, matching the
+ * `//// [<path>] ////` line TS-Go writes at the top of a `.types`/`.symbols`/`.js`
+ * baseline (e.g. `tests/cases/conformance/simpleTest.ts`). TS-Go uses the test
+ * file path here — NOT the per-config test name and NOT the virtual `/.src/`
+ * unit name — so we render `baseline.testPath` through `removeTestPathPrefixes`.
+ * Falls back to the configured test name when no test path is available.
+ *
+ * Shared by the `.types`/`.symbols` and the `.js` output channels so every
+ * channel's header line is identical to the TS-Go reference.
+ */
+function baselineHeader(baseline: CompilerBaseline): string {
+  if (baseline.testPath.length > 0) return removeTestPathPrefixes(baseline.testPath, false);
+  return baseline.testName;
+}
+
+/**
+ * Adapt the harness `Program` (and its real checker) to the narrow
+ * `TypeWriterProgram` surface the walker consumes. The checker is acquired once
+ * and held for the life of the walk; queries are guarded so a node the checker
+ * cannot resolve yields `undefined` (omitted) rather than crashing the run.
+ */
+function newTypeWriterProgram(program: Program): TypeWriterProgram {
+  const { checker } = program.getTypeChecker({});
+  return {
+    getSourceFile(fileName: string): SourceFile | undefined {
+      return program.getSourceFile(fileName);
+    },
+    getTypeAtLocation(node: AstNode): string | undefined {
+      try {
+        const type = checker.getTypeAtLocation(node);
+        if (type === undefined) return undefined;
+        const text = checker.typeToString(type);
+        return text.length === 0 ? undefined : text;
+      } catch {
+        return undefined;
+      }
+    },
+    getSymbolAtLocation(node: AstNode): AstSymbol | undefined {
+      try {
+        return checker.getSymbolAtLocation(node);
+      } catch {
+        return undefined;
+      }
+    },
+    // Match TS-Go `type_symbol_baseline.go`: the walker formats each symbol via
+    // `SymbolToStringEx(symbol, node.Parent, ...)`, so the enclosing declaration
+    // is the reference node's parent. The checker's `symbolToString` returns the
+    // qualified name (e.g. `Outer.method`, `E.A`).
+    symbolToString(symbol: AstSymbol, node: AstNode): string {
+      try {
+        return checker.symbolToString(symbol, node.parent);
+      } catch {
+        return symbol.name ?? symbol.escapedName ?? "";
+      }
+    },
+  };
 }
 
 function toNamedSources(files: readonly TestFile[]): readonly NamedSource[] {

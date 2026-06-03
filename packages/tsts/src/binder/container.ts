@@ -214,7 +214,7 @@ export function walkContainerChain(first: Node | undefined): readonly Node[] {
   let current = first;
   while (current !== undefined) {
     result.push(current);
-    current = field<Node>(current, "nextContainer");
+    current = current.nextContainer;
   }
   return result;
 }
@@ -255,9 +255,4 @@ function blockIsFunctionBody(node: Node): boolean {
 function isObjectLiteralOrClassExpressionMethodOrAccessorContainer(node: Node): boolean {
   const parent = nodeParent(node);
   return parent !== undefined && (parent.kind === Kind.ObjectLiteralExpression || parent.kind === Kind.ClassExpression);
-}
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
 }

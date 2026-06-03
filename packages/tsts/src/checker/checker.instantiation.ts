@@ -231,8 +231,33 @@ function instantiateOptionalType(host: InstantiationHost, type: Type | undefined
   return type === undefined ? undefined : instantiateTypeWorker(host, type, mapper);
 }
 
+// Mirror of TS-Go `instantiateList[T comparable]` (checker.go): walks the
+// list, returning the same slice when the instantiator is a no-op for every
+// element, and otherwise copying the unchanged prefix and instantiating the
+// remaining elements. The short-circuit preserves object identity for
+// non-generic values, matching upstream cache behaviour.
+export function instantiateList<T>(
+  values: readonly T[],
+  mapper: TypeMapper,
+  instantiator: (value: T, mapper: TypeMapper) => T,
+): readonly T[] {
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i]!;
+    const mapped = instantiator(value, mapper);
+    if (mapped !== value) {
+      const result: T[] = values.slice(0, i);
+      result[i] = mapped;
+      for (let j = i + 1; j < values.length; j++) {
+        result[j] = instantiator(values[j]!, mapper);
+      }
+      return result;
+    }
+  }
+  return values;
+}
+
 function instantiateSymbols(symbols: readonly AstSymbol[] | undefined, mapper: TypeMapper): readonly AstSymbol[] {
-  return (symbols ?? []).map(symbol => instantiateSymbol(symbol, mapper)).filter((symbol): symbol is AstSymbol => symbol !== undefined);
+  return instantiateList<AstSymbol | undefined>(symbols ?? [], mapper, instantiateSymbol).filter((symbol): symbol is AstSymbol => symbol !== undefined);
 }
 
 function instantiateSymbol(symbol: AstSymbol | undefined, mapper: TypeMapper): AstSymbol | undefined {
@@ -246,11 +271,11 @@ function instantiateSymbol(symbol: AstSymbol | undefined, mapper: TypeMapper): A
 }
 
 function instantiateSignatures(signatures: readonly Signature[] | undefined, mapper: TypeMapper): readonly Signature[] {
-  return (signatures ?? []).map(signature => instantiateSignatureEx(signature, mapper, false));
+  return instantiateList(signatures ?? [], mapper, (signature, m) => instantiateSignatureEx(signature, m, false));
 }
 
 function instantiateIndexInfos(infos: readonly IndexInfo[] | undefined, mapper: TypeMapper): readonly IndexInfo[] {
-  return (infos ?? []).map(info => instantiateIndexInfo(info, mapper));
+  return instantiateList(infos ?? [], mapper, (info, m) => instantiateIndexInfo(info, m));
 }
 
 function cloneSymbol(symbol: AstSymbol): AstSymbol {

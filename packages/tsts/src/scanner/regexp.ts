@@ -5,8 +5,8 @@ import type { DiagnosticMessage } from "../diagnostics/types.js";
 import { isASCIILetter, isDigit, isHexDigit, isOctalDigit } from "../stringutil/util.js";
 import { LanguageVariant } from "../core/languageVariant.js";
 import {
-  isIdentifierPartCodePoint,
-  isIdentifierStartCodePoint,
+  isIdentifierPartEx,
+  isIdentifierStart,
 } from "./scanner.js";
 import {
   binaryUnicodeProperties,
@@ -210,7 +210,7 @@ export function scanRegExpFlags(
   let flags = RegularExpressionFlags.None;
   while (pos < text.length) {
     const cp = text.codePointAt(pos);
-    if (cp === undefined || !isIdentifierPartCodePoint(cp, LanguageVariant.Standard)) break;
+    if (cp === undefined || !isIdentifierPartEx(cp, LanguageVariant.Standard)) break;
     const size = charSize(cp);
     const flag = charCodeToRegExpFlag.get(charToString(cp));
     if (flag === undefined) {
@@ -564,7 +564,7 @@ class RegExpParser {
     let flags = currFlags;
     while (this.pos() < this.end) {
       const ch = this.char();
-      if (ch < 0 || !isIdentifierPartCodePoint(ch, LanguageVariant.Standard)) break;
+      if (ch < 0 || !isIdentifierPartEx(ch, LanguageVariant.Standard)) break;
       const size = charSize(ch);
       const flag = charCodeToRegExpFlag.get(charToString(ch));
       if (flag === undefined) {
@@ -1214,14 +1214,14 @@ class RegExpParser {
   private scanIdentifier(): void {
     const start = this.pos();
     let cp = this.char();
-    if (cp < 0 || !isIdentifierStartCodePoint(cp)) {
+    if (cp < 0 || !isIdentifierStart(cp)) {
       this.state.tokenValue = "";
       return;
     }
     this.incPos(charSize(cp));
     while (this.pos() < this.end) {
       cp = this.char();
-      if (cp < 0 || !isIdentifierPartCodePoint(cp, LanguageVariant.Standard)) break;
+      if (cp < 0 || !isIdentifierPartEx(cp, LanguageVariant.Standard)) break;
       this.incPos(charSize(cp));
     }
     this.state.tokenValue = this.text.slice(start, this.pos());
@@ -1355,7 +1355,7 @@ class RegExpParser {
           (flags & EscapeSequenceScanningFlags.AnyUnicodeMode) !== 0
           || ((flags & EscapeSequenceScanningFlags.RegularExpression) !== 0
             && (flags & EscapeSequenceScanningFlags.AnnexB) === 0
-            && isIdentifierPartCodePoint(ch, LanguageVariant.Standard))
+            && isIdentifierPartEx(ch, LanguageVariant.Standard))
         ) {
           this.error(Diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, this.pos() - 2, 2);
         }

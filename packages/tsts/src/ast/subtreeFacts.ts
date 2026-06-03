@@ -36,7 +36,35 @@ export const SubtreeFacts = {
   ContainsES2018: (1 << 10) | (1 << 11) | (1 << 24),
   ContainsES2017: 1 << 12,
   ContainsES2016: 1 << 13,
-  ExclusionsNode: 1 << 25,
-  ExclusionsEraseable: ~(1 << 0),
+  // Scope Exclusions (subtreefacts.go:57-81)
+  // - Bitmasks that exclude flags from propagating out of a specific context
+  //   into the subtree flags of their container.
+  ExclusionsNode: 1 << 25, // SubtreeFactsComputed
+  ExclusionsEraseable: ~(1 << 0), // ^SubtreeContainsTypeScript
+  ExclusionsOuterExpression: 1 << 25, // ExclusionsNode
+  ExclusionsPropertyAccess: 1 << 25, // ExclusionsNode
+  ExclusionsElementAccess: 1 << 25, // ExclusionsNode
+  ExclusionsArrowFunction: (1 << 25) /* Node */ | (1 << 18) /* Await */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsFunction:
+    (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */ | (1 << 18) /* Await */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsConstructor:
+    (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */ | (1 << 18) /* Await */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsMethod:
+    (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */ | (1 << 18) /* Await */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsAccessor:
+    (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */ | (1 << 18) /* Await */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsProperty: (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */,
+  ExclusionsClass: 1 << 25, // ExclusionsNode
+  ExclusionsModule: (1 << 25) /* Node */ | (1 << 14) /* LexicalThis */ | (1 << 15) /* LexicalSuper */,
+  ExclusionsObjectLiteral: (1 << 25) /* Node */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsArrayLiteral: 1 << 25, // ExclusionsNode
+  ExclusionsCall: 1 << 25, // ExclusionsNode
+  ExclusionsNew: 1 << 25, // ExclusionsNode
+  ExclusionsVariableDeclarationList: (1 << 25) /* Node */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsParameter: 1 << 25, // ExclusionsNode
+  ExclusionsCatchClause: (1 << 25) /* Node */ | (1 << 17) /* ObjectRestOrSpread */,
+  ExclusionsBindingPattern: (1 << 25) /* Node */ | (1 << 16) /* RestOrSpread */,
+
+  // Masks (subtreefacts.go:83-86)
   ContainsLexicalThisOrSuper: (1 << 14) | (1 << 15),
 } as const;

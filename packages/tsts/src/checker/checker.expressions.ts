@@ -73,6 +73,7 @@ import {
   stringType,
   undefinedType,
   unresolvedType,
+  voidType,
   isAnyType,
   isNumberType,
   isStringType,
@@ -109,14 +110,16 @@ import {
   neverType,
   type ObjectProperty,
   getWidenedType,
+  getRegularTypeOfLiteralType,
   checkAssignable,
   displayType,
   typeFromTypeNode,
   getResolvedSymbol,
   setInitializerInferrer,
+  inferredBlockReturnType,
 } from "./checker.checkedtype.js";
 import { checkBlock } from "./checker.statements.js";
-import { getPropertyNameFromType, isTypeUsableAsPropertyName } from "./utilities.js";
+import { getPropertyNameFromType, isConstTypeReference, isTypeUsableAsPropertyName } from "./utilities.js";
 import { SignatureFlags, SignatureKind, TypeFlags, type IndexInfo, type Signature } from "./types.js";
 
 type SignatureKindValue = SignatureKind;
@@ -160,6 +163,13 @@ export function inferExpression(expression: Expression, state: CheckState, conte
     // so model the unbound `undefined` identifier as the undefined intrinsic.
     if (expression.text === "undefined") {
       return undefinedType;
+    }
+    // `NaN` / `Infinity` are global numeric value constants (lib.es5 `declare
+    // const NaN: number`); TS-Go resolves them to `number`. With no global
+    // symbol table, model the unbound globals as `number` — only reached when
+    // no local binding shadows them (getResolvedSymbol returned undefined).
+    if (expression.text === "NaN" || expression.text === "Infinity") {
+      return numberType;
     }
     return unresolvedType;
   }
@@ -217,7 +227,17 @@ export function inferExpression(expression: Expression, state: CheckState, conte
     return anyType;
   }
   if (isAsExpression(expression)) {
-    inferExpression(expression.expression, state);
+    // `expr as const`: the const-type reference is not a real type node —
+    // TS-Go's checkAssertion returns getRegularTypeOfLiteralType(exprType),
+    // i.e. the (non-fresh) literal type of the operand (checker.go:12248). For a
+    // primitive literal that is the literal itself (`1 as const` -> `1`,
+    // `"x" as const` -> `"x"`). Deep object/array const-context (readonly
+    // members / tuples) needs contextual-const propagation and is deferred — the
+    // operand's regular type is the honest result for those until then.
+    const exprType = inferExpression(expression.expression, state);
+    if (isConstTypeReference(expression.type)) {
+      return getRegularTypeOfLiteralType(exprType, state);
+    }
     return typeFromTypeNode(expression.type, state);
   }
   if (isSatisfiesExpression(expression)) {
@@ -1712,7 +1732,7 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   // reference inside the body resolves through them (no checker-side parameter
   // environment). The checker only infers the body + assembles the function type.
   const declaredReturnType = arrowFunction.type === undefined ? undefined : typeFromTypeNode(arrowFunction.type, state);
-  const inferredReturnType = inferConciseBody(arrowFunction.body, state, declaredReturnType);
+  const inferredReturnType = inferConciseBody(arrowFunction, arrowFunction.body, state, declaredReturnType);
   const parameters: FunctionParameter[] = arrowFunction.parameters
     .filter((parameter) => isIdentifier(parameter.name))
     .map((parameter) => ({
@@ -1724,16 +1744,29 @@ export function inferArrowFunction(arrowFunction: ArrowFunction, state: CheckSta
   return makeFunctionType(declaredReturnType ?? inferredReturnType, state, parameters);
 }
 
-export function inferConciseBody(body: ConciseBody, state: CheckState, expectedReturnType: Type | undefined): Type {
+export function inferConciseBody(functionNode: AstNode, body: ConciseBody, state: CheckState, expectedReturnType: Type | undefined): Type {
   if (isBlock(body)) {
     checkBlock(body, state, expectedReturnType);
-    return expectedReturnType ?? unresolvedType;
+    if (expectedReturnType !== undefined) return expectedReturnType;
+    // No annotation: infer the return type from the block's `return <expr>`
+    // statements (getReturnTypeFromBody), the same mechanism free functions use.
+    // A VALUE-returning arrow block, however, is held back to the permissive
+    // `unresolvedType`: an inferred concrete callback type flows into call-argument
+    // assignability against still-uninstantiated generic parameters (generic
+    // inference is a recorded DEFER), where it would surface a spurious mismatch.
+    // The no-value-return `void` arm is safe (no callback shape) and IS inferred,
+    // so a `const fn = () => { ...; }` still types as `() => void`.
+    const inferred = inferredBlockReturnType(functionNode, state);
+    return inferred === voidType ? inferred : unresolvedType;
   }
   const bodyType = inferExpression(body, state);
   if (expectedReturnType !== undefined) {
     checkAssignable(getWidenedLiteralLikeTypeForContextualType(bodyType, expectedReturnType, state), expectedReturnType, state);
+    return expectedReturnType;
   }
-  return bodyType;
+  // No annotation: the inferred return type is the body expression's type,
+  // widened (getReturnTypeFromBody's `!IsBlock` arm).
+  return getWidenedType(bodyType, state);
 }
 
 function checkSignatureArguments(arguments_: readonly Expression[], signature: Signature, state: CheckState): void {
@@ -1820,6 +1853,13 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
     const propertyType = getTypeOfSymbol(propertySymbol) ?? anyType;
     // An optional property's access type includes `undefined`.
     return isOptionalSymbol(propertySymbol) ? getUnionType([propertyType, undefinedType], state) : propertyType;
+  }
+  // A dotted property access on a type with a STRING index signature resolves to
+  // that signature's value type (TS-Go getPropertyTypeForIndexType): `obj.x` is
+  // equivalent to `obj["x"]`. Without this the access would wrongly error.
+  const stringIndexInfo = (getIndexInfos(receiverType) ?? []).find((info) => isStringType(info.keyType));
+  if (stringIndexInfo !== undefined) {
+    return stringIndexInfo.valueType;
   }
   if (!isAnyType(receiverType) && !isFunctionType(receiverType)) {
     state.diagnostics.push({

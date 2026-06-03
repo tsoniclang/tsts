@@ -388,10 +388,15 @@ export function getJSDocReturnTag(comment: ParsedJSDocComment): ParsedJSDocTag |
   return getJSDocTag(comment, "returns") ?? getJSDocTag(comment, "return");
 }
 
+// tsgo isJSDocLinkTag (jsdoc.go:775-777): the three inline link-tag kinds.
+export function isJSDocLinkTag(kind: string): boolean {
+  return kind === "link" || kind === "linkcode" || kind === "linkplain";
+}
+
 function parseInlineLink(text: string, at: number, basePos: number): ParsedJSDocLink | undefined {
   const nameEnd = scanIdentifierEnd(text, at + 1);
   const tag = text.slice(at + 1, nameEnd).toLowerCase();
-  if (tag !== "link" && tag !== "linkcode" && tag !== "linkplain" && tag !== "see") return undefined;
+  if (!isJSDocLinkTag(tag) && tag !== "see") return undefined;
   let position = nameEnd;
   while (position < text.length && isHorizontalWhitespace(text.charCodeAt(position))) position += 1;
   let close: number;

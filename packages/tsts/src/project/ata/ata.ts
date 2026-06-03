@@ -58,6 +58,24 @@ export interface TypingsInstallerHost {
   readonly npmExecutor: NpmExecutor;
 }
 
+// Port of TS-Go `npmConfig` (internal/project/ata/ata.go). Models the subset of
+// package.json read during cache processing.
+export interface npmConfig {
+  readonly devDependencies?: Record<string, unknown>;
+}
+
+// Port of TS-Go `npmDependecyEntry` (the misspelling is faithful to upstream).
+export interface npmDependecyEntry {
+  readonly version?: string;
+}
+
+// Port of TS-Go `npmLock`. Models the subset of package-lock.json read during
+// cache processing.
+export interface npmLock {
+  readonly dependencies?: Record<string, npmDependecyEntry>;
+  readonly packages?: Record<string, npmDependecyEntry>;
+}
+
 const tsVersionToUse = "latest";
 
 export class DefaultTypingsInstaller implements TypingsInstaller {
@@ -164,11 +182,11 @@ export class DefaultTypingsInstaller implements TypingsInstaller {
     logger?.log(`ATA:: Processing cache location ${this.typingsLocation}`);
     const packageJsonPath = combinePaths(this.typingsLocation, "package.json");
     const packageLockPath = combinePaths(this.typingsLocation, "package-lock.json");
-    const packageJson = readJsonObject(fs, packageJsonPath);
-    const packageLock = readJsonObject(fs, packageLockPath);
-    const devDependencies = objectProperty<Record<string, unknown>>(packageJson, "devDependencies") ?? {};
-    const lockPackages = objectProperty<Record<string, { readonly version?: string }>>(packageLock, "packages") ?? {};
-    const lockDependencies = objectProperty<Record<string, { readonly version?: string }>>(packageLock, "dependencies") ?? {};
+    const npmConfig = parseNpmConfigOrLock<npmConfig>(fs, packageJsonPath);
+    const npmLock = parseNpmConfigOrLock<npmLock>(fs, packageLockPath);
+    const devDependencies = npmConfig.devDependencies ?? {};
+    const lockPackages = npmLock.packages ?? {};
+    const lockDependencies = npmLock.dependencies ?? {};
     for (const key of Object.keys(devDependencies)) {
       if (!key.startsWith("@types/")) continue;
       const packageName = key.slice("@types/".length);
@@ -220,9 +238,24 @@ export class DefaultTypingsInstaller implements TypingsInstaller {
     return installed;
   }
 
+  // Port of TS-Go `(*TypingsInstaller).ensureTypingsLocationExists`
+  // (internal/project/ata/ata.go). Creates a minimal `package.json` in the
+  // typings location when it is missing so that subsequent npm operations have a
+  // manifest to work against.
+  ensureTypingsLocationExists(fs: FS, logger?: { readonly log: (message: string) => void }): void {
+    const npmConfigPath = combinePaths(this.typingsLocation, "package.json");
+    logger?.log(`ATA:: Npm config file: ${npmConfigPath}`);
+
+    if (!fs.fileExists(npmConfigPath)) {
+      logger?.log(`ATA:: Npm config file: '${npmConfigPath}' is missing, creating new one...`);
+      fs.writeFile(npmConfigPath, "{ \"private\": true }");
+    }
+  }
+
   private initialize(fs: FS, logger?: { readonly log: (message: string) => void }): void {
     if (this.typesRegistry.size > 0) return;
     this.processCacheLocation("global", fs, logger);
+    this.ensureTypingsLocationExists(fs, logger);
     this.loadTypesRegistryFile(fs, logger);
   }
 
@@ -303,6 +336,21 @@ function readJsonObject(fs: FS, fileName: string): Record<string, unknown> {
   if (text === undefined) return {};
   const value = JSON.parse(text) as unknown;
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+// Port of TS-Go `parseNpmConfigOrLock[T npmConfig | npmLock]`. Reads the file
+// and unmarshals it into the requested config shape, returning an empty object
+// (matching Go's zero value) when the file is missing or malformed.
+function parseNpmConfigOrLock<T extends npmConfig | npmLock>(fs: FS, location: string): T {
+  const object = readJsonObject(fs, location);
+  const devDependencies = objectProperty<Record<string, unknown>>(object, "devDependencies");
+  const dependencies = objectProperty<Record<string, npmDependecyEntry>>(object, "dependencies");
+  const packages = objectProperty<Record<string, npmDependecyEntry>>(object, "packages");
+  return {
+    ...(devDependencies === undefined ? {} : { devDependencies }),
+    ...(dependencies === undefined ? {} : { dependencies }),
+    ...(packages === undefined ? {} : { packages }),
+  } as T;
 }
 
 function objectProperty<T>(object: Record<string, unknown>, key: string): T | undefined {

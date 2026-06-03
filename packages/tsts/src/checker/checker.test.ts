@@ -29,6 +29,7 @@ import {
   isImportExpression,
   createNode,
   forEachChild,
+  isIdentifier,
   nodeParent,
   nodeSymbol,
   Kind,
@@ -344,12 +345,12 @@ test("resolves object literal members", () => {
   const objectMissingProperty = checkSourceFile(parseSourceFile("function f(): void { const o: { port: number } = { }; }"));
 
   assert.strictEqual(satisfiesOk.diagnostics.length, 0);
-  assert.deepStrictEqual(satisfiesBad.diagnostics.map((d) => d.message), ["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
+  assert.deepStrictEqual(satisfiesBad.diagnostics.map((d) => d.message), ["Type '{ port: string; }' is not assignable to type '{ port: number; }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
   assert.strictEqual(propertyOk.diagnostics.length, 0);
   assert.deepStrictEqual(propertyWrongType.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
-  assert.deepStrictEqual(propertyMissing.diagnostics.map((d) => d.message), ["Property 'missing' does not exist on type '{ port: number }'."]);
+  assert.deepStrictEqual(propertyMissing.diagnostics.map((d) => d.message), ["Property 'missing' does not exist on type '{ port: number; }'."]);
   assert.strictEqual(objectAssignable.diagnostics.length, 0);
-  assert.deepStrictEqual(objectMissingProperty.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ port: number }'."]);
+  assert.deepStrictEqual(objectMissingProperty.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ port: number; }'."]);
 });
 
 test("extends object member support", () => {
@@ -368,9 +369,9 @@ test("extends object member support", () => {
   assert.strictEqual(shorthand.diagnostics.length, 0);
   assert.strictEqual(methodSignature.diagnostics.length, 0);
   assert.strictEqual(optionalAbsent.diagnostics.length, 0);
-  assert.deepStrictEqual(requiredAbsent.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ a: number }'."]);
+  assert.deepStrictEqual(requiredAbsent.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ a: number; }'."]);
   assert.strictEqual(spreadOk.diagnostics.length, 0);
-  assert.deepStrictEqual(spreadMismatch.diagnostics.map((d) => d.message), ["Type '{ a: number }' is not assignable to type '{ a: string }'.\n  Types of property 'a' are incompatible.\n    Type 'number' is not assignable to type 'string'."]);
+  assert.deepStrictEqual(spreadMismatch.diagnostics.map((d) => d.message), ["Type '{ a: number; }' is not assignable to type '{ a: string; }'.\n  Types of property 'a' are incompatible.\n    Type 'number' is not assignable to type 'string'."]);
 });
 
 test("deepens object member typing", () => {
@@ -389,7 +390,7 @@ test("deepens object member typing", () => {
   assert.strictEqual(optionalAccessOk.diagnostics.length, 0);
   assert.strictEqual(methodParamOk.diagnostics.length, 0);
   assert.deepStrictEqual(methodParamMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
-  assert.deepStrictEqual(perPropertyElaboration.diagnostics.map((d) => d.message), ["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
+  assert.deepStrictEqual(perPropertyElaboration.diagnostics.map((d) => d.message), ["Type '{ port: string; }' is not assignable to type '{ port: number; }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
 });
 
 test("checks call signature arity", () => {
@@ -436,7 +437,7 @@ test("checks contextual object literals and excess", () => {
   // Contextual typing preserves target-driven literals; excess properties on
   // a FRESH object literal are reported (assignment, return, satisfies,
   // nested); a stored variable is not excess-checked.
-  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number; }'.";
   const contextualLiteral = checkSourceFile(parseSourceFile("function f(): void { const ok: { port: 8080 } = { port: 8080 }; }"));
   const excessAssign = checkSourceFile(parseSourceFile("function f(): void { const bad: { port: number } = { port: 1, host: \"x\" }; }"));
   const storedNoExcess = checkSourceFile(parseSourceFile("function f(): void { const tmp = { port: 1, host: \"x\" }; const ok: { port: number } = tmp; }"));
@@ -456,7 +457,7 @@ test("excess check regularization and empty target", () => {
   // Stored objects regularize recursively (nested freshness stripped), so a
   // stored variable never excess-checks. The broad `{}` target never
   // excess-checks. Call arguments use the same fresh-literal excess rule.
-  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number; }'.";
   const storedNested = checkSourceFile(parseSourceFile("function f(): void { const tmp = { server: { port: 1, host: \"x\" } }; const ok: { server: { port: number } } = tmp; }"));
   const emptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: {} = { a: 1 }; }"));
   const nestedEmptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: { nested: {} } = { nested: { a: 1 } }; }"));
@@ -650,7 +651,7 @@ test("checks object type signatures", () => {
   assert.strictEqual(indexOk.diagnostics.length, 0);
   assert.deepStrictEqual(indexValueMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.strictEqual(indexNumericKeyOk.diagnostics.length, 0);
-  assert.deepStrictEqual(indexBadKey.diagnostics.map((d) => d.message), ["Type 'string' cannot be used to index type '{ [key: number]: string }'."]);
+  assert.deepStrictEqual(indexBadKey.diagnostics.map((d) => d.message), ["Type 'string' cannot be used to index type '{ [key: number]: string; }'."]);
   assert.strictEqual(callOk.diagnostics.length, 0);
   assert.deepStrictEqual(callReturnMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.deepStrictEqual(callArgMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
@@ -816,7 +817,7 @@ test("checks interface and class heritage members", () => {
   assert.strictEqual(classBase.diagnostics.length, 0);
   assert.deepStrictEqual(classMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.strictEqual(implementsOk.diagnostics.length, 0);
-  assert.deepStrictEqual(implementsMismatch.diagnostics.map((d) => d.message), ["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type 'function' is not assignable to type 'function'."]);
+  assert.deepStrictEqual(implementsMismatch.diagnostics.map((d) => d.message), ["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type '() => string' is not assignable to type '() => number'."]);
 });
 
 test("accepts union type node return types", () => {
@@ -838,7 +839,7 @@ test("checks intersection type node members and relations", () => {
   assert.strictEqual(propertyOk.diagnostics.length, 0);
   assert.deepStrictEqual(propertyMismatch.diagnostics.map((d) => d.message), ["Type 'string' is not assignable to type 'number'."]);
   assert.strictEqual(assignOk.diagnostics.length, 0);
-  assert.deepStrictEqual(assignMissing.diagnostics.map((d) => d.message), ["Type '{ a: number }' is not assignable to type '{ a: number } & { b: string }'."]);
+  assert.deepStrictEqual(assignMissing.diagnostics.map((d) => d.message), ["Type '{ a: number; }' is not assignable to type '{ a: number; } & { b: string; }'."]);
 });
 
 test("reports union type node mismatch", () => {
@@ -1023,6 +1024,323 @@ function findExpressionStatementIdentifier(node: Node, text: string): Node | und
   });
   return found;
 }
+
+// ---------------------------------------------------------------------------
+// symbolToString qualification (S1) — the `.symbols` baseline emits QUALIFIED
+// names for members (Symbol(E.A), Symbol(Outer.method)) while top-level
+// declarations, locals, parameters, and type parameters stay bare. These cover
+// the checker display path the baseline walker calls via program.symbolToString.
+// ---------------------------------------------------------------------------
+
+// Bind the file (checkSourceFile binds idempotently) and collect the symbol of
+// the first declaration whose name matches, so we can format it via the checker.
+function symbolStringByName(source: string, name: string): string {
+  const sourceFile = parseSourceFile(source);
+  checkSourceFile(sourceFile);
+  const checker = newChecker();
+  const found: { symbol: ReturnType<typeof nodeSymbol> } = { symbol: undefined };
+  const walk = (node: Node): undefined => {
+    const symbol = nodeSymbol(node);
+    if (found.symbol === undefined && symbol !== undefined && (symbol.name === name || symbol.escapedName === name)) {
+      found.symbol = symbol;
+    }
+    forEachChild(node, walk);
+    return undefined;
+  };
+  walk(sourceFile);
+  assert.ok(found.symbol !== undefined, `no symbol named ${name} found`);
+  return checker.symbolToString(found.symbol);
+}
+
+test("symbolToString qualifies an enum member with its enum", () => {
+  assert.strictEqual(symbolStringByName("enum E { A, B }", "A"), "E.A");
+});
+
+test("symbolToString leaves the enum itself bare", () => {
+  assert.strictEqual(symbolStringByName("enum E { A, B }", "E"), "E");
+});
+
+test("symbolToString qualifies a class method with its class", () => {
+  assert.strictEqual(symbolStringByName("class Outer { method() {} }", "method"), "Outer.method");
+});
+
+test("symbolToString qualifies an interface member with its interface", () => {
+  assert.strictEqual(symbolStringByName("interface I { bar(): void; }", "bar"), "I.bar");
+});
+
+test("symbolToString qualifies nested namespace members recursively", () => {
+  assert.strictEqual(
+    symbolStringByName("namespace N { export namespace M { export const x = 1; } }", "x"),
+    "N.M.x",
+  );
+});
+
+test("symbolToString never qualifies a type parameter", () => {
+  assert.strictEqual(symbolStringByName("class G<T> { foo(p: T) { return p; } }", "T"), "T");
+});
+
+test("symbolToString leaves top-level module exports bare (module symbol dropped)", () => {
+  // In a module file the source-file (module) symbol owns the top-level members,
+  // but TS-Go drops it from the chain ("prefer `x` vs `\"foo\".x`").
+  assert.strictEqual(symbolStringByName("export class K { m() {} }", "K"), "K");
+  assert.strictEqual(symbolStringByName("export class K { m() {} }", "m"), "K.m");
+});
+
+// G6 (implicit-any) — an annotation-less, initializer-less parameter or variable
+// is an implicit-`any` position: getTypeOfVariableOrParameterOrProperty returns
+// `anyType` (not the error type), so the type walker emits `>x : any` exactly as
+// TS-Go does (e.g. catchClauseRestProperties.ts `>rest : any`). Locate the FIRST
+// reference identifier with the given name and format its resolved type via the
+// checker, mirroring the baseline walker's getTypeAtLocation/typeToString path.
+function typeStringByIdentifier(source: string, name: string): string {
+  const sourceFile = parseSourceFile(source);
+  checkSourceFile(sourceFile);
+  const checker = newChecker();
+  const found: { node: Node | undefined } = { node: undefined };
+  const walk = (node: Node): undefined => {
+    if (found.node === undefined && isIdentifier(node) && node.text === name) {
+      found.node = node;
+    }
+    forEachChild(node, walk);
+    return undefined;
+  };
+  walk(sourceFile);
+  assert.ok(found.node !== undefined, `no identifier named ${name} found`);
+  const type = checker.getTypeAtLocation(found.node);
+  assert.ok(type !== undefined, `no type for identifier ${name}`);
+  return checker.typeToString(type);
+}
+
+test("getTypeAtLocation reports an un-annotated parameter as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(x) { return x; }", "x"), "any");
+});
+
+test("getTypeAtLocation reports an un-annotated arrow parameter as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = (p) => p;", "p"), "any");
+});
+
+test("getTypeAtLocation reports an un-annotated un-initialized variable as implicit any", () => {
+  assert.strictEqual(typeStringByIdentifier("var v; v;", "v"), "any");
+});
+
+// Slice B (initializer inference + widening handoff) — an un-annotated variable
+// with an initializer infers its type FROM the initializer, then applies TS-Go's
+// getWidenedTypeForVariableLikeDeclaration widening: a `const` keeps the FRESH
+// primitive-literal type (the *widening* literal), while `let`/`var` collapse it
+// to the base primitive. The fresh-vs-regular distinction is observable when the
+// const flows into a `let` initializer: that `let` widens to the base, mirroring
+// literalTypeWidening.types (`const c1 = "hello"; let v1 = c1` → `v1 : string`).
+test("getTypeAtLocation keeps a const primitive-literal initializer as the literal", () => {
+  assert.strictEqual(typeStringByIdentifier("const n = 1; n;", "n"), "1");
+  assert.strictEqual(typeStringByIdentifier('const s = "lit"; s;', "s"), "\"lit\"");
+  assert.strictEqual(typeStringByIdentifier("const b = true; b;", "b"), "true");
+  assert.strictEqual(typeStringByIdentifier("const g = 1n; g;", "g"), "1n");
+});
+
+test("getTypeAtLocation widens a let/var primitive-literal initializer to the base", () => {
+  assert.strictEqual(typeStringByIdentifier("let m = 1; m;", "m"), "number");
+  assert.strictEqual(typeStringByIdentifier("var v = 1; v;", "v"), "number");
+  assert.strictEqual(typeStringByIdentifier('let s = "lit"; s;', "s"), "string");
+  assert.strictEqual(typeStringByIdentifier("let b = true; b;", "b"), "boolean");
+});
+
+test("getTypeAtLocation widens a let initialized from a const widening-literal to the base", () => {
+  assert.strictEqual(typeStringByIdentifier('const c1 = "hello"; let v1 = c1; v1;', "v1"), "string");
+  assert.strictEqual(typeStringByIdentifier("const c2 = 1; let v2 = c2; v2;", "v2"), "number");
+  assert.strictEqual(typeStringByIdentifier("const c3 = true; let v3 = c3; v3;", "v3"), "boolean");
+});
+
+test("getTypeAtLocation keeps a const initialized from another const widening-literal as the literal", () => {
+  assert.strictEqual(typeStringByIdentifier('const c1 = "hello"; const c2 = c1; c2;', "c2"), "\"hello\"");
+});
+
+// An object-literal member symbol (a PropertyAssignment name) resolves to its
+// value's WIDENED type — a fresh primitive literal collapses to its base, just
+// like the widened member shown inside the object-type display
+// `{ bar: number; }`. This is what makes a property-NAME reference in the type
+// walker print its real type instead of `unknown` (awaitObjectLiteral.ts
+// `>bar : number`, importAttributesWithValueComments.ts `>a : string`).
+test("getTypeAtLocation resolves an object-literal property name to its widened value type", () => {
+  assert.strictEqual(typeStringByIdentifier("const o = { bar: 42 };", "bar"), "number");
+  assert.strictEqual(typeStringByIdentifier('const o = { foo: "x" };', "foo"), "string");
+  assert.strictEqual(typeStringByIdentifier("const o = { flag: true };", "flag"), "boolean");
+});
+
+// A nested object-literal member resolves to its own (widened) anonymous object
+// type, and the inner primitive member widens to its base — confirming member
+// resolution reuses the same initializer inference + widening recursively.
+test("getTypeAtLocation resolves a nested object-literal property name to its widened object type", () => {
+  assert.strictEqual(typeStringByIdentifier("const o = { inner: { count: 1 } };", "inner"), "{ count: number; }");
+  assert.strictEqual(typeStringByIdentifier("const o = { inner: { count: 1 } };", "count"), "number");
+});
+
+// A shorthand property `{ a }` resolves the member through its reference node.
+// The binder resolves that node to the member symbol itself, so the
+// resolution-in-progress guard must break the self-cycle and surface `any`
+// rather than recursing forever (mirroring TS-Go's circularly-resolved
+// shorthand, circularDestructuring.types `>f : any`). The whole-object type
+// stays well-formed: `{ a }` → `{ a: any; }`.
+test("getTypeAtLocation resolves a shorthand object-literal property name without recursing", () => {
+  assert.doesNotThrow(() => typeStringByIdentifier("const o = { a };", "o"));
+  assert.strictEqual(typeStringByIdentifier("const o = { a };", "o"), "{ a: any; }");
+});
+
+// G2 (signature display) — a callable displays as its real `(p: T) => R`
+// signature (not the literal token "function"), matching TS-Go signatureToString
+// (e.g. `() => void`, `(_condition: boolean) => ...`, `(...data: any[]) => void`).
+test("displays a no-argument function declaration as () => R", () => {
+  assert.strictEqual(typeStringByIdentifier("function test(): void { }", "test"), "() => void");
+});
+
+test("displays a function declaration's parameters and return type", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(x: number): string { return \"\"; }", "f"), "(x: number) => string");
+});
+
+test("displays multiple parameters joined by a comma", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(a: number, b: string): boolean { return true; }", "f"),
+    "(a: number, b: string) => boolean",
+  );
+});
+
+test("displays an optional parameter with a trailing question mark", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(a?: number): void { }", "f"), "(a?: number) => void");
+});
+
+test("displays a rest parameter with a leading ellipsis", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(...data: number): void { }", "f"), "(...data: number) => void");
+});
+
+// Value-return inference (getReturnTypeFromBody) — an un-annotated function/
+// method/getter/arrow infers its return type from the body: the union (subtype-
+// reduced) of the expression-bearing `return <expr>` types, then widened
+// (a fresh primitive literal collapses to its base). A body with no value-return
+// is `void`. An annotation always wins.
+test("infers a function declaration's return type from a single value return (widened)", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return 1; }", "f"), "() => number");
+  assert.strictEqual(typeStringByIdentifier("function f() { return \"x\"; }", "f"), "() => string");
+  assert.strictEqual(typeStringByIdentifier("function f() { return true; }", "f"), "() => boolean");
+});
+
+test("keeps an `as const` value return as its literal type (no widening)", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return 1 as const; }", "f"), "() => 1");
+});
+
+test("infers a function declaration's return type as the union of its value returns", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(b: boolean) { if (b) { return 1; } return \"x\"; }", "f"),
+    "(b: boolean) => number | string",
+  );
+});
+
+test("infers `void` for an un-annotated function with no value return", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { return; }", "f"), "() => void");
+  assert.strictEqual(typeStringByIdentifier("function f() { }", "f"), "() => void");
+});
+
+test("does not let a nested function's return leak into the outer inferred type", () => {
+  assert.strictEqual(typeStringByIdentifier("function f() { const g = () => 1; }", "f"), "() => void");
+});
+
+test("infers a method declaration's return type from its body", () => {
+  // The method-NAME identifier resolves to the method symbol, whose type is the
+  // inferred signature (instance member-access typing is a separate slice).
+  assert.strictEqual(typeStringByIdentifier("class C { m() { return 1; } } C;", "m"), "() => number");
+});
+
+test("infers a concise arrow's return type from the body expression (widened)", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = () => 1; g;", "g"), "() => number");
+  assert.strictEqual(typeStringByIdentifier("const g = () => \"x\"; g;", "g"), "() => string");
+});
+
+test("infers `void` for a block-body arrow with no value return", () => {
+  assert.strictEqual(typeStringByIdentifier("const g = () => { return; }; g;", "g"), "() => void");
+  assert.strictEqual(typeStringByIdentifier("const g = () => { }; g;", "g"), "() => void");
+});
+
+// G9 (type-predicate / asserts display) — a predicate return annotation displaces
+// the return type in the signature display, matching TS-Go (e.g.
+// `(value: unknown) => value is string`, `(_condition: boolean) => asserts condition`).
+test("displays an `x is T` narrowing predicate signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function isString(value: unknown): value is string { return true; }", "isString"),
+    "(value: unknown) => value is string",
+  );
+});
+
+test("displays a bare `asserts x` assertion signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function assert(_condition: boolean): asserts condition { }", "assert"),
+    "(_condition: boolean) => asserts condition",
+  );
+});
+
+test("displays an `asserts x is T` assertion signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function assertString(value: unknown): asserts value is string { }", "assertString"),
+    "(value: unknown) => asserts value is string",
+  );
+});
+
+test("displays a `this is T` predicate signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(): this is string { return true; }", "f"),
+    "() => this is string",
+  );
+});
+
+// G7 (object/array literal display) — an anonymous object type terminates EVERY
+// member with `;` (including the last), so it renders `{ a: number; b: string; }`
+// (TS-Go typePrinter). An empty type is the bare `{}`. Array/tuple element types
+// render `T[]`. These match the TS-Go `.types` baseline format exactly.
+test("displays a multi-member object literal type with trailing semicolons", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = { x: 1, y: \"a\" }; value;", "value"),
+    "{ x: number; y: string; }",
+  );
+});
+
+test("displays a single-member annotated object type with a trailing semicolon", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { a: number } = { a: 1 }; value;", "value"),
+    "{ a: number; }",
+  );
+});
+
+test("displays an empty object type as a bare {}", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: {} = {}; value;", "value"),
+    "{}",
+  );
+});
+
+test("displays an optional member with a trailing question mark", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { a: number; b?: string } = { a: 1 }; value;", "value"),
+    "{ a: number; b?: string; }",
+  );
+});
+
+test("displays an index signature with a trailing semicolon", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { [k: string]: number } = {}; value;", "value"),
+    "{ [k: string]: number; }",
+  );
+});
+
+test("displays an array literal element type as T[]", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = [1, 2, 3]; value;", "value"),
+    "number[]",
+  );
+});
+
+test("displays an empty array literal as never[]", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = []; value;", "value"),
+    "never[]",
+  );
+});
 
 // The checker's NameResolver wiring (mirrors the shared resolver in
 // checker.checkedtype.ts): getSymbolOfDeclaration reads the in-place node symbol;

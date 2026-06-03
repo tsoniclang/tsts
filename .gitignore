@@ -141,9 +141,10 @@ npm/tsonic/runtime/*.dll
 
 # Claude Code working directories
 .tests/
-.analysis/
 .todos/
 .tmp/
+
+.analysis/
 
 # Plan-blue baselines
 .plan-blue-baselines/

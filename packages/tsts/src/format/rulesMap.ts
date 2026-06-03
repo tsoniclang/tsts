@@ -7,6 +7,9 @@
  * tokens beat NoContext-rules with any tokens, etc.
  */
 
+import { Kind } from "../ast/index.js";
+import { assert } from "../debug/index.js";
+
 import { getAllRules } from "./rules.js";
 import { RuleAction, type RuleSpec } from "./rule.js";
 import type { FormattingContext } from "./context.js";
@@ -14,38 +17,35 @@ import type { FormattingContext } from "./context.js";
 const MASK_BIT_SIZE = 5;
 const MASK = 0b11111;
 
-let mapRowLength = -1;
-let rulesMapCache: (readonly RuleSpec[])[] | undefined;
-
-export function setMapRowLength(value: number): void {
-  mapRowLength = value;
-  rulesMapCache = undefined;
-}
-
-function getRuleBucketIndex(row: number, column: number): number {
-  return row * mapRowLength + column;
-}
+// mapRowLength mirrors TS-Go's `mapRowLength = int(ast.KindLastToken) + 1`
+// (rulesmap.go:42) — a compile-time-style constant derived from the Kind
+// enum, not a mutable runtime value.
+const mapRowLength = (Kind.LastToken as number) + 1;
 
 /**
  * Mirrors TS-Go `getRules` — returns the rules whose token range and
  * predicates match the current context, in priority order.
  */
-export function getRules(context: FormattingContext, out: RuleSpec[] = []): RuleSpec[] {
-  const map = getRulesMap();
-  const bucket = map[getRuleBucketIndex(currentTokenKindOf(context), nextTokenKindOf(context))] ?? [];
-  if (bucket.length === 0) return out;
-
-  let ruleActionMask = 0;
-  outer: for (const ruleSpec of bucket) {
-    const acceptRuleActions = ~getRuleActionExclusion(ruleActionMask);
-    if ((ruleSpec.rule.action & acceptRuleActions) === 0) continue;
-    for (const p of ruleSpec.rule.context) {
-      if (!p(context)) continue outer;
+export function getRules(context: FormattingContext, rules: RuleSpec[] = []): RuleSpec[] {
+  const bucket = getRulesMap()[getRuleBucketIndex(currentTokenKindOf(context), nextTokenKindOf(context))] ?? [];
+  if (bucket.length > 0) {
+    let ruleActionMask = 0;
+    outer: for (const rule of bucket) {
+      const acceptRuleActions = ~getRuleActionExclusion(ruleActionMask);
+      if ((rule.rule.action & acceptRuleActions) !== 0) {
+        const preds = rule.rule.context;
+        for (const p of preds) {
+          if (!p(context)) {
+            continue outer;
+          }
+        }
+        rules.push(rule);
+        ruleActionMask |= rule.rule.action;
+      }
     }
-    out.push(ruleSpec);
-    ruleActionMask |= ruleSpec.rule.action;
+    return rules;
   }
-  return out;
+  return rules;
 }
 
 const MODIFY_SPACE_ACTION = RuleAction.InsertSpace | RuleAction.InsertNewLine | RuleAction.DeleteSpace;
@@ -68,6 +68,14 @@ function getRuleActionExclusion(action: number): number {
   return mask;
 }
 
+function getRuleBucketIndex(row: number, column: number): number {
+  assert(row <= (Kind.LastKeyword as number) && column <= (Kind.LastKeyword as number), "Must compute formatting context from tokens");
+  return row * mapRowLength + column;
+}
+
+// getRulesMap mirrors TS-Go's `sync.OnceValue(buildRulesMap)` (rulesmap.go:66):
+// the rules map is built once and memoized for the process lifetime.
+let rulesMapCache: (readonly RuleSpec[])[] | undefined;
 export function getRulesMap(): (readonly RuleSpec[])[] {
   if (rulesMapCache === undefined) rulesMapCache = buildRulesMap();
   return rulesMapCache;
@@ -75,21 +83,17 @@ export function getRulesMap(): (readonly RuleSpec[])[] {
 
 function buildRulesMap(): (readonly RuleSpec[])[] {
   const rules = getAllRules();
-  if (mapRowLength < 0) {
-    // Default to a generous upper-bound; real Kind.LastToken+1 will
-    // be set via setMapRowLength once the Kind enum is loaded.
-    mapRowLength = 512;
-  }
+  // Map from bucket index to array of rules
   const m: RuleSpec[][] = new Array(mapRowLength * mapRowLength);
   for (let i = 0; i < m.length; i++) m[i] = [];
-  const constructionState = new Array<number>(m.length).fill(0);
-
+  // This array is used only during construction of the rulesbucket in the map
+  const rulesBucketConstructionStateList = new Array<number>(m.length).fill(0);
   for (const rule of rules) {
-    const specific = rule.leftTokenRange.isSpecific && rule.rightTokenRange.isSpecific;
+    const specificRule = rule.leftTokenRange.isSpecific && rule.rightTokenRange.isSpecific;
     for (const left of rule.leftTokenRange.tokens) {
       for (const right of rule.rightTokenRange.tokens) {
         const index = getRuleBucketIndex(left, right);
-        addRule(m[index]!, rule, specific, constructionState, index);
+        m[index] = addRule(m[index]!, rule, specificRule, rulesBucketConstructionStateList, index);
       }
     }
   }
@@ -115,7 +119,7 @@ function addRule(
   specificTokens: boolean,
   constructionState: number[],
   rulesBucketIndex: number,
-): void {
+): RuleSpec[] {
   let position: number;
   if ((rule.rule.action & STOP_ACTION) !== 0) {
     position = specificTokens ? RulesPositionStopRulesSpecific : RulesPositionStopRulesAny;
@@ -126,9 +130,9 @@ function addRule(
   }
 
   const state = constructionState[rulesBucketIndex]!;
-  const insertIndex = getRuleInsertionIndex(state, position);
-  rules.splice(insertIndex, 0, rule);
+  rules.splice(getRuleInsertionIndex(state, position), 0, rule);
   constructionState[rulesBucketIndex] = increaseInsertionIndex(state, position);
+  return rules;
 }
 
 function getRuleInsertionIndex(indexBitmap: number, maskPosition: number): number {
@@ -148,19 +152,12 @@ function increaseInsertionIndex(indexBitmap: number, maskPosition: number): numb
   return (indexBitmap & ~(MASK << maskPosition)) | (value << maskPosition);
 }
 
-// Re-export for parity
-export class RulesMap {
-  static getRules = getRules;
-  static getRulesMap = getRulesMap;
-}
-
-// ---------------------------------------------------------------------------
-// Forward-declared accessors — implemented in context.ts when wired
-// ---------------------------------------------------------------------------
-
+// Read the current/next token kinds from the formatting context. Mirrors
+// TS-Go's `context.currentTokenSpan.Kind` / `context.nextTokenSpan.Kind`
+// reads in getRules (rulesmap.go:12).
 function currentTokenKindOf(ctx: FormattingContext): number {
-  return ((ctx as unknown as { currentTokenSpan?: { kind?: number } }).currentTokenSpan?.kind) ?? 0;
+  return ctx.currentTokenSpan?.kind ?? 0;
 }
 function nextTokenKindOf(ctx: FormattingContext): number {
-  return ((ctx as unknown as { nextTokenSpan?: { kind?: number } }).nextTokenSpan?.kind) ?? 0;
+  return ctx.nextTokenSpan?.kind ?? 0;
 }

@@ -1,6 +1,6 @@
 //// [parameterPropertyWithDefaultValue.ts] ////
 
-//// [/.src/parameterPropertyWithDefaultValue.ts] ////
+//// [parameterPropertyWithDefaultValue.ts]
 export class SomeClass {
   constructor(readonly timestamp = new Date()) {}
 }

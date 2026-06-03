@@ -7,6 +7,9 @@
  */
 
 import type { CommandLineOption } from "./commandLineOption.js";
+import { optionDeclarations } from "./declsCompiler.js";
+import { buildOpts } from "./declsBuild.js";
+import { watchOptions } from "./declsWatch.js";
 
 /**
  * Map of canonical option names to declarations, plus a side index of
@@ -56,3 +59,11 @@ export function getNameMapFromList(optDecls: readonly CommandLineOption[]): Name
   }
   return new NameMap(optionsNames, shortOptionNames);
 }
+
+/**
+ * Pre-built name maps for each parsing mode. Mirrors TS-Go's package-level
+ * `CompilerNameMap`, `BuildNameMap`, `WatchNameMap` vars in namemap.go.
+ */
+export const CompilerNameMap: NameMap = getNameMapFromList(optionDeclarations);
+export const BuildNameMap: NameMap = getNameMapFromList(buildOpts);
+export const WatchNameMap: NameMap = getNameMapFromList(watchOptions);

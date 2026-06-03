@@ -60,11 +60,20 @@ export class ProjectCompilerHost implements CompilerHost {
   }
 
   getSourceFile(fileName: string): FileHandle | undefined {
+    this.ensureAlive();
     return this.aliveSnapshot().getFile(fileName);
   }
 
   trace(message: string): void {
     void message;
+  }
+
+  // ensureAlive panics if a method is called after the snapshot has been
+  // finalized (frozen). Mirrors compilerHost.ensureAlive in TS-Go.
+  ensureAlive(): void {
+    if (this.snapshot === undefined || this.frozen) {
+      throw new Error("method must not be called after snapshot initialization");
+    }
   }
 
   private aliveSnapshot(): Snapshot {

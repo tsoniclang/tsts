@@ -136,6 +136,17 @@ export type StringLiteralLike = StringLiteral | NoSubstitutionTemplateLiteral;
 export type ModifierList = NodeArray<ModifierLike>;
 
 // ---------------------------------------------------------------------------
+// Node-union aliases not covered by ./generated/nodes.ts
+// (TS-Go internal/ast/ast.go:1257-1265 — modeled as `= Node`).
+// ---------------------------------------------------------------------------
+
+// (ImportDeclaration | ExportDeclaration | JSDocImportTag) & { moduleSpecifier: StringLiteral } | ImportEqualsDeclaration & { moduleReference: ExternalModuleReference & { expression: StringLiteral }} | RequireOrImportCall | ValidImportTypeNode
+export type AnyValidImportOrReExport = Node;
+
+// AnyImportSyntax | RequireVariableStatement
+export type AnyImportOrRequireStatement = Node;
+
+// ---------------------------------------------------------------------------
 // Re-exports for one-stop import
 // ---------------------------------------------------------------------------
 

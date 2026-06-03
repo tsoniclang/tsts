@@ -17,26 +17,29 @@ import type {
   Diagnostic,
   FileReference,
 } from "../ast/index.js";
+import { nodeText } from "../ast/index.js";
 import { bindSourceFile } from "../binder/index.js";
 import type { Checker } from "../checker/index.js";
 import {
   processAllProgramFiles,
-  type CompilerHost as LoaderCompilerHost,
   type FileIncludeReason,
   type JsxRuntimeImportSpecifier,
   type LibFile,
   type ResolvedModule,
   type ResolvedTypeReferenceDirective,
 } from "./fileLoader.js";
+import { toDiagnostic as includeReasonToDiagnostic } from "./fileInclude.js";
 import { newCheckerPool, type CheckerPool } from "./checkerPool.js";
 import { getDeclarationDiagnostics as getDeclarationDiagnosticsForEmit } from "./emitter.js";
 import { newProgramEmitHost } from "./emitHost.js";
 import { emitProgramJs } from "./jsEmit.js";
-import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
+import { ParsedCommandLine, type CompilerOptionsHandle } from "../tsoptions/parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
 import { Tristate } from "../core/tristate.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
+import { ScriptKind } from "../enums/scriptKind.enum.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
 import {
   createExtensionHost,
   type CompilerExtension,
@@ -138,7 +141,7 @@ export interface CompilerHost {
 // Program class
 // ---------------------------------------------------------------------------
 
-export class Program {
+export class Program implements ProgramLike {
   readonly opts: ProgramOptions;
   files: SourceFile[];
   duplicateSourceFiles: DuplicateSourceFile[];
@@ -179,8 +182,8 @@ export class Program {
     this.extensionFacts = this.extensionHost.facts;
     const rootFileNames = opts.config.parsedConfig.fileNames;
     const loaded = processAllProgramFiles(
-      opts.config.parsedConfig.compilerOptions as unknown as CompilerOptions,
-      opts.host as unknown as LoaderCompilerHost,
+      compilerOptionsFromHandle(opts.config.parsedConfig.compilerOptions),
+      opts.host,
       rootFileNames,
       opts.singleThreaded ?? false,
     );
@@ -199,7 +202,7 @@ export class Program {
     ];
     // Pre-populate the path → file index for quick lookup.
     for (const f of this.files) {
-      const path = (f as unknown as { fileName?: string }).fileName ?? "";
+      const path = f.fileName;
       if (path !== "") this.filesByPath.set(this.toPath(path), f);
     }
     // Eagerly resolve unresolvedImports so they're available immediately.
@@ -380,7 +383,7 @@ export class Program {
   sourceFiles(): readonly SourceFile[] { return this.files; }
   getDuplicateSourceFiles(): readonly DuplicateSourceFile[] { return this.duplicateSourceFiles; }
   options(): CompilerOptions {
-    return this.opts.config.parsedConfig.compilerOptions as unknown as CompilerOptions;
+    return compilerOptionsFromHandle(this.opts.config.parsedConfig.compilerOptions);
   }
   commandLine(): ParsedCommandLine { return this.opts.config; }
   host(): CompilerHost { return this.opts.host; }
@@ -449,14 +452,14 @@ export class Program {
 
   getResolvedModule(file: SourceFile, moduleReference: string, mode: number): ResolvedModule | undefined {
     void mode;
-    const fileName = (file as unknown as { fileName?: string }).fileName ?? "";
+    const fileName = file.fileName;
     if (fileName === "") return undefined;
     const cache = this.resolvedModulesCache.get(this.toPath(fileName));
     return cache?.get(moduleReference);
   }
 
   getResolvedModuleFromModuleSpecifier(file: SourceFile, moduleSpecifier: AstNode): ResolvedModule | undefined {
-    const text = (moduleSpecifier as unknown as { text?: string }).text ?? "";
+    const text = nodeText(moduleSpecifier);
     if (text === "") return undefined;
     return this.getResolvedModule(file, text, 0);
   }
@@ -470,10 +473,9 @@ export class Program {
     const packages = new Map<string, boolean>(this.packageNamesInfo?.packagesMap ?? []);
     for (const resolvedModulesInFile of this.resolvedModulesCache.values()) {
       for (const resolved of resolvedModulesInFile.values()) {
-        const record = resolved as unknown as { readonly packageId?: { readonly name?: string }; readonly extension?: string };
-        const packageName = record.packageId?.name;
+        const packageName = resolved.packageId?.name;
         if (packageName === undefined || packageName === "") continue;
-        packages.set(packageName, packages.get(packageName) === true || record.extension === ".d.ts");
+        packages.set(packageName, packages.get(packageName) === true || resolved.extension === ".d.ts");
       }
     }
     this.packagesMapValue = packages;
@@ -622,7 +624,7 @@ export class Program {
       return diagnostics.filter(diagnostic => plainJSErrors.has(diagnostic.code));
     }
     if (isCheckJSEnabledForFile(file, this.options())) {
-      const jsDocDiagnostics = (file as unknown as { readonly jsDocDiagnostics?: readonly Diagnostic[] }).jsDocDiagnostics ?? [];
+      const jsDocDiagnostics = (file as SourceFileWithDiagnosticSlots).jsDocDiagnostics ?? [];
       diagnostics.push(...jsDocDiagnostics);
     }
     const filtered = this.getDiagnosticsWithPrecedingDirectives(file, diagnostics);
@@ -633,7 +635,7 @@ export class Program {
     sourceFile: SourceFile,
     diagnostics: readonly Diagnostic[],
   ): { diagnostics: readonly Diagnostic[]; directivesByLine: ReadonlyMap<number, CommentDirectiveLike> } {
-    const commentDirectives = (sourceFile as unknown as { readonly commentDirectives?: readonly CommentDirectiveLike[] }).commentDirectives ?? [];
+    const commentDirectives = (sourceFile as SourceFileWithDiagnosticSlots).commentDirectives ?? [];
     if (commentDirectives.length === 0) return { diagnostics, directivesByLine: new Map() };
     const directivesByLine = new Map<number, CommentDirectiveLike>();
     const lineStarts = getLineStarts(sourceFile.text);
@@ -656,7 +658,7 @@ export class Program {
       if (!ignoreDiagnostic) filtered.push(diagnostic);
     }
     for (const directive of directivesByLine.values()) {
-      if (directive.kind === "expect-error") filtered.push(diagnosticFromText("Unused '@ts-expect-error' directive.", sourceFile));
+      if (directive.kind === "expect-error") filtered.push(diagnosticFromMessage(Diagnostics.Unused_ts_expect_error_directive, sourceFile));
     }
     return { diagnostics: filtered, directivesByLine };
   }
@@ -677,9 +679,8 @@ export class Program {
   getSuggestionDiagnosticsWithChecker(ctx: Context, fileChecker: Checker, sourceFile: SourceFile): readonly Diagnostic[] {
     void ctx;
     if (this.skipTypeChecking(sourceFile, false)) return [];
-    const bindSuggestionDiagnostics = (sourceFile as unknown as { readonly bindSuggestionDiagnostics?: readonly Diagnostic[] }).bindSuggestionDiagnostics ?? [];
-    const checkerDiagnostics = ((fileChecker as unknown as { getSuggestionDiagnostics?: (ctx: Context, file: SourceFile) => readonly Diagnostic[] })
-      .getSuggestionDiagnostics?.(ctx, sourceFile)) ?? [];
+    const bindSuggestionDiagnostics = (sourceFile as SourceFileWithDiagnosticSlots).bindSuggestionDiagnostics ?? [];
+    const checkerDiagnostics = (fileChecker as CheckerWithSuggestions).getSuggestionDiagnostics?.(ctx, sourceFile) ?? [];
     return [...bindSuggestionDiagnostics, ...checkerDiagnostics];
   }
 
@@ -725,7 +726,7 @@ export class Program {
 
   getIncludeProcessorDiagnostics(sourceFile: SourceFile): readonly Diagnostic[] {
     if (this.skipTypeChecking(sourceFile, false)) return [];
-    const record = sourceFile as unknown as { readonly includeDiagnostics?: readonly Diagnostic[] };
+    const record = sourceFile as SourceFileWithDiagnosticSlots;
     return sortAndDeduplicateDiagnostics(record.includeDiagnostics ?? []);
   }
 
@@ -745,27 +746,25 @@ export class Program {
     return !this.canIncludeBindAndCheckDiagnostics(sourceFile);
   }
 
+  // 1:1 port of TS-Go `(*Program).canIncludeBindAndCheckDiagnostics`.
   canIncludeBindAndCheckDiagnostics(sourceFile: SourceFile): boolean {
-    const record = sourceFile as unknown as {
-      readonly scriptKind?: string | number;
-      readonly checkJsDirective?: { readonly enabled?: boolean };
-      readonly isDeclarationFile?: boolean;
-    };
-    if (record.checkJsDirective?.enabled === false) return false;
-    if (isJsonSourceFile(sourceFile)) return false;
-    if (record.isDeclarationFile === true || isDeclarationFile(sourceFile)) return true;
-    if (typeof record.scriptKind === "string") {
-      const kind = record.scriptKind.toLowerCase();
-      return kind === "ts" || kind === "tsx" || kind === "external" || kind === "deferred"
-        || kind === "js" && (record.checkJsDirective?.enabled === true || booleanOption(this.options(), "checkJs") === true);
+    const checkJsDirective = (sourceFile as SourceFileWithDiagnosticSlots).checkJsDirective;
+    if (checkJsDirective !== undefined && checkJsDirective.enabled === false) {
+      return false;
     }
-    const extension = lowerExtension(sourceFile.fileName);
-    if (extension === ".ts" || extension === ".tsx" || extension === ".mts" || extension === ".cts") return true;
-    if ((extension === ".js" || extension === ".jsx" || extension === ".mjs" || extension === ".cjs")
-      && (record.checkJsDirective?.enabled === true || booleanOption(this.options(), "checkJs") === true || booleanOption(this.options(), "allowJs") === true)) {
+
+    if (sourceFile.scriptKind === ScriptKind.TS || sourceFile.scriptKind === ScriptKind.TSX || sourceFile.scriptKind === ScriptKind.External) {
       return true;
     }
-    return false;
+
+    const isJS = sourceFile.scriptKind === ScriptKind.JS || sourceFile.scriptKind === ScriptKind.JSX;
+    const isCheckJS = isJS && isCheckJSEnabledForFile(sourceFile, this.options());
+    const isPlainJS = isPlainJSFile(sourceFile, this.options());
+
+    // By default, only type-check .ts, .tsx, Deferred, plain JS, checked JS and
+    // External (plugins). Plain JS = .js with no // ts-check and checkJs
+    // undefined; check JS = .js with // ts-check or checkJs:true.
+    return isPlainJS || isCheckJS || sourceFile.scriptKind === ScriptKind.Deferred;
   }
 
   blockEmittingOfFile(emitFileName: string, diagnostic: Diagnostic): void {
@@ -922,13 +921,11 @@ export class Program {
 
   getModeForUsageLocation(file: SourceFile, moduleSpecifier: AstNode | undefined): number {
     void moduleSpecifier;
-    const record = file as unknown as { readonly impliedNodeFormat?: number };
-    return record.impliedNodeFormat ?? 0;
+    return (file as SourceFileWithDiagnosticSlots).impliedNodeFormat ?? 0;
   }
 
   getSourceFileMetaData(path: string): SourceFileMetaData {
-    const file = this.filesByPath.get(path);
-    const record = file as unknown as { readonly impliedNodeFormat?: number; readonly packageJsonType?: string; readonly packageJsonDirectory?: string } | undefined;
+    const record = this.filesByPath.get(path) as SourceFileWithDiagnosticSlots | undefined;
     return {
       impliedNodeFormat: record?.impliedNodeFormat ?? 0,
       packageJsonType: record?.packageJsonType ?? "",
@@ -1027,12 +1024,15 @@ export class Program {
   }
 
   explainFiles(write: (text: string) => void): void {
+    // 1:1 with TS-Go `(*Program).ExplainFiles`: each include reason is rendered
+    // through the canonical `FileIncludeReason.toDiagnostic` so the explanation
+    // text matches the diagnostic surface exactly.
     const reasons = this.getIncludeReasons();
     for (const file of this.files) {
       write(file.fileName);
       const fileReasons = reasons.get(this.toPath(file.fileName)) ?? [];
       for (const reason of fileReasons) {
-        write(`\n  ${formatIncludeReason(reason)}`);
+        write(`\n  ${includeReasonToDiagnostic(reason, this, true).text}`);
       }
       write("\n");
     }
@@ -1300,9 +1300,7 @@ export function canReplaceFileInProgram(file1: SourceFile, file2: SourceFile): b
 export function equalModuleSpecifiers(n1: AstNode | undefined, n2: AstNode | undefined): boolean {
   if (n1 === undefined && n2 === undefined) return true;
   if (n1 === undefined || n2 === undefined) return false;
-  const t1 = (n1 as unknown as { text?: string }).text;
-  const t2 = (n2 as unknown as { text?: string }).text;
-  return t1 === t2;
+  return nodeText(n1) === nodeText(n2);
 }
 
 export function equalModuleAugmentationNames(n1: AstNode | undefined, n2: AstNode | undefined): boolean {
@@ -1315,12 +1313,10 @@ export function equalFileReferences(f1: FileReference | undefined, f2: FileRefer
   return f1.fileName === f2.fileName;
 }
 
-export function equalCheckJSDirectives(d1: AstNode | undefined, d2: AstNode | undefined): boolean {
+export function equalCheckJSDirectives(d1: CheckJsDirective | undefined, d2: CheckJsDirective | undefined): boolean {
   if (d1 === undefined && d2 === undefined) return true;
   if (d1 === undefined || d2 === undefined) return false;
-  const a = (d1 as unknown as { enabled?: boolean }).enabled;
-  const b = (d2 as unknown as { enabled?: boolean }).enabled;
-  return a === b;
+  return d1.enabled === d2.enabled;
 }
 
 export function getAdditionalJSSyntacticDiagnostics(
@@ -1416,6 +1412,29 @@ export interface SourceMapEmitResult {
   readonly generatedFile: string;
 }
 
+// 1:1 port of TS-Go `internal/compiler/program.go` `type ProgramLike interface`.
+// The diagnostic/emit surface shared by the full Program and any program-like
+// wrapper (e.g. the build host). `Program` implements this structurally. The Go
+// `context.Context` argument maps to the local `Context` token; `tspath.Path`
+// is the local canonical `string` path.
+export interface ProgramLike {
+  options(): CompilerOptions;
+  getSourceFile(path: string): SourceFile | undefined;
+  getSourceFiles(): readonly SourceFile[];
+  getConfigFileParsingDiagnostics(): readonly Diagnostic[];
+  getSyntacticDiagnostics(ctx: Context, file: SourceFile | undefined): readonly Diagnostic[];
+  getBindDiagnostics(ctx: Context, file: SourceFile | undefined): readonly Diagnostic[];
+  getProgramDiagnostics(): readonly Diagnostic[];
+  getGlobalDiagnostics(ctx: Context): readonly Diagnostic[];
+  getSemanticDiagnostics(ctx: Context, file: SourceFile | undefined): readonly Diagnostic[];
+  getDeclarationDiagnostics(ctx: Context, file: SourceFile | undefined): readonly Diagnostic[];
+  getSuggestionDiagnostics(ctx: Context, file: SourceFile | undefined): readonly Diagnostic[];
+  emit(ctx: Context, options: EmitOptions): EmitResult;
+  commonSourceDirectory(): string;
+  isSourceFileDefaultLibrary(path: string): boolean;
+  program(): Program;
+}
+
 // ---------------------------------------------------------------------------
 // Forward-declared cross-module surface
 // ---------------------------------------------------------------------------
@@ -1441,12 +1460,49 @@ interface CommentDirectiveLike {
   readonly kind: "ignore" | "expect-error";
 }
 
+// Mirrors TS-Go `ast.CheckJsDirective` (the `// @ts-check` / `// @ts-nocheck`
+// pragma resolved on a source file).
+interface CheckJsDirective {
+  readonly enabled?: boolean;
+}
+
+// Optional SourceFile slots that the binder / file-loader attach but that are
+// not yet declared on the base AST SourceFile interface (upstream
+// `ast.SourceFile` carries them as fields). Reading them through this
+// augmentation keeps the access typed without a double-assertion escape hatch;
+// absent slots simply read as `undefined`.
+type SourceFileWithDiagnosticSlots = SourceFile & {
+  readonly jsDocDiagnostics?: readonly Diagnostic[];
+  readonly commentDirectives?: readonly CommentDirectiveLike[];
+  readonly bindSuggestionDiagnostics?: readonly Diagnostic[];
+  readonly includeDiagnostics?: readonly Diagnostic[];
+  readonly impliedNodeFormat?: number;
+  readonly packageJsonType?: string;
+  readonly packageJsonDirectory?: string;
+  readonly checkJsDirective?: { readonly enabled?: boolean };
+};
+
+// Optional checker method surface (the checker exposes suggestion diagnostics
+// only when suggestion analysis is enabled). Typed augmentation, not a cast.
+type CheckerWithSuggestions = Checker & {
+  getSuggestionDiagnostics?(ctx: Context, file: SourceFile): readonly Diagnostic[];
+};
+
 const plainJSErrors = new Set<number>([
   80002,
   80004,
   80006,
   80007,
 ]);
+
+// The parsed command line exposes compiler options through the lightweight
+// `CompilerOptionsHandle` placeholder (a structural subset whose fields are a
+// subset of the full core `CompilerOptions`). Until the two are unified by the
+// core port, bridge the handle to `CompilerOptions` in one place. This is a
+// single typed assertion across compatible shapes, not an `unknown` escape.
+function compilerOptionsFromHandle(handle: CompilerOptionsHandle): CompilerOptions {
+  return handle as CompilerOptions;
+}
 
 function moduleIsResolved(resolved: ResolvedModule): boolean {
   return (resolved as { readonly resolvedFileName?: string; readonly fileName?: string }).resolvedFileName !== undefined
@@ -1466,21 +1522,6 @@ function getPackageNameFromModuleName(moduleName: string): string {
   return parts[0] ?? "";
 }
 
-function formatIncludeReason(reason: FileIncludeReason): string {
-  switch (reason.kind) {
-    case 0: return `Root file specified for compilation${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
-    case 1: return `Source from project reference${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
-    case 2: return `Output from project reference${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
-    case 3: return `Imported by ${reason.referencingFile ?? "unknown source"}${reason.fileName === undefined ? "" : ` as ${reason.fileName}`}.`;
-    case 4: return `Referenced by ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : ` through ${reason.ref.fileName}`}.`;
-    case 5: return `Type reference directive from ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : `: ${reason.ref.fileName}`}.`;
-    case 6: return `Default library file${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
-    case 7: return `Library reference directive from ${reason.referencingFile ?? "unknown source"}${reason.ref?.fileName === undefined ? "" : `: ${reason.ref.fileName}`}.`;
-    case 8: return `Automatic type directive file${reason.fileName === undefined ? "" : `: ${reason.fileName}`}.`;
-    default: return "File included by compiler graph traversal.";
-  }
-}
-
 function diagnosticFromText(text: string, file?: SourceFile): Diagnostic {
   return {
     message: {
@@ -1493,6 +1534,21 @@ function diagnosticFromText(text: string, file?: SourceFile): Diagnostic {
     category: DiagnosticCategory.Error,
     code: 0,
     text,
+  };
+}
+
+// Build a diagnostic from a generated catalog Message (code/key/category
+// preserved), mirroring TS-Go `ast.NewDiagnostic(file, loc, message)`.
+function diagnosticFromMessage(
+  message: { code: number; key: string; category: DiagnosticCategory; message: string },
+  file?: SourceFile,
+): Diagnostic {
+  return {
+    message,
+    ...(file === undefined ? {} : { file }),
+    category: message.category,
+    code: message.code,
+    text: message.message,
   };
 }
 

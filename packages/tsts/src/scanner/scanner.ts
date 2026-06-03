@@ -198,19 +198,24 @@ function isUnicodeIdentifierPart(ch: number): boolean {
   return isInUnicodeRanges(ch, unicodeESNextIdentifierPart);
 }
 
-// Section 6.1.4 — scanner.go:2163-2165.
+// Section 6.1.4 — scanner.go:2173-2176.
 function isWordCharacter(ch: number): boolean {
   return isASCIILetter(ch) || isDigitCode(ch) || ch === 0x5f /* _ */;
 }
 
-/** scanner.go:2167-2169. */
-export function isIdentifierStartCodePoint(ch: number): boolean {
+/** scanner.go:2178-2180 (IsIdentifierStart). */
+export function isIdentifierStart(ch: number): boolean {
   return isASCIILetter(ch) || ch === 0x5f /* _ */ || ch === 0x24 /* $ */
     || (ch >= 0x80 && isUnicodeIdentifierStart(ch));
 }
 
-/** scanner.go:2175-2179 (IsIdentifierPartEx). */
-export function isIdentifierPartCodePoint(ch: number, languageVariant: LanguageVariant): boolean {
+/** scanner.go:2182-2184 (IsIdentifierPart) — Standard-variant convenience. */
+export function isIdentifierPart(ch: number): boolean {
+  return isIdentifierPartEx(ch, LanguageVariant.Standard);
+}
+
+/** scanner.go:2186-2190 (IsIdentifierPartEx). */
+export function isIdentifierPartEx(ch: number, languageVariant: LanguageVariant): boolean {
   return isWordCharacter(ch) || ch === 0x24 /* $ */
     || (ch >= 0x80 && isUnicodeIdentifierPart(ch))
     || (languageVariant === LanguageVariant.JSX && (ch === 0x2d /* - */ || ch === 0x3a /* : */));
@@ -243,6 +248,132 @@ export function getIdentifierToken(str: string): Kind {
     }
   }
   return Kind.Identifier;
+}
+
+// IsValidIdentifier — scanner.go:2161-2171. Reports whether `s` is a valid
+// identifier: the first code point must be an identifier start and every
+// subsequent code point an identifier part (Standard variant).
+export function isValidIdentifier(s: string): boolean {
+  if (s.length === 0) {
+    return false;
+  }
+  let i = 0;
+  for (const chStr of s) {
+    const ch = chStr.codePointAt(0)!;
+    if ((i === 0 && !isIdentifierStart(ch)) || (i !== 0 && !isIdentifierPartEx(ch, LanguageVariant.Standard))) {
+      return false;
+    }
+    i++;
+  }
+  return true;
+}
+
+// textToToken — faithful to scanner.go:124-190. The punctuation lexemes plus the
+// keyword set (maps.Copy(m, textToKeyword), scanner.go:188). Keyed by lexeme.
+const textToToken: ReadonlyMap<string, number> = (() => {
+  const m = new Map<string, number>([
+    ["{", Kind.OpenBraceToken],
+    ["}", Kind.CloseBraceToken],
+    ["(", Kind.OpenParenToken],
+    [")", Kind.CloseParenToken],
+    ["[", Kind.OpenBracketToken],
+    ["]", Kind.CloseBracketToken],
+    [".", Kind.DotToken],
+    ["...", Kind.DotDotDotToken],
+    [";", Kind.SemicolonToken],
+    [",", Kind.CommaToken],
+    ["<", Kind.LessThanToken],
+    [">", Kind.GreaterThanToken],
+    ["<=", Kind.LessThanEqualsToken],
+    [">=", Kind.GreaterThanEqualsToken],
+    ["==", Kind.EqualsEqualsToken],
+    ["!=", Kind.ExclamationEqualsToken],
+    ["===", Kind.EqualsEqualsEqualsToken],
+    ["!==", Kind.ExclamationEqualsEqualsToken],
+    ["=>", Kind.EqualsGreaterThanToken],
+    ["+", Kind.PlusToken],
+    ["-", Kind.MinusToken],
+    ["**", Kind.AsteriskAsteriskToken],
+    ["*", Kind.AsteriskToken],
+    ["/", Kind.SlashToken],
+    ["%", Kind.PercentToken],
+    ["++", Kind.PlusPlusToken],
+    ["--", Kind.MinusMinusToken],
+    ["<<", Kind.LessThanLessThanToken],
+    ["</", Kind.LessThanSlashToken],
+    [">>", Kind.GreaterThanGreaterThanToken],
+    [">>>", Kind.GreaterThanGreaterThanGreaterThanToken],
+    ["&", Kind.AmpersandToken],
+    ["|", Kind.BarToken],
+    ["^", Kind.CaretToken],
+    ["!", Kind.ExclamationToken],
+    ["~", Kind.TildeToken],
+    ["&&", Kind.AmpersandAmpersandToken],
+    ["||", Kind.BarBarToken],
+    ["?", Kind.QuestionToken],
+    ["??", Kind.QuestionQuestionToken],
+    ["?.", Kind.QuestionDotToken],
+    [":", Kind.ColonToken],
+    ["=", Kind.EqualsToken],
+    ["+=", Kind.PlusEqualsToken],
+    ["-=", Kind.MinusEqualsToken],
+    ["*=", Kind.AsteriskEqualsToken],
+    ["**=", Kind.AsteriskAsteriskEqualsToken],
+    ["/=", Kind.SlashEqualsToken],
+    ["%=", Kind.PercentEqualsToken],
+    ["<<=", Kind.LessThanLessThanEqualsToken],
+    [">>=", Kind.GreaterThanGreaterThanEqualsToken],
+    [">>>=", Kind.GreaterThanGreaterThanGreaterThanEqualsToken],
+    ["&=", Kind.AmpersandEqualsToken],
+    ["|=", Kind.BarEqualsToken],
+    ["^=", Kind.CaretEqualsToken],
+    ["||=", Kind.BarBarEqualsToken],
+    ["&&=", Kind.AmpersandAmpersandEqualsToken],
+    ["??=", Kind.QuestionQuestionEqualsToken],
+    ["@", Kind.AtToken],
+    ["#", Kind.HashToken],
+    ["`", Kind.BacktickToken],
+  ]);
+  for (const [text, kind] of textToKeyword) {
+    m.set(text, kind);
+  }
+  return m;
+})();
+
+// tokenToText — faithful to scanner.go:2224-2230. The inverse of textToToken
+// (last write per kind wins); keywords are copied in after punctuation, matching
+// Go's maps.Copy ordering, so iterating textToToken (punctuation first, then
+// keyword stems) gives the same per-kind result.
+const tokenToText: ReadonlyMap<number, string> = (() => {
+  const m = new Map<number, string>();
+  for (const [text, kind] of textToToken) {
+    m.set(kind, text);
+  }
+  return m;
+})();
+
+// TokenToString — scanner.go:2232-2234. The lexeme for a punctuation/keyword
+// Kind, or undefined for tokens with no fixed text (identifiers, literals).
+export function tokenToString(token: Kind): string | undefined {
+  return tokenToText.get(token);
+}
+
+// StringToToken — scanner.go:2236-2242. The token Kind for a lexeme, or
+// Kind.Unknown when the lexeme is not a punctuation/keyword.
+export function stringToToken(s: string): Kind {
+  return textToToken.get(s) ?? Kind.Unknown;
+}
+
+// GetViableKeywordSuggestions — scanner.go:2244-2252. Returns the set of keyword
+// texts longer than two characters, used as spell-check suggestions.
+export function getViableKeywordSuggestions(): string[] {
+  const result: string[] = [];
+  for (const text of textToKeyword.keys()) {
+    if (text.length > 2) {
+      result.push(text);
+    }
+  }
+  return result;
 }
 
 // JSDoc tag terminators — scanner.go:398 (a valid JSDoc tag name is followed by
@@ -317,6 +448,10 @@ interface ScannerConfig {
   end: number;
   languageVariant: LanguageVariant;
   skipTrivia: boolean;
+  // scanner.go:221 — set true once any non-ASCII (multi-unit) code point is
+  // decoded. Scanner-level (not part of ScannerState), so it persists across
+  // SetText and is not affected by Mark()/Rewind().
+  containsNonASCII: boolean;
 }
 
 export interface LiveScannerOptions {
@@ -336,11 +471,23 @@ export interface LiveScanner {
   getTokenValue(): string;
   getTokenFlags(): TokenFlagsType;
   hasPrecedingLineBreak(): boolean;
+  // Escape/non-ASCII token flag accessors — scanner.go:330-343.
+  hasUnicodeEscape(): boolean;
+  hasExtendedUnicodeEscape(): boolean;
+  // ContainsNonASCII — scanner.go:334-339. True if any non-ASCII bytes were
+  // encountered during scanning (UTF-8 byte offsets may differ from UTF-16).
+  containsNonASCII(): boolean;
   // JSDoc trivia accessors — scanner.go:349-362. Read the JSDoc token flags
   // captured while skipping leading trivia for the current token.
   hasPrecedingJSDocComment(): boolean;
+  hasPrecedingJSDocLeadingAsterisks(): boolean;
   hasPrecedingJSDocWithDeprecatedTag(): boolean;
   hasPrecedingJSDocWithSeeOrLink(): boolean;
+  // CommentDirectives — scanner.go:290-292. The ts-directive comments (the
+  // suppression pragmas) collected while scanning comments.
+  commentDirectives(): readonly CommentDirective[] | undefined;
+  // CanFollowJSDocAt — scanner.go:1389-1395.
+  canFollowJSDocAt(): boolean;
   isIdentifier(): boolean;
   isReservedWord(): boolean;
   isUnterminated(): boolean;
@@ -388,6 +535,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     end: text.length,
     languageVariant: options?.languageVariant ?? LanguageVariant.Standard,
     skipTrivia: options?.skipTrivia ?? true,
+    containsNonASCII: false,
   };
 
   // --- diagnostics ---------------------------------------------------------
@@ -413,7 +561,22 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
       return { ch: -1, size: 0 };
     }
     const cp = config.text.codePointAt(state.pos)!;
-    return { ch: cp, size: charSize(cp) };
+    const size = charSize(cp);
+    if (size > 1) {
+      config.containsNonASCII = true;
+    }
+    return { ch: cp, size };
+  }
+
+  // canFollowJSDocAt — scanner.go:1389-1395. Reports whether the code point at
+  // the current position can legally follow an `@` inside JSDoc (an identifier
+  // start, single-line whitespace, or a line break).
+  function canFollowJSDocAt(): boolean {
+    if (state.pos >= config.text.length) {
+      return true;
+    }
+    const ch = config.text.codePointAt(state.pos)!;
+    return isIdentifierStart(ch) || isWhiteSpaceSingleLine(ch) || isLineBreakCode(ch);
   }
 
 
@@ -439,7 +602,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
       state.pos = start + prefixLength;
     }
     const cs = charAndSize();
-    if (isIdentifierStartCodePoint(cs.ch)) {
+    if (isIdentifierStart(cs.ch)) {
       let size = cs.size;
       for (;;) {
         state.pos += size;
@@ -449,7 +612,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
         // IsIdentifierPartEx(Standard) — it does NOT treat the JSX `-`/`:` as
         // identifier parts here. JSX `-` is handled explicitly by ScanJsxIdentifier
         // and JSX `:` by the parser, so the core token scan stays Standard.
-        if (!isIdentifierPartCodePoint(next.ch, LanguageVariant.Standard)) {
+        if (!isIdentifierPartEx(next.ch, LanguageVariant.Standard)) {
           state.tokenValue = config.text.slice(start, state.pos);
           if (next.ch === 0x5c /* \ */) {
             state.tokenValue += scanIdentifierParts();
@@ -471,13 +634,13 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     let start = state.pos;
     for (;;) {
       const cs = charAndSize();
-      if (isIdentifierPartCodePoint(cs.ch, LanguageVariant.Standard)) {
+      if (isIdentifierPartEx(cs.ch, LanguageVariant.Standard)) {
         state.pos += cs.size;
         continue;
       }
       if (cs.ch === 0x5c /* \ */) {
         const escaped = peekUnicodeEscape();
-        if (escaped >= 0 && isIdentifierPartCodePoint(escaped, LanguageVariant.Standard)) {
+        if (escaped >= 0 && isIdentifierPartEx(escaped, LanguageVariant.Standard)) {
           sb += config.text.slice(start, state.pos);
           sb += String.fromCodePoint(scanUnicodeEscape(true));
           start = state.pos;
@@ -748,7 +911,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           || ((flags & EscapeSequenceScanningFlags.RegularExpression) !== 0
             && (flags & EscapeSequenceScanningFlags.AnnexB) === 0
             // tsgo uses IsIdentifierPart (Standard) here (scanner.go:1803).
-            && isIdentifierPartCodePoint(ch, LanguageVariant.Standard))
+            && isIdentifierPartEx(ch, LanguageVariant.Standard))
         ) {
           errorAt(Diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, state.pos - 2, 2);
         }
@@ -906,7 +1069,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
       result = Kind.NumericLiteral;
     }
     const cs = charAndSize();
-    if (isIdentifierStartCodePoint(cs.ch)) {
+    if (isIdentifierStart(cs.ch)) {
       const idStart = state.pos;
       const id = scanIdentifierParts();
       if (result !== Kind.BigIntLiteral && id.length === 1 && config.text.charCodeAt(idStart) === 0x6e /* n */) {
@@ -1504,7 +1667,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           break;
         case 0x5c /* \ */: {
           const cp = peekUnicodeEscape();
-          if (cp >= 0 && isIdentifierStartCodePoint(cp)) {
+          if (cp >= 0 && isIdentifierStart(cp)) {
             state.tokenValue = String.fromCodePoint(scanUnicodeEscape(true)) + scanIdentifierParts();
             state.token = getIdentifierToken(state.tokenValue);
           } else {
@@ -1533,7 +1696,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           if (charAt(1) === 0x5c /* \ */) {
             state.pos++;
             const cp = peekUnicodeEscape();
-            if (cp >= 0 && isIdentifierStartCodePoint(cp)) {
+            if (cp >= 0 && isIdentifierStart(cp)) {
               state.tokenValue = "#" + String.fromCodePoint(scanUnicodeEscape(true)) + scanIdentifierParts();
               state.token = Kind.PrivateIdentifier;
               break;
@@ -1761,7 +1924,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
           const cp = config.text.codePointAt(p)!;
           const size = cp > 0xffff ? 2 : 1;
           // tsgo uses IsIdentifierPart (Standard) for regex flags (scanner.go:1153).
-          if (!isIdentifierPartCodePoint(cp, LanguageVariant.Standard)) {
+          if (!isIdentifierPartEx(cp, LanguageVariant.Standard)) {
             break;
           }
           if (shouldReportErrors) {
@@ -1995,9 +2158,15 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     getTokenValue: () => state.tokenValue,
     getTokenFlags: () => state.tokenFlags,
     hasPrecedingLineBreak: () => (state.tokenFlags & TokenFlags.PrecedingLineBreak) !== 0,
+    hasUnicodeEscape: () => (state.tokenFlags & TokenFlags.UnicodeEscape) !== 0,
+    hasExtendedUnicodeEscape: () => (state.tokenFlags & TokenFlags.ExtendedUnicodeEscape) !== 0,
+    containsNonASCII: () => config.containsNonASCII,
     hasPrecedingJSDocComment: () => (state.tokenFlags & TokenFlags.PrecedingJSDocComment) !== 0,
+    hasPrecedingJSDocLeadingAsterisks: () => (state.tokenFlags & TokenFlags.PrecedingJSDocLeadingAsterisks) !== 0,
     hasPrecedingJSDocWithDeprecatedTag: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithDeprecated) !== 0,
     hasPrecedingJSDocWithSeeOrLink: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithSeeOrLink) !== 0,
+    commentDirectives: () => state.commentDirectives,
+    canFollowJSDocAt,
     isIdentifier: () => state.token === Kind.Identifier,
     isReservedWord: () => state.token >= Kind.FirstReservedWord && state.token <= Kind.LastReservedWord,
     isUnterminated: () => (state.tokenFlags & TokenFlags.Unterminated) !== 0,
