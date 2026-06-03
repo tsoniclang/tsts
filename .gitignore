@@ -141,9 +141,23 @@ npm/tsonic/runtime/*.dll
 
 # Claude Code working directories
 .tests/
-.analysis/
 .todos/
 .tmp/
+
+# Claude Code .analysis scratch is ignored, EXCEPT the TS-Go parity maps. The
+# parity tools load renames.json / split-ownership.json from
+# .analysis/tsts-tsc/parity-maps; git worktrees (where parity lanes run) must see
+# them so parity decisions are map-aware rather than map-less. Re-include the
+# exact path chain (git cannot re-include a file whose parent dir is ignored, so
+# each component is un-ignored in turn) and track only the map files. Do NOT move
+# the maps — the tools load them from this exact path.
+.analysis/*
+!.analysis/tsts-tsc/
+.analysis/tsts-tsc/*
+!.analysis/tsts-tsc/parity-maps/
+.analysis/tsts-tsc/parity-maps/*
+!.analysis/tsts-tsc/parity-maps/*.json
+!.analysis/tsts-tsc/parity-maps/*.md
 
 # Plan-blue baselines
 .plan-blue-baselines/

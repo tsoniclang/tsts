@@ -1,0 +1,378 @@
+{
+  "$schema": "./split-ownership.schema.json",
+  "version": 1,
+  "generatedBy": "wave-0 0C (hand-derived from repo inspection; see split-ownership.README.md)",
+  "tsgoRoot": "/home/jeswin/temp/typescript-go/internal",
+  "tstsRoot": "packages/tsts/src",
+  "description": "Declares how large TS-Go .go files map to multiple TSTS .ts files. Keys are upstream paths relative to tsgoRoot; values are the TSTS files (relative to tstsRoot) that together decompose that one upstream file. Only upstream files that map to TWO OR MORE TSTS files appear here (a split). 1:1 file mappings are intentionally omitted. Splits are ALLOWED but MUST be declared; any TSTS source file that decomposes a .go file and is not listed here (or in `barrels`) is suspicious and should be reconciled. This is a data deliverable: every entry was confirmed against header comments in the TSTS file and/or the upstream function home in TS-Go. It is NOT an invented mapping.",
+  "splits": {
+    "checker/checker.go": [
+      "checker/checker.ts",
+      "checker/checker.tsgoSurface.ts",
+      "checker/checkerCore.ts",
+      "checker/checkerInitialization.ts",
+      "checker/checker.algorithmKeys.ts",
+      "checker/checker.baseTypes.ts",
+      "checker/checker.bindingTypes.ts",
+      "checker/checker.callResolutionParity.ts",
+      "checker/checker.checkedtype.ts",
+      "checker/checker.classMemberParity.ts",
+      "checker/checker.constraintWideningParity.ts",
+      "checker/checker.contextualInferenceParity.ts",
+      "checker/checker.contextualTypes.ts",
+      "checker/checker.controlFlowFactsParity.ts",
+      "checker/checker.declarationParity.ts",
+      "checker/checker.declarations.ts",
+      "checker/checker.decoratorCollisionParity.ts",
+      "checker/checker.deferredDiagnosticParity.ts",
+      "checker/checker.diagnosticParity.ts",
+      "checker/checker.expressionParity.ts",
+      "checker/checker.expressions.ts",
+      "checker/checker.expressionTailParity.ts",
+      "checker/checker.indexedAccess.ts",
+      "checker/checker.indexedAccessDeepParity.ts",
+      "checker/checker.instantiation.ts",
+      "checker/checker.instantiationCacheParity.ts",
+      "checker/checker.instantiationParity.ts",
+      "checker/checker.iteration.ts",
+      "checker/checker.iterationParity.ts",
+      "checker/checker.moduleChecks.ts",
+      "checker/checker.moduleSymbolParity.ts",
+      "checker/checker.nameResolution.ts",
+      "checker/checker.objectMemberResolutionParity.ts",
+      "checker/checker.objectSpreadParity.ts",
+      "checker/checker.operatorControlParity.ts",
+      "checker/checker.referenceAssignmentParity.ts",
+      "checker/checker.returnTypes.ts",
+      "checker/checker.returnYieldAwaitParity.ts",
+      "checker/checker.semanticPipelineParity.ts",
+      "checker/checker.signatureApplicabilityParity.ts",
+      "checker/checker.signatures.ts",
+      "checker/checker.statements.ts",
+      "checker/checker.symbolMergeParity.ts",
+      "checker/checker.typeAlgebra.ts",
+      "checker/checker.typeAliasEnumParity.ts",
+      "checker/checker.typeConstructionParity.ts",
+      "checker/checker.typeConstructors.ts",
+      "checker/checker.typeFactsAwaitedParity.ts",
+      "checker/checker.typeMemberResolutionParity.ts",
+      "checker/checker.typeMembers.ts",
+      "checker/checker.typeNodeConstructors.ts",
+      "checker/checker.typeNodes.ts",
+      "checker/checker.typePredicateParity.ts",
+      "checker/checker.unionMappedParity.ts",
+      "checker/checker.unused.ts",
+      "checker/diagnosticsPipeline.ts",
+      "checker/globalResolution.ts",
+      "checker/moduleResolution.ts",
+      "checker/sourceElements.ts",
+      "checker/symbolResolution.ts",
+      "checker/symbolTypes.ts",
+      "checker/typeFacts.ts",
+      "checker/tupleTypes.ts"
+    ],
+    "checker/types.go": [
+      "checker/types.ts",
+      "checker/symbolTypes.ts"
+    ],
+    "checker/flow.go": [
+      "checker/flow.ts",
+      "checker/flow.assignment.ts",
+      "checker/checker.flowParity.ts",
+      "checker/checker.flowLoopParity.ts",
+      "checker/checker.narrowing.ts"
+    ],
+    "checker/relater.go": [
+      "checker/relater.ts",
+      "checker/relater.extras.ts",
+      "checker/relater.deepParity.ts",
+      "checker/checker.relationMemoParity.ts",
+      "checker/objectTypeRelations.ts",
+      "checker/signatureRelations.ts",
+      "checker/templateLiteralRelations.ts",
+      "checker/discriminants.ts"
+    ],
+    "checker/grammarchecks.go": [
+      "checker/grammarChecks.ts",
+      "checker/checker.grammarParity.ts"
+    ],
+    "checker/printer.go": [
+      "checker/printer.ts",
+      "checker/printer.extras.ts",
+      "checker/checker.symbolDisplay.ts"
+    ],
+    "checker/nodebuilder.go": [
+      "checker/nodeBuilder.ts",
+      "checker/nodeBuilder.core.ts"
+    ],
+    "checker/nodebuilderimpl.go": [
+      "checker/nodeBuilderImpl.ts",
+      "checker/nodeBuilderImpl.extras.ts",
+      "checker/checker.nodeBuilderParity.ts",
+      "checker/nodeBuilderHover.ts",
+      "checker/nodeBuilderScopes.ts",
+      "checker/pseudoTypeNodeBuilder.ts"
+    ],
+    "parser/parser.go": [
+      "parser/parser.ts",
+      "parser/listContext.ts",
+      "parser/recovery.ts",
+      "parser/speculation.ts",
+      "parser/typeModel.ts",
+      "parser/jsxModel.ts"
+    ],
+    "parser/jsdoc.go": [
+      "parser/jsdoc.ts",
+      "parser/jsdocScanner.ts",
+      "parser/jsdocTags.ts"
+    ],
+    "parser/reparser.go": [
+      "parser/reparser.ts",
+      "parser/reparseModel.ts"
+    ],
+    "parser/utilities.go": [
+      "parser/utilities.ts",
+      "parser/parser.ts"
+    ],
+    "ast/flow.go": [
+      "ast/flowFlags.ts",
+      "ast/aliases.ts",
+      "ast/index.ts"
+    ],
+    "ast/utilities.go": [
+      "ast/utilities.ts",
+      "ast/accessors.ts",
+      "ast/utils.ts"
+    ],
+    "ast/ast.go": [
+      "ast/ast.ts",
+      "ast/utilities.ts",
+      "ast/clone.ts",
+      "ast/is.ts"
+    ],
+    "binder/binder.go": [
+      "binder/binder.ts",
+      "binder/commonJs.ts",
+      "binder/container.ts",
+      "binder/declarationContainerParity.ts",
+      "binder/flow.ts",
+      "binder/labels.ts",
+      "binder/scope.ts",
+      "binder/strictMode.ts"
+    ],
+    "scanner/scanner.go": [
+      "scanner/scanner.ts",
+      "scanner/trivia.ts",
+      "scanner/scanner.nativePreview.ts"
+    ],
+    "scanner/regexp.go": [
+      "scanner/regexp.ts",
+      "scanner/scanner.ts"
+    ],
+    "ast/tokenflags.go": [
+      "enums/tokenFlags.enum.ts",
+      "scanner/tokenFlags.ts"
+    ],
+    "printer/factory.go": [
+      "printer/factory.ts",
+      "printer/factoryHelpers.ts"
+    ],
+    "printer/printer.go": [
+      "printer/printer.ts",
+      "printer/comments.ts",
+      "printer/commentDirectiveParity.ts",
+      "printer/emitHintParity.ts",
+      "printer/listFormat.ts",
+      "printer/newLineParity.ts",
+      "printer/printerEmitPipelineParity.ts",
+      "printer/semicolonParity.ts",
+      "printer/sourceMapEmitParity.ts",
+      "printer/tokenWriterParity.ts",
+      "printer/trailingCommaParity.ts"
+    ],
+    "printer/namegenerator.go": [
+      "printer/nameGenerator.ts",
+      "printer/generatedNameParity.ts"
+    ],
+    "transformers/transformer.go": [
+      "transformers/transformer.ts",
+      "transformers/commentRangeParity.ts",
+      "transformers/emitFlagsParity.ts",
+      "transformers/emitSubstitutionParity.ts",
+      "transformers/helperRequestParity.ts",
+      "transformers/lexicalEnvironmentParity.ts",
+      "transformers/modifierPropagationParity.ts",
+      "transformers/nodeFactoryParity.ts",
+      "transformers/sourceMapRangeParity.ts",
+      "transformers/transformerEmitPipelineParity.ts",
+      "transformers/visitorPipelineParity.ts"
+    ],
+    "module/resolver.go": [
+      "module/resolver.ts",
+      "module/types.ts",
+      "module/conditionsParity.ts",
+      "module/packageResolutionParity.ts"
+    ],
+    "tsoptions/tsconfigparsing.go": [
+      "tsoptions/tsconfigParsing.ts",
+      "tsoptions/configAssembly.ts",
+      "tsoptions/configSpecs.ts",
+      "tsoptions/tsconfigRootOptions.ts",
+      "tsoptions/extendsResolution.ts",
+      "tsoptions/projectReferenceParsing.ts"
+    ],
+    "tsoptions/commandlineparser.go": [
+      "tsoptions/commandLineParser.ts",
+      "tsoptions/commandLineResponse.ts",
+      "tsoptions/optionParseParity.ts",
+      "tsoptions/parseDiagnostics.ts"
+    ],
+    "tsoptions/parsinghelpers.go": [
+      "tsoptions/parsingHelpers.ts",
+      "tsoptions/optionNormalization.ts",
+      "tsoptions/jsonOptionValidation.ts"
+    ],
+    "tsoptions/commandlineoption.go": [
+      "tsoptions/commandLineOption.ts",
+      "tsoptions/optionSchema.ts",
+      "tsoptions/optionDefaults.ts",
+      "tsoptions/optionEffects.ts"
+    ],
+    "tsoptions/showconfig.go": [
+      "tsoptions/showConfig.ts",
+      "tsoptions/helpView.ts",
+      "tsoptions/optionNormalization.ts"
+    ]
+  },
+  "oneToOne": {
+    "description": "Confirmed 1:1 file ports: one upstream .go ported to exactly one TSTS .ts (NOT a split). These were flagged by the undeclared-local scan only because they share a directory with a split; each was verified against TS-Go (the TSTS file header cites the single upstream .go, and that .go exists upstream). Recording them keeps the scan honest (a recognized 1:1 port is not an undeclared split) without pretending they are decompositions. Keys are TSTS files (relative to tstsRoot); values are the single upstream .go (relative to tsgoRoot).",
+    "mappings": {
+      "ast/checkFlags.ts": "ast/checkflags.go",
+      "ast/deepClone.ts": "ast/deepclone.go",
+      "ast/diagnostic.ts": "ast/diagnostic.go",
+      "ast/functionFlags.ts": "ast/functionflags.go",
+      "ast/ids.ts": "ast/ids.go",
+      "ast/parseOptions.ts": "ast/parseoptions.go",
+      "ast/precedence.ts": "ast/precedence.go",
+      "ast/subtreeFacts.ts": "ast/subtreefacts.go",
+      "ast/symbol.ts": "ast/symbol.go",
+      "binder/nameResolver.ts": "binder/nameresolver.go",
+      "binder/referenceResolver.ts": "binder/referenceresolver.go",
+      "checker/emitResolver.ts": "checker/emitresolver.go",
+      "checker/exports.ts": "checker/exports.go",
+      "checker/inference.ts": "checker/inference.go",
+      "checker/jsdoc.ts": "checker/jsdoc.go",
+      "checker/jsx.ts": "checker/jsx.go",
+      "checker/mapper.ts": "checker/mapper.go",
+      "checker/nodeCopy.ts": "checker/nodecopy.go",
+      "checker/services.ts": "checker/services.go",
+      "checker/symbolAccessibility.ts": "checker/symbolaccessibility.go",
+      "checker/symbolTracker.ts": "checker/symboltracker.go",
+      "checker/tracer.ts": "checker/tracer.go",
+      "checker/utilities.ts": "checker/utilities.go",
+      "module/cache.ts": "module/cache.go",
+      "module/util.ts": "module/util.go",
+      "parser/references.ts": "parser/references.go",
+      "parser/types.ts": "parser/types.go",
+      "printer/changeTrackerWriter.ts": "printer/changetrackerwriter.go",
+      "printer/emitContext.ts": "printer/emitcontext.go",
+      "printer/emitFlags.ts": "printer/emitflags.go",
+      "printer/emitHost.ts": "printer/emithost.go",
+      "printer/emitResolver.ts": "printer/emitresolver.go",
+      "printer/emitTextWriter.ts": "printer/emittextwriter.go",
+      "printer/generatedIdentifierFlags.ts": "printer/generatedidentifierflags.go",
+      "printer/helpers.ts": "printer/helpers.go",
+      "printer/singleLineStringWriter.ts": "printer/singlelinestringwriter.go",
+      "printer/sourceFileMetadataProvider.ts": "printer/sourcefilemetadataprovider.go",
+      "printer/textWriter.ts": "printer/textwriter.go",
+      "printer/utilities.ts": "printer/utilities.go",
+      "scanner/unicodeProperties.ts": "scanner/unicodeproperties.go",
+      "scanner/utilities.ts": "scanner/utilities.go",
+      "transformers/chain.ts": "transformers/chain.go",
+      "transformers/destructuring.ts": "transformers/destructuring.go",
+      "transformers/modifierVisitor.ts": "transformers/modifiervisitor.go",
+      "transformers/utilities.ts": "transformers/utilities.go",
+      "tsoptions/declsBuild.ts": "tsoptions/declsbuild.go",
+      "tsoptions/declsCompiler.ts": "tsoptions/declscompiler.go",
+      "tsoptions/declsTypeAcquisition.ts": "tsoptions/declstypeacquisition.go",
+      "tsoptions/declsWatch.ts": "tsoptions/declswatch.go",
+      "tsoptions/diagnostics.ts": "tsoptions/diagnostics.go",
+      "tsoptions/enumMaps.ts": "tsoptions/enummaps.go",
+      "tsoptions/errors.ts": "tsoptions/errors.go",
+      "tsoptions/nameMap.ts": "tsoptions/namemap.go",
+      "tsoptions/parsedBuildCommandLine.ts": "tsoptions/parsedbuildcommandline.go",
+      "tsoptions/parsedCommandLine.ts": "tsoptions/parsedcommandline.go",
+      "tsoptions/wildcardDirectories.ts": "tsoptions/wildcarddirectories.go"
+    }
+  },
+  "enumSurface": {
+    "description": "Enum-definition surface under src/enums: hand-authored const-enum + companion `var X: any` pairs that mirror an upstream Go enum (e.g. ast/kind, scanner/token, compiler enums). They are enum surface, not hand-port algorithm splits, and many siblings are header-marked generated. They are flagged by the undeclared-local scan only because src/enums hosts the ast/tokenflags.go split entry (enums/tokenFlags.enum.ts). Listed here so the scan recognizes them; generated-surface parity for these is checkGenerated.ts / checkSchema.ts, not this map.",
+    "files": [
+      "enums/characterCodes.enum.ts",
+      "enums/characterCodes.ts",
+      "enums/commentDirectiveType.enum.ts",
+      "enums/commentDirectiveType.ts",
+      "enums/diagnosticCategory.enum.ts",
+      "enums/languageVariant.enum.ts",
+      "enums/languageVariant.ts",
+      "enums/regularExpressionFlags.enum.ts",
+      "enums/regularExpressionFlags.ts",
+      "enums/scriptKind.enum.ts",
+      "enums/scriptKind.ts",
+      "enums/scriptTarget.enum.ts",
+      "enums/scriptTarget.ts"
+    ]
+  },
+  "multiUpstreamLocals": {
+    "description": "TSTS files that legitimately draw from MORE THAN ONE upstream .go file (and so appear under multiple split keys above, or under a split key whose upstream is not their primary home). Listed here so the cross-reference is explicit and not mistaken for a mapping error.",
+    "entries": [
+      { "local": "checker/symbolTypes.ts", "upstream": ["checker/checker.go", "checker/types.go"] },
+      { "local": "checker/types.ts", "upstream": ["checker/types.go", "checker/checker.go", "checker/nodebuilderimpl.go"] },
+      { "local": "ast/utilities.ts", "upstream": ["ast/ast.go", "ast/utilities.go"] },
+      { "local": "ast/flags.ts", "upstream": ["ast/nodeflags.go", "ast/symbolflags.go"] },
+      { "local": "ast/aliases.ts", "upstream": ["ast/flow.go", "ast/symbol.go"] },
+      { "local": "ast/accessors.ts", "upstream": ["ast/utilities.go", "binder/binder.go"] },
+      { "local": "parser/parser.ts", "upstream": ["parser/parser.go", "parser/utilities.go", "core/core.go", "core/languagevariant.go"] },
+      { "local": "scanner/scanner.ts", "upstream": ["scanner/scanner.go", "scanner/regexp.go"] },
+      { "local": "scanner/trivia.ts", "upstream": ["scanner/scanner.go", "ast/ast.go"] },
+      { "local": "scanner/tokenFlags.ts", "upstream": ["ast/tokenflags.go", "ast/ast.go"] },
+      { "local": "tsoptions/optionCatalog.ts", "upstream": ["tsoptions/declsbuild.go", "tsoptions/declscompiler.go", "tsoptions/declstypeacquisition.go", "tsoptions/declswatch.go"] },
+      { "local": "tsoptions/optionNormalization.ts", "upstream": ["tsoptions/parsinghelpers.go", "tsoptions/showconfig.go"] }
+    ]
+  },
+  "barrels": {
+    "description": "TSTS ESM barrel/index files. These re-export from sibling files and do NOT decompose a single .go file; they are TypeScript module-system scaffolding with no TS-Go counterpart. They are NOT splits and must not be treated as undeclared decomposition. Tools should exclude these from undeclared-split detection.",
+    "files": [
+      "api/index.ts",
+      "ast/index.ts",
+      "binder/index.ts",
+      "checker/index.ts",
+      "config/index.ts",
+      "execute/index.ts",
+      "glob/index.ts",
+      "module/index.ts",
+      "nodebuilder/index.ts",
+      "parser/index.ts",
+      "printer/index.ts",
+      "program/index.ts",
+      "project/index.ts",
+      "scanner/index.ts",
+      "transformers/index.ts",
+      "tsoptions/index.ts"
+    ]
+  },
+  "crossModuleLocals": {
+    "description": "TSTS source directories that have NO 1:1 upstream module directory in TS-Go and instead host code split out from upstream files living in OTHER modules. Recorded so module-level coverage tools do not flag these as orphan modules.",
+    "entries": [
+      { "localDir": "config", "upstreamModule": "tsoptions", "note": "config/* hosts tsconfig assembly split from tsoptions; mapped to tsoptions in logical-parity MODULES." },
+      { "localDir": "program", "upstreamModule": "compiler", "note": "program/* decomposes parts of internal/compiler (program construction)." },
+      { "localDir": "emit-js", "upstreamModule": "printer", "note": "emit-js/* is a printer/emit split; mapped under printer in logical-parity MODULES." }
+    ]
+  },
+  "notes": [
+    "checker/checker.go is the single most decomposed upstream file: a ~20k-line TS-Go file split into 60+ TSTS files. This is the largest legitimate split in the codebase and the primary reason per-module coverage tools must consult this map rather than assuming 1:1 file parity.",
+    "*.Parity.ts files are conceptual splits: they isolate one algorithm/decision-engine out of a large upstream worker function. Their header comment cites the upstream .go section even when it does not name the exact line; ownership here was confirmed by locating the corresponding upstream function home.",
+    "Generated files (*.generated.ts on the TSTS side; *_generated.go / *_stringer.go / stringer_generated.go on the TS-Go side) are intentionally excluded from this map; generated-surface parity is the job of checkGenerated.ts / checkSchema.ts, not the hand-port split map.",
+    "This map is intentionally conservative: it lists only confirmed splits (upstream files mapped to >=2 TSTS files). Single-file 1:1 mappings (e.g. checker/inference.go -> checker/inference.ts, checker/jsx.go -> checker/jsx.ts) are omitted because they are not splits and need no ownership declaration."
+  ]
+}

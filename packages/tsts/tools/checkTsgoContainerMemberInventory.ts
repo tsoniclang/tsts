@@ -102,6 +102,12 @@ interface GoContainer {
   readonly exported: boolean;
   readonly generated: boolean;
   readonly members: readonly GoMember[];
+  // True when this container is a true Go runtime facade: a struct that embeds a
+  // Go stdlib io/fs/net/os/sync facade type, or a sync primitive (noCopy). Used
+  // to gate go-only classification so facade-interface methods (Read/Write/...)
+  // are only treated as go-only on an actual facade, not on a compiler type that
+  // merely happens to expose a same-named member.
+  readonly facade: boolean;
 }
 
 interface LocalMember {
@@ -165,33 +171,56 @@ interface InventoryReport {
 }
 
 // ---------------------------------------------------------------------------
-// Go-only container / member scaffolding (mirrors checkLogicalParity.ts).
+// Go-only container / member classification — PRECISE.
 //
-// Containers/members that exist because of Go's runtime/idioms (sync, io, fs,
-// goroutines, stringer, JSON marshalling, external-lib facades) have no
-// hand-port compiler-logic counterpart. They are classified `go-only-*` rather
-// than `missing-*` so honest gaps are not inflated by Go scaffolding.
+// `go-only` is reserved for true Go RUNTIME FACADES with no TS-compiler
+// counterpart BY DESIGN: io.Reader/Writer/Closer wrappers, fs.File/FileInfo
+// facades, net/os/exec/syscall wrappers, sync primitives used as the public
+// surface, and the Go-runtime interface methods (fmt.Stringer, json.Marshaler,
+// error, package init, copylock no-ops) that a hand port never reproduces.
+//
+// CRITICAL accuracy rule (false-positive avoidance): a container is NOT go-only
+// merely because it MENTIONS or USES a Go library/type internally, nor because a
+// member shares a generic name (Name/Type/Size/Clone/Read/Write/...) with a Go
+// stdlib method. Such a name is go-only ONLY when its container is a detected
+// runtime facade. A container that uses a Go sync primitive internally but
+// exposes compiler behavior stays a real (matched/missing) container so genuine
+// gaps remain visible. `go-only` and `deferred` are kept DISTINCT: deferred is a
+// module scope for real TS-Go surface not yet ported; go-only means no TS
+// counterpart by design.
 // ---------------------------------------------------------------------------
 
-const GO_ONLY_MEMBER_NAMES: ReadonlySet<string> = new Set([
+// Member names that are ALWAYS Go-runtime interface satisfaction regardless of
+// container — a faithful TS port never reproduces them, so they are go-only
+// wherever they appear. Kept deliberately narrow: only methods that exist purely
+// to satisfy a Go runtime/stdlib interface (fmt.Stringer, json.Marshaler, the
+// builtin error interface, copylock no-ops, and Go package init).
+const GO_RUNTIME_INTERFACE_MEMBERS: ReadonlySet<string> = new Set([
   "nocopy",
   "lock",
   "unlock",
   "rlock",
   "runlock",
   "string", // fmt.Stringer; covered by *_stringer_generated.go
-  "error", // error interface method
+  "error", // builtin error interface method
   "marshaljson",
   "unmarshaljson",
   "marshaljsonto",
   "unmarshaljsonfrom",
   "init", // Go package init()
+]);
+
+// Generic method names that satisfy io/fs/net/os stdlib interfaces. These are
+// go-only ONLY when their container is a detected runtime facade (it embeds an
+// io/fs/net/os/sync/exec/syscall facade type). On a real compiler container a
+// member named Read/Write/Close/Name/Type/etc. is genuine compiler surface and
+// must stay matched/missing — never blanket go-only.
+const FACADE_INTERFACE_MEMBERS: ReadonlySet<string> = new Set([
   "read",
   "write",
   "close",
   "seek",
   "sys",
-  "clone", // value-semantics helpers; TS uses references
   "accept",
   "acquire",
   "release",
@@ -204,17 +233,42 @@ const GO_ONLY_MEMBER_NAMES: ReadonlySet<string> = new Set([
   "stat",
   "chtimes",
   "appendfile",
+  "clone", // value-semantics helper on a facade; TS uses references
 ]);
 
-// Go receiver types whose methods exist purely to satisfy stdlib interfaces or
-// model Go runtime facades (pools, readers/writers, goroutine sync). Their
-// methods are not hand-port compiler logic.
-const GO_ONLY_RECEIVER_HINTS: ReadonlySet<string> = new Set([
-  "noCopy",
+// Go stdlib facade package/type prefixes. A struct that EMBEDS one of these as
+// part of its public surface is a runtime facade (its embedded methods are not
+// hand-port compiler logic). Matched against the embedded type token, e.g.
+// `io.Reader`, `fs.File`, `net.Conn`, `sync.Mutex`, `bytes.Buffer`.
+const GO_FACADE_EMBED_PREFIXES: readonly string[] = [
+  "io.",
+  "fs.",
+  "net.",
+  "os.",
+  "exec.",
+  "syscall.",
+  "sync.",
+  "bufio.",
+];
+
+const GO_FACADE_EMBED_TYPES: ReadonlySet<string> = new Set([
+  "bytes.Buffer",
+  "strings.Builder",
 ]);
 
-function isGoOnlyMember(name: string): boolean {
-  return GO_ONLY_MEMBER_NAMES.has(normalizeName(name));
+function isGoRuntimeInterfaceMember(name: string): boolean {
+  return GO_RUNTIME_INTERFACE_MEMBERS.has(normalizeName(name));
+}
+
+function isFacadeInterfaceMember(name: string): boolean {
+  return FACADE_INTERFACE_MEMBERS.has(normalizeName(name));
+}
+
+// True when an embedded-type token names a Go stdlib facade type.
+function isFacadeEmbed(embedded: string): boolean {
+  const token = embedded.replace(/^\*/, "").replace(/\[.*$/, "");
+  if (GO_FACADE_EMBED_TYPES.has(token)) return true;
+  return GO_FACADE_EMBED_PREFIXES.some((prefix) => token.startsWith(prefix));
 }
 
 // ---------------------------------------------------------------------------
@@ -293,6 +347,7 @@ function parseGoStructsAndInterfaces(
     const members = kind === "struct"
       ? parseGoStructFields(bodyLines)
       : parseGoInterfaceMethods(bodyLines);
+    const facade = kind === "struct" && structEmbedsFacade(bodyLines);
     containers.push({
       module,
       file: file.path,
@@ -301,6 +356,7 @@ function parseGoStructsAndInterfaces(
       exported: /^[A-Z]/.test(name),
       generated: file.generated,
       members,
+      facade,
     });
     i = j - 1;
   }
@@ -338,6 +394,24 @@ function parseGoStructFields(bodyLines: readonly string[]): readonly GoMember[] 
   return members;
 }
 
+// True when a struct body EMBEDS a Go stdlib facade type (an embedded field that
+// is a bare `pkg.Type` with no field name, e.g. `io.Reader`, `fs.File`). Embedded
+// facades make the struct a runtime facade whose interface methods (Read/Write/
+// Close/Stat/...) have no hand-port compiler counterpart. A struct that merely
+// has a NAMED field of a Go type (e.g. `mu sync.Mutex`) is NOT a facade — it
+// uses the primitive internally while exposing compiler behavior.
+function structEmbedsFacade(bodyLines: readonly string[]): boolean {
+  for (const raw of bodyLines) {
+    const line = raw.trim();
+    if (line === "" || line.startsWith("}") || line.startsWith("{")) continue;
+    // An embedded field is a single type token on its own (optionally pointer),
+    // with no preceding field name: `io.Reader`, `*bufio.Writer`, `sync.Mutex`.
+    const embed = /^(\*?[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)\s*$/.exec(line);
+    if (embed?.[1] !== undefined && isFacadeEmbed(embed[1])) return true;
+  }
+  return false;
+}
+
 // Interface methods: `Name(args) returns` or embedded interface `OtherIface`.
 // Embedded interfaces (bare capitalized identifier, no parens) are skipped.
 function parseGoInterfaceMethods(bodyLines: readonly string[]): readonly GoMember[] {
@@ -362,6 +436,7 @@ function parseGoInterfaceMethods(bodyLines: readonly string[]): readonly GoMembe
 function parseGoReceiverGroups(
   module: string,
   file: ClassifiedFile,
+  facadeStructNames: ReadonlySet<string>,
 ): readonly GoContainer[] {
   const byReceiver = new Map<string, GoMember[]>();
   const stripped = stripCommentsAndStrings(file.text);
@@ -385,6 +460,8 @@ function parseGoReceiverGroups(
     exported: /^[A-Z]/.test(receiver),
     generated: file.generated,
     members,
+    // A receiver group is a facade when its home struct embeds a facade type.
+    facade: facadeStructNames.has(receiver),
   }));
 }
 
@@ -455,15 +532,25 @@ function parseGoEnumGroups(
       exported: /^[A-Z]/.test(enumName),
       generated: file.generated,
       members,
+      facade: false,
     }));
 }
 
 function parseGoContainers(module: string, files: readonly ClassifiedFile[]): readonly GoContainer[] {
-  return files.flatMap((file) => [
-    ...parseGoStructsAndInterfaces(module, file),
-    ...parseGoReceiverGroups(module, file),
-    ...parseGoEnumGroups(module, file),
-  ]);
+  return files.flatMap((file) => {
+    const structsAndInterfaces = parseGoStructsAndInterfaces(module, file);
+    // Struct names whose body embeds a Go stdlib facade type; receiver groups in
+    // the same file inherit the facade flag so their interface methods classify
+    // as go-only only on a real facade.
+    const facadeStructNames = new Set(
+      structsAndInterfaces.filter((c) => c.facade).map((c) => c.name),
+    );
+    return [
+      ...structsAndInterfaces,
+      ...parseGoReceiverGroups(module, file, facadeStructNames),
+      ...parseGoEnumGroups(module, file),
+    ];
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -561,10 +648,21 @@ function captureTsBody(lines: readonly string[], startLine: number): CapturedBod
 }
 
 // Class members: fields (`name:`, `readonly name:`, `#name:`, `static name =`)
-// and methods (`name(...) {`, `#name(...) {`, accessors). Nested function bodies
-// are tolerated because we only key on member-shaped lines at any depth; a few
-// false members are acceptable (they only ever ADD to local coverage, never
-// hide an upstream gap), but control keywords are excluded.
+// and methods (`name(...) {`, `#name(...) {`, `private name(...) {`, accessors).
+// Nested function bodies are tolerated because we only key on member-shaped lines
+// at relativeDepth 1; a few false members are acceptable (they only ever ADD to
+// local coverage, never hide an upstream gap), but control keywords are excluded.
+//
+// A method is detected by its DECLARATION HEAD — `[modifiers] #?name(` (optionally
+// with a generic `<...>` parameter list before the `(`) — at the top level of the
+// class body. We deliberately do NOT require the body's opening `{` or the full
+// return type on the same line: TS-Go receiver methods are faithfully modeled as
+// `#private` methods whose signatures frequently (a) span multiple lines and (b)
+// carry generic return types such as `: NodeArray<T>` / `: ReturnType<typeof f>`
+// that contain `>` and would defeat a single-line `(){` regex. Anchoring on the
+// `(` that opens the parameter list keeps the detection robust without confusing a
+// call-initialized field (`#m: Map<K,V> = new Map(...)`) for a method, because a
+// field always has `:`/`=` before its first `(` while a method head does not.
 function parseTsClassMembers(bodyLines: readonly BodyLine[]): readonly LocalMember[] {
   const members: LocalMember[] = [];
   const seen = new Set<string>();
@@ -574,8 +672,11 @@ function parseTsClassMembers(bodyLines: readonly BodyLine[]): readonly LocalMemb
     if (body.relativeDepth !== 1) continue;
     const line = body.text.trim();
     if (line === "") continue;
-    // method: `[modifiers] name(...)[: type] {`
-    const method = /^(?:public\s+|private\s+|protected\s+|static\s+|override\s+|abstract\s+|async\s+|readonly\s+)*(?:get\s+|set\s+)?(#?[A-Za-z_$][\w$]*)\s*(?:<[^>{}]*>)?\([^;{}]*\)\s*(?::[^=>{}]*)?\{/.exec(line);
+    // method head: `[modifiers] [get|set] #?name [<...>] (` where the `(` opens the
+    // parameter list directly after the (possibly generic) member name. Includes
+    // TS `#private` and `private`-keyword methods, multi-line signatures, and
+    // generic return types (handled by anchoring on `(` rather than `(){`).
+    const method = /^(?:public\s+|private\s+|protected\s+|static\s+|override\s+|abstract\s+|async\s+|readonly\s+)*(?:get\s+|set\s+)?(#?[A-Za-z_$][\w$]*)\s*(?:<[^>{}=()]*>)?\(/.exec(line);
     if (method?.[1] !== undefined) {
       const name = method[1].replace(/^#/, "");
       if (!TS_NON_MEMBER_WORDS.has(name) && !seen.has(`m:${name}`)) {
@@ -803,8 +904,26 @@ function classifyContainer(
         note: "receiver methods modeled as free functions across split-ownership files",
       };
     }
-    if (GO_ONLY_RECEIVER_HINTS.has(go.name) || (go.kind === "receiver" && go.members.every((m) => isGoOnlyMember(m.name)))) {
-      return { status: "go-only-container", locals: [], note: "Go runtime/stdlib facade (no hand-port compiler counterpart)" };
+    // go-only-container ONLY for a TRUE runtime facade: a struct/receiver that
+    // embeds a Go stdlib io/fs/net/os/sync facade type as its public surface, or
+    // a copylock sync primitive (`noCopy`: a struct whose entire method set is
+    // Lock/Unlock no-ops). We deliberately do NOT classify a container go-only
+    // merely because all its members share Go-runtime-interface names (e.g. a
+    // receiver whose only method is the `String()` stringer): such a container is
+    // a real compiler type modeled differently in TSTS, and hiding it as go-only
+    // would mask a real rename/representation gap. Those containers fall through
+    // to missing/renamed; only the stringer/marshal MEMBER stays go-only.
+    const isCopyLockPrimitive =
+      go.kind === "struct" && go.members.length === 0 && go.name === "noCopy";
+    const isSyncPrimitive =
+      go.kind === "receiver" &&
+      go.members.length > 0 &&
+      go.members.every((m) => {
+        const n = normalizeName(m.name);
+        return n === "lock" || n === "unlock" || n === "rlock" || n === "runlock";
+      });
+    if (go.facade || isCopyLockPrimitive || isSyncPrimitive) {
+      return { status: "go-only-container", locals: [], note: "Go runtime/stdlib facade (no hand-port compiler counterpart by design)" };
     }
     return { status: "missing-container", locals: [], note: "" };
   })();
@@ -852,11 +971,19 @@ function classifyContainer(
     if (splitCandidate !== undefined) {
       return { upstream: member.name, kind: member.kind, status: "split-member", localCandidate: splitCandidate, note: "ported as free function in split-ownership file" };
     }
-    // 3) Go-only scaffolding member.
-    if (isGoOnlyMember(member.name)) {
-      return { upstream: member.name, kind: member.kind, status: "go-only-member", localCandidate: null, note: "Go runtime/stdlib scaffolding member" };
+    // 3a) Go-runtime interface member (fmt.Stringer / json.Marshaler / error /
+    // package init / copylock no-ops). These have no hand-port counterpart by
+    // design REGARDLESS of container — a faithful TS port never reproduces them.
+    if (isGoRuntimeInterfaceMember(member.name)) {
+      return { upstream: member.name, kind: member.kind, status: "go-only-member", localCandidate: null, note: "Go-runtime interface method (no TS counterpart by design)" };
     }
-    // 4) genuinely missing.
+    // 3b) io/fs/net/os stdlib-interface member (Read/Write/Close/Stat/Name/...),
+    // go-only ONLY on a true facade container. On a real compiler container a
+    // same-named member is genuine surface and stays a visible gap (missing).
+    if (go.facade && isFacadeInterfaceMember(member.name)) {
+      return { upstream: member.name, kind: member.kind, status: "go-only-member", localCandidate: null, note: "facade interface method (Go runtime facade)" };
+    }
+    // 4) genuinely missing — kept visible (not suppressed as go-only).
     return { upstream: member.name, kind: member.kind, status: "missing-member", localCandidate: null, note: "" };
   });
 
