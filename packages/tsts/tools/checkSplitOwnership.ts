@@ -1,7 +1,7 @@
 /**
  * Split-ownership map validator (Wave 0, 0C).
  *
- * Validates `.analysis/tsts-tsc/parity-maps/split-ownership.json`:
+ * Validates `packages/tsts/tools/tsgo-parity-maps/split-ownership.json`:
  *
  *   1. The JSON parses and has the expected top-level shape.
  *   2. Every upstream `.go` key resolves to a real file under TS-Go `internal/`.
@@ -23,6 +23,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SPLIT_OWNERSHIP_PATH } from "./tsgoParityShared.js";
 
 interface SplitOwnership {
   readonly tsgoRoot?: string;
@@ -69,7 +70,7 @@ interface Report {
 const TOOL_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
-const MAP_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "split-ownership.json");
+const MAP_PATH = SPLIT_OWNERSHIP_PATH;
 const DEFAULT_TSGO_ROOT = "/home/jeswin/temp/typescript-go/internal";
 const DEFAULT_TSTS_ROOT = "packages/tsts/src";
 

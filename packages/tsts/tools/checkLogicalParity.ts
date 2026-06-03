@@ -39,6 +39,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { RENAMES_PATH } from "./tsgoParityShared.js";
 
 type Scope = "required" | "deferred";
 type Status = "pass" | "fail" | "deferred" | "missing-upstream";
@@ -144,7 +145,6 @@ const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const DEFAULT_DECLARATION_THRESHOLD = 0.9;
 const DEFAULT_SHAPE_THRESHOLD = 0.65;
-const RENAMES_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "renames.json");
 
 interface RenamesFile {
   readonly casingConvention?: { readonly enabled?: boolean };

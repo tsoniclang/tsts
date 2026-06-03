@@ -29,6 +29,7 @@ export const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 export const PARITY_MAPS_DIR = join(PROJECT_ROOT, "tools", "tsgo-parity-maps");
 export const RENAMES_PATH = join(PARITY_MAPS_DIR, "renames.json");
 export const SPLIT_OWNERSHIP_PATH = join(PARITY_MAPS_DIR, "split-ownership.json");
+export const FUNCTION_INVENTORY_MAP_PATH = join(PARITY_MAPS_DIR, "function-inventory-map.json");
 
 export type Scope = "required" | "deferred";
 

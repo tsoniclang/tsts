@@ -20,6 +20,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { FUNCTION_INVENTORY_MAP_PATH, RENAMES_PATH } from "./tsgoParityShared.js";
 
 type Scope = "required" | "deferred";
 type Status = "matched" | "missing" | "split" | "renamed" | "generated" | "deferred";
@@ -91,7 +92,7 @@ interface FunctionInventoryReport {
 }
 
 /**
- * Optional manual mapping file shape (under .analysis/tsts-tsc/parity-maps/).
+ * Optional manual mapping file shape (under packages/tsts/tools/tsgo-parity-maps/).
  * Keys are upstream symbols as `module:Symbol` or fully qualified
  * `upstreamFile#Symbol`; values describe the intended local mapping. This lets
  * maintainers record renamed/split/deferred/generated facts that the mechanical
@@ -111,8 +112,7 @@ const TOOL_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
-const MAPPING_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "function-inventory-map.json");
-const RENAMES_PATH = join(PROJECT_ROOT, "tools", "tsgo-parity-maps", "renames.json");
+const MAPPING_PATH = FUNCTION_INVENTORY_MAP_PATH;
 
 // Keep the module list aligned with checkLogicalParity.ts so the two Wave-0
 // tools report on the same surface. Drift between the two lists would make the

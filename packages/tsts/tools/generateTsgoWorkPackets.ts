@@ -13,7 +13,7 @@
  *   0E corpus impact    .temp/tsgo-corpus-impact.json
  *   0G container/member .temp/tsgo-container-member-inventory.json
  *   raw corpus report   .temp/tsgo-report/divergence.json
- *   0C split ownership  .analysis/tsts-tsc/parity-maps/split-ownership.json
+ *   0C split ownership  packages/tsts/tools/tsgo-parity-maps/split-ownership.json
  *
  * Outputs:
  *   .analysis/tsts-tsc/work-packets/<id>/packet.json
@@ -33,6 +33,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SPLIT_OWNERSHIP_PATH as SHARED_SPLIT_OWNERSHIP_PATH } from "./tsgoParityShared.js";
 
 // ---------------------------------------------------------------------------
 // Paths / constants
@@ -43,7 +44,6 @@ const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const TEMP_DIR = join(REPO_ROOT, ".temp");
 const ANALYSIS_DIR = join(REPO_ROOT, ".analysis", "tsts-tsc");
-const PARITY_MAPS_DIR = join(ANALYSIS_DIR, "parity-maps");
 const WORK_PACKETS_DIR = join(ANALYSIS_DIR, "work-packets");
 
 const LOGICAL_PARITY_PATH = join(TEMP_DIR, "logical-parity.json");
@@ -52,7 +52,7 @@ const CONTROL_SKELETON_PATH = join(TEMP_DIR, "tsgo-control-skeleton.json");
 const CORPUS_IMPACT_PATH = join(TEMP_DIR, "tsgo-corpus-impact.json");
 const CONTAINER_MEMBER_PATH = join(TEMP_DIR, "tsgo-container-member-inventory.json");
 const DIVERGENCE_PATH = join(TEMP_DIR, "tsgo-report", "divergence.json");
-const SPLIT_OWNERSHIP_PATH = join(PARITY_MAPS_DIR, "split-ownership.json");
+const SPLIT_OWNERSHIP_PATH = SHARED_SPLIT_OWNERSHIP_PATH;
 
 // Maximum number of items embedded per list inside a packet, to keep packets
 // readable without losing the slice signal.

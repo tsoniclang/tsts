@@ -44,7 +44,7 @@
  * Inputs (all optional except the TS-Go repo and TSTS src):
  *   TSGO_REPO env var                                  (default /home/jeswin/temp/typescript-go)
  *   .temp/tsgo-function-inventory.json                 (0B output, if present)
- *   .analysis/tsts-tsc/parity-maps/split-ownership.json (0C output, if present)
+ *   packages/tsts/tools/tsgo-parity-maps/split-ownership.json (0C output, if present)
  *
  * Outputs:
  *   .temp/tsgo-control-skeleton.json
@@ -54,6 +54,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SPLIT_OWNERSHIP_PATH } from "./tsgoParityShared.js";
 
 type Scope = "required" | "deferred";
 
@@ -134,7 +135,6 @@ const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const INVENTORY_PATH = join(REPO_ROOT, ".temp", "tsgo-function-inventory.json");
-const SPLIT_OWNERSHIP_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "split-ownership.json");
 
 // A function is "minor-shape-drift" when its drift score is small (one or two
 // metrics off by a little). It becomes "major-shape-drift" once the structure
