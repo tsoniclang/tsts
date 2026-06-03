@@ -2,10 +2,39 @@
  * JSON utilities.
  *
  * Port of TS-Go `internal/json/json.go` (100 LoC).
- * TS-Go's wrappers around go-json support invalid UTF-8 and indent
- * control; the TS counterpart uses native JSON.stringify / JSON.parse
- * and exposes the same Marshal/MarshalIndent/Unmarshal names so
- * ported callers translate mechanically.
+ *
+ * `internal/json/json.go` is a thin facade over the external Go module
+ * `github.com/go-json-experiment/json` and its `jsontext` companion. Its
+ * genuine compiler-logic surface is the trio `Marshal` / `MarshalIndent`
+ * / `Unmarshal`, which we port mechanically here (1:1 control flow):
+ *
+ *   - `marshal`        <- `Marshal`
+ *   - `marshalIndent`  <- `MarshalIndent` (`prefix==""&&indent==""` falls
+ *                          back to compact `marshal`, matching upstream)
+ *   - `unmarshal`      <- `Unmarshal`
+ *
+ * TS replaces the go-json runtime with native JSON.parse and a typed,
+ * closed-`JsonValue` stringifier (Tsonic's closed-type-stringify policy
+ * forbids reflective JSON.stringify of `any`).
+ *
+ * The remaining TS-Go declarations are go-json/jsontext library surface,
+ * NOT TS-Go compiler logic, and have no TypeScript-compiler counterpart.
+ * They are deliberately Go-only / deferred:
+ *
+ *   - streaming codec types & ctor: `Encoder`, `Decoder`, `NewDecoder`,
+ *     `MarshalEncode`, `UnmarshalDecode`
+ *   - io.Writer / io.Reader wrappers: `MarshalWrite`, `MarshalIndentWrite`,
+ *     `UnmarshalRead`
+ *   - opaque go-json option tokens: `allowInvalid`, `AllowDuplicateNames`,
+ *     `Deterministic`, `WithIndent`
+ *   - jsontext token constants: `BeginObject`, `EndObject`, `BeginArray`,
+ *     `EndArray`, `Null`
+ *   - library type aliases / interfaces: `Value`, `Kind`, `MarshalerTo`,
+ *     `UnmarshalerFrom`
+ *
+ * Every TSTS consumer (packagejson, collections/orderedMap, sourcemap,
+ * tracing) decodes eagerly from JSON.parse output, so the streaming
+ * decoder/encoder is unreachable and is intentionally not reconstructed.
  *
  * JSON values are dynamic at the package boundary, matching TS-Go's
  * `any`-shaped Marshal/Unmarshal contract. The public carrier excludes
