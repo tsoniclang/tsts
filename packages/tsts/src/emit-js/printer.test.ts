@@ -146,6 +146,27 @@ test("prints empty statements verbatim", () => {
   );
 });
 
+test("prints export-equals as a CommonJS module.exports assignment", () => {
+  // `export = <expr>` is only valid under a CommonJS module target (it is a hard
+  // error under ES module targets, so it never reaches JS emit there). TS-Go
+  // lowers every emitting case to `module.exports = <expr>;`.
+  assert.strictEqual(
+    printSourceFile(parseSourceFile("export = { a: 1, b: \"hello\" };")),
+    "module.exports = { a: 1, b: \"hello\" };",
+  );
+  assert.strictEqual(
+    printSourceFile(parseSourceFile("const value = 123; export = value;")),
+    ["const value = 123;", "module.exports = value;"].join("\n"),
+  );
+});
+
+test("prints export default expressions preserving ES-module syntax", () => {
+  assert.strictEqual(
+    printSourceFile(parseSourceFile("const foo = { a: 1 }; export default foo;")),
+    ["const foo = { a: 1 };", "export default foo;"].join("\n"),
+  );
+});
+
 test("prints private fields templates try catch switch and throw statements", () => {
   assert.strictEqual(
     printSourceFile(parseSourceFile("class Box { #value = `hi ${name}`; get value() { return this.#value!; } } try { throw new Error(/x/.source); } catch (error) { switch (error) { default: break; } }")),

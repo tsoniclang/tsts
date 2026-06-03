@@ -1,7 +1,7 @@
 import type { BaselineOptions, BaselineResult } from "../baseline/baseline.js";
 import { compareToBaseline, diffText } from "../baseline/baseline.js";
 import type { NamedSource } from "../harnessutil/harnessutil.js";
-import { changeTsExtension, fileHeader, harnessNewLine, noContent, removeTestPathPrefixes } from "./util.js";
+import { changeTsExtension, harnessNewLine, noContent, removeTestPathPrefixes } from "./util.js";
 import { getErrorBaseline, type BaselineDiagnostic } from "./errorBaseline.js";
 
 export interface EmitBaselineFile {
@@ -55,23 +55,52 @@ export function doJSEmitBaseline(input: JSEmitBaselineInput): BaselineResult {
 }
 
 export function buildJSEmitBaseline(input: JSEmitBaselineInput, diagnostics: readonly BaselineDiagnostic[] = input.result.diagnostics ?? []): string {
+  // Faithful port of TS-Go `DoJSEmitBaseline` (internal/testutil/tsbaseline/
+  // js_emit_baseline.go). The `.js` output baseline has two regions:
+  //
+  //   1. The TypeScript source region (`tsCode`). It opens with the portable
+  //      corpus path header `//// [<header>] ////`, a blank line, then one
+  //      per-file section. Each per-file section is `//// [<basename>]` (the
+  //      base file name only — NO virtual `/.src/` mount prefix and NO trailing
+  //      ` ////`) followed by the verbatim source. Source sections are joined by
+  //      a single newline (not a blank line).
+  //   2. The emitted region (`jsCode`): the `.js` files then the `.d.ts` files,
+  //      each via `fileOutput`. JS files are separated by exactly one newline
+  //      (mirroring TS-Go's "append `\r\n` only when the buffer does not already
+  //      end in a newline"); the `.d.ts` block is preceded by a blank line.
+  //
+  // `tsCode` and `jsCode` are joined by a blank line. This structure is the
+  // source of truth; it is never reformatted by diff normalization.
   const tsSources = [...(input.otherFiles ?? []), ...input.toBeCompiled];
-  const sections: string[] = [];
-  sections.push(`//// [${input.header}] ////`);
-  sections.push(tsSources.map(file => `${fileHeader(file.name)}${harnessNewLine}${file.content}`).join(`${harnessNewLine}${harnessNewLine}`));
-  const emitted: string[] = [];
-  for (const file of input.result.js) emitted.push(fileOutput(file, input.harnessSettings));
-  for (const file of input.result.dts ?? []) emitted.push(fileOutput(file, input.harnessSettings));
+  const tsCode = `//// [${input.header}] ////${harnessNewLine}${harnessNewLine}`
+    + tsSources
+      .map(file => `//// [${baseFileName(file.name)}]${harnessNewLine}${file.content}`)
+      .join(harnessNewLine);
+
+  let jsCode = "";
+  for (const file of input.result.js) {
+    if (jsCode.length > 0 && !jsCode.endsWith("\n")) jsCode += harnessNewLine;
+    jsCode += fileOutput(file, input.harnessSettings);
+  }
+  const dts = input.result.dts ?? [];
+  if (dts.length > 0) {
+    jsCode += `${harnessNewLine}${harnessNewLine}`;
+    for (const file of dts) jsCode += fileOutput(file, input.harnessSettings);
+  }
   if (diagnostics.length > 0) {
-    emitted.push("//// [Diagnostics]");
-    emitted.push(getErrorBaseline([...(input.tsConfigFiles ?? []), ...tsSources], diagnostics, false));
+    if (jsCode.length > 0 && !jsCode.endsWith("\n")) jsCode += harnessNewLine;
+    jsCode += `//// [Diagnostics]${harnessNewLine}`;
+    jsCode += getErrorBaseline([...(input.tsConfigFiles ?? []), ...tsSources], diagnostics, false);
   }
   if (input.result.noCheck !== undefined && !optionIsTrue(input.compilerOptions?.noCheck) && !optionIsTrue(input.compilerOptions?.noEmit)) {
     const noCheckComparison = compareNoCheckEmit(input.result, input.result.noCheck, input.harnessSettings);
-    if (noCheckComparison.length > 0) emitted.push(noCheckComparison);
+    if (noCheckComparison.length > 0) {
+      if (jsCode.length > 0 && !jsCode.endsWith("\n")) jsCode += harnessNewLine;
+      jsCode += noCheckComparison;
+    }
   }
-  if (emitted.length > 0) sections.push(emitted.join(`${harnessNewLine}${harnessNewLine}`));
-  return sections.filter(section => section.length > 0).join(`${harnessNewLine}${harnessNewLine}`);
+
+  return jsCode.length > 0 ? `${tsCode}${harnessNewLine}${harnessNewLine}${jsCode}` : tsCode;
 }
 
 export function fileOutput(file: EmitBaselineFile, settings: HarnessOptions = {}): string {

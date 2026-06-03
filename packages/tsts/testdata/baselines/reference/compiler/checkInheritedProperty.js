@@ -1,6 +1,6 @@
 //// [checkInheritedProperty.ts] ////
 
-//// [/.src/checkInheritedProperty.ts] ////
+//// [checkInheritedProperty.ts]
 class Base {
 }
 
@@ -13,7 +13,6 @@ class Derived extends BaseFactory {
 
 
 //// [Diagnostics]
-
 error TS0: Cannot find name 'BaseFactory'.
 
 ==== /.src/checkInheritedProperty.ts (1 errors) ====

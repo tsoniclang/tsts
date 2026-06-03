@@ -1,6 +1,6 @@
 //// [exportDestructuring.ts] ////
 
-//// [/.src/exportDestructuring.ts] ////
+//// [exportDestructuring.ts]
 const arr = [1, 2];
 export const [a, b] = arr;
 

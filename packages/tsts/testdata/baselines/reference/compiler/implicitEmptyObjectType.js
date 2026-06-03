@@ -1,6 +1,6 @@
 //// [implicitEmptyObjectType.ts] ////
 
-//// [/.src/implicitEmptyObjectType.ts] ////
+//// [implicitEmptyObjectType.ts]
 // https://github.com/microsoft/typescript-go/issues/1563
 
 function f() {
@@ -11,7 +11,6 @@ function f() {
 
 
 //// [Diagnostics]
-
 error TS0: Cannot find name 'Record'.
 
 ==== /.src/implicitEmptyObjectType.ts (1 errors) ====

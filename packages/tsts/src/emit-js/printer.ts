@@ -21,6 +21,7 @@ import {
   isEmptyStatement,
   isEnumDeclaration,
   isExpressionStatement,
+  isExportAssignment,
   isExportDeclaration,
   isFunctionExpression,
   isForInStatement,
@@ -78,6 +79,7 @@ import {
   type ConstructorDeclaration,
   type EnumDeclaration,
   type Expression,
+  type ExportAssignment,
   type ExportDeclaration,
   type ForInitializer,
   type FunctionDeclaration,
@@ -207,6 +209,9 @@ function printStatement(statement: Statement, context: PrintContext, depth: numb
   if (isExportDeclaration(statement)) {
     return printExportDeclaration(statement);
   }
+  if (isExportAssignment(statement)) {
+    return printExportAssignment(statement);
+  }
   if (isFunctionDeclaration(statement)) {
     return printFunctionDeclaration(statement, context, depth);
   }
@@ -318,6 +323,33 @@ function printExportDeclaration(exportDeclaration: ExportDeclaration): string {
   const exportClause = exportDeclaration.exportClause === undefined ? "*" : printNamedExportBindings(exportDeclaration.exportClause);
   const moduleSpecifier = exportDeclaration.moduleSpecifier === undefined ? "" : ` from ${printExpression(exportDeclaration.moduleSpecifier)}`;
   return `export ${exportClause}${moduleSpecifier};`;
+}
+
+/**
+ * Print an `ExportAssignment` node (SyntaxKind 278).
+ *
+ * The kind covers two distinct source forms, discriminated by `isExportEquals`:
+ *
+ *   - `export = <expr>` (`isExportEquals === true`). This is a TypeScript
+ *     export-equals assignment. TypeScript only permits it when targeting a
+ *     CommonJS-style module (`export =` is a hard error under ES module targets,
+ *     so it never reaches JS emit there); the canonical lowering for every
+ *     emitting case is `module.exports = <expr>;`, matching TS-Go's CommonJS
+ *     transform (see e.g. `exportAssignmentMerging1` → `a.js`:
+ *     `module.exports = { a: 1, b: "hello" };`).
+ *
+ *   - `export default <expr>` (`isExportEquals === false`). This printer
+ *     preserves ES-module syntax (it keeps `export const` / `import ... from`
+ *     verbatim), so the consistent emit is the verbatim `export default <expr>;`.
+ *
+ * The type annotation (`export = expr` carries no value-level type) is erased.
+ */
+function printExportAssignment(exportAssignment: ExportAssignment): string {
+  const expression = printExpression(exportAssignment.expression);
+  if (exportAssignment.isExportEquals) {
+    return `module.exports = ${expression};`;
+  }
+  return `export default ${expression};`;
 }
 
 function printNamedExportBindings(namedBindings: NamedExportBindings): string {
