@@ -10,16 +10,6 @@ function f() {
 }
 
 
-//// [implicitEmptyObjectType.js]
-// https://github.com/microsoft/typescript-go/issues/1563
-
-function f() {
-  const v: unknown = "lol";
-  const acceptsRecord = (record: Record<string, string>) => {};
-  acceptsRecord(v || {});
-}
-
-
 //// [Diagnostics]
 
 error TS0: Cannot find name 'Record'.

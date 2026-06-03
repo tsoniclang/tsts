@@ -31,8 +31,10 @@ import {
 import { newCheckerPool, type CheckerPool } from "./checkerPool.js";
 import { getDeclarationDiagnostics as getDeclarationDiagnosticsForEmit } from "./emitter.js";
 import { newProgramEmitHost } from "./emitHost.js";
+import { emitProgramJs } from "./jsEmit.js";
 import { ParsedCommandLine } from "../tsoptions/parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
+import { Tristate } from "../core/tristate.js";
 import { getDirectoryPath, toPath as toCanonicalPath } from "../tspath/index.js";
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
 import {
@@ -961,21 +963,23 @@ export class Program {
     return this.libFiles.get(this.toPath(path));
   }
 
+  /**
+   * Produce real JavaScript output. This is the single product JS emit path:
+   * it delegates to the shared {@link emitProgramJs} helper, which composes the
+   * canonical source-file selection + output pathing with the working `emit-js`
+   * printer and writes through the program emit host. `noEmit` is enforced by
+   * the caller (`getSourceFilesToEmit` returns nothing meaningful otherwise);
+   * `noEmitOnError`, per-file `isEmitBlocked`, and source-file selection are
+   * honored inside the helper.
+   *
+   * HONEST SCOPE: only `.js` is emitted. Declaration (`.d.ts`) and source-map
+   * (`.js.map`) emit are deferred and are NOT produced here.
+   */
   emit(ctx: Context, options: EmitOptions = {}): EmitResult {
-    const noEmit = handleNoEmitOnError(ctx, this, options.targetSourceFile);
-    if (noEmit !== undefined) return noEmit;
-    const files = this.getSourceFilesToEmit(options.targetSourceFile, options.emitOnly === "forcedDts");
-    const emittedFiles: string[] = [];
-    const diagnostics: Diagnostic[] = [];
-    for (const file of files) {
-      if (this.isEmitBlocked(file.fileName)) continue;
-      for (const output of this.emitFileNames(file)) {
-        if (output === "") continue;
-        options.writeFile?.(output, file.text, { diagnostics: [] });
-        emittedFiles.push(output);
-      }
+    if (emitFlagIsOn(this.options(), "noEmit")) {
+      return { emitSkipped: true, diagnostics: [], emittedFiles: [], sourceMaps: [] };
     }
-    return { emitSkipped: false, diagnostics, emittedFiles, sourceMaps: [] };
+    return emitProgramJs(this, ctx, options);
   }
 
   lineCount(): number {
@@ -1353,7 +1357,7 @@ export function handleNoEmitOnError(
   program: Program,
   file: SourceFile | undefined,
 ): EmitResult | undefined {
-  if (!booleanCompilerOption(program.options(), "noEmitOnError")) return undefined;
+  if (!emitFlagIsOn(program.options(), "noEmitOnError")) return undefined;
   const diagnostics = getDiagnosticsOfAnyProgram(ctx, program, file, true);
   return diagnostics.length === 0
     ? undefined
@@ -1558,6 +1562,17 @@ function isJsonSourceFile(file: SourceFile): boolean {
 
 function booleanCompilerOption(options: CompilerOptions, name: string): boolean {
   return (options as Record<string, unknown>)[name] === true;
+}
+
+/**
+ * Read an emit-gating flag that is canonically stored as a `Tristate`
+ * (`CompilerOptions.noEmit` / `noEmitOnError` are typed `Tristate`). A raw
+ * boolean `true` is also honored so hosts that populate the slim record with a
+ * plain boolean still gate correctly. `Tristate.True` is the canonical "on".
+ */
+function emitFlagIsOn(options: CompilerOptions, name: string): boolean {
+  const value = (options as Record<string, unknown>)[name];
+  return value === true || value === Tristate.True;
 }
 
 function booleanOption(options: CompilerOptions, name: string): boolean | undefined {

@@ -22,6 +22,7 @@ export const moduleKindMap: ReadonlyMap<string, number> = new Map([
   ["esnext", 99],
   ["node16", 100],
   ["node18", 101],
+  ["node20", 102],
   ["nodenext", 199],
   ["preserve", 200],
 ]);

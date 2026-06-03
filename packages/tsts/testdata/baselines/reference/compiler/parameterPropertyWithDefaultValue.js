@@ -7,10 +7,7 @@ export class SomeClass {
 
 //// [parameterPropertyWithDefaultValue.js]
 export class SomeClass {
-  constructor(readonly timestamp = new Date()) {}
-}
-
-//// [parameterPropertyWithDefaultValue.d.ts]
-export class SomeClass {
-  constructor(readonly timestamp = new Date()) {}
+  constructor(timestamp = new Date()) {
+    this.timestamp = timestamp;
+  }
 }

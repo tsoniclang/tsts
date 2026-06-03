@@ -136,6 +136,16 @@ test("prints destructuring binding patterns with type erasure", () => {
   );
 });
 
+test("prints empty statements verbatim", () => {
+  assert.strictEqual(printSourceFile(parseSourceFile(";")), ";");
+  // A leading empty statement before an IIFE (ASI defense) must not be dropped
+  // or crash the printer; tsc preserves it.
+  assert.strictEqual(
+    printSourceFile(parseSourceFile(";(() => value)();")),
+    [";", "(() => value)();"].join("\n"),
+  );
+});
+
 test("prints private fields templates try catch switch and throw statements", () => {
   assert.strictEqual(
     printSourceFile(parseSourceFile("class Box { #value = `hi ${name}`; get value() { return this.#value!; } } try { throw new Error(/x/.source); } catch (error) { switch (error) { default: break; } }")),

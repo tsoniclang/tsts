@@ -5,8 +5,9 @@ export {};
 const x: string = undefined;
 
 //// [singleSettingsSimpleTest.js]
-export {};
-const x: string = undefined;
+export {  };
+const x = undefined;
+
 
 //// [Diagnostics]
 

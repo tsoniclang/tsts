@@ -18,6 +18,7 @@ import {
   isDeleteExpression,
   isDoStatement,
   isElementAccessExpression,
+  isEmptyStatement,
   isEnumDeclaration,
   isExpressionStatement,
   isExportDeclaration,
@@ -68,6 +69,7 @@ import {
   isVoidExpression,
   isWhileStatement,
   isArrayBindingPattern,
+  hasSyntacticModifier,
   type BindingElement,
   type BinaryOperatorToken,
   type ArrowFunction,
@@ -100,6 +102,7 @@ import {
   type VariableDeclarationList,
   type WhileStatement,
 } from "../ast/index.js";
+import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 
 function kindDebugName(kind: Kind): string {
   return String(kind);
@@ -189,6 +192,11 @@ export function printNode(node: Node): string {
 function printStatement(statement: Statement, context: PrintContext, depth: number): string | undefined {
   if (isExpressionStatement(statement)) {
     return `${printExpression(statement.expression)};`;
+  }
+  if (isEmptyStatement(statement)) {
+    // A standalone empty statement (a bare `;`) is preserved verbatim, matching
+    // tsc, which keeps it (e.g. as ASI defense before an IIFE).
+    return ";";
   }
   if (isVariableStatement(statement)) {
     return printVariableStatement(statement.modifiers, statement.declarationList);
@@ -449,8 +457,86 @@ function printClassElement(member: ClassElement, context: PrintContext, depth: n
 
 function printConstructorDeclaration(constructorDeclaration: ConstructorDeclaration, context: PrintContext, depth: number): string {
   const parameters = constructorDeclaration.parameters.map(printParameterDeclaration).join(", ");
-  const body = constructorDeclaration.body === undefined ? "{}" : printBlock(constructorDeclaration.body.statements, context, depth);
+  const body = printConstructorBody(constructorDeclaration, context, depth);
   return `constructor(${parameters}) ${body}`;
+}
+
+/**
+ * Print the constructor body, lowering parameter properties.
+ *
+ * A constructor parameter carrying an access modifier (`public` / `private` /
+ * `protected` / `readonly` / `override`, i.e. `ModifierFlags.ParameterPropertyModifier`)
+ * declares an instance field initialized from the parameter. TypeScript erases
+ * the modifier from the parameter list (handled by {@link printParameterDeclaration},
+ * which never prints those modifiers) and injects `this.<name> = <name>;`
+ * assignments into the constructor body, in declaration order. This mirrors the
+ * standard TS parameter-property lowering.
+ *
+ * The assignments are inserted immediately after a leading `super(...)` call (a
+ * derived class cannot reference `this` before `super()`); otherwise they go at
+ * the very start of the body.
+ *
+ * A constructor with no body is an overload signature; it carries no statements
+ * and gets no injected assignments.
+ */
+function printConstructorBody(constructorDeclaration: ConstructorDeclaration, context: PrintContext, depth: number): string {
+  // An overload signature has no body and emits no statements.
+  if (constructorDeclaration.body === undefined) {
+    return "{}";
+  }
+
+  const assignments = constructorDeclaration.parameters.flatMap(parameter => {
+    if (!hasSyntacticModifier(parameter, ModifierFlags.ParameterPropertyModifier)) {
+      return [];
+    }
+    // A parameter property name is always a plain identifier; binding patterns
+    // cannot carry access modifiers.
+    if (!isIdentifier(parameter.name)) {
+      return [];
+    }
+    const name = parameter.name.text;
+    return [`this.${name} = ${name};`];
+  });
+
+  if (assignments.length === 0) {
+    return printBlock(constructorDeclaration.body.statements, context, depth);
+  }
+
+  const statementLines = constructorDeclaration.body.statements.flatMap(statement => {
+    const printed = printStatement(statement, context, depth + 1);
+    return printed === undefined ? [] : [printed];
+  });
+
+  // Parameter-property assignments must follow a leading `super(...)` call.
+  const insertAt = startsWithSuperCall(constructorDeclaration.body.statements) ? 1 : 0;
+  const lines = [
+    ...statementLines.slice(0, insertAt),
+    ...assignments,
+    ...statementLines.slice(insertAt),
+  ];
+  return printSyntheticBlock(lines, context, depth);
+}
+
+/** Whether the first statement is a `super(...)` call expression statement. */
+function startsWithSuperCall(statements: NodeArray<Statement>): boolean {
+  const first = statements[0];
+  return first !== undefined
+    && isExpressionStatement(first)
+    && isCallExpression(first.expression)
+    && first.expression.expression.kind === Kind.SuperKeyword;
+}
+
+/**
+ * Render a block from already-printed statement lines, indented at `depth + 1`.
+ */
+function printSyntheticBlock(lines: readonly string[], context: PrintContext, depth: number): string {
+  const childIndent = context.indentText.repeat(depth + 1);
+  const currentIndent = context.indentText.repeat(depth);
+  if (lines.length === 0) {
+    return "{}";
+  }
+  const body = lines.map(line => `${childIndent}${line}`).join(context.newline);
+  return `{${context.newline}${body}${context.newline}${currentIndent}}`;
 }
 
 function printMethodDeclaration(methodDeclaration: MethodDeclaration, context: PrintContext, depth: number): string {

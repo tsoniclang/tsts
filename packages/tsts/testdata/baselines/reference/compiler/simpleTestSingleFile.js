@@ -4,7 +4,8 @@
 const x: number = "";
 
 //// [simpleTestSingleFile.js]
-const x: number = "";
+const x = "";
+
 
 //// [Diagnostics]
 

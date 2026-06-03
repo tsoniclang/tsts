@@ -13,8 +13,8 @@ export function foo() {
 //// [blockedScopeVariableNotUnused1.js]
 export function foo() {
   const _fn = () => {
-    ;(() => numFilesSelected)()
-  }
-
-  const numFilesSelected = 1
+  ;
+  (() => numFilesSelected)();
+};
+  const numFilesSelected = 1;
 }
