@@ -10,6 +10,12 @@
 
 import { MemoryFS } from "../memory.js";
 import type { DirEntry, Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
+import {
+  getCanonicalFileName,
+  isRootedDiskPath,
+  normalizePath,
+  removeTrailingDirectorySeparator,
+} from "../../tspath/path.js";
 
 export interface MapFile {
   readonly data: string;
@@ -320,57 +326,69 @@ export function validateMapPaths(paths: readonly string[]): void {
   if (posix && windows) throw new Error("vfstest: mixed posix and windows paths");
 }
 
+// Mirrors TS-Go `(m *MapFS) getCanonicalPath`: delegates to
+// tspath.GetCanonicalFileName.
 export function canonicalPath(path: string, useCaseSensitiveFileNames: boolean): string {
-  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
-  return useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
+  return getCanonicalFileName(path, useCaseSensitiveFileNames);
 }
 
-export function dirName(path: string): string {
-  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
-  const index = normalized.lastIndexOf("/");
-  if (index <= 0) return "";
-  return normalized.slice(0, index);
+// Mirrors TS-Go `dirName`: `strings.TrimSuffix(path.Split(p).dir, "/")`.
+// Go's path.Split returns everything up to and including the final slash as
+// dir; we trim the trailing slash.
+export function dirName(p: string): string {
+  const [dir] = pathSplit(p);
+  return trimSuffix(dir, "/");
 }
 
-export function baseName(path: string): string {
-  const normalized = removeTrailingDirectorySeparator(normalizePath(path));
-  const index = normalized.lastIndexOf("/");
-  return index === -1 ? normalized : normalized.slice(index + 1);
+// Mirrors TS-Go `baseName`: `path.Split(p).file`.
+export function baseName(p: string): string {
+  const [, file] = pathSplit(p);
+  return file;
 }
 
-function normalizePath(path: string): string {
-  const parts: string[] = [];
-  const root = path.match(/^[A-Za-z]:[\\/]/)?.[0] ?? (path.startsWith("/") ? "/" : "");
-  for (const part of path.replace(/\\/g, "/").slice(root.length).split("/")) {
-    if (part === "" || part === ".") continue;
-    if (part === "..") parts.pop();
-    else parts.push(part);
-  }
-  return root + parts.join("/");
+// Mirrors Go stdlib `path.Split`: splits path immediately after the final
+// slash, separating it into a directory (with trailing slash) and file name.
+function pathSplit(p: string): readonly [dir: string, file: string] {
+  const i = p.lastIndexOf("/");
+  return [p.slice(0, i + 1), p.slice(i + 1)];
 }
 
-function removeTrailingDirectorySeparator(path: string): string {
-  if (path === "/" || /^[A-Za-z]:\/$/.test(path)) return path;
-  return path.endsWith("/") ? path.slice(0, -1) : path;
+// strings.TrimSuffix.
+function trimSuffix(s: string, suffix: string): string {
+  return s.endsWith(suffix) ? s.slice(0, s.length - suffix.length) : s;
 }
 
-function isRootedDiskPath(p: string): boolean {
-  if (p.startsWith("/")) return true;
-  // Windows-style: drive letter + ":/"
-  return p.length >= 3 && p[1] === ":" && (p[2] === "/" || p[2] === "\\");
-}
-
+// Mirrors TS-Go `comparePathsByParts`: compares paths segment-by-segment
+// (`strings.Cut` on "/", `strings.Compare` on each segment).
 function comparePathsByParts(a: string, b: string): number {
-  while (true) {
-    const aIdx = a.indexOf("/");
-    const bIdx = b.indexOf("/");
-    if (aIdx === -1 || bIdx === -1) {
-      return a < b ? -1 : a > b ? 1 : 0;
+  for (;;) {
+    const [aStart, aEnd, aOk] = stringsCut(a, "/");
+    const [bStart, bEnd, bOk] = stringsCut(b, "/");
+
+    if (!aOk || !bOk) {
+      return stringsCompare(a, b);
     }
-    const aStart = a.slice(0, aIdx);
-    const bStart = b.slice(0, bIdx);
-    if (aStart !== bStart) return aStart < bStart ? -1 : 1;
-    a = a.slice(aIdx + 1);
-    b = b.slice(bIdx + 1);
+
+    const r = stringsCompare(aStart, bStart);
+    if (r !== 0) {
+      return r;
+    }
+
+    a = aEnd;
+    b = bEnd;
   }
+}
+
+// strings.Cut: splits s around the first occurrence of sep.
+function stringsCut(s: string, sep: string): readonly [before: string, after: string, found: boolean] {
+  const i = s.indexOf(sep);
+  if (i < 0) {
+    return [s, "", false];
+  }
+  return [s.slice(0, i), s.slice(i + sep.length), true];
+}
+
+// strings.Compare.
+function stringsCompare(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
 }
