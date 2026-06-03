@@ -18,7 +18,7 @@ import type { ParseConfigHost } from "./tsconfigParsing.js";
 import type { Diagnostic } from "../ast/index.js";
 import { OrderedMap } from "../collections/orderedMap.js";
 import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
-import { createCompilerDiagnostic } from "./errors.js";
+import { createCompilerDiagnostic, createDiagnosticForNodeInSourceFileOrCompilerDiagnostic } from "./errors.js";
 import { optionDeclarations } from "./declsCompiler.js";
 import { buildOpts } from "./declsBuild.js";
 import { watchOptions } from "./declsWatch.js";
@@ -158,6 +158,33 @@ function parseResponseFile(state: CommandLineParserState, fileName: string): voi
     return;
   }
   parseStrings(state, scanResponseFileArguments(text, fileName, state.errors));
+}
+
+/**
+ * Port of TS-Go `commandlineparser.go#tryReadFile`. Reads a file, appending a
+ * `Cannot_read_file_0` compiler diagnostic when the read fails. Returns the
+ * file text (empty on failure) alongside the accumulated diagnostics, mirroring
+ * Go's `(string, []*ast.Diagnostic)` return.
+ */
+export function tryReadFile(
+  fileName: string,
+  readFile: (fileName: string) => { text: string; ok: boolean },
+  errors: readonly Diagnostic[],
+): { text: string; errors: readonly Diagnostic[] } {
+  // this function adds a compiler diagnostic if the file cannot be read
+  const { text, ok } = readFile(fileName);
+  if (!ok) {
+    // !!! Divergence: the returned error will not give a useful message
+    // errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Cannot_read_file_0_Colon_1, *e));
+    return {
+      text: "",
+      errors: [
+        ...errors,
+        createDiagnosticForNodeInSourceFileOrCompilerDiagnostic(undefined, undefined, Diagnostics.Cannot_read_file_0, fileName),
+      ],
+    };
+  }
+  return { text, errors };
 }
 
 function scanResponseFileArguments(text: string, fileName: string, errors: Diagnostic[]): string[] {

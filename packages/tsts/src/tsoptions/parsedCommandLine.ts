@@ -99,6 +99,26 @@ export class ParsedCommandLine {
     return this.configFile?.fileName ?? "";
   }
 
+  /** Port of TS-Go `parsedcommandline.go#GetCurrentDirectory`. */
+  getCurrentDirectory(): string {
+    return this.comparePathsOptions.currentDirectory;
+  }
+
+  /** Port of TS-Go `parsedcommandline.go#UseCaseSensitiveFileNames`. */
+  useCaseSensitiveFileNames(): boolean {
+    return this.comparePathsOptions.useCaseSensitiveFileNames;
+  }
+
+  /** Port of TS-Go `parsedcommandline.go#CompilerOptions`. */
+  compilerOptions(): CompilerOptionsHandle {
+    return this.parsedConfig.compilerOptions;
+  }
+
+  /** Port of TS-Go `parsedcommandline.go#FileNames`. All file names matched by files, include, and exclude patterns. */
+  fileNames(): readonly string[] {
+    return this.parsedConfig.fileNames;
+  }
+
   sourceToProjectReference(): Map<string, SourceOutputAndProjectReference> | undefined {
     return this.sourceToProjectReferenceMap;
   }

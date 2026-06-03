@@ -15,7 +15,10 @@
 import { Tristate } from "../core/tristate.js";
 import type { CommandLineOption } from "./commandLineOption.js";
 import type { ProjectReference } from "../core/projectReference.js";
-import { combinePaths as joinPaths } from "../tspath/path.js";
+import { combinePaths as joinPaths, getNormalizedAbsolutePath } from "../tspath/path.js";
+import { map as coreMap } from "../core/core.js";
+import type { OrderedMap } from "../collections/orderedMap.js";
+import type { CommandLineOptionNameMap } from "./tsconfigParsing.js";
 
 // ---------------------------------------------------------------------------
 // Primitive parsers
@@ -169,6 +172,75 @@ export function convertOptionsFromJson(
     options[opt.name] = convertJsonOption(opt, rawValue, basePath, errors);
   }
   return { options, errors };
+}
+
+// ---------------------------------------------------------------------------
+// Absolute-path conversion
+// ---------------------------------------------------------------------------
+
+/**
+ * Port of TS-Go `parsinghelpers.go#convertToOptionsWithAbsolutePaths`. Walks
+ * the raw options map and rewrites file-path option values to normalized
+ * absolute paths.
+ */
+export function convertToOptionsWithAbsolutePaths(
+  optionsBase: OrderedMap<string, unknown> | undefined,
+  optionMap: CommandLineOptionNameMap,
+  cwd: string,
+): OrderedMap<string, unknown> | undefined {
+  // !!! convert to options with absolute paths was previously done with `CompilerOptions` object, but for ease of implementation, we do it pre-conversion.
+  // !!! Revisit this choice if/when refactoring when conversion is done in tsconfig parsing
+  if (optionsBase === undefined) {
+    return undefined;
+  }
+  for (const [o, v] of optionsBase.entries()) {
+    const { value: result, ok } = convertOptionToAbsolutePath(o, v, optionMap, cwd);
+    if (ok) {
+      optionsBase.set(o, result);
+    }
+  }
+  return optionsBase;
+}
+
+/**
+ * Port of TS-Go `parsinghelpers.go#ConvertOptionToAbsolutePath`. Returns the
+ * absolute-path-normalized value and whether the option carries a file path
+ * that was rewritten. The `ok` flag mirrors Go's second return value.
+ */
+export function convertOptionToAbsolutePath(
+  o: string,
+  v: unknown,
+  optionMap: CommandLineOptionNameMap,
+  cwd: string,
+): { value: unknown; ok: boolean } {
+  const option = optionMap.get(o);
+  if (option === undefined) {
+    return { value: undefined, ok: false };
+  }
+  if (option.type === "list") {
+    const elements = option.element ?? option.elements?.();
+    if (elements !== undefined && elements.isFilePath === true) {
+      if (isStringArray(v)) {
+        return { value: coreMap(v, (item) => getNormalizedAbsolutePath(item, cwd)), ok: true };
+      }
+      if (Array.isArray(v)) {
+        return {
+          value: coreMap(v as readonly unknown[], (item) =>
+            typeof item === "string" ? getNormalizedAbsolutePath(item, cwd) : item),
+          ok: true,
+        };
+      }
+    }
+  } else if (option.isFilePath === true) {
+    if (typeof v === "string") {
+      return { value: getNormalizedAbsolutePath(v, cwd), ok: true };
+    }
+  }
+  return { value: undefined, ok: false };
+}
+
+function isStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 // ---------------------------------------------------------------------------

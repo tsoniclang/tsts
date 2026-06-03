@@ -31,7 +31,15 @@ import { ParsedCommandLine } from "./parsedCommandLine.js";
 import type { ParsedOptions } from "./parsedCommandLine.js";
 import type { Diagnostic } from "../ast/index.js";
 import type { CommandLineOption } from "./commandLineOption.js";
+import { optionDeclarations } from "./declsCompiler.js";
 import { Tristate } from "../core/tristate.js";
+import type { DiagnosticMessage as Message } from "../diagnostics/types.js";
+import { Diagnostics } from "../diagnostics/diagnostics.generated.js";
+import type { OrderedMap } from "../collections/orderedMap.js";
+import type { Path } from "../tspath/path.js";
+import type { Node } from "../ast/index.js";
+import { isStringLiteral } from "../ast/index.js";
+import type { TypeAcquisition } from "../core/typeAcquisition.js";
 import { getDirectoryPath, combinePaths, normalizePath, getBaseFileName } from "../tspath/path.js";
 import { readDirectory } from "../vfs/vfsmatch/vfsMatch.js";
 import type { FS } from "../vfs/vfs.js";
@@ -116,6 +124,48 @@ export interface ConfigFileSpecs {
 export interface ResolutionStackEntry {
   path: string;
 }
+
+// ---------------------------------------------------------------------------
+// Option name maps
+// ---------------------------------------------------------------------------
+
+/**
+ * Case-insensitive lookup table from option name to declaration. Mirrors
+ * TS-Go `CommandLineOptionNameMap` (`map[string]*CommandLineOption` with a
+ * `Get` method that falls back to a lower-cased key).
+ */
+export class CommandLineOptionNameMap {
+  private readonly entries: ReadonlyMap<string, CommandLineOption>;
+
+  constructor(entries: ReadonlyMap<string, CommandLineOption>) {
+    this.entries = entries;
+  }
+
+  get(name: string): CommandLineOption | undefined {
+    const opt = this.entries.get(name);
+    if (opt !== undefined) {
+      return opt;
+    }
+    return this.entries.get(name.toLowerCase());
+  }
+}
+
+/**
+ * Port of TS-Go `tsconfigparsing.go#commandLineOptionsToMap`. Indexes each
+ * option by both its exact name and its lower-cased name.
+ */
+export function commandLineOptionsToMap(compilerOptions: readonly CommandLineOption[]): CommandLineOptionNameMap {
+  const result = new Map<string, CommandLineOption>();
+  for (const option of compilerOptions) {
+    result.set(option.name, option);
+    result.set(option.name.toLowerCase(), option);
+  }
+  return new CommandLineOptionNameMap(result);
+}
+
+/** Port of TS-Go `tsconfigparsing.go#CommandLineCompilerOptionsMap`. */
+export const CommandLineCompilerOptionsMap: CommandLineOptionNameMap =
+  commandLineOptionsToMap(optionDeclarations);
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -603,4 +653,72 @@ export function getExtendsConfigPathOrArray(
 
 export function directoryOfCombinedPath(fileName: string, basePath: string): string {
   return getDirectoryPath(combinePaths(basePath, fileName));
+}
+
+// ---------------------------------------------------------------------------
+// No-input-files reporting and file-spec validation
+// ---------------------------------------------------------------------------
+
+/** Port of TS-Go `tsconfigparsing.go#isDoubleQuotedString`. */
+export function isDoubleQuotedString(node: Node): boolean {
+  return isStringLiteral(node);
+}
+
+/** Port of TS-Go `tsconfigparsing.go#getDefaultTypeAcquisition`. */
+export function getDefaultTypeAcquisition(configFileName: string): TypeAcquisition {
+  const options: { enable?: Tristate } = {};
+  if (configFileName !== "" && getBaseFileName(configFileName) === "jsconfig.json") {
+    options.enable = Tristate.True;
+  }
+  return options;
+}
+
+/** Port of TS-Go `tsconfigparsing.go#canJsonReportNoInputFiles`. */
+export function canJsonReportNoInputFiles(rawConfig: OrderedMap<string, unknown>): boolean {
+  const filesExists = rawConfig.has("files");
+  const referencesExists = rawConfig.has("references");
+  return !filesExists && !referencesExists;
+}
+
+/** Port of TS-Go `tsconfigparsing.go#shouldReportNoInputFiles`. */
+export function shouldReportNoInputFiles(
+  fileNames: readonly string[],
+  canJsonReportNoInputFiles: boolean,
+  resolutionStack: readonly Path[],
+): boolean {
+  return fileNames.length === 0 && canJsonReportNoInputFiles && resolutionStack.length === 0;
+}
+
+/** Port of TS-Go `tsconfigparsing.go#specToDiagnostic`. */
+export function specToDiagnostic(spec: string, disallowTrailingRecursion: boolean): Message | undefined {
+  if (disallowTrailingRecursion && invalidTrailingRecursion(spec)) {
+    return Diagnostics.File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0;
+  }
+  if (invalidDotDotAfterRecursiveWildcard(spec)) {
+    return Diagnostics.File_specification_cannot_contain_a_parent_directory_that_appears_after_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0;
+  }
+  return undefined;
+}
+
+/** Port of TS-Go `tsconfigparsing.go#invalidTrailingRecursion`. */
+export function invalidTrailingRecursion(spec: string): boolean {
+  // Matches **, /**, **/, and /**/, but not a**b.
+  // Strip optional trailing slash, then check if it ends with /** or is just **
+  const s = spec.endsWith("/") ? spec.slice(0, -1) : spec;
+  return s === "**" || s.endsWith("/**");
+}
+
+/** Port of TS-Go `tsconfigparsing.go#invalidDotDotAfterRecursiveWildcard`. */
+export function invalidDotDotAfterRecursiveWildcard(s: string): boolean {
+  // We used to use the regex /(^|\/)\*\*\/(.*\/)?\.\.($|\/)/ to check for this case, but
+  // in v8, that has polynomial performance because the recursive wildcard match - **/ -
+  // can be matched in many arbitrary positions when multiple are present, resulting
+  // in bad backtracking (and we don't care which is matched - just that some /.. segment
+  // comes after some **/ segment).
+  const wildcardIndex = s.startsWith("**/") ? 0 : s.indexOf("/**/");
+  if (wildcardIndex === -1) {
+    return false;
+  }
+  const lastDotIndex = s.endsWith("/..") ? s.length : s.lastIndexOf("/../");
+  return lastDotIndex > wildcardIndex;
 }

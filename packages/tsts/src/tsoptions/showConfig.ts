@@ -13,6 +13,8 @@
 
 import type { ParsedCommandLine } from "./parsedCommandLine.js";
 import type { CompilerOptions } from "../core/compilerOptions.js";
+import type { OrderedMap } from "../collections/orderedMap.js";
+import { CommandLineCompilerOptionsMap } from "./tsconfigParsing.js";
 import {
   getEmitModuleKind,
   getModuleResolutionKind,
@@ -87,6 +89,37 @@ export function convertToTSConfig(parsed: ParsedCommandLine, configFileName: str
   const out: TSConfig = { compilerOptions: result };
   if (files !== undefined) out.files = files;
   return out;
+}
+
+/**
+ * Port of TS-Go `showconfig.go#getNameOfCompilerOptionValue`. Returns the
+ * string key for a given enum value by searching the option's enum map.
+ */
+export function getNameOfCompilerOptionValue(value: unknown, enumMap: OrderedMap<string, unknown>): string {
+  for (const [k, v] of enumMap.entries()) {
+    if (v === value) {
+      return k;
+    }
+  }
+  return "";
+}
+
+/**
+ * Port of TS-Go `showconfig.go#anyDependencyProvided`. Returns true if any of
+ * the given dependency names (Go field names like "Target") corresponds to an
+ * option in the provided set.
+ */
+export function anyDependencyProvided(
+  dependencies: readonly string[],
+  provided: ReadonlySet<string>,
+): boolean {
+  for (const dep of dependencies) {
+    const depDecl = CommandLineCompilerOptionsMap.get(dep);
+    if (depDecl !== undefined && provided.has(depDecl.name)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
