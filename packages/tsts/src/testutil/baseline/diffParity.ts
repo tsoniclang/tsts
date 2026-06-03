@@ -77,6 +77,15 @@ export function formatBaselineDiff(diff: BaselineDiff): string {
   return `${header}\n${formatChangedText(diff.expected ?? "", diff.actual ?? "")}`;
 }
 
+/**
+ * Single text-normalization point for the diff layer. Every text channel's
+ * equal check (`classifyBaselineDiff`) and unified diff (`formatChangedText`)
+ * runs both sides through here first, so CRLF/LF and trailing-whitespace
+ * differences are folded uniformly for ALL channels — there is no per-channel
+ * branch that could skip normalization. This is reporting/diff-layer only; it
+ * never rewrites baselines or alters compiler output. See `diffParity.test.ts`
+ * for the CRLF/LF audit that pins this across the text channels.
+ */
 export function normalizeBaselineText(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(/[ \t]+$/gm, "").trimEnd();
 }
