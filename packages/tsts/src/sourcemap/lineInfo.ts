@@ -20,11 +20,16 @@ export class ECMALineInfo {
     return this.lineStarts.length;
   }
 
+  // TS-Go: `func (li *ECMALineInfo) LineText(line int) string`.
   lineText(line: int): string {
     const pos = this.lineStarts[line]!;
-    const nextLine: int = (line + 1) | 0;
-    const end = nextLine < this.lineStarts.length ? this.lineStarts[nextLine]! : this.text.length;
-    return this.text.slice(pos as unknown as number, end as unknown as number);
+    let end: TextPos;
+    if (line + 1 < this.lineStarts.length) {
+      end = this.lineStarts[line + 1]!;
+    } else {
+      end = this.text.length;
+    }
+    return this.text.slice(pos, end);
   }
 }
 

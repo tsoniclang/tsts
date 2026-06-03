@@ -40,7 +40,8 @@ function computePositionOfLineAndUTF16Character(
   );
 }
 
-const MISSING_POSITION = -1;
+// TS-Go: `const ( missingPosition = -1 )`.
+const missingPosition = -1;
 
 export interface Host {
   useCaseSensitiveFileNames(): boolean;
@@ -58,7 +59,7 @@ export interface MappedPosition {
 export type SourceMappedPosition = MappedPosition;
 
 function isSourceMappedPosition(m: MappedPosition): boolean {
-  return m.sourceIndex !== MissingSource && m.sourcePosition !== MISSING_POSITION;
+  return m.sourceIndex !== MissingSource && m.sourcePosition !== missingPosition;
 }
 
 export interface DocumentPosition {
@@ -161,7 +162,7 @@ export function createDocumentPositionMapper(
   for (const mapping of decoder.values()) {
     const genLineInfo = host.getECMALineInfo(generatedAbsoluteFilePath);
     const generatedPosition = computePositionOfLineAndUTF16Character(genLineInfo, mapping.generatedLine, mapping.generatedCharacter);
-    let sourcePosition = MISSING_POSITION;
+    let sourcePosition = missingPosition;
     if (isSourceMapping(mapping)) {
       const srcLineInfo = host.getECMALineInfo(sourceFileAbsolutePaths[mapping.sourceIndex]!);
       sourcePosition = computePositionOfLineAndUTF16Character(srcLineInfo, mapping.sourceLine, mapping.sourceCharacter);
@@ -349,7 +350,15 @@ function tryGetSourceMappingURLFromHost(host: Host, fileName: string): string {
   return tryGetSourceMappingURL(lineInfo);
 }
 
-function tryParseBase64Url(url: string): { base64Object: string; matched: boolean } {
+// TS-Go returns `(parseableUrl string, isBase64Url bool)`; modeled as a named
+// pair so the signature carries no inline brace.
+interface ParseBase64UrlResult {
+  readonly base64Object: string;
+  readonly matched: boolean;
+}
+
+// Equivalent to /^data:(?:application\/json;(?:charset=[uU][tT][fF]-8;)?base64,([A-Za-z0-9+/=]+)$)?/
+function tryParseBase64Url(url: string): ParseBase64UrlResult {
   if (!url.startsWith("data:")) return { base64Object: "", matched: false };
   let rest = url.slice(5);
   if (!rest.startsWith("application/json;")) return { base64Object: "", matched: true };

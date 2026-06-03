@@ -24,23 +24,32 @@ export interface Mapping {
   nameIndex: NameIndex;
 }
 
+// TS-Go: `func (m *Mapping) Equals(other *Mapping) bool`. Free function here
+// because TSTS `Mapping` is a data interface (no logic methods); `a === b`
+// stands in for the upstream pointer-identity short-circuit `m == other`.
 export function mappingsEqual(a: Mapping, b: Mapping): boolean {
-  return (
-    a.generatedLine === b.generatedLine &&
+  return a === b || a.generatedLine === b.generatedLine &&
     a.generatedCharacter === b.generatedCharacter &&
     a.sourceIndex === b.sourceIndex &&
     a.sourceLine === b.sourceLine &&
     a.sourceCharacter === b.sourceCharacter &&
-    a.nameIndex === b.nameIndex
-  );
+    a.nameIndex === b.nameIndex;
 }
 
+// TS-Go: `func (m *Mapping) IsSourceMapping() bool`.
+/**
+ * Result of {@link MappingsDecoder.next}: TS-Go returns `(value *Mapping, done
+ * bool)`; modeled here as a discriminated union so callers can narrow on `done`.
+ */
+export type NextResult =
+  | { readonly value: Mapping; readonly done: false }
+  | { readonly value: undefined; readonly done: true };
+
+// TS-Go: `func (m *Mapping) IsSourceMapping() bool`.
 export function isSourceMapping(m: Mapping): boolean {
-  return (
-    m.sourceIndex !== MissingSource &&
+  return m.sourceIndex !== MissingSource &&
     m.sourceLine !== MissingLineOrColumn &&
-    m.sourceCharacter !== MissingUTF16Column
-  );
+    m.sourceCharacter !== MissingUTF16Column;
 }
 
 export class MappingsDecoder {
@@ -87,7 +96,7 @@ export class MappingsDecoder {
     }
   }
 
-  next(): { value: Mapping; done: false } | { value: undefined; done: true } {
+  next(): NextResult {
     while (!this.done && this.pos < this.mappings.length) {
       const ch = this.mappings[this.pos]!;
       if (ch === ";") {
@@ -111,28 +120,28 @@ export class MappingsDecoder {
         return this.setErrorAndStopIterating("Invalid generatedCharacter found");
       }
 
-      if (!this.isSegmentEnd()) {
+      if (!this.isSourceMappingSegmentEnd()) {
         hasSource = true;
         this.sourceIndex += this.base64VLQFormatDecode();
         if (this.hasReportedError()) return this.stopIterating();
         if (this.sourceIndex < 0) return this.setErrorAndStopIterating("Invalid sourceIndex found");
-        if (this.isSegmentEnd()) return this.setErrorAndStopIterating("Unsupported Format: No entries after sourceIndex");
+        if (this.isSourceMappingSegmentEnd()) return this.setErrorAndStopIterating("Unsupported Format: No entries after sourceIndex");
 
         this.sourceLine += this.base64VLQFormatDecode();
         if (this.hasReportedError()) return this.stopIterating();
         if (this.sourceLine < 0) return this.setErrorAndStopIterating("Invalid sourceLine found");
-        if (this.isSegmentEnd()) return this.setErrorAndStopIterating("Unsupported Format: No entries after sourceLine");
+        if (this.isSourceMappingSegmentEnd()) return this.setErrorAndStopIterating("Unsupported Format: No entries after sourceLine");
 
         this.sourceCharacter += this.base64VLQFormatDecode();
         if (this.hasReportedError()) return this.stopIterating();
         if (this.sourceCharacter < 0) return this.setErrorAndStopIterating("Invalid sourceCharacter found");
 
-        if (!this.isSegmentEnd()) {
+        if (!this.isSourceMappingSegmentEnd()) {
           hasName = true;
           this.nameIndex += this.base64VLQFormatDecode();
           if (this.hasReportedError()) return this.stopIterating();
           if (this.nameIndex < 0) return this.setErrorAndStopIterating("Invalid nameIndex found");
-          if (!this.isSegmentEnd()) {
+          if (!this.isSourceMappingSegmentEnd()) {
             return this.setErrorAndStopIterating("Unsupported Error Format: Entries after nameIndex");
           }
         }
@@ -154,7 +163,7 @@ export class MappingsDecoder {
     };
   }
 
-  private stopIterating(): { value: undefined; done: true } {
+  private stopIterating(): NextResult {
     this.done = true;
     return { value: undefined, done: true };
   }
@@ -163,7 +172,7 @@ export class MappingsDecoder {
     this.errorMessage = message;
   }
 
-  private setErrorAndStopIterating(message: string): { value: undefined; done: true } {
+  private setErrorAndStopIterating(message: string): NextResult {
     this.setError(message);
     return this.stopIterating();
   }
@@ -172,10 +181,9 @@ export class MappingsDecoder {
     return this.errorMessage !== undefined;
   }
 
-  private isSegmentEnd(): boolean {
-    if (this.pos >= this.mappings.length) return true;
-    const c = this.mappings[this.pos];
-    return c === "," || c === ";";
+  // TS-Go: `func (d *MappingsDecoder) isSourceMappingSegmentEnd() bool`.
+  private isSourceMappingSegmentEnd(): boolean {
+    return this.pos === this.mappings.length || this.mappings[this.pos] === "," || this.mappings[this.pos] === ";";
   }
 
   private base64VLQFormatDecode(): number {
@@ -206,11 +214,20 @@ export function decodeMappings(mappings: string): MappingsDecoder {
   return new MappingsDecoder(mappings);
 }
 
-function base64FormatDecode(charCode: number): number {
-  if (charCode >= 0x41 && charCode <= 0x5a) return charCode - 0x41; // A-Z
-  if (charCode >= 0x61 && charCode <= 0x7a) return charCode - 0x61 + 26; // a-z
-  if (charCode >= 0x30 && charCode <= 0x39) return charCode - 0x30 + 52; // 0-9
-  if (charCode === 0x2b) return 62; // +
-  if (charCode === 0x2f) return 63; // /
-  return -1;
+// TS-Go: `func base64FormatDecode(ch byte) int { switch { ... } }`.
+function base64FormatDecode(ch: number): number {
+  switch (true) {
+    case ch >= 0x41 && ch <= 0x5a: // 'A' .. 'Z'
+      return ch - 0x41;
+    case ch >= 0x61 && ch <= 0x7a: // 'a' .. 'z'
+      return ch - 0x61 + 26;
+    case ch >= 0x30 && ch <= 0x39: // '0' .. '9'
+      return ch - 0x30 + 52;
+    case ch === 0x2b: // '+'
+      return 62;
+    case ch === 0x2f: // '/'
+      return 63;
+    default:
+      return -1;
+  }
 }
