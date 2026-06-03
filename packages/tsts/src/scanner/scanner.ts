@@ -245,6 +245,36 @@ export function getIdentifierToken(str: string): Kind {
   return Kind.Identifier;
 }
 
+// IsValidIdentifier — scanner.go:2161-2171. Reports whether `s` is a valid
+// identifier: the first code point must be an identifier start and every
+// subsequent code point an identifier part (Standard variant).
+export function isValidIdentifier(s: string): boolean {
+  if (s.length === 0) {
+    return false;
+  }
+  let i = 0;
+  for (const chStr of s) {
+    const ch = chStr.codePointAt(0)!;
+    if ((i === 0 && !isIdentifierStartCodePoint(ch)) || (i !== 0 && !isIdentifierPartCodePoint(ch, LanguageVariant.Standard))) {
+      return false;
+    }
+    i++;
+  }
+  return true;
+}
+
+// GetViableKeywordSuggestions — scanner.go:2244-2252. Returns the set of keyword
+// texts longer than two characters, used as spell-check suggestions.
+export function getViableKeywordSuggestions(): string[] {
+  const result: string[] = [];
+  for (const text of textToKeyword.keys()) {
+    if (text.length > 2) {
+      result.push(text);
+    }
+  }
+  return result;
+}
+
 // JSDoc tag terminators — scanner.go:398 (a valid JSDoc tag name is followed by
 // whitespace, '}', '*', or end-of-string).
 const jsDocTagTerminators: ReadonlySet<string> = new Set([" ", "\t", "\n", "\r", "}", "*"]);
@@ -317,6 +347,10 @@ interface ScannerConfig {
   end: number;
   languageVariant: LanguageVariant;
   skipTrivia: boolean;
+  // scanner.go:221 — set true once any non-ASCII (multi-unit) code point is
+  // decoded. Scanner-level (not part of ScannerState), so it persists across
+  // SetText and is not affected by Mark()/Rewind().
+  containsNonASCII: boolean;
 }
 
 export interface LiveScannerOptions {
@@ -336,11 +370,23 @@ export interface LiveScanner {
   getTokenValue(): string;
   getTokenFlags(): TokenFlagsType;
   hasPrecedingLineBreak(): boolean;
+  // Escape/non-ASCII token flag accessors — scanner.go:330-343.
+  hasUnicodeEscape(): boolean;
+  hasExtendedUnicodeEscape(): boolean;
+  // ContainsNonASCII — scanner.go:334-339. True if any non-ASCII bytes were
+  // encountered during scanning (UTF-8 byte offsets may differ from UTF-16).
+  containsNonASCII(): boolean;
   // JSDoc trivia accessors — scanner.go:349-362. Read the JSDoc token flags
   // captured while skipping leading trivia for the current token.
   hasPrecedingJSDocComment(): boolean;
+  hasPrecedingJSDocLeadingAsterisks(): boolean;
   hasPrecedingJSDocWithDeprecatedTag(): boolean;
   hasPrecedingJSDocWithSeeOrLink(): boolean;
+  // CommentDirectives — scanner.go:290-292. The ts-directive comments (the
+  // suppression pragmas) collected while scanning comments.
+  commentDirectives(): readonly CommentDirective[] | undefined;
+  // CanFollowJSDocAt — scanner.go:1389-1395.
+  canFollowJSDocAt(): boolean;
   isIdentifier(): boolean;
   isReservedWord(): boolean;
   isUnterminated(): boolean;
@@ -388,6 +434,7 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     end: text.length,
     languageVariant: options?.languageVariant ?? LanguageVariant.Standard,
     skipTrivia: options?.skipTrivia ?? true,
+    containsNonASCII: false,
   };
 
   // --- diagnostics ---------------------------------------------------------
@@ -413,7 +460,22 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
       return { ch: -1, size: 0 };
     }
     const cp = config.text.codePointAt(state.pos)!;
-    return { ch: cp, size: charSize(cp) };
+    const size = charSize(cp);
+    if (size > 1) {
+      config.containsNonASCII = true;
+    }
+    return { ch: cp, size };
+  }
+
+  // canFollowJSDocAt — scanner.go:1389-1395. Reports whether the code point at
+  // the current position can legally follow an `@` inside JSDoc (an identifier
+  // start, single-line whitespace, or a line break).
+  function canFollowJSDocAt(): boolean {
+    if (state.pos >= config.text.length) {
+      return true;
+    }
+    const ch = config.text.codePointAt(state.pos)!;
+    return isIdentifierStartCodePoint(ch) || isWhiteSpaceSingleLine(ch) || isLineBreakCode(ch);
   }
 
 
@@ -1995,9 +2057,15 @@ export function createLiveScanner(text: string, options?: LiveScannerOptions): L
     getTokenValue: () => state.tokenValue,
     getTokenFlags: () => state.tokenFlags,
     hasPrecedingLineBreak: () => (state.tokenFlags & TokenFlags.PrecedingLineBreak) !== 0,
+    hasUnicodeEscape: () => (state.tokenFlags & TokenFlags.UnicodeEscape) !== 0,
+    hasExtendedUnicodeEscape: () => (state.tokenFlags & TokenFlags.ExtendedUnicodeEscape) !== 0,
+    containsNonASCII: () => config.containsNonASCII,
     hasPrecedingJSDocComment: () => (state.tokenFlags & TokenFlags.PrecedingJSDocComment) !== 0,
+    hasPrecedingJSDocLeadingAsterisks: () => (state.tokenFlags & TokenFlags.PrecedingJSDocLeadingAsterisks) !== 0,
     hasPrecedingJSDocWithDeprecatedTag: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithDeprecated) !== 0,
     hasPrecedingJSDocWithSeeOrLink: () => (state.tokenFlags & TokenFlags.PrecedingJSDocWithSeeOrLink) !== 0,
+    commentDirectives: () => state.commentDirectives,
+    canFollowJSDocAt,
     isIdentifier: () => state.token === Kind.Identifier,
     isReservedWord: () => state.token >= Kind.FirstReservedWord && state.token <= Kind.LastReservedWord,
     isUnterminated: () => (state.tokenFlags & TokenFlags.Unterminated) !== 0,

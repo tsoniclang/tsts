@@ -336,6 +336,21 @@ export function getECMALineAndUTF16CharacterOfPosition(
   return { line, character };
 }
 
+// GetECMAEndLinePosition — scanner.go:2664-2673. Returns the position of the
+// last character on the given line (the position just before its line break),
+// scanning forward from the line start until a line break or end-of-text.
+export function getECMAEndLinePosition(sourceFile: SourceFileLike, line: int): number {
+  const text = sourceFile.text();
+  let pos = getECMALineStarts(sourceFile)[line] as number;
+  for (;;) {
+    const ch = text.codePointAt(pos);
+    if (ch === undefined || isLineBreak(ch)) {
+      return (pos - 1) | 0;
+    }
+    pos += ch > 0xffff ? 2 : 1;
+  }
+}
+
 /**
  * GetECMALineAndByteOffsetOfPosition returns the 0-based line number and the
  * raw offset from the start of that line for the given position.
@@ -422,4 +437,41 @@ export function computePositionOfLineAndUTF16Character(
   }
   debugAssert(res <= text.length); // Allow single character overflow for trailing newline
   return res;
+}
+
+// GetECMAPositionOfLineAndUTF16Character — scanner.go:2678-2681. Converts a
+// 0-based line number and UTF-16 code unit character offset back to an absolute
+// position in the source text, using ECMAScript line separators.
+export function getECMAPositionOfLineAndUTF16Character(
+  sourceFile: SourceFileLike,
+  line: int,
+  character: UTF16Offset,
+): number {
+  const lineStarts = getECMALineStarts(sourceFile);
+  return computePositionOfLineAndUTF16Character(lineStarts, line, character, sourceFile.text(), false);
+}
+
+// GetECMAPositionOfLineAndByteOffset — scanner.go:2686-2688. Converts a 0-based
+// line number and offset from the line start back to an absolute position in the
+// source text, using ECMAScript line separators.
+export function getECMAPositionOfLineAndByteOffset(
+  sourceFile: SourceFileLike,
+  line: int,
+  byteOffset: number,
+): number {
+  return computePositionOfLineAndByteOffset(getECMALineStarts(sourceFile), line, byteOffset);
+}
+
+// ComputePositionOfLineAndByteOffset — scanner.go:2692-2697. Computes a position
+// from a line and raw offset from the line start. This is a simple addition with
+// validation.
+export function computePositionOfLineAndByteOffset(
+  lineStarts: readonly TextPos[],
+  line: int,
+  byteOffset: number,
+): number {
+  if (line < 0 || line >= lineStarts.length) {
+    debugFail(`Bad line number. Line: ${line}, lineStarts.length: ${lineStarts.length}.`);
+  }
+  return (lineStarts[line] as number) + byteOffset;
 }
