@@ -202,8 +202,6 @@ const backslashRegex = /\\/g;
 
 /** Normalizes path separators to '/'. */
 export function normalizeSlashes(path: string): string {
-  // Fast path: most paths don't contain '\'
-  if (!path.includes("\\")) return path;
   return path.replace(backslashRegex, "/");
 }
 
@@ -222,14 +220,18 @@ export function normalizeSlashes(path: string): string {
  * ```
  */
 export function combinePaths(firstPath: string, ...paths: readonly string[]): string {
+  // TODO (drosen): There is potential for a fast path here.
+  // In the case where we find the last absolute path and just path.Join from there.
   firstPath = normalizeSlashes(firstPath);
 
   let result = firstPath;
-  for (const path of paths) {
-    if (path === "") continue;
-    const trailingPath = normalizeSlashes(path);
+  for (let trailingPath of paths) {
+    if (trailingPath === "") {
+      continue;
+    }
+    trailingPath = normalizeSlashes(trailingPath);
     if (result === "" || getRootLength(trailingPath) !== 0) {
-      // `trailingPath` is absolute (or result is empty).
+      // `trailingPath` is absolute.
       result = trailingPath;
     } else {
       if (!hasTrailingDirectorySeparator(result)) {
@@ -242,10 +244,24 @@ export function combinePaths(firstPath: string, ...paths: readonly string[]): st
 }
 
 /**
- * Resolves a path: combines and normalizes. Absolute segments reset the result.
+ * Combines and resolves paths. If a path is absolute, it replaces any previous
+ * path. Any `.` and `..` path components are resolved. Trailing directory
+ * separators are preserved.
+ *
+ * ```
+ * resolvePath("/path", "to", "file.ext") === "path/to/file.ext"
+ * resolvePath("/path", "to", "file.ext/") === "path/to/file.ext/"
+ * resolvePath("/path", "dir", "..", "to", "file.ext") === "path/to/file.ext"
+ * ```
  */
 export function resolvePath(path: string, ...paths: readonly string[]): string {
-  return normalizePath(paths.length > 0 ? combinePaths(path, ...paths) : normalizeSlashes(path));
+  let combinedPath: string;
+  if (paths.length > 0) {
+    combinedPath = combinePaths(path, ...paths);
+  } else {
+    combinedPath = normalizeSlashes(path);
+  }
+  return normalizePath(combinedPath);
 }
 
 /** Resolves a triple-slash reference relative to the containing file. */
@@ -577,7 +593,21 @@ export function ensurePathIsNonModuleName(path: string): string {
 // ────────────────────────────────────────────────────────────────────────────
 
 export function pathIsRelative(path: string): boolean {
-  return /^\.\.?($|[\\/])/.test(path);
+  // True if path is ".", "..", or starts with "./", "../", ".\\", or "..\\".
+
+  if (path === "." || path === "..") {
+    return true;
+  }
+
+  if (path.length >= 2 && path[0] === "." && (path[1] === "/" || path[1] === "\\")) {
+    return true;
+  }
+
+  if (path.length >= 3 && path[0] === "." && path[1] === "." && (path[2] === "/" || path[2] === "\\")) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isExternalModuleNameRelative(moduleName: string): boolean {
@@ -647,8 +677,14 @@ export function containsPath(parent: string, child: string, options: ComparePath
 
   const componentComparer = getEqualityComparer(options);
   for (let i = 0; i < parentComponents.length; i++) {
-    const comparer = i === 0 ? equateStringCaseInsensitive : componentComparer;
-    if (!comparer(parentComponents[i]!, childComponents[i]!)) {
+    const parentComponent = parentComponents[i]!;
+    let comparer: (a: string, b: string) => boolean;
+    if (i === 0) {
+      comparer = equateStringCaseInsensitive;
+    } else {
+      comparer = componentComparer;
+    }
+    if (!comparer(parentComponent, childComponents[i]!)) {
       return false;
     }
   }
@@ -678,11 +714,78 @@ export function pathContainsPath(p: Path, child: Path): boolean {
 // ────────────────────────────────────────────────────────────────────────────
 
 export function getCanonicalFileName(fileName: string, useCaseSensitiveFileNames: boolean): string {
-  return useCaseSensitiveFileNames ? fileName : toFileNameLowerCase(fileName);
+  if (useCaseSensitiveFileNames) {
+    return fileName;
+  }
+  return toFileNameLowerCase(fileName);
 }
 
+// We convert the file names to lower case as key for file name on case insensitive file system
+// While doing so we need to handle special characters (eg İ) to ensure that we dont convert
+// it to lower case, fileName with its lowercase form can exist along side it.
+// Handle special characters and make those case sensitive instead
+//
+// |-#--|-Unicode--|-Char code-|-Desc-------------------------------------------------------------------|
+// | 1. | i        | 105       | Ascii i                                                                |
+// | 2. | I        | 73        | Ascii I                                                                |
+// |-------- Special characters ------------------------------------------------------------------------|
+// | 3. | İ   | 304       | Upper case I with dot above                                            |
+// | 4. | i,̇ | 105,775   | i, followed by 775: Lower case of (3rd item)                           |
+// | 5. | I,̇ | 73,775    | I, followed by 775: Upper case of (4th item), lower case is (4th item) |
+// | 6. | ı   | 305       | Lower case i without dot, upper case is I (2nd item)                   |
+// | 7. | ß   | 223       | Lower case sharp s                                                     |
+//
+// Because item 3 is special where in its lowercase character has its own
+// upper case form we cant convert its case.
+// Rest special characters are either already in lower case format or
+// they have corresponding upper case character so they dont need special handling
 export function toFileNameLowerCase(fileName: string): string {
-  return fileName.toLowerCase();
+  const IWithDot = "İ";
+
+  let ascii = true;
+  let needsLower = false;
+  const fileNameLen = fileName.length;
+  for (let i = 0; i < fileNameLen; i++) {
+    const c = fileName.charCodeAt(i);
+    if (c >= 0x80) {
+      ascii = false;
+      break;
+    }
+    if (0x41 /* A */ <= c && c <= 0x5a /* Z */) {
+      needsLower = true;
+    }
+  }
+  if (ascii) {
+    if (!needsLower) {
+      return fileName;
+    }
+    const b: string[] = [];
+    for (let i = 0; i < fileNameLen; i++) {
+      let c = fileName.charCodeAt(i);
+      if (0x41 /* A */ <= c && c <= 0x5a /* Z */) {
+        c += 0x61 /* a */ - 0x41 /* A */; // +32
+      }
+      b.push(String.fromCharCode(c));
+    }
+    return b.join("");
+  }
+
+  return stringsMap((r) => {
+    if (r === IWithDot) {
+      return r;
+    }
+    return r.toLowerCase();
+  }, fileName);
+}
+
+// Mirrors Go's `strings.Map`: applies `mapping` to each rune (code point) of
+// `s`, concatenating the results.
+function stringsMap(mapping: (r: string) => string, s: string): string {
+  let b = "";
+  for (const r of s) {
+    b += mapping(r);
+  }
+  return b;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -754,12 +857,8 @@ export function startsWithDirectory(
 
   const canonicalFileName = getCanonicalFileName(fileName, useCaseSensitiveFileNames);
   let canonicalDirectoryName = getCanonicalFileName(directoryName, useCaseSensitiveFileNames);
-  if (canonicalDirectoryName.endsWith("/")) {
-    canonicalDirectoryName = canonicalDirectoryName.slice(0, -1);
-  }
-  if (canonicalDirectoryName.endsWith("\\")) {
-    canonicalDirectoryName = canonicalDirectoryName.slice(0, -1);
-  }
+  canonicalDirectoryName = trimSuffix(canonicalDirectoryName, "/");
+  canonicalDirectoryName = trimSuffix(canonicalDirectoryName, "\\");
 
   return (
     canonicalFileName.startsWith(canonicalDirectoryName + "/") ||
@@ -767,18 +866,19 @@ export function startsWithDirectory(
   );
 }
 
-export function compareNumberOfDirectorySeparators(path1: string, path2: string): Comparison {
-  const a = countSeparators(path1);
-  const b = countSeparators(path2);
-  return a < b ? -1 : a > b ? 1 : 0;
+// Mirrors Go's `strings.TrimSuffix`: removes `suffix` from the end of `s`
+// if present.
+function trimSuffix(s: string, suffix: string): string {
+  if (s.endsWith(suffix)) {
+    return s.slice(0, s.length - suffix.length);
+  }
+  return s;
 }
 
-function countSeparators(path: string): number {
-  let count = 0;
-  for (let i = 0; i < path.length; i += 1) {
-    if (path[i] === directorySeparator) count += 1;
-  }
-  return count;
+export function compareNumberOfDirectorySeparators(path1: string, path2: string): Comparison {
+  const a = path1.split("/").length - 1;
+  const b = path2.split("/").length - 1;
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -855,13 +955,19 @@ export function forEachAncestorDirectory<T>(
   directory: string,
   callback: (directory: string) => AncestorDirectoryCallbackResult<T>,
 ): AncestorDirectoryResult<T> {
-  let dir = directory;
   for (;;) {
-    const { result, stop } = callback(dir);
-    if (stop) return { result, ok: true };
-    const parent = getDirectoryPath(dir);
-    if (parent === dir) return { result: undefined, ok: false };
-    dir = parent;
+    const { result, stop } = callback(directory);
+    if (stop) {
+      return { result, ok: true };
+    }
+
+    const parentPath = getDirectoryPath(directory);
+    if (parentPath === directory) {
+      const zero: T | undefined = undefined;
+      return { result: zero, ok: false };
+    }
+
+    directory = parentPath;
   }
 }
 

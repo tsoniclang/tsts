@@ -191,14 +191,19 @@ export function getDeclarationFileExtension(fileName: string): string {
 }
 
 export function getDeclarationEmitExtensionForPath(path: string): string {
-  if (fileExtensionIsOneOf(path, [extensionMjs, extensionMts])) return extensionDmts;
-  if (fileExtensionIsOneOf(path, [extensionCjs, extensionCts])) return extensionDcts;
-  if (fileExtensionIsOneOf(path, [extensionTs, extensionTsx, extensionJs, extensionJsx])) return extensionDts;
-  const ext = getAnyExtensionFromPath(path, undefined, false);
-  if (ext !== "") {
-    return ".d" + ext + ".ts";
+  if (fileExtensionIsOneOf(path, [extensionMjs, extensionMts])) {
+    return extensionDmts;
+  } else if (fileExtensionIsOneOf(path, [extensionCjs, extensionCts])) {
+    return extensionDcts;
+  } else if (fileExtensionIsOneOf(path, [extensionTs, extensionTsx, extensionJs, extensionJsx])) {
+    return extensionDts;
+  } else {
+    const ext = getAnyExtensionFromPath(path, undefined, false);
+    if (ext !== "") {
+      return ".d" + ext + ".ts";
+    }
+    return extensionDts;
   }
-  return extensionDts;
 }
 
 /**
