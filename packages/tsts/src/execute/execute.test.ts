@@ -16,7 +16,12 @@ import {
   Colors,
   createColors,
   createDiagnosticReporter,
+  createProgramSnapshotFromParts,
   createReportErrorSummary,
+  buildInfoToSnapshot,
+  snapshotToBuildInfo,
+  programToSnapshot,
+  getNewEmitSignature,
   defaultIsPretty,
   ExitStatus,
   ExtendedConfigCache,
@@ -32,6 +37,8 @@ import {
   UpToDateStatus,
   UpToDateStatusType,
   type CompilerOptionsLike,
+  type EmitOptions,
+  type EmitSignature,
   type ExtendedConfigHost,
   type TextWriter,
 } from "./index.js";
@@ -258,6 +265,101 @@ test("build info pending emit and signature encoding match tsgo", () => {
   assert.ok(new BuildInfoEmitSignature(1).noEmitSignature());
   assert.strictEqual(BuildInfoEmitSignature.fromJSON([1, ["sig"]]).signature, "sig");
   assert.deepStrictEqual(new BuildInfoResolvedRoot(2, 1).toJSON(), [2, 1]);
+});
+
+function compositeSnapshotWithEmitSignature(emitSignature: EmitSignature | undefined, fileSignature = "sigA") {
+  const path = "/repo/a.ts";
+  const emitSignatures = new Map<string, EmitSignature>();
+  if (emitSignature !== undefined) emitSignatures.set(path, emitSignature);
+  return createProgramSnapshotFromParts<unknown>(
+    "v",
+    new Map([[path, { version: "vA", signature: fileSignature, affectsGlobalScope: false, impliedNodeFormat: undefined }]]),
+    new Map<string, unknown>([["composite", true]]),
+    [path],
+    new Map(),
+    new Map(),
+    new Map(),
+    emitSignatures,
+    undefined,
+    [],
+    false,
+  );
+}
+
+function roundTripEmitSignature(emitSignature: EmitSignature | undefined, fileSignature = "sigA"): EmitSignature | undefined {
+  const snapshot = compositeSnapshotWithEmitSignature(emitSignature, fileSignature);
+  const buildInfo = snapshotToBuildInfo(snapshot, { version: "v", currentDirectory: "/repo", useCaseSensitiveFileNames: true });
+  return buildInfoToSnapshot(buildInfo).emitSignatures.get("/repo/a.ts");
+}
+
+test("emit signatures round-trip through buildInfo (tsgo parity)", () => {
+  // default: snapshot signature equals file signature -> serialized as bare fileId, restored as default
+  assert.deepStrictEqual(
+    roundTripEmitSignature({ signature: "sigA", signatureWithDifferentOptions: undefined }),
+    { signature: "sigA", signatureWithDifferentOptions: undefined },
+  );
+
+  // no emit signature recorded -> nothing carried back
+  assert.strictEqual(roundTripEmitSignature(undefined, ""), undefined);
+
+  // differsOnlyInDtsMap: alt-options signature equals the file signature
+  assert.deepStrictEqual(
+    roundTripEmitSignature({ signature: undefined, signatureWithDifferentOptions: ["sigA"] }),
+    { signature: undefined, signatureWithDifferentOptions: ["sigA"] },
+  );
+
+  // differsInOptions: alt-options signature differs from the file signature
+  assert.deepStrictEqual(
+    roundTripEmitSignature({ signature: undefined, signatureWithDifferentOptions: ["sigOther"] }),
+    { signature: undefined, signatureWithDifferentOptions: ["sigOther"] },
+  );
+
+  // plain different signature
+  assert.deepStrictEqual(
+    roundTripEmitSignature({ signature: "sigDiff", signatureWithDifferentOptions: undefined }),
+    { signature: "sigDiff", signatureWithDifferentOptions: undefined },
+  );
+});
+
+test("program snapshot builder copies and reuses old emit signatures", () => {
+  const path = "/repo/a.ts";
+  const oldSnapshot = compositeSnapshotWithEmitSignature({ signature: "sigOld", signatureWithDifferentOptions: undefined });
+  const emitOptions: EmitOptions = {
+    sourceMap: false,
+    inlineSourceMap: false,
+    declaration: true,
+    composite: true,
+    declarationMap: false,
+    emitDeclarationOnly: false,
+  };
+  const baseOptions = {
+    version: "v2",
+    hashWithText: false,
+    sourceFiles: [{ path, text: "export const a = 1;" }],
+    root: [path],
+    options: new Map<string, unknown>([["composite", true]]),
+    pendingEmit: new Map<string, never>(),
+    oldSnapshot,
+    declarationPathOptionsChanged: false,
+  };
+
+  // declarationMap unchanged -> old emit signature reused verbatim
+  const reused = programToSnapshot(undefined, { ...baseOptions, emitOptions, oldEmitOptions: emitOptions });
+  assert.deepStrictEqual(reused.emitSignatures.get(path), { signature: "sigOld", signatureWithDifferentOptions: undefined });
+
+  // declarationMap changed -> signature swaps to signatureWithDifferentOptions (via getNewEmitSignature)
+  const swapped = programToSnapshot(undefined, {
+    ...baseOptions,
+    emitOptions: { ...emitOptions, declarationMap: true },
+    oldEmitOptions: emitOptions,
+  });
+  assert.deepStrictEqual(swapped.emitSignatures.get(path), { signature: undefined, signatureWithDifferentOptions: ["sigOld"] });
+
+  // sanity: getNewEmitSignature itself swaps on declarationMap change
+  assert.deepStrictEqual(
+    getNewEmitSignature({ signature: "sigOld", signatureWithDifferentOptions: undefined }, emitOptions, { ...emitOptions, declarationMap: true }),
+    { signature: undefined, signatureWithDifferentOptions: ["sigOld"] },
+  );
 });
 
 test("build info root reader maps roots to resolved files", () => {

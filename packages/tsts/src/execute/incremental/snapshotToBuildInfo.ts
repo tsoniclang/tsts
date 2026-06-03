@@ -247,11 +247,24 @@ class SnapshotBuildInfoWriter<Diagnostic> {
   }
 
   private setEmitSignatures(): readonly BuildInfoEmitSignature[] {
+    if (this.snapshot.options.get("composite") !== true) return [];
     const result: BuildInfoEmitSignature[] = [];
     for (const file of this.sourceFiles()) {
       const info = this.snapshot.fileInfos.get(file.path);
       if (info === undefined || !this.shouldEmitSignature(file)) continue;
-      result.push(new BuildInfoEmitSignature(this.toFileId(file.path)));
+      const fileId = this.toFileId(file.path);
+      const emitSignature = this.snapshot.emitSignatures.get(file.path);
+      if (emitSignature === undefined) {
+        result.push(new BuildInfoEmitSignature(fileId));
+      } else if ((emitSignature.signature ?? "") !== info.signature) {
+        if (emitSignature.signature !== undefined && emitSignature.signature !== "") {
+          result.push(new BuildInfoEmitSignature(fileId, emitSignature.signature));
+        } else if (emitSignature.signatureWithDifferentOptions?.[0] === info.signature) {
+          result.push(new BuildInfoEmitSignature(fileId, "", true, false));
+        } else {
+          result.push(new BuildInfoEmitSignature(fileId, emitSignature.signatureWithDifferentOptions?.[0] ?? "", false, true));
+        }
+      }
     }
     return result;
   }

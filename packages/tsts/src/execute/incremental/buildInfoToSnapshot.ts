@@ -3,6 +3,7 @@ import {
   createProgramSnapshotFromParts,
   type DiagnosticsOrBuildInfoDiagnosticsWithFileName,
   type BuildInfoDiagnosticWithFileName,
+  type EmitSignature,
   type ProgramSnapshotFileInfo,
   type ProgramSnapshot,
   type SnapshotFileEmitKind,
@@ -50,6 +51,7 @@ class BuildInfoSnapshotConverter<Diagnostic> {
       this.semanticDiagnostics(fileInfos, this.changedFiles()),
       this.emitDiagnostics(),
       this.affectedFilesPendingEmit(),
+      this.emitSignatures(fileInfos),
       this.buildInfo.latestChangedDtsFile === "" ? undefined : normalizeBuildInfoFileName(this.buildInfo.latestChangedDtsFile),
       [] as Diagnostic[],
       this.buildInfo.checkPending === true,
@@ -152,6 +154,28 @@ class BuildInfoSnapshotConverter<Diagnostic> {
       pendingEmit.set(fileName, buildInfoFileEmitKindToSnapshot(entry.emitKind));
     }
     return pendingEmit;
+  }
+
+  private emitSignatures(fileInfos: ReadonlyMap<string, ProgramSnapshotFileInfo>): ReadonlyMap<string, EmitSignature> {
+    const emitSignatures = new Map<string, EmitSignature>();
+    const isComposite = this.buildInfo.options.get("composite") === true;
+    if (isComposite) {
+      for (const [path, info] of fileInfos) {
+        if (info.signature !== "") {
+          emitSignatures.set(path, { signature: info.signature, signatureWithDifferentOptions: undefined });
+        }
+      }
+    }
+    for (const value of this.buildInfo.emitSignatures) {
+      const path = this.toFilePath(value.fileId);
+      if (path === "") continue;
+      if (value.noEmitSignature()) {
+        emitSignatures.delete(path);
+      } else {
+        emitSignatures.set(path, value.toEmitSignature(path, emitSignatures));
+      }
+    }
+    return emitSignatures;
   }
 
   private diagnosticsOfFile(diagnostics: BuildInfoDiagnosticsOfFile): DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic> {

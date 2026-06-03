@@ -10,6 +10,7 @@ export {
   changedFiles,
   computeHash,
   createProgramSnapshot,
+  createProgramSnapshotFromParts,
   getFileEmitKind,
   getNewEmitSignature,
   getPendingEmitKind,

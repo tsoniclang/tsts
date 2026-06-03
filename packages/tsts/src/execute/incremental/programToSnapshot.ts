@@ -3,9 +3,11 @@ import {
   computeHash,
   createProgramSnapshotFromParts,
   getFileEmitKind,
+  getNewEmitSignature,
   getPendingEmitKindWithOptions,
   type DiagnosticsOrBuildInfoDiagnosticsWithFileName,
   type EmitOptions,
+  type EmitSignature,
   type ProgramSnapshot,
   type ProgramSnapshotFileInfo,
   type SnapshotFileEmitKind,
@@ -46,6 +48,7 @@ interface FileChangeComputation<Diagnostic> {
   readonly emitDiagnosticsPerFile: Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly changedFilesSet: Set<string>;
   readonly pendingEmit: Map<string, SnapshotFileEmitKind>;
+  readonly emitSignatures: Map<string, EmitSignature>;
   latestChangedDtsFile: string | undefined;
 }
 
@@ -91,6 +94,7 @@ class ProgramSnapshotBuilder<Diagnostic> {
       computation.semanticDiagnosticsPerFile,
       computation.emitDiagnosticsPerFile,
       computation.pendingEmit,
+      computation.emitSignatures,
       latestChangedDtsFile,
       [],
       this.options.noCheck === true,
@@ -107,8 +111,12 @@ class ProgramSnapshotBuilder<Diagnostic> {
     const emitDiagnosticsPerFile = new Map<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>();
     const changedFilesSet = new Set<string>();
     const pendingEmit = new Map(this.options.pendingEmit);
+    const emitSignatures = new Map<string, EmitSignature>();
     const canCopySemanticDiagnostics = this.oldSnapshot !== undefined && this.options.semanticOptionsChanged !== true;
     const canCopyEmitDiagnostics = this.oldSnapshot !== undefined;
+    const canCopyEmitSignatures = this.options.options.get("composite") === true &&
+      this.oldSnapshot !== undefined &&
+      this.options.declarationPathOptionsChanged !== true;
 
     for (const sourceFile of this.options.sourceFiles) {
       const info = fileInfoFromText(sourceFile, this.options.hashWithText);
@@ -133,6 +141,13 @@ class ProgramSnapshotBuilder<Diagnostic> {
           copyMapEntry(this.oldSnapshot!.semanticDiagnosticsPerFile, semanticDiagnosticsPerFile, sourceFile.path);
         }
       }
+
+      if (canCopyEmitSignatures) {
+        const oldEmitSignature = this.oldSnapshot!.emitSignatures.get(sourceFile.path);
+        if (oldEmitSignature !== undefined && this.options.emitOptions !== undefined && this.options.oldEmitOptions !== undefined) {
+          emitSignatures.set(sourceFile.path, getNewEmitSignature(oldEmitSignature, this.options.oldEmitOptions, this.options.emitOptions));
+        }
+      }
     }
 
     return {
@@ -142,6 +157,7 @@ class ProgramSnapshotBuilder<Diagnostic> {
       emitDiagnosticsPerFile,
       changedFilesSet,
       pendingEmit,
+      emitSignatures,
       latestChangedDtsFile: this.oldSnapshot?.latestChangedDtsFile,
     };
   }
