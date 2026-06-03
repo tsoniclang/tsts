@@ -1932,12 +1932,18 @@ export function displayType(type: Type): string {
     }
     const members = objectTypeMembers(type);
     if (members !== undefined) {
-      const entries = [...members.values()].map((m) => `${m.name}: ${displayType(m.syntheticType)}`);
+      const entries = [...members.values()].map(
+        (m) => `${m.name}${isOptionalSymbol(m as unknown as AstSymbol) ? "?" : ""}: ${displayType(m.syntheticType)}`,
+      );
       const indexEntries = (getIndexInfos(type) ?? []).map(
         (info) => `[${indexSignatureParameterName(info)}: ${displayType(info.keyType)}]: ${displayType(info.valueType)}`,
       );
       const all = [...entries, ...indexEntries];
-      return all.length === 0 ? "{}" : `{ ${all.join("; ")} }`;
+      // TS-Go (typePrinter) terminates EVERY member with `;`, including the last,
+      // so a member list renders as `{ a: number; b: string; }` (an empty type is
+      // the bare `{}`). Both the `.types` baseline and assignability error messages
+      // share this exact format.
+      return all.length === 0 ? "{}" : `{ ${all.map((entry) => `${entry};`).join(" ")} }`;
     }
     return "object";
   }

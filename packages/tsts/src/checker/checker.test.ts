@@ -345,12 +345,12 @@ test("resolves object literal members", () => {
   const objectMissingProperty = checkSourceFile(parseSourceFile("function f(): void { const o: { port: number } = { }; }"));
 
   assert.strictEqual(satisfiesOk.diagnostics.length, 0);
-  assert.deepStrictEqual(satisfiesBad.diagnostics.map((d) => d.message), ["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
+  assert.deepStrictEqual(satisfiesBad.diagnostics.map((d) => d.message), ["Type '{ port: string; }' is not assignable to type '{ port: number; }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
   assert.strictEqual(propertyOk.diagnostics.length, 0);
   assert.deepStrictEqual(propertyWrongType.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
-  assert.deepStrictEqual(propertyMissing.diagnostics.map((d) => d.message), ["Property 'missing' does not exist on type '{ port: number }'."]);
+  assert.deepStrictEqual(propertyMissing.diagnostics.map((d) => d.message), ["Property 'missing' does not exist on type '{ port: number; }'."]);
   assert.strictEqual(objectAssignable.diagnostics.length, 0);
-  assert.deepStrictEqual(objectMissingProperty.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ port: number }'."]);
+  assert.deepStrictEqual(objectMissingProperty.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ port: number; }'."]);
 });
 
 test("extends object member support", () => {
@@ -369,9 +369,9 @@ test("extends object member support", () => {
   assert.strictEqual(shorthand.diagnostics.length, 0);
   assert.strictEqual(methodSignature.diagnostics.length, 0);
   assert.strictEqual(optionalAbsent.diagnostics.length, 0);
-  assert.deepStrictEqual(requiredAbsent.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ a: number }'."]);
+  assert.deepStrictEqual(requiredAbsent.diagnostics.map((d) => d.message), ["Type '{}' is not assignable to type '{ a: number; }'."]);
   assert.strictEqual(spreadOk.diagnostics.length, 0);
-  assert.deepStrictEqual(spreadMismatch.diagnostics.map((d) => d.message), ["Type '{ a: number }' is not assignable to type '{ a: string }'.\n  Types of property 'a' are incompatible.\n    Type 'number' is not assignable to type 'string'."]);
+  assert.deepStrictEqual(spreadMismatch.diagnostics.map((d) => d.message), ["Type '{ a: number; }' is not assignable to type '{ a: string; }'.\n  Types of property 'a' are incompatible.\n    Type 'number' is not assignable to type 'string'."]);
 });
 
 test("deepens object member typing", () => {
@@ -390,7 +390,7 @@ test("deepens object member typing", () => {
   assert.strictEqual(optionalAccessOk.diagnostics.length, 0);
   assert.strictEqual(methodParamOk.diagnostics.length, 0);
   assert.deepStrictEqual(methodParamMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
-  assert.deepStrictEqual(perPropertyElaboration.diagnostics.map((d) => d.message), ["Type '{ port: string }' is not assignable to type '{ port: number }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
+  assert.deepStrictEqual(perPropertyElaboration.diagnostics.map((d) => d.message), ["Type '{ port: string; }' is not assignable to type '{ port: number; }'.\n  Types of property 'port' are incompatible.\n    Type 'string' is not assignable to type 'number'."]);
 });
 
 test("checks call signature arity", () => {
@@ -437,7 +437,7 @@ test("checks contextual object literals and excess", () => {
   // Contextual typing preserves target-driven literals; excess properties on
   // a FRESH object literal are reported (assignment, return, satisfies,
   // nested); a stored variable is not excess-checked.
-  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number; }'.";
   const contextualLiteral = checkSourceFile(parseSourceFile("function f(): void { const ok: { port: 8080 } = { port: 8080 }; }"));
   const excessAssign = checkSourceFile(parseSourceFile("function f(): void { const bad: { port: number } = { port: 1, host: \"x\" }; }"));
   const storedNoExcess = checkSourceFile(parseSourceFile("function f(): void { const tmp = { port: 1, host: \"x\" }; const ok: { port: number } = tmp; }"));
@@ -457,7 +457,7 @@ test("excess check regularization and empty target", () => {
   // Stored objects regularize recursively (nested freshness stripped), so a
   // stored variable never excess-checks. The broad `{}` target never
   // excess-checks. Call arguments use the same fresh-literal excess rule.
-  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number }'.";
+  const excessMessage = "Object literal may only specify known properties, and 'host' does not exist in type '{ port: number; }'.";
   const storedNested = checkSourceFile(parseSourceFile("function f(): void { const tmp = { server: { port: 1, host: \"x\" } }; const ok: { server: { port: number } } = tmp; }"));
   const emptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: {} = { a: 1 }; }"));
   const nestedEmptyTarget = checkSourceFile(parseSourceFile("function f(): void { const x: { nested: {} } = { nested: { a: 1 } }; }"));
@@ -651,7 +651,7 @@ test("checks object type signatures", () => {
   assert.strictEqual(indexOk.diagnostics.length, 0);
   assert.deepStrictEqual(indexValueMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.strictEqual(indexNumericKeyOk.diagnostics.length, 0);
-  assert.deepStrictEqual(indexBadKey.diagnostics.map((d) => d.message), ["Type 'string' cannot be used to index type '{ [key: number]: string }'."]);
+  assert.deepStrictEqual(indexBadKey.diagnostics.map((d) => d.message), ["Type 'string' cannot be used to index type '{ [key: number]: string; }'."]);
   assert.strictEqual(callOk.diagnostics.length, 0);
   assert.deepStrictEqual(callReturnMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.deepStrictEqual(callArgMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
@@ -839,7 +839,7 @@ test("checks intersection type node members and relations", () => {
   assert.strictEqual(propertyOk.diagnostics.length, 0);
   assert.deepStrictEqual(propertyMismatch.diagnostics.map((d) => d.message), ["Type 'string' is not assignable to type 'number'."]);
   assert.strictEqual(assignOk.diagnostics.length, 0);
-  assert.deepStrictEqual(assignMissing.diagnostics.map((d) => d.message), ["Type '{ a: number }' is not assignable to type '{ a: number } & { b: string }'."]);
+  assert.deepStrictEqual(assignMissing.diagnostics.map((d) => d.message), ["Type '{ a: number; }' is not assignable to type '{ a: number; } & { b: string; }'."]);
 });
 
 test("reports union type node mismatch", () => {
@@ -1177,6 +1177,59 @@ test("displays a `this is T` predicate signature", () => {
   assert.strictEqual(
     typeStringByIdentifier("function f(): this is string { return true; }", "f"),
     "() => this is string",
+  );
+});
+
+// G7 (object/array literal display) — an anonymous object type terminates EVERY
+// member with `;` (including the last), so it renders `{ a: number; b: string; }`
+// (TS-Go typePrinter). An empty type is the bare `{}`. Array/tuple element types
+// render `T[]`. These match the TS-Go `.types` baseline format exactly.
+test("displays a multi-member object literal type with trailing semicolons", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = { x: 1, y: \"a\" }; value;", "value"),
+    "{ x: number; y: string; }",
+  );
+});
+
+test("displays a single-member annotated object type with a trailing semicolon", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { a: number } = { a: 1 }; value;", "value"),
+    "{ a: number; }",
+  );
+});
+
+test("displays an empty object type as a bare {}", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: {} = {}; value;", "value"),
+    "{}",
+  );
+});
+
+test("displays an optional member with a trailing question mark", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { a: number; b?: string } = { a: 1 }; value;", "value"),
+    "{ a: number; b?: string; }",
+  );
+});
+
+test("displays an index signature with a trailing semicolon", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value: { [k: string]: number } = {}; value;", "value"),
+    "{ [k: string]: number; }",
+  );
+});
+
+test("displays an array literal element type as T[]", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = [1, 2, 3]; value;", "value"),
+    "number[]",
+  );
+});
+
+test("displays an empty array literal as never[]", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("const value = []; value;", "value"),
+    "never[]",
   );
 });
 
