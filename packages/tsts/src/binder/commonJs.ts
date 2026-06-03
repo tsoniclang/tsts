@@ -7,10 +7,16 @@ import {
   binaryRight,
   callExpressionArguments,
   callExpressionExpression,
+  elementAccessExpressionOf,
+  elementArgumentExpression,
   getSymbolExports,
   isIdentifier,
   nodeExpression,
+  nodeInitializer,
   nodeName,
+  nodeParent,
+  nodeSymbol,
+  nodeText,
   propertyAccessExpressionOf,
   propertyAccessName,
 } from "../ast/index.js";
@@ -103,15 +109,15 @@ export function getInitializerSymbol(symbol: Symbol | undefined): Symbol | undef
   if (symbol === undefined) return undefined;
   const valueDeclaration = symbol.valueDeclaration;
   if (valueDeclaration === undefined) return symbol;
-  const initializer = field<Node>(valueDeclaration, "initializer");
-  const initializerSymbol = field<Symbol>(initializer, "symbol");
+  const initializer = nodeInitializer(valueDeclaration);
+  const initializerSymbol = initializer === undefined ? undefined : nodeSymbol(initializer);
   return initializerSymbol ?? symbol;
 }
 
 export function getParentOfPropertyAssignment(node: Node): Node | undefined {
   let current: Node | undefined = node;
   while (current !== undefined) {
-    const parent: Node | undefined = field<Node>(current, "parent");
+    const parent: Node | undefined = nodeParent(current);
     if (parent === undefined) return undefined;
     if (parent.kind === Kind.ExpressionStatement || parent.kind === Kind.SourceFile || parent.kind === Kind.Block) return parent;
     current = parent;
@@ -157,8 +163,8 @@ export function isBindableStaticNameExpression(node: Node | undefined): boolean 
     return isBindableStaticNameExpression(propertyAccessExpressionOf(node)) && propertyNameText(propertyAccessName(node)) !== "";
   }
   if (node.kind === Kind.ElementAccessExpression) {
-    const expression = field<Node>(node, "expression");
-    const argument = field<Node>(node, "argumentExpression");
+    const expression = elementAccessExpressionOf(node);
+    const argument = elementArgumentExpression(node);
     return isBindableStaticNameExpression(expression) && literalPropertyName(argument) !== "";
   }
   return false;
@@ -183,8 +189,8 @@ export function getExportsPropertyName(node: Node | undefined): string {
     if (isModuleExportsAccess(expression)) return propertyNameText(propertyAccessName(node));
   }
   if (node.kind === Kind.ElementAccessExpression) {
-    const expression = field<Node>(node, "expression");
-    const argument = field<Node>(node, "argumentExpression");
+    const expression = elementAccessExpressionOf(node);
+    const argument = elementArgumentExpression(node);
     if (isExportsIdentifier(expression) || isModuleExportsAccess(expression)) return literalPropertyName(argument);
   }
   return "";
@@ -227,14 +233,9 @@ export function literalPropertyName(node: Node | undefined): string {
 
 export function propertyNameText(node: Node | undefined): string {
   if (node === undefined) return "";
-  return field<string>(node, "text") ?? "";
+  return nodeText(node);
 }
 
 function isModuleIdentifier(node: Node): boolean {
   return isIdentifier(node) && propertyNameText(node) === "module";
-}
-
-function field<T>(node: Node | undefined, key: string): T | undefined {
-  if (node === undefined) return undefined;
-  return (node as unknown as Record<string, T | undefined>)[key];
 }
