@@ -15,19 +15,22 @@
 import type { FormattingContext } from "./context.js";
 import type { FormatCodeSettings } from "./api.js";
 import { type Tristate, tristateIsTrue, tristateIsTrueOrUnknown } from "../core/tristate.js";
-import { Kind } from "../ast/index.js";
+import { Kind, nodeParent } from "../ast/index.js";
 
+// Field reads mirroring TS-Go's `context.contextNode.Kind`,
+// `context.currentTokenSpan.Kind`, etc. (rulecontext.go), via the public
+// accessors on FormattingContext.
 function ctxParentKind(ctx: FormattingContext): number {
-  return ((ctx as unknown as { contextNode?: { kind?: number } }).contextNode?.kind) ?? 0;
+  return ctx.contextNode?.kind ?? 0;
 }
 function ctxCurrentTokenKind(ctx: FormattingContext): number {
-  return ((ctx as unknown as { currentTokenSpan?: { kind?: number } }).currentTokenSpan?.kind) ?? 0;
+  return ctx.currentTokenSpan?.kind ?? 0;
 }
 function ctxNextTokenKind(ctx: FormattingContext): number {
-  return ((ctx as unknown as { nextTokenSpan?: { kind?: number } }).nextTokenSpan?.kind) ?? 0;
+  return ctx.nextTokenSpan?.kind ?? 0;
 }
 function ctxNextTokenParentKind(ctx: FormattingContext): number {
-  return ((ctx as unknown as { nextTokenParent?: { kind?: number } }).nextTokenParent?.kind) ?? 0;
+  return ctx.nextTokenParent?.kind ?? 0;
 }
 
 export type ContextPredicate = (ctx: FormattingContext) => boolean;
@@ -45,7 +48,7 @@ export type AnyOptionSelector<T> = (options: FormatCodeSettings) => T | undefine
 // Option selectors
 // ---------------------------------------------------------------------------
 
-export const semicolonOption: AnyOptionSelector<unknown> = (o) => (o as unknown as { semicolons?: unknown }).semicolons;
+export const semicolonOption: AnyOptionSelector<FormatCodeSettings["semicolons"]> = (o) => o.semicolons;
 
 export const insertSpaceAfterCommaDelimiterOption: OptionSelector = (o) => o.insertSpaceAfterCommaDelimiter;
 export const insertSpaceAfterSemicolonInForStatementsOption: OptionSelector = (o) => o.insertSpaceAfterSemicolonInForStatements;
@@ -134,27 +137,64 @@ export const isSameLineTokenOrBeforeBlockContext: ContextPredicate = (ctx) =>
 
 export const isBraceWrappedContext: ContextPredicate = (ctx) => {
   const kind = ctxParentKind(ctx);
-  return kind === Kind.Block || kind === Kind.ObjectLiteralExpression || kind === Kind.ObjectBindingPattern || kind === Kind.TypeLiteral || kind === Kind.MappedType || kind === Kind.EnumDeclaration;
+  return kind === Kind.ObjectBindingPattern ||
+    kind === Kind.MappedType ||
+    isSingleLineBlockContext(ctx);
 };
 
+// This check is done before an open brace in a control construct, a function, or a typescript block declaration
 export const isBeforeMultilineBlockContext: ContextPredicate = (ctx) =>
-  isBeforeBlockContext(ctx) && !ctx.tokensAreOnSameLine();
+  isBeforeBlockContext(ctx) && !(ctx.nextNodeAllOnSameLine() || ctx.nextNodeBlockIsOnOneLine());
 
 export const isMultilineBlockContext: ContextPredicate = (ctx) =>
-  isBlockContext(ctx) && !ctx.tokensAreOnSameLine();
+  isBlockContext(ctx) && !(ctx.contextNodeAllOnSameLine() || ctx.contextNodeBlockIsOnOneLine());
 
 export const isSingleLineBlockContext: ContextPredicate = (ctx) =>
-  isBlockContext(ctx) && ctx.tokensAreOnSameLine();
+  isBlockContext(ctx) && (ctx.contextNodeAllOnSameLine() || ctx.contextNodeBlockIsOnOneLine());
 
 function isBlockContext(ctx: FormattingContext): boolean {
-  const kind = ctxParentKind(ctx);
-  return kind === Kind.Block || kind === Kind.ModuleBlock || kind === Kind.CaseBlock;
+  return nodeIsBlockContext(ctxParentKind(ctx));
 }
 
 export function isBeforeBlockContext(ctx: FormattingContext): boolean {
-  const next = ctxNextTokenKind(ctx);
-  return next === Kind.OpenBraceToken;
+  return nodeIsBlockContext(ctxNextTokenParentKind(ctx));
 }
+
+// IMPORTANT!!! This method must return true ONLY for nodes with open and close braces as immediate children
+function nodeIsBlockContext(kind: number): boolean {
+  if (nodeIsTypeScriptDeclWithBlockContext(kind)) {
+    // This means we are in a context that looks like a block to the user, but in the grammar is actually not a node (it's a class, module, enum, object type literal, etc).
+    return true;
+  }
+  switch (kind) {
+    case Kind.Block:
+    case Kind.CaseBlock:
+    case Kind.ObjectLiteralExpression:
+    case Kind.ModuleBlock:
+      return true;
+  }
+  return false;
+}
+
+function nodeIsTypeScriptDeclWithBlockContext(kind: number): boolean {
+  switch (kind) {
+    case Kind.ClassDeclaration:
+    case Kind.ClassExpression:
+    case Kind.InterfaceDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.TypeLiteral:
+    case Kind.ModuleDeclaration:
+    case Kind.ExportDeclaration:
+    case Kind.NamedExports:
+    case Kind.ImportDeclaration:
+    case Kind.NamedImports:
+      return true;
+  }
+  return false;
+}
+
+export const isTypeScriptDeclWithBlockContext: ContextPredicate = (ctx) =>
+  nodeIsTypeScriptDeclWithBlockContext(ctxParentKind(ctx));
 
 export const isStatementOrDeclarationContext: ContextPredicate = (ctx) => {
   const k = ctxParentKind(ctx);
@@ -182,7 +222,26 @@ export const isUnaryContext: ContextPredicate = (ctx) => {
 // Misc predicate exports — each follows the same TS-Go-mirror shape
 // ---------------------------------------------------------------------------
 
-export const isAfterCodeBlockContext: ContextPredicate = (ctx) => isBlockContext(ctx);
+export const isAfterCodeBlockContext: ContextPredicate = (ctx) => {
+  const currentTokenParent = ctx.currentTokenParent;
+  switch (currentTokenParent?.kind) {
+    case Kind.ClassDeclaration:
+    case Kind.ModuleDeclaration:
+    case Kind.EnumDeclaration:
+    case Kind.CatchClause:
+    case Kind.ModuleBlock:
+    case Kind.SwitchStatement:
+      return true;
+    case Kind.Block: {
+      const blockParent = nodeParent(currentTokenParent);
+      // In a codefix scenario, we can't rely on parents being set. So just always return true.
+      if (blockParent === undefined || (blockParent.kind !== Kind.ArrowFunction && blockParent.kind !== Kind.FunctionExpression)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 export const isControlDeclContext: ContextPredicate = (ctx) => {
   const kind = ctxParentKind(ctx);
   return kind === Kind.IfStatement || kind === Kind.ForStatement || kind === Kind.ForInStatement || kind === Kind.ForOfStatement || kind === Kind.WhileStatement || kind === Kind.DoStatement || kind === Kind.SwitchStatement || kind === Kind.WithStatement;
@@ -240,14 +299,6 @@ export const isArrowFunctionContext: ContextPredicate = (ctx) => ctxParentKind(c
 export const isImportTypeContext: ContextPredicate = (ctx) => ctxParentKind(ctx) === Kind.ImportType;
 export const isNonJsxTextContext: ContextPredicate = (ctx) => ctxParentKind(ctx) !== Kind.JsxText;
 export const isNotFunctionDeclContext: ContextPredicate = (ctx) => !isFunctionDeclContext(ctx);
-export const isTypeScriptDeclWithBlockContext: ContextPredicate = (ctx) => {
-  const k = ctxParentKind(ctx);
-  return k === Kind.ClassDeclaration || k === Kind.ClassExpression
-    || k === Kind.InterfaceDeclaration || k === Kind.EnumDeclaration
-    || k === Kind.TypeLiteral || k === Kind.ModuleDeclaration
-    || k === Kind.ExportDeclaration || k === Kind.NamedExports
-    || k === Kind.ImportDeclaration || k === Kind.NamedImports;
-};
 
 // "Same-line" tests rely on context.tokensAreOnSameLine etc., already
 // provided as instance methods on FormattingContext.
