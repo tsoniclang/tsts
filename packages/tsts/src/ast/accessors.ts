@@ -76,6 +76,7 @@ export function nodeText(node: AstNode | undefined): string {
   return typeof t === "string" ? t : "";
 }
 export function nodeName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "name"); }
+export function tagName(node: AstNode | undefined): AstNode | undefined { return f<AstNode>(node, "tagName"); }
 // Binder-set slot readers (LocalsContainerBase.locals / DeclarationBase.symbol).
 // The polymorphic `f` bridge is the sanctioned accessor-layer cast; callers
 // (e.g. the name resolver) read typed values without any cast of their own.

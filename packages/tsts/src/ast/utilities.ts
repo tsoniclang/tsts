@@ -82,7 +82,7 @@ import {
 // `isStringOrNumericLiteralLike` (utilities.go:331 IsStringOrNumericLiteralLike)
 // and `isExternalModule` (utilities.go:1626 IsExternalModule) live in
 // accessors.ts as the single owners; imported here for faithful reuse.
-import { isExternalModule, isStringOrNumericLiteralLike } from "./accessors.js";
+import { isExternalModule, isStringOrNumericLiteralLike, nodeName, tagName } from "./accessors.js";
 
 function sameReference(left: unknown, right: unknown): boolean {
   return left === right;
@@ -1138,7 +1138,7 @@ export function isIdentifierName(node: Node): boolean {
     case Kind.EnumMember:
     case Kind.PropertyAssignment:
     case Kind.PropertyAccessExpression:
-      return (parent as unknown as { name?: Node }).name === node;
+      return nodeName(parent) === node;
     case Kind.QualifiedName:
       return (parent as QualifiedName).right === node;
     case Kind.BindingElement:
@@ -1299,8 +1299,9 @@ export function isClassLike(node: Node): boolean {
 
 // IsPrivateIdentifierClassElementDeclaration (utilities.go:562).
 export function isPrivateIdentifierClassElementDeclaration(node: Node): boolean {
-  return (isPropertyDeclaration(node) || isMethodOrAccessor(node))
-    && isPrivateIdentifier((node as unknown as { name: Node }).name);
+  if (!(isPropertyDeclaration(node) || isMethodOrAccessor(node))) return false;
+  const name = nodeName(node);
+  return name !== undefined && isPrivateIdentifier(name);
 }
 
 // IsObjectLiteralMethod (utilities.go:600).
@@ -1471,7 +1472,7 @@ export function isJsxTagName(node: Node): boolean {
     case Kind.JsxOpeningElement:
     case Kind.JsxClosingElement:
     case Kind.JsxSelfClosingElement:
-      return (parent as unknown as { tagName: Node }).tagName === node;
+      return tagName(parent) === node;
   }
   return false;
 }
