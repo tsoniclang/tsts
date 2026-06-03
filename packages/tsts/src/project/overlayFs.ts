@@ -1,5 +1,5 @@
 import { SnapshotFS, type FileHandle } from "./snapshotFs.js";
-import { newFileChangeSummary, type FileChange, type FileChangeSummary } from "./fileChange.js";
+import { FileChangeKind, isWatchKind, newFileChangeSummary, type FileChange, type FileChangeSummary } from "./fileChange.js";
 
 export interface Overlay {
   readonly fileName: string;
@@ -143,7 +143,7 @@ export class OverlayFS {
         result.includesWatchChangeOutsideNodeModules = true;
       }
       switch (change.kind) {
-        case "open":
+        case FileChangeKind.Open:
           events.closeChange = undefined;
           events.openChange = change;
           events.watchChanged = false;
@@ -152,22 +152,22 @@ export class OverlayFS {
           events.created = false;
           events.deleted = false;
           break;
-        case "close":
+        case FileChangeKind.Close:
           events.closeChange = change;
           events.changes = [];
           events.saved = false;
           events.watchChanged = false;
           break;
-        case "change":
+        case FileChangeKind.Change:
           if (events.closeChange !== undefined) throw new Error("changes after close are not a valid overlay event sequence");
           events.changes.push(change);
           events.saved = false;
           events.watchChanged = false;
           break;
-        case "save":
+        case FileChangeKind.Save:
           events.saved = true;
           break;
-        case "watch-create":
+        case FileChangeKind.WatchCreate:
           if (events.deleted) {
             events.deleted = false;
             events.watchChanged = true;
@@ -175,13 +175,13 @@ export class OverlayFS {
             events.created = true;
           }
           break;
-        case "watch-change":
+        case FileChangeKind.WatchChange:
           if (!events.created) {
             events.watchChanged = true;
             events.saved = false;
           }
           break;
-        case "watch-delete":
+        case FileChangeKind.WatchDelete:
           events.watchChanged = false;
           events.saved = false;
           if (events.created) events.created = false;
@@ -316,10 +316,6 @@ function hashString(text: string): string {
     hash = Math.imul(hash, 0x01000193);
   }
   return (hash >>> 0).toString(16).padStart(8, "0");
-}
-
-function isWatchKind(kind: FileChange["kind"]): boolean {
-  return kind === "watch-create" || kind === "watch-change" || kind === "watch-delete";
 }
 
 function contentAfterChange(current: string, change: FileChange): string {
