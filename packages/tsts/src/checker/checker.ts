@@ -26,6 +26,7 @@ import {
   isClassDeclaration,
   isInterfaceDeclaration,
   isEnumDeclaration,
+  isEnumMember,
   nodeParent,
   nodeSymbol,
   type Node as AstNode,
@@ -150,8 +151,29 @@ export class Checker {
       const declaredType = symbol === undefined ? undefined : getDeclaredTypeOfSymbolForName(symbol, this.state);
       if (declaredType !== undefined) return declaredType;
     }
+    // A declaration NAME that is NOT in scope as a bare value name (e.g. an enum
+    // member name `A`) resolves via the PARENT declaration's own binder symbol,
+    // not name resolution. Mirrors TS-Go getTypeOfNode's
+    // IsDeclarationNameOrImportPropertyName branch (checker.go:31694), which
+    // calls getSymbolAtLocation → getTypeOfSymbol on the declaration symbol. We
+    // scope this to enum members (the lexically-unreachable value-declaration
+    // case that the expression/name-resolution arms below cannot reach).
+    const enumMemberType = this.enumMemberDeclarationNameType(node);
+    if (enumMemberType !== undefined) return enumMemberType;
     if (isExpression(node)) return inferExpression(node, this.state);
     const symbol = this.getSymbolAtLocation(node);
+    return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
+  }
+
+  // The type of an enum-member declaration NAME identifier (`A` in `enum E { A }`):
+  // the member's fresh enum-literal type (`E.A`), read from the member's binder
+  // symbol via getTypeOfSymbol. Returns undefined for any other node.
+  private enumMemberDeclarationNameType(node: AstNode): Type | undefined {
+    if (!isIdentifier(node)) return undefined;
+    const parent = nodeParent(node);
+    if (parent === undefined || !isEnumMember(parent)) return undefined;
+    if ((parent as { readonly name?: AstNode }).name !== node) return undefined;
+    const symbol = nodeSymbol(parent);
     return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
   }
 

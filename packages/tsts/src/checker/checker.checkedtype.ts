@@ -17,6 +17,7 @@ import {
   hasModifier,
   isArrayTypeNode,
   isBigIntLiteral,
+  isBinaryExpression,
   isBindingElement,
   isCallSignatureDeclaration,
   isClassDeclaration,
@@ -25,6 +26,8 @@ import {
   isConstructorDeclaration,
   isFunctionTypeNode,
   isConstructSignatureDeclaration,
+  isEnumDeclaration,
+  isEnumMember,
   isFunctionDeclaration,
   isGetAccessorDeclaration,
   isIdentifier,
@@ -39,6 +42,7 @@ import {
   isObjectBindingPattern,
   isArrayBindingPattern,
   isParameterDeclaration,
+  isParenthesizedExpression,
   isParenthesizedTypeNode,
   isPrefixUnaryExpression,
   isPropertyAccessExpression,
@@ -58,6 +62,7 @@ import {
   isTypeParameterDeclaration,
   isUnionTypeNode,
   isVariableDeclaration,
+  type BinaryExpression,
   type BindingElement,
   type ClassDeclaration,
   type ClassElement,
@@ -1114,17 +1119,166 @@ function reportCyclicTypeAlias(symbol: AstSymbol, state: CheckState): void {
   }
 }
 
-// getDeclaredTypeOfEnum (checker.go) — the type-side of an enum symbol. TS-Go
-// models this as an `EnumLike` type that displays as the bare enum name (e.g.
-// `E`), distinct from the enum VALUE type (the enum object, displayed as
-// `typeof E`). Enum-MEMBER literal typing (`E.A`) is a later slice; the declared
-// type here is the nominal enum type carrying the enum symbol for display.
+// getDeclaredTypeOfEnum (checker.go:23738) — the type-side of an enum symbol.
+// TS-Go's declared type is the UNION of the members' fresh enum-literal types,
+// but it displays as the bare enum name (`E`) via the enum symbol. As a side
+// effect of resolving the enum, the loop also assigns each MEMBER symbol its
+// fresh enum-literal declared type (so a member reference / declaration name
+// resolves to `E.A`). We keep the enum's own declared type as the nominal
+// `{ Enum, aliasSymbol }` (it already displays as `E`) and only add the
+// member-typing side effect; the display path renders `E.A` for a member
+// enum-literal type via its enum-member symbol (nodebuilderimpl.go:3205).
 function getDeclaredTypeOfEnum(symbol: AstSymbol, state: CheckState): Type {
   const cached = state.declaredTypeResolutions.get(symbol);
   if (cached !== undefined) return cached;
   const type: Type = { flags: TypeFlags.Enum, id: state.nextTypeId(), aliasSymbol: symbol };
   state.declaredTypeResolutions.set(symbol, type);
+  // Populate each member symbol's declared type (E.A, E.B, …). Auto-incremented
+  // members carry forward the previous member's numeric value + 1 (TS-Go
+  // computeEnumMemberValue), and a non-constant value collapses the member to
+  // the enum type itself. A single value→type cache is shared across an enum's
+  // (possibly merged) declarations, mirroring TS-Go's per-enum getEnumLiteralType.
+  const byValue = new Map<string, Type>();
+  for (const declaration of symbol.declarations ?? []) {
+    if (!isEnumDeclaration(declaration)) continue;
+    populateEnumMemberDeclaredTypes(declaration, type, byValue, state);
+  }
   return type;
+}
+
+// Assign each enum member symbol a FRESH enum-literal declared type carrying the
+// member symbol (so display renders `E.A`). Mirrors TS-Go's getDeclaredTypeOfEnum
+// member loop + getEnumLiteralType value caching: members sharing a value share a
+// type (so `B` after a NaN-valued `A` displays as `E.A`).
+function populateEnumMemberDeclaredTypes(declaration: AstNode, enumType: Type, byValue: Map<string, Type>, state: CheckState): void {
+  const members = (declaration as { readonly members?: readonly AstNode[] }).members ?? [];
+  let autoValue: number | undefined = 0;
+  for (const member of members) {
+    if (!isEnumMember(member)) continue;
+    const memberSymbol = nodeSymbol(member);
+    if (memberSymbol === undefined) continue;
+    const value = computeEnumMemberConstantValue(member, autoValue);
+    const memberType = enumMemberLiteralType(memberSymbol, value, enumType, byValue, state);
+    state.declaredTypeResolutions.set(memberSymbol, memberType);
+    autoValue = typeof value === "number" ? value + 1 : undefined;
+  }
+}
+
+// The constant value of an enum member: its initializer when present (a literal
+// or constant expression), otherwise the carried auto-increment value. A
+// non-constant initializer yields `undefined` (a computed member).
+function computeEnumMemberConstantValue(member: AstNode, autoValue: number | undefined): string | number | undefined {
+  const initializer = (member as { readonly initializer?: Expression }).initializer;
+  if (initializer === undefined) return autoValue;
+  return evaluateConstantEnumExpression(initializer);
+}
+
+// Evaluate a constant enum-member initializer to its number/string value
+// (mirrors TS-Go's evaluator: literals, the `NaN`/`Infinity` globals, and
+// arithmetic over them — non-finite results like NaN/Infinity are still values).
+// Returns undefined for a genuinely non-constant expression.
+function evaluateConstantEnumExpression(node: Expression): string | number | undefined {
+  if (isNumericLiteral(node)) {
+    const value = Number((node as { readonly text: string }).text);
+    return Number.isNaN(value) ? undefined : value;
+  }
+  if (isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node)) {
+    return (node as { readonly text: string }).text;
+  }
+  if (isIdentifier(node)) {
+    if (node.text === "NaN") return NaN;
+    if (node.text === "Infinity") return Infinity;
+    return undefined;
+  }
+  if (isPrefixUnaryExpression(node)) {
+    const operand = evaluateConstantEnumExpression(node.operand);
+    if (typeof operand !== "number") return undefined;
+    if (node.operator === Kind.MinusToken) return -operand;
+    if (node.operator === Kind.PlusToken) return operand;
+    if (node.operator === Kind.TildeToken) return ~operand;
+    return undefined;
+  }
+  if (isBinaryExpression(node)) {
+    return evaluateBinaryConstantEnumExpression(node);
+  }
+  if (isParenthesizedExpression(node)) {
+    return evaluateConstantEnumExpression(node.expression);
+  }
+  return undefined;
+}
+
+function evaluateBinaryConstantEnumExpression(node: BinaryExpression): string | number | undefined {
+  const left = evaluateConstantEnumExpression(node.left);
+  const right = evaluateConstantEnumExpression(node.right);
+  const operator = node.operatorToken.kind;
+  if (operator === Kind.PlusToken && typeof left === "string" && typeof right === "string") return left + right;
+  if (typeof left !== "number" || typeof right !== "number") return undefined;
+  switch (operator) {
+    case Kind.PlusToken: return left + right;
+    case Kind.MinusToken: return left - right;
+    case Kind.AsteriskToken: return left * right;
+    case Kind.SlashToken: return left / right;
+    case Kind.PercentToken: return left % right;
+    case Kind.AsteriskAsteriskToken: return left ** right;
+    case Kind.LessThanLessThanToken: return left << right;
+    case Kind.GreaterThanGreaterThanToken: return left >> right;
+    case Kind.GreaterThanGreaterThanGreaterThanToken: return left >>> right;
+    case Kind.BarToken: return left | right;
+    case Kind.AmpersandToken: return left & right;
+    case Kind.CaretToken: return left ^ right;
+    default: return undefined;
+  }
+}
+
+// A FRESH enum-literal type for a member. For a non-constant (computed) member,
+// TS-Go collapses to the enum type itself (so the member displays as the enum
+// name); for a constant member it is keyed by (enumSymbol, value) so members
+// sharing a value share one type. The member symbol is recorded on the type so
+// the display path renders `EnumName.MemberName`.
+function enumMemberLiteralType(
+  memberSymbol: AstSymbol,
+  value: string | number | undefined,
+  enumType: Type,
+  byValue: Map<string, Type>,
+  state: CheckState,
+): Type {
+  if (value === undefined) return enumType;
+  const key = `${typeof value}:${value}`;
+  const cached = byValue.get(key);
+  if (cached !== undefined) return cached;
+  const literalFlags = typeof value === "number" ? TypeFlags.NumberLiteral : TypeFlags.StringLiteral;
+  const type: Type = {
+    flags: TypeFlags.EnumLiteral | literalFlags,
+    id: state.nextTypeId(),
+    symbol: memberSymbol,
+    data: { value },
+  };
+  byValue.set(key, type);
+  return type;
+}
+
+// getTypeOfEnumMember (checker.go:18364) — an enum member symbol used as a value
+// (or its declaration name). Resolving the parent enum's declared type assigns
+// every member symbol its fresh enum-literal type as a side effect; this reads
+// it back. Falls back to the enum type if the parent can't be resolved.
+function getTypeOfEnumMember(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const cached = state.declaredTypeResolutions.get(symbol);
+  if (cached !== undefined) return cached;
+  const enumSymbol = enumSymbolOfMember(symbol);
+  if (enumSymbol === undefined) return undefined;
+  getDeclaredTypeOfEnum(enumSymbol, state);
+  return state.declaredTypeResolutions.get(symbol);
+}
+
+// The owning enum symbol of an enum-member symbol: the binder sets symbol.parent,
+// but fall back to the member declaration's parent enum.
+function enumSymbolOfMember(symbol: AstSymbol): AstSymbol | undefined {
+  if (symbol.parent !== undefined && ((symbol.parent.flags ?? 0) & SymbolFlags.Enum) !== 0) {
+    return symbol.parent;
+  }
+  const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
+  const parent = declaration === undefined ? undefined : nodeParent(declaration);
+  return parent !== undefined && isEnumDeclaration(parent) ? nodeSymbol(parent) : undefined;
 }
 
 function getDeclaredTypeOfClassOrInterface(
@@ -1669,6 +1823,12 @@ function getTypeOfBinderSymbol(symbol: AstSymbol, state: CheckState): Type | und
   if ((flags & (SymbolFlags.Function | SymbolFlags.Method | SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module)) !== 0) {
     return getTypeOfFuncClassEnumModule(symbol, state);
   }
+  // An enum MEMBER symbol resolves to its fresh enum-literal type (e.g. `E.A`),
+  // populated as a side effect of resolving the parent enum's declared type
+  // (getTypeOfEnumMember → getDeclaredTypeOfEnum). Mirrors checker.go:16376.
+  if ((flags & SymbolFlags.EnumMember) !== 0) {
+    return getTypeOfEnumMember(symbol, state);
+  }
   if ((flags & SymbolFlags.Alias) !== 0) {
     return getTypeOfAlias(symbol, state);
   }
@@ -1911,6 +2071,13 @@ export function displayType(type: Type): string {
   if (type.typeofSymbol !== undefined) return `typeof ${declarationName(type.typeofSymbol)}`;
   // An enum's DECLARED type renders as the bare enum name, e.g. `E`.
   if ((type.flags & TypeFlags.EnumLike) !== 0 && type.aliasSymbol !== undefined) return declarationName(type.aliasSymbol);
+  // An enum-LITERAL member type renders as `EnumName.MemberName` (TS-Go
+  // nodebuilderimpl.go:3205). Its `symbol` is the enum-member symbol; its owning
+  // enum is the symbol's parent (or the member declaration's parent enum).
+  if ((type.flags & TypeFlags.EnumLiteral) !== 0 && type.symbol !== undefined && ((type.symbol.flags ?? 0) & SymbolFlags.EnumMember) !== 0) {
+    const enumSymbol = enumSymbolOfMember(type.symbol);
+    if (enumSymbol !== undefined) return `${declarationName(enumSymbol)}.${declarationName(type.symbol)}`;
+  }
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(String((type.data as LiteralType).value));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);

@@ -161,6 +161,13 @@ export function inferExpression(expression: Expression, state: CheckState, conte
     if (expression.text === "undefined") {
       return undefinedType;
     }
+    // `NaN` / `Infinity` are global numeric value constants (lib.es5 `declare
+    // const NaN: number`); TS-Go resolves them to `number`. With no global
+    // symbol table, model the unbound globals as `number` — only reached when
+    // no local binding shadows them (getResolvedSymbol returned undefined).
+    if (expression.text === "NaN" || expression.text === "Infinity") {
+      return numberType;
+    }
     return unresolvedType;
   }
   if (isParenthesizedExpression(expression)) {
