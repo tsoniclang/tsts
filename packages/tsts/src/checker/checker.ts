@@ -23,6 +23,10 @@ import {
   isExpression,
   isIdentifier,
   isTypeNode,
+  isClassDeclaration,
+  isInterfaceDeclaration,
+  isEnumDeclaration,
+  nodeParent,
   nodeSymbol,
   type Node as AstNode,
   type SourceFile,
@@ -52,6 +56,7 @@ import {
   undefinedType,
   unknownType,
   voidType,
+  getDeclaredTypeOfSymbolForName,
   type CheckResult,
   type CheckState,
   newCheckState,
@@ -133,6 +138,18 @@ export class Checker {
 
   getTypeAtLocation(node: AstNode): Type | undefined {
     if (isTypeNode(node)) return typeFromTypeNode(node, this.state);
+    // A type-declaration NAME (class/interface/enum) resolves to the DECLARED
+    // type — the class name displays as the instance type `C`, the enum name as
+    // the enum type `E`, distinct from a value reference which yields the value
+    // type (`typeof C`). Mirrors TS-Go getTypeOfNode's IsTypeDeclarationName
+    // branch, which precedes the expression-node branch (a declaration name is
+    // not an expression node in TS-Go, whereas our `isExpression` is looser, so
+    // this check must come first).
+    if (isTypeDeclarationName(node)) {
+      const symbol = this.getSymbolAtLocation(node);
+      const declaredType = symbol === undefined ? undefined : getDeclaredTypeOfSymbolForName(symbol, this.state);
+      if (declaredType !== undefined) return declaredType;
+    }
     if (isExpression(node)) return inferExpression(node, this.state);
     const symbol = this.getSymbolAtLocation(node);
     return symbol === undefined ? undefined : getTypeOfSymbol(symbol);
@@ -321,6 +338,25 @@ export function newChecker(program?: Program): Checker {
 
 export function checkSourceFile(sourceFile: SourceFile): CheckResult {
   return new Checker().checkSourceFile(sourceFile);
+}
+
+// The name identifier of a type-bearing declaration (class/interface/enum) — the
+// G3 subset of TS-Go's IsTypeDeclarationName. The name resolves to the declared
+// type (`C` / `E`). A namespace/module declaration is intentionally excluded (it
+// has no declared type, so its name resolves through the value path to
+// `typeof N`); type-alias / type-parameter name display is a separate slice.
+function isTypeDeclarationName(node: AstNode): boolean {
+  if (!isIdentifier(node)) return false;
+  const parent = nodeParent(node);
+  if (parent === undefined) return false;
+  if (
+    !isClassDeclaration(parent)
+    && !isInterfaceDeclaration(parent)
+    && !isEnumDeclaration(parent)
+  ) {
+    return false;
+  }
+  return (parent as { readonly name?: AstNode }).name === node;
 }
 
 export function isPrimitiveTypeName(name: string): boolean {

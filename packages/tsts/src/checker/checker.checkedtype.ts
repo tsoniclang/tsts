@@ -1011,6 +1011,9 @@ function getDeclaredTypeOfTypeSymbol(symbol: AstSymbol, typeArguments: readonly 
   if ((flags & (SymbolFlags.Interface | SymbolFlags.Class)) !== 0) {
     return getDeclaredTypeOfClassOrInterface(symbol, typeArguments, state);
   }
+  if ((flags & SymbolFlags.Enum) !== 0) {
+    return getDeclaredTypeOfEnum(symbol, state);
+  }
   if ((flags & SymbolFlags.TypeParameter) !== 0) {
     return lookupTypeParameterSubstitution(symbol, state) ?? makeTypeParameterType(symbol, state);
   }
@@ -1019,6 +1022,22 @@ function getDeclaredTypeOfTypeSymbol(symbol: AstSymbol, typeArguments: readonly 
   }
   state.diagnostics.push({ message: `Symbol '${declarationName(symbol)}' does not refer to a type.` });
   return unresolvedType;
+}
+
+// getDeclaredTypeOfSymbol (checker.go) — the TYPE-side of a symbol, used by the
+// type-writer walker for a type-declaration NAME node. Mirrors TS-Go
+// getTypeOfNode's IsTypeDeclarationName branch: the class name displays as the
+// instance type `C`, the enum name as the enum type `E` — distinct from a value
+// reference which displays `typeof C`. Scoped to class/interface/enum (the G3
+// leaf); type-alias and type-parameter name display is a separate slice, so those
+// keep their existing path. Returns undefined for a symbol with no type-side
+// meaning here so the caller falls back to the value type.
+export function getDeclaredTypeOfSymbolForName(symbol: AstSymbol, state: CheckState): Type | undefined {
+  const flags = symbol.flags ?? 0;
+  if ((flags & (SymbolFlags.Interface | SymbolFlags.Class | SymbolFlags.Enum)) === 0) {
+    return undefined;
+  }
+  return getDeclaredTypeOfTypeSymbol(symbol, undefined, state);
 }
 
 // Resolve an alias declaration to its target type, with cycle protection and
@@ -1093,6 +1112,19 @@ function reportCyclicTypeAlias(symbol: AstSymbol, state: CheckState): void {
     state.reportedCyclicTypeAliases.add(symbol);
     state.diagnostics.push({ message: `Type alias '${declarationName(symbol)}' circularly references itself.` });
   }
+}
+
+// getDeclaredTypeOfEnum (checker.go) — the type-side of an enum symbol. TS-Go
+// models this as an `EnumLike` type that displays as the bare enum name (e.g.
+// `E`), distinct from the enum VALUE type (the enum object, displayed as
+// `typeof E`). Enum-MEMBER literal typing (`E.A`) is a later slice; the declared
+// type here is the nominal enum type carrying the enum symbol for display.
+function getDeclaredTypeOfEnum(symbol: AstSymbol, state: CheckState): Type {
+  const cached = state.declaredTypeResolutions.get(symbol);
+  if (cached !== undefined) return cached;
+  const type: Type = { flags: TypeFlags.Enum, id: state.nextTypeId(), aliasSymbol: symbol };
+  state.declaredTypeResolutions.set(symbol, type);
+  return type;
 }
 
 function getDeclaredTypeOfClassOrInterface(
@@ -1766,7 +1798,38 @@ function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Typ
       collectTypeMembers(classMembers, staticProperties, state, isStaticClassMember);
     }
     const parameters = constructor === undefined ? [] : functionParametersFromNode(constructor.parameters, state);
-    return makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
+    const constructorType = makeObjectType(staticProperties, state, false, { constructSignatures: [makeCallSignature(instanceType, parameters)] });
+    // The class VALUE (its constructor) displays as `typeof C`, distinct from the
+    // class INSTANCE type `C` (the declared type) — TS-Go renders the static side
+    // with the QueryKeyword (nodebuilderimpl.go shouldWriteTypeOfFunctionSymbol).
+    constructorType.typeofSymbol = symbol;
+    return constructorType;
+  }
+  if ((flags & SymbolFlags.Enum) !== 0) {
+    // The enum VALUE (the enum object) displays as `typeof E`. Enum-MEMBER typing
+    // (the `A: E.A` static properties) is a later slice, so member access on the
+    // enum object must stay permissive — a string index signature returning the
+    // enum declared type lets `E.A` resolve to `E` (matching TS-Go's member-access
+    // result) without a spurious "property does not exist" error. The index info
+    // is never displayed: the type renders as `typeof E` via typeofSymbol.
+    const enumDeclaredType = getDeclaredTypeOfEnum(symbol, state);
+    const enumValueType = makeObjectType([], state, false, {
+      indexInfos: [{ keyType: stringType, valueType: enumDeclaredType }],
+    });
+    enumValueType.typeofSymbol = symbol;
+    return enumValueType;
+  }
+  if ((flags & SymbolFlags.Module) !== 0) {
+    // A namespace/module value has no instance type; its value displays as
+    // `typeof N`. Namespace-MEMBER typing is a later slice, so member access stays
+    // permissive via a string index signature returning `any` (the prior value
+    // model), letting `N.x` resolve without a spurious error. The index info is
+    // never displayed: the type renders as `typeof N` via typeofSymbol.
+    const moduleValueType = makeObjectType([], state, false, {
+      indexInfos: [{ keyType: stringType, valueType: anyType }],
+    });
+    moduleValueType.typeofSymbol = symbol;
+    return moduleValueType;
   }
   void state;
   return anyType;
@@ -1843,6 +1906,11 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Intersection) !== 0) {
     return (unionConstituents(type) ?? []).map(displayType).join(" & ");
   }
+  // The value-side ("typeof X") of a named class/enum/namespace/function symbol
+  // renders with the QueryKeyword, e.g. `typeof E` (TS-Go nodebuilderimpl.go).
+  if (type.typeofSymbol !== undefined) return `typeof ${declarationName(type.typeofSymbol)}`;
+  // An enum's DECLARED type renders as the bare enum name, e.g. `E`.
+  if ((type.flags & TypeFlags.EnumLike) !== 0 && type.aliasSymbol !== undefined) return declarationName(type.aliasSymbol);
   if ((type.flags & TypeFlags.StringLiteral) !== 0) return quoteStringLiteral(String((type.data as LiteralType).value));
   if ((type.flags & TypeFlags.NumberLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);

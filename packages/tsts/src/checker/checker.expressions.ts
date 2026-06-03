@@ -1821,6 +1821,13 @@ export function inferPropertyAccess(expression: Expression, propertyName: string
     // An optional property's access type includes `undefined`.
     return isOptionalSymbol(propertySymbol) ? getUnionType([propertyType, undefinedType], state) : propertyType;
   }
+  // A dotted property access on a type with a STRING index signature resolves to
+  // that signature's value type (TS-Go getPropertyTypeForIndexType): `obj.x` is
+  // equivalent to `obj["x"]`. Without this the access would wrongly error.
+  const stringIndexInfo = (getIndexInfos(receiverType) ?? []).find((info) => isStringType(info.keyType));
+  if (stringIndexInfo !== undefined) {
+    return stringIndexInfo.valueType;
+  }
   if (!isAnyType(receiverType) && !isFunctionType(receiverType)) {
     state.diagnostics.push({
       message: `Property '${propertyName}' does not exist on type '${displayType(receiverType)}'.`,
