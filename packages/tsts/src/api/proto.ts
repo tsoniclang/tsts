@@ -10,6 +10,7 @@
 
 import type { Node as AstNode } from "../ast/index.js";
 import { nodePos as getNodePos, nodeEnd as getNodeEnd } from "../ast/index.js";
+import { getNormalizedAbsolutePath } from "../tspath/index.js";
 
 function getNodePath(_node: AstNode): string {
   // TS-Go exposes a node→path string for diagnostic UI. The full
@@ -59,7 +60,7 @@ export function nodeHandleFrom(node: AstNode): Handle<AstNode> {
 export function parseNodeHandle(handle: Handle<AstNode>): {
   pos: number; end: number; kind: number; path: string; ok: boolean;
 } {
-  const parts = (handle as unknown as string).split(".", 4);
+  const parts = handle.split(".", 4);
   if (parts.length !== 4) return { pos: 0, end: 0, kind: 0, path: "", ok: false };
   const pos = parseInt(parts[0]!, 10);
   const end = parseInt(parts[1]!, 10);
@@ -72,9 +73,8 @@ export function parseNodeHandle(handle: Handle<AstNode>): {
 }
 
 export function parseProjectHandle(handle: Handle<ProjectType>): string {
-  const s = handle as unknown as string;
-  if (!s.startsWith(`${HandlePrefix.Project}.`)) return "";
-  return s.slice(2);
+  if (!handle.startsWith(`${HandlePrefix.Project}.`)) return "";
+  return handle.slice(2);
 }
 
 function createHandle<T>(prefix: string, id: unknown): Handle<T> {
@@ -109,9 +109,7 @@ export function documentIdentifierToURI(d: DocumentIdentifier): string {
 }
 
 export function documentIdentifierToAbsoluteFileName(d: DocumentIdentifier, cwd: string): string {
-  const name = documentIdentifierToFileName(d);
-  if (name.startsWith("/")) return name;
-  return `${cwd}/${name}`;
+  return getNormalizedAbsolutePath(documentIdentifierToFileName(d), cwd);
 }
 
 export function documentIdentifierString(d: DocumentIdentifier): string {
