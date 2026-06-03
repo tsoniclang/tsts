@@ -112,7 +112,7 @@ const PROJECT_ROOT = join(TOOL_DIR, "..");
 const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
 const MAPPING_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "function-inventory-map.json");
-const RENAMES_PATH = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps", "renames.json");
+const RENAMES_PATH = join(PROJECT_ROOT, "tools", "tsgo-parity-maps", "renames.json");
 
 // Keep the module list aligned with checkLogicalParity.ts so the two Wave-0
 // tools report on the same surface. Drift between the two lists would make the

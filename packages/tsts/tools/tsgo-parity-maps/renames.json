@@ -24,6 +24,10 @@
       "tspath/path.go#Path.ContainsPath": {
         "localName": "pathContainsPath",
         "reason": "Collision-avoidance: Go has BOTH a package function `ContainsPath(parent, child, options)` and a method `(Path).ContainsPath(child)` in path.go. Go disambiguates by receiver, but the TSTS module namespace cannot host two `containsPath` symbols. The package function is ported as `containsPath`; the `Path` method (a simple rooted-prefix check) is ported as `pathContainsPath`. Same function as the Go method."
+      },
+      "project/ata/discovertypings.go#addTypingNamesAndGetFilesToWatch": {
+        "localName": "addTypingNamesFromManifestAndModules",
+        "reason": "Same function (scans a manifest + its modules dir, adds inferred typings). TS-Go threads `filesToWatch` through the call chain and returns the appended slice; the TSTS discovery pipeline computes watched files separately in `DefaultTypingsInstaller.filesToWatchFor`, so the ported helper only mutates `inferredTypings` and the name drops the `...AndGetFilesToWatch` suffix to reflect the narrower return contract. The manifest/module scanning algorithm is faithfully preserved."
       }
     }
   },

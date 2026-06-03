@@ -238,9 +238,24 @@ export class DefaultTypingsInstaller implements TypingsInstaller {
     return installed;
   }
 
+  // Port of TS-Go `(*TypingsInstaller).ensureTypingsLocationExists`
+  // (internal/project/ata/ata.go). Creates a minimal `package.json` in the
+  // typings location when it is missing so that subsequent npm operations have a
+  // manifest to work against.
+  ensureTypingsLocationExists(fs: FS, logger?: { readonly log: (message: string) => void }): void {
+    const npmConfigPath = combinePaths(this.typingsLocation, "package.json");
+    logger?.log(`ATA:: Npm config file: ${npmConfigPath}`);
+
+    if (!fs.fileExists(npmConfigPath)) {
+      logger?.log(`ATA:: Npm config file: '${npmConfigPath}' is missing, creating new one...`);
+      fs.writeFile(npmConfigPath, "{ \"private\": true }");
+    }
+  }
+
   private initialize(fs: FS, logger?: { readonly log: (message: string) => void }): void {
     if (this.typesRegistry.size > 0) return;
     this.processCacheLocation("global", fs, logger);
+    this.ensureTypingsLocationExists(fs, logger);
     this.loadTypesRegistryFile(fs, logger);
   }
 
