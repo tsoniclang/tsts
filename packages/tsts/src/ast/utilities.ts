@@ -52,7 +52,9 @@ import type {
   QualifiedName,
   SetAccessorDeclaration,
   ShorthandPropertyAssignment,
+  TaggedTemplateExpression,
   TypeAssertion,
+  TypeNode,
   TypeReferenceNode,
 } from "./generated/nodes.js";
 import {
@@ -97,7 +99,18 @@ import {
   isVariableDeclaration,
   isVariableStatement,
   isVoidExpression,
+  isDecorator,
+  isNewExpression,
+  isCallOrNewExpression,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isJsxOpeningLikeElement,
+  isQuestionToken,
+  isTaggedTemplateExpression,
+  isExpression,
+  isTypeElement,
 } from "./generated/is.js";
+import { OuterExpressionKinds } from "../enums/outerExpressionKinds.enum.js";
 // `isStringOrNumericLiteralLike` (utilities.go:331 IsStringOrNumericLiteralLike)
 // and `isExternalModule` (utilities.go:1626 IsExternalModule) live in
 // accessors.ts as the single owners; imported here for faithful reuse.
@@ -111,7 +124,15 @@ import {
   nodeName,
   nodeText,
   tagName,
+  nodeParent,
+  expressionOf,
+  nodeQuestionToken,
+  elementArgumentExpression,
+  skipOuterExpressions,
+  getTypeAnnotation,
+  nodeInitializer,
 } from "./accessors.js";
+import { binarySearchUniqueFunc } from "../core/binarySearch.js";
 import type { Symbol } from "./generated/types.js";
 import { forEachChild } from "./generated/visitor.js";
 
@@ -1045,9 +1066,9 @@ export function canHaveStatements(node: Node): boolean {
 export type AccessKind = number;
 
 export const AccessKind = {
-  Read: 0, // Only reads from a variable
-  Write: 1, // Only writes to a variable without ever reading it. E.g.: `x=1;`.
-  ReadWrite: 2, // Reads from and writes to a variable. E.g.: `f(x++);`, `x/=1`.
+  Read: 0 as AccessKind, // Only reads from a variable
+  Write: 1 as AccessKind, // Only writes to a variable without ever reading it. E.g.: `x=1;`.
+  ReadWrite: 2 as AccessKind, // Reads from and writes to a variable. E.g.: `f(x++);`, `x/=1`.
 } as const;
 
 // accessKind (ast.go:1430).
@@ -1932,4 +1953,322 @@ export function nodeHasKind(node: Node | undefined, kind: Kind): boolean {
 // IsContextualKeyword (utilities.go:2945).
 export function isContextualKeyword(token: Kind): boolean {
   return Kind.FirstContextualKeyword <= token && token <= Kind.LastContextualKeyword;
+}
+
+// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is
+// part of a `let` declaration. (IsLet, utilities.go:2960)
+export function isLet(node: Node): boolean {
+  return (getCombinedNodeFlags(node) & NodeFlags.BlockScoped) === NodeFlags.Let;
+}
+
+// IsRightSideOfPropertyAccess (utilities.go:3570).
+export function isRightSideOfPropertyAccess(node: Node): boolean {
+  const parent = nodeParent(node);
+  return parent !== undefined && parent.kind === Kind.PropertyAccessExpression && nodeName(parent) === node;
+}
+
+// IsArgumentExpressionOfElementAccess (utilities.go:3574).
+export function isArgumentExpressionOfElementAccess(node: Node): boolean {
+  const parent = nodeParent(node);
+  return parent !== undefined && parent.kind === Kind.ElementAccessExpression && elementArgumentExpression(parent) === node;
+}
+
+// ClimbPastPropertyAccess (utilities.go:3578).
+export function climbPastPropertyAccess(node: Node): Node {
+  if (isRightSideOfPropertyAccess(node)) {
+    return nodeParent(node)!;
+  }
+  return node;
+}
+
+// climbPastPropertyOrElementAccess (utilities.go:3585).
+function climbPastPropertyOrElementAccess(node: Node): Node {
+  if (isRightSideOfPropertyAccess(node) || isArgumentExpressionOfElementAccess(node)) {
+    return nodeParent(node)!;
+  }
+  return node;
+}
+
+// selectExpressionOfCallOrNewExpressionOrDecorator (utilities.go:3592).
+function selectExpressionOfCallOrNewExpressionOrDecorator(node: Node): Node | undefined {
+  if (isCallExpression(node) || isNewExpression(node) || isDecorator(node)) {
+    return expressionOf(node);
+  }
+  return undefined;
+}
+
+// selectTagOfTaggedTemplateExpression (utilities.go:3599).
+function selectTagOfTaggedTemplateExpression(node: Node): Node | undefined {
+  if (isTaggedTemplateExpression(node)) {
+    return (node as TaggedTemplateExpression).tag;
+  }
+  return undefined;
+}
+
+// selectTagNameOfJsxOpeningLikeElement (utilities.go:3606).
+function selectTagNameOfJsxOpeningLikeElement(node: Node): Node | undefined {
+  if (isJsxOpeningElement(node) || isJsxSelfClosingElement(node)) {
+    return tagName(node);
+  }
+  return undefined;
+}
+
+// IsCallExpressionTarget (utilities.go:3613).
+export function isCallExpressionTarget(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isCallExpression, selectExpressionOfCallOrNewExpressionOrDecorator, includeElementAccess, skipPastOuterExpressions);
+}
+
+// IsNewExpressionTarget (utilities.go:3617).
+export function isNewExpressionTarget(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isNewExpression, selectExpressionOfCallOrNewExpressionOrDecorator, includeElementAccess, skipPastOuterExpressions);
+}
+
+// IsCallOrNewExpressionTarget (utilities.go:3621).
+export function isCallOrNewExpressionTarget(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isCallOrNewExpression, selectExpressionOfCallOrNewExpressionOrDecorator, includeElementAccess, skipPastOuterExpressions);
+}
+
+// IsTaggedTemplateTag (utilities.go:3625).
+export function isTaggedTemplateTag(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isTaggedTemplateExpression, selectTagOfTaggedTemplateExpression, includeElementAccess, skipPastOuterExpressions);
+}
+
+// IsDecoratorTarget (utilities.go:3629).
+export function isDecoratorTarget(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isDecorator, selectExpressionOfCallOrNewExpressionOrDecorator, includeElementAccess, skipPastOuterExpressions);
+}
+
+// IsJsxOpeningLikeElementTagName (utilities.go:3633).
+export function isJsxOpeningLikeElementTagName(node: Node, includeElementAccess: boolean, skipPastOuterExpressions: boolean): boolean {
+  return isCalleeWorker(node, isJsxOpeningLikeElement, selectTagNameOfJsxOpeningLikeElement, includeElementAccess, skipPastOuterExpressions);
+}
+
+// isCalleeWorker (utilities.go:3637).
+function isCalleeWorker(
+  node: Node,
+  pred: (node: Node) => boolean,
+  calleeSelector: (node: Node) => Node | undefined,
+  includeElementAccess: boolean,
+  skipPastOuterExpressions: boolean,
+): boolean {
+  let target: Node | undefined;
+  if (includeElementAccess) {
+    target = climbPastPropertyOrElementAccess(node);
+  } else {
+    target = climbPastPropertyAccess(node);
+  }
+  if (skipPastOuterExpressions) {
+    // Only skip outer expressions if the target is actually an expression node
+    if (isExpression(target)) {
+      target = skipOuterExpressions(target, OuterExpressionKinds.All);
+    }
+  }
+  const parent = target !== undefined ? nodeParent(target) : undefined;
+  return target !== undefined && parent !== undefined && pred(parent) && calleeSelector(parent) === target;
+}
+
+// IsRightSideOfQualifiedNameOrPropertyAccess (utilities.go:3659).
+export function isRightSideOfQualifiedNameOrPropertyAccess(node: Node): boolean {
+  const parent = nodeParent(node);
+  if (parent === undefined) {
+    return false;
+  }
+  switch (parent.kind) {
+    case Kind.QualifiedName:
+      return (parent as QualifiedName).right === node;
+    case Kind.PropertyAccessExpression:
+      return nodeName(parent) === node;
+    case Kind.MetaProperty:
+      return nodeName(parent) === node;
+  }
+  return false;
+}
+
+// HasQuestionToken (utilities.go:3680).
+export function hasQuestionToken(node: Node): boolean {
+  const questionToken = nodeQuestionToken(node);
+  return questionToken !== undefined && isQuestionToken(questionToken);
+}
+
+// GetInvokedExpression (utilities.go:3688).
+export function getInvokedExpression(node: Node): Node {
+  switch (node.kind) {
+    case Kind.TaggedTemplateExpression:
+      return (node as TaggedTemplateExpression).tag;
+    case Kind.JsxOpeningElement:
+    case Kind.JsxSelfClosingElement:
+      return tagName(node)!;
+    case Kind.BinaryExpression:
+      return (node as BinaryExpression).right;
+    case Kind.JsxOpeningFragment:
+      return node;
+    default:
+      return expressionOf(node);
+  }
+}
+
+// IndexOfNode (utilities.go:3707).
+export function indexOfNode(nodes: readonly Node[], node: Node): int {
+  const { index, match } = binarySearchUniqueFunc(nodes, (_, element) => compareNodePositions(element, node));
+  if (match) {
+    return index;
+  }
+  return -1;
+}
+
+// CompareNodePositions (utilities.go:3715). Mirrors core.CompareTextRanges on
+// each node's text range (pos then end); a Node is structurally a TextRange.
+export function compareNodePositions(n1: Node, n2: Node): int {
+  const c = n1.pos - n2.pos;
+  if (c !== 0) {
+    return c;
+  }
+  return n1.end - n2.end;
+}
+
+// HasAbstractModifier (utilities.go:4211).
+export function hasAbstractModifier(node: Node): boolean {
+  return hasSyntacticModifier(node, ModifierFlags.Abstract);
+}
+
+// HasAmbientModifier (utilities.go:4215).
+export function hasAmbientModifier(node: Node): boolean {
+  return hasSyntacticModifier(node, ModifierFlags.Ambient);
+}
+
+// IsKeyword (utilities.go:4089).
+export function isKeyword(token: Kind): boolean {
+  return Kind.FirstKeyword <= token && token <= Kind.LastKeyword;
+}
+
+// IsNonContextualKeyword (utilities.go:4093).
+export function isNonContextualKeyword(token: Kind): boolean {
+  return isKeyword(token) && !isContextualKeyword(token);
+}
+
+// IsClassMemberModifier (utilities.go:2964).
+export function isClassMemberModifier(token: Kind): boolean {
+  return isParameterPropertyModifier(token) || token === Kind.StaticKeyword ||
+    token === Kind.OverrideKeyword || token === Kind.AccessorKeyword;
+}
+
+// IsParameterPropertyModifier (utilities.go:2969).
+export function isParameterPropertyModifier(kind: Kind): boolean {
+  return (modifierToFlag(kind) & ModifierFlags.ParameterPropertyModifier) !== 0;
+}
+
+// HasTypeArguments (utilities.go:2980).
+export function hasTypeArguments(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.CallExpression:
+    case Kind.NewExpression:
+    case Kind.TaggedTemplateExpression:
+    case Kind.TypeReference:
+    case Kind.ExpressionWithTypeArguments:
+    case Kind.ImportType:
+    case Kind.TypeQuery:
+    case Kind.JsxOpeningElement:
+    case Kind.JsxSelfClosingElement:
+      return true;
+  }
+  return false;
+}
+
+// IsTypeReferenceType (utilities.go:2990).
+export function isTypeReferenceType(node: Node): boolean {
+  return node.kind === Kind.TypeReference || node.kind === Kind.ExpressionWithTypeArguments;
+}
+
+// IsVariableLike (utilities.go:2994).
+export function isVariableLike(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.BindingElement:
+    case Kind.EnumMember:
+    case Kind.Parameter:
+    case Kind.PropertyAssignment:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertySignature:
+    case Kind.ShorthandPropertyAssignment:
+    case Kind.VariableDeclaration:
+      return true;
+  }
+  return false;
+}
+
+// HasInitializer (utilities.go:3003).
+export function hasInitializer(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.BindingElement:
+    case Kind.PropertyDeclaration:
+    case Kind.PropertyAssignment:
+    case Kind.EnumMember:
+    case Kind.ForStatement:
+    case Kind.ForInStatement:
+    case Kind.ForOfStatement:
+    case Kind.JsxAttribute:
+      return nodeInitializer(node) !== undefined;
+    default:
+      return false;
+  }
+}
+
+// IsVariableParameterOrProperty (utilities.go:3014).
+export function isVariableParameterOrProperty(node: Node): boolean {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.PropertySignature:
+    case Kind.PropertyDeclaration:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// GetTypeAnnotationNode (utilities.go:3023).
+export function getTypeAnnotationNode(node: Node): TypeNode | undefined {
+  switch (node.kind) {
+    case Kind.VariableDeclaration:
+    case Kind.Parameter:
+    case Kind.PropertySignature:
+    case Kind.PropertyDeclaration:
+    case Kind.TypePredicate:
+    case Kind.ParenthesizedType:
+    case Kind.TypeOperator:
+    case Kind.MappedType:
+    case Kind.TypeAssertionExpression:
+    case Kind.AsExpression:
+    case Kind.SatisfiesExpression:
+    case Kind.TypeAliasDeclaration:
+    case Kind.JSTypeAliasDeclaration:
+    case Kind.NamedTupleMember:
+    case Kind.OptionalType:
+    case Kind.RestType:
+    case Kind.TemplateLiteralTypeSpan:
+    case Kind.JSDocTypeExpression:
+    case Kind.JSDocPropertyTag:
+    case Kind.JSDocNullableType:
+    case Kind.JSDocNonNullableType:
+    case Kind.JSDocOptionalType:
+      return getTypeAnnotation(node) as TypeNode | undefined;
+    default:
+      // FunctionLikeData().Type — the function-like return-type annotation lives
+      // in the same `type` slot.
+      if (isFunctionLike(node)) {
+        return getTypeAnnotation(node) as TypeNode | undefined;
+      }
+      return undefined;
+  }
+}
+
+// IsClassOrTypeElement (utilities.go:3044).
+export function isClassOrTypeElement(node: Node): boolean {
+  return isClassElement(node) || isTypeElement(node);
+}
+
+// IsTypeKeywordToken (utilities.go:3060).
+export function isTypeKeywordToken(node: Node): boolean {
+  return node.kind === Kind.TypeKeyword;
 }
