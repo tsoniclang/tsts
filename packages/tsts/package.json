@@ -8,6 +8,9 @@
     ".": "./src/index.ts",
     "./index.js": "./src/index.ts"
   },
+  "bin": {
+    "tsts": "./dist/src/cli/index.js"
+  },
   "files": [
     "src/**/*.ts",
     "tsonic.package.json",
