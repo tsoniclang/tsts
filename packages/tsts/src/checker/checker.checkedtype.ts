@@ -49,9 +49,11 @@ import {
   isNoSubstitutionTemplateLiteral,
   isSetAccessorDeclaration,
   isStringLiteral,
+  isThisTypeNode,
   isTypeAliasDeclaration,
   isTypeLiteralNode,
   isTypeOperatorNode,
+  isTypePredicateNode,
   isTypeReferenceNode,
   isTypeParameterDeclaration,
   isUnionTypeNode,
@@ -74,6 +76,7 @@ import {
   type TypeLiteralNode,
   type TypeNode,
   type TypeParameterDeclaration,
+  type TypePredicateNode,
   type TypeReferenceNode,
   type UnionTypeNode,
 } from "../ast/index.js";
@@ -89,6 +92,7 @@ import {
   type LiteralType,
   type ObjectType,
   type Signature,
+  type TypePredicate,
   type UnionType,
   type UnionOrIntersectionType,
   TypeFlags,
@@ -257,7 +261,7 @@ export interface FunctionParameter {
   readonly rest?: boolean;
 }
 
-export function makeCallSignature(returnType: Type, parameters: readonly FunctionParameter[] = []): Signature {
+export function makeCallSignature(returnType: Type, parameters: readonly FunctionParameter[] = [], predicate?: TypePredicate): Signature {
   const parameterSymbols = parameters.map((parameter) =>
     ({
       name: parameter.name,
@@ -279,15 +283,62 @@ export function makeCallSignature(returnType: Type, parameters: readonly Functio
     parameters: parameterSymbols,
     minArgumentCount,
     resolvedReturnType: returnType,
+    ...(predicate === undefined ? {} : { resolvedTypePredicate: predicate }),
   };
 }
 
-export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = []): Type {
+export function makeFunctionType(returnType: Type, state: CheckState, parameters: readonly FunctionParameter[] = [], predicate?: TypePredicate): Type {
   const data: ObjectType = {
     objectFlags: ObjectFlags.Anonymous,
-    declaredCallSignatures: [makeCallSignature(returnType, parameters)],
+    declaredCallSignatures: [makeCallSignature(returnType, parameters, predicate)],
   };
   return { flags: TypeFlags.Object, id: state.nextTypeId(), data };
+}
+
+// Local mirror of signatureRelations.TypePredicateKind. Defined here (not
+// imported) because signatureRelations imports from this module — importing it
+// back would close a cycle. The numeric values are identical so any consumer
+// reading `signature.resolvedTypePredicate.kind` (e.g. signatureRelations)
+// interprets the predicate consistently.
+const TypePredicateKindLocal = {
+  This: 0,
+  Identifier: 1,
+  AssertsThis: 2,
+  AssertsIdentifier: 3,
+} as const;
+
+// Resolve a function/method/call-signature return-type node into the signature's
+// return type plus an optional type predicate. A `TypePredicateNode` carries the
+// predicate (`x is T`, `asserts x`, `asserts x is T`); the underlying return type
+// is `boolean` for a narrowing predicate and `void` for a bare assertion
+// (mirrors TS-Go getTypePredicateOfSignature / a predicate signature's
+// declared return type).
+function signatureReturnFromTypeNode(typeNode: TypeNode | undefined, parameters: readonly FunctionParameter[], state: CheckState): { readonly returnType: Type; readonly predicate?: TypePredicate } {
+  if (typeNode !== undefined && isTypePredicateNode(typeNode)) {
+    return predicateSignatureReturn(typeNode, parameters, state);
+  }
+  return { returnType: typeNode === undefined ? anyType : typeFromTypeNode(typeNode, state) };
+}
+
+function predicateSignatureReturn(node: TypePredicateNode, parameters: readonly FunctionParameter[], state: CheckState): { readonly returnType: Type; readonly predicate: TypePredicate } {
+  const asserts = node.assertsModifier !== undefined;
+  const isThis = isThisTypeNode(node.parameterName);
+  const parameterName = isThis ? "this" : (node.parameterName as { readonly text: string }).text;
+  const parameterIndex = isThis ? -1 : Math.max(0, parameters.findIndex((parameter) => parameter.name === parameterName));
+  const predicateType = node.type === undefined ? undefined : typeFromTypeNode(node.type, state);
+  const kind = asserts
+    ? (isThis ? TypePredicateKindLocal.AssertsThis : TypePredicateKindLocal.AssertsIdentifier)
+    : (isThis ? TypePredicateKindLocal.This : TypePredicateKindLocal.Identifier);
+  const predicate: TypePredicate = {
+    kind,
+    parameterIndex,
+    parameterName,
+    ...(predicateType === undefined ? {} : { type: predicateType }),
+  };
+  // An `asserts x` (no narrowed-to type) signature returns `void`; every other
+  // predicate (`x is T`, `asserts x is T`) returns `boolean`.
+  const returnType = asserts && predicateType === undefined ? voidType : booleanType;
+  return { returnType, predicate };
 }
 
 export function isFunctionType(type: Type): boolean {
@@ -870,7 +921,9 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
     return typeFromTypeNode(type.type, state);
   }
   if (isFunctionTypeNode(type)) {
-    return makeFunctionType(type.type === undefined ? anyType : typeFromTypeNode(type.type, state), state, functionParametersFromNode(type.parameters, state));
+    const parameters = functionParametersFromNode(type.parameters, state);
+    const { returnType, predicate } = signatureReturnFromTypeNode(type.type, parameters, state);
+    return makeFunctionType(returnType, state, parameters, predicate);
   }
   if (isConstructorTypeNode(type)) {
     const returnType = type.type === undefined ? anyType : typeFromTypeNode(type.type, state);
@@ -892,6 +945,14 @@ export function typeFromTypeNode(type: TypeNode, state: CheckState): Type {
   }
   if (isTypeReferenceNode(type)) {
     return typeFromTypeReferenceNode(type, state);
+  }
+  if (isTypePredicateNode(type)) {
+    // A predicate node is only authored as a function's return-type annotation,
+    // where the callable sites route it through signatureReturnFromTypeNode (so
+    // the signature carries the predicate). Resolved as a bare type it has no
+    // signature to attach to: it is `void` for a bare `asserts x` and `boolean`
+    // for every narrowing predicate (`x is T`, `asserts x is T`).
+    return type.assertsModifier !== undefined && type.type === undefined ? voidType : booleanType;
   }
   return anyType;
 }
@@ -1342,10 +1403,11 @@ function collectTypeMembers(
     } else if (isMethodSignatureDeclaration(member) || isMethodDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
       properties.push({
         name,
-        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
+        type: makeFunctionType(returnType, state, parameters, predicate),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else if (isGetAccessorDeclaration(member)) {
@@ -1379,8 +1441,9 @@ function collectTypeMemberExtras(
   for (const member of members) {
     if (!includeMember(member)) continue;
     if (isCallSignatureDeclaration(member)) {
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
-      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
+      callSignatures.push(makeCallSignature(returnType, parameters, predicate));
     } else if (isConstructSignatureDeclaration(member)) {
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
       constructSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
@@ -1432,16 +1495,18 @@ function typeFromTypeLiteralNode(node: TypeLiteralNode, state: CheckState): Type
     } else if (isMethodSignatureDeclaration(member)) {
       const name = propertyNameText(member.name, state);
       if (name === undefined) continue;
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
       properties.push({
         name,
-        type: makeFunctionType(returnType, state, functionParametersFromNode(member.parameters, state)),
+        type: makeFunctionType(returnType, state, parameters, predicate),
         optional: member.postfixToken?.kind === Kind.QuestionToken,
       });
     } else if (isCallSignatureDeclaration(member)) {
       // `{ (args): R }` — an object type carrying a bare call signature.
-      const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
-      callSignatures.push(makeCallSignature(returnType, functionParametersFromNode(member.parameters, state)));
+      const parameters = functionParametersFromNode(member.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(member.type, parameters, state);
+      callSignatures.push(makeCallSignature(returnType, parameters, predicate));
     } else if (isConstructSignatureDeclaration(member)) {
       // `{ new (args): R }` — object type carrying a construct signature.
       const returnType = member.type === undefined ? anyType : typeFromTypeNode(member.type, state);
@@ -1681,8 +1746,9 @@ function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Typ
   if ((flags & (SymbolFlags.Function | SymbolFlags.Method)) !== 0) {
     const declaration = symbol.valueDeclaration;
     if (declaration !== undefined && (isFunctionDeclaration(declaration) || isMethodDeclaration(declaration) || isMethodSignatureDeclaration(declaration))) {
-      const returnType = declaration.type === undefined ? anyType : typeFromTypeNode(declaration.type, state);
-      return makeFunctionType(returnType, state, functionParametersFromNode(declaration.parameters, state));
+      const parameters = functionParametersFromNode(declaration.parameters, state);
+      const { returnType, predicate } = signatureReturnFromTypeNode(declaration.type, parameters, state);
+      return makeFunctionType(returnType, state, parameters, predicate);
     }
     return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
   }
@@ -1721,6 +1787,41 @@ function indexSignatureParameterName(info: IndexInfo): string {
   return parameter !== undefined && isIdentifier(parameter.name) ? parameter.name.text : "x";
 }
 
+// Render one signature parameter as `name: T`, with a leading `...` for a rest
+// parameter and a trailing `?` on the name for an optional one (mirrors TS-Go
+// signatureToString parameter formatting).
+function displaySignatureParameter(parameter: AstSymbol): string {
+  const name = (parameter as unknown as { readonly name?: string }).name ?? "arg";
+  const restPrefix = isRestSymbol(parameter) ? "..." : "";
+  const optionalSuffix = isOptionalSymbol(parameter) ? "?" : "";
+  const parameterType = getTypeOfSymbol(parameter) ?? anyType;
+  return `${restPrefix}${name}${optionalSuffix}: ${displayType(parameterType)}`;
+}
+
+// Render the `=> R` (or `=> x is T` / `=> asserts x`) right-hand side of a
+// signature. A type predicate displaces the return type in TS-Go's display.
+function displaySignatureReturn(signature: Signature): string {
+  const predicate = signature.resolvedTypePredicate as TypePredicate | undefined;
+  if (predicate !== undefined) return displayTypePredicate(predicate);
+  return displayType(signature.resolvedReturnType ?? anyType);
+}
+
+// `x is T`, `this is T`, `asserts x`, `asserts x is T`, `asserts this[ is T]`.
+// `asserts` is signalled by the kind (AssertsThis / AssertsIdentifier).
+function displayTypePredicate(predicate: TypePredicate): string {
+  const asserts = predicate.kind === TypePredicateKindLocal.AssertsThis || predicate.kind === TypePredicateKindLocal.AssertsIdentifier;
+  const prefix = asserts ? "asserts " : "";
+  const target = predicate.type === undefined ? "" : ` is ${displayType(predicate.type)}`;
+  return `${prefix}${predicate.parameterName}${target}`;
+}
+
+// `(p: T, ...rest: U[]) => R` for a call signature, `new (...) => R` for a
+// construct signature (mirrors TS-Go signatureToString).
+function displaySignature(signature: Signature, construct: boolean): string {
+  const parameters = signature.parameters.map(displaySignatureParameter).join(", ");
+  return `${construct ? "new " : ""}(${parameters}) => ${displaySignatureReturn(signature)}`;
+}
+
 export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.Union) !== 0) {
     const constituents = unionConstituents(type) ?? [];
@@ -1747,7 +1848,10 @@ export function displayType(type: Type): string {
   if ((type.flags & TypeFlags.BooleanLiteral) !== 0) return String((type.data as LiteralType).value);
   if ((type.flags & TypeFlags.BigIntLiteral) !== 0) return `${pseudoBigIntToString((type.data as LiteralType).value as PseudoBigInt)}n`;
   if ((type.flags & TypeFlags.TypeParameter) !== 0) return type.symbol?.name ?? "T";
-  if (isFunctionType(type)) return "function";
+  if (isFunctionType(type)) {
+    const signature = getCallSignature(type);
+    if (signature !== undefined) return displaySignature(signature, false);
+  }
   const elementType = getArrayElementType(type);
   if (elementType !== undefined) {
     const rendered = displayType(elementType);

@@ -817,7 +817,7 @@ test("checks interface and class heritage members", () => {
   assert.strictEqual(classBase.diagnostics.length, 0);
   assert.deepStrictEqual(classMismatch.diagnostics.map((d) => d.message), ["Type 'number' is not assignable to type 'string'."]);
   assert.strictEqual(implementsOk.diagnostics.length, 0);
-  assert.deepStrictEqual(implementsMismatch.diagnostics.map((d) => d.message), ["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type 'function' is not assignable to type 'function'."]);
+  assert.deepStrictEqual(implementsMismatch.diagnostics.map((d) => d.message), ["Type 'Bad' is not assignable to type 'Service'.\n  Types of property 'run' are incompatible.\n    Type '() => string' is not assignable to type '() => number'."]);
 });
 
 test("accepts union type node return types", () => {
@@ -1121,6 +1121,63 @@ test("getTypeAtLocation reports an un-annotated arrow parameter as implicit any"
 
 test("getTypeAtLocation reports an un-annotated un-initialized variable as implicit any", () => {
   assert.strictEqual(typeStringByIdentifier("var v; v;", "v"), "any");
+});
+
+// G2 (signature display) — a callable displays as its real `(p: T) => R`
+// signature (not the literal token "function"), matching TS-Go signatureToString
+// (e.g. `() => void`, `(_condition: boolean) => ...`, `(...data: any[]) => void`).
+test("displays a no-argument function declaration as () => R", () => {
+  assert.strictEqual(typeStringByIdentifier("function test(): void { }", "test"), "() => void");
+});
+
+test("displays a function declaration's parameters and return type", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(x: number): string { return \"\"; }", "f"), "(x: number) => string");
+});
+
+test("displays multiple parameters joined by a comma", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(a: number, b: string): boolean { return true; }", "f"),
+    "(a: number, b: string) => boolean",
+  );
+});
+
+test("displays an optional parameter with a trailing question mark", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(a?: number): void { }", "f"), "(a?: number) => void");
+});
+
+test("displays a rest parameter with a leading ellipsis", () => {
+  assert.strictEqual(typeStringByIdentifier("function f(...data: number): void { }", "f"), "(...data: number) => void");
+});
+
+// G9 (type-predicate / asserts display) — a predicate return annotation displaces
+// the return type in the signature display, matching TS-Go (e.g.
+// `(value: unknown) => value is string`, `(_condition: boolean) => asserts condition`).
+test("displays an `x is T` narrowing predicate signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function isString(value: unknown): value is string { return true; }", "isString"),
+    "(value: unknown) => value is string",
+  );
+});
+
+test("displays a bare `asserts x` assertion signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function assert(_condition: boolean): asserts condition { }", "assert"),
+    "(_condition: boolean) => asserts condition",
+  );
+});
+
+test("displays an `asserts x is T` assertion signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function assertString(value: unknown): asserts value is string { }", "assertString"),
+    "(value: unknown) => asserts value is string",
+  );
+});
+
+test("displays a `this is T` predicate signature", () => {
+  assert.strictEqual(
+    typeStringByIdentifier("function f(): this is string { return true; }", "f"),
+    "() => this is string",
+  );
 });
 
 // The checker's NameResolver wiring (mirrors the shared resolver in
