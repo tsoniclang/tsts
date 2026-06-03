@@ -8,6 +8,37 @@
 
 import type { Method } from "./proto.js";
 
+// MessageType represents the type of message in the msgpack protocol.
+// Port of TS-Go `internal/api/protocol_msgpack.go` `MessageType uint8`.
+export const enum MessageType {
+  Unknown = 0,
+  Request = 1,
+  CallResponse = 2,
+  CallError = 3,
+  Response = 4,
+  Error = 5,
+  Call = 6,
+}
+
+// IsValid reports whether the message type is within the recognised range.
+// Port of TS-Go `func (m MessageType) IsValid() bool`.
+export function isValid(m: MessageType): boolean {
+  return m >= MessageType.Request && m <= MessageType.Call;
+}
+
+// MessagePack format constants.
+// Port of TS-Go `internal/api/protocol_msgpack.go` format constant block.
+export const msgpackFixedArray3 = 0x93;
+export const msgpackBin8 = 0xc4;
+export const msgpackBin16 = 0xc5;
+export const msgpackBin32 = 0xc6;
+export const msgpackU8 = 0xcc;
+
+// RawBinary is a marker type for binary data that should be written directly
+// instead of being JSON-encoded.
+// Port of TS-Go `type RawBinary []byte`.
+export type RawBinary = Uint8Array & { readonly __rawBinary?: true };
+
 export interface MsgpackProtocolHandler {
   encodeRequest(id: number, method: Method, params: unknown): Uint8Array;
   encodeResponse(id: number, result: unknown, error: string | undefined): Uint8Array;
