@@ -19,9 +19,12 @@ import type { DiagnosticMessage, Key } from "./types.js";
  * Returns the canonical lowercase name of a category.
  *
  * Mirrors TS-Go `func (category Category) Name() string` in
- * `internal/diagnostics/diagnostics.go`.
+ * `internal/diagnostics/diagnostics.go`. The Go method's receiver is the
+ * `Category` enum; TSTS ports it as a free function whose name retains the
+ * upstream method name (`Name` -> `name`) and takes the receiver as its
+ * argument.
  */
-export function categoryName(category: DiagnosticCategory): string {
+export function name(category: DiagnosticCategory): string {
   switch (category) {
     case DiagnosticCategory.Warning:
       return "warning";
@@ -41,44 +44,48 @@ export function categoryName(category: DiagnosticCategory): string {
  * are directly readable on `DiagnosticMessage`, so each getter collapses to a
  * field read. The boolean accessors coerce the optional flag to a concrete
  * `bool` (Go's zero value is `false`), matching the upstream getter signature.
+ * Each function retains the upstream method name in lower-camel (`Code` ->
+ * `code`) and takes the `Message` receiver as its argument.
  *
  * Mirrors TS-Go `func (m *Message) Code() int32` and siblings in
  * `internal/diagnostics/diagnostics.go`.
  */
-export function messageCode(message: DiagnosticMessage): number {
+export function code(message: DiagnosticMessage): number {
   return message.code;
 }
 
 /** Mirrors TS-Go `func (m *Message) Category() Category`. */
-export function messageCategory(message: DiagnosticMessage): DiagnosticCategory {
+export function category(message: DiagnosticMessage): DiagnosticCategory {
   return message.category;
 }
 
 /** Mirrors TS-Go `func (m *Message) Key() Key`. */
-export function messageKey(message: DiagnosticMessage): Key {
+export function key(message: DiagnosticMessage): Key {
   return message.key;
 }
 
 /** Mirrors TS-Go `func (m *Message) ReportsUnnecessary() bool`. */
-export function messageReportsUnnecessary(message: DiagnosticMessage): boolean {
+export function reportsUnnecessary(message: DiagnosticMessage): boolean {
   return message.reportsUnnecessary === true;
 }
 
 /** Mirrors TS-Go `func (m *Message) ElidedInCompatibilityPyramid() bool`. */
-export function messageElidedInCompatibilityPyramid(message: DiagnosticMessage): boolean {
+export function elidedInCompatibilityPyramid(message: DiagnosticMessage): boolean {
   return message.elidedInCompatibilityPyramid === true;
 }
 
 /** Mirrors TS-Go `func (m *Message) ReportsDeprecated() bool`. */
-export function messageReportsDeprecated(message: DiagnosticMessage): boolean {
+export function reportsDeprecated(message: DiagnosticMessage): boolean {
   return message.reportsDeprecated === true;
 }
 
 /**
  * For debugging only. Mirrors TS-Go `func (m *Message) String() string`, which
  * returns the message `text` (the TSTS analogue is the `message` field).
+ * Retains the upstream method name in lower-camel (`String` -> `string`); the
+ * `string` identifier names a function here, not the TS `string` type.
  */
-export function messageString(message: DiagnosticMessage): string {
+export function string(message: DiagnosticMessage): string {
   return message.message;
 }
 
@@ -93,12 +100,11 @@ export type Locale = string;
  * (keyed by `DiagnosticMessage.key`) for the matched locale, or `undefined`
  * if no localization is available.
  *
- * This is the TSTS dependency-injection seam standing in for TS-Go's
- * module-level `localizedMessagesCache` / `getLocalizedMessages`
- * (which negotiate the locale tag against `matcher` and `localeFuncs` in
- * `loc_generated.go`). The control flow of `localize` mirrors upstream's
- * `Localize`; the resolver is threaded as a parameter rather than read from
- * package state.
+ * This is the TSTS explicit-dependency analogue of the tag negotiation TS-Go
+ * performs against `matcher` and `localeFuncs` in `loc_generated.go`:
+ * `getLocalizedMessages` threads this resolver in place of reading package
+ * state, then memoizes its result in `localizedMessagesCache` exactly as
+ * upstream does.
  */
 export type LocaleMessages = ReadonlyMap<Key, string>;
 export type LocaleProvider = (loc: Locale) => LocaleMessages | undefined;
@@ -147,12 +153,52 @@ export function localize(
   }
 
   let text = message.message;
-  const localized = localeProvider(loc)?.get(message.key);
+  const localized = getLocalizedMessages(loc, localeProvider)?.get(message.key);
   if (localized !== undefined) {
     text = localized;
   }
 
   return format(text, args);
+}
+
+// Per-locale localized-message tables resolved by `getLocalizedMessages`, the
+// TSTS analogue of TS-Go's module-level `localizedMessagesCache` (a
+// `sync.Map[language.Tag]map[Key]string`). The cache memoizes the negotiated
+// table for a locale so repeated lookups skip the provider/matcher work.
+const localizedMessagesCache = new Map<Locale, LocaleMessages | undefined>();
+
+/**
+ * Returns the localized-message table for a locale, or `undefined` when no
+ * localization applies (the undetermined locale, or no matching table). The
+ * negotiated table is memoized in `localizedMessagesCache`.
+ *
+ * Mirrors TS-Go `func getLocalizedMessages(loc language.Tag) map[Key]string`.
+ * Where upstream negotiates the tag against `matcher`/`localeFuncs` from
+ * `loc_generated.go`, TSTS delegates that match-and-load to the injected
+ * `localeProvider` (the explicit-dependency analogue of upstream's package
+ * state), then caches its result.
+ */
+export function getLocalizedMessages(
+  loc: Locale,
+  localeProvider: LocaleProvider,
+): LocaleMessages | undefined {
+  // language.Und — the undetermined locale — has no localization (TSTS spells
+  // it as the empty locale string).
+  if (loc === "") {
+    return undefined;
+  }
+
+  // Check cache first. `has` distinguishes "cached as undefined" (a previously
+  // negotiated locale with no table) from "never negotiated", mirroring TS-Go's
+  // `sync.Map.Load` returning `(value, ok)`.
+  if (localizedMessagesCache.has(loc)) {
+    return localizedMessagesCache.get(loc);
+  }
+
+  const messages = localeProvider(loc);
+
+  localizedMessagesCache.set(loc, messages);
+  return messages;
 }
 
 const placeholderRegexp = /\{(\d+)\}/g;

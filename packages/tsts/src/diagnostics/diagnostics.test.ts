@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { DiagnosticCategory } from "../enums/diagnosticCategory.enum.js";
-import { categoryName, format, localize, stringifyArgs, type LocaleMessages, type LocaleProvider } from "./diagnostics.js";
+import { name as categoryName, format, localize, stringifyArgs, type LocaleMessages, type LocaleProvider } from "./diagnostics.js";
 import type { DiagnosticMessage } from "./types.js";
 
 const Identifier_expected: DiagnosticMessage = {
