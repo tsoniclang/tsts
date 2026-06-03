@@ -19,6 +19,7 @@ import {
   isBigIntLiteral,
   isBinaryExpression,
   isBindingElement,
+  isBlock,
   isCallSignatureDeclaration,
   isClassDeclaration,
   isComputedPropertyName,
@@ -49,6 +50,7 @@ import {
   isPropertyDeclaration,
   isPropertySignatureDeclaration,
   isQualifiedName,
+  isReturnStatement,
   isPrivateIdentifier,
   isNoSubstitutionTemplateLiteral,
   isSetAccessorDeclaration,
@@ -86,7 +88,8 @@ import {
   type UnionTypeNode,
 } from "../ast/index.js";
 import type { int } from "@tsonic/core/types.js";
-import { nodeParent, nodeSymbol } from "../ast/index.js";
+import { forEachChild, nodeParent, nodeSymbol } from "../ast/index.js";
+import { FunctionFlags, getFunctionFlags } from "../ast/functionFlags.js";
 import { ModifierFlags } from "../enums/modifierFlags.enum.js";
 import { NameResolver } from "../binder/index.js";
 import { fromString, newPseudoBigInt, parsePseudoBigInt, parseValidBigInt, pseudoBigIntToString, type PseudoBigInt } from "../jsnum/index.js";
@@ -1940,14 +1943,71 @@ function getTypeOfBindingPattern(pattern: AstNode, state: CheckState): Type | un
 // is a later slice, so these resolve to `any` value placeholders (NOT the error
 // type — a class name IS a known value), with functions kept callable so a
 // direct `f()` call still type-checks.
+// Mirror the bounded `void` arm of getReturnTypeFromBody (checker.go:20032):
+// for a function/method with a BLOCK body that is neither async nor a generator
+// and whose body has NO `return <expr>` (only bare `return;` or no return at
+// all), the inferred return type is `void`. A body that returns a value needs
+// full body expression inference (not yet wired), so this returns undefined and
+// the caller keeps its placeholder. Walks statements directly rather than
+// crossing into nested function bodies (a `return` inside an inner function
+// belongs to that function, mirroring ast.ForEachReturnStatement).
+function inferredBlockReturnType(declaration: AstNode): Type | undefined {
+  const body = (declaration as { readonly body?: AstNode }).body;
+  if (body === undefined || !isBlock(body)) return undefined;
+  const functionFlags = getFunctionFlags(declaration);
+  if ((functionFlags & (FunctionFlags.Async | FunctionFlags.Generator)) !== 0) return undefined;
+  return bodyHasReturnWithExpression(body) ? undefined : voidType;
+}
+
+// True if any `return <expr>` (an expression-bearing return) appears in the
+// statement subtree, WITHOUT descending into nested function-like declarations
+// whose own returns bind to them (mirrors ast.ForEachReturnStatement's pruning).
+// Traversal uses the generated forEachChild so every statement form is covered
+// faithfully; the visitor short-circuits on the first expression-bearing return.
+function bodyHasReturnWithExpression(node: AstNode): boolean {
+  return forEachChild(node, (child): boolean | undefined => {
+    if (isReturnStatement(child)) {
+      return (child as { readonly expression?: AstNode }).expression !== undefined ? true : undefined;
+    }
+    // A nested function/class scope owns its own returns — do not descend.
+    if (startsNewReturnScope(child)) return undefined;
+    return bodyHasReturnWithExpression(child) ? true : undefined;
+  }) === true;
+}
+
+// A node that begins a fresh return scope (its `return` statements belong to it,
+// not the enclosing function). Mirrors ast.ForEachReturnStatement, which stops at
+// function-like boundaries; class bodies are also pruned since their methods are
+// independent functions.
+function startsNewReturnScope(node: AstNode): boolean {
+  return isFunctionDeclaration(node)
+    || isMethodDeclaration(node)
+    || node.kind === Kind.FunctionExpression
+    || node.kind === Kind.ArrowFunction
+    || isGetAccessorDeclaration(node)
+    || isSetAccessorDeclaration(node)
+    || isConstructorDeclaration(node)
+    || isClassDeclaration(node)
+    || node.kind === Kind.ClassExpression;
+}
+
 function getTypeOfFuncClassEnumModule(symbol: AstSymbol, state: CheckState): Type | undefined {
   const flags = symbol.flags ?? 0;
   if ((flags & (SymbolFlags.Function | SymbolFlags.Method)) !== 0) {
     const declaration = symbol.valueDeclaration;
     if (declaration !== undefined && (isFunctionDeclaration(declaration) || isMethodDeclaration(declaration) || isMethodSignatureDeclaration(declaration))) {
       const parameters = functionParametersFromNode(declaration.parameters, state);
-      const { returnType, predicate } = signatureReturnFromTypeNode(declaration.type, parameters, state);
-      return makeFunctionType(returnType, state, parameters, predicate);
+      const annotated = signatureReturnFromTypeNode(declaration.type, parameters, state);
+      // With no return-type annotation, TS-Go infers the return type from the
+      // body (getReturnTypeFromBody). The bounded case implemented here mirrors
+      // the `len(types) == 0` non-async/non-generator branch: a block body that
+      // contains no `return <expr>` infers `void` (checker.go:20032-20045).
+      // A body that does return a value still needs full expression inference,
+      // so it keeps the `any` placeholder; an annotation always wins.
+      const returnType = declaration.type === undefined && annotated.predicate === undefined
+        ? inferredBlockReturnType(declaration) ?? annotated.returnType
+        : annotated.returnType;
+      return makeFunctionType(returnType, state, parameters, annotated.predicate);
     }
     return makeFunctionType(anyType, state, [{ name: "args", type: anyType, rest: true }]);
   }
