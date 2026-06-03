@@ -26,7 +26,7 @@ const SHARED_DIR = dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = join(SHARED_DIR, "..");
 export const REPO_ROOT = join(PROJECT_ROOT, "..", "..");
 export const DEFAULT_TSGO_REPO = "/home/jeswin/temp/typescript-go";
-export const PARITY_MAPS_DIR = join(REPO_ROOT, ".analysis", "tsts-tsc", "parity-maps");
+export const PARITY_MAPS_DIR = join(PROJECT_ROOT, "tools", "tsgo-parity-maps");
 export const RENAMES_PATH = join(PARITY_MAPS_DIR, "renames.json");
 export const SPLIT_OWNERSHIP_PATH = join(PARITY_MAPS_DIR, "split-ownership.json");
 
