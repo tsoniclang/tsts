@@ -1024,6 +1024,67 @@ function findExpressionStatementIdentifier(node: Node, text: string): Node | und
   return found;
 }
 
+// ---------------------------------------------------------------------------
+// symbolToString qualification (S1) — the `.symbols` baseline emits QUALIFIED
+// names for members (Symbol(E.A), Symbol(Outer.method)) while top-level
+// declarations, locals, parameters, and type parameters stay bare. These cover
+// the checker display path the baseline walker calls via program.symbolToString.
+// ---------------------------------------------------------------------------
+
+// Bind the file (checkSourceFile binds idempotently) and collect the symbol of
+// the first declaration whose name matches, so we can format it via the checker.
+function symbolStringByName(source: string, name: string): string {
+  const sourceFile = parseSourceFile(source);
+  checkSourceFile(sourceFile);
+  const checker = newChecker();
+  const found: { symbol: ReturnType<typeof nodeSymbol> } = { symbol: undefined };
+  const walk = (node: Node): undefined => {
+    const symbol = nodeSymbol(node);
+    if (found.symbol === undefined && symbol !== undefined && (symbol.name === name || symbol.escapedName === name)) {
+      found.symbol = symbol;
+    }
+    forEachChild(node, walk);
+    return undefined;
+  };
+  walk(sourceFile);
+  assert.ok(found.symbol !== undefined, `no symbol named ${name} found`);
+  return checker.symbolToString(found.symbol);
+}
+
+test("symbolToString qualifies an enum member with its enum", () => {
+  assert.strictEqual(symbolStringByName("enum E { A, B }", "A"), "E.A");
+});
+
+test("symbolToString leaves the enum itself bare", () => {
+  assert.strictEqual(symbolStringByName("enum E { A, B }", "E"), "E");
+});
+
+test("symbolToString qualifies a class method with its class", () => {
+  assert.strictEqual(symbolStringByName("class Outer { method() {} }", "method"), "Outer.method");
+});
+
+test("symbolToString qualifies an interface member with its interface", () => {
+  assert.strictEqual(symbolStringByName("interface I { bar(): void; }", "bar"), "I.bar");
+});
+
+test("symbolToString qualifies nested namespace members recursively", () => {
+  assert.strictEqual(
+    symbolStringByName("namespace N { export namespace M { export const x = 1; } }", "x"),
+    "N.M.x",
+  );
+});
+
+test("symbolToString never qualifies a type parameter", () => {
+  assert.strictEqual(symbolStringByName("class G<T> { foo(p: T) { return p; } }", "T"), "T");
+});
+
+test("symbolToString leaves top-level module exports bare (module symbol dropped)", () => {
+  // In a module file the source-file (module) symbol owns the top-level members,
+  // but TS-Go drops it from the chain ("prefer `x` vs `\"foo\".x`").
+  assert.strictEqual(symbolStringByName("export class K { m() {} }", "K"), "K");
+  assert.strictEqual(symbolStringByName("export class K { m() {} }", "m"), "K.m");
+});
+
 // The checker's NameResolver wiring (mirrors the shared resolver in
 // checker.checkedtype.ts): getSymbolOfDeclaration reads the in-place node symbol;
 // error/arguments are no-op (the checker caller owns unresolved-name diagnostics).

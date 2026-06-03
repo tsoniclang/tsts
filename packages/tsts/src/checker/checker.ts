@@ -57,6 +57,7 @@ import {
   newCheckState,
   wireBinderSymbolResolution,
 } from "./checker.checkedtype.js";
+import { symbolToDisplayString } from "./checker.symbolDisplay.js";
 import { inferExpression } from "./checker.expressions.js";
 import { checkStatements } from "./checker.statements.js";
 import { createCheckerCoreState } from "./checkerInitialization.js";
@@ -181,6 +182,10 @@ export class Checker {
 
   typeToStringEx(type: Type): string {
     return displayType(type);
+  }
+
+  symbolToString(symbol: AstSymbol, enclosingDeclaration?: AstNode, meaning?: number): string {
+    return symbolToDisplayString(symbol, enclosingDeclaration, meaning);
   }
 
   getAnyType(): Type { return anyType; }

@@ -248,8 +248,16 @@ function newTypeWriterProgram(program: Program): TypeWriterProgram {
         return undefined;
       }
     },
-    symbolToString(symbol: AstSymbol): string {
-      return (symbol as { name?: string }).name ?? "";
+    // Match TS-Go `type_symbol_baseline.go`: the walker formats each symbol via
+    // `SymbolToStringEx(symbol, node.Parent, ...)`, so the enclosing declaration
+    // is the reference node's parent. The checker's `symbolToString` returns the
+    // qualified name (e.g. `Outer.method`, `E.A`).
+    symbolToString(symbol: AstSymbol, node: AstNode): string {
+      try {
+        return checker.symbolToString(symbol, node.parent);
+      } catch {
+        return symbol.name ?? symbol.escapedName ?? "";
+      }
     },
   };
 }
