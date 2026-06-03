@@ -11,6 +11,7 @@
  *   0B function inv.    .temp/tsgo-function-inventory.json
  *   0D control skeleton .temp/tsgo-control-skeleton.json
  *   0E corpus impact    .temp/tsgo-corpus-impact.json
+ *   0G container/member .temp/tsgo-container-member-inventory.json
  *   raw corpus report   .temp/tsgo-report/divergence.json
  *   0C split ownership  .analysis/tsts-tsc/parity-maps/split-ownership.json
  *
@@ -49,6 +50,7 @@ const LOGICAL_PARITY_PATH = join(TEMP_DIR, "logical-parity.json");
 const FUNCTION_INVENTORY_PATH = join(TEMP_DIR, "tsgo-function-inventory.json");
 const CONTROL_SKELETON_PATH = join(TEMP_DIR, "tsgo-control-skeleton.json");
 const CORPUS_IMPACT_PATH = join(TEMP_DIR, "tsgo-corpus-impact.json");
+const CONTAINER_MEMBER_PATH = join(TEMP_DIR, "tsgo-container-member-inventory.json");
 const DIVERGENCE_PATH = join(TEMP_DIR, "tsgo-report", "divergence.json");
 const SPLIT_OWNERSHIP_PATH = join(PARITY_MAPS_DIR, "split-ownership.json");
 
@@ -58,6 +60,8 @@ const MAX_OWNED_FILES = 24;
 const MAX_UPSTREAM_FILES = 24;
 const MAX_CORPUS_EXAMPLES = 24;
 const MAX_MISSING_SYMBOLS = 48;
+const MAX_MISSING_CONTAINERS = 32;
+const MAX_MISSING_CONTAINER_MEMBERS = 48;
 
 const SUCCESS_GATES: readonly string[] = [
   "npm run typecheck",
@@ -139,6 +143,30 @@ interface CorpusImpactReport {
   readonly moduleImpacts?: readonly CorpusImpactEntry[];
 }
 
+// Container/member inventory (0G). Per-container results carry the upstream
+// container's classification and a per-status member tally. We use it to add
+// missing containers/fields/methods (structural state gaps) to packets, so a
+// dynamic workflow aims at real missing containers, not just free functions.
+interface ContainerMemberResultMember {
+  readonly upstream?: string;
+  readonly kind?: string;
+  readonly status?: string;
+}
+
+interface ContainerMemberResult {
+  readonly module?: string;
+  readonly upstreamFile?: string;
+  readonly upstreamContainer?: string;
+  readonly kind?: string;
+  readonly status?: string;
+  readonly members?: readonly ContainerMemberResultMember[];
+  readonly memberTotals?: Readonly<Record<string, number>>;
+}
+
+interface ContainerMemberReport {
+  readonly containersResult?: readonly ContainerMemberResult[];
+}
+
 interface DivergenceClusterRow {
   readonly signature?: string;
   readonly count?: number;
@@ -176,6 +204,10 @@ interface PacketContext {
   readonly matchedDeclarations: number;
   readonly missingSymbols: readonly string[];
   readonly structuralGaps: readonly string[];
+  // Missing containers (structs/interfaces/receivers/enums) and their missing
+  // fields/methods/members, drawn from the container/member inventory (0G).
+  readonly missingContainers: readonly string[];
+  readonly missingContainerMembers: readonly string[];
   readonly corpusChannels: Readonly<Record<string, number>>;
   readonly splitDeclared: boolean;
   readonly rationale: readonly string[];
@@ -413,6 +445,42 @@ function collectMissingSymbols(
   return uniqueSorted([...fromInventory, ...fromParity]).slice(0, MAX_MISSING_SYMBOLS);
 }
 
+// Missing containers (structs/interfaces/receiver method-sets/enums) for a
+// module, drawn from the container/member inventory (0G). These are STRUCTURAL
+// STATE gaps the function inventory cannot see: a whole struct or interface that
+// has no TSTS counterpart.
+function collectMissingContainers(
+  module: LogicalParityModule,
+  containers: readonly ContainerMemberResult[] | undefined,
+): readonly string[] {
+  const out = (containers ?? [])
+    .filter((entry) => entry.module === module.module && entry.status === "missing-container")
+    .map((entry) => `${entry.upstreamContainer ?? ""} (${entry.kind ?? "container"})`)
+    .filter((label) => label.trim().length > 0 && !label.startsWith(" "));
+  return uniqueSorted(out).slice(0, MAX_MISSING_CONTAINERS);
+}
+
+// Missing members (fields/methods/enum members) attributed to their container,
+// drawn from the container/member inventory (0G). These prioritize the real
+// missing fields/properties/methods on otherwise-present containers.
+function collectMissingContainerMembers(
+  module: LogicalParityModule,
+  containers: readonly ContainerMemberResult[] | undefined,
+): readonly string[] {
+  const out: string[] = [];
+  for (const entry of containers ?? []) {
+    if (entry.module !== module.module) continue;
+    const container = entry.upstreamContainer ?? "";
+    for (const member of entry.members ?? []) {
+      if (member.status !== "missing-member") continue;
+      const name = member.upstream ?? "";
+      if (name.length === 0) continue;
+      out.push(`${container}.${name} (${member.kind ?? "member"})`);
+    }
+  }
+  return uniqueSorted(out).slice(0, MAX_MISSING_CONTAINER_MEMBERS);
+}
+
 // Upstream files for a module: prefer concrete files named by the function
 // inventory / control skeleton; fall back to the module directory.
 function collectUpstreamFiles(
@@ -493,21 +561,43 @@ const COVERAGE_GATE = 0.9;
 const SHAPE_GATE = 0.65;
 const MIN_UPSTREAM_DECLARATIONS = 8;
 
-function shouldEmit(module: LogicalParityModule): boolean {
+// Per-module structural-state gap from the container/member inventory (0G): the
+// count of genuinely-missing containers + genuinely-missing container members.
+// A module can be at full declaration coverage yet still have missing struct
+// fields / interface methods, so this is an independent emission signal.
+function containerGapCount(
+  module: LogicalParityModule,
+  containers: readonly ContainerMemberResult[] | undefined,
+): number {
+  let missing = 0;
+  for (const entry of containers ?? []) {
+    if (entry.module !== module.module) continue;
+    if (entry.status === "missing-container") missing += 1;
+    missing += entry.memberTotals?.["missing-member"] ?? 0;
+  }
+  return missing;
+}
+
+function shouldEmit(module: LogicalParityModule, containerGap: number): boolean {
   const coverage = clampPercent(module.declarationCoverage);
   const shapeScore = clampPercent(module.shapeScore);
   const upstreamDeclarations = module.upstreamDeclarations ?? 0;
   if (module.scope === "deferred") return false;
   if (module.status === "missing-upstream") return false;
   if (upstreamDeclarations < MIN_UPSTREAM_DECLARATIONS) return false;
-  return coverage < COVERAGE_GATE || shapeScore < SHAPE_GATE;
+  // Emit when declaration coverage / shape is below gate OR when the inventory
+  // shows real missing containers/fields/methods for this module.
+  return coverage < COVERAGE_GATE || shapeScore < SHAPE_GATE || containerGap > 0;
 }
 
 // Priority weight: bigger missing absolute surface and lower coverage first.
-function priorityWeight(module: LogicalParityModule): number {
+// The structural-state gap (missing containers + members) is added so packets
+// that close real container/field/method gaps are prioritized alongside the
+// function-declaration gap.
+function priorityWeight(module: LogicalParityModule, containerGap: number): number {
   const missing = (module.upstreamDeclarations ?? 0) - (module.matchedDeclarations ?? 0);
   const coverageDeficit = 1 - clampPercent(module.declarationCoverage);
-  return missing * (0.5 + coverageDeficit);
+  return missing * (0.5 + coverageDeficit) + containerGap;
 }
 
 function buildPacket(
@@ -515,6 +605,7 @@ function buildPacket(
   inventory: readonly FunctionInventoryEntry[] | undefined,
   skeleton: readonly ControlSkeletonEntry[] | undefined,
   impact: readonly CorpusImpactEntry[] | undefined,
+  containers: readonly ContainerMemberResult[] | undefined,
   splits: SplitOwnership | undefined,
   fallbackExamples: readonly string[],
   impactPresent: boolean,
@@ -523,6 +614,8 @@ function buildPacket(
   const upstreamFiles = collectUpstreamFiles(module, inventory, skeleton);
   const missingSymbols = collectMissingSymbols(module, inventory);
   const structuralGaps = collectStructuralGaps(module, impact, skeleton);
+  const missingContainers = collectMissingContainers(module, containers);
+  const missingContainerMembers = collectMissingContainerMembers(module, containers);
   const corpus = collectCorpusExamples(module, impact, fallbackExamples);
 
   const coverage = clampPercent(module.declarationCoverage);
@@ -552,6 +645,12 @@ function buildPacket(
   } else if (impactPresent && (impact === undefined || impact.length === 0)) {
     rationale.push(`Corpus-impact join (0E) produced no module-level entry for ${module.module}; no observed corpus divergence is currently attributed to this module.`);
   }
+  if (missingContainers.length > 0) {
+    rationale.push(`${missingContainers.length} TS-Go container(s) (struct/interface/receiver method-set/enum) have no TSTS counterpart. Port the missing structural state (fields + methods), not just free functions.`);
+  }
+  if (missingContainerMembers.length > 0) {
+    rationale.push(`${missingContainerMembers.length} fields/methods/members on otherwise-present containers are missing in TSTS. Add the missing struct fields / interface methods / enum members to the matching TSTS container.`);
+  }
 
   const packet: Packet = {
     id,
@@ -572,6 +671,8 @@ function buildPacket(
     matchedDeclarations,
     missingSymbols,
     structuralGaps,
+    missingContainers,
+    missingContainerMembers,
     corpusChannels: corpus.channels,
     splitDeclared: owned.splitDeclared,
     rationale,
@@ -731,6 +832,18 @@ function renderPacketMarkdown(packet: Packet, context: PacketContext): string {
     for (const gap of context.structuralGaps) lines.push(`- ${gap}`);
     lines.push("");
   }
+  if (context.missingContainers.length > 0) {
+    lines.push("## Missing TS-Go containers to port (from container/member inventory)");
+    lines.push("");
+    for (const container of context.missingContainers) lines.push(`- \`${container}\``);
+    lines.push("");
+  }
+  if (context.missingContainerMembers.length > 0) {
+    lines.push("## Missing container fields / methods / members to port");
+    lines.push("");
+    for (const member of context.missingContainerMembers) lines.push(`- \`${member}\``);
+    lines.push("");
+  }
   lines.push("## Corpus examples");
   lines.push("");
   if (packet.corpusExamples.length === 0) lines.push("- (no corpus examples joined)");
@@ -824,6 +937,7 @@ function main(): void {
   const inventory = loadJson<unknown>(FUNCTION_INVENTORY_PATH, "0B function-inventory");
   const skeleton = loadJson<unknown>(CONTROL_SKELETON_PATH, "0D control-skeleton");
   const impact = loadJson<CorpusImpactReport>(CORPUS_IMPACT_PATH, "0E corpus-impact");
+  const containerMember = loadJson<ContainerMemberReport>(CONTAINER_MEMBER_PATH, "0G container-member-inventory");
   const divergence = loadJson<Parameters<typeof buildFallbackExamples>[0]>(DIVERGENCE_PATH, "raw divergence");
   const splits = loadJson<unknown>(SPLIT_OWNERSHIP_PATH, "0C split-ownership");
   // 0C is an envelope { splits: { <go file>: [<ts file>...] }, ... } per the
@@ -839,8 +953,13 @@ function main(): void {
   const impactEntries = Array.isArray(impact.value)
     ? (impact.value as readonly CorpusImpactEntry[])
     : impact.value?.moduleImpacts ?? [];
+  // 0G is { containersResult: [...] } per checkTsgoContainerMemberInventory;
+  // tolerate a bare array too. Absent input yields an empty list (graceful).
+  const containerEntries = Array.isArray(containerMember.value)
+    ? (containerMember.value as readonly ContainerMemberResult[])
+    : containerMember.value?.containersResult ?? [];
 
-  const inputNotes = [parity.note, inventory.note, skeleton.note, impact.note, divergence.note, splits.note];
+  const inputNotes = [parity.note, inventory.note, skeleton.note, impact.note, containerMember.note, divergence.note, splits.note];
 
   if (!parity.present || parity.value?.reports === undefined) {
     const message = `0A logical-parity report is required but unavailable. Run "npm run logical-parity:report" first.\n  ${inputNotes.join("\n  ")}`;
@@ -860,9 +979,16 @@ function main(): void {
   const inventoryByModule = indexByModule(inventoryEntries);
   const skeletonByModule = indexByModule(skeletonEntries);
   const impactByModule = indexByModule(impactEntries);
+  const containerByModule = indexByModule(containerEntries);
 
-  const candidates = (parity.value.reports ?? []).filter(shouldEmit);
-  const ordered = [...candidates].sort((a, b) => priorityWeight(b) - priorityWeight(a) || a.module.localeCompare(b.module));
+  const candidates = (parity.value.reports ?? []).filter((module) =>
+    shouldEmit(module, containerGapCount(module, containerByModule.get(module.module))),
+  );
+  const ordered = [...candidates].sort((a, b) =>
+    priorityWeight(b, containerGapCount(b, containerByModule.get(b.module)))
+      - priorityWeight(a, containerGapCount(a, containerByModule.get(a.module)))
+    || a.module.localeCompare(b.module),
+  );
 
   const built = ordered.map((module) =>
     buildPacket(
@@ -870,6 +996,7 @@ function main(): void {
       inventoryByModule.get(module.module),
       skeletonByModule.get(module.module),
       impactByModule.get(module.module),
+      containerByModule.get(module.module),
       splitMap,
       fallbackExamples.get(module.module) ?? [],
       impact.present,
@@ -877,7 +1004,7 @@ function main(): void {
   );
 
   const contexts = new Map(built.map((b) => [b.packet.id, b.context]));
-  const weights = new Map(ordered.map((m) => [`tsgo-${slug(m.module)}-parity`, priorityWeight(m)]));
+  const weights = new Map(ordered.map((m) => [`tsgo-${slug(m.module)}-parity`, priorityWeight(m, containerGapCount(m, containerByModule.get(m.module)))]));
   const linked = linkSharedOwnership(built.map((b) => b.packet), contexts, weights);
 
   writePackets(linked, contexts, inputNotes);

@@ -32,6 +32,7 @@
     "tsgo:function-inventory": "node packages/tsts/tools/checkTsgoFunctionInventory.ts",
     "tsgo:control-skeleton": "node packages/tsts/tools/checkTsgoControlSkeleton.ts",
     "tsgo:corpus-impact": "node packages/tsts/tools/checkTsgoCorpusImpact.ts",
+    "tsgo:container-member-inventory": "cd packages/tsts && node --import ./tools/register.mjs tools/checkTsgoContainerMemberInventory.ts",
     "tsgo:work-packets": "node packages/tsts/tools/generateTsgoWorkPackets.ts",
     "typecheck": "node ../tsonic/node_modules/typescript/bin/tsc --noEmit -p packages/tsts/tsconfig.json --pretty false",
     "build:tsc": "node ../tsonic/node_modules/typescript/bin/tsc -p packages/tsts/tsconfig.json --outDir .temp/tsc-dist --pretty false && rm -rf .temp/tsc-dist/src/bundled/libs && cp -R packages/tsts/src/bundled/libs .temp/tsc-dist/src/bundled/libs",
