@@ -18,6 +18,9 @@
     "packages/tsts/schema/tsgo/symbolflags.go"
   ],
   "astGeneratedStatusOut": ".temp/porter/ast-generated.json",
+  "diagnosticsGeneratedDir": "internal/diagnostics/generated",
+  "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
+  "diagnosticsGeneratedStatusOut": ".temp/porter/diagnostics-generated.json",
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
@@ -67,6 +70,11 @@
       "match": "packages/tsts/src/internal/ast/generated/**",
       "category": "ast-generated",
       "reason": "Generated AST infrastructure emitted by porter:ast from packages/tsts/schema/tsgo/*; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/diagnostics/generated/**",
+      "category": "diagnostics-generated",
+      "reason": "Generated diagnostic message catalog emitted by porter:diagnostics from the pinned diagnostics_generated.go; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
       "match": "packages/tsts/src/go/*.ts",
