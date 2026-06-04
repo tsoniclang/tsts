@@ -937,7 +937,7 @@ export function Parser_isIdentifier(receiver: GoPtr<Parser>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isBindingIdentifier","kind":"method","status":"implemented","sigHash":"20e2c33b83c95cc405984d4233cd1e9c1f4ce073845fdd2ca69430780a2c8b13","bodyHash":"45300e5164d9a1e9f1f221c2cb205016e1b24880a24c7d2ece69430780a2c8b13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.isBindingIdentifier","kind":"method","status":"implemented","sigHash":"20e2c33b83c95cc405984d4233cd1e9c1f4ce073845fdd2ca69430780a2c8b13","bodyHash":"45300e5164d9a1e9f1f221c2cb205016e1b24880a24c7d2ece66f3ca3b117078"}
  *
  * Go source:
  * func (p *Parser) isBindingIdentifier() bool {

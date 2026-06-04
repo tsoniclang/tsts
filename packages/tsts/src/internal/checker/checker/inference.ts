@@ -1442,8 +1442,8 @@ export function Checker_popInferenceContext(receiver: GoPtr<Checker>): void {
  */
 export function Checker_getInferenceContext(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<InferenceContext> {
   for (let i = receiver!.inferenceContextInfos.length - 1; i >= 0; i--) {
-    if (isNodeDescendantOf(node, receiver!.inferenceContextInfos[i].node)) {
-      return receiver!.inferenceContextInfos[i].context;
+    if (isNodeDescendantOf(node, receiver!.inferenceContextInfos[i]!.node)) {
+      return receiver!.inferenceContextInfos[i]!.context;
     }
   }
   return undefined;

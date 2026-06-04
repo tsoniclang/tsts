@@ -22,7 +22,7 @@ import {
 import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js";
 import { FindBestPatternMatch, Pattern_IsValid } from "../core/pattern.js";
 import type { Pattern } from "../core/pattern.js";
-import { TSTrue } from "../core/tristate.js";
+import { TSFalse, TSTrue } from "../core/tristate.js";
 import * as diagnostics from "../diagnostics/generated/messages.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import { Expected_ActualJSONType, Expected_ExpectedJSONType, Expected_IsPresent, Expected_IsValid } from "../packagejson/expected.js";
@@ -192,7 +192,7 @@ export function tracer_getTraces(receiver: GoPtr<tracer>): GoSlice<DiagAndArgs> 
   if (receiver !== undefined) {
     return receiver.traces;
   }
-  return undefined as GoSlice<DiagAndArgs>;
+  return undefined as never;
 }
 
 /**
@@ -309,12 +309,12 @@ export function newResolutionState(name: string, containingDirectory: string, is
     isConfigLookup: false,
     features: NodeResolutionFeaturesNone,
     esmMode: false,
-    conditions: undefined as GoSlice<string>,
+    conditions: undefined as never,
     extensions: 0 as extensions,
     resolvePackageDirectoryOnly: false,
     candidateEndingIsFromConfig: false,
     resolvedPackageDirectory: false,
-    diagnostics: undefined as GoSlice<GoPtr<Diagnostic>>,
+    diagnostics: undefined as never,
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -473,7 +473,7 @@ export function NewResolverWithOptions(host: ResolutionHost, compilerOptions: Go
  */
 export function Resolver_newTraceBuilder(receiver: GoPtr<Resolver>): GoPtr<tracer> {
   if (receiver!.compilerOptions!.TraceResolution === TSTrue) {
-    return { traces: undefined as GoSlice<DiagAndArgs> };
+    return { traces: undefined as never };
   }
   return undefined;
 }

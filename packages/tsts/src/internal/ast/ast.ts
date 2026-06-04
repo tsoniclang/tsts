@@ -20,8 +20,8 @@ import type { AccessorDeclarationBase, ArrayLiteralExpression, ArrowFunction, As
 import * as casts from "./generated/casts.js";
 import * as predicates from "./generated/predicates.js";
 import { NewToken as NodeFactory_NewToken } from "./generated/factory.js";
+import type { Kind } from "./generated/kinds.js";
 import {
-  Kind,
   KindAbstractKeyword,
   KindAccessorKeyword,
   KindAmpersandAmpersandEqualsToken,
@@ -5203,7 +5203,11 @@ export function SourceFile_as_nodeData(receiver: GoPtr<SourceFile>): nodeData {
     AsNode: (): GoPtr<Node> => NodeDefault_AsNode(receiver),
     ForEachChild: (v: Visitor): bool => SourceFile_ForEachChild(receiver, v),
     IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),
-    VisitEachChild: (v): GoPtr<Node> => SourceFile_VisitEachChild(receiver, v),
+    // The spine `nodeData` interface forward-declares `*NodeVisitor` (a placeholder
+    // in spine.ts to break the spine<->visitor cycle); the concrete `NodeVisitor`
+    // lives in visitor.ts. In Go these are the same `internal/ast.NodeVisitor`, so we
+    // recover the concrete receiver type at this adapter boundary.
+    VisitEachChild: (v): GoPtr<Node> => SourceFile_VisitEachChild(receiver, v as GoPtr<NodeVisitor>),
     Clone: (f: NodeFactoryCoercible): GoPtr<Node> => SourceFile_Clone(receiver, f),
     Name: () => NodeDefault_Name(receiver),
     Modifiers: () => NodeDefault_Modifiers(receiver),

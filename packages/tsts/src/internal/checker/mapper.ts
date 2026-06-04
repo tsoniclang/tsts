@@ -500,7 +500,7 @@ export function DeferredTypeMapper_Map(receiver: GoPtr<DeferredTypeMapper>, t: G
   for (let i = 0; i < receiver!.sources.length; i++) {
     const s = receiver!.sources[i];
     if (t === s) {
-      return receiver!.targets[i]();
+      return receiver!.targets[i]!();
     }
   }
   return t;

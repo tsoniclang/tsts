@@ -2,14 +2,12 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
-// SourceFile, Pragma, CommentRange (structs) and NewModifier (a hand-written factory
-// wrapper, ast.go: NewModifier -> NewToken) live in the hand-written AST core whose
-// documented home is ../../ast/ast.ts (see ast/generated/data.ts: "SourceFile ...
-// hand-written in ../ast.ts"). That file has not been ported yet (it is owned by
-// another agent), so units that reference the *types* SourceFile/Pragma/CommentRange
-// remain stubs (see report).
+// SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
+// hand-written factory wrapper, ast.go: (*NodeFactory).NewModifier -> NewToken) live
+// in the hand-written AST core whose documented home is ../../ast/ast.ts (see
+// ast/generated/data.ts: "SourceFile ... hand-written in ../ast.ts").
 import type { CommentRange, Pragma, SourceFile } from "../../ast/ast.js";
-import { NewModifier } from "../../ast/ast.js";
+import { NodeFactory_NewModifier } from "../../ast/ast.js";
 import {
   NewCaseOrDefaultClause,
   NewComputedPropertyName,
@@ -1319,7 +1317,7 @@ export function Parser_tryParseModifier(receiver: GoPtr<Parser>, hasSeenStaticMo
       return undefined;
     }
   }
-  return Parser_finishNode(receiver, NewModifier(receiver!.factory, kind), pos);
+  return Parser_finishNode(receiver, NodeFactory_NewModifier(receiver!.factory, kind), pos);
 }
 
 /**

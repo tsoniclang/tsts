@@ -1,7 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
+import type { SourceFile } from "../ast/ast.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import type { BigIntLiteral, BindingElement, ConstructorDeclaration, Decorator, ExportDeclaration, ForInOrOfStatement, HeritageClause, ImportClause, IndexSignatureDeclaration, InterfaceDeclaration, JsxExpression, MappedTypeNode, MetaProperty, NumericLiteral, ObjectLiteralExpression, PrivateIdentifier, RegularExpressionLiteral, SourceFile, TaggedTemplateExpression, TypeOperatorNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "../ast/generated/data.js";
+import type { BigIntLiteral, BindingElement, ConstructorDeclaration, Decorator, ExportDeclaration, ForInOrOfStatement, HeritageClause, ImportClause, IndexSignatureDeclaration, InterfaceDeclaration, JsxExpression, MappedTypeNode, MetaProperty, NumericLiteral, ObjectLiteralExpression, PrivateIdentifier, RegularExpressionLiteral, TaggedTemplateExpression, TypeOperatorNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "../ast/generated/data.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import type { AccessorDeclaration, ClassLikeDeclaration, DeclarationName, Expression, JsxTagNameExpression, Statement, TokenNode } from "../ast/generated/unions.js";
 import type { Message } from "../diagnostics/diagnostics.js";

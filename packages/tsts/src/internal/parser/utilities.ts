@@ -1,15 +1,29 @@
 import type { bool } from "@tsonic/core/types.js";
+import { DeleteFunc } from "../../go/slices.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { CommentRange } from "../ast/generated/data.js";
+import type { CommentRange } from "../ast/ast.js";
 import type { Node } from "../ast/spine.js";
+import { Node_End, Node_Pos } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { Kind } from "../ast/generated/kinds.js";
-import { KindGreaterThanToken, KindIdentifier } from "../ast/generated/kinds.js";
+import {
+  KindArrowFunction,
+  KindExportSpecifier,
+  KindFunctionExpression,
+  KindGreaterThanToken,
+  KindIdentifier,
+  KindParameter,
+  KindParenthesizedExpression,
+  KindTypeParameter,
+  KindVariableDeclaration,
+} from "../ast/generated/kinds.js";
 import { IsKeywordKind, IsPunctuationKind } from "../ast/generated/predicates.js";
+import { TextRange_End, TextRange_Pos } from "../core/text.js";
 import type { LanguageVariant } from "../core/languagevariant.js";
 import { LanguageVariantJSX, LanguageVariantStandard } from "../core/languagevariant.js";
 import type { ScriptKind } from "../core/scriptkind.js";
 import { ScriptKindJS, ScriptKindJSON, ScriptKindJSX, ScriptKindTSX } from "../core/scriptkind.js";
+import { GetLeadingCommentRanges, GetTrailingCommentRanges } from "../scanner/scanner.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::getLanguageVariant","kind":"func","status":"implemented","sigHash":"4c5ee87fd9820be6daa04017b5c0edc7a2877024645c650bdab8194a3da6286b","bodyHash":"13c7111a0611fe78ed4af50148613b6c6f4ac28950c0080c87902c309eb7de82"}
@@ -61,7 +75,7 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: Kind): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges","kind":"func","status":"stub","sigHash":"abe27f30e9295ee1de1c8e361301cd0f43503a6a7610221b954137e14cf1de5f","bodyHash":"634b57b5113bebc9488a8a7f8a1b22bf79284fc4a6d2da6e3850c6fbb8db4e0e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges","kind":"func","status":"implemented","sigHash":"abe27f30e9295ee1de1c8e361301cd0f43503a6a7610221b954137e14cf1de5f","bodyHash":"634b57b5113bebc9488a8a7f8a1b22bf79284fc4a6d2da6e3850c6fbb8db4e0e"}
  *
  * Go source:
  * func GetJSDocCommentRanges(f *ast.NodeFactory, commentRanges []ast.CommentRange, node *ast.Node, text string) []ast.CommentRange {
@@ -87,7 +101,39 @@ export function tokenIsIdentifierOrKeywordOrGreaterThan(token: Kind): bool {
  * }
  */
 export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSlice<CommentRange>, node: GoPtr<Node>, text: string): GoSlice<CommentRange> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/utilities.go::func::GetJSDocCommentRanges");
+  switch (node!.Kind) {
+    case KindParameter:
+    case KindTypeParameter:
+    case KindFunctionExpression:
+    case KindArrowFunction:
+    case KindParenthesizedExpression:
+    case KindVariableDeclaration:
+    case KindExportSpecifier:
+      GetTrailingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+        commentRanges.push(commentRange);
+        return true;
+      });
+      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+        commentRanges.push(commentRange);
+        return true;
+      });
+      break;
+    default:
+      GetLeadingCommentRanges(f, text, Node_Pos(node))((commentRange: CommentRange): bool => {
+        commentRanges.push(commentRange);
+        return true;
+      });
+  }
+  // Keep if the comment starts with '/**' but not if it is '/**/'
+  return DeleteFunc(commentRanges, (comment: CommentRange): bool => {
+    const commentStart = TextRange_Pos(comment);
+    const commentLen = TextRange_End(comment) - commentStart;
+    return (TextRange_End(comment) > Node_End(node) ||
+      commentLen < 4 ||
+      text[commentStart + 1] !== "*" ||
+      text[commentStart + 2] !== "*" ||
+      text[commentStart + 3] === "/") as bool;
+  });
 }
 
 /**

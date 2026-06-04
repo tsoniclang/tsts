@@ -2,7 +2,7 @@ import type { byte, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import { Builder, Index } from "../../../go/strings.js";
 import type { Node } from "../../ast/spine.js";
-import type { SourceFile } from "../../ast/generated/unions.js";
+import type { SourceFile } from "../../ast/ast.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { CompilerOptions_GetIsolatedModules } from "../../core/compileroptions.js";
 import { Fail } from "../../debug/debug.js";

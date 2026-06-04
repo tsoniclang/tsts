@@ -61,6 +61,7 @@ import { AsTemplateLiteralTypeSpan } from "../../ast/generated/casts.js";
 import { Parser_parseJSDocAllType, Parser_parseJSDocNonNullableType, Parser_parseJSDocNullableType } from "./jsx-jsdoc.js";
 import { Scanner_ReScanAsteriskEqualsToken, Scanner_ReScanQuestionToken } from "../../scanner/scanner.js";
 import { PCHeritageClauseElement, PCHeritageClauses, PCTupleElementTypes, PCTypeArguments, PCTypeMembers, PCTypeParameters } from "./state.js";
+import type { Parser, jsdocScannerInfo } from "./state.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTypeAnnotation","kind":"method","status":"implemented","sigHash":"adeb19ed0f33f094ab8118ef44389341fcde713436a0c4f851edefe8318f7b75","bodyHash":"ffe2e6ac91a5266071191731e503f90b71c785e29183a83e3b67c9775406205d"}

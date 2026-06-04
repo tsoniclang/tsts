@@ -4,6 +4,7 @@ import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
+import type { LabeledStatement } from "../ast/generated/data.js";
 import {
   NewArrayLiteralExpression,
   NewArrowFunction,
@@ -32,7 +33,7 @@ import {
   NewTypeOfExpression,
   NewVoidExpression,
 } from "../ast/generated/factory.js";
-import type { BlockNode, Declaration, Expression, IdentifierNode, LabeledStatement, PrivateIdentifierNode, Statement } from "../ast/generated/unions.js";
+import type { BlockNode, Declaration, Expression, IdentifierNode, PrivateIdentifierNode, Statement } from "../ast/generated/unions.js";
 import { IsCallExpression, IsIdentifier, IsPrivateIdentifier, IsQualifiedName } from "../ast/generated/predicates.js";
 import { AsQualifiedName } from "../ast/generated/casts.js";
 import { NodeFlagsNone, NodeFlagsOptionalChain } from "../ast/generated/flags.js";
@@ -87,11 +88,13 @@ export interface NodeFactory {
  */
 export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> {
   return {
+    // Go embeds the value `*ast.NewNodeFactory(...)`; the `*` dereference is
+    // expressed here via the non-null assertion on the returned GoPtr.
     __tsgoEmbedded0: NewAstNodeFactory({
       OnCreate: (node) => EmitContext_onCreate(context, node),
       OnUpdate: (updated, original) => EmitContext_onUpdate(context, updated, original),
       OnClone: (updated, original) => EmitContext_onClone(context, updated, original),
-    }),
+    })!,
     emitContext: context,
   };
 }

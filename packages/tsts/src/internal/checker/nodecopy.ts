@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node, NodeVisitor } from "../ast/spine.js";
-import type { SourceFile } from "../ast/generated/data.js";
+import type { SourceFile } from "../ast/ast.js";
 import type { TypeNode } from "../ast/generated/unions.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";

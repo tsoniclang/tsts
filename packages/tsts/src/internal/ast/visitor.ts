@@ -1,14 +1,15 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
+import { AsSourceFile } from "./ast.js";
 import type { SourceFile } from "./ast.js";
 import { AsSyntaxList } from "./generated/casts.js";
 import { NewBlock } from "./generated/factory.js";
 import type { NodeFactory } from "./generated/factory.js";
 import { KindSyntaxList } from "./generated/kinds.js";
 import type { BlockOrExpression, ParameterList, Statement, StatementList, TokenNode } from "./generated/unions.js";
-import type { ModifierList, Node, NodeList } from "./spine.js";
-import { NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
+import type { ModifierList, Node, NodeList, NodeVisitor as NodeVisitorBrand } from "./spine.js";
+import { NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
 
 // NodeVisitor
 
@@ -22,7 +23,7 @@ import { NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChi
  * 	Hooks   NodeVisitorHooks       // Hooks to be invoked when visiting a node
  * }
  */
-export interface NodeVisitor {
+export interface NodeVisitor extends NodeVisitorBrand {
   Visit: (node: GoPtr<Node>) => GoPtr<Node>;
   Factory: GoPtr<NodeFactory>;
   Hooks: NodeVisitorHooks;
@@ -73,7 +74,7 @@ export function NewNodeVisitor(visit: (node: GoPtr<Node>) => GoPtr<Node>, factor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSourceFile","kind":"method","status":"stub","sigHash":"a72502a1c9477af1a5c3ff283872694a44fd1d519c5db278ba45d95e65707485","bodyHash":"644ddda4fcac4fd5694f22357c124f80a28c8bb47e87ec4c4d5665e5c9e850d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSourceFile","kind":"method","status":"implemented","sigHash":"a72502a1c9477af1a5c3ff283872694a44fd1d519c5db278ba45d95e65707485","bodyHash":"644ddda4fcac4fd5694f22357c124f80a28c8bb47e87ec4c4d5665e5c9e850d5"}
  *
  * Go source:
  * func (v *NodeVisitor) VisitSourceFile(node *SourceFile) *SourceFile {
@@ -81,7 +82,7 @@ export function NewNodeVisitor(visit: (node: GoPtr<Node>) => GoPtr<Node>, factor
  * }
  */
 export function NodeVisitor_VisitSourceFile(receiver: GoPtr<NodeVisitor>, node: GoPtr<SourceFile>): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/visitor.go::method::NodeVisitor.VisitSourceFile");
+  return AsSourceFile(NodeVisitor_VisitNode(receiver, NodeDefault_AsNode(node)));
 }
 
 /**

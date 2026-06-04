@@ -1,11 +1,12 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
-import type { SourceFile } from "../ast/generated/data.js";
+import type { SourceFile } from "../ast/ast.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
+import { SymbolFlagsTypeParameter } from "../ast/generated/flags.js";
 import type { SymbolTracker } from "../nodebuilder/types.js";
-import type { NodeBuilderContext } from "./nodebuilderimpl.js";
+import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::type::SymbolTrackerImpl","kind":"type","status":"implemented","sigHash":"79cac9a60c2d8c8e7c95ac5947d1ee4b007d23cb1f90efc004e66780e6519534","bodyHash":"27e1a5a4dd922451780ff5dccd97da42572e29cd8859ee5e60ca633255fc28f9"}
@@ -46,7 +47,7 @@ export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"stub","sigHash":"ff8227f8ec41ce48287f007f9f4b7ae28081554125ec42da7061b7337d30765f","bodyHash":"fc500489bfb106edc747ff6b322e4b66f8346b5931bd86b5d28fd5d16e2dd0f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.TrackSymbol","kind":"method","status":"implemented","sigHash":"ff8227f8ec41ce48287f007f9f4b7ae28081554125ec42da7061b7337d30765f","bodyHash":"fc500489bfb106edc747ff6b322e4b66f8346b5931bd86b5d28fd5d16e2dd0f9"}
  *
  * Go source:
  * func (this *SymbolTrackerImpl) TrackSymbol(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags) bool {
@@ -64,7 +65,18 @@ export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker
  * }
  */
 export function SymbolTrackerImpl_TrackSymbol(receiver: GoPtr<SymbolTrackerImpl>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/symboltracker.go::method::SymbolTrackerImpl.TrackSymbol");
+  if (!receiver!.DisableTrackSymbol) {
+    if (receiver!.inner !== undefined && receiver!.inner.TrackSymbol(symbol_, enclosingDeclaration, meaning)) {
+      SymbolTrackerImpl_onDiagnosticReported(receiver);
+      return true as bool;
+    }
+    // Skip recording type parameters as they dont contribute to late painted statements
+    if ((symbol_!.Flags & SymbolFlagsTypeParameter) === 0) {
+      const arg: TrackedSymbolArgs = { "symbol": symbol_, enclosingDeclaration: enclosingDeclaration, meaning: meaning };
+      receiver!.context!.trackedSymbols = [...receiver!.context!.trackedSymbols, arg];
+    }
+  }
+  return false as bool;
 }
 
 /**

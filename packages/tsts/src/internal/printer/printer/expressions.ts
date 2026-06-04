@@ -1,10 +1,12 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
-import type { Node, NodeList, SourceFile } from "../../ast/spine.js";
+import type { Node, NodeList } from "../../ast/spine.js";
+import type { SourceFile } from "../../ast/ast.js";
 import { Node_End, Node_Modifiers, Node_Name, Node_Pos, NodeList_HasTrailingComma } from "../../ast/spine.js";
 import { IsArrowFunction, IsIdentifier } from "../../ast/generated/predicates.js";
 import { IfElse } from "../../core/core.js";
-import type { ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingPattern, CallExpression, CallSignatureDeclaration, ClassExpression, ConditionalExpression, DeleteExpression, ElementAccessExpression, EnumMember, EnumMemberNode, Expression, ExpressionStatement, FunctionExpression, JsxExpression, JsxSpreadAttribute, KeywordExpression, LiteralLikeNode, MemberName, NewExpression, NonNullExpression, NoSubstitutionTemplateLiteral, NumericLiteral, ObjectLiteralElement, ObjectLiteralExpression, ParameterList, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PropertyAccessExpression, RegularExpressionLiteral, SatisfiesExpression, SpreadAssignment, SpreadElement, StringLiteral, TaggedTemplateExpression, TemplateExpression, TemplateHead, TemplateLiteral, TemplateMiddle, TemplateMiddleOrTail, TemplateTail, VoidExpression, YieldExpression } from "../../ast/generated/data.js";
+import type { ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingPattern, CallExpression, CallSignatureDeclaration, ClassExpression, ConditionalExpression, DeleteExpression, ElementAccessExpression, EnumMember, ExpressionStatement, FunctionExpression, JsxExpression, JsxSpreadAttribute, KeywordExpression, NewExpression, NonNullExpression, NoSubstitutionTemplateLiteral, NumericLiteral, ObjectLiteralExpression, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PropertyAccessExpression, RegularExpressionLiteral, SatisfiesExpression, SpreadAssignment, SpreadElement, StringLiteral, TaggedTemplateExpression, TemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, VoidExpression, YieldExpression } from "../../ast/generated/data.js";
+import type { EnumMemberNode, Expression, LiteralLikeNode, MemberName, ObjectLiteralElement, ParameterList, TemplateLiteral, TemplateMiddleOrTail } from "../../ast/generated/unions.js";
 import {
   KindClassKeyword,
   KindGetAccessor,

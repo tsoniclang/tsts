@@ -2,7 +2,7 @@ import type { GoPtr } from "../../../go/compat.js";
 import type { int } from "@tsonic/core/types.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeDefault_AsNode, Node_End, Node_Modifiers, Node_Name, Node_Pos, NodeList_End } from "../../ast/spine.js";
-import type { ArrayTypeNode, ConditionalTypeNode, ConstructorTypeNode, ExpressionWithTypeArguments, FunctionTypeNode, HeritageClause, ImportAttributes, ImportTypeNode, IndexedAccessTypeNode, InferTypeNode, IntersectionTypeNode, JSDocNonNullableType, JSDocNullableType, JSDocOptionalType, JSDocVariadicType, KeywordTypeNode, LiteralTypeNode, MappedTypeNode, NamedTupleMember, NotEmittedTypeElement, OptionalTypeNode, ParenthesizedTypeNode, RestTypeNode, TemplateLiteralTypeNode, ThisTypeNode, TupleTypeNode, TypeAliasDeclaration, TypeAssertion, TypeLiteralNode, TypeOfExpression, TypeOperatorNode, TypeParameterDeclaration, TypeQueryNode, TypeReferenceNode, UnionTypeNode } from "../../ast/generated/data.js";
+import type { ArrayTypeNode, ConditionalTypeNode, ConstructorTypeNode, ExpressionWithTypeArguments, FunctionTypeNode, HeritageClause, ImportAttributes, ImportTypeNode, IndexedAccessTypeNode, InferTypeNode, IntersectionTypeNode, JSDocNonNullableType, JSDocNullableType, JSDocOptionalType, JSDocVariadicType, KeywordTypeNode, LiteralTypeNode, MappedTypeNode, NamedTupleMember, NotEmittedTypeElement, OptionalTypeNode, ParenthesizedTypeNode, RestTypeNode, TemplateLiteralTypeNode, ThisTypeNode, TupleTypeNode, TypeAliasDeclaration, TypeAssertion, TypeLiteralNode, TypeOfExpression, TypeOperatorNode, TypeParameterDeclaration, TypePredicateNode, TypeQueryNode, TypeReferenceNode, UnionTypeNode } from "../../ast/generated/data.js";
 import type { ExpressionWithTypeArgumentsNode, HeritageClauseNode, TypeArgumentList, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList, TypePredicateParameterName } from "../../ast/generated/unions.js";
 import { KindAssertKeyword, KindCallSignature, KindCloseBracketToken, KindColonToken, KindConstructSignature, KindGetAccessor, KindIdentifier, KindIndexSignature, KindMethodSignature, KindNotEmittedTypeElement, KindOpenBracketToken, KindPropertySignature, KindQuestionToken, KindReadonlyKeyword, KindSetAccessor, KindThisType } from "../../ast/generated/kinds.js";
 import { AsCallSignatureDeclaration, AsConstructSignatureDeclaration, AsConstructorTypeNode, AsFunctionTypeNode, AsGetAccessorDeclaration, AsIdentifier, AsImportAttributes, AsIndexSignatureDeclaration, AsMethodSignatureDeclaration, AsNotEmittedTypeElement, AsPropertySignatureDeclaration, AsSetAccessorDeclaration, AsTemplateHead, AsThisTypeNode, AsTypeParameterDeclaration } from "../../ast/generated/casts.js";
@@ -267,7 +267,7 @@ export function Printer_emitTypePredicate(receiver: GoPtr<Printer>, node: GoPtr<
  * }
  */
 export function Printer_emitTypeArgument(receiver: GoPtr<Printer>, node: GoPtr<TypeNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTypeArgument");
+  Printer_emitTypeNodeOutsideExtends(receiver, node);
 }
 
 /**

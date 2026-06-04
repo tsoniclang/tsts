@@ -1,7 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
-import type { AwaitExpression, ForInOrOfStatement, LabeledStatement, ReturnStatement, SourceFile, YieldExpression } from "../../ast/generated/data.js";
+import type { SourceFile } from "../../ast/ast.js";
+import type { AwaitExpression, ForInOrOfStatement, LabeledStatement, ReturnStatement, YieldExpression } from "../../ast/generated/data.js";
 import type { FunctionFlags } from "../../ast/functionflags.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import type { TransformOptions } from "../chain.js";

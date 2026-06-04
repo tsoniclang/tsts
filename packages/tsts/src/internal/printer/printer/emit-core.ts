@@ -1,8 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
-import type { ModifierList, Node, NodeList, NodeFactory, SourceFile } from "../../ast/spine.js";
-import { Node_End, Node_Pos, Node_Clone, Node_Modifiers, Node_Name, Node_FunctionLikeData, NodeDefault_AsNode, NodeDefault_Modifiers, NodeDefault_Name } from "../../ast/spine.js";
+import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
+import type { SourceFile } from "../../ast/ast.js";
+import { Node_End, Node_Pos, Node_Modifiers, Node_Name, Node_FunctionLikeData, NodeDefault_AsNode, NodeDefault_Modifiers, NodeDefault_Name } from "../../ast/spine.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import {
   KindCaseClause,
@@ -34,6 +35,7 @@ import {
 } from "../../ast/generated/kinds.js";
 import { IsKeywordKind, IsPunctuationKind } from "../../ast/generated/predicates.js";
 import {
+  AsBindingElement,
   AsBindingPattern,
   AsBigIntLiteral,
   AsCaseOrDefaultClause,
@@ -57,8 +59,8 @@ import {
   AsStringLiteral,
 } from "../../ast/generated/casts.js";
 import type { AccessorDeclarationBase } from "../../ast/generated/node.js";
-import type { BindingElement, ComputedPropertyName, ConstructorDeclaration, ConstructSignatureDeclaration, Decorator, GetAccessorDeclaration, Identifier, IndexSignatureDeclaration, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxFragment, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxText, MetaProperty, MethodDeclaration, MethodSignatureDeclaration, ParameterDeclaration, PrivateIdentifier, PropertyAssignment, PropertyDeclaration, PropertySignatureDeclaration, QualifiedName, SetAccessorDeclaration, ShorthandPropertyAssignment } from "../../ast/generated/data.js";
-import type { BindingElementNode, BindingName, BlockOrExpression, CaseOrDefaultClause, CaseOrDefaultClauseNode, EntityName, Expression, IdentifierNode, JsxAttributeLike, JsxAttributeName, JsxAttributeValue, JsxChild, JsxTagNameExpression, MemberName, ModifierLike, ParameterDeclarationNode, ParameterList, PropertyName, TokenNode } from "../../ast/generated/unions.js";
+import type { BindingElement, CaseOrDefaultClause, ComputedPropertyName, ConstructorDeclaration, ConstructSignatureDeclaration, Decorator, GetAccessorDeclaration, Identifier, IndexSignatureDeclaration, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxFragment, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxText, MetaProperty, MethodDeclaration, MethodSignatureDeclaration, ParameterDeclaration, PrivateIdentifier, PropertyAssignment, PropertyDeclaration, PropertySignatureDeclaration, QualifiedName, SetAccessorDeclaration, ShorthandPropertyAssignment } from "../../ast/generated/data.js";
+import type { BindingElementNode, BindingName, BlockOrExpression, CaseOrDefaultClauseNode, EntityName, Expression, IdentifierNode, JsxAttributeLike, JsxAttributeName, JsxAttributeValue, JsxChild, JsxTagNameExpression, MemberName, ModifierLike, ParameterDeclarationNode, ParameterList, PropertyName, TokenNode } from "../../ast/generated/unions.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { TextRange } from "../../core/text.js";
 import { NewTextRange, TextRange_End, TextRange_Pos } from "../../core/text.js";
@@ -66,12 +68,9 @@ import { Every, IfElse, LastOrNil } from "../../core/core.js";
 import type { Generator } from "../../sourcemap/generator.js";
 import type { EmitTextWriter } from "../emittextwriter.js";
 import { EmitContext_AssignCommentAndSourceMapRanges, EmitContext_EmitFlags, EmitContext_GetEmitHelpers, EmitContext_HasRecordedExternalHelpers } from "../emitcontext.js";
-import type { AutoGenerateOptions } from "../emitcontext.js";
 import { EFHelperName, EFIndented, EFNoIndentation } from "../emitflags.js";
 import type { EmitHelper } from "../helpers.js";
 import { compareEmitHelpers } from "../helpers.js";
-import { GeneratedIdentifierFlagsFileLevel, GeneratedIdentifierFlagsOptimistic } from "../generatedidentifierflags.js";
-import { NodeFactory_NewUniqueNameEx } from "../factory.js";
 import { IsFileLevelUniqueName } from "../utilities.js";
 import { NameGenerator_GenerateName, NameGenerator_PopScope, NameGenerator_PushScope } from "../namegenerator.js";
 import { Printer_emitExpression, Printer_emitJsxExpression, Printer_emitKeywordExpression, Printer_emitObjectBindingPattern, Printer_emitArrayBindingPattern, Printer_emitPropertyAccessExpression, Printer_emitStringLiteral, Printer_emitNoSubstitutionTemplateLiteral, Printer_emitNumericLiteral, Printer_emitBigIntLiteral, Printer_writeLiteral } from "./expressions.js";
@@ -668,7 +667,7 @@ export function Printer_emitIdentifierNameNode(receiver: GoPtr<Printer>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName","kind":"method","status":"implemented","sigHash":"81cf2cc152c5172459d93e9a4b6ff48f92205259350f0974fd13b16b28cd6506","bodyHash":"ea1ef78c5725e6d71cfc80ae73c86d5a5897349d910bccfc209251a5642a8049"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName","kind":"method","status":"stub","sigHash":"81cf2cc152c5172459d93e9a4b6ff48f92205259350f0974fd13b16b28cd6506","bodyHash":"ea1ef78c5725e6d71cfc80ae73c86d5a5897349d910bccfc209251a5642a8049"}
  *
  * Go source:
  * func (p *Printer) getUniqueHelperName(name string) *ast.IdentifierNode {
@@ -681,17 +680,18 @@ export function Printer_emitIdentifierNameNode(receiver: GoPtr<Printer>, node: G
  * 	}
  * 	return helperName.Clone(p.emitContext.Factory)
  * }
+ *
+ * STUB (blocked): the cached-path `return helperName.Clone(p.emitContext.Factory)`
+ * passes the printer `*NodeFactory` where `Node.Clone` expects a
+ * `NodeFactoryCoercible`. Per the documented codebase state (see
+ * ../../ast/deepclone.ts), the generated/printer `NodeFactory` is a pure data
+ * interface with no `AsNodeFactory()` method, so a `GoPtr<NodeFactory>` is not
+ * assignable to `NodeFactoryCoercible`. Resolving that belongs to the
+ * factory/spine layer; porting the body now would require a forbidden cast or a
+ * divergent local adapter, so this unit stays a stub pending that wave.
  */
 export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: string): GoPtr<IdentifierNode> {
-  const helperName = receiver!.uniqueHelperNames.get(name);
-  if (helperName === undefined) {
-    const options: AutoGenerateOptions = { Flags: ((GeneratedIdentifierFlagsFileLevel | GeneratedIdentifierFlagsOptimistic) as int), Prefix: "", Suffix: "" };
-    const helperName2 = NodeFactory_NewUniqueNameEx(receiver!.emitContext!.Factory, name, options);
-    Printer_generateName(receiver, helperName2);
-    receiver!.uniqueHelperNames.set(name, helperName2);
-    return helperName2;
-  }
-  return Node_Clone(helperName, receiver!.emitContext!.Factory!);
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName");
 }
 
 /**

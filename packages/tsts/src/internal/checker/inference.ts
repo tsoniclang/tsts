@@ -1,10 +1,11 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
 import type { Node } from "../ast/spine.js";
 import { KindConstructor, KindMethodDeclaration, KindMethodSignature, KindUnknown } from "../ast/generated/kinds.js";
+import { AsMappedTypeNode } from "../ast/generated/casts.js";
 import type { Symbol } from "../ast/symbol.js";
 import {
   type Checker,
@@ -1312,7 +1313,7 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
   if (Checker_isGenericMappedType(c, source) && Checker_isGenericMappedType(c, target)) {
     Checker_inferFromGenericMappedTypes(c, state, source, target);
   }
-  if ((target!.objectFlags & ObjectFlagsMapped) !== 0 && Type_AsMappedType(target)!.declaration!.NameType === undefined) {
+  if ((target!.objectFlags & ObjectFlagsMapped) !== 0 && AsMappedTypeNode(Type_AsMappedType(target)!.declaration)!.NameType === undefined) {
     const constraintType = Checker_getConstraintTypeFromMappedType(c, target);
     if (Checker_inferToMappedType(c, state, source, target, constraintType)) {
       return;

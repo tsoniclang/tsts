@@ -111,7 +111,7 @@ export interface RuntimeSyntaxTransformer {
   currentNode: GoPtr<Node>;
   currentSourceFile: GoPtr<Node>;
   currentScope: GoPtr<Node>;
-  currentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>>;
+  currentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>> | undefined;
   currentEnum: GoPtr<EnumDeclarationNode>;
   currentNamespace: GoPtr<ModuleDeclarationNode>;
   resolver: ReferenceResolver;
@@ -201,7 +201,7 @@ export function RuntimeSyntaxTransformer_popNode(receiver: GoPtr<RuntimeSyntaxTr
  * 	return savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName
  * }
  */
-export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): [GoPtr<Node>, GoMap<string, GoPtr<Node>>] {
+export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<Node>): [GoPtr<Node>, GoMap<string, GoPtr<Node>> | undefined] {
   const savedCurrentScope = receiver!.currentScope;
   const savedCurrentScopeFirstDeclarationsOfName = receiver!.currentScopeFirstDeclarationsOfName;
   switch (node!.Kind) {
@@ -238,7 +238,7 @@ export function RuntimeSyntaxTransformer_pushScope(receiver: GoPtr<RuntimeSyntax
  * 	tx.currentScope = savedCurrentScope
  * }
  */
-export function RuntimeSyntaxTransformer_popScope(receiver: GoPtr<RuntimeSyntaxTransformer>, savedCurrentScope: GoPtr<Node>, savedCurrentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>>): void {
+export function RuntimeSyntaxTransformer_popScope(receiver: GoPtr<RuntimeSyntaxTransformer>, savedCurrentScope: GoPtr<Node>, savedCurrentScopeFirstDeclarationsOfName: GoMap<string, GoPtr<Node>> | undefined): void {
   if (receiver!.currentScope !== savedCurrentScope) {
     // only reset the first declaration for a name if we are exiting the scope in which it was declared
     receiver!.currentScopeFirstDeclarationsOfName = savedCurrentScopeFirstDeclarationsOfName;

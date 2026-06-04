@@ -1,5 +1,10 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Node_Symbol, Node_Text } from "../ast/ast.js";
+import { AsTypePredicateNode } from "../ast/generated/casts.js";
+import { NewParameterDeclaration, NewToken } from "../ast/generated/factory.js";
+import { KindDotDotDotToken, KindQuestionToken } from "../ast/generated/kinds.js";
+import { IsThisTypeNode, IsTypePredicateNode } from "../ast/generated/predicates.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { NodeFactory_NewNodeList } from "../ast/spine.js";
 import { Assert, Fail } from "../debug/debug.js";
@@ -19,6 +24,7 @@ import {
   PseudoTypeKindInferred,
   PseudoTypeKindMaybeConstLocation,
   PseudoTypeKindNull,
+  PseudoTypeKindNoResult,
   PseudoTypeKindNumber,
   PseudoTypeKindNumericLiteral,
   PseudoTypeKindObjectLiteral,
@@ -38,8 +44,10 @@ import {
   Checker_getWidenedType,
 } from "./checker/types.js";
 import type { NodeBuilderImpl } from "./nodebuilderimpl.js";
-import { NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
+import { NodeBuilderImpl_parameterToParameterDeclarationName, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
+import { Checker_compareTypesIdentical } from "./relater.js";
 import type { Type, TypePredicate } from "./types.js";
+import { TernaryTrue, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindThis } from "./types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0","bodyHash":"6dff4f2e4e1b894de517b2454b45c1d78af7720118a4a283fdceeccb1f59c224"}
@@ -366,7 +374,7 @@ export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParameterToNode","kind":"method","status":"stub","sigHash":"0a9a217c93e6aaa3ee3c061f128d5c336c3f8c6b40606d23b0d0559245ba6f58","bodyHash":"741475cf40809ce23db99fa9caf2289ae1e43b89cd0a28d7bf8075806ba8b933"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParameterToNode","kind":"method","status":"implemented","sigHash":"0a9a217c93e6aaa3ee3c061f128d5c336c3f8c6b40606d23b0d0559245ba6f58","bodyHash":"741475cf40809ce23db99fa9caf2289ae1e43b89cd0a28d7bf8075806ba8b933"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoParameterToNode(p *pseudochecker.PseudoParameter) *ast.Node {
@@ -390,7 +398,25 @@ export function NodeBuilderImpl_pseudoParametersToNodeList(receiver: GoPtr<NodeB
  * }
  */
 export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilderImpl>, p: GoPtr<PseudoParameter>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoParameterToNode");
+  const b = receiver!;
+  let dotDotDot: GoPtr<Node> = undefined;
+  let questionMark: GoPtr<Node> = undefined;
+  if (p!.Rest) {
+    dotDotDot = NewToken(b.f, KindDotDotDotToken);
+  }
+  if (p!.Optional) {
+    questionMark = NewToken(b.f, KindQuestionToken);
+  }
+  return NewParameterDeclaration(
+    b.f,
+    undefined,
+    dotDotDot,
+    // matches strada behavior of always reserializing param names from scratch
+    NodeBuilderImpl_parameterToParameterDeclarationName(b, Node_Symbol(p!.Name!.Parent), p!.Name!.Parent),
+    questionMark,
+    NodeBuilderImpl_pseudoTypeToNode(b, p!.Type),
+    undefined,
+  );
 }
 
 /**
@@ -681,7 +707,7 @@ export function isStructuralPseudoType(t: GoPtr<PseudoType>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoReturnTypeMatchesPredicate","kind":"method","status":"stub","sigHash":"f724e7b5afefecc94a62f0cf82933721516b9d8c8a7cf3dc8752dafa87ff3d14","bodyHash":"3aa0d7ed95fa60e2470898c172f96537cd655e5d57f693a56755a8cc9d4d4968"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoReturnTypeMatchesPredicate","kind":"method","status":"implemented","sigHash":"f724e7b5afefecc94a62f0cf82933721516b9d8c8a7cf3dc8752dafa87ff3d14","bodyHash":"3aa0d7ed95fa60e2470898c172f96537cd655e5d57f693a56755a8cc9d4d4968"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoReturnTypeMatchesPredicate(rt *pseudochecker.PseudoType, predicate *TypePredicate) bool {
@@ -729,7 +755,48 @@ export function isStructuralPseudoType(t: GoPtr<PseudoType>): bool {
  * }
  */
 export function NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(receiver: GoPtr<NodeBuilderImpl>, rt: GoPtr<PseudoType>, predicate: GoPtr<TypePredicate>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoReturnTypeMatchesPredicate");
+  const b = receiver!;
+  if (rt!.Kind !== PseudoTypeKindDirect) {
+    return false;
+  }
+  const node = PseudoType_AsPseudoTypeDirect(rt)!.TypeNode;
+  if (!IsTypePredicateNode(node)) {
+    return false;
+  }
+  const tp = AsTypePredicateNode(node)!;
+  // Check asserts modifier matches
+  const isAsserts = tp.AssertsModifier !== undefined;
+  const predicateIsAsserts = predicate!.kind === TypePredicateKindAssertsThis || predicate!.kind === TypePredicateKindAssertsIdentifier;
+  if (isAsserts !== predicateIsAsserts) {
+    return false;
+  }
+  // Check this vs identifier matches
+  const isThis = IsThisTypeNode(tp.ParameterName);
+  const predicateIsThis = predicate!.kind === TypePredicateKindThis || predicate!.kind === TypePredicateKindAssertsThis;
+  if (isThis !== predicateIsThis) {
+    return false;
+  }
+  // For identifier predicates, check parameter name matches
+  if (!isThis) {
+    if (Node_Text(tp.ParameterName) !== predicate!.parameterName) {
+      return false;
+    }
+  }
+  // Check the narrowed type, if any
+  if (predicate!.t !== undefined) {
+    if (tp.Type === undefined) {
+      return false;
+    }
+    const predicateTypeFromNode = Checker_getTypeFromTypeNode(b.ch, tp.Type);
+    if (predicateTypeFromNode !== predicate!.t) {
+      if (Checker_compareTypesIdentical(b.ch, predicateTypeFromNode, predicate!.t) !== TernaryTrue) {
+        return false;
+      }
+    }
+  } else if (tp.Type !== undefined) {
+    return false;
+  }
+  return true;
 }
 
 /**

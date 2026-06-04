@@ -1,7 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node, NodeList, NodeVisitor } from "../ast/spine.js";
-import type { Identifier, IndexedAccessTypeNode, SourceFile } from "../ast/generated/data.js";
+import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
+import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
 import { AsIndexedAccessTypeNode, AsQualifiedName, AsTypeReferenceNode } from "../ast/generated/casts.js";

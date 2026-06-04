@@ -472,7 +472,7 @@ export interface buildOptionsParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::method::buildOptionsParser.ParseOption","kind":"method","status":"implemented","sigHash":"40f437214dbc7c3897c6a71142fcf2eb7a3811c20df1b3be0d75c73585fae2ad","bodyHash":"601ecea15399ca364a89cb21bdc1992ec88ed7d708b07b93804f5cd9679219f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::method::buildOptionsParser.ParseOption","kind":"method","status":"implemented","sigHash":"40f437214dbc7c3897c6a71142fcf2eb7a3811c20df1b3be0d75c73585fae2ad","bodyHash":"601ecea15399ca364a39cb21bdc1992ec88ed7d708b07b93804f5cd9679219f9"}
  *
  * Go source:
  * func (o *buildOptionsParser) ParseOption(key string, value any) []*ast.Diagnostic {
