@@ -96,25 +96,3 @@ export const TokenFlags: TokenFlagsTable = {
     (1 << 11) /* ContainsInvalidEscape */, // 26656
 };
 
-/**
- * CommentDirectiveType — kind of `// @ts-...` directive line.
- *
- * Faithful to TS-Go `ast.CommentDirectiveType` (internal/ast/ast.go). TSTS's
- * AST module does not yet export this shape, so it is defined here (the scanner
- * is its only producer in this CORE wave). Modeled as a const-map (no enum).
- */
-export type CommentDirectiveType = number;
-
-export const CommentDirectiveType = {
-  ExpectError: 0,
-  Ignore: 1,
-} as const;
-
-/**
- * CommentDirective — a `// @ts-expect-error` / `// @ts-ignore` directive and
- * the source range it covers. Faithful to TS-Go `ast.CommentDirective`.
- */
-export interface CommentDirective {
-  readonly range: { readonly pos: number; readonly end: number };
-  readonly type: CommentDirectiveType;
-}

@@ -26,7 +26,8 @@ import {
 } from "./trivia.js";
 import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 import { TokenFlags } from "./tokenFlags.js";
-import type { CommentDirective, TokenFlags as TokenFlagsType } from "./tokenFlags.js";
+import type { TokenFlags as TokenFlagsType } from "./tokenFlags.js";
+import type { CommentDirective } from "../ast/pragma.js";
 
 export interface ScannedToken {
   readonly kind: Kind;

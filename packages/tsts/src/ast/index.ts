@@ -19,5 +19,7 @@ export * from "./accessors.js";
 export * from "./flowFlags.js";
 // Flow payload types + accessors (FlowSwitchClauseData/FlowReduceLabelData; flow.go:27-75).
 export * from "./flow.js";
+// Pragma + comment-directive support structs (ast.go:2383-2394, 2951-2986).
+export * from "./pragma.js";
 // Symbol helpers + InternalSymbolName constants (symbol.go).
 export * from "./symbol.js";

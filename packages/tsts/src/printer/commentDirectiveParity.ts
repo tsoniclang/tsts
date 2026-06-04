@@ -1,16 +1,22 @@
 /**
- * Comment directive emission parity helpers.
+ * Printer pragma/triple-slash directive emission helpers.
+ *
+ * These handle TypeScript pragma comments (`/// <reference ... />`, `@jsx`,
+ * `//# sourceMappingURL`), NOT TS-Go `ast.CommentDirective` (which is the
+ * `// @ts-expect-error` / `// @ts-ignore` concept owned canonically by
+ * `ast/pragma.ts`). Named `PrinterPragma*` so the pragma concept does not
+ * collide with the AST comment-directive concept.
  */
 
-export type CommentDirectiveKind = "reference" | "amd-module" | "amd-dependency" | "source-map" | "jsx";
+export type PrinterPragmaKind = "reference" | "amd-module" | "amd-dependency" | "source-map" | "jsx";
 
-export interface CommentDirective {
-  readonly kind: CommentDirectiveKind;
+export interface PrinterPragmaDirective {
+  readonly kind: PrinterPragmaKind;
   readonly value: string;
   readonly arguments?: ReadonlyMap<string, string>;
 }
 
-export function parseCommentDirective(text: string): CommentDirective | undefined {
+export function parsePrinterPragma(text: string): PrinterPragmaDirective | undefined {
   const trimmed = text.trim().replace(/^\/{2,3}\s*/, "");
   if (!trimmed.startsWith("@")) return undefined;
   const [name, ...rest] = trimmed.slice(1).split(/\s+/);
@@ -32,18 +38,18 @@ export function parseCommentDirective(text: string): CommentDirective | undefine
   }
 }
 
-export function emitCommentDirective(directive: CommentDirective): string {
+export function emitPrinterPragma(directive: PrinterPragmaDirective): string {
   if (directive.kind === "source-map") return `//# sourceMappingURL=${directive.value}`;
   if (directive.kind === "jsx") return `/** @jsx ${directive.value} */`;
   const args = directive.arguments === undefined ? directive.value : formatDirectiveArguments(directive.arguments);
   return `/// <${directive.kind.replace("-", " ")} ${args} />`;
 }
 
-export function collectCommentDirectives(comments: readonly string[]): readonly CommentDirective[] {
-  return comments.map(parseCommentDirective).filter((directive): directive is CommentDirective => directive !== undefined);
+export function collectPrinterPragmas(comments: readonly string[]): readonly PrinterPragmaDirective[] {
+  return comments.map(parsePrinterPragma).filter((directive): directive is PrinterPragmaDirective => directive !== undefined);
 }
 
-export function directiveValue(directive: CommentDirective, key: string): string | undefined {
+export function printerPragmaValue(directive: PrinterPragmaDirective, key: string): string | undefined {
   return directive.arguments?.get(key);
 }
 
