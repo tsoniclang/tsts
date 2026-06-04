@@ -1,11 +1,12 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { BinarySearchFunc as slicesBinarySearchFunc } from "../../go/slices.js";
 import { CutPrefix, EqualFold } from "../../go/strings.js";
 import { Some } from "../core/core.js";
 import { Unmarshal as jsonUnmarshal } from "../json/json.js";
 import { IsASCIILetter, IsDigit } from "../stringutil/util.js";
-import { GetCanonicalFileName } from "../tspath/path.js";
+import { GetCanonicalFileName, GetDirectoryPath, GetNormalizedAbsolutePath } from "../tspath/path.js";
 import { MissingSource } from "./decoder.js";
 import { TryGetSourceMappingURL } from "./util.js";
 import type { NameIndex, RawSourceMap, SourceIndex } from "./generator.js";
@@ -17,6 +18,8 @@ import type { ECMALineInfo } from "./lineinfo.js";
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 const stringToBytes = (s: string): GoSlice<byte> => globalThis.Array.from(utf8Encoder.encode(s));
+// Go's `string([]byte)` decodes the bytes as UTF-8.
+const bytesToString = (b: GoSlice<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
 const byteLen = (s: string): int => utf8Encoder.encode(s).length;
 const byteSlice = (s: string, start: int, end: int): string => {
   const bytes: Uint8Array = utf8Encoder.encode(s);
@@ -387,7 +390,7 @@ export function DocumentPositionMapper_GetGeneratedPosition(receiver: GoPtr<Docu
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::GetDocumentPositionMapper","kind":"func","status":"stub","sigHash":"a83374a7dcd8fe31c4879adfb4605af5d16023838ffcc5d782252d8f85624d75","bodyHash":"8e7920615216acea228452b2d9156529b77bab0a643da09062c71332b2a55f45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::GetDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"a83374a7dcd8fe31c4879adfb4605af5d16023838ffcc5d782252d8f85624d75","bodyHash":"8e7920615216acea228452b2d9156529b77bab0a643da09062c71332b2a55f45"}
  *
  * Go source:
  * func GetDocumentPositionMapper(host Host, generatedFileName string) *DocumentPositionMapper {
@@ -419,7 +422,34 @@ export function DocumentPositionMapper_GetGeneratedPosition(receiver: GoPtr<Docu
  * }
  */
 export function GetDocumentPositionMapper(host: Host, generatedFileName: string): GoPtr<DocumentPositionMapper> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::GetDocumentPositionMapper");
+  let mapFileName: string = tryGetSourceMappingURL(host, generatedFileName);
+  if (mapFileName !== "") {
+    const [base64Object, matched] = tryParseBase64Url(mapFileName);
+    if (matched) {
+      if (base64Object !== "") {
+        const [decoded, err] = base64StdEncoding.DecodeString(base64Object);
+        if (err === undefined) {
+          return convertDocumentToSourceMapper(host, bytesToString(decoded), generatedFileName);
+        }
+      }
+      // Not a data URL we can parse, skip it
+      mapFileName = "";
+    }
+  }
+
+  const possibleMapLocations: GoSlice<string> = [];
+  if (mapFileName !== "") {
+    possibleMapLocations.push(mapFileName);
+  }
+  possibleMapLocations.push(generatedFileName + ".map");
+  for (const location of possibleMapLocations) {
+    const resolvedMapFileName: string = GetNormalizedAbsolutePath(location, GetDirectoryPath(generatedFileName));
+    const [mapFileContents, ok] = host.ReadFile(resolvedMapFileName);
+    if (ok) {
+      return convertDocumentToSourceMapper(host, mapFileContents, resolvedMapFileName);
+    }
+  }
+  return undefined;
 }
 
 /**

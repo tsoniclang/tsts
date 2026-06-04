@@ -13,7 +13,7 @@ import * as strings from "../../go/strings.js";
  * Go source:
  * var versionRegexp = regexp.MustCompile(`(?i)^(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$`)
  */
-export const versionRegexp: unknown = regexp.MustCompile(
+export const versionRegexp: regexp.Regexp = regexp.MustCompile(
   `(?i)^(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:\\.(0|[1-9]\\d*)(?:-([a-z0-9-.]+))?(?:\\+([a-z0-9-.]+))?)?)?$`,
 );
 
@@ -26,10 +26,10 @@ export const versionRegexp: unknown = regexp.MustCompile(
  * 	prereleasePartRegexp = regexp.MustCompile(`(?i)^(?:0|[1-9]\d*|[a-z-][a-z0-9-]*)$`)
  * )
  */
-export const prereleaseRegexp: unknown = regexp.MustCompile(
+export const prereleaseRegexp: regexp.Regexp = regexp.MustCompile(
   `(?i)^(?:0|[1-9]\\d*|[a-z-][a-z0-9-]*)(?:\\.(?:0|[1-9]\\d*|[a-zA-Z-][a-zA-Z0-9-]*))*$`,
 );
-export const prereleasePartRegexp: unknown = regexp.MustCompile(
+export const prereleasePartRegexp: regexp.Regexp = regexp.MustCompile(
   `(?i)^(?:0|[1-9]\\d*|[a-z-][a-z0-9-]*)$`,
 );
 
@@ -42,10 +42,10 @@ export const prereleasePartRegexp: unknown = regexp.MustCompile(
  * 	buildPartRegExp = regexp.MustCompile(`(?i)^[a-z0-9-]+$`)
  * )
  */
-export const buildRegExp: unknown = regexp.MustCompile(
+export const buildRegExp: regexp.Regexp = regexp.MustCompile(
   `(?i)^[a-z0-9-]+(?:\\.[a-z0-9-]+)*$`,
 );
-export const buildPartRegExp: unknown = regexp.MustCompile(
+export const buildPartRegExp: regexp.Regexp = regexp.MustCompile(
   `(?i)^[a-z0-9-]+$`,
 );
 
@@ -55,7 +55,7 @@ export const buildPartRegExp: unknown = regexp.MustCompile(
  * Go source:
  * var numericIdentifierRegExp = regexp.MustCompile(`^(?:0|[1-9]\d*)$`)
  */
-export const numericIdentifierRegExp: unknown = regexp.MustCompile(
+export const numericIdentifierRegExp: regexp.Regexp = regexp.MustCompile(
   `^(?:0|[1-9]\\d*)$`,
 );
 
@@ -304,7 +304,7 @@ export function comparePreReleaseIdentifiers(left: GoSlice<string>, right: GoSli
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version.go::func::comparePreReleaseIdentifier","kind":"func","status":"stub","sigHash":"a63c0c87d2c3408292f897c7c94ba228dec267177858522e12211264b9f1e44f","bodyHash":"5f8f83149df501189b48f018b34bc1167f25c2276af845735e7c860c953adac0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version.go::func::comparePreReleaseIdentifier","kind":"func","status":"implemented","sigHash":"a63c0c87d2c3408292f897c7c94ba228dec267177858522e12211264b9f1e44f","bodyHash":"5f8f83149df501189b48f018b34bc1167f25c2276af845735e7c860c953adac0"}
  *
  * Go source:
  * func comparePreReleaseIdentifier(left, right string) int {
@@ -355,7 +355,50 @@ export function comparePreReleaseIdentifiers(left: GoSlice<string>, right: GoSli
  * }
  */
 export function comparePreReleaseIdentifier(left: string, right: string): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/semver/version.go::func::comparePreReleaseIdentifier");
+  // https://semver.org/#spec-item-11
+  // > Precedence for two pre-release versions with the same major, minor, and patch version
+  // > MUST be determined by comparing each dot separated identifier from left to right until
+  // > a difference is found [...]
+  const compareResult: int = strings.Compare(left, right);
+  if (compareResult === 0) {
+    return compareResult;
+  }
+
+  const leftIsNumeric: boolean = numericIdentifierRegExp.MatchString(left);
+  const rightIsNumeric: boolean = numericIdentifierRegExp.MatchString(right);
+
+  if (leftIsNumeric || rightIsNumeric) {
+    // https://semver.org/#spec-item-11
+    // > Numeric identifiers always have lower precedence than non-numeric identifiers.
+    if (!rightIsNumeric) {
+      return comparisonLessThan;
+    }
+    if (!leftIsNumeric) {
+      return comparisonGreaterThan;
+    }
+
+    // https://semver.org/#spec-item-11
+    // > identifiers consisting of only digits are compared numerically
+    const [leftAsNumber, leftErr] = getUintComponent(left);
+    const [rightAsNumber, rightErr] = getUintComponent(right);
+    if (leftErr !== undefined || rightErr !== undefined) {
+      // This should only happen in the event of an overflow.
+      // If so, use the lengths or fall back to string comparison.
+      const leftLen: int = left.length;
+      const rightLen: int = right.length;
+      const lenCompare: int = cmp.Compare(leftLen, rightLen);
+      if (lenCompare === 0) {
+        return compareResult;
+      } else {
+        return lenCompare;
+      }
+    }
+    return cmp.Compare(leftAsNumber, rightAsNumber);
+  }
+
+  // https://semver.org/#spec-item-11
+  // > identifiers with letters or hyphens are compared lexically in ASCII sort order.
+  return compareResult;
 }
 
 /**
@@ -413,7 +456,7 @@ export function SemverParseError_Error(receiver: GoPtr<SemverParseError>): strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version.go::func::TryParseVersion","kind":"func","status":"stub","sigHash":"b0c1adc3d0c09288df0bdecbc609fe1c4c6ff6cccc053223fab9add30ff7229a","bodyHash":"76028d93f6f7cba13c4d11814ebc8b3c415fe40a3a8650a69b632c239516bd7f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version.go::func::TryParseVersion","kind":"func","status":"implemented","sigHash":"b0c1adc3d0c09288df0bdecbc609fe1c4c6ff6cccc053223fab9add30ff7229a","bodyHash":"76028d93f6f7cba13c4d11814ebc8b3c415fe40a3a8650a69b632c239516bd7f"}
  *
  * Go source:
  * func TryParseVersion(text string) (Version, error) {
@@ -470,7 +513,63 @@ export function SemverParseError_Error(receiver: GoPtr<SemverParseError>): strin
  * }
  */
 export function TryParseVersion(text: string): [Version, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/semver/version.go::func::TryParseVersion");
+  const result: Version = {
+    major: 0,
+    minor: 0,
+    patch: 0,
+    prerelease: [],
+    build: [],
+  };
+
+  const match: GoSlice<string> | undefined = versionRegexp.FindStringSubmatch(text);
+  if (match === undefined) {
+    return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
+  }
+
+  const majorStr: string = match[1]!;
+  const minorStr: string = match[2]!;
+  const patchStr: string = match[3]!;
+  const prereleaseStr: string = match[4]!;
+  const buildStr: string = match[5]!;
+
+  const [majorVal, majorErr] = getUintComponent(majorStr);
+  if (majorErr !== undefined) {
+    return [result, majorErr];
+  }
+  result.major = majorVal;
+
+  if (minorStr !== "") {
+    const [minorVal, minorErr] = getUintComponent(minorStr);
+    if (minorErr !== undefined) {
+      return [result, minorErr];
+    }
+    result.minor = minorVal;
+  }
+
+  if (patchStr !== "") {
+    const [patchVal, patchErr] = getUintComponent(patchStr);
+    if (patchErr !== undefined) {
+      return [result, patchErr];
+    }
+    result.patch = patchVal;
+  }
+
+  if (prereleaseStr !== "") {
+    if (!prereleaseRegexp.MatchString(prereleaseStr)) {
+      return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
+    }
+
+    result.prerelease = strings.Split(prereleaseStr, ".");
+  }
+  if (buildStr !== "") {
+    if (!buildRegExp.MatchString(buildStr)) {
+      return [result, new globalThis.Error(SemverParseError_Error({ origInput: text }))];
+    }
+
+    result.build = strings.Split(buildStr, ".");
+  }
+
+  return [result, undefined];
 }
 
 /**

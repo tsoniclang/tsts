@@ -6,7 +6,7 @@ import { OrderedMap_Delete, OrderedMap_Has } from "../collections/ordered_map.js
 import type { SyncSet } from "../collections/syncset.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"stub","sigHash":"983db95743f083de914f46fe0f414fcaaeedb3c83b8b8885774e02abb1a1bf77","bodyHash":"309ebf85a8e1d1c8b853258caf629d5709d4c50933b4039bb5709ae637129405"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"983db95743f083de914f46fe0f414fcaaeedb3c83b8b8885774e02abb1a1bf77","bodyHash":"309ebf85a8e1d1c8b853258caf629d5709d4c50933b4039bb5709ae637129405"}
  *
  * Go source:
  * BreadthFirstSearchResult[N any] struct {
@@ -20,7 +20,7 @@ export interface BreadthFirstSearchResult<N = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::breadthFirstSearchJob","kind":"type","status":"stub","sigHash":"900d3ea72d81eff4d282136ee7be57d7f3c1f0133de55c97ec34289122f2fb3f","bodyHash":"f0da07afc98877f6240059d69dfe598fa60915bb6c289148b826d3889520963b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::breadthFirstSearchJob","kind":"type","status":"implemented","sigHash":"900d3ea72d81eff4d282136ee7be57d7f3c1f0133de55c97ec34289122f2fb3f","bodyHash":"f0da07afc98877f6240059d69dfe598fa60915bb6c289148b826d3889520963b"}
  *
  * Go source:
  * breadthFirstSearchJob[N any] struct {
@@ -34,7 +34,7 @@ export interface breadthFirstSearchJob<N = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchLevel","kind":"type","status":"stub","sigHash":"387c8702c2c347620608b7a95eca74cf5550c85a8ec43ce5715156a2af2d3cbf","bodyHash":"4d6020eade6f6fb22ab1a48bd8be2fa8aa4697e64652c58bafb9dbe58c8e468a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchLevel","kind":"type","status":"implemented","sigHash":"387c8702c2c347620608b7a95eca74cf5550c85a8ec43ce5715156a2af2d3cbf","bodyHash":"4d6020eade6f6fb22ab1a48bd8be2fa8aa4697e64652c58bafb9dbe58c8e468a"}
  *
  * Go source:
  * BreadthFirstSearchLevel[K comparable, N any] struct {
@@ -86,7 +86,7 @@ export function BreadthFirstSearchLevel_Range<K, N>(receiver: GoPtr<BreadthFirst
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchOptions","kind":"type","status":"stub","sigHash":"91a7347549071365c6ba2393774a4e83adc0d20fe99d1b565b4af3f2f0295cd3","bodyHash":"066ea2ecb621538ab6760b097ea7273a673a7e227abd8744a3ea433dc29bb262"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchOptions","kind":"type","status":"implemented","sigHash":"91a7347549071365c6ba2393774a4e83adc0d20fe99d1b565b4af3f2f0295cd3","bodyHash":"066ea2ecb621538ab6760b097ea7273a673a7e227abd8744a3ea433dc29bb262"}
  *
  * Go source:
  * BreadthFirstSearchOptions[K comparable, N any] struct {

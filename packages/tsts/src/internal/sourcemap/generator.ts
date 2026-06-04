@@ -1,6 +1,8 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
+import { NewEncoder as base64NewEncoder, StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
 import { New as errorsNew } from "../../go/errors.js";
+import type { WriteCloser } from "../../go/io.js";
 import { Builder } from "../../go/strings.js";
 import { Clone as slicesClone } from "../../go/slices.js";
 import type { UTF16Offset } from "../core/core.js";
@@ -806,7 +808,7 @@ export function Generator_String(receiver: GoPtr<Generator>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.Base64DataURL","kind":"method","status":"stub","sigHash":"171fd81356d7a0ef504898a5828516a31b685252f7c0bc4bc151b98569f953bc","bodyHash":"f089cbed2cc3d1b40b436e644adec3e7118e7d07a21ec58052282e339712f778"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.Base64DataURL","kind":"method","status":"implemented","sigHash":"171fd81356d7a0ef504898a5828516a31b685252f7c0bc4bc151b98569f953bc","bodyHash":"f089cbed2cc3d1b40b436e644adec3e7118e7d07a21ec58052282e339712f778"}
  *
  * Go source:
  * func (gen *Generator) Base64DataURL() string {
@@ -822,7 +824,16 @@ export function Generator_String(receiver: GoPtr<Generator>): string {
  * }
  */
 export function Generator_Base64DataURL(receiver: GoPtr<Generator>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/sourcemap/generator.go::method::Generator.Base64DataURL");
+  const gen: Generator = receiver!;
+  const prefix: string = "data:application/json;base64,";
+  const data: GoSlice<byte> = Generator_bytes(gen);
+  const sb: Builder = new Builder();
+  sb.Grow(prefix.length + base64StdEncoding.EncodedLen(data.length));
+  sb.WriteString(prefix);
+  const encoder: WriteCloser = base64NewEncoder(base64StdEncoding, sb);
+  encoder.Write(data);
+  encoder.Close();
+  return sb.String();
 }
 
 /**
