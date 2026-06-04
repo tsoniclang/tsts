@@ -28,7 +28,10 @@
     "go/sync/atomic.ts",
     "go/reflect.ts",
     "go/math.ts",
-    "go/path/filepath.ts"
+    "go/path/filepath.ts",
+    "go/regexp.ts",
+    "go/encoding/base64.ts",
+    "go/context.ts"
   ],
   "tsFilePolicies": [
     {

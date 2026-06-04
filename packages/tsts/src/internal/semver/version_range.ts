@@ -1,4 +1,4 @@
-import type { bool, byte, int } from "@tsonic/core/types.js";
+import type { bool, byte, int, uint } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import * as regexp from "../../go/regexp.js";
@@ -23,8 +23,8 @@ import {
  * 	whitespaceRegExp = regexp.MustCompile(`\s+`)
  * )
  */
-export const logicalOrRegExp: unknown = regexp.MustCompile(`\\|\\|`);
-export const whitespaceRegExp: unknown = regexp.MustCompile(`\\s+`);
+export const logicalOrRegExp: regexp.Regexp = regexp.MustCompile(`\\|\\|`);
+export const whitespaceRegExp: regexp.Regexp = regexp.MustCompile(`\\s+`);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::varGroup::partialRegExp","kind":"varGroup","status":"implemented","sigHash":"c87b5064a228e96d391a2dafbc9c1da48a39065877dc6ec80a4dc2ce343252e4","bodyHash":"7c8cf43c0671c3b8f83ea4dd1d291e929876dd3491bdd68039f687ff0e97ab1a"}
@@ -32,7 +32,7 @@ export const whitespaceRegExp: unknown = regexp.MustCompile(`\\s+`);
  * Go source:
  * var partialRegExp = regexp.MustCompile(`(?i)^([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:\.([x*0]|[1-9]\d*)(?:-([a-z0-9-.]+))?(?:\+([a-z0-9-.]+))?)?)?$`)
  */
-export const partialRegExp: unknown = regexp.MustCompile(
+export const partialRegExp: regexp.Regexp = regexp.MustCompile(
   `(?i)^([x*0]|[1-9]\\d*)(?:\\.([x*0]|[1-9]\\d*)(?:\\.([x*0]|[1-9]\\d*)(?:-([a-z0-9-.]+))?(?:\\+([a-z0-9-.]+))?)?)?$`,
 );
 
@@ -42,7 +42,7 @@ export const partialRegExp: unknown = regexp.MustCompile(
  * Go source:
  * var hyphenRegExp = regexp.MustCompile(`(?i)^\s*([a-z0-9-+.*]+)\s+-\s+([a-z0-9-+.*]+)\s*$`)
  */
-export const hyphenRegExp: unknown = regexp.MustCompile(
+export const hyphenRegExp: regexp.Regexp = regexp.MustCompile(
   `(?i)^\\s*([a-z0-9-+.*]+)\\s+-\\s+([a-z0-9-+.*]+)\\s*$`,
 );
 
@@ -52,7 +52,7 @@ export const hyphenRegExp: unknown = regexp.MustCompile(
  * Go source:
  * var rangeRegExp = regexp.MustCompile(`(?i)^([~^<>=]|<=|>=)?\s*([a-z0-9-+.*]+)$`)
  */
-export const rangeRegExp: unknown = regexp.MustCompile(
+export const rangeRegExp: regexp.Regexp = regexp.MustCompile(
   `(?i)^([~^<>=]|<=|>=)?\\s*([a-z0-9-+.*]+)$`,
 );
 
@@ -324,7 +324,7 @@ export function TryParseVersionRange(text: string): [VersionRange, bool] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseAlternatives","kind":"func","status":"stub","sigHash":"bfd48c56558d28564b697a14e5427ecb029419e4250a43df4933e71e959880ef","bodyHash":"0ce8b419cbc4b40420c5c9d57e738b83822af9bbd2d8ad771bbdb302cef26df0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseAlternatives","kind":"func","status":"implemented","sigHash":"bfd48c56558d28564b697a14e5427ecb029419e4250a43df4933e71e959880ef","bodyHash":"0ce8b419cbc4b40420c5c9d57e738b83822af9bbd2d8ad771bbdb302cef26df0"}
  *
  * Go source:
  * func parseAlternatives(text string) ([][]versionComparator, bool) {
@@ -368,7 +368,52 @@ export function TryParseVersionRange(text: string): [VersionRange, bool] {
  * }
  */
 export function parseAlternatives(text: string): [GoSlice<GoSlice<versionComparator>>, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parseAlternatives");
+  const alternatives: GoSlice<GoSlice<versionComparator>> = [];
+
+  const trimmed: string = strings.TrimSpace(text);
+  // Split with n=-1 returns all substrings (never nil); Go ranges over the
+  // resulting slice (a nil slice would simply yield zero iterations).
+  const ranges: GoSlice<string> = logicalOrRegExp.Split(trimmed, -1) ?? [];
+  for (const rRaw of ranges) {
+    const r: string = strings.TrimSpace(rRaw);
+    if (r === "") {
+      continue;
+    }
+
+    const comparators: GoSlice<versionComparator> = [];
+
+    const hyphenMatch: GoSlice<string> | undefined = hyphenRegExp.FindStringSubmatch(r);
+    if (hyphenMatch !== undefined) {
+      const [parsedComparators, ok] = parseHyphen(hyphenMatch[1]!, hyphenMatch[2]!);
+      if (ok) {
+        for (const c of parsedComparators) {
+          comparators.push(c);
+        }
+      } else {
+        return [[], false];
+      }
+    } else {
+      for (const simple of whitespaceRegExp.Split(r, -1) ?? []) {
+        const match: GoSlice<string> | undefined = rangeRegExp.FindStringSubmatch(strings.TrimSpace(simple));
+        if (match === undefined) {
+          return [[], false];
+        }
+
+        const [parsedComparators, ok] = parseComparator(match[1]!, match[2]!);
+        if (ok) {
+          for (const c of parsedComparators) {
+            comparators.push(c);
+          }
+        } else {
+          return [[], false];
+        }
+      }
+    }
+
+    alternatives.push(comparators);
+  }
+
+  return [alternatives, true];
 }
 
 /**
@@ -487,7 +532,7 @@ export interface partialVersion {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parsePartial","kind":"func","status":"stub","sigHash":"d860ad856dba7ae9eccb404699f8d3a47bc2d843d2c47ac8ea9d64ffea52235d","bodyHash":"3d18e7828736b1d511fe3c3f663cff3b1b09e0aeb0208f09baf06ec0b9c12961"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parsePartial","kind":"func","status":"implemented","sigHash":"d860ad856dba7ae9eccb404699f8d3a47bc2d843d2c47ac8ea9d64ffea52235d","bodyHash":"3d18e7828736b1d511fe3c3f663cff3b1b09e0aeb0208f09baf06ec0b9c12961"}
  *
  * Go source:
  * func parsePartial(text string) (partialVersion, bool) {
@@ -569,7 +614,100 @@ export interface partialVersion {
  * }
  */
 export function parsePartial(text: string): [partialVersion, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/semver/version_range.go::func::parsePartial");
+  // Zero value of partialVersion (Go `partialVersion{}`): zero Version and
+  // empty component strings.
+  const zeroPartial: partialVersion = {
+    version: {
+      major: 0,
+      minor: 0,
+      patch: 0,
+      prerelease: [],
+      build: [],
+    },
+    majorStr: "",
+    minorStr: "",
+    patchStr: "",
+  };
+
+  const match: GoSlice<string> | undefined = partialRegExp.FindStringSubmatch(text);
+  if (match === undefined) {
+    return [zeroPartial, false];
+  }
+
+  const majorStr: string = match[1]!;
+  let minorStr: string = match[2]!;
+  let patchStr: string = match[3]!;
+  const prereleaseStr: string = match[4]!;
+  const buildStr: string = match[5]!;
+
+  if (minorStr === "") {
+    minorStr = "*";
+  }
+  if (patchStr === "") {
+    patchStr = "*";
+  }
+
+  let majorNumeric: uint = 0;
+  let minorNumeric: uint = 0;
+  let patchNumeric: uint = 0;
+
+  if (isWildcard(majorStr)) {
+    majorNumeric = 0;
+    minorNumeric = 0;
+    patchNumeric = 0;
+  } else {
+    const [majorVal, majorErr] = getUintComponent(majorStr);
+    if (majorErr !== undefined) {
+      return [zeroPartial, false];
+    }
+    majorNumeric = majorVal;
+
+    if (isWildcard(minorStr)) {
+      minorNumeric = 0;
+      patchNumeric = 0;
+    } else {
+      const [minorVal, minorErr] = getUintComponent(minorStr);
+      if (minorErr !== undefined) {
+        return [zeroPartial, false];
+      }
+      minorNumeric = minorVal;
+
+      if (isWildcard(patchStr)) {
+        patchNumeric = 0;
+      } else {
+        const [patchVal, patchErr] = getUintComponent(patchStr);
+        if (patchErr !== undefined) {
+          return [zeroPartial, false];
+        }
+        patchNumeric = patchVal;
+      }
+    }
+  }
+
+  let prerelease: GoSlice<string> = [];
+  if (prereleaseStr !== "") {
+    prerelease = strings.Split(prereleaseStr, ".");
+  }
+
+  let build: GoSlice<string> = [];
+  if (buildStr !== "") {
+    build = strings.Split(buildStr, ".");
+  }
+
+  const result: partialVersion = {
+    version: {
+      major: majorNumeric,
+      minor: minorNumeric,
+      patch: patchNumeric,
+      prerelease: prerelease,
+      build: build,
+    },
+    majorStr: majorStr,
+    minorStr: minorStr,
+    patchStr: patchStr,
+  };
+
+  return [result, true];
 }
 
 /**

@@ -571,7 +571,7 @@ export function StripQuotes(name: string): string {
  * Go source:
  * var matchSlashSomething = regexp.MustCompile(`\\.`)
  */
-export const matchSlashSomething: unknown = regexp.MustCompile(`\\\\.`);
+export const matchSlashSomething: regexp.Regexp = regexp.MustCompile(`\\\\.`);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::matchSlashReplacer","kind":"func","status":"implemented","sigHash":"9b639d53c6eb5051f3849fa52411841e72642d5bd8bb5b24ac29a88edd6643b0","bodyHash":"add1c043d85c9d225a2df6f6febdf5b13251cb8c8a94c69bed4cab6ac66be239"}
@@ -586,7 +586,7 @@ export function matchSlashReplacer(in_: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::UnquoteString","kind":"func","status":"stub","sigHash":"4076e653169e775db2f979e55462e04da4ef2c04a6025e15e82e6358f5458f2e","bodyHash":"f7d3a77d681400d91b37d58098a44ca6de306fdfc9b25c1b5b7e1556093386d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::UnquoteString","kind":"func","status":"implemented","sigHash":"4076e653169e775db2f979e55462e04da4ef2c04a6025e15e82e6358f5458f2e","bodyHash":"f7d3a77d681400d91b37d58098a44ca6de306fdfc9b25c1b5b7e1556093386d1"}
  *
  * Go source:
  * func UnquoteString(str string) string {
@@ -598,7 +598,11 @@ export function matchSlashReplacer(in_: string): string {
  * }
  */
 export function UnquoteString(str: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/stringutil/util.go::func::UnquoteString");
+  // strconv.Unquote is insufficient as that only handles a single character inside single quotes, as those are character literals in go
+  const inner: string = StripQuotes(str);
+  // In strada we do str.replace(/\\./g, s => s.substring(1)) - which is to say, replace all backslash-something with just something
+  // That's replicated here faithfully, but it seems wrong! This should probably be an actual unquote operation?
+  return matchSlashSomething.ReplaceAllStringFunc(inner, matchSlashReplacer);
 }
 
 /**

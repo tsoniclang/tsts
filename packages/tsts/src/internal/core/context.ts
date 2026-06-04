@@ -1,5 +1,6 @@
 import type { int } from "@tsonic/core/types.js";
 import type { Context } from "../../go/context.js";
+import { WithValue } from "../../go/context.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::type::key","kind":"type","status":"implemented","sigHash":"f26be130c67fd98788332ccdfb09f91dc509299c557e60555de3f9e4d4bde003","bodyHash":"457238a82b2258a6a7e6036f5fc2c0853063292070dbb6cb7df6d18806b64ef8"}
@@ -20,7 +21,7 @@ export type key = int;
 export const requestIDKey: key = 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::func::WithRequestID","kind":"func","status":"stub","sigHash":"df240214ccb9132f197cf86e4cd8da4e0fce4e91395b41cf1469c3ec9a804be1","bodyHash":"04784f65de4384cb1a475e63b4ff2ed37f402c967e92d67022fe30854a2a968a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/context.go::func::WithRequestID","kind":"func","status":"implemented","sigHash":"df240214ccb9132f197cf86e4cd8da4e0fce4e91395b41cf1469c3ec9a804be1","bodyHash":"04784f65de4384cb1a475e63b4ff2ed37f402c967e92d67022fe30854a2a968a"}
  *
  * Go source:
  * func WithRequestID(ctx context.Context, id string) context.Context {
@@ -28,7 +29,7 @@ export const requestIDKey: key = 0;
  * }
  */
 export function WithRequestID(ctx: Context, id: string): Context {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/context.go::func::WithRequestID");
+  return WithValue(ctx, requestIDKey, id);
 }
 
 /**
