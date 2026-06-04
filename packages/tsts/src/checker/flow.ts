@@ -10,6 +10,8 @@
 
 import type { Node as AstNode, FlowNode, Symbol as AstSymbol } from "../ast/index.js";
 import {
+  asFlowSwitchClauseData,
+  flowNodeAstNode,
   FlowFlags,
   getAssignmentTarget,
   getCombinedNodeFlags,
@@ -216,7 +218,7 @@ export class FlowAnalyzer {
     return { type: typeOfNode(reference) };
   }
   getTypeAtFlowAssignment(reference: AstNode, flow: FlowNode): FlowType {
-    const node = flow.node;
+    const node = flowNodeAstNode(flow.node);
     if (node !== undefined && this.isMatchingReference(reference, node)) {
       if (!this.isReachableFlowNode(flow)) return { type: neverType() };
       return { type: this.getInitialOrAssignedType(node) };
@@ -230,7 +232,7 @@ export class FlowAnalyzer {
   getTypeAtFlowCondition(reference: AstNode, flow: FlowNode): FlowType {
     const antecedent = flow.antecedent;
     const flowType = antecedent === undefined ? { type: typeOfNode(reference) } : this.getTypeAtFlowNode(reference, antecedent);
-    const expression = flow.node;
+    const expression = flowNodeAstNode(flow.node);
     if (expression === undefined) return flowType;
     const assumeTrue = (flow.flags & FlowFlags.TrueCondition) !== 0;
     return newFlowType(this.narrowType(flowType.type, expression, assumeTrue), flowType.incomplete);
@@ -238,11 +240,10 @@ export class FlowAnalyzer {
   getTypeAtFlowSwitchClause(reference: AstNode, flow: FlowNode): FlowType {
     const antecedent = flow.antecedent;
     const flowType = antecedent === undefined ? { type: typeOfNode(reference) } : this.getTypeAtFlowNode(reference, antecedent);
-    const switchStatement = flow.node;
-    if (switchStatement === undefined) return flowType;
-    const data = flow as FlowNode & { clauseStart?: number; clauseEnd?: number };
+    const data = asFlowSwitchClauseData(flow.node);
+    if (data === undefined) return flowType;
     return newFlowType(
-      this.narrowTypeBySwitchOnDiscriminant(flowType.type, switchStatement, data.clauseStart ?? 0, data.clauseEnd ?? Number.MAX_SAFE_INTEGER),
+      this.narrowTypeBySwitchOnDiscriminant(flowType.type, data.switchStatement, data.clauseStart, data.clauseEnd),
       flowType.incomplete,
     );
   }
@@ -258,7 +259,7 @@ export class FlowAnalyzer {
   getTypeAtFlowArrayMutation(reference: AstNode, flow: FlowNode): FlowType {
     const antecedent = flow.antecedent;
     const prior = antecedent === undefined ? typeOfNode(reference) : this.getTypeAtFlowNode(reference, antecedent).type;
-    const node = flow.node;
+    const node = flowNodeAstNode(flow.node);
     if (node === undefined || !this.containsMatchingReference(reference, node)) return { type: prior };
     const argumentTypes = callArguments(node).map(typeOfNode);
     const elementType = unionType([arrayElementType(prior), ...argumentTypes].filter((type): type is Type => type !== undefined));
@@ -267,7 +268,7 @@ export class FlowAnalyzer {
   getTypeAtFlowCall(reference: AstNode, flow: FlowNode): FlowType {
     const antecedent = flow.antecedent;
     const flowType = antecedent === undefined ? { type: typeOfNode(reference) } : this.getTypeAtFlowNode(reference, antecedent);
-    const call = flow.node;
+    const call = flowNodeAstNode(flow.node);
     if (call === undefined) return flowType;
     const returnType = typeOfNode(call);
     if ((returnType.flags & TypeFlags.Never) !== 0) return { type: neverType() };

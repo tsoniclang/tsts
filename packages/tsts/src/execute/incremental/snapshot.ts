@@ -67,6 +67,7 @@ export interface ProgramSnapshot<Diagnostic = unknown> {
   readonly semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>;
+  readonly emitSignatures: ReadonlyMap<string, EmitSignature>;
   readonly latestChangedDtsFile: string | undefined;
   readonly errors: readonly Diagnostic[];
   readonly checkPending: boolean;
@@ -83,6 +84,7 @@ class ProgramSnapshotData<Diagnostic> implements ProgramSnapshot<Diagnostic> {
   readonly semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>;
   readonly pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>;
+  readonly emitSignatures: ReadonlyMap<string, EmitSignature>;
   readonly latestChangedDtsFile: string | undefined;
   readonly errors: readonly Diagnostic[];
   readonly checkPending: boolean;
@@ -95,6 +97,7 @@ class ProgramSnapshotData<Diagnostic> implements ProgramSnapshot<Diagnostic> {
     semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
     emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
     pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>,
+    emitSignatures: ReadonlyMap<string, EmitSignature>,
     latestChangedDtsFile: string | undefined,
     errors: readonly Diagnostic[],
     checkPending: boolean,
@@ -109,6 +112,7 @@ class ProgramSnapshotData<Diagnostic> implements ProgramSnapshot<Diagnostic> {
     this.semanticDiagnosticsPerFile = semanticDiagnosticsPerFile;
     this.emitDiagnosticsPerFile = emitDiagnosticsPerFile;
     this.pendingEmit = pendingEmit;
+    this.emitSignatures = emitSignatures;
     this.latestChangedDtsFile = latestChangedDtsFile;
     this.errors = errors;
     this.checkPending = checkPending;
@@ -182,6 +186,7 @@ export function createProgramSnapshot<Diagnostic>(snapshot: ProgramSnapshot<Diag
     snapshot.semanticDiagnosticsPerFile,
     snapshot.emitDiagnosticsPerFile,
     snapshot.pendingEmit,
+    snapshot.emitSignatures,
     snapshot.latestChangedDtsFile,
     snapshot.errors,
     snapshot.checkPending,
@@ -199,6 +204,7 @@ export function createProgramSnapshotFromParts<Diagnostic>(
   semanticDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
   emitDiagnosticsPerFile: ReadonlyMap<string, DiagnosticsOrBuildInfoDiagnosticsWithFileName<Diagnostic>>,
   pendingEmit: ReadonlyMap<string, SnapshotFileEmitKind>,
+  emitSignatures: ReadonlyMap<string, EmitSignature>,
   latestChangedDtsFile: string | undefined,
   errors: readonly Diagnostic[],
   checkPending: boolean,
@@ -214,6 +220,7 @@ export function createProgramSnapshotFromParts<Diagnostic>(
     new Map(semanticDiagnosticsPerFile),
     new Map(emitDiagnosticsPerFile),
     new Map(pendingEmit),
+    new Map(emitSignatures),
     latestChangedDtsFile,
     [...errors],
     checkPending,
@@ -256,6 +263,7 @@ export function withReferenceMaps<Diagnostic>(
     snapshot.semanticDiagnosticsPerFile,
     snapshot.emitDiagnosticsPerFile,
     snapshot.pendingEmit,
+    snapshot.emitSignatures,
     snapshot.latestChangedDtsFile,
     snapshot.errors,
     snapshot.checkPending,

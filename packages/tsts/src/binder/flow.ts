@@ -1,5 +1,5 @@
 import type { int } from "@tsonic/core/types.js";
-import type { FlowLabel, FlowList, FlowNode, Node } from "../ast/index.js";
+import type { FlowLabel, FlowList, FlowNode, FlowNodePayload, FlowReduceLabelData, FlowSwitchClauseData, Node } from "../ast/index.js";
 import {
   FlowFlags,
   Kind,
@@ -36,11 +36,9 @@ export interface FlowBinderState {
 
 interface MutableFlowNode extends FlowNode {
   flags: int;
-  node?: Node;
+  node?: FlowNodePayload;
   antecedent?: FlowNode;
   antecedents?: FlowList | undefined;
-  clauseStart?: int;
-  clauseEnd?: int;
 }
 
 export function createFlowStart(): FlowNode {
@@ -51,7 +49,7 @@ export function newFlowNode(flags: int): FlowNode {
   return { flags };
 }
 
-export function newFlowNodeEx(flags: int, node: Node | undefined, antecedent: FlowNode | undefined): FlowNode {
+export function newFlowNodeEx(flags: int, node: FlowNodePayload | undefined, antecedent: FlowNode | undefined): FlowNode {
   const result: FlowNode = { flags };
   const mutable = result as MutableFlowNode;
   if (node !== undefined) mutable.node = node;
@@ -72,9 +70,14 @@ export function createReduceLabel(
   antecedents: FlowList | undefined,
   antecedent: FlowNode | undefined,
 ): FlowNode {
-  const reduced = newFlowNodeEx(FlowFlags.ReduceLabel, undefined, antecedent);
+  const resolvedAntecedents = antecedents ?? target.antecedents;
+  const data: FlowReduceLabelData = { target, antecedents: resolvedAntecedents };
+  const reduced = newFlowNodeEx(FlowFlags.ReduceLabel, data, antecedent);
+  // Behavior-neutral (Phase A): keep the antecedent list on the flow node so the
+  // checker's existing antecedent reads are unchanged; the payload's target is
+  // not yet routed through the checker (that is the checker-flow parity phase).
   const mutable = reduced as MutableFlowNode;
-  mutable.antecedents = antecedents ?? target.antecedents;
+  mutable.antecedents = resolvedAntecedents;
   return reduced;
 }
 
@@ -105,11 +108,8 @@ export function createFlowSwitchClause(
 ): FlowNode | undefined {
   if (antecedent === undefined || isUnreachableFlow(antecedent)) return antecedent;
   setFlowNodeReferenced(antecedent);
-  const flow = newFlowNodeEx(FlowFlags.SwitchClause, switchStatement, antecedent);
-  const mutable = flow as MutableFlowNode;
-  mutable.clauseStart = clauseStart | 0;
-  mutable.clauseEnd = clauseEnd | 0;
-  return flow;
+  const data: FlowSwitchClauseData = { switchStatement, clauseStart: clauseStart | 0, clauseEnd: clauseEnd | 0 };
+  return newFlowNodeEx(FlowFlags.SwitchClause, data, antecedent);
 }
 
 export function createFlowCall(antecedent: FlowNode | undefined, node: Node | undefined): FlowNode | undefined {

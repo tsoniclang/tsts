@@ -8,6 +8,7 @@ import { version } from "../../core/version.js";
 import { ResolutionMode, type CompilerOptions } from "../../core/compilerOptions.js";
 import type { int } from "@tsonic/core/types.js";
 import type { Path } from "../../tspath/index.js";
+import type { EmitSignature } from "./snapshot.js";
 
 export type BuildInfoFileId = int;
 export type BuildInfoFileIdListId = int;
@@ -310,6 +311,17 @@ export class BuildInfoEmitSignature {
 
   noEmitSignature(): boolean {
     return this.signature === "" && !this.differsOnlyInDtsMap && !this.differsInOptions;
+  }
+
+  toEmitSignature(path: string, emitSignatures: ReadonlyMap<string, EmitSignature>): EmitSignature {
+    if (this.differsOnlyInDtsMap) {
+      const info = emitSignatures.get(path);
+      return { signature: undefined, signatureWithDifferentOptions: [info?.signature ?? ""] };
+    }
+    if (this.differsInOptions) {
+      return { signature: undefined, signatureWithDifferentOptions: [this.signature] };
+    }
+    return { signature: this.signature, signatureWithDifferentOptions: undefined };
   }
 
   toJSON(): number | readonly unknown[] {

@@ -12,7 +12,10 @@ import type {
 
 export type JSDocTokenKind = SyntaxKind.EndOfFile | SyntaxKind.WhitespaceTrivia | SyntaxKind.AtToken | SyntaxKind.NewLineTrivia | SyntaxKind.AsteriskToken | SyntaxKind.OpenBraceToken | SyntaxKind.CloseBraceToken | SyntaxKind.LessThanToken | SyntaxKind.GreaterThanToken | SyntaxKind.OpenBracketToken | SyntaxKind.CloseBracketToken | SyntaxKind.OpenParenToken | SyntaxKind.CloseParenToken | SyntaxKind.EqualsToken | SyntaxKind.CommaToken | SyntaxKind.DotToken | SyntaxKind.Identifier | SyntaxKind.BacktickToken | SyntaxKind.HashToken | SyntaxKind.Unknown | KeywordSyntaxKind;
 
-export interface CommentDirective {
+// Differential preview-lane internal shape (NOT the product CommentDirective,
+// which is owned canonically by ast/pragma.ts). Kept un-exported so the preview
+// lane cannot surface a concept name that collides with the AST owner.
+interface CommentDirective {
     range: { pos: number; end: number; };
     type: CommentDirectiveType;
 }
