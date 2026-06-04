@@ -180,7 +180,7 @@ export function Printer_writeLinesAndIndent(receiver: GoPtr<Printer>, lineCount:
  * 	if p.Options.PreserveSourceNewlines {
  * 		leadingNewlines := p.getLeadingLineTerminatorCount(parent, node, LFNone)
  * 		if leadingNewlines > 0 {
- * 			p.writeLinesAndIndent(leadingNewlines /*writeSpaceIfNotIndenting*/, false)
+ * 			p.writeLinesAndIndent(leadingNewlines, false) // writeSpaceIfNotIndenting=false
  * 			return true
  * 		}
  * 	}
@@ -204,7 +204,7 @@ export function Printer_writeLineSeparatorsAndIndentBefore(receiver: GoPtr<Print
  * Go source:
  * func (p *Printer) writeLineSeparatorsAfter(node *ast.Node, parent *ast.Node) {
  * 	if p.Options.PreserveSourceNewlines {
- * 		trailingNewlines := p.getClosingLineTerminatorCount(parent, node, LFNone, core.NewTextRange(-1, -1) /*childrenTextRange*/)
+ * 		trailingNewlines := p.getClosingLineTerminatorCount(parent, node, LFNone, core.NewTextRange(-1, -1) /*childrenTextRange* /)
  * 		if trailingNewlines > 0 {
  * 			p.writeLineRepeat(trailingNewlines)
  * 		}
@@ -277,7 +277,7 @@ export function Printer_getLinesBetweenNodes(receiver: GoPtr<Printer>, parent: G
  * 	//   node1;
  * 	//   // NODE2 COMMENT
  * 	//   node2;
- * 	lines := getLineDifference( /*includeComments*/ true)
+ * 	lines := getLineDifference( /*includeComments* / true)
  * 	if lines == 0 {
  * 		// However, if the line difference considering comments was 0, we might have this:
  * 		//
@@ -286,7 +286,7 @@ export function Printer_getLinesBetweenNodes(receiver: GoPtr<Printer>, parent: G
  * 		//
  * 		// in which case we should be ignoring node2's comment, so this too is counted as
  * 		// a one-line difference, not zero.
- * 		return getLineDifference( /*includeComments*/ false)
+ * 		return getLineDifference( /*includeComments* / false)
  * 	}
  * 	return lines
  * }
@@ -340,7 +340,7 @@ export function Printer_getEffectiveLines(receiver: GoPtr<Printer>, getLineDiffe
  * 		if p.currentSourceFile != nil && parentNode != nil &&
  * 			!ast.PositionIsSynthesized(parentNode.Pos()) &&
  * 			!ast.NodeIsSynthesized(firstChild) &&
- * 			(firstChild.Parent == nil /*|| getOriginalNode(firstChild.Parent) == getOriginalNode(parentNode)*/) {
+ * 			(firstChild.Parent == nil /*|| getOriginalNode(firstChild.Parent) == getOriginalNode(parentNode)* /) {
  * 			if p.Options.PreserveSourceNewlines {
  * 				return p.getEffectiveLines(
  * 					func(includeComments bool) int {
@@ -732,7 +732,7 @@ export function Printer_emitTemplateSpanNode(receiver: GoPtr<Printer>, node: GoP
  * 		node.Statements,
  * 		LFMultiLine,
  * 		index,
- * 		-1, /*count*/
+ * 		-1, /*count* /
  * 	)
  * 	p.popNameGenerationScope(node.AsNode())
  * 	p.emitDetachedCommentsAfterStatementList(node.AsNode(), node.Statements.Loc, state)
@@ -809,7 +809,7 @@ export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<Sou
  *
  * 	if format&LFBracketsMask != 0 {
  * 		if isEmpty && !isNil {
- * 			p.emitLeadingComments(children.End(), false /*elided*/) // Emit comments within empty lists
+ * 			p.emitLeadingComments(children.End(), false /*elided* /) // Emit comments within empty lists
  * 		}
  * 		p.writePunctuation(getClosingBracket(format))
  * 	}

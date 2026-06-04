@@ -77,6 +77,11 @@
       "reason": "Generated diagnostic message catalog emitted by porter:diagnostics from the pinned diagnostics_generated.go; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
+      "match": "packages/tsts/src/internal/ast/*_generated.ts",
+      "category": "ast-compat-reexport",
+      "reason": "Thin re-export barrels (ast_generated.ts/kind_generated.ts) aliasing the canonical generated/* modules to the scaffolder's Go-file-derived import paths; pure re-exports, no @tsgo-unit."
+    },
+    {
       "match": "packages/tsts/src/go/*.ts",
       "category": "go-compat-layer",
       "reason": "The Go compatibility layer is authored TypeScript infrastructure, not a TS-Go source unit."
