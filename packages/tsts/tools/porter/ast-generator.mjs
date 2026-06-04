@@ -364,13 +364,22 @@ const EMITTERS = [
 // File assembly + metadata
 // ---------------------------------------------------------------------------
 
-function generatedHeader(ac, relativePath, body, sourceRevision) {
+// Deterministic digest of each declared schema input, so porter:ast --check can
+// fail with a useful diagnostic when a specific input changes.
+function schemaInputDigests(ac) {
+  return ac.schemaInputs.map((relativePath) => ({
+    path: relativePath,
+    contentHash: hashText(readFileSync(resolveRepo(relativePath), "utf8")),
+  }));
+}
+
+function generatedHeader(relativePath, body, sourceRevision, schemaInputs) {
   const metadata = {
     schemaVersion: 1,
     kind: GENERATED_KIND,
     generator: GENERATOR,
     sourceRevision,
-    schemaInputs: ac.schemaInputs,
+    schemaInputs,
     path: relativePath,
     contentHash: hashText(body),
   };
@@ -381,11 +390,12 @@ function generatedHeader(ac, relativePath, body, sourceRevision) {
 export function buildAstGeneratedFiles(config, sourceRevision) {
   const ac = astConfig(config);
   const schema = loadAstSchema(config);
+  const schemaInputs = schemaInputDigests(ac);
   const files = new Map();
   for (const emitter of EMITTERS) {
     const relativePath = `${ac.generatedDir}/${emitter.file}`;
     const body = emitter.emit(schema);
-    const header = generatedHeader(ac, relativePath, body, sourceRevision);
+    const header = generatedHeader(relativePath, body, sourceRevision, schemaInputs);
     files.set(relativePath, header + body);
   }
   return files;

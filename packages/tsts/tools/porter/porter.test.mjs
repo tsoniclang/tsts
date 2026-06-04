@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -24,7 +24,13 @@ import {
   verifyStatus,
   writeTextSafely,
 } from "./porter.mjs";
-import { emitKinds, parseGoFlagFile } from "./ast-generator.mjs";
+import {
+  buildAstGeneratedArtifactStatus,
+  buildAstGeneratedFiles,
+  emitKinds,
+  parseGoFlagFile,
+  writeAstGenerated,
+} from "./ast-generator.mjs";
 
 const baseConfig = {
   goModulePath: "github.com/microsoft/typescript-go",
@@ -869,6 +875,108 @@ test("ast-generator: kinds emit sequential values, markers, and a stringer", () 
   // Markers are aliases of an existing kind, not new values.
   assert.match(out, /export const KindFirstNode: Kind = KindUnknown;/);
   assert.match(out, /export function KindString\(kind: Kind\): string \{/);
+});
+
+function astFixtureConfig(root) {
+  const rel = (target) => path.relative(repoRoot, target).split(path.sep).join("/");
+  const schemaDir = path.join(root, "schema");
+  mkdirSync(schemaDir, { recursive: true });
+  writeFileSync(
+    path.join(schemaDir, "ast.json"),
+    JSON.stringify({ kinds: { elements: ["Unknown", "EndOfFile"], markers: [] }, bases: {}, nodes: { definitions: {}, aliases: {} } }),
+  );
+  writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\n\ntype NodeFlags uint32\n\nconst (\n\tNodeFlagsNone NodeFlags = 0\n)\n");
+  writeFileSync(path.join(schemaDir, "symbolflags.go"), "package ast\n\ntype SymbolFlags uint32\n\nconst (\n\tSymbolFlagsNone SymbolFlags = 0\n)\n");
+  return {
+    tsRoot: rel(path.join(root, "src")),
+    astSchemaDir: rel(schemaDir),
+    astGeneratedDir: "internal/ast/generated",
+    astSchemaInputs: [
+      rel(path.join(schemaDir, "ast.json")),
+      rel(path.join(schemaDir, "nodeflags.go")),
+      rel(path.join(schemaDir, "symbolflags.go")),
+    ],
+  };
+}
+
+const cleanAstStatus = { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+
+test("porter:ast --check detects missing/stale/orphan/untracked/invalid generated files", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const genDir = path.join(root, "src/internal/ast/generated");
+
+    writeAstGenerated(config, "rev-fixture-1");
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-1"), cleanAstStatus);
+
+    // Missing.
+    unlinkSync(path.join(genDir, "kinds.ts"));
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").missing.length, 1);
+    writeAstGenerated(config, "rev-fixture-1", { force: true });
+
+    // Stale.
+    const kindsPath = path.join(genDir, "kinds.ts");
+    writeFileSync(kindsPath, `${readFileSync(kindsPath, "utf8")}\nexport const sneaky = 1;\n`);
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").stale.length, 1);
+    writeAstGenerated(config, "rev-fixture-1", { force: true });
+
+    // Orphan: well-formed generated file no longer in the expected set.
+    const expected = buildAstGeneratedFiles(config, "rev-fixture-1");
+    writeFileSync(path.join(genDir, "orphan.ts"), expected.get("internal/ast/generated/kinds.ts"));
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").orphan.length, 1);
+    unlinkSync(path.join(genDir, "orphan.ts"));
+
+    // Untracked: file in the generated dir without @tsgo-generated metadata.
+    writeFileSync(path.join(genDir, "loose.ts"), "export const loose = 1;\n");
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").untracked.length, 1);
+    unlinkSync(path.join(genDir, "loose.ts"));
+
+    // Invalid: @tsgo-generated metadata with the wrong kind/generator.
+    writeFileSync(
+      path.join(genDir, "wrongkind.ts"),
+      '// Code generated\n// @tsgo-generated {"schemaVersion":1,"kind":"go-facade","generator":"porter:facades","path":"x","sourceRevision":"r","contentHash":"h"}\n\nexport {}\n',
+    );
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-1").invalid.length, 1);
+    unlinkSync(path.join(genDir, "wrongkind.ts"));
+
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-1"), cleanAstStatus);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("writeAstGenerated honors the safe-write contract and --force", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    const kindsPath = path.join(root, "src/internal/ast/generated/kinds.ts");
+    writeAstGenerated(config, "rev-fixture-2");
+    writeFileSync(kindsPath, `${readFileSync(kindsPath, "utf8")}\n// edited\n`);
+    assert.throws(() => writeAstGenerated(config, "rev-fixture-2"), /refusing to overwrite/);
+    writeAstGenerated(config, "rev-fixture-2", { force: true });
+    assert.deepEqual(buildAstGeneratedArtifactStatus(config, "rev-fixture-2"), cleanAstStatus);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ast-generator: a schema input content change makes committed output stale", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = astFixtureConfig(root);
+    writeAstGenerated(config, "rev-fixture-3");
+    assert.equal(buildAstGeneratedArtifactStatus(config, "rev-fixture-3").stale.length, 0);
+    // Changing a declared schema input changes the schemaInputs digest in the header.
+    writeFileSync(
+      path.join(root, "schema/nodeflags.go"),
+      "package ast\n\ntype NodeFlags uint32\n\nconst (\n\tNodeFlagsNone NodeFlags = 0\n\tNodeFlagsLet  NodeFlags = 1 << 0\n)\n",
+    );
+    assert.ok(buildAstGeneratedArtifactStatus(config, "rev-fixture-3").stale.length >= 1);
+    assert.ok(existsSync(path.join(root, "src/internal/ast/generated/kinds.ts")));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 function snapshotWith(files) {

@@ -68,19 +68,20 @@ export function main() {
   if (command === "ast") {
     const snapshot = runScan(config);
     const sourceRevision = snapshot.gitRevision;
-    if (options.check === true) {
-      const astStatus = buildAstGeneratedArtifactStatus(config, sourceRevision);
-      const failures = collectAstArtifactFailures(astStatus);
-      if (failures.length > 0) {
-        fail(`AST generated artifact check failed: ${failures.join(", ")}`);
+    if (options.write === true) {
+      const results = writeAstGenerated(config, sourceRevision, { force: options.force === true });
+      for (const result of results) {
+        console.log(`${result.outcome}: ${result.path}`);
       }
-      console.log("AST generated artifact check passed");
       return;
     }
-    const results = writeAstGenerated(config, sourceRevision, { force: options.force === true });
-    for (const result of results) {
-      console.log(`${result.outcome}: ${result.path}`);
+    // Default: check mode (no write flag provided).
+    const astStatus = buildAstGeneratedArtifactStatus(config, sourceRevision);
+    const failures = collectAstArtifactFailures(astStatus);
+    if (failures.length > 0) {
+      fail(`AST generated artifact check failed: ${failures.join(", ")}`);
     }
+    console.log("AST generated artifact check passed");
     return;
   }
 
