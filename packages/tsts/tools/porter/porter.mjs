@@ -313,12 +313,24 @@ export function scanTsUnits(root) {
   return { fileCount: files.length, files: fileReports, units };
 }
 
+export function authoredFacadePathSet(config) {
+  const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
+  const set = new Set();
+  for (const entry of config.authoredFacadeModules ?? []) {
+    set.add(`${sourceRootPrefix}/${entry.replace(/^\/+/, "")}`);
+  }
+  return set;
+}
+
 export function buildGeneratedArtifactStatus(config, snapshot) {
+  const authored = authoredFacadePathSet(config);
   const expected = renderExpectedGeneratedArtifacts(config, snapshot);
   const expectedPaths = new Set(expected.keys());
   const actualRoot = resolveRepo(`${config.tsRoot.replace(/\/$/, "")}/go`);
   const actualFiles = walk(actualRoot)
-    .filter((file) => file.endsWith(".ts"))
+    // Test files (*.test.ts) co-located with facades are authored test infra, not
+    // facade artifacts; they are covered by the go-compat-layer tsFilePolicy.
+    .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
     .map((file) => path.relative(repoRoot, file).split(path.sep).join("/"));
   const actualPaths = new Set(actualFiles);
   const missing = [];
@@ -339,6 +351,19 @@ export function buildGeneratedArtifactStatus(config, snapshot) {
   for (const relativePath of actualFiles) {
     const absolutePath = resolveRepo(relativePath);
     const text = readFileSync(absolutePath, "utf8");
+    // Authored facade modules are hand-written compatibility layers classified by
+    // explicit `authoredFacadeModules` policy. They are exempt from generated-artifact
+    // checks, but must NOT carry @tsgo-generated metadata (one module is either
+    // generated or authored, never both).
+    if (authored.has(relativePath)) {
+      if (parseGeneratedArtifactMetadata(text).metadata) {
+        invalid.push({
+          path: relativePath,
+          reason: "Authored facade module must not carry @tsgo-generated metadata; it is classified as authored by porter.config.json authoredFacadeModules.",
+        });
+      }
+      continue;
+    }
     const metadataResult = parseGeneratedArtifactMetadata(text);
     if (metadataResult.error) {
       invalid.push({ path: relativePath, reason: metadataResult.error });
@@ -1226,6 +1251,12 @@ export function renderExpectedGeneratedArtifacts(config, snapshot) {
       `${sourceRootPrefix}/${relativePath}`,
       renderGeneratedArtifact(snapshot, relativePath, "go-facade", body),
     );
+  }
+  // Authored facade modules are excluded from the generated set: porter:facades must
+  // not regenerate or overwrite them, and they are not checked against deterministic
+  // generated output. Their faithful Go-semantics bodies are hand-authored.
+  for (const authoredPath of authoredFacadePathSet(config)) {
+    artifacts.delete(authoredPath);
   }
   return new Map([...artifacts.entries()].sort(([left], [right]) => left.localeCompare(right)));
 }

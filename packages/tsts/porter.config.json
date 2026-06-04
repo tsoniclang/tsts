@@ -9,6 +9,22 @@
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
+  "authoredFacadeModules": [
+    "go/fmt.ts",
+    "go/errors.ts",
+    "go/strconv.ts",
+    "go/strings.ts",
+    "go/unicode.ts",
+    "go/unicode/utf8.ts",
+    "go/unicode/utf16.ts",
+    "go/slices.ts",
+    "go/maps.ts",
+    "go/sort.ts",
+    "go/cmp.ts",
+    "go/sync.ts",
+    "go/reflect.ts",
+    "go/math.ts"
+  ],
   "tsFilePolicies": [
     {
       "match": "packages/tsts/src/internal/ls/**",
