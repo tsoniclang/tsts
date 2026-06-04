@@ -1,8 +1,10 @@
-import type { bool, int } from "@tsonic/core/types.js";
-import { CutPrefix, TrimLeft } from "../../go/strings.js";
+import type { bool, byte, int } from "@tsonic/core/types.js";
+import { CutPrefix, TrimLeft, TrimSuffix } from "../../go/strings.js";
+import { Sprintf } from "../../go/fmt.js";
 
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const byteLen = (s: string): int => utf8Encoder.encode(s).length;
+const byteAt = (s: string, i: int): byte => utf8Encoder.encode(s)[i]!;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::type::PseudoBigInt","kind":"type","status":"implemented","sigHash":"2c01c32f11727dc20097bc5fac4f0bef01a1d77c02fc05f3278b26533303babe","bodyHash":"0f4106f2abbd21512eb0198f560df140685b532155644faf40e4a5c29c804ae9"}
@@ -96,7 +98,7 @@ export function ParseValidBigInt(text: string): PseudoBigInt {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::func::ParsePseudoBigInt","kind":"func","status":"stub","sigHash":"7c956c53486e004ed5b295d5a96a01cd9f865a47daf6b333c1d2672698e040d5","bodyHash":"6ec628050fe614f4afed93b4ce1ba257734b021a8b1238f06e3cef85c7131f12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::func::ParsePseudoBigInt","kind":"func","status":"implemented","sigHash":"7c956c53486e004ed5b295d5a96a01cd9f865a47daf6b333c1d2672698e040d5","bodyHash":"6ec628050fe614f4afed93b4ce1ba257734b021a8b1238f06e3cef85c7131f12"}
  *
  * Go source:
  * func ParsePseudoBigInt(stringValue string) string {
@@ -123,5 +125,38 @@ export function ParseValidBigInt(text: string): PseudoBigInt {
  * }
  */
 export function ParsePseudoBigInt(stringValue: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/jsnum/pseudobigint.go::func::ParsePseudoBigInt");
+  stringValue = TrimSuffix(stringValue, "n");
+  let b1: byte = 0 as byte;
+  if (byteLen(stringValue) > 1) {
+    b1 = byteAt(stringValue, 1);
+  }
+  switch (b1) {
+    case 0x62 /* 'b' */:
+    case 0x42 /* 'B' */:
+    case 0x6f /* 'o' */:
+    case 0x4f /* 'O' */:
+    case 0x78 /* 'x' */:
+    case 0x58 /* 'X' */:
+      // Not decimal.
+      break;
+    default:
+      stringValue = TrimLeft(stringValue, "0");
+      if (stringValue === "") {
+        return "0";
+      }
+      return stringValue;
+  }
+  // `new(big.Int).SetString(stringValue, 0)` parses with base inference. The
+  // scanner has already validated and stripped numeric separators from the
+  // literal, so it is a positive, separator-free, prefix-tagged integer string
+  // that native BigInt parses identically. A malformed string makes Go report
+  // ok=false and panic; native BigInt throws on the same malformed input, so the
+  // panic is mirrored as a throw with the same message.
+  let bi: bigint;
+  try {
+    bi = globalThis.BigInt(stringValue);
+  } catch {
+    throw new globalThis.Error(Sprintf("Failed to parse big int: %q", stringValue));
+  }
+  return bi.toString(); // !!!
 }

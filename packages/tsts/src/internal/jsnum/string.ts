@@ -2,7 +2,7 @@ import type { bool, byte, double, int, long } from "@tsonic/core/types.js";
 import type { GoError, GoRune } from "../../go/compat.js";
 import * as math from "../../go/math.js";
 import { New as errors_New, Is as errors_Is } from "../../go/errors.js";
-import { FormatInt, ParseFloat, ErrRange } from "../../go/strconv.js";
+import { FormatInt, ParseFloat, ParseInt, ErrRange } from "../../go/strconv.js";
 import { Builder, Cut, CutPrefix, HasPrefix, HasSuffix, IndexAny, TrimFunc, TrimLeft, TrimRight } from "../../go/strings.js";
 import { Is as unicode_Is, Zs } from "../../go/unicode.js";
 import { DecodeRuneInString } from "../../go/unicode/utf8.js";
@@ -268,7 +268,7 @@ export function isStrWhiteSpace(r: GoRune): bool {
 export let errUnknownPrefix: GoError = errors_New("unknown number prefix");
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::tryParseInt","kind":"func","status":"stub","sigHash":"65f4d9e2cf198633f067545126beaa144ac71d34bc3271659af155413470de0e","bodyHash":"f9423630e7ad7f01f90b34a23a1713f2fdbc362a62e0677b9a9d86900f26b89d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/string.go::func::tryParseInt","kind":"func","status":"implemented","sigHash":"65f4d9e2cf198633f067545126beaa144ac71d34bc3271659af155413470de0e","bodyHash":"f9423630e7ad7f01f90b34a23a1713f2fdbc362a62e0677b9a9d86900f26b89d"}
  *
  * Go source:
  * func tryParseInt(s string) (Number, bool) {
@@ -325,7 +325,67 @@ export let errUnknownPrefix: GoError = errors_New("unknown number prefix");
  * }
  */
 export function tryParseInt(s: string): [Number, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/jsnum/string.go::func::tryParseInt");
+  let i: long = 0 as long;
+  let err: GoError = undefined;
+  let hasIntResult: bool = false;
+
+  if (byteLen(s) > 2) {
+    const prefix = byteSlice(s, 0, 2);
+    const rest = byteSlice(s, 2);
+    switch (prefix) {
+      case "0b":
+      case "0B":
+        if (!isAllBinaryDigits(rest)) {
+          return [NaN(), true];
+        }
+        [i, err] = ParseInt(rest, 2, 64);
+        hasIntResult = true;
+        break;
+      case "0o":
+      case "0O":
+        if (!isAllOctalDigits(rest)) {
+          return [NaN(), true];
+        }
+        [i, err] = ParseInt(rest, 8, 64);
+        hasIntResult = true;
+        break;
+      case "0x":
+      case "0X":
+        if (!isAllHexDigits(rest)) {
+          return [NaN(), true];
+        }
+        [i, err] = ParseInt(rest, 16, 64);
+        hasIntResult = true;
+        break;
+    }
+  }
+
+  if (!hasIntResult) {
+    // StringToNumber does not parse leading zeros as octal.
+    s = trimLeadingZeros(s);
+    if (!isAllDigits(s)) {
+      return [0 as Number, false];
+    }
+    [i, err] = ParseInt(s, 10, 64);
+    hasIntResult = true;
+  }
+
+  if (hasIntResult && err === undefined) {
+    return [i as Number, true];
+  }
+
+  // Using this to parse large integers.
+  // `new(big.Int).SetString(s, 0)` parses with base inference; every string that
+  // reaches here is a positive, separator-free, prefix-validated integer literal,
+  // so native BigInt parses it identically. A malformed string would throw rather
+  // than report ok=false, but those are filtered out by the isAll*Digits guards
+  // above, so the bigint parse always succeeds.
+  const bi: bigint = globalThis.BigInt(s);
+
+  // `bi.Float64()` returns the nearest float64 with round-to-nearest-even, which
+  // is exactly the ECMAScript BigInt-to-Number conversion.
+  const f = globalThis.Number(bi);
+  return [f as Number, true];
 }
 
 /**

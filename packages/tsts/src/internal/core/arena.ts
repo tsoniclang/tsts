@@ -2,7 +2,7 @@ import type { int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"stub","sigHash":"866dd69ab11aaa9aeee1c0e91b8a7af12f59ff5857f9a4e17d1779c0c3f973c2","bodyHash":"38f2190ab841cbf54c059e3dedb3a5a315a1cd4bc80b3c78ed2d38b4c0300932"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::type::Arena","kind":"type","status":"implemented","sigHash":"866dd69ab11aaa9aeee1c0e91b8a7af12f59ff5857f9a4e17d1779c0c3f973c2","bodyHash":"38f2190ab841cbf54c059e3dedb3a5a315a1cd4bc80b3c78ed2d38b4c0300932"}
  *
  * Go source:
  * Arena[T any] struct {

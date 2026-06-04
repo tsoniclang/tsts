@@ -1,9 +1,10 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import type { Arena } from "./arena.js";
+import { Arena_New } from "./arena.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"stub","sigHash":"96af231f81cab3ea96808ae94d0dd1d2f72fe89e0cdb4c2d385abf3ee3542b3d","bodyHash":"4819b5299d93f83bc94613116fe6aa9f531f2e6c747b99539f472a65af9c96fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"implemented","sigHash":"96af231f81cab3ea96808ae94d0dd1d2f72fe89e0cdb4c2d385abf3ee3542b3d","bodyHash":"4819b5299d93f83bc94613116fe6aa9f531f2e6c747b99539f472a65af9c96fb"}
  *
  * Go source:
  * LinkStore[K comparable, V any] struct {
@@ -17,7 +18,7 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::method::LinkStore.Get","kind":"method","status":"stub","sigHash":"9c97508aca07f6b6e2bf5511597c28312a377451b939490932beace4e6ef9302","bodyHash":"cd5a7b8c74bdc88653e14f17ac4a9cc7a2477b68dce2267a511e203b1cdfbc43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::method::LinkStore.Get","kind":"method","status":"implemented","sigHash":"9c97508aca07f6b6e2bf5511597c28312a377451b939490932beace4e6ef9302","bodyHash":"cd5a7b8c74bdc88653e14f17ac4a9cc7a2477b68dce2267a511e203b1cdfbc43"}
  *
  * Go source:
  * func (s *LinkStore[K, V]) Get(key K) *V {
@@ -34,7 +35,14 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * }
  */
 export function LinkStore_Get<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/linkstore.go::method::LinkStore.Get");
+  const s: GoPtr<LinkStore<K, V>> = receiver;
+  let value = s!.entries.get(key);
+  if (value !== undefined) {
+    return value;
+  }
+  value = Arena_New<V>(s!.arena);
+  s!.entries.set(key, value);
+  return value;
 }
 
 /**

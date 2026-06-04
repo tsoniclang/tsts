@@ -25,6 +25,7 @@
     "go/sort.ts",
     "go/cmp.ts",
     "go/sync.ts",
+    "go/sync/atomic.ts",
     "go/reflect.ts",
     "go/math.ts",
     "go/path/filepath.ts"
