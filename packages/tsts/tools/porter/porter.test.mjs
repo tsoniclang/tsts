@@ -5,8 +5,10 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  authoredFacadePathSet,
   buildGeneratedArtifactStatus,
   buildExternalFacadeMap,
+  buildLargeFileSplitStatus,
   buildStatus,
   collectVerifyFailures,
   expectedTsPath,
@@ -20,6 +22,7 @@ import {
   repoRoot,
   scanTsUnits,
   verifyStatus,
+  writeTextSafely,
 } from "./porter.mjs";
 
 const baseConfig = {
@@ -39,9 +42,11 @@ const baseConfig = {
     { match: "packages/tsts/src/**/*fourslash*", category: "forbidden-source", reason: "fourslash forbidden" },
     { match: "packages/tsts/src/**/*.ts", category: "requires-tsgo-unit", reason: "metadata required" },
   ],
-  splitRules: [
-    { match: "internal/checker/checker.go", target: "packages/tsts/src/checker/checker", strategy: "split", reason: "large file" },
-  ],
+  largeFileLineThreshold: 5000,
+  largeFileSplitPlan: {
+    schemaVersion: 1,
+    files: {},
+  },
 };
 
 test("matchGlob supports recursive and single-segment patterns", () => {
@@ -71,16 +76,41 @@ test("policyFor lets explicit inactive policies exclude generated LS/LSP files",
   assert.equal(policy.active, false);
 });
 
-test("expectedTsPath supports split rules without repeating path metadata", () => {
+test("expectedTsPath uses semantic large-file split plans without repeating source path metadata", () => {
   const unit = unitRecord({
     id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
     kind: "method",
     qualifiedName: "Checker.checkSourceFile",
     goPath: "internal/checker/checker.go",
   });
+  const snapshot = snapshotWith([fileRecord({
+    path: "internal/checker/checker.go",
+    lineCount: 6000,
+    units: [unit],
+  })]);
+  const config = {
+    ...baseConfig,
+    largeFileSplitPlan: {
+      schemaVersion: 1,
+      files: {
+        "internal/checker/checker.go": {
+          targetRoot: "packages/tsts/src/internal/checker/checker",
+          reason: "test semantic split plan",
+          targets: [
+            {
+              file: "source-files.ts",
+              description: "Source-file checking methods",
+              declarations: ["method::Checker.checkSourceFile"],
+            },
+          ],
+        },
+      },
+    },
+  };
+  const splitStatus = buildLargeFileSplitStatus(config, snapshot);
   assert.equal(
-    expectedTsPath(baseConfig, unit),
-    "packages/tsts/src/checker/checker/Checker.checkSourceFile_7cc9854edeff.ts",
+    expectedTsPath(config, unit, splitStatus),
+    "packages/tsts/src/internal/checker/checker/source-files.ts",
   );
 });
 
@@ -142,9 +172,111 @@ test("buildStatus reports missing, stale, orphan, parse-error, unitless, and unt
   assert.match(renderStatusMarkdown(status), /Coverage Diagnostics/);
 });
 
+test("large-file split plans must cover every declaration exactly once", () => {
+  const sourceMethod = unitRecord({
+    id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
+    kind: "method",
+    name: "checkSourceFile",
+    qualifiedName: "Checker.checkSourceFile",
+    receiver: "Checker",
+    goPath: "internal/checker/checker.go",
+  });
+  const typeMethod = unitRecord({
+    id: "m::internal/checker/checker.go::method::Checker.getTypeOfNode",
+    kind: "method",
+    name: "getTypeOfNode",
+    qualifiedName: "Checker.getTypeOfNode",
+    receiver: "Checker",
+    goPath: "internal/checker/checker.go",
+  });
+  const orphanMethod = unitRecord({
+    id: "m::internal/checker/checker.go::method::Checker.resolveName",
+    kind: "method",
+    name: "resolveName",
+    qualifiedName: "Checker.resolveName",
+    receiver: "Checker",
+    goPath: "internal/checker/checker.go",
+  });
+  const config = {
+    ...baseConfig,
+    largeFileSplitPlan: {
+      schemaVersion: 1,
+      files: {
+        "internal/checker/checker.go": {
+          targetRoot: "packages/tsts/src/internal/checker/checker",
+          targets: [
+            {
+              file: "source-files.ts",
+              description: "Source-file checking",
+              declarations: ["method::Checker.checkSourceFile", "method::Checker.gone"],
+            },
+            {
+              file: "types.ts",
+              description: "Type queries",
+              matchers: [{ kind: "method", receiver: "Checker", nameRegex: "^getType" }],
+            },
+            {
+              file: "duplicate-types.ts",
+              description: "Duplicate type queries",
+              declarations: ["method::Checker.getTypeOfNode"],
+            },
+          ],
+        },
+      },
+    },
+  };
+  const splitStatus = buildLargeFileSplitStatus(config, snapshotWith([fileRecord({
+    path: "internal/checker/checker.go",
+    lineCount: 6000,
+    units: [sourceMethod, typeMethod, orphanMethod],
+  })]));
+
+  assert.equal(splitStatus.requiredFileCount, 1);
+  assert.equal(splitStatus.files[0].assigned, 2);
+  assert.equal(splitStatus.files[0].unassigned, 1);
+  assert.ok(splitStatus.issues.some((issue) => issue.kind === "stale-declaration"));
+  assert.ok(splitStatus.issues.some((issue) => issue.kind === "duplicate-assignment"));
+  assert.ok(splitStatus.issues.some((issue) => issue.kind === "unassigned-declaration"));
+  assert.deepEqual(
+    collectVerifyFailures({ counts: { ...emptyCounts(), largeFileSplitFailures: splitStatus.failureCount }, generatedArtifacts: emptyGeneratedArtifacts() }, {}),
+    [`${splitStatus.failureCount} large-file split plan failures`],
+  );
+});
+
+test("large-file split plans reject random line/chunk target names", () => {
+  const unit = unitRecord({
+    id: "m::internal/parser/parser.go::func::ParseSourceFile",
+    kind: "func",
+    name: "ParseSourceFile",
+    qualifiedName: "ParseSourceFile",
+    goPath: "internal/parser/parser.go",
+  });
+  const splitStatus = buildLargeFileSplitStatus({
+    ...baseConfig,
+    largeFileSplitPlan: {
+      schemaVersion: 1,
+      files: {
+        "internal/parser/parser.go": {
+          targetRoot: "packages/tsts/src/internal/parser/parser",
+          targets: [
+            {
+              file: "part-001.ts",
+              description: "Invalid line-range style split",
+              declarations: ["func::ParseSourceFile"],
+            },
+          ],
+        },
+      },
+    },
+  }, snapshotWith([fileRecord({ path: "internal/parser/parser.go", lineCount: 6000, units: [unit] })]));
+
+  assert.ok(splitStatus.issues.some((issue) => issue.kind === "random-split-target"));
+});
+
 test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter coverage", () => {
   const config = {
     ...baseConfig,
+    largeFileSplitPlan: { schemaVersion: 1, files: {} },
     policies: [
       { match: "internal/ls/**", category: "out-of-scope", active: false, reason: "ls excluded" },
       { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
@@ -286,6 +418,22 @@ test("scanTsUnits records files with and without metadata", () => {
   }
 });
 
+test("writeTextSafely refuses to overwrite edited files without force", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const target = path.join(root, "draft.json");
+    assert.equal(writeTextSafely(target, "one\n", { label: "test artifact" }), "written");
+    assert.equal(writeTextSafely(target, "one\n", { label: "test artifact" }), "unchanged");
+    assert.throws(
+      () => writeTextSafely(target, "two\n", { label: "test artifact" }),
+      /refusing to overwrite existing test artifact/,
+    );
+    assert.equal(writeTextSafely(target, "two\n", { label: "test artifact", force: true }), "written");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("renderStub rejects non-portable unit kinds", () => {
   assert.throws(
     () => renderStub(unitRecord({ kind: "importGroup" })),
@@ -418,6 +566,70 @@ test("renderUnitGroup resolves Go external types through generated facades", () 
   assert.match(text, /writer: Writer/);
   assert.match(text, /\.\.\.opts: Options\[\]/);
   assert.doesNotMatch(text, /GoExternal/);
+});
+
+test("renderUnitGroup imports symbols from semantic split targets", () => {
+  const checkerType = unitRecord({
+    id: "m::internal/checker/checker.go::type::Checker",
+    kind: "type",
+    name: "Checker",
+    qualifiedName: "Checker",
+    goPath: "internal/checker/checker.go",
+    typeKind: "struct",
+  });
+  const emitResolverFactory = unitRecord({
+    id: "m::internal/checker/emitresolver.go::func::NewEmitResolver",
+    kind: "func",
+    name: "NewEmitResolver",
+    qualifiedName: "NewEmitResolver",
+    goPath: "internal/checker/emitresolver.go",
+    parameters: [
+      { names: ["checker"], type: selectorType("checker", "Checker") },
+    ],
+  });
+  const config = {
+    ...baseConfig,
+    largeFileSplitPlan: {
+      schemaVersion: 1,
+      files: {
+        "internal/checker/checker.go": {
+          targetRoot: "packages/tsts/src/internal/checker/checker",
+          targets: [
+            {
+              file: "state.ts",
+              description: "Checker state",
+              declarations: ["type::Checker"],
+            },
+          ],
+        },
+      },
+    },
+  };
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/checker/checker.go",
+      importPath: "github.com/microsoft/typescript-go/internal/checker",
+      lineCount: 6000,
+      units: [checkerType],
+    }),
+    fileRecord({
+      path: "internal/checker/emitresolver.go",
+      importPath: "github.com/microsoft/typescript-go/internal/checker",
+      imports: [{ name: "checker", path: "github.com/microsoft/typescript-go/internal/checker" }],
+      units: [emitResolverFactory],
+    }),
+  ]);
+  const splitStatus = buildLargeFileSplitStatus(config, snapshot);
+  const text = renderUnitGroup(
+    config,
+    snapshot,
+    "packages/tsts/src/internal/checker/emitresolver.ts",
+    [emitResolverFactory],
+    { largeFileSplits: splitStatus },
+  );
+
+  assert.match(text, /import type \{ Checker \} from "\.\/checker\/state\.js";/);
+  assert.doesNotMatch(text, /from "\.\/checker\.js"/);
 });
 
 test("renderUnitGroup uses extractor-provided inferred value types", () => {
@@ -567,6 +779,48 @@ test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, an
   }
 });
 
+test("authoredFacadeModules: authored modules are excluded from generation and exempt from generated checks", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = {
+      ...baseConfig,
+      tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/"),
+      authoredFacadeModules: ["go/io.ts"],
+    };
+    const snapshot = snapshotWith([]);
+    const generatedRoot = path.join(root, "src/go");
+    mkdirSync(generatedRoot, { recursive: true });
+
+    // The policy resolves "go/io.ts" to a full repo-relative path.
+    assert.ok(authoredFacadePathSet(config).has(`${config.tsRoot}/go/io.ts`));
+
+    // io.ts is excluded from the deterministic generated set (porter:facades will not regenerate it).
+    const expected = renderExpectedGeneratedArtifacts(config, snapshot);
+    assert.ok(!expected.has(`${config.tsRoot}/go/io.ts`));
+
+    for (const [relativePath, text] of expected) {
+      const targetPath = path.join(repoRoot, relativePath);
+      mkdirSync(path.dirname(targetPath), { recursive: true });
+      writeFileSync(targetPath, text);
+    }
+
+    // A header-free authored io.ts is exempt: no missing/stale/orphan/untracked/invalid.
+    writeFileSync(path.join(generatedRoot, "io.ts"), "export interface Writer { Write(p: number[]): [number, Error | undefined]; }\n");
+    assert.deepEqual(buildGeneratedArtifactStatus(config, snapshot), { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
+
+    // An authored module that still carries @tsgo-generated metadata is invalid (never both).
+    writeFileSync(
+      path.join(generatedRoot, "io.ts"),
+      "// Code generated by TSTS porter. DO NOT EDIT.\n// @tsgo-generated {\"schemaVersion\":1,\"kind\":\"go-facade\",\"generator\":\"porter:facades\",\"path\":\"go/io.ts\",\"sourceRevision\":\"abc123\",\"contentHash\":\"x\"}\n\nexport {}\n",
+    );
+    const conflicted = buildGeneratedArtifactStatus(config, snapshot);
+    assert.equal(conflicted.invalid.length, 1);
+    assert.match(conflicted.invalid[0].reason, /Authored facade module must not carry @tsgo-generated/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 function snapshotWith(files) {
   return {
     sourceRoot: "/tmp/tsgo",
@@ -578,6 +832,24 @@ function snapshotWith(files) {
     },
     files,
   };
+}
+
+function emptyCounts() {
+  return {
+    parseErrors: 0,
+    duplicateGoIDs: 0,
+    duplicateTsIDs: 0,
+    orphan: 0,
+    forbiddenTsFiles: 0,
+    untrackedTsFiles: 0,
+    stale: 0,
+    missing: 0,
+    largeFileSplitFailures: 0,
+  };
+}
+
+function emptyGeneratedArtifacts() {
+  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
 }
 
 function fileRecord(overrides) {

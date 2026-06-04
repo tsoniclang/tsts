@@ -17,6 +17,7 @@
     "porter:verify": "node packages/tsts/tools/porter/porter.mjs verify",
     "porter:scaffold": "node packages/tsts/tools/porter/porter.mjs scaffold",
     "porter:facades": "node packages/tsts/tools/porter/porter.mjs facades",
+    "porter:large-files": "node packages/tsts/tools/porter/porter.mjs large-files",
     "porter:skeleton-check": "node packages/tsts/tools/porter/porter.mjs skeleton-check",
     "porter:test": "node --test packages/tsts/tools/porter/*.test.mjs",
     "status": "git status --short --branch"
