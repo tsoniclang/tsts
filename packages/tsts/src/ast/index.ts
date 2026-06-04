@@ -17,5 +17,7 @@ export * from "./aliases.js";
 export * from "./accessors.js";
 // FlowFlags const-bitset (control-flow-graph node flags; flow.go:5-23).
 export * from "./flowFlags.js";
+// Flow payload types + accessors (FlowSwitchClauseData/FlowReduceLabelData; flow.go:27-75).
+export * from "./flow.js";
 // Symbol helpers + InternalSymbolName constants (symbol.go).
 export * from "./symbol.js";

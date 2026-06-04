@@ -4,6 +4,7 @@ import type { int } from "@tsonic/core/types.js";
 import { Kind } from "./kind.js";
 import type { EndOfFile, Statement } from "./nodes.js";
 import type { Diagnostic } from "../../diagnostics/types.js";
+import type { FlowNodePayload } from "../flow.js";
 
 export interface TextRange {
   // codex-048 Stage-1a: pos/end are MUTABLE parse-state. tsgo treats node
@@ -92,11 +93,12 @@ export interface FlowNode {
   // mutates flags and links while wiring the graph, so these slots are central
   // mutable flow-state fields rather than readonly syntax data.
   flags: int;
-  node?: Node;
+  // TS-Go FlowNode.Node holds either the associated AST node or, for the two
+  // synthetic flow kinds, a FlowSwitchClauseData / FlowReduceLabelData payload
+  // (flow.go:27-75). Read via the asFlow* accessors in ../flow.ts.
+  node?: FlowNodePayload;
   antecedent?: FlowNode;
   antecedents?: unknown;
-  clauseStart?: int;
-  clauseEnd?: int;
 }
 
 export interface Symbol {
