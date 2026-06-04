@@ -20,6 +20,7 @@ import {
   renderUnitGroup,
   renderStatusMarkdown,
   repoRoot,
+  resolveRepo,
   scanTsUnits,
   verifyStatus,
   writeTextSafely,
@@ -27,10 +28,12 @@ import {
 import {
   buildAstGeneratedArtifactStatus,
   buildAstGeneratedFiles,
+  buildGeneratedAstSkips,
   emitKinds,
   parseGoFlagFile,
   writeAstGenerated,
 } from "./ast-generator.mjs";
+import { AstSchema } from "./ast-schema-model.mjs";
 
 const baseConfig = {
   goModulePath: "github.com/microsoft/typescript-go",
@@ -1083,3 +1086,71 @@ function funcType(parameters, results) {
 function interfaceType(members) {
   return { kind: "interface", text: "interface", members };
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// AST node/data/factory/etc emitter tests (free-fn/adapter model).
+// ───────────────────────────────────────────────────────────────────────────
+
+test("ast-schema-model: alias derivation matches ast_generated.go (231 node + 71 union + 23 list)", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const schema = new AstSchema(ast);
+  const nodeAliasCount = schema.nodeNames().length
+    + schema.nodeNames().reduce((acc, n) => acc + schema.instantiationAliasesOf(n).length, 0);
+  assert.equal(nodeAliasCount, 231);
+  assert.equal(Object.keys(schema.aliases).length, 71);
+  assert.equal(Object.keys(schema.listAliases).length, 23);
+});
+
+test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion, not NodeDefault", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-1");
+  const data = files.get("internal/ast/generated/data.ts");
+  assert.ok(data.includes("export interface Identifier extends PrimaryExpressionBase, FlowNodeBase {"));
+  // Promotion: Identifier embeds FlowNodeBase, so FlowNodeData -> FlowNodeBase_FlowNodeData.
+  assert.match(data, /FlowNodeData: \(\) => FlowNodeBase_FlowNodeData\(receiver\),/);
+  // No override -> NodeDefault for DeclarationData (Identifier has no DeclarationBase).
+  assert.match(data, /DeclarationData: \(\) => NodeDefault_DeclarationData\(receiver\),/);
+  // VisitEachChild is deferred to the NodeVisitor co-wave -> NodeDefault.
+  assert.match(data, /VisitEachChild: \(v\) => NodeDefault_VisitEachChild\(receiver, v\),/);
+  // The brand carries the concrete receiver.
+  assert.match(data, /\[goReceiverKey\]: receiver,/);
+});
+
+test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-2");
+  const factory = files.get("internal/ast/generated/factory.ts");
+  assert.match(
+    factory,
+    /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, Identifier_as_nodeData\(data\)\);/,
+  );
+  const casts = files.get("internal/ast/generated/casts.ts");
+  assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data\[goReceiverKey\] as GoPtr<Identifier>;/);
+});
+
+test("ast-schema-model: raw string lists are not children; node raw lists are GoPtr<Node>", () => {
+  const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
+  const schema = new AstSchema(ast);
+  // JSDocText.text is []string (raw) inherited from JSDocCommentBase -> not a child.
+  const textField = schema.baseFields("JSDocCommentBase").find((f) => f.name === "text");
+  assert.equal(textField.isChild(), false);
+  assert.equal(textField.tsReference(), "GoSlice<string>");
+});
+
+test("ast-generator: multi-kind and type-parameter Is functions follow ast_generated.go", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-3");
+  const predicates = files.get("internal/ast/generated/predicates.ts");
+  // ForInOrOfStatement is multi-kind -> per-kind Is functions, no IsForInOrOfStatement.
+  assert.ok(predicates.includes("export function IsForInStatement("));
+  assert.ok(predicates.includes("export function IsForOfStatement("));
+  assert.ok(!predicates.includes("export function IsForInOrOfStatement("));
+  // Token is a type-parameter node -> a single IsToken switching over TokenSyntaxKind.
+  assert.match(predicates, /export function IsToken\(node: GoPtr<Node>\): bool \{\s*switch \(node!\.Kind\)/);
+});
+
+test("ast-generator: generatedAstSkips records handWritten + visitEachChild deferral", () => {
+  const skips = buildGeneratedAstSkips(baseConfig);
+  assert.deepEqual(skips.handWritten, ["SourceFile"]);
+  assert.deepEqual(skips.handWrittenVisitor, ["JSDocParameterOrPropertyTag"]);
+  // Many child-bearing kinds defer VisitEachChild this wave.
+  assert.ok(skips.visitEachChildDeferred.includes("IfStatement"));
+  assert.ok(skips.visitEachChildDeferred.length > 100);
+});

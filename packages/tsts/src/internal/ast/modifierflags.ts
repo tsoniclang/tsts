@@ -105,3 +105,96 @@ export const ModifierFlagsExportDefault: ModifierFlags = ModifierFlagsExport | M
 export const ModifierFlagsAll: ModifierFlags = ModifierFlagsExport | ModifierFlagsAmbient | ModifierFlagsPublic | ModifierFlagsPrivate | ModifierFlagsProtected | ModifierFlagsStatic | ModifierFlagsReadonly | ModifierFlagsAbstract | ModifierFlagsAccessor | ModifierFlagsAsync | ModifierFlagsDefault | ModifierFlagsConst | ModifierFlagsDeprecated | ModifierFlagsOverride | ModifierFlagsIn | ModifierFlagsOut | ModifierFlagsDecorator;
 export const ModifierFlagsModifier: ModifierFlags = (ModifierFlagsAll & ~ModifierFlagsDecorator) >>> 0;
 export const ModifierFlagsJavaScript: ModifierFlags = ModifierFlagsExport | ModifierFlagsStatic | ModifierFlagsAccessor | ModifierFlagsAsync | ModifierFlagsDefault;
+
+import type { Kind } from "./generated/kinds.js";
+import {
+  KindAbstractKeyword,
+  KindAccessorKeyword,
+  KindAsyncKeyword,
+  KindConstKeyword,
+  KindDeclareKeyword,
+  KindDecorator,
+  KindDefaultKeyword,
+  KindExportKeyword,
+  KindInKeyword,
+  KindOutKeyword,
+  KindOverrideKeyword,
+  KindPrivateKeyword,
+  KindProtectedKeyword,
+  KindPublicKeyword,
+  KindReadonlyKeyword,
+  KindStaticKeyword,
+} from "./generated/kinds.js";
+import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { Node } from "./spine.js";
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ModifierToFlag","kind":"func","status":"implemented","sigHash":"58cf09e20f2fc84d1f7e7ceae03afd109b00f3284f70ae0f00774dd5bfc4b878","bodyHash":"fdd98ffa51e6af1c6d28aaa38d08baf5aefa21f8f6d5dc85f00db93d35848129"}
+ *
+ * Go source:
+ * func ModifierToFlag(token Kind) ModifierFlags {
+ * 	switch token {
+ * 	case KindStaticKeyword:
+ * 		return ModifierFlagsStatic
+ * 	...
+ * 	}
+ * 	return ModifierFlagsNone
+ * }
+ */
+export function ModifierToFlag(token: Kind): ModifierFlags {
+  switch (token) {
+    case KindStaticKeyword:
+      return ModifierFlagsStatic;
+    case KindPublicKeyword:
+      return ModifierFlagsPublic;
+    case KindProtectedKeyword:
+      return ModifierFlagsProtected;
+    case KindPrivateKeyword:
+      return ModifierFlagsPrivate;
+    case KindAbstractKeyword:
+      return ModifierFlagsAbstract;
+    case KindAccessorKeyword:
+      return ModifierFlagsAccessor;
+    case KindExportKeyword:
+      return ModifierFlagsExport;
+    case KindDeclareKeyword:
+      return ModifierFlagsAmbient;
+    case KindConstKeyword:
+      return ModifierFlagsConst;
+    case KindDefaultKeyword:
+      return ModifierFlagsDefault;
+    case KindAsyncKeyword:
+      return ModifierFlagsAsync;
+    case KindReadonlyKeyword:
+      return ModifierFlagsReadonly;
+    case KindOverrideKeyword:
+      return ModifierFlagsOverride;
+    case KindInKeyword:
+      return ModifierFlagsIn;
+    case KindOutKeyword:
+      return ModifierFlagsOut;
+    case KindDecorator:
+      return ModifierFlagsDecorator;
+  }
+  return ModifierFlagsNone;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ModifiersToFlags","kind":"func","status":"implemented","sigHash":"bf456fe687f51bf75e93125c2f9626af2ded45dabe6e445d7531c56399c38a76","bodyHash":"549175831d96c6fae6cea9448905951d683138b8b498901deac2043cee497efd"}
+ *
+ * Go source:
+ * func ModifiersToFlags(modifiers []*Node) ModifierFlags {
+ * 	var flags ModifierFlags
+ * 	for _, modifier := range modifiers {
+ * 		flags |= ModifierToFlag(modifier.Kind)
+ * 	}
+ * 	return flags
+ * }
+ */
+export function ModifiersToFlags(modifiers: GoSlice<GoPtr<Node>>): ModifierFlags {
+  let flags: ModifierFlags = 0;
+  for (const modifier of modifiers) {
+    flags = (flags | ModifierToFlag(modifier!.Kind)) >>> 0;
+  }
+  return flags;
+}
