@@ -6,6 +6,9 @@
   "snapshotOut": ".temp/porter/tsgo-snapshot.json",
   "statusOut": ".temp/porter/status.json",
   "reportOut": ".temp/porter/status.md",
+  "largeFileLineThreshold": 5000,
+  "largeFileSplitPlanPath": "packages/tsts/porter.large-splits.json",
+  "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
@@ -129,26 +132,6 @@
       "category": "out-of-scope",
       "active": false,
       "reason": "Fourslash is a language-service/editor test harness and is not in the standalone compiler porter scope."
-    }
-  ],
-  "splitRules": [
-    {
-      "match": "internal/checker/checker.go",
-      "target": "packages/tsts/src/checker/checker",
-      "strategy": "receiver-method-shards",
-      "reason": "Checker is too large for a single maintainable TypeScript file; split by method/algorithm groups while preserving Go unit IDs."
-    },
-    {
-      "match": "internal/parser/parser.go",
-      "target": "packages/tsts/src/parser/parser",
-      "strategy": "parser-stage-shards",
-      "reason": "Parser can be split by syntactic stage while preserving Go unit IDs."
-    },
-    {
-      "match": "internal/ast/ast_generated.go",
-      "target": "packages/tsts/src/ast/generated",
-      "strategy": "schema-generated",
-      "reason": "Generated AST artifacts must come from schema generation, not a literal hand port."
     }
   ],
   "primaryUnitKinds": [

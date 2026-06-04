@@ -36,6 +36,28 @@ export function main() {
     return;
   }
 
+  if (command === "large-files") {
+    const snapshot = runScan(config);
+    const splitStatus = buildLargeFileSplitStatus(config, snapshot);
+    writeJson(resolveRepo(config.snapshotOut), snapshot);
+    writeJson(resolveRepo(config.largeFileSplitStatusOut ?? ".temp/porter/large-file-splits.json"), splitStatus);
+    if (options["write-draft"] === true) {
+      const draft = buildDraftLargeFileSplitPlan(config, snapshot);
+      writeJsonSafely(resolveRepo(splitPlanLabel(config)), draft, {
+        force: options.force === true,
+        label: "large-file split plan",
+      });
+      console.log(`wrote draft semantic split plan: ${splitPlanLabel(config)}`);
+      return;
+    }
+    printLargeFileSplitStatus(config, splitStatus);
+    if (options.check === true) {
+      verifyLargeFileSplitStatus(splitStatus);
+      return;
+    }
+    return;
+  }
+
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = runScan(config);
     const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
@@ -61,7 +83,7 @@ export function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, large-files, or skeleton-check.`);
 }
 
 export function runScan(config) {
@@ -90,6 +112,7 @@ export function runScan(config) {
 
 export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = emptyGeneratedArtifactStatus()) {
   const primaryKinds = new Set(config.primaryUnitKinds);
+  const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const goUnits = [];
   const goByID = new Map();
   const duplicateGoIDs = [];
@@ -110,7 +133,7 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
         },
         portable: primaryKinds.has(unit.kind),
         policy,
-        expectedTsPath: expectedTsPath(config, unit),
+        expectedTsPath: expectedTsPath(config, unit, largeFileSplits),
       };
       if (goByID.has(record.id)) duplicateGoIDs.push(record.id);
       goByID.set(record.id, record);
@@ -258,6 +281,7 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
       orphanGeneratedArtifacts: generatedArtifacts.orphan.length,
       untrackedGeneratedArtifacts: generatedArtifacts.untracked.length,
       invalidGeneratedArtifacts: generatedArtifacts.invalid.length,
+      largeFileSplitFailures: largeFileSplits.failureCount,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
@@ -270,6 +294,7 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
     untrackedTsFiles,
     forbiddenTsFiles,
     generatedArtifacts,
+    largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
     excluded: excluded.slice(0, 500),
@@ -403,6 +428,383 @@ export function emptyGeneratedArtifactStatus() {
   return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
 }
 
+export function buildLargeFileSplitStatus(config, snapshot) {
+  const threshold = Number(config.largeFileLineThreshold ?? 5000);
+  if (!Number.isInteger(threshold) || threshold < 1) {
+    fail("largeFileLineThreshold must be a positive integer");
+  }
+
+  const plan = loadLargeFileSplitPlan(config);
+  const assignments = new Map();
+  const files = [];
+  const issues = [];
+  const snapshotFiles = new Map((snapshot.files ?? []).map((file) => [file.path, file]));
+  const requiredPaths = new Set();
+
+  for (const file of snapshot.files ?? []) {
+    const portableUnits = largeLiteralUnitsForFile(config, file, threshold);
+    if (portableUnits.length === 0) continue;
+    requiredPaths.add(file.path);
+    const filePlan = plan.files?.[file.path];
+    if (!filePlan) {
+      issues.push(splitIssue(file.path, "missing-plan", `Large file has ${file.lineCount} LOC and ${portableUnits.length} portable units, but no semantic split plan.`));
+      files.push({
+        path: file.path,
+        lineCount: file.lineCount,
+        portableUnits: portableUnits.length,
+        planned: false,
+        assigned: 0,
+        unassigned: portableUnits.length,
+        duplicateAssignments: 0,
+        staleDeclarations: 0,
+        targetCount: 0,
+      });
+      continue;
+    }
+    files.push(validateLargeFilePlan(config, file, portableUnits, filePlan, assignments, issues));
+  }
+
+  for (const plannedPath of Object.keys(plan.files ?? {})) {
+    const file = snapshotFiles.get(plannedPath);
+    if (!file) {
+      issues.push(splitIssue(plannedPath, "stale-file", "Split plan references a Go file that does not exist in the current TS-Go snapshot."));
+      continue;
+    }
+    if (!requiredPaths.has(plannedPath)) {
+      issues.push(splitIssue(plannedPath, "stale-plan", `Split plan exists for a file that is no longer an active literal-port file over ${threshold} LOC.`));
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    threshold,
+    planPath: splitPlanLabel(config),
+    requiredFileCount: requiredPaths.size,
+    plannedFileCount: Object.keys(plan.files ?? {}).length,
+    assignedUnitCount: assignments.size,
+    failureCount: issues.length,
+    assignments: Object.fromEntries([...assignments.entries()].sort(([left], [right]) => left.localeCompare(right))),
+    files: files.sort((left, right) => left.path.localeCompare(right.path)),
+    issues: issues.sort((left, right) => `${left.file}:${left.kind}:${left.declaration ?? ""}`.localeCompare(`${right.file}:${right.kind}:${right.declaration ?? ""}`)),
+  };
+}
+
+export function buildDraftLargeFileSplitPlan(config, snapshot) {
+  const threshold = Number(config.largeFileLineThreshold ?? 5000);
+  const files = {};
+  for (const file of snapshot.files ?? []) {
+    const units = largeLiteralUnitsForFile(config, file, threshold);
+    if (units.length === 0) continue;
+    const targetRoot = defaultLargeFileTargetRoot(config, file.path);
+    const groups = new Map();
+    for (const unit of units) {
+      const target = draftSemanticTargetForUnit(file.path, unit);
+      const group = groups.get(target.file) ?? {
+        file: target.file,
+        description: target.description,
+        declarations: [],
+      };
+      group.declarations.push(splitDeclarationKey(unit));
+      groups.set(target.file, group);
+    }
+    files[file.path] = {
+      targetRoot,
+      reason: `Semantic split plan for ${file.lineCount} LOC TS-Go file. Generated by porter large-files --write-draft; review group boundaries before large-scale implementation.`,
+      targets: [...groups.values()]
+        .map((target) => ({
+          ...target,
+          declarations: target.declarations.sort((left, right) => left.localeCompare(right)),
+        }))
+        .sort((left, right) => left.file.localeCompare(right.file)),
+    };
+  }
+  return {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    sourceRevision: snapshot.gitRevision,
+    threshold,
+    files,
+  };
+}
+
+function largeLiteralUnitsForFile(config, file, threshold) {
+  if (file.lineCount < threshold) return [];
+  const primaryKinds = new Set(config.primaryUnitKinds);
+  return (file.units ?? []).filter((unit) => {
+    if (!primaryKinds.has(unit.kind)) return false;
+    const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+    return policy.category === "literal-port" && isActivePortPolicy(policy);
+  });
+}
+
+function defaultLargeFileTargetRoot(config, goPath) {
+  return `${config.tsRoot.replace(/\/$/, "")}/${goPath.replace(/\.go$/, "")}`;
+}
+
+function draftSemanticTargetForUnit(goPath, unit) {
+  if (goPath === "internal/checker/checker.go") return draftCheckerTarget(unit);
+  if (goPath === "internal/parser/parser.go") return draftParserTarget(unit);
+  if (goPath === "internal/printer/printer.go") return draftPrinterTarget(unit);
+  return { file: "support.ts", description: "General declarations that do not yet have a more specific semantic split." };
+}
+
+function draftCheckerTarget(unit) {
+  if (unit.kind !== "method") {
+    return { file: "state.ts", description: "Checker state, enums, cache keys, constructors, package constants, and top-level helpers." };
+  }
+  const name = unit.name ?? "";
+  const qualified = unit.qualifiedName ?? "";
+  if (/(Diagnostic|Diagnostics|Error|Errors|Grammar|Report|Message|Span|RelatedInfo|Unreachable|Deprecated)/.test(qualified)) {
+    return { file: "diagnostics.ts", description: "Checker diagnostics, grammar checks, error construction, and diagnostic attachment." };
+  }
+  if (/(Flow|Narrow|Narrowing|Truthiness|Falsy|Truthy|Discriminant|ControlFlow|Reachable|Definitely|Predicate)/.test(qualified)) {
+    return { file: "flow-narrowing.ts", description: "Control-flow analysis, narrowing, predicates, and definite-state queries." };
+  }
+  if (/(Signature|Call|Construct|Overload|Candidate|Applicable|Invocation|Argument|Parameter|Arity|ReturnType|RestType|ThisType|JsxSignature)/.test(qualified)) {
+    return { file: "signatures.ts", description: "Call, construct, overload, signature, argument, and return-type checking." };
+  }
+  if (/(Infer|Inference|Instantiation|Instantiate|Mapper|Mapping|Substitution|TypeParameter|Constraint|Variance)/.test(qualified)) {
+    return { file: "inference.ts", description: "Generic inference, type parameter constraints, type mappers, instantiation, and variance." };
+  }
+  if (/(Assignable|Assignment|Related|Relation|Comparable|Compare|Subtype|Supertype|Identity|Identical|Excess|Satisfies)/.test(qualified)) {
+    return { file: "relations.ts", description: "Assignability, comparability, relation checks, identity checks, and excess-property logic." };
+  }
+  if (/(Symbol|Declaration|Name|Member|Property|PropertyAccess|ElementAccess|Index|Lookup|ResolveName|Alias|Export|Import|Scope|Local|Global|Identifier)/.test(qualified)) {
+    return { file: "symbols.ts", description: "Symbol lookup, declarations, names, imports/exports, property/member resolution, and identifier checks." };
+  }
+  if (/(Object|Type|Union|Intersection|Tuple|Array|Literal|Enum|Widen|Apparent|Base|Indexed|Mapped|Conditional|Template|Primitive|StringLike|NumberLike|BooleanLike|BigInt|ESSymbol|Unknown|Never|Any|Void|Null|Undefined)/.test(qualified)) {
+    return { file: "types.ts", description: "Type construction, classification, object/union/intersection/tuple types, and apparent/base type operations." };
+  }
+  if (/(Class|Constructor|Heritage|Interface|Implements|BaseClass|Derived|Abstract|Private|Protected|Public|Static|Override)/.test(qualified)) {
+    return { file: "classes.ts", description: "Class, interface, constructor, heritage, visibility, and override semantics." };
+  }
+  if (/(Module|Namespace|Ambient|External|Augmentation|Import|Export|Package|Global)/.test(qualified)) {
+    return { file: "modules.ts", description: "Module, namespace, ambient, package, import/export, and global augmentation checks." };
+  }
+  if (/(Jsx|JSX|JSDoc|Decorator|TaggedTemplate|TemplateTag)/.test(qualified)) {
+    return { file: "jsx-jsdoc-decorators.ts", description: "JSX, JSDoc, decorators, and tagged-template checking." };
+  }
+  if (/(Expression|Node|SourceFile|Statement|Block|Variable|Function|Arrow|Return|Throw|Switch|For|While|Do|Break|Continue|With|Try|Catch|Binary|Unary|Conditional|Delete|Await|Yield|Access|Literal|Template|ObjectLiteral|ArrayLiteral)/.test(qualified)) {
+    return { file: "syntax-checking.ts", description: "Syntax-node checking for expressions, statements, literals, functions, and source files." };
+  }
+  if (/^(get|set|create|make|add|remove|append|clear|cache|mark|is|has|contains|maybe|try|forEach|visit|walk)/.test(name)) {
+    return { file: "support-queries.ts", description: "Shared checker queries, caches, predicates, walkers, and small support operations." };
+  }
+  return { file: "support.ts", description: "General checker support declarations that remain exact-id tracked and must be reviewed before implementation." };
+}
+
+function draftParserTarget(unit) {
+  if (unit.kind !== "method" && unit.kind !== "func") {
+    return { file: "state.ts", description: "Parser state, parsing contexts, pools, package constants, and top-level data." };
+  }
+  const qualified = unit.qualifiedName ?? "";
+  if (/(JSDoc|Jsx|JSX)/.test(qualified)) return { file: "jsx-jsdoc.ts", description: "JSX and JSDoc parsing." };
+  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage|Constraint)/.test(qualified)) return { file: "types.ts", description: "Type syntax parsing and type-list parsing." };
+  if (/(Expression|Primary|Member|Call|New|Literal|Template|Binary|Unary|Update|Yield|Await|Arrow|Object|Array|Spread|ElementAccess|PropertyAccess)/.test(qualified)) return { file: "expressions.ts", description: "Expression, literal, template, and binding-element parsing." };
+  if (/(Statement|Declaration|SourceFile|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { file: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item parsing." };
+  if (/(List|Delimited|Separated|Array|Members|Elements|Clauses|Specifiers|Parameters|Arguments)/.test(qualified)) return { file: "lists.ts", description: "List parsing, delimited lists, parameters, arguments, members, and recovery around list terminators." };
+  if (/(Token|Scanner|Scan|Expected|ReScan|LookAhead|Speculation|Context|Trivia|Keyword|Identifier)/.test(qualified)) return { file: "tokens-speculation.ts", description: "Token consumption, scanner coordination, lookahead, speculation, and context flags." };
+  if (/(Error|Missing|Diagnostic|Recover|ParseError|Abort)/.test(qualified)) return { file: "errors-recovery.ts", description: "Parser diagnostics, missing nodes, recovery, and parse-error spans." };
+  return { file: "support.ts", description: "General parser support declarations that remain exact-id tracked and must be reviewed before implementation." };
+}
+
+function draftPrinterTarget(unit) {
+  if (unit.kind !== "method" && unit.kind !== "func") {
+    return { file: "state.ts", description: "Printer options, state records, write-kind constants, and construction helpers." };
+  }
+  const qualified = unit.qualifiedName ?? "";
+  if (/(Comment|Trivia|Detached|Directive|Pragma)/.test(qualified)) return { file: "comments.ts", description: "Comment, trivia, detached-comment, directive, and pragma emission." };
+  if (/(SourceMap|Source|Line|Position|Span|Range)/.test(qualified)) return { file: "source-maps.ts", description: "Source-map state and source-position emission." };
+  if (/(Type|Tuple|Union|Intersection|Mapped|Infer|ImportType|TypeParameter|TypeArgument|Heritage)/.test(qualified)) return { file: "types.ts", description: "Type-node and type-list printing." };
+  if (/(Expression|Literal|Template|Binary|Unary|Call|New|Member|PropertyAccess|ElementAccess|Object|Array|Spread|Await|Yield|Arrow)/.test(qualified)) return { file: "expressions.ts", description: "Expression, literal, template, call, member, and operator printing." };
+  if (/(Statement|Block|Variable|Function|Class|Interface|Enum|Module|Namespace|Import|Export|Switch|For|While|Do|If|Try|Catch|Return|Throw|Break|Continue|With)/.test(qualified)) return { file: "statements-declarations.ts", description: "Statement, declaration, source-file, and module-item printing." };
+  if (/(Write|writer|Emit|Print|Node|List|Children|Separator|Indent|Line|Text|Token|Keyword|Punctuation|Operator)/.test(qualified)) return { file: "emit-core.ts", description: "Core writer, token/list emission, indentation, separators, and node dispatch." };
+  return { file: "support.ts", description: "General printer support declarations that remain exact-id tracked and must be reviewed before implementation." };
+}
+
+function validateLargeFilePlan(config, file, units, filePlan, assignments, issues) {
+  const targetRoot = normalizeSplitTargetRoot(config, file.path, filePlan.targetRoot);
+  const targetDeclarations = new Map();
+  const declarationToUnit = new Map(units.map((unit) => [splitDeclarationKey(unit), unit]));
+  const assignedInFile = new Map();
+  let staleDeclarations = 0;
+  let invalidTargets = 0;
+
+  if (!targetRoot) {
+    issues.push(splitIssue(file.path, "invalid-target-root", "Split plan must specify a repo-relative targetRoot under the TypeScript source root."));
+  }
+
+  for (const [targetIndex, target] of (filePlan.targets ?? []).entries()) {
+    const targetPath = splitTargetPath(targetRoot, target);
+    if (!targetPath) {
+      invalidTargets++;
+      issues.push(splitIssue(file.path, "invalid-target", `Target #${targetIndex + 1} must specify file or path.`));
+      continue;
+    }
+    if (isRandomLookingSplitPath(targetPath)) {
+      invalidTargets++;
+      issues.push(splitIssue(file.path, "random-split-target", `Target '${targetPath}' looks line/chunk based; large files must be split semantically.`));
+      continue;
+    }
+    if (!target.description || String(target.description).trim() === "") {
+      invalidTargets++;
+      issues.push(splitIssue(file.path, "missing-target-description", `Target '${targetPath}' must document its semantic responsibility.`));
+    }
+
+    const targetKey = targetPath;
+    const claimed = new Set();
+    for (const declaration of target.declarations ?? []) {
+      const unit = declarationToUnit.get(declaration);
+      if (!unit) {
+        staleDeclarations++;
+        issues.push(splitIssue(file.path, "stale-declaration", `Split plan references declaration '${declaration}' that does not exist in this Go file.`, declaration, targetPath));
+        continue;
+      }
+      claimed.add(splitDeclarationKey(unit));
+    }
+    for (const matcher of target.matchers ?? []) {
+      for (const unit of units) {
+        if (matchesSplitMatcher(unit, matcher)) claimed.add(splitDeclarationKey(unit));
+      }
+    }
+    if (claimed.size === 0) {
+      issues.push(splitIssue(file.path, "empty-target", `Target '${targetPath}' claims no declarations.`, undefined, targetPath));
+    }
+    targetDeclarations.set(targetKey, claimed.size);
+    for (const declaration of claimed) {
+      const unit = declarationToUnit.get(declaration);
+      if (!unit) continue;
+      const previous = assignedInFile.get(declaration);
+      if (previous && previous !== targetPath) {
+        issues.push(splitIssue(file.path, "duplicate-assignment", `Declaration '${declaration}' is claimed by both '${previous}' and '${targetPath}'.`, declaration, targetPath));
+        continue;
+      }
+      assignedInFile.set(declaration, targetPath);
+      assignments.set(unit.id, targetPath);
+    }
+  }
+
+  const unassigned = [];
+  for (const unit of units) {
+    const key = splitDeclarationKey(unit);
+    if (!assignedInFile.has(key)) {
+      unassigned.push(key);
+      issues.push(splitIssue(file.path, "unassigned-declaration", `Declaration '${key}' is not assigned to any semantic split target.`, key));
+    }
+  }
+
+  return {
+    path: file.path,
+    lineCount: file.lineCount,
+    portableUnits: units.length,
+    planned: true,
+    assigned: assignedInFile.size,
+    unassigned: unassigned.length,
+    duplicateAssignments: issues.filter((issue) => issue.file === file.path && issue.kind === "duplicate-assignment").length,
+    staleDeclarations,
+    invalidTargets,
+    targetCount: (filePlan.targets ?? []).length,
+    targetDeclarationCounts: Object.fromEntries([...targetDeclarations.entries()].sort()),
+    unassignedDeclarations: unassigned.slice(0, 100),
+  };
+}
+
+function loadLargeFileSplitPlan(config) {
+  if (config.largeFileSplitPlan) return normalizeLargeFileSplitPlan(config.largeFileSplitPlan);
+  const planPath = config.largeFileSplitPlanPath ?? "packages/tsts/porter.large-splits.json";
+  const absolutePath = resolveRepo(planPath);
+  if (!existsSync(absolutePath)) return { schemaVersion: 1, files: {} };
+  try {
+    return normalizeLargeFileSplitPlan(JSON.parse(readFileSync(absolutePath, "utf8")));
+  } catch (error) {
+    fail(`invalid large-file split plan ${planPath}: ${error.message}`);
+  }
+}
+
+function normalizeLargeFileSplitPlan(plan) {
+  if (!plan || typeof plan !== "object") fail("large-file split plan must be an object");
+  if (plan.schemaVersion !== 1) fail("large-file split plan schemaVersion must be 1");
+  if (!plan.files || typeof plan.files !== "object" || Array.isArray(plan.files)) {
+    fail("large-file split plan must contain a files object keyed by Go source path");
+  }
+  return plan;
+}
+
+function normalizeSplitTargetRoot(config, sourcePath, targetRoot) {
+  if (!targetRoot || typeof targetRoot !== "string") return "";
+  const normalized = targetRoot.split(path.sep).join("/").replace(/\/+$/, "");
+  if (normalized.startsWith("/") || normalized.includes("..")) return "";
+  const tsRoot = config.tsRoot.replace(/\/$/, "");
+  if (!normalized.startsWith(`${tsRoot}/`)) return "";
+  if (normalized.endsWith(".ts")) return "";
+  if (normalized.includes(sourcePath.replace(/\.go$/, ".ts"))) return "";
+  return normalized;
+}
+
+function splitTargetPath(targetRoot, target) {
+  const raw = target.path ?? (target.file ? `${targetRoot}/${target.file}` : "");
+  if (!raw || typeof raw !== "string") return "";
+  const normalized = raw.split(path.sep).join("/");
+  if (normalized.startsWith("/") || normalized.includes("..") || !normalized.endsWith(".ts")) return "";
+  return normalized;
+}
+
+function isRandomLookingSplitPath(targetPath) {
+  const basename = path.posix.basename(targetPath, ".ts").toLowerCase();
+  return /(?:^|[-_])(part|chunk|slice|lines?)[-_]?\d+$/.test(basename) || /^p\d+$/.test(basename);
+}
+
+function matchesSplitMatcher(unit, matcher) {
+  if (!matcher || typeof matcher !== "object") return false;
+  if (matcher.kind && unit.kind !== matcher.kind) return false;
+  if (matcher.receiver && unit.receiver !== matcher.receiver) return false;
+  if (matcher.name && unit.name !== matcher.name) return false;
+  if (matcher.qualifiedName && unit.qualifiedName !== matcher.qualifiedName) return false;
+  if (matcher.receiverRegex && !new RegExp(matcher.receiverRegex).test(unit.receiver ?? "")) return false;
+  if (matcher.nameRegex && !new RegExp(matcher.nameRegex).test(unit.name ?? "")) return false;
+  if (matcher.qualifiedNameRegex && !new RegExp(matcher.qualifiedNameRegex).test(unit.qualifiedName ?? "")) return false;
+  if (matcher.idRegex && !new RegExp(matcher.idRegex).test(unit.id ?? "")) return false;
+  return true;
+}
+
+function splitDeclarationKey(unit) {
+  const ordinal = /::#(\d+)$/.exec(unit.id ?? "");
+  return `${unit.kind}::${unit.qualifiedName}${ordinal ? `::#${ordinal[1]}` : ""}`;
+}
+
+function splitIssue(file, kind, message, declaration = undefined, target = undefined) {
+  return { file, kind, message, declaration, target };
+}
+
+function splitPlanLabel(config) {
+  return config.largeFileSplitPlanPath ?? "packages/tsts/porter.large-splits.json";
+}
+
+function verifyLargeFileSplitStatus(splitStatus) {
+  if (splitStatus.failureCount > 0) {
+    fail(`large-file split plan check failed: ${splitStatus.failureCount} issue(s)`);
+  }
+  console.log("large-file split plan check passed");
+}
+
+function printLargeFileSplitStatus(config, splitStatus) {
+  console.log(`Large-file threshold: ${splitStatus.threshold} LOC`);
+  console.log(`Split plan: ${splitStatus.planPath}`);
+  console.log(`Required large files: ${splitStatus.requiredFileCount}`);
+  console.log(`Planned files: ${splitStatus.plannedFileCount}`);
+  console.log(`Assigned units: ${splitStatus.assignedUnitCount}`);
+  console.log(`Failures: ${splitStatus.failureCount}`);
+  for (const file of splitStatus.files) {
+    console.log(`${file.path}: ${file.assigned}/${file.portableUnits} assigned across ${file.targetCount} target(s)`);
+  }
+  if (splitStatus.issues.length > 0) {
+    console.log("First issues:");
+    for (const issue of splitStatus.issues.slice(0, 20)) {
+      console.log(`- ${issue.file}: ${issue.kind}: ${issue.message}`);
+    }
+  }
+}
+
 function parseGeneratedArtifactMetadata(text) {
   const match = /^\/\/ @tsgo-generated\s+({[^\n\r]+})/m.exec(text);
   if (!match) return { metadata: undefined, error: undefined };
@@ -421,6 +823,7 @@ function parseGeneratedArtifactMetadata(text) {
 }
 
 export function scaffoldMissing(config, status, snapshot, options) {
+  assertLargeFileSplitPlanClean(status);
   const write = options.write === true;
   const limit = options.limit === undefined ? 25 : Number(options.limit);
   if (!Number.isInteger(limit) || limit < 0) {
@@ -461,7 +864,7 @@ export function scaffoldMissing(config, status, snapshot, options) {
       if (!unit) fail(`internal error: missing snapshot unit for ${row.id}`);
       return unit;
     });
-    const text = renderUnitGroup(config, snapshot, relativeTargetPath, units);
+    const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { largeFileSplits: status.largeFileSplits });
     const targetLabel = path.relative(repoRoot, targetPath);
 
     if (!write) {
@@ -489,15 +892,17 @@ export function scaffoldMissing(config, status, snapshot, options) {
 }
 
 export function renderStub(unit) {
+  const stubConfig = { goModulePath: "github.com/microsoft/typescript-go", tsRoot: "packages/tsts/src", primaryUnitKinds: ["constGroup", "func", "method", "type", "varGroup"] };
   return renderUnitGroup(
-    { goModulePath: "github.com/microsoft/typescript-go", tsRoot: "packages/tsts/src", splitRules: [] },
+    stubConfig,
     { files: [fileFromUnit(unit)] },
-    expectedTsPath({ tsRoot: "packages/tsts/src", splitRules: [] }, unit),
+    expectedTsPath(stubConfig, unit),
     [unit],
   );
 }
 
 export function checkSkeletons(config, status, snapshot, options) {
+  assertLargeFileSplitPlanClean(status);
   const emitTemp = options["emit-temp"] !== false;
   const compile = options.compile !== false && options.compile !== "false";
   const outRoot = resolveRepo(options.out ?? ".temp/porter/skeleton");
@@ -525,6 +930,14 @@ export function checkSkeletons(config, status, snapshot, options) {
         : repoRelativePath;
       writeText(path.join(targetRoot, relativeUnderSource), text);
     }
+    for (const repoRelativePath of authoredFacadePathSet(config)) {
+      const sourcePath = resolveRepo(repoRelativePath);
+      if (!existsSync(sourcePath)) continue;
+      const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
+        ? repoRelativePath.slice(tsRootPrefix.length)
+        : repoRelativePath;
+      writeText(path.join(targetRoot, relativeUnderSource), readFileSync(sourcePath, "utf8"));
+    }
   }
 
   let renderedFiles = 0;
@@ -532,7 +945,7 @@ export function checkSkeletons(config, status, snapshot, options) {
   const diagnostics = [];
   for (const [relativeTargetPath, units] of groups) {
     try {
-      const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { diagnostics });
+      const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { diagnostics, largeFileSplits: status.largeFileSplits });
       renderedFiles++;
       renderedUnits += units.length;
       if (emitTemp) {
@@ -596,7 +1009,8 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
 
 function rendererContext(config, snapshot, relativeTargetPath, units, options) {
   const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
-  const symbolIndex = buildSymbolIndex(config, snapshot);
+  const largeFileSplits = options.largeFileSplits ?? buildLargeFileSplitStatus(config, snapshot);
+  const symbolIndex = buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
   const goPath = firstUnit?.metadata?.goPath ?? "";
   const file = filesByPath.get(goPath) ?? fileFromUnit(firstUnit);
@@ -610,7 +1024,7 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
     config,
     snapshot,
     symbolIndex,
-    valueTypeIndex: buildValueTypeIndex(config, snapshot),
+    valueTypeIndex: buildValueTypeIndex(config, snapshot, largeFileSplits),
     file,
     relativeTargetPath,
     imports: new Map(),
@@ -1099,7 +1513,7 @@ function importExternalFacadeName(context, policy, unit) {
   return importTypeName(context, `${context.config.tsRoot}/${policy.tsModule}`, policy.tsName, unit);
 }
 
-function buildSymbolIndex(config, snapshot) {
+function buildSymbolIndex(config, snapshot, largeFileSplits = undefined) {
   const index = new Map();
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
@@ -1107,7 +1521,7 @@ function buildSymbolIndex(config, snapshot) {
       const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
       index.set(`${file.importPath}::${unit.name}`, {
         exportName: safeIdentifier(unit.name),
-        targetPath: expectedTsPath(config, unit),
+        targetPath: expectedTsPath(config, unit, largeFileSplits),
         active: isActivePortPolicy(policy),
         goName: `${file.importPath}.${unit.name}`,
       });
@@ -1116,8 +1530,8 @@ function buildSymbolIndex(config, snapshot) {
   return index;
 }
 
-function buildValueTypeIndex(config, snapshot) {
-  const symbolIndex = buildSymbolIndex(config, snapshot);
+function buildValueTypeIndex(config, snapshot, largeFileSplits = undefined) {
+  const symbolIndex = buildSymbolIndex(config, snapshot, largeFileSplits);
   const index = new Map();
   const pending = [];
   for (const file of snapshot.files ?? []) {
@@ -1232,7 +1646,10 @@ function writeExternalFacades(config, snapshot, options) {
     const relativeUnderSource = repoRelativePath.startsWith(sourceRootPrefix)
       ? repoRelativePath.slice(sourceRootPrefix.length)
       : repoRelativePath;
-    writeText(path.join(outRoot, relativeUnderSource), text);
+    writeTextSafely(path.join(outRoot, relativeUnderSource), text, {
+      force: options.force === true,
+      label: "generated Go facade",
+    });
     count++;
   }
   console.log(`generated ${count} Go compatibility/facade file(s) under ${path.relative(repoRoot, outRoot)}`);
@@ -1725,21 +2142,11 @@ const reservedWords = new Set([
   "set", "string", "symbol", "type", "from", "of",
 ]);
 
-export function expectedTsPath(config, unit) {
+export function expectedTsPath(config, unit, largeFileSplits = undefined) {
+  const splitTarget = largeFileSplits?.assignments?.[unit.id];
+  if (splitTarget) return splitTarget;
   const goPath = unit.metadata.goPath;
-  const splitRule = (config.splitRules ?? []).find((rule) => matchGlob(rule.match, goPath));
-  if (splitRule) {
-    const safe = safeFileStem(unit.qualifiedName, unit.id);
-    return `${splitRule.target}/${safe}.ts`;
-  }
   return `${config.tsRoot}/${goPath.replace(/\.go$/, ".ts")}`;
-}
-
-function safeFileStem(name, id) {
-  const safe = String(name ?? "unit").replace(/[^A-Za-z0-9._-]/g, "_").replace(/^([.])/, "_$1");
-  const hash = createHash("sha256").update(id).digest("hex").slice(0, 12);
-  const head = safe.length <= 80 ? safe : safe.slice(0, 80);
-  return `${head}_${hash}`;
 }
 
 export function policyFor(config, rel, generated) {
@@ -1787,6 +2194,7 @@ export function collectVerifyFailures(status, options) {
   if (status.counts.parseErrors > 0) failures.push(`${status.counts.parseErrors} Go parse errors`);
   if (status.counts.duplicateGoIDs > 0) failures.push(`${status.counts.duplicateGoIDs} duplicate Go IDs`);
   if (status.counts.duplicateTsIDs > 0) failures.push(`${status.counts.duplicateTsIDs} duplicate TS IDs`);
+  if ((status.counts.largeFileSplitFailures ?? 0) > 0) failures.push(`${status.counts.largeFileSplitFailures} large-file split plan failures`);
   if (status.counts.orphan > 0) failures.push(`${status.counts.orphan} orphan TS units`);
   if (status.counts.forbiddenTsFiles > 0) failures.push(`${status.counts.forbiddenTsFiles} forbidden TS files`);
   if (status.counts.untrackedTsFiles > 0) failures.push(`${status.counts.untrackedTsFiles} TS files without @tsgo-unit metadata`);
@@ -1794,6 +2202,13 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectGeneratedArtifactFailures(status.generatedArtifacts ?? emptyGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   return failures;
+}
+
+function assertLargeFileSplitPlanClean(status) {
+  const failures = status.counts.largeFileSplitFailures ?? 0;
+  if (failures > 0) {
+    fail(`large-file split plan must be clean before scaffolding or skeleton rendering: ${failures} issue(s)`);
+  }
 }
 
 export function collectGeneratedArtifactFailures(generatedArtifacts) {
@@ -1828,6 +2243,7 @@ export function printStatus(config, status) {
   console.log(`Forbidden TS files: ${status.counts.forbiddenTsFiles}`);
   console.log(`Untracked TS files: ${status.counts.untrackedTsFiles}`);
   console.log(`Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
+  console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
   console.log(`Report: ${path.relative(repoRoot, resolveRepo(config.reportOut))}`);
@@ -1854,6 +2270,7 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Forbidden TS files: ${status.counts.forbiddenTsFiles}`);
   lines.push(`- Untracked TS files: ${status.counts.untrackedTsFiles}`);
   lines.push(`- Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
+  lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
   lines.push("");
@@ -1888,6 +2305,30 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Forbidden TypeScript files: ${status.counts.forbiddenTsFiles}`);
   lines.push(`- TypeScript files without unit metadata: ${status.counts.untrackedTsFiles}`);
   lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
+  lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  if (status.largeFileSplits?.files?.length > 0) {
+    lines.push("");
+    lines.push("### Large-File Semantic Split Plans");
+    lines.push("");
+    lines.push(`Threshold: ${status.largeFileSplits.threshold} LOC`);
+    lines.push("");
+    lines.push("| Go path | LOC | Units | Assigned | Targets | Failures |");
+    lines.push("|---|---:|---:|---:|---:|---:|");
+    for (const file of status.largeFileSplits.files) {
+      const failures = file.unassigned + file.duplicateAssignments + file.staleDeclarations + (file.invalidTargets ?? 0);
+      lines.push(`| ${file.path} | ${file.lineCount} | ${file.portableUnits} | ${file.assigned} | ${file.targetCount} | ${failures} |`);
+    }
+  }
+  if (status.largeFileSplits?.issues?.length > 0) {
+    lines.push("");
+    lines.push("### Large-File Split Plan Issues");
+    lines.push("");
+    lines.push("| Go path | Issue | Declaration | Target | Message |");
+    lines.push("|---|---|---|---|---|");
+    for (const issue of status.largeFileSplits.issues.slice(0, 100)) {
+      lines.push(`| ${issue.file} | ${issue.kind} | ${escapeMd(issue.declaration ?? "")} | ${escapeMd(issue.target ?? "")} | ${escapeMd(issue.message)} |`);
+    }
+  }
   if (status.unitlessGoFiles.length > 0) {
     lines.push("");
     lines.push("### Unitless Go Files");
@@ -2045,6 +2486,25 @@ export function writeText(file, value) {
   writeFileSync(file, value);
 }
 
+export function writeJsonSafely(file, value, options = {}) {
+  return writeTextSafely(file, `${JSON.stringify(value, null, 2)}\n`, options);
+}
+
+export function writeTextSafely(file, value, options = {}) {
+  if (existsSync(file)) {
+    const current = readFileSync(file, "utf8");
+    if (current === value) return "unchanged";
+    if (options.force !== true) {
+      const relative = path.relative(repoRoot, file);
+      const label = options.label ?? "file";
+      throw new Error(`refusing to overwrite existing ${label}: ${relative}. Re-run with --force after reviewing the diff.`);
+    }
+  }
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, value);
+  return "written";
+}
+
 export function resolveRepo(relativePath) {
   return path.resolve(repoRoot, relativePath);
 }
@@ -2075,5 +2535,9 @@ export function fail(message) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
+  try {
+    main();
+  } catch (error) {
+    fail(error?.message ?? String(error));
+  }
 }
