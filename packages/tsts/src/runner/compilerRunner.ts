@@ -121,9 +121,10 @@ export class CompilerBaselineRunner implements Runner {
   readonly #basePath: string;
   readonly #testSuiteName: string;
   readonly #host: CompilerRunnerHost;
+  readonly #caseFilter: ((fileName: string) => boolean) | undefined;
   #testFiles: readonly string[] | undefined;
 
-  constructor(testType: CompilerTestType, isSubmodule: boolean, host: CompilerRunnerHost = defaultHost) {
+  constructor(testType: CompilerTestType, isSubmodule: boolean, host: CompilerRunnerHost = defaultHost, caseFilter?: (fileName: string) => boolean) {
     const testSuiteName = compilerTestTypeString(testType);
     this.#basePath = isSubmodule
       ? "../_submodules/TypeScript/tests/cases/" + testSuiteName
@@ -131,6 +132,7 @@ export class CompilerBaselineRunner implements Runner {
     this.#testSuiteName = testSuiteName;
     this.#isSubmodule = isSubmodule;
     this.#host = host;
+    this.#caseFilter = caseFilter;
   }
 
   enumerateTestFiles(): readonly string[] {
@@ -143,6 +145,7 @@ export class CompilerBaselineRunner implements Runner {
     this.cleanUpLocal();
     for (const fileName of this.enumerateTestFiles()) {
       if (skippedTests.has(getBaseFileName(fileName))) continue;
+      if (this.#caseFilter !== undefined && !this.#caseFilter(fileName)) continue;
       this.runTest(fileName);
     }
   }
@@ -185,8 +188,9 @@ export function newCompilerBaselineRunner(
   testType: CompilerTestType,
   isSubmodule: boolean,
   host: CompilerRunnerHost = defaultHost,
+  caseFilter?: (fileName: string) => boolean,
 ): CompilerBaselineRunner {
-  return new CompilerBaselineRunner(testType, isSubmodule, host);
+  return new CompilerBaselineRunner(testType, isSubmodule, host, caseFilter);
 }
 
 const skippedTests = new Set<string>([

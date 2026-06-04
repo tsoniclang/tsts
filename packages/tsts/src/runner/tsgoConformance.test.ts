@@ -25,15 +25,19 @@
  */
 
 import test from "node:test";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { rootPath, testDataPath, tsgoCorpusExists, tsgoReferenceRoot, requireTsgoCorpus } from "../repo/paths.js";
+import { rootPath, testDataPath, tsgoCorpusExists, tsgoReferenceRoot, tsgoTestdataRoot, requireTsgoCorpus } from "../repo/paths.js";
 import { type BaselineDiffLists } from "../testutil/baseline/diffParity.js";
 
 import { newBaselineSink, type BaselineTextProducer, type GeneratedBaseline } from "./baselineSink.js";
 import { produceBaselineText, UnsupportedBaselineKindError } from "./baselineTextProducer.js";
 import {
   CompilerTestType,
+  compilerBaselineSuitePath,
+  compilerTestTypeString,
+  isSkippedCompilerTest,
   newCompilerBaselineRunner,
   type CompilerBaseline,
   type CompilerRunnerHost,
@@ -41,6 +45,17 @@ import {
 import { newNodeCompilerRunnerHost, type BaselineSink } from "./nodeCompilerRunnerHost.js";
 import { DivergenceCollector, formatDivergenceReport, writeDivergenceReport } from "./divergenceReport.js";
 import { DiffCategorizer } from "./testCaseParser.js";
+import {
+  acceptedCaseKeys,
+  caseKey,
+  formatBlocked,
+  formatRunsetLine,
+  isSubmoduleRunset,
+  parseDiffListEntries,
+  resolveRunset,
+  selectionCounts,
+  type DiscoveredCase,
+} from "./runsetHarness.js";
 
 const reportDir = join(rootPath(), ".temp", "tsgo-report");
 
@@ -82,8 +97,21 @@ function emptyDiffLists(): BaselineDiffLists {
   return { accepted: new Set(), triaged: new Set() };
 }
 
+const corpusRegex = /\.tsx?$/;
+const testTypes = [CompilerTestType.Conformance, CompilerTestType.Regression] as const;
+
+function readListText(path: string): string {
+  if (path === "" || !existsSync(path)) return "";
+  return readFileSync(path, "utf8");
+}
+
 function runConformanceSuite(): void {
-  const categorizer = new DiffCategorizer({ acceptedListPath: "", triagedListPath: "" });
+  const runset = resolveRunset(process.env.TSGO_RUNSET);
+  const submodule = isSubmoduleRunset(runset);
+  const acceptedListPath = submodule ? join(tsgoTestdataRoot(), "submoduleAccepted.txt") : "";
+  const triagedListPath = submodule ? join(tsgoTestdataRoot(), "submoduleTriaged.txt") : "";
+
+  const categorizer = new DiffCategorizer({ acceptedListPath, triagedListPath });
   const collector = new DivergenceCollector(categorizer);
   const sink = newBaselineSink({
     regressionBaselineRoot: join(testDataPath(), "baselines", "reference"),
@@ -94,10 +122,40 @@ function runConformanceSuite(): void {
     collector,
     produce: conformanceProducerRef,
   });
-
   const host = buildHost(sink);
-  for (const testType of [CompilerTestType.Conformance, CompilerTestType.Regression]) {
-    const runner = newCompilerBaselineRunner(testType, false, host);
+
+  // Discover every case file in the run-set's corpus (both suites).
+  const discovered: DiscoveredCase[] = [];
+  for (const testType of testTypes) {
+    const suite = compilerTestTypeString(testType);
+    for (const fileName of host.enumerateFiles(compilerBaselineSuitePath(testType, submodule), corpusRegex, true)) {
+      discovered.push({ suite, fileName });
+    }
+  }
+
+  // A submodule run-set whose corpus is not checked out is reported as an
+  // explicit `blocked` status — never a silent zero-case pass.
+  if (submodule && discovered.length === 0) {
+    process.stdout.write(`${formatBlocked({
+      runset,
+      reason: "missing TypeScript submodule",
+      expectedPath: join(tsgoTestdataRoot(), "..", "_submodules", "TypeScript", "tests", "cases"),
+      acceptedEntries: parseDiffListEntries(readListText(acceptedListPath)).length,
+    })}\n`);
+    return;
+  }
+
+  const acceptedKeys = runset === "accepted-submodule"
+    ? acceptedCaseKeys(parseDiffListEntries(readListText(acceptedListPath)))
+    : undefined;
+  const counts = selectionCounts({ runset, cases: discovered, isSkipped: isSkippedCompilerTest, acceptedKeys });
+
+  for (const testType of testTypes) {
+    const suite = compilerTestTypeString(testType);
+    const caseFilter = acceptedKeys === undefined
+      ? undefined
+      : (fileName: string) => acceptedKeys.has(caseKey(suite, fileName));
+    const runner = newCompilerBaselineRunner(testType, submodule, host, caseFilter);
     runner.runTests();
   }
 
@@ -106,10 +164,11 @@ function runConformanceSuite(): void {
     humanPath: join(reportDir, "divergence.md"),
     machinePath: join(reportDir, "divergence.json"),
   });
-  // The report itself is the deliverable; surface the title + summary counts so
-  // a CI log shows the gap without having to open the file. The formatted report
-  // is `# title`, a blank line, then the `cases=… match=…` summary line.
+  // The report itself is the deliverable; surface the run-set selection line, the
+  // report title, and the `cases=… match=…` summary so a CI log shows the gap
+  // without opening the file.
   const reportLines = formatDivergenceReport(report).split("\n");
+  process.stdout.write(`${formatRunsetLine(runset, counts)}\n`);
   process.stdout.write(`${[reportLines[0], reportLines[2]].filter((line) => line !== undefined).join("\n")}\n`);
 }
 
