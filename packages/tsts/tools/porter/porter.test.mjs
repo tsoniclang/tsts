@@ -1,0 +1,655 @@
+import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+import {
+  buildGeneratedArtifactStatus,
+  buildExternalFacadeMap,
+  buildStatus,
+  collectVerifyFailures,
+  expectedTsPath,
+  matchGlob,
+  policyFor,
+  renderExpectedGeneratedArtifacts,
+  renderExternalFacadeModules,
+  renderStub,
+  renderUnitGroup,
+  renderStatusMarkdown,
+  repoRoot,
+  scanTsUnits,
+  verifyStatus,
+} from "./porter.mjs";
+
+const baseConfig = {
+  goModulePath: "github.com/microsoft/typescript-go",
+  primaryUnitKinds: ["constGroup", "func", "method", "type", "varGroup"],
+  tsRoot: "packages/tsts/src",
+  policies: [
+    { match: "**/*_test.go", category: "test", reason: "test reason" },
+    { match: "**/*_generated.go", category: "generated", reason: "generated reason" },
+  ],
+  overrides: [
+    { match: "internal/jsnum/**", category: "manual-required", reason: "manual reason" },
+  ],
+  tsFilePolicies: [
+    { match: "packages/tsts/src/internal/ls/**", category: "forbidden-source", reason: "ls forbidden" },
+    { match: "packages/tsts/src/internal/lsp/**", category: "forbidden-source", reason: "lsp forbidden" },
+    { match: "packages/tsts/src/**/*fourslash*", category: "forbidden-source", reason: "fourslash forbidden" },
+    { match: "packages/tsts/src/**/*.ts", category: "requires-tsgo-unit", reason: "metadata required" },
+  ],
+  splitRules: [
+    { match: "internal/checker/checker.go", target: "packages/tsts/src/checker/checker", strategy: "split", reason: "large file" },
+  ],
+};
+
+test("matchGlob supports recursive and single-segment patterns", () => {
+  assert.equal(matchGlob("internal/jsnum/**", "internal/jsnum/jsnum.go"), true);
+  assert.equal(matchGlob("internal/jsnum/**", "internal/jsnum/sub/a.go"), true);
+  assert.equal(matchGlob("**/*_test.go", "internal/debug/debug_test.go"), true);
+  assert.equal(matchGlob("internal/*/debug.go", "internal/debug/nested/debug.go"), false);
+  assert.equal(matchGlob("internal/*/debug.go", "internal/foo/debug.go"), true);
+});
+
+test("policyFor applies generated and explicit overrides before default literal ports", () => {
+  assert.equal(policyFor(baseConfig, "internal/jsnum/jsnum.go", false).category, "manual-required");
+  assert.equal(policyFor(baseConfig, "internal/debug/debug_test.go", false).category, "test");
+  assert.equal(policyFor(baseConfig, "internal/ast/ast_generated.go", true).category, "generated");
+  assert.equal(policyFor(baseConfig, "internal/debug/debug.go", false).category, "literal-port");
+});
+
+test("policyFor lets explicit inactive policies exclude generated LS/LSP files", () => {
+  const policy = policyFor({
+    ...baseConfig,
+    policies: [
+      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
+    ],
+  }, "internal/lsp/lsproto/lsp_generated.go", true);
+
+  assert.equal(policy.category, "out-of-scope");
+  assert.equal(policy.active, false);
+});
+
+test("expectedTsPath supports split rules without repeating path metadata", () => {
+  const unit = unitRecord({
+    id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
+    kind: "method",
+    qualifiedName: "Checker.checkSourceFile",
+    goPath: "internal/checker/checker.go",
+  });
+  assert.equal(
+    expectedTsPath(baseConfig, unit),
+    "packages/tsts/src/checker/checker/Checker.checkSourceFile_7cc9854edeff.ts",
+  );
+});
+
+test("buildStatus reports missing, stale, orphan, parse-error, unitless, and untracked TS files", () => {
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/debug/debug.go",
+      units: [unitRecord({
+        id: "m::internal/debug/debug.go::func::Fail",
+        kind: "func",
+        qualifiedName: "Fail",
+        goPath: "internal/debug/debug.go",
+        sigHash: "sig-1",
+        bodyHash: "body-1",
+      })],
+    }),
+    fileRecord({
+      path: "internal/core/doc.go",
+      units: [],
+    }),
+    fileRecord({
+      path: "internal/bad/bad.go",
+      units: [],
+      parseError: "expected declaration",
+    }),
+  ]);
+  const status = buildStatus(baseConfig, snapshot, {
+    fileCount: 2,
+    files: [
+      { path: "packages/tsts/src/internal/debug/debug.ts", metadataCount: 1 },
+      { path: "packages/tsts/src/internal/debug/helper.ts", metadataCount: 0 },
+      { path: "packages/tsts/src/internal/ls/service.ts", metadataCount: 1 },
+    ],
+    units: [
+      {
+        id: "m::internal/debug/debug.go::func::Fail",
+        path: "packages/tsts/src/internal/debug/debug.ts",
+        status: "implemented",
+        sigHash: "sig-1",
+        bodyHash: "old-body",
+      },
+      {
+        id: "m::internal/debug/debug.go::func::Gone",
+        path: "packages/tsts/src/internal/debug/debug.ts",
+        status: "implemented",
+        sigHash: "sig",
+        bodyHash: "body",
+      },
+    ],
+  });
+
+  assert.equal(status.counts.portable, 1);
+  assert.equal(status.counts.stale, 1);
+  assert.equal(status.counts.orphan, 1);
+  assert.equal(status.counts.parseErrors, 1);
+  assert.equal(status.counts.unitlessGoFiles, 1);
+  assert.equal(status.counts.untrackedTsFiles, 1);
+  assert.equal(status.counts.forbiddenTsFiles, 1);
+  assert.match(renderStatusMarkdown(status), /Coverage Diagnostics/);
+});
+
+test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter coverage", () => {
+  const config = {
+    ...baseConfig,
+    policies: [
+      { match: "internal/ls/**", category: "out-of-scope", active: false, reason: "ls excluded" },
+      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
+      { match: "**/*fourslash*", category: "out-of-scope", active: false, reason: "fourslash excluded" },
+    ],
+  };
+  const status = buildStatus(config, snapshotWith([
+    fileRecord({
+      path: "internal/ls/service.go",
+      units: [unitRecord({
+        id: "m::internal/ls/service.go::func::NewService",
+        kind: "func",
+        qualifiedName: "NewService",
+        goPath: "internal/ls/service.go",
+      })],
+    }),
+    fileRecord({
+      path: "internal/lsp/server.go",
+      units: [unitRecord({
+        id: "m::internal/lsp/server.go::type::Server",
+        kind: "type",
+        qualifiedName: "Server",
+        goPath: "internal/lsp/server.go",
+      })],
+    }),
+  ]), { fileCount: 0, files: [], units: [] });
+
+  assert.equal(status.counts.portable, 0);
+  assert.equal(status.counts.excluded, 2);
+  assert.equal(status.counts.missing, 0);
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+});
+
+test("renderUnitGroup treats references to excluded LS/LSP types as opaque boundary types", () => {
+  const config = {
+    ...baseConfig,
+    policies: [
+      { match: "internal/ls/**", category: "out-of-scope", active: false, reason: "ls excluded" },
+      { match: "internal/lsp/**", category: "out-of-scope", active: false, reason: "lsp excluded" },
+    ],
+  };
+  const formatCodeSettings = unitRecord({
+    id: "m::internal/ls/lsutil/formatcodeoptions.go::type::FormatCodeSettings",
+    kind: "type",
+    name: "FormatCodeSettings",
+    qualifiedName: "FormatCodeSettings",
+    goPath: "internal/ls/lsutil/formatcodeoptions.go",
+    typeKind: "struct",
+  });
+  const withFormatCodeSettings = unitRecord({
+    id: "m::internal/format/api.go::func::WithFormatCodeSettings",
+    kind: "func",
+    name: "WithFormatCodeSettings",
+    qualifiedName: "WithFormatCodeSettings",
+    goPath: "internal/format/api.go",
+    parameters: [
+      { names: ["options"], type: selectorType("lsutil", "FormatCodeSettings") },
+    ],
+  });
+  const text = renderUnitGroup(
+    config,
+    snapshotWith([
+      fileRecord({
+        path: "internal/ls/lsutil/formatcodeoptions.go",
+        importPath: "github.com/microsoft/typescript-go/internal/ls/lsutil",
+        packageName: "lsutil",
+        units: [formatCodeSettings],
+      }),
+      fileRecord({
+        path: "internal/format/api.go",
+        importPath: "github.com/microsoft/typescript-go/internal/format",
+        packageName: "format",
+        imports: [{ name: "lsutil", path: "github.com/microsoft/typescript-go/internal/ls/lsutil" }],
+        units: [withFormatCodeSettings],
+      }),
+    ]),
+    "packages/tsts/src/internal/format/api.ts",
+    [withFormatCodeSettings],
+  );
+
+  assert.doesNotMatch(text, /from ".*internal\/ls/);
+  assert.match(text, /import type \{ GoUnresolved \}/);
+  assert.ok(text.includes('options: GoUnresolved<"github.com/microsoft/typescript-go/internal/ls/lsutil.FormatCodeSettings">'));
+});
+
+test("verifyStatus fails hard on coverage and metadata defects", () => {
+  const status = {
+    counts: {
+      parseErrors: 1,
+      duplicateGoIDs: 1,
+      duplicateTsIDs: 1,
+      orphan: 1,
+      forbiddenTsFiles: 1,
+      untrackedTsFiles: 1,
+      stale: 1,
+      missing: 1,
+    },
+    generatedArtifacts: {
+      missing: [{ path: "packages/tsts/src/go/compat.ts" }],
+      stale: [{ path: "packages/tsts/src/go/io.ts" }],
+      orphan: [{ path: "packages/tsts/src/go/old.ts" }],
+      untracked: [{ path: "packages/tsts/src/go/manual.ts" }],
+      invalid: [{ path: "packages/tsts/src/go/bad.ts" }],
+    },
+  };
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), [
+    "1 Go parse errors",
+    "1 duplicate Go IDs",
+    "1 duplicate TS IDs",
+    "1 orphan TS units",
+    "1 forbidden TS files",
+    "1 TS files without @tsgo-unit metadata",
+    "1 stale TS units",
+    "1 missing generated artifacts",
+    "1 stale generated artifacts",
+    "1 orphan generated artifacts",
+    "1 untracked generated artifacts",
+    "1 invalid generated artifacts",
+    "1 missing Go units",
+  ]);
+});
+
+test("scanTsUnits records files with and without metadata", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "tsts-porter-"));
+  try {
+    mkdirSync(path.join(root, "internal/debug"), { recursive: true });
+    writeFileSync(
+      path.join(root, "internal/debug/debug.ts"),
+      '/** @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"stub","sigHash":"s","bodyHash":"b"} */\nexport {}\n',
+    );
+    writeFileSync(path.join(root, "internal/debug/helper.ts"), "export const helper = true;\n");
+    const result = scanTsUnits(root);
+    assert.equal(result.fileCount, 2);
+    assert.equal(result.units.length, 1);
+    assert.equal(result.files.find((file) => file.path.endsWith("debug.ts")).metadataCount, 1);
+    assert.equal(result.files.find((file) => file.path.endsWith("helper.ts")).metadataCount, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("renderStub rejects non-portable unit kinds", () => {
+  assert.throws(
+    () => renderStub(unitRecord({ kind: "importGroup" })),
+    /cannot render scaffold for non-portable Go unit kind 'importGroup'/,
+  );
+});
+
+test("renderUnitGroup emits typed generic method skeletons with Go result tuples", () => {
+  const orderedMapType = unitRecord({
+    id: "m::internal/collections/ordered_map.go::type::OrderedMap",
+    kind: "type",
+    name: "OrderedMap",
+    qualifiedName: "OrderedMap",
+    goPath: "internal/collections/ordered_map.go",
+    typeKind: "struct",
+    typeParameterDetails: [
+      { name: "K", constraint: identType("comparable") },
+      { name: "V", constraint: identType("any") },
+    ],
+    members: [
+      { kind: "field", name: "keys", typeExpr: sliceType(identType("K")) },
+      { kind: "field", name: "mp", typeExpr: mapType(identType("K"), identType("V")) },
+    ],
+  });
+  const getMethod = unitRecord({
+    id: "m::internal/collections/ordered_map.go::method::OrderedMap.Get",
+    kind: "method",
+    name: "Get",
+    qualifiedName: "OrderedMap.Get",
+    receiver: "OrderedMap",
+    receiverMode: "pointer",
+    receiverType: pointerType(instantiationType(identType("OrderedMap"), [identType("K"), identType("V")])),
+    goPath: "internal/collections/ordered_map.go",
+    parameters: [{ names: ["key"], type: identType("K") }],
+    results: [{ type: identType("V") }, { type: identType("bool") }],
+  });
+  const text = renderUnitGroup(
+    baseConfig,
+    snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", units: [orderedMapType, getMethod] })]),
+    "packages/tsts/src/internal/collections/ordered_map.ts",
+    [orderedMapType, getMethod],
+  );
+  assert.match(text, /import type \{ bool \} from "@tsonic\/core\/types\.js";/);
+  assert.match(text, /import type \{ GoComparable, GoMap, GoPtr, GoSlice \}/);
+  assert.match(text, /export interface OrderedMap<K extends GoComparable = unknown, V = unknown>/);
+  assert.match(text, /export function OrderedMap_Get<K, V>\(receiver: GoPtr<OrderedMap<K, V>>, key: K\): \[V, bool\]/);
+});
+
+test("renderUnitGroup emits higher-order function and inline interface signatures", () => {
+  const nodeAssert = unitRecord({
+    id: "m::internal/debug/debug.go::func::FailBadSyntaxKind",
+    kind: "func",
+    name: "FailBadSyntaxKind",
+    qualifiedName: "FailBadSyntaxKind",
+    goPath: "internal/debug/debug.go",
+    parameters: [
+      {
+        names: ["node"],
+        type: interfaceType([
+          { kind: "method", name: "KindString", typeExpr: funcType([], [{ type: identType("string") }]) },
+        ]),
+      },
+      { names: ["message"], type: identType("any"), variadic: true },
+    ],
+  });
+  const diffFunc = unitRecord({
+    id: "m::internal/collections/ordered_map.go::func::DiffOrderedMapsFunc",
+    kind: "func",
+    name: "DiffOrderedMapsFunc",
+    qualifiedName: "DiffOrderedMapsFunc",
+    goPath: "internal/collections/ordered_map.go",
+    typeParameterDetails: [
+      { name: "K", constraint: identType("comparable") },
+      { name: "V", constraint: identType("any") },
+    ],
+    parameters: [
+      { names: ["equalValues"], type: funcType([{ names: ["a"], type: identType("V") }, { names: ["b"], type: identType("V") }], [{ type: identType("bool") }]) },
+      { names: ["onAdded"], type: funcType([{ names: ["key"], type: identType("K") }, { names: ["value"], type: identType("V") }], []) },
+    ],
+  });
+  const debugText = renderUnitGroup(
+    baseConfig,
+    snapshotWith([fileRecord({ path: "internal/debug/debug.go", units: [nodeAssert] })]),
+    "packages/tsts/src/internal/debug/debug.ts",
+    [nodeAssert],
+  );
+  const diffText = renderUnitGroup(
+    baseConfig,
+    snapshotWith([fileRecord({ path: "internal/collections/ordered_map.go", units: [diffFunc] })]),
+    "packages/tsts/src/internal/collections/ordered_map.ts",
+    [diffFunc],
+  );
+  assert.match(debugText, /node: \{ KindString: \(\) => string \}, \.\.\.message: Array<unknown>/);
+  assert.match(diffText, /equalValues: \(a: V, b: V\) => bool/);
+  assert.match(diffText, /onAdded: \(key: K, value: V\) => void/);
+});
+
+test("renderUnitGroup resolves Go external types through generated facades", () => {
+  const diagnosticWriter = unitRecord({
+    id: "m::internal/diagnosticwriter/diagnosticwriter.go::func::WriteFlattenedDiagnosticMessage",
+    kind: "func",
+    name: "WriteFlattenedDiagnosticMessage",
+    qualifiedName: "WriteFlattenedDiagnosticMessage",
+    goPath: "internal/diagnosticwriter/diagnosticwriter.go",
+    parameters: [
+      { names: ["writer"], type: selectorType("io", "Writer") },
+      { names: ["opts"], type: sliceType(selectorType("json", "Options")), variadic: true },
+    ],
+  });
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/diagnosticwriter/diagnosticwriter.go",
+      importPath: "github.com/microsoft/typescript-go/internal/diagnosticwriter",
+      imports: [
+        { path: "io" },
+        { name: "json", path: "github.com/go-json-experiment/json" },
+      ],
+      units: [diagnosticWriter],
+    }),
+  ]);
+  const text = renderUnitGroup(
+    baseConfig,
+    snapshot,
+    "packages/tsts/src/internal/diagnosticwriter/diagnosticwriter.ts",
+    [diagnosticWriter],
+  );
+
+  assert.match(text, /import type \{ Writer \} from "\.\.\/\.\.\/go\/io\.js";/);
+  assert.match(text, /import type \{ Options \} from "\.\.\/\.\.\/go\/github\.com\/go-json-experiment\/json\.js";/);
+  assert.match(text, /writer: Writer/);
+  assert.match(text, /\.\.\.opts: Options\[\]/);
+  assert.doesNotMatch(text, /GoExternal/);
+});
+
+test("renderUnitGroup uses extractor-provided inferred value types", () => {
+  const kindType = unitRecord({
+    id: "m::internal/ast/kind_generated.go::type::Kind",
+    kind: "type",
+    name: "Kind",
+    qualifiedName: "Kind",
+    goPath: "internal/ast/kind_generated.go",
+    typeKind: "named",
+    typeExpression: identType("int32"),
+  });
+  const values = unitRecord({
+    id: "m::internal/api/proto.go::constGroup::handlePrefixProject+limit",
+    kind: "constGroup",
+    name: "handlePrefixProject+limit",
+    qualifiedName: "handlePrefixProject+limit",
+    goPath: "internal/api/proto.go",
+    valueSpecs: [
+      { names: ["handlePrefixProject"], values: ["'p'"], inferredValueTypes: [identType("rune")] },
+      { names: ["limit"], values: ["iota * 4"], inferredValueTypes: [identType("int")] },
+    ],
+  });
+  const kindBounds = unitRecord({
+    id: "m::internal/ast/kind_generated.go::constGroup::KindEqualsToken+KindFirstAssignment",
+    kind: "constGroup",
+    name: "KindEqualsToken+KindFirstAssignment",
+    qualifiedName: "KindEqualsToken+KindFirstAssignment",
+    goPath: "internal/ast/kind_generated.go",
+    valueSpecs: [
+      { names: ["KindEqualsToken"], type: identType("Kind"), values: ["iota"], inferredValueTypes: [identType("int")] },
+      { names: ["KindFirstAssignment"], values: ["KindEqualsToken"] },
+    ],
+  });
+  const channels = unitRecord({
+    id: "m::internal/scanner/scanner.go::varGroup::done+factory+err",
+    kind: "varGroup",
+    name: "done+factory+err",
+    qualifiedName: "done+factory+err",
+    goPath: "internal/scanner/scanner.go",
+    valueSpecs: [
+      { names: ["done"], values: ["make(chan int)"], inferredValueTypes: [channelType(identType("int"))] },
+      { names: ["factory"], values: ["func(x int) string { return \"\" }"], inferredValueTypes: [funcType([{ names: ["x"], type: identType("int") }], [{ type: identType("string") }])] },
+      { names: ["err"], values: ["errors.New(\"boom\")"], inferredValueTypes: [identType("error")] },
+    ],
+  });
+  const text = renderUnitGroup(
+    baseConfig,
+    snapshotWith([fileRecord({ path: "internal/api/proto.go", importPath: "github.com/microsoft/typescript-go/internal/ast", units: [kindType, values, kindBounds, channels] })]),
+    "packages/tsts/src/internal/ast/kind_generated.ts",
+    [kindType, values, kindBounds, channels],
+  );
+
+  assert.match(text, /export const handlePrefixProject: GoRune = undefined as never;/);
+  assert.match(text, /export const limit: int = undefined as never;/);
+  assert.match(text, /export const KindEqualsToken: Kind = undefined as never;/);
+  assert.match(text, /export const KindFirstAssignment: Kind = undefined as never;/);
+  assert.match(text, /export let done: GoChan<int, "bidirectional"> = undefined as never;/);
+  assert.match(text, /export let factory: \(x: int\) => string = undefined as never;/);
+  assert.match(text, /export let err: GoError = undefined as never;/);
+});
+
+test("renderExternalFacadeModules generates canonical facade modules for observed externals", () => {
+  const unit = unitRecord({
+    id: "m::internal/json/json.go::func::MarshalWrite",
+    kind: "func",
+    name: "MarshalWrite",
+    qualifiedName: "MarshalWrite",
+    goPath: "internal/json/json.go",
+    parameters: [
+      { names: ["writer"], type: selectorType("io", "Writer") },
+      { names: ["option"], type: selectorType("json", "Options") },
+    ],
+    externalRefs: [
+      { importPath: "path/filepath", package: "filepath", name: "Join", role: "call", count: 1 },
+      { importPath: "os", package: "os", name: "PathSeparator", role: "value", count: 1 },
+    ],
+  });
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/json/json.go",
+      importPath: "github.com/microsoft/typescript-go/internal/json",
+      imports: [
+        { path: "io" },
+        { name: "json", path: "github.com/go-json-experiment/json" },
+      ],
+      units: [unit],
+    }),
+  ]);
+
+  const facades = buildExternalFacadeMap(baseConfig, snapshot);
+  assert.equal(facades.get("io.Writer").tsModule, "go/io.ts");
+  assert.equal(facades.get("github.com/go-json-experiment/json.Options").tsModule, "go/github.com/go-json-experiment/json.ts");
+  assert.equal(facades.get("path/filepath.Join").kind, "functionValue");
+  assert.equal(facades.get("os.PathSeparator").kind, "value");
+
+  const modules = renderExternalFacadeModules(baseConfig, snapshot);
+  assert.match(modules.get("go/io.ts"), /export interface Writer/);
+  assert.match(modules.get("go/io.ts"), /Write\(p: GoSlice<byte>\): \[int, GoError\]/);
+  assert.match(modules.get("go/time.ts"), /export type Duration = long;/);
+  assert.match(modules.get("go/github.com/go-json-experiment/json.ts"), /export interface Options/);
+  assert.match(modules.get("go/path/filepath.ts"), /export function Join\(\.\.\.args: Array<unknown>\): unknown/);
+  assert.match(modules.get("go/os.ts"), /export const PathSeparator: unknown = undefined as never;/);
+  assert.doesNotMatch(modules.get("go/github.com/go-json-experiment/json.ts"), /GoExternal/);
+});
+
+test("renderExpectedGeneratedArtifacts embeds deterministic generated metadata", () => {
+  const snapshot = snapshotWith([]);
+  const artifacts = renderExpectedGeneratedArtifacts(baseConfig, snapshot);
+  const compat = artifacts.get("packages/tsts/src/go/compat.ts");
+  assert.match(compat, /^\/\/ Code generated by TSTS porter\. DO NOT EDIT\./);
+  assert.match(compat, /\/\/ @tsgo-generated {"schemaVersion":1,"kind":"go-compat","generator":"porter:facades","sourceRevision":"abc123","path":"go\/compat\.ts","contentHash":"[a-f0-9]{64}"}/);
+});
+
+test("buildGeneratedArtifactStatus catches missing, stale, orphan, untracked, and invalid generated files", () => {
+  const root = mkdtempSync(path.join(repoRoot, ".temp/porter-test-"));
+  try {
+    const config = { ...baseConfig, tsRoot: path.relative(repoRoot, path.join(root, "src")).split(path.sep).join("/") };
+    const snapshot = snapshotWith([]);
+    const generatedRoot = path.join(root, "src/go");
+    mkdirSync(generatedRoot, { recursive: true });
+    for (const [relativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot)) {
+      const targetPath = path.join(repoRoot, relativePath);
+      mkdirSync(path.dirname(targetPath), { recursive: true });
+      writeFileSync(targetPath, text);
+    }
+    let clean = buildGeneratedArtifactStatus(config, snapshot);
+    assert.deepEqual(clean, { missing: [], stale: [], orphan: [], untracked: [], invalid: [] });
+
+    writeFileSync(
+      path.join(generatedRoot, "compat.ts"),
+      renderExpectedGeneratedArtifacts(config, snapshot).get(`${config.tsRoot}/go/compat.ts`).replace(/\n$/, "\nexport const edited = true;\n"),
+    );
+    writeFileSync(path.join(generatedRoot, "manual.ts"), "export const manual = true;\n");
+    writeFileSync(path.join(generatedRoot, "bad.ts"), "// Code generated by TSTS porter. DO NOT EDIT.\n// @tsgo-generated {bad-json}\n\nexport {}\n");
+    writeFileSync(path.join(generatedRoot, "orphan.ts"), renderExpectedGeneratedArtifacts(config, snapshot).get(`${config.tsRoot}/go/compat.ts`));
+    rmSync(path.join(generatedRoot, "io.ts"), { force: true });
+
+    const broken = buildGeneratedArtifactStatus(config, snapshot);
+    assert.equal(broken.missing.length, 1);
+    assert.equal(broken.stale.length, 1);
+    assert.equal(broken.orphan.length, 1);
+    assert.equal(broken.untracked.length, 1);
+    assert.equal(broken.invalid.length, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function snapshotWith(files) {
+  return {
+    sourceRoot: "/tmp/tsgo",
+    gitRevision: "abc123",
+    summary: {
+      goFileCount: files.length,
+      lineCount: files.reduce((sum, file) => sum + file.lineCount, 0),
+      unitCount: files.reduce((sum, file) => sum + file.units.length, 0),
+    },
+    files,
+  };
+}
+
+function fileRecord(overrides) {
+  return {
+    path: "internal/debug/debug.go",
+    importPath: "github.com/microsoft/typescript-go/internal/debug",
+    packageName: "debug",
+    lineCount: 10,
+    generated: false,
+    units: [],
+    featureCounts: {},
+    ...overrides,
+  };
+}
+
+function unitRecord(overrides) {
+  const goPath = overrides?.goPath ?? "internal/debug/debug.go";
+  const metadata = { goPath, ...(overrides?.metadata ?? {}) };
+  const normalizedOverrides = { ...overrides };
+  delete normalizedOverrides.goPath;
+  delete normalizedOverrides.metadata;
+  return {
+    id: "m::internal/debug/debug.go::func::Fail",
+    kind: "func",
+    name: "Fail",
+    qualifiedName: "Fail",
+    generated: false,
+    startLine: 1,
+    endLine: 3,
+    signature: "func Fail()",
+    sigHash: "sig",
+    bodyHash: "body",
+    snippet: "func Fail() {}",
+    nodeKindCounts: {},
+    featureCounts: {},
+    metadata,
+    ...normalizedOverrides,
+  };
+}
+
+function identType(name) {
+  return { kind: "ident", name, text: name };
+}
+
+function selectorType(packageName, name) {
+  return { kind: "selector", package: packageName, name, text: `${packageName}.${name}` };
+}
+
+function pointerType(element) {
+  return { kind: "pointer", text: `*${element.text}`, element };
+}
+
+function sliceType(element) {
+  return { kind: "slice", text: `[]${element.text}`, element };
+}
+
+function mapType(key, value) {
+  return { kind: "map", text: `map[${key.text}]${value.text}`, key, value };
+}
+
+function channelType(element) {
+  return { kind: "channel", text: `chan ${element.text}`, element, direction: "bidirectional" };
+}
+
+function instantiationType(element, typeArgs) {
+  return { kind: "instantiation", text: `${element.text}[${typeArgs.map((arg) => arg.text).join(", ")}]`, element, typeArgs };
+}
+
+function funcType(parameters, results) {
+  return { kind: "func", text: "func", parameters, results };
+}
+
+function interfaceType(members) {
+  return { kind: "interface", text: "interface", members };
+}

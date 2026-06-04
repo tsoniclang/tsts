@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "sourceRoot": "packages/tsts/_vendor/typescript-go",
+  "tsRoot": "packages/tsts/src",
+  "goModulePath": "github.com/microsoft/typescript-go",
+  "snapshotOut": ".temp/porter/tsgo-snapshot.json",
+  "statusOut": ".temp/porter/status.json",
+  "reportOut": ".temp/porter/status.md",
+  "generatedPolicy": {
+    "firstLinePrefix": "// Code generated"
+  },
+  "tsFilePolicies": [
+    {
+      "match": "packages/tsts/src/internal/ls/**",
+      "category": "forbidden-source",
+      "reason": "Language-service implementation files must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/internal/lsp/**",
+      "category": "forbidden-source",
+      "reason": "Language-service protocol/server files must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/**/fourslash/**",
+      "category": "forbidden-source",
+      "reason": "Fourslash/editor harness files must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/**/*fourslash*",
+      "category": "forbidden-source",
+      "reason": "Fourslash/editor harness files must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/go/*.ts",
+      "category": "go-compat-layer",
+      "reason": "The Go compatibility layer is authored TypeScript infrastructure, not a TS-Go source unit."
+    },
+    {
+      "match": "packages/tsts/src/go/**",
+      "category": "go-compat-layer",
+      "reason": "The Go compatibility layer is authored TypeScript infrastructure, not a TS-Go source unit."
+    },
+    {
+      "match": "packages/tsts/src/**/*.ts",
+      "category": "requires-tsgo-unit",
+      "reason": "Every source file must carry at least one @tsgo-unit unless an explicit policy allows it."
+    }
+  ],
+  "overrides": [
+    {
+      "match": "internal/jsnum/**",
+      "category": "manual-required",
+      "reason": "Fixed-width integer and floating-point behavior must be implemented as an explicit Go-semantics layer."
+    },
+    {
+      "match": "internal/vfs/osvfs/**",
+      "category": "host-native",
+      "reason": "Operating-system bindings must be implemented through the TypeScript host layer."
+    },
+    {
+      "match": "internal/vfs/vfswatch/**",
+      "category": "host-native",
+      "reason": "File-watch bindings must be implemented through the TypeScript host layer."
+    }
+  ],
+  "policies": [
+    {
+      "match": "**/*_test.go",
+      "category": "test",
+      "reason": "Go test units are ported through the test-parity harness, not production compiler scaffolds."
+    },
+    {
+      "match": "**/*_generated.go",
+      "category": "generated",
+      "reason": "Generated Go files must be regenerated from their upstream source schema or generator."
+    },
+    {
+      "match": "internal/jsnum/**",
+      "category": "manual-required",
+      "reason": "Fixed-width integer and floating-point behavior must be hand-ported with explicit JavaScript/Tsonic numeric semantics."
+    },
+    {
+      "match": "internal/vfs/osvfs/**",
+      "category": "host-native",
+      "reason": "OS filesystem bindings must map to the TypeScript/Node host layer, not a literal syscall port."
+    },
+    {
+      "match": "internal/vfs/vfswatch/**",
+      "category": "host-native",
+      "reason": "File watching must map to the TypeScript/Node host layer."
+    },
+    {
+      "match": "internal/lsp/**",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Language-service protocol/server surface is not in the standalone compiler porter scope."
+    },
+    {
+      "match": "internal/ls/**",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Language-service implementation is not in the standalone compiler porter scope."
+    },
+    {
+      "match": "**/fourslash/**",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Fourslash is a language-service/editor test harness and is not in the standalone compiler porter scope."
+    },
+    {
+      "match": "**/*fourslash*",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Fourslash is a language-service/editor test harness and is not in the standalone compiler porter scope."
+    }
+  ],
+  "splitRules": [
+    {
+      "match": "internal/checker/checker.go",
+      "target": "packages/tsts/src/checker/checker",
+      "strategy": "receiver-method-shards",
+      "reason": "Checker is too large for a single maintainable TypeScript file; split by method/algorithm groups while preserving Go unit IDs."
+    },
+    {
+      "match": "internal/parser/parser.go",
+      "target": "packages/tsts/src/parser/parser",
+      "strategy": "parser-stage-shards",
+      "reason": "Parser can be split by syntactic stage while preserving Go unit IDs."
+    },
+    {
+      "match": "internal/ast/ast_generated.go",
+      "target": "packages/tsts/src/ast/generated",
+      "strategy": "schema-generated",
+      "reason": "Generated AST artifacts must come from schema generation, not a literal hand port."
+    }
+  ],
+  "primaryUnitKinds": [
+    "constGroup",
+    "func",
+    "method",
+    "type",
+    "varGroup"
+  ]
+}
