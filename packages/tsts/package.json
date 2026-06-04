@@ -19,8 +19,8 @@
     "LICENSE"
   ],
   "peerDependencies": {
-    "@tsonic/core": "10.0.45",
-    "@tsonic/js": "10.0.53",
-    "@tsonic/nodejs": "10.0.54"
+    "@tsonic/core": "10.0.46",
+    "@tsonic/js": "10.0.54",
+    "@tsonic/nodejs": "10.0.55"
   }
 }

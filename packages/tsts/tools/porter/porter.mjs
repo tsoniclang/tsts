@@ -1,0 +1,2048 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import process from "node:process";
+
+export const repoRoot = findRepoRoot(process.cwd());
+export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
+
+export function main() {
+  const [command = "status", ...args] = process.argv.slice(2);
+  const options = parseArgs(args);
+  const config = loadConfig();
+
+  if (command === "scan") {
+    const snapshot = runScan(config);
+    writeJson(resolveRepo(config.snapshotOut), snapshot);
+    printScanSummary(config, snapshot);
+    return;
+  }
+
+  if (command === "facades") {
+    const snapshot = runScan(config);
+    writeJson(resolveRepo(config.snapshotOut), snapshot);
+    if (options.check === true) {
+      const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
+      const failures = collectGeneratedArtifactFailures(generatedArtifacts);
+      if (failures.length > 0) {
+        fail(`generated facade check failed: ${failures.join(", ")}`);
+      }
+      console.log("generated facade check passed");
+      return;
+    }
+    writeExternalFacades(config, snapshot, options);
+    return;
+  }
+
+  if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
+    const snapshot = runScan(config);
+    const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
+    const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts);
+    writeJson(resolveRepo(config.snapshotOut), snapshot);
+    writeJson(resolveRepo(config.statusOut), status);
+    writeText(resolveRepo(config.reportOut), renderStatusMarkdown(status));
+    printStatus(config, status);
+
+    if (command === "verify") {
+      verifyStatus(status, options);
+      return;
+    }
+    if (command === "scaffold") {
+      scaffoldMissing(config, status, snapshot, options);
+      return;
+    }
+    if (command === "skeleton-check") {
+      checkSkeletons(config, status, snapshot, options);
+      return;
+    }
+    return;
+  }
+
+  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, or skeleton-check.`);
+}
+
+export function runScan(config) {
+  const sourceRoot = resolveRepo(config.sourceRoot);
+  const helperDir = resolveRepo("packages/tsts/tools/porter/go-extractor");
+  assertDirectory(sourceRoot, "TS-Go source root");
+  assertDirectory(helperDir, "Go extractor");
+
+  const result = spawnSync(
+    "go",
+    ["run", ".", "-root", sourceRoot, "-module", config.goModulePath],
+    { cwd: helperDir, encoding: "utf8", maxBuffer: 1024 * 1024 * 512 },
+  );
+  if (result.error) {
+    fail(`failed to execute go extractor: ${result.error.message}`);
+  }
+  if (result.status !== 0) {
+    fail(`go extractor failed with exit ${result.status}\n${result.stderr}`);
+  }
+  try {
+    return JSON.parse(result.stdout);
+  } catch (error) {
+    fail(`go extractor produced invalid JSON: ${error.message}`);
+  }
+}
+
+export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = emptyGeneratedArtifactStatus()) {
+  const primaryKinds = new Set(config.primaryUnitKinds);
+  const goUnits = [];
+  const goByID = new Map();
+  const duplicateGoIDs = [];
+
+  for (const file of snapshot.files) {
+    const filePolicy = policyFor(config, file.path, file.generated);
+    for (const unit of file.units ?? []) {
+      const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+      const record = {
+        ...unit,
+        file: {
+          path: file.path,
+          importPath: file.importPath,
+          packageName: file.packageName,
+          lineCount: file.lineCount,
+          generated: file.generated,
+          policy: filePolicy,
+        },
+        portable: primaryKinds.has(unit.kind),
+        policy,
+        expectedTsPath: expectedTsPath(config, unit),
+      };
+      if (goByID.has(record.id)) duplicateGoIDs.push(record.id);
+      goByID.set(record.id, record);
+      goUnits.push(record);
+    }
+  }
+
+  const tsByID = new Map();
+  const duplicateTsIDs = [];
+  for (const unit of tsUnits.units) {
+    if (tsByID.has(unit.id)) duplicateTsIDs.push(unit.id);
+    tsByID.set(unit.id, unit);
+  }
+
+  const rows = [];
+  const categoryCounts = new Map();
+  const moduleCounts = new Map();
+  const missing = [];
+  const stale = [];
+  const implemented = [];
+  const stubbed = [];
+  const excluded = [];
+
+  for (const unit of goUnits) {
+    if (!unit.portable) continue;
+
+    const tsUnit = tsByID.get(unit.id);
+    const category = unit.policy.category;
+    const moduleName = moduleNameFor(unit.file.path);
+    increment(categoryCounts, category);
+    increment(moduleCounts, moduleName);
+
+    const row = {
+      id: unit.id,
+      kind: unit.kind,
+      goPath: unit.file.path,
+      name: unit.qualifiedName,
+      category,
+      expectedTsPath: unit.expectedTsPath,
+      status: "missing",
+      reason: unit.policy.reason,
+      sigHash: unit.sigHash,
+      bodyHash: unit.bodyHash,
+      tsPath: "",
+      tsStatus: "",
+    };
+
+    if (!isActivePortPolicy(unit.policy)) {
+      row.status = "excluded";
+      excluded.push(row);
+      rows.push(row);
+      continue;
+    }
+
+    if (!tsUnit) {
+      missing.push(row);
+      rows.push(row);
+      continue;
+    }
+
+    row.tsPath = tsUnit.path;
+    row.tsStatus = tsUnit.status;
+    const sigMatches = !tsUnit.sigHash || tsUnit.sigHash === unit.sigHash;
+    const bodyMatches = !tsUnit.bodyHash || tsUnit.bodyHash === unit.bodyHash;
+    if (!sigMatches || !bodyMatches) {
+      row.status = "stale";
+      row.reason = `metadata hash drift: sig=${sigMatches ? "ok" : "changed"} body=${bodyMatches ? "ok" : "changed"}`;
+      stale.push(row);
+    } else if (tsUnit.status === "implemented") {
+      row.status = "implemented";
+      implemented.push(row);
+    } else if (tsUnit.status === "stub") {
+      row.status = "stub";
+      stubbed.push(row);
+    } else {
+      row.status = tsUnit.status || "present";
+    }
+    rows.push(row);
+  }
+
+  const orphanTsUnits = tsUnits.units
+    .filter((unit) => !goByID.has(unit.id))
+    .map((unit) => ({ id: unit.id, path: unit.path, status: unit.status }));
+  const untrackedTsFiles = tsUnits.files
+    .filter((file) => file.metadataCount === 0 && tsFilePolicyFor(config, file.path).category === "requires-tsgo-unit")
+    .map((file) => ({
+      path: file.path,
+      reason: tsFilePolicyFor(config, file.path).reason,
+    }));
+  const forbiddenTsFiles = tsUnits.files
+    .filter((file) => tsFilePolicyFor(config, file.path).category === "forbidden-source")
+    .map((file) => ({
+      path: file.path,
+      reason: tsFilePolicyFor(config, file.path).reason,
+    }));
+  const parseErrors = snapshot.files
+    .filter((file) => file.parseError)
+    .map((file) => ({ path: file.path, error: file.parseError }));
+  const unitlessGoFiles = snapshot.files
+    .filter((file) => !file.parseError && (file.units ?? []).length === 0)
+    .map((file) => ({
+      path: file.path,
+      lineCount: file.lineCount,
+      reason: "No top-level declarations; package docs/comment-only files are valid but reported.",
+    }));
+
+  const featureCounts = {};
+  for (const file of snapshot.files) {
+    for (const [name, count] of Object.entries(file.featureCounts ?? {})) {
+      featureCounts[name] = (featureCounts[name] ?? 0) + count;
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    source: {
+      root: snapshot.sourceRoot,
+      gitRevision: snapshot.gitRevision,
+      fileCount: snapshot.summary.goFileCount,
+      lineCount: snapshot.summary.lineCount,
+      unitCount: snapshot.summary.unitCount,
+    },
+    ts: {
+      root: resolveRepo(config.tsRoot),
+      metadataUnitCount: tsUnits.units.length,
+      scannedFileCount: tsUnits.fileCount,
+    },
+    counts: {
+      portable: rows.length - excluded.length,
+      excluded: excluded.length,
+      implemented: implemented.length,
+      stubbed: stubbed.length,
+      missing: missing.length,
+      stale: stale.length,
+      orphan: orphanTsUnits.length,
+      duplicateGoIDs: duplicateGoIDs.length,
+      duplicateTsIDs: duplicateTsIDs.length,
+      parseErrors: parseErrors.length,
+      unitlessGoFiles: unitlessGoFiles.length,
+      untrackedTsFiles: untrackedTsFiles.length,
+      forbiddenTsFiles: forbiddenTsFiles.length,
+      missingGeneratedArtifacts: generatedArtifacts.missing.length,
+      staleGeneratedArtifacts: generatedArtifacts.stale.length,
+      orphanGeneratedArtifacts: generatedArtifacts.orphan.length,
+      untrackedGeneratedArtifacts: generatedArtifacts.untracked.length,
+      invalidGeneratedArtifacts: generatedArtifacts.invalid.length,
+    },
+    categories: Object.fromEntries([...categoryCounts.entries()].sort()),
+    modules: Object.fromEntries([...moduleCounts.entries()].sort()),
+    featureCounts,
+    duplicateGoIDs,
+    duplicateTsIDs,
+    orphanTsUnits,
+    parseErrors,
+    unitlessGoFiles,
+    untrackedTsFiles,
+    forbiddenTsFiles,
+    generatedArtifacts,
+    missing: missing.slice(0, 500),
+    stale: stale.slice(0, 500),
+    excluded: excluded.slice(0, 500),
+    rows,
+  };
+}
+
+export function scanTsUnits(root) {
+  if (!existsSync(root)) return { fileCount: 0, files: [], units: [] };
+
+  const files = walk(root).filter((file) => file.endsWith(".ts"));
+  const fileReports = [];
+  const units = [];
+  for (const file of files) {
+    const text = readFileSync(file, "utf8");
+    const regex = /@tsgo-unit\s+({[^\n\r]+})/g;
+    let match;
+    let metadataCount = 0;
+    while ((match = regex.exec(text)) !== null) {
+      metadataCount++;
+      try {
+        const metadata = JSON.parse(match[1]);
+        units.push({
+          id: metadata.id,
+          kind: metadata.kind,
+          status: metadata.status,
+          sigHash: metadata.sigHash,
+          bodyHash: metadata.bodyHash,
+          path: path.relative(repoRoot, file).split(path.sep).join("/"),
+          metadata,
+        });
+      } catch (error) {
+        fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
+      }
+    }
+    fileReports.push({
+      path: path.relative(repoRoot, file).split(path.sep).join("/"),
+      metadataCount,
+    });
+  }
+  return { fileCount: files.length, files: fileReports, units };
+}
+
+export function buildGeneratedArtifactStatus(config, snapshot) {
+  const expected = renderExpectedGeneratedArtifacts(config, snapshot);
+  const expectedPaths = new Set(expected.keys());
+  const actualRoot = resolveRepo(`${config.tsRoot.replace(/\/$/, "")}/go`);
+  const actualFiles = walk(actualRoot)
+    .filter((file) => file.endsWith(".ts"))
+    .map((file) => path.relative(repoRoot, file).split(path.sep).join("/"));
+  const actualPaths = new Set(actualFiles);
+  const missing = [];
+  const stale = [];
+  const orphan = [];
+  const untracked = [];
+  const invalid = [];
+
+  for (const relativePath of [...expectedPaths].sort()) {
+    if (!actualPaths.has(relativePath)) {
+      missing.push({
+        path: relativePath,
+        reason: "Expected generated Go compatibility/facade artifact is missing.",
+      });
+    }
+  }
+
+  for (const relativePath of actualFiles) {
+    const absolutePath = resolveRepo(relativePath);
+    const text = readFileSync(absolutePath, "utf8");
+    const metadataResult = parseGeneratedArtifactMetadata(text);
+    if (metadataResult.error) {
+      invalid.push({ path: relativePath, reason: metadataResult.error });
+      continue;
+    }
+    if (!metadataResult.metadata) {
+      untracked.push({
+        path: relativePath,
+        reason: "Generated artifact area files must carry @tsgo-generated metadata.",
+      });
+      continue;
+    }
+    if (!expectedPaths.has(relativePath)) {
+      orphan.push({
+        path: relativePath,
+        metadata: metadataResult.metadata,
+        reason: "Generated artifact metadata exists, but this artifact is no longer generated from the current TS-Go snapshot.",
+      });
+      continue;
+    }
+    const expectedText = expected.get(relativePath);
+    if (text !== expectedText) {
+      stale.push({
+        path: relativePath,
+        metadata: metadataResult.metadata,
+        expectedHash: hashText(stripGeneratedArtifactHeader(expectedText)),
+        actualHash: hashText(stripGeneratedArtifactHeader(text)),
+        reason: "Generated artifact contents differ from the current deterministic porter output.",
+      });
+    }
+  }
+
+  return { missing, stale, orphan, untracked, invalid };
+}
+
+export function emptyGeneratedArtifactStatus() {
+  return { missing: [], stale: [], orphan: [], untracked: [], invalid: [] };
+}
+
+function parseGeneratedArtifactMetadata(text) {
+  const match = /^\/\/ @tsgo-generated\s+({[^\n\r]+})/m.exec(text);
+  if (!match) return { metadata: undefined, error: undefined };
+  try {
+    const metadata = JSON.parse(match[1]);
+    if (metadata.schemaVersion !== 1) return { metadata, error: "Unsupported @tsgo-generated schemaVersion." };
+    if (!metadata.kind) return { metadata, error: "Missing @tsgo-generated kind." };
+    if (!metadata.generator) return { metadata, error: "Missing @tsgo-generated generator." };
+    if (!metadata.path) return { metadata, error: "Missing @tsgo-generated path." };
+    if (!metadata.sourceRevision) return { metadata, error: "Missing @tsgo-generated sourceRevision." };
+    if (!metadata.contentHash) return { metadata, error: "Missing @tsgo-generated contentHash." };
+    return { metadata, error: undefined };
+  } catch (error) {
+    return { metadata: undefined, error: `Invalid @tsgo-generated JSON: ${error.message}` };
+  }
+}
+
+export function scaffoldMissing(config, status, snapshot, options) {
+  const write = options.write === true;
+  const limit = options.limit === undefined ? 25 : Number(options.limit);
+  if (!Number.isInteger(limit) || limit < 0) {
+    fail("--limit must be a non-negative integer");
+  }
+
+  let candidates = status.rows.filter((row) => row.status === "missing");
+  if (options["go-path"]) {
+    candidates = candidates.filter((row) => matchGlob(options["go-path"], row.goPath));
+  }
+  if (options.kind) {
+    candidates = candidates.filter((row) => row.kind === options.kind);
+  }
+  candidates = candidates.slice(0, limit);
+  if (candidates.length === 0) {
+    console.log("No missing units matched scaffold filters.");
+    return;
+  }
+
+  const unitsByID = new Map();
+  for (const file of snapshot.files) {
+    for (const unit of file.units ?? []) {
+      unitsByID.set(unit.id, unit);
+    }
+  }
+
+  const groups = new Map();
+  for (const row of candidates) {
+    const group = groups.get(row.expectedTsPath) ?? [];
+    group.push(row);
+    groups.set(row.expectedTsPath, group);
+  }
+
+  for (const [relativeTargetPath, rows] of groups) {
+    const targetPath = resolveRepo(relativeTargetPath);
+    const units = rows.map((row) => {
+      const unit = unitsByID.get(row.id);
+      if (!unit) fail(`internal error: missing snapshot unit for ${row.id}`);
+      return unit;
+    });
+    const text = renderUnitGroup(config, snapshot, relativeTargetPath, units);
+    const targetLabel = path.relative(repoRoot, targetPath);
+
+    if (!write) {
+      const action = existsSync(targetPath) ? "append to" : "create";
+      console.log(`[dry-run] would ${action} ${targetLabel} with ${rows.length} unit(s)`);
+      continue;
+    }
+    if (existsSync(targetPath) && options.append !== true) {
+      fail(`refusing to append existing file without --append: ${targetLabel}`);
+    }
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    if (existsSync(targetPath)) {
+      const current = readFileSync(targetPath, "utf8").replace(/\s*$/, "\n\n");
+      writeFileSync(targetPath, current + text);
+      console.log(`appended ${rows.length} unit(s) to ${targetLabel}`);
+    } else {
+      writeFileSync(targetPath, text);
+      console.log(`created ${targetLabel} with ${rows.length} unit(s)`);
+    }
+  }
+
+  if (!write) {
+    console.log("Dry run only. Re-run with --write to create scaffold files.");
+  }
+}
+
+export function renderStub(unit) {
+  return renderUnitGroup(
+    { goModulePath: "github.com/microsoft/typescript-go", tsRoot: "packages/tsts/src", splitRules: [] },
+    { files: [fileFromUnit(unit)] },
+    expectedTsPath({ tsRoot: "packages/tsts/src", splitRules: [] }, unit),
+    [unit],
+  );
+}
+
+export function checkSkeletons(config, status, snapshot, options) {
+  const emitTemp = options["emit-temp"] !== false;
+  const compile = options.compile !== false && options.compile !== "false";
+  const outRoot = resolveRepo(options.out ?? ".temp/porter/skeleton");
+  const targetRoot = path.join(outRoot, "src");
+  const tsRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
+  const rows = status.rows.filter((row) => row.status === "missing" || row.status === "stub" || row.status === "implemented");
+  const unitsByID = unitsByIDMap(snapshot);
+  const groups = new Map();
+  const renderFailures = [];
+
+  for (const row of rows) {
+    const unit = unitsByID.get(row.id);
+    if (!unit || !["constGroup", "func", "method", "type", "varGroup"].includes(unit.kind)) continue;
+    const group = groups.get(row.expectedTsPath) ?? [];
+    group.push(unit);
+    groups.set(row.expectedTsPath, group);
+  }
+
+  if (emitTemp) {
+    rmSync(outRoot, { recursive: true, force: true });
+    mkdirSync(targetRoot, { recursive: true });
+    for (const [repoRelativePath, text] of renderExpectedGeneratedArtifacts(config, snapshot)) {
+      const relativeUnderSource = repoRelativePath.startsWith(tsRootPrefix)
+        ? repoRelativePath.slice(tsRootPrefix.length)
+        : repoRelativePath;
+      writeText(path.join(targetRoot, relativeUnderSource), text);
+    }
+  }
+
+  let renderedFiles = 0;
+  let renderedUnits = 0;
+  const diagnostics = [];
+  for (const [relativeTargetPath, units] of groups) {
+    try {
+      const text = renderUnitGroup(config, snapshot, relativeTargetPath, units, { diagnostics });
+      renderedFiles++;
+      renderedUnits += units.length;
+      if (emitTemp) {
+        const relativeUnderSource = relativeTargetPath.startsWith(tsRootPrefix)
+          ? relativeTargetPath.slice(tsRootPrefix.length)
+          : relativeTargetPath;
+        const targetPath = path.join(targetRoot, relativeUnderSource);
+        mkdirSync(path.dirname(targetPath), { recursive: true });
+        writeFileSync(targetPath, text);
+      }
+    } catch (error) {
+      renderFailures.push(`${relativeTargetPath}: ${error.message}`);
+    }
+  }
+
+  const hardDiagnostics = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  console.log(`Skeleton files rendered: ${renderedFiles}`);
+  console.log(`Skeleton units rendered: ${renderedUnits}`);
+  console.log(`Skeleton render failures: ${renderFailures.length}`);
+  console.log(`Skeleton diagnostics: ${diagnostics.length}`);
+  console.log(`Skeleton hard diagnostics: ${hardDiagnostics.length}`);
+
+  if (renderFailures.length > 0 || hardDiagnostics.length > 0) {
+    const details = [
+      ...renderFailures.slice(0, 20),
+      ...hardDiagnostics.slice(0, 20).map((diagnostic) => `${diagnostic.unitID}: ${diagnostic.message}`),
+    ];
+    fail(`skeleton-check failed:\n${details.join("\n")}`);
+  }
+
+  if (emitTemp) {
+    const tsconfigPath = path.join(outRoot, "tsconfig.json");
+    writeJson(tsconfigPath, skeletonTsConfig());
+    console.log(`Skeleton output: ${path.relative(repoRoot, outRoot)}`);
+    if (compile) {
+      const result = spawnSync(
+        path.join(repoRoot, "node_modules/.bin/tsc"),
+        ["--noEmit", "-p", tsconfigPath],
+        { cwd: repoRoot, encoding: "utf8", maxBuffer: 1024 * 1024 * 256 },
+      );
+      if (result.error) fail(`failed to execute TypeScript compiler: ${result.error.message}`);
+      if (result.status !== 0) {
+        fail(`skeleton TypeScript compile failed with exit ${result.status}\n${result.stdout}\n${result.stderr}`);
+      }
+      console.log("skeleton TypeScript compile passed");
+    }
+  }
+}
+
+export function renderUnitGroup(config, snapshot, relativeTargetPath, units, options = {}) {
+  for (const unit of units) {
+    if (!["constGroup", "func", "method", "type", "varGroup"].includes(unit.kind)) {
+      throw new Error(`cannot render scaffold for non-portable Go unit kind '${unit.kind}': ${unit.id}`);
+    }
+  }
+  const context = rendererContext(config, snapshot, relativeTargetPath, units, options);
+  const body = units.map((unit) => renderUnit(unit, context)).join("\n");
+  const imports = renderImports(context);
+  return `${imports}${body}`.replace(/\s*$/, "\n");
+}
+
+function rendererContext(config, snapshot, relativeTargetPath, units, options) {
+  const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
+  const symbolIndex = buildSymbolIndex(config, snapshot);
+  const firstUnit = units[0];
+  const goPath = firstUnit?.metadata?.goPath ?? "";
+  const file = filesByPath.get(goPath) ?? fileFromUnit(firstUnit);
+  const localTypeNames = new Set(
+    units
+      .filter((unit) => unit.kind === "type")
+      .map((unit) => unit.name),
+  );
+  const localTopLevelNames = new Set(units.flatMap((unit) => topLevelNamesForUnit(unit)));
+  return {
+    config,
+    snapshot,
+    symbolIndex,
+    valueTypeIndex: buildValueTypeIndex(config, snapshot),
+    file,
+    relativeTargetPath,
+    imports: new Map(),
+    coreImports: new Set(),
+    compatImports: new Set(),
+    diagnostics: options.diagnostics ?? [],
+    localTypeNames,
+    localTopLevelNames,
+    importAliases: importAliasMap(file.imports ?? []),
+    externalFacades: buildExternalFacadeMap(config, snapshot),
+  };
+}
+
+function renderUnit(unit, context) {
+  const metadata = {
+    id: unit.id,
+    kind: unit.kind,
+    status: "stub",
+    sigHash: unit.sigHash,
+    bodyHash: unit.bodyHash,
+  };
+  const goComment = String(unit.snippet ?? "")
+    .split("\n")
+    .map((line) => ` * ${line.replaceAll("*/", "* /")}`)
+    .join("\n");
+  const header = `/**\n * @tsgo-unit ${JSON.stringify(metadata)}\n *\n * Go source:\n${goComment}\n */\n`;
+  if (unit.kind === "type") return `${header}${renderTypeUnit(unit, context)}\n`;
+  if (unit.kind === "func" || unit.kind === "method") return `${header}${renderFunctionUnit(unit, context)}\n`;
+  if (unit.kind === "constGroup") return `${header}${renderValueGroup(unit, context, "const")}\n`;
+  if (unit.kind === "varGroup") return `${header}${renderValueGroup(unit, context, "let")}\n`;
+  throw new Error(`unsupported unit kind ${unit.kind}`);
+}
+
+function renderTypeUnit(unit, context) {
+  const typeParameters = renderTypeParameterList(unit.typeParameterDetails ?? [], context, unit, { defaultUnknown: true });
+  if (unit.typeKind === "struct") {
+    const { heritage, members } = renderObjectMembers(unit.members ?? [], context, unit, "struct");
+    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
+    return `export interface ${safeIdentifier(unit.name)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+  }
+  if (unit.typeKind === "interface") {
+    const { heritage, members } = renderObjectMembers(unit.members ?? [], context, unit, "interface");
+    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
+    return `export interface ${safeIdentifier(unit.name)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+  }
+  const expression = tsType(unit.typeExpression, context, scopeForUnit(unit), unit);
+  return `export type ${safeIdentifier(unit.name)}${typeParameters} = ${expression};`;
+}
+
+function renderFunctionUnit(unit, context) {
+  const scope = scopeForUnit(unit);
+  const receiverTypeParameters = receiverTypeParameterDetails(unit.receiverType);
+  const typeParameters = renderTypeParameterList([...(receiverTypeParameters ?? []), ...(unit.typeParameterDetails ?? [])], context, unit);
+  const params = [];
+  const usedParamNames = new Set();
+  if (unit.kind === "method") {
+    const receiverName = uniqueName("receiver", usedParamNames);
+    params.push(`${receiverName}: ${tsType(unit.receiverType, context, scope, unit)}`);
+  }
+  params.push(...renderParameters(unit.parameters ?? [], context, scope, unit, usedParamNames));
+  const returnType = tsReturnType(unit.results ?? [], context, scope, unit);
+  return `export function ${localTsName(unit)}${typeParameters}(${params.join(", ")}): ${returnType} {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_UNIMPLEMENTED ${unit.id}`)});\n}`;
+}
+
+function renderValueGroup(unit, context, declarationKind) {
+  const lines = [];
+  let fallbackIndex = 0;
+  let blankIndex = 0;
+  const used = new Set();
+  for (const spec of unit.valueSpecs ?? []) {
+    const names = (spec.names ?? []).length > 0 ? spec.names : [`__tsgoValue${fallbackIndex++}`];
+    for (const [index, name] of names.entries()) {
+      const baseName = name === "_" ? `${localTsName(unit)}_${unitHash(unit)}_${blankIndex++}` : safeIdentifier(name);
+      const localName = uniqueName(baseName, used);
+      const inferredType = spec.inferredValueTypes?.[index] ?? spec.inferredValueTypes?.[0];
+      const indexedType = context.valueTypeIndex.get(`${context.file.importPath}::${name}`);
+      const valueType = spec.type
+        ? tsType(spec.type, context, scopeForUnit(unit), unit)
+        : inferredType
+          ? tsType(inferredType, context, scopeForUnit(unit), unit)
+          : indexedType
+            ? tsType(indexedType, context, scopeForUnit(unit), unit)
+            : inferValueType(spec.values?.[index] ?? spec.values?.[0], context, unit);
+      lines.push(`export ${declarationKind} ${localName}: ${valueType} = undefined as never;`);
+    }
+  }
+  if (lines.length === 0) {
+    lines.push(`export ${declarationKind} ${localTsName(unit)}: never = undefined as never;`);
+  }
+  return lines.join("\n");
+}
+
+function renderObjectMembers(members, context, unit, ownerKind) {
+  const scope = scopeForUnit(unit);
+  const heritage = [];
+  const lines = [];
+  let embeddedIndex = 0;
+  let blankIndex = 0;
+  for (const member of members) {
+    if (member.kind === "embeddedField" || member.kind === "embeddedInterface") {
+      const embeddedType = tsType(member.typeExpr, context, scope, unit);
+      lines.push(`  readonly __tsgoEmbedded${embeddedIndex++}?: ${embeddedType};`);
+      continue;
+    }
+    if (member.kind === "method" && member.typeExpr?.kind === "func") {
+      const params = renderParameters(member.typeExpr.parameters ?? [], context, scope, unit);
+      const result = tsReturnType(member.typeExpr.results ?? [], context, scope, unit);
+      lines.push(`  ${safePropertyName(member.name)}(${params.join(", ")}): ${result};`);
+      continue;
+    }
+    const propertyName = member.name === "_" ? `__tsgoBlank${blankIndex++}` : member.name;
+    const readonly = ownerKind === "struct" ? "" : "readonly ";
+    lines.push(`  ${readonly}${safePropertyName(propertyName)}: ${tsType(member.typeExpr, context, scope, unit)};`);
+  }
+  return { heritage, members: lines };
+}
+
+function renderParameters(params, context, scope, unit, used = new Set()) {
+  const output = [];
+  let syntheticIndex = 0;
+  for (const param of params) {
+    const names = (param.names ?? []).length > 0 ? param.names : [`arg${syntheticIndex++}`];
+    for (const name of names) {
+      const paramName = uniqueName(safeParamName(name), used);
+      const paramType = tsType(param.type, context, scope, unit);
+      if (param.variadic) {
+        output.push(`...${paramName}: ${restType(paramType)}`);
+      } else {
+        output.push(`${paramName}: ${paramType}`);
+      }
+    }
+  }
+  return output;
+}
+
+function tsReturnType(results, context, scope, unit) {
+  const flattened = [];
+  for (const result of results) {
+    const names = (result.names ?? []).length > 0 ? result.names : [""];
+    for (const _name of names) {
+      flattened.push(tsType(result.type, context, scope, unit));
+    }
+  }
+  if (flattened.length === 0) return "void";
+  if (flattened.length === 1) return flattened[0];
+  return `[${flattened.join(", ")}]`;
+}
+
+function restType(paramType) {
+  const sliceMatch = /^GoSlice<(.+)>$/.exec(paramType);
+  if (sliceMatch) return `${sliceMatch[1]}[]`;
+  return `Array<${paramType}>`;
+}
+
+function renderTypeParameterList(typeParameters, context, unit, options = {}) {
+  const seen = new Set();
+  const rendered = [];
+  for (const param of typeParameters) {
+    if (!param?.name || seen.has(param.name)) continue;
+    seen.add(param.name);
+    const constraint = renderTypeParameterConstraint(param.constraint, context, unit);
+    const defaultType = options.defaultUnknown ? " = unknown" : "";
+    rendered.push(`${safeIdentifier(param.name)}${constraint}${defaultType}`);
+  }
+  return rendered.length > 0 ? `<${rendered.join(", ")}>` : "";
+}
+
+function renderTypeParameterConstraint(constraint, context, unit) {
+  if (!constraint || constraint.text === "any") return "";
+  if (constraint.text === "comparable") return ` extends ${useCompat(context, "GoComparable")}`;
+  useCompat(context, "GoConstraint");
+  return "";
+}
+
+function tsType(expr, context, scope, unit) {
+  if (!expr) return "unknown";
+  switch (expr.kind) {
+    case "ident":
+      return tsIdentType(expr.name, context, scope, unit);
+    case "selector":
+      return tsSelectorType(expr, context, scope, unit);
+    case "pointer":
+      return `${useCompat(context, "GoPtr")}<${tsType(expr.element, context, scope, unit)}>`;
+    case "slice":
+      return `${useCompat(context, "GoSlice")}<${tsType(expr.element, context, scope, unit)}>`;
+    case "array":
+      return `${useCompat(context, "GoArray")}<${tsType(expr.element, context, scope, unit)}, ${JSON.stringify(expr.length ?? "")}>`;
+    case "map":
+      return `${useCompat(context, "GoMap")}<${tsType(expr.key, context, scope, unit)}, ${tsType(expr.value, context, scope, unit)}>`;
+    case "func":
+      return tsFunctionType(expr, context, scope, unit);
+    case "interface":
+      return tsInlineInterface(expr.members ?? [], context, scope, unit);
+    case "struct":
+      return tsInlineStruct(expr.members ?? [], context, scope, unit);
+    case "ellipsis":
+      return `${useCompat(context, "GoSlice")}<${tsType(expr.element, context, scope, unit)}>`;
+    case "instantiation":
+      return tsInstantiationType(expr, context, scope, unit);
+    case "paren":
+      return tsType(expr.element, context, scope, unit);
+    case "channel":
+      return `${useCompat(context, "GoChan")}<${tsType(expr.element, context, scope, unit)}, ${JSON.stringify(expr.direction ?? "bidirectional")}>`;
+    case "unary":
+    case "binary":
+      return `${useCompat(context, "GoConstraint")}<${JSON.stringify(expr.text)}>`;
+    default:
+      context.diagnostics.push({
+        severity: "error",
+        unitID: unit?.id ?? "",
+        message: `unsupported Go type expression '${expr.kind}' (${expr.text})`,
+      });
+      return `${useCompat(context, "GoUnsupported")}<${JSON.stringify(expr.text ?? expr.kind)}>`;
+  }
+}
+
+function tsIdentType(name, context, scope, unit) {
+  if (!name) return "unknown";
+  if (scope.typeParameters.has(name)) return safeIdentifier(name);
+  const primitive = primitiveTypes.get(name);
+  if (primitive) {
+    if (primitive.source === "core") return useCore(context, primitive.name);
+    if (primitive.source === "compat") return useCompat(context, primitive.name);
+    return primitive.name;
+  }
+  if (context.localTypeNames.has(name)) return safeIdentifier(name);
+  const resolved = resolvePackageSymbol(context, context.file.importPath, name, unit);
+  if (resolved) return resolved;
+  context.diagnostics.push({
+    severity: "error",
+    unitID: unit?.id ?? "",
+    message: `unresolved package-local type '${name}' in ${context.file.path}`,
+  });
+  return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${context.file.importPath}.${name}`)}>`;
+}
+
+function tsSelectorType(expr, context, _scope, unit, typeArgs = []) {
+  const importPath = context.importAliases.get(expr.package);
+  if (!importPath) {
+    const externalName = `${expr.package}.${expr.name}`;
+    return tsExternalType(context, externalName, typeArgs, unit);
+  }
+  const standard = standardSelectorTypes.get(`${importPath}.${expr.name}`);
+  if (standard) return useCompat(context, standard);
+  if (importPath.startsWith(context.config.goModulePath)) {
+    const resolved = resolvePackageSymbol(context, importPath, expr.name, unit);
+    if (resolved) return resolved;
+    context.diagnostics.push({
+      severity: "error",
+      unitID: unit?.id ?? "",
+      message: `unresolved imported TS-Go type '${expr.name}' from ${importPath}`,
+    });
+    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(`${importPath}.${expr.name}`)}>`;
+  }
+  return tsExternalType(context, `${importPath}.${expr.name}`, typeArgs, unit);
+}
+
+function tsInstantiationType(expr, context, scope, unit) {
+  const args = (expr.typeArgs ?? []).map((arg) => tsType(arg, context, scope, unit));
+  if (expr.element?.kind === "selector") {
+    const selector = expr.element;
+    const importPath = context.importAliases.get(selector.package);
+    const standard = importPath ? standardSelectorTypes.get(`${importPath}.${selector.name}`) : undefined;
+    if (!standard) return tsSelectorType(selector, context, scope, unit, args);
+  }
+  const base = tsType(expr.element, context, scope, unit);
+  return `${base}<${args.join(", ")}>`;
+}
+
+function tsExternalType(context, goName, typeArgs, unit) {
+  const facade = context.externalFacades.get(goName);
+  if (!facade) {
+    context.diagnostics.push({
+      severity: "error",
+      unitID: unit?.id ?? "",
+      message: `external Go type '${goName}' was not assigned a generated facade`,
+    });
+    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(goName)}>`;
+  }
+  if (facade.arity !== typeArgs.length) {
+    context.diagnostics.push({
+      severity: "error",
+      unitID: unit?.id ?? "",
+      message: `external Go type '${goName}' expected ${facade.arity} type argument(s), got ${typeArgs.length}`,
+    });
+  }
+  const name = importExternalFacadeName(context, facade, unit);
+  return typeArgs.length > 0 ? `${name}<${typeArgs.join(", ")}>` : name;
+}
+
+function tsFunctionType(expr, context, scope, unit) {
+  const params = renderParameters(expr.parameters ?? [], context, scope, unit);
+  const result = tsReturnType(expr.results ?? [], context, scope, unit);
+  return `(${params.join(", ")}) => ${result}`;
+}
+
+function tsInlineInterface(members, context, scope, unit) {
+  if (members.length === 0) return "unknown";
+  const lines = [];
+  for (const member of members) {
+    if (member.kind === "embeddedInterface") {
+      lines.push(`readonly __tsgoEmbedded?: ${tsType(member.typeExpr, context, scope, unit)}`);
+      continue;
+    }
+    if (member.kind === "method" && member.typeExpr?.kind === "func") {
+      const params = renderParameters(member.typeExpr.parameters ?? [], context, scope, unit);
+      const result = tsReturnType(member.typeExpr.results ?? [], context, scope, unit);
+      lines.push(`${safePropertyName(member.name)}: (${params.join(", ")}) => ${result}`);
+      continue;
+    }
+    lines.push(`${safePropertyName(member.name)}: ${tsType(member.typeExpr, context, scope, unit)}`);
+  }
+  return `{ ${lines.join("; ")} }`;
+}
+
+function tsInlineStruct(members, context, scope, unit) {
+  if (members.length === 0) return "{ readonly __tsgoEmpty?: never }";
+  return `{ ${members.map((member, index) => {
+    const name = member.kind === "embeddedField" ? `__tsgoEmbedded${index}` : member.name;
+    return `${safePropertyName(name)}: ${tsType(member.typeExpr, context, scope, unit)}`;
+  }).join("; ")} }`;
+}
+
+function inferValueType(value, context, unit) {
+  if (value === undefined || value === "") return "unknown";
+  if (/^".*"$|^`[\s\S]*`$/.test(value)) return "string";
+  if (/^(true|false)$/.test(value)) return useCore(context, "bool");
+  if (/^[+-]?(?:\d|\.\d)/.test(value) || value === "iota") return useCore(context, "int");
+  const identifierMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)$/.exec(value);
+  if (identifierMatch) {
+    const inferred = context.valueTypeIndex.get(`${context.file.importPath}::${identifierMatch[1]}`);
+    if (inferred) return tsType(inferred, context, scopeForUnit(unit), unit);
+  }
+  const conversionMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/.exec(value);
+  if (conversionMatch && context.symbolIndex.has(`${context.file.importPath}::${conversionMatch[1]}`)) {
+    return tsType({ kind: "ident", name: conversionMatch[1], text: conversionMatch[1] }, context, scopeForUnit(unit), unit);
+  }
+  return "unknown";
+}
+
+function topLevelNamesForUnit(unit) {
+  if (unit.kind === "type" || unit.kind === "func" || unit.kind === "method") return [localTsName(unit), safeIdentifier(unit.name)];
+  if (unit.kind === "constGroup" || unit.kind === "varGroup") {
+    const names = [];
+    for (const spec of unit.valueSpecs ?? []) {
+      for (const name of spec.names ?? []) {
+        if (name !== "_") names.push(safeIdentifier(name));
+      }
+    }
+    return names.length > 0 ? names : [localTsName(unit)];
+  }
+  return [localTsName(unit)];
+}
+
+function uniqueName(name, used) {
+  const base = name === "" ? "arg" : name;
+  let candidate = base;
+  let index = 0;
+  while (used.has(candidate)) {
+    candidate = `${base}${++index}`;
+  }
+  used.add(candidate);
+  return candidate;
+}
+
+function uniqueImportAlias(exportName, unit, targetPath = "") {
+  const hash = createHash("sha256").update(`${unit?.id ?? ""}:${targetPath}:${exportName}`).digest("hex").slice(0, 8);
+  return `${exportName}_${hash}`;
+}
+
+function isImportAliasUsed(context, alias) {
+  for (const names of context.imports.values()) {
+    for (const existing of names.values()) {
+      if (existing === alias) return true;
+    }
+  }
+  return false;
+}
+
+function unitHash(unit) {
+  return createHash("sha256").update(unit?.id ?? "").digest("hex").slice(0, 8);
+}
+
+function scopeForUnit(unit) {
+  return {
+    typeParameters: new Set([
+      ...(unit.typeParameters ?? []),
+      ...(unit.typeParameterDetails ?? []).map((param) => param.name),
+      ...receiverTypeParameterDetails(unit.receiverType).map((param) => param.name),
+    ]),
+  };
+}
+
+function receiverTypeParameterDetails(receiverType) {
+  const details = [];
+  const seen = new Set();
+  for (const name of collectReceiverTypeParameterNames(receiverType)) {
+    if (primitiveTypes.has(name) || seen.has(name)) continue;
+    seen.add(name);
+    details.push({ name });
+  }
+  return details;
+}
+
+function collectReceiverTypeParameterNames(expr) {
+  if (!expr) return [];
+  if (expr.kind === "pointer") return collectReceiverTypeParameterNames(expr.element);
+  if (expr.kind === "instantiation") return (expr.typeArgs ?? []).flatMap((arg) => collectTypeIdentifiers(arg));
+  return [];
+}
+
+function collectTypeIdentifiers(expr) {
+  if (!expr) return [];
+  if (expr.kind === "ident") return [expr.name];
+  return [
+    ...collectTypeIdentifiers(expr.element),
+    ...collectTypeIdentifiers(expr.key),
+    ...collectTypeIdentifiers(expr.value),
+    ...collectTypeIdentifiers(expr.left),
+    ...collectTypeIdentifiers(expr.right),
+    ...(expr.typeArgs ?? []).flatMap((arg) => collectTypeIdentifiers(arg)),
+  ];
+}
+
+function resolvePackageSymbol(context, importPath, name, unit) {
+  const symbol = context.symbolIndex.get(`${importPath}::${name}`);
+  if (!symbol) return undefined;
+  if (!symbol.active) return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(symbol.goName)}>`;
+  if (symbol.targetPath === context.relativeTargetPath) return safeIdentifier(symbol.exportName);
+  const alias = importTypeName(context, symbol.targetPath, symbol.exportName, unit);
+  return alias;
+}
+
+function importTypeName(context, targetPath, exportName, unit) {
+  const source = relativeImportPath(context.relativeTargetPath, targetPath);
+  const names = context.imports.get(source) ?? new Map();
+  context.imports.set(source, names);
+  const safeExport = safeIdentifier(exportName);
+  const existing = names.get(safeExport);
+  if (existing) return existing;
+  const alias = context.localTopLevelNames.has(safeExport) || isImportAliasUsed(context, safeExport)
+    ? uniqueImportAlias(safeExport, unit, targetPath)
+    : safeExport;
+  names.set(safeExport, alias);
+  return alias;
+}
+
+function renderImports(context) {
+  const lines = [];
+  if (context.coreImports.size > 0) {
+    lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "@tsonic/core/types.js";`);
+  }
+  if (context.compatImports.size > 0) {
+    lines.push(`import type { ${[...context.compatImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/compat.ts`)}";`);
+  }
+  for (const [source, names] of [...context.imports.entries()].sort()) {
+    const specifiers = [...names.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([exportName, alias]) => exportName === alias ? exportName : `${exportName} as ${alias}`)
+      .join(", ");
+    lines.push(`import type { ${specifiers} } from "${source}";`);
+  }
+  return lines.length > 0 ? `${lines.join("\n")}\n\n` : "";
+}
+
+function useCore(context, name) {
+  context.coreImports.add(name);
+  return name;
+}
+
+function useCompat(context, name) {
+  context.compatImports.add(name);
+  return name;
+}
+
+function importExternalFacadeName(context, policy, unit) {
+  if (!policy.tsModule || !policy.tsName) {
+    context.diagnostics.push({
+      severity: "error",
+      unitID: unit?.id ?? "",
+      message: `external type policy for '${policy.goName}' must specify tsModule and tsName`,
+    });
+    return `${useCompat(context, "GoUnresolved")}<${JSON.stringify(policy.goName)}>`;
+  }
+  if (`${context.config.tsRoot}/${policy.tsModule}` === context.relativeTargetPath) return safeIdentifier(policy.tsName);
+  return importTypeName(context, `${context.config.tsRoot}/${policy.tsModule}`, policy.tsName, unit);
+}
+
+function buildSymbolIndex(config, snapshot) {
+  const index = new Map();
+  for (const file of snapshot.files ?? []) {
+    for (const unit of file.units ?? []) {
+      if (unit.kind !== "type") continue;
+      const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+      index.set(`${file.importPath}::${unit.name}`, {
+        exportName: safeIdentifier(unit.name),
+        targetPath: expectedTsPath(config, unit),
+        active: isActivePortPolicy(policy),
+        goName: `${file.importPath}.${unit.name}`,
+      });
+    }
+  }
+  return index;
+}
+
+function buildValueTypeIndex(config, snapshot) {
+  const symbolIndex = buildSymbolIndex(config, snapshot);
+  const index = new Map();
+  const pending = [];
+  for (const file of snapshot.files ?? []) {
+    for (const unit of file.units ?? []) {
+      if (unit.kind !== "constGroup" && unit.kind !== "varGroup") continue;
+      for (const spec of unit.valueSpecs ?? []) {
+        const names = spec.names ?? [];
+        for (const [position, name] of names.entries()) {
+          if (!name || name === "_") continue;
+          const key = `${file.importPath}::${name}`;
+          const directType = spec.type ?? spec.inferredValueTypes?.[position] ?? spec.inferredValueTypes?.[0];
+          if (directType) {
+            index.set(key, directType);
+            continue;
+          }
+          pending.push({
+            key,
+            importPath: file.importPath,
+            value: spec.values?.[position] ?? spec.values?.[0] ?? "",
+          });
+        }
+      }
+    }
+  }
+
+  let changed = true;
+  for (let pass = 0; changed && pass < 8; pass++) {
+    changed = false;
+    for (const item of pending) {
+      if (index.has(item.key)) continue;
+      const resolved = resolveValueTypeFromText(item.value, item.importPath, index, symbolIndex);
+      if (!resolved) continue;
+      index.set(item.key, resolved);
+      changed = true;
+    }
+  }
+  return index;
+}
+
+function resolveValueTypeFromText(value, importPath, valueTypeIndex, symbolIndex) {
+  const text = String(value ?? "").trim();
+  const identifierMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)$/.exec(text);
+  if (identifierMatch) {
+    return valueTypeIndex.get(`${importPath}::${identifierMatch[1]}`);
+  }
+  const conversionMatch = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/.exec(text);
+  if (conversionMatch && symbolIndex.has(`${importPath}::${conversionMatch[1]}`)) {
+    return { kind: "ident", name: conversionMatch[1], text: conversionMatch[1] };
+  }
+  return undefined;
+}
+
+function importAliasMap(imports) {
+  const aliases = new Map();
+  for (const item of imports) {
+    if (item.name === "_" || item.name === ".") continue;
+    const alias = item.name || path.basename(item.path);
+    aliases.set(alias, item.path);
+  }
+  return aliases;
+}
+
+function relativeImportPath(fromTsPath, toTsPath) {
+  let relative = path.posix.relative(path.posix.dirname(fromTsPath), toTsPath.replace(/\.ts$/, ".js"));
+  if (!relative.startsWith(".")) relative = `./${relative}`;
+  return relative;
+}
+
+function fileFromUnit(unit) {
+  const goPath = unit?.metadata?.goPath ?? "unknown/unknown.go";
+  return {
+    path: goPath,
+    importPath: `github.com/microsoft/typescript-go/${path.posix.dirname(goPath)}`,
+    packageName: "",
+    imports: [],
+    units: unit ? [unit] : [],
+  };
+}
+
+function unitsByIDMap(snapshot) {
+  const map = new Map();
+  for (const file of snapshot.files ?? []) {
+    for (const unit of file.units ?? []) map.set(unit.id, unit);
+  }
+  return map;
+}
+
+function skeletonTsConfig() {
+  return {
+    compilerOptions: {
+      target: "ES2024",
+      module: "NodeNext",
+      moduleResolution: "NodeNext",
+      strict: true,
+      noUncheckedIndexedAccess: true,
+      exactOptionalPropertyTypes: true,
+      verbatimModuleSyntax: true,
+      skipLibCheck: true,
+      preserveSymlinks: true,
+      types: ["node"],
+    },
+    include: ["src/**/*.ts"],
+  };
+}
+
+function writeExternalFacades(config, snapshot, options) {
+  const outRoot = resolveRepo(options.out ?? config.tsRoot);
+  const artifacts = renderExpectedGeneratedArtifacts(config, snapshot);
+  const sourceRootPrefix = `${config.tsRoot.replace(/\/$/, "")}/`;
+  let count = 0;
+  for (const [repoRelativePath, text] of artifacts) {
+    const relativeUnderSource = repoRelativePath.startsWith(sourceRootPrefix)
+      ? repoRelativePath.slice(sourceRootPrefix.length)
+      : repoRelativePath;
+    writeText(path.join(outRoot, relativeUnderSource), text);
+    count++;
+  }
+  console.log(`generated ${count} Go compatibility/facade file(s) under ${path.relative(repoRoot, outRoot)}`);
+}
+
+export function renderExpectedGeneratedArtifacts(config, snapshot) {
+  const artifacts = new Map();
+  const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
+  const compatBody = renderGoCompatModule();
+  artifacts.set(
+    `${sourceRootPrefix}/go/compat.ts`,
+    renderGeneratedArtifact(snapshot, "go/compat.ts", "go-compat", compatBody),
+  );
+  for (const [relativePath, body] of renderExternalFacadeModules(config, snapshot)) {
+    artifacts.set(
+      `${sourceRootPrefix}/${relativePath}`,
+      renderGeneratedArtifact(snapshot, relativePath, "go-facade", body),
+    );
+  }
+  return new Map([...artifacts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+}
+
+function renderGeneratedArtifact(snapshot, relativePath, kind, body) {
+  const normalizedBody = body.replace(/\s*$/, "\n");
+  const metadata = {
+    schemaVersion: 1,
+    kind,
+    generator: "porter:facades",
+    sourceRevision: snapshot.gitRevision,
+    path: relativePath,
+    contentHash: hashText(normalizedBody),
+  };
+  return [
+    "// Code generated by TSTS porter. DO NOT EDIT.",
+    `// @tsgo-generated ${JSON.stringify(metadata)}`,
+    "",
+    normalizedBody,
+  ].join("\n");
+}
+
+function stripGeneratedArtifactHeader(text) {
+  return text.replace(/^\/\/ Code generated by TSTS porter\. DO NOT EDIT\.\r?\n\/\/ @tsgo-generated {[^}\r\n]+}\r?\n\r?\n/, "");
+}
+
+export function renderExternalFacadeModules(config, snapshot) {
+  const facades = buildExternalFacadeMap(config, snapshot);
+  const groups = new Map();
+  for (const facade of facades.values()) {
+    if (!facade.tsModule || !facade.tsName) fail(`external facade for ${facade.goName} must include tsModule and tsName`);
+    const group = groups.get(facade.tsModule) ?? [];
+    group.push(facade);
+    groups.set(facade.tsModule, group);
+  }
+
+  const output = new Map();
+  for (const [tsModule, policies] of [...groups.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+    const relativeTargetPath = `${config.tsRoot}/${tsModule}`;
+    const context = facadeRendererContext(config, relativeTargetPath, policies, facades);
+    const body = policies
+      .slice()
+      .sort((left, right) => left.tsName.localeCompare(right.tsName))
+      .map((policy) => renderExternalFacadePolicy(policy, context))
+      .join("\n\n");
+    output.set(tsModule, `${renderImports(context)}${body}\n`);
+  }
+  return output;
+}
+
+function facadeRendererContext(config, relativeTargetPath, policies, facades) {
+  return {
+    config,
+    snapshot: { files: [] },
+    symbolIndex: new Map(),
+    valueTypeIndex: new Map(),
+    file: { path: relativeTargetPath, importPath: "", imports: [] },
+    relativeTargetPath,
+    imports: new Map(),
+    coreImports: new Set(),
+    compatImports: new Set(),
+    diagnostics: [],
+    localTypeNames: new Set(policies.map((policy) => policy.tsName)),
+    localTopLevelNames: new Set(policies.map((policy) => policy.tsName)),
+    importAliases: new Map(),
+    externalFacades: facades,
+  };
+}
+
+function renderExternalFacadePolicy(policy, context) {
+  const typeParameters = renderExternalTypeParameters(facadeTypeParameters(policy));
+  if (policy.kind === "class") {
+    const members = renderExternalMembers(policy, context);
+    return `export class ${safeIdentifier(policy.tsName)}${typeParameters} {\n${members.length > 0 ? members.join("\n") : "  readonly __tsgoEmpty?: never;"}\n}`;
+  }
+  if (policy.kind === "interface" || policy.kind === "opaque") {
+    const heritage = (policy.extends ?? []).map((goName) => {
+      const parent = context.externalFacades.get(goName);
+      if (!parent) fail(`external type policy ${policy.goName} extends unknown facade ${goName}`);
+      return importExternalFacadeName(context, parent, { id: `external-facade:${policy.goName}` });
+    });
+    const extendsClause = heritage.length > 0 ? ` extends ${heritage.join(", ")}` : "";
+    const members = renderExternalMembers(policy, context);
+    const fallback = policy.kind === "opaque"
+      ? `  readonly __goFacadeName: ${JSON.stringify(policy.goName)};`
+      : "  readonly __tsgoEmpty?: never;";
+    return `export interface ${safeIdentifier(policy.tsName)}${typeParameters}${extendsClause} {\n${members.length > 0 ? members.join("\n") : fallback}\n}`;
+  }
+  if (policy.kind === "function") {
+    const params = renderParameters(policy.parameters ?? [], context, facadeScope(policy), { id: `external-facade:${policy.goName}` });
+    const result = tsReturnType(policy.results ?? [], context, facadeScope(policy), { id: `external-facade:${policy.goName}` });
+    return `export type ${safeIdentifier(policy.tsName)}${typeParameters} = (${params.join(", ")}) => ${result};`;
+  }
+  if (policy.kind === "functionValue") {
+    return `export function ${safeIdentifier(policy.tsName)}(...args: Array<unknown>): unknown {\n  throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}`)});\n}`;
+  }
+  if (policy.kind === "value") {
+    return `export const ${safeIdentifier(policy.tsName)}: unknown = undefined as never;`;
+  }
+  if (policy.kind === "type") {
+    const expression = policy.typeExpression
+      ? tsType(policy.typeExpression, context, facadeScope(policy), { id: `external-facade:${policy.goName}` })
+      : `${useCompat(context, "GoUnresolved")}<${JSON.stringify(policy.goName)}>`;
+    return `export type ${safeIdentifier(policy.tsName)}${typeParameters} = ${expression};`;
+  }
+  fail(`unsupported external facade kind '${policy.kind}' for ${policy.goName}`);
+}
+
+function renderExternalMembers(policy, context) {
+  const scope = facadeScope(policy);
+  return (policy.members ?? []).map((member) => {
+    if (member.kind !== "method") fail(`unsupported external facade member kind '${member.kind}' for ${policy.goName}`);
+    const params = renderParameters(member.parameters ?? [], context, scope, { id: `external-facade:${policy.goName}` });
+    const result = tsReturnType(member.results ?? [], context, scope, { id: `external-facade:${policy.goName}` });
+    if (policy.kind === "class") {
+      return `  ${safePropertyName(member.name)}(${params.join(", ")}): ${result} {\n    throw new globalThis.Error(${JSON.stringify(`TSGO_EXTERNAL_FACADE_UNIMPLEMENTED ${policy.goName}.${member.name}`)});\n  }`;
+    }
+    return `  ${safePropertyName(member.name)}(${params.join(", ")}): ${result};`;
+  });
+}
+
+function renderExternalTypeParameters(typeParameters) {
+  return typeParameters.length > 0 ? `<${typeParameters.map((param) => safeIdentifier(param)).join(", ")}>` : "";
+}
+
+function facadeScope(policy) {
+  return { typeParameters: new Set(facadeTypeParameters(policy)) };
+}
+
+function facadeTypeParameters(policy) {
+  if (policy.typeParameters?.length) return policy.typeParameters;
+  return Array.from({ length: policy.arity ?? 0 }, (_value, index) => `T${index}`);
+}
+
+export function buildExternalFacadeMap(config, snapshot) {
+  const facades = new Map();
+  for (const policy of knownExternalFacadePolicies()) {
+    addExternalFacade(facades, policy);
+  }
+  for (const policy of config.externalFacadePolicies ?? []) {
+    addExternalFacade(facades, normalizeExternalFacadePolicy(policy));
+  }
+  for (const usage of collectExternalTypeUsages(config, snapshot)) {
+    const existing = facades.get(usage.goName);
+    if (existing) {
+      if (existing.arity !== usage.arity) {
+        fail(`external facade arity mismatch for ${usage.goName}: configured ${existing.arity}, observed ${usage.arity}`);
+      }
+      continue;
+    }
+    addExternalFacade(facades, autoExternalFacadePolicy(usage));
+  }
+  for (const usage of collectExternalRefUsages(config, snapshot)) {
+    addOrMergeExternalFacade(facades, autoExternalRefFacadePolicy(usage));
+  }
+  return facades;
+}
+
+function addExternalFacade(facades, policy) {
+  if (!policy.goName) fail("external facade policy must include goName");
+  if (facades.has(policy.goName)) fail(`duplicate external facade policy for ${policy.goName}`);
+  facades.set(policy.goName, policy);
+}
+
+function addOrMergeExternalFacade(facades, policy) {
+  if (!policy.goName) fail("external facade policy must include goName");
+  const existing = facades.get(policy.goName);
+  if (!existing) {
+    facades.set(policy.goName, policy);
+    return;
+  }
+  if (existing.generated && existing.kind === "value" && policy.kind === "functionValue") {
+    facades.set(policy.goName, policy);
+  }
+}
+
+function collectExternalTypeUsages(config, snapshot) {
+  const usages = new Map();
+  const symbolIndex = buildSymbolIndex(config, snapshot);
+  for (const file of snapshot.files ?? []) {
+    const aliases = importAliasMap(file.imports ?? []);
+    for (const unit of file.units ?? []) {
+      collectExternalTypesFromUnit(config, symbolIndex, aliases, file.importPath, unit, usages);
+    }
+  }
+  return [...usages.values()].sort((left, right) => left.goName.localeCompare(right.goName));
+}
+
+function collectExternalTypesFromUnit(config, symbolIndex, aliases, currentImportPath, unit, usages) {
+  visitTypeExpr(unit.receiverType);
+  visitTypeExpr(unit.typeExpression);
+  for (const param of unit.typeParameterDetails ?? []) visitTypeExpr(param.constraint);
+  for (const param of unit.parameters ?? []) visitTypeExpr(param.type);
+  for (const result of unit.results ?? []) visitTypeExpr(result.type);
+  for (const spec of unit.valueSpecs ?? []) visitTypeExpr(spec.type);
+  for (const member of unit.members ?? []) visitTypeExpr(member.typeExpr);
+
+  function visitTypeExpr(expr) {
+    if (!expr) return;
+    if (expr.kind === "selector") {
+      const goName = externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr);
+      if (goName) recordExternalUsage(usages, goName, 0);
+    }
+    if (expr.kind === "instantiation") {
+      if (expr.element?.kind === "selector") {
+        const goName = externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr.element);
+        if (goName) recordExternalUsage(usages, goName, expr.typeArgs?.length ?? 0);
+      }
+    }
+    visitTypeExpr(expr.element);
+    visitTypeExpr(expr.key);
+    visitTypeExpr(expr.value);
+    visitTypeExpr(expr.left);
+    visitTypeExpr(expr.right);
+    for (const arg of expr.typeArgs ?? []) visitTypeExpr(arg);
+    for (const param of expr.parameters ?? []) visitTypeExpr(param.type);
+    for (const result of expr.results ?? []) visitTypeExpr(result.type);
+    for (const member of expr.members ?? []) visitTypeExpr(member.typeExpr);
+  }
+}
+
+function externalGoNameForSelector(config, symbolIndex, aliases, currentImportPath, expr) {
+  const importPath = aliases.get(expr.package);
+  if (!importPath) return `${expr.package}.${expr.name}`;
+  if (standardSelectorTypes.has(`${importPath}.${expr.name}`)) return undefined;
+  if (importPath.startsWith(config.goModulePath)) {
+    return symbolIndex.has(`${importPath}::${expr.name}`) ? undefined : `${importPath}.${expr.name}`;
+  }
+  return `${importPath}.${expr.name}`;
+}
+
+function recordExternalUsage(usages, goName, arity) {
+  const existing = usages.get(goName);
+  if (existing) {
+    if (existing.arity !== arity) {
+      fail(`external type '${goName}' used with both ${existing.arity} and ${arity} type argument(s)`);
+    }
+    existing.count++;
+    return;
+  }
+  usages.set(goName, { goName, arity, count: 1 });
+}
+
+function collectExternalRefUsages(config, snapshot) {
+  const usages = new Map();
+  for (const file of snapshot.files ?? []) {
+    for (const unit of file.units ?? []) {
+      for (const ref of unit.externalRefs ?? []) {
+        if (!ref.importPath || ref.importPath.startsWith(config.goModulePath)) continue;
+        const goName = `${ref.importPath}.${ref.name}`;
+        const role = ref.role === "call" ? "call" : "value";
+        const existing = usages.get(goName);
+        if (existing) {
+          existing.count += ref.count ?? 1;
+          if (role === "call") existing.role = "call";
+          continue;
+        }
+        usages.set(goName, { goName, role, count: ref.count ?? 1 });
+      }
+    }
+  }
+  return [...usages.values()].sort((left, right) => left.goName.localeCompare(right.goName));
+}
+
+function autoExternalFacadePolicy(usage) {
+  const { importPath, name } = splitExternalGoName(usage.goName);
+  return {
+    goName: usage.goName,
+    tsModule: externalFacadeModulePath(importPath),
+    tsName: safeIdentifier(name),
+    kind: "opaque",
+    arity: usage.arity,
+    generated: true,
+  };
+}
+
+function autoExternalRefFacadePolicy(usage) {
+  const { importPath, name } = splitExternalGoName(usage.goName);
+  return {
+    goName: usage.goName,
+    tsModule: externalFacadeModulePath(importPath),
+    tsName: safeIdentifier(name),
+    kind: usage.role === "call" ? "functionValue" : "value",
+    arity: 0,
+    generated: true,
+  };
+}
+
+function normalizeExternalFacadePolicy(policy) {
+  const { importPath, name } = splitExternalGoName(policy.goName);
+  return {
+    tsModule: externalFacadeModulePath(importPath),
+    tsName: safeIdentifier(name),
+    kind: "opaque",
+    arity: 0,
+    ...policy,
+  };
+}
+
+function splitExternalGoName(goName) {
+  const index = goName.lastIndexOf(".");
+  if (index <= 0 || index === goName.length - 1) fail(`invalid external Go type name '${goName}'`);
+  return { importPath: goName.slice(0, index), name: goName.slice(index + 1) };
+}
+
+function externalFacadeModulePath(importPath) {
+  return `go/${importPath.split("/").map((segment) => safePathSegment(segment)).join("/")}.ts`;
+}
+
+function safePathSegment(segment) {
+  return String(segment)
+    .replace(/[^A-Za-z0-9._-]/g, "_")
+    .replace(/^([.])/, "_$1") || "_";
+}
+
+function knownExternalFacadePolicies() {
+  const byteSlice = { kind: "slice", text: "[]byte", element: { kind: "ident", name: "byte", text: "byte" } };
+  const intType = { kind: "ident", name: "int", text: "int" };
+  const int64Type = { kind: "ident", name: "int64", text: "int64" };
+  const errorType = { kind: "ident", name: "error", text: "error" };
+  const boolType = { kind: "ident", name: "bool", text: "bool" };
+  const stringType = { kind: "ident", name: "string", text: "string" };
+
+  return [
+    {
+      goName: "io.Writer",
+      tsModule: "go/io.ts",
+      tsName: "Writer",
+      kind: "interface",
+      arity: 0,
+      members: [{ kind: "method", name: "Write", parameters: [{ names: ["p"], type: byteSlice }], results: [{ type: intType }, { type: errorType }] }],
+    },
+    {
+      goName: "io.Reader",
+      tsModule: "go/io.ts",
+      tsName: "Reader",
+      kind: "interface",
+      arity: 0,
+      members: [{ kind: "method", name: "Read", parameters: [{ names: ["p"], type: byteSlice }], results: [{ type: intType }, { type: errorType }] }],
+    },
+    { goName: "io.Closer", tsModule: "go/io.ts", tsName: "Closer", kind: "interface", arity: 0, members: [{ kind: "method", name: "Close", results: [{ type: errorType }] }] },
+    { goName: "io.ReadCloser", tsModule: "go/io.ts", tsName: "ReadCloser", kind: "interface", arity: 0, extends: ["io.Reader", "io.Closer"] },
+    { goName: "io.WriteCloser", tsModule: "go/io.ts", tsName: "WriteCloser", kind: "interface", arity: 0, extends: ["io.Writer", "io.Closer"] },
+    { goName: "io.ReadWriter", tsModule: "go/io.ts", tsName: "ReadWriter", kind: "interface", arity: 0, extends: ["io.Reader", "io.Writer"] },
+    { goName: "io.ReadWriteCloser", tsModule: "go/io.ts", tsName: "ReadWriteCloser", kind: "interface", arity: 0, extends: ["io.Reader", "io.Writer", "io.Closer"] },
+    {
+      goName: "context.Context",
+      tsModule: "go/context.ts",
+      tsName: "Context",
+      kind: "interface",
+      arity: 0,
+      members: [
+        { kind: "method", name: "Err", results: [{ type: errorType }] },
+        { kind: "method", name: "Value", parameters: [{ names: ["key"], type: { kind: "ident", name: "any", text: "any" } }], results: [{ type: { kind: "ident", name: "any", text: "any" } }] },
+      ],
+    },
+    { goName: "context.CancelFunc", tsModule: "go/context.ts", tsName: "CancelFunc", kind: "function", arity: 0 },
+    { goName: "time.Time", tsModule: "go/time.ts", tsName: "Time", kind: "class", arity: 0 },
+    { goName: "time.Duration", tsModule: "go/time.ts", tsName: "Duration", kind: "type", arity: 0, typeExpression: int64Type },
+    { goName: "sync.Mutex", tsModule: "go/sync.ts", tsName: "Mutex", kind: "class", arity: 0, members: [{ kind: "method", name: "Lock" }, { kind: "method", name: "Unlock" }] },
+    { goName: "sync.RWMutex", tsModule: "go/sync.ts", tsName: "RWMutex", kind: "class", arity: 0, members: [{ kind: "method", name: "Lock" }, { kind: "method", name: "Unlock" }, { kind: "method", name: "RLock" }, { kind: "method", name: "RUnlock" }] },
+    { goName: "sync.Once", tsModule: "go/sync.ts", tsName: "Once", kind: "class", arity: 0, members: [{ kind: "method", name: "Do", parameters: [{ names: ["f"], type: { kind: "func", text: "func()", parameters: [], results: [] } }] }] },
+    { goName: "sync.WaitGroup", tsModule: "go/sync.ts", tsName: "WaitGroup", kind: "class", arity: 0, members: [{ kind: "method", name: "Add", parameters: [{ names: ["delta"], type: intType }] }, { kind: "method", name: "Done" }, { kind: "method", name: "Wait" }] },
+    { goName: "sync.Map", tsModule: "go/sync.ts", tsName: "Map", kind: "class", arity: 0 },
+    ...["Bool", "Int32", "Int64", "Uint32", "Uint64"].map((name) => ({ goName: `sync/atomic.${name}`, tsModule: "go/sync/atomic.ts", tsName: name, kind: "class", arity: 0 })),
+    { goName: "regexp.Regexp", tsModule: "go/regexp.ts", tsName: "Regexp", kind: "class", arity: 0, members: [{ kind: "method", name: "MatchString", parameters: [{ names: ["s"], type: stringType }], results: [{ type: boolType }] }] },
+    { goName: "strings.Builder", tsModule: "go/strings.ts", tsName: "Builder", kind: "class", arity: 0, members: [{ kind: "method", name: "String", results: [{ type: stringType }] }] },
+    { goName: "testing.T", tsModule: "go/testing.ts", tsName: "T", kind: "class", arity: 0 },
+    { goName: "testing.B", tsModule: "go/testing.ts", tsName: "B", kind: "class", arity: 0 },
+    { goName: "testing.M", tsModule: "go/testing.ts", tsName: "M", kind: "class", arity: 0 },
+    { goName: "testing.TB", tsModule: "go/testing.ts", tsName: "TB", kind: "interface", arity: 0 },
+  ];
+}
+
+function renderGoCompatModule() {
+  return `import type { bool, int } from "@tsonic/core/types.js";
+
+declare const __goBrand: unique symbol;
+
+export type GoPtr<T> = T | undefined;
+export type GoSlice<T> = T[];
+export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
+export type GoMap<K, V> = Map<K, V>;
+export type GoChan<T, Direction extends string = "bidirectional"> = { readonly [__goBrand]?: { readonly element: T; readonly direction: Direction } };
+export type GoSeq<T> = (yieldValue: (value: T) => bool) => void;
+export type GoSeq2<K, V> = (yieldValue: (key: K, value: V) => bool) => void;
+export type GoError = Error | undefined;
+export type GoComparable = unknown;
+export type GoOrdered = string | number | bigint | bool;
+export type GoConstraint<Text extends string> = unknown;
+export type GoUnresolved<Name extends string> = { readonly [__goBrand]: { readonly unresolved: Name } };
+export type GoUnsupported<Text extends string> = { readonly [__goBrand]: { readonly unsupported: Text } };
+export type GoComplex64 = { readonly real: number; readonly imag: number };
+export type GoComplex128 = { readonly real: number; readonly imag: number };
+export type GoUnsafePointer = GoPtr<unknown>;
+export type GoRune = int;
+`;
+}
+
+const primitiveTypes = new Map([
+  ["any", { source: "inline", name: "unknown" }],
+  ["bool", { source: "core", name: "bool" }],
+  ["byte", { source: "core", name: "byte" }],
+  ["complex64", { source: "compat", name: "GoComplex64" }],
+  ["complex128", { source: "compat", name: "GoComplex128" }],
+  ["error", { source: "compat", name: "GoError" }],
+  ["float32", { source: "core", name: "float" }],
+  ["float64", { source: "core", name: "double" }],
+  ["int", { source: "core", name: "int" }],
+  ["int8", { source: "core", name: "sbyte" }],
+  ["int16", { source: "core", name: "short" }],
+  ["int32", { source: "core", name: "int" }],
+  ["int64", { source: "core", name: "long" }],
+  ["rune", { source: "compat", name: "GoRune" }],
+  ["string", { source: "inline", name: "string" }],
+  ["uint", { source: "core", name: "uint" }],
+  ["uint8", { source: "core", name: "byte" }],
+  ["uint16", { source: "core", name: "ushort" }],
+  ["uint32", { source: "core", name: "uint" }],
+  ["uint64", { source: "core", name: "ulong" }],
+  ["uintptr", { source: "core", name: "nuint" }],
+  ["unsafe.Pointer", { source: "compat", name: "GoUnsafePointer" }],
+]);
+
+const standardSelectorTypes = new Map([
+  ["cmp.Ordered", "GoOrdered"],
+  ["constraints.Ordered", "GoOrdered"],
+  ["iter.Seq", "GoSeq"],
+  ["iter.Seq2", "GoSeq2"],
+  ["unsafe.Pointer", "GoUnsafePointer"],
+]);
+
+export function localTsName(unit) {
+  const name = safeIdentifier(unit.receiver ? `${unit.receiver}_${unit.name}` : unit.name);
+  return name || "tsgoUnimplemented";
+}
+
+function safeIdentifier(value) {
+  const name = String(value ?? "")
+    .replace(/[^A-Za-z0-9_$]/g, "_")
+    .replace(/^([0-9])/, "_$1");
+  if (name === "" || name === "_") return name;
+  if (reservedWords.has(name)) return `${name}_`;
+  return name;
+}
+
+function safeParamName(value) {
+  const name = safeIdentifier(value);
+  if (name === "" || name === "_") return "arg";
+  return name;
+}
+
+function safePropertyName(value) {
+  const name = String(value ?? "");
+  const safe = safeIdentifier(name);
+  if (safe === name && safe !== "" && safe !== "_") return safe;
+  return JSON.stringify(name);
+}
+
+const reservedWords = new Set([
+  "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else",
+  "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof",
+  "new", "null", "return", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void",
+  "while", "with", "as", "implements", "interface", "let", "package", "private", "protected", "public",
+  "static", "yield", "any", "arguments", "boolean", "constructor", "declare", "get", "module", "require", "number",
+  "set", "string", "symbol", "type", "from", "of",
+]);
+
+export function expectedTsPath(config, unit) {
+  const goPath = unit.metadata.goPath;
+  const splitRule = (config.splitRules ?? []).find((rule) => matchGlob(rule.match, goPath));
+  if (splitRule) {
+    const safe = safeFileStem(unit.qualifiedName, unit.id);
+    return `${splitRule.target}/${safe}.ts`;
+  }
+  return `${config.tsRoot}/${goPath.replace(/\.go$/, ".ts")}`;
+}
+
+function safeFileStem(name, id) {
+  const safe = String(name ?? "unit").replace(/[^A-Za-z0-9._-]/g, "_").replace(/^([.])/, "_$1");
+  const hash = createHash("sha256").update(id).digest("hex").slice(0, 12);
+  const head = safe.length <= 80 ? safe : safe.slice(0, 80);
+  return `${head}_${hash}`;
+}
+
+export function policyFor(config, rel, generated) {
+  const inactivePolicy = (config.policies ?? []).find((candidate) => candidate.active === false && matchGlob(candidate.match, rel));
+  if (inactivePolicy) {
+    return { category: inactivePolicy.category, active: inactivePolicy.active, reason: inactivePolicy.reason };
+  }
+  if (generated) {
+    return { category: "generated", reason: "Go file is marked generated." };
+  }
+  const override = (config.overrides ?? []).find((candidate) => matchGlob(candidate.match, rel));
+  if (override) {
+    return { category: override.category, reason: override.reason };
+  }
+  const policy = (config.policies ?? []).find((candidate) => matchGlob(candidate.match, rel));
+  if (policy) {
+    return { category: policy.category, reason: policy.reason };
+  }
+  return { category: "literal-port", reason: "Default production compiler unit: mechanically port from TS-Go." };
+}
+
+export function isActivePortPolicy(policy) {
+  return policy.active !== false && policy.category !== "out-of-scope";
+}
+
+export function tsFilePolicyFor(config, rel) {
+  const policy = (config.tsFilePolicies ?? []).find((candidate) => matchGlob(candidate.match, rel));
+  if (policy) {
+    return { category: policy.category, reason: policy.reason };
+  }
+  return { category: "unclassified-ts-source", reason: "No TypeScript source policy matched this file." };
+}
+
+export function verifyStatus(status, options) {
+  const failures = collectVerifyFailures(status, options);
+  if (failures.length > 0) {
+    fail(`porter verify failed: ${failures.join(", ")}`);
+  }
+  console.log("porter verify passed");
+}
+
+export function collectVerifyFailures(status, options) {
+  const strictPort = options["strict-port"] === true;
+  const failures = [];
+  if (status.counts.parseErrors > 0) failures.push(`${status.counts.parseErrors} Go parse errors`);
+  if (status.counts.duplicateGoIDs > 0) failures.push(`${status.counts.duplicateGoIDs} duplicate Go IDs`);
+  if (status.counts.duplicateTsIDs > 0) failures.push(`${status.counts.duplicateTsIDs} duplicate TS IDs`);
+  if (status.counts.orphan > 0) failures.push(`${status.counts.orphan} orphan TS units`);
+  if (status.counts.forbiddenTsFiles > 0) failures.push(`${status.counts.forbiddenTsFiles} forbidden TS files`);
+  if (status.counts.untrackedTsFiles > 0) failures.push(`${status.counts.untrackedTsFiles} TS files without @tsgo-unit metadata`);
+  if (status.counts.stale > 0) failures.push(`${status.counts.stale} stale TS units`);
+  failures.push(...collectGeneratedArtifactFailures(status.generatedArtifacts ?? emptyGeneratedArtifactStatus()));
+  if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
+  return failures;
+}
+
+export function collectGeneratedArtifactFailures(generatedArtifacts) {
+  const failures = [];
+  if (generatedArtifacts.missing.length > 0) failures.push(`${generatedArtifacts.missing.length} missing generated artifacts`);
+  if (generatedArtifacts.stale.length > 0) failures.push(`${generatedArtifacts.stale.length} stale generated artifacts`);
+  if (generatedArtifacts.orphan.length > 0) failures.push(`${generatedArtifacts.orphan.length} orphan generated artifacts`);
+  if (generatedArtifacts.untracked.length > 0) failures.push(`${generatedArtifacts.untracked.length} untracked generated artifacts`);
+  if (generatedArtifacts.invalid.length > 0) failures.push(`${generatedArtifacts.invalid.length} invalid generated artifacts`);
+  return failures;
+}
+
+export function printScanSummary(config, snapshot) {
+  console.log(`TS-Go ${snapshot.gitRevision.slice(0, 12)}`);
+  console.log(`Go files: ${snapshot.summary.goFileCount}`);
+  console.log(`Lines: ${snapshot.summary.lineCount}`);
+  console.log(`Units: ${snapshot.summary.unitCount}`);
+  console.log(`Snapshot: ${path.relative(repoRoot, resolveRepo(config.snapshotOut))}`);
+}
+
+export function printStatus(config, status) {
+  console.log(`TS-Go ${status.source.gitRevision.slice(0, 12)}`);
+  console.log(`Go files: ${status.source.fileCount}`);
+  console.log(`Go lines: ${status.source.lineCount}`);
+  console.log(`Portable units: ${status.counts.portable}`);
+  console.log(`Excluded units: ${status.counts.excluded}`);
+  console.log(`Implemented: ${status.counts.implemented}`);
+  console.log(`Stubbed: ${status.counts.stubbed}`);
+  console.log(`Missing: ${status.counts.missing}`);
+  console.log(`Stale: ${status.counts.stale}`);
+  console.log(`Orphan TS units: ${status.counts.orphan}`);
+  console.log(`Forbidden TS files: ${status.counts.forbiddenTsFiles}`);
+  console.log(`Untracked TS files: ${status.counts.untrackedTsFiles}`);
+  console.log(`Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
+  console.log(`Go parse errors: ${status.counts.parseErrors}`);
+  console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
+  console.log(`Report: ${path.relative(repoRoot, resolveRepo(config.reportOut))}`);
+}
+
+export function renderStatusMarkdown(status) {
+  const lines = [];
+  lines.push("# TSTS Porter Status");
+  lines.push("");
+  lines.push(`Generated: ${status.generatedAt}`);
+  lines.push(`TS-Go revision: \`${status.source.gitRevision}\``);
+  lines.push("");
+  lines.push("## Summary");
+  lines.push("");
+  lines.push(`- Go files: ${status.source.fileCount}`);
+  lines.push(`- Go lines: ${status.source.lineCount}`);
+  lines.push(`- Portable units: ${status.counts.portable}`);
+  lines.push(`- Excluded units: ${status.counts.excluded}`);
+  lines.push(`- Implemented: ${status.counts.implemented}`);
+  lines.push(`- Stubbed: ${status.counts.stubbed}`);
+  lines.push(`- Missing: ${status.counts.missing}`);
+  lines.push(`- Stale: ${status.counts.stale}`);
+  lines.push(`- Orphan TS units: ${status.counts.orphan}`);
+  lines.push(`- Forbidden TS files: ${status.counts.forbiddenTsFiles}`);
+  lines.push(`- Untracked TS files: ${status.counts.untrackedTsFiles}`);
+  lines.push(`- Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
+  lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
+  lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
+  lines.push("");
+  lines.push("## Categories");
+  lines.push("");
+  lines.push("| Category | Units |");
+  lines.push("|---|---:|");
+  for (const [name, count] of Object.entries(status.categories)) {
+    lines.push(`| ${name} | ${count} |`);
+  }
+  lines.push("");
+  lines.push("## Go Feature Counts");
+  lines.push("");
+  lines.push("| Feature | Count |");
+  lines.push("|---|---:|");
+  for (const [name, count] of Object.entries(status.featureCounts).sort()) {
+    lines.push(`| ${name} | ${count} |`);
+  }
+  lines.push("");
+  lines.push("## Largest Missing Modules");
+  lines.push("");
+  lines.push("| Module | Units |");
+  lines.push("|---|---:|");
+  for (const [name, count] of Object.entries(status.modules).sort((a, b) => b[1] - a[1]).slice(0, 30)) {
+    lines.push(`| ${name} | ${count} |`);
+  }
+  lines.push("");
+  lines.push("## Coverage Diagnostics");
+  lines.push("");
+  lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
+  lines.push(`- Go files with no top-level units: ${status.counts.unitlessGoFiles}`);
+  lines.push(`- Forbidden TypeScript files: ${status.counts.forbiddenTsFiles}`);
+  lines.push(`- TypeScript files without unit metadata: ${status.counts.untrackedTsFiles}`);
+  lines.push(`- Generated artifact defects: ${status.counts.missingGeneratedArtifacts + status.counts.staleGeneratedArtifacts + status.counts.orphanGeneratedArtifacts + status.counts.untrackedGeneratedArtifacts + status.counts.invalidGeneratedArtifacts}`);
+  if (status.unitlessGoFiles.length > 0) {
+    lines.push("");
+    lines.push("### Unitless Go Files");
+    lines.push("");
+    lines.push("| Go path | Lines | Reason |");
+    lines.push("|---|---:|---|");
+    for (const file of status.unitlessGoFiles.slice(0, 100)) {
+      lines.push(`| ${file.path} | ${file.lineCount} | ${file.reason} |`);
+    }
+  }
+  if (status.untrackedTsFiles.length > 0) {
+    lines.push("");
+    lines.push("### Untracked TypeScript Files");
+    lines.push("");
+    lines.push("| TS path | Reason |");
+    lines.push("|---|---|");
+    for (const file of status.untrackedTsFiles.slice(0, 100)) {
+      lines.push(`| ${file.path} | ${file.reason} |`);
+    }
+  }
+  if (status.forbiddenTsFiles.length > 0) {
+    lines.push("");
+    lines.push("### Forbidden TypeScript Files");
+    lines.push("");
+    lines.push("| TS path | Reason |");
+    lines.push("|---|---|");
+    for (const file of status.forbiddenTsFiles.slice(0, 100)) {
+      lines.push(`| ${file.path} | ${file.reason} |`);
+    }
+  }
+  if (collectGeneratedArtifactFailures(status.generatedArtifacts).length > 0) {
+    lines.push("");
+    lines.push("### Generated Artifact Defects");
+    lines.push("");
+    lines.push("| Status | Path | Reason |");
+    lines.push("|---|---|---|");
+    for (const artifact of status.generatedArtifacts.missing.slice(0, 100)) {
+      lines.push(`| missing | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of status.generatedArtifacts.stale.slice(0, 100)) {
+      lines.push(`| stale | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of status.generatedArtifacts.orphan.slice(0, 100)) {
+      lines.push(`| orphan | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of status.generatedArtifacts.untracked.slice(0, 100)) {
+      lines.push(`| untracked | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of status.generatedArtifacts.invalid.slice(0, 100)) {
+      lines.push(`| invalid | ${artifact.path} | ${artifact.reason} |`);
+    }
+  }
+  if (status.excluded.length > 0) {
+    lines.push("");
+    lines.push("## Excluded Units");
+    lines.push("");
+    lines.push("| Go path | Kind | Name | Category | Reason |");
+    lines.push("|---|---|---|---|---|");
+    for (const row of status.excluded.slice(0, 100)) {
+      lines.push(`| ${row.goPath} | ${row.kind} | ${escapeMd(row.name)} | ${row.category} | ${escapeMd(row.reason)} |`);
+    }
+  }
+  lines.push("");
+  lines.push("## First Missing Units");
+  lines.push("");
+  lines.push("| Go path | Kind | Name | Category | Expected TS path |");
+  lines.push("|---|---|---|---|---|");
+  for (const row of status.missing.slice(0, 100)) {
+    lines.push(`| ${row.goPath} | ${row.kind} | ${escapeMd(row.name)} | ${row.category} | ${row.expectedTsPath} |`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function loadConfig() {
+  if (!existsSync(configPath)) {
+    fail(`missing config: ${path.relative(repoRoot, configPath)}`);
+  }
+  return JSON.parse(readFileSync(configPath, "utf8"));
+}
+
+export function parseArgs(args) {
+  const options = {};
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (!arg.startsWith("--")) {
+      fail(`unexpected positional argument: ${arg}`);
+    }
+    const key = arg.slice(2);
+    const next = args[index + 1];
+    if (next === undefined || next.startsWith("--")) {
+      options[key] = true;
+    } else {
+      options[key] = next;
+      index++;
+    }
+  }
+  return options;
+}
+
+export function walk(root) {
+  if (!existsSync(root)) return [];
+  const out = [];
+  const stack = [root];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const entries = readdirSync(current, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === ".git" || entry.name === "node_modules" || entry.name === "dist") continue;
+        stack.push(full);
+      } else if (entry.isFile()) {
+        out.push(full);
+      }
+    }
+  }
+  out.sort();
+  return out;
+}
+
+export function matchGlob(pattern, value) {
+  const normalizedPattern = pattern.split(path.sep).join("/");
+  const normalizedValue = value.split(path.sep).join("/");
+  const regex = new RegExp(`^${normalizedPattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replaceAll("**", "\u0000")
+    .replaceAll("*", "[^/]*")
+    .replaceAll("\u0000", ".*")}$`);
+  return regex.test(normalizedValue);
+}
+
+export function increment(map, key) {
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+export function hashText(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
+export function moduleNameFor(goPath) {
+  const parts = goPath.split("/");
+  if (parts[0] === "internal" && parts.length > 1) return `internal/${parts[1]}`;
+  if (parts[0] === "cmd" && parts.length > 1) return `cmd/${parts[1]}`;
+  return parts[0] || ".";
+}
+
+export function writeJson(file, value) {
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+export function writeText(file, value) {
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, value);
+}
+
+export function resolveRepo(relativePath) {
+  return path.resolve(repoRoot, relativePath);
+}
+
+export function findRepoRoot(start) {
+  let current = path.resolve(start);
+  while (true) {
+    if (existsSync(path.join(current, ".git"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) fail("could not find repo root");
+    current = parent;
+  }
+}
+
+export function assertDirectory(directory, label) {
+  if (!existsSync(directory) || !statSync(directory).isDirectory()) {
+    fail(`${label} is not a directory: ${directory}`);
+  }
+}
+
+export function escapeMd(value) {
+  return String(value).replaceAll("|", "\\|");
+}
+
+export function fail(message) {
+  console.error(message);
+  process.exit(1);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
