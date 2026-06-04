@@ -23,7 +23,8 @@
     "go/cmp.ts",
     "go/sync.ts",
     "go/reflect.ts",
-    "go/math.ts"
+    "go/math.ts",
+    "go/path/filepath.ts"
   ],
   "tsFilePolicies": [
     {
