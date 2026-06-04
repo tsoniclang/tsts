@@ -24,6 +24,7 @@ import {
   verifyStatus,
   writeTextSafely,
 } from "./porter.mjs";
+import { emitKinds, parseGoFlagFile } from "./ast-generator.mjs";
 
 const baseConfig = {
   goModulePath: "github.com/microsoft/typescript-go",
@@ -819,6 +820,55 @@ test("authoredFacadeModules: authored modules are excluded from generation and e
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("ast-generator: Go flag const evaluation respects Go precedence and complement", () => {
+  const source = [
+    "package ast",
+    "",
+    "type SampleFlags uint32",
+    "",
+    "const (",
+    "\tSampleFlagsNone      SampleFlags = 0",
+    "\tSampleFlagsA         SampleFlags = 1 << 0",
+    "\tSampleFlagsB         SampleFlags = 1 << 1",
+    "\tSampleFlagsC         SampleFlags = 1 << 2",
+    "\tSampleFlagsAll       SampleFlags = 1<<30 - 1 // trailing comment",
+    "\tSampleFlagsAB                    = SampleFlagsA | SampleFlagsB",
+    "\tSampleFlagsExcludesA             = SampleFlagsAll & ^SampleFlagsA",
+    ")",
+  ].join("\n");
+  const consts = parseGoFlagFile(source, "SampleFlags").filter((entry) => entry.kind === "const");
+  const byName = Object.fromEntries(consts.map((entry) => [entry.name, entry.value]));
+  assert.equal(byName.SampleFlagsNone, 0);
+  assert.equal(byName.SampleFlagsA, 1);
+  assert.equal(byName.SampleFlagsC, 4);
+  // Go binds `<<` tighter than `-`, so this is (1<<30)-1, NOT 1<<(30-1).
+  assert.equal(byName.SampleFlagsAll, (1 << 30) - 1);
+  assert.equal(byName.SampleFlagsAB, 3);
+  // `& ^X` is bitwise-AND with the complement of X (uint32).
+  assert.equal(byName.SampleFlagsExcludesA, (((1 << 30) - 1) & ~1) >>> 0);
+});
+
+test("ast-generator: kinds emit sequential values, markers, and a stringer", () => {
+  const schema = {
+    ast: {
+      kinds: {
+        elements: ["Unknown", "EndOfFile", { comment: "A group header" }, "Identifier"],
+        markers: [{ name: "FirstNode", value: "Unknown" }],
+      },
+    },
+  };
+  const out = emitKinds(schema);
+  assert.match(out, /export type Kind = short;/);
+  assert.match(out, /export const KindUnknown: Kind = 0;/);
+  assert.match(out, /export const KindEndOfFile: Kind = 1;/);
+  assert.match(out, /\n\/\/ A group header\n/);
+  // The comment-only element does not consume an enum index.
+  assert.match(out, /export const KindIdentifier: Kind = 2;/);
+  // Markers are aliases of an existing kind, not new values.
+  assert.match(out, /export const KindFirstNode: Kind = KindUnknown;/);
+  assert.match(out, /export function KindString\(kind: Kind\): string \{/);
 });
 
 function snapshotWith(files) {

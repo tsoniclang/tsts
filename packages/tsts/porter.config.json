@@ -9,6 +9,15 @@
   "largeFileLineThreshold": 5000,
   "largeFileSplitPlanPath": "packages/tsts/porter.large-splits.json",
   "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
+  "astSchemaDir": "packages/tsts/schema/tsgo",
+  "astGeneratedDir": "internal/ast/generated",
+  "astSchemaInputs": [
+    "packages/tsts/schema/tsgo/ast.json",
+    "packages/tsts/schema/tsgo/ast.schema.json",
+    "packages/tsts/schema/tsgo/nodeflags.go",
+    "packages/tsts/schema/tsgo/symbolflags.go"
+  ],
+  "astGeneratedStatusOut": ".temp/porter/ast-generated.json",
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
@@ -53,6 +62,11 @@
       "match": "packages/tsts/src/**/*fourslash*",
       "category": "forbidden-source",
       "reason": "Fourslash/editor harness files must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/internal/ast/generated/**",
+      "category": "ast-generated",
+      "reason": "Generated AST infrastructure emitted by porter:ast from packages/tsts/schema/tsgo/*; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
       "match": "packages/tsts/src/go/*.ts",
