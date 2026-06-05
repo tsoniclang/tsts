@@ -107,7 +107,7 @@ export interface ParsedCommandLine {
 // ParsedCommandLine_as_ResolvedProjectReference adapts a *ParsedCommandLine to the
 // module.ResolvedProjectReference interface by delegating each method to the
 // corresponding free function (Go interface satisfaction -> method-bearing adapter).
-function ParsedCommandLine_as_ResolvedProjectReference(receiver: GoPtr<ParsedCommandLine>): ResolvedProjectReference {
+export function ParsedCommandLine_as_ResolvedProjectReference(receiver: GoPtr<ParsedCommandLine>): ResolvedProjectReference {
   const p = receiver;
   return {
     ConfigName: (): string => ParsedCommandLine_ConfigName(p),
