@@ -3348,7 +3348,13 @@ export function Checker_getFinalArrayType(receiver: GoPtr<Checker>, t: GoPtr<Evo
  * }
  */
 export function Checker_createFinalArrayType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.createFinalArrayType");
+  if (elementType!.flags & TypeFlagsNever) {
+    return receiver!.autoArrayType;
+  }
+  if (elementType!.flags & TypeFlagsUnion) {
+    return Checker_createArrayType(receiver, Checker_getUnionTypeEx(receiver, Type_AsUnionOrIntersectionType(elementType)!.types, UnionReductionSubtype, undefined, undefined));
+  }
+  return Checker_createArrayType(receiver, elementType);
 }
 
 /**
@@ -3363,7 +3369,10 @@ export function Checker_createFinalArrayType(receiver: GoPtr<Checker>, elementTy
  * }
  */
 export function Checker_reportFlowControlError(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.reportFlowControlError");
+  const block = FindAncestor(node, IsFunctionOrModuleBlock);
+  const sourceFile = GetSourceFileOfNode(node);
+  const span = GetRangeOfTokenAtPosition(sourceFile, Node_StatementList(block)!.pos);
+  DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(sourceFile, span, The_containing_function_or_module_body_is_too_large_for_control_flow_analysis));
 }
 
 /**

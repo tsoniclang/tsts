@@ -1189,7 +1189,7 @@ export function asyncTransformer_visitFunctionExpression(receiver: GoPtr<asyncTr
 export function asyncTransformer_visitArrowFunction(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
   // `arguments` in class static blocks is always an error, but we preserve Strada's emit
   // behavior for baseline compatibility.
-  let savedLexicalArguments: typeof receiver.lexicalArguments | undefined;
+  let savedLexicalArguments: lexicalArgumentsInfo | undefined;
   if ((EmitContext_EmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node) & EFNoLexicalArguments) !== 0) {
     savedLexicalArguments = receiver!.lexicalArguments;
     receiver!.lexicalArguments = { binding: undefined, used: false };

@@ -17,7 +17,7 @@ import type { NodeFactory } from "../../ast/generated/factory.js";
 import { CheckFlagsContainsPrivate, CheckFlagsSyntheticMethod } from "../../ast/checkflags.js";
 import { GetFunctionFlags, FunctionFlagsAsyncGenerator } from "../../ast/functionflags.js";
 import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBooleanKeyword, KindClassDeclaration, KindComputedPropertyName, KindConstructor, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExpressionWithTypeArguments, KindExternalModuleReference, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindIdentifier, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindIndexedAccessType, KindInterfaceDeclaration, KindJSImportDeclaration, KindLiteralType, KindMethodDeclaration, KindMethodSignature, KindMinusToken, KindNamespaceImport, KindNeverKeyword, KindNumberKeyword, KindObjectKeyword, KindPropertyDeclaration, KindPropertySignature, KindQualifiedName, KindSetAccessor, KindStringKeyword, KindSuperKeyword, KindSymbolKeyword, KindThisKeyword, KindTypeAliasDeclaration, KindTypeReference, KindUndefinedKeyword, KindUnknownKeyword, KindVariableStatement, KindVoidKeyword, KindAnyKeyword } from "../../ast/generated/kinds.js";
-import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
+import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
 import type { Declaration, IdentifierNode, TypeNode } from "../../ast/generated/unions.js";
 import { NodeFlagsAmbient } from "../../ast/generated/flags.js";
 import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
@@ -2276,7 +2276,7 @@ function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
       { primitive: "symbol", builtin: "Symbol" },
     ];
     for (const e of pairs) {
-      const sym: Symbol = { Flags: (SymbolFlagsTypeAlias | SymbolFlagsTransient) as unknown as SymbolFlags, CheckFlags: 0, Name: e.primitive, Declarations: [], ValueDeclaration: undefined, Members: undefined, Exports: undefined, id: new Uint64(), Parent: undefined, ExportSymbol: undefined };
+      const sym: Symbol = { Flags: (SymbolFlagsTypeAlias | SymbolFlagsTransient) as unknown as SymbolFlags, CheckFlags: 0, Name: e.primitive, Declarations: [], ValueDeclaration: undefined, Members: undefined as unknown as SymbolTable, Exports: undefined as unknown as SymbolTable, id: new Uint64(), Parent: undefined, ExportSymbol: undefined };
       result.set(e.builtin, sym);
     }
     _primitiveTypeAliasSuggestionsCache = result;
@@ -2728,7 +2728,7 @@ export function hasTypeParameterByName(typeParameters: GoSlice<GoPtr<Type>>, nam
  * }
  */
 export function getUniqueTypeParameterName(typeParameters: GoSlice<GoPtr<Type>>, baseName: string): string {
-  while (baseName.length > 1 && baseName[baseName.length - 1] >= "0" && baseName[baseName.length - 1] <= "9") {
+  while (baseName.length > 1 && baseName[baseName.length - 1]! >= "0" && baseName[baseName.length - 1]! <= "9") {
     baseName = baseName.slice(0, baseName.length - 1);
   }
   let index = 1;
@@ -3982,14 +3982,14 @@ export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModif
  */
 export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: (c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T): GoSlice<T> {
   for (let i = 0; i < (values !== undefined ? values.length : 0); i++) {
-    const value = values![i];
+    const value = values![i]!;
     const mapped = instantiator(c, value, m);
     if (mapped !== value) {
       const result: T[] = new Array(values!.length) as T[];
-      for (let k = 0; k < i; k++) result[k] = values![k];
+      for (let k = 0; k < i; k++) result[k] = values![k]!;
       result[i] = mapped;
       for (let j = i + 1; j < values!.length; j++) {
-        result[j] = instantiator(c, values![j], m);
+        result[j] = instantiator(c, values![j]!, m);
       }
       return result;
     }
@@ -4053,7 +4053,7 @@ export interface TupleNormalizer {
 export function getStartElementCount(t: GoPtr<TupleType>, flags: ElementFlags): int {
   const infos = t!.elementInfos;
   for (let i = 0; i < (infos !== undefined ? infos.length : 0); i++) {
-    if ((infos![i].flags & flags) === 0) {
+    if ((infos![i]!.flags & flags) === 0) {
       return i;
     }
   }
@@ -4077,7 +4077,7 @@ export function getEndElementCount(t: GoPtr<TupleType>, flags: ElementFlags): in
   const infos = t!.elementInfos;
   const len = infos !== undefined ? infos.length : 0;
   for (let i = len; i > 0; i--) {
-    if ((infos![i - 1].flags & flags) === 0) {
+    if ((infos![i - 1]!.flags & flags) === 0) {
       return len - i;
     }
   }
