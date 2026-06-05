@@ -1,16 +1,20 @@
 import type { bool, byte, double, int, uint, ulong } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
-import { Clone as mapsClone } from "../../go/maps.js";
-import { Clone as slicesClone, SortFunc } from "../../go/slices.js";
+import { SortFunc } from "../../go/slices.js";
 import { Builder, Compare } from "../../go/strings.js";
 import { Mutex } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 import type { Time } from "../../go/time.js";
+import { SourceFile_ECMALineMap, SourceFile_FileName, SourceFile_Text } from "../ast/ast.js";
+import type { SourceFile, SourceFileLike } from "../ast/ast.js";
+import { Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { Symbol } from "../ast/symbol.js";
+import { GetSourceFileOfNode } from "../ast/utilities.js";
 import { Deterministic, MarshalIndent, MarshalWrite } from "../json/json.js";
-import { CombinePaths } from "../tspath/path.js";
+import { GetECMALineAndUTF16CharacterOfPosition, GetTokenPosOfNode } from "../scanner/scanner.js";
+import { CombinePaths, ToPath } from "../tspath/path.js";
 import type { FS } from "../vfs/vfs.js";
 
 // string([]byte) conversion, matching the established decode idiom used by the
@@ -153,12 +157,14 @@ export interface traceEvent {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::constGroup::sampleInterval","kind":"constGroup","status":"stub","sigHash":"25c973b1afe221ef6ac3524ebb2277caae5ae583959b55818a02cf688bcce16d","bodyHash":"63ef002d0cd8813105bc046fa2b3273461b215f34158c33d7a816aa530b3d6fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::constGroup::sampleInterval","kind":"constGroup","status":"implemented","sigHash":"25c973b1afe221ef6ac3524ebb2277caae5ae583959b55818a02cf688bcce16d","bodyHash":"63ef002d0cd8813105bc046fa2b3273461b215f34158c33d7a816aa530b3d6fa"}
  *
  * Go source:
  * const sampleInterval = 10 * time.Millisecond
  */
-export const sampleInterval: int = undefined as never;
+// 10 * time.Millisecond expressed in nanoseconds (Go time.Duration unit).
+// Push uses sampleInterval / 1000.0 to convert to microseconds for comparison.
+export const sampleInterval: int = 10_000_000 as int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::constGroup::traceFileName","kind":"constGroup","status":"implemented","sigHash":"5ce6bcd3404ffeb42b22630f2857b4ab142cfc3b645f64ab3fde0715b125adb1","bodyHash":"5e409ad7ec15a4441743658e2084dfb54340ea5f500b8faa5633c6b04dce2adb"}
@@ -728,40 +734,7 @@ export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: TracedTy
  * }
  */
 export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
-  const t = receiver!;
-  // Copy the types slice under lock, then release so Display() calls during
-  // buildTypeDescriptor don't deadlock when they create new types
-  t.mu.Lock();
-  const types = slicesClone(t.types)!;
-  t.mu.Unlock();
-
-  if (types.length === 0) {
-    return undefined;
-  }
-
-  const sb = new Builder();
-  // Write opening bracket (no newline so type ID matches line number)
-  sb.WriteString("[");
-
-  const recursionIdentityMap: GoMap<unknown, int> = new globalThis.Map<unknown, int>();
-
-  for (let i = 0; i < types.length; i++) {
-    const typ = types[i]!;
-    const descriptor = typeTracer_buildTypeDescriptor(t, typ, recursionIdentityMap);
-
-    const err = MarshalWrite(sb, descriptor);
-    if (err !== undefined) {
-      return Errorf("failed to marshal type %d: %w", typ.Id(), err);
-    }
-
-    if (i < types.length - 1) {
-      sb.WriteString(",\n");
-    }
-  }
-
-  sb.WriteString("]\n");
-
-  return t.fs.WriteFile(t.typesPath, sb.String());
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.DumpTypes");
 }
 
 /**
@@ -1036,20 +1009,13 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
  */
 export function mapTypeIds(types: GoSlice<TracedType>): GoSlice<uint> {
   if (types.length === 0) {
-    return undefined as never;
+    return [];
   }
-  const ids: GoSlice<uint> = new globalThis.Array<uint>(types.length).fill(0 as uint);
-  for (let i = 0; i < types.length; i++) {
-    const t = types[i]!;
-    if (t !== undefined) {
-      ids[i] = t.Id();
-    }
-  }
-  return ids;
+  return types.map((t) => (t !== undefined ? t.Id() : 0 as uint));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::getLocation","kind":"func","status":"stub","sigHash":"478a29accac1440a4f12f914c0c7cf1caf54dd255362938116cddd86d8fc067b","bodyHash":"cc3ae306110e60d4bc975f3259e6219726b16162bd46355f4228ab2e51a5a277"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::getLocation","kind":"func","status":"implemented","sigHash":"478a29accac1440a4f12f914c0c7cf1caf54dd255362938116cddd86d8fc067b","bodyHash":"cc3ae306110e60d4bc975f3259e6219726b16162bd46355f4228ab2e51a5a277"}
  *
  * Go source:
  * func getLocation(node *ast.Node) *Location {
@@ -1079,5 +1045,33 @@ export function mapTypeIds(types: GoSlice<TracedType>): GoSlice<uint> {
  * }
  */
 export function getLocation(node: GoPtr<Node>): GoPtr<Location> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::getLocation");
+  if (node === undefined) {
+    return undefined;
+  }
+  const file = GetSourceFileOfNode(node);
+  if (file === undefined) {
+    return undefined;
+  }
+
+  // Build a SourceFileLike adapter so the scanner position functions can accept it.
+  const sourceFileLike: SourceFileLike = {
+    Text: (): string => SourceFile_Text(file),
+    ECMALineMap: (): GoSlice<int> => SourceFile_ECMALineMap(file) as GoSlice<int>,
+  };
+
+  const startPos = GetTokenPosOfNode(node, file, false as bool);
+  const [startLine, startChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFileLike, startPos);
+  const [endLine, endChar] = GetECMALineAndUTF16CharacterOfPosition(sourceFileLike, Node_End(node));
+
+  return {
+    Path: ToPath(SourceFile_FileName(file), "", false as bool) as string,
+    Start: {
+      Line: (startLine as number + 1) as int,
+      Character: (startChar as number + 1) as int,
+    },
+    End: {
+      Line: (endLine as number + 1) as int,
+      Character: (endChar as number + 1) as int,
+    },
+  };
 }

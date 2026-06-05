@@ -1,10 +1,23 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
+import { AsSourceFile } from "../ast/ast.js";
 import type { SourceFileNode } from "../ast/generated/unions.js";
-import { JsxEmitPreserve } from "../core/compileroptions.js";
+import {
+  CompilerOptions_GetAllowJS,
+  CompilerOptions_GetResolveJsonModule,
+  JsxEmitNone,
+  JsxEmitPreserve,
+} from "../core/compileroptions.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
+import { Tristate_DefaultIfUnknown, Tristate_IsTrue } from "../core/tristate.js";
 import { Version as coreVersion } from "../core/version.js";
+import {
+  Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type,
+  Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set,
+  Module_0_was_resolved_to_1_but_jsx_is_not_set,
+  Module_0_was_resolved_to_1_but_resolveJsonModule_is_not_used,
+} from "../diagnostics/generated/messages.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import { MustParse } from "../semver/version.js";
 import type { Version } from "../semver/version.js";
@@ -288,7 +301,7 @@ export function ComparePatternKeys(a: string, b: string): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic","kind":"func","status":"stub","sigHash":"81cbc2857ca9604da7d6e28d7de3263b92890e0a3a40c727e75e14832c72fe0b","bodyHash":"f2f43bcf2dd6f3c8d523968bb9b453a1f5ef5926d608d01718cc5d5c922cdecc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic","kind":"func","status":"implemented","sigHash":"81cbc2857ca9604da7d6e28d7de3263b92890e0a3a40c727e75e14832c72fe0b","bodyHash":"f2f43bcf2dd6f3c8d523968bb9b453a1f5ef5926d608d01718cc5d5c922cdecc"}
  *
  * Go source:
  * func GetResolutionDiagnostic(options *core.CompilerOptions, resolvedModule *ResolvedModule, file *ast.SourceFile) *diagnostics.Message {
@@ -343,7 +356,65 @@ export function ComparePatternKeys(a: string, b: string): int {
  * }
  */
 export function GetResolutionDiagnostic(options: GoPtr<CompilerOptions>, resolvedModule: GoPtr<ResolvedModule>, file: GoPtr<SourceFileNode>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/module/util.go::func::GetResolutionDiagnostic");
+  const needJsx = (): GoPtr<Message> => {
+    if (options!.Jsx !== JsxEmitNone) {
+      return undefined;
+    }
+    return Module_0_was_resolved_to_1_but_jsx_is_not_set;
+  };
+
+  const needAllowJs = (): GoPtr<Message> => {
+    if (
+      CompilerOptions_GetAllowJS(options) ||
+      !Tristate_IsTrue(Tristate_DefaultIfUnknown(options!.NoImplicitAny, options!.Strict))
+    ) {
+      return undefined;
+    }
+    return Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type;
+  };
+
+  const needResolveJsonModule = (): GoPtr<Message> => {
+    if (CompilerOptions_GetResolveJsonModule(options)) {
+      return undefined;
+    }
+    return Module_0_was_resolved_to_1_but_resolveJsonModule_is_not_used;
+  };
+
+  const needAllowArbitraryExtensions = (): GoPtr<Message> => {
+    const sourceFile = AsSourceFile(file);
+    if (sourceFile!.IsDeclarationFile || Tristate_IsTrue(options!.AllowArbitraryExtensions)) {
+      return undefined;
+    }
+    return Module_0_was_resolved_to_1_but_allowArbitraryExtensions_is_not_set;
+  };
+
+  switch (resolvedModule!.Extension) {
+    case ExtensionTs:
+    case ExtensionDts:
+    case ExtensionMts:
+    case ExtensionDmts:
+    case ExtensionCts:
+    case ExtensionDcts:
+      // These are always allowed.
+      return undefined;
+    case ExtensionTsx:
+      return needJsx();
+    case ExtensionJsx: {
+      const msg = needJsx();
+      if (msg !== undefined) {
+        return msg;
+      }
+      return needAllowJs();
+    }
+    case ExtensionJs:
+    case ExtensionMjs:
+    case ExtensionCjs:
+      return needAllowJs();
+    case ExtensionJson:
+      return needResolveJsonModule();
+    default:
+      return needAllowArbitraryExtensions();
+  }
 }
 
 /**

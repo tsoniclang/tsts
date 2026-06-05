@@ -131,7 +131,7 @@ export function Number_toUint32(receiver: Number): uint {
  * }
  */
 export function Number_toInt32(receiver: Number): int {
-  let x: double = receiver as double;
+  const x: double = receiver as double;
 
   // Fast path: if the number is in the range (-2^31, 2^32), i.e. an SMI,
   // then we don't need to do any special mapping.
@@ -148,12 +148,12 @@ export function Number_toInt32(receiver: Number): int {
   }
 
   // Let int be truncate(ℝ(number)).
-  x = math.Trunc(x);
+  const truncated = math.Trunc(x);
   // Let int32bit be int modulo 2**32.
-  x = math.Mod(x, 2 ** 32);
+  const int32bit = math.Mod(truncated, 2 ** 32);
   // If int32bit ≥ 2**31, return 𝔽(int32bit - 2**32); otherwise return 𝔽(int32bit).
   // `int32(int64(x))` reinterprets the low 32 bits as signed, matched by `| 0`.
-  return (x | 0) as int;
+  return (int32bit | 0) as int;
 }
 
 /**
@@ -295,7 +295,7 @@ export function Number_Abs(receiver: Number): Number {
  * Go source:
  * var negativeZero = Number(math.Copysign(0, -1))
  */
-export let negativeZero: Number = math.Copysign(0, -1) as Number;
+export const negativeZero: Number = math.Copysign(0, -1) as Number;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Remainder","kind":"method","status":"implemented","sigHash":"f9622ca1c6207c341cfd19c4568786ffbd5f8d91763bd8d71063441a4a482de6","bodyHash":"593adc70856ec82537da33fde2831f046fe13a16000ba74fe631c27b882105e6"}
@@ -334,7 +334,7 @@ export function Number_Remainder(receiver: Number, d: Number): Number {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Exponentiate","kind":"method","status":"stub","sigHash":"a9cd4318b3af4cb04ca38cec0dd7138184f5c70de84202b4019022f6c540e014","bodyHash":"628ff842be7201b8a53d5ac64594007430157fbdf83b4bd2ed98f634252a554a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Exponentiate","kind":"method","status":"implemented","sigHash":"a9cd4318b3af4cb04ca38cec0dd7138184f5c70de84202b4019022f6c540e014","bodyHash":"628ff842be7201b8a53d5ac64594007430157fbdf83b4bd2ed98f634252a554a"}
  *
  * Go source:
  * func (base Number) Exponentiate(exponent Number) Number {
@@ -344,10 +344,10 @@ export function Number_Remainder(receiver: Number, d: Number): Number {
  * 	case base == 1 && exponent.IsNaN():
  * 		return NaN()
  * 	}
- * 
+ *
  * 	b := float64(base)
  * 	e := float64(exponent)
- * 
+ *
  * 	// For integer base ** integer exponent where the result exceeds 53 bits,
  * 	// math.Pow can be off by multiple ULPs vs JS engines. Use exact big.Int
  * 	// arithmetic and IEEE 754 round-to-nearest-even conversion instead.
@@ -365,10 +365,42 @@ export function Number_Remainder(receiver: Number, d: Number): Number {
  * 			return Number(result)
  * 		}
  * 	}
- * 
+ *
  * 	return Number(math.Pow(b, e))
  * }
  */
 export function Number_Exponentiate(receiver: Number, exponent: Number): Number {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/jsnum/jsnum.go::method::Number.Exponentiate");
+  switch (true) {
+    case (receiver === (1 as Number) || receiver === (-1 as Number)) && Number_IsInf(exponent):
+      return NaN();
+    case receiver === (1 as Number) && Number_IsNaN(exponent):
+      return NaN();
+  }
+
+  const b: double = receiver as double;
+  const e: double = exponent as double;
+
+  // For integer base ** integer exponent where the result exceeds 53 bits,
+  // use exact BigInt arithmetic and IEEE 754 round-to-nearest-even conversion.
+  if (
+    b >= math.MinInt64 &&
+    b <= math.MaxInt64 &&
+    b === math.Trunc(b) &&
+    e >= 0 &&
+    e <= math.MaxInt64 &&
+    e === math.Trunc(e) &&
+    !math.IsInf(e, 0)
+  ) {
+    const magnitude: double = e * math.Log2(math.Abs(b));
+    if (magnitude > 53 && magnitude <= math.Log2(math.MaxFloat64)) {
+      // Use BigInt for exact integer exponentiation, then convert to float64.
+      const bBig = globalThis.BigInt(globalThis.Math.trunc(b));
+      const eBig = globalThis.BigInt(globalThis.Math.trunc(e));
+      const riBig = bBig ** eBig;
+      const result: double = globalThis.Number(riBig) as double;
+      return result as Number;
+    }
+  }
+
+  return math.Pow(b, e) as Number;
 }

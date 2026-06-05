@@ -23,7 +23,7 @@ import {
 import type { Path } from "../tspath/path.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownDirectoryLink","kind":"type","status":"stub","sigHash":"f2a5b90e560484583eec97408c9d1fd8e015b467fded66244e0eae467c4abb4a","bodyHash":"710af6aaf1c9b39cd8a3111210b4b58fe5186a239f2d87ac6e0af8dc18086eca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownDirectoryLink","kind":"type","status":"implemented","sigHash":"f2a5b90e560484583eec97408c9d1fd8e015b467fded66244e0eae467c4abb4a","bodyHash":"710af6aaf1c9b39cd8a3111210b4b58fe5186a239f2d87ac6e0af8dc18086eca"}
  *
  * Go source:
  * KnownDirectoryLink struct {
@@ -41,7 +41,7 @@ export interface KnownDirectoryLink {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownSymlinks","kind":"type","status":"stub","sigHash":"09fb15eada609e6c30cedd4319a0ab5f052dab5bff4746713576c69880a91362","bodyHash":"bb055375d9be4012d1f3c66b77b233879fd8fe48762298adc9e15d88c34aa66d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/symlinks/knownsymlinks.go::type::KnownSymlinks","kind":"type","status":"implemented","sigHash":"09fb15eada609e6c30cedd4319a0ab5f052dab5bff4746713576c69880a91362","bodyHash":"bb055375d9be4012d1f3c66b77b233879fd8fe48762298adc9e15d88c34aa66d"}
  *
  * Go source:
  * KnownSymlinks struct {

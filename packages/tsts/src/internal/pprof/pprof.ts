@@ -138,7 +138,7 @@ export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"stub","sigHash":"265a83d69f78d31aaf7f3b1b83149ac1799609bd56f05cade4c12650bcad334f","bodyHash":"1dd7f6d5e3dd36274c4ae9b79f63e045e12d3131e116c2e120b9e7e144b0f0c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile","kind":"method","status":"implemented","sigHash":"265a83d69f78d31aaf7f3b1b83149ac1799609bd56f05cade4c12650bcad334f","bodyHash":"1dd7f6d5e3dd36274c4ae9b79f63e045e12d3131e116c2e120b9e7e144b0f0c6"}
  *
  * Go source:
  * func (c *CPUProfiler) StopCPUProfile() (string, error) {
@@ -157,7 +157,21 @@ export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profil
  * }
  */
 export function CPUProfiler_StopCPUProfile(receiver: GoPtr<CPUProfiler>): [string, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StopCPUProfile");
+  const c = receiver!;
+  c.mu.Lock();
+  try {
+    if (c.session === undefined) {
+      return ["", new globalThis.Error("CPU profiling not in progress")];
+    }
+
+    const filePath = c.session!.cpuFilePath;
+    ProfileSession_Stop(c.session);
+    c.session = undefined;
+
+    return [filePath, undefined];
+  } finally {
+    c.mu.Unlock();
+  }
 }
 
 /**

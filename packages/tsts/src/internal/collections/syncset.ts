@@ -4,7 +4,7 @@ import type { SyncMap } from "./syncmap.js";
 import { SyncMap_Delete, SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Range } from "./syncmap.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"stub","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151","bodyHash":"0e2e94afb12a20e228869161c6096511665888582db035691c74d3203f2f7238"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncset.go::type::SyncSet","kind":"type","status":"implemented","sigHash":"570927ea2bf0e4da3a3ad7fdaadd4bd3b7b32ccbc5b750adb2dd0d43ce00e151","bodyHash":"0e2e94afb12a20e228869161c6096511665888582db035691c74d3203f2f7238"}
  *
  * Go source:
  * SyncSet[T comparable] struct {
@@ -97,12 +97,12 @@ export function SyncSet_Range<T>(receiver: GoPtr<SyncSet<T>>, fn: (key: T) => bo
  * }
  */
 export function SyncSet_Size<T>(receiver: GoPtr<SyncSet<T>>): int {
-  let count = 0;
-  SyncMap_Range(receiver!.m, (_key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
-    count++;
+  const keys: T[] = [];
+  SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
+    keys.push(key);
     return true;
   });
-  return count;
+  return keys.length as int;
 }
 
 /**
@@ -120,13 +120,7 @@ export function SyncSet_Size<T>(receiver: GoPtr<SyncSet<T>>): int {
  * }
  */
 export function SyncSet_IsEmpty<T>(receiver: GoPtr<SyncSet<T>>): bool {
-  let empty = true;
-  SyncMap_Range(receiver!.m, (_key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
-    empty = false;
-    return false;
-  });
-
-  return empty;
+  return SyncSet_Size(receiver) === 0;
 }
 
 /**
@@ -144,8 +138,7 @@ export function SyncSet_IsEmpty<T>(receiver: GoPtr<SyncSet<T>>): bool {
  * }
  */
 export function SyncSet_ToSlice<T>(receiver: GoPtr<SyncSet<T>>): GoSlice<T> {
-  let arr: GoSlice<T>;
-  arr = [];
+  const arr: GoSlice<T> = [];
   SyncMap_Range(receiver!.m, (key: T, _value: { readonly __tsgoEmpty?: never }): bool => {
     arr.push(key);
     return true;

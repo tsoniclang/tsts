@@ -14,7 +14,7 @@ export interface Arena<T = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"stub","sigHash":"7f61e2bb57de57610e5585534f7544ee42ef4fef68509f3a42c767cf9152e756","bodyHash":"b9bd82671cbff82c70555631173bc5f846f2b81fd84ef711e37082b735d1f20f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"implemented","sigHash":"7f61e2bb57de57610e5585534f7544ee42ef4fef68509f3a42c767cf9152e756","bodyHash":"b9bd82671cbff82c70555631173bc5f846f2b81fd84ef711e37082b735d1f20f"}
  *
  * Go source:
  * func (a *Arena[T]) New() *T {
@@ -29,11 +29,15 @@ export interface Arena<T = unknown> {
  * }
  */
 export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New");
+  // In TS there is no arena allocation: just push a new zero-value slot and
+  // return a reference to the wrapper object so callers can read/write it.
+  const slot = {} as T;
+  receiver!.data.push(slot);
+  return slot;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"stub","sigHash":"e6e68464be11603146e0ba334fce4d5628033c5389e68c2032220be0b3bef2c3","bodyHash":"607827fa585765652039cf140ef55b5973bd0297db32e1930d30c8e8964be471"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice","kind":"method","status":"implemented","sigHash":"e6e68464be11603146e0ba334fce4d5628033c5389e68c2032220be0b3bef2c3","bodyHash":"607827fa585765652039cf140ef55b5973bd0297db32e1930d30c8e8964be471"}
  *
  * Go source:
  * func (a *Arena[T]) NewSlice(size int) []T {
@@ -55,11 +59,18 @@ export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
  * }
  */
 export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice");
+  if (size === 0) {
+    return [];
+  }
+  return globalThis.Array.from({ length: size as number }, () => {
+    const slot = {} as T;
+    receiver!.data.push(slot);
+    return slot;
+  });
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice1","kind":"method","status":"stub","sigHash":"4992a47dcf040851aaf48bfd2287241d7af83d638266ca8a84a954dfd0c34ea8","bodyHash":"c17187b13925bf4d4021e37e5e794b8a3eba83c54d739f6d706f6d54a7fde037"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice1","kind":"method","status":"implemented","sigHash":"4992a47dcf040851aaf48bfd2287241d7af83d638266ca8a84a954dfd0c34ea8","bodyHash":"c17187b13925bf4d4021e37e5e794b8a3eba83c54d739f6d706f6d54a7fde037"}
  *
  * Go source:
  * func (a *Arena[T]) NewSlice1(t T) []T {
@@ -69,11 +80,13 @@ export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice
  * }
  */
 export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.NewSlice1");
+  const slice = Arena_NewSlice(receiver, 1 as int);
+  slice[0] = t;
+  return slice;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone","kind":"method","status":"stub","sigHash":"27f28fb80bfb60096650cf2a896227f2837f1d4e0e6bda9450442ee99972cd6c","bodyHash":"2a82317a6079eb431f604b475bb86a27c8b3408278a5590d0ead847075f5aa47"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone","kind":"method","status":"implemented","sigHash":"27f28fb80bfb60096650cf2a896227f2837f1d4e0e6bda9450442ee99972cd6c","bodyHash":"2a82317a6079eb431f604b475bb86a27c8b3408278a5590d0ead847075f5aa47"}
  *
  * Go source:
  * func (a *Arena[T]) Clone(t []T) []T {
@@ -86,7 +99,13 @@ export function Arena_NewSlice1<T>(receiver: GoPtr<Arena<T>>, t: T): GoSlice<T> 
  * }
  */
 export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoSlice<T>): GoSlice<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.Clone");
+  if (t.length === 0) {
+    return [];
+  }
+  return globalThis.Array.from(t, (item) => {
+    receiver!.data.push(item);
+    return item;
+  });
 }
 
 /**
@@ -101,8 +120,6 @@ export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoSlice<T>): GoSlic
  * }
  */
 export function nextArenaSize(size: int): int {
-  // This compiles down branch-free.
-  size = globalThis.Math.max(size, 1) as int;
-  size = globalThis.Math.min(size * 2, 256) as int;
-  return size;
+  const s1 = globalThis.Math.max(size as number, 1) as int;
+  return globalThis.Math.min((s1 as number) * 2, 256) as int;
 }

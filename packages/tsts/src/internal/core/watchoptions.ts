@@ -110,7 +110,7 @@ export const PollingKindDynamicPriority: PollingKind = 3;
 export const PollingKindFixedChunkSize: PollingKind = 4;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::method::WatchOptions.WatchInterval","kind":"method","status":"stub","sigHash":"844ee5f41c0b2b975b26c0b38fe1aeb4bf7a438c68a01c0e8753d988710ef38f","bodyHash":"40d4dfeee25ccee5c9525627cc3ffd61c35e57b95824561a2970f739086f6821"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/watchoptions.go::method::WatchOptions.WatchInterval","kind":"method","status":"implemented","sigHash":"844ee5f41c0b2b975b26c0b38fe1aeb4bf7a438c68a01c0e8753d988710ef38f","bodyHash":"40d4dfeee25ccee5c9525627cc3ffd61c35e57b95824561a2970f739086f6821"}
  *
  * Go source:
  * func (w *WatchOptions) WatchInterval() time.Duration {
@@ -122,5 +122,11 @@ export const PollingKindFixedChunkSize: PollingKind = 4;
  * }
  */
 export function WatchOptions_WatchInterval(receiver: GoPtr<WatchOptions>): Duration {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/watchoptions.go::method::WatchOptions.WatchInterval");
+  // time.Millisecond = 1_000_000 nanoseconds; Duration = long (nanoseconds).
+  const millisecond: Duration = 1_000_000 as Duration;
+  const defaultInterval: Duration = (1000 * (millisecond as number)) as Duration;
+  if (receiver !== undefined && receiver.Interval !== undefined) {
+    return ((receiver.Interval as number) * (millisecond as number)) as Duration;
+  }
+  return defaultInterval;
 }
