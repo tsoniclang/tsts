@@ -1,8 +1,15 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { Once } from "../../go/sync.js";
+import { Once } from "../../go/sync.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import type { CommandLineOption } from "./commandlineoption.js";
+import { BuildNameMap } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
+import {
+  Compiler_option_0_expects_an_argument,
+  Compiler_option_0_may_only_be_used_with_build,
+  Unknown_compiler_option_0,
+  Unknown_compiler_option_0_Did_you_mean_1,
+} from "../diagnostics/generated/messages.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::type::DidYouMeanOptionsDiagnostics","kind":"type","status":"implemented","sigHash":"dc632d6912763754c1599dd99d1c79d6a6ab027017c8f569679c41c24ba85fb8","bodyHash":"2f0d3597b83574def9afc68e8bb6aaa07907939be3ebd4d74fe19914b7defc27"}
@@ -60,10 +67,10 @@ export interface ParseCommandLineWorkerDiagnostics {
  * Go source:
  * var CompilerOptionsDidYouMeanDiagnostics = getParseCommandLineWorkerDiagnostics(OptionsDeclarations)
  */
-export let CompilerOptionsDidYouMeanDiagnostics: unknown = undefined as never;
+export const CompilerOptionsDidYouMeanDiagnostics: unknown = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::func::getParseCommandLineWorkerDiagnostics","kind":"func","status":"stub","sigHash":"5e6ee1a7dbb0b0305303b2ca7598920e4df8215ea06c1b71675ce63417f4e960","bodyHash":"0c9c8651121ba0fec17135a2647d52459090124161cd391e3493c108bdada6c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::func::getParseCommandLineWorkerDiagnostics","kind":"func","status":"implemented","sigHash":"5e6ee1a7dbb0b0305303b2ca7598920e4df8215ea06c1b71675ce63417f4e960","bodyHash":"0c9c8651121ba0fec17135a2647d52459090124161cd391e3493c108bdada6c4"}
  *
  * Go source:
  * func getParseCommandLineWorkerDiagnostics(decls []*CommandLineOption) *ParseCommandLineWorkerDiagnostics {
@@ -83,7 +90,20 @@ export let CompilerOptionsDidYouMeanDiagnostics: unknown = undefined as never;
  * }
  */
 export function getParseCommandLineWorkerDiagnostics(decls: GoSlice<GoPtr<CommandLineOption>>): GoPtr<ParseCommandLineWorkerDiagnostics> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::func::getParseCommandLineWorkerDiagnostics");
+  return {
+    didYouMean: {
+      alternateMode: {
+        diagnostic: Compiler_option_0_may_only_be_used_with_build,
+        optionsNameMap: BuildNameMap as GoPtr<NameMap>,
+      },
+      OptionDeclarations: decls,
+      UnknownOptionDiagnostic: Unknown_compiler_option_0,
+      UnknownDidYouMeanDiagnostic: Unknown_compiler_option_0_Did_you_mean_1,
+    },
+    optionsNameMap: undefined,
+    optionsNameMapOnce: new Once(),
+    OptionTypeMismatchDiagnostic: Compiler_option_0_expects_an_argument,
+  };
 }
 
 /**
@@ -100,7 +120,7 @@ export function getParseCommandLineWorkerDiagnostics(decls: GoSlice<GoPtr<Comman
  * 	OptionTypeMismatchDiagnostic: diagnostics.Watch_option_0_requires_a_value_of_type_1,
  * }
  */
-export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
+export const watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::buildOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"stub","sigHash":"82367338c4879fe397da04e723c5eb0818a1777fa154ea066902967579bff305","bodyHash":"346eda9bb19ecf3695410844f0b33357dfa620ac945c14a2f450d2d7e9df308f"}
@@ -119,4 +139,4 @@ export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagno
  * 	OptionTypeMismatchDiagnostic: diagnostics.Build_option_0_requires_a_value_of_type_1,
  * }
  */
-export let buildOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
+export const buildOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;

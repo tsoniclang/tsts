@@ -2,8 +2,8 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Group } from "../../go/golang.org/x/sync/errgroup.js";
-import type { Mutex, WaitGroup } from "../../go/sync.js";
-import type { Bool } from "../../go/sync/atomic.js";
+import { Mutex, WaitGroup } from "../../go/sync.js";
+import { Bool } from "../../go/sync/atomic.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::type::WorkGroup","kind":"type","status":"implemented","sigHash":"19fd930d122948ff76428da13421e7a882e8e100255044419228149409e8e1dc","bodyHash":"54c8ed163b25c1eae3b3b92c524fd93ccdfd4ab1263a584b1651e1a7e79f42d3"}
@@ -24,7 +24,7 @@ export interface WorkGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewWorkGroup","kind":"func","status":"stub","sigHash":"1ea31ba49674c94947d50bfaf04e58059059eb8b0fc25dea263b3b3338b451d8","bodyHash":"98054b232cc0512af0f9bc21d9881b049da0e30bffec414f830af4e37ed58b4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewWorkGroup","kind":"func","status":"implemented","sigHash":"1ea31ba49674c94947d50bfaf04e58059059eb8b0fc25dea263b3b3338b451d8","bodyHash":"98054b232cc0512af0f9bc21d9881b049da0e30bffec414f830af4e37ed58b4e"}
  *
  * Go source:
  * func NewWorkGroup(singleThreaded bool) WorkGroup {
@@ -35,7 +35,18 @@ export interface WorkGroup {
  * }
  */
 export function NewWorkGroup(singleThreaded: bool): WorkGroup {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewWorkGroup");
+  if (singleThreaded) {
+    const state: singleThreadedWorkGroup = { done: new Bool(), fnsMu: new Mutex(), fns: [] };
+    return {
+      Queue: (fn: () => void): void => singleThreadedWorkGroup_Queue(state, fn),
+      RunAndWait: (): void => singleThreadedWorkGroup_RunAndWait(state),
+    };
+  }
+  const state: parallelWorkGroup = { done: new Bool(), wg: new WaitGroup() };
+  return {
+    Queue: (fn: () => void): void => parallelWorkGroup_Queue(state, fn),
+    RunAndWait: (): void => parallelWorkGroup_RunAndWait(state),
+  };
 }
 
 /**
@@ -58,10 +69,10 @@ export interface parallelWorkGroup {
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
  */
-export let __7c9694b3_0: WorkGroup = undefined as never;
+export const __7c9694b3_0: WorkGroup = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.Queue","kind":"method","status":"stub","sigHash":"3a613e599ba2aa8046b19e5cea538987a132e970ec82b28e8d9dd4448e04b823","bodyHash":"ab0e077af06b04fdf79a20c4f839d7670dd8cd9d253fc427497de91affd5a466"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.Queue","kind":"method","status":"implemented","sigHash":"3a613e599ba2aa8046b19e5cea538987a132e970ec82b28e8d9dd4448e04b823","bodyHash":"ab0e077af06b04fdf79a20c4f839d7670dd8cd9d253fc427497de91affd5a466"}
  *
  * Go source:
  * func (w *parallelWorkGroup) Queue(fn func()) {
@@ -75,11 +86,14 @@ export let __7c9694b3_0: WorkGroup = undefined as never;
  * }
  */
 export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: () => void): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.Queue");
+  if (receiver!.done.Load()) {
+    throw new globalThis.Error("Queue called after RunAndWait returned");
+  }
+  receiver!.wg.Go(fn);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.RunAndWait","kind":"method","status":"stub","sigHash":"704756b7f57ff3271356ab6aed02912229fae08d2e404ad177d526f9a7ec5472","bodyHash":"10b2d6aa54a4fa62fae878f311cff3c7f935b338fc3112d406fb03f95d44a50c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.RunAndWait","kind":"method","status":"implemented","sigHash":"704756b7f57ff3271356ab6aed02912229fae08d2e404ad177d526f9a7ec5472","bodyHash":"10b2d6aa54a4fa62fae878f311cff3c7f935b338fc3112d406fb03f95d44a50c"}
  *
  * Go source:
  * func (w *parallelWorkGroup) RunAndWait() {
@@ -88,7 +102,8 @@ export function parallelWorkGroup_Queue(receiver: GoPtr<parallelWorkGroup>, fn: 
  * }
  */
 export function parallelWorkGroup_RunAndWait(receiver: GoPtr<parallelWorkGroup>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.RunAndWait");
+  receiver!.wg.Wait(); // no-op single-threaded; all queued fns ran synchronously in Queue
+  receiver!.done.Store(true as bool);
 }
 
 /**
@@ -113,10 +128,10 @@ export interface singleThreadedWorkGroup {
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)
  */
-export let __056fa025_0: WorkGroup = undefined as never;
+export const __056fa025_0: WorkGroup = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.Queue","kind":"method","status":"stub","sigHash":"01ad6bcfb7e5a22d16bf001ed92e5e227494b699f7b81f785d7a7de0efc800e9","bodyHash":"988fed99c77ff7fbd07fa317212524ffb19e5aad06caa4d766fcc3b50b488e06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.Queue","kind":"method","status":"implemented","sigHash":"01ad6bcfb7e5a22d16bf001ed92e5e227494b699f7b81f785d7a7de0efc800e9","bodyHash":"988fed99c77ff7fbd07fa317212524ffb19e5aad06caa4d766fcc3b50b488e06"}
  *
  * Go source:
  * func (w *singleThreadedWorkGroup) Queue(fn func()) {
@@ -130,11 +145,16 @@ export let __056fa025_0: WorkGroup = undefined as never;
  * }
  */
 export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWorkGroup>, fn: () => void): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.Queue");
+  if (receiver!.done.Load()) {
+    throw new globalThis.Error("Queue called after RunAndWait returned");
+  }
+  receiver!.fnsMu.Lock();
+  receiver!.fns.push(fn);
+  receiver!.fnsMu.Unlock();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.RunAndWait","kind":"method","status":"stub","sigHash":"469232e5330a9ac7d4f6eebd65beb509d7ab96b7583cc9c25812f5d585c85e28","bodyHash":"d169892c6c034f2206c71dba6e096856c1077ff2a828ed94ee78cbf6f77e0b44"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.RunAndWait","kind":"method","status":"implemented","sigHash":"469232e5330a9ac7d4f6eebd65beb509d7ab96b7583cc9c25812f5d585c85e28","bodyHash":"d169892c6c034f2206c71dba6e096856c1077ff2a828ed94ee78cbf6f77e0b44"}
  *
  * Go source:
  * func (w *singleThreadedWorkGroup) RunAndWait() {
@@ -149,11 +169,19 @@ export function singleThreadedWorkGroup_Queue(receiver: GoPtr<singleThreadedWork
  * }
  */
 export function singleThreadedWorkGroup_RunAndWait(receiver: GoPtr<singleThreadedWorkGroup>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.RunAndWait");
+  const drain = (): void => {
+    const fn = singleThreadedWorkGroup_pop(receiver);
+    if (fn !== undefined) {
+      fn();
+      drain();
+    }
+  };
+  drain();
+  receiver!.done.Store(true as bool);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.pop","kind":"method","status":"stub","sigHash":"b4591f455dfbfc9dda4bf6bd450de895d37dc08301e65bf2298c34ac129d51ab","bodyHash":"0c6c6851e5da8b2d74873f7fa4cccd909e3189aedf69cf4fe1a3a7a2338cd81c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.pop","kind":"method","status":"implemented","sigHash":"b4591f455dfbfc9dda4bf6bd450de895d37dc08301e65bf2298c34ac129d51ab","bodyHash":"0c6c6851e5da8b2d74873f7fa4cccd909e3189aedf69cf4fe1a3a7a2338cd81c"}
  *
  * Go source:
  * func (w *singleThreadedWorkGroup) pop() func() {
@@ -169,8 +197,15 @@ export function singleThreadedWorkGroup_RunAndWait(receiver: GoPtr<singleThreade
  * 	return fn
  * }
  */
-export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGroup>): () => void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.pop");
+export function singleThreadedWorkGroup_pop(receiver: GoPtr<singleThreadedWorkGroup>): GoPtr<() => void> {
+  receiver!.fnsMu.Lock();
+  if (receiver!.fns.length === 0) {
+    receiver!.fnsMu.Unlock();
+    return undefined;
+  }
+  const fn = receiver!.fns.pop()!;
+  receiver!.fnsMu.Unlock();
+  return fn;
 }
 
 /**
@@ -188,7 +223,7 @@ export interface ThrottleGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewThrottleGroup","kind":"func","status":"stub","sigHash":"32e6223810b6d3463dcfe567e22200bc40e79eccece87bd67af3d32c688b880c","bodyHash":"ab422ce84d9bc036c2962029063de5ad974bff98bf8cda71d43d5ea79912d8df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewThrottleGroup","kind":"func","status":"implemented","sigHash":"32e6223810b6d3463dcfe567e22200bc40e79eccece87bd67af3d32c688b880c","bodyHash":"ab422ce84d9bc036c2962029063de5ad974bff98bf8cda71d43d5ea79912d8df"}
  *
  * Go source:
  * func NewThrottleGroup(ctx context.Context, semaphore chan struct{}) *ThrottleGroup {
@@ -200,11 +235,14 @@ export interface ThrottleGroup {
  * }
  */
 export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">): GoPtr<ThrottleGroup> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::func::NewThrottleGroup");
+  return {
+    semaphore,
+    group: { __goFacadeName: "golang.org/x/sync/errgroup.Group" } as GoPtr<Group>,
+  };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go","kind":"method","status":"stub","sigHash":"73f2fd187d8bfc7b8c568b33621ebac6f839fbfa338297906a95f3506bfeb1bd","bodyHash":"baccfb5231d0190a3b01f97e87979cd24b3afbad7b6bb3053af2fdfc7cc037af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go","kind":"method","status":"implemented","sigHash":"73f2fd187d8bfc7b8c568b33621ebac6f839fbfa338297906a95f3506bfeb1bd","bodyHash":"baccfb5231d0190a3b01f97e87979cd24b3afbad7b6bb3053af2fdfc7cc037af"}
  *
  * Go source:
  * func (tg *ThrottleGroup) Go(fn func() error) {
@@ -220,11 +258,15 @@ export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __ts
  * }
  */
 export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: () => GoError): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Go");
+  // Single-threaded: semaphore and errgroup are no-ops; call fn synchronously.
+  const err = fn();
+  if (err !== undefined) {
+    throw err;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Wait","kind":"method","status":"stub","sigHash":"5509c7a6b09b2bbaf9be0e054349f985b78c62a5854a16c48a0ce0e63c78fbb2","bodyHash":"747addbdb10adfe1b1d0d6c5670e23b352b02f50f49df6c75111cdc6f3958148"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Wait","kind":"method","status":"implemented","sigHash":"5509c7a6b09b2bbaf9be0e054349f985b78c62a5854a16c48a0ce0e63c78fbb2","bodyHash":"747addbdb10adfe1b1d0d6c5670e23b352b02f50f49df6c75111cdc6f3958148"}
  *
  * Go source:
  * func (tg *ThrottleGroup) Wait() error {
@@ -232,5 +274,5 @@ export function ThrottleGroup_Go(receiver: GoPtr<ThrottleGroup>, fn: () => GoErr
  * }
  */
 export function ThrottleGroup_Wait(receiver: GoPtr<ThrottleGroup>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/workgroup.go::method::ThrottleGroup.Wait");
+  return undefined;
 }

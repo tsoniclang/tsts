@@ -4,7 +4,7 @@ import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"stub","sigHash":"955c1a2ed6ee58a00a33eb9d83a514b829e17934a40779d6671c3715322c6279","bodyHash":"5fa746f9ad8184af45af12e61f174c3763b0f6e232c9d3cf29c17b36e4bd2f94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/multimap.go::type::MultiMap","kind":"type","status":"implemented","sigHash":"955c1a2ed6ee58a00a33eb9d83a514b829e17934a40779d6671c3715322c6279","bodyHash":"5fa746f9ad8184af45af12e61f174c3763b0f6e232c9d3cf29c17b36e4bd2f94"}
  *
  * Go source:
  * MultiMap[K comparable, V comparable] struct {
@@ -115,14 +115,12 @@ export function MultiMap_Add<K, V>(receiver: GoPtr<MultiMap<K, V>>, key: K, valu
 export function MultiMap_Remove<K, V>(receiver: GoPtr<MultiMap<K, V>>, key: K, value: V): void {
   const values0 = receiver!.M.get(key);
   if (values0 !== undefined) {
-    let values: GoSlice<V> = values0;
-    const i = slices.Index(values, value);
+    const i = slices.Index(values0, value);
     if (i >= 0) {
-      if (values.length === 1) {
+      if (values0.length === 1) {
         receiver!.M.delete(key);
       } else {
-        values = values.slice(0, i).concat(values.slice(i + 1));
-        receiver!.M.set(key, values);
+        receiver!.M.set(key, values0.slice(0, i).concat(values0.slice(i + 1)));
       }
     }
   }

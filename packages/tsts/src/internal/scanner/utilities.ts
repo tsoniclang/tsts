@@ -2,13 +2,17 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoRune } from "../../go/compat.js";
 import { ContainsRune } from "../../go/strings.js";
 import { DecodeRuneInString } from "../../go/unicode/utf8.js";
+import { Node_End, Node_Pos } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
+import type { SourceFile } from "../ast/ast.js";
+import { SourceFile_Text } from "../ast/ast.js";
+import { GetSourceFileOfNode, NodeIsMissing } from "../ast/utilities.js";
 import type { Identifier } from "../ast/generated/data.js";
 import type { SourceFileNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindIdentifier, KindUnknown } from "../ast/generated/kinds.js";
 import type { LanguageVariant } from "../core/languagevariant.js";
-import { IsIdentifierPartEx, IsIdentifierStart, textToKeyword } from "./scanner.js";
+import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from "./scanner.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `name[i:]` operate on byte offsets. We mirror that contract by
@@ -74,7 +78,7 @@ export function surrogatePairToCodepoint(r1: GoRune, r2: GoRune): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::encodeSurrogate","kind":"func","status":"stub","sigHash":"2b3f3c1d70db7cbc381e823a09fc809b955ffba8986d29998983627281329861","bodyHash":"3d338da63ad530763726641b11a1c6d2e2e6df3b5c5c495805536a303b9e4551"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::encodeSurrogate","kind":"func","status":"implemented","sigHash":"2b3f3c1d70db7cbc381e823a09fc809b955ffba8986d29998983627281329861","bodyHash":"3d338da63ad530763726641b11a1c6d2e2e6df3b5c5c495805536a303b9e4551"}
  *
  * Go source:
  * func encodeSurrogate(r rune) string {
@@ -86,11 +90,12 @@ export function surrogatePairToCodepoint(r1: GoRune, r2: GoRune): GoRune {
  * }
  */
 export function encodeSurrogate(r: GoRune): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::encodeSurrogate");
+  const bytes = new globalThis.Uint8Array([0xed, (0x80 | ((r >> 6) & 0x3f)), (0x80 | (r & 0x3f))]);
+  return utf8Decoder.decode(bytes);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::decodeClassAtomRune","kind":"func","status":"stub","sigHash":"048ab810c787cc11e24b6295a27752b82c19a2eff78ccbe45af38d1e22cfb704","bodyHash":"4f44ff79d920c9fbebbd0125eb47b01dbb7f6ab771f17fe2562903f349fb3e63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::decodeClassAtomRune","kind":"func","status":"implemented","sigHash":"048ab810c787cc11e24b6295a27752b82c19a2eff78ccbe45af38d1e22cfb704","bodyHash":"4f44ff79d920c9fbebbd0125eb47b01dbb7f6ab771f17fe2562903f349fb3e63"}
  *
  * Go source:
  * func decodeClassAtomRune(s string) (rune, int) {
@@ -102,7 +107,12 @@ export function encodeSurrogate(r: GoRune): string {
  * }
  */
 export function decodeClassAtomRune(s: string): [GoRune, int] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::decodeClassAtomRune");
+  const bytes = utf8Encoder.encode(s);
+  if (bytes.length >= 3 && bytes[0] === 0xed && bytes[1]! >= 0xa0 && bytes[1]! <= 0xbf && bytes[2]! >= 0x80 && bytes[2]! <= 0xbf) {
+    const r = (0xd000 | ((bytes[1]! & 0x3f) << 6) | (bytes[2]! & 0x3f)) as GoRune;
+    return [r, 3];
+  }
+  return DecodeRuneInString(s);
 }
 
 /**
@@ -130,7 +140,7 @@ export function IdentifierToKeywordKind(node: GoPtr<Identifier>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetSourceTextOfNodeFromSourceFile","kind":"func","status":"stub","sigHash":"b7cca8022b228202419ff6a10aae646430a4663efa578392cfb257ad13cb8c4a","bodyHash":"3ad2719a98901b75c3c09a0e86e2f00a2b42f0ba823f317b37fbb5288d36d508"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetSourceTextOfNodeFromSourceFile","kind":"func","status":"implemented","sigHash":"b7cca8022b228202419ff6a10aae646430a4663efa578392cfb257ad13cb8c4a","bodyHash":"3ad2719a98901b75c3c09a0e86e2f00a2b42f0ba823f317b37fbb5288d36d508"}
  *
  * Go source:
  * func GetSourceTextOfNodeFromSourceFile(sourceFile *ast.SourceFile, node *ast.Node, includeTrivia bool) string {
@@ -138,11 +148,11 @@ export function IdentifierToKeywordKind(node: GoPtr<Identifier>): Kind {
  * }
  */
 export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>, includeTrivia: bool): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetSourceTextOfNodeFromSourceFile");
+  return GetTextOfNodeFromSourceText(SourceFile_Text(sourceFile as GoPtr<SourceFile>), node, includeTrivia);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNodeFromSourceText","kind":"func","status":"stub","sigHash":"50273fa97318ececf08f0e40b5aa9b625dc22ee36fa65aa43b3792df6e056025","bodyHash":"ccc4594cd54e8aa853fdbe1e0f238807f30db56fdb1e3f3bfb45b888d0611196"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNodeFromSourceText","kind":"func","status":"implemented","sigHash":"50273fa97318ececf08f0e40b5aa9b625dc22ee36fa65aa43b3792df6e056025","bodyHash":"ccc4594cd54e8aa853fdbe1e0f238807f30db56fdb1e3f3bfb45b888d0611196"}
  *
  * Go source:
  * func GetTextOfNodeFromSourceText(sourceText string, node *ast.Node, includeTrivia bool) string {
@@ -162,11 +172,16 @@ export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFileNo
  * }
  */
 export function GetTextOfNodeFromSourceText(sourceText: string, node: GoPtr<Node>, includeTrivia: bool): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNodeFromSourceText");
+  if (NodeIsMissing(node)) {
+    return "";
+  }
+  const rawPos = Node_Pos(node);
+  const pos = includeTrivia ? rawPos : SkipTrivia(sourceText, rawPos);
+  return byteSlice(sourceText, pos, Node_End(node));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNode","kind":"func","status":"stub","sigHash":"af3b3d5af10aba571189fe45de3a202f5979647ea5666587041cb14941e3fcd4","bodyHash":"806427f325bde31538bfa18fb5dbaadc6dca3040796c8a64c45254d5eaa414b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNode","kind":"func","status":"implemented","sigHash":"af3b3d5af10aba571189fe45de3a202f5979647ea5666587041cb14941e3fcd4","bodyHash":"806427f325bde31538bfa18fb5dbaadc6dca3040796c8a64c45254d5eaa414b8"}
  *
  * Go source:
  * func GetTextOfNode(node *ast.Node) string {
@@ -174,11 +189,11 @@ export function GetTextOfNodeFromSourceText(sourceText: string, node: GoPtr<Node
  * }
  */
 export function GetTextOfNode(node: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNode");
+  return GetSourceTextOfNodeFromSourceFile(GetSourceFileOfNode(node), node, false as bool);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::DeclarationNameToString","kind":"func","status":"stub","sigHash":"b94b736db3899ab68a72217ba50aa545c6dfd8ef5a9f71144ad3a5964b77e5ac","bodyHash":"232b64bb61a169e5aa06fa603b208229ec2b6966dad37e8c491db825c9881d07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::DeclarationNameToString","kind":"func","status":"implemented","sigHash":"b94b736db3899ab68a72217ba50aa545c6dfd8ef5a9f71144ad3a5964b77e5ac","bodyHash":"232b64bb61a169e5aa06fa603b208229ec2b6966dad37e8c491db825c9881d07"}
  *
  * Go source:
  * func DeclarationNameToString(name *ast.Node) string {
@@ -189,7 +204,10 @@ export function GetTextOfNode(node: GoPtr<Node>): string {
  * }
  */
 export function DeclarationNameToString(name: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::DeclarationNameToString");
+  if (name === undefined || Node_Pos(name) === Node_End(name)) {
+    return "(Missing)";
+  }
+  return GetTextOfNode(name);
 }
 
 /**
@@ -212,19 +230,17 @@ export function DeclarationNameToString(name: GoPtr<Node>): string {
  * }
  */
 export function IsIdentifierText(name: string, languageVariant: LanguageVariant): bool {
-  let [ch, size] = DecodeRuneInString(name);
+  const [ch, size] = DecodeRuneInString(name);
   if (!IsIdentifierStart(ch)) {
     return false;
   }
-  let i: int = size;
-  while (i < byteLen(name)) {
-    [ch, size] = DecodeRuneInString(byteSlice(name, i));
-    if (!IsIdentifierPartEx(ch, languageVariant)) {
-      return false;
-    }
-    i += size;
-  }
-  return true;
+  const loop = (i: int): bool => {
+    if (i >= byteLen(name)) return true;
+    const [ch2, sz] = DecodeRuneInString(byteSlice(name, i));
+    if (!IsIdentifierPartEx(ch2, languageVariant)) return false;
+    return loop((i + sz) as int);
+  };
+  return loop(size as int);
 }
 
 /**

@@ -15,43 +15,10 @@ import {
   CommandLineOptionTypeString,
   extraValidationLocale,
   extraValidationNone,
+  newCommandLineOption,
 } from "./commandlineoption.js";
 import type { CommandLineOption } from "./commandlineoption.js";
 
-// Constructs a CommandLineOption from a Go composite literal's named fields,
-// filling all remaining fields with their Go zero values. Mirrors the Go struct
-// literal semantics where unspecified fields take their type's zero value.
-function newCommandLineOption(fields: Partial<CommandLineOption>): CommandLineOption {
-  return {
-    Name: "",
-    ShortName: "",
-    Kind: "",
-    IsFilePath: false,
-    IsTSConfigOnly: false,
-    IsCommandLineOnly: false,
-    Description: undefined,
-    DefaultValueDescription: undefined,
-    ShowInSimplifiedHelpView: false,
-    Category: undefined,
-    extraValidation: extraValidationNone,
-    minValue: 0,
-    allowConfigDirTemplateSubstitution: false,
-    AffectsDeclarationPath: false,
-    AffectsProgramStructure: false,
-    AffectsSemanticDiagnostics: false,
-    AffectsBuildInfo: false,
-    AffectsBindDiagnostics: false,
-    AffectsSourceFile: false,
-    AffectsModuleResolution: false,
-    AffectsEmit: false,
-    allowJsFlag: false,
-    strictFlag: false,
-    transpileOptionValue: TSUnknown,
-    listPreserveFalsyValues: false,
-    ElementOptions: undefined as never,
-    ...fields,
-  };
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/declscompiler.go::varGroup::OptionsDeclarations","kind":"varGroup","status":"implemented","sigHash":"13c9568bcd832d79be6deb0428dad16819ed913e5ca1740d1c9811ec04b9d830","bodyHash":"250634e4ab39e833a421c31ec41040c09200eb172d38f436f33829244ceebbb1"}

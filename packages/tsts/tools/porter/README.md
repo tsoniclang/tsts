@@ -8,6 +8,7 @@ This directory is the mechanical-port backbone for TSTS. The tooling reads the r
 - `npm run porter:status` extracts TS-Go, scans TypeScript metadata, and writes `.temp/porter/status.json` plus `.temp/porter/status.md`.
 - `npm run porter:verify` fails on Go parse errors, duplicate Go IDs, duplicate TS IDs, orphan TS metadata, TypeScript files without `@tsgo-unit`, or stale hashes. Add `-- --strict-port` to also fail while units are missing.
 - `npm run porter:scaffold -- --limit 25` previews missing-unit scaffolds. Add `-- --write` to create files.
+- `npm run porter:scaffold-all` creates or appends scaffolds for every active missing Go unit, refreshes porter status, and fails if any active unit remains missing.
 - `npm run porter:facades -- --out packages/tsts/src` regenerates the checked-in Go compatibility/facade layer from the full TS-Go snapshot. Existing differing files are never overwritten unless `-- --force` is also supplied.
 - `npm run porter:facades -- --check` verifies the checked-in Go compatibility/facade layer is exactly the deterministic output for the current TS-Go snapshot.
 - `npm run porter:large-files` verifies every active literal-port Go file over the configured LOC threshold has a semantic split plan.
@@ -34,10 +35,10 @@ The ID already contains the Go module, Go file path, artifact kind, and qualifie
 - `stale`: the Go signature/body hash changed since the TypeScript unit was written.
 - `orphan`: a TypeScript `@tsgo-unit` refers to no current Go unit.
 - `untracked TS file`: a TypeScript source file exists under `src/` but carries no `@tsgo-unit`.
-- `excluded`: the Go unit is explicitly outside the active standalone compiler porter scope and must not be scaffolded.
+- `excluded`: the Go unit is explicitly outside the active standalone compiler porter scope and must not be scaffolded. Generated units, Go tests, language-service/editor surfaces, and other non-production policy classes are excluded from production scaffold coverage even though they remain visible in the inventory.
 - `forbidden TS file`: a TypeScript source file exists in a path that must not exist in the active standalone compiler tree.
 
-Generated, host-native, out-of-scope, and manual-required categories are explicit policy classifications in `porter.config.json`; they are not silent omissions.
+Generated, test, host-native, out-of-scope, and manual-required categories are explicit policy classifications in `porter.config.json`; they are not silent omissions. Production scaffold coverage is active only for `literal-port`, `manual-required`, and `host-native` units. Generated code is checked through generated-artifact gates, and test parity belongs to the test harness rather than production source scaffolding.
 
 ## Out-of-Scope Language-Service Surface
 
@@ -45,7 +46,13 @@ The standalone compiler porter excludes the language-service/editor surface comp
 
 - `internal/ls/**`
 - `internal/lsp/**`
+- `internal/api/**`
+- `internal/project/**`
+- `internal/format/**`
+- `cmd/tsgo/lsp.go`
 - fourslash/editor harness paths
+- upstream repository tools under `_tools/**`
+- upstream test harness/helper paths such as `internal/testutil/**`, `internal/testrunner/**`, and `internal/execute/tsctests/**`
 
 These files may exist only in the vendored TS-Go checkout as upstream reference input. They must not exist under `packages/tsts/src`. The porter reports matching Go units as `excluded`, and `porter:verify` fails if matching TypeScript files appear in the active source tree.
 
@@ -112,6 +119,8 @@ The extractor records every `.go` file it sees, including generated files, tests
 - TypeScript files that contain no `@tsgo-unit` metadata.
 
 Normal port code cannot appear silently. If a TypeScript helper is genuinely needed, add an explicit source-file policy before it is accepted.
+
+The intended full-coverage bootstrap invariant is stronger: every active Go unit must have exactly one TypeScript `@tsgo-unit` block. Use `npm run porter:scaffold-all` to create traceable stubs for the complete active missing set before judging implementation quality. After that point, `missing` should remain zero; ongoing work should move units from `stub` to `implemented`.
 
 ## Incremental Update Contract
 

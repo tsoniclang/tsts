@@ -1,7 +1,7 @@
 import type { int, uint } from "@tsonic/core/types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::type::NodeFlags","kind":"type","status":"stub","sigHash":"1ab8cedf51e53d4d4a76535f180fa467201a4ee1d08d7a155aaeb2a90ab16ad7","bodyHash":"5197d1ac139ca86c7af2d2cefe73128e846310afb8e0533c210c8308c6d55e12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::type::NodeFlags","kind":"type","status":"implemented","sigHash":"1ab8cedf51e53d4d4a76535f180fa467201a4ee1d08d7a155aaeb2a90ab16ad7","bodyHash":"5197d1ac139ca86c7af2d2cefe73128e846310afb8e0533c210c8308c6d55e12"}
  *
  * Go source:
  * NodeFlags uint32
@@ -9,7 +9,7 @@ import type { int, uint } from "@tsonic/core/types.js";
 export type NodeFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::constGroup::NodeFlagsNone+NodeFlagsLet+NodeFlagsConst+NodeFlagsUsing+NodeFlagsReparsed+NodeFlagsSynthesized+NodeFlagsOptionalChain+NodeFlagsExportContext+NodeFlagsContainsThis+NodeFlagsHasImplicitReturn+NodeFlagsHasExplicitReturn+NodeFlagsDisallowInContext+NodeFlagsYieldContext+NodeFlagsDecoratorContext+NodeFlagsAwaitContext+NodeFlagsDisallowConditionalTypesContext+NodeFlagsThisNodeHasError+NodeFlagsJavaScriptFile+NodeFlagsThisNodeOrAnySubNodesHasError+NodeFlagsHasAsyncFunctions+NodeFlagsPossiblyContainsDynamicImport+NodeFlagsPossiblyContainsImportMeta+NodeFlagsHasJSDoc+NodeFlagsJSDoc+NodeFlagsAmbient+NodeFlagsInWithStatement+NodeFlagsJsonFile+NodeFlagsPossiblyContainsDeprecatedTag+NodeFlagsUnreachable+NodeFlagsBlockScoped+NodeFlagsConstant+NodeFlagsAwaitUsing+NodeFlagsReachabilityCheckFlags+NodeFlagsReachabilityAndEmitFlags+NodeFlagsContextFlags+NodeFlagsTypeExcludesFlags+NodeFlagsPermanentlySetIncrementalFlags+NodeFlagsIdentifierHasExtendedUnicodeEscape","kind":"constGroup","status":"stub","sigHash":"d0234342afdf1d9936c76788479c8c9262ad27533a39c6a4bb52188d435a5e19","bodyHash":"48e7bb2d2442640d317a22fb7b4312b32137ec9ae5e1c89b80134a3644c26346"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::constGroup::NodeFlagsNone+NodeFlagsLet+NodeFlagsConst+NodeFlagsUsing+NodeFlagsReparsed+NodeFlagsSynthesized+NodeFlagsOptionalChain+NodeFlagsExportContext+NodeFlagsContainsThis+NodeFlagsHasImplicitReturn+NodeFlagsHasExplicitReturn+NodeFlagsDisallowInContext+NodeFlagsYieldContext+NodeFlagsDecoratorContext+NodeFlagsAwaitContext+NodeFlagsDisallowConditionalTypesContext+NodeFlagsThisNodeHasError+NodeFlagsJavaScriptFile+NodeFlagsThisNodeOrAnySubNodesHasError+NodeFlagsHasAsyncFunctions+NodeFlagsPossiblyContainsDynamicImport+NodeFlagsPossiblyContainsImportMeta+NodeFlagsHasJSDoc+NodeFlagsJSDoc+NodeFlagsAmbient+NodeFlagsInWithStatement+NodeFlagsJsonFile+NodeFlagsPossiblyContainsDeprecatedTag+NodeFlagsUnreachable+NodeFlagsBlockScoped+NodeFlagsConstant+NodeFlagsAwaitUsing+NodeFlagsReachabilityCheckFlags+NodeFlagsReachabilityAndEmitFlags+NodeFlagsContextFlags+NodeFlagsTypeExcludesFlags+NodeFlagsPermanentlySetIncrementalFlags+NodeFlagsIdentifierHasExtendedUnicodeEscape","kind":"constGroup","status":"implemented","sigHash":"d0234342afdf1d9936c76788479c8c9262ad27533a39c6a4bb52188d435a5e19","bodyHash":"48e7bb2d2442640d317a22fb7b4312b32137ec9ae5e1c89b80134a3644c26346"}
  *
  * Go source:
  * const (
@@ -77,41 +77,41 @@ export type NodeFlags = uint;
  * 	NodeFlagsIdentifierHasExtendedUnicodeEscape NodeFlags = NodeFlagsContainsThis // Indicates whether the identifier contains an extended unicode escape sequence
  * )
  */
-export const NodeFlagsNone: NodeFlags = undefined as never;
-export const NodeFlagsLet: NodeFlags = undefined as never;
-export const NodeFlagsConst: NodeFlags = undefined as never;
-export const NodeFlagsUsing: NodeFlags = undefined as never;
-export const NodeFlagsReparsed: NodeFlags = undefined as never;
-export const NodeFlagsSynthesized: NodeFlags = undefined as never;
-export const NodeFlagsOptionalChain: NodeFlags = undefined as never;
-export const NodeFlagsExportContext: NodeFlags = undefined as never;
-export const NodeFlagsContainsThis: NodeFlags = undefined as never;
-export const NodeFlagsHasImplicitReturn: NodeFlags = undefined as never;
-export const NodeFlagsHasExplicitReturn: NodeFlags = undefined as never;
-export const NodeFlagsDisallowInContext: NodeFlags = undefined as never;
-export const NodeFlagsYieldContext: NodeFlags = undefined as never;
-export const NodeFlagsDecoratorContext: NodeFlags = undefined as never;
-export const NodeFlagsAwaitContext: NodeFlags = undefined as never;
-export const NodeFlagsDisallowConditionalTypesContext: NodeFlags = undefined as never;
-export const NodeFlagsThisNodeHasError: NodeFlags = undefined as never;
-export const NodeFlagsJavaScriptFile: NodeFlags = undefined as never;
-export const NodeFlagsThisNodeOrAnySubNodesHasError: NodeFlags = undefined as never;
-export const NodeFlagsHasAsyncFunctions: NodeFlags = undefined as never;
-export const NodeFlagsPossiblyContainsDynamicImport: NodeFlags = undefined as never;
-export const NodeFlagsPossiblyContainsImportMeta: NodeFlags = undefined as never;
-export const NodeFlagsHasJSDoc: NodeFlags = undefined as never;
-export const NodeFlagsJSDoc: NodeFlags = undefined as never;
-export const NodeFlagsAmbient: NodeFlags = undefined as never;
-export const NodeFlagsInWithStatement: NodeFlags = undefined as never;
-export const NodeFlagsJsonFile: NodeFlags = undefined as never;
-export const NodeFlagsPossiblyContainsDeprecatedTag: NodeFlags = undefined as never;
-export const NodeFlagsUnreachable: NodeFlags = undefined as never;
-export const NodeFlagsBlockScoped: int = undefined as never;
-export const NodeFlagsConstant: int = undefined as never;
-export const NodeFlagsAwaitUsing: int = undefined as never;
-export const NodeFlagsReachabilityCheckFlags: int = undefined as never;
-export const NodeFlagsReachabilityAndEmitFlags: int = undefined as never;
-export const NodeFlagsContextFlags: NodeFlags = undefined as never;
-export const NodeFlagsTypeExcludesFlags: NodeFlags = undefined as never;
-export const NodeFlagsPermanentlySetIncrementalFlags: NodeFlags = undefined as never;
-export const NodeFlagsIdentifierHasExtendedUnicodeEscape: NodeFlags = undefined as never;
+export const NodeFlagsNone: NodeFlags = 0;
+export const NodeFlagsLet: NodeFlags = 1 << 0;
+export const NodeFlagsConst: NodeFlags = 1 << 1;
+export const NodeFlagsUsing: NodeFlags = 1 << 2;
+export const NodeFlagsReparsed: NodeFlags = 1 << 3;
+export const NodeFlagsSynthesized: NodeFlags = 1 << 4;
+export const NodeFlagsOptionalChain: NodeFlags = 1 << 5;
+export const NodeFlagsExportContext: NodeFlags = 1 << 6;
+export const NodeFlagsContainsThis: NodeFlags = 1 << 7;
+export const NodeFlagsHasImplicitReturn: NodeFlags = 1 << 8;
+export const NodeFlagsHasExplicitReturn: NodeFlags = 1 << 9;
+export const NodeFlagsDisallowInContext: NodeFlags = 1 << 10;
+export const NodeFlagsYieldContext: NodeFlags = 1 << 11;
+export const NodeFlagsDecoratorContext: NodeFlags = 1 << 12;
+export const NodeFlagsAwaitContext: NodeFlags = 1 << 13;
+export const NodeFlagsDisallowConditionalTypesContext: NodeFlags = 1 << 14;
+export const NodeFlagsThisNodeHasError: NodeFlags = 1 << 15;
+export const NodeFlagsJavaScriptFile: NodeFlags = 1 << 16;
+export const NodeFlagsThisNodeOrAnySubNodesHasError: NodeFlags = 1 << 17;
+export const NodeFlagsHasAsyncFunctions: NodeFlags = 1 << 18;
+export const NodeFlagsPossiblyContainsDynamicImport: NodeFlags = 1 << 19;
+export const NodeFlagsPossiblyContainsImportMeta: NodeFlags = 1 << 20;
+export const NodeFlagsHasJSDoc: NodeFlags = 1 << 21;
+export const NodeFlagsJSDoc: NodeFlags = 1 << 22;
+export const NodeFlagsAmbient: NodeFlags = 1 << 23;
+export const NodeFlagsInWithStatement: NodeFlags = 1 << 24;
+export const NodeFlagsJsonFile: NodeFlags = 1 << 25;
+export const NodeFlagsPossiblyContainsDeprecatedTag: NodeFlags = 1 << 26;
+export const NodeFlagsUnreachable: NodeFlags = 1 << 27;
+export const NodeFlagsBlockScoped: int = NodeFlagsLet | NodeFlagsConst | NodeFlagsUsing;
+export const NodeFlagsConstant: int = NodeFlagsConst | NodeFlagsUsing;
+export const NodeFlagsAwaitUsing: int = NodeFlagsConst | NodeFlagsUsing;
+export const NodeFlagsReachabilityCheckFlags: int = NodeFlagsHasImplicitReturn | NodeFlagsHasExplicitReturn;
+export const NodeFlagsReachabilityAndEmitFlags: int = NodeFlagsReachabilityCheckFlags | NodeFlagsHasAsyncFunctions;
+export const NodeFlagsContextFlags: NodeFlags = NodeFlagsDisallowInContext | NodeFlagsDisallowConditionalTypesContext | NodeFlagsYieldContext | NodeFlagsDecoratorContext | NodeFlagsAwaitContext | NodeFlagsJavaScriptFile | NodeFlagsInWithStatement | NodeFlagsAmbient;
+export const NodeFlagsTypeExcludesFlags: NodeFlags = NodeFlagsYieldContext | NodeFlagsAwaitContext;
+export const NodeFlagsPermanentlySetIncrementalFlags: NodeFlags = NodeFlagsPossiblyContainsDynamicImport | NodeFlagsPossiblyContainsImportMeta;
+export const NodeFlagsIdentifierHasExtendedUnicodeEscape: NodeFlags = NodeFlagsContainsThis;

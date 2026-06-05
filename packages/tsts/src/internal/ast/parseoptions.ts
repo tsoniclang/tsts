@@ -38,7 +38,10 @@ import { SubtreeContainsJsx } from "./subtreefacts.js";
 import {
   GetImpliedNodeFormatForEmitWorker,
   HasSyntacticModifier,
+  IsImportMeta,
 } from "./utilities.js";
+import { NodeFlagsPossiblyContainsImportMeta } from "./generated/flags.js";
+import { ScriptKindJSON } from "../core/scriptkind.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::type::SourceFileParseOptions","kind":"type","status":"implemented","sigHash":"9a450bb87222c925154d70406dc08e93c64ffd27c4119d98bcb70e15e077af29","bodyHash":"053ca2016d94420fcce03accf7a3b15427c4e250f890f4d10a0b2b28e4befd05"}
@@ -130,7 +133,7 @@ export function GetExternalModuleIndicatorOptions(fileName: string, options: GoP
  * Go source:
  * var isFileForcedToBeModuleByFormatExtensions = []string{tspath.ExtensionCjs, tspath.ExtensionCts, tspath.ExtensionMjs, tspath.ExtensionMts}
  */
-export let isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = [ExtensionCjs, ExtensionCts, ExtensionMjs, ExtensionMts];
+export const isFileForcedToBeModuleByFormatExtensions: GoSlice<string> = [ExtensionCjs, ExtensionCts, ExtensionMjs, ExtensionMts];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileForcedToBeModuleByFormat","kind":"func","status":"implemented","sigHash":"963f93612f9d264992fd241122e4739f2dcc96a8bf53731f6ba3521376ee8870","bodyHash":"0efad914924fa06650a053b7e4a3fee6f937dc7a5e0f5a5924430ca8ed0ab5ca"}
@@ -169,7 +172,7 @@ export function SetExternalModuleIndicator(file: GoPtr<SourceFile>, opts: Extern
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getExternalModuleIndicator","kind":"func","status":"stub","sigHash":"550e3c5d8118e3df5ad51f817184bc5a9f2a356da99a5bab340b77992d750078","bodyHash":"659c4a8ce9b6ac1ffb4452fb0682b875104599d0dd229cd61aad4fc0fcbe5db6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getExternalModuleIndicator","kind":"func","status":"implemented","sigHash":"550e3c5d8118e3df5ad51f817184bc5a9f2a356da99a5bab340b77992d750078","bodyHash":"659c4a8ce9b6ac1ffb4452fb0682b875104599d0dd229cd61aad4fc0fcbe5db6"}
  *
  * Go source:
  * func getExternalModuleIndicator(file *SourceFile, opts ExternalModuleIndicatorOptions) *Node {
@@ -199,7 +202,26 @@ export function SetExternalModuleIndicator(file: GoPtr<SourceFile>, opts: Extern
  * }
  */
 export function getExternalModuleIndicator(file: GoPtr<SourceFile>, opts: ExternalModuleIndicatorOptions): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getExternalModuleIndicator");
+  if (file!.ScriptKind === ScriptKindJSON) {
+    return undefined;
+  }
+  const node = isFileProbablyExternalModule(file);
+  if (node !== undefined) {
+    return node;
+  }
+  if (file!.IsDeclarationFile) {
+    return undefined;
+  }
+  if (opts.JSX) {
+    const jsxNode = isFileModuleFromUsingJSXTag(file);
+    if (jsxNode !== undefined) {
+      return jsxNode;
+    }
+  }
+  if (opts.Force) {
+    return file as GoPtr<Node>;
+  }
+  return undefined;
 }
 
 /**
@@ -241,7 +263,7 @@ export function isAnExternalModuleIndicatorNode(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getImportMetaIfNecessary","kind":"func","status":"stub","sigHash":"55e22613652764c1b0203104647aa82f50101ac8e960b8a66c832c815d9e4d38","bodyHash":"c8b7cef2954e743f056bac07de86919af6fbb27281f68a533613a90c55624ebd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getImportMetaIfNecessary","kind":"func","status":"implemented","sigHash":"55e22613652764c1b0203104647aa82f50101ac8e960b8a66c832c815d9e4d38","bodyHash":"c8b7cef2954e743f056bac07de86919af6fbb27281f68a533613a90c55624ebd"}
  *
  * Go source:
  * func getImportMetaIfNecessary(sourceFile *SourceFile) *Node {
@@ -252,7 +274,10 @@ export function isAnExternalModuleIndicatorNode(node: GoPtr<Node>): bool {
  * }
  */
 export function getImportMetaIfNecessary(sourceFile: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::getImportMetaIfNecessary");
+  if (((sourceFile as GoPtr<Node>)!.Flags & NodeFlagsPossiblyContainsImportMeta) !== 0) {
+    return findChildNode(sourceFile as GoPtr<Node>, IsImportMeta);
+  }
+  return undefined;
 }
 
 /**
@@ -274,20 +299,20 @@ export function getImportMetaIfNecessary(sourceFile: GoPtr<SourceFile>): GoPtr<N
  * }
  */
 export function findChildNode(root: GoPtr<Node>, check: (arg0: GoPtr<Node>) => bool): GoPtr<Node> {
-  let result: GoPtr<Node> = undefined;
+  const container = { result: undefined as GoPtr<Node> };
   const visit: Visitor = (node: GoPtr<Node>): bool => {
     if (check(node)) {
-      result = node;
+      container.result = node;
       return true;
     }
     return Node_ForEachChild(node, visit);
   };
   visit(root);
-  return result;
+  return container.result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileModuleFromUsingJSXTag","kind":"func","status":"stub","sigHash":"42b93852c47bd324e1a0545c1741ba35a3e6bd119150fcf069d28d44e55138ae","bodyHash":"4294b2ca70f78b4e67054bb92ebc39dd263be5364809845f865d7c017875ddf2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileModuleFromUsingJSXTag","kind":"func","status":"implemented","sigHash":"42b93852c47bd324e1a0545c1741ba35a3e6bd119150fcf069d28d44e55138ae","bodyHash":"4294b2ca70f78b4e67054bb92ebc39dd263be5364809845f865d7c017875ddf2"}
  *
  * Go source:
  * func isFileModuleFromUsingJSXTag(file *SourceFile) *Node {
@@ -295,7 +320,7 @@ export function findChildNode(root: GoPtr<Node>, check: (arg0: GoPtr<Node>) => b
  * }
  */
 export function isFileModuleFromUsingJSXTag(file: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/parseoptions.go::func::isFileModuleFromUsingJSXTag");
+  return walkTreeForJSXTags(file as GoPtr<Node>);
 }
 
 /**
@@ -325,22 +350,20 @@ export function isFileModuleFromUsingJSXTag(file: GoPtr<SourceFile>): GoPtr<Node
  * }
  */
 export function walkTreeForJSXTags(node: GoPtr<Node>): GoPtr<Node> {
-  let found: GoPtr<Node> = undefined;
-
-  const visitor: Visitor = (node: GoPtr<Node>): bool => {
-    if (found !== undefined) {
+  const container = { found: undefined as GoPtr<Node> };
+  const visitor: Visitor = (n: GoPtr<Node>): bool => {
+    if (container.found !== undefined) {
       return true;
     }
-    if ((Node_SubtreeFacts(node) & SubtreeContainsJsx) === 0) {
+    if ((Node_SubtreeFacts(n) & SubtreeContainsJsx) === 0) {
       return false;
     }
-    if (IsJsxOpeningElement(node) || IsJsxFragment(node)) {
-      found = node;
+    if (IsJsxOpeningElement(n) || IsJsxFragment(n)) {
+      container.found = n;
       return true;
     }
-    return Node_ForEachChild(node, visitor);
+    return Node_ForEachChild(n, visitor);
   };
   visitor(node);
-
-  return found;
+  return container.found;
 }

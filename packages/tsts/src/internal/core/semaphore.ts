@@ -22,7 +22,7 @@ export interface Semaphore {
  * Go source:
  * var _ Semaphore = UnlimitedSemaphore{}
  */
-export let __c5a93a22_0: Semaphore = undefined as never;
+export const __c5a93a22_0: Semaphore = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::UnlimitedSemaphore","kind":"type","status":"implemented","sigHash":"eccd0e32b4c71792b14c837a176a34fde532f11d1c1de7a6bc8d6e5ecd893ad6","bodyHash":"9a5249372744aeb917534fe31e743753d15baf0a7b9261dd414c68096c346c9a"}
@@ -64,7 +64,7 @@ export function UnlimitedSemaphore_TryAcquire(receiver: UnlimitedSemaphore, ctx:
  * Go source:
  * var _ Semaphore = (*LimitedSemaphore)(nil)
  */
-export let __1cad8911_0: Semaphore = undefined as never;
+export const __1cad8911_0: Semaphore = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::type::LimitedSemaphore","kind":"type","status":"implemented","sigHash":"6f0f638a52f144421c3246c9abcfb7d73564bb66fef1678b506f56eacc4422bb","bodyHash":"1c887baa2361c1b7920dc8e0bf6029187c7675f621d3a761bea7670a48b7f195"}
@@ -81,7 +81,7 @@ export interface LimitedSemaphore {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::func::NewLimitedSemaphore","kind":"func","status":"stub","sigHash":"04ea60e6edd31c8d707f046528fee535e40e99379fbc42e23567268d23e8f132","bodyHash":"6b62640d18477fb112e0f3753f5c3ee70d38e5b5c192cfcc167f420c15073797"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::func::NewLimitedSemaphore","kind":"func","status":"implemented","sigHash":"04ea60e6edd31c8d707f046528fee535e40e99379fbc42e23567268d23e8f132","bodyHash":"6b62640d18477fb112e0f3753f5c3ee70d38e5b5c192cfcc167f420c15073797"}
  *
  * Go source:
  * func NewLimitedSemaphore(maxConcurrency int) *LimitedSemaphore {
@@ -96,11 +96,18 @@ export interface LimitedSemaphore {
  * }
  */
 export function NewLimitedSemaphore(maxConcurrency: int): GoPtr<LimitedSemaphore> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/semaphore.go::func::NewLimitedSemaphore");
+  if ((maxConcurrency as number) <= 0) {
+    throw new globalThis.Error("maxConcurrency must be positive");
+  }
+  const s: LimitedSemaphore = {
+    ch: {} as GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">,
+    release: (): void => {},
+  };
+  return s;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.Acquire","kind":"method","status":"stub","sigHash":"b6946d2579c55c04567c62dd8298fcb819eb4ed2f84eecdee53fc9a6cee3e3a4","bodyHash":"83f874bf20143bc4a8548b65a993a7c13b4ba3fa6953c236fed25b5348ab8d88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.Acquire","kind":"method","status":"implemented","sigHash":"b6946d2579c55c04567c62dd8298fcb819eb4ed2f84eecdee53fc9a6cee3e3a4","bodyHash":"83f874bf20143bc4a8548b65a993a7c13b4ba3fa6953c236fed25b5348ab8d88"}
  *
  * Go source:
  * func (s *LimitedSemaphore) Acquire() (release func()) {
@@ -109,11 +116,12 @@ export function NewLimitedSemaphore(maxConcurrency: int): GoPtr<LimitedSemaphore
  * }
  */
 export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () => void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.Acquire");
+  // Single-threaded: channel send never blocks; return the stored release function.
+  return receiver!.release;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.TryAcquire","kind":"method","status":"stub","sigHash":"445bd0e58d03cc995179f2b01adc3b80adf8bc693fe894f99c491b0590656a1c","bodyHash":"8450a2a545ce6cf65675f7e300fbb763964a16e9469d9a841358c85d04e7ff66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.TryAcquire","kind":"method","status":"implemented","sigHash":"445bd0e58d03cc995179f2b01adc3b80adf8bc693fe894f99c491b0590656a1c","bodyHash":"8450a2a545ce6cf65675f7e300fbb763964a16e9469d9a841358c85d04e7ff66"}
  *
  * Go source:
  * func (s *LimitedSemaphore) TryAcquire(ctx context.Context) (release func(), acquired bool) {
@@ -126,5 +134,6 @@ export function LimitedSemaphore_Acquire(receiver: GoPtr<LimitedSemaphore>): () 
  * }
  */
 export function LimitedSemaphore_TryAcquire(receiver: GoPtr<LimitedSemaphore>, ctx: Context): [() => void, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/semaphore.go::method::LimitedSemaphore.TryAcquire");
+  // Single-threaded: select always takes the acquire branch (no ctx.Done blocking).
+  return [receiver!.release, true];
 }

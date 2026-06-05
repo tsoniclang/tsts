@@ -301,11 +301,12 @@ export function OrderedMap_Keys<K, V>(receiver: GoPtr<OrderedMap<K, V>>): GoSeq<
     }
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
-    for (let i = 0; i < m.keys.length; i++) {
-      if (!yield_(m.keys[i]!)) {
-        break;
+    const iterate = (i: number): void => {
+      if (i < m.keys.length && yield_(m.keys[i]!)) {
+        iterate(i + 1);
       }
-    }
+    };
+    iterate(0);
   };
 }
 
@@ -337,11 +338,12 @@ export function OrderedMap_Values<K, V>(receiver: GoPtr<OrderedMap<K, V>>): GoSe
     }
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
-    for (let i = 0; i < m.keys.length; i++) {
-      if (!yield_(m.mp.get(m.keys[i]!) as V)) {
-        break;
+    const iterate = (i: number): void => {
+      if (i < m.keys.length && yield_(m.mp.get(m.keys[i]!) as V)) {
+        iterate(i + 1);
       }
-    }
+    };
+    iterate(0);
   };
 }
 
@@ -374,12 +376,15 @@ export function OrderedMap_Entries<K, V>(receiver: GoPtr<OrderedMap<K, V>>): GoS
     }
 
     // We use a for loop here to ensure we enumerate new items added during iteration.
-    for (let i = 0; i < m.keys.length; i++) {
-      const key = m.keys[i]!;
-      if (!yield_(key, m.mp.get(key) as V)) {
-        break;
+    const iterate = (i: number): void => {
+      if (i < m.keys.length) {
+        const key = m.keys[i]!;
+        if (yield_(key, m.mp.get(key) as V)) {
+          iterate(i + 1);
+        }
       }
-    }
+    };
+    iterate(0);
   };
 }
 
@@ -470,7 +475,7 @@ export function OrderedMap_clone<K, V>(receiver: GoPtr<OrderedMap<K, V>>): Order
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
  */
-export let __83877ae8_0: MarshalerTo = undefined as never;
+export const __83877ae8_0: MarshalerTo = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.MarshalJSONTo","kind":"method","status":"stub","sigHash":"c276ee5f48fdfa57fdc9849d191b2334e25048b2cb68a37a9096425c013cb0dc","bodyHash":"881d0dabd2a738ffc1b18de6fd9242eae15a836994d0c41dc08a800b2969580c"}
@@ -538,7 +543,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
  */
-export let __ffc9f882_0: UnmarshalerFrom = undefined as never;
+export const __ffc9f882_0: UnmarshalerFrom = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom","kind":"method","status":"stub","sigHash":"a7144f1a9e8365998959b2007618110405c3631c153fe92dbfe6516a80ef469d","bodyHash":"2b0d1d85377e6789c937edb9e222ea9eca541fa5b08f7040fe6a8f4273bb4ff5"}

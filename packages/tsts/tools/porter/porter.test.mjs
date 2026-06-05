@@ -190,6 +190,48 @@ test("buildStatus reports missing, stale, orphan, parse-error, unitless, and unt
   assert.match(renderStatusMarkdown(status), /Coverage Diagnostics/);
 });
 
+test("renderStatusMarkdown reports largest missing modules from missing rows only", () => {
+  const snapshot = snapshotWith([
+    fileRecord({
+      path: "internal/checker/checker.go",
+      units: [unitRecord({
+        id: "m::internal/checker/checker.go::func::Implemented",
+        kind: "func",
+        qualifiedName: "Implemented",
+        goPath: "internal/checker/checker.go",
+        sigHash: "sig-1",
+        bodyHash: "body-1",
+      })],
+    }),
+    fileRecord({
+      path: "internal/parser/parser.go",
+      units: [unitRecord({
+        id: "m::internal/parser/parser.go::func::Missing",
+        kind: "func",
+        qualifiedName: "Missing",
+        goPath: "internal/parser/parser.go",
+        sigHash: "sig-2",
+        bodyHash: "body-2",
+      })],
+    }),
+  ]);
+  const status = buildStatus(baseConfig, snapshot, {
+    fileCount: 1,
+    files: [{ path: "packages/tsts/src/internal/checker/checker.ts", metadataCount: 1 }],
+    units: [{
+      id: "m::internal/checker/checker.go::func::Implemented",
+      path: "packages/tsts/src/internal/checker/checker.ts",
+      status: "implemented",
+      sigHash: "sig-1",
+      bodyHash: "body-1",
+    }],
+  });
+  const markdown = renderStatusMarkdown(status);
+
+  assert.match(markdown, /\| internal\/parser \| 1 \|/);
+  assert.doesNotMatch(markdown, /\| internal\/checker \| 1 \|/);
+});
+
 test("large-file split plans must cover every declaration exactly once", () => {
   const sourceMethod = unitRecord({
     id: "m::internal/checker/checker.go::method::Checker.checkSourceFile",
@@ -318,6 +360,35 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
         kind: "type",
         qualifiedName: "Server",
         goPath: "internal/lsp/server.go",
+      })],
+    }),
+  ]), { fileCount: 0, files: [], units: [] });
+
+  assert.equal(status.counts.portable, 0);
+  assert.equal(status.counts.excluded, 2);
+  assert.equal(status.counts.missing, 0);
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+});
+
+test("buildStatus excludes generated and Go test units from production scaffold coverage", () => {
+  const status = buildStatus(baseConfig, snapshotWith([
+    fileRecord({
+      path: "internal/ast/ast_generated.go",
+      generated: true,
+      units: [unitRecord({
+        id: "m::internal/ast/ast_generated.go::type::Node",
+        kind: "type",
+        qualifiedName: "Node",
+        goPath: "internal/ast/ast_generated.go",
+      })],
+    }),
+    fileRecord({
+      path: "internal/debug/debug_test.go",
+      units: [unitRecord({
+        id: "m::internal/debug/debug_test.go::func::TestDebug",
+        kind: "func",
+        qualifiedName: "TestDebug",
+        goPath: "internal/debug/debug_test.go",
       })],
     }),
   ]), { fileCount: 0, files: [], units: [] });

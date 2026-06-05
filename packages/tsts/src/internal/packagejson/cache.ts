@@ -14,7 +14,7 @@ import type { Fields } from "./packagejson.js";
  * Go source:
  * var typeScriptVersion = semver.MustParse(core.Version())
  */
-export let typeScriptVersion: unknown = undefined as never;
+export const typeScriptVersion: unknown = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::type::PackageJson","kind":"type","status":"stub","sigHash":"ba2f011c29e742814adcc6724eca6beed3c6bfe7f05261dcfee0078b659e2c67","bodyHash":"3127e2cc6082d7ea478e1d27db24b30b1db8be360c493f7d8816254a8526680c"}

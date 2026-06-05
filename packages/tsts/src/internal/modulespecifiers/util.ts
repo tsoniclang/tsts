@@ -33,8 +33,8 @@ export interface regexPatternCacheKey {
  * 	regexPatternCache   = make(map[regexPatternCacheKey]*regexp.Regexp)
  * )
  */
-export let regexPatternCacheMu: RWMutex = undefined as never;
-export let regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = undefined as never;
+export const regexPatternCacheMu: RWMutex = undefined as never;
+export const regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"stub","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"f2cd303b3114a0cbc28de1a9be907e69afa26d9741dd0d5c9c9c95835e7a68ef"}

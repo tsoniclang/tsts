@@ -1,7 +1,7 @@
 import type { int, uint } from "@tsonic/core/types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::type::CheckFlags","kind":"type","status":"stub","sigHash":"8783fe522e6fb728eda21975eac65cc4e65e974800f115a4801bc8cffe63fa24","bodyHash":"bc5b0aaffe170f45300b26c2000cf73afff3e70e2b4884987366c08876b2f849"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::type::CheckFlags","kind":"type","status":"implemented","sigHash":"8783fe522e6fb728eda21975eac65cc4e65e974800f115a4801bc8cffe63fa24","bodyHash":"bc5b0aaffe170f45300b26c2000cf73afff3e70e2b4884987366c08876b2f849"}
  *
  * Go source:
  * CheckFlags uint32
@@ -9,7 +9,7 @@ import type { int, uint } from "@tsonic/core/types.js";
 export type CheckFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::constGroup::CheckFlagsNone+CheckFlagsInstantiated+CheckFlagsSyntheticProperty+CheckFlagsSyntheticMethod+CheckFlagsReadonly+CheckFlagsReadPartial+CheckFlagsWritePartial+CheckFlagsHasNonUniformType+CheckFlagsHasLiteralType+CheckFlagsContainsPublic+CheckFlagsContainsProtected+CheckFlagsContainsPrivate+CheckFlagsContainsStatic+CheckFlagsLate+CheckFlagsReverseMapped+CheckFlagsOptionalParameter+CheckFlagsRestParameter+CheckFlagsDeferredType+CheckFlagsHasNeverType+CheckFlagsMapped+CheckFlagsStripOptional+CheckFlagsUnresolved+CheckFlagsIsDiscriminantComputed+CheckFlagsIsDiscriminant+CheckFlagsIndexSymbol+CheckFlagsSynthetic+CheckFlagsNonUniformAndLiteral+CheckFlagsPartial","kind":"constGroup","status":"stub","sigHash":"57e1c6ccbeb0fdd2def846a1d0a96dbcda51d95c9ae0f4b1b528dff91e62403f","bodyHash":"d47848dd3cc88429023447214b3e07f10a8a65a3fc8819b7dccb30b0002429bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/checkflags.go::constGroup::CheckFlagsNone+CheckFlagsInstantiated+CheckFlagsSyntheticProperty+CheckFlagsSyntheticMethod+CheckFlagsReadonly+CheckFlagsReadPartial+CheckFlagsWritePartial+CheckFlagsHasNonUniformType+CheckFlagsHasLiteralType+CheckFlagsContainsPublic+CheckFlagsContainsProtected+CheckFlagsContainsPrivate+CheckFlagsContainsStatic+CheckFlagsLate+CheckFlagsReverseMapped+CheckFlagsOptionalParameter+CheckFlagsRestParameter+CheckFlagsDeferredType+CheckFlagsHasNeverType+CheckFlagsMapped+CheckFlagsStripOptional+CheckFlagsUnresolved+CheckFlagsIsDiscriminantComputed+CheckFlagsIsDiscriminant+CheckFlagsIndexSymbol+CheckFlagsSynthetic+CheckFlagsNonUniformAndLiteral+CheckFlagsPartial","kind":"constGroup","status":"implemented","sigHash":"57e1c6ccbeb0fdd2def846a1d0a96dbcda51d95c9ae0f4b1b528dff91e62403f","bodyHash":"d47848dd3cc88429023447214b3e07f10a8a65a3fc8819b7dccb30b0002429bc"}
  *
  * Go source:
  * const (
@@ -43,31 +43,31 @@ export type CheckFlags = uint;
  * 	CheckFlagsPartial                           = CheckFlagsReadPartial | CheckFlagsWritePartial
  * )
  */
-export const CheckFlagsNone: CheckFlags = undefined as never;
-export const CheckFlagsInstantiated: CheckFlags = undefined as never;
-export const CheckFlagsSyntheticProperty: CheckFlags = undefined as never;
-export const CheckFlagsSyntheticMethod: CheckFlags = undefined as never;
-export const CheckFlagsReadonly: CheckFlags = undefined as never;
-export const CheckFlagsReadPartial: CheckFlags = undefined as never;
-export const CheckFlagsWritePartial: CheckFlags = undefined as never;
-export const CheckFlagsHasNonUniformType: CheckFlags = undefined as never;
-export const CheckFlagsHasLiteralType: CheckFlags = undefined as never;
-export const CheckFlagsContainsPublic: CheckFlags = undefined as never;
-export const CheckFlagsContainsProtected: CheckFlags = undefined as never;
-export const CheckFlagsContainsPrivate: CheckFlags = undefined as never;
-export const CheckFlagsContainsStatic: CheckFlags = undefined as never;
-export const CheckFlagsLate: CheckFlags = undefined as never;
-export const CheckFlagsReverseMapped: CheckFlags = undefined as never;
-export const CheckFlagsOptionalParameter: CheckFlags = undefined as never;
-export const CheckFlagsRestParameter: CheckFlags = undefined as never;
-export const CheckFlagsDeferredType: CheckFlags = undefined as never;
-export const CheckFlagsHasNeverType: CheckFlags = undefined as never;
-export const CheckFlagsMapped: CheckFlags = undefined as never;
-export const CheckFlagsStripOptional: CheckFlags = undefined as never;
-export const CheckFlagsUnresolved: CheckFlags = undefined as never;
-export const CheckFlagsIsDiscriminantComputed: CheckFlags = undefined as never;
-export const CheckFlagsIsDiscriminant: CheckFlags = undefined as never;
-export const CheckFlagsIndexSymbol: CheckFlags = undefined as never;
-export const CheckFlagsSynthetic: int = undefined as never;
-export const CheckFlagsNonUniformAndLiteral: int = undefined as never;
-export const CheckFlagsPartial: int = undefined as never;
+export const CheckFlagsNone: CheckFlags = 0;
+export const CheckFlagsInstantiated: CheckFlags = 1 << 0;
+export const CheckFlagsSyntheticProperty: CheckFlags = 1 << 1;
+export const CheckFlagsSyntheticMethod: CheckFlags = 1 << 2;
+export const CheckFlagsReadonly: CheckFlags = 1 << 3;
+export const CheckFlagsReadPartial: CheckFlags = 1 << 4;
+export const CheckFlagsWritePartial: CheckFlags = 1 << 5;
+export const CheckFlagsHasNonUniformType: CheckFlags = 1 << 6;
+export const CheckFlagsHasLiteralType: CheckFlags = 1 << 7;
+export const CheckFlagsContainsPublic: CheckFlags = 1 << 8;
+export const CheckFlagsContainsProtected: CheckFlags = 1 << 9;
+export const CheckFlagsContainsPrivate: CheckFlags = 1 << 10;
+export const CheckFlagsContainsStatic: CheckFlags = 1 << 11;
+export const CheckFlagsLate: CheckFlags = 1 << 12;
+export const CheckFlagsReverseMapped: CheckFlags = 1 << 13;
+export const CheckFlagsOptionalParameter: CheckFlags = 1 << 14;
+export const CheckFlagsRestParameter: CheckFlags = 1 << 15;
+export const CheckFlagsDeferredType: CheckFlags = 1 << 16;
+export const CheckFlagsHasNeverType: CheckFlags = 1 << 17;
+export const CheckFlagsMapped: CheckFlags = 1 << 18;
+export const CheckFlagsStripOptional: CheckFlags = 1 << 19;
+export const CheckFlagsUnresolved: CheckFlags = 1 << 20;
+export const CheckFlagsIsDiscriminantComputed: CheckFlags = 1 << 21;
+export const CheckFlagsIsDiscriminant: CheckFlags = 1 << 22;
+export const CheckFlagsIndexSymbol: CheckFlags = 1 << 23;
+export const CheckFlagsSynthetic: int = CheckFlagsSyntheticProperty | CheckFlagsSyntheticMethod;
+export const CheckFlagsNonUniformAndLiteral: int = CheckFlagsHasNonUniformType | CheckFlagsHasLiteralType;
+export const CheckFlagsPartial: int = CheckFlagsReadPartial | CheckFlagsWritePartial;

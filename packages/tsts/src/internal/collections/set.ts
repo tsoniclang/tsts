@@ -3,7 +3,7 @@ import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::type::Set","kind":"type","status":"stub","sigHash":"b78751182a173542a2fc40a2d7a06459ad2b7539fa753c39278377d1cbed21b3","bodyHash":"26fea571e8a25382cc169b0b08e08a87923711113a0a52733743b8fd4d92640b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/set.go::type::Set","kind":"type","status":"implemented","sigHash":"b78751182a173542a2fc40a2d7a06459ad2b7539fa753c39278377d1cbed21b3","bodyHash":"26fea571e8a25382cc169b0b08e08a87923711113a0a52733743b8fd4d92640b"}
  *
  * Go source:
  * Set[T comparable] struct {
@@ -224,13 +224,14 @@ export function Set_UnionedWith<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>
   if (receiver === undefined && other === undefined) {
     return undefined;
   }
-  let result: GoPtr<Set<T>> = Set_Clone(receiver);
-  if (other !== undefined) {
-    if (result === undefined) {
-      result = { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
-    }
-    maps.Copy(result.M, other.M);
+  const cloned = Set_Clone(receiver);
+  if (other === undefined) {
+    return cloned;
   }
+  const result = cloned !== undefined
+    ? cloned
+    : { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
+  maps.Copy(result.M, other.M);
   return result;
 }
 

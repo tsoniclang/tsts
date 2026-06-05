@@ -3,7 +3,7 @@ import type { GoArray, GoComparable, GoMap, GoPtr, GoSeq } from "../../go/compat
 import { Map } from "../../go/sync.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"stub","sigHash":"4f6f655e995f945c3130474631c32240c46c5dd0b984a67769b1fe2ed69a7fa9","bodyHash":"fdc45c613dbb64f7a1c093e977b4bdb29dd6477913552f974a1aa70ac112fb64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::type::SyncMap","kind":"type","status":"implemented","sigHash":"4f6f655e995f945c3130474631c32240c46c5dd0b984a67769b1fe2ed69a7fa9","bodyHash":"fdc45c613dbb64f7a1c093e977b4bdb29dd6477913552f974a1aa70ac112fb64"}
  *
  * Go source:
  * SyncMap[K comparable, V any] struct {
@@ -120,16 +120,8 @@ export function SyncMap_Clear<K, V>(receiver: GoPtr<SyncMap<K, V>>): void {
  */
 export function SyncMap_Range<K, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, value: V) => bool): void {
   receiver!.m.Range((key: unknown, value: unknown): bool => {
-    let k = undefined as K;
-    if (key !== undefined) {
-      k = key as K;
-    }
-
-    let v = undefined as V;
-    if (value !== undefined) {
-      v = value as V;
-    }
-
+    const k = (key !== undefined ? key as K : undefined as K);
+    const v = (value !== undefined ? value as V : undefined as V);
     return f(k, v);
   });
 }
@@ -148,12 +140,12 @@ export function SyncMap_Range<K, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, 
  * }
  */
 export function SyncMap_Size<K, V>(receiver: GoPtr<SyncMap<K, V>>): int {
-  let count = 0;
-  receiver!.m.Range((_key: unknown, _value: unknown): bool => {
-    count++;
+  const entries: unknown[] = [];
+  receiver!.m.Range((key: unknown, _value: unknown): bool => {
+    entries.push(key);
     return true;
   });
-  return count;
+  return entries.length as int;
 }
 
 /**
