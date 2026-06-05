@@ -2,12 +2,12 @@ import type { bool, byte, int } from "@tsonic/core/types.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import { Node_FlowNodeData, Node_Name, Node_Pos, Node_End } from "../ast/spine.js";
+import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
 import type { BinaryExpression, ElementAccessExpression, LiteralExpression, TypeOfExpression } from "../ast/ast_generated.js";
-import { AsBinaryExpression, AsBindingElement, AsCaseBlock, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsForInOrOfStatement, AsMetaProperty, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment, AsSwitchStatement, AsTypeOfExpression } from "../ast/generated/casts.js";
+import { AsBinaryExpression, AsBindingElement, AsCaseBlock, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsExportDeclaration, AsExportSpecifier, AsForInOrOfStatement, AsMetaProperty, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment, AsSwitchStatement, AsTypeOfExpression } from "../ast/generated/casts.js";
 import { IsAccessExpression, IsAssignmentExpression, IsBooleanLiteral, IsBindingPattern, IsClassLike, IsEntityNameExpression, IsExpressionOfOptionalChainRoot, IsFunctionLike, IsFunctionOrModuleBlock, IsFunctionOrSourceFile, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, IsOptionalChain, IsStatic, IsStringLiteralLike, IsStringOrNumericLiteralLike, IsTypeNode, SkipParentheses, GetRootDeclaration, GetSourceFileOfNode, GetThisContainer, FindAncestor, TryGetTextOfPropertyName, IsThisInTypeQuery, HasStaticModifier, IsPushOrUnshiftIdentifier, IsAssignmentTarget } from "../ast/utilities.js";
-import { IsArrowFunction, IsArrayBindingPattern, IsArrayLiteralExpression, IsBinaryExpression, IsBindingElement, IsCallExpression, IsCatchClause, IsElementAccessExpression, IsEnumMember, IsExpressionStatement, IsForInStatement, IsForOfStatement, IsIdentifier, IsMetaProperty, IsNonNullExpression, IsObjectBindingPattern, IsParameterDeclaration, IsParenthesizedExpression, IsPrivateIdentifier, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsTypeOfExpression, IsVariableDeclaration } from "../ast/generated/predicates.js";
+import { IsArrowFunction, IsArrayBindingPattern, IsArrayLiteralExpression, IsBinaryExpression, IsBindingElement, IsCallExpression, IsCatchClause, IsElementAccessExpression, IsEnumMember, IsExpressionStatement, IsExportSpecifier, IsForInStatement, IsForOfStatement, IsIdentifier, IsMetaProperty, IsNonNullExpression, IsObjectBindingPattern, IsParameterDeclaration, IsParenthesizedExpression, IsPrivateIdentifier, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsStringLiteral, IsTypeOfExpression, IsVariableDeclaration } from "../ast/generated/predicates.js";
 import { NodeFlagsInWithStatement, NodeFlagsNone } from "../ast/generated/flags.js";
 import type { NodeFlags } from "../ast/generated/flags.js";
 import { NewDiagnostic } from "../ast/diagnostic.js";
@@ -16,7 +16,7 @@ import type { Diagnostic } from "../ast/diagnostic.js";
 import type { FlowList, FlowNode, FlowReduceLabelData, FlowSwitchClauseData } from "../ast/flow.js";
 import { FlowFlagsAssignment, FlowFlagsArrayMutation, FlowFlagsBranchLabel, FlowFlagsCall, FlowFlagsCondition, FlowFlagsLoopLabel, FlowFlagsReduceLabel, FlowFlagsShared, FlowFlagsStart, FlowFlagsSwitchClause, FlowFlagsTrueCondition, FlowFlagsUnreachable, FlowSwitchClauseData_IsEmpty } from "../ast/flow.js";
 import type { Kind } from "../ast/kind_generated.js";
-import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindArrowFunction, KindArrayLiteralExpression, KindBarBarEqualsToken, KindBarBarToken, KindBinaryExpression, KindBindingElement, KindCallExpression, KindCaseClause, KindCommaToken, KindDefaultClause, KindDeleteExpression, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindFunctionDeclaration, KindFunctionExpression, KindIdentifier, KindInKeyword, KindInstanceOfKeyword, KindMethodDeclaration, KindObjectBindingPattern, KindArrayBindingPattern, KindParenthesizedExpression, KindNonNullExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindPropertyAssignment, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSatisfiesExpression, KindShorthandPropertyAssignment, KindSpreadElement, KindSuperKeyword, KindThisKeyword, KindTrueKeyword, KindTypeAliasDeclaration, KindTypeOfExpression, KindVariableDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindJSTypeAliasDeclaration } from "../ast/generated/kinds.js";
+import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindArrowFunction, KindArrayLiteralExpression, KindBarBarEqualsToken, KindBarBarToken, KindBinaryExpression, KindBindingElement, KindCallExpression, KindCaseClause, KindClassDeclaration, KindCommaToken, KindDefaultClause, KindDeleteExpression, KindDoStatement, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindExpressionStatement, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindIdentifier, KindIfStatement, KindInKeyword, KindInstanceOfKeyword, KindMethodDeclaration, KindObjectBindingPattern, KindArrayBindingPattern, KindParenthesizedExpression, KindNonNullExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindPropertyAssignment, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSatisfiesExpression, KindShorthandPropertyAssignment, KindSpreadElement, KindSuperKeyword, KindSwitchStatement, KindThisKeyword, KindTrueKeyword, KindTryStatement, KindTypeAliasDeclaration, KindTypeOfExpression, KindVariableDeclaration, KindVariableStatement, KindWhileStatement, KindWithStatement, KindEnumDeclaration, KindInterfaceDeclaration, KindJSTypeAliasDeclaration } from "../ast/generated/kinds.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import type { CheckFlags } from "../ast/checkflags.js";
 import { SymbolFlagsEnumMember, SymbolFlagsOptional, SymbolFlagsValue } from "../ast/symbolflags.js";
@@ -33,7 +33,7 @@ import { CachedTypeKindEvolvingArrayType, CheckModeNormal, TypeFactsAllTypeofNE,
 import type { FlowLoopInfo, FlowLoopKey } from "./checker/state.js";
 import { UnionReductionLiteral, UnionReductionSubtype } from "./checker/state.js";
 import { NodeCheckFlagsAssignmentsMarked, ExhaustiveStateComputing, ExhaustiveStateFalse, ExhaustiveStateTrue, ExhaustiveStateUnknown } from "./checker/types.js";
-import type { MarkedAssignmentSymbolLinks, NodeLinks } from "./types.js";
+import type { MarkedAssignmentSymbolLinks, NodeLinks, TypeNodeLinks } from "./types.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
 import { CacheHashKey_IsZero, keyBuilder_writeByte, keyBuilder_writeString } from "./checker/support.js";
@@ -4888,8 +4888,8 @@ export function Checker_getInitialTypeOfVariableDeclaration(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getTypeOfInitializer(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  if (LinkStore_Has(receiver!.typeNodeLinks, node)) {
-    const t = LinkStore_Get(receiver!.typeNodeLinks, node).resolvedType;
+  if (LinkStore_Has<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks as unknown as LinkStore<GoPtr<Node>, TypeNodeLinks>, node)) {
+    const t = LinkStore_Get<GoPtr<Node>, TypeNodeLinks>(receiver!.typeNodeLinks as unknown as LinkStore<GoPtr<Node>, TypeNodeLinks>, node)!.resolvedType;
     if (t !== undefined) { return t; }
   }
   return Checker_getTypeOfExpression(receiver, node);
@@ -4921,7 +4921,7 @@ export function Checker_getInitialTypeOfBindingElement(receiver: GoPtr<Checker>,
   if (IsObjectBindingPattern(pattern)) {
     t = Checker_getTypeOfDestructuredProperty(receiver, parentType, getBindingElementPropertyName(node));
   } else if (!hasDotDotDotToken(node)) {
-    t = Checker_getTypeOfDestructuredArrayElement(receiver, parentType, Node_Elements(pattern).indexOf(node));
+    t = Checker_getTypeOfDestructuredArrayElement(receiver, parentType, Node_Elements(pattern!)!.indexOf(node));
   } else {
     t = Checker_getTypeOfDestructuredSpreadExpression(receiver, parentType);
   }
@@ -5015,7 +5015,7 @@ export function Checker_getAssignedTypeOfBinaryExpression(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getAssignedTypeOfArrayLiteralElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, element: GoPtr<Node>): GoPtr<Type> {
-  return Checker_getTypeOfDestructuredArrayElement(receiver, Checker_getAssignedType(receiver, node), Node_Elements(node).indexOf(element));
+  return Checker_getTypeOfDestructuredArrayElement(receiver, Checker_getAssignedType(receiver, node), Node_Elements(node!)!.indexOf(element));
 }
 
 /**
@@ -5265,7 +5265,7 @@ export function Checker_typeMaybeAssignableTo(receiver: GoPtr<Checker>, source: 
   if (!(source!.flags & TypeFlagsUnion)) {
     return Checker_isTypeAssignableTo(receiver, source, target);
   }
-  for (const t of Type_AsUnionType(source)!.types) {
+  for (const t of Type_AsUnionOrIntersectionType(source)!.types) {
     if (Checker_isTypeAssignableTo(receiver, t, target)) { return true; }
   }
   return false;
@@ -5292,7 +5292,7 @@ export function Checker_typeMaybeAssignableTo(receiver: GoPtr<Checker>, source: 
  */
 export function Checker_getTypePredicateArgument(receiver: GoPtr<Checker>, predicate: GoPtr<TypePredicate>, callExpression: GoPtr<Node>): GoPtr<Node> {
   if (predicate!.kind === TypePredicateKindIdentifier || predicate!.kind === TypePredicateKindAssertsIdentifier) {
-    const arguments_ = Node_Arguments(callExpression);
+    const arguments_ = Node_Arguments(callExpression)!;
     if (predicate!.parameterIndex >= 0 && predicate!.parameterIndex < arguments_.length) {
       return arguments_[predicate!.parameterIndex];
     }
@@ -5515,7 +5515,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       if (signature !== undefined) {
         const predicate = Checker_getTypePredicateOfSignature(receiver, signature);
         if (predicate !== undefined && predicate!.kind === TypePredicateKindAssertsIdentifier && predicate!.t === undefined) {
-          const arguments_ = Node_Arguments(flow!.Node);
+          const arguments_ = Node_Arguments(flow!.Node)!;
           if (predicate!.parameterIndex >= 0 && predicate!.parameterIndex < arguments_.length && Checker_isFalseExpression(receiver, arguments_[predicate!.parameterIndex])) {
             return false;
           }
@@ -5569,8 +5569,8 @@ export function Checker_isFalseExpression(receiver: GoPtr<Checker>, expr: GoPtr<
   if (node!.Kind === KindFalseKeyword) { return true; }
   if (IsBinaryExpression(node)) {
     const binary = AsBinaryExpression(node);
-    return binary!.OperatorToken.Kind === KindAmpersandAmpersandToken && (Checker_isFalseExpression(receiver, binary!.Left) || Checker_isFalseExpression(receiver, binary!.Right)) ||
-      binary!.OperatorToken.Kind === KindBarBarToken && Checker_isFalseExpression(receiver, binary!.Left) && Checker_isFalseExpression(receiver, binary!.Right);
+    return binary!.OperatorToken!.Kind === KindAmpersandAmpersandToken && (Checker_isFalseExpression(receiver, binary!.Left as unknown as GoPtr<Node>) || Checker_isFalseExpression(receiver, binary!.Right as unknown as GoPtr<Node>)) ||
+      binary!.OperatorToken!.Kind === KindBarBarToken && Checker_isFalseExpression(receiver, binary!.Left as unknown as GoPtr<Node>) && Checker_isFalseExpression(receiver, binary!.Right as unknown as GoPtr<Node>);
   }
   return false;
 }
@@ -5686,11 +5686,11 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
  */
 export function Checker_isSymbolAssignedDefinitely(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   Checker_ensureAssignmentsMarked(receiver, symbol_);
-  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_).hasDefiniteAssignment;
+  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.hasDefiniteAssignment;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssigned","kind":"method","status":"stub","sigHash":"3753a162109a73e08e245c3f594164b1fab7b38a2798320195630803864762a6","bodyHash":"69d165afde1727dd5e2ac42127cee94e951768d6b7bfe6072a0e10b83eba6f25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssigned","kind":"method","status":"implemented","sigHash":"3753a162109a73e08e245c3f594164b1fab7b38a2798320195630803864762a6","bodyHash":"69d165afde1727dd5e2ac42127cee94e951768d6b7bfe6072a0e10b83eba6f25"}
  *
  * Go source:
  * func (c *Checker) isSymbolAssigned(symbol *ast.Symbol) bool {
@@ -5699,11 +5699,12 @@ export function Checker_isSymbolAssignedDefinitely(receiver: GoPtr<Checker>, sym
  * }
  */
 export function Checker_isSymbolAssigned(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssigned");
+  Checker_ensureAssignmentsMarked(receiver, symbol_);
+  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isPastLastAssignment","kind":"method","status":"stub","sigHash":"9bbd9b743a29bd71471fe35565b2ffb4954f5e0db33f284f629ef8275ef691bb","bodyHash":"bb87ee5ae773f7b89985f9b1128281a5131f59a4a17cc92ea5d2ee634395d6c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isPastLastAssignment","kind":"method","status":"implemented","sigHash":"9bbd9b743a29bd71471fe35565b2ffb4954f5e0db33f284f629ef8275ef691bb","bodyHash":"bb87ee5ae773f7b89985f9b1128281a5131f59a4a17cc92ea5d2ee634395d6c8"}
  *
  * Go source:
  * func (c *Checker) isPastLastAssignment(symbol *ast.Symbol, location *ast.Node) bool {
@@ -5713,11 +5714,13 @@ export function Checker_isSymbolAssigned(receiver: GoPtr<Checker>, symbol_: GoPt
  * }
  */
 export function Checker_isPastLastAssignment(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, location: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isPastLastAssignment");
+  Checker_ensureAssignmentsMarked(receiver, symbol_);
+  const lastAssignmentPos = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos;
+  return lastAssignmentPos === 0 || (location !== undefined && lastAssignmentPos < Node_Pos(location));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.ensureAssignmentsMarked","kind":"method","status":"stub","sigHash":"9619e437521ee129e7cf327a47a721fed18c24f3b9d741a0aa05f1b38db730af","bodyHash":"3d88adcf87da8b0359ea2c985f298f65966c172be6cbd1a8529b0828c3b8a97f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.ensureAssignmentsMarked","kind":"method","status":"implemented","sigHash":"9619e437521ee129e7cf327a47a721fed18c24f3b9d741a0aa05f1b38db730af","bodyHash":"3d88adcf87da8b0359ea2c985f298f65966c172be6cbd1a8529b0828c3b8a97f"}
  *
  * Go source:
  * func (c *Checker) ensureAssignmentsMarked(symbol *ast.Symbol) {
@@ -5738,11 +5741,20 @@ export function Checker_isPastLastAssignment(receiver: GoPtr<Checker>, symbol_: 
  * }
  */
 export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.ensureAssignmentsMarked");
+  if (LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos !== 0) { return; }
+  const parent = FindAncestor(symbol_!.ValueDeclaration, IsFunctionOrSourceFile);
+  if (parent === undefined) { return; }
+  const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
+  if (!(links.flags & NodeCheckFlagsAssignmentsMarked)) {
+    links.flags |= NodeCheckFlagsAssignmentsMarked;
+    if (!Checker_hasParentWithAssignmentsMarked(receiver, parent)) {
+      receiver!.markNodeAssignments(parent);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.hasParentWithAssignmentsMarked","kind":"method","status":"stub","sigHash":"2d68661bdd2642fddd2d04df0b5b87cd76c611cca8bb87f6a904f5447dec747e","bodyHash":"f9e6df021bf0f8366ceac8991dfd494e41f34ccb53a7bb225fbac57c3a24b8d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.hasParentWithAssignmentsMarked","kind":"method","status":"implemented","sigHash":"2d68661bdd2642fddd2d04df0b5b87cd76c611cca8bb87f6a904f5447dec747e","bodyHash":"f9e6df021bf0f8366ceac8991dfd494e41f34ccb53a7bb225fbac57c3a24b8d4"}
  *
  * Go source:
  * func (c *Checker) hasParentWithAssignmentsMarked(node *ast.Node) bool {
@@ -5752,11 +5764,11 @@ export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol
  * }
  */
 export function Checker_hasParentWithAssignmentsMarked(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.hasParentWithAssignmentsMarked");
+  return FindAncestor(node!.Parent, (n) => IsFunctionOrSourceFile(n) && !!(LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, n)!.flags & NodeCheckFlagsAssignmentsMarked)) !== undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.markNodeAssignmentsWorker","kind":"method","status":"stub","sigHash":"fe94d1085af3a2e6bcd7629e552475b70353a642ef97cd6efe6a2ec18531231b","bodyHash":"cbe6cb178f2d5298636716dbb8dd4ad7689716ac36c84b27a51aca4bc46ec68c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.markNodeAssignmentsWorker","kind":"method","status":"implemented","sigHash":"fe94d1085af3a2e6bcd7629e552475b70353a642ef97cd6efe6a2ec18531231b","bodyHash":"cbe6cb178f2d5298636716dbb8dd4ad7689716ac36c84b27a51aca4bc46ec68c"}
  *
  * Go source:
  * func (c *Checker) markNodeAssignmentsWorker(node *ast.Node) bool {
@@ -5806,11 +5818,52 @@ export function Checker_hasParentWithAssignmentsMarked(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_markNodeAssignmentsWorker(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.markNodeAssignmentsWorker");
+  switch (node!.Kind) {
+    case KindIdentifier: {
+      const assignmentKind = getAssignmentTargetKind(node);
+      if (assignmentKind !== AssignmentKindNone) {
+        const symbol = Checker_getResolvedSymbol(receiver, node);
+        if (Checker_isParameterOrMutableLocalVariable(receiver, symbol)) {
+          const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol)!;
+          const pos = links.lastAssignmentPos;
+          if (pos === 0 || pos !== 2147483647) {
+            const referencingFunction = FindAncestor(node, IsFunctionOrSourceFile);
+            const declaringFunction = FindAncestor(symbol!.ValueDeclaration, IsFunctionOrSourceFile);
+            if (referencingFunction === declaringFunction) {
+              links.lastAssignmentPos = Checker_extendAssignmentPosition(receiver, node, symbol!.ValueDeclaration);
+            } else {
+              links.lastAssignmentPos = 2147483647;
+            }
+          }
+          if (assignmentKind === AssignmentKindDefinite) { links.hasDefiniteAssignment = true; }
+        }
+      }
+      return false;
+    }
+    case KindEnumDeclaration:
+    case KindTypeAliasDeclaration:
+    case KindJSTypeAliasDeclaration:
+    case KindInterfaceDeclaration:
+      return false;
+  }
+  if (IsExportSpecifier(node)) {
+    const exportDeclaration = AsExportDeclaration(AsExportSpecifier(node)!.Parent!.Parent);
+    const name = Node_PropertyNameOrName(node);
+    if (!AsExportSpecifier(node)!.IsTypeOnly && !exportDeclaration!.IsTypeOnly && exportDeclaration!.ModuleSpecifier === undefined && !IsStringLiteral(name)) {
+      const symbol = Checker_resolveEntityName(receiver, name, SymbolFlagsValue, true, true, undefined);
+      if (symbol !== undefined && Checker_isParameterOrMutableLocalVariable(receiver, symbol)) {
+        const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol)!;
+        links.lastAssignmentPos = 2147483647;
+      }
+    }
+    return false;
+  }
+  if (IsTypeNode(node)) { return false; }
+  return Node_ForEachChild(node, receiver!.markNodeAssignments);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.extendAssignmentPosition","kind":"method","status":"stub","sigHash":"cc0b28ad564cf0e462a823cfc7bc96c37346e1dfe16d540db381a6cbf5869eec","bodyHash":"6cc53f702f78aab4d98a01520b26fc4b03170f7bde8ea487a2907d7f436097ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.extendAssignmentPosition","kind":"method","status":"implemented","sigHash":"cc0b28ad564cf0e462a823cfc7bc96c37346e1dfe16d540db381a6cbf5869eec","bodyHash":"6cc53f702f78aab4d98a01520b26fc4b03170f7bde8ea487a2907d7f436097ed"}
  *
  * Go source:
  * func (c *Checker) extendAssignmentPosition(node *ast.Node, declaration *ast.Node) int {
@@ -5828,5 +5881,26 @@ export function Checker_markNodeAssignmentsWorker(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_extendAssignmentPosition(receiver: GoPtr<Checker>, node: GoPtr<Node>, declaration: GoPtr<Node>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.extendAssignmentPosition");
+  let pos = Node_Pos(node);
+  let cur = node;
+  while (cur !== undefined && Node_Pos(cur) > Node_Pos(declaration)) {
+    switch (cur!.Kind) {
+      case KindVariableStatement:
+      case KindExpressionStatement:
+      case KindIfStatement:
+      case KindDoStatement:
+      case KindWhileStatement:
+      case KindForStatement:
+      case KindForInStatement:
+      case KindForOfStatement:
+      case KindWithStatement:
+      case KindSwitchStatement:
+      case KindTryStatement:
+      case KindClassDeclaration:
+        pos = Node_End(cur);
+        break;
+    }
+    cur = cur!.Parent;
+  }
+  return pos;
 }
