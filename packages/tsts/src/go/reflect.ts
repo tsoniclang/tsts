@@ -118,6 +118,18 @@ export class Value {
     return this.v === undefined || this.v === null;
   }
 
+  // IsZero reports whether v is the zero value for its type.
+  IsZero(): bool {
+    if (this.v === undefined || this.v === null) return true;
+    if (typeof this.v === "boolean") return this.v === false;
+    if (typeof this.v === "number") return this.v === 0;
+    if (typeof this.v === "bigint") return this.v === 0n;
+    if (typeof this.v === "string") return this.v === "";
+    if (globalThis.Array.isArray(this.v)) return (this.v as unknown[]).length === 0;
+    if (this.v instanceof globalThis.Map) return this.v.size === 0;
+    return false;
+  }
+
   // IsValid reports whether v represents a value (a non-nil, non-Invalid kind).
   IsValid(): bool {
     return this.v !== undefined && this.v !== null;
