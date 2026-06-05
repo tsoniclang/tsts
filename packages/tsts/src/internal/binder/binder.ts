@@ -1,27 +1,81 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import * as strconv from "../../go/strconv.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { Pool } from "../../go/sync.js";
+import { Pool } from "../../go/sync.js";
 import {
   Node_Arguments,
+  Node_Body,
+  Node_Elements,
   Node_Expression,
   Node_Initializer,
+  Node_Label,
+  Node_LocalSymbol,
+  Node_Parameters,
   Node_PostfixToken,
+  Node_Properties,
+  Node_QuestionDotToken,
+  Node_StatementList,
+  Node_Statements,
+  Node_Symbol,
   Node_Text,
+  Node_Type,
+  Node_TypeArgumentList,
+  AsSourceFile,
+  IsLocalsContainer,
+  SourceFile_BindDiagnostics,
+  SourceFile_BindOnce,
+  SourceFile_Diagnostics,
+  SourceFile_FileName,
+  SourceFile_IsBound,
+  SourceFile_SetBindDiagnostics,
 } from "../ast/ast.js";
 import type { ModifierList, Node, NodeList, SourceFile } from "../ast/ast.js";
 import type { BinaryExpression } from "../ast/ast_generated.js";
 import {
   AsBinaryExpression,
+  AsBindingElement,
   AsCallExpression,
+  AsCaseBlock,
+  AsCaseOrDefaultClause,
+  AsCatchClause,
+  AsClassStaticBlockDeclaration,
   AsConditionalExpression,
+  AsConditionalTypeNode,
+  AsConstructorDeclaration,
+  AsDeleteExpression,
+  AsDoStatement,
   AsElementAccessExpression,
+  AsExpressionStatement,
+  AsExportAssignment,
+  AsExportDeclaration,
+  AsExportSpecifier,
   AsForStatement,
+  AsForInOrOfStatement,
+  AsFunctionDeclaration,
   AsFunctionExpression,
+  AsIdentifier,
+  AsIfStatement,
+  AsImportClause,
+  AsImportEqualsDeclaration,
+  AsKeywordExpression,
+  AsLabeledStatement,
+  AsMetaProperty,
+  AsModuleDeclaration,
+  AsParameterDeclaration,
+  AsPostfixUnaryExpression,
   AsPrefixUnaryExpression,
+  AsPropertyAccessExpression,
+  AsQualifiedName,
+  AsReturnStatement,
+  AsShorthandPropertyAssignment,
+  AsSwitchStatement,
+  AsTryStatement,
+  AsTypeAliasDeclaration,
   AsVariableDeclaration,
+  AsWhileStatement,
 } from "../ast/generated/casts.js";
 import {
+  KindAmpersandAmpersandToken,
   KindAmpersandAmpersandEqualsToken,
   KindArrowFunction,
   KindBarBarEqualsToken,
@@ -48,6 +102,8 @@ import {
   KindExclamationEqualsEqualsToken,
   KindExclamationEqualsToken,
   KindExclamationToken,
+  KindFalseKeyword,
+  KindFirstStatement,
   KindForInStatement,
   KindForOfStatement,
   KindForStatement,
@@ -58,22 +114,28 @@ import {
   KindIdentifier,
   KindIfStatement,
   KindIndexSignature,
+  KindInferType,
   KindInKeyword,
   KindInstanceOfKeyword,
   KindInterfaceDeclaration,
   KindJSTypeAliasDeclaration,
   KindJsxAttributes,
+  KindLabeledStatement,
+  KindLastStatement,
+  KindLastToken,
   KindMappedType,
   KindMetaProperty,
   KindMethodDeclaration,
   KindMethodSignature,
   KindMinusToken,
+  KindMinusMinusToken,
   KindModuleBlock,
   KindModuleDeclaration,
   KindNonNullExpression,
   KindObjectLiteralExpression,
   KindParenthesizedExpression,
   KindPlusToken,
+  KindPlusPlusToken,
   KindPrefixUnaryExpression,
   KindPropertyAccessExpression,
   KindPropertyDeclaration,
@@ -83,56 +145,348 @@ import {
   KindSourceFile,
   KindSuperKeyword,
   KindThisKeyword,
+  KindTrueKeyword,
   KindTypeAliasDeclaration,
   KindTypeLiteral,
   KindTypeOfExpression,
+  KindArrayLiteralExpression,
+  KindAwaitKeyword,
+  KindBindingElement,
+  KindBreakStatement,
+  KindCaseClause,
+  KindContinueStatement,
+  KindDefaultClause,
+  KindDeleteExpression,
+  KindEndOfFile,
+  KindExportSpecifier,
+  KindExpressionStatement,
+  KindFirstFutureReservedWord,
+  KindImportClause,
+  KindImportEqualsDeclaration,
+  KindImportSpecifier,
+  KindJsxAttribute,
+  KindLastFutureReservedWord,
+  KindNamespaceExportDeclaration,
+  KindNamespaceImport,
+  KindParameter,
+  KindPostfixUnaryExpression,
+  KindPrivateIdentifier,
+  KindPropertyAssignment,
+  KindPropertySignature,
+  KindQualifiedName,
+  KindReturnStatement,
+  KindShorthandPropertyAssignment,
+  KindSpreadAssignment,
+  KindSpreadElement,
+  KindSwitchStatement,
+  KindThisType,
+  KindThrowStatement,
+  KindTryStatement,
+  KindTypeParameter,
+  KindVariableDeclaration,
+  KindVariableDeclarationList,
   KindWhileStatement,
+  KindWithStatement,
+  KindEnumMember,
+  KindExportDeclaration,
+  KindExportAssignment,
+  KindYieldKeyword,
 } from "../ast/generated/kinds.js";
 import {
   IsAssignmentOperator,
   IsBinaryExpression,
   IsCallExpression,
+  IsClassDeclaration,
   IsClassStaticBlockDeclaration,
+  IsComputedPropertyName,
+  IsConditionalTypeNode,
+  IsExportAssignment,
+  IsExportDeclaration,
+  IsExportSpecifier,
+  IsExpressionStatement,
   IsFunctionDeclaration,
   IsFunctionExpression,
   IsIdentifier,
+  IsJsxNamespacedName,
+  IsJSTypeAliasDeclaration,
+  IsLogicalOrCoalescingAssignmentOperator,
+  IsModuleBlock,
   IsModuleDeclaration,
+  IsNamespaceExport,
+  IsNonNullExpression,
   IsNumericLiteral,
   IsParenthesizedExpression,
+  IsPrivateIdentifier,
   IsPrefixUnaryExpression,
   IsPropertyAccessExpression,
+  IsSourceFile,
+  IsStringLiteral,
+  IsTypeAliasDeclaration,
   IsTypeOfExpression,
   IsVariableDeclaration,
+  IsVariableStatement,
 } from "../ast/generated/predicates.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_SetCategory, NewDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
-import { FlowFlagsReferenced, FlowFlagsShared } from "../ast/flow.js";
+import {
+  FlowFlagsArrayMutation,
+  FlowFlagsBranchLabel,
+  FlowFlagsCall,
+  FlowFlagsAssignment,
+  FlowFlagsFalseCondition,
+  FlowFlagsLoopLabel,
+  FlowFlagsReferenced,
+  FlowFlagsReduceLabel,
+  FlowFlagsShared,
+  FlowFlagsStart,
+  FlowFlagsSwitchClause,
+  FlowFlagsTrueCondition,
+  FlowFlagsUnreachable,
+  NewFlowReduceLabelData,
+  NewFlowSwitchClauseData,
+} from "../ast/flow.js";
 import type { FlowFlags, FlowLabel, FlowList, FlowNode } from "../ast/flow.js";
-import { NodeFlagsOptionalChain } from "../ast/nodeflags.js";
+import {
+  NodeFlagsAmbient,
+  NodeFlagsAwaitContext,
+  NodeFlagsContainsThis,
+  NodeFlagsConst,
+  NodeFlagsExportContext,
+  NodeFlagsHasAsyncFunctions,
+  NodeFlagsHasExplicitReturn,
+  NodeFlagsHasImplicitReturn,
+  NodeFlagsJSDoc,
+  NodeFlagsOptionalChain,
+  NodeFlagsReachabilityAndEmitFlags,
+  NodeFlagsThisNodeHasError,
+  NodeFlagsThisNodeOrAnySubNodesHasError,
+  NodeFlagsUnreachable,
+  NodeFlagsYieldContext,
+} from "../ast/nodeflags.js";
 import type { NodeFlags } from "../ast/nodeflags.js";
-import { InternalSymbolNamePrefix } from "../ast/symbol.js";
+import {
+  InternalSymbolNameAssignmentDeclaration,
+  InternalSymbolNameCall,
+  InternalSymbolNameClass,
+  InternalSymbolNameComputed,
+  InternalSymbolNameConstructor,
+  InternalSymbolNameDefault,
+  InternalSymbolNameExportEquals,
+  InternalSymbolNameExportStar,
+  InternalSymbolNameFunction,
+  InternalSymbolNameGlobal,
+  InternalSymbolNameIndex,
+  InternalSymbolNameJSXAttributes,
+  InternalSymbolNameMissing,
+  InternalSymbolNameNew,
+  InternalSymbolNameObject,
+  InternalSymbolNamePrefix,
+  InternalSymbolNameType,
+  SymbolName,
+} from "../ast/symbol.js";
 import type { Symbol, SymbolTable } from "../ast/symbol.js";
-import { SymbolFlagsNone, SymbolFlagsOptional } from "../ast/symbolflags.js";
+import {
+  SymbolFlagsAccessor,
+  SymbolFlagsAlias,
+  SymbolFlagsBlockScopedVariable,
+  SymbolFlagsBlockScopedVariableExcludes,
+  SymbolFlagsClass,
+  SymbolFlagsClassExcludes,
+  SymbolFlagsClassMember,
+  SymbolFlagsConstEnum,
+  SymbolFlagsConstEnumExcludes,
+  SymbolFlagsConstEnumOnlyModule,
+  SymbolFlagsConstructor,
+  SymbolFlagsEnum,
+  SymbolFlagsEnumMember,
+  SymbolFlagsEnumMemberExcludes,
+  SymbolFlagsExportStar,
+  SymbolFlagsExportValue,
+  SymbolFlagsFunction,
+  SymbolFlagsFunctionExcludes,
+  SymbolFlagsFunctionScopedVariable,
+  SymbolFlagsFunctionScopedVariableExcludes,
+  SymbolFlagsInterface,
+  SymbolFlagsModuleExports,
+  SymbolFlagsNamespaceModule,
+  SymbolFlagsNamespaceModuleExcludes,
+  SymbolFlagsNone,
+  SymbolFlagsObjectLiteral,
+  SymbolFlagsOptional,
+  SymbolFlagsParameterExcludes,
+  SymbolFlagsProperty,
+  SymbolFlagsPropertyExcludes,
+  SymbolFlagsPrototype,
+  SymbolFlagsRegularEnum,
+  SymbolFlagsReplaceableByMethod,
+  SymbolFlagsSignature,
+  SymbolFlagsTypeAlias,
+  SymbolFlagsTypeAliasExcludes,
+  SymbolFlagsTypeLiteral,
+  SymbolFlagsTypeParameter,
+  SymbolFlagsTypeParameterExcludes,
+  SymbolFlagsValueModule,
+  SymbolFlagsValueModuleExcludes,
+  SymbolFlagsValue,
+  SymbolFlagsAll,
+  SymbolFlagsAliasExcludes,
+  SymbolFlagsAssignment,
+  SymbolFlagsClassifiable,
+  SymbolFlagsVariable,
+  SymbolFlagsGetAccessor,
+  SymbolFlagsGetAccessorExcludes,
+  SymbolFlagsInterfaceExcludes,
+  SymbolFlagsMethod,
+  SymbolFlagsMethodExcludes,
+  SymbolFlagsRegularEnumExcludes,
+  SymbolFlagsSetAccessor,
+  SymbolFlagsSetAccessorExcludes,
+  SymbolFlagsAccessorExcludes,
+  SymbolFlagsType,
+  SymbolFlagsNamespace,
+} from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import {
+  ModifierFlagsAsync,
+  ModifierFlagsDefault,
+  ModifierFlagsExport,
+} from "../ast/modifierflags.js";
+import {
+  ExpressionIsAlias,
+  FindAncestor,
+  GetAssignmentDeclarationKind,
+  GetCombinedModifierFlags,
+  GetContainingClass,
+  GetElementOrPropertyAccessName,
+  GetExports,
+  GetLocals,
+  GetMembers,
+  GetModuleInstanceState,
+  GetNameOfDeclaration,
+  GetSymbolTable,
   GetSymbolId,
+  HasDynamicName,
+  HasSyntacticModifier,
   IsAccessExpression,
+  IsAmbientModule,
+  IsAsyncFunction,
+  IsAssignmentTarget,
+  IsAutoAccessorPropertyDeclaration,
+  IsBindingPattern,
   IsBooleanLiteral,
+  IsBlockOrCatchScoped,
+  IsDestructuringAssignment,
+  IsDottedName,
   IsEntityNameExpression,
+  IsEnumConst,
+  IsExpressionOfOptionalChainRoot,
+  IsExpandoInitializer,
+  IsExternalModule,
+  IsExternalOrCommonJSModule,
+  IsForInOrOfStatement,
   IsFunctionLike,
+  IsGlobalScopeAugmentation,
+  IsImplicitlyExportedJSTypeAlias,
+  IsInJSFile,
+  IsInTopLevelContext,
   IsLeftHandSideExpression,
   IsLogicalExpression,
   IsLogicalOrCoalescingAssignmentExpression,
+  IsLogicalOrCoalescingBinaryOperator,
+  IsModuleAugmentationExternal,
+  IsNullishCoalesce,
+  IsObjectLiteralMethod,
   IsObjectLiteralOrClassExpressionMethodOrAccessor,
   IsOptionalChain,
+  IsOptionalChainRoot,
+  IsOutermostOptionalChain,
+  IsParameterPropertyDeclaration,
+  IsPartOfParameterDeclaration,
+  IsPartOfTypeQuery,
+  IsPotentiallyExecutableNode,
+  IsPrologueDirective,
+  IsPushOrUnshiftIdentifier,
+  IsRequireCall,
+  IsStatic,
   IsStringLiteralLike,
   IsStringOrNumericLiteralLike,
+  GetImmediatelyInvokedFunctionExpression,
+  IsDeclarationStatement,
+  IsIdentifierName,
+  IsPropertyNameLiteral,
+  IsVariableDeclarationInitializedToRequire,
+  IsJsonSourceFile,
+  JSDeclarationKindModuleExports,
+  JSDeclarationKindExportsProperty,
+  JSDeclarationKindThisProperty,
+  JSDeclarationKindProperty,
+  JSDeclarationKindObjectDefinePropertyValue,
+  JSDeclarationKindObjectDefinePropertyExports,
+  ModuleExportNameIsDefault,
+  ModuleInstanceStateNonInstantiated,
+  ModuleInstanceStateConstEnumOnly,
+  NodeIsMissing,
+  NodeIsPresent,
   SkipParentheses,
 } from "../ast/utilities.js";
 import type { ModuleInstanceState } from "../ast/utilities.js";
+import {
+  Set_Add,
+  Set_Has,
+  NewSetWithSizeHint,
+} from "../collections/set.js";
 import type { Set } from "../collections/set.js";
+import { Arena_New, Arena_NewSlice1 } from "../core/arena.js";
 import type { Arena } from "../core/arena.js";
-import { IfElse } from "../core/core.js";
+import { AppendIfUnique, IfElse, OrElse, Some } from "../core/core.js";
+import { CategorySuggestion } from "../diagnostics/diagnostics.js";
 import type { Message } from "../diagnostics/diagnostics.js";
+import {
+  A_label_is_not_allowed_here,
+  A_module_cannot_have_multiple_default_exports,
+  Another_export_default_is_here,
+  Cannot_redeclare_block_scoped_variable_0,
+  Code_contained_in_a_class_is_evaluated_in_JavaScript_s_strict_mode_which_does_not_allow_this_use_of_0_For_more_information_see_https_Colon_Slash_Slashdeveloper_mozilla_org_Slashen_US_Slashdocs_SlashWeb_SlashJavaScript_SlashReference_SlashStrict_mode,
+  Did_you_mean_0,
+  Duplicate_identifier_0,
+  Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations,
+  Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5,
+  Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5_Class_definitions_are_automatically_in_strict_mode,
+  Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5_Modules_are_automatically_in_strict_mode,
+  Global_module_exports_may_only_appear_at_top_level,
+  Global_module_exports_may_only_appear_in_declaration_files,
+  Global_module_exports_may_only_appear_in_module_files,
+  Identifier_expected_0_is_a_reserved_word_at_the_top_level_of_a_module,
+  Identifier_expected_0_is_a_reserved_word_in_strict_mode,
+  Identifier_expected_0_is_a_reserved_word_in_strict_mode_Class_definitions_are_automatically_in_strict_mode,
+  Identifier_expected_0_is_a_reserved_word_in_strict_mode_Modules_are_automatically_in_strict_mode,
+  Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here,
+  Invalid_use_of_0_in_strict_mode,
+  Invalid_use_of_0_Modules_are_automatically_in_strict_mode,
+  Modifiers_cannot_appear_here,
+  Pattern_0_can_have_at_most_one_Asterisk_character,
+  The_first_export_default_is_here,
+  X_and_here,
+  X_constructor_is_a_reserved_word,
+  X_delete_cannot_be_called_on_an_identifier_in_strict_mode,
+  X_export_modifier_cannot_be_applied_to_ambient_modules_and_module_augmentations_since_they_are_always_visible,
+  X_with_statements_are_not_allowed_in_strict_mode,
+} from "../diagnostics/generated/messages.js";
+import {
+  GetSourceTextOfNodeFromSourceFile,
+  DeclarationNameToString,
+} from "../scanner/utilities.js";
+import {
+  GetErrorRangeForNode,
+  GetIdentifierToken,
+  GetRangeOfTokenAtPosition,
+  TokenToString,
+} from "../scanner/scanner.js";
+import { NewTextRange } from "../core/text.js";
+import { Pattern_IsValid, TryParsePattern } from "../core/pattern.js";
+import type { Pattern } from "../core/pattern.js";
+import { RemoveFileExtension } from "../tspath/extension.js";
+import { Node_AsNode, Node_BodyData, Node_DeclarationData, Node_End, Node_FlowNodeData, Node_ExportableData, Node_ForEachChild, Node_LocalsContainerData, Node_Name, Node_Modifiers, Node_Pos } from "../ast/spine.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ContainerFlags","kind":"type","status":"implemented","sigHash":"068247eebc62ebe4c4b32ff608d4161dc758afa1a02341cf8ec341921dcd4c5d","bodyHash":"2fbc434e23f039c3fcc0dec2f41a450f3a94b32ea8cb8a767ea8f7ac402f3048"}
@@ -243,6 +597,7 @@ export interface Binder {
   file: GoPtr<SourceFile>;
   bindFunc: (arg0: GoPtr<Node>) => bool;
   unreachableFlow: GoPtr<FlowNode>;
+  parent: GoPtr<Node>;
   container: GoPtr<Node>;
   thisContainer: GoPtr<Node>;
   blockScopeContainer: GoPtr<Node>;
@@ -326,7 +681,9 @@ export function ActiveLabel_ContinueTarget(receiver: GoPtr<ActiveLabel>): GoPtr<
  * }
  */
 export function BindSourceFile(file: GoPtr<SourceFile>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::BindSourceFile");
+  if (!SourceFile_IsBound(file)) {
+    bindSourceFile(file);
+  }
 }
 
 /**
@@ -341,7 +698,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
  * 	},
  * }
  */
-export let binderPool: Pool = undefined as never;
+export const binderPool = new Pool<Binder>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"stub","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2","bodyHash":"459fb11735c11ea9e06babc9f1dab3e1df80aca8b93fcd595671fbd375fceddb"}
@@ -352,7 +709,14 @@ export let binderPool: Pool = undefined as never;
  * }
  */
 export function getBinder(): GoPtr<Binder> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder");
+  if (binderPool.New === undefined) {
+    binderPool.New = () => {
+      const b = {} as Binder;
+      b.bindFunc = (node) => Binder_bind(b, node);
+      return b;
+    };
+  }
+  return binderPool.Get() as Binder;
 }
 
 /**
@@ -365,7 +729,15 @@ export function getBinder(): GoPtr<Binder> {
  * }
  */
 export function putBinder(b: GoPtr<Binder>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::putBinder");
+  const savedBindFunc = b!.bindFunc;
+  // Reset all fields to zero values preserving bindFunc
+  const bAsRecord = b as unknown as Record<string, unknown>;
+  const keys = globalThis.Object.keys(bAsRecord) as Array<string>;
+  for (const key of keys) {
+    bAsRecord[key] = undefined;
+  }
+  b!.bindFunc = savedBindFunc;
+  binderPool.Put(b!);
 }
 
 /**
@@ -387,7 +759,17 @@ export function putBinder(b: GoPtr<Binder>): void {
  * }
  */
 export function bindSourceFile(file: GoPtr<SourceFile>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::bindSourceFile");
+  SourceFile_BindOnce(file, () => {
+    const b = getBinder()!;
+    b.file = file;
+    b.unreachableFlow = Binder_newFlowNode(b, FlowFlagsUnreachable);
+    Binder_bind(b, Node_AsNode(file as unknown as Node));
+    Binder_bindDeferredExpandoAssignments(b);
+    file!.SymbolCount = b.symbolCount;
+    file!.ClassifiableNames = b.classifiableNames;
+    file!.NestedCJSExports = b.nestedCJSExports;
+    putBinder(b);
+  });
 }
 
 /**
@@ -403,7 +785,11 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
  * }
  */
 export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, name: string): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSymbol");
+  receiver!.symbolCount = (receiver!.symbolCount as number + 1) as int;
+  const result = Arena_New(receiver!.symbolArena);
+  result!.Flags = flags;
+  result!.Name = name;
+  return result;
 }
 
 /**
@@ -415,7 +801,7 @@ export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, na
  * }
  */
 export function Binder_declareSymbol(receiver: GoPtr<Binder>, symbolTable: SymbolTable, parent: GoPtr<Symbol>, node: GoPtr<Node>, includes: SymbolFlags, excludes: SymbolFlags): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbol");
+  return Binder_declareSymbolEx(receiver, symbolTable, parent, node, includes, excludes, false, false);
 }
 
 /**
@@ -573,7 +959,111 @@ export function Binder_declareSymbol(receiver: GoPtr<Binder>, symbolTable: Symbo
  * }
  */
 export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: SymbolTable, parent: GoPtr<Symbol>, node: GoPtr<Node>, includes: SymbolFlags, excludes: SymbolFlags, isReplaceableByMethod: bool, isComputedName: bool): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolEx");
+  // debug.Assert(isComputedName || !ast.HasDynamicName(node))
+  const isDefaultExport = HasSyntacticModifier(node, ModifierFlagsDefault) || IsExportSpecifier(node) && ModuleExportNameIsDefault(Node_Name(AsExportSpecifier(node)!.name as unknown as Node)!);
+  let name: string;
+  if (isComputedName) {
+    name = InternalSymbolNameComputed;
+  } else if (isDefaultExport && parent !== undefined) {
+    name = InternalSymbolNameDefault;
+  } else {
+    name = Binder_getDeclarationName(receiver, node);
+  }
+  let symbol: GoPtr<Symbol>;
+  if (name === InternalSymbolNameMissing) {
+    symbol = Binder_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameMissing);
+  } else {
+    if ((includes & SymbolFlagsClassifiable) !== 0) {
+      Set_Add(receiver!.classifiableNames, name);
+    }
+    symbol = symbolTable.get(name);
+    if (symbol === undefined) {
+      symbol = Binder_newSymbol(receiver, SymbolFlagsNone, name);
+      symbolTable.set(name, symbol!);
+      if (isReplaceableByMethod) {
+        symbol!.Flags = (symbol!.Flags | SymbolFlagsReplaceableByMethod) as SymbolFlags;
+      }
+    } else if (isReplaceableByMethod && (symbol!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
+      return symbol;
+    } else if ((symbol!.Flags & excludes) !== 0) {
+      if ((symbol!.Flags & SymbolFlagsReplaceableByMethod) !== 0) {
+        symbol = Binder_newSymbol(receiver, SymbolFlagsNone, name);
+        symbolTable.set(name, symbol!);
+      } else if (!((includes & SymbolFlagsVariable) !== 0 && (symbol!.Flags & SymbolFlagsAssignment) !== 0 ||
+        (includes & SymbolFlagsAssignment) !== 0 && (symbol!.Flags & SymbolFlagsVariable) !== 0)) {
+        let message: GoPtr<Message>;
+        if ((symbol!.Flags & SymbolFlagsBlockScopedVariable) !== 0) {
+          message = Cannot_redeclare_block_scoped_variable_0;
+        } else {
+          message = Duplicate_identifier_0;
+        }
+        let messageNeedsName = true;
+        if ((symbol!.Flags & SymbolFlagsEnum) !== 0 || (includes & SymbolFlagsEnum) !== 0) {
+          message = Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations;
+          messageNeedsName = false;
+        }
+        let multipleDefaultExports = false;
+        if ((symbol!.Declarations ?? []).length !== 0) {
+          if (isDefaultExport) {
+            message = A_module_cannot_have_multiple_default_exports;
+            messageNeedsName = false;
+            multipleDefaultExports = true;
+          } else {
+            if ((symbol!.Declarations ?? []).length !== 0 && IsExportAssignment(node) && !AsExportAssignment(node)!.IsExportEquals) {
+              message = A_module_cannot_have_multiple_default_exports;
+              messageNeedsName = false;
+              multipleDefaultExports = true;
+            }
+          }
+        }
+        let declarationName: GoPtr<Node> = GetNameOfDeclaration(node);
+        if (declarationName === undefined) {
+          declarationName = node;
+        }
+        let diag: GoPtr<Diagnostic>;
+        if (messageNeedsName) {
+          diag = Binder_createDiagnosticForNode(receiver, declarationName, message!, Binder_getDisplayName(receiver, node));
+        } else {
+          diag = Binder_createDiagnosticForNode(receiver, declarationName, message!);
+        }
+        if (IsTypeAliasDeclaration(node) && NodeIsMissing(Node_Type(node)) && HasSyntacticModifier(node, ModifierFlagsExport) && (symbol!.Flags & (SymbolFlagsAlias | SymbolFlagsType | SymbolFlagsNamespace)) !== 0) {
+          Diagnostic_AddRelatedInfo(diag!, Binder_createDiagnosticForNode(receiver, node, Did_you_mean_0, "export type { " + Node_Text(AsTypeAliasDeclaration(node)!.name as unknown as Node) + " }"));
+        }
+        for (let index = 0; index < (symbol!.Declarations ?? []).length; index++) {
+          const declaration = symbol!.Declarations![index];
+          let decl: GoPtr<Node> = GetNameOfDeclaration(declaration);
+          if (decl === undefined) {
+            decl = declaration;
+          }
+          let d: GoPtr<Diagnostic>;
+          if (messageNeedsName) {
+            d = Binder_createDiagnosticForNode(receiver, decl, message!, Binder_getDisplayName(receiver, declaration));
+          } else {
+            d = Binder_createDiagnosticForNode(receiver, decl, message!);
+          }
+          if (multipleDefaultExports) {
+            Diagnostic_AddRelatedInfo(d!, Binder_createDiagnosticForNode(receiver, declarationName, IfElse(index === 0, Another_export_default_is_here, X_and_here)));
+          }
+          Binder_addDiagnostic(receiver, d!);
+          if (multipleDefaultExports) {
+            Diagnostic_AddRelatedInfo(diag!, Binder_createDiagnosticForNode(receiver, decl, The_first_export_default_is_here));
+          }
+        }
+        Binder_addDiagnostic(receiver, diag!);
+        if ((symbol!.Flags & SymbolFlagsAccessor) !== 0 && (symbol!.Flags & SymbolFlagsAccessor) !== (includes & SymbolFlagsAccessor)) {
+          symbol!.Flags = (symbol!.Flags | SymbolFlagsAccessor) as SymbolFlags;
+        }
+        symbol = Binder_newSymbol(receiver, SymbolFlagsNone, name);
+      }
+    }
+  }
+  Binder_addDeclarationToSymbol(receiver, symbol!, node!, includes);
+  if (symbol!.Parent === undefined) {
+    symbol!.Parent = parent;
+  } else if (symbol!.Parent !== parent) {
+    throw new globalThis.Error("Existing symbol parent should match new one");
+  }
+  return symbol;
 }
 
 /**
@@ -637,7 +1127,59 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
  * }
  */
 export function Binder_getDeclarationName(receiver: GoPtr<Binder>, node: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDeclarationName");
+  if (IsExportAssignment(node)) {
+    return IfElse(AsExportAssignment(node)!.IsExportEquals, InternalSymbolNameExportEquals, InternalSymbolNameDefault);
+  }
+  const name = GetNameOfDeclaration(node);
+  if (name !== undefined) {
+    if (IsAmbientModule(node)) {
+      const moduleName = Node_Text(name);
+      if (IsGlobalScopeAugmentation(node)) {
+        return InternalSymbolNameGlobal;
+      }
+      return "\"" + moduleName + "\"";
+    }
+    if (IsPrivateIdentifier(name)) {
+      const containingClass = GetContainingClass(node);
+      if (containingClass === undefined) {
+        return InternalSymbolNameMissing;
+      }
+      return GetSymbolNameForPrivateIdentifier(Node_Symbol(containingClass), Node_Text(name));
+    }
+    if (IsPropertyNameLiteral(name) || IsJsxNamespacedName(name)) {
+      return Node_Text(name);
+    }
+    if (IsComputedPropertyName(name)) {
+      const nameExpression = Node_Expression(name);
+      if (IsStringOrNumericLiteralLike(nameExpression)) {
+        return Node_Text(nameExpression);
+      }
+      if (isSignedNumericLiteral(nameExpression)) {
+        const unaryExpression = AsPrefixUnaryExpression(nameExpression);
+        return TokenToString(unaryExpression!.Operator) + Node_Text(unaryExpression!.Operand as unknown as Node);
+      }
+      throw new globalThis.Error("Only computed properties with literal names have declaration names");
+    }
+    return InternalSymbolNameMissing;
+  }
+  switch (node!.Kind) {
+    case KindConstructor:
+      return InternalSymbolNameConstructor;
+    case KindFunctionType:
+    case KindCallSignature:
+      return InternalSymbolNameCall;
+    case KindConstructorType:
+    case KindConstructSignature:
+      return InternalSymbolNameNew;
+    case KindIndexSignature:
+      return InternalSymbolNameIndex;
+    case KindExportDeclaration:
+      return InternalSymbolNameExportStar;
+    case KindSourceFile:
+    case KindBinaryExpression:
+      return InternalSymbolNameExportEquals;
+  }
+  return InternalSymbolNameMissing;
 }
 
 /**
@@ -657,7 +1199,15 @@ export function Binder_getDeclarationName(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_getDisplayName(receiver: GoPtr<Binder>, node: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDisplayName");
+  const nameNode = Node_Name(node);
+  if (nameNode !== undefined) {
+    return DeclarationNameToString(nameNode as unknown as Node);
+  }
+  const name = Binder_getDeclarationName(receiver, node);
+  if (name !== InternalSymbolNameMissing) {
+    return name;
+  }
+  return "(Missing)";
 }
 
 /**
@@ -718,7 +1268,25 @@ export function GetSymbolNameForPrivateIdentifier(containingClassSymbol: GoPtr<S
  * }
  */
 export function Binder_declareModuleMember(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleMember");
+  const container = receiver!.container;
+  const hasExportModifier = (GetCombinedModifierFlags(node) & ModifierFlagsExport) !== 0 || IsImplicitlyExportedJSTypeAlias(node);
+  if ((symbolFlags & SymbolFlagsAlias) !== 0) {
+    if (node!.Kind === KindExportSpecifier || (node!.Kind === KindImportEqualsDeclaration && hasExportModifier)) {
+      return Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, symbolFlags, symbolExcludes);
+    }
+    return Binder_declareSymbol(receiver, GetLocals(container)!, undefined, node, symbolFlags, symbolExcludes);
+  }
+  if (!IsAmbientModule(node) && (hasExportModifier || (container!.Flags & NodeFlagsExportContext) !== 0)) {
+    if (!IsLocalsContainer(container) || (HasSyntacticModifier(node, ModifierFlagsDefault) && Binder_getDeclarationName(receiver, node) === InternalSymbolNameMissing)) {
+      return Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, symbolFlags, symbolExcludes);
+    }
+    const exportKind: SymbolFlags = (symbolFlags & SymbolFlagsValue) !== 0 ? SymbolFlagsExportValue : SymbolFlagsNone;
+    const local = Binder_declareSymbol(receiver, GetLocals(container)!, undefined, node, exportKind, symbolExcludes);
+    local!.ExportSymbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, symbolFlags, symbolExcludes);
+    (Node_ExportableData(node) as unknown as { LocalSymbol?: GoPtr<Symbol> }).LocalSymbol = local;
+    return local;
+  }
+  return Binder_declareSymbol(receiver, GetLocals(container)!, undefined, node, symbolFlags, symbolExcludes);
 }
 
 /**
@@ -733,7 +1301,10 @@ export function Binder_declareModuleMember(receiver: GoPtr<Binder>, node: GoPtr<
  * }
  */
 export function Binder_declareClassMember(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareClassMember");
+  if (IsStatic(node)) {
+    return Binder_declareSymbol(receiver, GetExports(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, node, symbolFlags, symbolExcludes);
+  }
+  return Binder_declareSymbol(receiver, GetMembers(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, node, symbolFlags, symbolExcludes);
 }
 
 /**
@@ -748,7 +1319,10 @@ export function Binder_declareClassMember(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_declareSourceFileMember(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSourceFileMember");
+  if (IsExternalOrCommonJSModule(receiver!.file)) {
+    return Binder_declareModuleMember(receiver, node, symbolFlags, symbolExcludes);
+  }
+  return Binder_declareSymbol(receiver, GetLocals(Node_AsNode(receiver!.file as unknown as Node))!, undefined, node, symbolFlags, symbolExcludes);
 }
 
 /**
@@ -777,7 +1351,41 @@ export function Binder_declareSourceFileMember(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolAndAddToSymbolTable");
+  switch (receiver!.container!.Kind) {
+    case KindModuleDeclaration:
+      return Binder_declareModuleMember(receiver, node, symbolFlags, symbolExcludes);
+    case KindSourceFile:
+      return Binder_declareSourceFileMember(receiver, node, symbolFlags, symbolExcludes);
+    case KindClassExpression:
+    case KindClassDeclaration:
+      return Binder_declareClassMember(receiver, node, symbolFlags, symbolExcludes);
+    case KindEnumDeclaration:
+      return Binder_declareSymbol(receiver, GetExports(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, node, symbolFlags, symbolExcludes);
+    case KindTypeLiteral:
+    case KindObjectLiteralExpression:
+    case KindInterfaceDeclaration:
+    case KindJsxAttributes:
+      return Binder_declareSymbol(receiver, GetMembers(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, node, symbolFlags, symbolExcludes);
+    case KindFunctionType:
+    case KindConstructorType:
+    case KindCallSignature:
+    case KindConstructSignature:
+    case KindIndexSignature:
+    case KindMethodDeclaration:
+    case KindMethodSignature:
+    case KindConstructor:
+    case KindGetAccessor:
+    case KindSetAccessor:
+    case KindFunctionDeclaration:
+    case KindFunctionExpression:
+    case KindArrowFunction:
+    case KindClassStaticBlockDeclaration:
+    case KindTypeAliasDeclaration:
+    case KindJSTypeAliasDeclaration:
+    case KindMappedType:
+      return Binder_declareSymbol(receiver, GetLocals(receiver!.container)!, undefined, node, symbolFlags, symbolExcludes);
+  }
+  throw new globalThis.Error("Unhandled case in declareSymbolAndAddToSymbolTable");
 }
 
 /**
@@ -791,7 +1399,9 @@ export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>,
  * }
  */
 export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNode");
+  const result = Arena_New(receiver!.flowNodeArena);
+  result!.Flags = flags;
+  return result;
 }
 
 /**
@@ -806,7 +1416,10 @@ export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): G
  * }
  */
 export function Binder_newFlowNodeEx(receiver: GoPtr<Binder>, flags: FlowFlags, node: GoPtr<Node>, antecedent: GoPtr<FlowNode>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNodeEx");
+  const result = Binder_newFlowNode(receiver, flags);
+  result!.Node = node;
+  result!.Antecedent = antecedent;
+  return result;
 }
 
 /**
@@ -818,7 +1431,7 @@ export function Binder_newFlowNodeEx(receiver: GoPtr<Binder>, flags: FlowFlags, 
  * }
  */
 export function Binder_createLoopLabel(receiver: GoPtr<Binder>): GoPtr<FlowLabel> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createLoopLabel");
+  return Binder_newFlowNode(receiver, FlowFlagsLoopLabel);
 }
 
 /**
@@ -830,7 +1443,7 @@ export function Binder_createLoopLabel(receiver: GoPtr<Binder>): GoPtr<FlowLabel
  * }
  */
 export function Binder_createBranchLabel(receiver: GoPtr<Binder>): GoPtr<FlowLabel> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createBranchLabel");
+  return Binder_newFlowNode(receiver, FlowFlagsBranchLabel);
 }
 
 /**
@@ -842,7 +1455,7 @@ export function Binder_createBranchLabel(receiver: GoPtr<Binder>): GoPtr<FlowLab
  * }
  */
 export function Binder_createReduceLabel(receiver: GoPtr<Binder>, target: GoPtr<FlowLabel>, antecedents: GoPtr<FlowList>, antecedent: GoPtr<FlowNode>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createReduceLabel");
+  return Binder_newFlowNodeEx(receiver, FlowFlagsReduceLabel, NewFlowReduceLabelData(target, antecedents), antecedent);
 }
 
 /**
@@ -870,7 +1483,23 @@ export function Binder_createReduceLabel(receiver: GoPtr<Binder>, target: GoPtr<
  * }
  */
 export function Binder_createFlowCondition(receiver: GoPtr<Binder>, flags: FlowFlags, antecedent: GoPtr<FlowNode>, expression: GoPtr<Node>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCondition");
+  if ((antecedent!.Flags & FlowFlagsUnreachable) !== 0) {
+    return antecedent;
+  }
+  if (expression === undefined) {
+    if ((flags & FlowFlagsTrueCondition) !== 0) {
+      return antecedent;
+    }
+    return receiver!.unreachableFlow;
+  }
+  if ((expression!.Kind === KindTrueKeyword && (flags & FlowFlagsFalseCondition) !== 0 || expression!.Kind === KindFalseKeyword && (flags & FlowFlagsTrueCondition) !== 0) && !IsExpressionOfOptionalChainRoot(expression) && !IsNullishCoalesce(expression!.Parent)) {
+    return receiver!.unreachableFlow;
+  }
+  if (!isNarrowingExpression(expression)) {
+    return antecedent;
+  }
+  setFlowNodeReferenced(antecedent!);
+  return Binder_newFlowNodeEx(receiver, flags, expression, antecedent);
 }
 
 /**
@@ -888,7 +1517,13 @@ export function Binder_createFlowCondition(receiver: GoPtr<Binder>, flags: FlowF
  * }
  */
 export function Binder_createFlowMutation(receiver: GoPtr<Binder>, flags: FlowFlags, antecedent: GoPtr<FlowNode>, node: GoPtr<Node>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowMutation");
+  setFlowNodeReferenced(antecedent!);
+  receiver!.hasFlowEffects = true;
+  const result = Binder_newFlowNodeEx(receiver, flags, node, antecedent);
+  if (receiver!.currentExceptionTarget !== undefined) {
+    Binder_addAntecedent(receiver, receiver!.currentExceptionTarget, result!);
+  }
+  return result;
 }
 
 /**
@@ -901,7 +1536,8 @@ export function Binder_createFlowMutation(receiver: GoPtr<Binder>, flags: FlowFl
  * }
  */
 export function Binder_createFlowSwitchClause(receiver: GoPtr<Binder>, antecedent: GoPtr<FlowNode>, switchStatement: GoPtr<Node>, clauseStart: int, clauseEnd: int): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowSwitchClause");
+  setFlowNodeReferenced(antecedent!);
+  return Binder_newFlowNodeEx(receiver, FlowFlagsSwitchClause, NewFlowSwitchClauseData(switchStatement, clauseStart, clauseEnd), antecedent);
 }
 
 /**
@@ -915,7 +1551,9 @@ export function Binder_createFlowSwitchClause(receiver: GoPtr<Binder>, anteceden
  * }
  */
 export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr<FlowNode>, node: GoPtr<Node>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCall");
+  setFlowNodeReferenced(antecedent!);
+  receiver!.hasFlowEffects = true;
+  return Binder_newFlowNodeEx(receiver, FlowFlagsCall, node, antecedent);
 }
 
 /**
@@ -930,7 +1568,10 @@ export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr
  * }
  */
 export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode>, tail: GoPtr<FlowList>): GoPtr<FlowList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowList");
+  const result = Arena_New(receiver!.flowListArena);
+  result!.Flow = head;
+  result!.Next = tail;
+  return result;
 }
 
 /**
@@ -945,7 +1586,10 @@ export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode
  * }
  */
 export function Binder_combineFlowLists(receiver: GoPtr<Binder>, head: GoPtr<FlowList>, tail: GoPtr<FlowList>): GoPtr<FlowList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.combineFlowLists");
+  if (head === undefined) {
+    return tail;
+  }
+  return Binder_newFlowList(receiver, head!.Flow, Binder_combineFlowLists(receiver, head!.Next, tail));
 }
 
 /**
@@ -957,7 +1601,7 @@ export function Binder_combineFlowLists(receiver: GoPtr<Binder>, head: GoPtr<Flo
  * }
  */
 export function Binder_newSingleDeclaration(receiver: GoPtr<Binder>, declaration: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSingleDeclaration");
+  return Arena_NewSlice1(receiver!.singleDeclarationsArena, declaration);
 }
 
 /**
@@ -1007,7 +1651,22 @@ export function setFlowNodeReferenced(flow: GoPtr<FlowNode>): void {
  * }
  */
 export function Binder_addAntecedent(receiver: GoPtr<Binder>, label: GoPtr<FlowLabel>, antecedent: GoPtr<FlowNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addAntecedent");
+  if ((antecedent!.Flags & FlowFlagsUnreachable) !== 0) {
+    return;
+  }
+  let last: GoPtr<FlowList> = undefined;
+  for (let list = label!.Antecedents; list !== undefined; list = list!.Next) {
+    if (list!.Flow === antecedent) {
+      return;
+    }
+    last = list;
+  }
+  if (last === undefined) {
+    label!.Antecedents = Binder_newFlowList(receiver, antecedent, undefined);
+  } else {
+    last!.Next = Binder_newFlowList(receiver, antecedent, undefined);
+  }
+  setFlowNodeReferenced(antecedent!);
 }
 
 /**
@@ -1025,7 +1684,13 @@ export function Binder_addAntecedent(receiver: GoPtr<Binder>, label: GoPtr<FlowL
  * }
  */
 export function Binder_finishFlowLabel(receiver: GoPtr<Binder>, label: GoPtr<FlowLabel>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.finishFlowLabel");
+  if (label!.Antecedents === undefined) {
+    return receiver!.unreachableFlow;
+  }
+  if (label!.Antecedents!.Next === undefined) {
+    return label!.Antecedents!.Flow;
+  }
+  return label;
 }
 
 /**
@@ -1208,7 +1873,220 @@ export function Binder_finishFlowLabel(receiver: GoPtr<Binder>, label: GoPtr<Flo
  * }
  */
 export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bind");
+  if (node === undefined) {
+    return false;
+  }
+  node!.Parent = receiver!.parent;
+  const saveParent = receiver!.parent;
+  receiver!.parent = node;
+  // First bind declaration nodes to a symbol if possible.
+  switch (node!.Kind) {
+    case KindIdentifier:
+      setFlowNode(node, receiver!.currentFlow);
+      Binder_checkContextualIdentifier(receiver, node);
+      break;
+    case KindThisKeyword:
+      receiver!.seenThisKeyword = true;
+      setFlowNode(node, receiver!.currentFlow);
+      break;
+    case KindSuperKeyword:
+      setFlowNode(node, receiver!.currentFlow);
+      break;
+    case KindQualifiedName:
+      if (receiver!.currentFlow !== undefined && IsPartOfTypeQuery(node)) {
+        setFlowNode(node, receiver!.currentFlow);
+      }
+      break;
+    case KindMetaProperty:
+      setFlowNode(node, receiver!.currentFlow);
+      break;
+    case KindPrivateIdentifier:
+      Binder_checkPrivateIdentifier(receiver, node);
+      break;
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression:
+      if (receiver!.currentFlow !== undefined && isNarrowableReference(node)) {
+        setFlowNode(node, receiver!.currentFlow);
+      }
+      break;
+    case KindBinaryExpression: {
+      const kind = GetAssignmentDeclarationKind(node);
+      if (kind === JSDeclarationKindModuleExports) {
+        Binder_bindModuleExportsAssignment(receiver, node);
+      } else if (kind === JSDeclarationKindExportsProperty) {
+        Binder_bindExportsOrObjectDefineProperty(receiver, node);
+      } else if (kind === JSDeclarationKindProperty) {
+        Binder_bindExpandoPropertyAssignment(receiver, node);
+      } else if (kind === JSDeclarationKindThisProperty) {
+        Binder_bindThisPropertyAssignment(receiver, node);
+      }
+      Binder_checkStrictModeBinaryExpression(receiver, node);
+      break;
+    }
+    case KindCatchClause:
+      Binder_checkStrictModeCatchClause(receiver, node);
+      break;
+    case KindDeleteExpression:
+      Binder_checkStrictModeDeleteExpression(receiver, node);
+      break;
+    case KindPostfixUnaryExpression:
+      Binder_checkStrictModePostfixUnaryExpression(receiver, node);
+      break;
+    case KindPrefixUnaryExpression:
+      Binder_checkStrictModePrefixUnaryExpression(receiver, node);
+      break;
+    case KindWithStatement:
+      Binder_checkStrictModeWithStatement(receiver, node);
+      break;
+    case KindLabeledStatement:
+      Binder_checkStrictModeLabeledStatement(receiver, node);
+      break;
+    case KindThisType:
+      receiver!.seenThisKeyword = true;
+      break;
+    case KindTypeParameter:
+      Binder_bindTypeParameter(receiver, node);
+      break;
+    case KindParameter:
+      Binder_bindParameter(receiver, node);
+      break;
+    case KindVariableDeclaration:
+      Binder_bindVariableDeclarationOrBindingElement(receiver, node);
+      break;
+    case KindBindingElement:
+      setFlowNode(node, receiver!.currentFlow);
+      Binder_bindVariableDeclarationOrBindingElement(receiver, node);
+      break;
+    case KindPropertyDeclaration:
+    case KindPropertySignature:
+      Binder_bindPropertyWorker(receiver, node);
+      break;
+    case KindPropertyAssignment:
+    case KindShorthandPropertyAssignment:
+      Binder_bindPropertyOrMethodOrAccessor(receiver, node, SymbolFlagsProperty, SymbolFlagsPropertyExcludes);
+      break;
+    case KindEnumMember:
+      Binder_bindPropertyOrMethodOrAccessor(receiver, node, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes);
+      break;
+    case KindCallSignature:
+    case KindConstructSignature:
+    case KindIndexSignature:
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsSignature, SymbolFlagsNone);
+      break;
+    case KindMethodDeclaration:
+    case KindMethodSignature:
+      Binder_bindPropertyOrMethodOrAccessor(receiver, node, (SymbolFlagsMethod | getOptionalSymbolFlagForNode(node)) as SymbolFlags, IfElse(IsObjectLiteralMethod(node), SymbolFlagsPropertyExcludes, SymbolFlagsMethodExcludes));
+      break;
+    case KindFunctionDeclaration:
+      Binder_bindFunctionDeclaration(receiver, node);
+      break;
+    case KindConstructor:
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsConstructor, SymbolFlagsNone);
+      break;
+    case KindGetAccessor:
+      Binder_bindPropertyOrMethodOrAccessor(receiver, node, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes);
+      break;
+    case KindSetAccessor:
+      Binder_bindPropertyOrMethodOrAccessor(receiver, node, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes);
+      break;
+    case KindFunctionType:
+    case KindConstructorType:
+      Binder_bindFunctionOrConstructorType(receiver, node);
+      break;
+    case KindTypeLiteral:
+    case KindMappedType:
+      Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsTypeLiteral, InternalSymbolNameType);
+      break;
+    case KindObjectLiteralExpression:
+      Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsObjectLiteral, InternalSymbolNameObject);
+      break;
+    case KindFunctionExpression:
+    case KindArrowFunction:
+      Binder_bindFunctionExpression(receiver, node);
+      break;
+    case KindClassExpression:
+    case KindClassDeclaration:
+      Binder_bindClassLikeDeclaration(receiver, node);
+      break;
+    case KindInterfaceDeclaration:
+      Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes);
+      break;
+    case KindCallExpression: {
+      const callKind = GetAssignmentDeclarationKind(node);
+      if (callKind === JSDeclarationKindObjectDefinePropertyValue) {
+        Binder_bindExpandoPropertyAssignment(receiver, node);
+      } else if (callKind === JSDeclarationKindObjectDefinePropertyExports) {
+        Binder_bindExportsOrObjectDefineProperty(receiver, node);
+      }
+      if (IsInJSFile(node)) {
+        Binder_bindCallExpression(receiver, node);
+      }
+      break;
+    }
+    case KindTypeAliasDeclaration:
+      Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes);
+      break;
+    case KindJSTypeAliasDeclaration:
+      if (!IsSourceFile(receiver!.blockScopeContainer)) {
+        Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes);
+      }
+      break;
+    case KindEnumDeclaration:
+      Binder_bindEnumDeclaration(receiver, node);
+      break;
+    case KindModuleDeclaration:
+      Binder_bindModuleDeclaration(receiver, node);
+      break;
+    case KindImportEqualsDeclaration:
+    case KindNamespaceImport:
+    case KindImportSpecifier:
+    case KindExportSpecifier:
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+      break;
+    case KindNamespaceExportDeclaration:
+      Binder_bindNamespaceExportDeclaration(receiver, node);
+      break;
+    case KindImportClause:
+      Binder_bindImportClause(receiver, node);
+      break;
+    case KindExportDeclaration:
+      Binder_bindExportDeclaration(receiver, node);
+      break;
+    case KindExportAssignment:
+      Binder_bindExportAssignment(receiver, node);
+      break;
+    case KindSourceFile:
+      Binder_bindSourceFileIfExternalModule(receiver);
+      break;
+    case KindJsxAttributes:
+      Binder_bindJsxAttributes(receiver, node);
+      break;
+    case KindJsxAttribute:
+      Binder_bindJsxAttribute(receiver, node, SymbolFlagsProperty, SymbolFlagsPropertyExcludes);
+      break;
+  }
+  // Then we recurse into the children of the node to bind them as well.
+  let thisNodeOrAnySubnodesHasError = (node!.Flags & NodeFlagsThisNodeHasError) !== 0;
+  if (node!.Kind > KindLastToken) {
+    const saveSeenParseError = receiver!.seenParseError;
+    receiver!.seenParseError = false;
+    const containerFlags = GetContainerFlags(node);
+    if (containerFlags === ContainerFlagsNone) {
+      Binder_bindChildren(receiver, node);
+    } else {
+      Binder_bindContainer(receiver, node, containerFlags);
+    }
+    if (receiver!.seenParseError) {
+      thisNodeOrAnySubnodesHasError = true;
+    }
+    receiver!.seenParseError = saveSeenParseError;
+  }
+  if (thisNodeOrAnySubnodesHasError) {
+    node!.Flags = (node!.Flags | NodeFlagsThisNodeOrAnySubNodesHasError) as NodeFlags;
+    receiver!.seenParseError = true;
+  }
+  receiver!.parent = saveParent;
+  return false;
 }
 
 /**
@@ -1223,7 +2101,10 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
  * }
  */
 export function Binder_bindPropertyWorker(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyWorker");
+  const isAutoAccessor = IsAutoAccessorPropertyDeclaration(node);
+  const includes = IfElse(isAutoAccessor, SymbolFlagsAccessor, SymbolFlagsProperty) as SymbolFlags;
+  const excludes = IfElse(isAutoAccessor, SymbolFlagsAccessorExcludes, SymbolFlagsPropertyExcludes) as SymbolFlags;
+  Binder_bindPropertyOrMethodOrAccessor(receiver, node, (includes | getOptionalSymbolFlagForNode(node)) as SymbolFlags, excludes);
 }
 
 /**
@@ -1244,7 +2125,18 @@ export function Binder_bindPropertyWorker(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_bindSourceFileIfExternalModule(receiver: GoPtr<Binder>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileIfExternalModule");
+  const fileNode = receiver!.file as unknown as GoPtr<Node>;
+  Binder_setExportContextFlag(receiver, fileNode);
+  if (IsExternalOrCommonJSModule(receiver!.file)) {
+    Binder_bindSourceFileAsExternalModule(receiver);
+  } else if (IsJsonSourceFile(receiver!.file)) {
+    Binder_bindSourceFileAsExternalModule(receiver);
+    const fileDecl = Node_DeclarationData(fileNode);
+    const originalSymbol = (fileDecl as unknown as { Symbol?: GoPtr<Symbol> })?.Symbol;
+    const fileSymbol = Node_Symbol(fileNode);
+    Binder_declareSymbol(receiver, GetSymbolTable(fileSymbol?.Exports), fileSymbol, fileNode, SymbolFlagsProperty, SymbolFlagsAll);
+    (fileDecl as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = originalSymbol;
+  }
 }
 
 /**
@@ -1256,7 +2148,7 @@ export function Binder_bindSourceFileIfExternalModule(receiver: GoPtr<Binder>): 
  * }
  */
 export function Binder_bindSourceFileAsExternalModule(receiver: GoPtr<Binder>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileAsExternalModule");
+  Binder_bindAnonymousDeclaration(receiver, (receiver!.file as unknown as Node), SymbolFlagsValueModule, "\"" + RemoveFileExtension(SourceFile_FileName(receiver!.file)) + "\"");
 }
 
 /**
@@ -1306,7 +2198,40 @@ export function Binder_bindSourceFileAsExternalModule(receiver: GoPtr<Binder>): 
  * }
  */
 export function Binder_bindModuleDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleDeclaration");
+  Binder_setExportContextFlag(receiver, node);
+  if (IsAmbientModule(node)) {
+    if (HasSyntacticModifier(node, ModifierFlagsExport)) {
+      Binder_errorOnFirstToken(receiver, node, X_export_modifier_cannot_be_applied_to_ambient_modules_and_module_augmentations_since_they_are_always_visible);
+    }
+    if (IsModuleAugmentationExternal(node)) {
+      Binder_declareModuleSymbol(receiver, node);
+    } else {
+      const name = Node_Name(AsModuleDeclaration(node));
+      const symbol = Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes);
+      if (IsStringLiteral(name)) {
+        const pattern = TryParsePattern(Node_Text(name));
+        if (!Pattern_IsValid(pattern)) {
+          Binder_errorOnFirstToken(receiver, name, Pattern_0_can_have_at_most_one_Asterisk_character, Node_Text(name));
+        } else if ((pattern.StarIndex as number) >= 0) {
+          receiver!.file!.PatternAmbientModules = [...(receiver!.file!.PatternAmbientModules ?? []), { Pattern: pattern, Symbol: symbol }];
+        }
+      }
+    }
+  } else {
+    const state = Binder_declareModuleSymbol(receiver, node);
+    if (state !== ModuleInstanceStateNonInstantiated) {
+      const symbol = Node_Symbol(node);
+      const constEnumOnlyModule = ((symbol!.Flags & (SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum)) === 0) &&
+        state === ModuleInstanceStateConstEnumOnly &&
+        !Set_Has(receiver!.notConstEnumOnlyModules, symbol);
+      if (constEnumOnlyModule) {
+        symbol!.Flags = (symbol!.Flags | SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
+      } else {
+        symbol!.Flags = (symbol!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
+        Set_Add(receiver!.notConstEnumOnlyModules, symbol);
+      }
+    }
+  }
 }
 
 /**
@@ -1321,7 +2246,10 @@ export function Binder_bindModuleDeclaration(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_declareModuleSymbol(receiver: GoPtr<Binder>, node: GoPtr<Node>): ModuleInstanceState {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleSymbol");
+  const state = GetModuleInstanceState(node);
+  const instantiated = state !== ModuleInstanceStateNonInstantiated;
+  Binder_declareSymbolAndAddToSymbolTable(receiver, node, IfElse(instantiated, SymbolFlagsValueModule, SymbolFlagsNamespaceModule) as SymbolFlags, IfElse(instantiated, SymbolFlagsValueModuleExcludes, SymbolFlagsNamespaceModuleExcludes) as SymbolFlags);
+  return state;
 }
 
 /**
@@ -1345,7 +2273,18 @@ export function Binder_declareModuleSymbol(receiver: GoPtr<Binder>, node: GoPtr<
  * }
  */
 export function Binder_bindNamespaceExportDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNamespaceExportDeclaration");
+  if (Node_Modifiers(node) !== undefined) {
+    Binder_errorOnNode(receiver, node, Modifiers_cannot_appear_here);
+  }
+  if (!IsSourceFile(node!.Parent)) {
+    Binder_errorOnNode(receiver, node, Global_module_exports_may_only_appear_at_top_level);
+  } else if (!IsExternalModule(AsSourceFile(node!.Parent))) {
+    Binder_errorOnNode(receiver, node, Global_module_exports_may_only_appear_in_module_files);
+  } else if (!AsSourceFile(node!.Parent)!.IsDeclarationFile) {
+    Binder_errorOnNode(receiver, node, Global_module_exports_may_only_appear_in_declaration_files);
+  } else {
+    Binder_declareSymbol(receiver, GetSymbolTable(receiver!.file!.GlobalExports), Node_Symbol(receiver!.file as unknown as GoPtr<Node>), node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+  }
 }
 
 /**
@@ -1359,7 +2298,9 @@ export function Binder_bindNamespaceExportDeclaration(receiver: GoPtr<Binder>, n
  * }
  */
 export function Binder_bindImportClause(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindImportClause");
+  if (AsImportClause(node)!.name !== undefined) {
+    Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+  }
 }
 
 /**
@@ -1380,7 +2321,14 @@ export function Binder_bindImportClause(receiver: GoPtr<Binder>, node: GoPtr<Nod
  * }
  */
 export function Binder_bindExportDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportDeclaration");
+  const decl = AsExportDeclaration(node);
+  if (Node_Symbol(receiver!.container) === undefined) {
+    Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsExportStar, Binder_getDeclarationName(receiver, node));
+  } else if (decl!.ExportClause === undefined) {
+    Binder_declareSymbol(receiver, GetExports(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, node, SymbolFlagsExportStar, SymbolFlagsNone);
+  } else if (IsNamespaceExport(decl!.ExportClause as unknown as GoPtr<Node>)) {
+    Binder_declareSymbol(receiver, GetExports(Node_Symbol(receiver!.container)!)!, Node_Symbol(receiver!.container)!, decl!.ExportClause as unknown as GoPtr<Node>, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+  }
 }
 
 /**
@@ -1405,7 +2353,16 @@ export function Binder_bindExportDeclaration(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindExportAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportAssignment");
+  const container = receiver!.container;
+  if (Node_Symbol(container) === undefined && IsExportAssignment(node)) {
+    Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsValue, Binder_getDeclarationName(receiver, node));
+  } else {
+    const flags = IfElse(ExpressionIsAlias(Node_Expression(node)), SymbolFlagsAlias, SymbolFlagsProperty) as SymbolFlags;
+    const symbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, SymbolFlagsAll);
+    if (AsExportAssignment(node)!.IsExportEquals) {
+      SetValueDeclaration(symbol!, node);
+    }
+  }
 }
 
 /**
@@ -1419,7 +2376,9 @@ export function Binder_bindExportAssignment(receiver: GoPtr<Binder>, node: GoPtr
  * }
  */
 export function Binder_trackNestedCJSExport(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.trackNestedCJSExport");
+  if (!(IsSourceFile(node!.Parent) || IsExpressionStatement(node!.Parent) && IsSourceFile(node!.Parent!.Parent))) {
+    receiver!.nestedCJSExports = [...(receiver!.nestedCJSExports ?? []), node!];
+  }
 }
 
 /**
@@ -1431,7 +2390,7 @@ export function Binder_trackNestedCJSExport(receiver: GoPtr<Binder>, node: GoPtr
  * }
  */
 export function Binder_bindJsxAttributes(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttributes");
+  Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsObjectLiteral, InternalSymbolNameJSXAttributes);
 }
 
 /**
@@ -1443,7 +2402,7 @@ export function Binder_bindJsxAttributes(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_bindJsxAttribute(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttribute");
+  Binder_declareSymbolAndAddToSymbolTable(receiver, node, symbolFlags, symbolExcludes);
 }
 
 /**
@@ -1461,7 +2420,11 @@ export function Binder_bindJsxAttribute(receiver: GoPtr<Binder>, node: GoPtr<Nod
  * }
  */
 export function Binder_setExportContextFlag(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setExportContextFlag");
+  if ((node!.Flags & NodeFlagsAmbient) !== 0 && !Binder_hasExportDeclarations(receiver, node)) {
+    node!.Flags = (node!.Flags | NodeFlagsExportContext) as NodeFlags;
+  } else {
+    node!.Flags = (node!.Flags & ~NodeFlagsExportContext) as NodeFlags;
+  }
 }
 
 /**
@@ -1485,7 +2448,20 @@ export function Binder_setExportContextFlag(receiver: GoPtr<Binder>, node: GoPtr
  * }
  */
 export function Binder_hasExportDeclarations(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.hasExportDeclarations");
+  let statements: GoSlice<GoPtr<Node>> = [];
+  switch (node!.Kind) {
+    case KindSourceFile:
+      statements = Node_Statements(node) ?? [];
+      break;
+    case KindModuleDeclaration: {
+      const body = Node_Body(node);
+      if (body !== undefined && IsModuleBlock(body)) {
+        statements = Node_Statements(body) ?? [];
+      }
+      break;
+    }
+  }
+  return Some(statements, (s) => IsExportDeclaration(s) || IsExportAssignment(s));
 }
 
 /**
@@ -1506,7 +2482,16 @@ export function Binder_hasExportDeclarations(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindFunctionExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionExpression");
+  if (!receiver!.file!.IsDeclarationFile && (node!.Flags & NodeFlagsAmbient) === 0 && IsAsyncFunction(node)) {
+    receiver!.emitFlags = (receiver!.emitFlags | NodeFlagsHasAsyncFunctions) as NodeFlags;
+  }
+  setFlowNode(node, receiver!.currentFlow);
+  let bindingName = InternalSymbolNameFunction;
+  if (IsFunctionExpression(node) && AsFunctionExpression(node)!.name !== undefined) {
+    Binder_checkStrictModeFunctionName(receiver, node);
+    bindingName = Node_Text(AsFunctionExpression(node)!.name as unknown as Node);
+  }
+  Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsFunction, bindingName);
 }
 
 /**
@@ -1522,7 +2507,9 @@ export function Binder_bindFunctionExpression(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function Binder_bindCallExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpression");
+  if (receiver!.file!.CommonJSModuleIndicator === undefined && IsRequireCall(node, false)) {
+    Binder_setCommonJSModuleIndicator(receiver, node);
+  }
 }
 
 /**
@@ -1543,7 +2530,17 @@ export function Binder_bindCallExpression(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_setCommonJSModuleIndicator(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setCommonJSModuleIndicator");
+  const fileNode = receiver!.file as unknown as GoPtr<Node>;
+  if (receiver!.file!.ExternalModuleIndicator !== undefined && receiver!.file!.ExternalModuleIndicator !== fileNode) {
+    return false;
+  }
+  if (receiver!.file!.CommonJSModuleIndicator === undefined) {
+    receiver!.file!.CommonJSModuleIndicator = node;
+    if (receiver!.file!.ExternalModuleIndicator === undefined) {
+      Binder_bindSourceFileAsExternalModule(receiver);
+    }
+  }
+  return true;
 }
 
 /**
@@ -1583,7 +2580,30 @@ export function Binder_setCommonJSModuleIndicator(receiver: GoPtr<Binder>, node:
  * }
  */
 export function Binder_bindClassLikeDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindClassLikeDeclaration");
+  const name = Node_Name(node);
+  switch (node!.Kind) {
+    case KindClassDeclaration:
+      Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsClass, SymbolFlagsClassExcludes);
+      break;
+    case KindClassExpression: {
+      let nameText = InternalSymbolNameClass;
+      if (name !== undefined) {
+        nameText = Node_Text(name as unknown as Node);
+        Set_Add(receiver!.classifiableNames, nameText);
+      }
+      Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsClass, nameText);
+      break;
+    }
+  }
+  const symbol = Node_Symbol(node);
+  const prototypeSymbol = Binder_newSymbol(receiver, (SymbolFlagsProperty | SymbolFlagsPrototype) as SymbolFlags, "prototype");
+  const exports = GetExports(symbol);
+  const symbolExport = exports?.get(prototypeSymbol!.Name);
+  if (symbolExport !== undefined) {
+    Binder_errorOnNode(receiver, symbolExport!.Declarations![0], Duplicate_identifier_0, SymbolName(prototypeSymbol));
+  }
+  exports?.set(prototypeSymbol!.Name, prototypeSymbol!);
+  prototypeSymbol!.Parent = symbol;
 }
 
 /**
@@ -1605,7 +2625,17 @@ export function Binder_bindClassLikeDeclaration(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindPropertyOrMethodOrAccessor(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyOrMethodOrAccessor");
+  if (!receiver!.file!.IsDeclarationFile && (node!.Flags & NodeFlagsAmbient) === 0 && IsAsyncFunction(node)) {
+    receiver!.emitFlags = (receiver!.emitFlags | NodeFlagsHasAsyncFunctions) as NodeFlags;
+  }
+  if (receiver!.currentFlow !== undefined && IsObjectLiteralOrClassExpressionMethodOrAccessor(node)) {
+    setFlowNode(node, receiver!.currentFlow);
+  }
+  if (HasDynamicName(node)) {
+    Binder_bindAnonymousDeclaration(receiver, node, symbolFlags, InternalSymbolNameComputed);
+  } else {
+    Binder_declareSymbolAndAddToSymbolTable(receiver, node, symbolFlags, symbolExcludes);
+  }
 }
 
 /**
@@ -1628,7 +2658,12 @@ export function Binder_bindPropertyOrMethodOrAccessor(receiver: GoPtr<Binder>, n
  * }
  */
 export function Binder_bindFunctionOrConstructorType(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionOrConstructorType");
+  const symbol = Binder_newSymbol(receiver, SymbolFlagsSignature, Binder_getDeclarationName(receiver, node));
+  Binder_addDeclarationToSymbol(receiver, symbol!, node!, SymbolFlagsSignature);
+  const typeLiteralSymbol = Binder_newSymbol(receiver, SymbolFlagsTypeLiteral, InternalSymbolNameType);
+  Binder_addDeclarationToSymbol(receiver, typeLiteralSymbol!, node!, SymbolFlagsTypeLiteral);
+  typeLiteralSymbol!.Members = new globalThis.Map<string, GoPtr<Symbol>>();
+  typeLiteralSymbol!.Members.set(symbol!.Name, symbol);
 }
 
 /**
@@ -1646,7 +2681,13 @@ export function Binder_bindFunctionOrConstructorType(receiver: GoPtr<Binder>, no
  * }
  */
 export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbol_: GoPtr<Symbol>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addLateBoundAssignmentDeclarationToSymbol");
+  const exports = GetExports(symbol_);
+  let assignmentSymbol = exports?.get(InternalSymbolNameAssignmentDeclaration);
+  if (assignmentSymbol === undefined) {
+    assignmentSymbol = Binder_newSymbol(receiver, SymbolFlagsNone, InternalSymbolNameAssignmentDeclaration);
+    exports?.set(InternalSymbolNameAssignmentDeclaration, assignmentSymbol!);
+  }
+  assignmentSymbol!.Declarations = [...(assignmentSymbol!.Declarations ?? []), node!];
 }
 
 /**
@@ -1664,7 +2705,13 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
  * }
  */
 export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleExportsAssignment");
+  if (Binder_setCommonJSModuleIndicator(receiver, node)) {
+    Binder_trackNestedCJSExport(receiver, node);
+    const container = receiver!.file as unknown as GoPtr<Node>;
+    const flags = IfElse(ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsProperty) as SymbolFlags;
+    const symbol = Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, 0 as SymbolFlags);
+    SetValueDeclaration(symbol!, node);
+  }
 }
 
 /**
@@ -1680,7 +2727,11 @@ export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_bindExpandoPropertyAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpandoPropertyAssignment");
+  receiver!.expandoAssignments = [...(receiver!.expandoAssignments ?? []), {
+    node: node!,
+    container: receiver!.container!,
+    blockScopeContainer: receiver!.blockScopeContainer!,
+  }];
 }
 
 /**
@@ -1696,7 +2747,11 @@ export function Binder_bindExpandoPropertyAssignment(receiver: GoPtr<Binder>, no
  * }
  */
 export function Binder_bindDeferredExpandoAssignments(receiver: GoPtr<Binder>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignments");
+  for (const info of (receiver!.expandoAssignments ?? [])) {
+    receiver!.container = info.container;
+    receiver!.blockScopeContainer = info.blockScopeContainer;
+    Binder_bindDeferredExpandoAssignment(receiver, info.node);
+  }
 }
 
 /**
@@ -1716,7 +2771,18 @@ export function Binder_bindDeferredExpandoAssignments(receiver: GoPtr<Binder>): 
  * }
  */
 export function Binder_bindCommonJSTypeExports(receiver: GoPtr<Binder>, moduleSymbol: GoPtr<Symbol>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCommonJSTypeExports");
+  const moduleExports = moduleSymbol!.Exports;
+  if (moduleExports === undefined) { return; }
+  const exportEquals = moduleExports.get(InternalSymbolNameExportEquals);
+  if (exportEquals !== undefined) {
+    for (const [, symbol_] of moduleExports) {
+      if (symbol_!.Name !== InternalSymbolNameExportEquals && (symbol_!.Flags & (SymbolFlagsType | SymbolFlagsNamespace)) !== 0) {
+        const exportEqualsExports = GetExports(exportEquals);
+        exportEqualsExports?.set(symbol_!.Name, symbol_!);
+        exportEquals!.Flags = (exportEquals!.Flags | SymbolFlagsNamespaceModule) as SymbolFlags;
+      }
+    }
+  }
 }
 
 /**
@@ -1744,7 +2810,24 @@ export function Binder_bindCommonJSTypeExports(receiver: GoPtr<Binder>, moduleSy
  * }
  */
 export function Binder_bindDeferredExpandoAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignment");
+  const parent = getParentOfPropertyAssignment(node);
+  let symbol = Binder_lookupEntity(receiver, parent, receiver!.blockScopeContainer);
+  if (symbol === undefined) {
+    symbol = Binder_lookupEntity(receiver, parent, receiver!.container);
+  }
+  symbol = getInitializerSymbol(symbol);
+  if (symbol !== undefined) {
+    if (HasDynamicName(node)) {
+      Binder_bindAnonymousDeclaration(receiver, node, (SymbolFlagsProperty | SymbolFlagsAssignment) as SymbolFlags, InternalSymbolNameComputed);
+      Binder_addLateBoundAssignmentDeclarationToSymbol(receiver, node, symbol);
+    } else {
+      const exports = GetExports(symbol);
+      const existing = exports?.get(Binder_getDeclarationName(receiver, node));
+      if (existing === undefined || (existing!.Flags & SymbolFlagsAssignment) !== 0) {
+        Binder_declareSymbol(receiver, exports!, symbol, node, (SymbolFlagsProperty | SymbolFlagsAssignment) as SymbolFlags, SymbolFlagsPropertyExcludes);
+      }
+    }
+  }
 }
 
 /**
@@ -1785,7 +2868,12 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function Binder_bindExportsOrObjectDefineProperty(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportsOrObjectDefineProperty");
+  if (Binder_setCommonJSModuleIndicator(receiver, node)) {
+    Binder_trackNestedCJSExport(receiver, node);
+    const container = receiver!.file as unknown as GoPtr<Node>;
+    const flags = IfElse(IsBinaryExpression(node) && ExpressionIsAlias(AsBinaryExpression(node)!.Right), SymbolFlagsAlias, SymbolFlagsFunctionScopedVariable) as SymbolFlags;
+    Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, flags, SymbolFlagsFunctionScopedVariableExcludes);
+  }
 }
 
 /**
@@ -1820,7 +2908,26 @@ export function Binder_bindExportsOrObjectDefineProperty(receiver: GoPtr<Binder>
  * }
  */
 export function getInitializerSymbol(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::getInitializerSymbol");
+  if (symbol_ === undefined || symbol_!.ValueDeclaration === undefined) {
+    return undefined;
+  }
+  const declaration = symbol_!.ValueDeclaration;
+  if (IsFunctionDeclaration(declaration) || (IsInJSFile(declaration) && IsClassDeclaration(declaration))) {
+    return symbol_;
+  }
+  if (IsVariableDeclaration(declaration) && ((declaration!.Flags & NodeFlagsConst) !== 0 || IsInJSFile(declaration))) {
+    const initializer = Node_Initializer(declaration);
+    if (IsExpandoInitializer(initializer)) {
+      return Node_Symbol(initializer);
+    }
+  }
+  if (IsBinaryExpression(declaration) && IsInJSFile(declaration)) {
+    const initializer = AsBinaryExpression(declaration)!.Right;
+    if (IsExpandoInitializer(initializer)) {
+      return Node_Symbol(initializer);
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -1850,7 +2957,22 @@ export function getInitializerSymbol(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
  * }
  */
 export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThisPropertyAssignment");
+  if (!IsInJSFile(node)) { return; }
+  const bin = AsBinaryExpression(node);
+  if (IsPropertyAccessExpression(bin!.Left) && IsPrivateIdentifier(AsPropertyAccessExpression(bin!.Left)!.name as unknown as Node) || receiver!.thisContainer === undefined) {
+    return;
+  }
+  const [classSymbol, symbolTable] = Binder_getThisClassAndSymbolTable(receiver);
+  if (symbolTable !== undefined) {
+    if (HasDynamicName(node)) {
+      Binder_declareSymbolEx(receiver, symbolTable, classSymbol, node, SymbolFlagsProperty, SymbolFlagsNone, true, true);
+      Binder_addLateBoundAssignmentDeclarationToSymbol(receiver, node, classSymbol);
+    } else {
+      Binder_declareSymbolEx(receiver, symbolTable, classSymbol, node, (SymbolFlagsProperty | SymbolFlagsAssignment) as SymbolFlags, SymbolFlagsNone, true, false);
+    }
+  } else if (receiver!.thisContainer!.Kind !== KindFunctionDeclaration && receiver!.thisContainer!.Kind !== KindFunctionExpression) {
+    throw new globalThis.Error("Unhandled case in bindThisPropertyAssignment: " + receiver!.thisContainer!.Kind);
+  }
 }
 
 /**
@@ -1877,7 +2999,26 @@ export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node:
  * }
  */
 export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoPtr<Symbol>, SymbolTable] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getThisClassAndSymbolTable");
+  if (receiver!.thisContainer === undefined) {
+    return [undefined, undefined as unknown as SymbolTable];
+  }
+  switch (receiver!.thisContainer!.Kind) {
+    case KindFunctionDeclaration:
+    case KindFunctionExpression:
+      // constructor functions - not yet implemented
+      break;
+    case KindConstructor:
+    case KindPropertyDeclaration:
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+    case KindClassStaticBlockDeclaration: {
+      const classSymbol = Node_Symbol(receiver!.thisContainer!.Parent);
+      const symbolTable = IsStatic(receiver!.thisContainer) ? GetExports(classSymbol) : GetMembers(classSymbol);
+      return [classSymbol, symbolTable!];
+    }
+  }
+  return [undefined, undefined as unknown as SymbolTable];
 }
 
 /**
@@ -1893,7 +3034,11 @@ export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoP
  * }
  */
 export function Binder_bindEnumDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEnumDeclaration");
+  if (IsEnumConst(node)) {
+    Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes);
+  } else {
+    Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes);
+  }
 }
 
 /**
@@ -1926,7 +3071,19 @@ export function Binder_bindEnumDeclaration(receiver: GoPtr<Binder>, node: GoPtr<
  * }
  */
 export function Binder_bindVariableDeclarationOrBindingElement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationOrBindingElement");
+  Binder_checkStrictModeEvalOrArguments(receiver, node, Node_Name(node));
+  const name = Node_Name(node);
+  if (name !== undefined && !IsBindingPattern(name)) {
+    if (IsVariableDeclarationInitializedToRequire(node)) {
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+    } else if (IsBlockOrCatchScoped(node)) {
+      Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes);
+    } else if (IsPartOfParameterDeclaration(node)) {
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsFunctionScopedVariable, SymbolFlagsParameterExcludes);
+    } else {
+      Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes);
+    }
+  }
 }
 
 /**
@@ -1956,7 +3113,22 @@ export function Binder_bindVariableDeclarationOrBindingElement(receiver: GoPtr<B
  * }
  */
 export function Binder_bindParameter(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameter");
+  const decl = AsParameterDeclaration(node);
+  if ((node!.Flags & NodeFlagsAmbient) === 0) {
+    Binder_checkStrictModeEvalOrArguments(receiver, node, Node_Name(decl));
+  }
+  if (IsBindingPattern(Node_Name(decl))) {
+    const params = Node_Parameters(node!.Parent);
+    const index = params.indexOf(node);
+    Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsFunctionScopedVariable, "__" + strconv.Itoa(index as int));
+  } else {
+    Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsFunctionScopedVariable, SymbolFlagsParameterExcludes);
+  }
+  if (IsParameterPropertyDeclaration(node, node!.Parent)) {
+    const classDeclaration = node!.Parent!.Parent;
+    const flags = (SymbolFlagsProperty | IfElse(decl!.QuestionToken !== undefined, SymbolFlagsOptional, SymbolFlagsNone)) as SymbolFlags;
+    Binder_declareSymbol(receiver, GetMembers(Node_Symbol(classDeclaration)), Node_Symbol(classDeclaration), node, flags, SymbolFlagsPropertyExcludes);
+  }
 }
 
 /**
@@ -1972,7 +3144,11 @@ export function Binder_bindParameter(receiver: GoPtr<Binder>, node: GoPtr<Node>)
  * }
  */
 export function Binder_bindFunctionDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionDeclaration");
+  if (!receiver!.file!.IsDeclarationFile && (node!.Flags & NodeFlagsAmbient) === 0 && IsAsyncFunction(node)) {
+    receiver!.emitFlags = (receiver!.emitFlags | NodeFlagsHasAsyncFunctions) as NodeFlags;
+  }
+  Binder_checkStrictModeFunctionName(receiver, node);
+  Binder_bindBlockScopedDeclaration(receiver, node, SymbolFlagsFunction, SymbolFlagsFunctionExcludes);
 }
 
 /**
@@ -1991,7 +3167,14 @@ export function Binder_bindFunctionDeclaration(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_getInferTypeContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getInferTypeContainer");
+  const extendsType = FindAncestor(node, (n) => {
+    const parent = n!.Parent;
+    return parent !== undefined && IsConditionalTypeNode(parent) && AsConditionalTypeNode(parent)!.ExtendsType === n;
+  });
+  if (extendsType !== undefined) {
+    return extendsType!.Parent;
+  }
+  return undefined;
 }
 
 /**
@@ -2007,7 +3190,11 @@ export function Binder_getInferTypeContainer(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindAnonymousDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, name: string): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAnonymousDeclaration");
+  const symbol = Binder_newSymbol(receiver, symbolFlags, name);
+  if ((symbolFlags & (SymbolFlagsEnumMember | SymbolFlagsClassMember)) !== 0) {
+    symbol!.Parent = Node_Symbol(receiver!.container);
+  }
+  Binder_addDeclarationToSymbol(receiver, symbol, node, symbolFlags);
 }
 
 /**
@@ -2030,7 +3217,19 @@ export function Binder_bindAnonymousDeclaration(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindBlockScopedDeclaration(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBlockScopedDeclaration");
+  switch (receiver!.blockScopeContainer!.Kind) {
+    case KindModuleDeclaration:
+      Binder_declareModuleMember(receiver, node, symbolFlags, symbolExcludes);
+      break;
+    case KindSourceFile:
+      if (IsExternalOrCommonJSModule(AsSourceFile(receiver!.blockScopeContainer))) {
+        Binder_declareModuleMember(receiver, node, symbolFlags, symbolExcludes);
+        break;
+      }
+      // fallthrough
+    default:
+      Binder_declareSymbol(receiver, GetLocals(receiver!.blockScopeContainer), undefined, node, symbolFlags, symbolExcludes);
+  }
 }
 
 /**
@@ -2051,7 +3250,16 @@ export function Binder_bindBlockScopedDeclaration(receiver: GoPtr<Binder>, node:
  * }
  */
 export function Binder_bindTypeParameter(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTypeParameter");
+  if (node!.Parent!.Kind === KindInferType) {
+    const container = Binder_getInferTypeContainer(receiver, node!.Parent);
+    if (container !== undefined) {
+      Binder_declareSymbol(receiver, GetLocals(container), undefined, node, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes);
+    } else {
+      Binder_bindAnonymousDeclaration(receiver, node, SymbolFlagsTypeParameter, Binder_getDeclarationName(receiver, node));
+    }
+  } else {
+    Binder_declareSymbolAndAddToSymbolTable(receiver, node, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes);
+  }
 }
 
 /**
@@ -2079,7 +3287,27 @@ export function Binder_bindTypeParameter(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_lookupEntity(receiver: GoPtr<Binder>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupEntity");
+  if (IsIdentifier(node)) {
+    return Binder_lookupName(receiver, Node_Text(node), container);
+  }
+  if (Node_Expression(node)!.Kind === KindThisKeyword) {
+    const [, symbolTable] = Binder_getThisClassAndSymbolTable(receiver);
+    if (symbolTable !== undefined) {
+      const name = GetElementOrPropertyAccessName(node);
+      if (name !== undefined) {
+        return symbolTable.get(Node_Text(name));
+      }
+    }
+    return undefined;
+  }
+  const symbol = getInitializerSymbol(Binder_lookupEntity(receiver, Node_Expression(node), container));
+  if (symbol !== undefined && symbol!.Exports !== undefined) {
+    const name = GetElementOrPropertyAccessName(node);
+    if (name !== undefined) {
+      return symbol!.Exports.get(Node_Text(name));
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2099,7 +3327,20 @@ export function Binder_lookupEntity(receiver: GoPtr<Binder>, node: GoPtr<Node>, 
  * }
  */
 export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, container: GoPtr<Node>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupName");
+  const localsContainer = Node_LocalsContainerData(container);
+  if (localsContainer !== undefined) {
+    const localsMap = (localsContainer as unknown as { Locals?: SymbolTable }).Locals;
+    const local = localsMap?.get(name);
+    if (local !== undefined) {
+      return OrElse(local!.ExportSymbol, local);
+    }
+  }
+  const declaration = Node_DeclarationData(container);
+  const declSymbol = (declaration as unknown as { Symbol?: GoPtr<Symbol> })?.Symbol;
+  if (declaration !== undefined && declSymbol !== undefined) {
+    return declSymbol!.Exports?.get(name);
+  }
+  return undefined;
 }
 
 /**
@@ -2129,7 +3370,23 @@ export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, contain
  * }
  */
 export function Binder_checkContextualIdentifier(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkContextualIdentifier");
+  if (SourceFile_Diagnostics(receiver!.file).length === 0 && (node!.Flags & NodeFlagsAmbient) === 0 && (node!.Flags & NodeFlagsJSDoc) === 0 && !IsIdentifierName(node)) {
+    const originalKeywordKind = GetIdentifierToken(Node_Text(node));
+    if (originalKeywordKind === KindIdentifier) {
+      return;
+    }
+    if (originalKeywordKind >= KindFirstFutureReservedWord && originalKeywordKind <= KindLastFutureReservedWord) {
+      Binder_errorOnNode(receiver, node, Binder_getStrictModeIdentifierMessage(receiver, node), DeclarationNameToString(node));
+    } else if (originalKeywordKind === KindAwaitKeyword) {
+      if (IsExternalModule(receiver!.file) && IsInTopLevelContext(node)) {
+        Binder_errorOnNode(receiver, node, Identifier_expected_0_is_a_reserved_word_at_the_top_level_of_a_module, DeclarationNameToString(node));
+      } else if ((node!.Flags & NodeFlagsAwaitContext) !== 0) {
+        Binder_errorOnNode(receiver, node, Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here, DeclarationNameToString(node));
+      }
+    } else if (originalKeywordKind === KindYieldKeyword && (node!.Flags & NodeFlagsYieldContext) !== 0) {
+      Binder_errorOnNode(receiver, node, Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here, DeclarationNameToString(node));
+    }
+  }
 }
 
 /**
@@ -2146,7 +3403,11 @@ export function Binder_checkContextualIdentifier(receiver: GoPtr<Binder>, node: 
  * }
  */
 export function Binder_checkPrivateIdentifier(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkPrivateIdentifier");
+  if (Node_Text(node) === "#constructor") {
+    if (SourceFile_Diagnostics(receiver!.file).length === 0) {
+      Binder_errorOnNode(receiver, node, X_constructor_is_a_reserved_word, DeclarationNameToString(node));
+    }
+  }
 }
 
 /**
@@ -2166,7 +3427,13 @@ export function Binder_checkPrivateIdentifier(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function Binder_getStrictModeIdentifierMessage(receiver: GoPtr<Binder>, node: GoPtr<Node>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeIdentifierMessage");
+  if (GetContainingClass(node) !== undefined) {
+    return Identifier_expected_0_is_a_reserved_word_in_strict_mode_Class_definitions_are_automatically_in_strict_mode;
+  }
+  if (receiver!.file!.ExternalModuleIndicator !== undefined) {
+    return Identifier_expected_0_is_a_reserved_word_in_strict_mode_Modules_are_automatically_in_strict_mode;
+  }
+  return Identifier_expected_0_is_a_reserved_word_in_strict_mode;
 }
 
 /**
@@ -2181,7 +3448,8 @@ export function Binder_getStrictModeIdentifierMessage(receiver: GoPtr<Binder>, n
  * }
  */
 export function isUseStrictPrologueDirective(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isUseStrictPrologueDirective");
+  const nodeText = GetSourceTextOfNodeFromSourceFile(sourceFile, Node_Expression(node), false);
+  return (nodeText === "\"use strict\"" || nodeText === "'use strict'") as bool;
 }
 
 /**
@@ -2203,7 +3471,16 @@ export function isUseStrictPrologueDirective(sourceFile: GoPtr<SourceFile>, node
  * }
  */
 export function FindUseStrictPrologue(sourceFile: GoPtr<SourceFile>, statements: GoSlice<GoPtr<Node>>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::FindUseStrictPrologue");
+  for (const statement of statements) {
+    if (IsPrologueDirective(statement)) {
+      if (isUseStrictPrologueDirective(sourceFile, statement)) {
+        return statement;
+      }
+    } else {
+      return undefined;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2218,7 +3495,9 @@ export function FindUseStrictPrologue(sourceFile: GoPtr<SourceFile>, statements:
  * }
  */
 export function Binder_checkStrictModeFunctionName(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeFunctionName");
+  if ((node!.Flags & NodeFlagsAmbient) === 0) {
+    Binder_checkStrictModeEvalOrArguments(receiver, node, Node_Name(node));
+  }
 }
 
 /**
@@ -2237,7 +3516,13 @@ export function Binder_checkStrictModeFunctionName(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_getStrictModeBlockScopeFunctionDeclarationMessage(receiver: GoPtr<Binder>, node: GoPtr<Node>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeBlockScopeFunctionDeclarationMessage");
+  if (GetContainingClass(node) !== undefined) {
+    return Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5_Class_definitions_are_automatically_in_strict_mode;
+  }
+  if (receiver!.file!.ExternalModuleIndicator !== undefined) {
+    return Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5_Modules_are_automatically_in_strict_mode;
+  }
+  return Function_declarations_are_not_allowed_inside_blocks_in_strict_mode_when_targeting_ES5;
 }
 
 /**
@@ -2254,7 +3539,10 @@ export function Binder_getStrictModeBlockScopeFunctionDeclarationMessage(receive
  * }
  */
 export function Binder_checkStrictModeBinaryExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeBinaryExpression");
+  const expr = AsBinaryExpression(node);
+  if (IsLeftHandSideExpression(expr!.Left) && IsAssignmentOperator(expr!.OperatorToken!.Kind)) {
+    Binder_checkStrictModeEvalOrArguments(receiver, node, expr!.Left);
+  }
 }
 
 /**
@@ -2271,7 +3559,11 @@ export function Binder_checkStrictModeBinaryExpression(receiver: GoPtr<Binder>, 
  * }
  */
 export function Binder_checkStrictModeCatchClause(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeCatchClause");
+  const clause = AsCatchClause(node);
+  if (clause!.VariableDeclaration !== undefined) {
+    const varDecl = AsVariableDeclaration(clause!.VariableDeclaration);
+    Binder_checkStrictModeEvalOrArguments(receiver, node, Node_Name(varDecl));
+  }
 }
 
 /**
@@ -2289,7 +3581,10 @@ export function Binder_checkStrictModeCatchClause(receiver: GoPtr<Binder>, node:
  * }
  */
 export function Binder_checkStrictModeDeleteExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeDeleteExpression");
+  const expr = AsDeleteExpression(node);
+  if (expr!.Expression!.Kind === KindIdentifier) {
+    Binder_errorOnNode(receiver, expr!.Expression, X_delete_cannot_be_called_on_an_identifier_in_strict_mode);
+  }
 }
 
 /**
@@ -2305,7 +3600,7 @@ export function Binder_checkStrictModeDeleteExpression(receiver: GoPtr<Binder>, 
  * }
  */
 export function Binder_checkStrictModePostfixUnaryExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePostfixUnaryExpression");
+  Binder_checkStrictModeEvalOrArguments(receiver, node, AsPostfixUnaryExpression(node)!.Operand);
 }
 
 /**
@@ -2321,7 +3616,10 @@ export function Binder_checkStrictModePostfixUnaryExpression(receiver: GoPtr<Bin
  * }
  */
 export function Binder_checkStrictModePrefixUnaryExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePrefixUnaryExpression");
+  const expr = AsPrefixUnaryExpression(node);
+  if (expr!.Operator === KindPlusPlusToken || expr!.Operator === KindMinusMinusToken) {
+    Binder_checkStrictModeEvalOrArguments(receiver, node, expr!.Operand);
+  }
 }
 
 /**
@@ -2334,7 +3632,7 @@ export function Binder_checkStrictModePrefixUnaryExpression(receiver: GoPtr<Bind
  * }
  */
 export function Binder_checkStrictModeWithStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeWithStatement");
+  Binder_errorOnFirstToken(receiver, node, X_with_statements_are_not_allowed_in_strict_mode);
 }
 
 /**
@@ -2350,7 +3648,10 @@ export function Binder_checkStrictModeWithStatement(receiver: GoPtr<Binder>, nod
  * }
  */
 export function Binder_checkStrictModeLabeledStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeLabeledStatement");
+  const data = AsLabeledStatement(node);
+  if (IsDeclarationStatement(data!.Statement) || IsVariableStatement(data!.Statement)) {
+    Binder_errorOnFirstToken(receiver, data!.Label, A_label_is_not_allowed_here);
+  }
 }
 
 /**
@@ -2386,7 +3687,9 @@ export function isEvalOrArgumentsIdentifier(node: GoPtr<Node>): bool {
  * }
  */
 export function Binder_checkStrictModeEvalOrArguments(receiver: GoPtr<Binder>, contextNode: GoPtr<Node>, name: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeEvalOrArguments");
+  if (name !== undefined && isEvalOrArgumentsIdentifier(name)) {
+    Binder_errorOnNode(receiver, name, Binder_getStrictModeEvalOrArgumentsMessage(receiver, contextNode), Node_Text(name));
+  }
 }
 
 /**
@@ -2405,7 +3708,13 @@ export function Binder_checkStrictModeEvalOrArguments(receiver: GoPtr<Binder>, c
  * }
  */
 export function Binder_getStrictModeEvalOrArgumentsMessage(receiver: GoPtr<Binder>, node: GoPtr<Node>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeEvalOrArgumentsMessage");
+  if (GetContainingClass(node) !== undefined) {
+    return Code_contained_in_a_class_is_evaluated_in_JavaScript_s_strict_mode_which_does_not_allow_this_use_of_0_For_more_information_see_https_Colon_Slash_Slashdeveloper_mozilla_org_Slashen_US_Slashdocs_SlashWeb_SlashJavaScript_SlashReference_SlashStrict_mode;
+  }
+  if (receiver!.file!.ExternalModuleIndicator !== undefined) {
+    return Invalid_use_of_0_Modules_are_automatically_in_strict_mode;
+  }
+  return Invalid_use_of_0_in_strict_mode;
 }
 
 /**
@@ -2563,7 +3872,123 @@ export function Binder_getStrictModeEvalOrArgumentsMessage(receiver: GoPtr<Binde
  * }
  */
 export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>, containerFlags: ContainerFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContainer");
+  const saveContainer = receiver!.container;
+  const saveThisContainer = receiver!.thisContainer;
+  const savedBlockScopeContainer = receiver!.blockScopeContainer;
+  if ((containerFlags & ContainerFlagsIsContainer) !== 0) {
+    receiver!.container = node;
+    receiver!.blockScopeContainer = node;
+    if ((containerFlags & ContainerFlagsHasLocals) !== 0) {
+      Binder_addToContainerChain(receiver, node);
+    }
+  } else if ((containerFlags & ContainerFlagsIsBlockScopedContainer) !== 0) {
+    receiver!.blockScopeContainer = node;
+    Binder_addToContainerChain(receiver, node);
+  }
+  if ((containerFlags & ContainerFlagsIsThisContainer) !== 0) {
+    receiver!.thisContainer = node;
+  }
+  if ((containerFlags & ContainerFlagsIsControlFlowContainer) !== 0) {
+    const saveCurrentFlow = receiver!.currentFlow;
+    const saveBreakTarget = receiver!.currentBreakTarget;
+    const saveContinueTarget = receiver!.currentContinueTarget;
+    const saveReturnTarget = receiver!.currentReturnTarget;
+    const saveExceptionTarget = receiver!.currentExceptionTarget;
+    const saveActiveLabelList = receiver!.activeLabelList;
+    const saveHasExplicitReturn = receiver!.hasExplicitReturn;
+    const saveSeenThisKeyword = receiver!.seenThisKeyword;
+    const isImmediatelyInvoked = ((containerFlags & ContainerFlagsIsFunctionExpression) !== 0 &&
+      !HasSyntacticModifier(node, ModifierFlagsAsync) &&
+      !isGeneratorFunctionExpression(node) &&
+      GetImmediatelyInvokedFunctionExpression(node) !== undefined) || node!.Kind === KindClassStaticBlockDeclaration;
+    if (!isImmediatelyInvoked) {
+      const flowStart = Binder_newFlowNode(receiver, FlowFlagsStart);
+      receiver!.currentFlow = flowStart;
+      if ((containerFlags & (ContainerFlagsIsFunctionExpression | ContainerFlagsIsObjectLiteralOrClassExpressionMethodOrAccessor)) !== 0) {
+        flowStart!.Node = node;
+      }
+    }
+    if (isImmediatelyInvoked || node!.Kind === KindConstructor) {
+      receiver!.currentReturnTarget = Binder_newFlowNode(receiver, FlowFlagsBranchLabel);
+    } else {
+      receiver!.currentReturnTarget = undefined;
+    }
+    receiver!.currentExceptionTarget = undefined;
+    receiver!.currentBreakTarget = undefined;
+    receiver!.currentContinueTarget = undefined;
+    receiver!.activeLabelList = undefined;
+    receiver!.hasExplicitReturn = false;
+    receiver!.seenThisKeyword = false;
+    Binder_bindChildren(receiver, node);
+    node!.Flags = (node!.Flags & ~(NodeFlagsReachabilityAndEmitFlags | NodeFlagsContainsThis)) as NodeFlags;
+    if ((receiver!.currentFlow!.Flags & FlowFlagsUnreachable) === 0 && (containerFlags & ContainerFlagsIsFunctionLike) !== 0) {
+      const bodyData = Node_BodyData(node);
+      if (bodyData !== undefined && NodeIsPresent((bodyData as unknown as { Body?: GoPtr<Node> }).Body)) {
+        node!.Flags = (node!.Flags | NodeFlagsHasImplicitReturn) as NodeFlags;
+        if (receiver!.hasExplicitReturn) {
+          node!.Flags = (node!.Flags | NodeFlagsHasExplicitReturn) as NodeFlags;
+        }
+        (bodyData as unknown as { EndFlowNode?: GoPtr<FlowNode> }).EndFlowNode = receiver!.currentFlow;
+      }
+    }
+    if (receiver!.seenThisKeyword) {
+      node!.Flags = (node!.Flags | NodeFlagsContainsThis) as NodeFlags;
+    }
+    if (node!.Kind === KindSourceFile) {
+      node!.Flags = (node!.Flags | receiver!.emitFlags) as NodeFlags;
+      receiver!.file!.EndFlowNode = receiver!.currentFlow;
+    }
+    if (receiver!.currentReturnTarget !== undefined) {
+      Binder_addAntecedent(receiver, receiver!.currentReturnTarget, receiver!.currentFlow!);
+      receiver!.currentFlow = Binder_finishFlowLabel(receiver, receiver!.currentReturnTarget);
+      if (node!.Kind === KindConstructor || node!.Kind === KindClassStaticBlockDeclaration) {
+        setReturnFlowNode(node, receiver!.currentFlow);
+      }
+    }
+    if (!isImmediatelyInvoked) {
+      receiver!.currentFlow = saveCurrentFlow;
+    }
+    receiver!.currentBreakTarget = saveBreakTarget;
+    receiver!.currentContinueTarget = saveContinueTarget;
+    receiver!.currentReturnTarget = saveReturnTarget;
+    receiver!.currentExceptionTarget = saveExceptionTarget;
+    receiver!.activeLabelList = saveActiveLabelList;
+    receiver!.hasExplicitReturn = saveHasExplicitReturn;
+    if ((containerFlags & ContainerFlagsPropagatesThisKeyword) !== 0) {
+      receiver!.seenThisKeyword = saveSeenThisKeyword || receiver!.seenThisKeyword;
+    } else {
+      receiver!.seenThisKeyword = saveSeenThisKeyword;
+    }
+  } else if ((containerFlags & ContainerFlagsIsInterface) !== 0) {
+    const saveSeenThisKeyword2 = receiver!.seenThisKeyword;
+    receiver!.seenThisKeyword = false;
+    Binder_bindChildren(receiver, node);
+    if (receiver!.seenThisKeyword) {
+      node!.Flags = (node!.Flags | NodeFlagsContainsThis) as NodeFlags;
+    } else {
+      node!.Flags = (node!.Flags & ~NodeFlagsContainsThis) as NodeFlags;
+    }
+    receiver!.seenThisKeyword = saveSeenThisKeyword2;
+  } else {
+    Binder_bindChildren(receiver, node);
+  }
+  if (IsSourceFile(node) && IsInJSFile(node)) {
+    for (const statement of (Node_Statements(node) ?? [])) {
+      if (IsJSTypeAliasDeclaration(statement)) {
+        Binder_bindBlockScopedDeclaration(receiver, statement, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes);
+      }
+    }
+    if (receiver!.file!.CommonJSModuleIndicator !== undefined) {
+      Binder_declareCommonJSVariable(receiver, "module");
+      Binder_declareCommonJSVariable(receiver, "exports");
+    }
+  }
+  if ((IsSourceFile(node) && IsExternalOrCommonJSModule(AsSourceFile(node))) || IsAmbientModule(node)) {
+    Binder_bindCommonJSTypeExports(receiver, Node_Symbol(node));
+  }
+  receiver!.container = saveContainer;
+  receiver!.thisContainer = saveThisContainer;
+  receiver!.blockScopeContainer = savedBlockScopeContainer;
 }
 
 /**
@@ -2589,7 +4014,22 @@ export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>,
  * }
  */
 export function Binder_declareCommonJSVariable(receiver: GoPtr<Binder>, name: string): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareCommonJSVariable");
+  const fileNode = receiver!.file as unknown as GoPtr<Node>;
+  const locals = GetLocals(fileNode);
+  if (locals !== undefined && locals.get(name) === undefined) {
+    const symbol = Binder_newSymbol(receiver, (SymbolFlagsFunctionScopedVariable | SymbolFlagsModuleExports) as SymbolFlags, name);
+    symbol!.Declarations = Binder_newSingleDeclaration(receiver, fileNode);
+    symbol!.ValueDeclaration = symbol!.Declarations![0];
+    if (name === "module") {
+      const exportsProperty = Binder_newSymbol(receiver, (SymbolFlagsModuleExports | SymbolFlagsProperty) as SymbolFlags, "exports");
+      exportsProperty!.Declarations = symbol!.Declarations;
+      exportsProperty!.ValueDeclaration = symbol!.ValueDeclaration;
+      exportsProperty!.Parent = symbol;
+      symbol!.Members = new globalThis.Map<string, GoPtr<Symbol>>();
+      symbol!.Members.set("exports", exportsProperty);
+    }
+    locals.set(name, symbol);
+  }
 }
 
 /**
@@ -2696,7 +4136,135 @@ export function Binder_declareCommonJSVariable(receiver: GoPtr<Binder>, name: st
  * }
  */
 export function Binder_bindChildren(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindChildren");
+  const saveInAssignmentPattern = receiver!.inAssignmentPattern;
+  receiver!.inAssignmentPattern = false;
+  if (receiver!.currentFlow === receiver!.unreachableFlow) {
+    const flowNodeData = Node_FlowNodeData(node);
+    if (flowNodeData !== undefined) {
+      (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = undefined;
+    }
+    if (IsPotentiallyExecutableNode(node)) {
+      node!.Flags = (node!.Flags | NodeFlagsUnreachable) as NodeFlags;
+    }
+    Binder_bindEachChild(receiver, node);
+    receiver!.inAssignmentPattern = saveInAssignmentPattern;
+    return;
+  }
+  if (node!.Kind >= KindFirstStatement && node!.Kind <= KindLastStatement) {
+    const flowNodeData = Node_FlowNodeData(node);
+    if (flowNodeData !== undefined) {
+      (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = receiver!.currentFlow;
+    }
+  }
+  switch (node!.Kind) {
+    case KindWhileStatement:
+      Binder_bindWhileStatement(receiver, node);
+      break;
+    case KindDoStatement:
+      Binder_bindDoStatement(receiver, node);
+      break;
+    case KindForStatement:
+      Binder_bindForStatement(receiver, node);
+      break;
+    case KindForInStatement:
+    case KindForOfStatement:
+      Binder_bindForInOrForOfStatement(receiver, node);
+      break;
+    case KindIfStatement:
+      Binder_bindIfStatement(receiver, node);
+      break;
+    case KindReturnStatement:
+      Binder_bindReturnStatement(receiver, node);
+      break;
+    case KindThrowStatement:
+      Binder_bindThrowStatement(receiver, node);
+      break;
+    case KindBreakStatement:
+      Binder_bindBreakStatement(receiver, node);
+      break;
+    case KindContinueStatement:
+      Binder_bindContinueStatement(receiver, node);
+      break;
+    case KindTryStatement:
+      Binder_bindTryStatement(receiver, node);
+      break;
+    case KindSwitchStatement:
+      Binder_bindSwitchStatement(receiver, node);
+      break;
+    case KindCaseBlock:
+      Binder_bindCaseBlock(receiver, node);
+      break;
+    case KindCaseClause:
+    case KindDefaultClause:
+      Binder_bindCaseOrDefaultClause(receiver, node);
+      break;
+    case KindExpressionStatement:
+      Binder_bindExpressionStatement(receiver, node);
+      break;
+    case KindLabeledStatement:
+      Binder_bindLabeledStatement(receiver, node);
+      break;
+    case KindPrefixUnaryExpression:
+      Binder_bindPrefixUnaryExpressionFlow(receiver, node);
+      break;
+    case KindPostfixUnaryExpression:
+      Binder_bindPostfixUnaryExpressionFlow(receiver, node);
+      break;
+    case KindBinaryExpression:
+      if (IsDestructuringAssignment(node)) {
+        receiver!.inAssignmentPattern = saveInAssignmentPattern;
+        Binder_bindDestructuringAssignmentFlow(receiver, node);
+        return;
+      }
+      Binder_bindBinaryExpressionFlow(receiver, node);
+      break;
+    case KindDeleteExpression:
+      Binder_bindDeleteExpressionFlow(receiver, node);
+      break;
+    case KindConditionalExpression:
+      Binder_bindConditionalExpressionFlow(receiver, node);
+      break;
+    case KindVariableDeclaration:
+      Binder_bindVariableDeclarationFlow(receiver, node);
+      break;
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression:
+      Binder_bindAccessExpressionFlow(receiver, node);
+      break;
+    case KindCallExpression:
+      Binder_bindCallExpressionFlow(receiver, node);
+      break;
+    case KindNonNullExpression:
+      Binder_bindNonNullExpressionFlow(receiver, node);
+      break;
+    case KindSourceFile: {
+      const sourceFile = AsSourceFile(node);
+      Binder_bindEachStatementFunctionsFirst(receiver, sourceFile!.Statements);
+      Binder_bind(receiver, sourceFile!.EndOfFileToken as unknown as GoPtr<Node>);
+      break;
+    }
+    case KindBlock:
+    case KindModuleBlock:
+      Binder_bindEachStatementFunctionsFirst(receiver, Node_StatementList(node)!);
+      break;
+    case KindBindingElement:
+      Binder_bindBindingElementFlow(receiver, node);
+      break;
+    case KindParameter:
+      Binder_bindParameterFlow(receiver, node);
+      break;
+    case KindObjectLiteralExpression:
+    case KindArrayLiteralExpression:
+    case KindPropertyAssignment:
+    case KindSpreadElement:
+      receiver!.inAssignmentPattern = saveInAssignmentPattern;
+      Binder_bindEachChild(receiver, node);
+      break;
+    default:
+      Binder_bindEachChild(receiver, node);
+      break;
+  }
+  receiver!.inAssignmentPattern = saveInAssignmentPattern;
 }
 
 /**
@@ -2708,7 +4276,7 @@ export function Binder_bindChildren(receiver: GoPtr<Binder>, node: GoPtr<Node>):
  * }
  */
 export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachChild");
+  Node_ForEachChild(node, receiver!.bindFunc);
 }
 
 /**
@@ -2722,7 +4290,9 @@ export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>)
  * }
  */
 export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoSlice<GoPtr<Node>>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEach");
+  for (const node of nodes) {
+    Binder_bind(receiver, node);
+  }
 }
 
 /**
@@ -2736,7 +4306,9 @@ export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoSlice<GoPtr<No
  * }
  */
 export function Binder_bindNodeList(receiver: GoPtr<Binder>, nodeList: GoPtr<NodeList>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNodeList");
+  if (nodeList !== undefined) {
+    Binder_bindEach(receiver, nodeList!.Nodes);
+  }
 }
 
 /**
@@ -2750,7 +4322,9 @@ export function Binder_bindNodeList(receiver: GoPtr<Binder>, nodeList: GoPtr<Nod
  * }
  */
 export function Binder_bindModifiers(receiver: GoPtr<Binder>, modifiers: GoPtr<ModifierList>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModifiers");
+  if (modifiers !== undefined) {
+    Binder_bindEach(receiver, modifiers!.Nodes);
+  }
 }
 
 /**
@@ -2771,7 +4345,16 @@ export function Binder_bindModifiers(receiver: GoPtr<Binder>, modifiers: GoPtr<M
  * }
  */
 export function Binder_bindEachStatementFunctionsFirst(receiver: GoPtr<Binder>, statements: GoPtr<NodeList>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachStatementFunctionsFirst");
+  for (const node of statements!.Nodes) {
+    if (node!.Kind === KindFunctionDeclaration) {
+      Binder_bind(receiver, node);
+    }
+  }
+  for (const node of statements!.Nodes) {
+    if (node!.Kind !== KindFunctionDeclaration) {
+      Binder_bind(receiver, node);
+    }
+  }
 }
 
 /**
@@ -2789,7 +4372,14 @@ export function Binder_bindEachStatementFunctionsFirst(receiver: GoPtr<Binder>, 
  * }
  */
 export function Binder_setContinueTarget(receiver: GoPtr<Binder>, node: GoPtr<Node>, target: GoPtr<FlowLabel>): GoPtr<FlowLabel> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setContinueTarget");
+  let label = receiver!.activeLabelList;
+  let current = node;
+  while (label !== undefined && current!.Parent!.Kind === KindLabeledStatement) {
+    label!.continueTarget = target;
+    label = label!.next;
+    current = current!.Parent;
+  }
+  return target;
 }
 
 /**
@@ -2807,7 +4397,13 @@ export function Binder_setContinueTarget(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_doWithConditionalBranches(receiver: GoPtr<Binder>, action: (b: GoPtr<Binder>, value: GoPtr<Node>) => bool, value: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.doWithConditionalBranches");
+  const savedTrueTarget = receiver!.currentTrueTarget;
+  const savedFalseTarget = receiver!.currentFalseTarget;
+  receiver!.currentTrueTarget = trueTarget;
+  receiver!.currentFalseTarget = falseTarget;
+  action(receiver, value);
+  receiver!.currentTrueTarget = savedTrueTarget;
+  receiver!.currentFalseTarget = savedFalseTarget;
 }
 
 /**
@@ -2823,7 +4419,11 @@ export function Binder_doWithConditionalBranches(receiver: GoPtr<Binder>, action
  * }
  */
 export function Binder_bindCondition(receiver: GoPtr<Binder>, node: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCondition");
+  Binder_doWithConditionalBranches(receiver, Binder_bind, node, trueTarget, falseTarget);
+  if (node === undefined || !isLogicalAssignmentExpression(node) && !IsLogicalExpression(node) && !(IsOptionalChain(node) && IsOutermostOptionalChain(node))) {
+    Binder_addAntecedent(receiver, trueTarget, Binder_createFlowCondition(receiver, FlowFlagsTrueCondition, receiver!.currentFlow!, node));
+    Binder_addAntecedent(receiver, falseTarget, Binder_createFlowCondition(receiver, FlowFlagsFalseCondition, receiver!.currentFlow!, node));
+  }
 }
 
 /**
@@ -2841,7 +4441,13 @@ export function Binder_bindCondition(receiver: GoPtr<Binder>, node: GoPtr<Node>,
  * }
  */
 export function Binder_bindIterativeStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>, breakTarget: GoPtr<FlowLabel>, continueTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIterativeStatement");
+  const saveBreakTarget = receiver!.currentBreakTarget;
+  const saveContinueTarget = receiver!.currentContinueTarget;
+  receiver!.currentBreakTarget = breakTarget;
+  receiver!.currentContinueTarget = continueTarget;
+  Binder_bind(receiver, node);
+  receiver!.currentBreakTarget = saveBreakTarget;
+  receiver!.currentContinueTarget = saveContinueTarget;
 }
 
 /**
@@ -2889,11 +4495,41 @@ export function isLogicalAssignmentExpression(node: GoPtr<Node>): bool {
  * }
  */
 export function Binder_bindAssignmentTargetFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAssignmentTargetFlow");
+  switch (node!.Kind) {
+    case KindArrayLiteralExpression:
+      for (const e of Node_Elements(node)!) {
+        if (e!.Kind === KindSpreadElement) {
+          Binder_bindAssignmentTargetFlow(receiver, Node_Expression(e)!);
+        } else {
+          Binder_bindDestructuringTargetFlow(receiver, e);
+        }
+      }
+      break;
+    case KindObjectLiteralExpression:
+      for (const p of Node_Properties(node)!) {
+        switch (p!.Kind) {
+          case KindPropertyAssignment:
+            Binder_bindDestructuringTargetFlow(receiver, Node_Initializer(p)!);
+            break;
+          case KindShorthandPropertyAssignment:
+            Binder_bindAssignmentTargetFlow(receiver, AsShorthandPropertyAssignment(p)!.name as unknown as GoPtr<Node>);
+            break;
+          case KindSpreadAssignment:
+            Binder_bindAssignmentTargetFlow(receiver, Node_Expression(p)!);
+            break;
+        }
+      }
+      break;
+    default:
+      if (isNarrowableReference(node)) {
+        receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsAssignment, receiver!.currentFlow!, node);
+      }
+      break;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringTargetFlow","kind":"method","status":"stub","sigHash":"f77b38ede7df1b0f82e18cb7340d12e57564027b0fe684638631c02b220cc8cb","bodyHash":"359c259269e4da6bdea0c44908c2498d782d1eeb88268f0301b76cbf62553896"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringTargetFlow","kind":"method","status":"implemented","sigHash":"f77b38ede7df1b0f82e18cb7340d12e57564027b0fe684638631c02b220cc8cb","bodyHash":"359c259269e4da6bdea0c44908c2498d782d1eeb88268f0301b76cbf62553896"}
  *
  * Go source:
  * func (b *Binder) bindDestructuringTargetFlow(node *ast.Node) {
@@ -2905,11 +4541,15 @@ export function Binder_bindAssignmentTargetFlow(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindDestructuringTargetFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringTargetFlow");
+  if (IsBinaryExpression(node) && AsBinaryExpression(node)!.OperatorToken!.Kind === KindEqualsToken) {
+    Binder_bindAssignmentTargetFlow(receiver, AsBinaryExpression(node)!.Left);
+  } else {
+    Binder_bindAssignmentTargetFlow(receiver, node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindWhileStatement","kind":"method","status":"stub","sigHash":"86e1da471e277a1ff8bc44bda271ff94e31ae974c90934e80e74b759cb8479a6","bodyHash":"1026265c60b75a8a2f23aaec0f47eec488380700a7528f130d6e2309b891cc89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindWhileStatement","kind":"method","status":"implemented","sigHash":"86e1da471e277a1ff8bc44bda271ff94e31ae974c90934e80e74b759cb8479a6","bodyHash":"1026265c60b75a8a2f23aaec0f47eec488380700a7528f130d6e2309b891cc89"}
  *
  * Go source:
  * func (b *Binder) bindWhileStatement(node *ast.Node) {
@@ -2927,11 +4567,21 @@ export function Binder_bindDestructuringTargetFlow(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_bindWhileStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindWhileStatement");
+  const stmt = AsWhileStatement(node);
+  const preWhileLabel = Binder_setContinueTarget(receiver, node, Binder_createLoopLabel(receiver));
+  const preBodyLabel = Binder_createBranchLabel(receiver);
+  const postWhileLabel = Binder_createBranchLabel(receiver);
+  Binder_addAntecedent(receiver, preWhileLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = preWhileLabel;
+  Binder_bindCondition(receiver, stmt!.Expression as unknown as GoPtr<Node>, preBodyLabel, postWhileLabel);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, preBodyLabel);
+  Binder_bindIterativeStatement(receiver, stmt!.Statement as unknown as GoPtr<Node>, postWhileLabel!, preWhileLabel!);
+  Binder_addAntecedent(receiver, preWhileLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postWhileLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDoStatement","kind":"method","status":"stub","sigHash":"470cbe0f635a9d84652dd8ddf73ec2536391e01b7f7f5ba0c30ac857d533ee94","bodyHash":"fa19dca85ec7a4da4e455dcb106036d6cbba5e44b6c2aa176b0e8ba5921a2d4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDoStatement","kind":"method","status":"implemented","sigHash":"470cbe0f635a9d84652dd8ddf73ec2536391e01b7f7f5ba0c30ac857d533ee94","bodyHash":"fa19dca85ec7a4da4e455dcb106036d6cbba5e44b6c2aa176b0e8ba5921a2d4a"}
  *
  * Go source:
  * func (b *Binder) bindDoStatement(node *ast.Node) {
@@ -2949,11 +4599,21 @@ export function Binder_bindWhileStatement(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_bindDoStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDoStatement");
+  const stmt = AsDoStatement(node);
+  const preDoLabel = Binder_createLoopLabel(receiver);
+  const preConditionLabel = Binder_setContinueTarget(receiver, node, Binder_createBranchLabel(receiver));
+  const postDoLabel = Binder_createBranchLabel(receiver);
+  Binder_addAntecedent(receiver, preDoLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = preDoLabel;
+  Binder_bindIterativeStatement(receiver, stmt!.Statement as unknown as GoPtr<Node>, postDoLabel!, preConditionLabel!);
+  Binder_addAntecedent(receiver, preConditionLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, preConditionLabel);
+  Binder_bindCondition(receiver, stmt!.Expression as unknown as GoPtr<Node>, preDoLabel, postDoLabel);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postDoLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForStatement","kind":"method","status":"stub","sigHash":"e654f62eadff2b56e2ee11dc56996171a3f1e8fd555dda0468c2ca819cfff382","bodyHash":"55007449816034d164443710d9060c69ec94f3efe56891dacc0d16449b9b81ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForStatement","kind":"method","status":"implemented","sigHash":"e654f62eadff2b56e2ee11dc56996171a3f1e8fd555dda0468c2ca819cfff382","bodyHash":"55007449816034d164443710d9060c69ec94f3efe56891dacc0d16449b9b81ba"}
  *
  * Go source:
  * func (b *Binder) bindForStatement(node *ast.Node) {
@@ -2976,11 +4636,26 @@ export function Binder_bindDoStatement(receiver: GoPtr<Binder>, node: GoPtr<Node
  * }
  */
 export function Binder_bindForStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForStatement");
+  const stmt = AsForStatement(node);
+  const preLoopLabel = Binder_setContinueTarget(receiver, node, Binder_createLoopLabel(receiver));
+  const preBodyLabel = Binder_createBranchLabel(receiver);
+  const preIncrementorLabel = Binder_createBranchLabel(receiver);
+  const postLoopLabel = Binder_createBranchLabel(receiver);
+  Binder_bind(receiver, stmt!.Initializer as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, preLoopLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = preLoopLabel;
+  Binder_bindCondition(receiver, stmt!.Condition as unknown as GoPtr<Node>, preBodyLabel, postLoopLabel);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, preBodyLabel);
+  Binder_bindIterativeStatement(receiver, stmt!.Statement as unknown as GoPtr<Node>, postLoopLabel!, preIncrementorLabel!);
+  Binder_addAntecedent(receiver, preIncrementorLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, preIncrementorLabel);
+  Binder_bind(receiver, stmt!.Incrementor as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, preLoopLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postLoopLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForInOrForOfStatement","kind":"method","status":"stub","sigHash":"a1fc823b0a9a6c44a2fe8b8dbcf4013f4e2dabb61163e61fb51a644433353050","bodyHash":"b43749a6639a7f7a876d7263e2787d6dc2b4c8d24168e5b59d75a04e8afe2e48"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForInOrForOfStatement","kind":"method","status":"implemented","sigHash":"a1fc823b0a9a6c44a2fe8b8dbcf4013f4e2dabb61163e61fb51a644433353050","bodyHash":"b43749a6639a7f7a876d7263e2787d6dc2b4c8d24168e5b59d75a04e8afe2e48"}
  *
  * Go source:
  * func (b *Binder) bindForInOrForOfStatement(node *ast.Node) {
@@ -3004,11 +4679,27 @@ export function Binder_bindForStatement(receiver: GoPtr<Binder>, node: GoPtr<Nod
  * }
  */
 export function Binder_bindForInOrForOfStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindForInOrForOfStatement");
+  const stmt = AsForInOrOfStatement(node);
+  const preLoopLabel = Binder_setContinueTarget(receiver, node, Binder_createLoopLabel(receiver));
+  const postLoopLabel = Binder_createBranchLabel(receiver);
+  Binder_bind(receiver, stmt!.Expression as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, preLoopLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = preLoopLabel;
+  if (node!.Kind === KindForOfStatement) {
+    Binder_bind(receiver, stmt!.AwaitModifier as unknown as GoPtr<Node>);
+  }
+  Binder_addAntecedent(receiver, postLoopLabel!, receiver!.currentFlow!);
+  Binder_bind(receiver, stmt!.Initializer as unknown as GoPtr<Node>);
+  if (stmt!.Initializer!.Kind !== KindVariableDeclarationList) {
+    Binder_bindAssignmentTargetFlow(receiver, stmt!.Initializer as unknown as GoPtr<Node>);
+  }
+  Binder_bindIterativeStatement(receiver, stmt!.Statement as unknown as GoPtr<Node>, postLoopLabel!, preLoopLabel!);
+  Binder_addAntecedent(receiver, preLoopLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postLoopLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIfStatement","kind":"method","status":"stub","sigHash":"133a8d292b05766046eec7b2fdbcbe48cc849c61e5e91b2c2edd111bea5cfcf8","bodyHash":"3c4ad35058c0633ea5d70c1cd210dbf91f22136805a7e208d4d8cdd3440b14e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIfStatement","kind":"method","status":"implemented","sigHash":"133a8d292b05766046eec7b2fdbcbe48cc849c61e5e91b2c2edd111bea5cfcf8","bodyHash":"3c4ad35058c0633ea5d70c1cd210dbf91f22136805a7e208d4d8cdd3440b14e2"}
  *
  * Go source:
  * func (b *Binder) bindIfStatement(node *ast.Node) {
@@ -3027,11 +4718,22 @@ export function Binder_bindForInOrForOfStatement(receiver: GoPtr<Binder>, node: 
  * }
  */
 export function Binder_bindIfStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIfStatement");
+  const stmt = AsIfStatement(node);
+  const thenLabel = Binder_createBranchLabel(receiver);
+  const elseLabel = Binder_createBranchLabel(receiver);
+  const postIfLabel = Binder_createBranchLabel(receiver);
+  Binder_bindCondition(receiver, stmt!.Expression as unknown as GoPtr<Node>, thenLabel, elseLabel);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, thenLabel);
+  Binder_bind(receiver, stmt!.ThenStatement as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, postIfLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, elseLabel);
+  Binder_bind(receiver, stmt!.ElseStatement as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, postIfLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postIfLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindReturnStatement","kind":"method","status":"stub","sigHash":"8b14466a98436817c914fd8b21ce839213451caa353b6e459d17c76307b490f8","bodyHash":"0407287a341af2c1ea73a37e785b2aaa6398e0eed596941269416f4936c0552a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindReturnStatement","kind":"method","status":"implemented","sigHash":"8b14466a98436817c914fd8b21ce839213451caa353b6e459d17c76307b490f8","bodyHash":"0407287a341af2c1ea73a37e785b2aaa6398e0eed596941269416f4936c0552a"}
  *
  * Go source:
  * func (b *Binder) bindReturnStatement(node *ast.Node) {
@@ -3045,11 +4747,17 @@ export function Binder_bindIfStatement(receiver: GoPtr<Binder>, node: GoPtr<Node
  * }
  */
 export function Binder_bindReturnStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindReturnStatement");
+  Binder_bind(receiver, Node_Expression(node));
+  if (receiver!.currentReturnTarget !== undefined) {
+    Binder_addAntecedent(receiver, receiver!.currentReturnTarget, receiver!.currentFlow!);
+  }
+  receiver!.currentFlow = receiver!.unreachableFlow;
+  receiver!.hasExplicitReturn = true;
+  receiver!.hasFlowEffects = true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThrowStatement","kind":"method","status":"stub","sigHash":"ae598b2fd33dbe49e5f7faf4faedec799d04f0d107eddab4aba8f7142e01fd7a","bodyHash":"2c6ca1f4a152ff63076bd7ebaec1b640cf9537a1ca70830fc13822652da6c9e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThrowStatement","kind":"method","status":"implemented","sigHash":"ae598b2fd33dbe49e5f7faf4faedec799d04f0d107eddab4aba8f7142e01fd7a","bodyHash":"2c6ca1f4a152ff63076bd7ebaec1b640cf9537a1ca70830fc13822652da6c9e5"}
  *
  * Go source:
  * func (b *Binder) bindThrowStatement(node *ast.Node) {
@@ -3059,11 +4767,13 @@ export function Binder_bindReturnStatement(receiver: GoPtr<Binder>, node: GoPtr<
  * }
  */
 export function Binder_bindThrowStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThrowStatement");
+  Binder_bind(receiver, Node_Expression(node));
+  receiver!.currentFlow = receiver!.unreachableFlow;
+  receiver!.hasFlowEffects = true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakStatement","kind":"method","status":"stub","sigHash":"2c906f28d5b7252ab4e1784a5561c1b27ba2fb8574f45915d9bbf0ab3003b844","bodyHash":"6834e6f1ec376213a2e7c83ec5eb89ef9c6f814ea7244de4947b3d4974e32af5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakStatement","kind":"method","status":"implemented","sigHash":"2c906f28d5b7252ab4e1784a5561c1b27ba2fb8574f45915d9bbf0ab3003b844","bodyHash":"6834e6f1ec376213a2e7c83ec5eb89ef9c6f814ea7244de4947b3d4974e32af5"}
  *
  * Go source:
  * func (b *Binder) bindBreakStatement(node *ast.Node) {
@@ -3071,11 +4781,11 @@ export function Binder_bindThrowStatement(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_bindBreakStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakStatement");
+  Binder_bindBreakOrContinueStatement(receiver, Node_Label(node), receiver!.currentBreakTarget, ActiveLabel_BreakTarget);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContinueStatement","kind":"method","status":"stub","sigHash":"4dc5e4d6150673173c1c14614246d4cb50364abe93d7586a99797df2db545361","bodyHash":"cfbbc612a070367ee6b9b55e3326b89e49528af6ecb63faa5732f71cdcc4e1ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContinueStatement","kind":"method","status":"implemented","sigHash":"4dc5e4d6150673173c1c14614246d4cb50364abe93d7586a99797df2db545361","bodyHash":"cfbbc612a070367ee6b9b55e3326b89e49528af6ecb63faa5732f71cdcc4e1ef"}
  *
  * Go source:
  * func (b *Binder) bindContinueStatement(node *ast.Node) {
@@ -3083,11 +4793,11 @@ export function Binder_bindBreakStatement(receiver: GoPtr<Binder>, node: GoPtr<N
  * }
  */
 export function Binder_bindContinueStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContinueStatement");
+  Binder_bindBreakOrContinueStatement(receiver, Node_Label(node), receiver!.currentContinueTarget, ActiveLabel_ContinueTarget);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueStatement","kind":"method","status":"stub","sigHash":"8e29c0c1efd1033629081dd6fd5e3d3475781f33213bc4dfe663629ba486b2a8","bodyHash":"ceb97ff791be49e924de15b3fa7e44e44fd4999d5a57beee46e4a13e06faae6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueStatement","kind":"method","status":"implemented","sigHash":"8e29c0c1efd1033629081dd6fd5e3d3475781f33213bc4dfe663629ba486b2a8","bodyHash":"ceb97ff791be49e924de15b3fa7e44e44fd4999d5a57beee46e4a13e06faae6e"}
  *
  * Go source:
  * func (b *Binder) bindBreakOrContinueStatement(label *ast.Node, currentTarget *ast.FlowNode, getTarget func(*ActiveLabel) *ast.FlowNode) {
@@ -3104,11 +4814,20 @@ export function Binder_bindContinueStatement(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindBreakOrContinueStatement(receiver: GoPtr<Binder>, label: GoPtr<Node>, currentTarget: GoPtr<FlowNode>, getTarget: (arg0: GoPtr<ActiveLabel>) => GoPtr<FlowNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueStatement");
+  Binder_bind(receiver, label);
+  if (label !== undefined) {
+    const activeLabel = Binder_findActiveLabel(receiver, Node_Text(label!));
+    if (activeLabel !== undefined) {
+      activeLabel!.referenced = true;
+      Binder_bindBreakOrContinueFlow(receiver, getTarget(activeLabel) as GoPtr<FlowLabel>);
+    }
+  } else {
+    Binder_bindBreakOrContinueFlow(receiver, currentTarget as GoPtr<FlowLabel>);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.findActiveLabel","kind":"method","status":"stub","sigHash":"37c376c9787e20c31031ceace543f7b0a5d8b5dc4e86a8d5af17f79458180b88","bodyHash":"a03e76de5f99ee415efdee186b3e0d959cf3e9afefee74d0cb60886f0ece2d23"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.findActiveLabel","kind":"method","status":"implemented","sigHash":"37c376c9787e20c31031ceace543f7b0a5d8b5dc4e86a8d5af17f79458180b88","bodyHash":"a03e76de5f99ee415efdee186b3e0d959cf3e9afefee74d0cb60886f0ece2d23"}
  *
  * Go source:
  * func (b *Binder) findActiveLabel(name string) *ActiveLabel {
@@ -3121,11 +4840,18 @@ export function Binder_bindBreakOrContinueStatement(receiver: GoPtr<Binder>, lab
  * }
  */
 export function Binder_findActiveLabel(receiver: GoPtr<Binder>, name: string): GoPtr<ActiveLabel> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.findActiveLabel");
+  let label = receiver!.activeLabelList;
+  while (label !== undefined) {
+    if (label.name === name) {
+      return label;
+    }
+    label = label.next;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueFlow","kind":"method","status":"stub","sigHash":"f08d23fdbffcf1e7a73b0a24960a513d487f403c855a34450a541a293cacc428","bodyHash":"9899d900b9f542d04b700106132d337e16372c4736586502bf3f14ef63461d08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueFlow","kind":"method","status":"implemented","sigHash":"f08d23fdbffcf1e7a73b0a24960a513d487f403c855a34450a541a293cacc428","bodyHash":"9899d900b9f542d04b700106132d337e16372c4736586502bf3f14ef63461d08"}
  *
  * Go source:
  * func (b *Binder) bindBreakOrContinueFlow(flowLabel *ast.FlowLabel) {
@@ -3137,11 +4863,15 @@ export function Binder_findActiveLabel(receiver: GoPtr<Binder>, name: string): G
  * }
  */
 export function Binder_bindBreakOrContinueFlow(receiver: GoPtr<Binder>, flowLabel: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBreakOrContinueFlow");
+  if (flowLabel !== undefined) {
+    Binder_addAntecedent(receiver, flowLabel, receiver!.currentFlow!);
+    receiver!.currentFlow = receiver!.unreachableFlow;
+    receiver!.hasFlowEffects = true;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTryStatement","kind":"method","status":"stub","sigHash":"88447a4c3035c315dcfea667a117b060e2988d10463a8de6490bd70e44d67f4c","bodyHash":"ec50e3d99d60804cef47ee802a57f6f4cc7aadb850df56a9ac2cb71b1d9152fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTryStatement","kind":"method","status":"implemented","sigHash":"88447a4c3035c315dcfea667a117b060e2988d10463a8de6490bd70e44d67f4c","bodyHash":"ec50e3d99d60804cef47ee802a57f6f4cc7aadb850df56a9ac2cb71b1d9152fa"}
  *
  * Go source:
  * func (b *Binder) bindTryStatement(node *ast.Node) {
@@ -3226,11 +4956,56 @@ export function Binder_bindBreakOrContinueFlow(receiver: GoPtr<Binder>, flowLabe
  * }
  */
 export function Binder_bindTryStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTryStatement");
+  const stmt = AsTryStatement(node);
+  const saveReturnTarget = receiver!.currentReturnTarget;
+  const saveExceptionTarget = receiver!.currentExceptionTarget;
+  const normalExitLabel = Binder_createBranchLabel(receiver);
+  const returnLabel = Binder_createBranchLabel(receiver);
+  let exceptionLabel = Binder_createBranchLabel(receiver);
+  if (stmt!.FinallyBlock !== undefined) {
+    receiver!.currentReturnTarget = returnLabel;
+  }
+  Binder_addAntecedent(receiver, exceptionLabel!, receiver!.currentFlow!);
+  receiver!.currentExceptionTarget = exceptionLabel;
+  Binder_bind(receiver, stmt!.TryBlock as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, normalExitLabel!, receiver!.currentFlow!);
+  if (stmt!.CatchClause !== undefined) {
+    receiver!.currentFlow = Binder_finishFlowLabel(receiver, exceptionLabel);
+    exceptionLabel = Binder_createBranchLabel(receiver);
+    Binder_addAntecedent(receiver, exceptionLabel!, receiver!.currentFlow!);
+    receiver!.currentExceptionTarget = exceptionLabel;
+    Binder_bind(receiver, stmt!.CatchClause as unknown as GoPtr<Node>);
+    Binder_addAntecedent(receiver, normalExitLabel!, receiver!.currentFlow!);
+  }
+  receiver!.currentReturnTarget = saveReturnTarget;
+  receiver!.currentExceptionTarget = saveExceptionTarget;
+  if (stmt!.FinallyBlock !== undefined) {
+    const finallyLabel = Binder_createBranchLabel(receiver);
+    finallyLabel!.Antecedents = Binder_combineFlowLists(receiver, normalExitLabel!.Antecedents, Binder_combineFlowLists(receiver, exceptionLabel!.Antecedents, returnLabel!.Antecedents));
+    receiver!.currentFlow = finallyLabel;
+    Binder_bind(receiver, stmt!.FinallyBlock as unknown as GoPtr<Node>);
+    if ((receiver!.currentFlow!.Flags & FlowFlagsUnreachable) !== 0) {
+      receiver!.currentFlow = receiver!.unreachableFlow;
+    } else {
+      if (receiver!.currentReturnTarget !== undefined && returnLabel!.Antecedents !== undefined) {
+        Binder_addAntecedent(receiver, receiver!.currentReturnTarget, Binder_createReduceLabel(receiver, finallyLabel!, returnLabel!.Antecedents, receiver!.currentFlow!)!);
+      }
+      if (receiver!.currentExceptionTarget !== undefined && exceptionLabel!.Antecedents !== undefined) {
+        Binder_addAntecedent(receiver, receiver!.currentExceptionTarget, Binder_createReduceLabel(receiver, finallyLabel!, exceptionLabel!.Antecedents, receiver!.currentFlow!)!);
+      }
+      if (normalExitLabel!.Antecedents !== undefined) {
+        receiver!.currentFlow = Binder_createReduceLabel(receiver, finallyLabel!, normalExitLabel!.Antecedents, receiver!.currentFlow!);
+      } else {
+        receiver!.currentFlow = receiver!.unreachableFlow;
+      }
+    }
+  } else {
+    receiver!.currentFlow = Binder_finishFlowLabel(receiver, normalExitLabel);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSwitchStatement","kind":"method","status":"stub","sigHash":"9f72704525b4a04d8118024bc425581db6db08d533cc58dc4ba7dc680c1a04bb","bodyHash":"439cfef217952bcfcf0d2ecf8bd84dbff3aa8e4775a3aa23909e15128bd95994"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSwitchStatement","kind":"method","status":"implemented","sigHash":"9f72704525b4a04d8118024bc425581db6db08d533cc58dc4ba7dc680c1a04bb","bodyHash":"439cfef217952bcfcf0d2ecf8bd84dbff3aa8e4775a3aa23909e15128bd95994"}
  *
  * Go source:
  * func (b *Binder) bindSwitchStatement(node *ast.Node) {
@@ -3255,11 +5030,26 @@ export function Binder_bindTryStatement(receiver: GoPtr<Binder>, node: GoPtr<Nod
  * }
  */
 export function Binder_bindSwitchStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSwitchStatement");
+  const stmt = AsSwitchStatement(node);
+  const postSwitchLabel = Binder_createBranchLabel(receiver);
+  Binder_bind(receiver, stmt!.Expression as unknown as GoPtr<Node>);
+  const saveBreakTarget = receiver!.currentBreakTarget;
+  const savePreSwitchCaseFlow = receiver!.preSwitchCaseFlow;
+  receiver!.currentBreakTarget = postSwitchLabel;
+  receiver!.preSwitchCaseFlow = receiver!.currentFlow;
+  Binder_bind(receiver, stmt!.CaseBlock as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, postSwitchLabel!, receiver!.currentFlow!);
+  const hasDefault = Some(AsCaseBlock(stmt!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes, (c) => (c!.Kind === KindDefaultClause) as bool);
+  if (!hasDefault) {
+    Binder_addAntecedent(receiver, postSwitchLabel!, Binder_createFlowSwitchClause(receiver, receiver!.preSwitchCaseFlow!, node, 0 as int, 0 as int)!);
+  }
+  receiver!.currentBreakTarget = saveBreakTarget;
+  receiver!.preSwitchCaseFlow = savePreSwitchCaseFlow;
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postSwitchLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseBlock","kind":"method","status":"stub","sigHash":"7afb55ad7e4593cc7e22e2899b9e7c9df52c147cdd16cb9539764d4bd14c8332","bodyHash":"4c2cced473c94e6b23bc2f51cb35dba47d579dc12e54b3e45ae1008f52e81d9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseBlock","kind":"method","status":"implemented","sigHash":"7afb55ad7e4593cc7e22e2899b9e7c9df52c147cdd16cb9539764d4bd14c8332","bodyHash":"4c2cced473c94e6b23bc2f51cb35dba47d579dc12e54b3e45ae1008f52e81d9b"}
  *
  * Go source:
  * func (b *Binder) bindCaseBlock(node *ast.Node) {
@@ -3294,11 +5084,40 @@ export function Binder_bindSwitchStatement(receiver: GoPtr<Binder>, node: GoPtr<
  * }
  */
 export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseBlock");
+  const switchStatement = node!.Parent;
+  const clauses = AsCaseBlock(node)!.Clauses!.Nodes;
+  const isNarrowingSwitch = Node_Expression(switchStatement)!.Kind === KindTrueKeyword || isNarrowingExpression(Node_Expression(switchStatement));
+  let fallthroughFlow: GoPtr<FlowNode> = receiver!.unreachableFlow;
+  let i = 0;
+  while (i < clauses.length) {
+    const clauseStart = i;
+    while ((Node_Statements(clauses[i]) ?? []).length === 0 && i + 1 < clauses.length) {
+      if (fallthroughFlow === receiver!.unreachableFlow) {
+        receiver!.currentFlow = receiver!.preSwitchCaseFlow;
+      }
+      Binder_bind(receiver, clauses[i]);
+      i++;
+    }
+    const preCaseLabel = Binder_createBranchLabel(receiver);
+    let preCaseFlow: GoPtr<FlowNode> = receiver!.preSwitchCaseFlow;
+    if (isNarrowingSwitch) {
+      preCaseFlow = Binder_createFlowSwitchClause(receiver, receiver!.preSwitchCaseFlow!, switchStatement, clauseStart as int, (i + 1) as int);
+    }
+    Binder_addAntecedent(receiver, preCaseLabel!, preCaseFlow!);
+    Binder_addAntecedent(receiver, preCaseLabel!, fallthroughFlow!);
+    receiver!.currentFlow = Binder_finishFlowLabel(receiver, preCaseLabel);
+    const clause = clauses[i];
+    Binder_bind(receiver, clause);
+    fallthroughFlow = receiver!.currentFlow;
+    if ((receiver!.currentFlow!.Flags & FlowFlagsUnreachable) === 0 && i !== clauses.length - 1) {
+      (AsCaseOrDefaultClause(clause) as unknown as { FallthroughFlowNode?: GoPtr<FlowNode> }).FallthroughFlowNode = receiver!.currentFlow;
+    }
+    i++;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseOrDefaultClause","kind":"method","status":"stub","sigHash":"dea7156e7e405d1d39d683d1ebdb2099bba01255c9ccf159ec15dc96985fb4a4","bodyHash":"5b6f879924e73216ed45720e290772296e8a71a9f5070bad8c485e04ef28f363"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseOrDefaultClause","kind":"method","status":"implemented","sigHash":"dea7156e7e405d1d39d683d1ebdb2099bba01255c9ccf159ec15dc96985fb4a4","bodyHash":"5b6f879924e73216ed45720e290772296e8a71a9f5070bad8c485e04ef28f363"}
  *
  * Go source:
  * func (b *Binder) bindCaseOrDefaultClause(node *ast.Node) {
@@ -3313,11 +5132,18 @@ export function Binder_bindCaseBlock(receiver: GoPtr<Binder>, node: GoPtr<Node>)
  * }
  */
 export function Binder_bindCaseOrDefaultClause(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCaseOrDefaultClause");
+  const clause = AsCaseOrDefaultClause(node);
+  if (clause!.Expression !== undefined) {
+    const saveCurrentFlow = receiver!.currentFlow;
+    receiver!.currentFlow = receiver!.preSwitchCaseFlow;
+    Binder_bind(receiver, clause!.Expression as unknown as GoPtr<Node>);
+    receiver!.currentFlow = saveCurrentFlow;
+  }
+  Binder_bindEach(receiver, clause!.Statements!.Nodes);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpressionStatement","kind":"method","status":"stub","sigHash":"02ce8faae8e9ca21ff2571df539172ec388883446f3325287c606bdf7f994b43","bodyHash":"be5b1b489b33ffecb4146e66dca3c847d65fed91c4cdae278ffc23f6c80d62e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpressionStatement","kind":"method","status":"implemented","sigHash":"02ce8faae8e9ca21ff2571df539172ec388883446f3325287c606bdf7f994b43","bodyHash":"be5b1b489b33ffecb4146e66dca3c847d65fed91c4cdae278ffc23f6c80d62e0"}
  *
  * Go source:
  * func (b *Binder) bindExpressionStatement(node *ast.Node) {
@@ -3327,11 +5153,13 @@ export function Binder_bindCaseOrDefaultClause(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_bindExpressionStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpressionStatement");
+  const stmt = AsExpressionStatement(node);
+  Binder_bind(receiver, stmt!.Expression as unknown as GoPtr<Node>);
+  Binder_maybeBindExpressionFlowIfCall(receiver, stmt!.Expression as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.maybeBindExpressionFlowIfCall","kind":"method","status":"stub","sigHash":"9e2ee17f7ccf023f177e8a72aa1971d479929e746c8eb688f3c983454fcbc8a1","bodyHash":"e192584b8a9a9b757d18c75b04c5c9d58b8617b36095666daddc5dda2130e7c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.maybeBindExpressionFlowIfCall","kind":"method","status":"implemented","sigHash":"9e2ee17f7ccf023f177e8a72aa1971d479929e746c8eb688f3c983454fcbc8a1","bodyHash":"e192584b8a9a9b757d18c75b04c5c9d58b8617b36095666daddc5dda2130e7c0"}
  *
  * Go source:
  * func (b *Binder) maybeBindExpressionFlowIfCall(node *ast.Node) {
@@ -3345,11 +5173,15 @@ export function Binder_bindExpressionStatement(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_maybeBindExpressionFlowIfCall(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.maybeBindExpressionFlowIfCall");
+  if (IsCallExpression(node)) {
+    if (Node_Expression(node)!.Kind !== KindSuperKeyword && IsDottedName(Node_Expression(node))) {
+      receiver!.currentFlow = Binder_createFlowCall(receiver, receiver!.currentFlow!, node);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLabeledStatement","kind":"method","status":"stub","sigHash":"8c7a547a41e83858e7af1fdd67a4e4f8dd01f4f5c1f46a87cc69a2d624953cbd","bodyHash":"a125d06072aa57b79eb81a03a46ff5809492d8eb1931bceebad0b58dff68ab3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLabeledStatement","kind":"method","status":"implemented","sigHash":"8c7a547a41e83858e7af1fdd67a4e4f8dd01f4f5c1f46a87cc69a2d624953cbd","bodyHash":"a125d06072aa57b79eb81a03a46ff5809492d8eb1931bceebad0b58dff68ab3d"}
  *
  * Go source:
  * func (b *Binder) bindLabeledStatement(node *ast.Node) {
@@ -3374,11 +5206,27 @@ export function Binder_maybeBindExpressionFlowIfCall(receiver: GoPtr<Binder>, no
  * }
  */
 export function Binder_bindLabeledStatement(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLabeledStatement");
+  const stmt = AsLabeledStatement(node);
+  const postStatementLabel = Binder_createBranchLabel(receiver);
+  receiver!.activeLabelList = {
+    next: receiver!.activeLabelList,
+    name: Node_Text(stmt!.Label as unknown as Node),
+    breakTarget: postStatementLabel,
+    continueTarget: undefined,
+    referenced: false,
+  };
+  Binder_bind(receiver, stmt!.Label as unknown as GoPtr<Node>);
+  Binder_bind(receiver, stmt!.Statement as unknown as GoPtr<Node>);
+  if (!receiver!.activeLabelList!.referenced) {
+    stmt!.Label!.Flags = (stmt!.Label!.Flags | NodeFlagsUnreachable) as NodeFlags;
+  }
+  receiver!.activeLabelList = receiver!.activeLabelList!.next;
+  Binder_addAntecedent(receiver, postStatementLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, postStatementLabel);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPrefixUnaryExpressionFlow","kind":"method","status":"stub","sigHash":"a7a60e8a91d158fb5d0d2559c1638a1119705ccc421ae0ecdc00936a62fa17fb","bodyHash":"71f4a361ab3cab7b42124074c2172b7ffbfe49417c9b3bd44c6b07c530065400"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPrefixUnaryExpressionFlow","kind":"method","status":"implemented","sigHash":"a7a60e8a91d158fb5d0d2559c1638a1119705ccc421ae0ecdc00936a62fa17fb","bodyHash":"71f4a361ab3cab7b42124074c2172b7ffbfe49417c9b3bd44c6b07c530065400"}
  *
  * Go source:
  * func (b *Binder) bindPrefixUnaryExpressionFlow(node *ast.Node) {
@@ -3399,11 +5247,24 @@ export function Binder_bindLabeledStatement(receiver: GoPtr<Binder>, node: GoPtr
  * }
  */
 export function Binder_bindPrefixUnaryExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPrefixUnaryExpressionFlow");
+  const expr = AsPrefixUnaryExpression(node);
+  if (expr!.Operator === KindExclamationToken) {
+    const saveTrueTarget = receiver!.currentTrueTarget;
+    receiver!.currentTrueTarget = receiver!.currentFalseTarget;
+    receiver!.currentFalseTarget = saveTrueTarget;
+    Binder_bindEachChild(receiver, node);
+    receiver!.currentFalseTarget = receiver!.currentTrueTarget;
+    receiver!.currentTrueTarget = saveTrueTarget;
+  } else {
+    Binder_bindEachChild(receiver, node);
+    if (expr!.Operator === KindPlusPlusToken || expr!.Operator === KindMinusMinusToken) {
+      Binder_bindAssignmentTargetFlow(receiver, expr!.Operand as unknown as GoPtr<Node>);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPostfixUnaryExpressionFlow","kind":"method","status":"stub","sigHash":"5f1df513646ec86b0139e731a191c22d69737febdd94808e924924e67d5fc607","bodyHash":"7ef16343ec567b7a503d8086d5f08547c725b46654d9510a1ea62175009258dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPostfixUnaryExpressionFlow","kind":"method","status":"implemented","sigHash":"5f1df513646ec86b0139e731a191c22d69737febdd94808e924924e67d5fc607","bodyHash":"7ef16343ec567b7a503d8086d5f08547c725b46654d9510a1ea62175009258dd"}
  *
  * Go source:
  * func (b *Binder) bindPostfixUnaryExpressionFlow(node *ast.Node) {
@@ -3415,11 +5276,15 @@ export function Binder_bindPrefixUnaryExpressionFlow(receiver: GoPtr<Binder>, no
  * }
  */
 export function Binder_bindPostfixUnaryExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPostfixUnaryExpressionFlow");
+  const expr = AsPostfixUnaryExpression(node);
+  Binder_bindEachChild(receiver, node);
+  if (expr!.Operator === KindPlusPlusToken || expr!.Operator === KindMinusMinusToken) {
+    Binder_bindAssignmentTargetFlow(receiver, expr!.Operand as unknown as GoPtr<Node>);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringAssignmentFlow","kind":"method","status":"stub","sigHash":"ebb5e3159698d377ab4046357f300823c846c8062c946a252a2f365fca123f67","bodyHash":"14e201612a9ef48d49d9ef2a11829d120948da95db70f00e553039661da7a0c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringAssignmentFlow","kind":"method","status":"implemented","sigHash":"ebb5e3159698d377ab4046357f300823c846c8062c946a252a2f365fca123f67","bodyHash":"14e201612a9ef48d49d9ef2a11829d120948da95db70f00e553039661da7a0c9"}
  *
  * Go source:
  * func (b *Binder) bindDestructuringAssignmentFlow(node *ast.Node) {
@@ -3443,11 +5308,27 @@ export function Binder_bindPostfixUnaryExpressionFlow(receiver: GoPtr<Binder>, n
  * }
  */
 export function Binder_bindDestructuringAssignmentFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDestructuringAssignmentFlow");
+  const expr = AsBinaryExpression(node);
+  if (receiver!.inAssignmentPattern) {
+    receiver!.inAssignmentPattern = false;
+    Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
+    Binder_bind(receiver, expr!.Right as unknown as GoPtr<Node>);
+    receiver!.inAssignmentPattern = true;
+    Binder_bind(receiver, expr!.Left as unknown as GoPtr<Node>);
+    Binder_bind(receiver, (expr as unknown as { Type?: GoPtr<Node> }).Type);
+  } else {
+    receiver!.inAssignmentPattern = true;
+    Binder_bind(receiver, expr!.Left as unknown as GoPtr<Node>);
+    Binder_bind(receiver, (expr as unknown as { Type?: GoPtr<Node> }).Type);
+    receiver!.inAssignmentPattern = false;
+    Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
+    Binder_bind(receiver, expr!.Right as unknown as GoPtr<Node>);
+  }
+  Binder_bindAssignmentTargetFlow(receiver, expr!.Left as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBinaryExpressionFlow","kind":"method","status":"stub","sigHash":"2528bb73085d7b11c9a536c13f32c3a218827894c2e0d1e87c6de6705e46989e","bodyHash":"e02b22b41d8ace0374bc12746a52832b6670fc3b6860ec14c757ab4e37355945"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBinaryExpressionFlow","kind":"method","status":"implemented","sigHash":"2528bb73085d7b11c9a536c13f32c3a218827894c2e0d1e87c6de6705e46989e","bodyHash":"e02b22b41d8ace0374bc12746a52832b6670fc3b6860ec14c757ab4e37355945"}
  *
  * Go source:
  * func (b *Binder) bindBinaryExpressionFlow(node *ast.Node) {
@@ -3493,11 +5374,49 @@ export function Binder_bindDestructuringAssignmentFlow(receiver: GoPtr<Binder>, 
  * }
  */
 export function Binder_bindBinaryExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBinaryExpressionFlow");
+  const expr = AsBinaryExpression(node);
+  const operator = expr!.OperatorToken!.Kind;
+  if (IsLogicalOrCoalescingBinaryOperator(operator) || IsLogicalOrCoalescingAssignmentOperator(operator)) {
+    if (isTopLevelLogicalExpression(node)) {
+      const postExpressionLabel = Binder_createBranchLabel(receiver);
+      const saveCurrentFlow = receiver!.currentFlow;
+      const saveHasFlowEffects = receiver!.hasFlowEffects;
+      receiver!.hasFlowEffects = false;
+      Binder_bindLogicalLikeExpression(receiver, node, postExpressionLabel, postExpressionLabel);
+      if (receiver!.hasFlowEffects) {
+        receiver!.currentFlow = Binder_finishFlowLabel(receiver, postExpressionLabel);
+      } else {
+        receiver!.currentFlow = saveCurrentFlow;
+      }
+      receiver!.hasFlowEffects = (receiver!.hasFlowEffects || saveHasFlowEffects) as bool;
+    } else {
+      Binder_bindLogicalLikeExpression(receiver, node, receiver!.currentTrueTarget, receiver!.currentFalseTarget);
+    }
+  } else {
+    Binder_bind(receiver, expr!.Left as unknown as GoPtr<Node>);
+    Binder_bind(receiver, (expr as unknown as { Type?: GoPtr<Node> }).Type);
+    if (operator === KindCommaToken) {
+      Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Left as unknown as GoPtr<Node>);
+    }
+    Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
+    Binder_bind(receiver, expr!.Right as unknown as GoPtr<Node>);
+    if (operator === KindCommaToken) {
+      Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Right as unknown as GoPtr<Node>);
+    }
+    if (IsAssignmentOperator(operator) && !IsAssignmentTarget(node)) {
+      Binder_bindAssignmentTargetFlow(receiver, expr!.Left as unknown as GoPtr<Node>);
+      if (operator === KindEqualsToken && expr!.Left!.Kind === KindElementAccessExpression) {
+        const elementAccess = AsElementAccessExpression(expr!.Left as unknown as GoPtr<Node>);
+        if (isNarrowableOperand(elementAccess!.Expression as unknown as GoPtr<Node>)) {
+          receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsArrayMutation, receiver!.currentFlow!, node);
+        }
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLogicalLikeExpression","kind":"method","status":"stub","sigHash":"495531426ebfdcc314cd3151e4ab0927cda2edd57c7c202d27061c5da2a92fca","bodyHash":"a9712bff4109ce88f497573b6c2961263bd22a3c4eafb79a5f32630f7575d9bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLogicalLikeExpression","kind":"method","status":"implemented","sigHash":"495531426ebfdcc314cd3151e4ab0927cda2edd57c7c202d27061c5da2a92fca","bodyHash":"a9712bff4109ce88f497573b6c2961263bd22a3c4eafb79a5f32630f7575d9bf"}
  *
  * Go source:
  * func (b *Binder) bindLogicalLikeExpression(node *ast.Node, trueTarget *ast.FlowLabel, falseTarget *ast.FlowLabel) {
@@ -3521,11 +5440,27 @@ export function Binder_bindBinaryExpressionFlow(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindLogicalLikeExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindLogicalLikeExpression");
+  const expr = AsBinaryExpression(node);
+  const preRightLabel = Binder_createBranchLabel(receiver);
+  if (expr!.OperatorToken!.Kind === KindAmpersandAmpersandToken || expr!.OperatorToken!.Kind === KindAmpersandAmpersandEqualsToken) {
+    Binder_bindCondition(receiver, expr!.Left as unknown as GoPtr<Node>, preRightLabel, falseTarget);
+  } else {
+    Binder_bindCondition(receiver, expr!.Left as unknown as GoPtr<Node>, trueTarget, preRightLabel);
+  }
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, preRightLabel);
+  Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
+  if (IsLogicalOrCoalescingAssignmentOperator(expr!.OperatorToken!.Kind)) {
+    Binder_doWithConditionalBranches(receiver, Binder_bind, expr!.Right as unknown as GoPtr<Node>, trueTarget, falseTarget);
+    Binder_bindAssignmentTargetFlow(receiver, expr!.Left as unknown as GoPtr<Node>);
+    Binder_addAntecedent(receiver, trueTarget!, Binder_createFlowCondition(receiver, FlowFlagsTrueCondition, receiver!.currentFlow!, node)!);
+    Binder_addAntecedent(receiver, falseTarget!, Binder_createFlowCondition(receiver, FlowFlagsFalseCondition, receiver!.currentFlow!, node)!);
+  } else {
+    Binder_bindCondition(receiver, expr!.Right as unknown as GoPtr<Node>, trueTarget, falseTarget);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeleteExpressionFlow","kind":"method","status":"stub","sigHash":"aa87264ef1104759b358d496080c32ee2dc67afe3c93d6dcdad28b442b2ce9db","bodyHash":"afe1fdd9cee8cef15e9622fac7f6b16503c9194463421b38313f393069d9d1db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeleteExpressionFlow","kind":"method","status":"implemented","sigHash":"aa87264ef1104759b358d496080c32ee2dc67afe3c93d6dcdad28b442b2ce9db","bodyHash":"afe1fdd9cee8cef15e9622fac7f6b16503c9194463421b38313f393069d9d1db"}
  *
  * Go source:
  * func (b *Binder) bindDeleteExpressionFlow(node *ast.Node) {
@@ -3537,11 +5472,15 @@ export function Binder_bindLogicalLikeExpression(receiver: GoPtr<Binder>, node: 
  * }
  */
 export function Binder_bindDeleteExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeleteExpressionFlow");
+  const expr = AsDeleteExpression(node);
+  Binder_bindEachChild(receiver, node);
+  if (expr!.Expression!.Kind === KindPropertyAccessExpression) {
+    Binder_bindAssignmentTargetFlow(receiver, expr!.Expression as unknown as GoPtr<Node>);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindConditionalExpressionFlow","kind":"method","status":"stub","sigHash":"7958cbd109aea4d0cf5ff9fdaf199c3df67a403756acbd6d1755f949df94cd45","bodyHash":"54a9ee4e102b34a3650168762e90aa87942e6acb9b47604cadb2d488676140bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindConditionalExpressionFlow","kind":"method","status":"implemented","sigHash":"7958cbd109aea4d0cf5ff9fdaf199c3df67a403756acbd6d1755f949df94cd45","bodyHash":"54a9ee4e102b34a3650168762e90aa87942e6acb9b47604cadb2d488676140bb"}
  *
  * Go source:
  * func (b *Binder) bindConditionalExpressionFlow(node *ast.Node) {
@@ -3570,11 +5509,32 @@ export function Binder_bindDeleteExpressionFlow(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindConditionalExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindConditionalExpressionFlow");
+  const expr = AsConditionalExpression(node);
+  const trueLabel = Binder_createBranchLabel(receiver);
+  const falseLabel = Binder_createBranchLabel(receiver);
+  const postExpressionLabel = Binder_createBranchLabel(receiver);
+  const saveCurrentFlow = receiver!.currentFlow;
+  const saveHasFlowEffects = receiver!.hasFlowEffects;
+  receiver!.hasFlowEffects = false;
+  Binder_bindCondition(receiver, expr!.Condition as unknown as GoPtr<Node>, trueLabel, falseLabel);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, trueLabel);
+  Binder_bind(receiver, expr!.QuestionToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, expr!.WhenTrue as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, postExpressionLabel!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, falseLabel);
+  Binder_bind(receiver, expr!.ColonToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, expr!.WhenFalse as unknown as GoPtr<Node>);
+  Binder_addAntecedent(receiver, postExpressionLabel!, receiver!.currentFlow!);
+  if (receiver!.hasFlowEffects) {
+    receiver!.currentFlow = Binder_finishFlowLabel(receiver, postExpressionLabel);
+  } else {
+    receiver!.currentFlow = saveCurrentFlow;
+  }
+  receiver!.hasFlowEffects = (receiver!.hasFlowEffects || saveHasFlowEffects) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationFlow","kind":"method","status":"stub","sigHash":"326794be06390561fd5026c316785326fd9c8c8e9769fda686ad275d72e380f6","bodyHash":"759d5ccf350694ade7fdb5b7cfb415a49b3e03cf47576d025c6233c9566eb84a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationFlow","kind":"method","status":"implemented","sigHash":"326794be06390561fd5026c316785326fd9c8c8e9769fda686ad275d72e380f6","bodyHash":"759d5ccf350694ade7fdb5b7cfb415a49b3e03cf47576d025c6233c9566eb84a"}
  *
  * Go source:
  * func (b *Binder) bindVariableDeclarationFlow(node *ast.Node) {
@@ -3585,11 +5545,14 @@ export function Binder_bindConditionalExpressionFlow(receiver: GoPtr<Binder>, no
  * }
  */
 export function Binder_bindVariableDeclarationFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationFlow");
+  Binder_bindEachChild(receiver, node);
+  if (Node_Initializer(node) !== undefined || IsForInOrOfStatement(node!.Parent!.Parent)) {
+    Binder_bindInitializedVariableFlow(receiver, node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializedVariableFlow","kind":"method","status":"stub","sigHash":"2878be7fe696a58838fb81f813209f9549b0d38e5ced5e67c8e56d25147867e1","bodyHash":"6def3ef1cf7f160268eeb0d1006a734e523a30d4f7a152964bca37e6d703ce36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializedVariableFlow","kind":"method","status":"implemented","sigHash":"2878be7fe696a58838fb81f813209f9549b0d38e5ced5e67c8e56d25147867e1","bodyHash":"6def3ef1cf7f160268eeb0d1006a734e523a30d4f7a152964bca37e6d703ce36"}
  *
  * Go source:
  * func (b *Binder) bindInitializedVariableFlow(node *ast.Node) {
@@ -3610,11 +5573,26 @@ export function Binder_bindVariableDeclarationFlow(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_bindInitializedVariableFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializedVariableFlow");
+  let name: GoPtr<Node>;
+  switch (node!.Kind) {
+    case KindVariableDeclaration:
+      name = Node_Name(node);
+      break;
+    case KindBindingElement:
+      name = Node_Name(node);
+      break;
+  }
+  if (name !== undefined && IsBindingPattern(name)) {
+    for (const child of (Node_Elements(name) ?? [])) {
+      Binder_bindInitializedVariableFlow(receiver, child);
+    }
+  } else {
+    receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsAssignment, receiver!.currentFlow!, node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAccessExpressionFlow","kind":"method","status":"stub","sigHash":"27c7bfedc0b686809bafb71d7e01211e8924bc055c61d313eaaa2ada88eae867","bodyHash":"262624bab0e0a45ec6615da958b845f916769a2ab7e5ffea176c7925939701f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAccessExpressionFlow","kind":"method","status":"implemented","sigHash":"27c7bfedc0b686809bafb71d7e01211e8924bc055c61d313eaaa2ada88eae867","bodyHash":"262624bab0e0a45ec6615da958b845f916769a2ab7e5ffea176c7925939701f1"}
  *
  * Go source:
  * func (b *Binder) bindAccessExpressionFlow(node *ast.Node) {
@@ -3626,11 +5604,15 @@ export function Binder_bindInitializedVariableFlow(receiver: GoPtr<Binder>, node
  * }
  */
 export function Binder_bindAccessExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAccessExpressionFlow");
+  if (IsOptionalChain(node)) {
+    Binder_bindOptionalChainFlow(receiver, node);
+  } else {
+    Binder_bindEachChild(receiver, node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainFlow","kind":"method","status":"stub","sigHash":"ff83bf50837dd3068e1cbdfb28a401e3a9ca762949d019140dc3f940213bd2d4","bodyHash":"720e528649f8448a0279fdfdd2392b64c8da9bc71a43cc352e1d5f6e2bce137a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainFlow","kind":"method","status":"implemented","sigHash":"ff83bf50837dd3068e1cbdfb28a401e3a9ca762949d019140dc3f940213bd2d4","bodyHash":"720e528649f8448a0279fdfdd2392b64c8da9bc71a43cc352e1d5f6e2bce137a"}
  *
  * Go source:
  * func (b *Binder) bindOptionalChainFlow(node *ast.Node) {
@@ -3651,11 +5633,24 @@ export function Binder_bindAccessExpressionFlow(receiver: GoPtr<Binder>, node: G
  * }
  */
 export function Binder_bindOptionalChainFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainFlow");
+  if (isTopLevelLogicalExpression(node)) {
+    const postExpressionLabel = Binder_createBranchLabel(receiver);
+    const saveCurrentFlow = receiver!.currentFlow;
+    const saveHasFlowEffects = receiver!.hasFlowEffects;
+    Binder_bindOptionalChain(receiver, node, postExpressionLabel, postExpressionLabel);
+    if (receiver!.hasFlowEffects) {
+      receiver!.currentFlow = Binder_finishFlowLabel(receiver, postExpressionLabel);
+    } else {
+      receiver!.currentFlow = saveCurrentFlow;
+    }
+    receiver!.hasFlowEffects = (receiver!.hasFlowEffects || saveHasFlowEffects) as bool;
+  } else {
+    Binder_bindOptionalChain(receiver, node, receiver!.currentTrueTarget, receiver!.currentFalseTarget);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChain","kind":"method","status":"stub","sigHash":"8324d16ef53f9b50ade10e2073a1c5e2186e94b20d8b7abc50a51994330fb6e3","bodyHash":"3e540f51b1af0d55e271c2525a28c2c6b47120e71a49b0752e61d4694d22beba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChain","kind":"method","status":"implemented","sigHash":"8324d16ef53f9b50ade10e2073a1c5e2186e94b20d8b7abc50a51994330fb6e3","bodyHash":"3e540f51b1af0d55e271c2525a28c2c6b47120e71a49b0752e61d4694d22beba"}
  *
  * Go source:
  * func (b *Binder) bindOptionalChain(node *ast.Node, trueTarget *ast.FlowLabel, falseTarget *ast.FlowLabel) {
@@ -3686,11 +5681,23 @@ export function Binder_bindOptionalChainFlow(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindOptionalChain(receiver: GoPtr<Binder>, node: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChain");
+  let preChainLabel: GoPtr<FlowLabel>;
+  if (IsOptionalChainRoot(node)) {
+    preChainLabel = Binder_createBranchLabel(receiver);
+  }
+  Binder_bindOptionalExpression(receiver, Node_Expression(node), IfElse(preChainLabel !== undefined, preChainLabel!, trueTarget) as GoPtr<FlowLabel>, falseTarget);
+  if (preChainLabel !== undefined) {
+    receiver!.currentFlow = Binder_finishFlowLabel(receiver, preChainLabel);
+  }
+  Binder_doWithConditionalBranches(receiver, Binder_bindOptionalChainRest, node, trueTarget, falseTarget);
+  if (IsOutermostOptionalChain(node)) {
+    Binder_addAntecedent(receiver, trueTarget!, Binder_createFlowCondition(receiver, FlowFlagsTrueCondition, receiver!.currentFlow!, node)!);
+    Binder_addAntecedent(receiver, falseTarget!, Binder_createFlowCondition(receiver, FlowFlagsFalseCondition, receiver!.currentFlow!, node)!);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalExpression","kind":"method","status":"stub","sigHash":"1da19a095155b80b1b260170912bf48d8b88944f68b5bf3cdd9a817422f05fe9","bodyHash":"77a997bd87e482445a60614b0e8db5f217c7b14157ccd9b1ddaaf89afafafb90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalExpression","kind":"method","status":"implemented","sigHash":"1da19a095155b80b1b260170912bf48d8b88944f68b5bf3cdd9a817422f05fe9","bodyHash":"77a997bd87e482445a60614b0e8db5f217c7b14157ccd9b1ddaaf89afafafb90"}
  *
  * Go source:
  * func (b *Binder) bindOptionalExpression(node *ast.Node, trueTarget *ast.FlowLabel, falseTarget *ast.FlowLabel) {
@@ -3702,11 +5709,15 @@ export function Binder_bindOptionalChain(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_bindOptionalExpression(receiver: GoPtr<Binder>, node: GoPtr<Node>, trueTarget: GoPtr<FlowLabel>, falseTarget: GoPtr<FlowLabel>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalExpression");
+  Binder_doWithConditionalBranches(receiver, Binder_bind, node, trueTarget, falseTarget);
+  if (!IsOptionalChain(node) || IsOutermostOptionalChain(node)) {
+    Binder_addAntecedent(receiver, trueTarget!, Binder_createFlowCondition(receiver, FlowFlagsTrueCondition, receiver!.currentFlow!, node)!);
+    Binder_addAntecedent(receiver, falseTarget!, Binder_createFlowCondition(receiver, FlowFlagsFalseCondition, receiver!.currentFlow!, node)!);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainRest","kind":"method","status":"stub","sigHash":"bec8ae94365270f1eb05ccfdf85c934d1df88fd99ae72f6d48d21c5043f3e6b6","bodyHash":"b2063678ea63415327b3c8f5db1d7edf096482822a46c36e0ffd90a4eec76053"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainRest","kind":"method","status":"implemented","sigHash":"bec8ae94365270f1eb05ccfdf85c934d1df88fd99ae72f6d48d21c5043f3e6b6","bodyHash":"b2063678ea63415327b3c8f5db1d7edf096482822a46c36e0ffd90a4eec76053"}
  *
  * Go source:
  * func (b *Binder) bindOptionalChainRest(node *ast.Node) bool {
@@ -3726,11 +5737,26 @@ export function Binder_bindOptionalExpression(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function Binder_bindOptionalChainRest(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindOptionalChainRest");
+  switch (node!.Kind) {
+    case KindPropertyAccessExpression:
+      Binder_bind(receiver, Node_QuestionDotToken(node));
+      Binder_bind(receiver, Node_Name(node));
+      break;
+    case KindElementAccessExpression:
+      Binder_bind(receiver, Node_QuestionDotToken(node));
+      Binder_bind(receiver, AsElementAccessExpression(node)!.ArgumentExpression as unknown as GoPtr<Node>);
+      break;
+    case KindCallExpression:
+      Binder_bind(receiver, Node_QuestionDotToken(node));
+      Binder_bindNodeList(receiver, Node_TypeArgumentList(node));
+      Binder_bindEach(receiver, Node_Arguments(node) ?? []);
+      break;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpressionFlow","kind":"method","status":"stub","sigHash":"fc53baa9ee9b5a8cf2f6729a0030f59b72da8e525ca16f5a3820a51a4d276c78","bodyHash":"78b87c3846286322fca3e0f7d6db35695f0a8d7ff1a50075f440d97782e16123"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpressionFlow","kind":"method","status":"implemented","sigHash":"fc53baa9ee9b5a8cf2f6729a0030f59b72da8e525ca16f5a3820a51a4d276c78","bodyHash":"78b87c3846286322fca3e0f7d6db35695f0a8d7ff1a50075f440d97782e16123"}
  *
  * Go source:
  * func (b *Binder) bindCallExpressionFlow(node *ast.Node) {
@@ -3762,11 +5788,32 @@ export function Binder_bindOptionalChainRest(receiver: GoPtr<Binder>, node: GoPt
  * }
  */
 export function Binder_bindCallExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpressionFlow");
+  const call = AsCallExpression(node);
+  if (IsOptionalChain(node)) {
+    Binder_bindOptionalChainFlow(receiver, node);
+  } else {
+    const expr = SkipParentheses(call!.Expression as unknown as GoPtr<Node>);
+    if (expr!.Kind === KindFunctionExpression || expr!.Kind === KindArrowFunction) {
+      Binder_bindNodeList(receiver, call!.TypeArguments as unknown as GoPtr<NodeList>);
+      Binder_bindEach(receiver, call!.Arguments!.Nodes ?? []);
+      Binder_bind(receiver, call!.Expression as unknown as GoPtr<Node>);
+    } else {
+      Binder_bindEachChild(receiver, node);
+      if (call!.Expression!.Kind === KindSuperKeyword) {
+        receiver!.currentFlow = Binder_createFlowCall(receiver, receiver!.currentFlow!, node);
+      }
+    }
+  }
+  if (IsPropertyAccessExpression(call!.Expression as unknown as GoPtr<Node>)) {
+    const access = AsPropertyAccessExpression(call!.Expression as unknown as GoPtr<Node>);
+    if (IsIdentifier(access!.name as unknown as GoPtr<Node>) && isNarrowableOperand(access!.Expression as unknown as GoPtr<Node>) && IsPushOrUnshiftIdentifier(access!.name as unknown as GoPtr<Node>)) {
+      receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsArrayMutation, receiver!.currentFlow!, node);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNonNullExpressionFlow","kind":"method","status":"stub","sigHash":"66b835a73422a0b9264a9769b3bb64e5d2c10c752c0de18b3a59703fba354841","bodyHash":"fc611e8a3d4a8a705e76c49935511be79f1270b3fd36d5087e89e1f4895aa87a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNonNullExpressionFlow","kind":"method","status":"implemented","sigHash":"66b835a73422a0b9264a9769b3bb64e5d2c10c752c0de18b3a59703fba354841","bodyHash":"fc611e8a3d4a8a705e76c49935511be79f1270b3fd36d5087e89e1f4895aa87a"}
  *
  * Go source:
  * func (b *Binder) bindNonNullExpressionFlow(node *ast.Node) {
@@ -3778,11 +5825,15 @@ export function Binder_bindCallExpressionFlow(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function Binder_bindNonNullExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNonNullExpressionFlow");
+  if (IsOptionalChain(node)) {
+    Binder_bindOptionalChainFlow(receiver, node);
+  } else {
+    Binder_bindEachChild(receiver, node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBindingElementFlow","kind":"method","status":"stub","sigHash":"95476ce26441b1eb79b9c493935eb062f8302e5b538ab3a2988247bc4efdc79b","bodyHash":"13a727fa63a988862c85ec95a374748c77ba480d03f26ff9d646768f2e7d5791"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBindingElementFlow","kind":"method","status":"implemented","sigHash":"95476ce26441b1eb79b9c493935eb062f8302e5b538ab3a2988247bc4efdc79b","bodyHash":"13a727fa63a988862c85ec95a374748c77ba480d03f26ff9d646768f2e7d5791"}
  *
  * Go source:
  * func (b *Binder) bindBindingElementFlow(node *ast.Node) {
@@ -3799,11 +5850,15 @@ export function Binder_bindNonNullExpressionFlow(receiver: GoPtr<Binder>, node: 
  * }
  */
 export function Binder_bindBindingElementFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBindingElementFlow");
+  const elem = AsBindingElement(node);
+  Binder_bind(receiver, elem!.DotDotDotToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, elem!.PropertyName as unknown as GoPtr<Node>);
+  Binder_bindInitializer(receiver, elem!.Initializer as unknown as GoPtr<Node>);
+  Binder_bind(receiver, Node_Name(node));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameterFlow","kind":"method","status":"stub","sigHash":"59feaa0a1617fd1f2d95e2a0f6b0056442a9aa3d9323ebc7ba7fe337dded6d72","bodyHash":"39bf29fd8ca62718c79e6d62420398c58452339757a42ecb893ed835841e0792"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameterFlow","kind":"method","status":"implemented","sigHash":"59feaa0a1617fd1f2d95e2a0f6b0056442a9aa3d9323ebc7ba7fe337dded6d72","bodyHash":"39bf29fd8ca62718c79e6d62420398c58452339757a42ecb893ed835841e0792"}
  *
  * Go source:
  * func (b *Binder) bindParameterFlow(node *ast.Node) {
@@ -3817,11 +5872,17 @@ export function Binder_bindBindingElementFlow(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function Binder_bindParameterFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameterFlow");
+  const param = AsParameterDeclaration(node);
+  Binder_bindModifiers(receiver, Node_Modifiers(node));
+  Binder_bind(receiver, param!.DotDotDotToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, param!.QuestionToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, param!.Type as unknown as GoPtr<Node>);
+  Binder_bindInitializer(receiver, param!.Initializer as unknown as GoPtr<Node>);
+  Binder_bind(receiver, Node_Name(node));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializer","kind":"method","status":"stub","sigHash":"bd53a15be84ba8c0a1f068639980791b854c7b91c0a9145081ea5a78d0ad0ee6","bodyHash":"2c013f15f65d422eb4498fe06fce206bf6054f4a68af3ebaac853a1b83c9b691"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializer","kind":"method","status":"implemented","sigHash":"bd53a15be84ba8c0a1f068639980791b854c7b91c0a9145081ea5a78d0ad0ee6","bodyHash":"2c013f15f65d422eb4498fe06fce206bf6054f4a68af3ebaac853a1b83c9b691"}
  *
  * Go source:
  * func (b *Binder) bindInitializer(node *ast.Node) {
@@ -3840,11 +5901,22 @@ export function Binder_bindParameterFlow(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_bindInitializer(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindInitializer");
+  if (node === undefined) {
+    return;
+  }
+  const entryFlow = receiver!.currentFlow;
+  Binder_bind(receiver, node);
+  if (entryFlow === receiver!.unreachableFlow || entryFlow === receiver!.currentFlow) {
+    return;
+  }
+  const exitFlow = Binder_createBranchLabel(receiver);
+  Binder_addAntecedent(receiver, exitFlow!, entryFlow!);
+  Binder_addAntecedent(receiver, exitFlow!, receiver!.currentFlow!);
+  receiver!.currentFlow = Binder_finishFlowLabel(receiver, exitFlow);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNode","kind":"func","status":"stub","sigHash":"419497b1b40ef89e848e669f459a8167afffaefad03726304863bb1c41da067d","bodyHash":"9245d745151a491d5d4ad6d433541b4c3e54a8f846b989b38df7093af1b922f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNode","kind":"func","status":"implemented","sigHash":"419497b1b40ef89e848e669f459a8167afffaefad03726304863bb1c41da067d","bodyHash":"9245d745151a491d5d4ad6d433541b4c3e54a8f846b989b38df7093af1b922f9"}
  *
  * Go source:
  * func setFlowNode(node *ast.Node, flowNode *ast.FlowNode) {
@@ -3855,11 +5927,14 @@ export function Binder_bindInitializer(receiver: GoPtr<Binder>, node: GoPtr<Node
  * }
  */
 export function setFlowNode(node: GoPtr<Node>, flowNode: GoPtr<FlowNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNode");
+  const data = Node_FlowNodeData(node);
+  if (data !== undefined) {
+    (data as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode = flowNode;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setReturnFlowNode","kind":"func","status":"stub","sigHash":"26b0a3a8b77c7ab5aace20bcfe80ea88b35dc7b51355b59868a94e0a4538de1a","bodyHash":"2d440df1fd042f6b76cc95db50af2737b82cb277433002f4c69d8129c85890d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setReturnFlowNode","kind":"func","status":"implemented","sigHash":"26b0a3a8b77c7ab5aace20bcfe80ea88b35dc7b51355b59868a94e0a4538de1a","bodyHash":"2d440df1fd042f6b76cc95db50af2737b82cb277433002f4c69d8129c85890d2"}
  *
  * Go source:
  * func setReturnFlowNode(node *ast.Node, returnFlowNode *ast.FlowNode) {
@@ -3876,7 +5951,20 @@ export function setFlowNode(node: GoPtr<Node>, flowNode: GoPtr<FlowNode>): void 
  * }
  */
 export function setReturnFlowNode(node: GoPtr<Node>, returnFlowNode: GoPtr<FlowNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::setReturnFlowNode");
+  switch (node!.Kind) {
+    case KindConstructor:
+      (AsConstructorDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      break;
+    case KindFunctionDeclaration:
+      (AsFunctionDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      break;
+    case KindFunctionExpression:
+      (AsFunctionExpression(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      break;
+    case KindClassStaticBlockDeclaration:
+      (AsClassStaticBlockDeclaration(node) as unknown as Record<string, GoPtr<FlowNode>>)["ReturnFlowNode"] = returnFlowNode;
+      break;
+  }
 }
 
 /**
@@ -3892,7 +5980,7 @@ export function isGeneratorFunctionExpression(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addToContainerChain","kind":"method","status":"stub","sigHash":"aeb651d5647a658340b4a7dd4beb516279d51d60e7907f1993fdf4a0cf5344df","bodyHash":"8eaca857699108b0d6c1d295645872fe7ec8cdcd86253de88bd8982c2f4a26ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addToContainerChain","kind":"method","status":"implemented","sigHash":"aeb651d5647a658340b4a7dd4beb516279d51d60e7907f1993fdf4a0cf5344df","bodyHash":"8eaca857699108b0d6c1d295645872fe7ec8cdcd86253de88bd8982c2f4a26ee"}
  *
  * Go source:
  * func (b *Binder) addToContainerChain(next *ast.Node) {
@@ -3903,11 +5991,14 @@ export function isGeneratorFunctionExpression(node: GoPtr<Node>): bool {
  * }
  */
 export function Binder_addToContainerChain(receiver: GoPtr<Binder>, next: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addToContainerChain");
+  if (receiver!.lastContainer !== undefined) {
+    (Node_LocalsContainerData(receiver!.lastContainer) as unknown as { NextContainer?: GoPtr<Node> })!.NextContainer = next;
+  }
+  receiver!.lastContainer = next;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDeclarationToSymbol","kind":"method","status":"stub","sigHash":"ffc46cf8f996d846ddb045dcdc1dae5ca52203ab5e348d041ebf8cac53e07e7a","bodyHash":"2fe420510ccb963c97afb2178df44984804acd81cc6cdd4ebe7efa4c6c22c3fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDeclarationToSymbol","kind":"method","status":"implemented","sigHash":"ffc46cf8f996d846ddb045dcdc1dae5ca52203ab5e348d041ebf8cac53e07e7a","bodyHash":"2fe420510ccb963c97afb2178df44984804acd81cc6cdd4ebe7efa4c6c22c3fd"}
  *
  * Go source:
  * func (b *Binder) addDeclarationToSymbol(symbol *ast.Symbol, node *ast.Node, symbolFlags ast.SymbolFlags) {
@@ -3929,7 +6020,20 @@ export function Binder_addToContainerChain(receiver: GoPtr<Binder>, next: GoPtr<
  * }
  */
 export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: GoPtr<Symbol>, node: GoPtr<Node>, symbolFlags: SymbolFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDeclarationToSymbol");
+  symbol_!.Flags = (symbol_!.Flags | symbolFlags) as SymbolFlags;
+  (Node_DeclarationData(node) as unknown as { Symbol?: GoPtr<Symbol> })!.Symbol = symbol_;
+  if (symbol_!.Declarations === undefined || symbol_!.Declarations.length === 0) {
+    symbol_!.Declarations = Binder_newSingleDeclaration(receiver, node);
+  } else {
+    symbol_!.Declarations = AppendIfUnique(symbol_!.Declarations, node);
+  }
+  if ((symbol_!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0 && (symbol_!.Flags & (SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum)) !== 0) {
+    symbol_!.Flags = (symbol_!.Flags & ~SymbolFlagsConstEnumOnlyModule) as SymbolFlags;
+    Set_Add(receiver!.notConstEnumOnlyModules, symbol_!);
+  }
+  if ((symbolFlags & SymbolFlagsValue) !== 0) {
+    SetValueDeclaration(symbol_, node);
+  }
 }
 
 /**
@@ -4339,7 +6443,7 @@ export function isNarrowingTypeOfOperands(expr1: GoPtr<Node>, expr2: GoPtr<Node>
  * }
  */
 export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnNode");
+  Binder_addDiagnostic(receiver, Binder_createDiagnosticForNode(receiver, node, message, ...args));
 }
 
 /**
@@ -4352,7 +6456,8 @@ export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, m
  * }
  */
 export function Binder_errorOnFirstToken(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnFirstToken");
+  const span = GetRangeOfTokenAtPosition(receiver!.file, Node_Pos(node));
+  Binder_addDiagnostic(receiver, NewDiagnostic(receiver!.file, span, message, ...args));
 }
 
 /**
@@ -4364,7 +6469,7 @@ export function Binder_errorOnFirstToken(receiver: GoPtr<Binder>, node: GoPtr<No
  * }
  */
 export function Binder_errorOrSuggestionOnNode(receiver: GoPtr<Binder>, isError: bool, node: GoPtr<Node>, message: GoPtr<Message>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnNode");
+  Binder_errorOrSuggestionOnRange(receiver, isError, node, node, message);
 }
 
 /**
@@ -4383,7 +6488,14 @@ export function Binder_errorOrSuggestionOnNode(receiver: GoPtr<Binder>, isError:
  * }
  */
 export function Binder_errorOrSuggestionOnRange(receiver: GoPtr<Binder>, isError: bool, startNode: GoPtr<Node>, endNode: GoPtr<Node>, message: GoPtr<Message>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnRange");
+  const textRange = NewTextRange(GetRangeOfTokenAtPosition(receiver!.file, Node_Pos(startNode)).pos, Node_End(endNode));
+  const diagnostic = NewDiagnostic(receiver!.file, textRange, message);
+  if (isError) {
+    Binder_addDiagnostic(receiver, diagnostic);
+  } else {
+    Diagnostic_SetCategory(diagnostic, CategorySuggestion);
+    receiver!.file!.BindSuggestionDiagnostics = [...(receiver!.file!.BindSuggestionDiagnostics ?? []), diagnostic!];
+  }
 }
 
 /**
@@ -4395,7 +6507,7 @@ export function Binder_errorOrSuggestionOnRange(receiver: GoPtr<Binder>, isError
  * }
  */
 export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createDiagnosticForNode");
+  return NewDiagnostic(receiver!.file, GetErrorRangeForNode(receiver!.file, node), message, ...args);
 }
 
 /**
@@ -4407,7 +6519,7 @@ export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: Go
  * }
  */
 export function Binder_addDiagnostic(receiver: GoPtr<Binder>, diagnostic: GoPtr<Diagnostic>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDiagnostic");
+  SourceFile_SetBindDiagnostics(receiver!.file, [...SourceFile_BindDiagnostics(receiver!.file)!, diagnostic!]);
 }
 
 /**

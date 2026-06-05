@@ -177,7 +177,7 @@ function newSyncSet<T>(): SyncSet<T> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher","kind":"func","status":"implemented","sigHash":"0e2d5121c1d046397f1a7ddb5f201fd49b57844625e305771faf15d864d02e49","bodyHash":"3d1989a8ae55a6bff236d90d814008c3c4126956c874c07741b4eafdd19efed4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher","kind":"func","status":"stub","sigHash":"0e2d5121c1d046397f1a7ddb5f201fd49b57844625e305771faf15d864d02e49","bodyHash":"3d1989a8ae55a6bff236d90d814008c3c4126956c874c07741b4eafdd19efed4"}
  *
  * Go source:
  * func createWatcher(
@@ -211,34 +211,7 @@ function newSyncSet<T>(): SyncSet<T> {
  * }
  */
 export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting): GoPtr<Watcher> {
-  const w: Watcher = {
-    mu: undefined as never,
-    sys: sys,
-    configFileName: "",
-    config: configParseResult,
-    compilerOptionsFromCommandLine: compilerOptionsFromCommandLine,
-    reportDiagnostic: reportDiagnostic,
-    reportErrorSummary: reportErrorSummary,
-    reportWatchStatus: CreateWatchStatusReporter(sys, ParsedCommandLine_Locale(configParseResult), ParsedCommandLine_CompilerOptions(configParseResult), testing),
-    testing: testing,
-    program: undefined,
-    extendedConfigCache: undefined,
-    configModified: false,
-    configHasErrors: false,
-    configFilePaths: [],
-    sourceFileCache: newSyncMap(),
-    fileWatcher: undefined,
-  };
-  if (configParseResult!.ConfigFile !== undefined) {
-    w.configFileName = configParseResult!.ConfigFile!.SourceFile!.parseOptions.FileName;
-  }
-  w.fileWatcher = NewFileWatcher(
-    sys.FS(),
-    WatchOptions_WatchInterval(configParseResult!.ParsedConfig!.WatchOptions),
-    testing !== undefined,
-    () => Watcher_DoCycle(w),
-  );
-  return w;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher");
 }
 
 /**

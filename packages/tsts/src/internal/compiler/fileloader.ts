@@ -275,7 +275,7 @@ export interface DuplicateSourceFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8284e921f9f925885aeaa798132fe24f86ec0403613b3a5953059d91a14dc916"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8284e921f9f925885aeaa798132fe24f86ec0403613b3a5953059d91a14dc916"}
  *
  * Go source:
  * var _ ast.HasFileName = (*redirectsFile)(nil)
@@ -377,7 +377,7 @@ export interface jsxRuntimeImportSpecifier {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::func::processAllProgramFiles","kind":"func","status":"implemented","sigHash":"e38059a13537c31d50a7ef49c7d0d511f7b51bcbfa1e1375a459fe88a6b62a6f","bodyHash":"b704a34feaf4326ab708bb87a49091eb52d93663900e8c5e49fd2b83a70e2d46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::func::processAllProgramFiles","kind":"func","status":"stub","sigHash":"e38059a13537c31d50a7ef49c7d0d511f7b51bcbfa1e1375a459fe88a6b62a6f","bodyHash":"b704a34feaf4326ab708bb87a49091eb52d93663900e8c5e49fd2b83a70e2d46"}
  *
  * Go source:
  * func processAllProgramFiles(
@@ -446,78 +446,7 @@ export interface jsxRuntimeImportSpecifier {
  * }
  */
 export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: bool): processedFiles {
-  const compilerOptions = ParsedCommandLine_CompilerOptions(opts.Config);
-  const rootFiles = ParsedCommandLine_FileNames(opts.Config);
-  const supportedExtensions = GetSupportedExtensions(compilerOptions, undefined as never);
-  const supportedExtensionsWithJsonIfResolveJsonModule = GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOptions, supportedExtensions);
-  let maxNodeModuleJsDepth: int = 0;
-  const p = ParsedCommandLine_CompilerOptions(opts.Config)!.MaxNodeModuleJsDepth;
-  if (p !== undefined) {
-    maxNodeModuleJsDepth = p;
-  }
-  const loader: fileLoader = {
-    opts,
-    resolver: undefined,
-    defaultLibraryPath: GetNormalizedAbsolutePath(opts.Host.DefaultLibraryPath(), opts.Host.GetCurrentDirectory()),
-    comparePathsOptions: {
-      UseCaseSensitiveFileNames: opts.Host.FS().UseCaseSensitiveFileNames(),
-      CurrentDirectory: opts.Host.GetCurrentDirectory(),
-    },
-    filesParser: {
-      wg: NewWorkGroup(singleThreaded),
-      maxDepth: maxNodeModuleJsDepth,
-    } as unknown as filesParser,
-    rootTasks: [],
-    supportedExtensions,
-    supportedExtensionsWithJsonIfResolveJsonModule,
-    totalFileCount: undefined as never,
-    libFileCount: undefined as never,
-    factoryMu: undefined as never,
-    factory: undefined as never,
-    projectReferenceFileMapper: undefined as never,
-    dtsDirectories: undefined as never,
-    pathForLibFileCache: undefined as never,
-    pathForLibFileResolutions: undefined as never,
-  };
-  fileLoader_addProjectReferenceTasks(loader, singleThreaded);
-  loader.resolver = NewResolver(loader.projectReferenceFileMapper!.host, compilerOptions, opts.TypingsLocation, opts.ProjectName);
-  let traceDone: (() => void) | undefined;
-  if (opts.Tracing !== undefined) {
-    traceDone = Tracing_Push(opts.Tracing, PhaseProgram, "processRootFiles", new globalThis.Map([["count", rootFiles.length]]), false);
-  }
-  try {
-    for (let index = 0; index < rootFiles.length; index++) {
-      const rootFile = rootFiles[index]!;
-      fileLoader_addRootTask(loader, rootFile, undefined, { kind: fileIncludeKindRootFile, data: index, relativeFileNameDiag: undefined, relativeFileNameDiagOnce: new OnceImpl(), diag: undefined, diagOnce: new OnceImpl() });
-    }
-    if (rootFiles.length > 0 && Tristate_IsFalseOrUnknown(compilerOptions!.NoLib)) {
-      if (compilerOptions!.Lib === undefined) {
-        const name = GetDefaultLibFileName(compilerOptions);
-        const libFile = fileLoader_pathForLibFile(loader, name);
-        fileLoader_addRootTask(loader, libFile!.path, libFile, { kind: fileIncludeKindLibFile, data: undefined, relativeFileNameDiag: undefined, relativeFileNameDiagOnce: new OnceImpl(), diag: undefined, diagOnce: new OnceImpl() });
-      } else {
-        for (let index = 0; index < compilerOptions!.Lib.length; index++) {
-          const lib = compilerOptions!.Lib[index]!;
-          const [name, ok] = GetLibFileName(lib);
-          if (ok) {
-            const libFile = fileLoader_pathForLibFile(loader, name);
-            fileLoader_addRootTask(loader, libFile!.path, libFile, { kind: fileIncludeKindLibFile, data: index, relativeFileNameDiag: undefined, relativeFileNameDiagOnce: new OnceImpl(), diag: undefined, diagOnce: new OnceImpl() });
-          }
-        }
-      }
-    }
-    if (rootFiles.length > 0) {
-      fileLoader_addAutomaticTypeDirectiveTasks(loader);
-    }
-  } finally {
-    if (traceDone !== undefined) {
-      traceDone();
-    }
-  }
-  filesParser_parse(loader.filesParser, loader, loader.rootTasks);
-  loader.projectReferenceFileMapper!.loader = undefined;
-  loader.projectReferenceFileMapper!.host = undefined as never;
-  return filesParser_getProcessedFiles(loader.filesParser, loader);
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/fileloader.go::func::processAllProgramFiles");
 }
 
 /**
@@ -593,7 +522,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveAutomaticTypeDirectives","kind":"method","status":"implemented","sigHash":"d5630a21f4c873881f4d09a4a659e797d51c13879d5787cde8b7fc03204fb7e2","bodyHash":"4c2ad4bce41cf4536367bc81da99da3c94ecf47ceed7318cfd12d0c9d62752a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveAutomaticTypeDirectives","kind":"method","status":"stub","sigHash":"d5630a21f4c873881f4d09a4a659e797d51c13879d5787cde8b7fc03204fb7e2","bodyHash":"4c2ad4bce41cf4536367bc81da99da3c94ecf47ceed7318cfd12d0c9d62752a2"}
  *
  * Go source:
  * func (p *fileLoader) resolveAutomaticTypeDirectives(containingFileName string) (
@@ -650,61 +579,7 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
  * }
  */
 export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLoader>, containingFileName: string): [GoSlice<resolvedRef>, ModeAwareCache, GoSlice<DiagAndArgs>, GoSlice<GoPtr<processingDiagnostic>>] {
-  let toParse: GoSlice<resolvedRef> = [];
-  let typeResolutionsInFile: ModeAwareCache = undefined as never;
-  let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
-  let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = [];
-  const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
-  if (automaticTypeDirectiveNames.length !== 0) {
-    toParse = [];
-    typeResolutionsInFile = new Map();
-    for (const name of automaticTypeDirectiveNames) {
-      const resolutionMode = ResolutionModeNone;
-      const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, name, containingFileName, resolutionMode, undefined as never);
-      let traceDone: (() => void) | undefined;
-      if (receiver!.opts.Tracing !== undefined) {
-        traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]), false);
-      }
-      typeResolutionsInFile.set({ Name: name, Mode: resolutionMode }, resolved);
-      typeResolutionsTrace = [...typeResolutionsTrace, ...trace];
-      if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
-        toParse.push({
-          fileName: resolved!.ResolvedFileName,
-          increaseDepth: resolved!.IsExternalLibraryImport,
-          elideOnDepth: false,
-          includeReason: {
-            kind: fileIncludeKindAutomaticTypeDirectiveFile,
-            data: { typeReference: name, packageId: resolved!.PackageId } as automaticTypeDirectiveFileData,
-            relativeFileNameDiag: undefined,
-            relativeFileNameDiagOnce: new OnceImpl(),
-            diag: undefined,
-            diagOnce: new OnceImpl(),
-          },
-          packageId: resolved!.PackageId,
-        });
-      } else {
-        pDiagnostics.push({
-          kind: processingDiagnosticKindExplainingFileInclude,
-          data: {
-            diagnosticReason: {
-              kind: fileIncludeKindAutomaticTypeDirectiveFile,
-              data: { typeReference: name } as automaticTypeDirectiveFileData,
-              relativeFileNameDiag: undefined,
-              relativeFileNameDiagOnce: new OnceImpl(),
-              diag: undefined,
-              diagOnce: new OnceImpl(),
-            },
-            message: diagnostics.Cannot_find_type_definition_file_for_0,
-            args: [name],
-          } as includeExplainingDiagnostic,
-        });
-      }
-      if (traceDone !== undefined) {
-        traceDone();
-      }
-    }
-  }
-  return [toParse, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics];
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveAutomaticTypeDirectives");
 }
 
 /**
@@ -1079,7 +954,7 @@ export function fileLoader_resolveTripleslashPathReference(receiver: GoPtr<fileL
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveTypeReferenceDirectives","kind":"method","status":"implemented","sigHash":"3ceb6eaf8b39721cdbeb0a7e0db48b1fbb489ceffa7421c841664b85ec63b78f","bodyHash":"550e99bd1dd2f8aeb163ec0c22c09029fdeed846c49f65566949512cf48ba359"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveTypeReferenceDirectives","kind":"method","status":"stub","sigHash":"3ceb6eaf8b39721cdbeb0a7e0db48b1fbb489ceffa7421c841664b85ec63b78f","bodyHash":"550e99bd1dd2f8aeb163ec0c22c09029fdeed846c49f65566949512cf48ba359"}
  *
  * Go source:
  * func (p *fileLoader) resolveTypeReferenceDirectives(t *parseTask) {
@@ -1136,63 +1011,7 @@ export function fileLoader_resolveTripleslashPathReference(receiver: GoPtr<fileL
  * }
  */
 export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLoader>, t: GoPtr<parseTask>): void {
-  const file = t!.file;
-  if (file!.TypeReferenceDirectives.length === 0) {
-    return;
-  }
-  let traceDone: (() => void) | undefined;
-  if (receiver!.opts.Tracing !== undefined) {
-    traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "resolveTypeReferenceDirectiveNamesWorker", new globalThis.Map([["containingFileName", SourceFile_FileName(file)]]), false);
-  }
-  const meta = t!.metadata;
-  const typeResolutionsInFile: ModeAwareCache = new Map();
-  let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
-  for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
-    const ref = file!.TypeReferenceDirectives[index];
-    const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(SourceFile_FileName(file), SourceFile_Path(file)));
-    const redirectRef = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined as never;
-    const resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, meta, GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectRef));
-    const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, ref!.FileName, fileName, resolutionMode, redirectRef);
-    let innerTraceDone: (() => void) | undefined;
-    if (receiver!.opts.Tracing !== undefined) {
-      innerTraceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", ref!.FileName], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindTypeReferenceDirective], ["refPath", globalThis.String(t!.path)]]), false);
-    }
-    typeResolutionsInFile.set({ Name: ref!.FileName, Mode: resolutionMode }, resolved);
-    const includeReason: FileIncludeReason = {
-      kind: fileIncludeKindTypeReferenceDirective,
-      data: {
-        file: t!.path,
-        index,
-      } as referencedFileData,
-      relativeFileNameDiag: undefined,
-      relativeFileNameDiagOnce: new OnceImpl(),
-      diag: undefined,
-      diagOnce: new OnceImpl(),
-    };
-    typeResolutionsTrace = [...typeResolutionsTrace, ...trace];
-    if (ResolvedTypeReferenceDirective_IsResolved(resolved)) {
-      parseTask_addSubTask(t, {
-        fileName: resolved!.ResolvedFileName,
-        increaseDepth: resolved!.IsExternalLibraryImport,
-        elideOnDepth: false,
-        includeReason,
-        packageId: resolved!.PackageId,
-      }, undefined);
-    } else {
-      t!.processingDiagnostics.push({
-        kind: processingDiagnosticKindUnknownReference,
-        data: includeReason,
-      });
-    }
-    if (innerTraceDone !== undefined) {
-      innerTraceDone();
-    }
-  }
-  t!.typeResolutionsInFile = typeResolutionsInFile;
-  t!.typeResolutionsTrace = typeResolutionsTrace;
-  if (traceDone !== undefined) {
-    traceDone();
-  }
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveTypeReferenceDirectives");
 }
 
 /**
@@ -1204,7 +1023,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
 export const externalHelpersModuleNameText: string = "tslib";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"87087a4d8389e42965513b4553f0d28856760b96b9ccdb8bbbcfa7424eedfd41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"stub","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"87087a4d8389e42965513b4553f0d28856760b96b9ccdb8bbbcfa7424eedfd41"}
  *
  * Go source:
  * func (p *fileLoader) resolveImportsAndModuleAugmentations(t *parseTask) {
@@ -1312,104 +1131,7 @@ export const externalHelpersModuleNameText: string = "tslib";
  * }
  */
 export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<fileLoader>, t: GoPtr<parseTask>): void {
-  let traceDone: (() => void) | undefined;
-  if (receiver!.opts.Tracing !== undefined) {
-    traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "resolveModuleNamesWorker", new globalThis.Map([["containingFileName", SourceFile_FileName(t!.file)]]), false);
-  }
-  try {
-    const file = t!.file;
-    const meta = t!.metadata;
-    const moduleNames: GoSlice<GoPtr<Node>> = [];
-    const isJavaScriptFile = IsSourceFileJS(file);
-    const isExternalModuleFile = IsExternalModule(file);
-    const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(SourceFile_FileName(file), SourceFile_Path(file)));
-    const redirectRef = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined as never;
-    const optionsForFile = GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectRef);
-    if (isJavaScriptFile || (!file!.IsDeclarationFile && (CompilerOptions_GetIsolatedModules(optionsForFile) || isExternalModuleFile))) {
-      if (Tristate_IsTrue(optionsForFile!.ImportHelpers)) {
-        const specifier = fileLoader_createSyntheticImport(receiver, externalHelpersModuleNameText, file);
-        moduleNames.push(specifier as unknown as GoPtr<Node>);
-        t!.importHelpersImportSpecifier = specifier;
-      }
-    }
-    if (file!.ScriptKind === ScriptKindJSX || file!.ScriptKind === ScriptKindTSX) {
-      const jsxImport = GetJSXRuntimeImport(GetJSXImplicitImportBase(optionsForFile, file), optionsForFile);
-      if (jsxImport !== "") {
-        const specifier = fileLoader_createSyntheticImport(receiver, jsxImport, file);
-        moduleNames.push(specifier as unknown as GoPtr<Node>);
-        t!.jsxRuntimeImportSpecifier = {
-          moduleReference: jsxImport,
-          specifier,
-        };
-      }
-    }
-    const importsStart = moduleNames.length;
-    const fileImports = SourceFile_Imports(file);
-    for (const imp of fileImports) {
-      moduleNames.push(imp);
-    }
-    for (const imp of file!.ModuleAugmentations) {
-      if (imp!.Kind === KindStringLiteral) {
-        moduleNames.push(imp);
-      }
-    }
-    if (moduleNames.length !== 0) {
-      const resolutionsInFile: ModeAwareCache = new Map();
-      let resolutionsTrace: GoSlice<DiagAndArgs> = [];
-      for (let index = 0; index < moduleNames.length; index++) {
-        const entry = moduleNames[index];
-        const moduleName = Node_Text(entry);
-        if (moduleName === "") {
-          continue;
-        }
-        const mode = getModeForUsageLocation(SourceFile_FileName(file), meta, entry as GoPtr<StringLiteralLike>, optionsForFile);
-        const [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectRef);
-        resolutionsInFile.set({ Name: moduleName, Mode: mode }, resolvedModule);
-        resolutionsTrace = [...resolutionsTrace, ...trace];
-        if (!ResolvedModule_IsResolved(resolvedModule)) {
-          continue;
-        }
-        const resolvedFileName = resolvedModule!.ResolvedFileName;
-        const isFromNodeModulesSearch = resolvedModule!.IsExternalLibraryImport;
-        const isJsFile = !FileExtensionIsOneOf(resolvedFileName, SupportedTSExtensionsWithJsonFlat as GoSlice<string>) &&
-          projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(resolvedFileName, fileLoader_toPath(receiver, resolvedFileName))) === undefined;
-        const isJsFileFromNodeModules = isFromNodeModulesSearch && isJsFile && strings.Contains(resolvedFileName, "/node_modules/");
-        const importIndex = index - importsStart;
-        const currentFileImports = SourceFile_Imports(file);
-        const shouldAddFile = moduleName !== "" &&
-          GetResolutionDiagnostic(optionsForFile, resolvedModule, file) === undefined &&
-          !Tristate_IsTrue(optionsForFile!.NoResolve) &&
-          !(isJsFile && !CompilerOptions_GetAllowJS(optionsForFile)) &&
-          (importIndex < 0 || (importIndex < currentFileImports.length && (IsInJSFile(currentFileImports[importIndex]) || (currentFileImports[importIndex]!.Flags & NodeFlagsJSDoc) === 0)));
-        if (shouldAddFile) {
-          parseTask_addSubTask(t, {
-            fileName: resolvedFileName,
-            increaseDepth: resolvedModule!.IsExternalLibraryImport,
-            elideOnDepth: isJsFileFromNodeModules,
-            includeReason: {
-              kind: fileIncludeKindImport,
-              data: {
-                file: t!.path,
-                index: importIndex,
-                synthetic: IfElse(importIndex < 0, entry, undefined as never),
-              } as referencedFileData,
-              relativeFileNameDiag: undefined,
-              relativeFileNameDiagOnce: new OnceImpl(),
-              diag: undefined,
-              diagOnce: new OnceImpl(),
-            },
-            packageId: resolvedModule!.PackageId,
-          }, undefined);
-        }
-      }
-      t!.resolutionsInFile = resolutionsInFile;
-      t!.resolutionsTrace = resolutionsTrace;
-    }
-  } finally {
-    if (traceDone !== undefined) {
-      traceDone();
-    }
-  }
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations");
 }
 
 /**
@@ -1495,7 +1217,7 @@ export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: str
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveLibrary","kind":"method","status":"implemented","sigHash":"39cc443bb78b3ec22b291425386d2286803c465de79b3999527058e33f976863","bodyHash":"3ddbfe4ac5194990404adaf2dc8a5806d8fe91eb7c58fe6c10bbe71ce35c8088"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveLibrary","kind":"method","status":"stub","sigHash":"39cc443bb78b3ec22b291425386d2286803c465de79b3999527058e33f976863","bodyHash":"3ddbfe4ac5194990404adaf2dc8a5806d8fe91eb7c58fe6c10bbe71ce35c8088"}
  *
  * Go source:
  * func (p *fileLoader) resolveLibrary(libraryName, resolveFrom string) (*module.ResolvedModule, []module.DiagAndArgs) {
@@ -1506,17 +1228,7 @@ export function fileLoader_pathForLibFile(receiver: GoPtr<fileLoader>, name: str
  * }
  */
 export function fileLoader_resolveLibrary(receiver: GoPtr<fileLoader>, libraryName: string, resolveFrom: string): [GoPtr<ResolvedModule>, GoSlice<DiagAndArgs>] {
-  let traceDone: (() => void) | undefined;
-  if (receiver!.opts.Tracing !== undefined) {
-    traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "resolveLibrary", new globalThis.Map([["resolveFrom", resolveFrom]]), false);
-  }
-  try {
-    return Resolver_ResolveModuleName(receiver!.resolver, libraryName, resolveFrom, ModuleKindCommonJS, undefined as never);
-  } finally {
-    if (traceDone !== undefined) {
-      traceDone();
-    }
-  }
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveLibrary");
 }
 
 /**

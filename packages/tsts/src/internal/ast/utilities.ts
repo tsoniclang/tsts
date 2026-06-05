@@ -4532,7 +4532,7 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements","kind":"func","status":"implemented","sigHash":"67ba33008c49a5e27f901d3c71680837142ebbb329ca49778d9bed1daa744542","bodyHash":"f2021f5553e964f53dab867a2467f5897558610bc9482835dff13adf8d486945"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements","kind":"func","status":"stub","sigHash":"67ba33008c49a5e27f901d3c71680837142ebbb329ca49778d9bed1daa744542","bodyHash":"f2021f5553e964f53dab867a2467f5897558610bc9482835dff13adf8d486945"}
  *
  * Go source:
  * func GetHeritageElements(node *Node, kind Kind) []*Node {
@@ -4544,11 +4544,7 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
  * }
  */
 export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
-  const clause: GoPtr<Node> = GetHeritageClause(node, kind);
-  if (clause !== undefined) {
-    return AsHeritageClause(clause)!.Types!.Nodes;
-  }
-  return undefined as never;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements");
 }
 
 /**
@@ -5970,7 +5966,7 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"implemented","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc","bodyHash":"57b2cbd6668f51b9a3db0b138956609013228247447d13fdce9277f92013b0e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"stub","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc","bodyHash":"57b2cbd6668f51b9a3db0b138956609013228247447d13fdce9277f92013b0e1"}
  *
  * Go source:
  * func popAncestor(ancestors []*Node, node *Node) ([]*Node, *Node) {
@@ -5982,11 +5978,7 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
  * }
  */
 export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>): [GoSlice<GoPtr<Node>>, GoPtr<Node>] {
-  if (ancestors.length === 0) {
-    return [undefined as never, node!.Parent];
-  }
-  const n: int = (ancestors.length - 1) as int;
-  return [ancestors.slice(0, n), ancestors[n]];
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor");
 }
 
 /**
@@ -6014,7 +6006,7 @@ export const ModuleInstanceStateInstantiated: ModuleInstanceState = 2 as ModuleI
 export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as ModuleInstanceState;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState","kind":"func","status":"implemented","sigHash":"e96171169aa8f239465d00cde9e5abec4d0bffa9d0b66cbb15f94ecdfa7d8d7b","bodyHash":"387d535020695b0c685561a549242b44ced588df639f247ad3461a1da9e6b5c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState","kind":"func","status":"stub","sigHash":"e96171169aa8f239465d00cde9e5abec4d0bffa9d0b66cbb15f94ecdfa7d8d7b","bodyHash":"387d535020695b0c685561a549242b44ced588df639f247ad3461a1da9e6b5c3"}
  *
  * Go source:
  * func GetModuleInstanceState(node *Node) ModuleInstanceState {
@@ -6022,7 +6014,7 @@ export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as Module
  * }
  */
 export function GetModuleInstanceState(node: GoPtr<Node>): ModuleInstanceState {
-  return getModuleInstanceState(node, undefined as never, undefined as never);
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState");
 }
 
 /**
@@ -8210,7 +8202,7 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags","kind":"func","status":"implemented","sigHash":"3709d6957779875ac4b2a31b315f7e6fdf2316864f83b76ecacec10a91bf2693","bodyHash":"73a95b995b5159e159f75b703ec3eaa7f11a87ed4cb9177983f54652a98d4f68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags","kind":"func","status":"stub","sigHash":"3709d6957779875ac4b2a31b315f7e6fdf2316864f83b76ecacec10a91bf2693","bodyHash":"73a95b995b5159e159f75b703ec3eaa7f11a87ed4cb9177983f54652a98d4f68"}
  *
  * Go source:
  * func CreateModifiersFromModifierFlags(flags ModifierFlags, createModifier func(kind Kind) *Node) []*Node {
@@ -8264,24 +8256,7 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
  * }
  */
 export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: (kind: Kind) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  const items: GoSlice<GoPtr<Node>> = ([
-    [(flags & ModifierFlagsExport) !== 0, KindExportKeyword],
-    [(flags & ModifierFlagsAmbient) !== 0, KindDeclareKeyword],
-    [(flags & ModifierFlagsDefault) !== 0, KindDefaultKeyword],
-    [(flags & ModifierFlagsConst) !== 0, KindConstKeyword],
-    [(flags & ModifierFlagsPublic) !== 0, KindPublicKeyword],
-    [(flags & ModifierFlagsPrivate) !== 0, KindPrivateKeyword],
-    [(flags & ModifierFlagsProtected) !== 0, KindProtectedKeyword],
-    [(flags & ModifierFlagsAbstract) !== 0, KindAbstractKeyword],
-    [(flags & ModifierFlagsStatic) !== 0, KindStaticKeyword],
-    [(flags & ModifierFlagsOverride) !== 0, KindOverrideKeyword],
-    [(flags & ModifierFlagsReadonly) !== 0, KindReadonlyKeyword],
-    [(flags & ModifierFlagsAccessor) !== 0, KindAccessorKeyword],
-    [(flags & ModifierFlagsAsync) !== 0, KindAsyncKeyword],
-    [(flags & ModifierFlagsIn) !== 0, KindInKeyword],
-    [(flags & ModifierFlagsOut) !== 0, KindOutKeyword],
-  ] as Array<[boolean, Kind]>).filter(([cond]) => cond).map(([, kind]) => createModifier(kind));
-  return items.length > 0 ? items : undefined as never;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags");
 }
 
 /**
@@ -9276,7 +9251,7 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern","kind":"func","status":"implemented","sigHash":"adff8602a7cfe924132398c277c2683ba7feaf5ee75ca7865bbc28b91d25d772","bodyHash":"32aa813868ee0fab12cab76464b1d8c81e61b7914a24d634c63be3cd90dafa28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern","kind":"func","status":"stub","sigHash":"adff8602a7cfe924132398c277c2683ba7feaf5ee75ca7865bbc28b91d25d772","bodyHash":"32aa813868ee0fab12cab76464b1d8c81e61b7914a24d634c63be3cd90dafa28"}
  *
  * Go source:
  * func GetElementsOfBindingOrAssignmentPattern(name *Node) []*Node {
@@ -9293,18 +9268,7 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
  * }
  */
 export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  switch (name!.Kind) {
-    case KindObjectBindingPattern:
-    case KindArrayBindingPattern:
-    case KindArrayLiteralExpression:
-      // `a` in `{a}`
-      // `a` in `[a]`
-      return Node_Elements(name) as GoSlice<GoPtr<Node>>;
-    case KindObjectLiteralExpression:
-      // `a` in `{a}`
-      return Node_Properties(name) as GoSlice<GoPtr<Node>>;
-  }
-  return undefined as never;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern");
 }
 
 /**

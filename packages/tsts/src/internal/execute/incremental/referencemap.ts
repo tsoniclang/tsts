@@ -20,8 +20,8 @@ import type { Path } from "../../tspath/path.js";
  * }
  */
 export interface referenceMap {
-  references: SyncMap;
-  referencedBy: GoMap<Path, GoPtr<Set>>;
+  references: SyncMap<Path, GoPtr<Set<Path>>>;
+  referencedBy: GoMap<Path, GoPtr<Set<Path>>>;
   referenceBy: Once;
 }
 
@@ -91,13 +91,13 @@ export function referenceMap_getPathsWithReferences(receiver: GoPtr<referenceMap
  */
 export function referenceMap_getReferencedBy(receiver: GoPtr<referenceMap>, path: Path): GoSeq<Path> {
   receiver!.referenceBy.Do(() => {
-    receiver!.referencedBy = new globalThis.Map<Path, GoPtr<Set>>();
-    SyncMap_Range(receiver!.references, (key: Path, value: unknown): bool => {
-      const valueSet = value as GoPtr<Set>;
+    receiver!.referencedBy = new globalThis.Map<Path, GoPtr<Set<Path>>>();
+    SyncMap_Range(receiver!.references, (key: Path, value: GoPtr<Set<Path>>): bool => {
+      const valueSet = value;
       for (const [ref] of Set_Keys(valueSet)) {
         let set = receiver!.referencedBy!.get(ref);
         if (set === undefined) {
-          set = { M: new globalThis.Map() };
+          set = { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() };
           receiver!.referencedBy!.set(ref, set);
         }
         Set_Add(set, key);

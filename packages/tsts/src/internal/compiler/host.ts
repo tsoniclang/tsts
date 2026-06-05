@@ -76,7 +76,7 @@ export interface compilerHost {
  * }
  */
 export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: ExtendedConfigCache, trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void): CompilerHost {
-  return NewCompilerHost(currentDirectory, cachedvfsFrom(fs) as FS_4e804012, defaultLibraryPath, extendedConfigCache, trace);
+  return NewCompilerHost(currentDirectory, cachedvfsFrom(fs) as unknown as FS_4e804012, defaultLibraryPath, extendedConfigCache, trace);
 }
 
 /**
@@ -201,6 +201,6 @@ export function compilerHost_GetSourceFile(receiver: GoPtr<compilerHost>, opts: 
  * }
  */
 export function compilerHost_GetResolvedProjectReference(receiver: GoPtr<compilerHost>, fileName: string, path: Path): GoPtr<ParsedCommandLine> {
-  const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, path, undefined, undefined, receiver as CompilerHost, receiver!.extendedConfigCache);
+  const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, path, undefined, undefined, receiver as unknown as CompilerHost, receiver!.extendedConfigCache);
   return commandLine;
 }

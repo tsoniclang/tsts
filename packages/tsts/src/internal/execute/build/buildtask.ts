@@ -475,7 +475,7 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"implemented","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"f5584563c40eab2cd5db88a6edf3eee7dd63fbef2cfc3010a4f5ff7df5b2ec7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"stub","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"f5584563c40eab2cd5db88a6edf3eee7dd63fbef2cfc3010a4f5ff7df5b2ec7d"}
  *
  * Go source:
  * func (t *BuildTask) compileAndEmit(orchestrator *Orchestrator, path tspath.Path) {
@@ -544,77 +544,7 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
  * }
  */
 export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): void {
-  receiver!.errors = [];
-  if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
-    receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
-  }
-
-  const compileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
-  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
-  compileTimes.ConfigTime = (configTime as number) ?? 0;
-
-  type TimeWithSub = Time & { Sub(t: Time): number };
-  const buildInfoReadStart = orchestrator!.opts.Sys.Now();
-  let oldProgram = undefined;
-  if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Force)) {
-    oldProgram = ReadBuildInfoProgram(receiver!.resolved, NewBuildInfoReader(orchestrator!.host as unknown as Parameters<typeof NewBuildInfoReader>[0]), orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[2]);
-  }
-  compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart);
-
-  const parseStart = orchestrator!.opts.Sys.Now();
-  const ch: compilerHost = {
-    host: orchestrator!.host,
-    trace: GetTraceWithWriterFromSys(receiver!.result!.builder as unknown as Parameters<typeof GetTraceWithWriterFromSys>[0], ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command), orchestrator!.opts.Testing),
-  };
-  const chAdapter = {
-    FS: () => compilerHost_FS(ch),
-    DefaultLibraryPath: () => compilerHost_DefaultLibraryPath(ch),
-    GetCurrentDirectory: () => compilerHost_GetCurrentDirectory(ch),
-    Trace: (msg: Parameters<typeof compilerHost_Trace>[1], ...args: unknown[]) => compilerHost_Trace(ch, msg, ...args),
-    GetSourceFile: (opts: Parameters<typeof compilerHost_GetSourceFile>[1]) => compilerHost_GetSourceFile(ch, opts),
-    GetResolvedProjectReference: (fileName: string, p: Path) => compilerHost_GetResolvedProjectReference(ch, fileName, p),
-  };
-  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: chAdapter as unknown as Parameters<typeof compiler_NewProgram>[0]["Host"], UseSourceOfProjectReference: false as bool, SingleThreaded: undefined as never, CreateCheckerPool: undefined as never, TypingsLocation: "", ProjectName: "", Tracing: undefined });
-  compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart);
-
-  const changesComputeStart = orchestrator!.opts.Sys.Now();
-  receiver!.result!.program = incremental_NewProgram(program, oldProgram, orchestrator!.host as unknown as Parameters<typeof incremental_NewProgram>[2], (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool);
-  compileTimes.ChangesComputeTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(changesComputeStart);
-
-  const [result, statistics] = EmitAndReportStatistics({
-    Sys: orchestrator!.opts.Sys,
-    ProgramLike: receiver!.result!.program as unknown as Parameters<typeof EmitAndReportStatistics>[0]["ProgramLike"],
-    Program: program,
-    Config: receiver!.resolved,
-    ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
-    ReportErrorSummary: QuietDiagnosticsReporter,
-    Writer: receiver!.result!.builder as unknown as Parameters<typeof EmitAndReportStatistics>[0]["Writer"],
-    WriteFile: (fileName, text, data) => BuildTask_writeFile(receiver, orchestrator, fileName, text, data),
-    CompileTimes: compileTimes as unknown as Parameters<typeof EmitAndReportStatistics>[0]["CompileTimes"],
-    Testing: orchestrator!.opts.Testing,
-    TestingMTimesCache: orchestrator!.host!.mTimes,
-    Tracing: undefined,
-  });
-  receiver!.result!.exitStatus = result.Status;
-  receiver!.result!.statistics = statistics;
-
-  const programOpts = (program as unknown as { Options(): import("../../core/compileroptions.js").CompilerOptions }).Options();
-  if ((!Tristate_IsTrue(programOpts.NoEmitOnError) || result.Diagnostics.length === 0) &&
-    (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
-    BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult!.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
-  }
-  receiver!.result!.buildKind = buildKindProgram;
-  if (result.Status === ExitStatusDiagnosticsPresent_OutputsSkipped || result.Status === ExitStatusDiagnosticsPresent_OutputsGenerated) {
-    receiver!.status = { kind: upToDateStatusTypeBuildErrors, data: undefined };
-  } else {
-    let oldestOutputFileName = "";
-    if (result.EmitResult!.EmittedFiles.length > 0) {
-      oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
-    } else {
-      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved));
-    }
-    receiver!.status = { kind: upToDateStatusTypeUpToDate, data: oldestOutputFileName };
-  }
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit");
 }
 
 /**

@@ -4,7 +4,7 @@ import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl, Mutex, Once } from "../../../go/sync.js";
 import type { Bool as AtomicBool } from "../../../go/sync/atomic.js";
 import { Bool } from "../../../go/sync/atomic.js";
-import { Node_Symbol } from "../../ast/ast.js";
+import { Node_Symbol, SourceFile_Path } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { NodeDefault_AsNode } from "../../ast/spine.js";
 import { SymbolFlagsConstEnum } from "../../ast/symbolflags.js";
@@ -17,6 +17,7 @@ import type { SyncSet } from "../../collections/syncset.js";
 import { SyncSet_Add, SyncSet_Has, SyncSet_Range, SyncSet_Size } from "../../collections/syncset.js";
 import { Filter, IfElse } from "../../core/core.js";
 import { CompilerOptions_GetEmitDeclarations } from "../../core/compileroptions.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
 import {
   Program_Emit as compiler_Program_Emit,
   Program_GetSourceFileByPath as compiler_Program_GetSourceFileByPath,
@@ -175,10 +176,10 @@ export function affectedFilesHandler_removeDiagnosticsOfLibraryFiles(receiver: G
   receiver!.cleanedDiagnosticsOfLibFiles.Do((): void => {
     for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
       if (
-        compiler_Program_IsSourceFileDefaultLibrary(receiver!.program!.program, file!.Path()) &&
+        compiler_Program_IsSourceFileDefaultLibrary(receiver!.program!.program, SourceFile_Path(file)) &&
         !compiler_Program_SkipTypeChecking(receiver!.program!.program, file, true as bool)
       ) {
-        affectedFilesHandler_removeSemanticDiagnosticsOf(receiver, file!.Path());
+        affectedFilesHandler_removeSemanticDiagnosticsOf(receiver, SourceFile_Path(file));
       }
     }
   });
@@ -252,19 +253,19 @@ export function affectedFilesHandler_updateShapeSignature(receiver: GoPtr<affect
 
   const [existing, ok] = SyncMap_LoadOrStore<Path, GoPtr<updatedSignature>>(
     receiver!.updatedSignatures as SyncMap<Path, GoPtr<updatedSignature>>,
-    file!.Path(),
+    SourceFile_Path(file),
     update
   );
   if (ok) {
-    existing.mu.Lock();
-    existing.mu.Unlock();
+    existing!.mu.Lock();
+    existing!.mu.Unlock();
     update.mu.Unlock();
     return false as bool;
   }
 
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    file!.Path()
+    SourceFile_Path(file)
   );
   const prevSignature = info!.signature;
   if (!file!.IsDeclarationFile && !useFileVersionAsSignature) {
@@ -327,14 +328,14 @@ export function affectedFilesHandler_getFilesAffectedBy(receiver: GoPtr<affected
 
   const [info] = SyncMap_Load<Path, GoPtr<FileInfo>>(
     receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<FileInfo>>,
-    file!.Path()
+    SourceFile_Path(file)
   );
   if (info!.affectsGlobalScope) {
     receiver!.hasAllFilesExcludingDefaultLibraryFile.Store(true as bool);
     snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.program!.snapshot, receiver!.program!.program, file);
   }
 
-  if (receiver!.program!.snapshot!.options!.IsolatedModules.IsTrue()) {
+  if (Tristate_IsTrue(receiver!.program!.snapshot!.options!.IsolatedModules)) {
     return [file];
   }
 
@@ -389,10 +390,10 @@ export function affectedFilesHandler_forEachFileReferencedBy(
   fn: (currentFile: GoPtr<SourceFile>, currentPath: Path) => [bool, bool]
 ): GoMap<Path, GoPtr<SourceFile>> {
   const seenFileNamesMap: GoMap<Path, GoPtr<SourceFile>> = new Map<Path, GoPtr<SourceFile>>();
-  seenFileNamesMap.set(file!.Path(), file);
+  seenFileNamesMap.set(SourceFile_Path(file), file);
 
   const queue: Path[] = [];
-  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, file!.Path())((p: Path): bool => {
+  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(file))((p: Path): bool => {
     queue.push(p);
     return true as bool;
   });
@@ -400,15 +401,15 @@ export function affectedFilesHandler_forEachFileReferencedBy(
   while (queue.length > 0) {
     const currentPath = queue[queue.length - 1];
     queue.splice(queue.length - 1, 1);
-    if (!seenFileNamesMap.has(currentPath)) {
-      const currentFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, currentPath);
-      seenFileNamesMap.set(currentPath, currentFile);
-      const [queueForFile, fastReturn] = fn(currentFile, currentPath);
+    if (!seenFileNamesMap.has(currentPath!)) {
+      const currentFile = compiler_Program_GetSourceFileByPath(receiver!.program!.program, currentPath!);
+      seenFileNamesMap.set(currentPath!, currentFile);
+      const [queueForFile, fastReturn] = fn(currentFile, currentPath!);
       if (fastReturn) {
         return seenFileNamesMap;
       }
       if (queueForFile) {
-        referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, currentFile!.Path())((ref: Path): bool => {
+        referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(currentFile))((ref: Path): bool => {
           queue.push(ref);
           return true as bool;
         });
@@ -419,7 +420,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"a5c0e8df65875fc9df4b7b89abfc1b81628a2baafeecdbf120e79761625ea059","bodyHash":"83361289b5d5a1794c003fa4caa4ee55a497ac4b5b5035b3fb743ddf699fbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"a5c0e8df65875fc9df4b7b89abfc1b81628a2baafeecdbf120e79761625ea059","bodyHash":"83361289b5d5a1794c003fa4cae94fee55a497ac4b5b5035b3fb743ddf699fbf"}
  *
  * Go source:
  * func (h *affectedFilesHandler) handleDtsMayChangeOfAffectedFile(dtsMayChange dtsMayChange, affectedFile *ast.SourceFile) {
@@ -499,7 +500,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
  * }
  */
 export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: GoPtr<affectedFilesHandler>, dtsMayChange: dtsMayChange, affectedFile: GoPtr<SourceFile>): void {
-  affectedFilesHandler_removeSemanticDiagnosticsOf(receiver, affectedFile!.Path());
+  affectedFilesHandler_removeSemanticDiagnosticsOf(receiver, SourceFile_Path(affectedFile));
 
   if (receiver!.hasAllFilesExcludingDefaultLibraryFile.Load()) {
     affectedFilesHandler_removeDiagnosticsOfLibraryFiles(receiver);
@@ -507,18 +508,18 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
     return;
   }
 
-  if (receiver!.program!.snapshot!.options!.AssumeChangesOnlyAffectDirectDependencies.IsTrue()) {
+  if (Tristate_IsTrue(receiver!.program!.snapshot!.options!.AssumeChangesOnlyAffectDirectDependencies)) {
     return;
   }
 
   if (
-    !SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, affectedFile!.Path()) ||
-    !affectedFilesHandler_isChangedSignature(receiver, affectedFile!.Path())
+    !SyncSet_Has<Path>(receiver!.program!.snapshot!.changedFilesSet as SyncSet<Path>, SourceFile_Path(affectedFile)) ||
+    !affectedFilesHandler_isChangedSignature(receiver, SourceFile_Path(affectedFile))
   ) {
     return;
   }
 
-  if (receiver!.program!.snapshot!.options!.IsolatedModules.IsTrue()) {
+  if (Tristate_IsTrue(receiver!.program!.snapshot!.options!.IsolatedModules)) {
     affectedFilesHandler_forEachFileReferencedBy(
       receiver,
       affectedFile,
@@ -571,7 +572,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
   }
 
   let earlyReturn = false;
-  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, affectedFile!.Path())((fileReferencingChangedFile: Path): bool => {
+  referenceMap_getReferencedBy(receiver!.program!.snapshot!.referencedMap, SourceFile_Path(affectedFile))((fileReferencingChangedFile: Path): bool => {
     if (earlyReturn) {
       return false as bool;
     }
@@ -676,7 +677,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfGlobalScope(receiver: G
     return false as bool;
   }
   for (const file of snapshot_getAllFilesExcludingDefaultLibraryFile(receiver!.program!.snapshot, receiver!.program!.program, undefined)) {
-    affectedFilesHandler_handleDtsMayChangeOf(receiver, dtsMayChange, file!.Path(), invalidateJsFiles);
+    affectedFilesHandler_handleDtsMayChangeOf(receiver, dtsMayChange, SourceFile_Path(file), invalidateJsFiles);
   }
   affectedFilesHandler_removeDiagnosticsOfLibraryFiles(receiver);
   return true as bool;
@@ -719,7 +720,7 @@ export function affectedFilesHandler_handleDtsMayChangeOf(receiver: GoPtr<affect
     dtsMayChange_addFileToAffectedFilesPendingEmit(
       dtsMayChange,
       path,
-      IfElse(receiver!.program!.snapshot!.options!.DeclarationMap.IsTrue(), FileEmitKindAllDts, FileEmitKindDts)
+      IfElse(Tristate_IsTrue(receiver!.program!.snapshot!.options!.DeclarationMap), FileEmitKindAllDts, FileEmitKindDts)
     );
   }
 }
@@ -874,7 +875,7 @@ export function collectAllAffectedFiles(ctx: Context, program: GoPtr<Program>): 
   SyncSet_Range<GoPtr<SourceFile>>(
     result,
     (file: GoPtr<SourceFile>): bool => {
-      const dtsChange = affectedFilesHandler_getDtsMayChange(handler, file!.Path(), emitKind);
+      const dtsChange = affectedFilesHandler_getDtsMayChange(handler, SourceFile_Path(file), emitKind);
       wg.Queue((): void => {
         affectedFilesHandler_handleDtsMayChangeOfAffectedFile(handler, dtsChange, file);
       });

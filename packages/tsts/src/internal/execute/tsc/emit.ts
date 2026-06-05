@@ -145,7 +145,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"implemented","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559","bodyHash":"6d90ae6ffaff1722e0a0fb6244dfeeba85fd98688819688ff62470c0bc3c1490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"stub","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559","bodyHash":"6d90ae6ffaff1722e0a0fb6244dfeeba85fd98688819688ff62470c0bc3c1490"}
  *
  * Go source:
  * func EmitFilesAndReportErrors(input EmitInput) (result CompileAndEmitResult) {
@@ -210,77 +210,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
  * }
  */
 export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult {
-  const result: CompileAndEmitResult = {
-    Diagnostics: [],
-    EmitResult: undefined,
-    Status: ExitStatusSuccess,
-    times: input.CompileTimes,
-  };
-  const ctx = Background();
-  let allDiagnostics = GetDiagnosticsOfAnyProgram(
-    ctx,
-    input.ProgramLike,
-    undefined,
-    false,
-    (ctx2, file) => {
-      if (input.Tracing !== undefined) {
-        const pop = Tracing_Push(input.Tracing, PhaseBind, "bindSourceFiles", undefined as never, true);
-        try {
-          const bindStart = input.Sys.Now();
-          const diags = input.ProgramLike.GetBindDiagnostics(ctx2, file);
-          result.times!.bindTime = input.Sys.SinceStart();
-          return diags;
-        } finally {
-          pop();
-        }
-      }
-      const bindStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetBindDiagnostics(ctx2, file);
-      result.times!.bindTime = input.Sys.SinceStart();
-      return diags;
-    },
-    (ctx2, file) => {
-      if (input.Tracing !== undefined) {
-        const pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined as never, true);
-        try {
-          const checkStart = input.Sys.Now();
-          const diags = input.ProgramLike.GetSemanticDiagnostics(ctx2, file);
-          result.times!.checkTime = input.Sys.SinceStart();
-          return diags;
-        } finally {
-          pop();
-        }
-      }
-      const checkStart = input.Sys.Now();
-      const diags = input.ProgramLike.GetSemanticDiagnostics(ctx2, file);
-      result.times!.checkTime = input.Sys.SinceStart();
-      return diags;
-    },
-  );
-  let emitResult: GoPtr<import("../../compiler/program.js").EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
-  if (!Tristate_IsTrue(input.ProgramLike.Options()!.ListFilesOnly)) {
-    const emitStart = input.Sys.Now();
-    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0, WriteFile: input.WriteFile });
-    result.times!.emitTime = input.Sys.SinceStart();
-  }
-  if (emitResult !== undefined) {
-    allDiagnostics = [...allDiagnostics, ...emitResult.Diagnostics];
-  }
-  if (input.Testing !== undefined) {
-    input.Testing.OnEmittedFiles(emitResult, input.TestingMTimesCache);
-  }
-  allDiagnostics = SortAndDeduplicateDiagnostics(allDiagnostics);
-  for (const diagnostic of allDiagnostics) {
-    input.ReportDiagnostic(diagnostic);
-  }
-  listFiles(input, emitResult);
-  input.ReportErrorSummary(allDiagnostics);
-  return {
-    Diagnostics: allDiagnostics,
-    EmitResult: emitResult,
-    Status: ExitStatusSuccess,
-    times: result.times,
-  };
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors");
 }
 
 /**

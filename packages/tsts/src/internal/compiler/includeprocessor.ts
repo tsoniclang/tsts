@@ -1,6 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice, GoUnresolved } from "../../go/compat.js";
 import { IsExternalOrCommonJSModule } from "../ast/utilities.js";
+import { SourceFile_FileName } from "../ast/ast.js";
 import type { HasFileName, SourceFile } from "../ast/ast.js";
 import { DiagnosticsCollection_Add, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
@@ -368,16 +369,16 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
   let sourceFile: GoPtr<SourceFile> = undefined;
   const redirectsFile = program!.__tsgoEmbedded0!.redirectFilesByPath.get(filePath);
   if (redirectsFile !== undefined) {
-    file = redirectsFile;
+    file = redirectsFile as unknown as HasFileName;
   } else {
     sourceFile = Program_GetSourceFileByPath(program, filePath);
     if (sourceFile === undefined) {
       return [];
     }
-    file = sourceFile;
+    file = sourceFile as unknown as HasFileName;
   }
   let result: GoSlice<GoPtr<Diagnostic>> = [];
-  const source = Program_GetSourceOfProjectReferenceIfOutputIncluded(program, file);
+  const source = Program_GetSourceOfProjectReferenceIfOutputIncluded(program, file!);
   if (source !== file!.FileName()) {
     result = [...result, NewCompilerDiagnostic(
       File_is_output_of_project_reference_source_0,
@@ -389,7 +390,7 @@ export function includeProcessor_explainRedirectAndImpliedFormat(receiver: GoPtr
     const targetFile = Program_GetSourceFileByPath(program, redirectsFile.target);
     result = [...result, NewCompilerDiagnostic(
       File_redirects_to_file_0,
-      toFileName(targetFile!.FileName()),
+      toFileName(SourceFile_FileName(targetFile)),
     )];
   }
 

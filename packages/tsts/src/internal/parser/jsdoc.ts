@@ -1,36 +1,114 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
-import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
-import { Node_Pos } from "../ast/spine.js";
+import { HasPrefix, LastIndex, TrimLeft, TrimRightFunc } from "../../go/strings.js";
+import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import { NewExpressionWithTypeArguments, NewJSDocLink, NewJSDocLinkCode, NewJSDocLinkPlain, NewJSDocNameReference, NewJSDocTypeExpression, NewPropertyAccessExpression, NewQualifiedName } from "../ast/generated/factory.js";
+import { SetParseJSDocForNode, Node_TagName, Node_Text, Node_Type } from "../ast/ast.js";
+import type { SourceFile } from "../ast/ast.js";
+import {
+  NewExpressionWithTypeArguments,
+  NewJSDoc,
+  NewJSDocAugmentsTag,
+  NewJSDocCallbackTag,
+  NewJSDocDeprecatedTag,
+  NewJSDocImplementsTag,
+  NewJSDocImportTag,
+  NewJSDocLink,
+  NewJSDocLinkCode,
+  NewJSDocLinkPlain,
+  NewJSDocNameReference,
+  NewJSDocOverloadTag,
+  NewJSDocOverrideTag,
+  NewJSDocParameterOrPropertyTag,
+  NewJSDocPrivateTag,
+  NewJSDocProtectedTag,
+  NewJSDocPublicTag,
+  NewJSDocReadonlyTag,
+  NewJSDocReturnTag,
+  NewJSDocSatisfiesTag,
+  NewJSDocSeeTag,
+  NewJSDocSignature,
+  NewJSDocTemplateTag,
+  NewJSDocText,
+  NewJSDocThisTag,
+  NewJSDocThrowsTag,
+  NewJSDocTypeLiteral,
+  NewJSDocTypeExpression,
+  NewJSDocTypeTag,
+  NewJSDocTypedefTag,
+  NewJSDocUnknownTag,
+  NewModuleDeclaration,
+  NewPropertyAccessExpression,
+  NewQualifiedName,
+  NewTypeParameterDeclaration,
+} from "../ast/generated/factory.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
+  KindArrayType,
   KindAsteriskToken,
   KindAtToken,
   KindBacktickToken,
   KindCloseBraceToken,
   KindCloseBracketToken,
+  KindCommaToken,
   KindDotToken,
   KindEqualsToken,
   KindEndOfFile,
+  KindIdentifier,
+  KindJSDocCommentTextToken,
+  KindJSDocParameterTag,
+  KindJSDocPropertyTag,
+  KindJSDocReturnTag,
+  KindJSDocTemplateTag,
+  KindJSDocTypeTag,
+  KindNamespaceKeyword,
   KindNewLineTrivia,
+  KindObjectKeyword,
   KindOpenBraceToken,
   KindOpenBracketToken,
   KindPrivateIdentifier,
+  KindTypeKeyword,
   KindWhitespaceTrivia,
 } from "../ast/generated/kinds.js";
-import { NodeFlagsJSDoc, NodeFlagsNone } from "../ast/generated/flags.js";
-import type { EntityName, IdentifierNode, SourceFileNode, TypeNode, TypeParameterList } from "../ast/generated/unions.js";
-import { IfElse } from "../core/core.js";
-import { Identifier_expected, Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here } from "../diagnostics/generated/messages.js";
-import type { Message } from "../diagnostics/diagnostics.js";
-import { IsWhiteSpaceLike } from "../stringutil/util.js";
 import {
+  NodeFlagsHasAsyncFunctions,
+  NodeFlagsHasJSDoc,
+  NodeFlagsJavaScriptFile,
+  NodeFlagsJSDoc,
+  NodeFlagsNone,
+  NodeFlagsOptionalChain,
+  NodeFlagsPossiblyContainsDeprecatedTag,
+} from "../ast/generated/flags.js";
+import type { EntityName, IdentifierNode, SourceFileNode, TypeNode, TypeParameterList } from "../ast/generated/unions.js";
+import { Some, IfElse } from "../core/core.js";
+import {
+  A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag,
+  A_JSDoc_typedef_comment_may_not_contain_multiple_type_tags,
+  Identifier_expected,
+  Identifier_expected_0_is_a_reserved_word_that_cannot_be_used_here,
+  The_tag_was_first_specified_here,
+  Unexpected_token_A_type_parameter_name_was_expected_without_curly_braces,
+  X_0_tag_already_specified,
+} from "../diagnostics/generated/messages.js";
+import type { Message } from "../diagnostics/diagnostics.js";
+import { NewDiagnostic, Diagnostic_AddRelatedInfo } from "../ast/diagnostic.js";
+import { IsIdentifier, IsJSDocParameterTag, IsJSDocPropertyTag, IsJSDocReturnTag, IsJSDocTemplateTag, IsJSDocTypeTag, IsTypeReferenceNode } from "../ast/generated/predicates.js";
+import { AsArrayTypeNode, AsJSDocTypeTag, AsQualifiedName, AsTypeReferenceNode } from "../ast/generated/casts.js";
+import { NodeIsMissing } from "../ast/utilities.js";
+import { IsWhiteSpaceLike } from "../stringutil/util.js";
+import { NewTextRange } from "../core/text.js";
+import { Arena_Clone, Arena_NewSlice } from "../core/arena.js";
+import type { Arena } from "../core/arena.js";
+import type { ScannerState } from "../scanner/scanner.js";
+import {
+  Scanner_CanFollowJSDocAt,
   Scanner_HasPrecedingLineBreak,
+  Scanner_Mark,
+  Scanner_Rewind,
   Scanner_ResetPos,
   Scanner_ReScanHashToken,
   Scanner_SetSkipJSDocLeadingAsterisks,
+  Scanner_SetText,
   Scanner_TokenEnd,
   Scanner_TokenFullStart,
   Scanner_TokenStart,
@@ -38,13 +116,28 @@ import {
   Scanner_TokenValue,
 } from "../scanner/scanner.js";
 import { Parser_parseExpression } from "./parser/expressions.js";
-import { Parser_parseExpectedJSDoc, Parser_parseExpectedTokenJSDoc, Parser_parseJSDocType, Parser_nextTokenJSDoc } from "./parser/jsx-jsdoc.js";
-import { Parser_finishNode, Parser_lookAhead, Parser_mark, Parser_nodePos, Parser_parseOptional, Parser_rewind } from "./parser/support.js";
-import { Parser_finishNodeWithEnd } from "./parser/statements-declarations.js";
+import { Parser_nextJSDocCommentTextToken, Parser_parseExpectedJSDoc, Parser_parseExpectedTokenJSDoc, Parser_parseJSDocType, Parser_nextTokenJSDoc } from "./parser/jsx-jsdoc.js";
+import {
+  Parser_finishNode,
+  Parser_initializeState,
+  Parser_isJavaScript,
+  Parser_lookAhead,
+  Parser_mark,
+  Parser_nodePos,
+  Parser_parseModifiersEx,
+  Parser_parseOptional,
+  Parser_rewind,
+  getParser,
+  isReservedWord,
+  putParser,
+} from "./parser/support.js";
+import { Parser_finishNodeWithEnd, Parser_parseModuleSpecifier, Parser_tryParseImportAttributes, Parser_tryParseImportClause } from "./parser/statements-declarations.js";
 import {
   Parser_createMissingIdentifier,
   Parser_internIdentifier,
+  Parser_isIdentifier,
   Parser_newIdentifier,
+  Parser_nextTokenIsIdentifierOrKeyword,
   Parser_parseErrorAtCurrentToken,
   Parser_parseExpected,
   Parser_parseIdentifier,
@@ -52,13 +145,16 @@ import {
   Parser_parseOptionalToken,
   Parser_setContextFlags,
 } from "./parser/tokens-speculation.js";
+import { Parser_parseErrorAt, Parser_parseErrorAtRange } from "./parser/errors-recovery.js";
+import { Parser_newNodeList } from "./parser/lists.js";
 import { Parser_parseTypeArguments } from "./parser/types.js";
-import { isReservedWord } from "./parser/support.js";
-import type { jsdocScannerInfo, Parser } from "./parser/state.js";
-import { tokenIsIdentifierOrKeyword } from "./utilities.js";
+import type { jsdocScannerInfo, JSDocInfo, Parser } from "./parser/state.js";
+import { jsdocScannerInfoHasDeprecated, jsdocScannerInfoHasJSDoc, jsdocScannerInfoHasSeeOrLink, PCJSDocComment } from "./parser/state.js";
+import { GetJSDocCommentRanges, isJSDocLikeText, tokenIsIdentifierOrKeyword } from "./utilities.js";
+import { Parser_reparseTags } from "./reparser.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init","kind":"func","status":"stub","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db","bodyHash":"96bfb6b01644ae8c4357bfbcdc48104efcf247c2ce7785580737940d751be6d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init","kind":"func","status":"implemented","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db","bodyHash":"96bfb6b01644ae8c4357bfbcdc48104efcf247c2ce7785580737940d751be6d3"}
  *
  * Go source:
  * func init() {
@@ -66,11 +162,11 @@ import { tokenIsIdentifierOrKeyword } from "./utilities.js";
  * }
  */
 export function init(): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::init");
+  SetParseJSDocForNode(parseJSDocForNode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode","kind":"func","status":"stub","sigHash":"aaa76ebc73eade1cba544f6a0b246a3bb0e95f4bc627a3eff5ac4666ac433093","bodyHash":"17bbecbd63e34176aee3841adcb8a0f816a4476d4f1de3d8b01f67dfac6db430"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode","kind":"func","status":"implemented","sigHash":"aaa76ebc73eade1cba544f6a0b246a3bb0e95f4bc627a3eff5ac4666ac433093","bodyHash":"17bbecbd63e34176aee3841adcb8a0f816a4476d4f1de3d8b01f67dfac6db430"}
  *
  * Go source:
  * func parseJSDocForNode(sourceFile *ast.SourceFile, node *ast.Node) []*ast.Node {
@@ -94,7 +190,28 @@ export function init(): void {
  * }
  */
 export function parseJSDocForNode(sourceFile: GoPtr<SourceFileNode>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::parseJSDocForNode");
+  const sf = sourceFile as unknown as GoPtr<SourceFile>;
+  const p = getParser();
+  try {
+    Parser_initializeState(p, sf!.parseOptions, sf!.text, sf!.ScriptKind);
+    const ranges = GetJSDocCommentRanges(p!.factory, [], node, sf!.text);
+    if (ranges.length === 0) {
+      return undefined!;
+    }
+    const jsdoc: GoSlice<GoPtr<Node>> = [];
+    let pos = Node_Pos(node);
+    for (const comment of ranges) {
+      const parsed = Parser_parseJSDocComment(p, node, comment.pos, comment.end, pos);
+      if (parsed !== undefined) {
+        parsed!.Parent = node;
+        jsdoc.push(parsed);
+        pos = Node_End(parsed);
+      }
+    }
+    return jsdoc;
+  } finally {
+    putParser(p);
+  }
 }
 
 /**
@@ -144,7 +261,7 @@ export const propertyLikeParseParameter: propertyLikeParse = 1 << 1;
 export const propertyLikeParseCallbackParameter: propertyLikeParse = 1 << 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.withJSDoc","kind":"method","status":"stub","sigHash":"0f34ce66e38dcebcdffa165bf7113e2875854e913938acb86fed0d0dd8cb89f1","bodyHash":"622962271bc540cda6b499e44af31cae57f21d534af6855a254880c68a7789c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.withJSDoc","kind":"method","status":"implemented","sigHash":"0f34ce66e38dcebcdffa165bf7113e2875854e913938acb86fed0d0dd8cb89f1","bodyHash":"622962271bc540cda6b499e44af31cae57f21d534af6855a254880c68a7789c2"}
  *
  * Go source:
  * func (p *Parser) withJSDoc(node *ast.Node, info jsdocScannerInfo) []*ast.Node {
@@ -199,7 +316,55 @@ export const propertyLikeParseCallbackParameter: propertyLikeParse = 1 << 2;
  * }
  */
 export function Parser_withJSDoc(receiver: GoPtr<Parser>, node: GoPtr<Node>, info: jsdocScannerInfo): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.withJSDoc");
+  if ((info & jsdocScannerInfoHasJSDoc) === 0) {
+    return undefined!;
+  }
+
+  // For TS/TSX files, defer JSDoc parsing to first access, unless the comment
+  // contains @see/@link (needed for unused-identifier checks).
+  // @deprecated is detected via cheap text scan to set PossiblyContainsDeprecatedTag;
+  // callers must confirm via JSDoc lookup.
+  if (!Parser_isJavaScript(receiver)) {
+    node!.Flags |= NodeFlagsHasJSDoc;
+    if ((info & jsdocScannerInfoHasDeprecated) !== 0) {
+      node!.Flags |= NodeFlagsPossiblyContainsDeprecatedTag;
+    }
+    if ((info & jsdocScannerInfoHasSeeOrLink) === 0) {
+      return undefined!;
+    }
+    // Fall through to eager parse for @see/@link
+  }
+
+  const ranges = GetJSDocCommentRanges(receiver!.factory, receiver!.jsdocCommentRangesSpace, node, receiver!.sourceText);
+  receiver!.jsdocCommentRangesSpace = ranges.slice(0, 0);
+
+  // Should only be called once per node
+  receiver!.hasDeprecatedTag = false;
+  const jsdoc: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, ranges.length).slice(0, 0);
+  let pos = Node_Pos(node);
+  for (const comment of ranges) {
+    const parsed = Parser_parseJSDocComment(receiver, node, comment.pos, comment.end, pos);
+    if (parsed !== undefined) {
+      parsed!.Parent = node;
+      jsdoc.push(parsed);
+      pos = Node_End(parsed);
+    }
+  }
+  if (jsdoc.length !== 0) {
+    if ((node!.Flags & NodeFlagsHasJSDoc) === 0) {
+      node!.Flags |= NodeFlagsHasJSDoc;
+    }
+    if (receiver!.hasDeprecatedTag) {
+      receiver!.hasDeprecatedTag = false;
+      node!.Flags |= NodeFlagsPossiblyContainsDeprecatedTag;
+    }
+    if (Parser_isJavaScript(receiver)) {
+      Parser_reparseTags(receiver, node, jsdoc);
+    }
+    receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: node, jsDocs: jsdoc } as JSDocInfo];
+    return jsdoc;
+  }
+  return undefined!;
 }
 
 /**
@@ -273,7 +438,7 @@ export function Parser_parseJSDocNameReference(receiver: GoPtr<Parser>): GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocComment","kind":"method","status":"stub","sigHash":"f880ad6115e4280140e1ce6a6199952ac8a0553d21fc56174a701697e2792d8e","bodyHash":"2680decdbd77a2ff602d6e6fa5da12d48d863f5e9e483af93903822ef6078086"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocComment","kind":"method","status":"implemented","sigHash":"f880ad6115e4280140e1ce6a6199952ac8a0553d21fc56174a701697e2792d8e","bodyHash":"2680decdbd77a2ff602d6e6fa5da12d48d863f5e9e483af93903822ef6078086"}
  *
  * Go source:
  * func (p *Parser) parseJSDocComment(parent *ast.Node, start int, end int, fullStart int) *ast.Node {
@@ -327,11 +492,57 @@ export function Parser_parseJSDocNameReference(receiver: GoPtr<Parser>): GoPtr<N
  * }
  */
 export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<Node>, start: int, end: int, fullStart: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocComment");
+  if (end === -1) {
+    end = receiver!.sourceText.length;
+  }
+  // Check for /** (JSDoc opening part)
+  if (!isJSDocLikeText(receiver!.sourceText.slice(start))) {
+    // TODO: This should be a panic, unless parseSingleJSDocComment is calling this (not ported yet)
+    return undefined;
+  }
+
+  const saveSourceText = receiver!.sourceText;
+  const saveToken = receiver!.token;
+  const saveContextFlags = receiver!.contextFlags;
+  const saveParsingContexts = receiver!.parsingContexts;
+  const saveScannerState: ScannerState = Scanner_Mark(receiver!.scanner);
+  const saveDiagnosticsLength = receiver!.diagnostics.length;
+  const saveHasParseError = receiver!.hasParseError;
+  const saveHasAwaitIdentifier = receiver!.statementHasAwaitIdentifier;
+
+  // initial indent is start+4 to account for leading `/** `
+  // + 1 because \n is one character before the first character in the line and,
+  // if there is no \n before start, -1 is one index before the first character in the string
+  const initialIndent = start + 4 - (LastIndex(receiver!.sourceText.slice(0, start), "\n") + 1);
+  // -2 for trailing `*/`
+  receiver!.sourceText = receiver!.sourceText.slice(0, end - 2);
+  Scanner_SetText(receiver!.scanner, receiver!.sourceText);
+  // +3 for leading `/**`
+  Scanner_ResetPos(receiver!.scanner, start + 3);
+  Parser_setContextFlags(receiver, NodeFlagsJSDoc, true);
+  receiver!.parsingContexts |= 1 << PCJSDocComment;
+
+  const comment = Parser_parseJSDocCommentWorker(receiver, start, end, fullStart, initialIndent);
+  // move jsdoc diagnostics to jsdocDiagnostics -- for JS files only
+  if ((receiver!.contextFlags & NodeFlagsJavaScriptFile) !== 0) {
+    receiver!.jsdocDiagnostics = [...receiver!.jsdocDiagnostics, ...receiver!.diagnostics.slice(saveDiagnosticsLength)];
+  }
+  receiver!.diagnostics = receiver!.diagnostics.slice(0, saveDiagnosticsLength);
+
+  receiver!.sourceText = saveSourceText;
+  Scanner_SetText(receiver!.scanner, receiver!.sourceText);
+  receiver!.parsingContexts = saveParsingContexts;
+  receiver!.contextFlags = saveContextFlags;
+  Scanner_Rewind(receiver!.scanner, saveScannerState);
+  receiver!.token = saveToken;
+  receiver!.hasParseError = saveHasParseError;
+  receiver!.statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+
+  return comment;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocCommentWorker","kind":"method","status":"stub","sigHash":"582b0878c098492c9c6a9465058d854952b30789e43eb30c927c01a586bce4d8","bodyHash":"2e5b02f24d4f490f8fdd684eb0c6bf7aa2a163e1c5e4e1d98783a6cc97f51027"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocCommentWorker","kind":"method","status":"implemented","sigHash":"582b0878c098492c9c6a9465058d854952b30789e43eb30c927c01a586bce4d8","bodyHash":"2e5b02f24d4f490f8fdd684eb0c6bf7aa2a163e1c5e4e1d98783a6cc97f51027"}
  *
  * Go source:
  * func (p *Parser) parseJSDocCommentWorker(start int, end int, fullStart int, indent int) *ast.Node {
@@ -339,7 +550,198 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
  * }
  */
 export function Parser_parseJSDocCommentWorker(receiver: GoPtr<Parser>, start: int, end: int, fullStart: int, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocCommentWorker");
+  // Initially we can parse out a tag.  We also have seen a starting asterisk.
+  // This is so that /** * @type */ doesn't parse.
+  let tags: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let tagsPos = -1;
+  let tagsEnd = -1;
+  let state: jsdocState = jsdocStateSawAsterisk;
+  let backtickCount = 0;
+  let inFencedCodeBlock = false;
+  let commentParts: GoSlice<GoPtr<Node>> = Arena_NewSlice(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, 1).slice(0, 0);
+  let comments: GoSlice<string> = receiver!.jsdocCommentsSpace;
+  let commentsPos = -1;
+  let linkEnd = start;
+  let margin = -1;
+  const pushComment = (text: string): void => {
+    if (margin === -1) {
+      margin = indent;
+    }
+    comments.push(text);
+    indent += text.length;
+  };
+
+  Parser_nextTokenJSDoc(receiver);
+  while (Parser_parseOptionalJsdoc(receiver, KindWhitespaceTrivia)) {
+    // skip
+  }
+  if (Parser_parseOptionalJsdoc(receiver, KindNewLineTrivia)) {
+    state = jsdocStateBeginningOfLine;
+    indent = 0;
+  }
+
+  loop: for (;;) {
+    // Detect fenced code blocks by counting consecutive backtick tokens.
+    // Three or more consecutive backticks toggle the fenced code block state.
+    if (receiver!.token !== KindBacktickToken && backtickCount > 0) {
+      if (backtickCount >= 3) {
+        inFencedCodeBlock = !inFencedCodeBlock;
+      }
+      backtickCount = 0;
+    }
+    switch (receiver!.token) {
+      case KindAtToken:
+        if (inFencedCodeBlock || !Scanner_CanFollowJSDocAt(receiver!.scanner)) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+          pushComment(Scanner_TokenText(receiver!.scanner));
+          break;
+        }
+        comments = removeTrailingWhitespace(comments);
+        if (commentsPos === -1) {
+          commentsPos = Parser_nodePos(receiver);
+        }
+        {
+          const tag = Parser_parseTag(receiver, tags, indent);
+          if (tagsPos === -1) {
+            tagsPos = Node_Pos(tag);
+          }
+          tags.push(tag);
+          tagsEnd = Node_End(tag);
+        }
+        // NOTE: According to usejsdoc.org, a tag goes to end of line, except the last tag.
+        state = jsdocStateBeginningOfLine;
+        margin = -1;
+        break;
+      case KindNewLineTrivia:
+        comments.push(Scanner_TokenText(receiver!.scanner));
+        state = jsdocStateBeginningOfLine;
+        indent = 0;
+        break;
+      case KindAsteriskToken: {
+        const asterisk = Scanner_TokenText(receiver!.scanner);
+        if (state === jsdocStateSawAsterisk) {
+          // If we've already seen an asterisk, then we can no longer parse a tag on this line
+          state = jsdocStateSavingComments;
+          pushComment(asterisk);
+        } else {
+          // Ignore the first asterisk on a line
+          state = jsdocStateSawAsterisk;
+          indent += asterisk.length;
+        }
+        break;
+      }
+      case KindWhitespaceTrivia: {
+        // only collect whitespace if we're already saving comments or have just crossed the comment indent margin
+        const whitespace = Scanner_TokenText(receiver!.scanner);
+        if (margin > -1 && indent + whitespace.length > margin) {
+          let existingIndent = margin - indent;
+          if (existingIndent < 0) {
+            existingIndent += whitespace.length;
+          }
+          if (existingIndent < 0) {
+            existingIndent = 0;
+          }
+          comments.push(whitespace.slice(existingIndent));
+        }
+        indent += whitespace.length;
+        break;
+      }
+      case KindEndOfFile:
+        break loop;
+      case KindJSDocCommentTextToken:
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+        }
+        pushComment(Scanner_TokenValue(receiver!.scanner));
+        break;
+      case KindBacktickToken:
+        backtickCount++;
+        if (state === jsdocStateSavingBackticks) {
+          state = jsdocStateSavingComments;
+        } else {
+          state = jsdocStateSavingBackticks;
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+      case KindOpenBraceToken: {
+        if (inFencedCodeBlock) {
+          state = jsdocStateSavingBackticks;
+          pushComment(Scanner_TokenText(receiver!.scanner));
+          break;
+        }
+        state = jsdocStateSavingComments;
+        const commentEnd = Scanner_TokenFullStart(receiver!.scanner);
+        const linkStart = Scanner_TokenEnd(receiver!.scanner) - 1;
+        const link = Parser_parseJSDocLink(receiver, linkStart);
+        if (link !== undefined) {
+          if (linkEnd === start) {
+            comments = removeLeadingNewlines(comments);
+          }
+          const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentEnd);
+          commentParts.push(jsdocText!);
+          commentParts.push(link!);
+          comments = comments.slice(0, 0);
+          linkEnd = Scanner_TokenEnd(receiver!.scanner);
+          break;
+        }
+        // fallthrough to default
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+      }
+      default:
+        // Anything else is doc comment text. We just save it. Because it
+        // wasn't a tag, we can no longer parse a tag on this line until we hit the next
+        // line break.
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+    }
+    if (state === jsdocStateSavingComments || state === jsdocStateSavingBackticks) {
+      Parser_nextJSDocCommentTextToken(receiver, state === jsdocStateSavingBackticks);
+    } else {
+      Parser_nextTokenJSDoc(receiver);
+    }
+  }
+
+  receiver!.jsdocCommentsSpace = comments.slice(0, 0); // Reuse this slice for further parses
+  if (commentsPos === -1) {
+    commentsPos = Scanner_TokenFullStart(receiver!.scanner);
+  }
+
+  if (comments.length > 0) {
+    comments[comments.length - 1] = comments[comments.length - 1]!.replace(/\s+$/, "");
+    const jsdocText = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), linkEnd, commentsPos);
+    commentParts.push(jsdocText!);
+  }
+
+  let tagsNodeList: GoPtr<NodeList>;
+  if (tagsPos !== -1) {
+    tagsNodeList = Parser_newNodeList(receiver, NewTextRange(tagsPos, tagsEnd), tags);
+  }
+
+  const jsdocComment = NewJSDoc(receiver!.factory, Parser_newNodeList(receiver, NewTextRange(start, commentsPos), commentParts), tagsNodeList!);
+  return Parser_finishNodeWithEnd(receiver, jsdocComment, fullStart, end);
 }
 
 /**
@@ -526,16 +928,94 @@ export function Parser_skipWhitespaceOrAsterisk(receiver: GoPtr<Parser>): string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTag","kind":"method","status":"stub","sigHash":"2ee0b49974131ada9371d804ff8e3483a96aa1072a602069013b40ca94176289","bodyHash":"90f6984f17d8de2caadd8238904bbb638a8194b85326c65dc1e4343742e10350"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTag","kind":"method","status":"implemented","sigHash":"2ee0b49974131ada9371d804ff8e3483a96aa1072a602069013b40ca94176289","bodyHash":"90f6984f17d8de2caadd8238904bbb638a8194b85326c65dc1e4343742e10350"}
  *
  * Go source: (uses tagName.Text() and many trailing-tag-comment parsers)
  */
 export function Parser_parseTag(receiver: GoPtr<Parser>, tags: GoSlice<GoPtr<Node>>, margin: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTag");
+  const start = Scanner_TokenStart(receiver!.scanner);
+  Parser_nextTokenJSDoc(receiver);
+
+  const tagName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
+  const indentText = Parser_skipWhitespaceOrAsterisk(receiver);
+
+  let tag: GoPtr<Node>;
+  switch (Node_Text(tagName)) {
+    case "implements":
+      tag = Parser_parseImplementsTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "augments":
+    case "extends":
+      tag = Parser_parseAugmentsTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "public":
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocPublicTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "private":
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocPrivateTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "protected":
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocProtectedTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "readonly":
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocReadonlyTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "override":
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocOverrideTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "deprecated":
+      receiver!.hasDeprecatedTag = true;
+      tag = Parser_parseSimpleTag(receiver, start, (tn: GoPtr<IdentifierNode>, comments: GoPtr<NodeList>) => NewJSDocDeprecatedTag(receiver!.factory, tn, comments), tagName, margin, indentText);
+      break;
+    case "this":
+      tag = Parser_parseThisTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "arg":
+    case "argument":
+    case "param":
+      tag = Parser_parseParameterOrPropertyTag(receiver, start, tagName, propertyLikeParseParameter, margin);
+      break;
+    case "return":
+    case "returns":
+      tag = Parser_parseReturnTag(receiver, tags, start, tagName, margin, indentText);
+      break;
+    case "template":
+      tag = Parser_parseTemplateTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "type":
+      tag = Parser_parseTypeTag(receiver, tags, start, tagName, margin, indentText);
+      break;
+    case "typedef":
+      tag = Parser_parseTypedefTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "callback":
+      tag = Parser_parseCallbackTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "overload":
+      tag = Parser_parseOverloadTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "satisfies":
+      tag = Parser_parseSatisfiesTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "see":
+      tag = Parser_parseSeeTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "exception":
+    case "throws":
+      tag = Parser_parseThrowsTag(receiver, start, tagName, margin, indentText);
+      break;
+    case "import":
+      tag = Parser_parseImportTag(receiver, start, tagName, margin, indentText);
+      break;
+    default:
+      tag = Parser_parseUnknownTag(receiver, start, tagName, margin, indentText);
+      break;
+  }
+  return tag!;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTrailingTagComments","kind":"method","status":"stub","sigHash":"6f864dc164bc0675b0ed1041623b193560130368935e57c822c9c48d7e8ba62f","bodyHash":"bdeb3e5e8d0d9e531525c9727734190f87ba9c7b5eeca0163fd6723673374e29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTrailingTagComments","kind":"method","status":"implemented","sigHash":"6f864dc164bc0675b0ed1041623b193560130368935e57c822c9c48d7e8ba62f","bodyHash":"bdeb3e5e8d0d9e531525c9727734190f87ba9c7b5eeca0163fd6723673374e29"}
  *
  * Go source:
  * func (p *Parser) parseTrailingTagComments(pos int, end int, margin int, indentText string) *ast.NodeList {
@@ -551,16 +1031,191 @@ export function Parser_parseTag(receiver: GoPtr<Parser>, tags: GoSlice<GoPtr<Nod
  * }
  */
 export function Parser_parseTrailingTagComments(receiver: GoPtr<Parser>, pos: int, end: int, margin: int, indentText: string): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTrailingTagComments");
+  // some tags, like typedef and callback, have already parsed their comments earlier
+  let m = margin;
+  if (indentText.length === 0) {
+    m += end - pos;
+  }
+  let initialMargin: string | undefined;
+  if (m < indentText.length) {
+    initialMargin = indentText.slice(m);
+  }
+  return Parser_parseTagComments(receiver, m, initialMargin);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTagComments","kind":"method","status":"stub","sigHash":"a6864a465e146657c734aa711bdc59d3613d2e8f704e4664fec203229f84a8dc","bodyHash":"647eaacbdc98b3b54ebf4b55b046e2e13120102953445e8bf90e31a96fe61b26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTagComments","kind":"method","status":"implemented","sigHash":"a6864a465e146657c734aa711bdc59d3613d2e8f704e4664fec203229f84a8dc","bodyHash":"647eaacbdc98b3b54ebf4b55b046e2e13120102953445e8bf90e31a96fe61b26"}
  *
  * Go source: (uses arena-cloned string slices: p.stringSliceArena.Clone / p.nodeSliceArena.Clone)
  */
 export function Parser_parseTagComments(receiver: GoPtr<Parser>, indent: int, initialMargin: GoPtr<string>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTagComments");
+  const commentsPos = Parser_nodePos(receiver);
+  let comments: GoSlice<string> = receiver!.jsdocTagCommentsSpace;
+  receiver!.jsdocTagCommentsSpace = [];
+  let parts: GoSlice<GoPtr<Node>> = receiver!.jsdocTagCommentsPartsSpace;
+  receiver!.jsdocTagCommentsPartsSpace = [];
+  let linkEnd = -1;
+  let state: jsdocState = jsdocStateBeginningOfLine;
+  let backtickCount = 0;
+  let inFencedCodeBlock = false;
+  let margin = -1;
+  const pushComment = (text: string): void => {
+    if (margin === -1) {
+      margin = indent;
+    }
+    comments.push(text);
+    indent += text.length;
+  };
+
+  if (initialMargin !== undefined) {
+    // jump straight to saving comments if there is some initial indentation
+    if (initialMargin !== "") {
+      pushComment(initialMargin);
+    }
+    state = jsdocStateSawAsterisk;
+  }
+  let tok = receiver!.token;
+
+  loop: for (;;) {
+    // Detect fenced code blocks by counting consecutive backtick tokens.
+    // Three or more consecutive backticks toggle the fenced code block state.
+    if (tok !== KindBacktickToken && backtickCount > 0) {
+      if (backtickCount >= 3) {
+        inFencedCodeBlock = !inFencedCodeBlock;
+      }
+      backtickCount = 0;
+    }
+    switch (tok) {
+      case KindNewLineTrivia:
+        state = jsdocStateBeginningOfLine;
+        // don't use pushComment here because we want to keep the margin unchanged
+        comments.push(Scanner_TokenText(receiver!.scanner));
+        indent = 0;
+        break;
+      case KindAtToken:
+        if (!inFencedCodeBlock && Scanner_CanFollowJSDocAt(receiver!.scanner)) {
+          Scanner_ResetPos(receiver!.scanner, Scanner_TokenEnd(receiver!.scanner) - 1);
+          break loop;
+        }
+        if (inFencedCodeBlock) {
+          state = jsdocStateSavingBackticks;
+        } else {
+          state = jsdocStateSavingComments;
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+      case KindEndOfFile:
+        // Done
+        break loop;
+      case KindWhitespaceTrivia: {
+        const whitespace = Scanner_TokenText(receiver!.scanner);
+        // if the whitespace crosses the margin, take only the whitespace that passes the margin
+        if (margin > -1 && indent + whitespace.length > margin) {
+          comments.push(whitespace.slice(Math.max(margin - indent, 0)));
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+        }
+        indent += whitespace.length;
+        break;
+      }
+      case KindOpenBraceToken: {
+        if (inFencedCodeBlock) {
+          state = jsdocStateSavingBackticks;
+          pushComment(Scanner_TokenText(receiver!.scanner));
+          break;
+        }
+        state = jsdocStateSavingComments;
+        const commentEnd = Scanner_TokenFullStart(receiver!.scanner);
+        const linkStart = Scanner_TokenEnd(receiver!.scanner) - 1;
+        const link = Parser_parseJSDocLink(receiver, linkStart);
+        if (link !== undefined) {
+          const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
+          const text = Parser_finishNodeWithEnd(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart, commentEnd);
+          parts.push(text!);
+          parts.push(link!);
+          comments = comments.slice(0, 0);
+          linkEnd = Scanner_TokenEnd(receiver!.scanner);
+        } else {
+          pushComment(Scanner_TokenText(receiver!.scanner));
+        }
+        break;
+      }
+      case KindBacktickToken:
+        backtickCount++;
+        if (state === jsdocStateSavingBackticks) {
+          state = jsdocStateSavingComments;
+        } else {
+          state = jsdocStateSavingBackticks;
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+      case KindJSDocCommentTextToken:
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+          // leading identifiers start recording as well
+        }
+        pushComment(Scanner_TokenValue(receiver!.scanner));
+        break;
+      case KindAsteriskToken:
+        if (state === jsdocStateBeginningOfLine) {
+          // leading asterisks start recording on the *next* (non-whitespace) token
+          state = jsdocStateSawAsterisk;
+          indent += 1;
+          break;
+        }
+        // record the * as a comment
+        // fallthrough to default
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+          // leading identifiers start recording as well
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+      default:
+        if (state !== jsdocStateSavingBackticks) {
+          if (inFencedCodeBlock) {
+            state = jsdocStateSavingBackticks;
+          } else {
+            state = jsdocStateSavingComments;
+          }
+          // leading identifiers start recording as well
+        }
+        pushComment(Scanner_TokenText(receiver!.scanner));
+        break;
+    }
+    if (state === jsdocStateSavingComments || state === jsdocStateSavingBackticks) {
+      tok = Parser_nextJSDocCommentTextToken(receiver, state === jsdocStateSavingBackticks);
+    } else {
+      tok = Parser_nextTokenJSDoc(receiver);
+    }
+  }
+
+  receiver!.jsdocTagCommentsSpace = comments.slice(0, 0);
+
+  comments = removeLeadingNewlines(comments);
+  if (comments.length > 0) {
+    const commentStart = linkEnd > -1 ? linkEnd : commentsPos;
+    const text = Parser_finishNode(receiver, NewJSDocText(receiver!.factory, Arena_Clone(receiver!.stringSliceArena as GoPtr<Arena<string>>, comments)), commentStart);
+    parts.push(text!);
+  }
+
+  receiver!.jsdocTagCommentsPartsSpace = parts.slice(0, 0);
+
+  if (parts.length > 0) {
+    return Parser_newNodeList(receiver, NewTextRange(commentsPos, Scanner_TokenEnd(receiver!.scanner)), Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, parts));
+  }
+  return undefined;
 }
 
 /**
@@ -714,7 +1369,7 @@ export function isJSDocLinkTag(kind: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseUnknownTag","kind":"method","status":"stub","sigHash":"2b707fde5fd22a2da2889c5858421791e05030e180ccf2c63edb62bfd0cab53e","bodyHash":"eee1fabff869c41b7bcfaaba19155115b7c05e471bb17c666f68b1947440d9bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseUnknownTag","kind":"method","status":"implemented","sigHash":"2b707fde5fd22a2da2889c5858421791e05030e180ccf2c63edb62bfd0cab53e","bodyHash":"eee1fabff869c41b7bcfaaba19155115b7c05e471bb17c666f68b1947440d9bf"}
  *
  * Go source:
  * func (p *Parser) parseUnknownTag(start int, tagName *ast.IdentifierNode, indent int, indentText string) *ast.Node {
@@ -722,7 +1377,7 @@ export function isJSDocLinkTag(kind: string): bool {
  * }
  */
 export function Parser_parseUnknownTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseUnknownTag");
+  return Parser_finishNode(receiver, NewJSDocUnknownTag(receiver!.factory, tagName, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText)), start);
 }
 
 /**
@@ -802,102 +1457,196 @@ export function Parser_parseBracketNameInPropertyAndParamTag(receiver: GoPtr<Par
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::isObjectOrObjectArrayTypeReference","kind":"func","status":"stub","sigHash":"4f5c566c07833aef7e31cb0628afaf73e9484fbb2f97c9df8b806eb8698f503e","bodyHash":"1b9cdc562b578359bf0502d602e06010c436a8393f30af3c4b2e74b6b5e6ea65"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::isObjectOrObjectArrayTypeReference","kind":"func","status":"implemented","sigHash":"4f5c566c07833aef7e31cb0628afaf73e9484fbb2f97c9df8b806eb8698f503e","bodyHash":"1b9cdc562b578359bf0502d602e06010c436a8393f30af3c4b2e74b6b5e6ea65"}
  *
  * Go source: (uses node.AsArrayTypeNode().ElementType and ref.TypeName.Text())
  */
 export function isObjectOrObjectArrayTypeReference(node: GoPtr<TypeNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::isObjectOrObjectArrayTypeReference");
+  switch (node!.Kind) {
+    case KindObjectKeyword:
+      return true;
+    case KindArrayType:
+      return isObjectOrObjectArrayTypeReference(AsArrayTypeNode(node)!.ElementType as GoPtr<TypeNode>);
+    default:
+      if (IsTypeReferenceNode(node)) {
+        const ref = AsTypeReferenceNode(node);
+        return IsIdentifier(ref!.TypeName) && Node_Text(ref!.TypeName) === "Object" && ref!.TypeArguments === undefined;
+      }
+      return false;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseParameterOrPropertyTag","kind":"method","status":"stub","sigHash":"c1d527e4a71c31007f5c504d9092b440cde7dcccd669fa80eba50fc8120b8124","bodyHash":"7db3c9dda9860fa53ae971f9d0471db4e2a2e10c7a688cc645d268dcb2903952"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseParameterOrPropertyTag","kind":"method","status":"implemented","sigHash":"c1d527e4a71c31007f5c504d9092b440cde7dcccd669fa80eba50fc8120b8124","bodyHash":"7db3c9dda9860fa53ae971f9d0471db4e2a2e10c7a688cc645d268dcb2903952"}
  *
  * Go source: (uses parseNestedTypeLiteral / parseTrailingTagComments)
  */
 export function Parser_parseParameterOrPropertyTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, target: propertyLikeParse, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseParameterOrPropertyTag");
+  let typeExpression = Parser_tryParseTypeExpression(receiver);
+  const isNameFirst = typeExpression === undefined;
+  Parser_skipWhitespaceOrAsterisk(receiver);
+
+  const [name, isBracketed] = Parser_parseBracketNameInPropertyAndParamTag(receiver, target);
+  const indentText = Parser_skipWhitespaceOrAsterisk(receiver);
+
+  if (isNameFirst && Parser_lookAhead(receiver, (p: GoPtr<Parser>): bool => { const [, ok] = Parser_parseJSDocLinkPrefix(p); return !ok; })) {
+    typeExpression = Parser_tryParseTypeExpression(receiver);
+  }
+
+  const comment = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText);
+
+  const nestedTypeLiteral = Parser_parseNestedTypeLiteral(receiver, typeExpression, name, target, indent);
+  if (nestedTypeLiteral !== undefined) {
+    typeExpression = nestedTypeLiteral;
+  }
+  const kind: Kind = IfElse<Kind>(target === propertyLikeParseProperty, KindJSDocPropertyTag, KindJSDocParameterTag);
+  const result = NewJSDocParameterOrPropertyTag(receiver!.factory, kind, tagName, name, isBracketed, typeExpression as GoPtr<TypeNode>, isNameFirst || nestedTypeLiteral !== undefined, comment);
+  return Parser_finishNode(receiver, result, start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseNestedTypeLiteral","kind":"method","status":"stub","sigHash":"c59f7ee0382abe1caaa8c28de790420f33b055e596509f4c07e5afe2158c6605","bodyHash":"181b731dcb1b3b23c609d5668fe01800f089662b49db9d166793efb4746130b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseNestedTypeLiteral","kind":"method","status":"implemented","sigHash":"c59f7ee0382abe1caaa8c28de790420f33b055e596509f4c07e5afe2158c6605","bodyHash":"181b731dcb1b3b23c609d5668fe01800f089662b49db9d166793efb4746130b8"}
  *
  * Go source: (uses typeExpression.Type() and child.TagName().Loc)
  */
 export function Parser_parseNestedTypeLiteral(receiver: GoPtr<Parser>, typeExpression: GoPtr<Node>, name: GoPtr<EntityName>, target: propertyLikeParse, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseNestedTypeLiteral");
+  if (typeExpression !== undefined && isObjectOrObjectArrayTypeReference(Node_Type(typeExpression) as GoPtr<TypeNode>)) {
+    const pos = Parser_nodePos(receiver);
+    const children: GoSlice<GoPtr<Node>> = [];
+    for (;;) {
+      const state = Parser_mark(receiver);
+      const child = Parser_parseChildParameterOrPropertyTag(receiver, target, indent, name);
+      if (child === undefined) {
+        Parser_rewind(receiver, state);
+        break;
+      }
+      switch (child!.Kind) {
+        case KindJSDocParameterTag:
+        case KindJSDocPropertyTag:
+          children.push(child);
+          break;
+        case KindJSDocTemplateTag:
+          Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
+          break;
+      }
+    }
+    if (children.length > 0) {
+      const literal = Parser_finishNode(receiver, NewJSDocTypeLiteral(receiver!.factory, children, Node_Type(typeExpression)!.Kind === KindArrayType), pos);
+      return Parser_finishNode(receiver, NewJSDocTypeExpression(receiver!.factory, literal as GoPtr<TypeNode>), pos);
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseReturnTag","kind":"method","status":"stub","sigHash":"6491578673ceb6108907c2a933952d4fa68d38ec3348d7937d05ad2e29474dad","bodyHash":"b03d7195134d9d1cfb0499e1e04d90543f376a2aa13d27e3b5e9e43465fbc1f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseReturnTag","kind":"method","status":"implemented","sigHash":"6491578673ceb6108907c2a933952d4fa68d38ec3348d7937d05ad2e29474dad","bodyHash":"b03d7195134d9d1cfb0499e1e04d90543f376a2aa13d27e3b5e9e43465fbc1f2"}
  *
  * Go source: (uses tagName.Text() and parseTrailingTagComments)
  */
 export function Parser_parseReturnTag(receiver: GoPtr<Parser>, previousTags: GoSlice<GoPtr<Node>>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseReturnTag");
+  if (Some(previousTags, IsJSDocReturnTag)) {
+    Parser_parseErrorAt(receiver, Node_Pos(tagName), Scanner_TokenStart(receiver!.scanner), X_0_tag_already_specified, Node_Text(tagName));
+  }
+
+  const typeExpression = Parser_tryParseTypeExpression(receiver);
+  return Parser_finishNode(receiver, NewJSDocReturnTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText)), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag","kind":"method","status":"stub","sigHash":"2349d1317667067c0b7600b02473eb3e8b9dffd31b847f37bec66fd38c5bffc3","bodyHash":"59d07509d6201d922b971412447c5b015828c71f14bf46d9b2ff52a6635e33c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag","kind":"method","status":"implemented","sigHash":"2349d1317667067c0b7600b02473eb3e8b9dffd31b847f37bec66fd38c5bffc3","bodyHash":"59d07509d6201d922b971412447c5b015828c71f14bf46d9b2ff52a6635e33c4"}
  *
  * Go source: (uses tagName.Text() and parseTrailingTagComments)
  */
 export function Parser_parseTypeTag(receiver: GoPtr<Parser>, previousTags: GoSlice<GoPtr<Node>>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypeTag");
+  if (Some(previousTags, IsJSDocTypeTag)) {
+    Parser_parseErrorAt(receiver, Node_Pos(tagName), Scanner_TokenStart(receiver!.scanner), X_0_tag_already_specified, Node_Text(tagName));
+  }
+
+  const typeExpression = Parser_parseJSDocTypeExpression(receiver, true);
+  let comments: GoPtr<NodeList>;
+  if (indent !== -1) {
+    comments = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText);
+  }
+  return Parser_finishNode(receiver, NewJSDocTypeTag(receiver!.factory, tagName, typeExpression, comments!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSeeTag","kind":"method","status":"stub","sigHash":"f733cbb444adbbbe3e9593eea39b9aca5c2d0ae808423d3e644eaa3566cca2c4","bodyHash":"2304947e2f6b8486b4fb6a3009b312188cd67a7a9e8fd314fe150d8dd45397ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSeeTag","kind":"method","status":"implemented","sigHash":"f733cbb444adbbbe3e9593eea39b9aca5c2d0ae808423d3e644eaa3566cca2c4","bodyHash":"2304947e2f6b8486b4fb6a3009b312188cd67a7a9e8fd314fe150d8dd45397ac"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseSeeTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSeeTag");
+  const hasNameReference = (Parser_isIdentifier(receiver) && !HasPrefix(receiver!.sourceText.slice(Scanner_TokenEnd(receiver!.scanner)), "://")) ||
+    (receiver!.token === KindOpenBraceToken && Parser_lookAhead(receiver, (p: GoPtr<Parser>): bool => Parser_nextTokenIsIdentifierOrKeyword(p)));
+  let nameExpression: GoPtr<Node>;
+  if (hasNameReference) {
+    nameExpression = Parser_parseJSDocNameReference(receiver);
+  }
+  const comments = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText);
+  return Parser_finishNode(receiver, NewJSDocSeeTag(receiver!.factory, tagName, nameExpression as GoPtr<TypeNode>, comments!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImplementsTag","kind":"method","status":"stub","sigHash":"06875622725a4ceeec31288b6b045de012dcde0067beeb1f6662ddedfd360e79","bodyHash":"b1541afcf22b034b580c942a65c26fa4effc6fd5c9682f3106b179d6684ada91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImplementsTag","kind":"method","status":"implemented","sigHash":"06875622725a4ceeec31288b6b045de012dcde0067beeb1f6662ddedfd360e79","bodyHash":"b1541afcf22b034b580c942a65c26fa4effc6fd5c9682f3106b179d6684ada91"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseImplementsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImplementsTag");
+  const className = Parser_parseExpressionWithTypeArgumentsForAugments(receiver);
+  return Parser_finishNode(receiver, NewJSDocImplementsTag(receiver!.factory, tagName, className, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseAugmentsTag","kind":"method","status":"stub","sigHash":"f1279fcea9b5213917cc93294df2eee310e33254c84254f1060a79da8fa9c53f","bodyHash":"54cd3659041908d0ed05c3449c799bf98fb90abf695085e7368344fd11495348"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseAugmentsTag","kind":"method","status":"implemented","sigHash":"f1279fcea9b5213917cc93294df2eee310e33254c84254f1060a79da8fa9c53f","bodyHash":"54cd3659041908d0ed05c3449c799bf98fb90abf695085e7368344fd11495348"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseAugmentsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseAugmentsTag");
+  const className = Parser_parseExpressionWithTypeArgumentsForAugments(receiver);
+  return Parser_finishNode(receiver, NewJSDocAugmentsTag(receiver!.factory, tagName, className, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSatisfiesTag","kind":"method","status":"stub","sigHash":"01d516ec22ee779accaa39283ed15a76cf1bffdb2b167d5c63b610d45bec7483","bodyHash":"36c8e0356b3282f6fd1d6911a684e2f6b52ed69ae6fbd55e3e96970b5d3a8e1b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSatisfiesTag","kind":"method","status":"implemented","sigHash":"01d516ec22ee779accaa39283ed15a76cf1bffdb2b167d5c63b610d45bec7483","bodyHash":"36c8e0356b3282f6fd1d6911a684e2f6b52ed69ae6fbd55e3e96970b5d3a8e1b"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseSatisfiesTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSatisfiesTag");
+  const typeExpression = Parser_parseJSDocTypeExpression(receiver, false);
+  const comments = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText);
+  return Parser_finishNode(receiver, NewJSDocSatisfiesTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, comments!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThrowsTag","kind":"method","status":"stub","sigHash":"6e6a885e0f2ae2822e5f24f917c1475bd6ddc38010d00a619a07f67a280510de","bodyHash":"dd555f80f274b9bacab720bc59cfd589ea60c06a53128e006b0cbd075b496dcf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThrowsTag","kind":"method","status":"implemented","sigHash":"6e6a885e0f2ae2822e5f24f917c1475bd6ddc38010d00a619a07f67a280510de","bodyHash":"dd555f80f274b9bacab720bc59cfd589ea60c06a53128e006b0cbd075b496dcf"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseThrowsTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThrowsTag");
+  const typeExpression = Parser_tryParseTypeExpression(receiver);
+  const comment = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText);
+  return Parser_finishNode(receiver, NewJSDocThrowsTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, comment!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImportTag","kind":"method","status":"stub","sigHash":"3fee6b8292a484a3fb35f9e880b3e68bfa9348b036c10cd5d675f0eb8a7a8a38","bodyHash":"ca679c17c1c517daf81d1bb0fe9fca67e44c97936f3ddfc324edd2710f92174f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImportTag","kind":"method","status":"implemented","sigHash":"3fee6b8292a484a3fb35f9e880b3e68bfa9348b036c10cd5d675f0eb8a7a8a38","bodyHash":"ca679c17c1c517daf81d1bb0fe9fca67e44c97936f3ddfc324edd2710f92174f"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseImportTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseImportTag");
+  const afterImportTagPos = Scanner_TokenFullStart(receiver!.scanner);
+
+  let identifier: GoPtr<IdentifierNode>;
+  if (Parser_isIdentifier(receiver)) {
+    identifier = Parser_parseIdentifier(receiver) as GoPtr<IdentifierNode>;
+  }
+
+  const importClause = Parser_tryParseImportClause(receiver, identifier, afterImportTagPos, KindTypeKeyword, true /*skipJSDocLeadingAsterisks*/);
+  const moduleSpecifier = Parser_parseModuleSpecifier(receiver);
+  const attributes = Parser_tryParseImportAttributes(receiver);
+
+  const comments = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText);
+  return Parser_finishNode(receiver, NewJSDocImportTag(receiver!.factory, tagName, importClause, moduleSpecifier, attributes, comments!), start);
 }
 
 /**
@@ -959,79 +1708,250 @@ export function Parser_parsePropertyAccessEntityNameExpression(receiver: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSimpleTag","kind":"method","status":"stub","sigHash":"0fa7d14d798a66fe0ddb91610d0b26e1dffb43851310f682b2ede94a8cadf1e8","bodyHash":"d76afe493cc550dc21eea24d88085626c8c150332a5ee1eaad94a592f7349286"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSimpleTag","kind":"method","status":"implemented","sigHash":"0fa7d14d798a66fe0ddb91610d0b26e1dffb43851310f682b2ede94a8cadf1e8","bodyHash":"d76afe493cc550dc21eea24d88085626c8c150332a5ee1eaad94a592f7349286"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseSimpleTag(receiver: GoPtr<Parser>, start: int, createTag: (tagName: GoPtr<IdentifierNode>, comment: GoPtr<NodeList>) => GoPtr<Node>, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseSimpleTag");
+  return Parser_finishNode(receiver, createTag(tagName, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThisTag","kind":"method","status":"stub","sigHash":"f1ce0385f28356b3d02dc3020e1b166e28245756ab72d43dd2000fb903786213","bodyHash":"ee85f94bfb60ec08ef5846d576d9188bc51247deab23898acad919f823499f51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThisTag","kind":"method","status":"implemented","sigHash":"f1ce0385f28356b3d02dc3020e1b166e28245756ab72d43dd2000fb903786213","bodyHash":"ee85f94bfb60ec08ef5846d576d9188bc51247deab23898acad919f823499f51"}
  *
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseThisTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, margin: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseThisTag");
+  const typeExpression = Parser_parseJSDocTypeExpression(receiver, true);
+  Parser_skipWhitespace(receiver);
+  const result = NewJSDocThisTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), margin, indentText)!);
+  return Parser_finishNode(receiver, result, start);
+}
+
+function Parser_parseJSDocTypeNameWithNamespace(receiver: GoPtr<Parser>, nested: bool): GoPtr<Node> {
+  const start = Scanner_TokenStart(receiver!.scanner);
+  if (!tokenIsIdentifierOrKeyword(receiver!.token)) {
+    return undefined;
+  }
+  const typeNameOrNamespaceName = Parser_parseJSDocIdentifierName(receiver, undefined);
+  if (Parser_parseOptionalJsdoc(receiver, KindDotToken)) {
+    const body = Parser_parseJSDocTypeNameWithNamespace(receiver, true /*nested*/);
+    const jsDocNamespaceNode = NewModuleDeclaration(
+      receiver!.factory,
+      undefined /*modifiers*/,
+      KindNamespaceKeyword /*keyword*/,
+      typeNameOrNamespaceName,
+      body,
+    );
+    if (nested) {
+      jsDocNamespaceNode!.Flags |= NodeFlagsOptionalChain; // NodeFlagsNestedNamespace = NodeFlagsOptionalChain
+    }
+    return Parser_finishNode(receiver, jsDocNamespaceNode, start);
+  }
+  if (nested) {
+    typeNameOrNamespaceName!.Flags |= NodeFlagsHasAsyncFunctions; // NodeFlagsIdentifierIsInJSDocNamespace = NodeFlagsHasAsyncFunctions
+  }
+  return typeNameOrNamespaceName;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypedefTag","kind":"method","status":"stub","sigHash":"5d56ed9fa8a5d4d2f7d04ebb717d03b62cf3d34b70138e46b4967dc3679b000f","bodyHash":"0de048995e261c2102341aa3968b1694c2e9c965775b5dd1f3ac210b6dc38f59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypedefTag","kind":"method","status":"implemented","sigHash":"5d56ed9fa8a5d4d2f7d04ebb717d03b62cf3d34b70138e46b4967dc3679b000f","bodyHash":"0de048995e261c2102341aa3968b1694c2e9c965775b5dd1f3ac210b6dc38f59"}
  *
  * Go source: (uses isObjectOrObjectArrayTypeReference / typeExpression.Type() / parseTagComments)
  */
 export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypedefTag");
+  let typeExpression = Parser_tryParseTypeExpression(receiver);
+  Parser_skipWhitespaceOrAsterisk(receiver);
+  let fullName = Parser_parseJSDocTypeNameWithNamespace(receiver, false /*nested*/);
+  if (fullName === undefined) {
+    fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
+  }
+  Parser_skipWhitespace(receiver);
+  const comment = Parser_parseTagComments(receiver, indent, undefined);
+
+  let end = -1;
+  let hasChildren = false;
+  if (typeExpression === undefined || isObjectOrObjectArrayTypeReference(Node_Type(typeExpression) as GoPtr<TypeNode>)) {
+    let child: GoPtr<Node>;
+    let childTypeTag: GoPtr<ReturnType<typeof AsJSDocTypeTag>>;
+    let jsdocPropertyTags: GoSlice<GoPtr<Node>> = [];
+    for (;;) {
+      const state = Parser_mark(receiver);
+      child = Parser_parseChildPropertyTag(receiver, indent);
+      if (child === undefined) {
+        Parser_rewind(receiver, state);
+        break;
+      }
+      hasChildren = true;
+      switch (child!.Kind) {
+        case KindJSDocTemplateTag:
+          Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
+          break;
+        case KindJSDocTypeTag:
+          if (childTypeTag === undefined) {
+            childTypeTag = AsJSDocTypeTag(child);
+          } else {
+            const lastError = Parser_parseErrorAtCurrentToken(receiver, A_JSDoc_typedef_comment_may_not_contain_multiple_type_tags);
+            if (lastError !== undefined) {
+              const related = NewDiagnostic(undefined, NewTextRange(0, 0), The_tag_was_first_specified_here);
+              Diagnostic_AddRelatedInfo(lastError, related);
+            }
+          }
+          break;
+        default:
+          jsdocPropertyTags.push(child!);
+          break;
+      }
+    }
+    if (hasChildren) {
+      const isArrayType = typeExpression !== undefined && Node_Type(typeExpression)!.Kind === KindArrayType;
+      const jsdocTypeLiteral = NewJSDocTypeLiteral(receiver!.factory, jsdocPropertyTags, isArrayType);
+      if (childTypeTag !== undefined && childTypeTag!.TypeExpression !== undefined && !isObjectOrObjectArrayTypeReference(Node_Type(childTypeTag!.TypeExpression) as GoPtr<TypeNode>)) {
+        typeExpression = childTypeTag!.TypeExpression;
+      } else {
+        // !!! This differs from Strada but prevents a crash
+        let pos = start;
+        if (jsdocPropertyTags.length > 0) {
+          pos = Node_Pos(jsdocPropertyTags[0]);
+        }
+        typeExpression = Parser_finishNode(receiver, jsdocTypeLiteral, pos);
+      }
+      end = Node_End(typeExpression);
+    }
+  }
+
+  // Only include the characters between the name end and the next token if a comment was actually parsed out
+  if (end === -1) {
+    if (hasChildren && typeExpression !== undefined) {
+      end = Node_End(typeExpression);
+    } else if (comment !== undefined) {
+      end = Parser_nodePos(receiver);
+    } else if (fullName !== undefined) {
+      end = Node_End(fullName);
+    } else if (typeExpression !== undefined) {
+      end = Node_End(typeExpression);
+    } else {
+      end = Node_End(tagName);
+    }
+  }
+
+  let finalComment: GoPtr<NodeList> = comment;
+  if (comment === undefined) {
+    finalComment = Parser_parseTrailingTagComments(receiver, start, end, indent, indentText);
+  }
+
+  const typedefTag = Parser_finishNodeWithEnd(receiver, NewJSDocTypedefTag(receiver!.factory, tagName, typeExpression, fullName as GoPtr<IdentifierNode>, finalComment!), start, end);
+  if (typeExpression !== undefined) {
+    typeExpression!.Parent = typedefTag; // forcibly overwrite parent potentially set by inner type expression parse
+  }
+  return typedefTag;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTagParameters","kind":"method","status":"stub","sigHash":"4ad87430b3330f13901ca974355508fb4e1cc79ddc839f284d7d84e57f2f282a","bodyHash":"102319cc2b565326e13425dd05e36bd6ffbb497dfdbad1a74908e02ce1efb41a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTagParameters","kind":"method","status":"implemented","sigHash":"4ad87430b3330f13901ca974355508fb4e1cc79ddc839f284d7d84e57f2f282a","bodyHash":"102319cc2b565326e13425dd05e36bd6ffbb497dfdbad1a74908e02ce1efb41a"}
  *
  * Go source: (uses parseChildParameterOrPropertyTag / child.TagName().Loc)
  */
 export function Parser_parseCallbackTagParameters(receiver: GoPtr<Parser>, indent: int): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTagParameters");
+  let child: GoPtr<Node>;
+  const parameters: GoSlice<GoPtr<Node>> = [];
+  const pos = Parser_nodePos(receiver);
+  for (;;) {
+    const state = Parser_mark(receiver);
+    child = Parser_parseChildParameterOrPropertyTag(receiver, propertyLikeParseCallbackParameter, indent, undefined);
+    if (child === undefined) {
+      Parser_rewind(receiver, state);
+      break;
+    }
+    if (child.Kind === KindJSDocTemplateTag) {
+      Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
+    } else {
+      parameters.push(child);
+    }
+  }
+  return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), parameters);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocSignature","kind":"method","status":"stub","sigHash":"3904620168ad3f97031ea33815eb4b184215bf6de3e5ee72f49a7b5cb519ae8d","bodyHash":"f22fc90581ca99e6f85674a30d8cedf86afc3e05cded37d223ff0c667d934297"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocSignature","kind":"method","status":"implemented","sigHash":"3904620168ad3f97031ea33815eb4b184215bf6de3e5ee72f49a7b5cb519ae8d","bodyHash":"f22fc90581ca99e6f85674a30d8cedf86afc3e05cded37d223ff0c667d934297"}
  *
  * Go source: (uses parseCallbackTagParameters / parseTag)
  */
 export function Parser_parseJSDocSignature(receiver: GoPtr<Parser>, start: int, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseJSDocSignature");
+  const parameters = Parser_parseCallbackTagParameters(receiver, indent);
+  let returnTag: GoPtr<Node>;
+  const state = Parser_mark(receiver);
+  if (Parser_parseOptionalJsdoc(receiver, KindAtToken)) {
+    const tag = Parser_parseTag(receiver, [], indent);
+    if (tag!.Kind === KindJSDocReturnTag) {
+      returnTag = tag;
+    }
+  }
+  if (returnTag === undefined) {
+    Parser_rewind(receiver, state);
+  }
+  return Parser_finishNode(receiver, NewJSDocSignature(receiver!.factory, undefined, parameters as GoPtr<NodeList>, returnTag as GoPtr<TypeNode>), start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTag","kind":"method","status":"stub","sigHash":"cb3bc6c00bfc192275c96cf7ba0b68de671626f1b38670fec99b97c57b7c6055","bodyHash":"cf909d9bdecb1892bc658acb2b220c629fee98631d55ceedaf90686c034e6125"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTag","kind":"method","status":"implemented","sigHash":"cb3bc6c00bfc192275c96cf7ba0b68de671626f1b38670fec99b97c57b7c6055","bodyHash":"cf909d9bdecb1892bc658acb2b220c629fee98631d55ceedaf90686c034e6125"}
  *
  * Go source: (uses parseTagComments / parseJSDocSignature)
  */
 export function Parser_parseCallbackTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseCallbackTag");
+  let fullName = Parser_parseJSDocTypeNameWithNamespace(receiver, false);
+  if (fullName === undefined) {
+    fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
+  }
+  Parser_skipWhitespace(receiver);
+  let comment = Parser_parseTagComments(receiver, indent, undefined);
+  const typeExpression = Parser_parseJSDocSignature(receiver, Parser_nodePos(receiver), indent);
+  if (comment === undefined) {
+    comment = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText);
+  }
+  const end = comment !== undefined ? Parser_nodePos(receiver) : Node_End(typeExpression);
+  return Parser_finishNodeWithEnd(receiver, NewJSDocCallbackTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, fullName, comment!), start, end);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseOverloadTag","kind":"method","status":"stub","sigHash":"386780e260b3597c399fe60ab174d15f5b4ec704302ff81c9e8e6a229034aa13","bodyHash":"b0c7c256c9ae1e4902582b80ccda679646183fde0f496ba67c3e042f46f6f393"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseOverloadTag","kind":"method","status":"implemented","sigHash":"386780e260b3597c399fe60ab174d15f5b4ec704302ff81c9e8e6a229034aa13","bodyHash":"b0c7c256c9ae1e4902582b80ccda679646183fde0f496ba67c3e042f46f6f393"}
  *
  * Go source: (uses parseTagComments / parseJSDocSignature)
  */
 export function Parser_parseOverloadTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseOverloadTag");
+  Parser_skipWhitespace(receiver);
+  let comment = Parser_parseTagComments(receiver, indent, undefined);
+  const typeExpression = Parser_parseJSDocSignature(receiver, start, indent);
+  if (comment === undefined) {
+    comment = Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText);
+  }
+  const end = comment !== undefined ? Parser_nodePos(receiver) : Node_End(typeExpression);
+  return Parser_finishNodeWithEnd(receiver, NewJSDocOverloadTag(receiver!.factory, tagName, typeExpression as GoPtr<TypeNode>, comment!), start, end);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::textsEqual","kind":"func","status":"stub","sigHash":"187dca3f1d3c550954abc643ba1eb68a6b9953e48f7cc80140fd3ffc097176a6","bodyHash":"8e643117b3c5cb1f51eebec1125b468d5e8a5a77b7b3965081244ca0cc7b2578"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::textsEqual","kind":"func","status":"implemented","sigHash":"187dca3f1d3c550954abc643ba1eb68a6b9953e48f7cc80140fd3ffc097176a6","bodyHash":"8e643117b3c5cb1f51eebec1125b468d5e8a5a77b7b3965081244ca0cc7b2578"}
  *
  * Go source: (uses a.AsQualifiedName().Right.Text() and a.Text())
  */
 export function textsEqual(a: GoPtr<EntityName>, b: GoPtr<EntityName>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::func::textsEqual");
+  for (;;) {
+    if (!IsIdentifier(a) || !IsIdentifier(b)) {
+      if (!IsIdentifier(a) && !IsIdentifier(b) && Node_Text(AsQualifiedName(a)!.Right) === Node_Text(AsQualifiedName(b)!.Right)) {
+        a = AsQualifiedName(a)!.Left;
+        b = AsQualifiedName(b)!.Left;
+      } else {
+        return false as bool;
+      }
+    } else {
+      break;
+    }
+  }
+  return (Node_Text(a) === Node_Text(b)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildPropertyTag","kind":"method","status":"stub","sigHash":"862487a9029694223b51e19e6c98331b659f6968ab2d83f2a1151ff1b838ecdf","bodyHash":"2d2d102ce12c56d7cf1ee81957726275e477a9a779af49ff1c5ebeacd66faa49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildPropertyTag","kind":"method","status":"implemented","sigHash":"862487a9029694223b51e19e6c98331b659f6968ab2d83f2a1151ff1b838ecdf","bodyHash":"2d2d102ce12c56d7cf1ee81957726275e477a9a779af49ff1c5ebeacd66faa49"}
  *
  * Go source:
  * func (p *Parser) parseChildPropertyTag(indent int) *ast.Node {
@@ -1039,52 +1959,156 @@ export function textsEqual(a: GoPtr<EntityName>, b: GoPtr<EntityName>): bool {
  * }
  */
 export function Parser_parseChildPropertyTag(receiver: GoPtr<Parser>, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildPropertyTag");
+  return Parser_parseChildParameterOrPropertyTag(receiver, propertyLikeParseProperty, indent, undefined);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildParameterOrPropertyTag","kind":"method","status":"stub","sigHash":"efe568b14a7e0a40fef1206589beb4ebc3c02fba71293ffd1166550dc373b576","bodyHash":"4d5217b6ea6215a821af142031eda4489c8325706c4e2402d3c9a95190d50fba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildParameterOrPropertyTag","kind":"method","status":"implemented","sigHash":"efe568b14a7e0a40fef1206589beb4ebc3c02fba71293ffd1166550dc373b576","bodyHash":"4d5217b6ea6215a821af142031eda4489c8325706c4e2402d3c9a95190d50fba"}
  *
  * Go source: (uses textsEqual / child.Name() / child.Kind)
  */
 export function Parser_parseChildParameterOrPropertyTag(receiver: GoPtr<Parser>, target: propertyLikeParse, indent: int, name: GoPtr<EntityName>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseChildParameterOrPropertyTag");
+  let canParseTag = true;
+  let seenAsterisk = false;
+  for (;;) {
+    switch (Parser_nextTokenJSDoc(receiver)) {
+      case KindAtToken:
+        if (canParseTag && Scanner_CanFollowJSDocAt(receiver!.scanner)) {
+          const child = Parser_tryParseChildTag(receiver, target, indent);
+          if (child !== undefined && name !== undefined &&
+            (child.Kind === KindJSDocParameterTag || child.Kind === KindJSDocPropertyTag) &&
+            (IsIdentifier(Node_Name(child)) || !textsEqual(name, AsQualifiedName(Node_Name(child))!.Left))) {
+            return undefined;
+          }
+          return child;
+        }
+        seenAsterisk = false;
+        break;
+      case KindNewLineTrivia:
+        canParseTag = true;
+        seenAsterisk = false;
+        break;
+      case KindAsteriskToken:
+        if (seenAsterisk) {
+          canParseTag = false;
+        }
+        seenAsterisk = true;
+        break;
+      case KindIdentifier:
+        canParseTag = false;
+        break;
+      case KindEndOfFile:
+        return undefined;
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.tryParseChildTag","kind":"method","status":"stub","sigHash":"88dc5cb321a70b88417f72c9f69f1ad92c234c6259bea3da55a5e75b80f33aa7","bodyHash":"6a3ff17a7e2e7c1fcda5a9ca09f3b5334761661e0d52b3d64f2f52b420a10cf4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.tryParseChildTag","kind":"method","status":"implemented","sigHash":"88dc5cb321a70b88417f72c9f69f1ad92c234c6259bea3da55a5e75b80f33aa7","bodyHash":"6a3ff17a7e2e7c1fcda5a9ca09f3b5334761661e0d52b3d64f2f52b420a10cf4"}
  *
  * Go source: (uses tagName.Text())
  */
 export function Parser_tryParseChildTag(receiver: GoPtr<Parser>, target: propertyLikeParse, indent: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.tryParseChildTag");
+  if (receiver!.token !== KindAtToken) {
+    throw new globalThis.Error("should only be called when at @");
+  }
+  const start = Scanner_TokenFullStart(receiver!.scanner);
+  Parser_nextTokenJSDoc(receiver);
+
+  const tagName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
+  const indentText = Parser_skipWhitespaceOrAsterisk(receiver);
+  let t: propertyLikeParse;
+  switch (Node_Text(tagName)) {
+    case "type":
+      if (target === propertyLikeParseProperty) {
+        return Parser_parseTypeTag(receiver, [], start, tagName, -1, "");
+      }
+      break;
+    case "prop":
+    case "property":
+      t = propertyLikeParseProperty;
+      break;
+    case "arg":
+    case "argument":
+    case "param":
+      t = propertyLikeParseParameter | propertyLikeParseCallbackParameter;
+      break;
+    case "template":
+      return Parser_parseTemplateTag(receiver, start, tagName, indent, indentText);
+    case "this":
+      return Parser_parseThisTag(receiver, start, tagName, indent, indentText);
+    default:
+      return undefined;
+  }
+  if ((target & t!) === 0) {
+    return undefined;
+  }
+  return Parser_parseParameterOrPropertyTag(receiver, start, tagName, target, indent);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameter","kind":"method","status":"stub","sigHash":"deef519dbbae989e3c31f9127b46ef873cfc760ae17a5c1cf76f420790a1673c","bodyHash":"c25356eb0bd20e24a4445930ddb67922d4af9e200e50d32eb0da87d38ca9c2bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameter","kind":"method","status":"implemented","sigHash":"deef519dbbae989e3c31f9127b46ef873cfc760ae17a5c1cf76f420790a1673c","bodyHash":"c25356eb0bd20e24a4445930ddb67922d4af9e200e50d32eb0da87d38ca9c2bd"}
  *
  * Go source: (uses ast.NodeIsMissing -- not yet ported in the AST layer)
  */
 export function Parser_parseTemplateTagTypeParameter(receiver: GoPtr<Parser>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameter");
+  const typeParameterPos = Parser_nodePos(receiver);
+  const isBracketed = Parser_parseOptionalJsdoc(receiver, KindOpenBracketToken);
+  if (isBracketed) {
+    Parser_skipWhitespace(receiver);
+  }
+
+  const modifiers = Parser_parseModifiersEx(receiver, false, true, false);
+  const name = Parser_parseJSDocIdentifierName(receiver, Unexpected_token_A_type_parameter_name_was_expected_without_curly_braces);
+  let defaultType: GoPtr<Node>;
+  if (isBracketed) {
+    Parser_skipWhitespace(receiver);
+    Parser_parseExpected(receiver, KindEqualsToken);
+    const saveContextFlags = receiver!.contextFlags;
+    Parser_setContextFlags(receiver, NodeFlagsJSDoc, true);
+    defaultType = Parser_parseJSDocType(receiver);
+    receiver!.contextFlags = saveContextFlags;
+    Parser_parseExpected(receiver, KindCloseBracketToken);
+  }
+
+  if (NodeIsMissing(name)) {
+    return undefined;
+  }
+  return Parser_finishNode(receiver, NewTypeParameterDeclaration(receiver!.factory, modifiers, name, undefined, undefined, defaultType as GoPtr<TypeNode>), typeParameterPos);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameters","kind":"method","status":"stub","sigHash":"85b9f38c4f8ba05631dae52ecfcee50aa5b829d336c11d99025c5231abd22590","bodyHash":"9d79d578b7413d7a68d177821b1d93e3a06471fd46b247836bd586aa07120974"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameters","kind":"method","status":"implemented","sigHash":"85b9f38c4f8ba05631dae52ecfcee50aa5b829d336c11d99025c5231abd22590","bodyHash":"9d79d578b7413d7a68d177821b1d93e3a06471fd46b247836bd586aa07120974"}
  *
  * Go source: (uses parseTemplateTagTypeParameter)
  */
 export function Parser_parseTemplateTagTypeParameters(receiver: GoPtr<Parser>): GoPtr<TypeParameterList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTagTypeParameters");
+  const pos = Parser_nodePos(receiver);
+  const nodes: GoSlice<GoPtr<Node>> = [];
+  do {
+    Parser_skipWhitespace(receiver);
+    const node = Parser_parseTemplateTagTypeParameter(receiver);
+    if (node !== undefined) {
+      nodes.push(node);
+    }
+    Parser_skipWhitespaceOrAsterisk(receiver);
+  } while (Parser_parseOptionalJsdoc(receiver, KindCommaToken));
+  return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), nodes) as GoPtr<TypeParameterList>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTag","kind":"method","status":"stub","sigHash":"c25858bf3d7381a0a8a3f24800807ebf870458f1ac65bd2c845b9151a9ad131a","bodyHash":"da1d54ce2dc9878a9207beb30a1b0c50a50404b56c9696de8117fd2fea62f862"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTag","kind":"method","status":"implemented","sigHash":"c25858bf3d7381a0a8a3f24800807ebf870458f1ac65bd2c845b9151a9ad131a","bodyHash":"da1d54ce2dc9878a9207beb30a1b0c50a50404b56c9696de8117fd2fea62f862"}
  *
  * Go source: (uses parseTemplateTagTypeParameters / parseTrailingTagComments)
  */
 export function Parser_parseTemplateTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTemplateTag");
+  let constraint: GoPtr<Node>;
+  if (receiver!.token === KindOpenBraceToken) {
+    constraint = Parser_parseJSDocTypeExpression(receiver, false);
+  }
+  const typeParameters = Parser_parseTemplateTagTypeParameters(receiver);
+  const result = NewJSDocTemplateTag(receiver!.factory, tagName, constraint, typeParameters, Parser_parseTrailingTagComments(receiver, start, Parser_nodePos(receiver), indent, indentText));
+  return Parser_finishNode(receiver, result, start);
 }
 
 /**

@@ -3,6 +3,7 @@ import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { SourceFile_Path } from "../../ast/ast.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import { SyncMap_Load, SyncMap_Size, SyncMap_Store } from "../../collections/syncmap.js";
@@ -32,7 +33,8 @@ import {
 } from "../../compiler/program.js";
 import type { EmitOptions, EmitResult, Program as Program_22a0a6ce, ProgramLike, WriteFileData } from "../../compiler/program.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
-import { TSUnknown, TSTrue, TSFalse } from "../../core/tristate.js";
+import { CompilerOptions_IsIncremental } from "../../core/compileroptions.js";
+import { TSUnknown, TSTrue, TSFalse, Tristate_IsTrue } from "../../core/tristate.js";
 import { IfElse } from "../../core/core.js";
 import { GetBuildInfoFileName } from "../../outputpaths/outputpaths.js";
 import type { Path } from "../../tspath/path.js";
@@ -390,7 +392,7 @@ export function Program_GetGlobalDiagnostics(receiver: GoPtr<Program>, ctx: Cont
  */
 export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   Program_panicIfNoProgram(receiver, "GetSemanticDiagnostics");
-  if (receiver!.snapshot!.options!.NoCheck.IsTrue()) {
+  if (Tristate_IsTrue(receiver!.snapshot!.options!.NoCheck)) {
     return [];
   }
 
@@ -430,7 +432,7 @@ export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Co
 export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   const [cachedDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
     receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-    file!.Path()
+    SourceFile_Path(file)
   );
   if (!ok) {
     throw new globalThis.Error("After handling all the affected files, there shouldnt be more changes");
@@ -517,10 +519,10 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
   Program_panicIfNoProgram(receiver, "Emit");
 
   let result: GoPtr<EmitResult>;
-  if (receiver!.snapshot!.options!.NoEmit.IsTrue()) {
-    result = { EmitSkipped: true as bool, Diagnostics: [], EmittedFiles: [] } as EmitResult;
+  if (Tristate_IsTrue(receiver!.snapshot!.options!.NoEmit)) {
+    result = { EmitSkipped: true as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] } as EmitResult;
   } else {
-    result = HandleNoEmitOnError(ctx, receiver as ProgramLike, options.TargetSourceFile);
+    result = HandleNoEmitOnError(ctx, receiver as unknown as ProgramLike, options.TargetSourceFile);
     if (ctx.Err() !== undefined) {
       return undefined;
     }
@@ -608,7 +610,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
   if (file !== undefined) {
     const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-      file!.Path()
+      SourceFile_Path(file)
     );
     if (ok) {
       return;
@@ -618,7 +620,7 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
     for (const f of compiler_Program_GetSourceFiles(receiver!.program)) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-        f!.Path()
+        SourceFile_Path(f)
       );
       if (!ok) {
         affectedFiles.push(f);
@@ -634,13 +636,13 @@ export function Program_collectSemanticDiagnosticsOfAffectedFiles(receiver: GoPt
   for (const [f, diagnostics] of diagnosticsPerFile) {
     SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-      f!.Path(),
+      SourceFile_Path(f),
       { diagnostics: diagnostics, buildInfoDiagnostics: [] }
     );
   }
   if (SyncMap_Size<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
     receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>
-  ) === compiler_Program_GetSourceFiles(receiver!.program).length && receiver!.snapshot!.checkPending && !receiver!.snapshot!.options!.NoCheck.IsTrue()) {
+  ) === compiler_Program_GetSourceFiles(receiver!.program).length && receiver!.snapshot!.checkPending && !Tristate_IsTrue(receiver!.snapshot!.options!.NoCheck)) {
     receiver!.snapshot!.checkPending = false;
   }
   receiver!.snapshot!.buildInfoEmitPending.Store(true as bool);
@@ -734,6 +736,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
       EmitSkipped: true as bool,
       Diagnostics: [],
       EmittedFiles: [],
+      SourceMaps: [],
     };
   }
   receiver!.snapshot!.buildInfoEmitPending.Store(false as bool);
@@ -741,6 +744,7 @@ export function Program_emitBuildInfo(receiver: GoPtr<Program>, ctx: Context, op
     EmitSkipped: false as bool,
     Diagnostics: [],
     EmittedFiles: [buildInfoFileName],
+    SourceMaps: [],
   };
 }
 
@@ -823,7 +827,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
     for (const file of sourceFiles) {
       const [, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
         receiver!.snapshot!.emitDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-        file!.Path()
+        SourceFile_Path(file)
       );
       if (ok) {
         hasEmitDiagnostics = true;
@@ -846,7 +850,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
   }
 
   if (hasEmitDiagnostics) {
-    receiver!.snapshot!.hasErrors = IfElse(receiver!.snapshot!.options!.IsIncremental(), TSFalse, TSTrue);
+    receiver!.snapshot!.hasErrors = IfElse(CompilerOptions_IsIncremental(receiver!.snapshot!.options), TSFalse, TSTrue);
     receiver!.snapshot!.hasSemanticErrors = false;
     return;
   }
@@ -865,10 +869,10 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
   const hasSemanticErrors = compiler_Program_GetSourceFiles(program).some((file: GoPtr<SourceFile>): boolean => {
     const [semanticDiagnostics, ok] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
       receiver!.snapshot!.semanticDiagnosticsPerFile as import("../../collections/syncmap.js").SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-      file!.Path()
+      SourceFile_Path(file)
     );
     if (!ok) {
-      return receiver!.snapshot!.options!.IsIncremental() as boolean;
+      return CompilerOptions_IsIncremental(receiver!.snapshot!.options) as boolean;
     }
     if (semanticDiagnostics!.diagnostics.length > 0 || semanticDiagnostics!.buildInfoDiagnostics.length > 0) {
       return true;
@@ -876,6 +880,6 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
     return false;
   });
   if (hasSemanticErrors) {
-    receiver!.snapshot!.hasSemanticErrors = !receiver!.snapshot!.options!.IsIncremental();
+    receiver!.snapshot!.hasSemanticErrors = !CompilerOptions_IsIncremental(receiver!.snapshot!.options);
   }
 }

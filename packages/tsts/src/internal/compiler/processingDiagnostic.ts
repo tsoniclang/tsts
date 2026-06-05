@@ -130,9 +130,9 @@ export function processingDiagnostic_toDiagnostic(receiver: GoPtr<processingDiag
       const loc = FileIncludeReason_getReferencedLocation(ref, program);
       switch (ref!.kind) {
         case fileIncludeKindTypeReferenceDirective:
-          return referenceFileLocation_diagnosticAt(loc, Cannot_find_type_definition_file_for_0, loc!.ref.FileName);
+          return referenceFileLocation_diagnosticAt(loc, Cannot_find_type_definition_file_for_0, loc!.ref!.FileName);
         case fileIncludeKindLibReferenceDirective: {
-          const libName = ToFileNameLowerCase(loc!.ref.FileName);
+          const libName = ToFileNameLowerCase(loc!.ref!.FileName);
           const unqualifiedLibName = libName.replace(/^lib\./, "").replace(/\.d\.ts$/, "");
           const suggestion = GetSpellingSuggestionForStrings(unqualifiedLibName, Values(Libs));
           return referenceFileLocation_diagnosticAt(loc, IfElse(
@@ -230,7 +230,7 @@ export function processingDiagnostic_createDiagnosticExplainingFile(receiver: Go
   let relatedInfo: GoSlice<GoPtr<Diagnostic>> = [];
   let redirectInfo: GoSlice<GoPtr<Diagnostic>> = [];
   let preferredLocation: GoPtr<FileIncludeReason> = undefined;
-  const seenReasons: Set<GoPtr<FileIncludeReason>> = { m: new globalThis.Map() };
+  const seenReasons: Set<GoPtr<FileIncludeReason>> = { M: new globalThis.Map() };
   const includeProcessor = program!.__tsgoEmbedded0!.includeProcessor;
 
   if (FileIncludeReason_isReferencedFile(diag!.diagnosticReason) && !includeProcessor_getReferenceLocation(includeProcessor, diag!.diagnosticReason, program)!.isSynthetic) {

@@ -628,7 +628,7 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList","kind":"func","status":"implemented","sigHash":"99be7eb5fce8ead6933f781a010e4798280327a1c220a737374fa538c06cb91d","bodyHash":"a026bca71a69c25b7f1b8c11508baed25078795f4b01652a0bb622fd5fd1d7be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList","kind":"func","status":"stub","sigHash":"99be7eb5fce8ead6933f781a010e4798280327a1c220a737374fa538c06cb91d","bodyHash":"a026bca71a69c25b7f1b8c11508baed25078795f4b01652a0bb622fd5fd1d7be"}
  *
  * Go source:
  * func repopulateDiagnosticsList(diags []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -652,28 +652,11 @@ export function repopulateDiagnosticsOfFile(diags: GoPtr<DiagnosticsOrBuildInfoD
  * }
  */
 export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  let changed = false;
-  const result: GoSlice<GoPtr<Diagnostic>> = new Array(diags.length);
-  for (let i = 0; i < diags.length; i++) {
-    const d = diags[i]!;
-    const repopulated = repopulateDiagnosticMessageChain(Diagnostic_MessageChain(d), p, file);
-    if (repopulated !== undefined && repopulated !== null) {
-      const clone = Diagnostic_Clone(d);
-      Diagnostic_SetMessageChain(clone, repopulated);
-      result[i] = clone;
-      changed = true;
-    } else {
-      result[i] = d;
-    }
-  }
-  if (!changed) {
-    return undefined as never;
-  }
-  return result;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticsList");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain","kind":"func","status":"implemented","sigHash":"e1527c7a51b0ee2981df52918566e2fc419facbfbab3ad7960203a6cf45a001a","bodyHash":"063591cd51a507f2e92cb5d78a11a6fb01e64b78133aa29713632e3723a14497"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain","kind":"func","status":"stub","sigHash":"e1527c7a51b0ee2981df52918566e2fc419facbfbab3ad7960203a6cf45a001a","bodyHash":"063591cd51a507f2e92cb5d78a11a6fb01e64b78133aa29713632e3723a14497"}
  *
  * Go source:
  * func repopulateDiagnosticMessageChain(chain []*ast.Diagnostic, p *compiler.Program, file *ast.SourceFile) []*ast.Diagnostic {
@@ -707,54 +690,7 @@ export function repopulateDiagnosticsList(diags: GoSlice<GoPtr<Diagnostic>>, p: 
  * }
  */
 export function repopulateDiagnosticMessageChain(chain: GoSlice<GoPtr<Diagnostic>>, p: GoPtr<Program>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  if (chain.length === 0) {
-    return undefined as never;
-  }
-  let changed = false;
-  const result: GoSlice<GoPtr<Diagnostic>> = new Array(chain.length);
-  for (let i = 0; i < chain.length; i++) {
-    const c = chain[i]!;
-    if (Diagnostic_RepopulateInfo(c) !== undefined) {
-      // Convert to buildInfoDiagnosticWithFileName and repopulate
-      const b: buildInfoDiagnosticWithFileName = {
-        pos: Diagnostic_Pos(c),
-        end: Diagnostic_End(c),
-        code: Diagnostic_Code(c),
-        category: Diagnostic_Category(c),
-        messageKey: Diagnostic_MessageKey(c),
-        messageArgs: Diagnostic_MessageArgs(c),
-        repopulateInfo: Diagnostic_RepopulateInfo(c),
-        file: "" as Path,
-        noFile: false,
-        messageChain: [],
-        relatedInformation: [],
-        reportsUnnecessary: false,
-        reportsDeprecated: false,
-        skippedOnNoEmit: false,
-      };
-      // Recursively handle nested chains
-      for (const nested of Diagnostic_MessageChain(c)) {
-        b.messageChain.push(astDiagToBuildInfoDiag(nested));
-      }
-      result[i] = repopulateDiagnosticChain(b, p, file);
-      changed = true;
-    } else {
-      // Check nested chains
-      const nested = repopulateDiagnosticMessageChain(Diagnostic_MessageChain(c), p, file);
-      if (nested !== undefined && nested !== null) {
-        const clone = Diagnostic_Clone(c);
-        Diagnostic_SetMessageChain(clone, nested);
-        result[i] = clone;
-        changed = true;
-      } else {
-        result[i] = c;
-      }
-    }
-  }
-  if (!changed) {
-    return undefined as never;
-  }
-  return result;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::repopulateDiagnosticMessageChain");
 }
 
 /**
