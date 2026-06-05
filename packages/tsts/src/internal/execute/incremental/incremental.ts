@@ -93,7 +93,10 @@ export function buildInfoReader_ReadBuildInfo(receiver: GoPtr<buildInfoReader>, 
  * }
  */
 export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
-  return { host };
+  const r: buildInfoReader = { host };
+  return {
+    ReadBuildInfo: (config: GoPtr<ParsedCommandLine>): GoPtr<BuildInfo> => buildInfoReader_ReadBuildInfo(r, config),
+  };
 }
 
 /**

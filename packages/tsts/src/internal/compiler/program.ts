@@ -7,7 +7,7 @@ import type { Bool } from "../../go/sync/atomic.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import { BindSourceFile } from "../binder/binder.js";
-import type { CheckJsDirective, CommentDirective, FileReference, HasFileName, Node, SourceFile, SourceFileMetaData, StringLiteralLike, Visitor } from "../ast/ast.js";
+import type { CheckJsDirective, CommentDirective, FileReference, HasFileName, Node, SourceFile, SourceFileMetaData, SourceFileLike, StringLiteralLike, Visitor } from "../ast/ast.js";
 import { CommentDirectiveKindIgnore, CommentDirectiveKindExpectError } from "../ast/ast.js";
 import { NewDiagnostic, NewCompilerDiagnostic, CompareDiagnostics, EqualDiagnosticsNoRelatedInfo, EqualDiagnostics } from "../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
@@ -16,9 +16,11 @@ import { DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_GetDi
 import { IsStringLiteralLike, IsSourceFileJS, IsCheckJSEnabledForFile, IsPlainJSFile, HasDecorators, NewHasFileName, GetEmitModuleFormatOfFileWorker, GetImpliedNodeFormatForEmitWorker } from "../ast/utilities.js";
 import { IsDecorator, IsObjectLiteralExpression, IsArrayLiteralExpression, IsStringLiteral } from "../ast/generated/predicates.js";
 import { KindParameter } from "../ast/generated/kinds.js";
-import { SubtreeContainsDecorators } from "../ast/flags.js";
-import { Node_ForEachChild, Node_SubtreeFacts, Node_AsNode } from "../ast/spine.js";
-import { SourceFile_BindDiagnostics, SourceFile_Diagnostics, SourceFile_JSDiagnostics, SourceFile_JSDocDiagnostics, SourceFile_ECMALineMap, SourceFile_Imports, SourceFile_Path, SourceFile_ParseOptions, SourceFile_ForEachChild, SourceFile_FileName, SourceFile_IsBound, SourceFile_Text, Node_Text } from "../ast/ast.js";
+import type { ArrayLiteralExpression, ObjectLiteralExpression, PropertyAssignment } from "../ast/generated/data.js";
+import { AsObjectLiteralExpression, AsArrayLiteralExpression } from "../ast/generated/casts.js";
+import { SubtreeContainsDecorators } from "../ast/subtreefacts.js";
+import { Node_ForEachChild, Node_SubtreeFacts, Node_AsNode, NamedMemberBase_Name } from "../ast/spine.js";
+import { SourceFile_BindDiagnostics, SourceFile_Diagnostics, SourceFile_JSDiagnostics, SourceFile_JSDocDiagnostics, SourceFile_ECMALineMap, SourceFile_Imports, SourceFile_Path, SourceFile_ParseOptions, SourceFile_ForEachChild, SourceFile_FileName, SourceFile_IsBound, SourceFile_Text, Node_Text, Node_ModifierNodes } from "../ast/ast.js";
 import type { Checker, Program as Program_e32ad451 } from "../checker/checker/state.js";
 import { Checker_GetDiagnostics, Checker_GetSuggestionDiagnostics } from "../checker/checker/diagnostics.js";
 import type { Set } from "../collections/set.js";
@@ -57,18 +59,21 @@ import { NewKnownSymlink, KnownSymlinks_HasDirectory, KnownSymlinks_ProcessResol
 import type { Tracing as Tracing_bcfc8412 } from "../tracing/tracing.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_FileNames, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_ProjectReferences } from "../tsoptions/parsedcommandline.js";
-import { GetSupportedExtensions, GetSupportedExtensionsWithJsonIfResolveJsonModule, ForEachTsConfigPropArray, ForEachPropertyAssignment, CreateDiagnosticForNodeInSourceFile, CreateDiagnosticAtReferenceSyntax, GetLibFileName } from "../tsoptions/tsconfigparsing.js";
+import { GetSupportedExtensions, GetSupportedExtensionsWithJsonIfResolveJsonModule, ForEachTsConfigPropArray, ForEachPropertyAssignment, CreateDiagnosticAtReferenceSyntax } from "../tsoptions/tsconfigparsing.js";
+import { CreateDiagnosticForNodeInSourceFile } from "../tsoptions/errors.js";
+import { GetLibFileName } from "../tsoptions/enummaps.js";
 import { ContainsPath, ToPath, GetDirectoryPath, GetCanonicalFileName, GetRelativePathFromFile, GetRelativePathFromDirectory, PathIsRelative, PathIsAbsolute, IsExternalModuleNameRelative, GetBaseFileName, GetRootLength, CombinePaths, ToFileNameLowerCase, ResolvePath, HasExtension } from "../tspath/path.js";
 import { IsDeclarationFileName, HasImplementationTSFileExtension, FileExtensionIsOneOf, ExtensionIsOneOf, SupportedTSExtensionsWithJsonFlat } from "../tspath/extension.js";
 import type { ComparePathsOptions, Path } from "../tspath/path.js";
-import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory, ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath } from "../outputpaths/outputpaths.js";
+import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
+import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath } from "../outputpaths/outputpaths.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
 import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo } from "./checkerpool.js";
 import type { checkerPool, CheckerPool } from "./checkerpool.js";
 import { newCheckerPoolWithTracing } from "./checkerpool.js";
 import { getSourceFilesToEmit, sourceFileMayBeEmitted, getDeclarationDiagnostics, emitter_emit } from "./emitter.js";
-import type { emitter as emitterType, EmitOnly } from "./emitter.js";
-import { newEmitHost } from "./emitHost.js";
+import type { emitter as emitterType, EmitOnly, SourceFileMayBeEmittedHost } from "./emitter.js";
+import { newEmitHost, emitHost_Options } from "./emitHost.js";
 import type { FileIncludeReason } from "./fileInclude.js";
 import { FileIncludeReason_toDiagnostic } from "./fileInclude.js";
 import type { DuplicateSourceFile, LibFile, processedFiles, redirectsFile } from "./fileloader.js";
@@ -312,7 +317,7 @@ export function Program_GetGlobalTypingsCacheLocation(receiver: GoPtr<Program>):
  */
 export function Program_GetNearestAncestorDirectoryWithPackageJson(receiver: GoPtr<Program>, dirname: string): string {
   const scoped = Resolver_GetPackageScopeForPath(receiver!.__tsgoEmbedded0!.resolver, dirname);
-  if (scoped !== undefined && scoped.Exists()) {
+  if (scoped !== undefined && InfoCacheEntry_Exists(scoped)) {
     return scoped.PackageDirectory;
   }
   return "";
@@ -334,7 +339,7 @@ export function Program_GetNearestAncestorDirectoryWithPackageJson(receiver: GoP
 export function Program_GetPackageJsonInfo(receiver: GoPtr<Program>, pkgJsonPath: string): GoPtr<InfoCacheEntry> {
   const directory = GetDirectoryPath(pkgJsonPath);
   const scoped = Resolver_GetPackageScopeForPath(receiver!.__tsgoEmbedded0!.resolver, directory);
-  if (scoped !== undefined && scoped.Exists() && scoped.PackageDirectory === directory) {
+  if (scoped !== undefined && InfoCacheEntry_Exists(scoped) && scoped.PackageDirectory === directory) {
     return scoped;
   }
   return undefined;
@@ -565,7 +570,7 @@ export let __7d754c38_0: Program_e32ad451 = undefined as never;
  */
 export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> {
   const fileName = ResolvePath(GetDirectoryPath(SourceFile_FileName(origin)), ref!.FileName);
-  const supportedExtensionsBase = GetSupportedExtensions(Program_Options(receiver), undefined);
+  const supportedExtensionsBase = GetSupportedExtensions(Program_Options(receiver), []);
   const supportedExtensions = GetSupportedExtensionsWithJsonIfResolveJsonModule(Program_Options(receiver), supportedExtensionsBase);
   const allowNonTsExtensions = Tristate_IsTrue(Program_Options(receiver)!.AllowNonTsExtensions);
   if (HasExtension(fileName)) {
@@ -590,7 +595,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
       return extensionless;
     }
   }
-  for (const ext of supportedExtensions[0]) {
+  for (const ext of (supportedExtensions[0] ?? [])) {
     const result = Program_GetSourceFile(receiver, fileName + ext);
     if (result !== undefined) {
       return result;
@@ -712,7 +717,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   const result: Program = {
     opts: newOpts,
     comparePathsOptions: receiver!.comparePathsOptions,
-    __tsgoEmbedded0: receiver!.__tsgoEmbedded0,
+    ...(receiver!.__tsgoEmbedded0 !== undefined ? { __tsgoEmbedded0: receiver!.__tsgoEmbedded0 } : {}),
     checkerPool: undefined as never,
     compilerCheckerPool: undefined,
     usesUriStyleNodeCoreModules: receiver!.usesUriStyleNodeCoreModules,
@@ -740,7 +745,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   newFiles[index] = newFile;
   const newFilesByPath = maps.Clone(result.__tsgoEmbedded0!.filesByPath)!;
   newFilesByPath.set(SourceFile_Path(newFile)!, newFile);
-  result.__tsgoEmbedded0 = {
+  (result as unknown as { __tsgoEmbedded0: processedFiles }).__tsgoEmbedded0 = {
     ...result.__tsgoEmbedded0!,
     files: newFiles,
     filesByPath: newFilesByPath,
@@ -775,7 +780,7 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
     receiver!.checkerPool = receiver!.opts.CreateCheckerPool(receiver);
   } else {
     const pool = newCheckerPoolWithTracing(receiver, receiver!.opts.Tracing);
-    receiver!.checkerPool = pool;
+    receiver!.checkerPool = pool as unknown as CheckerPool;
     receiver!.compilerCheckerPool = pool;
   }
 }
@@ -993,9 +998,10 @@ export function Program_extractUnresolvedImportsFromSourceFile(receiver: GoPtr<P
   const unresolvedImports: string[] = [];
   const resolvedModules = receiver!.__tsgoEmbedded0!.resolvedModules.get(SourceFile_Path(file)!);
   if (resolvedModules !== undefined) {
-    for (const [cacheKey, resolution] of resolvedModules) {
+    for (const [cacheKey, resolution_] of resolvedModules) {
+      const resolution = resolution_ as GoPtr<ResolvedModule>;
       const resolved = ResolvedModule_IsResolved(resolution);
-      if ((!resolved || !ExtensionIsOneOf(resolution!.Extension, SupportedTSExtensionsWithJsonFlat)) &&
+      if ((!resolved || !ExtensionIsOneOf(resolution!.Extension, SupportedTSExtensionsWithJsonFlat as GoSlice<string>)) &&
           !IsExternalModuleNameRelative(cacheKey.Name)) {
         unresolvedImports.push(cacheKey.Name);
       }
@@ -1155,7 +1161,7 @@ export function Program_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<Pro
     throw new globalThis.Error("moduleSpecifier must be a StringLiteralLike");
   }
   const mode = Program_GetModeForUsageLocation(receiver, file, moduleSpecifier);
-  return Program_GetResolvedModule(receiver, file, moduleSpecifier!.Text(), mode);
+  return Program_GetResolvedModule(receiver, file, Node_Text(moduleSpecifier), mode);
 }
 
 /**
@@ -1400,7 +1406,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
       return false as bool;
     }
     if (node!.Kind === KindParameter && HasDecorators(node)) {
-      const decorator = Find(node!.ModifierNodes(), IsDecorator);
+      const decorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator);
       if (decorator !== undefined) {
         diags.push(NewDiagnostic(file, decorator!.Loc, diagnostics.Decorators_are_not_valid_here));
       }
@@ -1467,7 +1473,7 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
-    result.set(sourceFiles[i], SortAndDeduplicateDiagnostics(allDiags[i]));
+    result.set(sourceFiles[i], SortAndDeduplicateDiagnostics(allDiags[i] ?? []));
   }
   return result;
 }
@@ -1602,11 +1608,11 @@ export function Program_canIncludeBindAndCheckDiagnostics(receiver: GoPtr<Progra
 export function Program_getSourceFilesToEmit(receiver: GoPtr<Program>, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
   if (targetSourceFile === undefined && !forceDtsEmit) {
     receiver!.sourceFilesToEmitOnce.Do(() => {
-      receiver!.sourceFilesToEmit = getSourceFilesToEmit(receiver, undefined, false as bool);
+      receiver!.sourceFilesToEmit = getSourceFilesToEmit(receiver as unknown as SourceFileMayBeEmittedHost, undefined, false as bool);
     });
     return receiver!.sourceFilesToEmit;
   }
-  return getSourceFilesToEmit(receiver, targetSourceFile, forceDtsEmit);
+  return getSourceFilesToEmit(receiver as unknown as SourceFileMayBeEmittedHost, targetSourceFile, forceDtsEmit);
 }
 
 /**
@@ -2132,21 +2138,19 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return ForEachTsConfigPropArray(sourceFile(), "compilerOptions", (x) => x);
   });
 
-  const getCompilerOptionsObjectLiteralSyntax = Memoize(() => {
+  const getCompilerOptionsObjectLiteralSyntax = Memoize((): GoPtr<ObjectLiteralExpression> | undefined => {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax();
     if (compilerOptionsProperty !== undefined &&
         compilerOptionsProperty!.Initializer !== undefined &&
         IsObjectLiteralExpression(compilerOptionsProperty!.Initializer)) {
-      return compilerOptionsProperty!.Initializer!.AsObjectLiteralExpression !== undefined
-        ? compilerOptionsProperty!.Initializer!.AsObjectLiteralExpression()
-        : compilerOptionsProperty!.Initializer;
+      return AsObjectLiteralExpression(compilerOptionsProperty!.Initializer!);
     }
     return undefined;
   });
 
-  const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<import("../ast/ast.js").Node>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
+  const createOptionDiagnosticInObjectLiteralSyntax = (objectLiteral: GoPtr<ObjectLiteralExpression>, onKey: bool, key1: string, key2: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
     const diag = ForEachPropertyAssignment(objectLiteral, key1, (property) => {
-      return CreateDiagnosticForNodeInSourceFile(sourceFile()!, onKey ? property!.Name() : property!.Initializer, message, ...args);
+      return CreateDiagnosticForNodeInSourceFile(sourceFile()!, onKey ? NamedMemberBase_Name(property) : property!.Initializer, message, ...args);
     }, key2);
     if (diag !== undefined) {
       receiver!.programDiagnostics = [...receiver!.programDiagnostics, diag];
@@ -2158,7 +2162,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     const compilerOptionsProperty = getCompilerOptionsPropertySyntax();
     let diag: GoPtr<Diagnostic>;
     if (compilerOptionsProperty !== undefined) {
-      diag = CreateDiagnosticForNodeInSourceFile(sourceFile()!, compilerOptionsProperty!.Name(), message, ...args);
+      diag = CreateDiagnosticForNodeInSourceFile(sourceFile()!, NamedMemberBase_Name(compilerOptionsProperty), message, ...args);
     } else {
       diag = NewCompilerDiagnostic(message, ...args);
     }
@@ -2299,7 +2303,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     }
 
     for (const file of receiver!.__tsgoEmbedded0!.files) {
-      if (sourceFileMayBeEmitted(file, receiver, false as bool) && !Set_Has(rootPaths, SourceFile_Path(file)!)) {
+      if (sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool) && !Set_Has(rootPaths, SourceFile_Path(file)!)) {
         includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {
           kind: processingDiagnosticKindExplainingFileInclude,
           data: {
@@ -2312,14 +2316,14 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     }
   }
 
-  const forEachOptionPathsSyntax = (callback: (p: GoPtr<import("../ast/ast.js").Node>) => GoPtr<Diagnostic>): GoPtr<Diagnostic> => {
+  const forEachOptionPathsSyntax = (callback: (p: GoPtr<PropertyAssignment>) => GoPtr<Diagnostic>): GoPtr<Diagnostic> => {
     return ForEachPropertyAssignment(getCompilerOptionsObjectLiteralSyntax(), "paths", callback);
   };
 
   const createDiagnosticForOptionPaths = (onKey: bool, key: string, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
-        return createOptionDiagnosticInObjectLiteralSyntax(pathProp!.Initializer, onKey, key, "", message, ...args);
+        return createOptionDiagnosticInObjectLiteralSyntax(AsObjectLiteralExpression(pathProp!.Initializer!), onKey, key, "", message, ...args);
       }
       return undefined;
     });
@@ -2332,10 +2336,10 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   const createDiagnosticForOptionPathKeyValue = (key: string, valueIndex: int, message: GoPtr<Message>, ...args: unknown[]): GoPtr<Diagnostic> => {
     let diag = forEachOptionPathsSyntax((pathProp) => {
       if (IsObjectLiteralExpression(pathProp!.Initializer)) {
-        return ForEachPropertyAssignment(pathProp!.Initializer, key, (keyProps) => {
+        return ForEachPropertyAssignment(AsObjectLiteralExpression(pathProp!.Initializer!), key, (keyProps) => {
           const initializer = keyProps!.Initializer;
           if (IsArrayLiteralExpression(initializer)) {
-            const elements = initializer!.ElementList();
+            const elements = AsArrayLiteralExpression(initializer!)!.Elements;
             if (elements !== undefined && elements!.Nodes.length > valueIndex) {
               const d = CreateDiagnosticForNodeInSourceFile(sourceFile()!, elements!.Nodes[valueIndex], message, ...args);
               receiver!.programDiagnostics = [...receiver!.programDiagnostics, d];
@@ -2353,7 +2357,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     return diag;
   };
 
-  for (const [key, value] of OrderedMap_Entries(options!.Paths)) {
+  OrderedMap_Entries(options!.Paths as GoPtr<import("../collections/ordered_map.js").OrderedMap<string, GoSlice<string>>>)((key: string, value: GoSlice<string>): bool => {
     if (!hasZeroOrOneAsteriskCharacter(key)) {
       createDiagnosticForOptionPaths(true as bool, key, diagnostics.Pattern_0_can_have_at_most_one_Asterisk_character, key);
     }
@@ -2364,7 +2368,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     }
     if (value !== undefined) {
       for (let i = 0; i < value.length; i++) {
-        const subst = value[i];
+        const subst = value[i]!;
         if (!hasZeroOrOneAsteriskCharacter(subst)) {
           createDiagnosticForOptionPathKeyValue(key, i, diagnostics.Substitution_0_in_pattern_1_can_have_at_most_one_Asterisk_character, subst, key);
         }
@@ -2373,7 +2377,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         }
       }
     }
-  }
+    return false as bool;
+  });
 
   if (Tristate_IsFalseOrUnknown(options!.SourceMap) && Tristate_IsFalseOrUnknown(options!.InlineSourceMap)) {
     if (Tristate_IsTrue(options!.InlineSources)) {
@@ -2433,7 +2438,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     const dir = Program_CommonSourceDirectory(receiver);
     const emittedFiles: string[] = [];
     for (const file of receiver!.__tsgoEmbedded0!.files) {
-      if (!file!.IsDeclarationFile && sourceFileMayBeEmitted(file, receiver, false as bool)) {
+      if (!file!.IsDeclarationFile && sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool)) {
         emittedFiles.push(SourceFile_FileName(file));
       }
     }
@@ -2459,7 +2464,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         GetBaseFileName(options!.ConfigFilePath),
         GetRelativePathFromFile(options!.ConfigFilePath, dir59, receiver!.comparePathsOptions),
       );
-      Diagnostic_AddMessageChain(diag, NewCompilerDiagnostic(diagnostics.Visit_https_Colon_Slash_Slashaka_ms_Slash_for_migration_information));
+      Diagnostic_AddMessageChain(diag, NewCompilerDiagnostic(diagnostics.Visit_https_Colon_Slash_Slashaka_ms_Slashts6_for_migration_information));
     }
   }
 
@@ -2579,7 +2584,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       }
     };
 
-    ForEachEmittedFile(receiver, options, (emitFileNames, _sourceFile) => {
+    ForEachEmittedFile(receiver as unknown as import("../outputpaths/outputpaths.js").OutputPathsHost, options, (emitFileNames, _sourceFile) => {
       verifyEmitFilePath(OutputPaths_JsFilePath(emitFileNames));
       verifyEmitFilePath(OutputPaths_SourceMapFilePath(emitFileNames));
       verifyEmitFilePath(OutputPaths_DeclarationFilePath(emitFileNames));
@@ -2941,11 +2946,12 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
     return [diags, undefined!];
   }
   const directivesByLine = new globalThis.Map<int, CommentDirective>();
+  const sourceFileLike: SourceFileLike = { Text: () => SourceFile_Text(sourceFile), ECMALineMap: () => SourceFile_ECMALineMap(sourceFile) };
   for (const directive of sourceFile!.CommentDirectives) {
-    const line = GetECMALineOfPosition(sourceFile, directive.Loc.Pos());
+    const line = GetECMALineOfPosition(sourceFileLike, TextRange_Pos(directive.Loc));
     directivesByLine.set(line, directive);
   }
-  const lineStarts = GetECMALineStarts(sourceFile);
+  const lineStarts = GetECMALineStarts(sourceFileLike);
   const filtered: GoPtr<Diagnostic>[] = [];
   for (const diagnostic of diags) {
     let ignoreDiagnostic = false;
@@ -2956,7 +2962,7 @@ export function Program_getDiagnosticsWithPrecedingDirectives(receiver: GoPtr<Pr
         directivesByLine.set(line, { ...dir, Kind: CommentDirectiveKindIgnore });
         break;
       }
-      if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), lineStarts[line])) {
+      if (!isCommentOrBlankLine(SourceFile_Text(sourceFile), lineStarts[line]!)) {
         break;
       }
     }
@@ -2996,7 +3002,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
     return cached as GoSlice<GoPtr<Diagnostic>>;
   }
   const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-  const diags = getDeclarationDiagnostics(host, sourceFile);
+  const diags = getDeclarationDiagnostics(host as unknown as import("./emitHost.js").EmitHost, sourceFile);
   const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags);
   done();
   return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
@@ -3430,7 +3436,7 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
       () => {
         const files: string[] = [];
         for (const file of receiver!.__tsgoEmbedded0!.files) {
-          if (sourceFileMayBeEmitted(file, receiver, false as bool)) {
+          if (sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool)) {
             files.push(SourceFile_FileName(file));
           }
         }
@@ -3619,8 +3625,8 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     };
     emitters.push(e);
     const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-    e.host = host;
-    e.paths = GetOutputPathsFor(sourceFile, host.Options(), host, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
+    e.host = host as unknown as import("./emitHost.js").EmitHost;
+    e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), host as unknown as import("../outputpaths/outputpaths.js").OutputPathsHost, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
     emitter_emit(e);
     done();
   }

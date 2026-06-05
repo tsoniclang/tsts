@@ -5,6 +5,7 @@ import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
 import { Time } from "../../../go/time.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { SourceFile_Path } from "../../ast/ast.js";
 import { Set_Add, Set_Keys } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import type { SyncMap } from "../../collections/syncmap.js";
@@ -166,7 +167,7 @@ export function emitFilesHandler_emitAllAffectedFiles(receiver: GoPtr<emitFilesH
       if (options.TargetSourceFile !== undefined) {
         const [diagnostics] = SyncMap_Load<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
           receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-          options.TargetSourceFile!.Path()
+          SourceFile_Path(options.TargetSourceFile)
         );
         return {
           EmitSkipped: true as bool,
@@ -462,7 +463,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
           let emitSig = "";
           const [info] = SyncMap_Load<Path, GoPtr<import("./snapshot.js").FileInfo>>(
             receiver!.program!.snapshot!.fileInfos as SyncMap<Path, GoPtr<import("./snapshot.js").FileInfo>>,
-            options.TargetSourceFile!.Path()
+            SourceFile_Path(options.TargetSourceFile)
           );
           if (info!.signature === info!.version) {
             const signature = snapshot_computeSignatureWithDiagnostics(receiver!.program!.snapshot, options.TargetSourceFile, text, data);
@@ -472,7 +473,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
             if (signature !== info!.version) {
               SyncMap_Store<Path, string>(
                 receiver!.signatures as SyncMap<Path, string>,
-                options.TargetSourceFile!.Path(),
+                SourceFile_Path(options.TargetSourceFile),
                 signature
               );
             }
@@ -544,13 +545,13 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   let oldSignature = "";
   const [oldSignatureFormat, ok] = SyncMap_Load<Path, GoPtr<emitSignature>>(
     receiver!.program!.snapshot!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
-    file!.Path()
+    SourceFile_Path(file)
   );
   if (ok) {
     if (oldSignatureFormat!.signature !== "") {
       oldSignature = oldSignatureFormat!.signature;
     } else {
-      oldSignature = oldSignatureFormat!.signatureWithDifferentOptions[0];
+      oldSignature = oldSignatureFormat!.signatureWithDifferentOptions[0]!;
     }
   }
   if (newSignature === "") {
@@ -566,13 +567,13 @@ export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFi
   } else {
     SyncMap_Store<Path, string>(
       receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
-      file!.Path(),
+      SourceFile_Path(file),
       outputFileName
     );
   }
   SyncMap_Store<Path, GoPtr<emitSignature>>(
     receiver!.emitSignatures as SyncMap<Path, GoPtr<emitSignature>>,
-    file!.Path(),
+    SourceFile_Path(file),
     { signature: newSignature, signatureWithDifferentOptions: [] }
   );
   return false as bool;
@@ -673,7 +674,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
     for (const file of incremental_Program_GetSourceFiles(receiver!.program)) {
       const [latestChangedDtsFile, ok1] = SyncMap_Load<Path, string>(
         receiver!.latestChangedDtsFiles as SyncMap<Path, string>,
-        file!.Path()
+        SourceFile_Path(file)
       );
       if (ok1) {
         receiver!.program!.snapshot!.latestChangedDtsFile = latestChangedDtsFile;
@@ -682,19 +683,19 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
       }
       const [update, ok2] = SyncMap_Load<Path, GoPtr<emitUpdate>>(
         receiver!.emitUpdates as SyncMap<Path, GoPtr<emitUpdate>>,
-        file!.Path()
+        SourceFile_Path(file)
       );
       if (ok2) {
         if (!update!.dtsErrorsFromCache) {
           if (update!.pendingKind === 0) {
             SyncMap_Delete<Path, FileEmitKind>(
               receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
-              file!.Path()
+              SourceFile_Path(file)
             );
           } else {
             SyncMap_Store<Path, FileEmitKind>(
               receiver!.program!.snapshot!.affectedFilesPendingEmit as SyncMap<Path, FileEmitKind>,
-              file!.Path(),
+              SourceFile_Path(file),
               update!.pendingKind
             );
           }
@@ -705,7 +706,7 @@ export function emitFilesHandler_updateSnapshot(receiver: GoPtr<emitFilesHandler
           if (update!.result!.Diagnostics.length !== 0) {
             SyncMap_Store<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>(
               receiver!.program!.snapshot!.emitDiagnosticsPerFile as SyncMap<Path, GoPtr<DiagnosticsOrBuildInfoDiagnosticsWithFileName>>,
-              file!.Path(),
+              SourceFile_Path(file),
               { diagnostics: update!.result!.Diagnostics, buildInfoDiagnostics: [] } as DiagnosticsOrBuildInfoDiagnosticsWithFileName
             );
           }
