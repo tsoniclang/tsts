@@ -121,7 +121,7 @@ import type {
   TypeSystemPropertyName,
 } from "./state.js";
 import { Checker_instantiateType, Checker_getTypeFromTypeNode, Checker_mapType, Checker_getUnionType, Checker_getIntersectionType, Checker_getReducedType, Checker_getSimplifiedType, Checker_isGenericTupleType, Checker_maybeTypeOfKind, Checker_getConditionalType, Checker_isEmptyLiteralType, Checker_isEmptyArrayLiteralType, Checker_getWidenedLiteralTypeForInitializer, Checker_reportImplicitAny, Checker_IsEmptyAnonymousObjectType, Checker_getTemplateLiteralType, Checker_createTupleTypeEx, Checker_getElementTypes, Checker_isPatternLiteralType, Checker_isPatternLiteralPlaceholderType, Checker_isGenericMappedType, Checker_isArrayOrTupleType, Checker_getActualTypeVariable, Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getStringLiteralType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getTypeOfExpression, Checker_instantiateAnonymousType, Checker_instantiateMappedType, Checker_createDeferredTypeReference } from "./types.js";
-import { Checker_getTypeOfSymbol, Checker_getWriteTypeOfSymbol, Checker_instantiateSymbol, Checker_instantiateTypeWithAlias, Checker_instantiateTypeAlias, Checker_getDeclaredTypeOfSymbol, Checker_getNameTypeFromMappedType, Checker_isMappedTypeGenericIndexedAccess, Checker_getIndexedAccessTypeOrUndefined, Checker_substituteIndexedMappedType, Checker_isGenericIndexType, Checker_getIndexTypeForMappedType, Checker_mapTypeWithAlias } from "./symbols.js";
+import { Checker_getTypeOfSymbol, Checker_getWriteTypeOfSymbol, Checker_instantiateSymbol, Checker_instantiateTypeWithAlias, Checker_instantiateTypeAlias, Checker_getDeclaredTypeOfSymbol, Checker_getNameTypeFromMappedType, Checker_isMappedTypeGenericIndexedAccess, Checker_getIndexedAccessTypeOrUndefined, Checker_substituteIndexedMappedType, Checker_isGenericIndexType, Checker_getIndexTypeForMappedType, Checker_mapTypeWithAlias, Checker_getSymbolOfDeclaration } from "./symbols.js";
 import { Checker_getConstraintOfTypeParameter, Checker_getConstraintFromTypeParameter, Checker_fillMissingTypeArguments, Checker_getMinTypeArgumentCount, Checker_isTypeParameterPossiblyReferenced, Checker_getTypeParameterFromMappedType, Checker_getOuterTypeParameters, Checker_getDeclaredTypeOfTypeParameter, Checker_getRestrictiveTypeParameter, Checker_getContextualTypeForArgument } from "./signatures.js";
 import { Checker_error } from "./support.js";
 
@@ -676,7 +676,7 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
   if (symbols.length === 0) {
     return undefined as unknown as SymbolTable;
   }
-  const result: SymbolTable = new Map();
+  const result: SymbolTable = new globalThis.Map();
   for (const symbol of symbols) {
     result.set(symbol!.Name, Checker_instantiateSymbol(receiver, symbol, m));
   }
@@ -705,7 +705,7 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
 export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr<TypeMapper>): void {
   receiver!.activeMappers.push(mapper);
   // In TypeScript arrays have no separate cap concept; always push a new map.
-  receiver!.activeTypeMappersCaches.push(new Map<CacheHashKey, GoPtr<Type>>());
+  receiver!.activeTypeMappersCaches.push(new globalThis.Map<CacheHashKey, GoPtr<Type>>());
 }
 
 /**
@@ -726,7 +726,7 @@ export function Checker_popActiveMapper(receiver: GoPtr<Checker>): void {
   receiver!.activeMappers[receiver!.activeMappers.length - 1] = undefined;
   receiver!.activeMappers = receiver!.activeMappers.slice(0, receiver!.activeMappers.length - 1);
   const lastIndex = receiver!.activeTypeMappersCaches.length - 1;
-  receiver!.activeTypeMappersCaches[lastIndex].clear();
+  receiver!.activeTypeMappersCaches[lastIndex]!.clear();
   receiver!.activeTypeMappersCaches = receiver!.activeTypeMappersCaches.slice(0, lastIndex);
 }
 
@@ -910,7 +910,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   const data = Type_AsObjectType(target);
   const key = getTypeInstantiationKey(typeArguments, newAlias, (t!.objectFlags & ObjectFlagsSingleSignatureType) !== 0);
   if (data!.instantiations === undefined) {
-    data!.instantiations = new Map<CacheHashKey, GoPtr<Type>>();
+    data!.instantiations = new globalThis.Map<CacheHashKey, GoPtr<Type>>();
     data!.instantiations.set(getTypeInstantiationKey(typeParameters, target!.alias, false), target);
   }
   let result = data!.instantiations.get(key);

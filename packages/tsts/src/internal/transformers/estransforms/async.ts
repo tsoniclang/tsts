@@ -1781,7 +1781,7 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
     (OrderedSet_Size(receiver!.__tsgoEmbedded1!.capturedSuperProperties!) > 0 || receiver!.__tsgoEmbedded1!.hasSuperElementAccess);
   if (emitSuperHelpers) {
     if (innerParameters !== undefined) {
-      innerParameters = NodeVisitor_VisitNodes(receiver!.__tsgoEmbedded1!.superAccessVisitor as unknown as GoPtr<NodeVisitor>, innerParameters);
+      innerParameters = NodeVisitor_VisitNodes(receiver!.__tsgoEmbedded1!.superAccessVisitor as ConcreteNodeVisitor, innerParameters);
     }
     asyncBody = superAccessState_substituteSuperAccessesInBody(receiver!.__tsgoEmbedded1!, asyncBody);
   }
@@ -1889,12 +1889,12 @@ export function asyncTransformer_transformAsyncFunctionBodyWorker(receiver: GoPt
     return NodeFactory_UpdateBlock(
       factory,
       bodyBlock,
-      NodeVisitor_VisitNodes(receiver!.asyncBodyVisitor as unknown as GoPtr<NodeVisitor>, Node_StatementList(body) as unknown as GoPtr<NodeList>) as unknown as GoPtr<never>,
+      NodeVisitor_VisitNodes(receiver!.asyncBodyVisitor as ConcreteNodeVisitor, Node_StatementList(body) as unknown as GoPtr<NodeList>) as unknown as GoPtr<never>,
       bodyBlock.MultiLine,
     ) as unknown as GoPtr<Node>;
   }
   // Convert expression body to block body with return statement
-  const visited = NodeVisitor_VisitNode(receiver!.asyncBodyVisitor as unknown as GoPtr<NodeVisitor>, body);
+  const visited = NodeVisitor_VisitNode(receiver!.asyncBodyVisitor as ConcreteNodeVisitor, body);
   const ret = NewReturnStatement(factory, visited as unknown as GoPtr<never>);
   ret!.Loc = body!.Loc;
   const list = NodeFactory_NewNodeList(factory, [ret as unknown as GoPtr<Node>]);

@@ -20,7 +20,7 @@ import { Checker_isCanceled } from "../utilities.js";
 import { SignatureKindConstruct, Type_Types, TypeFlagsNonPrimitive, TypeFlagsPrimitive, TypeFlagsUnion } from "../types.js";
 import { newEmitResolver } from "../emitresolver.js";
 import type { EmitResolver } from "../emitresolver.js";
-import type { Ternary, Type } from "../types.js";
+import type { SymbolReferenceLinks, Ternary, Type } from "../types.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
 import { getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
@@ -237,7 +237,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): void {
-  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.referenceKinds |= meaning;
+  (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds |= meaning;
 }
 
 /**
@@ -698,7 +698,7 @@ export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: Go
  */
 export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
   const diagnostic = NewDiagnosticForNode(location, message, ...args);
-  DiagnosticCollection_Add(receiver!.diagnostics, diagnostic);
+  DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
   return diagnostic;
 }
 
@@ -917,7 +917,7 @@ export function Checker_symbolIsValue(receiver: GoPtr<Checker>, symbol_: GoPtr<S
  * }
  */
 export function Checker_symbolIsValueEx(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, includeTypeOnlyMembers: bool): bool {
-  return (symbol_!.flags & SymbolFlagsValue) !== 0 || ((symbol_!.flags & SymbolFlagsAlias) !== 0 &&
+  return (symbol_!.Flags & SymbolFlagsValue) !== 0 || ((symbol_!.Flags & SymbolFlagsAlias) !== 0 &&
     (Checker_getSymbolFlagsEx(receiver, symbol_, !includeTypeOnlyMembers, false /*excludeLocalMeanings*/) & SymbolFlagsValue) !== 0);
 }
 
@@ -1030,7 +1030,7 @@ export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: 
       return TernaryFalse;
     }
   } else {
-    if ((sourceProp!.flags & SymbolFlagsOptional) !== (targetProp!.flags & SymbolFlagsOptional)) {
+    if ((sourceProp!.Flags & SymbolFlagsOptional) !== (targetProp!.Flags & SymbolFlagsOptional)) {
       return TernaryFalse;
     }
   }

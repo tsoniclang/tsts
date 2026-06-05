@@ -5,7 +5,8 @@ import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/sp
 import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
 import { AsSourceFile } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
-import type { AwaitExpression, Expression as Expression_9ab73856, ForInOrOfStatement, GetAccessorDeclaration, LabeledStatement, ReturnStatement, SetAccessorDeclaration, YieldExpression } from "../../ast/generated/data.js";
+import type { AwaitExpression, ForInOrOfStatement, GetAccessorDeclaration, LabeledStatement, ReturnStatement, SetAccessorDeclaration, YieldExpression } from "../../ast/generated/data.js";
+import type { Expression as Expression_9ab73856 } from "../../ast/generated/unions.js";
 import { AsArrowFunction, AsAwaitExpression, AsConstructorDeclaration, AsForInOrOfStatement, AsFunctionDeclaration, AsFunctionExpression, AsGetAccessorDeclaration, AsLabeledStatement, AsMethodDeclaration, AsParameterDeclaration, AsReturnStatement, AsSetAccessorDeclaration, AsYieldExpression } from "../../ast/generated/casts.js";
 import { KindArrowFunction, KindAsyncKeyword, KindAsteriskToken, KindAwaitExpression, KindClassDeclaration, KindClassExpression, KindConstructor, KindDoStatement, KindExclamationToken, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindLabeledStatement, KindMethodDeclaration, KindReturnStatement, KindSetAccessor, KindSourceFile, KindTrueKeyword, KindWhileStatement, KindYieldExpression, KindAmpersandAmpersandToken } from "../../ast/generated/kinds.js";
 import { IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
@@ -1391,7 +1392,7 @@ export function forawaitTransformer_visitMethodDeclaration(receiver: GoPtr<foraw
     ? undefined
     : decl!.AsteriskToken;
 
-  let parameters: GoPtr<Node>;
+  let parameters: GoPtr<NodeList>;
   let body: GoPtr<Node>;
   if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
     parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);
@@ -1482,7 +1483,7 @@ export function forawaitTransformer_visitFunctionDeclaration(receiver: GoPtr<for
     ? undefined
     : decl!.AsteriskToken;
 
-  let parameters: GoPtr<Node>;
+  let parameters: GoPtr<NodeList>;
   let body: GoPtr<Node>;
   if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
     parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);
@@ -1616,7 +1617,7 @@ export function forawaitTransformer_visitFunctionExpression(receiver: GoPtr<fora
     ? undefined
     : decl!.AsteriskToken;
 
-  let parameters: GoPtr<Node>;
+  let parameters: GoPtr<NodeList>;
   let body: GoPtr<Node>;
   if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
     parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);

@@ -6,7 +6,7 @@ import { Node_Elements, Node_Text, Node_Initializer, Node_StatementList, Node_St
 import type { SourceFile } from "../../ast/ast.js";
 import type { Block, ClassDeclaration, ExportAssignment, ForInOrOfStatement, ForStatement, VariableDeclaration, VariableDeclarationList, VariableStatement } from "../../ast/generated/data.js";
 import type { BindingPattern } from "../../ast/generated/data.js";
-import type { ExportSpecifierNode, Expression, ForInitializer, IdentifierNode, Statement, VariableDeclarationNode } from "../../ast/generated/unions.js";
+import type { Declaration, ExportSpecifierNode, Expression, ForInitializer, IdentifierNode, Statement, VariableDeclarationNode } from "../../ast/generated/unions.js";
 import { NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsLet, NodeFlagsUsing } from "../../ast/generated/flags.js";
 import { IsVariableDeclarationList, IsVariableStatement, IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
 import { AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement, AsForStatement, AsForInOrOfStatement, AsBlock, AsSyntaxList, AsClassDeclaration, AsExportAssignment } from "../../ast/generated/casts.js";
@@ -294,14 +294,14 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
     receiver!.exportVars = [];
     const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
     let topLevelStatements: GoSlice<GoPtr<Statement>> = [];
-    const prologueVisited = FirstResult(NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>));
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
     topLevelStatements = [...topLevelStatements, ...prologueVisited as GoSlice<GoPtr<Statement>>];
     let pos = 0;
     while (pos < rest.length) {
       const statement = rest[pos];
       if (getUsingKind(statement as GoPtr<Node>) !== usingKindNone) {
         if (pos > 0) {
-          const leadingVisited = FirstResult(NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>));
+          const leadingVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>)[0];
           topLevelStatements = [...topLevelStatements, ...leadingVisited as GoSlice<GoPtr<Statement>>];
         }
         break;
@@ -341,7 +341,7 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
   } else {
     visited = NodeVisitor_VisitEachChild((visitor as ConcreteNodeVisitor), node as GoPtr<Node>);
   }
-  EmitContext_AddEmitHelper(emitContext, visited, EmitContext_ReadEmitHelpers(emitContext)!);
+  EmitContext_AddEmitHelper(emitContext, visited, ...EmitContext_ReadEmitHelpers(emitContext)!);
   receiver!.exportVars = [];
   receiver!.exportBindings = new globalThis.Map();
   receiver!.defaultExportBinding = undefined;
@@ -381,7 +381,7 @@ export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDecl
     const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
     const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
     let statements: GoSlice<GoPtr<Node>> = [];
-    const prologueVisited = FirstResult(NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>));
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
     statements = [...statements, ...prologueVisited];
     const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(
       receiver,

@@ -698,7 +698,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
     ));
   }
   const buildResult: orchestratorResult = {
-    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined },
+    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined as unknown as import("../tsc/compile.js").Watcher },
     errors: [],
     statistics: {
       Projects: 0,

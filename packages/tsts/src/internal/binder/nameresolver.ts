@@ -1,11 +1,11 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
-import { Node_Locals, Node_Body, Node_Type, Node_Parameters, Node_Expression, Node_BodyData, Node_Symbol, Node_LocalSymbol, Node_ForEachChild, Node_Pos, Node_End, AsSourceFile, Node_ModuleSpecifier, Node_Text } from "../ast/ast.js";
-import { Node_Name } from "../ast/spine.js";
+import { Node_Locals, Node_Body, Node_Type, Node_Parameters, Node_Expression, Node_Symbol, Node_LocalSymbol, AsSourceFile, Node_ModuleSpecifier, Node_Text } from "../ast/ast.js";
+import { Node_Name, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/ast.js";
 import { AsConditionalTypeNode, AsFunctionExpression, AsHeritageClause, AsParameterDeclaration, AsBindingElement, AsInferTypeNode, AsExportSpecifier, AsPropertyDeclaration, AsTypeParameterDeclaration } from "../ast/generated/casts.js";
-import { KindSourceFile, KindModuleDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindClassDeclaration, KindClassExpression, KindInterfaceDeclaration, KindExpressionWithTypeArguments, KindComputedPropertyName, KindMethodDeclaration, KindConstructor, KindGetAccessor, KindSetAccessor, KindFunctionDeclaration, KindFunctionExpression, KindDecorator, KindParameter, KindBindingElement, KindInferType, KindExportSpecifier, KindConditionalType, KindJSDoc, KindJSDocParameterTag, KindJSDocReturnTag, KindTypeParameter, KindExtendsKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindNamespaceExport, KindArrowFunction } from "../ast/generated/kinds.js";
-import { NodeFlagsSynthesized, NodeFlagsAmbient } from "../ast/generated/flags.js";
+import { KindSourceFile, KindModuleDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindClassDeclaration, KindClassExpression, KindInterfaceDeclaration, KindExpressionWithTypeArguments, KindComputedPropertyName, KindMethodDeclaration, KindConstructor, KindGetAccessor, KindSetAccessor, KindFunctionDeclaration, KindFunctionExpression, KindDecorator, KindParameter, KindBindingElement, KindInferType, KindExportSpecifier, KindConditionalType, KindJSDoc, KindJSDocParameterTag, KindJSDocReturnTag, KindTypeParameter, KindExtendsKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindNamespaceExport, KindArrowFunction, KindPropertyAssignment } from "../ast/generated/kinds.js";
+import { NodeFlagsSynthesized, NodeFlagsAmbient, SymbolFlagsFunction } from "../ast/generated/flags.js";
 import { SymbolFlagsType, SymbolFlagsTypeParameter, SymbolFlagsVariable, SymbolFlagsFunctionScopedVariable, SymbolFlagsClass, SymbolFlagsGlobalLookup, SymbolFlagsModuleMember, SymbolFlagsEnumMember, SymbolFlagsProperty, SymbolFlagsTransient, SymbolFlagsAlias, SymbolFlagsValue } from "../ast/symbolflags.js";
 import { ModifierFlagsDefault, ModifierFlagsAsync } from "../ast/modifierflags.js";
 import { InternalSymbolNameDefault } from "../ast/symbol.js";
@@ -13,15 +13,15 @@ import type { Diagnostic } from "../ast/diagnostic.js";
 import type { Symbol, SymbolTable } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import {
-  IsConstAssertion, IsModuleOrEnumDeclaration, IsGlobalSourceFile, IsFunctionLike, IsParameterDeclaration,
-  IsBindingPattern, IsPartOfParameterDeclaration, IsClassExpression, IsClassLike, IsInterfaceDeclaration,
-  IsHeritageClause, IsClassElement, IsExternalOrCommonJSModule, IsGlobalScopeAugmentation, GetDeclarationOfKind,
-  IsStatic, FindConstructorDeclaration, IsNullishCoalesce, IsOptionalChain, IsObjectBindingPattern, IsTypeNode,
-  IsTypeQueryNode, IsFunctionLikeDeclaration, HasStaticModifier, GetImmediatelyInvokedFunctionExpression,
+  IsConstAssertion, IsModuleOrEnumDeclaration, IsGlobalSourceFile, IsFunctionLike,
+  IsBindingPattern, IsPartOfParameterDeclaration, IsClassLike,
+  IsClassElement, IsExternalOrCommonJSModule, IsGlobalScopeAugmentation, GetDeclarationOfKind,
+  IsStatic, FindConstructorDeclaration, IsNullishCoalesce, IsOptionalChain, IsTypeNode,
+  IsFunctionLikeDeclaration, HasStaticModifier, GetImmediatelyInvokedFunctionExpression,
   HasSyntacticModifier, IsInJSFile, IsRequireCall,
   GetSourceFileOfNode, FindAncestor,
 } from "../ast/utilities.js";
-import { IsSourceFile, IsModuleDeclaration, IsBindingElement } from "../ast/generated/predicates.js";
+import { IsSourceFile, IsModuleDeclaration, IsBindingElement, IsParameterDeclaration, IsClassExpression, IsInterfaceDeclaration, IsHeritageClause, IsObjectBindingPattern, IsTypeQueryNode } from "../ast/generated/predicates.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import { CompilerOptions_GetEmitScriptTarget, CompilerOptions_GetEmitStandardClassFields, CompilerOptions_GetIsolatedModules, ScriptTargetES2020, ScriptTargetES2017 } from "../core/compileroptions.js";
 import { IfElse, Some } from "../core/core.js";
@@ -855,7 +855,7 @@ export function NameResolver_requiresScopeChangeWorker(receiver: GoPtr<NameResol
       if (IsTypeNode(node)) {
         return false;
       }
-      return Node_ForEachChild(node, (n) => NameResolver_requiresScopeChangeWorker(receiver, n));
+      return Node_ForEachChild(node, (n: GoPtr<Node>) => NameResolver_requiresScopeChangeWorker(receiver, n));
   }
 }
 

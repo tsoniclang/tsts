@@ -2832,7 +2832,7 @@ export function esDecoratorTransformer_visitMethodDeclaration(receiver: GoPtr<es
   const factory = f!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   esDecoratorTransformer_enterClassElement(tx, node);
-  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createMethodDescriptorObject);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, (member, modifiers) => esDecoratorTransformer_createMethodDescriptorObject(tx, member, modifiers));
   if (result.descriptorName !== undefined) {
     esDecoratorTransformer_exitClassElement(tx);
     return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createMethodDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);
@@ -2873,7 +2873,7 @@ export function esDecoratorTransformer_visitGetAccessorDeclaration(receiver: GoP
   const factory = Transformer_Factory(tx.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   esDecoratorTransformer_enterClassElement(tx, node);
-  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createGetAccessorDescriptorObject);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, (member, modifiers) => esDecoratorTransformer_createGetAccessorDescriptorObject(tx, member, modifiers));
   if (result.descriptorName !== undefined) {
     esDecoratorTransformer_exitClassElement(tx);
     return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createGetAccessorDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);
@@ -2914,7 +2914,7 @@ export function esDecoratorTransformer_visitSetAccessorDeclaration(receiver: GoP
   const factory = Transformer_Factory(tx.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
   esDecoratorTransformer_enterClassElement(tx, node);
-  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createSetAccessorDescriptorObject);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, (member, modifiers) => esDecoratorTransformer_createSetAccessorDescriptorObject(tx, member, modifiers));
   if (result.descriptorName !== undefined) {
     esDecoratorTransformer_exitClassElement(tx);
     return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createSetAccessorDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);

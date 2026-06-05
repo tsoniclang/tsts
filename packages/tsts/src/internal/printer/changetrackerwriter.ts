@@ -2,9 +2,10 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import { goReceiverKey } from "../ast/spine.js";
-import type { GoInterfaceValue, ModifierList, Node, NodeList, NodeFactoryCoercible, NodeVisitor } from "../ast/spine.js";
-import { Node_Clone, Node_End, Node_ForEachChild, Node_Pos, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone, NodeList_End, NodeList_Pos } from "../ast/spine.js";
+import type { GoInterfaceValue, ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
+import { Node_Clone, Node_End, Node_ForEachChild, Node_Pos, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone, NodeList_End, NodeList_Pos } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
+import type { NodeVisitor } from "../ast/visitor.js";
 import { NewNodeVisitor, NodeVisitor_VisitNodes } from "../ast/visitor.js";
 import { NodeIsSynthesized } from "../ast/utilities.js";
 import { NewTextRange } from "../core/text.js";
@@ -344,7 +345,7 @@ export function ChangeTrackerWriter_AssignPositionsToNode(receiver: GoPtr<Change
   let visitor: GoPtr<NodeVisitor> = undefined;
   visitor = NewNodeVisitor(
     (n: GoPtr<Node>): GoPtr<Node> => ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, n, visitor),
-    factory as unknown as NodeFactoryCoercible,
+    factory,
     {
       VisitNode: (n: GoPtr<Node>, v: GoPtr<NodeVisitor>): GoPtr<Node> => ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, n, v),
       VisitNodes: (nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>): GoPtr<NodeList> => ChangeTrackerWriter_assignPositionsToNodeArray(receiver, nodes, v),
@@ -397,7 +398,7 @@ export function ChangeTrackerWriter_assignPositionsToNodeWorker(receiver: GoPtr<
   if (node === undefined) {
     return node;
   }
-  const visited = node.VisitEachChild(v);
+  const visited = Node_VisitEachChild(node, v);
   // create proxy node for non synthesized nodes
   let newNode = visited;
   if (!NodeIsSynthesized(visited)) {

@@ -1,16 +1,109 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import * as slices from "../../../go/slices.js";
-import { Every } from "../../core/core.js";
+import { AppendIfUnique, Every, IfElse, OrElse } from "../../core/core.js";
+import {
+  A_default_export_can_only_be_used_in_an_ECMAScript_style_module,
+  A_default_export_must_be_at_the_top_level_of_a_file_or_module_declaration,
+  A_rest_element_cannot_have_an_initializer,
+  A_rest_element_must_be_last_in_a_destructuring_pattern,
+  A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma,
+  An_export_assignment_cannot_be_used_in_a_namespace,
+  An_export_assignment_cannot_have_modifiers,
+  An_export_assignment_must_be_at_the_top_level_of_a_file_or_module_declaration,
+  Export_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_export_default_or_another_module_format_instead,
+  Export_assignment_is_not_supported_when_module_flag_is_system,
+  Expression_produces_a_union_type_that_is_too_complex_to_represent,
+  Interface_0_cannot_simultaneously_extend_types_1_and_2,
+  Named_property_0_of_types_1_and_2_are_not_identical,
+  Property_assignment_expected,
+  The_expression_of_an_export_assignment_must_be_an_identifier_or_qualified_name_in_an_ambient_context,
+  The_left_hand_side_of_an_assignment_expression_may_not_be_an_optional_property_access,
+  The_left_hand_side_of_an_assignment_expression_must_be_a_variable_or_a_property_access,
+  The_target_of_an_object_rest_assignment_may_not_be_an_optional_property_access,
+  The_target_of_an_object_rest_assignment_must_be_a_variable_or_a_property_access,
+  This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled,
+  Type_0_does_not_satisfy_the_expected_type_1,
+  Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target,
+} from "../../diagnostics/generated/messages.js";
+import type { Message } from "../../diagnostics/generated/messages.js";
 import type { Node, NodeList } from "../../ast/spine.js";
-import type { BinaryExpression } from "../../ast/generated/data.js";
+import type { BinaryExpression, ShorthandPropertyAssignment } from "../../ast/generated/data.js";
 import type { Declaration } from "../../ast/generated/unions.js";
+import { KindEqualsToken, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindSpreadElement, KindThisKeyword } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
-import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo } from "../relater.js";
+import {
+  IsAccessExpression,
+  IsAmbientModule,
+  IsBinaryExpression,
+  IsCallExpression,
+  IsComputedPropertyName,
+  IsConstructorDeclaration,
+  IsIdentifier,
+  IsModuleDeclaration,
+  IsObjectLiteralExpression,
+  IsArrayLiteralExpression,
+  IsNamespaceImport,
+  IsOmittedExpression,
+  IsParameterDeclaration,
+  IsPropertyAccessExpression,
+  IsPropertyAssignment,
+  IsPropertyDeclaration,
+  IsPropertySignatureDeclaration,
+  IsShorthandPropertyAssignment,
+  IsSourceFile,
+  IsSpreadAssignment,
+  IsSpreadElement,
+  IsVariableDeclaration,
+  SkipParentheses,
+} from "../../ast/utilities.js";
+import { AsExportAssignment, AsBinaryExpression, AsElementAccessExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
+import { NodeFlagsAmbient, NodeFlagsReparsed } from "../../ast/generated/flags.js";
+import { SymbolFlagsAlias, SymbolFlagsModuleExports, SymbolFlagsValue } from "../../ast/generated/flags.js";
+import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsInJSFile, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
+import { NewDiagnosticChain } from "../../ast/diagnostic.js";
+import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
+import { getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
+import { ModifierFlagsAbstract, ModifierFlagsAsync, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsReadonly, ModifierFlagsStatic } from "../../ast/modifierflags.js";
+import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo, Checker_checkTypeAssignableToAndOptionallyElaborate } from "../relater.js";
 import { TernaryFalse } from "../types.js";
-import { Checker_IsEmptyAnonymousObjectType } from "./types.js";
+import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition } from "../types.js";
+import type { AccessFlags, TypeFacts } from "../types.js";
+import { Checker_IsEmptyAnonymousObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_filterType, Checker_isErrorType, Checker_getNumberLiteralType, Checker_createArrayType, Checker_mapType, Checker_getTypeWithFacts, Checker_getRegularTypeOfLiteralType, Checker_checkNonNullType, Checker_hasTypeFacts, Checker_getTypeFromTypeNode, Checker_getTypeOfPropertyOfType, Checker_maybeTypeOfKind, Checker_checkIteratedTypeOrElementType, Checker_isArrayLikeType } from "./types.js";
+import { Checker_getPropertiesOfType, Checker_getBaseTypes, Checker_resolveDeclaredMembers, Checker_isNamedMember, Checker_getLiteralTypeFromPropertyName, Checker_getPropertyOfType, Checker_markPropertyAsReferenced, Checker_checkPropertyAccessibility, Checker_getIndexedAccessTypeEx, Checker_getIndexedAccessTypeOrUndefined, Checker_getTypeOfPropertyInBaseClass, Checker_getExportSymbolOfValueSymbolIfExported, Checker_resolveEntityName, Checker_getTypeOnlyAliasDeclarationEx, Checker_getSymbolFlagsEx, Checker_getSymbolFlags, Checker_getDeclarationOfAliasSymbol, Checker_markAliasReferenced, Checker_checkPropertyAccessExpression, Checker_getTypeFromPropertyDescriptor, Checker_markLinkedReferences, Checker_checkExternalModuleExports, Checker_isReadonlySymbol, Checker_getResolvedSymbol, Checker_checkComputedPropertyName } from "./symbols.js";
+import { Checker_getTypeWithThisArgument, Checker_isConstructorDeclaredThisProperty, Checker_getRestType } from "./signatures.js";
+import { Checker_getTypeOfSymbol } from "./symbols.js";
+import { Checker_getTypeOfExpression, Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
+import { Checker_checkSourceElement, Checker_error, Checker_shouldCheckErasableSyntax } from "./support.js";
 import { Checker_compareProperties } from "./support.js";
+import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionForMutableLocation, Checker_checkExpressionEx, Checker_checkBinaryExpression, Checker_checkBinaryLikeExpression, Checker_checkReferenceExpression, Checker_createSyntheticExpression } from "./syntax-checking.js";
+import { Checker_getFlowTypeOfDestructuring, Checker_getControlFlowContainer } from "./flow-narrowing.js";
+import { Checker_hasDefaultValue } from "./support-queries.js";
+import { Checker_reportImplicitAny } from "./types.js";
+import { Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx } from "./types.js";
+import { Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_getTargetOfAliasLikeExpression } from "./symbols.js";
+import { Checker_grammarErrorOnNode, Checker_grammarErrorOnFirstToken, Checker_checkGrammarModifiers, Checker_checkGrammarModuleElementContext, Checker_checkGrammarForDisallowedTrailingComma } from "../grammarchecks.js";
+import { Checker_addTypeOnlyDeclarationRelatedInfo, Checker_isErrorType as _Checker_isErrorType } from "./diagnostics.js";
+import { Checker_getIsolatedModulesLikeFlagName } from "./symbols.js";
+import { Checker_getFlowTypeInConstructor } from "../flow.js";
+import { Checker_TypeToString, Checker_symbolToString } from "../printer.js";
+import {
+  CheckModeNormal,
+  InheritanceInfo,
+  IterationUseDestructuring,
+  IterationUsePossiblyOutOfBounds,
+  ReferenceHintExportAssignment,
+  WideningKind,
+  WideningKindNormal,
+  everyType,
+  getVerbatimModuleSyntaxErrorMessage,
+  isTupleType,
+  thisAssignmentDeclarationConstructor,
+  thisAssignmentDeclarationMethod,
+  thisAssignmentDeclarationTyped,
+} from "./state.js";
+import { Checker_sliceTupleType } from "../relater.js";
 import {
   Type_Types,
   TypeFlagsAnyOrUnknown,
@@ -37,12 +130,14 @@ import {
   TypeFlagsUniqueESSymbol,
   TypeFlagsVoid,
 } from "../types.js";
-import type { Type, TypeFlags } from "../types.js";
+import type { Type, TypeAlias, TypeFlags } from "../types.js";
+import { LinkStore_Get } from "../../core/linkstore.js";
+import type { SymbolNodeLinks } from "../types.js";
 import type { AssignmentKind } from "../utilities.js";
 import type { Checker, CheckMode } from "./state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkInheritedPropertiesAreIdentical","kind":"method","status":"stub","sigHash":"2cfdd4534d57cdaa28eedef2c8073db14c95a2a1a0272411d5330d0b99cd43bc","bodyHash":"a2bfcbf871d67df8aa0e9343ba29c3d6446fc3fa9134814f54f111036d6c2a81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkInheritedPropertiesAreIdentical","kind":"method","status":"implemented","sigHash":"2cfdd4534d57cdaa28eedef2c8073db14c95a2a1a0272411d5330d0b99cd43bc","bodyHash":"a2bfcbf871d67df8aa0e9343ba29c3d6446fc3fa9134814f54f111036d6c2a81"}
  *
  * Go source:
  * func (c *Checker) checkInheritedPropertiesAreIdentical(t *Type, typeNode *ast.Node) bool {
@@ -78,7 +173,37 @@ import type { Checker, CheckMode } from "./state.js";
  * }
  */
 export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Checker>, t: GoPtr<Type>, typeNode: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkInheritedPropertiesAreIdentical");
+  const baseTypes = Checker_getBaseTypes(receiver, t);
+  if (baseTypes.length < 2) {
+    return true;
+  }
+  const seen = new globalThis.Map<string, InheritanceInfo>();
+  const declaredMembers = Checker_resolveDeclaredMembers(receiver, t)!.declaredMembers;
+  for (const [id, p] of declaredMembers) {
+    if (Checker_isNamedMember(receiver, p, id)) {
+      seen.set(p!.Name, { prop: p, containingType: t });
+    }
+  }
+  let identical = true;
+  for (const base of baseTypes) {
+    const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, t!.AsInterfaceType!.thisType, false));
+    for (const prop of properties) {
+      const existing = seen.get(prop!.Name);
+      if (existing === undefined) {
+        seen.set(prop!.Name, { prop: prop, containingType: base });
+      } else {
+        const isInheritedProperty = existing.containingType !== t;
+        if (isInheritedProperty && !Checker_isPropertyIdenticalTo(receiver, existing.prop, prop)) {
+          identical = false;
+          const typeName1 = Checker_TypeToString(receiver, existing.containingType);
+          const typeName2 = Checker_TypeToString(receiver, base);
+          const errorInfo = NewDiagnosticForNode(typeNode, Named_property_0_of_types_1_and_2_are_not_identical, Checker_symbolToString(receiver, prop), typeName1, typeName2);
+          DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnosticChain(errorInfo, Interface_0_cannot_simultaneously_extend_types_1_and_2, Checker_TypeToString(receiver, t), typeName1, typeName2));
+        }
+      }
+    }
+  }
+  return identical;
 }
 
 /**

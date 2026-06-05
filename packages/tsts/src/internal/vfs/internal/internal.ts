@@ -117,7 +117,7 @@ export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [FS, 
  * 	return stat
  * }
  */
-export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo {
+export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo | undefined {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
   if (fsys === undefined) {
     return undefined;

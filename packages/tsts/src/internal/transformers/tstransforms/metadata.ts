@@ -479,7 +479,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
       originalNodes = list!.Nodes ?? [];
     }
     if (originalNodes.length === 0) {
-      const res = NodeFactory_NewModifierList(factory, metadata);
+      const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, metadata);
       if (list !== undefined) {
         res!.Loc = list!.Loc;
       }
@@ -497,7 +497,7 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
     modifiersArray = [...modifiersArray, ...decos, ...metadata];
     const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
     modifiersArray = [...modifiersArray, ...otherModifiers];
-    const res = NodeFactory_NewModifierList(factory, modifiersArray);
+    const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
   }
@@ -557,7 +557,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
       originalNodes = list!.Nodes ?? [];
     }
     if (originalNodes.length === 0) {
-      const res = NodeFactory_NewModifierList(factory, metadata);
+      const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, metadata);
       if (list !== undefined) {
         res!.Loc = list!.Loc;
       }
@@ -568,7 +568,7 @@ export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoP
     modifiersArray = [...modifiersArray, ...decos, ...metadata];
     const modifiers = Filter(originalNodes, IsModifier);
     modifiersArray = [...modifiersArray, ...modifiers];
-    const res = NodeFactory_NewModifierList(factory, modifiersArray);
+    const res = NodeFactory_NewModifierList(factory.__tsgoEmbedded0!, modifiersArray);
     res!.Loc = list!.Loc;
     return res;
   }

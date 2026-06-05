@@ -5,8 +5,8 @@ import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
-import { AsImportTypeNode, AsIndexedAccessTypeNode, AsQualifiedName, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
-import { IsComputedPropertyName, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsPropertyAccessExpression, IsQualifiedName, IsTypeReferenceNode } from "../ast/generated/predicates.js";
+import { AsIdentifier, AsImportTypeNode, AsIndexedAccessTypeNode, AsQualifiedName, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
+import { IsComputedPropertyName, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
@@ -26,6 +26,7 @@ import {
   KindNamespaceExport,
   KindNamespaceImport,
   KindSourceFile,
+  KindUndefinedKeyword,
   KindVariableDeclaration,
 } from "../ast/generated/kinds.js";
 import type { Symbol } from "../ast/symbol.js";
@@ -35,6 +36,7 @@ import type { SymbolFlags } from "../ast/generated/flags.js";
 import {
   NodeFlagsNone,
   SymbolFlagsAlias,
+  NodeFlagsSynthesized,
   SymbolFlagsClass,
   SymbolFlagsEnum,
   SymbolFlagsFunction,
@@ -71,17 +73,21 @@ import {
   NewQualifiedName,
   NewStringLiteral,
   NewTypeReferenceNode,
+  NewUnionTypeNode,
 } from "../ast/generated/factory.js";
-import { Node_TypeArgumentList } from "../ast/ast.js";
+import { Node_TypeArgumentList, Node_TypeArguments } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
-import { updateNode } from "../ast/spine.js";
+import { Node_Clone, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
+import { NewTextRange } from "../core/text.js";
 import type { Set } from "../collections/set.js";
-import { FirstNonNil } from "../core/core.js";
+import type { MultiMap } from "../collections/multimap.js";
+import { MultiMap_Add, MultiMap_Values } from "../collections/multimap.js";
+import { Filter, FirstNonNil } from "../core/core.js";
 import { LanguageVariantStandard } from "../core/languagevariant.js";
 import { DeclarationNameToString, IsIdentifierText } from "../scanner/utilities.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
 import type { LinkStore } from "../core/linkstore.js";
-import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import { LinkStore_Get, LinkStore_Has, LinkStore_TryGet } from "../core/linkstore.js";
 import type { ModeAwareCache } from "../module/cache.js";
 import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import {
@@ -115,10 +121,11 @@ import { SymbolAccessibilityAccessible } from "../printer/emitresolver.js";
 import { NewPseudoChecker } from "../pseudochecker/checker.js";
 import type { PseudoChecker } from "../pseudochecker/checker.js";
 import type { Checker, Host } from "./checker/state.js";
-import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter } from "./checker/state.js";
+import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, someType, TypeFactsNEUndefined } from "./checker/state.js";
 import {
   Checker_getDefaultFromTypeParameter,
   Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias,
+  Checker_getMinTypeArgumentCount,
   Checker_getOuterTypeParametersOfClassOrInterface,
   Checker_getSignatureFromDeclaration,
   Checker_getTypeArguments,
@@ -130,8 +137,11 @@ import {
 import {
   Checker_getDeclaredTypeOfClassOrInterface,
   Checker_getHomomorphicTypeVariable,
+  Checker_getOptionalType,
   Checker_getRegularTypeOfExpression,
   Checker_getTypeFromTypeNode,
+  Checker_getTypeFromTypeReference,
+  Checker_getTypeWithFacts,
   Checker_getWidenedType,
   Checker_instantiateType,
   Checker_newAnonymousType,
@@ -150,6 +160,7 @@ import {
 import {
   Checker_getExportsOfSymbol,
   Checker_getMembersOfSymbol,
+  Checker_getDeclaredTypeOfSymbol,
   Checker_getNonMissingTypeOfSymbol,
   Checker_getSymbolIfSameReference,
   Checker_getSymbolOfDeclaration,
@@ -166,13 +177,14 @@ import { Checker_GetEmitResolver } from "./checker/support.js";
 import { Checker_getTypePredicateOfSignature, Checker_instantiateTypePredicate } from "./relater.js";
 import type { TypeMapper } from "./mapper.js";
 import { newTypeMapper, prependTypeMapping } from "./mapper.js";
-import type { IndexInfo, MappedType, Signature, StructuredType, Type, TypeAlias, TypeId, TypeParameter, TypePredicate, ValueSymbolLinks } from "./types.js";
-import { ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsReference, Type_AsLiteralType, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUniqueESSymbol, TypeFlagsUnion } from "./types.js";
+import type { IndexInfo, InterfaceType, MappedType, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeId, TypeParameter, TypePredicate, TypeReference, ValueSymbolLinks } from "./types.js";
+import { InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsReference, SignatureFlagsAbstract, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsInterfaceType, Type_AsLiteralType, Type_AsStructuredType, Type_AsTypeReference, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUniqueESSymbol, TypeFlagsUnion } from "./types.js";
 import { Checker_valueToString } from "./printer.js";
 import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols } from "./utilities.js";
 import { PathIsRelative } from "../tspath/path.js";
 import { CountPathComponents } from "../modulespecifiers/compare.js";
 import type { SymbolAccessibilityResult } from "../printer/emitresolver.js";
+import { NodeBuilderImpl_tryReuseExistingNodeHelper } from "./nodecopy.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::type::CompositeSymbolIdentity","kind":"type","status":"implemented","sigHash":"63514e5aab5471e2bab3ef29ffba28b0a73601b785edc7c308cd3b4728c501c4","bodyHash":"34b94602045468ce4801ed8661c2bcd1d48e14cd0dd0bd5326decd357a921eff"}
@@ -916,7 +928,68 @@ export function NodeBuilderImpl_createElidedInformationPlaceholder(receiver: GoP
  * }
  */
 export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>, list: GoSlice<GoPtr<Type>>, isBareList: bool): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.mapToTypeNodes");
+  if (list.length === 0) {
+    return undefined;
+  }
+  if (NodeBuilderImpl_checkTruncationLength(receiver)) {
+    if (!isBareList) {
+      const node = (receiver!.ctx!.flags & FlagsNoTruncation) !== 0
+        ? EmitContext_AddSyntheticLeadingComment(receiver!.e, NewKeywordTypeNode(receiver!.f, KindAnyKeyword), KindMultiLineCommentTrivia, "elided", false)
+        : NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, "..."), undefined);
+      return NodeFactory_NewNodeList(receiver!.f, [node]);
+    } else if (list.length > 2) {
+      const nodes: GoSlice<GoPtr<Node>> = [
+        NodeBuilderImpl_typeToTypeNode(receiver, list[0]),
+        undefined,
+        NodeBuilderImpl_typeToTypeNode(receiver, list[list.length - 1]),
+      ];
+      nodes[1] = (receiver!.ctx!.flags & FlagsNoTruncation) !== 0
+        ? EmitContext_AddSyntheticLeadingComment(receiver!.e, NewKeywordTypeNode(receiver!.f, KindAnyKeyword), KindMultiLineCommentTrivia, `... ${list.length - 2} more elided ...`, false)
+        : NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, `... ${list.length - 2} more ...`), undefined);
+      return NodeFactory_NewNodeList(receiver!.f, nodes);
+    }
+  }
+  const mayHaveNameCollisions = (receiver!.ctx!.flags & FlagsUseFullyQualifiedType) === 0;
+  const seenNames: GoPtr<MultiMap<string, { t: GoPtr<Type>; i: int }>> = mayHaveNameCollisions ? { M: new globalThis.Map() } : undefined;
+  const result: GoSlice<GoPtr<Node>> = [];
+  let i = 0;
+  for (const t of list) {
+    if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < list.length - 1)) {
+      const truncNode = (receiver!.ctx!.flags & FlagsNoTruncation) !== 0
+        ? EmitContext_AddSyntheticLeadingComment(receiver!.e, NewKeywordTypeNode(receiver!.f, KindAnyKeyword), KindMultiLineCommentTrivia, `... ${list.length - i} more elided ...`, false)
+        : NewTypeReferenceNode(receiver!.f, NewIdentifier(receiver!.f, `... ${list.length - i} more ...`), undefined);
+      result.push(truncNode);
+      const lastTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, list[list.length - 1]);
+      if (lastTypeNode !== undefined) {
+        result.push(lastTypeNode);
+      }
+      break;
+    }
+    receiver!.ctx!.approximateLength += 2;
+    const typeNode = NodeBuilderImpl_typeToTypeNode(receiver, t);
+    if (typeNode !== undefined) {
+      result.push(typeNode);
+      if (seenNames !== undefined && isIdentifierTypeReference(typeNode)) {
+        const name = AsIdentifier(AsTypeReferenceNode(typeNode)!.TypeName)!.Text;
+        MultiMap_Add(seenNames, name, { t, i: result.length - 1 });
+      }
+    }
+    i++;
+  }
+  if (seenNames !== undefined) {
+    const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
+    receiver!.ctx!.flags |= FlagsUseFullyQualifiedType;
+    MultiMap_Values<string, { t: GoPtr<Type>; i: int }>(seenNames)(types => {
+      if (!arrayIsHomogeneous(types, (a, b) => typesAreSameReference(a.t, b.t))) {
+        for (const seen of types) {
+          result[seen.i] = NodeBuilderImpl_typeToTypeNode(receiver, seen.t);
+        }
+      }
+      return true;
+    });
+    restoreFlags();
+  }
+  return NodeFactory_NewNodeList(receiver!.f, result);
 }
 
 /**
@@ -1031,7 +1104,7 @@ export function NodeBuilderImpl_setCommentRange(receiver: GoPtr<NodeBuilderImpl>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingTypeNode","kind":"method","status":"stub","sigHash":"bec5f3d0f12933fd704da0f48a8e64b5ae5eff7000ba54e7143a88797bcd12f7","bodyHash":"e3f784ef0fce391771b04e3e550933148ee70b5e7481e9076577acb7de365cfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingTypeNode","kind":"method","status":"implemented","sigHash":"bec5f3d0f12933fd704da0f48a8e64b5ae5eff7000ba54e7143a88797bcd12f7","bodyHash":"e3f784ef0fce391771b04e3e550933148ee70b5e7481e9076577acb7de365cfd"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) tryReuseExistingTypeNode(typeNode *ast.TypeNode, t *Type, host *ast.Node, addUndefined bool) *ast.TypeNode {
@@ -1059,7 +1132,22 @@ export function NodeBuilderImpl_setCommentRange(receiver: GoPtr<NodeBuilderImpl>
  * }
  */
 export function NodeBuilderImpl_tryReuseExistingTypeNode(receiver: GoPtr<NodeBuilderImpl>, typeNode: GoPtr<TypeNode>, t: GoPtr<Type>, host: GoPtr<Node>, addUndefined: bool): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingTypeNode");
+  const originalType = t;
+  const effectiveT = addUndefined ? Checker_getOptionalType(receiver!.ch, t, !IsParameterDeclaration(host)) : t;
+  const clone = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, effectiveT, host, undefined);
+  if (clone !== undefined) {
+    if (addUndefined && containsNonMissingUndefinedType(receiver!.ch, effectiveT) && !someType(NodeBuilderImpl_getTypeFromTypeNode(receiver, typeNode, false), (inner) => (inner!.flags & TypeFlagsUndefined) !== 0)) {
+      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [clone, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
+    }
+    return clone;
+  }
+  if (addUndefined && originalType !== effectiveT) {
+    const cloneMissingUndefined = NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver, typeNode, originalType, host, undefined);
+    if (cloneMissingUndefined !== undefined) {
+      return NewUnionTypeNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, [cloneMissingUndefined, NewKeywordTypeNode(receiver!.f, KindUndefinedKeyword)]));
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -1095,7 +1183,7 @@ export function NodeBuilderImpl_typeNodeIsEquivalentToType(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount","kind":"method","status":"stub","sigHash":"f9b4e03cc8196cd733c5d8568b0783ba753c2a35c53b34bea3e08350144ebdab","bodyHash":"7b62e24434cfceaf234d6cbefa6e3113a23008f5fa46ae211858c037eb1685ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount","kind":"method","status":"implemented","sigHash":"f9b4e03cc8196cd733c5d8568b0783ba753c2a35c53b34bea3e08350144ebdab","bodyHash":"7b62e24434cfceaf234d6cbefa6e3113a23008f5fa46ae211858c037eb1685ec"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(existing *ast.TypeNode, t *Type) bool {
@@ -1126,11 +1214,31 @@ export function NodeBuilderImpl_typeNodeIsEquivalentToType(receiver: GoPtr<NodeB
  * }
  */
 export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(receiver: GoPtr<NodeBuilderImpl>, existing: GoPtr<TypeNode>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount");
+  if ((t!.objectFlags & ObjectFlagsReference) === 0) {
+    return true;
+  }
+  if (!IsTypeReferenceNode(existing)) {
+    return true;
+  }
+  Checker_getTypeFromTypeReference(receiver!.ch, existing);
+  const links = LinkStore_TryGet<GoPtr<Node>, SymbolNodeLinks>(receiver!.ch!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, existing);
+  if (links === undefined) {
+    return true;
+  }
+  const symbol = links!.resolvedSymbol;
+  if (symbol === undefined) {
+    return true;
+  }
+  const existingTarget = Checker_getDeclaredTypeOfSymbol(receiver!.ch, symbol);
+  if (existingTarget === undefined || existingTarget !== Type_AsTypeReference(t)!.target) {
+    return true;
+  }
+  const typeArgs = Node_TypeArguments(existing);
+  return (typeArgs !== undefined ? typeArgs.length : 0) >= Checker_getMinTypeArgumentCount(receiver!.ch, InterfaceType_TypeParameters(Type_AsInterfaceType(Type_AsTypeReference(t)!.target)));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingNonParameterTypeNode","kind":"method","status":"stub","sigHash":"57a8620fdc7b9187bce0c8e3064f8da98436d896dbafae744344a9cbb53f793a","bodyHash":"df0d4822129492849fffe0d515cc11a6fcc6acb13ed744d828643a6f960f44c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingNonParameterTypeNode","kind":"method","status":"implemented","sigHash":"57a8620fdc7b9187bce0c8e3064f8da98436d896dbafae744344a9cbb53f793a","bodyHash":"df0d4822129492849fffe0d515cc11a6fcc6acb13ed744d828643a6f960f44c4"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) tryReuseExistingNonParameterTypeNode(existing *ast.TypeNode, t *Type, host *ast.Node, annotationType *Type) *ast.TypeNode {
@@ -1150,11 +1258,19 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
  * }
  */
 export function NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver: GoPtr<NodeBuilderImpl>, existing: GoPtr<TypeNode>, t: GoPtr<Type>, host: GoPtr<Node>, annotationType: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.tryReuseExistingNonParameterTypeNode");
+  const effectiveHost = host !== undefined ? host : receiver!.ctx!.enclosingDeclaration;
+  const effectiveAnnotationType = annotationType !== undefined ? annotationType : NodeBuilderImpl_getTypeFromTypeNode(receiver, existing, true);
+  if (effectiveAnnotationType !== undefined && NodeBuilderImpl_typeNodeIsEquivalentToType(receiver, effectiveHost, t, effectiveAnnotationType) && NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithCompatibleTypeArgumentCount(receiver, existing, t)) {
+    const result = NodeBuilderImpl_tryReuseExistingNodeHelper(receiver, existing);
+    if (result !== undefined) {
+      return result;
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getResolvedTypeWithoutAbstractConstructSignatures","kind":"method","status":"stub","sigHash":"7de1d71a82a74bfcc62ae4f50da10d102531fc68cb0b9ba34d99a0ab1e70e445","bodyHash":"3fa71c683bdb4075a1650a8904ef88cb3fef9b635d716ad3a485efe648d0ab1d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getResolvedTypeWithoutAbstractConstructSignatures","kind":"method","status":"implemented","sigHash":"7de1d71a82a74bfcc62ae4f50da10d102531fc68cb0b9ba34d99a0ab1e70e445","bodyHash":"3fa71c683bdb4075a1650a8904ef88cb3fef9b635d716ad3a485efe648d0ab1d"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) getResolvedTypeWithoutAbstractConstructSignatures(t *StructuredType) *Type {
@@ -1178,7 +1294,23 @@ export function NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver: G
  * }
  */
 export function NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<StructuredType>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getResolvedTypeWithoutAbstractConstructSignatures");
+  const typeBase = t!.__tsgoEmbedded0!.__tsgoEmbedded0;
+  const asType = TypeBase_AsType(typeBase);
+  if (StructuredType_ConstructSignatures(t).length === 0) {
+    return asType;
+  }
+  if (t!.objectTypeWithoutAbstractConstructSignatures !== undefined) {
+    return t!.objectTypeWithoutAbstractConstructSignatures;
+  }
+  const constructSignatures = Filter(StructuredType_ConstructSignatures(t), (sig) => (sig!.flags & SignatureFlagsAbstract) === 0);
+  if (constructSignatures.length === StructuredType_ConstructSignatures(t).length) {
+    t!.objectTypeWithoutAbstractConstructSignatures = asType;
+    return asType;
+  }
+  const typeCopy = Checker_newAnonymousType(receiver!.ch, asType!.symbol, t!.members, StructuredType_CallSignatures(t), constructSignatures.length > 0 ? constructSignatures : [], t!.indexInfos);
+  t!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
+  Type_AsStructuredType(typeCopy)!.objectTypeWithoutAbstractConstructSignatures = typeCopy;
+  return typeCopy;
 }
 
 /**
@@ -2319,7 +2451,7 @@ export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.setTextRange","kind":"method","status":"stub","sigHash":"0b7beeeb9832c9ac762ecacbeb008051eb6bb9dce9f4c55cc045ce82d63f8074","bodyHash":"ce6dd6d7313609c263cdf7c646082c3abc891e5cc08ac09b46a42b9f4f726520"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.setTextRange","kind":"method","status":"implemented","sigHash":"0b7beeeb9832c9ac762ecacbeb008051eb6bb9dce9f4c55cc045ce82d63f8074","bodyHash":"ce6dd6d7313609c263cdf7c646082c3abc891e5cc08ac09b46a42b9f4f726520"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) setTextRange(range_ *ast.Node, location *ast.Node) *ast.Node {
@@ -2357,7 +2489,42 @@ export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receive
  * }
  */
 export function NodeBuilderImpl_setTextRange(receiver: GoPtr<NodeBuilderImpl>, range_: GoPtr<Node>, location: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.setTextRange");
+  if (range_ === undefined) {
+    return range_;
+  }
+  const cloned = (!NodeIsSynthesized(range_) || (range_!.Flags & NodeFlagsSynthesized) === 0 || receiver!.ctx!.enclosingFile === undefined || receiver!.ctx!.enclosingFile !== GetSourceFileOfNode(EmitContext_MostOriginal(receiver!.e, range_)))
+    ? (() => {
+        const original = range_!;
+        const c = Node_Clone(range_, receiver!.f);
+        c!.Loc = NewTextRange(-1, -1);
+        const symbol = receiver!.idToSymbol!.get(original as unknown as GoPtr<IdentifierNode>);
+        if (symbol !== undefined) {
+          receiver!.idToSymbol!.set(c as unknown as GoPtr<IdentifierNode>, symbol);
+        }
+        return c;
+      })()
+    : range_;
+  if (cloned === location || location === undefined) {
+    return cloned;
+  }
+  // Don't overwrite the original node if `cloned` has an `original` node that points either directly or indirectly to `location`
+  const checkOriginal = (() => {
+    const findOriginalLoop = (o: GoPtr<Node>): GoPtr<Node> => {
+      if (o === undefined || o === location) return o;
+      return findOriginalLoop(EmitContext_Original(receiver!.e, o));
+    };
+    return findOriginalLoop(EmitContext_Original(receiver!.e, cloned));
+  })();
+  if (checkOriginal === undefined) {
+    EmitContext_SetOriginalEx(receiver!.e, cloned, location, true);
+  }
+  // only set positions if range comes from the same file since copying text across files isn't supported by the emitter
+  if (receiver!.ctx!.enclosingFile !== undefined && receiver!.ctx!.enclosingFile === GetSourceFileOfNode(EmitContext_MostOriginal(receiver!.e, location))) {
+    cloned!.Loc = location!.Loc;
+  } else {
+    cloned!.Loc = NewTextRange(-1, -1);
+  }
+  return cloned;
 }
 
 /**

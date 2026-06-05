@@ -1,9 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { GetSourceFileOfNode, HasSyntacticModifier, HasDecorators, IsDynamicName, IsEntityNameExpression, IsEffectiveExternalModule, IsInTopLevelContext, IsFunctionLikeDeclaration, IsBindingPattern, IsAmbientModule, IsAutoAccessorPropertyDeclaration, IsStringOrNumericLiteralLike, CanHaveIllegalDecorators, CanHaveModifiers, HasAbstractModifier, NodeCanBeDecorated, IsIterationStatement, IsFunctionLikeOrClassStaticBlockDeclaration, IsClassLike, HasSamePropertyAccessName, IsCommaSequence, IsDeclaration, GetContainingFunction, GetAllAccessorDeclarationsForDeclaration, SkipParentheses, IsInJSFile } from "../ast/utilities.js";
+import { GetSourceFileOfNode, HasSyntacticModifier, HasDecorators, IsDynamicName, IsEntityNameExpression, IsEffectiveExternalModule, IsInTopLevelContext, IsFunctionLikeDeclaration, IsBindingPattern, IsAmbientModule, IsAutoAccessorPropertyDeclaration, IsStringOrNumericLiteralLike, CanHaveIllegalDecorators, CanHaveIllegalModifiers, CanHaveModifiers, HasAbstractModifier, NodeCanBeDecorated, IsIterationStatement, IsFunctionLikeOrClassStaticBlockDeclaration, IsClassLike, HasSamePropertyAccessName, IsCommaSequence, IsDeclaration, GetContainingFunction, GetAllAccessorDeclarationsForDeclaration, SkipParentheses, IsInJSFile } from "../ast/utilities.js";
 import { Node_EagerJSDoc, Node_ModifierNodes, Node_PostfixToken, Node_Attributes, Node_TagName, Node_TypeArgumentList, Node_Parameters, Node_Label, Node_Statement, Node_ClassName, Node_Statements, Node_StatementList, Node_Properties } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
-import { Node_Name, Node_FunctionLikeData, Node_ClassLikeData, Node_BodyData, Node_End, Node_Pos, NodeList_Pos, NodeList_End, NodeList_HasTrailingComma, Node_Modifiers } from "../ast/spine.js";
+import { Node_Name, Node_FunctionLikeData, Node_ClassLikeData, Node_BodyData, Node_End, Node_Pos, NodeList_Pos, NodeList_End, NodeList_HasTrailingComma, Node_Modifiers, Node_ForEachChild } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import type { BigIntLiteral, BindingElement, ConstructorDeclaration, Decorator, ExportDeclaration, ForInOrOfStatement, HeritageClause, ImportClause, IndexSignatureDeclaration, InterfaceDeclaration, JsxExpression, MappedTypeNode, MetaProperty, NumericLiteral, ObjectLiteralExpression, PrivateIdentifier, RegularExpressionLiteral, TaggedTemplateExpression, TypeOperatorNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "../ast/generated/data.js";
 import {
@@ -24,7 +24,7 @@ import {
   AsArrowFunction, AsCallExpression, AsBinaryExpression, AsPropertyAccessExpression, AsVariableDeclarationList, AsParameterDeclaration, AsHeritageClause,
   AsExpressionWithTypeArguments, AsVariableStatement, AsMetaProperty, AsComputedPropertyName, AsMethodDeclaration, AsPropertyDeclaration, AsPropertyAssignment,
   AsShorthandPropertyAssignment, AsSpreadAssignment, AsJsxAttribute, AsJSDoc, AsVariableDeclaration, AsTypeOperatorNode, AsMappedTypeNode, AsConstructorDeclaration,
-  AsImportClause, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsIndexSignatureDeclaration,
+  AsImportClause, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsIndexSignatureDeclaration, AsJsxNamespacedName, AsBindingElement,
 } from "../ast/generated/casts.js";
 import {
   IsIdentifier, IsForInStatement, IsForOfStatement, IsBinaryExpression, IsPropertyAccessExpression, IsCallExpression, IsParenthesizedExpression, IsExpressionWithTypeArguments,
@@ -253,7 +253,7 @@ import { IsAccessor, IsFunctionLike, WalkUpParenthesizedTypes, IsStatic } from "
 import { IsDeclarationNode } from "../ast/ast.js";
 import { hasAsyncModifier, hasReadonlyModifier } from "./utilities.js";
 import { GetFunctionFlags } from "../ast/functionflags.js";
-import { Node_Text, Node_ElementList, Node_IsTypeOnly, Node_TypeParameterList, Node_Initializer, SourceFile_Path, Node_Statements } from "../ast/ast.js";
+import { Node_Text, Node_ElementList, Node_IsTypeOnly, Node_TypeParameterList, Node_Initializer, SourceFile_Path, Node_Statements, Node_Members, Node_Elements } from "../ast/ast.js";
 import { IsIntrinsicJsxName } from "../scanner/utilities.js";
 import { CompilerOptions_GetJSXTransformEnabled } from "../core/compileroptions.js";
 import { LinkStore_Get } from "../core/linkstore.js";
@@ -261,10 +261,11 @@ import type { NodeLinks, Type } from "./types.js";
 import { TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsEnumLike } from "./types.js";
 import { FromString } from "../jsnum/string.js";
 import { MaxSafeInteger } from "../jsnum/jsnum.js";
+import { TokenFlagsScientific } from "../ast/tokenflags.js";
 import { IfElse } from "../core/core.js";
 import { Program_GetSourceFileMetaData } from "../compiler/program.js";
 import {
-  KindIfStatement, KindDoStatement, KindWhileStatement, KindWithStatement,
+  KindIfStatement, KindDoStatement, KindWhileStatement, KindWithStatement, KindForStatement,
 } from "../ast/generated/kinds.js";
 import { AsPrefixUnaryExpression, AsPropertySignatureDeclaration, AsTypeParameterDeclaration } from "../ast/generated/casts.js";
 import { FileExtensionIsOneOf, ExtensionMts, ExtensionCts } from "../tspath/extension.js";
@@ -290,6 +291,10 @@ import {
   Line_terminator_not_permitted_before_arrow,
   JSDoc_0_1_does_not_match_the_extends_2_clause,
   Generators_are_not_allowed_in_an_ambient_context,
+  Jump_target_cannot_cross_function_boundary,
+  Identifier_expected_esModule_is_reserved_as_an_exported_marker_when_transforming_ECMAScript_modules,
+  Duplicate_identifier_0,
+  Initializers_are_not_allowed_in_ambient_contexts,
 } from "../diagnostics/generated/messages.js";
 
 /**
@@ -1413,7 +1418,7 @@ export function isJSDocTypedefTag(_arg: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.reportObviousModifierErrors","kind":"method","status":"stub","sigHash":"74a14bff8368eb7795ec34c9e91916e9e7e2a3fd73b1a9887c0a695d0a1a5c09","bodyHash":"23a2e9ee53fa3b5eec691effe89a3d7d0a9eacabf25d96e213d5dc69645b3a00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.reportObviousModifierErrors","kind":"method","status":"implemented","sigHash":"74a14bff8368eb7795ec34c9e91916e9e7e2a3fd73b1a9887c0a695d0a1a5c09","bodyHash":"23a2e9ee53fa3b5eec691effe89a3d7d0a9eacabf25d96e213d5dc69645b3a00"}
  *
  * Go source:
  * func (c *Checker) reportObviousModifierErrors(node *ast.Node) bool {
@@ -1433,7 +1438,7 @@ export function Checker_reportObviousModifierErrors(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstModifierExcept","kind":"method","status":"stub","sigHash":"437d953f18fc4295435a134924484c4e5b30aca27fff6632e9b8252f11ffb204","bodyHash":"7207dfb01a9bf77de2528c4249c28fa4abb91b4b14f315d78f846c3a10fd9d25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstModifierExcept","kind":"method","status":"implemented","sigHash":"437d953f18fc4295435a134924484c4e5b30aca27fff6632e9b8252f11ffb204","bodyHash":"7207dfb01a9bf77de2528c4249c28fa4abb91b4b14f315d78f846c3a10fd9d25"}
  *
  * Go source:
  * func (c *Checker) findFirstModifierExcept(node *ast.Node, allowedModifier ast.Kind) *ast.Node {
@@ -1453,7 +1458,7 @@ export function Checker_findFirstModifierExcept(receiver: GoPtr<Checker>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstIllegalModifier","kind":"method","status":"stub","sigHash":"bf400441e6e93c32dcfec61a751d6fd516cc6787d7457c1790b77d5dd07c840e","bodyHash":"1134c3c1d54997ac7636fd7afa25d610a3907405c8d93275fc071b8a88d33882"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstIllegalModifier","kind":"method","status":"implemented","sigHash":"bf400441e6e93c32dcfec61a751d6fd516cc6787d7457c1790b77d5dd07c840e","bodyHash":"1134c3c1d54997ac7636fd7afa25d610a3907405c8d93275fc071b8a88d33882"}
  *
  * Go source:
  * func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
@@ -1567,7 +1572,7 @@ export function Checker_findFirstIllegalModifier(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.reportObviousDecoratorErrors","kind":"method","status":"stub","sigHash":"f6984c82989e13d6ecb3db4e6bcfe8ce93da1a4a49f4279749db0dbc62daa98c","bodyHash":"30f42d4662d94ce2f0e5eebd869dfe6be936487cb078ad7feedda5ce8eccc310"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.reportObviousDecoratorErrors","kind":"method","status":"implemented","sigHash":"f6984c82989e13d6ecb3db4e6bcfe8ce93da1a4a49f4279749db0dbc62daa98c","bodyHash":"30f42d4662d94ce2f0e5eebd869dfe6be936487cb078ad7feedda5ce8eccc310"}
  *
  * Go source:
  * func (c *Checker) reportObviousDecoratorErrors(node *ast.Node) bool {
@@ -1587,7 +1592,7 @@ export function Checker_reportObviousDecoratorErrors(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstIllegalDecorator","kind":"method","status":"stub","sigHash":"6f00e6ca045ef8aa8d286e1e57d0b2aa21cb6189edb01229a660c1a85eadb038","bodyHash":"8dd0b94f3747f680a6744b06ece3a75dec03c6a1d92be1004e9868fa3a457c9a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.findFirstIllegalDecorator","kind":"method","status":"implemented","sigHash":"6f00e6ca045ef8aa8d286e1e57d0b2aa21cb6189edb01229a660c1a85eadb038","bodyHash":"8dd0b94f3747f680a6744b06ece3a75dec03c6a1d92be1004e9868fa3a457c9a"}
  *
  * Go source:
  * func (c *Checker) findFirstIllegalDecorator(node *ast.Node) *ast.Node {
@@ -1609,7 +1614,7 @@ export function Checker_findFirstIllegalDecorator(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarAsyncModifier","kind":"method","status":"stub","sigHash":"d54b13a9d2fa44460464977bb696ac9ae4dbacb1ec735ce4a01b452ad6cb984f","bodyHash":"c4698c6ff4beab84b73933d8acba4d705b206664ee5be70b14f18341294f56d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarAsyncModifier","kind":"method","status":"implemented","sigHash":"d54b13a9d2fa44460464977bb696ac9ae4dbacb1ec735ce4a01b452ad6cb984f","bodyHash":"c4698c6ff4beab84b73933d8acba4d705b206664ee5be70b14f18341294f56d6"}
  *
  * Go source:
  * func (c *Checker) checkGrammarAsyncModifier(node *ast.Node, asyncModifier *ast.Node) bool {
@@ -1636,7 +1641,7 @@ export function Checker_checkGrammarAsyncModifier(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForDisallowedTrailingComma","kind":"method","status":"stub","sigHash":"a35da90b785d8beb5a9c2d22ebd89358077e0bb54c0a11c024fb1f939d182271","bodyHash":"c0e97ca3f274693f4a47174d8906bf814a67cfc79805182a706828fe458fec77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForDisallowedTrailingComma","kind":"method","status":"implemented","sigHash":"a35da90b785d8beb5a9c2d22ebd89358077e0bb54c0a11c024fb1f939d182271","bodyHash":"c0e97ca3f274693f4a47174d8906bf814a67cfc79805182a706828fe458fec77"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForDisallowedTrailingComma(list *ast.NodeList, diag *diagnostics.Message) bool {
@@ -1654,7 +1659,7 @@ export function Checker_checkGrammarForDisallowedTrailingComma(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTypeParameterList","kind":"method","status":"stub","sigHash":"e0d95c60e6b16c268fa288bbf965cfc1abc6155aa0f2d02fe3b33014bde5e0da","bodyHash":"729efaa2cb75faa37ac3cd5abf90c73c0f3abb10a35454c4c9d49bd40b397afa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTypeParameterList","kind":"method","status":"implemented","sigHash":"e0d95c60e6b16c268fa288bbf965cfc1abc6155aa0f2d02fe3b33014bde5e0da","bodyHash":"729efaa2cb75faa37ac3cd5abf90c73c0f3abb10a35454c4c9d49bd40b397afa"}
  *
  * Go source:
  * func (c *Checker) checkGrammarTypeParameterList(typeParameters *ast.NodeList, file *ast.SourceFile) bool {
@@ -1676,7 +1681,7 @@ export function Checker_checkGrammarTypeParameterList(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarParameterList","kind":"method","status":"stub","sigHash":"6d6e4dbbeaefbd4cc4091aa38b4ab5a2ce7d26f1266d8136737c1892ff9cb8b1","bodyHash":"e51ec8657c9c165a0515df5e1943fcee57a99d2acf4e578107590a4f6e7a77b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarParameterList","kind":"method","status":"implemented","sigHash":"6d6e4dbbeaefbd4cc4091aa38b4ab5a2ce7d26f1266d8136737c1892ff9cb8b1","bodyHash":"e51ec8657c9c165a0515df5e1943fcee57a99d2acf4e578107590a4f6e7a77b3"}
  *
  * Go source:
  * func (c *Checker) checkGrammarParameterList(parameters *ast.NodeList) bool {
@@ -1748,7 +1753,7 @@ export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, para
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForUseStrictSimpleParameterList","kind":"method","status":"stub","sigHash":"2e19063ec0a437a8c220065365061dc49d2a3789be9a47cf2e8db62b3d229ce9","bodyHash":"b718e49840666faf668d0537dd89cff537d847791ea166e6f19feda30e41796f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForUseStrictSimpleParameterList","kind":"method","status":"implemented","sigHash":"2e19063ec0a437a8c220065365061dc49d2a3789be9a47cf2e8db62b3d229ce9","bodyHash":"b718e49840666faf668d0537dd89cff537d847791ea166e6f19feda30e41796f"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForUseStrictSimpleParameterList(node *ast.Node) bool {
@@ -1821,7 +1826,7 @@ export function Checker_checkGrammarForUseStrictSimpleParameterList(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarFunctionLikeDeclaration","kind":"method","status":"stub","sigHash":"870d17938e226df009bf5a745d939bb4763b608c00ac15058839cae25d211a82","bodyHash":"62bef1861f89393a91c7e637dd60ac50d262015fcfefc4024acbbd1dfa0df455"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarFunctionLikeDeclaration","kind":"method","status":"implemented","sigHash":"870d17938e226df009bf5a745d939bb4763b608c00ac15058839cae25d211a82","bodyHash":"62bef1861f89393a91c7e637dd60ac50d262015fcfefc4024acbbd1dfa0df455"}
  *
  * Go source:
  * func (c *Checker) checkGrammarFunctionLikeDeclaration(node *ast.Node) bool {
@@ -1843,7 +1848,7 @@ export function Checker_checkGrammarFunctionLikeDeclaration(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarClassLikeDeclaration","kind":"method","status":"stub","sigHash":"5ce56af70ed0a67134918545c6f91a27f995da5eef93608d35add56509c0a37a","bodyHash":"5fa1697611a8d67acc03d48d2d7b19b9ab668a480bddb226d27776af804ffe53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarClassLikeDeclaration","kind":"method","status":"implemented","sigHash":"5ce56af70ed0a67134918545c6f91a27f995da5eef93608d35add56509c0a37a","bodyHash":"5fa1697611a8d67acc03d48d2d7b19b9ab668a480bddb226d27776af804ffe53"}
  *
  * Go source:
  * func (c *Checker) checkGrammarClassLikeDeclaration(node *ast.Node) bool {
@@ -1857,7 +1862,7 @@ export function Checker_checkGrammarClassLikeDeclaration(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarArrowFunction","kind":"method","status":"stub","sigHash":"5e3226bd327fd486b6abd9e2779555b44c3d01056d43c314cf4f536aada72350","bodyHash":"a06aa50d7e1a1648be7c8be83a934490b8422c5bae78e9dd7bfacd97b1b350fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarArrowFunction","kind":"method","status":"implemented","sigHash":"5e3226bd327fd486b6abd9e2779555b44c3d01056d43c314cf4f536aada72350","bodyHash":"a06aa50d7e1a1648be7c8be83a934490b8422c5bae78e9dd7bfacd97b1b350fc"}
  *
  * Go source:
  * func (c *Checker) checkGrammarArrowFunction(node *ast.Node, file *ast.SourceFile) bool {
@@ -1907,7 +1912,7 @@ export function Checker_checkGrammarArrowFunction(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarIndexSignatureParameters","kind":"method","status":"stub","sigHash":"83c0df83bc63fd85c1dbf6c6d1839adbed082d31e52e645fb4981b0a30f33eb1","bodyHash":"ab0d368e8ba74f732caf12e7f833347c47062ad0e65eb0c06a1822560d3bb690"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarIndexSignatureParameters","kind":"method","status":"implemented","sigHash":"83c0df83bc63fd85c1dbf6c6d1839adbed082d31e52e645fb4981b0a30f33eb1","bodyHash":"ab0d368e8ba74f732caf12e7f833347c47062ad0e65eb0c06a1822560d3bb690"}
  *
  * Go source:
  * func (c *Checker) checkGrammarIndexSignatureParameters(node *ast.IndexSignatureDeclaration) bool {
@@ -1994,7 +1999,7 @@ export function Checker_checkGrammarIndexSignatureParameters(receiver: GoPtr<Che
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarIndexSignature","kind":"method","status":"stub","sigHash":"f4c85d41a1aeef6724f9eaa1178d072ccc8b4b428c7e40aa8bc99487ea6e8fc5","bodyHash":"82c7484247a90e5e5914b79ed7a134420a1d6b0f3f1b55f764fb8be2da78ef2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarIndexSignature","kind":"method","status":"implemented","sigHash":"f4c85d41a1aeef6724f9eaa1178d072ccc8b4b428c7e40aa8bc99487ea6e8fc5","bodyHash":"82c7484247a90e5e5914b79ed7a134420a1d6b0f3f1b55f764fb8be2da78ef2c"}
  *
  * Go source:
  * func (c *Checker) checkGrammarIndexSignature(node *ast.IndexSignatureDeclaration) bool {
@@ -2008,7 +2013,7 @@ export function Checker_checkGrammarIndexSignature(receiver: GoPtr<Checker>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForAtLeastOneTypeArgument","kind":"method","status":"stub","sigHash":"fcbedb418a0e985b8eb57039e04c12907bb55567fdd86499bd2103086242b9a1","bodyHash":"68aade49e5aa318db13f11c7f28247b21599adb72c1b6fdc23f2649bfc5c25d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForAtLeastOneTypeArgument","kind":"method","status":"implemented","sigHash":"fcbedb418a0e985b8eb57039e04c12907bb55567fdd86499bd2103086242b9a1","bodyHash":"68aade49e5aa318db13f11c7f28247b21599adb72c1b6fdc23f2649bfc5c25d5"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForAtLeastOneTypeArgument(node *ast.Node, typeArguments *ast.NodeList) bool {
@@ -2032,7 +2037,7 @@ export function Checker_checkGrammarForAtLeastOneTypeArgument(receiver: GoPtr<Ch
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTypeArguments","kind":"method","status":"stub","sigHash":"8a90235755408d44657bac57e6cc9800285dd139d038c27d5324bee1f13124ca","bodyHash":"bfef6639595660c25f27c8c9c1b62f6269602de33d16079d61d19aba5a7abf65"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTypeArguments","kind":"method","status":"implemented","sigHash":"8a90235755408d44657bac57e6cc9800285dd139d038c27d5324bee1f13124ca","bodyHash":"bfef6639595660c25f27c8c9c1b62f6269602de33d16079d61d19aba5a7abf65"}
  *
  * Go source:
  * func (c *Checker) checkGrammarTypeArguments(node *ast.Node, typeArguments *ast.NodeList) bool {
@@ -2044,7 +2049,7 @@ export function Checker_checkGrammarTypeArguments(receiver: GoPtr<Checker>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTaggedTemplateChain","kind":"method","status":"stub","sigHash":"188b01ce1fdfda0d94d79eda4aec280e7fd9bdb72684b789a504fe8526796c78","bodyHash":"8168c582adce34621bc3ea08ef6c319403716d63737ca013bac0959889a483ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarTaggedTemplateChain","kind":"method","status":"implemented","sigHash":"188b01ce1fdfda0d94d79eda4aec280e7fd9bdb72684b789a504fe8526796c78","bodyHash":"8168c582adce34621bc3ea08ef6c319403716d63737ca013bac0959889a483ad"}
  *
  * Go source:
  * func (c *Checker) checkGrammarTaggedTemplateChain(node *ast.TaggedTemplateExpression) bool {
@@ -2062,7 +2067,7 @@ export function Checker_checkGrammarTaggedTemplateChain(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarHeritageClause","kind":"method","status":"stub","sigHash":"123b8fb0790f9d6f266d85a2b84e7ad075b6494d978395ac2015eafe83cca003","bodyHash":"9136aab077f29ab5537410e30027b1d9a623eb122c69a05b5f2188738bd32215"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarHeritageClause","kind":"method","status":"implemented","sigHash":"123b8fb0790f9d6f266d85a2b84e7ad075b6494d978395ac2015eafe83cca003","bodyHash":"9136aab077f29ab5537410e30027b1d9a623eb122c69a05b5f2188738bd32215"}
  *
  * Go source:
  * func (c *Checker) checkGrammarHeritageClause(node *ast.HeritageClause) bool {
@@ -2105,7 +2110,7 @@ export function Checker_checkGrammarHeritageClause(receiver: GoPtr<Checker>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarExpressionWithTypeArguments","kind":"method","status":"stub","sigHash":"af6e2eff9c43401e230029def29304e11ed9f61ae6cc473a3bc52c69964b4789","bodyHash":"8ec334978dfb08f4957c60401cbdf0d6a68b09f511b5819a3900c92b7a2d8d5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarExpressionWithTypeArguments","kind":"method","status":"implemented","sigHash":"af6e2eff9c43401e230029def29304e11ed9f61ae6cc473a3bc52c69964b4789","bodyHash":"8ec334978dfb08f4957c60401cbdf0d6a68b09f511b5819a3900c92b7a2d8d5e"}
  *
  * Go source:
  * func (c *Checker) checkGrammarExpressionWithTypeArguments(node *ast.Node /*Union[ExpressionWithTypeArguments, TypeQuery]* /) bool {
@@ -2123,7 +2128,7 @@ export function Checker_checkGrammarExpressionWithTypeArguments(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarClassDeclarationHeritageClauses","kind":"method","status":"stub","sigHash":"c6081052108d5899f0301c930f47c21933a6f8f94cfe1a4316b370536d1cb3a5","bodyHash":"228845eda186d7d2f3f326d250a7f113238890ea7ae60653fd7112e02a617c72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarClassDeclarationHeritageClauses","kind":"method","status":"implemented","sigHash":"c6081052108d5899f0301c930f47c21933a6f8f94cfe1a4316b370536d1cb3a5","bodyHash":"228845eda186d7d2f3f326d250a7f113238890ea7ae60653fd7112e02a617c72"}
  *
  * Go source:
  * func (c *Checker) checkGrammarClassDeclarationHeritageClauses(node *ast.ClassLikeDeclaration, file *ast.SourceFile) bool {
@@ -2238,7 +2243,7 @@ export function Checker_checkGrammarClassDeclarationHeritageClauses(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarInterfaceDeclaration","kind":"method","status":"stub","sigHash":"c9b54167c596379eae7c93fe642627266fa2c134ee4008edabc92329f73050e6","bodyHash":"ef89e20fe1cba09c23ee91640e246e8f6f93327eec6f53114c0b82b648a8edc0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarInterfaceDeclaration","kind":"method","status":"implemented","sigHash":"c9b54167c596379eae7c93fe642627266fa2c134ee4008edabc92329f73050e6","bodyHash":"ef89e20fe1cba09c23ee91640e246e8f6f93327eec6f53114c0b82b648a8edc0"}
  *
  * Go source:
  * func (c *Checker) checkGrammarInterfaceDeclaration(node *ast.InterfaceDeclaration) bool {
@@ -2292,7 +2297,7 @@ export function Checker_checkGrammarInterfaceDeclaration(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarComputedPropertyName","kind":"method","status":"stub","sigHash":"5e0329796e2bfc37ebb51cde9c5823f23cd2988bb8fd365239b6cebc9605a1a3","bodyHash":"c49e090816ba2097d993fe8d50ab27e83a251bb8e1917fb5cf0d79cf0bb39805"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarComputedPropertyName","kind":"method","status":"implemented","sigHash":"5e0329796e2bfc37ebb51cde9c5823f23cd2988bb8fd365239b6cebc9605a1a3","bodyHash":"c49e090816ba2097d993fe8d50ab27e83a251bb8e1917fb5cf0d79cf0bb39805"}
  *
  * Go source:
  * func (c *Checker) checkGrammarComputedPropertyName(node *ast.Node) bool {
@@ -2321,7 +2326,7 @@ export function Checker_checkGrammarComputedPropertyName(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForGenerator","kind":"method","status":"stub","sigHash":"21bf494af82f009b66f87db069de7394afd1c3d3a2a4cc3c3f65c8155e08f2eb","bodyHash":"702fc60f1bab8fda929c0622d4fe857a02ac8b5a1fa87ff3d39f7f3f382ca707"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForGenerator","kind":"method","status":"implemented","sigHash":"21bf494af82f009b66f87db069de7394afd1c3d3a2a4cc3c3f65c8155e08f2eb","bodyHash":"702fc60f1bab8fda929c0622d4fe857a02ac8b5a1fa87ff3d39f7f3f382ca707"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForGenerator(node *ast.Node) bool {
@@ -2357,7 +2362,7 @@ export function Checker_checkGrammarForGenerator(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInvalidQuestionMark","kind":"method","status":"stub","sigHash":"32e35056d76e9e25f5e2712a0b074ce4bb73efba032e04cb94d590227ecc9b7d","bodyHash":"4c288ecc93f38f277248b5e63670cf82083ec91efd273b04e33e39edde861891"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInvalidQuestionMark","kind":"method","status":"implemented","sigHash":"32e35056d76e9e25f5e2712a0b074ce4bb73efba032e04cb94d590227ecc9b7d","bodyHash":"4c288ecc93f38f277248b5e63670cf82083ec91efd273b04e33e39edde861891"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForInvalidQuestionMark(postfixToken *ast.TokenNode, message *diagnostics.Message) bool {
@@ -2369,7 +2374,7 @@ export function Checker_checkGrammarForInvalidQuestionMark(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInvalidExclamationToken","kind":"method","status":"stub","sigHash":"568a113bf327b24ebea7f0c6544237efac47eddf6357c196a6590f666ed149a9","bodyHash":"bb882157f738777bc861b5678c786e5316b8516598f4697cdd722af0527771d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInvalidExclamationToken","kind":"method","status":"implemented","sigHash":"568a113bf327b24ebea7f0c6544237efac47eddf6357c196a6590f666ed149a9","bodyHash":"bb882157f738777bc861b5678c786e5316b8516598f4697cdd722af0527771d2"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForInvalidExclamationToken(postfixToken *ast.TokenNode, message *diagnostics.Message) bool {
@@ -2381,7 +2386,7 @@ export function Checker_checkGrammarForInvalidExclamationToken(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarObjectLiteralExpression","kind":"method","status":"stub","sigHash":"a9c196863e38cf676b534b07fda26c6972ce8786ba7e4da201eed68f8df63b2c","bodyHash":"52d0467ef4fd3442402287687a5bbb8134f7cc34ed02a9fd7299cfeb0bd40c9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarObjectLiteralExpression","kind":"method","status":"implemented","sigHash":"a9c196863e38cf676b534b07fda26c6972ce8786ba7e4da201eed68f8df63b2c","bodyHash":"52d0467ef4fd3442402287687a5bbb8134f7cc34ed02a9fd7299cfeb0bd40c9b"}
  *
  * Go source:
  * func (c *Checker) checkGrammarObjectLiteralExpression(node *ast.ObjectLiteralExpression, inDestructuring bool) bool {
@@ -2525,11 +2530,116 @@ export function Checker_checkGrammarForInvalidExclamationToken(receiver: GoPtr<C
  * }
  */
 export function Checker_checkGrammarObjectLiteralExpression(receiver: GoPtr<Checker>, node: GoPtr<ObjectLiteralExpression>, inDestructuring: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarObjectLiteralExpression");
+  const seen = new Map<string, DeclarationMeaning>();
+  const properties = node!.Properties !== undefined ? node!.Properties!.Nodes : [];
+  for (const prop of properties) {
+    if (prop!.Kind === KindSpreadAssignment) {
+      const spreadAssignment = AsSpreadAssignment(prop);
+      if (inDestructuring) {
+        const expression = SkipParentheses(spreadAssignment!.Expression as unknown as GoPtr<Node>);
+        if (IsArrayLiteralExpression(expression) || IsObjectLiteralExpression(expression)) {
+          return Checker_grammarErrorOnNode(receiver, spreadAssignment!.Expression as unknown as GoPtr<Node>, A_rest_element_cannot_contain_a_binding_pattern);
+        }
+      }
+      continue;
+    }
+    const name = Node_Name(prop);
+    if (name!.Kind === KindComputedPropertyName) {
+      Checker_checkGrammarComputedPropertyName(receiver, name);
+    }
+    if (prop!.Kind === KindShorthandPropertyAssignment && !inDestructuring) {
+      const shorthandProp = AsShorthandPropertyAssignment(prop);
+      if (shorthandProp!.ObjectAssignmentInitializer !== undefined) {
+        let lastNodeBeforeInitializer: GoPtr<Node> = undefined;
+        Node_ForEachChild(prop, (child: GoPtr<Node>): bool => {
+          if (child !== (shorthandProp!.ObjectAssignmentInitializer as unknown as GoPtr<Node>)) {
+            lastNodeBeforeInitializer = child;
+            return false;
+          }
+          return true;
+        });
+        Checker_grammarErrorOnFirstToken(receiver, lastNodeBeforeInitializer, Did_you_mean_to_use_a_Colon_An_can_only_follow_a_property_name_when_the_containing_object_literal_is_part_of_a_destructuring_pattern);
+      }
+    }
+    if (name!.Kind === KindPrivateIdentifier) {
+      Checker_grammarErrorOnNode(receiver, name, Private_identifiers_are_not_allowed_outside_class_bodies);
+    }
+    const modifiers = Node_ModifierNodes(prop);
+    if (modifiers.length !== 0) {
+      if (CanHaveModifiers(prop)) {
+        for (const mod of modifiers) {
+          if (IsModifier(mod) && (mod!.Kind !== KindAsyncKeyword || prop!.Kind !== KindMethodDeclaration)) {
+            Checker_grammarErrorOnNode(receiver, mod, X_0_modifier_cannot_be_used_here, GetTextOfNode(mod));
+          }
+        }
+      } else if (CanHaveIllegalModifiers(prop)) {
+        for (const mod of modifiers) {
+          if (IsModifier(mod)) {
+            Checker_grammarErrorOnNode(receiver, mod, X_0_modifier_cannot_be_used_here, GetTextOfNode(mod));
+          }
+        }
+      }
+    }
+    let currentKind: DeclarationMeaning;
+    switch (prop!.Kind) {
+      case KindShorthandPropertyAssignment:
+      case KindPropertyAssignment: {
+        const postfixToken = prop!.Kind === KindShorthandPropertyAssignment
+          ? AsShorthandPropertyAssignment(prop)!.PostfixToken
+          : AsPropertyAssignment(prop)!.PostfixToken;
+        Checker_checkGrammarForInvalidExclamationToken(receiver, postfixToken as unknown as GoPtr<TokenNode>, A_definite_assignment_assertion_is_not_permitted_in_this_context);
+        Checker_checkGrammarForInvalidQuestionMark(receiver, postfixToken as unknown as GoPtr<TokenNode>, An_object_member_cannot_be_declared_optional);
+        if (name!.Kind === KindNumericLiteral) {
+          Checker_checkGrammarNumericLiteral(receiver, name as unknown as GoPtr<NumericLiteral>);
+        }
+        if (name!.Kind === KindBigIntLiteral) {
+          Checker_addErrorOrSuggestion(receiver, true, createDiagnosticForNode(name, A_bigint_literal_cannot_be_used_as_a_property_name));
+        }
+        currentKind = DeclarationMeaningPropertyAssignment;
+        break;
+      }
+      case KindMethodDeclaration:
+        currentKind = DeclarationMeaningMethod;
+        break;
+      case KindGetAccessor:
+        currentKind = DeclarationMeaningGetAccessor;
+        break;
+      case KindSetAccessor:
+        currentKind = DeclarationMeaningSetAccessor;
+        break;
+      default:
+        throw new globalThis.Error(`Unexpected node kind "${prop!.Kind}"`);
+    }
+    if (!inDestructuring) {
+      const [effectiveName, ok] = Checker_getEffectivePropertyNameForPropertyNameNode(receiver, name);
+      if (!ok) {
+        continue;
+      }
+      const existingKind = seen.get(effectiveName) ?? (0 as DeclarationMeaning);
+      if (existingKind === 0) {
+        seen.set(effectiveName, currentKind);
+      } else {
+        if ((currentKind & DeclarationMeaningMethod) !== 0 && (existingKind & DeclarationMeaningMethod) !== 0) {
+          Checker_grammarErrorOnNode(receiver, name, Duplicate_identifier_0, GetTextOfNode(name));
+        } else if ((currentKind & DeclarationMeaningPropertyAssignment) !== 0 && (existingKind & DeclarationMeaningPropertyAssignment) !== 0) {
+          Checker_grammarErrorOnNode(receiver, name, An_object_literal_cannot_have_multiple_properties_with_the_same_name, GetTextOfNode(name));
+        } else if ((currentKind & DeclarationMeaningGetOrSetAccessor) !== 0 && (existingKind & DeclarationMeaningGetOrSetAccessor) !== 0) {
+          if (existingKind !== DeclarationMeaningGetOrSetAccessor && currentKind !== existingKind) {
+            seen.set(effectiveName, (currentKind | existingKind) as DeclarationMeaning);
+          } else {
+            return Checker_grammarErrorOnNode(receiver, name, An_object_literal_cannot_have_multiple_get_Slashset_accessors_with_the_same_name);
+          }
+        } else {
+          return Checker_grammarErrorOnNode(receiver, name, An_object_literal_cannot_have_property_and_accessor_with_the_same_name);
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxElement","kind":"method","status":"stub","sigHash":"158066c7c61bf24195d7ba706ceb7109a5532cc48c7bb1d119eccd852d7920aa","bodyHash":"5f7a8fd88f75114a89c11c89176f8a17e0c7a275d2830028cdb3b5aabeaa91e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxElement","kind":"method","status":"implemented","sigHash":"158066c7c61bf24195d7ba706ceb7109a5532cc48c7bb1d119eccd852d7920aa","bodyHash":"5f7a8fd88f75114a89c11c89176f8a17e0c7a275d2830028cdb3b5aabeaa91e4"}
  *
  * Go source:
  * func (c *Checker) checkGrammarJsxElement(node *ast.Node) bool {
@@ -2557,11 +2667,33 @@ export function Checker_checkGrammarObjectLiteralExpression(receiver: GoPtr<Chec
  * }
  */
 export function Checker_checkGrammarJsxElement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxElement");
+  Checker_checkGrammarJsxName(receiver, Node_TagName(node) as unknown as GoPtr<JsxTagNameExpression>);
+  Checker_checkGrammarTypeArguments(receiver, node, Node_TypeArgumentList(node));
+  const seen = new Set<string>();
+  const attrs = Node_Attributes(node);
+  const props = Node_Properties(attrs) ?? [];
+  for (const attrNode of props) {
+    if (attrNode!.Kind === KindJsxSpreadAttribute) {
+      continue;
+    }
+    const attr = AsJsxAttribute(attrNode);
+    const attrName = attr!.name as unknown as GoPtr<Node>;
+    const initializer = attr!.Initializer;
+    const textOfName = Node_Text(attrName);
+    if (!seen.has(textOfName)) {
+      seen.add(textOfName);
+    } else {
+      return Checker_grammarErrorOnNode(receiver, attrName, JSX_elements_cannot_have_multiple_attributes_with_the_same_name);
+    }
+    if (initializer !== undefined && (initializer as unknown as GoPtr<Node>)!.Kind === KindJsxExpression && Node_Expression(initializer as unknown as GoPtr<Node>) === undefined) {
+      return Checker_grammarErrorOnNode(receiver, initializer as unknown as GoPtr<Node>, JSX_attributes_must_only_be_assigned_a_non_empty_expression);
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxName","kind":"method","status":"stub","sigHash":"81f6096d6b28ad09cd5d3d4b96cd7fe0f6ebe37340724846a93e208e28a3277f","bodyHash":"c11b03d5fa0b6aca8c13f3adba5c8a52ebcc58be8da2c5f29fa0aace41eb1c3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxName","kind":"method","status":"implemented","sigHash":"81f6096d6b28ad09cd5d3d4b96cd7fe0f6ebe37340724846a93e208e28a3277f","bodyHash":"c11b03d5fa0b6aca8c13f3adba5c8a52ebcc58be8da2c5f29fa0aace41eb1c3f"}
  *
  * Go source:
  * func (c *Checker) checkGrammarJsxName(node *ast.JsxTagNameExpression) bool {
@@ -2577,11 +2709,17 @@ export function Checker_checkGrammarJsxElement(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkGrammarJsxName(receiver: GoPtr<Checker>, node: GoPtr<JsxTagNameExpression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxName");
+  if (IsPropertyAccessExpression(node as unknown as GoPtr<Node>) && IsJsxNamespacedName(Node_Expression(node as unknown as GoPtr<Node>))) {
+    return Checker_grammarErrorOnNode(receiver, Node_Expression(node as unknown as GoPtr<Node>), JSX_property_access_expressions_cannot_include_JSX_namespace_names);
+  }
+  if (IsJsxNamespacedName(node as unknown as GoPtr<Node>) && CompilerOptions_GetJSXTransformEnabled(receiver!.compilerOptions) && !IsIntrinsicJsxName(Node_Text(AsJsxNamespacedName(node as unknown as GoPtr<Node>)!.Namespace as unknown as GoPtr<Node>))) {
+    return Checker_grammarErrorOnNode(receiver, node as unknown as GoPtr<Node>, React_components_cannot_include_JSX_namespace_names);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxExpression","kind":"method","status":"stub","sigHash":"b7b40bab6bd76f6ae891fc5a0eb17f5424f2d491683a1f1da42ae0937e2a236b","bodyHash":"2a5d71c6da465a99bea20524c7beb2a43cfe7eecacaf28ff6e368701b7b4f597"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxExpression","kind":"method","status":"implemented","sigHash":"b7b40bab6bd76f6ae891fc5a0eb17f5424f2d491683a1f1da42ae0937e2a236b","bodyHash":"2a5d71c6da465a99bea20524c7beb2a43cfe7eecacaf28ff6e368701b7b4f597"}
  *
  * Go source:
  * func (c *Checker) checkGrammarJsxExpression(node *ast.JsxExpression) bool {
@@ -2593,11 +2731,14 @@ export function Checker_checkGrammarJsxName(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function Checker_checkGrammarJsxExpression(receiver: GoPtr<Checker>, node: GoPtr<JsxExpression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarJsxExpression");
+  if (node!.Expression !== undefined && IsCommaSequence(node!.Expression as unknown as GoPtr<Node>)) {
+    return Checker_grammarErrorOnNode(receiver, node!.Expression as unknown as GoPtr<Node>, JSX_expressions_may_not_use_the_comma_operator_Did_you_mean_to_write_an_array);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInOrForOfStatement","kind":"method","status":"stub","sigHash":"ffbcc9e0df95aca13d0bca755617f2ce69a0ef9246b0a313c6372abd322912c3","bodyHash":"b8d12b388b86386c29f28aab22aa0a154750579cb7a5297faa8aacc36fc638b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInOrForOfStatement","kind":"method","status":"implemented","sigHash":"ffbcc9e0df95aca13d0bca755617f2ce69a0ef9246b0a313c6372abd322912c3","bodyHash":"b8d12b388b86386c29f28aab22aa0a154750579cb7a5297faa8aacc36fc638b0"}
  *
  * Go source:
  * func (c *Checker) checkGrammarForInOrForOfStatement(forInOrOfStatement *ast.ForInOrOfStatement) bool {
@@ -2711,11 +2852,89 @@ export function Checker_checkGrammarJsxExpression(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_checkGrammarForInOrForOfStatement(receiver: GoPtr<Checker>, forInOrOfStatement: GoPtr<ForInOrOfStatement>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForInOrForOfStatement");
+  const asNode = forInOrOfStatement as unknown as GoPtr<Node>;
+  if (Checker_checkGrammarStatementInAmbientContext(receiver, asNode)) {
+    return true;
+  }
+  if (forInOrOfStatement!.Kind === KindForOfStatement && forInOrOfStatement!.AwaitModifier !== undefined) {
+    if ((forInOrOfStatement!.Flags & NodeFlagsAwaitContext) === 0) {
+      const sourceFile = GetSourceFileOfNode(asNode);
+      if (IsInTopLevelContext(asNode)) {
+        if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
+          if (!IsEffectiveExternalModule(sourceFile, receiver!.compilerOptions)) {
+            DiagnosticsCollection_Add(receiver!.diagnostics, createDiagnosticForNode(forInOrOfStatement!.AwaitModifier as unknown as GoPtr<Node>, X_for_await_loops_are_only_allowed_at_the_top_level_of_a_file_when_that_file_is_a_module_but_this_file_has_no_imports_or_exports_Consider_adding_an_empty_export_to_make_this_file_a_module));
+          }
+          const isNodeModuleKind2 = receiver!.moduleKind === ModuleKindNode16 || receiver!.moduleKind === ModuleKindNode18 || receiver!.moduleKind === ModuleKindNode20 || receiver!.moduleKind === ModuleKindNodeNext;
+          const isEsModuleKind2 = receiver!.moduleKind === ModuleKindES2022 || receiver!.moduleKind === ModuleKindESNext || receiver!.moduleKind === ModuleKindPreserve || receiver!.moduleKind === ModuleKindSystem;
+          let skipTopLevelForAwaitError = false;
+          if (isNodeModuleKind2) {
+            const sourceFileMetaData = Program_GetSourceFileMetaData(receiver!.program, SourceFile_Path(sourceFile));
+            if (sourceFileMetaData!.ImpliedNodeFormat === ModuleKindCommonJS) {
+              DiagnosticsCollection_Add(receiver!.diagnostics, createDiagnosticForNode(forInOrOfStatement!.AwaitModifier as unknown as GoPtr<Node>, The_current_file_is_a_CommonJS_module_and_cannot_use_await_at_the_top_level));
+              skipTopLevelForAwaitError = true;
+            }
+          }
+          if (!skipTopLevelForAwaitError && (isNodeModuleKind2 || isEsModuleKind2)) {
+            if (receiver!.languageVersion >= ScriptTargetES2017) {
+              skipTopLevelForAwaitError = true;
+            }
+          }
+          if (!skipTopLevelForAwaitError) {
+            DiagnosticsCollection_Add(receiver!.diagnostics, createDiagnosticForNode(forInOrOfStatement!.AwaitModifier as unknown as GoPtr<Node>, Top_level_for_await_loops_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_node20_nodenext_or_preserve_and_the_target_option_is_set_to_es2017_or_higher));
+          }
+        }
+      } else {
+        // use of 'for-await-of' in non-async function
+        if (!Checker_hasParseDiagnostics(receiver, sourceFile)) {
+          const diagnostic = createDiagnosticForNode(forInOrOfStatement!.AwaitModifier as unknown as GoPtr<Node>, X_for_await_loops_are_only_allowed_within_async_functions_and_at_the_top_levels_of_modules);
+          const containingFunc = GetContainingFunction(asNode);
+          if (containingFunc !== undefined && containingFunc!.Kind !== KindConstructor) {
+            const relatedInfo = createDiagnosticForNode(containingFunc, Did_you_mean_to_mark_this_function_as_async);
+            Diagnostic_AddRelatedInfo(diagnostic, relatedInfo);
+          }
+          DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
+          return true;
+        }
+      }
+    }
+  }
+  if (IsForOfStatement(asNode) && (forInOrOfStatement!.Flags & NodeFlagsAwaitContext) === 0 && IsIdentifier(forInOrOfStatement!.Initializer as unknown as GoPtr<Node>) && Node_Text(forInOrOfStatement!.Initializer as unknown as GoPtr<Node>) === "async") {
+    Checker_grammarErrorOnNode(receiver, forInOrOfStatement!.Initializer as unknown as GoPtr<Node>, The_left_hand_side_of_a_for_of_statement_may_not_be_async);
+    return false;
+  }
+  if ((forInOrOfStatement!.Initializer as unknown as GoPtr<Node>)!.Kind === KindVariableDeclarationNode) {
+    const variableList = AsVariableDeclarationList(forInOrOfStatement!.Initializer as unknown as GoPtr<Node>);
+    if (!Checker_checkGrammarVariableDeclarationList(receiver, variableList)) {
+      const declarations = variableList!.Declarations;
+      if (declarations!.Nodes.length === 0) {
+        return false;
+      }
+      if (declarations!.Nodes.length > 1) {
+        const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
+          ? Only_a_single_variable_declaration_is_allowed_in_a_for_in_statement
+          : Only_a_single_variable_declaration_is_allowed_in_a_for_of_statement;
+        return Checker_grammarErrorOnFirstToken(receiver, declarations!.Nodes[1], diagnostic);
+      }
+      const firstVariableDeclaration = AsVariableDeclaration(declarations!.Nodes[0]);
+      if (firstVariableDeclaration!.Initializer !== undefined) {
+        const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
+          ? The_variable_declaration_of_a_for_in_statement_cannot_have_an_initializer
+          : The_variable_declaration_of_a_for_of_statement_cannot_have_an_initializer;
+        return Checker_grammarErrorOnNode(receiver, Node_Name(declarations!.Nodes[0]), diagnostic);
+      }
+      if (firstVariableDeclaration!.Type !== undefined) {
+        const diagnostic = forInOrOfStatement!.Kind === KindForInStatement
+          ? The_left_hand_side_of_a_for_in_statement_cannot_use_a_type_annotation
+          : The_left_hand_side_of_a_for_of_statement_cannot_use_a_type_annotation;
+        return Checker_grammarErrorOnNode(receiver, declarations!.Nodes[0], diagnostic);
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarAccessor","kind":"method","status":"stub","sigHash":"485959dd2d0d94678b3f779984008f26ef7f12b135d3e7b4d0d41f2c96fd9147","bodyHash":"89bff844a07e29cde95add98124bfa2c49806fb35aa7f3298c7eaad263330f91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarAccessor","kind":"method","status":"implemented","sigHash":"485959dd2d0d94678b3f779984008f26ef7f12b135d3e7b4d0d41f2c96fd9147","bodyHash":"89bff844a07e29cde95add98124bfa2c49806fb35aa7f3298c7eaad263330f91"}
  *
  * Go source:
  * func (c *Checker) checkGrammarAccessor(accessor *ast.AccessorDeclaration) bool {
@@ -2771,11 +2990,53 @@ export function Checker_checkGrammarForInOrForOfStatement(receiver: GoPtr<Checke
  * }
  */
 export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor: GoPtr<AccessorDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarAccessor");
+  const asNode = accessor as unknown as GoPtr<Node>;
+  const body = Node_Body(asNode);
+  if ((asNode!.Flags & NodeFlagsAmbient) === 0 && asNode!.Parent!.Kind !== KindTypeLiteral && asNode!.Parent!.Kind !== KindInterfaceDeclaration) {
+    if (body === undefined && !HasSyntacticModifier(asNode, ModifierFlagsAbstract)) {
+      return Checker_grammarErrorAtPos(receiver, asNode, Node_End(asNode) - 1, 1, X_0_expected, "{");
+    }
+  }
+  if (body !== undefined) {
+    if (HasSyntacticModifier(asNode, ModifierFlagsAbstract)) {
+      return Checker_grammarErrorOnNode(receiver, asNode, An_abstract_accessor_cannot_have_an_implementation);
+    }
+    if (asNode!.Parent!.Kind === KindTypeLiteral || asNode!.Parent!.Kind === KindInterfaceDeclaration) {
+      return Checker_grammarErrorOnNode(receiver, body as unknown as GoPtr<Node>, An_implementation_cannot_be_declared_in_ambient_contexts);
+    }
+  }
+  const funcData = Node_FunctionLikeData(asNode);
+  const typeParameters = funcData !== undefined ? funcData!.TypeParameters : undefined;
+  if (typeParameters !== undefined) {
+    return Checker_grammarErrorOnNode(receiver, Node_Name(asNode), An_accessor_cannot_have_type_parameters);
+  }
+  if (!Checker_doesAccessorHaveCorrectParameterCount(receiver, accessor)) {
+    return Checker_grammarErrorOnNode(receiver, Node_Name(asNode), IfElse(asNode!.Kind === KindGetAccessor, A_get_accessor_cannot_have_parameters, A_set_accessor_must_have_exactly_one_parameter));
+  }
+  if (asNode!.Kind === KindSetAccessor) {
+    if (funcData!.Type !== undefined) {
+      return Checker_grammarErrorOnNode(receiver, Node_Name(asNode), A_set_accessor_cannot_have_a_return_type_annotation);
+    }
+    const parameterNode = getSetAccessorValueParameter(asNode);
+    if (parameterNode === undefined) {
+      throw new globalThis.Error("Return value does not match parameter count assertion.");
+    }
+    const parameter = AsParameterDeclaration(parameterNode);
+    if (parameter!.DotDotDotToken !== undefined) {
+      return Checker_grammarErrorOnNode(receiver, parameter!.DotDotDotToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_rest_parameter);
+    }
+    if (parameter!.QuestionToken !== undefined) {
+      return Checker_grammarErrorOnNode(receiver, parameter!.QuestionToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_an_optional_parameter);
+    }
+    if (parameter!.Initializer !== undefined) {
+      return Checker_grammarErrorOnNode(receiver, Node_Name(asNode), A_set_accessor_parameter_cannot_have_an_initializer);
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.doesAccessorHaveCorrectParameterCount","kind":"method","status":"stub","sigHash":"e5c96ffc7430da9e5c0b0d33f2df94cf71cac9f5c841eaf08a33966d49f29e8d","bodyHash":"65beedcb5f5c5885890f0343664fbc16c2e60d297a544963ec7017c985f11d54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.doesAccessorHaveCorrectParameterCount","kind":"method","status":"implemented","sigHash":"e5c96ffc7430da9e5c0b0d33f2df94cf71cac9f5c841eaf08a33966d49f29e8d","bodyHash":"65beedcb5f5c5885890f0343664fbc16c2e60d297a544963ec7017c985f11d54"}
  *
  * Go source:
  * func (c *Checker) doesAccessorHaveCorrectParameterCount(accessor *ast.AccessorDeclaration) bool {
@@ -2785,7 +3046,10 @@ export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor:
  * }
  */
 export function Checker_doesAccessorHaveCorrectParameterCount(receiver: GoPtr<Checker>, accessor: GoPtr<AccessorDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.doesAccessorHaveCorrectParameterCount");
+  const asNode = accessor as unknown as GoPtr<Node>;
+  const funcData = Node_FunctionLikeData(asNode);
+  const paramCount = funcData !== undefined && funcData!.Parameters !== undefined ? funcData!.Parameters!.Nodes.length : 0;
+  return Checker_getAccessorThisParameter(receiver, asNode) !== undefined || paramCount === IfElse(asNode!.Kind === KindGetAccessor, 0, 1);
 }
 
 /**
@@ -2931,7 +3195,7 @@ export function Checker_checkGrammarMethod(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBreakOrContinueStatement","kind":"method","status":"stub","sigHash":"5268e6a388eb530764bcf9c46f79285d09b53a611ef8c3cf16748de4b0fe8bb6","bodyHash":"a363cf3795b9740fc3b8c516f2806d602ec5e6218f0f94d88473fbb7a0102b88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBreakOrContinueStatement","kind":"method","status":"implemented","sigHash":"5268e6a388eb530764bcf9c46f79285d09b53a611ef8c3cf16748de4b0fe8bb6","bodyHash":"a363cf3795b9740fc3b8c516f2806d602ec5e6218f0f94d88473fbb7a0102b88"}
  *
  * Go source:
  * func (c *Checker) checkGrammarBreakOrContinueStatement(node *ast.Node) bool {
@@ -2991,11 +3255,49 @@ export function Checker_checkGrammarMethod(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_checkGrammarBreakOrContinueStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBreakOrContinueStatement");
+  const targetLabel = Node_Label(node);
+  let current: GoPtr<Node> = node;
+  while (current !== undefined) {
+    if (IsFunctionLikeOrClassStaticBlockDeclaration(current)) {
+      return Checker_grammarErrorOnNode(receiver, node, Jump_target_cannot_cross_function_boundary);
+    }
+    switch (current!.Kind) {
+      case KindLabeledStatement:
+        if (targetLabel !== undefined && Node_Text(Node_Label(current)) === Node_Text(targetLabel)) {
+          const isMisplacedContinueLabel = node!.Kind === KindContinueStatement && !IsIterationStatement(Node_Statement(current), true);
+          if (isMisplacedContinueLabel) {
+            return Checker_grammarErrorOnNode(receiver, node, A_continue_statement_can_only_jump_to_a_label_of_an_enclosing_iteration_statement);
+          }
+          return false;
+        }
+        break;
+      case KindSwitchStatement:
+        if (node!.Kind === KindBreakStatement && targetLabel === undefined) {
+          return false;
+        }
+        break;
+      default:
+        if (IsIterationStatement(current, false) && targetLabel === undefined) {
+          return false;
+        }
+    }
+    current = current!.Parent;
+  }
+  if (targetLabel !== undefined) {
+    const message = node!.Kind === KindBreakStatement
+      ? A_break_statement_can_only_jump_to_a_label_of_an_enclosing_statement
+      : A_continue_statement_can_only_jump_to_a_label_of_an_enclosing_iteration_statement;
+    return Checker_grammarErrorOnNode(receiver, node, message);
+  } else {
+    const message = node!.Kind === KindBreakStatement
+      ? A_break_statement_can_only_be_used_within_an_enclosing_iteration_or_switch_statement
+      : A_continue_statement_can_only_be_used_within_an_enclosing_iteration_statement;
+    return Checker_grammarErrorOnNode(receiver, node, message);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBindingElement","kind":"method","status":"stub","sigHash":"e7cc27eb47c93739a9e83a836b7c6333a7cdbc9eea15a075274e6a5ca0f7fec8","bodyHash":"bf5d48331b4c5c29fd419eb9bf1186613593870c36f194db13ce7b6178985de6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBindingElement","kind":"method","status":"implemented","sigHash":"e7cc27eb47c93739a9e83a836b7c6333a7cdbc9eea15a075274e6a5ca0f7fec8","bodyHash":"bf5d48331b4c5c29fd419eb9bf1186613593870c36f194db13ce7b6178985de6"}
  *
  * Go source:
  * func (c *Checker) checkGrammarBindingElement(node *ast.BindingElement) bool {
@@ -3020,7 +3322,21 @@ export function Checker_checkGrammarBreakOrContinueStatement(receiver: GoPtr<Che
  * }
  */
 export function Checker_checkGrammarBindingElement(receiver: GoPtr<Checker>, node: GoPtr<BindingElement>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarBindingElement");
+  const asNode = node as unknown as GoPtr<Node>;
+  if (node!.DotDotDotToken !== undefined) {
+    const elements = Node_ElementList(asNode!.Parent);
+    if (asNode !== LastOrNil(elements!.Nodes)) {
+      return Checker_grammarErrorOnNode(receiver, asNode, A_rest_element_must_be_last_in_a_destructuring_pattern);
+    }
+    Checker_checkGrammarForDisallowedTrailingComma(receiver, elements, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
+    if (node!.PropertyName !== undefined) {
+      return Checker_grammarErrorOnNode(receiver, Node_Name(asNode), A_rest_element_cannot_have_a_property_name);
+    }
+  }
+  if (node!.DotDotDotToken !== undefined && node!.Initializer !== undefined) {
+    return Checker_grammarErrorAtPos(receiver, asNode, Node_Pos(node!.Initializer as unknown as GoPtr<Node>) - 1, 1, A_rest_element_cannot_have_an_initializer);
+  }
+  return false;
 }
 
 /**
@@ -3085,7 +3401,50 @@ export function Checker_checkGrammarBindingElement(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_checkGrammarVariableDeclaration(receiver: GoPtr<Checker>, node: GoPtr<VariableDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarVariableDeclaration");
+  const asNode = node as unknown as GoPtr<Node>;
+  const nodeFlags = Checker_getCombinedNodeFlagsCached(receiver, asNode);
+  const blockScopeKind = nodeFlags & NodeFlagsBlockScoped;
+  if (IsBindingPattern(Node_Name(asNode))) {
+    if (blockScopeKind === NodeFlagsAwaitUsing) {
+      return Checker_grammarErrorOnNode(receiver, asNode, X_0_declarations_may_not_have_binding_patterns, "await using");
+    }
+    if (blockScopeKind === NodeFlagsUsing) {
+      return Checker_grammarErrorOnNode(receiver, asNode, X_0_declarations_may_not_have_binding_patterns, "using");
+    }
+  }
+  if (asNode!.Parent!.Parent!.Kind !== KindForInStatement && asNode!.Parent!.Parent!.Kind !== KindForOfStatement) {
+    if ((nodeFlags & NodeFlagsAmbient) !== 0) {
+      Checker_checkAmbientInitializer(receiver, asNode);
+    } else if (node!.Initializer === undefined) {
+      if (IsBindingPattern(Node_Name(asNode)) && !IsBindingPattern(asNode!.Parent)) {
+        return Checker_grammarErrorOnNode(receiver, asNode, A_destructuring_declaration_must_have_an_initializer);
+      }
+      if (blockScopeKind === NodeFlagsAwaitUsing) {
+        return Checker_grammarErrorOnNode(receiver, asNode, X_0_declarations_must_be_initialized, "await using");
+      }
+      if (blockScopeKind === NodeFlagsUsing) {
+        return Checker_grammarErrorOnNode(receiver, asNode, X_0_declarations_must_be_initialized, "using");
+      }
+      if (blockScopeKind === NodeFlagsConst) {
+        return Checker_grammarErrorOnNode(receiver, asNode, X_0_declarations_must_be_initialized, "const");
+      }
+    }
+  }
+  if (node!.ExclamationToken !== undefined && (asNode!.Parent!.Parent!.Kind !== KindVariableStatement || node!.Type === undefined || node!.Initializer !== undefined || (nodeFlags & NodeFlagsAmbient) !== 0)) {
+    let message: GoPtr<Message>;
+    if (node!.Initializer !== undefined) {
+      message = Declarations_with_initializers_cannot_also_have_definite_assignment_assertions;
+    } else if (node!.Type === undefined) {
+      message = Declarations_with_definite_assignment_assertions_must_also_have_type_annotations;
+    } else {
+      message = A_definite_assignment_assertion_is_not_permitted_in_this_context;
+    }
+    return Checker_grammarErrorOnNode(receiver, node!.ExclamationToken as unknown as GoPtr<Node>, message);
+  }
+  if (Program_GetEmitModuleFormatOfFile(receiver!.program, GetSourceFileOfNode(asNode)) < ModuleKindSystem && (asNode!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0 && HasSyntacticModifier(asNode!.Parent!.Parent, ModifierFlagsExport)) {
+    Checker_checkGrammarForEsModuleMarkerInBindingName(receiver, Node_Name(asNode));
+  }
+  return blockScopeKind !== 0 && Checker_checkGrammarNameInLetOrConstDeclarations(receiver, Node_Name(asNode));
 }
 
 /**
@@ -3108,7 +3467,24 @@ export function Checker_checkGrammarVariableDeclaration(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_checkGrammarForEsModuleMarkerInBindingName(receiver: GoPtr<Checker>, name: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForEsModuleMarkerInBindingName");
+  if (IsIdentifier(name)) {
+    if (Node_Text(name) === "__esModule") {
+      return Checker_grammarErrorOnNodeSkippedOnNoEmit(receiver, name, Identifier_expected_esModule_is_reserved_as_an_exported_marker_when_transforming_ECMAScript_modules);
+    }
+  } else {
+    const elements = Node_Elements(name);
+    if (elements !== undefined) {
+      for (const element of elements!.Nodes) {
+        const elementName = Node_Name(element);
+        if (elementName !== undefined) {
+          if (Checker_checkGrammarForEsModuleMarkerInBindingName(receiver, elementName)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -3133,7 +3509,22 @@ export function Checker_checkGrammarForEsModuleMarkerInBindingName(receiver: GoP
  * }
  */
 export function Checker_checkGrammarNameInLetOrConstDeclarations(receiver: GoPtr<Checker>, name: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarNameInLetOrConstDeclarations");
+  if (name!.Kind === KindIdentifier) {
+    if (Node_Text(name) === "let") {
+      return Checker_grammarErrorOnNode(receiver, name, X_let_is_not_allowed_to_be_used_as_a_name_in_let_or_const_declarations);
+    }
+  } else {
+    const elements = Node_Elements(name);
+    if (elements !== undefined) {
+      for (const element of elements!.Nodes) {
+        const bindingElementName = Node_Name(element);
+        if (bindingElementName !== undefined) {
+          Checker_checkGrammarNameInLetOrConstDeclarations(receiver, bindingElementName);
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -3301,7 +3692,16 @@ export function Checker_checkGrammarAwaitOrAwaitUsing(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_checkGrammarYieldExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarYieldExpression");
+  let hasError = false;
+  if ((node!.Flags & NodeFlagsYieldContext) === 0) {
+    Checker_grammarErrorOnFirstToken(receiver, node, A_yield_expression_is_only_allowed_in_a_generator_body);
+    hasError = true;
+  }
+  if (Checker_isInParameterInitializerBeforeContainingFunction(receiver, node)) {
+    Checker_error(receiver, node, X_yield_expressions_cannot_be_used_in_a_parameter_initializer);
+    hasError = true;
+  }
+  return hasError;
 }
 
 /**
@@ -3333,7 +3733,26 @@ export function Checker_checkGrammarYieldExpression(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_checkGrammarForDisallowedBlockScopedVariableStatement(receiver: GoPtr<Checker>, node: GoPtr<VariableStatement>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.checkGrammarForDisallowedBlockScopedVariableStatement");
+  const asNode = node as unknown as GoPtr<Node>;
+  if (!Checker_containerAllowsBlockScopedVariable(receiver, asNode!.Parent)) {
+    const blockScopeKind = Checker_getCombinedNodeFlagsCached(receiver, node!.DeclarationList as unknown as GoPtr<Node>) & NodeFlagsBlockScoped;
+    if (blockScopeKind !== 0) {
+      let keyword: string;
+      if (blockScopeKind === NodeFlagsLet) {
+        keyword = "let";
+      } else if (blockScopeKind === NodeFlagsConst) {
+        keyword = "const";
+      } else if (blockScopeKind === NodeFlagsUsing) {
+        keyword = "using";
+      } else if (blockScopeKind === NodeFlagsAwaitUsing) {
+        keyword = "await using";
+      } else {
+        throw new globalThis.Error("Unknown BlockScope flag");
+      }
+      Checker_error(receiver, asNode, X_0_declarations_can_only_be_declared_inside_a_block, keyword);
+    }
+  }
+  return false;
 }
 
 /**
@@ -3358,7 +3777,19 @@ export function Checker_checkGrammarForDisallowedBlockScopedVariableStatement(re
  * }
  */
 export function Checker_containerAllowsBlockScopedVariable(receiver: GoPtr<Checker>, parent: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.containerAllowsBlockScopedVariable");
+  switch (parent!.Kind) {
+    case KindIfStatement:
+    case KindDoStatement:
+    case KindWhileStatement:
+    case KindWithStatement:
+    case KindForStatement:
+    case KindForInStatement:
+    case KindForOfStatement:
+      return false;
+    case KindLabeledStatement:
+      return Checker_containerAllowsBlockScopedVariable(receiver, parent!.Parent);
+  }
+  return true;
 }
 
 /**

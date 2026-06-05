@@ -254,7 +254,7 @@ export function createWatcher(sys: System, configParseResult: GoPtr<ParsedComman
     fileWatcher: undefined,
   };
   if (configParseResult!.ConfigFile !== undefined && configParseResult!.ConfigFile !== null) {
-    w.configFileName = configParseResult!.ConfigFile!.SourceFile!.FileName();
+    w.configFileName = configParseResult!.ConfigFile!.SourceFile!.fileName;
   }
   w.fileWatcher = NewFileWatcher(
     sys.FS(),

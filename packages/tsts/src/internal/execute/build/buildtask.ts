@@ -591,10 +591,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     GetSourceFile: (opts): GoPtr<import("../../ast/ast.js").SourceFile> => compilerHost_GetSourceFile({ host: orchestrator!.host, trace } as compilerHost, opts),
     GetResolvedProjectReference: (fileName, p): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> => compilerHost_GetResolvedProjectReference({ host: orchestrator!.host, trace } as compilerHost, fileName, p),
   };
-  const program = compiler_NewProgram({
-    Config: receiver!.resolved,
-    Host: buildCompilerHost,
-  });
+  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
   compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
 
   const changesComputeStart = orchestrator!.opts.Sys.Now();
@@ -608,7 +605,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
 
   const [result, statistics] = EmitAndReportStatistics({
     Sys: orchestrator!.opts.Sys,
-    ProgramLike: receiver!.result!.program as unknown as import("../tsc/emit.js").ProgramLike,
+    ProgramLike: receiver!.result!.program as unknown as import("../../compiler/program.js").ProgramLike,
     Program: program,
     Config: receiver!.resolved,
     ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
@@ -626,16 +623,16 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   const programOptions = (program as unknown as { Options(): { NoEmitOnError?: unknown; IsTrue?(): bool } }).Options();
   const noEmitOnError = programOptions !== undefined && (programOptions.NoEmitOnError as unknown as { IsTrue(): bool } | undefined)?.IsTrue() === true;
   if ((!noEmitOnError || result.Diagnostics.length === 0) &&
-    (result.EmitResult.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
-    BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
+    (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
+    BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult!.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
   }
   receiver!.result!.buildKind = buildKindProgram;
   if (result.Status === ExitStatusDiagnosticsPresent_OutputsSkipped || result.Status === ExitStatusDiagnosticsPresent_OutputsGenerated) {
     receiver!.status = { kind: upToDateStatusTypeBuildErrors, data: undefined };
   } else {
     let oldestOutputFileName: string;
-    if (result.EmitResult.EmittedFiles.length > 0) {
-      oldestOutputFileName = result.EmitResult.EmittedFiles[0]!;
+    if (result.EmitResult!.EmittedFiles.length > 0) {
+      oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
     } else {
       oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)) ?? "";
     }

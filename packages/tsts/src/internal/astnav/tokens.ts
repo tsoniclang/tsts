@@ -1,11 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { ModifierList, Node, NodeList, NodeVisitor } from "../ast/spine.js";
+import type { ModifierList, Node, NodeList } from "../ast/spine.js";
 import { Node_AsNode, Node_End, Node_Pos, Node_VisitEachChild, NodeList_End, NodeList_Pos } from "../ast/spine.js";
-import type { SourceFile, TokenNode } from "../ast/ast.js";
+import type { SourceFile } from "../ast/ast.js";
 import { Node_JSDoc, SourceFile_GetOrCreateToken } from "../ast/ast.js";
-import type { NodeVisitorHooks } from "../ast/visitor.js";
+import type { NodeVisitor, NodeVisitorHooks } from "../ast/visitor.js";
 import { NewNodeVisitor } from "../ast/visitor.js";
+import type { TokenNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindEndOfFile, KindIdentifier, KindJSDoc, KindJSDocSignature, KindJSDocText, KindJSDocTypeLiteral, KindLessThanLessThanToken } from "../ast/generated/kinds.js";
 import { NodeFlagsReparsed } from "../ast/generated/flags.js";

@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { Coalesce, Find, FirstResult, IfElse } from "../../core/core.js";
-import type { Node, NodeFactoryCoercible } from "../../ast/spine.js";
+import { Coalesce, Find, IfElse } from "../../core/core.js";
+import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
 import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
 import {
   KindArrayBindingPattern,
@@ -156,6 +156,7 @@ import { constantExpression } from "./utilities.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"60ac09ddc0df66acaac125944f07657585e16fe81b3e057942787c81d8c958b6","bodyHash":"f6da722d67500e59af9792d655cb93c0162bf9294c6412407cbdc162733836ae"}
@@ -1012,8 +1013,8 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
 
-  let statementsLocation: TextRange = { Pos: 0, End: 0 };
-  let blockLocation: TextRange = { Pos: 0, End: 0 };
+  let statementsLocation: TextRange = { pos: 0, end: 0 };
+  let blockLocation: TextRange = { pos: 0, end: 0 };
 
   if (node!.Body !== undefined) {
     if (node!.Body!.Kind === KindModuleBlock) {
@@ -1073,7 +1074,7 @@ export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: 
   if (!RuntimeSyntaxTransformer_isExportOfNamespace(receiver, nodeAsNode)) {
     //  export var ${name} = ${moduleReference};
     //  var ${name} = ${moduleReference};
-    const varDecl = NewVariableDeclaration(astFactory, node!.Name, undefined /*exclamationToken*/, undefined /*type*/, moduleReference);
+    const varDecl = NewVariableDeclaration(astFactory, node!.name, undefined /*exclamationToken*/, undefined /*type*/, moduleReference);
     EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varDecl, nodeAsNode);
     const varList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, [varDecl]), NodeFlagsNone);
     const varModifiers = ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(nodeAsNode), ModifierFlagsExport);
@@ -1083,7 +1084,7 @@ export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: 
     return varStatement;
   } else {
     // exports.${name} = ${moduleReference};
-    const statement = RuntimeSyntaxTransformer_createExportStatement(receiver, node!.Name as unknown as GoPtr<IdentifierNode>, moduleReference, nodeAsNode!.Loc, nodeAsNode!.Loc, nodeAsNode);
+    const statement = RuntimeSyntaxTransformer_createExportStatement(receiver, node!.name as unknown as GoPtr<IdentifierNode>, moduleReference, nodeAsNode!.Loc, nodeAsNode!.Loc, nodeAsNode);
     statement!.Loc = nodeAsNode!.Loc;
     return statement;
   }
@@ -1180,7 +1181,7 @@ export function RuntimeSyntaxTransformer_visitFunctionDeclaration(receiver: GoPt
     const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
     const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
     const updated = NodeFactory_UpdateFunctionDeclaration(
-      factory,
+      factory.__tsgoEmbedded0!,
       node,
       NodeVisitor_VisitModifiers(visitor, ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExport)),
       node!.AsteriskToken,
@@ -1231,7 +1232,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
   const astFactory = factory.__tsgoEmbedded0!;
 
-  let modifiers: GoPtr<NodeList>;
+  let modifiers: GoPtr<ModifierList>;
   if (exported) {
     modifiers = NodeVisitor_VisitModifiers(visitor, ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExportDefault));
   } else {
@@ -1239,7 +1240,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
   }
 
   let name = NodeVisitor_VisitNode(visitor, node!.name) as unknown as GoPtr<IdentifierNode>;
-  if (name === undefined && (exported || ChildIsDecorated(receiver!.compilerOptions!.ExperimentalDecorators!.IsTrue(), Node_AsNode(node), undefined))) {
+  if (name === undefined && (exported || ChildIsDecorated(Tristate_IsTrue(receiver!.compilerOptions!.ExperimentalDecorators!), Node_AsNode(node), undefined))) {
     name = NodeFactory_NewGeneratedNameForNode(factory, Node_AsNode(node));
   }
   const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
@@ -1269,7 +1270,7 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
     }
   }
 
-  const updated = NodeFactory_UpdateClassDeclaration(factory, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
+  const updated = NodeFactory_UpdateClassDeclaration(factory.__tsgoEmbedded0!, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
   if (exported) {
     const export_ = RuntimeSyntaxTransformer_createExportStatementForDeclaration(receiver, Node_AsNode(node) as unknown as GoPtr<Declaration>);
     if (export_ !== undefined) {
@@ -1321,7 +1322,7 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
     }
   }
 
-  return NodeFactory_UpdateClassExpression(factory, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
+  return NodeFactory_UpdateClassExpression(factory.__tsgoEmbedded0!, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
 }
 
 /**
@@ -1338,7 +1339,7 @@ export function RuntimeSyntaxTransformer_visitConstructorDeclaration(receiver: G
   const modifiers = NodeVisitor_VisitModifiers(visitor, Node_Modifiers(Node_AsNode(node)));
   const parameters = EmitContext_VisitParameters(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_ParameterList(Node_AsNode(node)), visitor as unknown as GoPtr<ConcreteNodeVisitor>);
   const body = RuntimeSyntaxTransformer_visitConstructorBody(receiver, AsBlock(node!.Body), Node_AsNode(node));
-  return NodeFactory_UpdateConstructorDeclaration(factory, node, modifiers, undefined /*typeParameters*/, parameters, undefined /*returnType*/, undefined /*fullSignature*/, body);
+  return NodeFactory_UpdateConstructorDeclaration(factory.__tsgoEmbedded0!, node, modifiers, undefined /*typeParameters*/, parameters, undefined /*returnType*/, undefined /*fullSignature*/, body);
 }
 
 /**
@@ -1405,7 +1406,8 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
     statements = [...statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments)];
   } else {
     statements = [...statements, ...parameterPropertyAssignments];
-    statements = [...statements, ...FirstResult(NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest))];
+    const [visitedRest] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest);
+    statements = [...statements, ...visitedRest as GoSlice<GoPtr<Statement>>];
   }
 
   statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
@@ -1430,7 +1432,7 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
  */
 export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
   let statementsOut: GoSlice<GoPtr<Statement>> = [];
-  const superStatementIndex = superPath[0];
+  const superStatementIndex = superPath[0]!;
   const superStatement = statementsIn[superStatementIndex];
 
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
@@ -1438,7 +1440,8 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
   const astFactory = factory.__tsgoEmbedded0!;
 
   // visit up to the statement containing `super`
-  statementsOut = [...statementsOut, ...FirstResult(NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>))];
+  const [visitedBefore] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>);
+  statementsOut = [...statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>];
 
   // if the statement containing `super` is a `try` statement, transform the body of the `try` block
   if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
@@ -1467,9 +1470,9 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
     statementsOut = [
       ...statementsOut,
       NodeFactory_UpdateTryStatement(
-        factory,
+        factory.__tsgoEmbedded0!,
         tryStatement,
-        NodeFactory_UpdateBlock(factory, tryBlock, tryBlockStatementList, tryBlock!.MultiLine!),
+        NodeFactory_UpdateBlock(factory.__tsgoEmbedded0!, tryBlock, tryBlockStatementList, tryBlock!.MultiLine!),
         NodeVisitor_VisitNode(visitor, tryStatement!.CatchClause),
         NodeVisitor_VisitNode(visitor, tryStatement!.FinallyBlock),
       ) as unknown as GoPtr<Statement>,
@@ -1479,14 +1482,16 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
     RuntimeSyntaxTransformer_popNode(receiver, grandparentOfTryStatement);
   } else {
     // visit the statement containing `super`
-    statementsOut = [...statementsOut, ...FirstResult(NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>))];
+    const [visitedSuper] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
+    statementsOut = [...statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>];
 
     // insert the initializer statements
     statementsOut = [...statementsOut, ...initializerStatements];
   }
 
   // visit the statements after `super`
-  statementsOut = [...statementsOut, ...FirstResult(NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>))];
+  const [visitedAfter] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
+  statementsOut = [...statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>];
   return statementsOut;
 }
 
@@ -1528,7 +1533,7 @@ export function RuntimeSyntaxTransformer_visitShorthandPropertyAssignment(receiv
     return updated;
   }
   return NodeFactory_UpdateShorthandPropertyAssignment(
-    factory,
+    factory.__tsgoEmbedded0!,
     node,
     undefined /*modifiers*/,
     exportedOrImportedName as unknown as GoPtr<IdentifierNode>,
