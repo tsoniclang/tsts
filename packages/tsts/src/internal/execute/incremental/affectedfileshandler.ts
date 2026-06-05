@@ -419,7 +419,7 @@ export function affectedFilesHandler_forEachFileReferencedBy(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"a5c0e8df65875fc9df4b7b89abfc1b81628a2baafeecdbf120e79761625ea059","bodyHash":"83361289b5d5a1794c003fa4caa4ee55a497ac4b5b5035b3fb743ddf699fbf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::method::affectedFilesHandler.handleDtsMayChangeOfAffectedFile","kind":"method","status":"implemented","sigHash":"a5c0e8df65875fc9df4b7b89abfc1b81628a2baafeecdbf120e79761625ea059","bodyHash":"83361289b5d5a1794c003fa4cae94fee55a497ac4b5b5035b3fb743ddf699fbf"}
  *
  * Go source:
  * func (h *affectedFilesHandler) handleDtsMayChangeOfAffectedFile(dtsMayChange dtsMayChange, affectedFile *ast.SourceFile) {
