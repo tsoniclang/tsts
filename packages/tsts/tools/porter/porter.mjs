@@ -20,6 +20,7 @@ import {
 
 export const repoRoot = findRepoRoot(process.cwd());
 export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
+export const activePortCategories = new Set(["literal-port", "manual-required", "host-native"]);
 
 export function main() {
   const [command = "status", ...args] = process.argv.slice(2);
@@ -350,6 +351,7 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
+    missingModules: countsByModule(missing),
     featureCounts,
     duplicateGoIDs,
     duplicateTsIDs,
@@ -892,8 +894,9 @@ function parseGeneratedArtifactMetadata(text) {
 export function scaffoldMissing(config, status, snapshot, options) {
   assertLargeFileSplitPlanClean(status);
   const write = options.write === true;
-  const limit = options.limit === undefined ? 25 : Number(options.limit);
-  if (!Number.isInteger(limit) || limit < 0) {
+  const scaffoldAll = options.all === true;
+  const limit = scaffoldAll ? undefined : options.limit === undefined ? 25 : Number(options.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) {
     fail("--limit must be a non-negative integer");
   }
 
@@ -904,7 +907,9 @@ export function scaffoldMissing(config, status, snapshot, options) {
   if (options.kind) {
     candidates = candidates.filter((row) => row.kind === options.kind);
   }
-  candidates = candidates.slice(0, limit);
+  if (!scaffoldAll) {
+    candidates = candidates.slice(0, limit);
+  }
   if (candidates.length === 0) {
     console.log("No missing units matched scaffold filters.");
     return;
@@ -955,6 +960,27 @@ export function scaffoldMissing(config, status, snapshot, options) {
 
   if (!write) {
     console.log("Dry run only. Re-run with --write to create scaffold files.");
+    if (!scaffoldAll) {
+      console.log("Use --all to include every matching active missing unit.");
+    }
+    return;
+  }
+
+  if (scaffoldAll) {
+    const afterStatus = buildStatus(
+      config,
+      snapshot,
+      scanTsUnits(resolveRepo(config.tsRoot)),
+      buildGeneratedArtifactStatus(config, snapshot),
+      buildAstGeneratedArtifactStatus(config, snapshot.gitRevision),
+      buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision),
+    );
+    writeJson(resolveRepo(config.statusOut), afterStatus);
+    writeText(resolveRepo(config.reportOut), renderStatusMarkdown(afterStatus));
+    if (afterStatus.counts.missing > 0) {
+      fail(`scaffold --all left ${afterStatus.counts.missing} active missing Go unit(s); inspect ${config.reportOut}`);
+    }
+    console.log("scaffold --all complete: active missing Go units = 0");
   }
 }
 
@@ -2236,7 +2262,7 @@ export function policyFor(config, rel, generated) {
 }
 
 export function isActivePortPolicy(policy) {
-  return policy.active !== false && policy.category !== "out-of-scope";
+  return policy.active !== false && activePortCategories.has(policy.category);
 }
 
 export function tsFilePolicyFor(config, rel) {
@@ -2367,7 +2393,7 @@ export function renderStatusMarkdown(status) {
   lines.push("");
   lines.push("| Module | Units |");
   lines.push("|---|---:|");
-  for (const [name, count] of Object.entries(status.modules).sort((a, b) => b[1] - a[1]).slice(0, 30)) {
+  for (const [name, count] of Object.entries(status.missingModules ?? countsByModule(status.rows.filter((row) => row.status === "missing"))).sort((a, b) => b[1] - a[1]).slice(0, 30)) {
     lines.push(`| ${name} | ${count} |`);
   }
   lines.push("");
@@ -2559,6 +2585,14 @@ export function matchGlob(pattern, value) {
 
 export function increment(map, key) {
   map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+export function countsByModule(rows) {
+  const counts = new Map();
+  for (const row of rows) {
+    increment(counts, moduleNameFor(row.goPath));
+  }
+  return Object.fromEntries([...counts.entries()].sort());
 }
 
 export function hashText(text) {

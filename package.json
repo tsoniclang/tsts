@@ -16,6 +16,7 @@
     "porter:status": "node packages/tsts/tools/porter/porter.mjs status",
     "porter:verify": "node packages/tsts/tools/porter/porter.mjs verify --strict-port",
     "porter:scaffold": "node packages/tsts/tools/porter/porter.mjs scaffold",
+    "porter:scaffold-all": "node packages/tsts/tools/porter/porter.mjs scaffold --all --write --append",
     "porter:facades": "node packages/tsts/tools/porter/porter.mjs facades",
     "porter:large-files": "node packages/tsts/tools/porter/porter.mjs large-files",
     "porter:ast": "node packages/tsts/tools/porter/porter.mjs ast",
