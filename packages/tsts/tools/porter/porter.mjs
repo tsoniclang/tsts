@@ -11,6 +11,12 @@ import {
   emptyAstGeneratedArtifactStatus,
   writeAstGenerated,
 } from "./ast-generator.mjs";
+import {
+  buildDiagnosticsGeneratedArtifactStatus,
+  collectDiagnosticsArtifactFailures,
+  emptyDiagnosticsGeneratedArtifactStatus,
+  writeDiagnosticsGenerated,
+} from "./diagnostics-generator.mjs";
 
 export const repoRoot = findRepoRoot(process.cwd());
 export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
@@ -85,12 +91,33 @@ export function main() {
     return;
   }
 
+  if (command === "diagnostics") {
+    const snapshot = runScan(config);
+    const sourceRevision = snapshot.gitRevision;
+    if (options.write === true) {
+      const results = writeDiagnosticsGenerated(config, sourceRevision, { force: options.force === true });
+      for (const result of results) {
+        console.log(`${result.outcome}: ${result.path}`);
+      }
+      return;
+    }
+    // Default: check mode (no write flag provided).
+    const diagnosticsStatus = buildDiagnosticsGeneratedArtifactStatus(config, sourceRevision);
+    const failures = collectDiagnosticsArtifactFailures(diagnosticsStatus);
+    if (failures.length > 0) {
+      fail(`diagnostics generated artifact check failed: ${failures.join(", ")}`);
+    }
+    console.log("diagnostics generated artifact check passed");
+    return;
+  }
+
   if (command === "status" || command === "verify" || command === "scaffold" || command === "skeleton-check") {
     const snapshot = runScan(config);
     const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
     const generatedArtifacts = buildGeneratedArtifactStatus(config, snapshot);
     const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts);
+    const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);
     writeText(resolveRepo(config.reportOut), renderStatusMarkdown(status));
@@ -111,7 +138,7 @@ export function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, large-files, ast, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
 }
 
 export function runScan(config) {
@@ -138,7 +165,7 @@ export function runScan(config) {
   }
 }
 
-export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = emptyGeneratedArtifactStatus(), astGeneratedArtifacts = emptyAstGeneratedArtifactStatus()) {
+export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = emptyGeneratedArtifactStatus(), astGeneratedArtifacts = emptyAstGeneratedArtifactStatus(), diagnosticsGeneratedArtifacts = emptyDiagnosticsGeneratedArtifactStatus()) {
   const primaryKinds = new Set(config.primaryUnitKinds);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
   const goUnits = [];
@@ -314,6 +341,11 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
       orphanAstArtifacts: astGeneratedArtifacts.orphan.length,
       untrackedAstArtifacts: astGeneratedArtifacts.untracked.length,
       invalidAstArtifacts: astGeneratedArtifacts.invalid.length,
+      missingDiagnosticsArtifacts: diagnosticsGeneratedArtifacts.missing.length,
+      staleDiagnosticsArtifacts: diagnosticsGeneratedArtifacts.stale.length,
+      orphanDiagnosticsArtifacts: diagnosticsGeneratedArtifacts.orphan.length,
+      untrackedDiagnosticsArtifacts: diagnosticsGeneratedArtifacts.untracked.length,
+      invalidDiagnosticsArtifacts: diagnosticsGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
@@ -328,6 +360,7 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
     forbiddenTsFiles,
     generatedArtifacts,
     astGeneratedArtifacts,
+    diagnosticsGeneratedArtifacts,
     largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
@@ -2235,6 +2268,7 @@ export function collectVerifyFailures(status, options) {
   if (status.counts.stale > 0) failures.push(`${status.counts.stale} stale TS units`);
   failures.push(...collectGeneratedArtifactFailures(status.generatedArtifacts ?? emptyGeneratedArtifactStatus()));
   failures.push(...collectAstArtifactFailures(status.astGeneratedArtifacts ?? emptyAstGeneratedArtifactStatus()));
+  failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   return failures;
 }
@@ -2279,6 +2313,7 @@ export function printStatus(config, status) {
   console.log(`Untracked TS files: ${status.counts.untrackedTsFiles}`);
   console.log(`Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
   console.log(`AST generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingAstArtifacts}/${status.counts.staleAstArtifacts}/${status.counts.orphanAstArtifacts}/${status.counts.untrackedAstArtifacts}/${status.counts.invalidAstArtifacts}`);
+  console.log(`Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -2306,6 +2341,8 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Forbidden TS files: ${status.counts.forbiddenTsFiles}`);
   lines.push(`- Untracked TS files: ${status.counts.untrackedTsFiles}`);
   lines.push(`- Generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingGeneratedArtifacts}/${status.counts.staleGeneratedArtifacts}/${status.counts.orphanGeneratedArtifacts}/${status.counts.untrackedGeneratedArtifacts}/${status.counts.invalidGeneratedArtifacts}`);
+  lines.push(`- AST generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingAstArtifacts}/${status.counts.staleAstArtifacts}/${status.counts.orphanAstArtifacts}/${status.counts.untrackedAstArtifacts}/${status.counts.invalidAstArtifacts}`);
+  lines.push(`- Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -2414,6 +2451,29 @@ export function renderStatusMarkdown(status) {
       lines.push(`| untracked | ${artifact.path} | ${artifact.reason} |`);
     }
     for (const artifact of status.generatedArtifacts.invalid.slice(0, 100)) {
+      lines.push(`| invalid | ${artifact.path} | ${artifact.reason} |`);
+    }
+  }
+  const diagnosticsArtifacts = status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus();
+  if (collectDiagnosticsArtifactFailures(diagnosticsArtifacts).length > 0) {
+    lines.push("");
+    lines.push("### Diagnostics Generated Artifact Defects");
+    lines.push("");
+    lines.push("| Status | Path | Reason |");
+    lines.push("|---|---|---|");
+    for (const artifact of diagnosticsArtifacts.missing.slice(0, 100)) {
+      lines.push(`| missing | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of diagnosticsArtifacts.stale.slice(0, 100)) {
+      lines.push(`| stale | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of diagnosticsArtifacts.orphan.slice(0, 100)) {
+      lines.push(`| orphan | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of diagnosticsArtifacts.untracked.slice(0, 100)) {
+      lines.push(`| untracked | ${artifact.path} | ${artifact.reason} |`);
+    }
+    for (const artifact of diagnosticsArtifacts.invalid.slice(0, 100)) {
       lines.push(`| invalid | ${artifact.path} | ${artifact.reason} |`);
     }
   }
