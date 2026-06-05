@@ -252,6 +252,8 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
 
     row.tsPath = tsUnit.path;
     row.tsStatus = tsUnit.status;
+    row.hasUnimplThrow = tsUnit.hasUnimplThrow ?? false;
+    row.kind = tsUnit.kind;
     const sigMatches = !tsUnit.sigHash || tsUnit.sigHash === unit.sigHash;
     const bodyMatches = !tsUnit.bodyHash || tsUnit.bodyHash === unit.bodyHash;
     if (!sigMatches || !bodyMatches) {
@@ -395,6 +397,14 @@ export function scanTsUnits(root) {
           path: path.relative(repoRoot, file).split(path.sep).join("/"),
           metadata,
         });
+        // Check if the next TS export throws TSGO_UNIMPLEMENTED.
+        // TSGO_UNIMPLEMENTED never appears in Go source, so scanning the whole region
+        // between this @tsgo-unit block and the next export declaration is safe.
+        const afterPos = regex.lastIndex;
+        const nextUnitMatch = text.indexOf('@tsgo-unit', afterPos);
+        const regionEnd = nextUnitMatch >= 0 ? nextUnitMatch : afterPos + 50000;
+        const region = text.slice(afterPos, regionEnd);
+        units[units.length - 1].hasUnimplThrow = region.includes('TSGO_UNIMPLEMENTED');
       } catch (error) {
         fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
       }
@@ -2296,6 +2306,18 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectAstArtifactFailures(status.astGeneratedArtifacts ?? emptyAstGeneratedArtifactStatus()));
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
+  if (strictPort) {
+    // Check implemented units don't throw TSGO_UNIMPLEMENTED
+    const implWithThrow = status.rows.filter(r => r.tsStatus === 'implemented' && r.hasUnimplThrow);
+    if (implWithThrow.length > 0) {
+      failures.push(`${implWithThrow.length} implemented units still throw TSGO_UNIMPLEMENTED: ${implWithThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
+    }
+    // Check func/method stubs throw TSGO_UNIMPLEMENTED
+    const stubsWithoutThrow = status.rows.filter(r => r.tsStatus === 'stub' && (r.kind === 'func' || r.kind === 'method') && r.hasUnimplThrow === false);
+    if (stubsWithoutThrow.length > 0) {
+      failures.push(`${stubsWithoutThrow.length} stub func/method units missing TSGO_UNIMPLEMENTED throw: ${stubsWithoutThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
+    }
+  }
   return failures;
 }
 

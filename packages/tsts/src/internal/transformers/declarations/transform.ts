@@ -159,14 +159,14 @@ export interface DeclarationTransformer {
   bindingNameVisitor: GoPtr<NodeVisitor>;
 }
 
-// TODO: implement visitBindingName (used by bindingNameVisitor)
+// unexported Go method — not tracked by porter
 export function DeclarationTransformer_visitBindingName(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new Error("TSGO_UNIMPLEMENTED: DeclarationTransformer_visitBindingName");
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.visitBindingName");
 }
 
-// TODO: implement transformCjsRequireVariableDeclaration
+// unexported Go method — not tracked by porter
 export function DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
-  throw new Error("TSGO_UNIMPLEMENTED: DeclarationTransformer_transformCjsRequireVariableDeclaration");
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.transformCjsRequireVariableDeclaration");
 }
 
 /**

@@ -243,7 +243,7 @@ export interface InferenceState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferenceState","kind":"method","status":"stub","sigHash":"6407cb38ab889d67e0934e6676a2d483e56861fbdb8d46093f81e0ca715afee9","bodyHash":"67db8a99b788bafa7fdd07f8e4f08aa69d13baf1d69fa8d121e1f0de0ef75831"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferenceState","kind":"method","status":"implemented","sigHash":"6407cb38ab889d67e0934e6676a2d483e56861fbdb8d46093f81e0ca715afee9","bodyHash":"67db8a99b788bafa7fdd07f8e4f08aa69d13baf1d69fa8d121e1f0de0ef75831"}
  *
  * Go source:
  * func (c *Checker) getInferenceState() *InferenceState {
@@ -277,7 +277,7 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.putInferenceState","kind":"method","status":"stub","sigHash":"cc538de524ce9cd90b84b0cd36d0e76d877fee1436f6f4b733ff1719ea01d4b0","bodyHash":"a0cb92ed78e51902eac8b7232ad54e93e91dcd447934f0abec4564f6631b17ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.putInferenceState","kind":"method","status":"implemented","sigHash":"cc538de524ce9cd90b84b0cd36d0e76d877fee1436f6f4b733ff1719ea01d4b0","bodyHash":"a0cb92ed78e51902eac8b7232ad54e93e91dcd447934f0abec4564f6631b17ae"}
  *
  * Go source:
  * func (c *Checker) putInferenceState(n *InferenceState) {
@@ -317,7 +317,7 @@ export function Checker_putInferenceState(receiver: GoPtr<Checker>, n: GoPtr<Inf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypes","kind":"method","status":"stub","sigHash":"97566b5023a13225d04eb7cf9b31664d14770ad75c0ac952660dd453378eb545","bodyHash":"719c5a498adf1e0bbf1a484e07321c045b7cc5d60ddf5f9d36923b4ab2e74e5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypes","kind":"method","status":"implemented","sigHash":"97566b5023a13225d04eb7cf9b31664d14770ad75c0ac952660dd453378eb545","bodyHash":"719c5a498adf1e0bbf1a484e07321c045b7cc5d60ddf5f9d36923b4ab2e74e5b"}
  *
  * Go source:
  * func (c *Checker) inferTypes(inferences []*InferenceInfo, originalSource *Type, originalTarget *Type, priority InferencePriority, contravariant bool) {
@@ -567,7 +567,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypeArguments","kind":"method","status":"stub","sigHash":"dff4bdcf801faef2dda4e9808b8d6fe086f69c941d89e059f4ccb90757928fd4","bodyHash":"c961a65625a058c070585881fc7fffcddce644d88241d02d363b69690430e683"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypeArguments","kind":"method","status":"implemented","sigHash":"dff4bdcf801faef2dda4e9808b8d6fe086f69c941d89e059f4ccb90757928fd4","bodyHash":"c961a65625a058c070585881fc7fffcddce644d88241d02d363b69690430e683"}
  *
  * Go source:
  * func (c *Checker) inferFromTypeArguments(n *InferenceState, sourceTypes []*Type, targetTypes []*Type, variances []VarianceFlags) {
@@ -593,7 +593,7 @@ export function Checker_inferFromTypeArguments(receiver: GoPtr<Checker>, n: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferWithPriority","kind":"method","status":"stub","sigHash":"9acdd5a6bced9ade683d5fb99750cf8837c4d9410e19d870e111440e7d2466ab","bodyHash":"79c8f38e499130c3d6895a502ff2d6eddbc40b027cc0176f213b11d6328b7ca2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferWithPriority","kind":"method","status":"implemented","sigHash":"9acdd5a6bced9ade683d5fb99750cf8837c4d9410e19d870e111440e7d2466ab","bodyHash":"79c8f38e499130c3d6895a502ff2d6eddbc40b027cc0176f213b11d6328b7ca2"}
  *
  * Go source:
  * func (c *Checker) inferWithPriority(n *InferenceState, source *Type, target *Type, newPriority InferencePriority) {
@@ -613,7 +613,7 @@ export function Checker_inferWithPriority(receiver: GoPtr<Checker>, n: GoPtr<Inf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypesWithPriority","kind":"method","status":"stub","sigHash":"ffd2e583802dccec17448b231fe60d968092b103f602556d1b62d0b76db685ce","bodyHash":"2e6a436acd295ef002f9333467fb83546270043c8505cc9646e0a870eefb98df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypesWithPriority","kind":"method","status":"implemented","sigHash":"ffd2e583802dccec17448b231fe60d968092b103f602556d1b62d0b76db685ce","bodyHash":"2e6a436acd295ef002f9333467fb83546270043c8505cc9646e0a870eefb98df"}
  *
  * Go source:
  * func (c *Checker) inferFromContravariantTypesWithPriority(n *InferenceState, source *Type, target *Type, newPriority InferencePriority) {
@@ -633,7 +633,7 @@ export function Checker_inferFromContravariantTypesWithPriority(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypes","kind":"method","status":"stub","sigHash":"8cd7bb0ae8105a6e08152617f32900eec796586ecd0298c728a40047aba3eff2","bodyHash":"c41287df66bd7ee6906d13e4ff8cd892bb10c8d568854cc97850ec24c7174de8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypes","kind":"method","status":"implemented","sigHash":"8cd7bb0ae8105a6e08152617f32900eec796586ecd0298c728a40047aba3eff2","bodyHash":"c41287df66bd7ee6906d13e4ff8cd892bb10c8d568854cc97850ec24c7174de8"}
  *
  * Go source:
  * func (c *Checker) inferFromContravariantTypes(n *InferenceState, source *Type, target *Type) {
@@ -651,7 +651,7 @@ export function Checker_inferFromContravariantTypes(receiver: GoPtr<Checker>, n:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypesIfStrictFunctionTypes","kind":"method","status":"stub","sigHash":"c2a8ea0ff382557c1b28a20b2d2f736b8dc1f5f4d77206006a0b341fbaa3078e","bodyHash":"472294ff8f831ff9a2cad076dceb9804f2fffb4274ed3be9692653b4d83f7172"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromContravariantTypesIfStrictFunctionTypes","kind":"method","status":"implemented","sigHash":"c2a8ea0ff382557c1b28a20b2d2f736b8dc1f5f4d77206006a0b341fbaa3078e","bodyHash":"472294ff8f831ff9a2cad076dceb9804f2fffb4274ed3be9692653b4d83f7172"}
  *
  * Go source:
  * func (c *Checker) inferFromContravariantTypesIfStrictFunctionTypes(n *InferenceState, source *Type, target *Type) {
@@ -716,7 +716,7 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromMatchingTypes","kind":"method","status":"stub","sigHash":"4b3b643b206027112f0ce26f2176180c75b45db15ff0bf9e0e68a863bddcdae5","bodyHash":"938b7a6d74806782bbd84141b604fcdf30e4a16513090b85373a7bb198b3999a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromMatchingTypes","kind":"method","status":"implemented","sigHash":"4b3b643b206027112f0ce26f2176180c75b45db15ff0bf9e0e68a863bddcdae5","bodyHash":"938b7a6d74806782bbd84141b604fcdf30e4a16513090b85373a7bb198b3999a"}
  *
  * Go source:
  * func (c *Checker) inferFromMatchingTypes(n *InferenceState, sources []*Type, targets []*Type, matches func(c *Checker, s *Type, t *Type) bool) ([]*Type, []*Type) {
@@ -765,7 +765,7 @@ export function Checker_inferFromMatchingTypes(receiver: GoPtr<Checker>, n: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMultipleTypes","kind":"method","status":"stub","sigHash":"a605a043077d26b932102e01380cd6999551c28808603bdf7d2c93f30cadec3f","bodyHash":"8e95e7dcfcfd1d67082f0206a9d8bf483bb0515a8900264595f55d277c0509bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMultipleTypes","kind":"method","status":"implemented","sigHash":"a605a043077d26b932102e01380cd6999551c28808603bdf7d2c93f30cadec3f","bodyHash":"8e95e7dcfcfd1d67082f0206a9d8bf483bb0515a8900264595f55d277c0509bf"}
  *
  * Go source:
  * func (c *Checker) inferToMultipleTypes(n *InferenceState, source *Type, targets []*Type, targetFlags TypeFlags) {
@@ -929,7 +929,7 @@ export function Checker_inferToMultipleTypes(receiver: GoPtr<Checker>, n: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::getSingleTypeVariableFromIntersectionTypes","kind":"func","status":"stub","sigHash":"6f1efbb664994b58ff730e8a25eb4c9efb456b3483e9bf5c3f770eb72f614303","bodyHash":"9183b518d8ae566a1e602e640febd326ff52a4202761d8a06c1477dee22bd0ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::getSingleTypeVariableFromIntersectionTypes","kind":"func","status":"implemented","sigHash":"6f1efbb664994b58ff730e8a25eb4c9efb456b3483e9bf5c3f770eb72f614303","bodyHash":"9183b518d8ae566a1e602e640febd326ff52a4202761d8a06c1477dee22bd0ba"}
  *
  * Go source:
  * func getSingleTypeVariableFromIntersectionTypes(n *InferenceState, types []*Type) *Type {
@@ -963,7 +963,7 @@ export function getSingleTypeVariableFromIntersectionTypes(n: GoPtr<InferenceSta
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMultipleTypesWithPriority","kind":"method","status":"stub","sigHash":"a62d1a112056220d435ae3ec2adffcfd28d98bc1d2c16178c3ac38d285815b88","bodyHash":"b17a6706e892c417dfb35453cb29b80649203648b478d76bbff135ef5b7d0b16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMultipleTypesWithPriority","kind":"method","status":"implemented","sigHash":"a62d1a112056220d435ae3ec2adffcfd28d98bc1d2c16178c3ac38d285815b88","bodyHash":"b17a6706e892c417dfb35453cb29b80649203648b478d76bbff135ef5b7d0b16"}
  *
  * Go source:
  * func (c *Checker) inferToMultipleTypesWithPriority(n *InferenceState, source *Type, targets []*Type, targetFlags TypeFlags, newPriority InferencePriority) {
@@ -983,7 +983,7 @@ export function Checker_inferToMultipleTypesWithPriority(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToConditionalType","kind":"method","status":"stub","sigHash":"82e4f3b2fa0bee63ab2b79977b4dae6aac6f0980188573f8438c6fb28c7e017f","bodyHash":"c561597a06e40026ffc047d498b645ce2084cbd6602517a94384fced60acaf58"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToConditionalType","kind":"method","status":"implemented","sigHash":"82e4f3b2fa0bee63ab2b79977b4dae6aac6f0980188573f8438c6fb28c7e017f","bodyHash":"c561597a06e40026ffc047d498b645ce2084cbd6602517a94384fced60acaf58"}
  *
  * Go source:
  * func (c *Checker) inferToConditionalType(n *InferenceState, source *Type, target *Type) {
@@ -1142,7 +1142,7 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromGenericMappedTypes","kind":"method","status":"stub","sigHash":"12aaf432cac5e8522629d2aec7a9528e66435dc8b3ca1ab28346d754b4dcbe41","bodyHash":"8894855a8b2a3d9f7a6fed8af068cd6bb36dd20c1bd3e510f436ed68c922b50d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromGenericMappedTypes","kind":"method","status":"implemented","sigHash":"12aaf432cac5e8522629d2aec7a9528e66435dc8b3ca1ab28346d754b4dcbe41","bodyHash":"8894855a8b2a3d9f7a6fed8af068cd6bb36dd20c1bd3e510f436ed68c922b50d"}
  *
  * Go source:
  * func (c *Checker) inferFromGenericMappedTypes(n *InferenceState, source *Type, target *Type) {
@@ -1172,7 +1172,7 @@ export function Checker_inferFromGenericMappedTypes(receiver: GoPtr<Checker>, n:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromObjectTypes","kind":"method","status":"stub","sigHash":"1e786fae1ad85769b0d5d58d2cb17488d761e04646c1d0981fe6a197627c71b9","bodyHash":"924d4c576a4e6c0194a7c4a115db7aa9d08e69d3a19b0a901990105f11551254"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromObjectTypes","kind":"method","status":"implemented","sigHash":"1e786fae1ad85769b0d5d58d2cb17488d761e04646c1d0981fe6a197627c71b9","bodyHash":"924d4c576a4e6c0194a7c4a115db7aa9d08e69d3a19b0a901990105f11551254"}
  *
  * Go source:
  * func (c *Checker) inferFromObjectTypes(n *InferenceState, source *Type, target *Type) {
@@ -1448,7 +1448,7 @@ export function Checker_inferFromProperties(receiver: GoPtr<Checker>, n: GoPtr<I
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromSignatures","kind":"method","status":"stub","sigHash":"a20f8fb70c19dbbc96a64006d1c8f503399ec043c9ddf92838423965cbf252cf","bodyHash":"02cb903c4696d613e93c0a569fb4130aebf02cdebb8473b25f4145c8d55c2908"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromSignatures","kind":"method","status":"implemented","sigHash":"a20f8fb70c19dbbc96a64006d1c8f503399ec043c9ddf92838423965cbf252cf","bodyHash":"02cb903c4696d613e93c0a569fb4130aebf02cdebb8473b25f4145c8d55c2908"}
  *
  * Go source:
  * func (c *Checker) inferFromSignatures(n *InferenceState, source *Type, target *Type, kind SignatureKind) {
@@ -1484,7 +1484,7 @@ export function Checker_inferFromSignatures(receiver: GoPtr<Checker>, n: GoPtr<I
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromSignature","kind":"method","status":"stub","sigHash":"56289f13825c268270f6f10cfbb0db1e86cfa5ab46701a78bec0eafe2e9bd0f4","bodyHash":"6781147da576dcc2ba2781be4bde87f4195e1779f9d9114b67be148d5bc06151"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromSignature","kind":"method","status":"implemented","sigHash":"56289f13825c268270f6f10cfbb0db1e86cfa5ab46701a78bec0eafe2e9bd0f4","bodyHash":"6781147da576dcc2ba2781be4bde87f4195e1779f9d9114b67be148d5bc06151"}
  *
  * Go source:
  * func (c *Checker) inferFromSignature(n *InferenceState, source *Signature, target *Signature) {
@@ -1524,7 +1524,7 @@ export function Checker_inferFromSignature(receiver: GoPtr<Checker>, n: GoPtr<In
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.applyToParameterTypes","kind":"method","status":"stub","sigHash":"8385a93a11a9776e79aaa945d00ed1ca4318517b4e8733300d3904f1a545a3e6","bodyHash":"7ca0441ffa33e5bd0711b630175e605a49517c37065e4e926e304edd6cd70b85"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.applyToParameterTypes","kind":"method","status":"implemented","sigHash":"8385a93a11a9776e79aaa945d00ed1ca4318517b4e8733300d3904f1a545a3e6","bodyHash":"7ca0441ffa33e5bd0711b630175e605a49517c37065e4e926e304edd6cd70b85"}
  *
  * Go source:
  * func (c *Checker) applyToParameterTypes(source *Signature, target *Signature, callback func(s *Type, t *Type)) {
@@ -1579,7 +1579,7 @@ export function Checker_applyToParameterTypes(receiver: GoPtr<Checker>, source: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.applyToReturnTypes","kind":"method","status":"stub","sigHash":"48a4b32c69aeac3ce5dd050d578cdc56a06621c2657970fee4cba2ec0e4206e3","bodyHash":"b2fb7da0f13d0c291d9100b1846fb8568761abfc8e7f1985750e76ac64dccfe6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.applyToReturnTypes","kind":"method","status":"implemented","sigHash":"48a4b32c69aeac3ce5dd050d578cdc56a06621c2657970fee4cba2ec0e4206e3","bodyHash":"b2fb7da0f13d0c291d9100b1846fb8568761abfc8e7f1985750e76ac64dccfe6"}
  *
  * Go source:
  * func (c *Checker) applyToReturnTypes(source *Signature, target *Signature, callback func(s *Type, t *Type)) {
@@ -1659,7 +1659,7 @@ export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<I
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMappedType","kind":"method","status":"stub","sigHash":"9b12d4397c7351d05e2e7a3beb2e754ca63159a3625d1ef3a121f2c8bdf36157","bodyHash":"3c4be923713f05941f39278097d7aeae14d0d05f59c1f717cdab012ab9d8d632"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToMappedType","kind":"method","status":"implemented","sigHash":"9b12d4397c7351d05e2e7a3beb2e754ca63159a3625d1ef3a121f2c8bdf36157","bodyHash":"3c4be923713f05941f39278097d7aeae14d0d05f59c1f717cdab012ab9d8d632"}
  *
  * Go source:
  * func (c *Checker) inferToMappedType(n *InferenceState, source *Type, target *Type, constraintType *Type) bool {
@@ -1787,7 +1787,7 @@ export function Checker_inferTypeForHomomorphicMappedType(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createReverseMappedType","kind":"method","status":"stub","sigHash":"a0580ef08af3d9ff1ea7c7b3d1ed5b94b1ef4e684c51453f7f7f0cd98c9e8a69","bodyHash":"418bb1ce86751dcaaeb6303680730e04eb5e9c768775374307ec8b78adb537d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createReverseMappedType","kind":"method","status":"implemented","sigHash":"a0580ef08af3d9ff1ea7c7b3d1ed5b94b1ef4e684c51453f7f7f0cd98c9e8a69","bodyHash":"418bb1ce86751dcaaeb6303680730e04eb5e9c768775374307ec8b78adb537d5"}
  *
  * Go source:
  * func (c *Checker) createReverseMappedType(source *Type, target *Type, constraint *Type) *Type {
@@ -1876,7 +1876,7 @@ export function Checker_createReverseMappedType(receiver: GoPtr<Checker>, source
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isPartiallyInferableType","kind":"method","status":"stub","sigHash":"c4fd384722e021dce38629d9dadddae8bdf77b647f098384118f5703dabceb14","bodyHash":"6e6bb84cd378a1fc409e3bb3f3b4c20aa2da44a53dadf6126275be9e7bb86775"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isPartiallyInferableType","kind":"method","status":"implemented","sigHash":"c4fd384722e021dce38629d9dadddae8bdf77b647f098384118f5703dabceb14","bodyHash":"6e6bb84cd378a1fc409e3bb3f3b4c20aa2da44a53dadf6126275be9e7bb86775"}
  *
  * Go source:
  * func (c *Checker) isPartiallyInferableType(t *Type) bool {
@@ -1930,7 +1930,7 @@ export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferReverseMappedTypeWorker","kind":"method","status":"stub","sigHash":"d45d698a71ee18179b9b2f4b88808da8970936efd60c35c39c38b69f7aed8fcb","bodyHash":"c54055f4d81c3b99b0c821901bfdb8888bc43e900b8923f0593a6857f1059e7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferReverseMappedTypeWorker","kind":"method","status":"implemented","sigHash":"d45d698a71ee18179b9b2f4b88808da8970936efd60c35c39c38b69f7aed8fcb","bodyHash":"c54055f4d81c3b99b0c821901bfdb8888bc43e900b8923f0593a6857f1059e7e"}
  *
  * Go source:
  * func (c *Checker) inferReverseMappedTypeWorker(source *Type, target *Type, constraint *Type) *Type {
@@ -2022,7 +2022,7 @@ export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getLimitedConstraint","kind":"method","status":"stub","sigHash":"b9bbc2bc1efe51336c54da327bbdb22edac82102f8b544960e5dab5a8a8baee3","bodyHash":"ef258f9e2d4872e5b01523ca0c1401e100b2921407e97926c0b5d89f444df8f6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getLimitedConstraint","kind":"method","status":"implemented","sigHash":"b9bbc2bc1efe51336c54da327bbdb22edac82102f8b544960e5dab5a8a8baee3","bodyHash":"ef258f9e2d4872e5b01523ca0c1401e100b2921407e97926c0b5d89f444df8f6"}
  *
  * Go source:
  * func (c *Checker) getLimitedConstraint(t *Type) *Type {

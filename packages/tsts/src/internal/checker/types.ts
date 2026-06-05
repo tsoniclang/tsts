@@ -1162,7 +1162,7 @@ export const typeFlagNames: GoArray<{ flag: TypeFlags; name: string }, "..."> = 
 ] as GoArray<{ flag: TypeFlags; name: string }, "...">;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::func::FormatTypeFlags","kind":"func","status":"stub","sigHash":"e927368847a2a91161816e5cb84351d111911678d373a466bf7d6ec7e8f3fd10","bodyHash":"ef37e91a659a9939e009b4ace805de296079a2d2c5f7c3b0e2b23676166193f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::func::FormatTypeFlags","kind":"func","status":"implemented","sigHash":"e927368847a2a91161816e5cb84351d111911678d373a466bf7d6ec7e8f3fd10","bodyHash":"ef37e91a659a9939e009b4ace805de296079a2d2c5f7c3b0e2b23676166193f7"}
  *
  * Go source:
  * func FormatTypeFlags(flags TypeFlags) []string {
@@ -1189,7 +1189,7 @@ export function FormatTypeFlags(flags: TypeFlags): GoSlice<string> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeFlags.String","kind":"method","status":"stub","sigHash":"bbcbeb6f8b572483c758dc290ce29cfd71f395d4a907202d81930ac6022a8067","bodyHash":"7d19bbb614040e07cf804b9cd284c18c2eb4196bd1d24d64fb2b13098acb4747"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeFlags.String","kind":"method","status":"implemented","sigHash":"bbcbeb6f8b572483c758dc290ce29cfd71f395d4a907202d81930ac6022a8067","bodyHash":"7d19bbb614040e07cf804b9cd284c18c2eb4196bd1d24d64fb2b13098acb4747"}
  *
  * Go source:
  * func (f TypeFlags) String() string {
@@ -1201,7 +1201,7 @@ export function TypeFlags_String(receiver: TypeFlags): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::VarianceFlags.String","kind":"method","status":"stub","sigHash":"e53e39f56ea8e176a06f7994240619336fad8cffd42180c7b5aa28d05dd9c6b5","bodyHash":"f6154e056605de3f3d2bfd2ca5bb61e6da854bb0ce58be909eeb1c0cae74b673"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::VarianceFlags.String","kind":"method","status":"implemented","sigHash":"e53e39f56ea8e176a06f7994240619336fad8cffd42180c7b5aa28d05dd9c6b5","bodyHash":"f6154e056605de3f3d2bfd2ca5bb61e6da854bb0ce58be909eeb1c0cae74b673"}
  *
  * Go source:
  * func (v VarianceFlags) String() string {
@@ -1393,7 +1393,7 @@ export interface TypeAlias {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeAlias.Symbol","kind":"method","status":"stub","sigHash":"03f2c0317d6c373b2319092b7b3526584d13575c973317de60d5bb22acac6ff1","bodyHash":"94dac0d2bf5f1b870af1f8c25b4ced582af4e6d6a5595868c3ecd34527672fc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeAlias.Symbol","kind":"method","status":"implemented","sigHash":"03f2c0317d6c373b2319092b7b3526584d13575c973317de60d5bb22acac6ff1","bodyHash":"94dac0d2bf5f1b870af1f8c25b4ced582af4e6d6a5595868c3ecd34527672fc5"}
  *
  * Go source:
  * func (a *TypeAlias) Symbol() *ast.Symbol {
@@ -1411,7 +1411,7 @@ export function TypeAlias_Symbol(receiver: GoPtr<TypeAlias>): GoPtr<Symbol_62f2f
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeAlias.TypeArguments","kind":"method","status":"stub","sigHash":"d9ec20c58e98fbec383d651b650d376b181246db0cfb567dd34d2a72b1e0566b","bodyHash":"5938a33d1e200988652a121e1bdf681648d7d01f570821a3eb6e6dcc28e33afa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::method::TypeAlias.TypeArguments","kind":"method","status":"implemented","sigHash":"d9ec20c58e98fbec383d651b650d376b181246db0cfb567dd34d2a72b1e0566b","bodyHash":"5938a33d1e200988652a121e1bdf681648d7d01f570821a3eb6e6dcc28e33afa"}
  *
  * Go source:
  * func (a *TypeAlias) TypeArguments() []*Type {
