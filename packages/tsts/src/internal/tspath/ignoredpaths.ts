@@ -12,7 +12,7 @@ import * as strings from "../../go/strings.js";
  * 	".#",
  * }
  */
-export let ignoredPaths: GoSlice<string> = ["/node_modules/.", "/.git", ".#"];
+export const ignoredPaths: GoSlice<string> = ["/node_modules/.", "/.git", ".#"];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tspath/ignoredpaths.go::func::ContainsIgnoredPath","kind":"func","status":"implemented","sigHash":"0ab7ac9a02a1bf077778f62fc167cb887d2b5bb911c5896f0b12b231c7a449fa","bodyHash":"23db57a167eec4cf40c8b75c6af67bfa9e7db3ceb9e20b5b7ee9869c878d150c"}

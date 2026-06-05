@@ -192,7 +192,7 @@ export interface ioFS {
  * Go source:
  * var _ FsWithSys = (*ioFS)(nil)
  */
-export let __90decee0_0: FsWithSys = undefined as never;
+export const __90decee0_0: FsWithSys = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.UseCaseSensitiveFileNames","kind":"method","status":"stub","sigHash":"81df6f6759fef0aa41afeeb986d4e25141847b8799dd8ed704195a2bb8c42839","bodyHash":"536622fb3cbb19cad130e8b6234afc2739624b6069af48f202c0e5f9fc334446"}

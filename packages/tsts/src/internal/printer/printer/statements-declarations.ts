@@ -1367,18 +1367,19 @@ export function Printer_emitModuleDeclaration(receiver: GoPtr<Printer>, node: Go
     Printer_writeSpace(receiver);
   }
   Printer_emitModuleName(receiver, Node_Name(node));
-  let body = node!.Body;
-  while (body !== undefined && IsModuleDeclaration(body)) {
+  const processBody = (body: GoPtr<Node>): GoPtr<Node> => {
+    if (body === undefined || !IsModuleDeclaration(body)) return body;
     const module = AsModuleDeclaration(body);
     Printer_writePunctuation(receiver, ".");
     Printer_emitNestedModuleName(receiver, Node_Name(module));
-    body = module!.Body;
-  }
-  if (body === undefined) {
+    return processBody(module!.Body);
+  };
+  const finalBody = processBody(node!.Body);
+  if (finalBody === undefined) {
     Printer_writeTrailingSemicolon(receiver);
   } else {
     Printer_writeSpace(receiver);
-    Printer_emitModuleBlock(receiver, AsModuleBlock(body));
+    Printer_emitModuleBlock(receiver, AsModuleBlock(finalBody));
   }
   Printer_exitNode(receiver, Node_AsNode(node), state);
 }

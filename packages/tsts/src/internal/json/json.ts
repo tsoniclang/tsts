@@ -272,8 +272,8 @@ export type Encoder = Encoder_517f1597;
  * 	EndArray    = jsontext.EndArray
  * )
  */
-export let BeginObject: unknown = BeginObject_jsontext;
-export let EndObject: unknown = EndObject_jsontext;
-export let Null: unknown = Null_jsontext;
-export let BeginArray: unknown = BeginArray_jsontext;
-export let EndArray: unknown = EndArray_jsontext;
+export const BeginObject: unknown = BeginObject_jsontext;
+export const EndObject: unknown = EndObject_jsontext;
+export const Null: unknown = Null_jsontext;
+export const BeginArray: unknown = BeginArray_jsontext;
+export const EndArray: unknown = EndArray_jsontext;

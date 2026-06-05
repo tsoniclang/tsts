@@ -61,7 +61,7 @@ export interface ReferenceResolverHooks {
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
  */
-export let __e8d524b9_0: ReferenceResolver = undefined as never;
+export const __e8d524b9_0: ReferenceResolver = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"stub","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2","bodyHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}

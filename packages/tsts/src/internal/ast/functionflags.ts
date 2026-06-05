@@ -70,22 +70,10 @@ export function GetFunctionFlags(node: GoPtr<Node>): FunctionFlags {
   if (data === undefined) {
     return FunctionFlagsInvalid;
   }
-  let flags = FunctionFlagsNormal;
-  switch (node.Kind) {
-    case KindFunctionDeclaration:
-    case KindFunctionExpression:
-    case KindMethodDeclaration:
-      if (data.AsteriskToken !== undefined) {
-        flags = (flags | FunctionFlagsGenerator) >>> 0;
-      }
-    // fallthrough
-    case KindArrowFunction:
-      if (HasSyntacticModifier(node, ModifierFlagsAsync)) {
-        flags = (flags | FunctionFlagsAsync) >>> 0;
-      }
-  }
-  if (data.Body === undefined) {
-    flags = (flags | FunctionFlagsInvalid) >>> 0;
-  }
-  return flags;
+  const isGeneratorCandidate = node.Kind === KindFunctionDeclaration || node.Kind === KindFunctionExpression || node.Kind === KindMethodDeclaration;
+  const isAsyncCandidate = isGeneratorCandidate || node.Kind === KindArrowFunction;
+  const generatorFlag = (isGeneratorCandidate && data.AsteriskToken !== undefined) ? FunctionFlagsGenerator : 0;
+  const asyncFlag = (isAsyncCandidate && HasSyntacticModifier(node, ModifierFlagsAsync)) ? FunctionFlagsAsync : 0;
+  const invalidFlag = data.Body === undefined ? FunctionFlagsInvalid : 0;
+  return ((FunctionFlagsNormal | generatorFlag | asyncFlag | invalidFlag) >>> 0) as FunctionFlags;
 }

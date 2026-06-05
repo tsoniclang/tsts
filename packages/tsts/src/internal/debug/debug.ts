@@ -40,12 +40,7 @@ export function Fail(reason: string): void {
  * }
  */
 export function FailBadSyntaxKind(node: { KindString: () => string }, ...message: Array<unknown>): void {
-  let msg: string;
-  if (message.length === 0) {
-    msg = "Unexpected node.";
-  } else {
-    msg = Sprint(...message);
-  }
+  const msg: string = message.length === 0 ? "Unexpected node." : Sprint(...message);
   Fail(Sprintf("%s\nNode %s was unexpected.", msg, node.KindString()));
 }
 
@@ -72,22 +67,12 @@ export function FailBadSyntaxKind(node: { KindString: () => string }, ...message
  * }
  */
 export function AssertNever(member: unknown, ...message: Array<unknown>): void {
-  let msg: string;
-  if (message.length === 0) {
-    msg = "Illegal value:";
-  } else {
-    msg = Sprint(...message);
-  }
-  let detail: string;
+  const msg: string = message.length === 0 ? "Illegal value:" : Sprint(...message);
   const mKind = member as { KindString?: () => string };
   const mStr = member as { String?: () => string };
-  if (typeof mKind?.KindString === "function") {
-    detail = mKind.KindString();
-  } else if (typeof mStr?.String === "function") {
-    detail = mStr.String();
-  } else {
-    detail = Sprintf("%v", member);
-  }
+  const detail: string = typeof mKind?.KindString === "function" ? mKind.KindString()
+    : typeof mStr?.String === "function" ? mStr.String()
+    : Sprintf("%v", member);
   Fail(Sprintf("%s %s", msg, detail));
 }
 
@@ -126,11 +111,6 @@ export function Assert(value: bool, ...message: Array<unknown>): void {
  */
 export function assertSlow(...message: Array<unknown>): void {
   // See https://dave.cheney.net/2020/05/02/mid-stack-inlining-in-go
-  let msg: string;
-  if (message.length > 0) {
-    msg = "False expression: " + Sprint(...message);
-  } else {
-    msg = "False expression.";
-  }
+  const msg: string = message.length > 0 ? "False expression: " + Sprint(...message) : "False expression.";
   Fail(msg);
 }
