@@ -26,7 +26,7 @@ import type { TypeMapper } from "./mapper.js";
 import type { ConditionalRoot, ElementFlags, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags } from "./types.js";
 import { TernaryFalse, TernaryTrue, TernaryMaybe, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, AccessFlagsNone, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable } from "./types.js";
 import { UnionReductionNone } from "./checker/state.js";
-import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference } from "./checker/types.js";
+import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference, Checker_getApparentType } from "./checker/types.js";
 import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
 import { Checker_getBaseConstraintOfType, Checker_getTypeAliasInstantiation } from "./checker/inference.js";
 import { SameMap, Same, CountWhere } from "../core/core.js";
@@ -39,7 +39,7 @@ import { IsExpression, GetDeclarationOfKind, GetSymbolId } from "../ast/utilitie
 import { Checker_isContextSensitive } from "./checker/support-queries.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
 import { Checker_getConstraintOfType } from "./checker/inference.js";
-import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue } from "./checker/symbols.js";
+import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType } from "./checker/symbols.js";
 import { Checker_getPropertiesOfType } from "./checker/types.js";
 import { Checker_getApplicableIndexInfoForName, Checker_isTypeParameterPossiblyReferenced, Checker_getSignaturesOfType, Checker_getSignaturesOfStructuredType, Checker_getTypeOfPropertyOrIndexSignatureOfType } from "./checker/signatures.js";
 import { AsConditionalTypeNode } from "../ast/generated/casts.js";
@@ -5306,7 +5306,7 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInTypes","kind":"method","status":"stub","sigHash":"4d9e3423a062cefdf9d1070364cedbf949a73f9981a7bcc43bafe5e0d4ef8efe","bodyHash":"b27a85704f2ab8a68a77cf887b04208dcd9ec6c9c4fb6dd586989e5531b7f98d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInTypes","kind":"method","status":"implemented","sigHash":"4d9e3423a062cefdf9d1070364cedbf949a73f9981a7bcc43bafe5e0d4ef8efe","bodyHash":"b27a85704f2ab8a68a77cf887b04208dcd9ec6c9c4fb6dd586989e5531b7f98d"}
  *
  * Go source:
  * func (c *Checker) getTypeOfPropertyInTypes(types []*Type, name string) *Type {
@@ -5318,11 +5318,15 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
  * }
  */
 export function Checker_getTypeOfPropertyInTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, name: string): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInTypes");
+  let propTypes: GoSlice<GoPtr<Type>> = [];
+  for (const t of types ?? []) {
+    propTypes = [...propTypes, Checker_getTypeOfPropertyInType(receiver, t, name)];
+  }
+  return Checker_getUnionType(receiver, propTypes);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInType","kind":"method","status":"stub","sigHash":"ead50dcbac0d9fd1cfd2e8eea84524b965d7e81e48dbd46b8d9eab667d9a9293","bodyHash":"1c95e5744bd8c4acc2d77872efa8afe10796256755ede332d08b518e9408c97f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInType","kind":"method","status":"implemented","sigHash":"ead50dcbac0d9fd1cfd2e8eea84524b965d7e81e48dbd46b8d9eab667d9a9293","bodyHash":"1c95e5744bd8c4acc2d77872efa8afe10796256755ede332d08b518e9408c97f"}
  *
  * Go source:
  * func (c *Checker) getTypeOfPropertyInType(t *Type, name string) *Type {
@@ -5344,7 +5348,21 @@ export function Checker_getTypeOfPropertyInTypes(receiver: GoPtr<Checker>, types
  * }
  */
 export function Checker_getTypeOfPropertyInType(receiver: GoPtr<Checker>, t: GoPtr<Type>, name: string): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.getTypeOfPropertyInType");
+  t = Checker_getApparentType(receiver, t);
+  let prop: GoPtr<Symbol>;
+  if ((t!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+    prop = Checker_getPropertyOfUnionOrIntersectionType(receiver, t, name, false as bool);
+  } else {
+    prop = Checker_getPropertyOfObjectType(receiver, t, name);
+  }
+  if (prop !== undefined) {
+    return Checker_getTypeOfSymbol(receiver, prop);
+  }
+  const indexInfo = Checker_getApplicableIndexInfoForName(receiver, t, name);
+  if (indexInfo !== undefined) {
+    return indexInfo!.valueType;
+  }
+  return receiver!.undefinedType;
 }
 
 /**

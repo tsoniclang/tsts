@@ -55,7 +55,7 @@ import { GetErrorRangeForNode } from "../scanner/scanner.js";
 import { FindUseStrictPrologue } from "../binder/binder.js";
 import { Find, LastOrNil, Filter, Some } from "../core/core.js";
 import { Node_Expression, Node_Body, IsTypeOrJSTypeAliasDeclaration, SourceFile_Text, SourceFile_ECMALineMap } from "../ast/ast.js";
-import { GetContainingClass, IsExpressionNode, IsModifier, NodeIsPresent, IsThisParameter, IsPrivateIdentifierClassElementDeclaration } from "../ast/utilities.js";
+import { GetContainingClass, IsExpressionNode, IsModifier, NodeIsPresent, IsThisParameter, IsPrivateIdentifierClassElementDeclaration, NewHasFileName } from "../ast/utilities.js";
 import { NodeFlagsNone } from "../ast/generated/flags.js";
 import { Program_GetEmitModuleFormatOfFile } from "../compiler/program.js";
 import type { Program } from "../compiler/program.js";
@@ -1239,7 +1239,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
           flags |= ModifierFlagsReadonly;
           break;
         case KindExportKeyword:
-          if (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && (node!.Flags & NodeFlagsAmbient) === 0 && node!.Kind !== KindTypeAliasDeclaration && node!.Kind !== KindInterfaceDeclaration && node!.Kind !== KindModuleDeclaration && node!.Parent!.Kind === KindSourceFile && Program_GetEmitModuleFormatOfFile(receiver!.program as unknown as GoPtr<Program>, GetSourceFileOfNode(node)) === ModuleKindCommonJS) {
+          if (receiver!.compilerOptions!.VerbatimModuleSyntax === TSTrue && (node!.Flags & NodeFlagsAmbient) === 0 && node!.Kind !== KindTypeAliasDeclaration && node!.Kind !== KindInterfaceDeclaration && node!.Kind !== KindModuleDeclaration && node!.Parent!.Kind === KindSourceFile && Program_GetEmitModuleFormatOfFile(receiver!.program as unknown as GoPtr<Program>, NewHasFileName(SourceFile_FileName(GetSourceFileOfNode(node)), SourceFile_Path(GetSourceFileOfNode(node)))) === ModuleKindCommonJS) {
             return Checker_grammarErrorOnNode(receiver, modifier, A_top_level_export_modifier_cannot_be_used_on_value_declarations_in_a_CommonJS_module_when_verbatimModuleSyntax_is_enabled);
           }
           if ((flags & ModifierFlagsExport) !== 0) {
@@ -3525,7 +3525,8 @@ export function Checker_checkGrammarVariableDeclaration(receiver: GoPtr<Checker>
     }
     return Checker_grammarErrorOnNode(receiver, node!.ExclamationToken as unknown as GoPtr<Node>, message);
   }
-  if (Program_GetEmitModuleFormatOfFile(receiver!.program as unknown as GoPtr<Program>, GetSourceFileOfNode(asNode)) < ModuleKindSystem && (asNode!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0 && HasSyntacticModifier(asNode!.Parent!.Parent, ModifierFlagsExport)) {
+  const sf = GetSourceFileOfNode(asNode);
+  if (Program_GetEmitModuleFormatOfFile(receiver!.program as unknown as GoPtr<Program>, NewHasFileName(SourceFile_FileName(sf), SourceFile_Path(sf))) < ModuleKindSystem && (asNode!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0 && HasSyntacticModifier(asNode!.Parent!.Parent, ModifierFlagsExport)) {
     Checker_checkGrammarForEsModuleMarkerInBindingName(receiver, Node_Name(asNode));
   }
   return blockScopeKind !== 0 && Checker_checkGrammarNameInLetOrConstDeclarations(receiver, Node_Name(asNode));

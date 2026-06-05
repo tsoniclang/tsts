@@ -1896,7 +1896,7 @@ export function Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicTagSymbol","kind":"method","status":"stub","sigHash":"8c2d4aa9a6eae60cdb430adae6151234e3d41d583ea4d0f03075439367458c77","bodyHash":"6e61020629021364f0db9e5e947e8f7bf6fcd82fa6288bc64c9df17c48d3a69d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getIntrinsicTagSymbol","kind":"method","status":"implemented","sigHash":"8c2d4aa9a6eae60cdb430adae6151234e3d41d583ea4d0f03075439367458c77","bodyHash":"6e61020629021364f0db9e5e947e8f7bf6fcd82fa6288bc64c9df17c48d3a69d"}
  *
  * Go source:
  * func (c *Checker) getIntrinsicTagSymbol(node *ast.Node) *ast.Symbol {

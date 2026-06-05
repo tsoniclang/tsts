@@ -33,6 +33,8 @@ import { CachedTypeKindEvolvingArrayType, CheckModeNormal, TypeFactsAllTypeofNE,
 import type { FlowLoopInfo, FlowLoopKey } from "./checker/state.js";
 import { UnionReductionLiteral, UnionReductionSubtype } from "./checker/state.js";
 import { NodeCheckFlagsAssignmentsMarked, ExhaustiveStateComputing, ExhaustiveStateFalse, ExhaustiveStateTrue, ExhaustiveStateUnknown } from "./checker/types.js";
+import type { MarkedAssignmentSymbolLinks, NodeLinks } from "./types.js";
+import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
 import { CacheHashKey_IsZero, keyBuilder_writeByte, keyBuilder_writeString } from "./checker/support.js";
 import { keyBuilder_hash } from "./checker/support-queries.js";
@@ -5674,7 +5676,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssignedDefinitely","kind":"method","status":"stub","sigHash":"78a82847889560ec4d2e88e1b0f0788a79b4f180a68c3edbf2c0f8f18a71c973","bodyHash":"4b4ca0c33576e0d18bf7abac07c5175ae70650274c5a881472b1d9de1be520dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssignedDefinitely","kind":"method","status":"implemented","sigHash":"78a82847889560ec4d2e88e1b0f0788a79b4f180a68c3edbf2c0f8f18a71c973","bodyHash":"4b4ca0c33576e0d18bf7abac07c5175ae70650274c5a881472b1d9de1be520dc"}
  *
  * Go source:
  * func (c *Checker) isSymbolAssignedDefinitely(symbol *ast.Symbol) bool {
@@ -5683,7 +5685,8 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
  * }
  */
 export function Checker_isSymbolAssignedDefinitely(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isSymbolAssignedDefinitely");
+  Checker_ensureAssignmentsMarked(receiver, symbol_);
+  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_).hasDefiniteAssignment;
 }
 
 /**

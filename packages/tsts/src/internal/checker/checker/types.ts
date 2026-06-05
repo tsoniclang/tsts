@@ -6210,7 +6210,7 @@ export function Checker_isTupleLikeType(receiver: GoPtr<Checker>, t: GoPtr<Type>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleLikeType","kind":"method","status":"stub","sigHash":"307b11d4a0001b09fd8997d1ee2620864a8478400717d0dcc32b93aa0065c7f5","bodyHash":"00ee6926c355adf4a8e3ea85e141b4be4215b16272da75806b2ad8566725a3a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleLikeType","kind":"method","status":"implemented","sigHash":"307b11d4a0001b09fd8997d1ee2620864a8478400717d0dcc32b93aa0065c7f5","bodyHash":"00ee6926c355adf4a8e3ea85e141b4be4215b16272da75806b2ad8566725a3a2"}
  *
  * Go source:
  * func (c *Checker) isArrayOrTupleLikeType(t *Type) bool {
@@ -6218,11 +6218,11 @@ export function Checker_isTupleLikeType(receiver: GoPtr<Checker>, t: GoPtr<Type>
  * }
  */
 export function Checker_isArrayOrTupleLikeType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleLikeType");
+  return Checker_isArrayLikeType(receiver, t) || Checker_isTupleLikeType(receiver, t);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleOrIntersection","kind":"method","status":"stub","sigHash":"ade27448818e876c91a4f3af01d0372721b8b1101a3f5c43f0ce9ca11d2d8e0d","bodyHash":"4a559a946e0aab29f263643528aa371250c0155fd5deda5baa6be3c03dccf91b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleOrIntersection","kind":"method","status":"implemented","sigHash":"ade27448818e876c91a4f3af01d0372721b8b1101a3f5c43f0ce9ca11d2d8e0d","bodyHash":"4a559a946e0aab29f263643528aa371250c0155fd5deda5baa6be3c03dccf91b"}
  *
  * Go source:
  * func (c *Checker) isArrayOrTupleOrIntersection(t *Type) bool {
@@ -6230,7 +6230,7 @@ export function Checker_isArrayOrTupleLikeType(receiver: GoPtr<Checker>, t: GoPt
  * }
  */
 export function Checker_isArrayOrTupleOrIntersection(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isArrayOrTupleOrIntersection");
+  return (t!.flags & TypeFlagsIntersection) !== 0 && core.Every(Type_Types(t), (t_) => Checker_isArrayOrTupleType(receiver, t_));
 }
 
 /**
