@@ -2,20 +2,50 @@ import type { bool, int, long } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
 import type { GoError } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
-import { ParseInt } from "../../../go/strconv.js";
+import { FormatInt, ParseInt } from "../../../go/strconv.js";
 import { DecodeRuneInString } from "../../../go/unicode/utf8.js";
 import type { Node, NodeList } from "../../ast/spine.js";
+import { Node_AsNode, Node_End, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { Node_Attributes, Node_Expression, Node_Initializer, Node_Properties, Node_PropertyName, Node_Statements, Node_TagName, Node_Text, SourceFile_FileName, SourceFile_Text } from "../../ast/ast.js";
 import type { JsxAttribute, JsxElement, JsxExpression, JsxFragment, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, ObjectLiteralExpression } from "../../ast/generated/data.js";
 import type { Expression, JsxChild, ObjectLiteralElement } from "../../ast/generated/unions.js";
+import { AsImportSpecifier, AsJsxAttribute, AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxNamespacedName, AsJsxOpeningFragment, AsJsxSelfClosingElement, AsJsxSpreadAttribute, AsJsxText, AsObjectLiteralExpression, AsQualifiedName, AsStringLiteral, AsVariableDeclaration } from "../../ast/generated/casts.js";
+import { NewArrayLiteralExpression, NewBindingElement, NewBindingPattern, NewCallExpression, NewIdentifier, NewImportClause, NewImportDeclaration, NewImportSpecifier, NewKeywordExpression, NewNamedImports, NewNumericLiteral, NewObjectLiteralExpression, NewPropertyAccessExpression, NewPropertyAssignment, NewSpreadAssignment, NewSpreadElement, NewStringLiteral, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
+import { KindJsxAttribute, KindJsxElement, KindJsxExpression, KindJsxFragment, KindJsxOpeningElement, KindJsxOpeningFragment, KindJsxSelfClosingElement, KindJsxSpreadAttribute, KindJsxText, KindNullKeyword, KindObjectBindingPattern, KindSourceFile, KindString, KindStringLiteral, KindUnknown } from "../../ast/generated/kinds.js";
+import { IsIdentifier, IsJsxAttribute, IsJsxElement, IsJsxExpression, IsJsxFragment, IsJsxNamespacedName, IsJsxSelfClosingElement, IsJsxSpreadAttribute, IsModuleDeclaration, IsObjectLiteralExpression, IsPropertyAssignment, IsQualifiedName, IsSourceFile, IsSpreadAssignment, IsStringLiteral } from "../../ast/generated/predicates.js";
+import { NodeFlagsConst, NodeFlagsNone, NodeFlagsSynthesized } from "../../ast/nodeflags.js";
+import { SubtreeContainsJsx } from "../../ast/subtreefacts.js";
+import type { SourceFileLike } from "../../ast/ast.js";
+import { AsSourceFile, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
+import { GetJSXImplicitImportBase, GetJSXRuntimeImport, GetSemanticJsxChildren, IsExternalModule, IsExternalOrCommonJSModule, IsPrologueDirective, SetParentInChildren } from "../../ast/utilities.js";
+import { IsJsxOpeningLikeElement } from "../../ast/utilities.js";
+import { OrderedMap_Clear, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set, OrderedMap_Size } from "../../collections/ordered_map.js";
 import type { OrderedMap } from "../../collections/ordered_map.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
-import { JsxEmitReactJSXDev } from "../../core/compileroptions.js";
+import { CompilerOptions_GetEmitScriptTarget, JsxEmitReactJSXDev, ScriptTargetES2018 } from "../../core/compileroptions.js";
+import { LanguageVariantStandard } from "../../core/languagevariant.js";
+import { NewTextRange } from "../../core/text.js";
 import type { TextRange } from "../../core/text.js";
+import { TokenFlagsNone } from "../../ast/tokenflags.js";
 import { IsDigit, IsHexDigit, IsLineBreak, IsWhiteSpaceSingleLine } from "../../stringutil/util.js";
+import { CompareStringsCaseSensitive } from "../../stringutil/compare.js";
+import { EFCustomPrologue, EFStartOnNewLine } from "../../printer/emitflags.js";
+import { EmitContext_AddEmitFlags, EmitContext_EmitFlags, EmitContext_MostOriginal, EmitContext_ParseNode, EmitContext_ReadEmitHelpers, EmitContext_SetEmitFlags, EmitContext_AddEmitHelper } from "../../printer/emitcontext.js";
+import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
+import { GeneratedIdentifierFlagsAllowNameSubstitution, GeneratedIdentifierFlagsFileLevel, GeneratedIdentifierFlagsOptimistic } from "../../printer/generatedidentifierflags.js";
+import type { NodeFactory } from "../../printer/factory.js";
+import { NodeFactory_CreateExpressionFromEntityName, NodeFactory_NewAssignHelper, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewThisExpression, NodeFactory_NewTrueExpression, NodeFactory_NewFalseExpression, NodeFactory_NewVoidZeroExpression, NodeFactory_NewUniqueNameEx } from "../../printer/factory.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
+import { IsIntrinsicJsxName } from "../../scanner/utilities.js";
+import { IsIdentifierText } from "../../scanner/utilities.js";
+import { GetECMALineAndUTF16CharacterOfPosition, SkipTrivia } from "../../scanner/scanner.js";
+import { NodeFactory_NewNodeList } from "../../ast/spine.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitSlice } from "../../ast/visitor.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
@@ -32,7 +62,7 @@ const byteSlice = (s: string, start: int, end?: int): string => {
 };
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"stub","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12","bodyHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12","bodyHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
  *
  * Go source:
  * JSXTransformer struct {
@@ -60,7 +90,7 @@ export interface JSXTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::NewJSXTransformer","kind":"func","status":"stub","sigHash":"29835ab7065cb1ebe8fb083beca71c929e309981dbe55498b53a24467274d575","bodyHash":"fb1cf81a0ed533b3afc438d422dca6c6c9e60164c88fb9bb40f38f623d97c725"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::NewJSXTransformer","kind":"func","status":"implemented","sigHash":"29835ab7065cb1ebe8fb083beca71c929e309981dbe55498b53a24467274d575","bodyHash":"fb1cf81a0ed533b3afc438d422dca6c6c9e60164c88fb9bb40f38f623d97c725"}
  *
  * Go source:
  * func NewJSXTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -74,11 +104,23 @@ export interface JSXTransformer {
  * }
  */
 export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::NewJSXTransformer");
+  const compilerOptions = opts!.CompilerOptions;
+  const emitContext = opts!.Context;
+  const tx: JSXTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    compilerOptions: compilerOptions,
+    emitResolver: opts!.EmitResolver,
+    importSpecifier: "",
+    filenameDeclaration: undefined,
+    utilizedImplicitRuntimeImports: { __tsgoBlank0: {}, keys: [], mp: new globalThis.Map() },
+    inJsxChild: false,
+    currentSourceFile: undefined,
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => JSXTransformer_visit(tx, node), emitContext);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getCurrentFileNameExpression","kind":"method","status":"stub","sigHash":"f67f49fed61267f6058d23cb6f62a0ba7a6af24279aa0de90ccbe3d710bd853f","bodyHash":"346beda3bd2ffc4a4f553a765b103a1c0366a83298bf81c7d652d812ed672457"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getCurrentFileNameExpression","kind":"method","status":"implemented","sigHash":"f67f49fed61267f6058d23cb6f62a0ba7a6af24279aa0de90ccbe3d710bd853f","bodyHash":"346beda3bd2ffc4a4f553a765b103a1c0366a83298bf81c7d652d812ed672457"}
  *
  * Go source:
  * func (tx *JSXTransformer) getCurrentFileNameExpression() *ast.Node {
@@ -98,7 +140,24 @@ export function NewJSXTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transfor
  * }
  */
 export function JSXTransformer_getCurrentFileNameExpression(receiver: GoPtr<JSXTransformer>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getCurrentFileNameExpression");
+  if (receiver!.filenameDeclaration !== undefined) {
+    return AsVariableDeclaration(receiver!.filenameDeclaration)!.name;
+  }
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const d = NewVariableDeclaration(
+    astFactory,
+    NodeFactory_NewUniqueNameEx(factory, "_jsxFileName", {
+      Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
+      Prefix: "",
+      Suffix: "",
+    }),
+    undefined,
+    undefined,
+    NewStringLiteral(astFactory, SourceFile_FileName(receiver!.currentSourceFile), TokenFlagsNone),
+  );
+  receiver!.filenameDeclaration = d;
+  return AsVariableDeclaration(d)!.name;
 }
 
 /**
@@ -126,7 +185,7 @@ export function JSXTransformer_getJsxFactoryCalleePrimitive(receiver: GoPtr<JSXT
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCallee","kind":"method","status":"stub","sigHash":"d2ef3b46db25829b7a7083fb6ef490a8e8213431b2d714b383a43b2f2da3dad7","bodyHash":"ffa40e046d3ddf1b12e4f291a6e0e9f7911b237f8de6191ce7219abb45a9c4b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCallee","kind":"method","status":"implemented","sigHash":"d2ef3b46db25829b7a7083fb6ef490a8e8213431b2d714b383a43b2f2da3dad7","bodyHash":"ffa40e046d3ddf1b12e4f291a6e0e9f7911b237f8de6191ce7219abb45a9c4b3"}
  *
  * Go source:
  * func (tx *JSXTransformer) getJsxFactoryCallee(isStaticChildren bool) *ast.Node {
@@ -135,11 +194,12 @@ export function JSXTransformer_getJsxFactoryCalleePrimitive(receiver: GoPtr<JSXT
  * }
  */
 export function JSXTransformer_getJsxFactoryCallee(receiver: GoPtr<JSXTransformer>, isStaticChildren: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getJsxFactoryCallee");
+  const t = JSXTransformer_getJsxFactoryCalleePrimitive(receiver, isStaticChildren);
+  return JSXTransformer_getImplicitImportForName(receiver, t);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitJsxFragmentReference","kind":"method","status":"stub","sigHash":"32cdb023740a4398d1f0cef995d6f2faf36082cbc27bb7fed228da6849902c10","bodyHash":"79bf6a15a9fc6ddd9f06ffb15324d92ef3d32aeece534a3bf622d69921a94b50"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitJsxFragmentReference","kind":"method","status":"implemented","sigHash":"32cdb023740a4398d1f0cef995d6f2faf36082cbc27bb7fed228da6849902c10","bodyHash":"79bf6a15a9fc6ddd9f06ffb15324d92ef3d32aeece534a3bf622d69921a94b50"}
  *
  * Go source:
  * func (tx *JSXTransformer) getImplicitJsxFragmentReference() *ast.Node {
@@ -147,11 +207,11 @@ export function JSXTransformer_getJsxFactoryCallee(receiver: GoPtr<JSXTransforme
  * }
  */
 export function JSXTransformer_getImplicitJsxFragmentReference(receiver: GoPtr<JSXTransformer>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitJsxFragmentReference");
+  return JSXTransformer_getImplicitImportForName(receiver, "Fragment");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitImportForName","kind":"method","status":"stub","sigHash":"bf50e5f1a91428d2c425223ed98145487b875045253e761c4d1a2ca68bc895eb","bodyHash":"c595260d9c743edec5d120f59e4174bfe95fee142ee435edd4afa84aa17c5289"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitImportForName","kind":"method","status":"implemented","sigHash":"bf50e5f1a91428d2c425223ed98145487b875045253e761c4d1a2ca68bc895eb","bodyHash":"c595260d9c743edec5d120f59e4174bfe95fee142ee435edd4afa84aa17c5289"}
  *
  * Go source:
  * func (tx *JSXTransformer) getImplicitImportForName(name string) *ast.Node {
@@ -180,7 +240,31 @@ export function JSXTransformer_getImplicitJsxFragmentReference(receiver: GoPtr<J
  * }
  */
 export function JSXTransformer_getImplicitImportForName(receiver: GoPtr<JSXTransformer>, name: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getImplicitImportForName");
+  let importSource = receiver!.importSpecifier;
+  if (name !== "createElement") {
+    importSource = GetJSXRuntimeImport(importSource, receiver!.compilerOptions);
+  }
+  const [existing, ok] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
+  if (ok) {
+    const elem = existing!.get(name);
+    if (elem !== undefined) {
+      return AsImportSpecifier(elem)!.name;
+    }
+  } else {
+    OrderedMap_Set<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource, new globalThis.Map<string, GoPtr<Node>>());
+  }
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const generatedName = NodeFactory_NewUniqueNameEx(factory, "_" + name, {
+    Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel | GeneratedIdentifierFlagsAllowNameSubstitution,
+    Prefix: "",
+    Suffix: "",
+  });
+  const specifier = NewImportSpecifier(astFactory, false, NewIdentifier(astFactory, name), generatedName);
+  receiver!.emitResolver.SetReferencedImportDeclaration(generatedName, specifier);
+  const [existingMap] = OrderedMap_Get<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>, importSource);
+  existingMap!.set(name, specifier);
+  return AsImportSpecifier(specifier)!.name;
 }
 
 /**
@@ -196,7 +280,7 @@ export function JSXTransformer_setInChild(receiver: GoPtr<JSXTransformer>, v: bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visit","kind":"method","status":"stub","sigHash":"d506fd405ffb5b15f0c87fe4693328c29a4a0665ee9ae8d67bd3eccf913d8dc9","bodyHash":"5eb77053b6db23d39256c06e25dc4f5a3482aeff3993d96eded095e7f42ba85f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visit","kind":"method","status":"implemented","sigHash":"d506fd405ffb5b15f0c87fe4693328c29a4a0665ee9ae8d67bd3eccf913d8dc9","bodyHash":"5eb77053b6db23d39256c06e25dc4f5a3482aeff3993d96eded095e7f42ba85f"}
  *
  * Go source:
  * func (tx *JSXTransformer) visit(node *ast.Node) *ast.Node {
@@ -232,11 +316,39 @@ export function JSXTransformer_setInChild(receiver: GoPtr<JSXTransformer>, v: bo
  * }
  */
 export function JSXTransformer_visit(receiver: GoPtr<JSXTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visit");
+  if (node === undefined) {
+    return undefined;
+  }
+  if ((Node_SubtreeFacts(node) & SubtreeContainsJsx) === 0) {
+    return node;
+  }
+  switch (node!.Kind) {
+    case KindSourceFile:
+      JSXTransformer_setInChild(receiver, false);
+      return JSXTransformer_visitSourceFile(receiver, AsSourceFile(node));
+    case KindJsxElement:
+      return JSXTransformer_visitJsxElement(receiver, AsJsxElement(node));
+    case KindJsxSelfClosingElement:
+      return JSXTransformer_visitJsxSelfClosingElement(receiver, AsJsxSelfClosingElement(node));
+    case KindJsxFragment:
+      return JSXTransformer_visitJsxFragment(receiver, AsJsxFragment(node));
+    case KindJsxOpeningElement:
+      throw new globalThis.Error("JsxOpeningElement should not be visited, handled in visitJsxElement");
+    case KindJsxOpeningFragment:
+      throw new globalThis.Error("JsxOpeningFragment should not be visited, handled in visitJsxFragment");
+    case KindJsxText:
+      JSXTransformer_setInChild(receiver, false);
+      return JSXTransformer_visitJsxText(receiver, AsJsxText(node));
+    case KindJsxExpression:
+      JSXTransformer_setInChild(receiver, false);
+      return JSXTransformer_visitJsxExpression(receiver, AsJsxExpression(node));
+  }
+  JSXTransformer_setInChild(receiver, false);
+  return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node); // by default, do nothing
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"stub","sigHash":"410dfa82121e57aa7b00154093b4c575db0069df96b273cff1976c9d3f473443","bodyHash":"fc27af3a69cdac8503d810a1950d3929869e54b206d19e0f3f56ae5945e6fcc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread","kind":"func","status":"implemented","sigHash":"410dfa82121e57aa7b00154093b4c575db0069df96b273cff1976c9d3f473443","bodyHash":"fc27af3a69cdac8503d810a1950d3929869e54b206d19e0f3f56ae5945e6fcc1"}
  *
  * Go source:
  * func hasKeyAfterPropsSpread(node *ast.Node) bool {
@@ -256,7 +368,20 @@ export function JSXTransformer_visit(receiver: GoPtr<JSXTransformer>, node: GoPt
  * }
  */
 export function hasKeyAfterPropsSpread(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasKeyAfterPropsSpread");
+  let spread = false;
+  let opener = node;
+  if (node!.Kind === KindJsxElement) {
+    opener = AsJsxElement(node)!.OpeningElement;
+  } // otherwise self-closing
+  const attrs = Node_Properties(Node_Attributes(opener)) ?? [];
+  for (const elem of attrs) {
+    if (IsJsxSpreadAttribute(elem) && (!IsObjectLiteralExpression(Node_Expression(elem)) || (Node_Properties(Node_Expression(elem)) ?? []).some((p) => IsSpreadAssignment(p)))) {
+      spread = true;
+    } else if (spread && IsJsxAttribute(elem) && IsIdentifier(Node_Name(elem)) && Node_Text(Node_Name(elem)) === "key") {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -272,7 +397,7 @@ export function JSXTransformer_shouldUseCreateElement(receiver: GoPtr<JSXTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::insertStatementAfterPrologue","kind":"func","status":"stub","sigHash":"f832143b0e7f3a7f35e765c94ce2612ab78265ee196bc795a362822f5bc88bf1","bodyHash":"2d74604c56f163f5feaf55de653a94b72ea34f26a6748da67b7c1e28a4294e6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::insertStatementAfterPrologue","kind":"func","status":"implemented","sigHash":"f832143b0e7f3a7f35e765c94ce2612ab78265ee196bc795a362822f5bc88bf1","bodyHash":"2d74604c56f163f5feaf55de653a94b72ea34f26a6748da67b7c1e28a4294e6e"}
  *
  * Go source:
  * func insertStatementAfterPrologue[T any](to []*ast.Node, statement *ast.Node, isPrologueDirective func(callee T, node *ast.Node) bool, callee T) []*ast.Node {
@@ -290,11 +415,21 @@ export function JSXTransformer_shouldUseCreateElement(receiver: GoPtr<JSXTransfo
  * }
  */
 export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statement: GoPtr<Node>, isPrologueDirective: (callee: T, node: GoPtr<Node>) => bool, callee: T): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::insertStatementAfterPrologue");
+  if (statement === undefined) {
+    return to;
+  }
+  let statementIdx = 0;
+  // skip all prologue directives to insert at the correct position
+  for (; statementIdx < to.length; statementIdx++) {
+    if (!isPrologueDirective(callee, to[statementIdx])) {
+      break;
+    }
+  }
+  return [...to.slice(0, statementIdx), statement, ...to.slice(statementIdx)];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.isAnyPrologueDirective","kind":"method","status":"stub","sigHash":"0bbb36cd4cfc35cc05d92623a458f1b9bb6c9dc9fb0f6665966884e6f3488ca7","bodyHash":"adba537c945702e36a64fe190b401f31ecf6d7965326d3fd4f63aa0b2f0636f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.isAnyPrologueDirective","kind":"method","status":"implemented","sigHash":"0bbb36cd4cfc35cc05d92623a458f1b9bb6c9dc9fb0f6665966884e6f3488ca7","bodyHash":"adba537c945702e36a64fe190b401f31ecf6d7965326d3fd4f63aa0b2f0636f0"}
  *
  * Go source:
  * func (tx *JSXTransformer) isAnyPrologueDirective(node *ast.Node) bool {
@@ -302,11 +437,11 @@ export function insertStatementAfterPrologue<T>(to: GoSlice<GoPtr<Node>>, statem
  * }
  */
 export function JSXTransformer_isAnyPrologueDirective(receiver: GoPtr<JSXTransformer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.isAnyPrologueDirective");
+  return IsPrologueDirective(node) || (EmitContext_EmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), node) & EFCustomPrologue) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.insertStatementAfterCustomPrologue","kind":"method","status":"stub","sigHash":"25161bbccce5a2455bf329eaccafa851964941e9369eb14802004bde26ac1c07","bodyHash":"d4f0f8f172e24794906f74faaf9333f58646370d378a9c1304cbcab0d55d5204"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.insertStatementAfterCustomPrologue","kind":"method","status":"implemented","sigHash":"25161bbccce5a2455bf329eaccafa851964941e9369eb14802004bde26ac1c07","bodyHash":"d4f0f8f172e24794906f74faaf9333f58646370d378a9c1304cbcab0d55d5204"}
  *
  * Go source:
  * func (tx *JSXTransformer) insertStatementAfterCustomPrologue(to []*ast.Node, statement *ast.Node) []*ast.Node {
@@ -314,11 +449,11 @@ export function JSXTransformer_isAnyPrologueDirective(receiver: GoPtr<JSXTransfo
  * }
  */
 export function JSXTransformer_insertStatementAfterCustomPrologue(receiver: GoPtr<JSXTransformer>, to: GoSlice<GoPtr<Node>>, statement: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.insertStatementAfterCustomPrologue");
+  return insertStatementAfterPrologue(to, statement, JSXTransformer_isAnyPrologueDirective, receiver);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::sortImportSpecifiers","kind":"func","status":"stub","sigHash":"13eedef921187722636169983beb3233354db81cc50dedd588a28c37565ed5fd","bodyHash":"adab7f7f9aed4dd065e7ecf0450f0d49732c7ee1a804953ee80784a5a5a65796"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::sortImportSpecifiers","kind":"func","status":"implemented","sigHash":"13eedef921187722636169983beb3233354db81cc50dedd588a28c37565ed5fd","bodyHash":"adab7f7f9aed4dd065e7ecf0450f0d49732c7ee1a804953ee80784a5a5a65796"}
  *
  * Go source:
  * func sortImportSpecifiers(a *ast.Node, b *ast.Node) int {
@@ -330,11 +465,15 @@ export function JSXTransformer_insertStatementAfterCustomPrologue(receiver: GoPt
  * }
  */
 export function sortImportSpecifiers(a: GoPtr<Node>, b: GoPtr<Node>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::sortImportSpecifiers");
+  const res = CompareStringsCaseSensitive(Node_Text(Node_PropertyName(a)), Node_Text(Node_PropertyName(b)));
+  if (res !== 0) {
+    return res;
+  }
+  return CompareStringsCaseSensitive(Node_Text(AsImportSpecifier(a)!.name), Node_Text(AsImportSpecifier(b)!.name));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::getSortedSpecifiers","kind":"func","status":"stub","sigHash":"45b6fde0106693ef0478f9fb2a78ec492c9812d6fd06fd650a62a326bfcb1874","bodyHash":"6337134fd4fa77b10c72dcdfcc592339d7b79ab82c897c466a6aeb3d936659c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::getSortedSpecifiers","kind":"func","status":"implemented","sigHash":"45b6fde0106693ef0478f9fb2a78ec492c9812d6fd06fd650a62a326bfcb1874","bodyHash":"6337134fd4fa77b10c72dcdfcc592339d7b79ab82c897c466a6aeb3d936659c5"}
  *
  * Go source:
  * func getSortedSpecifiers(m map[string]*ast.Node) []*ast.Node {
@@ -344,11 +483,13 @@ export function sortImportSpecifiers(a: GoPtr<Node>, b: GoPtr<Node>): int {
  * }
  */
 export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::getSortedSpecifiers");
+  const res: GoSlice<GoPtr<Node>> = [...m.values()];
+  res.sort(sortImportSpecifiers);
+  return res;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitSourceFile","kind":"method","status":"stub","sigHash":"cce2e0463e5a5aa3ed9661f146af4a491bd5546ac199d1fc0a02643fab6e9a23","bodyHash":"94c819c7a71033a35b4b9ad11a7869f92fe95a52d5ea56ad85d824b560b51827"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"cce2e0463e5a5aa3ed9661f146af4a491bd5546ac199d1fc0a02643fab6e9a23","bodyHash":"94c819c7a71033a35b4b9ad11a7869f92fe95a52d5ea56ad85d824b560b51827"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitSourceFile(file *ast.SourceFile) *ast.Node {
@@ -434,11 +575,117 @@ export function getSortedSpecifiers(m: GoMap<string, GoPtr<Node>>): GoSlice<GoPt
  * }
  */
 export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, file: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitSourceFile");
+  if (file!.IsDeclarationFile) {
+    return file as unknown as GoPtr<Node>;
+  }
+
+  receiver!.currentSourceFile = file;
+  receiver!.importSpecifier = GetJSXImplicitImportBase(receiver!.compilerOptions, file);
+  receiver!.filenameDeclaration = undefined;
+  OrderedMap_Clear<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>);
+
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  let visited = NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, file as unknown as GoPtr<Node>);
+  EmitContext_AddEmitHelper(emitContext, visited!, ...EmitContext_ReadEmitHelpers(emitContext));
+  let statements: GoSlice<GoPtr<Node>> = Node_Statements(visited) ?? [];
+  let statementsUpdated = false;
+  if (receiver!.filenameDeclaration !== undefined) {
+    statements = JSXTransformer_insertStatementAfterCustomPrologue(
+      receiver,
+      statements,
+      NewVariableStatement(
+        astFactory,
+        undefined,
+        NewVariableDeclarationList(
+          astFactory,
+          NodeFactory_NewNodeList(astFactory, [receiver!.filenameDeclaration]),
+          NodeFlagsConst,
+        ),
+      ),
+    );
+    statementsUpdated = true;
+  }
+
+  if (OrderedMap_Size<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>) > 0) {
+    if (IsExternalModule(file)) {
+      statementsUpdated = true;
+      const newStatements: GoSlice<GoPtr<Node>> = [];
+      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+        const s = NewImportDeclaration(
+          astFactory,
+          undefined,
+          NewImportClause(astFactory, KindUnknown, undefined, NewNamedImports(astFactory, NodeFactory_NewNodeList(astFactory, getSortedSpecifiers(importSpecifiersMap)))),
+          NewStringLiteral(astFactory, importSource, TokenFlagsNone),
+          undefined,
+        );
+        SetParentInChildren(s);
+        newStatements.push(s);
+        return true;
+      });
+      for (const e of newStatements) {
+        statements = JSXTransformer_insertStatementAfterCustomPrologue(receiver, statements, e);
+      }
+    } else if (IsExternalOrCommonJSModule(file)) {
+      statementsUpdated = true;
+      const newStatements: GoSlice<GoPtr<Node>> = [];
+      OrderedMap_Entries<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>)((importSource, importSpecifiersMap) => {
+        const sorted = getSortedSpecifiers(importSpecifiersMap);
+        const asBindingElems: GoSlice<GoPtr<Node>> = [];
+        for (const elem of sorted) {
+          asBindingElems.push(NewBindingElement(astFactory, undefined, Node_PropertyName(elem), AsImportSpecifier(elem)!.name, undefined));
+        }
+        const s = NewVariableStatement(
+          astFactory,
+          undefined,
+          NewVariableDeclarationList(
+            astFactory,
+            NodeFactory_NewNodeList(astFactory, [
+              NewVariableDeclaration(
+                astFactory,
+                NewBindingPattern(astFactory, KindObjectBindingPattern, NodeFactory_NewNodeList(astFactory, asBindingElems)),
+                undefined,
+                undefined,
+                NewCallExpression(
+                  astFactory,
+                  NewIdentifier(astFactory, "require"),
+                  undefined,
+                  undefined,
+                  NodeFactory_NewNodeList(astFactory, [NewStringLiteral(astFactory, importSource, TokenFlagsNone)]),
+                  NodeFlagsNone,
+                ),
+              ),
+            ]),
+            NodeFlagsConst,
+          ),
+        );
+        SetParentInChildren(s);
+        newStatements.push(s);
+        return true;
+      });
+      for (const e of newStatements) {
+        statements = JSXTransformer_insertStatementAfterCustomPrologue(receiver, statements, e);
+      }
+    } else {
+      // Do nothing (script file) - consider an error in the checker?
+    }
+  }
+
+  if (statementsUpdated) {
+    visited = NodeFactory_UpdateSourceFile(astFactory, file, NodeFactory_NewNodeList(astFactory, statements), file!.EndOfFileToken);
+  }
+
+  receiver!.currentSourceFile = undefined;
+  receiver!.importSpecifier = "";
+  receiver!.filenameDeclaration = undefined;
+  OrderedMap_Clear<string, GoMap<string, GoPtr<Node>>>(receiver!.utilizedImplicitRuntimeImports as unknown as GoPtr<OrderedMap<string, GoMap<string, GoPtr<Node>>>>);
+
+  return visited;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxElement","kind":"method","status":"stub","sigHash":"d5761f92ca2ec4e98cb3af820f783572e895782cdaa60e5b0285a6447ea81e86","bodyHash":"b6632afad8016fcce673709eb3b9ccdf74b8f77f3309c1034253488d7f28ca86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxElement","kind":"method","status":"implemented","sigHash":"d5761f92ca2ec4e98cb3af820f783572e895782cdaa60e5b0285a6447ea81e86","bodyHash":"b6632afad8016fcce673709eb3b9ccdf74b8f77f3309c1034253488d7f28ca86"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxElement(element *ast.JsxElement) *ast.Node {
@@ -451,11 +698,19 @@ export function JSXTransformer_visitSourceFile(receiver: GoPtr<JSXTransformer>, 
  * }
  */
 export function JSXTransformer_visitJsxElement(receiver: GoPtr<JSXTransformer>, element: GoPtr<JsxElement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxElement");
+  let tagTransform = JSXTransformer_visitJsxOpeningLikeElementJSX;
+  if (JSXTransformer_shouldUseCreateElement(receiver, element as unknown as GoPtr<Node>)) {
+    tagTransform = JSXTransformer_visitJsxOpeningLikeElementCreateElement;
+  }
+  const location = NewTextRange(
+    SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), Node_Pos(element as unknown as GoPtr<Node>)),
+    Node_End(element as unknown as GoPtr<Node>),
+  );
+  return tagTransform(receiver, element!.OpeningElement, element!.Children, location);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxSelfClosingElement","kind":"method","status":"stub","sigHash":"a6a4e323adf8a41eb524b3f4f7306ff26f08f35fdf40194ec37e221382bf5ca2","bodyHash":"ad08192f77f7e268612bb664b6cec4d2535c39a60614ab352962d0a938c3d8e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxSelfClosingElement","kind":"method","status":"implemented","sigHash":"a6a4e323adf8a41eb524b3f4f7306ff26f08f35fdf40194ec37e221382bf5ca2","bodyHash":"ad08192f77f7e268612bb664b6cec4d2535c39a60614ab352962d0a938c3d8e0"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxSelfClosingElement(element *ast.JsxSelfClosingElement) *ast.Node {
@@ -468,11 +723,19 @@ export function JSXTransformer_visitJsxElement(receiver: GoPtr<JSXTransformer>, 
  * }
  */
 export function JSXTransformer_visitJsxSelfClosingElement(receiver: GoPtr<JSXTransformer>, element: GoPtr<JsxSelfClosingElement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxSelfClosingElement");
+  let tagTransform = JSXTransformer_visitJsxOpeningLikeElementJSX;
+  if (JSXTransformer_shouldUseCreateElement(receiver, element as unknown as GoPtr<Node>)) {
+    tagTransform = JSXTransformer_visitJsxOpeningLikeElementCreateElement;
+  }
+  const location = NewTextRange(
+    SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), Node_Pos(element as unknown as GoPtr<Node>)),
+    Node_End(element as unknown as GoPtr<Node>),
+  );
+  return tagTransform(receiver, element as unknown as GoPtr<Node>, undefined, location);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxFragment","kind":"method","status":"stub","sigHash":"76e42a60a7a34f843c07e67935a221e526a4ed806001756dd6cbcbf7b0b71a0a","bodyHash":"165ababa17163779967211f053946e3d2fca8c7126d2774e6a666ed783c2eca7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxFragment","kind":"method","status":"implemented","sigHash":"76e42a60a7a34f843c07e67935a221e526a4ed806001756dd6cbcbf7b0b71a0a","bodyHash":"165ababa17163779967211f053946e3d2fca8c7126d2774e6a666ed783c2eca7"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxFragment(fragment *ast.JsxFragment) *ast.Node {
@@ -485,11 +748,19 @@ export function JSXTransformer_visitJsxSelfClosingElement(receiver: GoPtr<JSXTra
  * }
  */
 export function JSXTransformer_visitJsxFragment(receiver: GoPtr<JSXTransformer>, fragment: GoPtr<JsxFragment>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxFragment");
+  let tagTransform = JSXTransformer_visitJsxOpeningFragmentJSX;
+  if (byteLen(receiver!.importSpecifier) === 0) {
+    tagTransform = JSXTransformer_visitJsxOpeningFragmentCreateElement;
+  }
+  const location = NewTextRange(
+    SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), Node_Pos(fragment as unknown as GoPtr<Node>)),
+    Node_End(fragment as unknown as GoPtr<Node>),
+  );
+  return tagTransform(receiver, AsJsxOpeningFragment(fragment!.OpeningFragment), fragment!.Children, location);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropObject","kind":"method","status":"stub","sigHash":"02106466e4197ee5402fdbbd492c44fe3cab7c9e4b5132b24570771553bb253a","bodyHash":"16411bb922b8c38faa104ab778e53b8fc65221550431e7395ff54d053d6fabd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropObject","kind":"method","status":"implemented","sigHash":"02106466e4197ee5402fdbbd492c44fe3cab7c9e4b5132b24570771553bb253a","bodyHash":"16411bb922b8c38faa104ab778e53b8fc65221550431e7395ff54d053d6fabd3"}
  *
  * Go source:
  * func (tx *JSXTransformer) convertJsxChildrenToChildrenPropObject(children []*ast.JsxChild) *ast.Node {
@@ -501,11 +772,17 @@ export function JSXTransformer_visitJsxFragment(receiver: GoPtr<JSXTransformer>,
  * }
  */
 export function JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver: GoPtr<JSXTransformer>, children: GoSlice<GoPtr<JsxChild>>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropObject");
+  const prop = JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver, children);
+  if (prop === undefined) {
+    return undefined;
+  }
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  return NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, [prop]), false);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxChildToExpression","kind":"method","status":"stub","sigHash":"1e346b779434456b9ca346c734bbd66f823cb5217411c3c7880476c837af44fa","bodyHash":"447d6ac7461afebabd738131b66243d4fb317e3751c5158f5ab9cc1145fcdb9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxChildToExpression","kind":"method","status":"implemented","sigHash":"1e346b779434456b9ca346c734bbd66f823cb5217411c3c7880476c837af44fa","bodyHash":"447d6ac7461afebabd738131b66243d4fb317e3751c5158f5ab9cc1145fcdb9b"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxChildToExpression(node *ast.Node) *ast.Node {
@@ -516,11 +793,17 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver: 
  * }
  */
 export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSXTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxChildToExpression");
+  const prev = receiver!.inJsxChild;
+  JSXTransformer_setInChild(receiver, true);
+  try {
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node);
+  } finally {
+    JSXTransformer_setInChild(receiver, prev);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment","kind":"method","status":"stub","sigHash":"f8adc13a5c690fe86ac97a56fa6ebe0c881888e65609a6f16c5c19db82bfa647","bodyHash":"755e7b267f1c52a2cbc5c437e2dc9856323a407ce775f13f3de02e2df31043f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment","kind":"method","status":"implemented","sigHash":"f8adc13a5c690fe86ac97a56fa6ebe0c881888e65609a6f16c5c19db82bfa647","bodyHash":"755e7b267f1c52a2cbc5c437e2dc9856323a407ce775f13f3de02e2df31043f9"}
  *
  * Go source:
  * func (tx *JSXTransformer) convertJsxChildrenToChildrenPropAssignment(children []*ast.JsxChild) *ast.Node {
@@ -550,11 +833,36 @@ export function JSXTransformer_transformJsxChildToExpression(receiver: GoPtr<JSX
  * }
  */
 export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver: GoPtr<JSXTransformer>, children: GoSlice<GoPtr<JsxChild>>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.convertJsxChildrenToChildrenPropAssignment");
+  const nonWhitespaceChildren = GetSemanticJsxChildren(children);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  if (nonWhitespaceChildren.length === 1 && (nonWhitespaceChildren[0]!.Kind !== KindJsxExpression || AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken === undefined)) {
+    const result = JSXTransformer_transformJsxChildToExpression(receiver, nonWhitespaceChildren[0] as unknown as GoPtr<Node>);
+    if (result === undefined) {
+      return undefined;
+    }
+    return NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "children"), undefined, undefined, result);
+  }
+  // For multiple children in the children property array, don't set StartOnNewLine
+  // on child elements — the array literal is single-line.
+  const results: GoSlice<GoPtr<Node>> = [];
+  for (const child of nonWhitespaceChildren) {
+    const res = JSXTransformer_transformJsxChildToExpression(receiver, child as unknown as GoPtr<Node>);
+    if (res === undefined) {
+      continue;
+    }
+    EmitContext_SetEmitFlags(emitContext, res, (EmitContext_EmitFlags(emitContext, res) & ~EFStartOnNewLine) >>> 0);
+    results.push(res);
+  }
+  if (results.length === 0) {
+    return undefined;
+  }
+  return NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "children"), undefined, undefined, NewArrayLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, results), false));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getTagName","kind":"method","status":"stub","sigHash":"391d8292148fcef36d5507213d02d50717168b47816d49b9fa4b77e19ee0f43c","bodyHash":"80e6f25c46f253b99a0f130b16b1350e31538c06c3969a22e574cb4a6cdfaf7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getTagName","kind":"method","status":"implemented","sigHash":"391d8292148fcef36d5507213d02d50717168b47816d49b9fa4b77e19ee0f43c","bodyHash":"80e6f25c46f253b99a0f130b16b1350e31538c06c3969a22e574cb4a6cdfaf7e"}
  *
  * Go source:
  * func (tx *JSXTransformer) getTagName(node *ast.Node) *ast.Node {
@@ -577,11 +885,30 @@ export function JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiv
  * }
  */
 export function JSXTransformer_getTagName(receiver: GoPtr<JSXTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getTagName");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  if (node!.Kind === KindJsxElement) {
+    return JSXTransformer_getTagName(receiver, AsJsxElement(node)!.OpeningElement);
+  } else if (IsJsxOpeningLikeElement(node)) {
+    const tagName = Node_TagName(node);
+    if (IsIdentifier(tagName) && IsIntrinsicJsxName(Node_Text(tagName))) {
+      return NewStringLiteral(astFactory, Node_Text(tagName), TokenFlagsNone);
+    } else if (IsJsxNamespacedName(tagName)) {
+      return NewStringLiteral(
+        astFactory,
+        Node_Text(AsJsxNamespacedName(tagName)!.Namespace) + ":" + Node_Text(AsJsxNamespacedName(tagName)!.name),
+        TokenFlagsNone,
+      );
+    } else {
+      return NodeFactory_CreateExpressionFromEntityName(factory, tagName);
+    }
+  } else {
+    throw new globalThis.Error("unhandled node kind passed to getTagName: " + KindString(node!.Kind));
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementJSX","kind":"method","status":"stub","sigHash":"6f2cee7e0bb8987f9d608a701b8d8908570f8cad3e60f0f9365acd8ec31f426d","bodyHash":"cc37a8bc8ffccbda13197a68d678249243f66a4f7746eb70e8d1a673817a5b7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementJSX","kind":"method","status":"implemented","sigHash":"6f2cee7e0bb8987f9d608a701b8d8908570f8cad3e60f0f9365acd8ec31f426d","bodyHash":"cc37a8bc8ffccbda13197a68d678249243f66a4f7746eb70e8d1a673817a5b7e"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementJSX(element *ast.Node, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -620,11 +947,45 @@ export function JSXTransformer_getTagName(receiver: GoPtr<JSXTransformer>, node:
  * }
  */
 export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSXTransformer>, element: GoPtr<Node>, children: GoPtr<NodeList>, location: TextRange): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementJSX");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const tagName = JSXTransformer_getTagName(receiver, element);
+  let childrenProp: GoPtr<Node> = undefined;
+  if (children !== undefined && children!.Nodes.length > 0) {
+    childrenProp = JSXTransformer_convertJsxChildrenToChildrenPropAssignment(receiver, children!.Nodes as GoSlice<GoPtr<JsxChild>>);
+  }
+  let keyAttr: GoPtr<Node> = undefined;
+  let attrs: GoSlice<GoPtr<Node>> = Node_Properties(Node_Attributes(element)) ?? [];
+  for (let i = 0; i < attrs.length; i++) {
+    const p = attrs[i]!;
+    if (p!.Kind === KindJsxAttribute && Node_Name(p) !== undefined && IsIdentifier(Node_Name(p)) && Node_Text(Node_Name(p)) === "key") {
+      keyAttr = p;
+      attrs = [...attrs.slice(0, i), ...attrs.slice(i + 1)];
+      break;
+    }
+  }
+  let object: GoPtr<Node>;
+  if (attrs.length > 0) {
+    object = JSXTransformer_transformJsxAttributesToObjectProps(receiver, attrs, childrenProp);
+  } else {
+    const objectChildren: GoSlice<GoPtr<Node>> = [];
+    if (childrenProp !== undefined) {
+      objectChildren.push(childrenProp);
+    }
+    object = NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, objectChildren), false); // When there are no attributes, React wants {}
+  }
+  return JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(
+    receiver,
+    tagName,
+    object,
+    keyAttr,
+    children,
+    location,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToObjectProps","kind":"method","status":"stub","sigHash":"a727ebb6c31c5d6a5f8db5db7c8c4abfd36c90ed88bd89a606ddf4e9783703b6","bodyHash":"e5ec2b7f47235718468b7768e16582f863d7fdefed5fd97c3527743e28b4842c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToObjectProps","kind":"method","status":"implemented","sigHash":"a727ebb6c31c5d6a5f8db5db7c8c4abfd36c90ed88bd89a606ddf4e9783703b6","bodyHash":"e5ec2b7f47235718468b7768e16582f863d7fdefed5fd97c3527743e28b4842c"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToObjectProps(attrs []*ast.Node, childrenProp *ast.Node) *ast.Node {
@@ -637,11 +998,18 @@ export function JSXTransformer_visitJsxOpeningLikeElementJSX(receiver: GoPtr<JSX
  * }
  */
 export function JSXTransformer_transformJsxAttributesToObjectProps(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToObjectProps");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const target = CompilerOptions_GetEmitScriptTarget(receiver!.compilerOptions);
+  if (target >= ScriptTargetES2018) {
+    // target has object spreads, can keep as-is
+    return NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, JSXTransformer_transformJsxAttributesToProps(receiver, attrs, childrenProp)), false);
+  }
+  return JSXTransformer_transformJsxAttributesToExpression(receiver, attrs, childrenProp);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToExpression","kind":"method","status":"stub","sigHash":"096a5d938414fe75c743c0cb6cd3c152131082656fc2a51751f5fb5aff89ed11","bodyHash":"75a14f92ddde5f8b879c046bcc4e23cc3aabd60a3f945f924d48deb4afbf0ee0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToExpression","kind":"method","status":"implemented","sigHash":"096a5d938414fe75c743c0cb6cd3c152131082656fc2a51751f5fb5aff89ed11","bodyHash":"75a14f92ddde5f8b879c046bcc4e23cc3aabd60a3f945f924d48deb4afbf0ee0"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToExpression(attrs []*ast.Node, childrenProp *ast.Node) *ast.Node {
@@ -690,11 +1058,54 @@ export function JSXTransformer_transformJsxAttributesToObjectProps(receiver: GoP
  * }
  */
 export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToExpression");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  let expressions: GoSlice<GoPtr<Expression>> = [];
+  let properties: GoSlice<GoPtr<ObjectLiteralElement>> = [];
+
+  for (const attr of attrs) {
+    if (IsJsxSpreadAttribute(attr)) {
+      // as an optimization we try to flatten the first level of spread inline object
+      // as if its props would be passed as JSX attributes
+      if (IsObjectLiteralExpression(Node_Expression(attr)) && !hasProto(AsObjectLiteralExpression(Node_Expression(attr)))) {
+        for (const prop of Node_Properties(Node_Expression(attr)) ?? []) {
+          if (IsSpreadAssignment(prop)) {
+            [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
+            expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(Node_Expression(prop))];
+            continue;
+          }
+          properties = [...properties, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(prop)];
+        }
+        continue;
+      }
+      [expressions, properties] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
+      expressions = [...expressions, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(Node_Expression(attr))];
+      continue;
+    }
+    properties = [...properties, JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver, AsJsxAttribute(attr))];
+  }
+
+  if (childrenProp !== undefined) {
+    properties = [...properties, childrenProp];
+  }
+
+  [expressions] = JSXTransformer_combinePropertiesIntoNewExpression(receiver, expressions, properties);
+
+  if (expressions.length > 0 && !IsObjectLiteralExpression(expressions[0])) {
+    // We must always emit at least one object literal before a spread attribute
+    // as the JSX always factory expects a fresh object, so we need to make a copy here
+    // we also avoid mutating an external reference by doing this (first expression is used as assign's target)
+    expressions = [NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false), ...expressions];
+  }
+
+  if (expressions.length === 1) {
+    return expressions[0];
+  }
+  return NodeFactory_NewAssignHelper(factory, expressions, CompilerOptions_GetEmitScriptTarget(receiver!.compilerOptions));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.combinePropertiesIntoNewExpression","kind":"method","status":"stub","sigHash":"5a0fac7dfda6d2247e496d797fc22b2a9adc5570cd18c6ccd50bc7d28f216539","bodyHash":"c96d3b385d24749305210b9f559b73af32fc96bb7c49a39c01aec4e05693c136"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.combinePropertiesIntoNewExpression","kind":"method","status":"implemented","sigHash":"5a0fac7dfda6d2247e496d797fc22b2a9adc5570cd18c6ccd50bc7d28f216539","bodyHash":"c96d3b385d24749305210b9f559b73af32fc96bb7c49a39c01aec4e05693c136"}
  *
  * Go source:
  * func (tx *JSXTransformer) combinePropertiesIntoNewExpression(expressions []*ast.Expression, props []*ast.ObjectLiteralElement) ([]*ast.Expression, []*ast.ObjectLiteralElement) {
@@ -707,11 +1118,18 @@ export function JSXTransformer_transformJsxAttributesToExpression(receiver: GoPt
  * }
  */
 export function JSXTransformer_combinePropertiesIntoNewExpression(receiver: GoPtr<JSXTransformer>, expressions: GoSlice<GoPtr<Expression>>, props: GoSlice<GoPtr<ObjectLiteralElement>>): [GoSlice<GoPtr<Expression>>, GoSlice<GoPtr<ObjectLiteralElement>>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.combinePropertiesIntoNewExpression");
+  if (props.length === 0) {
+    return [expressions, props];
+  }
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const newObj = NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, props), false);
+  const newExpressions = [...expressions, newObj];
+  return [newExpressions, []];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToProps","kind":"method","status":"stub","sigHash":"769720f39f3d89219d911d9edc628adec9dbfd2fda8983f30b7a9604a84d8011","bodyHash":"dc41db1c97a9339d3ddc4f58be1d67823802ddf603c2a1e6c074274d1559612d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToProps","kind":"method","status":"implemented","sigHash":"769720f39f3d89219d911d9edc628adec9dbfd2fda8983f30b7a9604a84d8011","bodyHash":"dc41db1c97a9339d3ddc4f58be1d67823802ddf603c2a1e6c074274d1559612d"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributesToProps(attrs []*ast.Node, childrenProp *ast.Node) []*ast.Node {
@@ -731,11 +1149,23 @@ export function JSXTransformer_combinePropertiesIntoNewExpression(receiver: GoPt
  * }
  */
 export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSXTransformer>, attrs: GoSlice<GoPtr<Node>>, childrenProp: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributesToProps");
+  const props: GoSlice<GoPtr<Node>> = [];
+  for (const attr of attrs) {
+    if (attr!.Kind === KindJsxSpreadAttribute) {
+      const res = JSXTransformer_transformJsxSpreadAttributesToProps(receiver, AsJsxSpreadAttribute(attr));
+      props.push(...res);
+    } else {
+      props.push(JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver, AsJsxAttribute(attr)));
+    }
+  }
+  if (childrenProp !== undefined) {
+    props.push(childrenProp);
+  }
+  return props;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasProto","kind":"func","status":"stub","sigHash":"8d95351a84f4bc2ae415834ab3d41bb981c05e55c24cfeedc6ff815025e15330","bodyHash":"d64fa2c1b9665ca0771b894c15bcabf9780cb958eb1654c4bb08c45e3376b524"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasProto","kind":"func","status":"implemented","sigHash":"8d95351a84f4bc2ae415834ab3d41bb981c05e55c24cfeedc6ff815025e15330","bodyHash":"d64fa2c1b9665ca0771b894c15bcabf9780cb958eb1654c4bb08c45e3376b524"}
  *
  * Go source:
  * func hasProto(obj *ast.ObjectLiteralExpression) bool {
@@ -748,11 +1178,16 @@ export function JSXTransformer_transformJsxAttributesToProps(receiver: GoPtr<JSX
  * }
  */
 export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::func::hasProto");
+  for (const p of obj!.Properties!.Nodes) {
+    if (IsPropertyAssignment(p) && (IsStringLiteral(Node_Name(p)) || IsIdentifier(Node_Name(p))) && Node_Text(Node_Name(p)) === "__proto__") {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps","kind":"method","status":"stub","sigHash":"d18800099aa396872b1797984584d6102eef25d9f9c431ab09974a7641256fa5","bodyHash":"c649130bc66ab2a46c97fe5bd8717b11456f94d3851cdb275204b4df47da2cd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps","kind":"method","status":"implemented","sigHash":"d18800099aa396872b1797984584d6102eef25d9f9c431ab09974a7641256fa5","bodyHash":"c649130bc66ab2a46c97fe5bd8717b11456f94d3851cdb275204b4df47da2cd5"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxSpreadAttributesToProps(node *ast.JsxSpreadAttribute) []*ast.Node {
@@ -764,11 +1199,17 @@ export function hasProto(obj: GoPtr<ObjectLiteralExpression>): bool {
  * }
  */
 export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoPtr<JSXTransformer>, node: GoPtr<JsxSpreadAttribute>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxSpreadAttributesToProps");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  if (IsObjectLiteralExpression(node!.Expression) && !hasProto(AsObjectLiteralExpression(node!.Expression))) {
+    const [res] = NodeVisitor_VisitSlice(Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as ConcreteNodeVisitor, Node_Properties(node!.Expression) ?? []);
+    return res;
+  }
+  return [NewSpreadAssignment(astFactory, (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node!.Expression))];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeToObjectLiteralElement","kind":"method","status":"stub","sigHash":"773dbf9e494f64d11be73d404f338adf4ed8a1e73527c767ba00681c94cd9351","bodyHash":"7dfd0d0ed6fe122b1073cc781cc20c546dffe1e43d0f4c86b14a7b8beb91b8f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeToObjectLiteralElement","kind":"method","status":"implemented","sigHash":"773dbf9e494f64d11be73d404f338adf4ed8a1e73527c767ba00681c94cd9351","bodyHash":"7dfd0d0ed6fe122b1073cc781cc20c546dffe1e43d0f4c86b14a7b8beb91b8f8"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributeToObjectLiteralElement(node *ast.JsxAttribute) *ast.Node {
@@ -778,11 +1219,15 @@ export function JSXTransformer_transformJsxSpreadAttributesToProps(receiver: GoP
  * }
  */
 export function JSXTransformer_transformJsxAttributeToObjectLiteralElement(receiver: GoPtr<JSXTransformer>, node: GoPtr<JsxAttribute>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeToObjectLiteralElement");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const name = JSXTransformer_getAttributeName(receiver, node);
+  const expression = JSXTransformer_transformJsxAttributeInitializer(receiver, node!.Initializer as unknown as GoPtr<Node>);
+  return NewPropertyAssignment(astFactory, undefined, name, undefined, undefined, expression);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"stub","sigHash":"e164f6c3b366746481f32e6ec8643428d4b7b03c4e270d03d6b9014b0f5bff67","bodyHash":"03efd43451396c58ae7a0d84cde26e787f61a369f10af9f6c85e0e5dd5f16d01"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName","kind":"method","status":"implemented","sigHash":"e164f6c3b366746481f32e6ec8643428d4b7b03c4e270d03d6b9014b0f5bff67","bodyHash":"03efd43451396c58ae7a0d84cde26e787f61a369f10af9f6c85e0e5dd5f16d01"}
  *
  * Go source:
  * func (tx *JSXTransformer) getAttributeName(node *ast.JsxAttribute) *ast.Node {
@@ -801,11 +1246,26 @@ export function JSXTransformer_transformJsxAttributeToObjectLiteralElement(recei
  * }
  */
 export function JSXTransformer_getAttributeName(receiver: GoPtr<JSXTransformer>, node: GoPtr<JsxAttribute>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.getAttributeName");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const name = node!.name as unknown as GoPtr<Node>;
+  if (IsIdentifier(name)) {
+    const text = Node_Text(name);
+    if (IsIdentifierText(text, LanguageVariantStandard)) {
+      return name;
+    }
+    return NewStringLiteral(astFactory, text, TokenFlagsNone);
+  }
+  // must be jsx namespace
+  return NewStringLiteral(
+    astFactory,
+    Node_Text(AsJsxNamespacedName(name)!.Namespace) + ":" + Node_Text(AsJsxNamespacedName(name)!.name),
+    TokenFlagsNone,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeInitializer","kind":"method","status":"stub","sigHash":"992a1b432f04a4f8c4c54860261947e8dc740d85db48926d8b9acd53973a8a43","bodyHash":"c71c56322e634623a1ea54b4e2012c49d105b6311800cc97f1bf676475b365ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeInitializer","kind":"method","status":"implemented","sigHash":"992a1b432f04a4f8c4c54860261947e8dc740d85db48926d8b9acd53973a8a43","bodyHash":"c71c56322e634623a1ea54b4e2012c49d105b6311800cc97f1bf676475b365ec"}
  *
  * Go source:
  * func (tx *JSXTransformer) transformJsxAttributeInitializer(node *ast.Node) *ast.Node {
@@ -835,11 +1295,35 @@ export function JSXTransformer_getAttributeName(receiver: GoPtr<JSXTransformer>,
  * }
  */
 export function JSXTransformer_transformJsxAttributeInitializer(receiver: GoPtr<JSXTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.transformJsxAttributeInitializer");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  if (node === undefined) {
+    return NodeFactory_NewTrueExpression(factory);
+  }
+  if (node!.Kind === KindStringLiteral) {
+    // Always recreate the literal to escape any escape sequences or newlines which may be in the original jsx string and which
+    // Need to be escaped to be handled correctly in a normal string
+    const res = NewStringLiteral(astFactory, decodeEntities(Node_Text(node)), AsStringLiteral(node)!.TokenFlags);
+    res!.Loc = node!.Loc;
+    // Preserve the original quote style (single vs double quotes)
+    AsStringLiteral(res)!.TokenFlags = AsStringLiteral(node)!.TokenFlags;
+    return res;
+  }
+  if (node!.Kind === KindJsxExpression) {
+    if (AsJsxExpression(node)!.Expression === undefined) {
+      return NodeFactory_NewTrueExpression(factory);
+    }
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(AsJsxExpression(node)!.Expression as unknown as GoPtr<Node>);
+  }
+  if (IsJsxElement(node) || IsJsxSelfClosingElement(node) || IsJsxFragment(node)) {
+    JSXTransformer_setInChild(receiver, false);
+    return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node);
+  }
+  throw new globalThis.Error("Unhandled node kind found in jsx initializer: " + KindString(node!.Kind));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementOrFragmentJSX","kind":"method","status":"stub","sigHash":"5ad4943db7b62c70024513125b0c4c95406c1a83f951fb1bd3a6affce95b3784","bodyHash":"da74b1ee3b0a58a64ee05ce57e0adf5ef3220d5f18eea0db1c45699727f67483"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementOrFragmentJSX","kind":"method","status":"implemented","sigHash":"5ad4943db7b62c70024513125b0c4c95406c1a83f951fb1bd3a6affce95b3784","bodyHash":"da74b1ee3b0a58a64ee05ce57e0adf5ef3220d5f18eea0db1c45699727f67483"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementOrFragmentJSX(
@@ -898,11 +1382,68 @@ export function JSXTransformer_transformJsxAttributeInitializer(receiver: GoPtr<
  * }
  */
 export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver: GoPtr<JSXTransformer>, tagName: GoPtr<Expression>, object: GoPtr<Expression>, keyAttr: GoPtr<Node>, children: GoPtr<NodeList>, location: TextRange): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementOrFragmentJSX");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  let nonWhitespaceChildren: GoSlice<GoPtr<Node>> = [];
+  if (children !== undefined) {
+    nonWhitespaceChildren = GetSemanticJsxChildren(children!.Nodes as GoSlice<GoPtr<JsxChild>>);
+  }
+  const isStaticChildren =
+    nonWhitespaceChildren.length > 1 ||
+    (nonWhitespaceChildren.length === 1 && IsJsxExpression(nonWhitespaceChildren[0]) && AsJsxExpression(nonWhitespaceChildren[0])!.DotDotDotToken !== undefined);
+  const args: GoSlice<GoPtr<Node>> = [];
+  args.push(tagName as unknown as GoPtr<Node>);
+  args.push(object as unknown as GoPtr<Node>);
+  // function jsx(type, config, maybeKey) {}
+  // "maybeKey" is optional. It is acceptable to use "_jsx" without a third argument
+  if (keyAttr !== undefined) {
+    args.push(JSXTransformer_transformJsxAttributeInitializer(receiver, Node_Initializer(keyAttr)));
+  }
+
+  if (receiver!.compilerOptions!.Jsx === JsxEmitReactJSXDev) {
+    const originalFile = EmitContext_MostOriginal(emitContext, receiver!.currentSourceFile as unknown as GoPtr<Node>);
+    if (originalFile !== undefined && IsSourceFile(originalFile)) {
+      // "maybeKey" has to be replaced with "void 0" to not break the jsxDEV signature
+      if (keyAttr === undefined) {
+        args.push(NodeFactory_NewVoidZeroExpression(factory) as unknown as GoPtr<Node>);
+      }
+      // isStaticChildren development flag
+      if (isStaticChildren) {
+        args.push(NodeFactory_NewTrueExpression(factory) as unknown as GoPtr<Node>);
+      } else {
+        args.push(NodeFactory_NewFalseExpression(factory) as unknown as GoPtr<Node>);
+      }
+      // __source development flag
+      const [line, col] = GetECMALineAndUTF16CharacterOfPosition(AsSourceFile(originalFile) as unknown as SourceFileLike, location.pos);
+      args.push(
+        NewObjectLiteralExpression(
+          astFactory,
+          NodeFactory_NewNodeList(astFactory, [
+            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "fileName"), undefined, undefined, JSXTransformer_getCurrentFileNameExpression(receiver) as unknown as GoPtr<Node>),
+            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "lineNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(line + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>),
+            NewPropertyAssignment(astFactory, undefined, NewIdentifier(astFactory, "columnNumber"), undefined, undefined, NewNumericLiteral(astFactory, FormatInt(col + 1, 10), TokenFlagsNone) as unknown as GoPtr<Node>),
+          ]),
+          false,
+        ) as unknown as GoPtr<Node>,
+      );
+      // __self development flag
+      args.push(NodeFactory_NewThisExpression(factory) as unknown as GoPtr<Node>);
+    }
+  }
+
+  const element = NewCallExpression(astFactory, JSXTransformer_getJsxFactoryCallee(receiver, isStaticChildren) as unknown as GoPtr<Node>, undefined, undefined, NodeFactory_NewNodeList(astFactory, args), NodeFlagsNone);
+  element!.Loc = location;
+
+  if (receiver!.inJsxChild) {
+    EmitContext_AddEmitFlags(emitContext, element as unknown as GoPtr<Node>, EFStartOnNewLine);
+  }
+
+  return element as unknown as GoPtr<Node>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentJSX","kind":"method","status":"stub","sigHash":"ee40516ff6c23ef634ea95583d0e4cb6a4d8f85238a7524bc14236cbf8f17086","bodyHash":"ee18639fc0c685d5a90af15a5beac0155a75ef87aaf8ddab4a0abbfe7fb7132b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentJSX","kind":"method","status":"implemented","sigHash":"ee40516ff6c23ef634ea95583d0e4cb6a4d8f85238a7524bc14236cbf8f17086","bodyHash":"ee18639fc0c685d5a90af15a5beac0155a75ef87aaf8ddab4a0abbfe7fb7132b"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningFragmentJSX(fragment *ast.JsxOpeningFragment, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -926,11 +1467,30 @@ export function JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(receiver:
  * }
  */
 export function JSXTransformer_visitJsxOpeningFragmentJSX(receiver: GoPtr<JSXTransformer>, fragment: GoPtr<JsxOpeningFragment>, children: GoPtr<NodeList>, location: TextRange): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentJSX");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  let childrenProps: GoPtr<Expression> = undefined;
+  if (children !== undefined && children!.Nodes.length > 0) {
+    const result = JSXTransformer_convertJsxChildrenToChildrenPropObject(receiver, children!.Nodes as GoSlice<GoPtr<JsxChild>>);
+    if (result !== undefined) {
+      childrenProps = result as unknown as GoPtr<Expression>;
+    }
+  }
+  if (childrenProps === undefined) {
+    childrenProps = NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false) as unknown as GoPtr<Expression>;
+  }
+  return JSXTransformer_visitJsxOpeningLikeElementOrFragmentJSX(
+    receiver,
+    JSXTransformer_getImplicitJsxFragmentReference(receiver) as unknown as GoPtr<Expression>,
+    childrenProps,
+    undefined,
+    children,
+    location,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createReactNamespace","kind":"method","status":"stub","sigHash":"d18c67a2e8e841a49ac09ddd532c5c3677623b64c54a90f8ea17e51812a46a10","bodyHash":"37581b853ca0f40a5f3c77d0e7c9c862d47f9fa0eedd0b52f2124a6f2e2b2980"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createReactNamespace","kind":"method","status":"implemented","sigHash":"d18c67a2e8e841a49ac09ddd532c5c3677623b64c54a90f8ea17e51812a46a10","bodyHash":"37581b853ca0f40a5f3c77d0e7c9c862d47f9fa0eedd0b52f2124a6f2e2b2980"}
  *
  * Go source:
  * func (tx *JSXTransformer) createReactNamespace(reactNamespace string, parent *ast.Node) *ast.Node {
@@ -960,11 +1520,33 @@ export function JSXTransformer_visitJsxOpeningFragmentJSX(receiver: GoPtr<JSXTra
  * }
  */
 export function JSXTransformer_createReactNamespace(receiver: GoPtr<JSXTransformer>, reactNamespace: string, parent: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createReactNamespace");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  // To ensure the emit resolver can properly resolve the namespace, we need to
+  // treat this identifier as if it were a source tree node by clearing the `Synthesized`
+  // flag and setting a parent node.
+  const ns = reactNamespace.length === 0 ? "React" : reactNamespace;
+  const react = NewIdentifier(astFactory, ns);
+  react!.Flags = (react!.Flags & ~NodeFlagsSynthesized) >>> 0;
+
+  // Set the parent that is in parse tree
+  // this makes sure that parent chain is intact for checker to traverse complete scope tree
+  react!.Parent = EmitContext_ParseNode(emitContext, parent); // Parent is intentionally wired to a parse-tree node for resolver traversal.
+
+  // If the identifier refers to an exported member of a namespace, substitute with
+  // a qualified namespace property access (e.g., `React` -> `M.React`).
+  const container = receiver!.emitResolver!.__tsgoEmbedded0!.GetReferencedExportContainer(react as unknown as GoPtr<Node>, false /*prefixLocals*/);
+  if (container !== undefined && IsModuleDeclaration(container as unknown as GoPtr<Node>)) {
+    const containerName = NodeFactory_NewGeneratedNameForNode(factory, container as unknown as GoPtr<Node>);
+    return NewPropertyAccessExpression(astFactory, containerName, undefined, react as unknown as GoPtr<Node>, NodeFlagsNone);
+  }
+
+  return react as unknown as GoPtr<Node>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpressionFromEntityName","kind":"method","status":"stub","sigHash":"f10375993dbd1f03075f6372af5c6bfa4ba55d2c60e08cdd88cda529e8116928","bodyHash":"d4bd43371721963dec7b536feb41df61e366b1703ff89a3447018ec6fb9cb7ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpressionFromEntityName","kind":"method","status":"implemented","sigHash":"f10375993dbd1f03075f6372af5c6bfa4ba55d2c60e08cdd88cda529e8116928","bodyHash":"d4bd43371721963dec7b536feb41df61e366b1703ff89a3447018ec6fb9cb7ec"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFactoryExpressionFromEntityName(e *ast.Node, parent *ast.Node) *ast.Node {
@@ -977,11 +1559,18 @@ export function JSXTransformer_createReactNamespace(receiver: GoPtr<JSXTransform
  * }
  */
 export function JSXTransformer_createJsxFactoryExpressionFromEntityName(receiver: GoPtr<JSXTransformer>, e: GoPtr<Node>, parent: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpressionFromEntityName");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  if (IsQualifiedName(e)) {
+    const left = JSXTransformer_createJsxFactoryExpressionFromEntityName(receiver, AsQualifiedName(e)!.Left as unknown as GoPtr<Node>, parent);
+    const right = NewIdentifier(astFactory, Node_Text(AsQualifiedName(e)!.Right as unknown as GoPtr<Node>));
+    return NewPropertyAccessExpression(astFactory, left, undefined, right as unknown as GoPtr<Node>, NodeFlagsNone);
+  }
+  return JSXTransformer_createReactNamespace(receiver, Node_Text(e), parent);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxPseudoFactoryExpression","kind":"method","status":"stub","sigHash":"77be78769325668cbeac36ec71745d7051f8f9619dcb9d9b18999e13ce5b2ab6","bodyHash":"d5fa84b5232dfebbd22e26a60d34539091101162b37faefafd6c34d759e89ba2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxPseudoFactoryExpression","kind":"method","status":"implemented","sigHash":"77be78769325668cbeac36ec71745d7051f8f9619dcb9d9b18999e13ce5b2ab6","bodyHash":"d5fa84b5232dfebbd22e26a60d34539091101162b37faefafd6c34d759e89ba2"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxPseudoFactoryExpression(parent *ast.Node, e *ast.Node, target string) *ast.Node {
@@ -997,11 +1586,22 @@ export function JSXTransformer_createJsxFactoryExpressionFromEntityName(receiver
  * }
  */
 export function JSXTransformer_createJsxPseudoFactoryExpression(receiver: GoPtr<JSXTransformer>, parent: GoPtr<Node>, e: GoPtr<Node>, target: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxPseudoFactoryExpression");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  if (e !== undefined) {
+    return JSXTransformer_createJsxFactoryExpressionFromEntityName(receiver, e, parent);
+  }
+  return NewPropertyAccessExpression(
+    astFactory,
+    JSXTransformer_createReactNamespace(receiver, receiver!.compilerOptions!.ReactNamespace, parent),
+    undefined,
+    NewIdentifier(astFactory, target) as unknown as GoPtr<Node>,
+    NodeFlagsNone,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpression","kind":"method","status":"stub","sigHash":"af223043145f5d5727d5424d8e8411b4355e5aef7122d8527bcf5bea106c9e08","bodyHash":"71ccc2393509e696a5ecc5a2c27c7f90b7d2a1bf122c8b51bdee3372d7b07491"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpression","kind":"method","status":"implemented","sigHash":"af223043145f5d5727d5424d8e8411b4355e5aef7122d8527bcf5bea106c9e08","bodyHash":"71ccc2393509e696a5ecc5a2c27c7f90b7d2a1bf122c8b51bdee3372d7b07491"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFactoryExpression(parent *ast.Node) *ast.Node {
@@ -1010,11 +1610,12 @@ export function JSXTransformer_createJsxPseudoFactoryExpression(receiver: GoPtr<
  * }
  */
 export function JSXTransformer_createJsxFactoryExpression(receiver: GoPtr<JSXTransformer>, parent: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFactoryExpression");
+  const e = receiver!.emitResolver!.GetJsxFactoryEntity(receiver!.currentSourceFile as unknown as GoPtr<Node>);
+  return JSXTransformer_createJsxPseudoFactoryExpression(receiver, parent, e, "createElement");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFragmentFactoryExpression","kind":"method","status":"stub","sigHash":"eef477f14fe925ed7203e644439a87ef8557bf1eb94db83eb87a360fad79731b","bodyHash":"c61c6a131ac5fe16beaf992bed0b88edfa9b7cc2fb262e91b0ceb1002d415b89"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFragmentFactoryExpression","kind":"method","status":"implemented","sigHash":"eef477f14fe925ed7203e644439a87ef8557bf1eb94db83eb87a360fad79731b","bodyHash":"c61c6a131ac5fe16beaf992bed0b88edfa9b7cc2fb262e91b0ceb1002d415b89"}
  *
  * Go source:
  * func (tx *JSXTransformer) createJsxFragmentFactoryExpression(parent *ast.Node) *ast.Node {
@@ -1023,11 +1624,12 @@ export function JSXTransformer_createJsxFactoryExpression(receiver: GoPtr<JSXTra
  * }
  */
 export function JSXTransformer_createJsxFragmentFactoryExpression(receiver: GoPtr<JSXTransformer>, parent: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.createJsxFragmentFactoryExpression");
+  const e = receiver!.emitResolver!.GetJsxFragmentFactoryEntity(receiver!.currentSourceFile as unknown as GoPtr<Node>);
+  return JSXTransformer_createJsxPseudoFactoryExpression(receiver, parent, e, "Fragment");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementCreateElement","kind":"method","status":"stub","sigHash":"5aa5881cbd88d11788e6e2386acc7e6036dee885c48cbb1e1ad117adbe99d843","bodyHash":"e928e1e7bb85e27ddc87240dbc25e2e6fb9b42427ad08718436d526ea20dddb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementCreateElement","kind":"method","status":"implemented","sigHash":"5aa5881cbd88d11788e6e2386acc7e6036dee885c48cbb1e1ad117adbe99d843","bodyHash":"e928e1e7bb85e27ddc87240dbc25e2e6fb9b42427ad08718436d526ea20dddb7"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningLikeElementCreateElement(element *ast.Node, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -1085,11 +1687,65 @@ export function JSXTransformer_createJsxFragmentFactoryExpression(receiver: GoPt
  * }
  */
 export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver: GoPtr<JSXTransformer>, element: GoPtr<Node>, children: GoPtr<NodeList>, location: TextRange): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningLikeElementCreateElement");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  const tagName = JSXTransformer_getTagName(receiver, element);
+  const attrs = Node_Properties(Node_Attributes(element)) ?? [];
+  let objectProperties: GoPtr<Expression>;
+  if (attrs.length > 0) {
+    objectProperties = JSXTransformer_transformJsxAttributesToObjectProps(receiver, attrs, undefined) as unknown as GoPtr<Expression>;
+  } else {
+    objectProperties = NewKeywordExpression(astFactory, KindNullKeyword) as unknown as GoPtr<Expression>; // When there are no attributes, React wants "null"
+  }
+
+  let callee: GoPtr<Expression>;
+  if (receiver!.importSpecifier.length === 0) {
+    callee = JSXTransformer_createJsxFactoryExpression(receiver, element) as unknown as GoPtr<Expression>;
+  } else {
+    callee = JSXTransformer_getImplicitImportForName(receiver, "createElement") as unknown as GoPtr<Expression>;
+  }
+
+  const newChildren: GoSlice<GoPtr<Node>> = [];
+  if (children !== undefined && children!.Nodes.length > 0) {
+    for (const c of children!.Nodes) {
+      const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
+      if (res !== undefined) {
+        newChildren.push(res);
+      }
+    }
+  }
+
+  // Add StartOnNewLine flag only if there are multiple actual children (after filtering)
+  if (newChildren.length > 1) {
+    for (const child of newChildren) {
+      EmitContext_AddEmitFlags(emitContext, child, EFStartOnNewLine);
+    }
+  }
+
+  const args: GoSlice<GoPtr<Node>> = [];
+  args.push(tagName);
+  args.push(objectProperties as unknown as GoPtr<Node>);
+  args.push(...newChildren);
+
+  const result = NewCallExpression(
+    astFactory,
+    callee as unknown as GoPtr<Node>,
+    undefined,
+    undefined,
+    NodeFactory_NewNodeList(astFactory, args),
+    NodeFlagsNone,
+  );
+  result!.Loc = location;
+
+  if (receiver!.inJsxChild) {
+    EmitContext_AddEmitFlags(emitContext, result as unknown as GoPtr<Node>, EFStartOnNewLine);
+  }
+  return result as unknown as GoPtr<Node>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentCreateElement","kind":"method","status":"stub","sigHash":"e34d68ca7a2a072a5a80c653f20618329581ac3fe489b095177582757f9bd99d","bodyHash":"5d2b9d9b6b9eaaa8fea5581de6e1d2e0425eb4ca8d4d5acf470c17ea90e29e5d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentCreateElement","kind":"method","status":"implemented","sigHash":"e34d68ca7a2a072a5a80c653f20618329581ac3fe489b095177582757f9bd99d","bodyHash":"5d2b9d9b6b9eaaa8fea5581de6e1d2e0425eb4ca8d4d5acf470c17ea90e29e5d"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxOpeningFragmentCreateElement(fragment *ast.JsxOpeningFragment, children *ast.NodeList, location core.TextRange) *ast.Node {
@@ -1134,11 +1790,52 @@ export function JSXTransformer_visitJsxOpeningLikeElementCreateElement(receiver:
  * }
  */
 export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: GoPtr<JSXTransformer>, fragment: GoPtr<JsxOpeningFragment>, children: GoPtr<NodeList>, location: TextRange): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxOpeningFragmentCreateElement");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  const tagName = JSXTransformer_createJsxFragmentFactoryExpression(receiver, fragment as unknown as GoPtr<Node>);
+  const callee = JSXTransformer_createJsxFactoryExpression(receiver, fragment as unknown as GoPtr<Node>);
+
+  const newChildren: GoSlice<GoPtr<Node>> = [];
+  if (children !== undefined && children!.Nodes.length > 0) {
+    for (const c of children!.Nodes) {
+      const res = JSXTransformer_transformJsxChildToExpression(receiver, c as unknown as GoPtr<Node>);
+      if (res !== undefined) {
+        newChildren.push(res);
+      }
+    }
+  }
+
+  // Add StartOnNewLine flag only if there are multiple actual children (after filtering)
+  if (newChildren.length > 1) {
+    for (const child of newChildren) {
+      EmitContext_AddEmitFlags(emitContext, child, EFStartOnNewLine);
+    }
+  }
+
+  const args: GoSlice<GoPtr<Node>> = [];
+  args.push(tagName);
+  args.push(NewKeywordExpression(astFactory, KindNullKeyword) as unknown as GoPtr<Node>);
+  args.push(...newChildren);
+
+  const result = NewCallExpression(
+    astFactory,
+    callee as unknown as GoPtr<Node>,
+    undefined,
+    undefined,
+    NodeFactory_NewNodeList(astFactory, args),
+    NodeFlagsNone,
+  );
+  result!.Loc = location;
+
+  if (receiver!.inJsxChild) {
+    EmitContext_AddEmitFlags(emitContext, result as unknown as GoPtr<Node>, EFStartOnNewLine);
+  }
+  return result as unknown as GoPtr<Node>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxText","kind":"method","status":"stub","sigHash":"dcea0b5d1d62ee7eccf9d3e721415c810dd34819039e0ed4f8cd74624b8f4376","bodyHash":"7d4e840d3930a133ece20ffd6742a4d2e59f954257e7a7688a932202cc186b20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxText","kind":"method","status":"implemented","sigHash":"dcea0b5d1d62ee7eccf9d3e721415c810dd34819039e0ed4f8cd74624b8f4376","bodyHash":"7d4e840d3930a133ece20ffd6742a4d2e59f954257e7a7688a932202cc186b20"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxText(text *ast.JsxText) *ast.Node {
@@ -1150,7 +1847,13 @@ export function JSXTransformer_visitJsxOpeningFragmentCreateElement(receiver: Go
  * }
  */
 export function JSXTransformer_visitJsxText(receiver: GoPtr<JSXTransformer>, text: GoPtr<JsxText>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxText");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const fixed = fixupWhitespaceAndDecodeEntities(text!.Text);
+  if (fixed.length === 0) {
+    return undefined;
+  }
+  return NewStringLiteral(astFactory, fixed, TokenFlagsNone);
 }
 
 /**
@@ -1267,7 +1970,7 @@ export function fixupWhitespaceAndDecodeEntities(text: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxExpression","kind":"method","status":"stub","sigHash":"16aa083d8146d82cdf8ef39a1825bdf6a10c05c98365ef2db031c15f22f23ea2","bodyHash":"b4a0734cb89f0d59c3c82adb4727a3c02c1a65b444fa0d86c82a3d7e236ddb67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxExpression","kind":"method","status":"implemented","sigHash":"16aa083d8146d82cdf8ef39a1825bdf6a10c05c98365ef2db031c15f22f23ea2","bodyHash":"b4a0734cb89f0d59c3c82adb4727a3c02c1a65b444fa0d86c82a3d7e236ddb67"}
  *
  * Go source:
  * func (tx *JSXTransformer) visitJsxExpression(expression *ast.JsxExpression) *ast.Node {
@@ -1279,7 +1982,13 @@ export function fixupWhitespaceAndDecodeEntities(text: string): string {
  * }
  */
 export function JSXTransformer_visitJsxExpression(receiver: GoPtr<JSXTransformer>, expression: GoPtr<JsxExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::method::JSXTransformer.visitJsxExpression");
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const e = (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(expression!.Expression as unknown as GoPtr<Node>);
+  if (expression!.DotDotDotToken !== undefined) {
+    return NewSpreadElement(astFactory, e);
+  }
+  return e;
 }
 
 /**

@@ -1,23 +1,35 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoError, GoPtr } from "../../../go/compat.js";
+import type { GoError, GoMap, GoPtr } from "../../../go/compat.js";
+import { ContainsFunc } from "../../../go/slices.js";
 import type { Node, NodeList } from "../../ast/spine.js";
-import { NodeDefault_AsNode, NodeList_End, NodeList_Pos } from "../../ast/spine.js";
+import { NodeDefault_AsNode, NodeList_End, NodeList_Pos, Node_Pos, Node_End } from "../../ast/spine.js";
 import type { CommentRange, SourceFile } from "../../ast/ast.js";
-import type { Block, TemplateLiteralTypeSpan, TemplateSpan } from "../../ast/generated/data.js";
-import type { Expression, TemplateLiteralTypeSpanNode, TemplateSpanNode } from "../../ast/generated/unions.js";
-import { AsTemplateLiteralTypeSpan, AsTemplateSpan } from "../../ast/generated/casts.js";
+import { SourceFile_Text } from "../../ast/ast.js";
+import type { IdentifierNode } from "../../ast/ast_generated.js";
+import type { Block, PartiallyEmittedExpression, TemplateLiteralTypeSpan, TemplateSpan } from "../../ast/generated/data.js";
+import type { Expression, TemplateLiteralTypeSpanNode, TemplateSpanNode, Statement } from "../../ast/generated/unions.js";
+import { AsTemplateLiteralTypeSpan, AsTemplateSpan, AsPartiallyEmittedExpression } from "../../ast/generated/casts.js";
 import type { Kind } from "../../ast/generated/kinds.js";
-import { KindCloseBraceToken, KindOpenBraceToken } from "../../ast/generated/kinds.js";
+import { KindCloseBraceToken, KindJsxText, KindOpenBraceToken, KindSingleLineCommentTrivia } from "../../ast/generated/kinds.js";
+import { IsInJsonFile, NodeIsSynthesized, PositionIsSynthesized } from "../../ast/utilities.js";
+import { IsNotEmittedStatement, IsParenthesizedExpression, IsPartiallyEmittedExpression, IsSourceFile } from "../../ast/generated/predicates.js";
 import type { TextRange } from "../../core/text.js";
-import { NewTextRange, TextRange_End } from "../../core/text.js";
+import { NewTextRange, TextRange_End, TextRange_Pos } from "../../core/text.js";
+import { FirstOrNil, LastOrNil } from "../../core/core.js";
+import { ScriptKindJSON } from "../../core/scriptkind.js";
 import type { Source } from "../../sourcemap/source.js";
 import { Generator_AddSource, Generator_SetSourceContent } from "../../sourcemap/generator.js";
 import { SplitLines, GuessIndentation } from "../../stringutil/util.js";
 import { FileExtensionIs } from "../../tspath/path.js";
 import { ExtensionJson } from "../../tspath/extension.js";
-import { EmitContext_EmitFlags } from "../emitcontext.js";
-import { EFMultiLine, EFNoTokenTrailingSourceMaps, EFSingleLine, EFStartOnNewLine } from "../emitflags.js";
-import { newLineCharacterCache, RangeIsOnSingleLine } from "../utilities.js";
+import { SkipTrivia, GetLeadingCommentRanges, GetTrailingCommentRanges } from "../../scanner/scanner.js";
+import { NodeFactory_AsNodeFactory } from "../../ast/spine.js";
+import { EmitContext_EmitFlags, EmitContext_GetSyntheticLeadingComments, EmitContext_MostOriginal, EmitContext_ParseNode, EmitContext_SourceMapRange, EmitContext_TokenSourceMapRange, EmitContext_GetExternalHelpersModuleName } from "../emitcontext.js";
+import type { SynthesizedComment } from "../emitcontext.js";
+import { EFExternalHelpers, EFMultiLine, EFNoLeadingSourceMap, EFNoNestedSourceMaps, EFNoTokenLeadingSourceMaps, EFNoTokenTrailingSourceMaps, EFNoTrailingSourceMap, EFSingleLine, EFStartOnNewLine } from "../emitflags.js";
+import { newLineCharacterCache, greatestEnd, getLinesBetweenRangeEndAndRangeStart, getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter, getLinesBetweenPositionAndNextNonWhitespaceCharacter, originalNodesHaveSameParent, rangeEndIsOnSameLineAsRangeStart, rangeEndPositionsAreOnSameLine, rangeStartPositionsAreOnSameLine, RangeIsOnSingleLine, siblingNodePositionsAreComparable, skipSynthesizedParentheses } from "../utilities.js";
+import { Arena_New } from "../../core/arena.js";
+import type { Arena } from "../../core/arena.js";
 import {
   Printer_emitListItems,
   Printer_emitPos,
@@ -26,13 +38,19 @@ import {
   Printer_exitNode,
   Printer_hasTrailingComma,
   Printer_increaseIndent,
+  Printer_pushNameGenerationScope,
+  Printer_popNameGenerationScope,
+  Printer_generateAllNames,
+  Printer_shouldElideIndentation,
+  Printer_emitHelpers,
   Printer_write,
   Printer_writePunctuation,
   Printer_writeSpace,
 } from "./emit-core.js";
-import { Printer_emitLeadingComments, Printer_emitTrailingComments } from "./comments.js";
-import { Printer_emitTemplateMiddleTail } from "./expressions.js";
+import { Printer_emitLeadingComments, Printer_emitTrailingComments, Printer_syntheticCommentWillEmitNewLine, Printer_emitPrologueDirectives, Printer_emitTripleSlashDirectives, Printer_emitDetachedCommentsBeforeStatementList, Printer_emitDetachedCommentsAfterStatementList } from "./comments.js";
+import { Printer_emitTemplateMiddleTail, Printer_emitExpression } from "./expressions.js";
 import { Printer_emitTypeNodeOutsideExtends } from "./types.js";
+import { Printer_emitStatement, Printer_emitShebangIfNeeded } from "./statements-declarations.js";
 import { getClosingBracket, getOpeningBracket } from "./support.js";
 import type { ListFormat, Printer, sourceMapState, tokenEmitFlags } from "./state.js";
 import {
@@ -44,9 +62,12 @@ import {
   LFOptionalIfEmpty,
   LFOptionalIfNil,
   LFPreferNewLine,
+  LFPreserveLines,
+  LFNoTrailingNewLine,
   LFSpaceBetweenBraces,
   tefNoSourceMaps,
 } from "./state.js";
+import { OperatorPrecedenceComma } from "../../ast/precedence.js";
 
 // Go strings are immutable UTF-8 byte sequences; `s[i:j]` and `len(s)` operate
 // on byte offsets. Mirror that contract by operating over the UTF-8 byte view
@@ -220,7 +241,7 @@ export function Printer_writeLineSeparatorsAfter(receiver: GoPtr<Printer>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLinesBetweenNodes","kind":"method","status":"stub","sigHash":"7efc48d3ae154a180f17dd7d30243e670708b9b371861308381b86dcb16b8384","bodyHash":"2d76a074daaabc7547427de2ebf5fdd093f490363d2e558f650e21fe90efd0b9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLinesBetweenNodes","kind":"method","status":"implemented","sigHash":"7efc48d3ae154a180f17dd7d30243e670708b9b371861308381b86dcb16b8384","bodyHash":"2d76a074daaabc7547427de2ebf5fdd093f490363d2e558f650e21fe90efd0b9"}
  *
  * Go source:
  * func (p *Printer) getLinesBetweenNodes(parent *ast.Node, node1 *ast.Node, node2 *ast.Node) int {
@@ -257,7 +278,35 @@ export function Printer_writeLineSeparatorsAfter(receiver: GoPtr<Printer>, node:
  * }
  */
 export function Printer_getLinesBetweenNodes(receiver: GoPtr<Printer>, parent: GoPtr<Node>, node1: GoPtr<Node>, node2: GoPtr<Node>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLinesBetweenNodes");
+  if (Printer_shouldElideIndentation(receiver, parent)) {
+    return 0 as int;
+  }
+
+  const parentSkipped = skipSynthesizedParentheses(parent);
+  const node1Skipped = skipSynthesizedParentheses(node1);
+  const node2Skipped = skipSynthesizedParentheses(node2);
+
+  // Always use a newline for synthesized code if the synthesizer desires it.
+  if (Printer_shouldEmitOnNewLine(receiver, node2Skipped, LFNone)) {
+    return 1 as int;
+  }
+
+  if (receiver!.currentSourceFile !== undefined && !NodeIsSynthesized(parentSkipped) && !NodeIsSynthesized(node1Skipped) && !NodeIsSynthesized(node2Skipped)) {
+    if (receiver!.Options.PreserveSourceNewlines) {
+      return Printer_getEffectiveLines(
+        receiver,
+        (includeComments: bool): int => getLinesBetweenRangeEndAndRangeStart(
+          node1Skipped!.Loc,
+          node2Skipped!.Loc,
+          receiver!.currentSourceFile,
+          includeComments,
+        ),
+      );
+    }
+    return (rangeEndIsOnSameLineAsRangeStart(node1Skipped!.Loc, node2Skipped!.Loc, receiver!.currentSourceFile) ? 0 : 1) as int;
+  }
+
+  return 0 as int;
 }
 
 /**
@@ -302,7 +351,7 @@ export function Printer_getEffectiveLines(receiver: GoPtr<Printer>, getLineDiffe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLeadingLineTerminatorCount","kind":"method","status":"stub","sigHash":"8b4eb3bf5b3f21870f677fb63723b281459580c99353ff0cd48a7272035b8d8f","bodyHash":"26c245cb9b11e375579e6ee45412772a2a625d653a32b1a5d3aa7aed546f2d0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLeadingLineTerminatorCount","kind":"method","status":"implemented","sigHash":"8b4eb3bf5b3f21870f677fb63723b281459580c99353ff0cd48a7272035b8d8f","bodyHash":"26c245cb9b11e375579e6ee45412772a2a625d653a32b1a5d3aa7aed546f2d0b"}
  *
  * Go source:
  * func (p *Printer) getLeadingLineTerminatorCount(parentNode *ast.Node, firstChild *ast.Node, format ListFormat) int {
@@ -362,11 +411,46 @@ export function Printer_getEffectiveLines(receiver: GoPtr<Printer>, getLineDiffe
  * }
  */
 export function Printer_getLeadingLineTerminatorCount(receiver: GoPtr<Printer>, parentNode: GoPtr<Node>, firstChild: GoPtr<Node>, format: ListFormat): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLeadingLineTerminatorCount");
+  if ((format & LFPreserveLines) !== 0 || receiver!.Options.PreserveSourceNewlines) {
+    if ((format & LFPreferNewLine) !== 0) {
+      return 1 as int;
+    }
+
+    if (firstChild === undefined) {
+      return (parentNode === undefined || (receiver!.currentSourceFile !== undefined && RangeIsOnSingleLine(parentNode!.Loc, receiver!.currentSourceFile)) ? 0 : 1) as int;
+    }
+    if (receiver!.nextListElementPos > 0 && Node_Pos(firstChild) === receiver!.nextListElementPos) {
+      return 0 as int;
+    }
+    if (firstChild!.Kind === KindJsxText) {
+      return 0 as int;
+    }
+    if (receiver!.currentSourceFile !== undefined && parentNode !== undefined &&
+      !PositionIsSynthesized(Node_Pos(parentNode)) &&
+      !NodeIsSynthesized(firstChild) &&
+      (firstChild!.Parent === undefined /*|| getOriginalNode(firstChild.Parent) == getOriginalNode(parentNode)*/)) {
+      if (receiver!.Options.PreserveSourceNewlines) {
+        return Printer_getEffectiveLines(
+          receiver,
+          (includeComments: bool): int => getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(
+            Node_Pos(firstChild),
+            Node_Pos(parentNode),
+            receiver!.currentSourceFile,
+            includeComments,
+          ),
+        );
+      }
+      return (rangeStartPositionsAreOnSameLine(parentNode!.Loc, firstChild!.Loc, receiver!.currentSourceFile) ? 0 : 1) as int;
+    }
+    if (Printer_shouldEmitOnNewLine(receiver, firstChild, format)) {
+      return 1 as int;
+    }
+  }
+  return ((format & LFMultiLine) !== 0 ? 1 : 0) as int;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getSeparatingLineTerminatorCount","kind":"method","status":"stub","sigHash":"c773105a2f5c575c9b94183a664bf9cdbf1674b395c88db4fddce2c553a200ec","bodyHash":"aa3aea2222f98a508e5dd448c8599107222997564e3f3cf76ad313743404f054"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getSeparatingLineTerminatorCount","kind":"method","status":"implemented","sigHash":"c773105a2f5c575c9b94183a664bf9cdbf1674b395c88db4fddce2c553a200ec","bodyHash":"aa3aea2222f98a508e5dd448c8599107222997564e3f3cf76ad313743404f054"}
  *
  * Go source:
  * func (p *Printer) getSeparatingLineTerminatorCount(previousNode *ast.Node, nextNode *ast.Node, format ListFormat) int {
@@ -410,11 +494,40 @@ export function Printer_getLeadingLineTerminatorCount(receiver: GoPtr<Printer>, 
  * }
  */
 export function Printer_getSeparatingLineTerminatorCount(receiver: GoPtr<Printer>, previousNode: GoPtr<Node>, nextNode: GoPtr<Node>, format: ListFormat): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getSeparatingLineTerminatorCount");
+  if ((format & LFPreserveLines) !== 0 || receiver!.Options.PreserveSourceNewlines) {
+    if (previousNode === undefined || nextNode === undefined) {
+      return 0 as int;
+    }
+    if (nextNode!.Kind === KindJsxText) {
+      return 0 as int;
+    } else if (receiver!.currentSourceFile !== undefined && !NodeIsSynthesized(previousNode) && !NodeIsSynthesized(nextNode)) {
+      if (receiver!.Options.PreserveSourceNewlines && siblingNodePositionsAreComparable(previousNode, nextNode)) {
+        return Printer_getEffectiveLines(
+          receiver,
+          (includeComments: bool): int => getLinesBetweenRangeEndAndRangeStart(
+            previousNode!.Loc,
+            nextNode!.Loc,
+            receiver!.currentSourceFile,
+            includeComments,
+          ),
+        );
+      } else if (!receiver!.Options.PreserveSourceNewlines && originalNodesHaveSameParent(previousNode, nextNode)) {
+        return (rangeEndIsOnSameLineAsRangeStart(previousNode!.Loc, nextNode!.Loc, receiver!.currentSourceFile) ? 0 : 1) as int;
+      }
+      // If the two nodes are not comparable, add a line terminator based on the format that can indicate
+      // whether new lines are preferred or not.
+      return ((format & LFPreferNewLine) !== 0 ? 1 : 0) as int;
+    } else if (Printer_shouldEmitOnNewLine(receiver, previousNode, format) || Printer_shouldEmitOnNewLine(receiver, nextNode, format)) {
+      return 1 as int;
+    }
+  } else if (Printer_shouldEmitOnNewLine(receiver, nextNode, LFNone)) {
+    return 1 as int;
+  }
+  return ((format & LFMultiLine) !== 0 ? 1 : 0) as int;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getClosingLineTerminatorCount","kind":"method","status":"stub","sigHash":"ec50f337724492ef38775af24d2906378de68d6b8a37ce19e6975057ea4c8493","bodyHash":"101f06f2f12d9c23589a94d4180d262bd98505bcb58d056725b9f02a546d5b91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getClosingLineTerminatorCount","kind":"method","status":"implemented","sigHash":"ec50f337724492ef38775af24d2906378de68d6b8a37ce19e6975057ea4c8493","bodyHash":"101f06f2f12d9c23589a94d4180d262bd98505bcb58d056725b9f02a546d5b91"}
  *
  * Go source:
  * func (p *Printer) getClosingLineTerminatorCount(parentNode *ast.Node, lastChild *ast.Node, format ListFormat, childrenTextRange core.TextRange) int {
@@ -452,7 +565,38 @@ export function Printer_getSeparatingLineTerminatorCount(receiver: GoPtr<Printer
  * }
  */
 export function Printer_getClosingLineTerminatorCount(receiver: GoPtr<Printer>, parentNode: GoPtr<Node>, lastChild: GoPtr<Node>, format: ListFormat, childrenTextRange: TextRange): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getClosingLineTerminatorCount");
+  if ((format & LFPreserveLines) !== 0 || receiver!.Options.PreserveSourceNewlines) {
+    if ((format & LFPreferNewLine) !== 0) {
+      return 1 as int;
+    }
+    if (lastChild === undefined) {
+      return (parentNode === undefined || (receiver!.currentSourceFile !== undefined && RangeIsOnSingleLine(parentNode!.Loc, receiver!.currentSourceFile)) ? 0 : 1) as int;
+    }
+    if (receiver!.currentSourceFile !== undefined && parentNode !== undefined && !PositionIsSynthesized(Node_Pos(parentNode)) && !NodeIsSynthesized(lastChild) && (lastChild!.Parent === undefined || lastChild!.Parent === parentNode)) {
+      if (receiver!.Options.PreserveSourceNewlines) {
+        const lastChildEnd = Node_End(lastChild);
+        const childrenTextRangeEnd = TextRange_End(childrenTextRange);
+        const end = (lastChildEnd > childrenTextRangeEnd ? lastChildEnd : childrenTextRangeEnd) as int;
+        return Printer_getEffectiveLines(
+          receiver,
+          (includeComments: bool): int => getLinesBetweenPositionAndNextNonWhitespaceCharacter(
+            end,
+            Node_End(parentNode),
+            receiver!.currentSourceFile,
+            includeComments,
+          ),
+        );
+      }
+      return (rangeEndPositionsAreOnSameLine(parentNode!.Loc, lastChild!.Loc, receiver!.currentSourceFile) ? 0 : 1) as int;
+    }
+    if (Printer_shouldEmitOnNewLine(receiver, lastChild, format)) {
+      return 1 as int;
+    }
+  }
+  if ((format & LFMultiLine) !== 0 && (format & LFNoTrailingNewLine) === 0) {
+    return 1 as int;
+  }
+  return 0 as int;
 }
 
 /**
@@ -480,7 +624,7 @@ export function Printer_shouldEmitOnMultipleLines(receiver: GoPtr<Printer>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitBlockFunctionBodyOnSingleLine","kind":"method","status":"stub","sigHash":"847c3c3411bed444282620cfe6d3272562663c485d525793a993758cff4c768d","bodyHash":"b4ced921f91cd2acd201f7fd3eb6d9023c486ed801a27bff2ae416572e2ffe08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitBlockFunctionBodyOnSingleLine","kind":"method","status":"implemented","sigHash":"847c3c3411bed444282620cfe6d3272562663c485d525793a993758cff4c768d","bodyHash":"b4ced921f91cd2acd201f7fd3eb6d9023c486ed801a27bff2ae416572e2ffe08"}
  *
  * Go source:
  * func (p *Printer) shouldEmitBlockFunctionBodyOnSingleLine(body *ast.Block) bool {
@@ -522,7 +666,32 @@ export function Printer_shouldEmitOnMultipleLines(receiver: GoPtr<Printer>, node
  * }
  */
 export function Printer_shouldEmitBlockFunctionBodyOnSingleLine(receiver: GoPtr<Printer>, body: GoPtr<Block>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitBlockFunctionBodyOnSingleLine");
+  if (Printer_shouldEmitOnSingleLine(receiver, NodeDefault_AsNode(body))) {
+    return true as bool;
+  }
+
+  if (body!.MultiLine) {
+    return false as bool;
+  }
+
+  if (!NodeIsSynthesized(NodeDefault_AsNode(body)) && receiver!.currentSourceFile !== undefined && !RangeIsOnSingleLine(body!.Loc, receiver!.currentSourceFile)) {
+    return false as bool;
+  }
+
+  if (Printer_getLeadingLineTerminatorCount(receiver, NodeDefault_AsNode(body), FirstOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines) > 0 ||
+    Printer_getClosingLineTerminatorCount(receiver, NodeDefault_AsNode(body), LastOrNil(body!.Statements!.Nodes) as GoPtr<Node>, LFPreserveLines, body!.Statements!.Loc) > 0) {
+    return false as bool;
+  }
+
+  let previousStatement: GoPtr<Node> = undefined;
+  for (const statement of body!.Statements!.Nodes) {
+    if (Printer_getSeparatingLineTerminatorCount(receiver, previousStatement, statement as GoPtr<Node>, LFPreserveLines) > 0) {
+      return false as bool;
+    }
+    previousStatement = statement as GoPtr<Node>;
+  }
+
+  return true as bool;
 }
 
 /**
@@ -544,7 +713,7 @@ export function Printer_shouldEmitOnNewLine(receiver: GoPtr<Printer>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitSourceMaps","kind":"method","status":"stub","sigHash":"8aa31e75d3e5632c8806a7e74df14c5fd0a7c4732113654cfcea59728ffe3de3","bodyHash":"c0036f386e2ae2071ade40722850fbdb210b2a1de2517bfc41fdc334ad9eff41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitSourceMaps","kind":"method","status":"implemented","sigHash":"8aa31e75d3e5632c8806a7e74df14c5fd0a7c4732113654cfcea59728ffe3de3","bodyHash":"c0036f386e2ae2071ade40722850fbdb210b2a1de2517bfc41fdc334ad9eff41"}
  *
  * Go source:
  * func (p *Printer) shouldEmitSourceMaps(node *ast.Node) bool {
@@ -555,7 +724,10 @@ export function Printer_shouldEmitOnNewLine(receiver: GoPtr<Printer>, node: GoPt
  * }
  */
 export function Printer_shouldEmitSourceMaps(receiver: GoPtr<Printer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.shouldEmitSourceMaps");
+  return (!receiver!.sourceMapsDisabled &&
+    receiver!.sourceMapSource !== undefined &&
+    !IsSourceFile(node) &&
+    !IsInJsonFile(node)) as bool;
 }
 
 /**
@@ -609,7 +781,7 @@ export function Printer_emitTemplateTypeSpanNode(receiver: GoPtr<Printer>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.commentWillEmitNewLine","kind":"method","status":"stub","sigHash":"9e3eb39606e4ddbd2414f308417d597aabb7251d51caecc8d00b18323fb0617a","bodyHash":"a37b15d828ffe4371725d3f58ec2c8478096eee30bc0950ffcbf178baf8e7108"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.commentWillEmitNewLine","kind":"method","status":"implemented","sigHash":"9e3eb39606e4ddbd2414f308417d597aabb7251d51caecc8d00b18323fb0617a","bodyHash":"a37b15d828ffe4371725d3f58ec2c8478096eee30bc0950ffcbf178baf8e7108"}
  *
  * Go source:
  * func (p *Printer) commentWillEmitNewLine(comment ast.CommentRange) bool {
@@ -617,11 +789,11 @@ export function Printer_emitTemplateTypeSpanNode(receiver: GoPtr<Printer>, node:
  * }
  */
 export function Printer_commentWillEmitNewLine(receiver: GoPtr<Printer>, comment: CommentRange): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.commentWillEmitNewLine");
+  return (comment.Kind === KindSingleLineCommentTrivia || comment.HasTrailingNewLine) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.willEmitLeadingNewLine","kind":"method","status":"stub","sigHash":"65eaaaa7ef48aca870d502b817724b18b8dc2663e9537c0de8749820d8c6dd87","bodyHash":"de29dff73cbf345ebaea71e36b2797045237e89538a2aec2f3d8becd66d6ffa3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.willEmitLeadingNewLine","kind":"method","status":"implemented","sigHash":"65eaaaa7ef48aca870d502b817724b18b8dc2663e9537c0de8749820d8c6dd87","bodyHash":"de29dff73cbf345ebaea71e36b2797045237e89538a2aec2f3d8becd66d6ffa3"}
  *
  * Go source:
  * func (p *Printer) willEmitLeadingNewLine(node *ast.Expression) bool {
@@ -663,11 +835,52 @@ export function Printer_commentWillEmitNewLine(receiver: GoPtr<Printer>, comment
  * }
  */
 export function Printer_willEmitLeadingNewLine(receiver: GoPtr<Printer>, node: GoPtr<Expression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.willEmitLeadingNewLine");
+  if (receiver!.currentSourceFile === undefined) {
+    return false as bool;
+  }
+  let hasLeadingCommentRanges = false;
+  let hasNewLineComment = false;
+  GetLeadingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(node as GoPtr<Node>))((comment: CommentRange): bool => {
+    hasLeadingCommentRanges = true;
+    if (Printer_commentWillEmitNewLine(receiver, comment)) {
+      hasNewLineComment = true;
+    }
+    return true as bool; // continue iterating
+  });
+  if (hasLeadingCommentRanges) {
+    const parseNode = EmitContext_ParseNode(receiver!.emitContext, node as GoPtr<Node>);
+    if (parseNode !== undefined && IsParenthesizedExpression(parseNode!.Parent)) {
+      return true as bool;
+    }
+  }
+  if (hasNewLineComment) {
+    return true as bool;
+  }
+  if (ContainsFunc(EmitContext_GetSyntheticLeadingComments(receiver!.emitContext, node as GoPtr<Node>), (comment: SynthesizedComment): bool => Printer_syntheticCommentWillEmitNewLine(receiver, comment))) {
+    return true as bool;
+  }
+  if (IsPartiallyEmittedExpression(node as GoPtr<Node>)) {
+    const pee = AsPartiallyEmittedExpression(node as GoPtr<Node>);
+    if (Node_Pos(node as GoPtr<Node>) !== Node_Pos(pee!.Expression as GoPtr<Node>)) {
+      let foundNewLineComment = false;
+      GetTrailingCommentRanges(NodeFactory_AsNodeFactory(receiver!.emitContext!.Factory!.__tsgoEmbedded0), SourceFile_Text(receiver!.currentSourceFile), Node_Pos(pee!.Expression as GoPtr<Node>))((comment: CommentRange): bool => {
+        if (Printer_commentWillEmitNewLine(receiver, comment)) {
+          foundNewLineComment = true;
+          return false as bool; // stop iterating (like Go's return)
+        }
+        return true as bool; // continue
+      });
+      if (foundNewLineComment) {
+        return true as bool;
+      }
+    }
+    return Printer_willEmitLeadingNewLine(receiver, pee!.Expression);
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTemplateSpan","kind":"method","status":"stub","sigHash":"5bf7a8e5c5bc9f68002ebb9e1d925f743c8212ef6a1e8a524821244072d20b3e","bodyHash":"c312297ef625a4d040b5e5f9fdbdc2c830052434990ec4fa531499d1b2afd928"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTemplateSpan","kind":"method","status":"implemented","sigHash":"5bf7a8e5c5bc9f68002ebb9e1d925f743c8212ef6a1e8a524821244072d20b3e","bodyHash":"c312297ef625a4d040b5e5f9fdbdc2c830052434990ec4fa531499d1b2afd928"}
  *
  * Go source:
  * func (p *Printer) emitTemplateSpan(node *ast.TemplateSpan) {
@@ -678,7 +891,10 @@ export function Printer_willEmitLeadingNewLine(receiver: GoPtr<Printer>, node: G
  * }
  */
 export function Printer_emitTemplateSpan(receiver: GoPtr<Printer>, node: GoPtr<TemplateSpan>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitTemplateSpan");
+  const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceComma);
+  Printer_emitTemplateMiddleTail(receiver, node!.Literal);
+  Printer_exitNode(receiver, NodeDefault_AsNode(node), state);
 }
 
 /**
@@ -694,7 +910,7 @@ export function Printer_emitTemplateSpanNode(receiver: GoPtr<Printer>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceFile","kind":"method","status":"stub","sigHash":"3e0e753be69a58d4d53ac116b17da3cf2fea3d3a166c83054579f5c7ffec1928","bodyHash":"408910302e01208c1535c57c3367cce8fb65331ec987ea16a7ea1281761f040a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceFile","kind":"method","status":"implemented","sigHash":"3e0e753be69a58d4d53ac116b17da3cf2fea3d3a166c83054579f5c7ffec1928","bodyHash":"408910302e01208c1535c57c3367cce8fb65331ec987ea16a7ea1281761f040a"}
  *
  * Go source:
  * func (p *Printer) emitSourceFile(node *ast.SourceFile) {
@@ -740,7 +956,46 @@ export function Printer_emitTemplateSpanNode(receiver: GoPtr<Printer>, node: GoP
  * }
  */
 export function Printer_emitSourceFile(receiver: GoPtr<Printer>, node: GoPtr<SourceFile>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceFile");
+  const savedCurrentSourceFile = receiver!.currentSourceFile;
+  const savedCommentsDisabled = receiver!.commentsDisabled;
+  receiver!.currentSourceFile = node;
+
+  Printer_writeLine(receiver);
+
+  Printer_pushNameGenerationScope(receiver, NodeDefault_AsNode(node));
+  Printer_generateAllNames(receiver, node!.Statements);
+
+  let index = 0 as int;
+  let state = undefined;
+  if (node!.ScriptKind !== ScriptKindJSON) {
+    Printer_emitShebangIfNeeded(receiver, node);
+    index = Printer_emitPrologueDirectives(receiver, node!.Statements);
+    if (!receiver!.writer.IsAtStartOfLine()) {
+      Printer_writeLine(receiver);
+    }
+    state = Printer_emitDetachedCommentsBeforeStatementList(receiver, NodeDefault_AsNode(node), node!.Statements!.Loc);
+    Printer_emitHelpers(receiver, NodeDefault_AsNode(node));
+    if (node!.IsDeclarationFile) {
+      Printer_emitTripleSlashDirectives(receiver, node);
+    }
+  } else {
+    state = Printer_emitDetachedCommentsBeforeStatementList(receiver, NodeDefault_AsNode(node), node!.Statements!.Loc);
+  }
+
+  // !!! Emit triple-slash directives
+  Printer_emitListRange(
+    receiver,
+    Printer_emitStatement as (p: GoPtr<Printer>, node: GoPtr<Node>) => void,
+    NodeDefault_AsNode(node),
+    node!.Statements,
+    LFMultiLine,
+    index,
+    -1 as int, /*count*/
+  );
+  Printer_popNameGenerationScope(receiver, NodeDefault_AsNode(node));
+  Printer_emitDetachedCommentsAfterStatementList(receiver, NodeDefault_AsNode(node), node!.Statements!.Loc, state);
+  receiver!.currentSourceFile = savedCurrentSourceFile;
+  receiver!.commentsDisabled = savedCommentsDisabled;
 }
 
 /**
@@ -877,7 +1132,7 @@ export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: (p: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.EmitSourceFile","kind":"method","status":"stub","sigHash":"a33c96bbc1c93092255a57a87ebdb0df473d55a68b4b962d049abdfe09baed7b","bodyHash":"f13d8186adbd4262971400287a199a9f5855f92716038b64c1ccc495e77633d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.EmitSourceFile","kind":"method","status":"implemented","sigHash":"a33c96bbc1c93092255a57a87ebdb0df473d55a68b4b962d049abdfe09baed7b","bodyHash":"f13d8186adbd4262971400287a199a9f5855f92716038b64c1ccc495e77633d2"}
  *
  * Go source:
  * func (p *Printer) EmitSourceFile(sourceFile *ast.SourceFile) string {
@@ -885,11 +1140,11 @@ export function Printer_emitListRange(receiver: GoPtr<Printer>, emit: (p: GoPtr<
  * }
  */
 export function Printer_EmitSourceFile(receiver: GoPtr<Printer>, sourceFile: GoPtr<SourceFile>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.EmitSourceFile");
+  return Printer_Emit(receiver, NodeDefault_AsNode(sourceFile), sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.setSourceFile","kind":"method","status":"stub","sigHash":"f82e7e0cc559acfdd92e8697bf4c34c2b287f5c74db25eba87897abdf475240a","bodyHash":"097dcc59308a507383f9c5e790b6940a5ac28294ea3d5069bc320d9c3d411ff0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.setSourceFile","kind":"method","status":"implemented","sigHash":"f82e7e0cc559acfdd92e8697bf4c34c2b287f5c74db25eba87897abdf475240a","bodyHash":"097dcc59308a507383f9c5e790b6940a5ac28294ea3d5069bc320d9c3d411ff0"}
  *
  * Go source:
  * func (p *Printer) setSourceFile(sourceFile *ast.SourceFile) {
@@ -908,7 +1163,18 @@ export function Printer_EmitSourceFile(receiver: GoPtr<Printer>, sourceFile: GoP
  * }
  */
 export function Printer_setSourceFile(receiver: GoPtr<Printer>, sourceFile: GoPtr<SourceFile>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.setSourceFile");
+  receiver!.currentSourceFile = sourceFile;
+  receiver!.uniqueHelperNames = undefined as never;
+  receiver!.externalHelpersModuleName = undefined;
+  if (sourceFile !== undefined) {
+    if ((EmitContext_EmitFlags(receiver!.emitContext, EmitContext_MostOriginal(receiver!.emitContext, NodeDefault_AsNode(sourceFile))) & EFExternalHelpers) !== 0) {
+      receiver!.uniqueHelperNames = new globalThis.Map<string, GoPtr<IdentifierNode>>();
+    }
+    receiver!.externalHelpersModuleName = EmitContext_GetExternalHelpersModuleName(receiver!.emitContext, sourceFile);
+    Printer_setSourceMapSource(receiver, sourceFile as unknown as Source);
+  }
+
+  // !!!
 }
 
 /**
@@ -1007,7 +1273,7 @@ export function Printer_emitSourcePos(receiver: GoPtr<Printer>, source: Source, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeNode","kind":"method","status":"stub","sigHash":"964d0c1f817b171f4972287f0cfd3b08dc8d3b2c23addbc57aa6764321c2b0d0","bodyHash":"e1f35648cd413efee1a7ddab742db0429ae189e16bd964a763ec6ee6792b9668"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeNode","kind":"method","status":"implemented","sigHash":"964d0c1f817b171f4972287f0cfd3b08dc8d3b2c23addbc57aa6764321c2b0d0","bodyHash":"e1f35648cd413efee1a7ddab742db0429ae189e16bd964a763ec6ee6792b9668"}
  *
  * Go source:
  * func (p *Printer) emitSourceMapsBeforeNode(node *ast.Node) *sourceMapState {
@@ -1035,11 +1301,33 @@ export function Printer_emitSourcePos(receiver: GoPtr<Printer>, source: Source, 
  * }
  */
 export function Printer_emitSourceMapsBeforeNode(receiver: GoPtr<Printer>, node: GoPtr<Node>): GoPtr<sourceMapState> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeNode");
+  if (!Printer_shouldEmitSourceMaps(receiver, node)) {
+    return undefined;
+  }
+
+  const emitFlags = EmitContext_EmitFlags(receiver!.emitContext, node);
+  const loc = EmitContext_SourceMapRange(receiver!.emitContext, node);
+
+  if (!IsNotEmittedStatement(node) &&
+    (emitFlags & EFNoLeadingSourceMap) === 0 &&
+    receiver!.currentSourceFile !== undefined &&
+    !PositionIsSynthesized(TextRange_Pos(loc))) {
+    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), TextRange_Pos(loc)));
+  }
+
+  if ((emitFlags & EFNoNestedSourceMaps) !== 0) {
+    receiver!.sourceMapsDisabled = true as bool;
+  }
+
+  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
+  state!.emitFlags = emitFlags;
+  state!.sourceMapRange = loc;
+  state!.hasTokenSourceMapRange = false as bool;
+  return state;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsAfterNode","kind":"method","status":"stub","sigHash":"94c7310c6b4a347deb2f586459aaace1128d68b7f9743ccae143ca204e91e12a","bodyHash":"b101149252f3d0b554c90876e4a5e0a48a4953490656e38e2cc965b9dfe5438c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsAfterNode","kind":"method","status":"implemented","sigHash":"94c7310c6b4a347deb2f586459aaace1128d68b7f9743ccae143ca204e91e12a","bodyHash":"b101149252f3d0b554c90876e4a5e0a48a4953490656e38e2cc965b9dfe5438c"}
  *
  * Go source:
  * func (p *Printer) emitSourceMapsAfterNode(node *ast.Node, previousState *sourceMapState) {
@@ -1062,11 +1350,26 @@ export function Printer_emitSourceMapsBeforeNode(receiver: GoPtr<Printer>, node:
  * }
  */
 export function Printer_emitSourceMapsAfterNode(receiver: GoPtr<Printer>, node: GoPtr<Node>, previousState: GoPtr<sourceMapState>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsAfterNode");
+  if (previousState === undefined) {
+    return;
+  }
+
+  const emitFlags = previousState.emitFlags;
+  const loc = previousState.sourceMapRange;
+
+  if ((emitFlags & EFNoNestedSourceMaps) !== 0) {
+    receiver!.sourceMapsDisabled = false as bool;
+  }
+
+  if (!IsNotEmittedStatement(node) &&
+    (emitFlags & EFNoTrailingSourceMap) === 0 &&
+    !PositionIsSynthesized(TextRange_End(loc))) {
+    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, TextRange_End(loc));
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeToken","kind":"method","status":"stub","sigHash":"718f9c4d62de22decd6668551ac0ba04f460de7846262fe234ca25e2f06b247d","bodyHash":"720029105c3955a6501bf9c2d47a2d1c35ca84de060ff5dbb875a97cfccf8b26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeToken","kind":"method","status":"implemented","sigHash":"718f9c4d62de22decd6668551ac0ba04f460de7846262fe234ca25e2f06b247d","bodyHash":"720029105c3955a6501bf9c2d47a2d1c35ca84de060ff5dbb875a97cfccf8b26"}
  *
  * Go source:
  * func (p *Printer) emitSourceMapsBeforeToken(token ast.Kind, pos int, contextNode *ast.Node, flags tokenEmitFlags) *sourceMapState {
@@ -1092,7 +1395,28 @@ export function Printer_emitSourceMapsAfterNode(receiver: GoPtr<Printer>, node: 
  * }
  */
 export function Printer_emitSourceMapsBeforeToken(receiver: GoPtr<Printer>, token: Kind, pos: int, contextNode: GoPtr<Node>, flags: tokenEmitFlags): GoPtr<sourceMapState> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSourceMapsBeforeToken");
+  if (!Printer_shouldEmitTokenSourceMaps(receiver, token, pos, contextNode, flags)) {
+    return undefined;
+  }
+
+  const emitFlags = EmitContext_EmitFlags(receiver!.emitContext, contextNode);
+  const [loc, hasLoc] = EmitContext_TokenSourceMapRange(receiver!.emitContext, contextNode, token);
+  let posResolved = pos;
+  if (hasLoc) {
+    posResolved = TextRange_Pos(loc);
+  }
+  if (posResolved >= 0 && receiver!.currentSourceFile !== undefined) {
+    posResolved = SkipTrivia(SourceFile_Text(receiver!.currentSourceFile), posResolved);
+  }
+  if ((emitFlags & EFNoTokenLeadingSourceMaps) === 0 && posResolved >= 0) {
+    Printer_emitSourcePos(receiver, receiver!.sourceMapSource, posResolved);
+  }
+
+  const state = Arena_New<sourceMapState>(receiver!.sourceMapStateArena as Arena<sourceMapState>);
+  state!.emitFlags = emitFlags;
+  state!.sourceMapRange = loc;
+  state!.hasTokenSourceMapRange = hasLoc as bool;
+  return state;
 }
 
 /**

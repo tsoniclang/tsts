@@ -4,6 +4,8 @@ import * as strings from "../../go/strings.js";
 import type { GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
 import { Once } from "../../go/sync.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
+import type { SourceFile } from "../ast/ast.js";
+import { SourceFile_FileName, SourceFile_Diagnostics } from "../ast/ast.js";
 import type { CompilerOptions as CompilerOptions_3bab6c7a } from "../core/compileroptions.js";
 import { CompilerOptions_GetAreDeclarationMapsEnabled, CompilerOptions_GetEmitDeclarations } from "../core/compileroptions.js";
 import { Filter, IfElse, Map as core_Map } from "../core/core.js";
@@ -12,6 +14,7 @@ import type { ProjectReference } from "../core/projectreference.js";
 import { ResolveProjectReferencePath } from "../core/projectreference.js";
 import { Tristate_IsTrue } from "../core/tristate.js";
 import type { TypeAcquisition as TypeAcquisition_0a5bf39c } from "../core/typeacquisition.js";
+import type { WatchOptions } from "../core/watchoptions.js";
 import type { Glob } from "../glob/glob.js";
 import { Glob_Match, Parse as glob_Parse } from "../glob/glob.js";
 import type { Locale as Locale_c4184476 } from "../locale/locale.js";
@@ -150,31 +153,31 @@ export function NewParsedCommandLine(compilerOptions: GoPtr<CompilerOptions_3bab
     ParsedConfig: {
       CompilerOptions: compilerOptions,
       WatchOptions: undefined,
-      TypeAcquisition: undefined,
       FileNames: rootFileNames,
-      ProjectReferences: undefined as never,
+      TypeAcquisition: undefined,
+      ProjectReferences: [],
     },
     ConfigFile: undefined,
-    Errors: undefined as never,
+    Errors: [],
     Raw: undefined,
     CompileOnSave: undefined,
     comparePathsOptions: comparePathsOptions,
     wildcardDirectoriesOnce: new Once(),
-    wildcardDirectories: undefined as never,
+    wildcardDirectories: new globalThis.Map<string, bool>(),
     includeGlobsOnce: new Once(),
-    includeGlobs: undefined as never,
-    extraFileExtensions: undefined as never,
+    includeGlobs: [],
+    extraFileExtensions: [],
     sourceAndOutputMapsOnce: new Once(),
-    sourceToProjectReference: undefined as never,
-    outputDtsToProjectReference: undefined as never,
+    sourceToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
+    outputDtsToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    resolvedProjectReferencePaths: undefined as never,
+    resolvedProjectReferencePaths: [],
     resolvedProjectReferencePathsOnce: new Once(),
-    literalFileNamesLen: 0,
-    fileNamesByPath: undefined as never,
+    literalFileNamesLen: 0 as int,
+    fileNamesByPath: new globalThis.Map<Path, string>(),
     fileNamesByPathOnce: new Once(),
-    locale: undefined as never,
+    locale: locale_Parse("")[0],
     localeOnce: new Once(),
   };
 }
@@ -208,7 +211,7 @@ export const ____696f5a2e_0: ResolvedProjectReference = ParsedCommandLine_as_Res
 export const ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsHost(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"stub","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888","bodyHash":"43a5be1ed884944707ac2970bf30706ed5cb68b46a0a1e52efb7b495ca41229a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName","kind":"method","status":"implemented","sigHash":"ca2a0fcae55a827972ed0dddfca3fe277a8c3dcd47c3a3b8f4f2948d5df7f888","bodyHash":"43a5be1ed884944707ac2970bf30706ed5cb68b46a0a1e52efb7b495ca41229a"}
  *
  * Go source:
  * func (p *ParsedCommandLine) ConfigName() string {
@@ -219,7 +222,10 @@ export const ____696f5a2e_1: OutputPathsHost = ParsedCommandLine_as_OutputPathsH
  * }
  */
 export function ParsedCommandLine_ConfigName(receiver: GoPtr<ParsedCommandLine>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.ConfigName");
+  if (receiver === undefined) {
+    return "";
+  }
+  return SourceFile_FileName(receiver.ConfigFile!.SourceFile);
 }
 
 /**
@@ -521,13 +527,12 @@ export function ParsedCommandLine_GetBuildInfoFileName(receiver: GoPtr<ParsedCom
  * }
  */
 export function ParsedCommandLine_WildcardDirectories(receiver: GoPtr<ParsedCommandLine>): GoMap<string, bool> {
-  const p = receiver;
-  if (p === undefined) {
-    return undefined as never;
+  if (receiver === undefined) {
+    return new globalThis.Map<string, bool>();
   }
-
+  const p = receiver;
   p.wildcardDirectoriesOnce.Do((): void => {
-    if (p.wildcardDirectories === undefined) {
+    if (p.wildcardDirectories.size === 0) {
       p.wildcardDirectories = getWildcardDirectories(
         p.ConfigFile!.configFileSpecs!.validatedIncludeSpecs,
         p.ConfigFile!.configFileSpecs!.validatedExcludeSpecs,
@@ -535,7 +540,6 @@ export function ParsedCommandLine_WildcardDirectories(receiver: GoPtr<ParsedComm
       );
     }
   });
-
   return p.wildcardDirectories;
 }
 
@@ -567,15 +571,16 @@ export function ParsedCommandLine_WildcardDirectories(receiver: GoPtr<ParsedComm
 export function ParsedCommandLine_WildcardDirectoryGlobs(receiver: GoPtr<ParsedCommandLine>): GoSlice<GoPtr<Glob>> {
   const p = receiver!;
   const wildcardDirectories = ParsedCommandLine_WildcardDirectories(p);
-  if (wildcardDirectories === undefined) {
-    return undefined as never;
+  if (wildcardDirectories.size === 0) {
+    return [];
   }
 
   p.includeGlobsOnce.Do((): void => {
-    if (p.includeGlobs === undefined) {
+    if (p.includeGlobs.length === 0) {
       const globs: GoSlice<GoPtr<Glob>> = [];
       for (const [dir, recursive] of wildcardDirectories) {
-        const [parsed, err] = glob_Parse(fmt.Sprintf("%s/%s", NormalizePath(dir), IfElse(recursive, recursiveFileGlobPattern, fileGlobPattern)));
+        const pattern = fmt.Sprintf("%s/%s", NormalizePath(dir), IfElse(recursive, recursiveFileGlobPattern, fileGlobPattern));
+        const [parsed, err] = glob_Parse(pattern);
         if (err === undefined) {
           globs.push(parsed);
         }
@@ -599,11 +604,10 @@ export function ParsedCommandLine_WildcardDirectoryGlobs(receiver: GoPtr<ParsedC
  * }
  */
 export function ParsedCommandLine_LiteralFileNames(receiver: GoPtr<ParsedCommandLine>): GoSlice<string> {
-  const p = receiver;
-  if (p !== undefined && p.ConfigFile !== undefined) {
-    return ParsedCommandLine_FileNames(p).slice(0, p.literalFileNamesLen);
+  if (receiver !== undefined && receiver.ConfigFile !== undefined) {
+    return ParsedCommandLine_FileNames(receiver).slice(0, receiver.literalFileNamesLen);
   }
-  return undefined as never;
+  return [];
 }
 
 /**
@@ -755,15 +759,14 @@ export function ParsedCommandLine_ResolvedProjectReferencePaths(receiver: GoPtr<
  * }
  */
 export function ParsedCommandLine_ExtendedSourceFiles(receiver: GoPtr<ParsedCommandLine>): GoSlice<string> {
-  const p = receiver;
-  if (p === undefined || p.ConfigFile === undefined) {
-    return undefined as never;
+  if (receiver === undefined || receiver.ConfigFile === undefined) {
+    return [];
   }
-  return p.ConfigFile.ExtendedSourceFiles;
+  return receiver.ConfigFile.ExtendedSourceFiles;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.GetConfigFileParsingDiagnostics","kind":"method","status":"stub","sigHash":"eb4d9e6d8a688a330c9f9b3d9a53786e7e8d515a5128bb5174e7a1c83b921773","bodyHash":"c487ecce00b52ae58ea096f996780bf3677a3b0bf91245e95d34dfcbc14d195b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.GetConfigFileParsingDiagnostics","kind":"method","status":"implemented","sigHash":"eb4d9e6d8a688a330c9f9b3d9a53786e7e8d515a5128bb5174e7a1c83b921773","bodyHash":"c487ecce00b52ae58ea096f996780bf3677a3b0bf91245e95d34dfcbc14d195b"}
  *
  * Go source:
  * func (p *ParsedCommandLine) GetConfigFileParsingDiagnostics() []*ast.Diagnostic {
@@ -775,7 +778,12 @@ export function ParsedCommandLine_ExtendedSourceFiles(receiver: GoPtr<ParsedComm
  * }
  */
 export function ParsedCommandLine_GetConfigFileParsingDiagnostics(receiver: GoPtr<ParsedCommandLine>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/parsedcommandline.go::method::ParsedCommandLine.GetConfigFileParsingDiagnostics");
+  const p = receiver!;
+  if (p.ConfigFile !== undefined) {
+    // todo: !!! should be ConfigFile.ParseDiagnostics, check if they are the same
+    return [...SourceFile_Diagnostics(p.ConfigFile.SourceFile), ...p.Errors];
+  }
+  return p.Errors;
 }
 
 /**
@@ -942,9 +950,9 @@ export function ParsedCommandLine_GetMatchedIncludeSpec(receiver: GoPtr<ParsedCo
  */
 export function ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver: GoPtr<ParsedCommandLine>, fs: FS): GoPtr<ParsedCommandLine> {
   const p = receiver!;
-  const parsedConfig: ParsedOptions = { ...p.ParsedConfig! };
+  const parsedConfig = { ...p.ParsedConfig! };
   const [fileNames, literalFileNamesLen] = getFileNamesFromConfigSpecs(
-    p.ConfigFile!.configFileSpecs!,
+    { ...p.ConfigFile!.configFileSpecs! },
     ParsedCommandLine_GetCurrentDirectory(p),
     ParsedCommandLine_CompilerOptions(p),
     fs,
@@ -964,16 +972,16 @@ export function ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(receiver: G
     includeGlobs: p.includeGlobs,
     extraFileExtensions: p.extraFileExtensions,
     sourceAndOutputMapsOnce: new Once(),
-    sourceToProjectReference: undefined as never,
-    outputDtsToProjectReference: undefined as never,
+    sourceToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
+    outputDtsToProjectReference: new globalThis.Map<Path, GoPtr<SourceOutputAndProjectReference>>(),
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    resolvedProjectReferencePaths: undefined as never,
+    resolvedProjectReferencePaths: [],
     resolvedProjectReferencePathsOnce: new Once(),
     literalFileNamesLen: literalFileNamesLen,
-    fileNamesByPath: undefined as never,
+    fileNamesByPath: new globalThis.Map<Path, string>(),
     fileNamesByPathOnce: new Once(),
-    locale: undefined as never,
+    locale: p.locale,
     localeOnce: new Once(),
   };
   return parsedCommandLine;

@@ -42,6 +42,8 @@ import {
   CommandLineCompilerOptionsMap,
   CommandLineOptionNameMap_Get,
 } from "./tsconfigparsing.js";
+import { BuildNameMap, NameMap_Get } from "./namemap.js";
+import type { NameMap } from "./namemap.js";
 
 // Go's `value.(*collections.OrderedMap[string, any])` type assertion: the JSON
 // parser yields OrderedMap instances, which structurally carry `keys`/`mp`.
@@ -113,20 +115,19 @@ export function ParseTristate(value: unknown): Tristate {
  */
 export function ParseStringArray(value: unknown): GoSlice<string> {
   if (globalThis.Array.isArray(value)) {
-    const arr: GoSlice<unknown> = value;
-    if (arr === undefined) {
-      return undefined as never;
+    const arr = value as unknown[];
+    if (arr === null) {
+      return [];
     }
     const result: GoSlice<string> = [];
     for (const v of arr) {
       if (typeof v === "string") {
-        const str: string = v;
-        result.push(str);
+        result.push(v);
       }
     }
     return result;
   }
-  return undefined as never;
+  return [];
 }
 
 /**
@@ -513,13 +514,13 @@ export function buildOptionsParser_UnknownOptionDiagnostic(receiver: GoPtr<build
  */
 export function ParseCompilerOptions(key: string, value: unknown, allOptions: GoPtr<CompilerOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
-    return undefined as never;
+    return [];
   }
   if (allOptions === undefined) {
-    return undefined as never;
+    return [];
   }
   parseCompilerOptions(key, value, allOptions);
-  return undefined as never;
+  return [];
 }
 
 /**
@@ -1004,7 +1005,7 @@ export function floatOrInt32ToFlag<T>(value: unknown): T {
  */
 export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr<WatchOptions>): GoSlice<GoPtr<Diagnostic>> {
   if (allOptions === undefined) {
-    return undefined as never;
+    return [];
   }
   const o = allOptions;
   switch (key) {
@@ -1036,7 +1037,7 @@ export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr
       o.ExcludeFiles = ParseStringArray(value);
       break;
   }
-  return undefined as never;
+  return [];
 }
 
 /**
@@ -1065,10 +1066,10 @@ export function ParseWatchOptions(key: string, value: unknown, allOptions: GoPtr
  */
 export function ParseTypeAcquisition(key: string, value: unknown, allOptions: GoPtr<TypeAcquisition>): GoSlice<GoPtr<Diagnostic>> {
   if (value === undefined) {
-    return undefined as never;
+    return [];
   }
   if (allOptions === undefined) {
-    return undefined as never;
+    return [];
   }
   const o = allOptions;
   switch (key) {
@@ -1085,11 +1086,11 @@ export function ParseTypeAcquisition(key: string, value: unknown, allOptions: Go
       o.DisableFilenameBasedTypeAcquisition = ParseTristate(value);
       break;
   }
-  return undefined as never;
+  return [];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::ParseBuildOptions","kind":"func","status":"stub","sigHash":"794ee8a4473683f18c2a63b0d15f6baee31adf3dcc2195537a945317ef701a03","bodyHash":"f94ee9fa4666f6bb75f7df2407e865b98657b01a415d63ba912e2a4f7e761555"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::ParseBuildOptions","kind":"func","status":"implemented","sigHash":"794ee8a4473683f18c2a63b0d15f6baee31adf3dcc2195537a945317ef701a03","bodyHash":"f94ee9fa4666f6bb75f7df2407e865b98657b01a415d63ba912e2a4f7e761555"}
  *
  * Go source:
  * func ParseBuildOptions(key string, value any, allOptions *core.BuildOptions) []*ast.Diagnostic {
@@ -1121,11 +1122,40 @@ export function ParseTypeAcquisition(key: string, value: unknown, allOptions: Go
  * }
  */
 export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr<BuildOptions>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::ParseBuildOptions");
+  if (value === undefined) {
+    return [];
+  }
+  if (allOptions === undefined) {
+    return [];
+  }
+  const option = NameMap_Get(BuildNameMap as GoPtr<NameMap>, key);
+  const k: string = option !== undefined ? option.Name : key;
+  const o = allOptions;
+  switch (k) {
+    case "clean":
+      o.Clean = ParseTristate(value);
+      break;
+    case "dry":
+      o.Dry = ParseTristate(value);
+      break;
+    case "force":
+      o.Force = ParseTristate(value);
+      break;
+    case "builders":
+      o.Builders = parseNumber(value);
+      break;
+    case "stopBuildOnErrors":
+      o.StopBuildOnErrors = ParseTristate(value);
+      break;
+    case "verbose":
+      o.Verbose = ParseTristate(value);
+      break;
+  }
+  return [];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::mergeCompilerOptions","kind":"func","status":"stub","sigHash":"7c402d7880eb4e1a48806b603920f87a8449e640da732a4cec56b4a1d42dfb63","bodyHash":"8dd23a1ab9b5f12dd3d4fd9d4fa25e6dd7ef5c9086e369c0f8fdef9977cbf68e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::mergeCompilerOptions","kind":"func","status":"implemented","sigHash":"7c402d7880eb4e1a48806b603920f87a8449e640da732a4cec56b4a1d42dfb63","bodyHash":"8dd23a1ab9b5f12dd3d4fd9d4fa25e6dd7ef5c9086e369c0f8fdef9977cbf68e"}
  *
  * Go source:
  * func mergeCompilerOptions(targetOptions, sourceOptions *core.CompilerOptions, rawSource any) *core.CompilerOptions {
@@ -1177,7 +1207,47 @@ export function ParseBuildOptions(key: string, value: unknown, allOptions: GoPtr
  * }
  */
 export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sourceOptions: GoPtr<CompilerOptions>, rawSource: unknown): GoPtr<CompilerOptions> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::func::mergeCompilerOptions");
+  if (sourceOptions === undefined) {
+    return targetOptions;
+  }
+
+  // Collect explicitly null field names from raw JSON (keyed by JSON option name)
+  const explicitNullFields = new globalThis.Set<string>();
+  if (rawSource !== undefined) {
+    const rawMap = asOrderedMap(rawSource) as GoPtr<OrderedMap<string, unknown>>;
+    if (rawMap !== undefined) {
+      const [compilerOptionsRaw, exists] = OrderedMap_Get(rawMap, "compilerOptions");
+      if (exists) {
+        const compilerOptionsMap = asOrderedMap(compilerOptionsRaw) as GoPtr<OrderedMap<string, unknown>>;
+        if (compilerOptionsMap !== undefined) {
+          OrderedMap_Entries(compilerOptionsMap)((key: string, value: unknown): bool => {
+            if (value === undefined || value === null) {
+              explicitNullFields.add(key);
+            }
+            return true;
+          });
+        }
+      }
+    }
+  }
+
+  // Do the merge: iterate over all keys of source options object
+  const target = targetOptions as unknown as globalThis.Record<string, unknown>;
+  const source = sourceOptions as unknown as globalThis.Record<string, unknown>;
+  for (const key of globalThis.Object.keys(source)) {
+    // Check if this field's JSON name is explicitly null (zero it in target)
+    if (explicitNullFields.has(key)) {
+      target[key] = undefined;
+      continue;
+    }
+    // Normal merge behavior: copy non-zero/non-undefined fields
+    const sourceVal = source[key];
+    if (sourceVal !== undefined && sourceVal !== null && sourceVal !== 0 && sourceVal !== false && sourceVal !== "") {
+      target[key] = sourceVal;
+    }
+  }
+
+  return targetOptions;
 }
 
 /**

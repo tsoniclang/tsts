@@ -3,12 +3,24 @@ import type { GoMap, GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/ast.js";
 import type { MemberName } from "../ast/ast_generated.js";
 import type { NodeId } from "../ast/ids.js";
+import { GetNodeId, GetExternalModuleName, IsNodeDescendantOf } from "../ast/utilities.js";
+import { IsIdentifier, IsPrivateIdentifier, IsStringLiteral } from "../ast/generated/predicates.js";
+import { KindClassDeclaration, KindClassExpression, KindComputedPropertyName, KindEnumDeclaration, KindExportAssignment, KindExportDeclaration, KindFunctionDeclaration, KindGetAccessor, KindIdentifier, KindImportDeclaration, KindJSImportDeclaration, KindMethodDeclaration, KindModuleDeclaration, KindPrivateIdentifier, KindSetAccessor } from "../ast/generated/kinds.js";
+import { Node_Locals } from "../ast/ast.js";
+import { Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
+import { SymbolFlagsValue, SymbolFlagsExportValue, SymbolFlagsAlias } from "../ast/symbolflags.js";
+import { IfElse } from "../core/core.js";
+import { Set_Has, Set_Add } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
 import type { AutoGenerateId, EmitContext } from "./emitcontext.js";
+import { EmitContext_HasAutoGenerateInfo, EmitContext_GetNodeForGeneratedName } from "./emitcontext.js";
 import type { GeneratedIdentifierFlags } from "./generatedidentifierflags.js";
+import { GeneratedIdentifierFlagsAuto, GeneratedIdentifierFlagsLoop, GeneratedIdentifierFlagsNone, GeneratedIdentifierFlagsUnique } from "./generatedidentifierflags.js";
+import { GeneratedIdentifierFlags_IsNode, GeneratedIdentifierFlags_Kind, GeneratedIdentifierFlags_IsOptimistic, GeneratedIdentifierFlags_IsReservedInNestedScopes, GeneratedIdentifierFlags_IsFileLevel } from "./generatedidentifierflags.js";
+import { FormatGeneratedName, ensureLeadingHash, removeLeadingHash, makeIdentifierFromModuleName } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::tempFlags","kind":"type","status":"stub","sigHash":"743dd98db6ac806ced73789710bf9f48c2924a29522016b43a75017c04ea73e8","bodyHash":"e7534f272d4994a4dd9b64b24ec4e9151d79bc27fcd42db7b8f0d6680ec0e5f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::tempFlags","kind":"type","status":"implemented","sigHash":"743dd98db6ac806ced73789710bf9f48c2924a29522016b43a75017c04ea73e8","bodyHash":"e7534f272d4994a4dd9b64b24ec4e9151d79bc27fcd42db7b8f0d6680ec0e5f8"}
  *
  * Go source:
  * tempFlags int
@@ -16,7 +28,7 @@ import type { GeneratedIdentifierFlags } from "./generatedidentifierflags.js";
 export type tempFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::constGroup::tempFlagsAuto+tempFlagsCountMask+tempFlags_i","kind":"constGroup","status":"stub","sigHash":"ea9c6a0fbbd10057fb25325d8c3174bc621dc3922946aa69e0c0a047c7f75253","bodyHash":"f7dbb70e2d45d07edc863185d6542edd2b6163b0d38193b83efda2ff94e4d6d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::constGroup::tempFlagsAuto+tempFlagsCountMask+tempFlags_i","kind":"constGroup","status":"implemented","sigHash":"ea9c6a0fbbd10057fb25325d8c3174bc621dc3922946aa69e0c0a047c7f75253","bodyHash":"f7dbb70e2d45d07edc863185d6542edd2b6163b0d38193b83efda2ff94e4d6d7"}
  *
  * Go source:
  * const (
@@ -25,12 +37,12 @@ export type tempFlags = int;
  * 	tempFlags_i        tempFlags = 0x10000000 // Use/preference flag for '_i'
  * )
  */
-export const tempFlagsAuto: tempFlags = undefined as never;
-export const tempFlagsCountMask: tempFlags = undefined as never;
-export const tempFlags_i: tempFlags = undefined as never;
+export const tempFlagsAuto: tempFlags = 0x00000000;
+export const tempFlagsCountMask: tempFlags = 0x0fffffff;
+export const tempFlags_i: tempFlags = 0x10000000;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::NameGenerator","kind":"type","status":"stub","sigHash":"e129da42636dc88da2cace59d4f7c4daad8adc65022d14a494cd6b3cb09a6892","bodyHash":"7fa65eec2dce3b6164ea0cfbc770f7e2f128d07bd43832ec3622b9260859605f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::NameGenerator","kind":"type","status":"implemented","sigHash":"e129da42636dc88da2cace59d4f7c4daad8adc65022d14a494cd6b3cb09a6892","bodyHash":"7fa65eec2dce3b6164ea0cfbc770f7e2f128d07bd43832ec3622b9260859605f"}
  *
  * Go source:
  * NameGenerator struct {
@@ -58,7 +70,7 @@ export interface NameGenerator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::nameGenerationScope","kind":"type","status":"stub","sigHash":"c403fe9541a71be4524431b7099c9b193a2c0853a1b580cce16bdf5aa1b9211d","bodyHash":"87e706c966e1eed04719341e37f7a77b0ddad474a689bfc789c7d715f878e287"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::type::nameGenerationScope","kind":"type","status":"implemented","sigHash":"c403fe9541a71be4524431b7099c9b193a2c0853a1b580cce16bdf5aa1b9211d","bodyHash":"87e706c966e1eed04719341e37f7a77b0ddad474a689bfc789c7d715f878e287"}
  *
  * Go source:
  * nameGenerationScope struct {
@@ -77,7 +89,7 @@ export interface nameGenerationScope {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PushScope","kind":"method","status":"stub","sigHash":"2ad09250ca60180e83c58a1da88b2fe4f6017857d4f72febf1b24b4d1494ba7a","bodyHash":"021145e12e653a6129a40297330d8c5bf8cc9f9911144585da409b5c321c2ea1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PushScope","kind":"method","status":"implemented","sigHash":"2ad09250ca60180e83c58a1da88b2fe4f6017857d4f72febf1b24b4d1494ba7a","bodyHash":"021145e12e653a6129a40297330d8c5bf8cc9f9911144585da409b5c321c2ea1"}
  *
  * Go source:
  * func (g *NameGenerator) PushScope(reuseTempVariableScope bool) {
@@ -88,11 +100,24 @@ export interface nameGenerationScope {
  * }
  */
 export function NameGenerator_PushScope(receiver: GoPtr<NameGenerator>, reuseTempVariableScope: bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PushScope");
+  receiver!.privateNameGenerationScope = {
+    next: receiver!.privateNameGenerationScope,
+    tempFlags: tempFlagsAuto,
+    formattedNameTempFlags: new globalThis.Map(),
+    reservedNames: { M: new globalThis.Map() },
+  };
+  if (!reuseTempVariableScope) {
+    receiver!.nameGenerationScope = {
+      next: receiver!.nameGenerationScope,
+      tempFlags: tempFlagsAuto,
+      formattedNameTempFlags: new globalThis.Map(),
+      reservedNames: { M: new globalThis.Map() },
+    };
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PopScope","kind":"method","status":"stub","sigHash":"9e1a854030ca57a7ab6f769926f531e013ec5c9a1d28d7717f1fa8d4b1dd57a1","bodyHash":"b2a87b154ba1d18dac793f4ea0f378b73997ebca718b709a3f6374565217554d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PopScope","kind":"method","status":"implemented","sigHash":"9e1a854030ca57a7ab6f769926f531e013ec5c9a1d28d7717f1fa8d4b1dd57a1","bodyHash":"b2a87b154ba1d18dac793f4ea0f378b73997ebca718b709a3f6374565217554d"}
  *
  * Go source:
  * func (g *NameGenerator) PopScope(reuseTempVariableScope bool) {
@@ -105,11 +130,16 @@ export function NameGenerator_PushScope(receiver: GoPtr<NameGenerator>, reuseTem
  * }
  */
 export function NameGenerator_PopScope(receiver: GoPtr<NameGenerator>, reuseTempVariableScope: bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.PopScope");
+  if (receiver!.privateNameGenerationScope !== undefined) {
+    receiver!.privateNameGenerationScope = receiver!.privateNameGenerationScope.next;
+  }
+  if (!reuseTempVariableScope && receiver!.nameGenerationScope !== undefined) {
+    receiver!.nameGenerationScope = receiver!.nameGenerationScope.next;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getScope","kind":"method","status":"stub","sigHash":"20b057f10628457f38f4f96a1825ec6690ce2654839743945e5128662e34d1de","bodyHash":"0afa79218e1dea3841d46ed1aec1b72d5890f45a881a2466848557b41a747e07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getScope","kind":"method","status":"implemented","sigHash":"20b057f10628457f38f4f96a1825ec6690ce2654839743945e5128662e34d1de","bodyHash":"0afa79218e1dea3841d46ed1aec1b72d5890f45a881a2466848557b41a747e07"}
  *
  * Go source:
  * func (g *NameGenerator) getScope(privateName bool) **nameGenerationScope {
@@ -117,11 +147,13 @@ export function NameGenerator_PopScope(receiver: GoPtr<NameGenerator>, reuseTemp
  * }
  */
 export function NameGenerator_getScope(receiver: GoPtr<NameGenerator>, privateName: bool): GoPtr<GoPtr<nameGenerationScope>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getScope");
+  // In TS we cannot return a pointer-to-field. Callers inline scope selection.
+  // This function returns the current scope value (not a mutable reference).
+  return IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlags","kind":"method","status":"stub","sigHash":"08a13191942c49158a1ec1a7644116f3b18622e559f68e1678cf3ade92c57be2","bodyHash":"8ecb6cf06aad5607c26fc900c2f8fc31c28c6d9169d8c3766dac902dd3e82cdd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlags","kind":"method","status":"implemented","sigHash":"08a13191942c49158a1ec1a7644116f3b18622e559f68e1678cf3ade92c57be2","bodyHash":"8ecb6cf06aad5607c26fc900c2f8fc31c28c6d9169d8c3766dac902dd3e82cdd"}
  *
  * Go source:
  * func (g *NameGenerator) getTempFlags(privateName bool) tempFlags {
@@ -133,11 +165,15 @@ export function NameGenerator_getScope(receiver: GoPtr<NameGenerator>, privateNa
  * }
  */
 export function NameGenerator_getTempFlags(receiver: GoPtr<NameGenerator>, privateName: bool): tempFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlags");
+  const scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
+  if (scope !== undefined) {
+    return scope.tempFlags;
+  }
+  return tempFlagsAuto;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlags","kind":"method","status":"stub","sigHash":"61e5b7ff3b49f92fee911a957cc385c916ef27ee1a3aeed3276bc3bc62e3ab0f","bodyHash":"768e564bc56acd4ae790dded8685979270ef266d7cb36b92840b833219d5b5fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlags","kind":"method","status":"implemented","sigHash":"61e5b7ff3b49f92fee911a957cc385c916ef27ee1a3aeed3276bc3bc62e3ab0f","bodyHash":"768e564bc56acd4ae790dded8685979270ef266d7cb36b92840b833219d5b5fc"}
  *
  * Go source:
  * func (g *NameGenerator) setTempFlags(privateName bool, flags tempFlags) {
@@ -149,11 +185,31 @@ export function NameGenerator_getTempFlags(receiver: GoPtr<NameGenerator>, priva
  * }
  */
 export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, privateName: bool, flags: tempFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlags");
+  if (privateName) {
+    if (receiver!.privateNameGenerationScope === undefined) {
+      receiver!.privateNameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    receiver!.privateNameGenerationScope.tempFlags = flags;
+  } else {
+    if (receiver!.nameGenerationScope === undefined) {
+      receiver!.nameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    receiver!.nameGenerationScope.tempFlags = flags;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlagsForFormattedName","kind":"method","status":"stub","sigHash":"0b1cc551d0f761e7e728fca0f116696bfc0041394a017f3b9e3145e1cce33fe0","bodyHash":"f31359a0bbe879d861751cfc972f4030e21b34ec457c81e26322974754edf153"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"0b1cc551d0f761e7e728fca0f116696bfc0041394a017f3b9e3145e1cce33fe0","bodyHash":"f31359a0bbe879d861751cfc972f4030e21b34ec457c81e26322974754edf153"}
  *
  * Go source:
  * func (g *NameGenerator) getTempFlagsForFormattedName(privateName bool, formattedNameKey string) tempFlags {
@@ -167,11 +223,18 @@ export function NameGenerator_setTempFlags(receiver: GoPtr<NameGenerator>, priva
  * }
  */
 export function NameGenerator_getTempFlagsForFormattedName(receiver: GoPtr<NameGenerator>, privateName: bool, formattedNameKey: string): tempFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.getTempFlagsForFormattedName");
+  const scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
+  if (scope !== undefined) {
+    const flags = scope.formattedNameTempFlags.get(formattedNameKey);
+    if (flags !== undefined) {
+      return flags;
+    }
+  }
+  return tempFlagsAuto;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlagsForFormattedName","kind":"method","status":"stub","sigHash":"d60f7262271b68ce91521c5acbf23f38a01eee1ba1a021884fd172663a340c4b","bodyHash":"788cf4e4dc495ea358bdf4648cef530035338624b75b953f0ed8e6a602243644"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlagsForFormattedName","kind":"method","status":"implemented","sigHash":"d60f7262271b68ce91521c5acbf23f38a01eee1ba1a021884fd172663a340c4b","bodyHash":"788cf4e4dc495ea358bdf4648cef530035338624b75b953f0ed8e6a602243644"}
  *
  * Go source:
  * func (g *NameGenerator) setTempFlagsForFormattedName(privateName bool, formattedNameKey string, flags tempFlags) {
@@ -186,11 +249,37 @@ export function NameGenerator_getTempFlagsForFormattedName(receiver: GoPtr<NameG
  * }
  */
 export function NameGenerator_setTempFlagsForFormattedName(receiver: GoPtr<NameGenerator>, privateName: bool, formattedNameKey: string, flags: tempFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.setTempFlagsForFormattedName");
+  if (privateName) {
+    if (receiver!.privateNameGenerationScope === undefined) {
+      receiver!.privateNameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    if (receiver!.privateNameGenerationScope.formattedNameTempFlags === undefined) {
+      receiver!.privateNameGenerationScope.formattedNameTempFlags = new globalThis.Map();
+    }
+    receiver!.privateNameGenerationScope.formattedNameTempFlags.set(formattedNameKey, flags);
+  } else {
+    if (receiver!.nameGenerationScope === undefined) {
+      receiver!.nameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    if (receiver!.nameGenerationScope.formattedNameTempFlags === undefined) {
+      receiver!.nameGenerationScope.formattedNameTempFlags = new globalThis.Map();
+    }
+    receiver!.nameGenerationScope.formattedNameTempFlags.set(formattedNameKey, flags);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.reserveName","kind":"method","status":"stub","sigHash":"b586c9b0b328513d9dcfccc94f31c999688da71264960cdc6d1749f7da1d478f","bodyHash":"70423d1d741a9f2092a722d1ed2ef043669acf1bb556fffe61013a3b88fb4fb2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.reserveName","kind":"method","status":"implemented","sigHash":"b586c9b0b328513d9dcfccc94f31c999688da71264960cdc6d1749f7da1d478f","bodyHash":"70423d1d741a9f2092a722d1ed2ef043669acf1bb556fffe61013a3b88fb4fb2"}
  *
  * Go source:
  * func (g *NameGenerator) reserveName(name string, privateName bool, scoped bool, temp bool) {
@@ -207,11 +296,39 @@ export function NameGenerator_setTempFlagsForFormattedName(receiver: GoPtr<NameG
  * }
  */
 export function NameGenerator_reserveName(receiver: GoPtr<NameGenerator>, name: string, privateName: bool, scoped: bool, temp: bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.reserveName");
+  if (privateName) {
+    if (receiver!.privateNameGenerationScope === undefined) {
+      receiver!.privateNameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    if (privateName || scoped) {
+      Set_Add(receiver!.privateNameGenerationScope.reservedNames, name);
+    } else if (!temp) {
+      Set_Add(receiver!.generatedNames, name);
+    }
+  } else {
+    if (receiver!.nameGenerationScope === undefined) {
+      receiver!.nameGenerationScope = {
+        next: undefined,
+        tempFlags: tempFlagsAuto,
+        formattedNameTempFlags: new globalThis.Map(),
+        reservedNames: { M: new globalThis.Map() },
+      };
+    }
+    if (privateName || scoped) {
+      Set_Add(receiver!.nameGenerationScope.reservedNames, name);
+    } else if (!temp) {
+      Set_Add(receiver!.generatedNames, name);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.GenerateName","kind":"method","status":"stub","sigHash":"9b99478f3b7702787c5d1dbdf6016d7201df1c173e929f4164171ea99f20baeb","bodyHash":"3355b694144d8999bd1d1fa7171bb79f00524f84a30df416fc5ef257bbe21695"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.GenerateName","kind":"method","status":"implemented","sigHash":"9b99478f3b7702787c5d1dbdf6016d7201df1c173e929f4164171ea99f20baeb","bodyHash":"3355b694144d8999bd1d1fa7171bb79f00524f84a30df416fc5ef257bbe21695"}
  *
  * Go source:
  * func (g *NameGenerator) GenerateName(name *ast.MemberName) string {
@@ -239,11 +356,37 @@ export function NameGenerator_reserveName(receiver: GoPtr<NameGenerator>, name: 
  * }
  */
 export function NameGenerator_GenerateName(receiver: GoPtr<NameGenerator>, name: GoPtr<MemberName>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.GenerateName");
+  if (receiver!.Context !== undefined) {
+    const autoGenerate = receiver!.Context.autoGenerate?.get(name);
+    if (autoGenerate !== undefined) {
+      if (GeneratedIdentifierFlags_IsNode(autoGenerate.Flags)) {
+        return NameGenerator_generateNameForNodeCached(
+          receiver,
+          EmitContext_GetNodeForGeneratedName(receiver!.Context, name),
+          IsPrivateIdentifier(name),
+          autoGenerate.Flags,
+          autoGenerate.Prefix,
+          autoGenerate.Suffix,
+        );
+      } else {
+        const autoGeneratedName = receiver!.autoGeneratedIdToGeneratedName?.get(autoGenerate.Id);
+        if (autoGeneratedName !== undefined) {
+          return autoGeneratedName;
+        }
+        if (receiver!.autoGeneratedIdToGeneratedName === undefined) {
+          receiver!.autoGeneratedIdToGeneratedName = new globalThis.Map();
+        }
+        const generated = NameGenerator_makeName(receiver, name);
+        receiver!.autoGeneratedIdToGeneratedName.set(autoGenerate.Id, generated);
+        return generated;
+      }
+    }
+  }
+  return receiver!.GetTextOfNode(name);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNodeCached","kind":"method","status":"stub","sigHash":"169dedf9f73d62115907d45322297dbd42b9cc50078157d0f12d98ab48f6b4f9","bodyHash":"5772089f2ffe214c71b8268587fca13746aaefb5f6841d68c40c4ab1a209c63d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNodeCached","kind":"method","status":"implemented","sigHash":"169dedf9f73d62115907d45322297dbd42b9cc50078157d0f12d98ab48f6b4f9","bodyHash":"5772089f2ffe214c71b8268587fca13746aaefb5f6841d68c40c4ab1a209c63d"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForNodeCached(node *ast.Node, privateName bool, flags GeneratedIdentifierFlags, prefix string, suffix string) string {
@@ -252,22 +395,45 @@ export function NameGenerator_GenerateName(receiver: GoPtr<NameGenerator>, name:
  * 	if *cache == nil {
  * 		*cache = make(map[ast.NodeId]string)
  * 	}
- * 
+ *
  * 	if name, ok := (*cache)[nodeId]; ok {
  * 		return name
  * 	}
- * 
+ *
  * 	name := g.generateNameForNode(node, privateName, flags, prefix, suffix)
  * 	(*cache)[nodeId] = name
  * 	return name
  * }
  */
 export function NameGenerator_generateNameForNodeCached(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>, privateName: bool, flags: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNodeCached");
+  const nodeId = GetNodeId(node);
+  if (privateName) {
+    if (receiver!.nodeIdToGeneratedPrivateName === undefined) {
+      receiver!.nodeIdToGeneratedPrivateName = new globalThis.Map();
+    }
+    const cached = receiver!.nodeIdToGeneratedPrivateName.get(nodeId);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const generated = NameGenerator_generateNameForNode(receiver, node, privateName, flags, prefix, suffix);
+    receiver!.nodeIdToGeneratedPrivateName.set(nodeId, generated);
+    return generated;
+  } else {
+    if (receiver!.nodeIdToGeneratedName === undefined) {
+      receiver!.nodeIdToGeneratedName = new globalThis.Map();
+    }
+    const cached = receiver!.nodeIdToGeneratedName.get(nodeId);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const generated = NameGenerator_generateNameForNode(receiver, node, privateName, flags, prefix, suffix);
+    receiver!.nodeIdToGeneratedName.set(nodeId, generated);
+    return generated;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNode","kind":"method","status":"stub","sigHash":"ca9c012ca1861ce6478b62a80135e3e79dea4ca36047bd8d1507e4977dc4ce38","bodyHash":"02949e5e53ee34c1441e6057474fac1f5d94acb9763d1b194e896dd5c3479df0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNode","kind":"method","status":"implemented","sigHash":"ca9c012ca1861ce6478b62a80135e3e79dea4ca36047bd8d1507e4977dc4ce38","bodyHash":"02949e5e53ee34c1441e6057474fac1f5d94acb9763d1b194e896dd5c3479df0"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForNode(node *ast.Node, privateName bool, flags GeneratedIdentifierFlags, prefix string, suffix string) string {
@@ -313,11 +479,66 @@ export function NameGenerator_generateNameForNodeCached(receiver: GoPtr<NameGene
  * }
  */
 export function NameGenerator_generateNameForNode(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>, privateName: bool, flags: GeneratedIdentifierFlags, prefix: string, suffix: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForNode");
+  switch (node!.Kind) {
+    case KindIdentifier:
+    case KindPrivateIdentifier:
+      return NameGenerator_makeUniqueName(
+        receiver,
+        receiver!.GetTextOfNode(node),
+        undefined as unknown as (name: string, pn: bool) => bool,
+        GeneratedIdentifierFlags_IsOptimistic(flags),
+        GeneratedIdentifierFlags_IsReservedInNestedScopes(flags),
+        privateName,
+        prefix,
+        suffix,
+      );
+    case KindModuleDeclaration:
+    case KindEnumDeclaration:
+      if (privateName || prefix.length > 0 || suffix.length > 0) {
+        throw new globalThis.Error("Generated name for a module or enum cannot be private and may have neither a prefix nor suffix");
+      }
+      return NameGenerator_generateNameForModuleOrEnum(receiver, node);
+    case KindImportDeclaration:
+    case KindJSImportDeclaration:
+    case KindExportDeclaration:
+      if (privateName || prefix.length > 0 || suffix.length > 0) {
+        throw new globalThis.Error("Generated name for an import or export cannot be private and may have neither a prefix nor suffix");
+      }
+      return NameGenerator_generateNameForImportOrExportDeclaration(receiver, node);
+    case KindFunctionDeclaration:
+    case KindClassDeclaration:
+      if (privateName || prefix.length > 0 || suffix.length > 0) {
+        throw new globalThis.Error("Generated name for a class or function declaration cannot be private and may have neither a prefix nor suffix");
+      } {
+        const nodeName = Node_Name(node);
+        if (nodeName !== undefined && !(receiver!.Context === undefined && EmitContext_HasAutoGenerateInfo(receiver!.Context, nodeName as unknown as MemberName))) {
+          return NameGenerator_generateNameForNode(receiver, nodeName, false, flags, "", "");
+        }
+        return NameGenerator_generateNameForExportDefault(receiver);
+      }
+    case KindExportAssignment:
+      if (privateName || prefix.length > 0 || suffix.length > 0) {
+        throw new globalThis.Error("Generated name for an export assignment cannot be private and may have neither a prefix nor suffix");
+      }
+      return NameGenerator_generateNameForExportDefault(receiver);
+    case KindClassExpression:
+      if (privateName || prefix.length > 0 || suffix.length > 0) {
+        throw new globalThis.Error("Generated name for a class expression cannot be private and may have neither a prefix nor suffix");
+      }
+      return NameGenerator_generateNameForClassExpression(receiver);
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+      return NameGenerator_generateNameForMethodOrAccessor(receiver, node, privateName, prefix, suffix);
+    case KindComputedPropertyName:
+      return NameGenerator_makeTempVariableName(receiver, tempFlagsAuto, true, privateName, prefix, suffix);
+    default:
+      return NameGenerator_makeTempVariableName(receiver, tempFlagsAuto, false, privateName, prefix, suffix);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForModuleOrEnum","kind":"method","status":"stub","sigHash":"fdbfe0c7ceedcd6ba42d0b9e37b990a1103cf003ed651c577e03ccdb14a87d33","bodyHash":"9903ba37356ca5c35d2b47d21bc0624ca01dcdf8d4985671905e0a064f9fb9f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForModuleOrEnum","kind":"method","status":"implemented","sigHash":"fdbfe0c7ceedcd6ba42d0b9e37b990a1103cf003ed651c577e03ccdb14a87d33","bodyHash":"9903ba37356ca5c35d2b47d21bc0624ca01dcdf8d4985671905e0a064f9fb9f7"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForModuleOrEnum(node *ast.Node /* ModuleDeclaration | EnumDeclaration * /) string {
@@ -331,11 +552,25 @@ export function NameGenerator_generateNameForNode(receiver: GoPtr<NameGenerator>
  * }
  */
 export function NameGenerator_generateNameForModuleOrEnum(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForModuleOrEnum");
+  const name = receiver!.GetTextOfNode(Node_Name(node));
+  if (isUniqueLocalName(name, node)) {
+    return name;
+  } else {
+    return NameGenerator_makeUniqueName(
+      receiver,
+      name,
+      undefined as unknown as (n: string, pn: bool) => bool,
+      false,
+      false,
+      false,
+      "",
+      "",
+    );
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForImportOrExportDeclaration","kind":"method","status":"stub","sigHash":"d497b1c6ed2a82c948415644de7e84659692733cc11a920d2502c27dc57471b0","bodyHash":"1c0636b952338e4e18135e7ca392d662632ce32004396f977ef8fc4943bd3c86"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForImportOrExportDeclaration","kind":"method","status":"implemented","sigHash":"d497b1c6ed2a82c948415644de7e84659692733cc11a920d2502c27dc57471b0","bodyHash":"1c0636b952338e4e18135e7ca392d662632ce32004396f977ef8fc4943bd3c86"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForImportOrExportDeclaration(node *ast.Node /* ImportDeclaration | ExportDeclaration * /) string {
@@ -348,11 +583,24 @@ export function NameGenerator_generateNameForModuleOrEnum(receiver: GoPtr<NameGe
  * }
  */
 export function NameGenerator_generateNameForImportOrExportDeclaration(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForImportOrExportDeclaration");
+  const expr = GetExternalModuleName(node);
+  const baseName = IsStringLiteral(expr)
+    ? makeIdentifierFromModuleName(receiver!.GetTextOfNode(expr))
+    : "module";
+  return NameGenerator_makeUniqueName(
+    receiver,
+    baseName,
+    undefined as unknown as (n: string, pn: bool) => bool,
+    false,
+    false,
+    false,
+    "",
+    "",
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForExportDefault","kind":"method","status":"stub","sigHash":"1b39137b1c5ff9119a766a1319623f268960b7157b0f56a50065fb5ef7832ac7","bodyHash":"497c72a0881e2ddc2827b6de88d5ccbf3eb5716b4b565717f259188a9e7b99df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForExportDefault","kind":"method","status":"implemented","sigHash":"1b39137b1c5ff9119a766a1319623f268960b7157b0f56a50065fb5ef7832ac7","bodyHash":"497c72a0881e2ddc2827b6de88d5ccbf3eb5716b4b565717f259188a9e7b99df"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForExportDefault() string {
@@ -360,11 +608,20 @@ export function NameGenerator_generateNameForImportOrExportDeclaration(receiver:
  * }
  */
 export function NameGenerator_generateNameForExportDefault(receiver: GoPtr<NameGenerator>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForExportDefault");
+  return NameGenerator_makeUniqueName(
+    receiver,
+    "default",
+    undefined as unknown as (n: string, pn: bool) => bool,
+    false,
+    false,
+    false,
+    "",
+    "",
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForClassExpression","kind":"method","status":"stub","sigHash":"7adc3ce7fa5b0349a5c0128819bf0a6c196e68439e20214c508e8e28ba3bd181","bodyHash":"c856bf1b3eeb21fdd6bd70b8a8bb4f299aa15f613a53b5a807bbeb1e09f9a229"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForClassExpression","kind":"method","status":"implemented","sigHash":"7adc3ce7fa5b0349a5c0128819bf0a6c196e68439e20214c508e8e28ba3bd181","bodyHash":"c856bf1b3eeb21fdd6bd70b8a8bb4f299aa15f613a53b5a807bbeb1e09f9a229"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForClassExpression() string {
@@ -372,11 +629,20 @@ export function NameGenerator_generateNameForExportDefault(receiver: GoPtr<NameG
  * }
  */
 export function NameGenerator_generateNameForClassExpression(receiver: GoPtr<NameGenerator>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForClassExpression");
+  return NameGenerator_makeUniqueName(
+    receiver,
+    "class",
+    undefined as unknown as (n: string, pn: bool) => bool,
+    false,
+    false,
+    false,
+    "",
+    "",
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForMethodOrAccessor","kind":"method","status":"stub","sigHash":"ea51b8bdc764fb188198528e746499496bbd7d95fd2d94cbd8516038c181fda1","bodyHash":"121d0257715af30afbc48838dea38c3473fb96d77fc3ebe5e243d8c8157c5817"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForMethodOrAccessor","kind":"method","status":"implemented","sigHash":"ea51b8bdc764fb188198528e746499496bbd7d95fd2d94cbd8516038c181fda1","bodyHash":"121d0257715af30afbc48838dea38c3473fb96d77fc3ebe5e243d8c8157c5817"}
  *
  * Go source:
  * func (g *NameGenerator) generateNameForMethodOrAccessor(node *ast.Node /* MethodDeclaration | AccessorDeclaration * /, privateName bool, prefix string, suffix string) string {
@@ -387,11 +653,15 @@ export function NameGenerator_generateNameForClassExpression(receiver: GoPtr<Nam
  * }
  */
 export function NameGenerator_generateNameForMethodOrAccessor(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>, privateName: bool, prefix: string, suffix: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.generateNameForMethodOrAccessor");
+  const nodeName = Node_Name(node);
+  if (IsIdentifier(nodeName)) {
+    return NameGenerator_generateNameForNodeCached(receiver, nodeName, privateName, GeneratedIdentifierFlagsNone as GeneratedIdentifierFlags, prefix, suffix);
+  }
+  return NameGenerator_makeTempVariableName(receiver, tempFlagsAuto, false, privateName, prefix, suffix);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeName","kind":"method","status":"stub","sigHash":"dde535361aecdd55eda513d6d7e1b35333e1ca15bd642b1173c6c789fb2ef6a6","bodyHash":"43284a56182891ea3b4b854129acb7ef1b950dfc19b891e177c9a70d49dfbe61"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeName","kind":"method","status":"implemented","sigHash":"dde535361aecdd55eda513d6d7e1b35333e1ca15bd642b1173c6c789fb2ef6a6","bodyHash":"43284a56182891ea3b4b854129acb7ef1b950dfc19b891e177c9a70d49dfbe61"}
  *
  * Go source:
  * func (g *NameGenerator) makeName(name *ast.Node) string {
@@ -420,11 +690,49 @@ export function NameGenerator_generateNameForMethodOrAccessor(receiver: GoPtr<Na
  * }
  */
 export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeName");
+  if (receiver!.Context !== undefined) {
+    const autoGenerate = receiver!.Context.autoGenerate?.get(name as unknown as MemberName);
+    if (autoGenerate !== undefined) {
+      switch (GeneratedIdentifierFlags_Kind(autoGenerate.Flags)) {
+        case GeneratedIdentifierFlagsAuto:
+          return NameGenerator_makeTempVariableName(
+            receiver,
+            tempFlagsAuto,
+            GeneratedIdentifierFlags_IsReservedInNestedScopes(autoGenerate.Flags),
+            IsPrivateIdentifier(name),
+            autoGenerate.Prefix,
+            autoGenerate.Suffix,
+          );
+        case GeneratedIdentifierFlagsLoop:
+          return NameGenerator_makeTempVariableName(
+            receiver,
+            tempFlags_i,
+            GeneratedIdentifierFlags_IsReservedInNestedScopes(autoGenerate.Flags),
+            false,
+            autoGenerate.Prefix,
+            autoGenerate.Suffix,
+          );
+        case GeneratedIdentifierFlagsUnique:
+          return NameGenerator_makeUniqueName(
+            receiver,
+            receiver!.GetTextOfNode(name),
+            GeneratedIdentifierFlags_IsFileLevel(autoGenerate.Flags)
+              ? receiver!.IsFileLevelUniqueNameInCurrentFile
+              : (undefined as unknown as (n: string, pn: bool) => bool),
+            GeneratedIdentifierFlags_IsOptimistic(autoGenerate.Flags),
+            GeneratedIdentifierFlags_IsReservedInNestedScopes(autoGenerate.Flags),
+            IsPrivateIdentifier(name),
+            autoGenerate.Prefix,
+            autoGenerate.Suffix,
+          );
+      }
+    }
+  }
+  return receiver!.GetTextOfNode(name);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeTempVariableName","kind":"method","status":"stub","sigHash":"4c6f26d750a187d717da022a3de07dba1e6acf307b64dbfe70f7b7edf53cf158","bodyHash":"4225e67ec53fb8dc69febda2169bbc5adc3dc66bf833303651850682c92938e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeTempVariableName","kind":"method","status":"implemented","sigHash":"4c6f26d750a187d717da022a3de07dba1e6acf307b64dbfe70f7b7edf53cf158","bodyHash":"4225e67ec53fb8dc69febda2169bbc5adc3dc66bf833303651850682c92938e1"}
  *
  * Go source:
  * func (g *NameGenerator) makeTempVariableName(flags tempFlags, reservedInNestedScopes bool, privateName bool, prefix string, suffix string) string {
@@ -441,7 +749,7 @@ export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoP
  * 		}
  * 		tempFlags = g.getTempFlagsForFormattedName(privateName, key)
  * 	}
- * 
+ *
  * 	if flags != 0 && tempFlags&flags == 0 {
  * 		fullName := FormatGeneratedName(privateName, prefix, "_i", suffix)
  * 		if g.isUniqueName(fullName, privateName) {
@@ -455,7 +763,7 @@ export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoP
  * 			return fullName
  * 		}
  * 	}
- * 
+ *
  * 	for {
  * 		count := tempFlags & tempFlagsCountMask
  * 		tempFlags++
@@ -482,11 +790,53 @@ export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoP
  * }
  */
 export function NameGenerator_makeTempVariableName(receiver: GoPtr<NameGenerator>, flags: tempFlags, reservedInNestedScopes: bool, privateName: bool, prefix: string, suffix: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeTempVariableName");
+  const simple = prefix.length === 0 && suffix.length === 0;
+  const key = simple ? "" : (() => {
+    const k = FormatGeneratedName(privateName, prefix, "", suffix);
+    return privateName ? ensureLeadingHash(k) : k;
+  })();
+  let currentTempFlags = simple
+    ? NameGenerator_getTempFlags(receiver, privateName)
+    : NameGenerator_getTempFlagsForFormattedName(receiver, privateName, key);
+
+  if (flags !== 0 && (currentTempFlags & flags) === 0) {
+    const fullName = FormatGeneratedName(privateName, prefix, "_i", suffix);
+    if (NameGenerator_isUniqueName(receiver, fullName, privateName)) {
+      currentTempFlags = (currentTempFlags | flags) as tempFlags;
+      NameGenerator_reserveName(receiver, fullName, privateName, reservedInNestedScopes, true);
+      if (simple) {
+        NameGenerator_setTempFlags(receiver, privateName, currentTempFlags);
+      } else {
+        NameGenerator_setTempFlagsForFormattedName(receiver, privateName, key, currentTempFlags);
+      }
+      return fullName;
+    }
+  }
+
+  for (;;) {
+    const count = (currentTempFlags & tempFlagsCountMask) as tempFlags;
+    currentTempFlags = (currentTempFlags + 1) as tempFlags;
+    // Skip over 'i' (8) and 'n' (13)
+    if (count !== 8 && count !== 13) {
+      const name = count < 26
+        ? `_${globalThis.String.fromCharCode(97 + count)}`
+        : `_${count - 26}`;
+      const fullName = FormatGeneratedName(privateName, prefix, name, suffix);
+      if (NameGenerator_isUniqueName(receiver, fullName, privateName)) {
+        NameGenerator_reserveName(receiver, fullName, privateName, reservedInNestedScopes, true);
+        if (simple) {
+          NameGenerator_setTempFlags(receiver, privateName, currentTempFlags);
+        } else {
+          NameGenerator_setTempFlagsForFormattedName(receiver, privateName, key, currentTempFlags);
+        }
+        return fullName;
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeUniqueName","kind":"method","status":"stub","sigHash":"81f2523c502eac064f1671dad0cd869a9be0a883705435d86e54f20dc48b42c5","bodyHash":"2f21888b164cdb7a7740d2288a9766c0ee9a1d85ec060fe84306e1bc973b635c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeUniqueName","kind":"method","status":"implemented","sigHash":"81f2523c502eac064f1671dad0cd869a9be0a883705435d86e54f20dc48b42c5","bodyHash":"2f21888b164cdb7a7740d2288a9766c0ee9a1d85ec060fe84306e1bc973b635c"}
  *
  * Go source:
  * func (g *NameGenerator) makeUniqueName(baseName string, checkFn func(name string, privateName bool) bool, optimistic bool, scoped bool, privateName bool, prefix string, suffix string) string {
@@ -498,12 +848,12 @@ export function NameGenerator_makeTempVariableName(receiver: GoPtr<NameGenerator
  * 			return fullName
  * 		}
  * 	}
- * 
+ *
  * 	// Find the first unique 'name_n', where n is a positive integer
  * 	if len(baseName) > 0 && baseName[len(baseName)-1] != '_' {
  * 		baseName += "_"
  * 	}
- * 
+ *
  * 	i := 1
  * 	for {
  * 		fullName := FormatGeneratedName(privateName, prefix, fmt.Sprintf("%s%d", baseName, i), suffix)
@@ -516,11 +866,32 @@ export function NameGenerator_makeTempVariableName(receiver: GoPtr<NameGenerator
  * }
  */
 export function NameGenerator_makeUniqueName(receiver: GoPtr<NameGenerator>, baseName: string, checkFn: (name: string, privateName: bool) => bool, optimistic: bool, scoped: bool, privateName: bool, prefix: string, suffix: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.makeUniqueName");
+  const cleanBase = removeLeadingHash(baseName);
+  if (optimistic) {
+    const fullName = FormatGeneratedName(privateName, prefix, cleanBase, suffix);
+    if (NameGenerator_checkUniqueName(receiver, fullName, privateName, checkFn)) {
+      NameGenerator_reserveName(receiver, fullName, privateName, scoped, false);
+      return fullName;
+    }
+  }
+
+  const baseWithUnderscore = cleanBase.length > 0 && cleanBase[cleanBase.length - 1] !== "_"
+    ? cleanBase + "_"
+    : cleanBase;
+
+  let i = 1;
+  for (;;) {
+    const fullName = FormatGeneratedName(privateName, prefix, `${baseWithUnderscore}${i}`, suffix);
+    if (NameGenerator_checkUniqueName(receiver, fullName, privateName, checkFn)) {
+      NameGenerator_reserveName(receiver, fullName, privateName, scoped, false);
+      return fullName;
+    }
+    i++;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.MakeFileLevelOptimisticUniqueName","kind":"method","status":"stub","sigHash":"60931a9cc0710f6345e49e1666de07e2a2ed7a9a7ad20b7c3504045204b302f5","bodyHash":"16ac769a81b17c38f84addfb7df45783fd7860e8815796b7f0741853d40207e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.MakeFileLevelOptimisticUniqueName","kind":"method","status":"implemented","sigHash":"60931a9cc0710f6345e49e1666de07e2a2ed7a9a7ad20b7c3504045204b302f5","bodyHash":"16ac769a81b17c38f84addfb7df45783fd7860e8815796b7f0741853d40207e2"}
  *
  * Go source:
  * func (g *NameGenerator) MakeFileLevelOptimisticUniqueName(name string) string {
@@ -528,11 +899,11 @@ export function NameGenerator_makeUniqueName(receiver: GoPtr<NameGenerator>, bas
  * }
  */
 export function NameGenerator_MakeFileLevelOptimisticUniqueName(receiver: GoPtr<NameGenerator>, name: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.MakeFileLevelOptimisticUniqueName");
+  return NameGenerator_makeUniqueName(receiver, name, receiver!.IsFileLevelUniqueNameInCurrentFile, true, false, false, "", "");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.checkUniqueName","kind":"method","status":"stub","sigHash":"fd2a947b6aea9654e32f581a1f886ef3a0ff94992ea629759f8177c3734ef58e","bodyHash":"f9029cc1c15ed471743e48446cfc4a87239b47c8b82016419375e55dc480f233"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.checkUniqueName","kind":"method","status":"implemented","sigHash":"fd2a947b6aea9654e32f581a1f886ef3a0ff94992ea629759f8177c3734ef58e","bodyHash":"f9029cc1c15ed471743e48446cfc4a87239b47c8b82016419375e55dc480f233"}
  *
  * Go source:
  * func (g *NameGenerator) checkUniqueName(name string, privateName bool, checkFn func(name string, privateName bool) bool) bool {
@@ -544,11 +915,15 @@ export function NameGenerator_MakeFileLevelOptimisticUniqueName(receiver: GoPtr<
  * }
  */
 export function NameGenerator_checkUniqueName(receiver: GoPtr<NameGenerator>, name: string, privateName: bool, checkFn: (name: string, privateName: bool) => bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.checkUniqueName");
+  if (checkFn !== undefined && checkFn !== null) {
+    return checkFn(name, privateName);
+  } else {
+    return NameGenerator_isUniqueName(receiver, name, privateName);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::nextContainer","kind":"func","status":"stub","sigHash":"28fe209997f87b07808200983ac141a6f88eb8994c4f29f015af737e157ce519","bodyHash":"bcde09b66a3f4855213d582ee57a51962f6b6363b4fa2137e716520fa59e7685"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::nextContainer","kind":"func","status":"implemented","sigHash":"28fe209997f87b07808200983ac141a6f88eb8994c4f29f015af737e157ce519","bodyHash":"bcde09b66a3f4855213d582ee57a51962f6b6363b4fa2137e716520fa59e7685"}
  *
  * Go source:
  * func nextContainer(node *ast.Node) *ast.Node {
@@ -560,11 +935,15 @@ export function NameGenerator_checkUniqueName(receiver: GoPtr<NameGenerator>, na
  * }
  */
 export function nextContainer(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::nextContainer");
+  const data = Node_LocalsContainerData(node);
+  if (data !== undefined) {
+    return (data as unknown as { NextContainer?: GoPtr<Node> }).NextContainer;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::isUniqueLocalName","kind":"func","status":"stub","sigHash":"11b9ea00b944da9fefbac5876a092432852a1c0fdc3ae917e79d7d31c83640c8","bodyHash":"40e567629982fe068e8988960e56d9f51e25f1c5e200c91d037feca4c6adaa8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::isUniqueLocalName","kind":"func","status":"implemented","sigHash":"11b9ea00b944da9fefbac5876a092432852a1c0fdc3ae917e79d7d31c83640c8","bodyHash":"40e567629982fe068e8988960e56d9f51e25f1c5e200c91d037feca4c6adaa8b"}
  *
  * Go source:
  * func isUniqueLocalName(name string, container *ast.Node) bool {
@@ -583,11 +962,22 @@ export function nextContainer(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isUniqueLocalName(name: string, container: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::func::isUniqueLocalName");
+  let node = container;
+  while (node !== undefined && IsNodeDescendantOf(node, container) && Node_LocalsContainerData(node) !== undefined) {
+    const locals = Node_Locals(node);
+    if (locals !== undefined) {
+      const local = locals.get(name);
+      if (local !== undefined && (local.Flags & (SymbolFlagsValue | SymbolFlagsExportValue | SymbolFlagsAlias)) !== 0) {
+        return false;
+      }
+    }
+    node = nextContainer(node);
+  }
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isUniqueName","kind":"method","status":"stub","sigHash":"206ba650f06c7ca1ebddf213be6e42a27d519c58b1ab7c4c6fe5768736f0e45e","bodyHash":"22e633a4eaeec36d24db5c6db96ef2889e9598631edbcd8289cf60a5284afce1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isUniqueName","kind":"method","status":"implemented","sigHash":"206ba650f06c7ca1ebddf213be6e42a27d519c58b1ab7c4c6fe5768736f0e45e","bodyHash":"22e633a4eaeec36d24db5c6db96ef2889e9598631edbcd8289cf60a5284afce1"}
  *
  * Go source:
  * func (g *NameGenerator) isUniqueName(name string, privateName bool) bool {
@@ -596,28 +986,31 @@ export function isUniqueLocalName(name: string, container: GoPtr<Node>): bool {
  * }
  */
 export function NameGenerator_isUniqueName(receiver: GoPtr<NameGenerator>, name: string, privateName: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isUniqueName");
+  return (receiver!.IsFileLevelUniqueNameInCurrentFile === undefined ||
+    receiver!.IsFileLevelUniqueNameInCurrentFile === null ||
+    receiver!.IsFileLevelUniqueNameInCurrentFile(name, privateName)) &&
+    !NameGenerator_isReservedName(receiver, name, privateName);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isReservedName","kind":"method","status":"stub","sigHash":"0ada1aacdd8497505937b998021698ed323eb15aef47357dffae616920b03a75","bodyHash":"ef0749c766e24f542b0edd401715d6e5c8a9078a528eb44ca1b74d2aa68ebad3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isReservedName","kind":"method","status":"implemented","sigHash":"0ada1aacdd8497505937b998021698ed323eb15aef47357dffae616920b03a75","bodyHash":"ef0749c766e24f542b0edd401715d6e5c8a9078a528eb44ca1b74d2aa68ebad3"}
  *
  * Go source:
  * func (g *NameGenerator) isReservedName(name string, privateName bool) bool {
  * 	scope := g.getScope(privateName)
- * 
+ *
  * 	// NOTE: The following matches Strada, but is incorrect.
  * 	if g.generatedNames.Has(name) {
  * 		return true
  * 	}
- * 
+ *
  * 	// TODO: generated names should be scoped after Strada port is complete.
  * 	////if *scope != nil {
  * 	////	if (*scope).generatedNames.Has(name) {
  * 	////		return true
  * 	////	}
  * 	////}
- * 
+ *
  * 	for *scope != nil {
  * 		if (*scope).reservedNames.Has(name) {
  * 			return true
@@ -628,5 +1021,16 @@ export function NameGenerator_isUniqueName(receiver: GoPtr<NameGenerator>, name:
  * }
  */
 export function NameGenerator_isReservedName(receiver: GoPtr<NameGenerator>, name: string, privateName: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/namegenerator.go::method::NameGenerator.isReservedName");
+  if (Set_Has(receiver!.generatedNames, name)) {
+    return true;
+  }
+
+  let scope = IfElse(privateName, receiver!.privateNameGenerationScope, receiver!.nameGenerationScope);
+  while (scope !== undefined) {
+    if (Set_Has(scope.reservedNames, name)) {
+      return true;
+    }
+    scope = scope.next;
+  }
+  return false;
 }

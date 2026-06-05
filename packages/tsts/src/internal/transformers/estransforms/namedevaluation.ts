@@ -1,12 +1,39 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
-import type { BinaryExpression, BindingElement, ExportAssignment, ParameterDeclaration, PropertyAssignment, PropertyDeclaration, ShorthandPropertyAssignment, VariableDeclaration } from "../../ast/generated/data.js";
+import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
+import type { BinaryExpression, BindingElement, ClassStaticBlockDeclaration, ExportAssignment, ParameterDeclaration, PropertyAssignment, PropertyDeclaration, ShorthandPropertyAssignment, VariableDeclaration } from "../../ast/generated/data.js";
+import { AsBindingElement, AsBinaryExpression, AsCallExpression, AsClassStaticBlockDeclaration, AsExportAssignment, AsFunctionExpression, AsParameterDeclaration, AsPropertyAssignment, AsPropertyDeclaration, AsShorthandPropertyAssignment, AsVariableDeclaration } from "../../ast/generated/casts.js";
 import type { ClassLikeDeclaration, Expression, IdentifierNode, PropertyName, StringLiteralNode } from "../../ast/generated/unions.js";
+import {
+  KindAmpersandAmpersandEqualsToken,
+  KindArrowFunction,
+  KindBarBarEqualsToken,
+  KindBinaryExpression,
+  KindBindingElement,
+  KindClassExpression,
+  KindEqualsToken,
+  KindExportAssignment,
+  KindFunctionExpression,
+  KindParameter,
+  KindPropertyAssignment,
+  KindPropertyDeclaration,
+  KindQuestionQuestionEqualsToken,
+  KindShorthandPropertyAssignment,
+  KindVariableDeclaration,
+} from "../../ast/generated/kinds.js";
+import { IsClassStaticBlockDeclaration, IsClassDeclaration, IsClassExpression, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsPrivateIdentifier, IsStringLiteral } from "../../ast/generated/predicates.js";
+import { HasSyntacticModifier, IsPropertyNameLiteral, SkipOuterExpressions, OEKAll } from "../../ast/utilities.js";
+import { Node_Expression, Node_Initializer, Node_Members, Node_Statements, Node_Text } from "../../ast/ast.js";
+import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
+import { NewBlock, NewClassStaticBlockDeclaration, NewExpressionStatement, NewStringLiteral } from "../../ast/generated/factory.js";
+import { TokenFlagsNone } from "../../ast/tokenflags.js";
+import { EmitContext_AssignedName, EmitContext_ClassThis, EmitContext_IsCallToHelper, EmitContext_MostOriginal, EmitContext_SetAssignedName, EmitContext_SetClassThis } from "../../printer/emitcontext.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewStringLiteralFromNode, NodeFactory_NewSetFunctionNameHelper, NodeFactory_NewThisExpression, NodeFactory_RestoreOuterExpressions } from "../../printer/factory.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"stub","sigHash":"6237d8463b0ae001fda9291aeee2d73a8fd801211e0a23674e97802ef7b8c569","bodyHash":"62e2f5e07d210a350a4f297648f084ea9d398afaf7219b63b7ae3dc40e41362e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"6237d8463b0ae001fda9291aeee2d73a8fd801211e0a23674e97802ef7b8c569","bodyHash":"62e2f5e07d210a350a4f297648f084ea9d398afaf7219b63b7ae3dc40e41362e"}
  *
  * Go source:
  * func isClassNamedEvaluationHelperBlock(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -27,11 +54,30 @@ import type { EmitContext } from "../../printer/emitcontext.js";
  * }
  */
 export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isClassNamedEvaluationHelperBlock");
+  if (!IsClassStaticBlockDeclaration(node)) {
+    return false;
+  }
+  const csbd = AsClassStaticBlockDeclaration(node);
+  const bodyStatements = Node_Statements(csbd!.Body as unknown as GoPtr<Node>);
+  if (bodyStatements === undefined || bodyStatements.length !== 1) {
+    return false;
+  }
+
+  const statement = bodyStatements[0];
+  if (IsExpressionStatement(statement)) {
+    const expression = Node_Expression(statement);
+    if (EmitContext_IsCallToHelper(emitContext, expression, "__setFunctionName")) {
+      const callExpr = AsCallExpression(expression);
+      const args = callExpr!.Arguments;
+      return args!.Nodes.length >= 2 &&
+        args!.Nodes[1] === EmitContext_AssignedName(emitContext, node);
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasExplicitlyAssignedName","kind":"func","status":"stub","sigHash":"5eb0191f9c13b270588fd746d07b37f97cc90eb30f17ee06adb0f61e99cc9642","bodyHash":"7ef0855c78b00276698046b4c09f99ce663834689d05f0157c2bd86c499e25f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"5eb0191f9c13b270588fd746d07b37f97cc90eb30f17ee06adb0f61e99cc9642","bodyHash":"7ef0855c78b00276698046b4c09f99ce663834689d05f0157c2bd86c499e25f2"}
  *
  * Go source:
  * func classHasExplicitlyAssignedName(emitContext *printer.EmitContext, node *ast.ClassLikeDeclaration) bool {
@@ -46,11 +92,18 @@ export function isClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext
  * }
  */
 export function classHasExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, node: GoPtr<ClassLikeDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasExplicitlyAssignedName");
+  if (EmitContext_AssignedName(emitContext, node as unknown as GoPtr<Node>) !== undefined) {
+    for (const member of Node_Members(node as unknown as GoPtr<Node>) ?? []) {
+      if (isClassNamedEvaluationHelperBlock(emitContext, member)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasDeclaredOrExplicitlyAssignedName","kind":"func","status":"stub","sigHash":"b6168342e8fcff30827e8e7ee1aeac1d0fa7c47caedb045e6f2ee42a384488ed","bodyHash":"764a9d8831d376a0ef398e9f2b4d14701abd642ed6d61ea2c9471d44a7a73926"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasDeclaredOrExplicitlyAssignedName","kind":"func","status":"implemented","sigHash":"b6168342e8fcff30827e8e7ee1aeac1d0fa7c47caedb045e6f2ee42a384488ed","bodyHash":"764a9d8831d376a0ef398e9f2b4d14701abd642ed6d61ea2c9471d44a7a73926"}
  *
  * Go source:
  * func classHasDeclaredOrExplicitlyAssignedName(emitContext *printer.EmitContext, node *ast.ClassLikeDeclaration) bool {
@@ -58,11 +111,11 @@ export function classHasExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, 
  * }
  */
 export function classHasDeclaredOrExplicitlyAssignedName(emitContext: GoPtr<EmitContext>, node: GoPtr<ClassLikeDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::classHasDeclaredOrExplicitlyAssignedName");
+  return Node_Name(node as unknown as GoPtr<Node>) !== undefined || classHasExplicitlyAssignedName(emitContext, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isProtoSetter","kind":"func","status":"stub","sigHash":"1941583680736a93397a9144112cc090fa3c62ea6010b6f067c34a12f2dbc807","bodyHash":"12d58de5b966336972181acb509b5ae3cf7ffd3fcaa3295443e8e15678b2de3b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isProtoSetter","kind":"func","status":"implemented","sigHash":"1941583680736a93397a9144112cc090fa3c62ea6010b6f067c34a12f2dbc807","bodyHash":"12d58de5b966336972181acb509b5ae3cf7ffd3fcaa3295443e8e15678b2de3b"}
  *
  * Go source:
  * func isProtoSetter(node *ast.PropertyName) bool {
@@ -70,7 +123,7 @@ export function classHasDeclaredOrExplicitlyAssignedName(emitContext: GoPtr<Emit
  * }
  */
 export function isProtoSetter(node: GoPtr<PropertyName>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isProtoSetter");
+  return (IsIdentifier(node as unknown as GoPtr<Node>) || IsStringLiteral(node as unknown as GoPtr<Node>)) && Node_Text(node as unknown as GoPtr<Node>) === "__proto__";
 }
 
 /**
@@ -82,7 +135,7 @@ export function isProtoSetter(node: GoPtr<PropertyName>): bool {
 export type anonymousFunctionDefinition = Node;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition","kind":"func","status":"stub","sigHash":"837c166f1b0fe809c982161dd9d4fba0fad539484530366ef517fb80f50a3f75","bodyHash":"6469512651378f6a29f1d7ce40ed4b4a47ac140495c340c3b9f50c94a152b7e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition","kind":"func","status":"implemented","sigHash":"837c166f1b0fe809c982161dd9d4fba0fad539484530366ef517fb80f50a3f75","bodyHash":"6469512651378f6a29f1d7ce40ed4b4a47ac140495c340c3b9f50c94a152b7e9"}
  *
  * Go source:
  * func isAnonymousFunctionDefinition(emitContext *printer.EmitContext, node *ast.Expression, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -110,11 +163,31 @@ export type anonymousFunctionDefinition = Node;
  * }
  */
 export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isAnonymousFunctionDefinition");
+  const skipped = SkipOuterExpressions(node, OEKAll);
+  switch (skipped!.Kind) {
+    case KindClassExpression:
+      if (classHasDeclaredOrExplicitlyAssignedName(emitContext, skipped)) {
+        return false;
+      }
+      break;
+    case KindFunctionExpression:
+      if (Node_Name(AsFunctionExpression(skipped) as unknown as GoPtr<Node>) !== undefined) {
+        return false;
+      }
+      break;
+    case KindArrowFunction:
+      break;
+    default:
+      return false;
+  }
+  if (cb !== undefined) {
+    return cb(skipped);
+  }
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationSource","kind":"func","status":"stub","sigHash":"cffa1b4211162a98ff1b87afb6940aa52e9e5fd5d907d1f923e19f3761ac3501","bodyHash":"e4919ba9450f51ea904f0c2de3639df98c7242ea2711c7e02e3b559b9f2ef06b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationSource","kind":"func","status":"implemented","sigHash":"cffa1b4211162a98ff1b87afb6940aa52e9e5fd5d907d1f923e19f3761ac3501","bodyHash":"e4919ba9450f51ea904f0c2de3639df98c7242ea2711c7e02e3b559b9f2ef06b"}
  *
  * Go source:
  * func isNamedEvaluationSource(node *ast.Node) bool {
@@ -144,11 +217,38 @@ export function isAnonymousFunctionDefinition(emitContext: GoPtr<EmitContext>, n
  * }
  */
 export function isNamedEvaluationSource(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationSource");
+  switch (node!.Kind) {
+    case KindPropertyAssignment:
+      return !isProtoSetter(AsPropertyAssignment(node)!.name);
+    case KindShorthandPropertyAssignment:
+      return AsShorthandPropertyAssignment(node)!.ObjectAssignmentInitializer !== undefined;
+    case KindVariableDeclaration:
+      return IsIdentifier(AsVariableDeclaration(node)!.name as unknown as GoPtr<Node>) && Node_Initializer(node) !== undefined;
+    case KindParameter:
+      return IsIdentifier(AsParameterDeclaration(node)!.name as unknown as GoPtr<Node>) && Node_Initializer(node) !== undefined && AsParameterDeclaration(node)!.DotDotDotToken === undefined;
+    case KindBindingElement:
+      return IsIdentifier(AsBindingElement(node)!.name as unknown as GoPtr<Node>) && Node_Initializer(node) !== undefined && AsBindingElement(node)!.DotDotDotToken === undefined;
+    case KindPropertyDeclaration:
+      return Node_Initializer(node) !== undefined;
+    case KindBinaryExpression: {
+      const operatorKind = AsBinaryExpression(node)!.OperatorToken!.Kind;
+      switch (operatorKind) {
+        case KindEqualsToken:
+        case KindAmpersandAmpersandEqualsToken:
+        case KindBarBarEqualsToken:
+        case KindQuestionQuestionEqualsToken:
+          return IsIdentifier(AsBinaryExpression(node)!.Left as unknown as GoPtr<Node>);
+      }
+      break;
+    }
+    case KindExportAssignment:
+      return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluation","kind":"func","status":"stub","sigHash":"c1b0e9007fae51c9bab3cb0b3b5a8ae8cdb3aafc811d57d419069e6890a396fa","bodyHash":"1b9a87034890eb02ed74ffdc0186856a9b68e1fd95c11a17e8e9cf942ecf59af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluation","kind":"func","status":"implemented","sigHash":"c1b0e9007fae51c9bab3cb0b3b5a8ae8cdb3aafc811d57d419069e6890a396fa","bodyHash":"1b9a87034890eb02ed74ffdc0186856a9b68e1fd95c11a17e8e9cf942ecf59af"}
  *
  * Go source:
  * func isNamedEvaluation(emitContext *printer.EmitContext, node *ast.Node) bool {
@@ -156,11 +256,11 @@ export function isNamedEvaluationSource(node: GoPtr<Node>): bool {
  * }
  */
 export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluation");
+  return isNamedEvaluationAnd(emitContext, node, undefined as unknown as (arg0: GoPtr<anonymousFunctionDefinition>) => bool);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd","kind":"func","status":"stub","sigHash":"5cc7c91b9e6c5a560d4cb2edf14f7ee220f9d9c506e85f9b0b312b46c1d6a79c","bodyHash":"564eaed3c6f04fd384940eb9846a1e3abddd2989e4be6fee8ee32a0cf28639b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd","kind":"func","status":"implemented","sigHash":"5cc7c91b9e6c5a560d4cb2edf14f7ee220f9d9c506e85f9b0b312b46c1d6a79c","bodyHash":"564eaed3c6f04fd384940eb9846a1e3abddd2989e4be6fee8ee32a0cf28639b2"}
  *
  * Go source:
  * func isNamedEvaluationAnd(emitContext *printer.EmitContext, node *ast.Node, cb func(*anonymousFunctionDefinition) bool) bool {
@@ -183,11 +283,29 @@ export function isNamedEvaluation(emitContext: GoPtr<EmitContext>, node: GoPtr<N
  * }
  */
 export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, cb: (arg0: GoPtr<anonymousFunctionDefinition>) => bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::isNamedEvaluationAnd");
+  if (!isNamedEvaluationSource(node)) {
+    return false;
+  }
+  switch (node!.Kind) {
+    case KindShorthandPropertyAssignment:
+      return isAnonymousFunctionDefinition(emitContext, AsShorthandPropertyAssignment(node)!.ObjectAssignmentInitializer, cb);
+    case KindPropertyAssignment:
+    case KindVariableDeclaration:
+    case KindParameter:
+    case KindBindingElement:
+    case KindPropertyDeclaration:
+      return isAnonymousFunctionDefinition(emitContext, Node_Initializer(node), cb);
+    case KindBinaryExpression:
+      return isAnonymousFunctionDefinition(emitContext, AsBinaryExpression(node)!.Right, cb);
+    case KindExportAssignment:
+      return isAnonymousFunctionDefinition(emitContext, Node_Expression(node), cb);
+    default:
+      throw new globalThis.Error("Unhandled case in isNamedEvaluation");
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfIdentifier","kind":"func","status":"stub","sigHash":"3b1b68a8baab172bab7ce4ae3e5c9642dbab06120e9cca69a5af92dc89bd82a6","bodyHash":"02cf63a626012ab995c8c460104bfb908d1988d1cbdf84860829f9d58f404755"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfIdentifier","kind":"func","status":"implemented","sigHash":"3b1b68a8baab172bab7ce4ae3e5c9642dbab06120e9cca69a5af92dc89bd82a6","bodyHash":"02cf63a626012ab995c8c460104bfb908d1988d1cbdf84860829f9d58f404755"}
  *
  * Go source:
  * func getAssignedNameOfIdentifier(emitContext *printer.EmitContext, name *ast.IdentifierNode, expression *ast.Node /*WrappedExpression<AnonymousFunctionDefinition>* /) *ast.StringLiteralNode {
@@ -200,7 +318,12 @@ export function isNamedEvaluationAnd(emitContext: GoPtr<EmitContext>, node: GoPt
  * }
  */
 export function getAssignedNameOfIdentifier(emitContext: GoPtr<EmitContext>, name: GoPtr<IdentifierNode>, expression: GoPtr<Node>): GoPtr<StringLiteralNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::getAssignedNameOfIdentifier");
+  const original = EmitContext_MostOriginal(emitContext, SkipOuterExpressions(expression, OEKAll) as unknown as GoPtr<Node>);
+  if ((IsClassDeclaration(original) || IsFunctionDeclaration(original)) &&
+    Node_Name(original) === undefined && HasSyntacticModifier(original, ModifierFlagsDefault)) {
+    return NewStringLiteral(emitContext!.Factory!.__tsgoEmbedded0!, "default", TokenFlagsNone) as unknown as GoPtr<StringLiteralNode>;
+  }
+  return NodeFactory_NewStringLiteralFromNode(emitContext!.Factory, name as unknown as GoPtr<Node>) as unknown as GoPtr<StringLiteralNode>;
 }
 
 /**
@@ -241,7 +364,7 @@ export function getAssignedNameOfPropertyName(emitContext: GoPtr<EmitContext>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::createClassNamedEvaluationHelperBlock","kind":"func","status":"stub","sigHash":"9feb917f7e94207e1242d09e3e3892104c1f7da3ade6fed43210d85ce6ae2b88","bodyHash":"4eeba07e82f041eb281dba4835d7c80c0654ad3026ed3ea8872b83e8debe5567"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::createClassNamedEvaluationHelperBlock","kind":"func","status":"implemented","sigHash":"9feb917f7e94207e1242d09e3e3892104c1f7da3ade6fed43210d85ce6ae2b88","bodyHash":"4eeba07e82f041eb281dba4835d7c80c0654ad3026ed3ea8872b83e8debe5567"}
  *
  * Go source:
  * func createClassNamedEvaluationHelperBlock(emitContext *printer.EmitContext, assignedName *ast.Expression, thisExpression *ast.Expression) *ast.Node {
@@ -267,7 +390,17 @@ export function getAssignedNameOfPropertyName(emitContext: GoPtr<EmitContext>, n
  * }
  */
 export function createClassNamedEvaluationHelperBlock(emitContext: GoPtr<EmitContext>, assignedName: GoPtr<Expression>, thisExpression: GoPtr<Expression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/namedevaluation.go::func::createClassNamedEvaluationHelperBlock");
+  const factory = emitContext!.Factory;
+  const astFactory = factory!.__tsgoEmbedded0!;
+
+  const actualThisExpression = thisExpression !== undefined ? thisExpression : NodeFactory_NewThisExpression(factory);
+  const expression = NodeFactory_NewSetFunctionNameHelper(factory, actualThisExpression, assignedName, "");
+  const statement = NewExpressionStatement(astFactory, expression);
+  const body = NewBlock(astFactory, NodeFactory_NewNodeList(astFactory, [statement]), false);
+  const block = NewClassStaticBlockDeclaration(astFactory, undefined, body);
+
+  EmitContext_SetAssignedName(emitContext, block, assignedName);
+  return block;
 }
 
 /**

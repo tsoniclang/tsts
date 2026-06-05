@@ -16,10 +16,11 @@ import type { Tristate } from "../core/tristate.js";
 import * as strings from "../../go/strings.js";
 import type { Path as Path_79c49227 } from "../tspath/path.js";
 import { GetEncodedRootLength, NormalizePath } from "../tspath/path.js";
-import type { AccessorDeclarationBase, ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingElement, BindingPattern, CallExpression, CatchClause, ClassDeclaration, ClassExpression, ClassStaticBlockDeclaration, CompositeBase, ConstructorDeclaration, Declaration, DeclarationBase, Decorator, ElementAccessExpression, EnumDeclaration, EnumMember, ExportAssignment, ExportDeclaration, ExportSpecifier, Expression as Expression_9ab73856, ExpressionWithTypeArguments, ForInOrOfStatement, FunctionDeclaration, FunctionExpression, FunctionOrConstructorTypeNodeBase, HeritageClause, Identifier, ImportAttributesNode, ImportClause as ImportClause_58d51725, ImportEqualsDeclaration, ImportSpecifier, JSDocParameterOrPropertyTag, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxExpression, JsxFragment, JsxNamespacedName, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, KeywordExpression, LiteralLikeNode, LocalsContainerBase, MetaProperty, MethodDeclaration, ModuleDeclaration, ModuleName, NewExpression, NodeFactory, NonNullExpression, NoSubstitutionTemplateLiteral, ObjectLiteralExpression, ParameterDeclaration, ParameterDeclarationNode, ParameterList as ParameterList_5701af3c, PrivateIdentifier, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, ReturnStatement, SatisfiesExpression, ShorthandPropertyAssignment, SpreadAssignment, SpreadElement, Statement as Statement_98c7cd47, StatementList as StatementList_3cde134f, TaggedTemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, Token, TokenNode, TypeAssertion, TypeSyntaxBase, VariableDeclaration, VariableDeclarationList, VariableStatement, YieldExpression } from "./generated/index.js";
+import type { AccessorDeclarationBase, ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingElement, BindingPattern, Block, CallExpression, CaseOrDefaultClause, CatchClause, ClassDeclaration, ClassExpression, ClassStaticBlockDeclaration, CompositeBase, ConditionalExpression, ComputedPropertyName, ConstructorDeclaration, Declaration, DeclarationBase, Decorator, DoStatement, ElementAccessExpression, EnumDeclaration, EnumMember, ExportAssignment, ExportDeclaration, ExportSpecifier, Expression as Expression_9ab73856, ExpressionStatement, ExpressionWithTypeArguments, ForInOrOfStatement, ForStatement, FunctionDeclaration, FunctionExpression, FunctionOrConstructorTypeNodeBase, HeritageClause, IfStatement, Identifier, ImportAttributesNode, ImportClause as ImportClause_58d51725, ImportEqualsDeclaration, ImportSpecifier, JSDocParameterOrPropertyTag, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxExpression, JsxFragment, JsxNamespacedName, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, KeywordExpression, LabeledStatement, LiteralLikeNode, LocalsContainerBase, MetaProperty, MethodDeclaration, ModuleDeclaration, ModuleName, NewExpression, NodeFactory, NonNullExpression, NoSubstitutionTemplateLiteral, ObjectLiteralExpression, ParameterDeclaration, ParameterDeclarationNode, ParameterList as ParameterList_5701af3c, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PrivateIdentifier, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, ReturnStatement, SatisfiesExpression, ShorthandPropertyAssignment, SpreadAssignment, SpreadElement, Statement as Statement_98c7cd47, StatementList as StatementList_3cde134f, SwitchStatement, TaggedTemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, Token, TokenNode, TryStatement, TypeAssertion, TypeSyntaxBase, VariableDeclaration, VariableDeclarationList, VariableStatement, WhileStatement, WithStatement, YieldExpression } from "./generated/index.js";
 import * as casts from "./generated/casts.js";
 import * as predicates from "./generated/predicates.js";
-import { NewToken as NodeFactory_NewToken } from "./generated/factory.js";
+import { NewToken as NodeFactory_NewToken, NewArrayLiteralExpression, NewAsExpression, NewBinaryExpression, NewBlock, NewCallExpression, NewCaseOrDefaultClause, NewCatchClause, NewClassDeclaration, NewClassExpression, NewComputedPropertyName, NewConditionalExpression, NewConstructorDeclaration, NewDoStatement, NewElementAccessExpression, NewExpressionStatement, NewExpressionWithTypeArguments, NewForInOrOfStatement, NewForStatement, NewFunctionDeclaration, NewIfStatement, NewLabeledStatement, NewNonNullExpression, NewObjectLiteralExpression, NewParenthesizedExpression, NewPartiallyEmittedExpression, NewPostfixUnaryExpression, NewPrefixUnaryExpression, NewPropertyAccessExpression, NewPropertyAssignment, NewPropertyDeclaration, NewSatisfiesExpression, NewShorthandPropertyAssignment, NewSpreadAssignment, NewSpreadElement, NewSwitchStatement, NewTaggedTemplateExpression, NewTryStatement, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement, NewWhileStatement, NewWithStatement } from "./generated/factory.js";
+import type { AsteriskToken, AwaitKeyword, BindingName, BinaryOperatorToken, BlockNode, CaseBlockNode, CaseClausesList, CatchClauseNode, ClassElementList, ColonToken, ElementList, EqualsToken, ExclamationToken, ForInitializer, FunctionBody, HeritageClauseList, IdentifierNode, MemberName, ParameterList, PropertyName, QuestionDotToken, QuestionToken, Statement, StatementList, TemplateLiteral, TypeList, TypeNode, TypeParameterList, VariableDeclarationListNode, VariableDeclarationNode, VariableDeclarationNodeList } from "./generated/unions.js";
 import type { Kind } from "./generated/kinds.js";
 import {
   KindAbstractKeyword,
@@ -219,6 +220,7 @@ import {
   KindYieldExpression,
 } from "./generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsUsing } from "./generated/flags.js";
+import type { NodeFlags } from "./generated/flags.js";
 import { goReceiverKey, NodeFactory_newNode, updateNode, cloneNode, visit, visitNodeList, NodeDefault_AsNode, NodeDefault_ForEachChild, NodeDefault_IterChildren, NodeDefault_VisitEachChild, NodeDefault_Name, NodeDefault_Modifiers, NodeDefault_setModifiers, NodeDefault_ExportableData, NodeDefault_FlowNodeData, NodeDefault_DeclarationData, NodeDefault_LocalsContainerData, NodeDefault_FunctionLikeData, NodeDefault_ClassLikeData, NodeDefault_BodyData, FlowNodeBase_FlowNodeData, DeclarationBase_DeclarationData, LocalsContainerBase_LocalsContainerData, CompositeBase_subtreeFactsWorker, NodeDefault_LiteralLikeData, NodeDefault_TemplateLiteralLikeData, NodeDefault_SubtreeFacts, NodeDefault_propagateSubtreeFacts, NewNodeFactory, Node_FunctionLikeData, Node_Modifiers, Node_Name, Node_DeclarationData, Node_LocalsContainerData, Node_BodyData, Node_ForEachChild, Node_Pos, Node_AsNode, Node_SubtreeFacts } from "./spine.js";
 import type { Node, NodeBase, NodeIter, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData } from "./spine.js";
 import { ModifierFlagsAmbient, ModifierFlagsAsync, ModifierFlagsNone } from "./modifierflags.js";
@@ -6165,4 +6167,303 @@ export function forEachChild_JSDocParameterOrPropertyTag(node: GoPtr<JSDocParame
  */
 export function visitEachChild_JSDocParameterOrPropertyTag(node: GoPtr<JSDocParameterOrPropertyTag>, v: GoPtr<NodeVisitor>): GoPtr<Node> {
   throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::func::visitEachChild_JSDocParameterOrPropertyTag");
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// NodeFactory Update methods (ast_generated.go). Ported from Go's
+// generated ast_generated.go UpdateXxx methods.
+// ──────────────────────────────────────────────────────────────────────
+
+export function NodeFactory_UpdateComputedPropertyName(receiver: GoPtr<NodeFactory>, node: GoPtr<ComputedPropertyName>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewComputedPropertyName(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateBlock(receiver: GoPtr<NodeFactory>, node: GoPtr<Block>, statements: GoPtr<StatementList_3cde134f>, multiLine: bool): GoPtr<Node> {
+  if (statements !== node!.Statements || multiLine !== node!.MultiLine) {
+    return updateNode(NewBlock(receiver, statements, multiLine), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateForStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<ForStatement>, initializer: GoPtr<ForInitializer>, condition: GoPtr<Expression_9ab73856>, incrementor: GoPtr<Expression_9ab73856>, statement: GoPtr<Statement>): GoPtr<Node> {
+  if (initializer !== node!.Initializer || condition !== node!.Condition || incrementor !== node!.Incrementor || statement !== node!.Statement) {
+    return updateNode(NewForStatement(receiver, initializer, condition, incrementor, statement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateExpressionStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<ExpressionStatement>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewExpressionStatement(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateTryStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<TryStatement>, tryBlock: GoPtr<BlockNode>, catchClause: GoPtr<CatchClauseNode>, finallyBlock: GoPtr<BlockNode>): GoPtr<Node> {
+  if (tryBlock !== node!.TryBlock || catchClause !== node!.CatchClause || finallyBlock !== node!.FinallyBlock) {
+    return updateNode(NewTryStatement(receiver, tryBlock, catchClause, finallyBlock), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateClassDeclaration(receiver: GoPtr<NodeFactory>, node: GoPtr<ClassDeclaration>, modifiers: GoPtr<ModifierList>, name: GoPtr<IdentifierNode>, typeParameters: GoPtr<TypeParameterList>, heritageClauses: GoPtr<HeritageClauseList>, members: GoPtr<ClassElementList>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || name !== node!.name || typeParameters !== node!.TypeParameters || heritageClauses !== node!.HeritageClauses || members !== node!.Members) {
+    return updateNode(NewClassDeclaration(receiver, modifiers, name, typeParameters, heritageClauses, members), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateClassExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ClassExpression>, modifiers: GoPtr<ModifierList>, name: GoPtr<IdentifierNode>, typeParameters: GoPtr<TypeParameterList>, heritageClauses: GoPtr<HeritageClauseList>, members: GoPtr<ClassElementList>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || name !== node!.name || typeParameters !== node!.TypeParameters || heritageClauses !== node!.HeritageClauses || members !== node!.Members) {
+    return updateNode(NewClassExpression(receiver, modifiers, name, typeParameters, heritageClauses, members), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateConstructorDeclaration(receiver: GoPtr<NodeFactory>, node: GoPtr<ConstructorDeclaration>, modifiers: GoPtr<ModifierList>, typeParameters: GoPtr<TypeParameterList>, parameters: GoPtr<ParameterList_5701af3c>, typeNode: GoPtr<TypeNode>, fullSignature: GoPtr<TypeNode>, body: GoPtr<FunctionBody>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || typeParameters !== node!.TypeParameters || parameters !== node!.Parameters || typeNode !== node!.Type || fullSignature !== node!.FullSignature || body !== node!.Body) {
+    return updateNode(NewConstructorDeclaration(receiver, modifiers, typeParameters, parameters, typeNode, fullSignature, body), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePropertyDeclaration(receiver: GoPtr<NodeFactory>, node: GoPtr<PropertyDeclaration>, modifiers: GoPtr<ModifierList>, name: GoPtr<PropertyName>, postfixToken: GoPtr<TokenNode>, typeNode: GoPtr<TypeNode>, initializer: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || name !== node!.name || postfixToken !== node!.PostfixToken || typeNode !== node!.Type || initializer !== node!.Initializer) {
+    return updateNode(NewPropertyDeclaration(receiver, modifiers, name, postfixToken, typeNode, initializer), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateBinaryExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<BinaryExpression>, modifiers: GoPtr<ModifierList>, left: GoPtr<Expression_9ab73856>, typeNode: GoPtr<TypeNode>, operatorToken: GoPtr<BinaryOperatorToken>, right: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || left !== node!.Left || typeNode !== node!.Type || operatorToken !== node!.OperatorToken || right !== node!.Right) {
+    return updateNode(NewBinaryExpression(receiver, modifiers, left, typeNode, operatorToken, right), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePrefixUnaryExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<PrefixUnaryExpression>, operator: Kind, operand: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (operator !== node!.Operator || operand !== node!.Operand) {
+    return updateNode(NewPrefixUnaryExpression(receiver, operator, operand), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePostfixUnaryExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<PostfixUnaryExpression>, operand: GoPtr<Expression_9ab73856>, operator: Kind): GoPtr<Node> {
+  if (operand !== node!.Operand || operator !== node!.Operator) {
+    return updateNode(NewPostfixUnaryExpression(receiver, operand, operator), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePropertyAccessExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<PropertyAccessExpression>, expression: GoPtr<Expression_9ab73856>, questionDotToken: GoPtr<QuestionDotToken>, name: GoPtr<MemberName>, flags: NodeFlags): GoPtr<Node> {
+  if (expression !== node!.Expression || questionDotToken !== node!.QuestionDotToken || name !== node!.name || flags !== node!.Flags) {
+    return updateNode(NewPropertyAccessExpression(receiver, expression, questionDotToken, name, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateElementAccessExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ElementAccessExpression>, expression: GoPtr<Expression_9ab73856>, questionDotToken: GoPtr<QuestionDotToken>, argumentExpression: GoPtr<Expression_9ab73856>, flags: NodeFlags): GoPtr<Node> {
+  if (expression !== node!.Expression || questionDotToken !== node!.QuestionDotToken || argumentExpression !== node!.ArgumentExpression || flags !== node!.Flags) {
+    return updateNode(NewElementAccessExpression(receiver, expression, questionDotToken, argumentExpression, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateCallExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<CallExpression>, expression: GoPtr<Expression_9ab73856>, questionDotToken: GoPtr<QuestionDotToken>, typeArguments: GoPtr<TypeList>, argumentsNodes: GoPtr<ElementList>, flags: NodeFlags): GoPtr<Node> {
+  if (expression !== node!.Expression || questionDotToken !== node!.QuestionDotToken || typeArguments !== node!.TypeArguments || argumentsNodes !== node!.Arguments || flags !== node!.Flags) {
+    return updateNode(NewCallExpression(receiver, expression, questionDotToken, typeArguments, argumentsNodes, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateTaggedTemplateExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<TaggedTemplateExpression>, tag: GoPtr<Expression_9ab73856>, questionDotToken: GoPtr<QuestionDotToken>, typeArguments: GoPtr<TypeList>, template: GoPtr<TemplateLiteral>, flags: NodeFlags): GoPtr<Node> {
+  if (tag !== node!.Tag || questionDotToken !== node!.QuestionDotToken || typeArguments !== node!.TypeArguments || template !== node!.Template || flags !== node!.Flags) {
+    return updateNode(NewTaggedTemplateExpression(receiver, tag, questionDotToken, typeArguments, template, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateParenthesizedExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ParenthesizedExpression>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewParenthesizedExpression(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateArrayLiteralExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ArrayLiteralExpression>, elements: GoPtr<ElementList>, multiLine: bool): GoPtr<Node> {
+  if (elements !== node!.Elements || multiLine !== node!.MultiLine) {
+    return updateNode(NewArrayLiteralExpression(receiver, elements, multiLine), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateObjectLiteralExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ObjectLiteralExpression>, properties: GoPtr<NodeList>, multiLine: bool): GoPtr<Node> {
+  if (properties !== node!.Properties || multiLine !== node!.MultiLine) {
+    return updateNode(NewObjectLiteralExpression(receiver, properties, multiLine), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateSpreadAssignment(receiver: GoPtr<NodeFactory>, node: GoPtr<SpreadAssignment>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewSpreadAssignment(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePropertyAssignment(receiver: GoPtr<NodeFactory>, node: GoPtr<PropertyAssignment>, modifiers: GoPtr<ModifierList>, name: GoPtr<PropertyName>, postfixToken: GoPtr<TokenNode>, typeNode: GoPtr<TypeNode>, initializer: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || name !== node!.name || postfixToken !== node!.PostfixToken || typeNode !== node!.Type || initializer !== node!.Initializer) {
+    return updateNode(NewPropertyAssignment(receiver, modifiers, name, postfixToken, typeNode, initializer), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateExpressionWithTypeArguments(receiver: GoPtr<NodeFactory>, node: GoPtr<ExpressionWithTypeArguments>, expression: GoPtr<Expression_9ab73856>, typeArguments: GoPtr<TypeList>): GoPtr<Node> {
+  if (expression !== node!.Expression || typeArguments !== node!.TypeArguments) {
+    return updateNode(NewExpressionWithTypeArguments(receiver, expression, typeArguments), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateSpreadElement(receiver: GoPtr<NodeFactory>, node: GoPtr<SpreadElement>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewSpreadElement(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateIfStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<IfStatement>, expression: GoPtr<Expression_9ab73856>, thenStatement: GoPtr<Statement>, elseStatement: GoPtr<Statement>): GoPtr<Node> {
+  if (expression !== node!.Expression || thenStatement !== node!.ThenStatement || elseStatement !== node!.ElseStatement) {
+    return updateNode(NewIfStatement(receiver, expression, thenStatement, elseStatement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateDoStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<DoStatement>, statement: GoPtr<Statement>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (statement !== node!.Statement || expression !== node!.Expression) {
+    return updateNode(NewDoStatement(receiver, statement, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateWhileStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<WhileStatement>, expression: GoPtr<Expression_9ab73856>, statement: GoPtr<Statement>): GoPtr<Node> {
+  if (expression !== node!.Expression || statement !== node!.Statement) {
+    return updateNode(NewWhileStatement(receiver, expression, statement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateForInOrOfStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<ForInOrOfStatement>, awaitModifier: GoPtr<AwaitKeyword>, initializer: GoPtr<ForInitializer>, expression: GoPtr<Expression_9ab73856>, statement: GoPtr<Statement>): GoPtr<Node> {
+  if (awaitModifier !== node!.AwaitModifier || initializer !== node!.Initializer || expression !== node!.Expression || statement !== node!.Statement) {
+    return updateNode(NewForInOrOfStatement(receiver, node!.Kind, awaitModifier, initializer, expression, statement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateWithStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<WithStatement>, expression: GoPtr<Expression_9ab73856>, statement: GoPtr<Statement>): GoPtr<Node> {
+  if (expression !== node!.Expression || statement !== node!.Statement) {
+    return updateNode(NewWithStatement(receiver, expression, statement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateSwitchStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<SwitchStatement>, expression: GoPtr<Expression_9ab73856>, caseBlock: GoPtr<CaseBlockNode>): GoPtr<Node> {
+  if (expression !== node!.Expression || caseBlock !== node!.CaseBlock) {
+    return updateNode(NewSwitchStatement(receiver, expression, caseBlock), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateCaseOrDefaultClause(receiver: GoPtr<NodeFactory>, node: GoPtr<CaseOrDefaultClause>, expression: GoPtr<Expression_9ab73856>, statements: GoPtr<StatementList>): GoPtr<Node> {
+  if (expression !== node!.Expression || statements !== node!.Statements) {
+    return updateNode(NewCaseOrDefaultClause(receiver, node!.Kind, expression, statements), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateCatchClause(receiver: GoPtr<NodeFactory>, node: GoPtr<CatchClause>, variableDeclaration: GoPtr<VariableDeclarationNode>, block: GoPtr<BlockNode>): GoPtr<Node> {
+  if (variableDeclaration !== node!.VariableDeclaration || block !== node!.Block) {
+    return updateNode(NewCatchClause(receiver, variableDeclaration, block), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateLabeledStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<LabeledStatement>, label: GoPtr<IdentifierNode>, statement: GoPtr<Statement>): GoPtr<Node> {
+  if (label !== node!.Label || statement !== node!.Statement) {
+    return updateNode(NewLabeledStatement(receiver, label, statement), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateVariableStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<VariableStatement>, modifiers: GoPtr<ModifierList>, declarationList: GoPtr<VariableDeclarationListNode>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || declarationList !== node!.DeclarationList) {
+    return updateNode(NewVariableStatement(receiver, modifiers, declarationList), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateVariableDeclaration(receiver: GoPtr<NodeFactory>, node: GoPtr<VariableDeclaration>, name: GoPtr<BindingName>, exclamationToken: GoPtr<ExclamationToken>, typeNode: GoPtr<TypeNode>, initializer: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (name !== node!.name || exclamationToken !== node!.ExclamationToken || typeNode !== node!.Type || initializer !== node!.Initializer) {
+    return updateNode(NewVariableDeclaration(receiver, name, exclamationToken, typeNode, initializer), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateVariableDeclarationList(receiver: GoPtr<NodeFactory>, node: GoPtr<VariableDeclarationList>, declarations: GoPtr<VariableDeclarationNodeList>, flags: NodeFlags): GoPtr<Node> {
+  if (declarations !== node!.Declarations || flags !== node!.Flags) {
+    return updateNode(NewVariableDeclarationList(receiver, declarations, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateFunctionDeclaration(receiver: GoPtr<NodeFactory>, node: GoPtr<FunctionDeclaration>, modifiers: GoPtr<ModifierList>, asteriskToken: GoPtr<AsteriskToken>, name: GoPtr<IdentifierNode>, typeParameters: GoPtr<TypeParameterList>, parameters: GoPtr<ParameterList>, typeNode: GoPtr<TypeNode>, fullSignature: GoPtr<TypeNode>, body: GoPtr<FunctionBody>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || asteriskToken !== node!.AsteriskToken || name !== node!.name || typeParameters !== node!.TypeParameters || parameters !== node!.Parameters || typeNode !== node!.Type || fullSignature !== node!.FullSignature || body !== node!.Body) {
+    return updateNode(NewFunctionDeclaration(receiver, modifiers, asteriskToken, name, typeParameters, parameters, typeNode, fullSignature, body), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateShorthandPropertyAssignment(receiver: GoPtr<NodeFactory>, node: GoPtr<ShorthandPropertyAssignment>, modifiers: GoPtr<ModifierList>, name: GoPtr<PropertyName>, postfixToken: GoPtr<TokenNode>, typeNode: GoPtr<TypeNode>, equalsToken: GoPtr<EqualsToken>, objectAssignmentInitializer: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (modifiers !== node!.modifiers || name !== node!.name || postfixToken !== node!.PostfixToken || typeNode !== node!.Type || equalsToken !== node!.EqualsToken || objectAssignmentInitializer !== node!.ObjectAssignmentInitializer) {
+    return updateNode(NewShorthandPropertyAssignment(receiver, modifiers, name, postfixToken, typeNode, equalsToken, objectAssignmentInitializer), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdatePartiallyEmittedExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<PartiallyEmittedExpression>, expression: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (expression !== node!.Expression) {
+    return updateNode(NewPartiallyEmittedExpression(receiver, expression), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateAsExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<AsExpression>, expression: GoPtr<Expression_9ab73856>, typeNode: GoPtr<TypeNode>): GoPtr<Node> {
+  if (expression !== node!.Expression || typeNode !== node!.Type) {
+    return updateNode(NewAsExpression(receiver, expression, typeNode), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateSatisfiesExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<SatisfiesExpression>, expression: GoPtr<Expression_9ab73856>, typeNode: GoPtr<TypeNode>): GoPtr<Node> {
+  if (expression !== node!.Expression || typeNode !== node!.Type) {
+    return updateNode(NewSatisfiesExpression(receiver, expression, typeNode), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateConditionalExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<ConditionalExpression>, condition: GoPtr<Expression_9ab73856>, questionToken: GoPtr<QuestionToken>, whenTrue: GoPtr<Expression_9ab73856>, colonToken: GoPtr<ColonToken>, whenFalse: GoPtr<Expression_9ab73856>): GoPtr<Node> {
+  if (condition !== node!.Condition || questionToken !== node!.QuestionToken || whenTrue !== node!.WhenTrue || colonToken !== node!.ColonToken || whenFalse !== node!.WhenFalse) {
+    return updateNode(NewConditionalExpression(receiver, condition, questionToken, whenTrue, colonToken, whenFalse), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
+}
+
+export function NodeFactory_UpdateNonNullExpression(receiver: GoPtr<NodeFactory>, node: GoPtr<NonNullExpression>, expression: GoPtr<Expression_9ab73856>, flags: NodeFlags): GoPtr<Node> {
+  if (expression !== node!.Expression || flags !== node!.Flags) {
+    return updateNode(NewNonNullExpression(receiver, expression, flags), NodeDefault_AsNode(node), receiver!.hooks);
+  }
+  return NodeDefault_AsNode(node);
 }

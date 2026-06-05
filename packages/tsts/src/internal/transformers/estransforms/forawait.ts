@@ -1,13 +1,38 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr } from "../../../go/compat.js";
+import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
+import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
+import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList } from "../../ast/ast.js";
+import { AsSourceFile } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { AwaitExpression, ForInOrOfStatement, LabeledStatement, ReturnStatement, YieldExpression } from "../../ast/generated/data.js";
+import { AsArrowFunction, AsAwaitExpression, AsConstructorDeclaration, AsForInOrOfStatement, AsFunctionDeclaration, AsFunctionExpression, AsGetAccessorDeclaration, AsLabeledStatement, AsMethodDeclaration, AsParameterDeclaration, AsReturnStatement, AsSetAccessorDeclaration, AsYieldExpression } from "../../ast/generated/casts.js";
+import { KindArrowFunction, KindAsyncKeyword, KindAsteriskToken, KindAwaitExpression, KindClassDeclaration, KindClassExpression, KindConstructor, KindDoStatement, KindExclamationToken, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindLabeledStatement, KindMethodDeclaration, KindReturnStatement, KindSetAccessor, KindSourceFile, KindTrueKeyword, KindWhileStatement, KindYieldExpression, KindAmpersandAmpersandToken } from "../../ast/generated/kinds.js";
+import { IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
+import { NodeFlagsNone } from "../../ast/generated/flags.js";
+import { NewAwaitExpression, NewBinaryExpression, NewBlock, NewCatchClause, NewCallExpression, NewExpressionStatement, NewForStatement, NewFunctionExpression, NewIdentifier, NewIfStatement, NewKeywordExpression, NewObjectLiteralExpression, NewParameterDeclaration, NewPropertyAccessExpression, NewPropertyAssignment, NewPrefixUnaryExpression, NewReturnStatement, NewThrowStatement, NewToken, NewTryStatement, NewVariableDeclaration, NewVariableDeclarationList, NewYieldExpression } from "../../ast/generated/factory.js";
+import { SubtreeContainsForAwaitOrAsyncGenerator } from "../../ast/subtreefacts.js";
+import { Node_SubtreeFacts } from "../../ast/spine.js";
+import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
 import type { FunctionFlags } from "../../ast/functionflags.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewAwaitHelper, NodeFactory_NewAsyncValuesHelper, NodeFactory_NewAsyncDelegatorHelper, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewGeneratedNameForNodeEx, NodeFactory_NewTempVariable, NodeFactory_NewUniqueName, NodeFactory_InlineExpressions, NodeFactory_RestoreEnclosingLabel, NodeFactory_CreateForOfBindingStatement, NodeFactory_NewVoidZeroExpression, NodeFactory_NewFunctionCallCall } from "../../printer/factory.js";
+import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
+import { EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AddInitializationStatement, EmitContext_AddVariableDeclaration, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_VisitFunctionBody, EmitContext_VisitParameters } from "../../printer/emitcontext.js";
+import { EFNoTokenTrailingSourceMaps, EFSingleLine } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlagsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
+import { AdvancedAsyncSuperHelper, AsyncSuperHelper } from "../../printer/helpers.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitEmbeddedStatement, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
+import { superAccessState_initSuperAccessVisitor, superAccessState_trackSuperAccess, superAccessState_substituteSuperAccessesInBody, superAccessState_createSuperAccessVariableStatement } from "./utilities.js";
 import type { superAccessState } from "./utilities.js";
+import { isSimpleParameterList } from "./async.js";
+import type { OrderedSet } from "../../collections/ordered_set.js";
+import { NewOrderedSetWithSizeHint } from "../../collections/ordered_set.js";
+import { OrderedSet_Size } from "../../collections/ordered_set.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forAwaitHierarchyFacts","kind":"type","status":"implemented","sigHash":"89f2a13d454fc30fc2e581b3a64d8e6613f0c8304132aa4c7f38bf9964ca1d3a","bodyHash":"74a7859468c019889c9ce9acb2e9dbcd44fb07f6d451f381feab8893f24a4446"}
@@ -72,7 +97,7 @@ export const forAwaitHierarchyFactsIterationStatementIncludes: forAwaitHierarchy
 export const forAwaitHierarchyFactsIterationStatementExcludes: forAwaitHierarchyFacts = forAwaitHierarchyFactsNone;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forawaitTransformer","kind":"type","status":"stub","sigHash":"74b099c5f784cd0dc4b6903480b7f1adb0f61b2ae0834037fa6c0542fc3ba5bd","bodyHash":"85f20d7e8c3215d64829184a754d4829c59e0226dc5b95052ffded5076ef1ee0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::type::forawaitTransformer","kind":"type","status":"implemented","sigHash":"74b099c5f784cd0dc4b6903480b7f1adb0f61b2ae0834037fa6c0542fc3ba5bd","bodyHash":"85f20d7e8c3215d64829184a754d4829c59e0226dc5b95052ffded5076ef1ee0"}
  *
  * Go source:
  * forawaitTransformer struct {
@@ -100,7 +125,7 @@ export interface forawaitTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::newforawaitTransformer","kind":"func","status":"stub","sigHash":"9b8ab282cb69b46cd28f0af038d8d664d988dc0ebc568c8fc57fddc1bfe7626c","bodyHash":"7fc9333cc865232603ea4660491df340b98227ff22d1d3782b7a14f4fdb4fbac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::newforawaitTransformer","kind":"func","status":"implemented","sigHash":"9b8ab282cb69b46cd28f0af038d8d664d988dc0ebc568c8fc57fddc1bfe7626c","bodyHash":"7fc9333cc865232603ea4660491df340b98227ff22d1d3782b7a14f4fdb4fbac"}
  *
  * Go source:
  * func newforawaitTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -120,11 +145,30 @@ export interface forawaitTransformer {
  * }
  */
 export function newforawaitTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::newforawaitTransformer");
+  const tx: forawaitTransformer = {
+    __tsgoEmbedded0: {} as Transformer,
+    __tsgoEmbedded1: {} as superAccessState,
+    compilerOptions: opts!.CompilerOptions,
+    enclosingFunctionFlags: 0,
+    forAwaitHierarchyFacts: 0,
+    exportedVariableStatement: false,
+    fallbackNodeVisitor: undefined,
+    noAsyncModifierVisitor: undefined,
+  };
+  const result = Transformer_NewTransformer(tx.__tsgoEmbedded0!, (node) => forawaitTransformer_visit(tx, node), opts!.Context);
+  superAccessState_initSuperAccessVisitor(tx.__tsgoEmbedded1!, Transformer_EmitContext(tx.__tsgoEmbedded0!), Transformer_Factory(tx.__tsgoEmbedded0!));
+  tx.fallbackNodeVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => forawaitTransformer_visitFallback(tx, node));
+  tx.noAsyncModifierVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => {
+    if (node!.Kind === KindAsyncKeyword) {
+      return undefined;
+    }
+    return node;
+  });
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.affectsSubtree","kind":"method","status":"stub","sigHash":"76e6c92285d4cb71be23ed97488a944dfe8c81ce15926a54624c3f0c140763e2","bodyHash":"c879cb5f936811a06d83a29e88cf9e6dc81fb42520c47081eba5cd1fba89e8ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.affectsSubtree","kind":"method","status":"implemented","sigHash":"76e6c92285d4cb71be23ed97488a944dfe8c81ce15926a54624c3f0c140763e2","bodyHash":"c879cb5f936811a06d83a29e88cf9e6dc81fb42520c47081eba5cd1fba89e8ef"}
  *
  * Go source:
  * func (tx *forawaitTransformer) affectsSubtree(excludeFacts forAwaitHierarchyFacts, includeFacts forAwaitHierarchyFacts) bool {
@@ -132,11 +176,11 @@ export function newforawaitTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tra
  * }
  */
 export function forawaitTransformer_affectsSubtree(receiver: GoPtr<forawaitTransformer>, excludeFacts: forAwaitHierarchyFacts, includeFacts: forAwaitHierarchyFacts): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.affectsSubtree");
+  return receiver!.forAwaitHierarchyFacts !== ((receiver!.forAwaitHierarchyFacts & ~excludeFacts) | includeFacts);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.enterSubtree","kind":"method","status":"stub","sigHash":"74deceb2ecc6edd54ab978004d35fe5d74ded2753cf8c26891b4dca1a2ec3af7","bodyHash":"604e1f7c3e1fbead5057f53a79a8a75da4664ab90b7722f77316dfae6e02d8cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.enterSubtree","kind":"method","status":"implemented","sigHash":"74deceb2ecc6edd54ab978004d35fe5d74ded2753cf8c26891b4dca1a2ec3af7","bodyHash":"604e1f7c3e1fbead5057f53a79a8a75da4664ab90b7722f77316dfae6e02d8cb"}
  *
  * Go source:
  * func (tx *forawaitTransformer) enterSubtree(excludeFacts forAwaitHierarchyFacts, includeFacts forAwaitHierarchyFacts) forAwaitHierarchyFacts {
@@ -146,11 +190,13 @@ export function forawaitTransformer_affectsSubtree(receiver: GoPtr<forawaitTrans
  * }
  */
 export function forawaitTransformer_enterSubtree(receiver: GoPtr<forawaitTransformer>, excludeFacts: forAwaitHierarchyFacts, includeFacts: forAwaitHierarchyFacts): forAwaitHierarchyFacts {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.enterSubtree");
+  const ancestorFacts = receiver!.forAwaitHierarchyFacts;
+  receiver!.forAwaitHierarchyFacts = ((receiver!.forAwaitHierarchyFacts & ~excludeFacts) | includeFacts) & forAwaitHierarchyFactsAncestorFactsMask;
+  return ancestorFacts;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.exitSubtree","kind":"method","status":"stub","sigHash":"24e9a4e6e8594ef2f7477e8baa982bd70b14b61cd194e38db39b8dac89393879","bodyHash":"2ef16831e21930b18952bd6c939a79bfb66bf08bc6c42c12c0502c711a470899"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.exitSubtree","kind":"method","status":"implemented","sigHash":"24e9a4e6e8594ef2f7477e8baa982bd70b14b61cd194e38db39b8dac89393879","bodyHash":"2ef16831e21930b18952bd6c939a79bfb66bf08bc6c42c12c0502c711a470899"}
  *
  * Go source:
  * func (tx *forawaitTransformer) exitSubtree(ancestorFacts forAwaitHierarchyFacts) {
@@ -158,11 +204,11 @@ export function forawaitTransformer_enterSubtree(receiver: GoPtr<forawaitTransfo
  * }
  */
 export function forawaitTransformer_exitSubtree(receiver: GoPtr<forawaitTransformer>, ancestorFacts: forAwaitHierarchyFacts): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.exitSubtree");
+  receiver!.forAwaitHierarchyFacts = ancestorFacts;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitModifiersNoAsync","kind":"method","status":"stub","sigHash":"af42efb4c1654341cc38b8246bb8a65e1c9d72f64edfa2d646aa3fe13824e010","bodyHash":"cb74dce23d3964873539637f8aa1df7d39ca211542899d734d0fbd57cc700b2d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitModifiersNoAsync","kind":"method","status":"implemented","sigHash":"af42efb4c1654341cc38b8246bb8a65e1c9d72f64edfa2d646aa3fe13824e010","bodyHash":"cb74dce23d3964873539637f8aa1df7d39ca211542899d734d0fbd57cc700b2d"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitModifiersNoAsync(modifiers *ast.ModifierList) *ast.ModifierList {
@@ -170,11 +216,11 @@ export function forawaitTransformer_exitSubtree(receiver: GoPtr<forawaitTransfor
  * }
  */
 export function forawaitTransformer_visitModifiersNoAsync(receiver: GoPtr<forawaitTransformer>, modifiers: GoPtr<ModifierList>): GoPtr<ModifierList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitModifiersNoAsync");
+  return NodeVisitor_VisitModifiers((receiver!.noAsyncModifierVisitor as ConcreteNodeVisitor), modifiers);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.doWithHierarchyFacts","kind":"method","status":"stub","sigHash":"5663a1b827a325a42b388135bb0947710d30814985de98325f0972980c70c1c1","bodyHash":"e14109d0365f607f8e58020d082929f1026e37c820d6372ff698754878adb205"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.doWithHierarchyFacts","kind":"method","status":"implemented","sigHash":"5663a1b827a325a42b388135bb0947710d30814985de98325f0972980c70c1c1","bodyHash":"e14109d0365f607f8e58020d082929f1026e37c820d6372ff698754878adb205"}
  *
  * Go source:
  * func (tx *forawaitTransformer) doWithHierarchyFacts(cb func(*forawaitTransformer, *ast.Node) *ast.Node, node *ast.Node, excludeFacts forAwaitHierarchyFacts, includeFacts forAwaitHierarchyFacts) *ast.Node {
@@ -188,11 +234,17 @@ export function forawaitTransformer_visitModifiersNoAsync(receiver: GoPtr<forawa
  * }
  */
 export function forawaitTransformer_doWithHierarchyFacts(receiver: GoPtr<forawaitTransformer>, cb: (arg0: GoPtr<forawaitTransformer>, arg1: GoPtr<Node>) => GoPtr<Node>, node: GoPtr<Node>, excludeFacts: forAwaitHierarchyFacts, includeFacts: forAwaitHierarchyFacts): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.doWithHierarchyFacts");
+  if (forawaitTransformer_affectsSubtree(receiver, excludeFacts, includeFacts)) {
+    const ancestorFacts = forawaitTransformer_enterSubtree(receiver, excludeFacts, includeFacts);
+    const result = cb(receiver, node);
+    forawaitTransformer_exitSubtree(receiver, ancestorFacts);
+    return result;
+  }
+  return cb(receiver, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitDefault","kind":"method","status":"stub","sigHash":"5aaf3bffebf6d6156dd4ecf8bf71c7f235473d9a2ec60621b328d2bd0052fd36","bodyHash":"b7998168d3b94d2b014776ee639b2b9a05fc37f4af61912daecf3f1188abdc51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitDefault","kind":"method","status":"implemented","sigHash":"5aaf3bffebf6d6156dd4ecf8bf71c7f235473d9a2ec60621b328d2bd0052fd36","bodyHash":"b7998168d3b94d2b014776ee639b2b9a05fc37f4af61912daecf3f1188abdc51"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitDefault(node *ast.Node) *ast.Node {
@@ -200,11 +252,11 @@ export function forawaitTransformer_doWithHierarchyFacts(receiver: GoPtr<forawai
  * }
  */
 export function forawaitTransformer_visitDefault(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitDefault");
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.fallbackVisitor","kind":"method","status":"stub","sigHash":"448b30665c5e497e06b7a318262d177e5223b3d0bbd12b7998c759cbb24f82dd","bodyHash":"a0df4d6812439d6f1910d40e81443738d53e232420378010c8e67c1e88ef2e65"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.fallbackVisitor","kind":"method","status":"implemented","sigHash":"448b30665c5e497e06b7a318262d177e5223b3d0bbd12b7998c759cbb24f82dd","bodyHash":"a0df4d6812439d6f1910d40e81443738d53e232420378010c8e67c1e88ef2e65"}
  *
  * Go source:
  * func (tx *forawaitTransformer) fallbackVisitor(node *ast.Node) *ast.Node {
@@ -222,11 +274,24 @@ export function forawaitTransformer_visitDefault(receiver: GoPtr<forawaitTransfo
  * }
  */
 export function forawaitTransformer_fallbackVisitor(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.fallbackVisitor");
+  if (receiver!.__tsgoEmbedded1!.capturedSuperProperties === undefined) {
+    return node;
+  }
+  switch (node!.Kind) {
+    case KindFunctionExpression:
+    case KindFunctionDeclaration:
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+    case KindConstructor:
+      return node;
+  }
+  superAccessState_trackSuperAccess(receiver!.__tsgoEmbedded1!, node);
+  return NodeVisitor_VisitEachChild((receiver!.fallbackNodeVisitor as ConcreteNodeVisitor), node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFallback","kind":"method","status":"stub","sigHash":"f0a33e6dba4716be40aa58f337a0cebfe51a54897fe625c9c0bf63c1429a754c","bodyHash":"4a233df46c52aa6c714e9643035c7fc957240501eefc4657816ed7c9a6e393ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFallback","kind":"method","status":"implemented","sigHash":"f0a33e6dba4716be40aa58f337a0cebfe51a54897fe625c9c0bf63c1429a754c","bodyHash":"4a233df46c52aa6c714e9643035c7fc957240501eefc4657816ed7c9a6e393ed"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitFallback(node *ast.Node) *ast.Node {
@@ -234,11 +299,11 @@ export function forawaitTransformer_fallbackVisitor(receiver: GoPtr<forawaitTran
  * }
  */
 export function forawaitTransformer_visitFallback(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFallback");
+  return forawaitTransformer_fallbackVisitor(receiver, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visit","kind":"method","status":"stub","sigHash":"fa781b076800220a8d835c1ba582cb6a6d2041037efd9581734fa7b94cd925c7","bodyHash":"dcdb1c7694d3c079a3239d10b3237360580bd121e890ce6aea542e9f48f6b5f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visit","kind":"method","status":"implemented","sigHash":"fa781b076800220a8d835c1ba582cb6a6d2041037efd9581734fa7b94cd925c7","bodyHash":"dcdb1c7694d3c079a3239d10b3237360580bd121e890ce6aea542e9f48f6b5f3"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visit(node *ast.Node) *ast.Node {
@@ -335,11 +400,113 @@ export function forawaitTransformer_visitFallback(receiver: GoPtr<forawaitTransf
  * }
  */
 export function forawaitTransformer_visit(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visit");
+  if ((Node_SubtreeFacts(node) & SubtreeContainsForAwaitOrAsyncGenerator) === 0) {
+    return forawaitTransformer_fallbackVisitor(receiver, node);
+  }
+  superAccessState_trackSuperAccess(receiver!.__tsgoEmbedded1!, node);
+  switch (node!.Kind) {
+    case KindSourceFile:
+      return forawaitTransformer_visitSourceFile(receiver, AsSourceFile(node));
+    case KindAwaitExpression:
+      return forawaitTransformer_visitAwaitExpression(receiver, AsAwaitExpression(node));
+    case KindYieldExpression:
+      return forawaitTransformer_visitYieldExpression(receiver, AsYieldExpression(node));
+    case KindReturnStatement:
+      return forawaitTransformer_visitReturnStatement(receiver, AsReturnStatement(node));
+    case KindLabeledStatement:
+      return forawaitTransformer_visitLabeledStatement(receiver, AsLabeledStatement(node));
+    case KindDoStatement:
+    case KindWhileStatement:
+    case KindForInStatement:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitDefault,
+        node,
+        forAwaitHierarchyFactsIterationStatementExcludes,
+        forAwaitHierarchyFactsIterationStatementIncludes,
+      );
+    case KindForOfStatement:
+      return forawaitTransformer_visitForOfStatement(receiver, AsForInOrOfStatement(node), undefined);
+    case KindForStatement:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitDefault,
+        node,
+        forAwaitHierarchyFactsIterationStatementExcludes,
+        forAwaitHierarchyFactsIterationStatementIncludes,
+      );
+    case KindConstructor:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitConstructorDeclaration,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindMethodDeclaration:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitMethodDeclaration,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindGetAccessor:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitGetAccessorDeclaration,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindSetAccessor:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitSetAccessorDeclaration,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindFunctionDeclaration:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitFunctionDeclaration,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindFunctionExpression:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitFunctionExpression,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    case KindArrowFunction:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitArrowFunction,
+        node,
+        forAwaitHierarchyFactsArrowFunctionExcludes,
+        forAwaitHierarchyFactsArrowFunctionIncludes,
+      );
+    case KindClassDeclaration:
+    case KindClassExpression:
+      return forawaitTransformer_doWithHierarchyFacts(
+        receiver,
+        forawaitTransformer_visitDefault,
+        node,
+        forAwaitHierarchyFactsClassOrFunctionExcludes,
+        forAwaitHierarchyFactsClassOrFunctionIncludes,
+      );
+    default:
+      return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitAwaitExpression","kind":"method","status":"stub","sigHash":"58e790692819e11ec611a4dc68808a6ffde0f04fcaf4c891cc9227f0976756df","bodyHash":"e92d25e42bd32376210aa851028e20f29cc1621e35a48c75f382866eda15fe3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitAwaitExpression","kind":"method","status":"implemented","sigHash":"58e790692819e11ec611a4dc68808a6ffde0f04fcaf4c891cc9227f0976756df","bodyHash":"e92d25e42bd32376210aa851028e20f29cc1621e35a48c75f382866eda15fe3d"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitAwaitExpression(node *ast.AwaitExpression) *ast.Node {
@@ -356,7 +523,16 @@ export function forawaitTransformer_visit(receiver: GoPtr<forawaitTransformer>, 
  * }
  */
 export function forawaitTransformer_visitAwaitExpression(receiver: GoPtr<forawaitTransformer>, node: GoPtr<AwaitExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitAwaitExpression");
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    const visited = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Expression);
+    const result = NewYieldExpression(factory, undefined, NodeFactory_NewAwaitHelper(printerFactory, visited));
+    result!.Loc = node!.Loc;
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), result, node as unknown as GoPtr<Node>);
+    return result;
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
 }
 
 /**
@@ -440,7 +616,7 @@ export function forawaitTransformer_visitReturnStatement(receiver: GoPtr<forawai
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitLabeledStatement","kind":"method","status":"stub","sigHash":"c47a01e51c5de6d99e9037e57693768c4eb996cf9de1f8bbef7e68a2243d0be6","bodyHash":"dcccee1d0454c76018f1a957389d1b1d81ef69846139f43484c283b989220755"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitLabeledStatement","kind":"method","status":"implemented","sigHash":"c47a01e51c5de6d99e9037e57693768c4eb996cf9de1f8bbef7e68a2243d0be6","bodyHash":"dcccee1d0454c76018f1a957389d1b1d81ef69846139f43484c283b989220755"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitLabeledStatement(node *ast.LabeledStatement) *ast.Node {
@@ -455,11 +631,19 @@ export function forawaitTransformer_visitReturnStatement(receiver: GoPtr<forawai
  * }
  */
 export function forawaitTransformer_visitLabeledStatement(receiver: GoPtr<forawaitTransformer>, node: GoPtr<LabeledStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitLabeledStatement");
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0) {
+    const statement = unwrapInnermostStatementOfLabel(node);
+    if (statement!.Kind === KindForOfStatement && AsForInOrOfStatement(statement)!.AwaitModifier !== undefined) {
+      return forawaitTransformer_visitForOfStatement(receiver, AsForInOrOfStatement(statement), node);
+    }
+    const visited = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), statement);
+    return NodeFactory_RestoreEnclosingLabel(Transformer_Factory(receiver!.__tsgoEmbedded0!), visited, node);
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::unwrapInnermostStatementOfLabel","kind":"func","status":"stub","sigHash":"ef81b7da32e71f60f0e66cc6482c4be2df333ef1d60df9e0c4015ec52c2601fd","bodyHash":"ab7f83a5260a02547930cc6c72d4db55eef2e358e1124a2dc2242dfed6c9a842"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::unwrapInnermostStatementOfLabel","kind":"func","status":"implemented","sigHash":"ef81b7da32e71f60f0e66cc6482c4be2df333ef1d60df9e0c4015ec52c2601fd","bodyHash":"ab7f83a5260a02547930cc6c72d4db55eef2e358e1124a2dc2242dfed6c9a842"}
  *
  * Go source:
  * func unwrapInnermostStatementOfLabel(node *ast.LabeledStatement) *ast.Node {
@@ -472,11 +656,17 @@ export function forawaitTransformer_visitLabeledStatement(receiver: GoPtr<forawa
  * }
  */
 export function unwrapInnermostStatementOfLabel(node: GoPtr<LabeledStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::func::unwrapInnermostStatementOfLabel");
+  const go = (current: GoPtr<LabeledStatement>): GoPtr<Node> => {
+    if (current!.Statement!.Kind !== KindLabeledStatement) {
+      return current!.Statement as unknown as GoPtr<Node>;
+    }
+    return go(AsLabeledStatement(current!.Statement as unknown as GoPtr<Node>));
+  };
+  return go(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSourceFile","kind":"method","status":"stub","sigHash":"81f2fe063999736dc3574324128d48e9cf46849897977e24473fb3c5100041fe","bodyHash":"b8fe4b288aa94dbbd9430a7ef39a18335a50d4ce8c3ae7a13f1edbfa63790cff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"81f2fe063999736dc3574324128d48e9cf46849897977e24473fb3c5100041fe","bodyHash":"b8fe4b288aa94dbbd9430a7ef39a18335a50d4ce8c3ae7a13f1edbfa63790cff"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -492,11 +682,18 @@ export function unwrapInnermostStatementOfLabel(node: GoPtr<LabeledStatement>): 
  * }
  */
 export function forawaitTransformer_visitSourceFile(receiver: GoPtr<forawaitTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSourceFile");
+  const ancestorFacts = forawaitTransformer_enterSubtree(receiver, forAwaitHierarchyFactsSourceFileExcludes, forAwaitHierarchyFactsStrictModeSourceFileIncludes);
+  receiver!.exportedVariableStatement = false;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visited = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
+  const helpers = EmitContext_ReadEmitHelpers(emitContext);
+  EmitContext_AddEmitHelper(emitContext, visited, ...helpers);
+  forawaitTransformer_exitSubtree(receiver, ancestorFacts);
+  return visited;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitForOfStatement","kind":"method","status":"stub","sigHash":"a1398a3acc7c58354bfa198fe3be639b681d7c75a8e6a85d3f805367d00c5068","bodyHash":"0f85697196489795918de6b16d4bce25763f610cea23eba55a8c1165b101afe7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitForOfStatement","kind":"method","status":"implemented","sigHash":"a1398a3acc7c58354bfa198fe3be639b681d7c75a8e6a85d3f805367d00c5068","bodyHash":"0f85697196489795918de6b16d4bce25763f610cea23eba55a8c1165b101afe7"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitForOfStatement(node *ast.ForInOrOfStatement, outermostLabeledStatement *ast.LabeledStatement) *ast.Node {
@@ -512,11 +709,20 @@ export function forawaitTransformer_visitSourceFile(receiver: GoPtr<forawaitTran
  * }
  */
 export function forawaitTransformer_visitForOfStatement(receiver: GoPtr<forawaitTransformer>, node: GoPtr<ForInOrOfStatement>, outermostLabeledStatement: GoPtr<LabeledStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitForOfStatement");
+  const ancestorFacts = forawaitTransformer_enterSubtree(receiver, forAwaitHierarchyFactsIterationStatementExcludes, forAwaitHierarchyFactsIterationStatementIncludes);
+  const result = node!.AwaitModifier !== undefined
+    ? forawaitTransformer_transformForAwaitOfStatement(receiver, node, outermostLabeledStatement, ancestorFacts)
+    : NodeFactory_RestoreEnclosingLabel(
+        Transformer_Factory(receiver!.__tsgoEmbedded0!),
+        NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>),
+        outermostLabeledStatement,
+      );
+  forawaitTransformer_exitSubtree(receiver, ancestorFacts);
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.convertForOfStatementHead","kind":"method","status":"stub","sigHash":"a6f9a0657f1a2fe7f2e2da38c6279f20b42b1ea6383b3631f0598aba4b81b650","bodyHash":"102a7f567221df7a226d6a8d1748537fd442835e4c7f344595957590b2482b85"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.convertForOfStatementHead","kind":"method","status":"implemented","sigHash":"a6f9a0657f1a2fe7f2e2da38c6279f20b42b1ea6383b3631f0598aba4b81b650","bodyHash":"102a7f567221df7a226d6a8d1748537fd442835e4c7f344595957590b2482b85"}
  *
  * Go source:
  * func (tx *forawaitTransformer) convertForOfStatementHead(node *ast.ForInOrOfStatement, boundValue *ast.Node, nonUserCode *ast.Node) *ast.Node {
@@ -526,15 +732,15 @@ export function forawaitTransformer_visitForOfStatement(receiver: GoPtr<forawait
  * 	iteratorValueExpression := f.NewAssignmentExpression(value, boundValue)
  * 	iteratorValueStatement := f.NewExpressionStatement(iteratorValueExpression)
  * 	tx.EmitContext().SetSourceMapRange(iteratorValueStatement, node.Expression.Loc)
- * 
+ *
  * 	exitNonUserCodeExpression := f.NewAssignmentExpression(nonUserCode, f.NewKeywordExpression(ast.KindFalseKeyword))
  * 	exitNonUserCodeStatement := f.NewExpressionStatement(exitNonUserCodeExpression)
  * 	tx.EmitContext().SetSourceMapRange(exitNonUserCodeStatement, node.Expression.Loc)
- * 
+ *
  * 	statements := []*ast.Node{iteratorValueStatement, exitNonUserCodeStatement}
  * 	binding := tx.Factory().CreateForOfBindingStatement(node.Initializer, value)
  * 	statements = append(statements, tx.Visitor().VisitNode(binding))
- * 
+ *
  * 	var bodyLocation core.TextRange
  * 	var statementsLocation core.TextRange
  * 	statement := tx.Visitor().VisitEmbeddedStatement(node.Statement)
@@ -545,7 +751,7 @@ export function forawaitTransformer_visitForOfStatement(receiver: GoPtr<forawait
  * 	} else {
  * 		statements = append(statements, statement)
  * 	}
- * 
+ *
  * 	stmtList := f.NewNodeList(statements)
  * 	stmtList.Loc = statementsLocation
  * 	block := f.NewBlock(stmtList, true)
@@ -554,11 +760,52 @@ export function forawaitTransformer_visitForOfStatement(receiver: GoPtr<forawait
  * }
  */
 export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<forawaitTransformer>, node: GoPtr<ForInOrOfStatement>, boundValue: GoPtr<Node>, nonUserCode: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.convertForOfStatementHead");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  const value = NodeFactory_NewTempVariable(printerFactory);
+  EmitContext_AddVariableDeclaration(emitContext, value);
+  const iteratorValueExpression = NodeFactory_NewAssignmentExpression(printerFactory, value, boundValue);
+  const iteratorValueStatement = NewExpressionStatement(factory, iteratorValueExpression);
+  EmitContext_SetSourceMapRange(emitContext, iteratorValueStatement, node!.Expression!.Loc);
+
+  const exitNonUserCodeExpression = NodeFactory_NewAssignmentExpression(printerFactory, nonUserCode, NewKeywordExpression(factory, KindFalseKeyword));
+  const exitNonUserCodeStatement = NewExpressionStatement(factory, exitNonUserCodeExpression);
+  EmitContext_SetSourceMapRange(emitContext, exitNonUserCodeStatement, node!.Expression!.Loc);
+
+  const binding = NodeFactory_CreateForOfBindingStatement(printerFactory, node!.Initializer as unknown as GoPtr<Node>, value as unknown as GoPtr<Node>);
+  const visitedBinding = NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), binding);
+
+  const statement = NodeVisitor_VisitEmbeddedStatement((visitor as ConcreteNodeVisitor), node!.Statement as unknown as GoPtr<Node>);
+
+  const statements: Array<GoPtr<Node>> = [iteratorValueStatement, exitNonUserCodeStatement, visitedBinding];
+  let bodyLocation = { pos: 0, end: 0 };
+  let statementsLocation = { pos: 0, end: 0 };
+
+  if (IsBlock(statement)) {
+    const stmts = Node_StatementList(statement);
+    if (stmts !== undefined) {
+      for (const stmt of stmts!.Nodes) {
+        statements.push(stmt);
+      }
+      statementsLocation = stmts!.Loc;
+    }
+    bodyLocation = statement!.Loc;
+  } else {
+    statements.push(statement);
+  }
+
+  const stmtList = NodeFactory_NewNodeList(factory, statements);
+  stmtList!.Loc = statementsLocation;
+  const block = NewBlock(factory, stmtList, true);
+  block!.Loc = bodyLocation;
+  return block;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.createDownlevelAwait","kind":"method","status":"stub","sigHash":"e04f6503e860b6111e48fdc613be52d29462cd361e7e37f4b18e225dd14ac657","bodyHash":"aae274c113eb5f1fe423d3a52f144306c81ab32b0f5df7b8cb21f1d1cc52b1ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.createDownlevelAwait","kind":"method","status":"implemented","sigHash":"e04f6503e860b6111e48fdc613be52d29462cd361e7e37f4b18e225dd14ac657","bodyHash":"aae274c113eb5f1fe423d3a52f144306c81ab32b0f5df7b8cb21f1d1cc52b1ed"}
  *
  * Go source:
  * func (tx *forawaitTransformer) createDownlevelAwait(expression *ast.Node) *ast.Node {
@@ -572,11 +819,16 @@ export function forawaitTransformer_convertForOfStatementHead(receiver: GoPtr<fo
  * }
  */
 export function forawaitTransformer_createDownlevelAwait(receiver: GoPtr<forawaitTransformer>, expression: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.createDownlevelAwait");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    return NewYieldExpression(factory, undefined, NodeFactory_NewAwaitHelper(printerFactory, expression));
+  }
+  return NewAwaitExpression(factory, expression);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformForAwaitOfStatement","kind":"method","status":"stub","sigHash":"9e1798e0d2fc819362d8c1829f537d0137351eaecbe97d08e12920fc2128b4a7","bodyHash":"8fa919ecd24fe6500a64b54bab0bc7920cc9b59462db7b1bdbff1483a1069cad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformForAwaitOfStatement","kind":"method","status":"implemented","sigHash":"9e1798e0d2fc819362d8c1829f537d0137351eaecbe97d08e12920fc2128b4a7","bodyHash":"8fa919ecd24fe6500a64b54bab0bc7920cc9b59462db7b1bdbff1483a1069cad"}
  *
  * Go source:
  * func (tx *forawaitTransformer) transformForAwaitOfStatement(node *ast.ForInOrOfStatement, outermostLabeledStatement *ast.LabeledStatement, ancestorFacts forAwaitHierarchyFacts) *ast.Node {
@@ -725,7 +977,165 @@ export function forawaitTransformer_createDownlevelAwait(receiver: GoPtr<forawai
  * }
  */
 export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr<forawaitTransformer>, node: GoPtr<ForInOrOfStatement>, outermostLabeledStatement: GoPtr<LabeledStatement>, ancestorFacts: forAwaitHierarchyFacts): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformForAwaitOfStatement");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  const expression = NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), node!.Expression as unknown as GoPtr<Node>);
+
+  const iterator = IsIdentifier(expression)
+    ? NodeFactory_NewGeneratedNameForNode(printerFactory, expression)
+    : NodeFactory_NewTempVariable(printerFactory);
+
+  const result = IsIdentifier(expression)
+    ? NodeFactory_NewGeneratedNameForNode(printerFactory, iterator as unknown as GoPtr<Node>)
+    : NodeFactory_NewTempVariable(printerFactory);
+
+  const nonUserCode = NodeFactory_NewTempVariable(printerFactory);
+  const done = NodeFactory_NewTempVariable(printerFactory);
+  EmitContext_AddVariableDeclaration(emitContext, done);
+  const errorRecord = NodeFactory_NewUniqueName(printerFactory, "e");
+  const catchVariable = NodeFactory_NewGeneratedNameForNode(printerFactory, errorRecord as unknown as GoPtr<Node>);
+  const returnMethod = NodeFactory_NewTempVariable(printerFactory);
+  const callValues = NodeFactory_NewAsyncValuesHelper(printerFactory, expression);
+  callValues!.Loc = node!.Expression!.Loc;
+
+  const callNext = NewCallExpression(
+    factory,
+    NewPropertyAccessExpression(factory, iterator as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "next"), NodeFlagsNone),
+    undefined,
+    undefined,
+    NodeFactory_NewNodeList(factory, []),
+    NodeFlagsNone,
+  );
+  const getDone = NewPropertyAccessExpression(factory, result as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "done"), NodeFlagsNone);
+  const getValue = NewPropertyAccessExpression(factory, result as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "value"), NodeFlagsNone);
+  const callReturn = NodeFactory_NewFunctionCallCall(printerFactory, returnMethod, iterator as unknown as GoPtr<Node>, []);
+
+  EmitContext_AddVariableDeclaration(emitContext, errorRecord);
+  EmitContext_AddVariableDeclaration(emitContext, returnMethod);
+
+  const initializer = (ancestorFacts & forAwaitHierarchyFactsIterationContainer) !== 0
+    ? NodeFactory_InlineExpressions(printerFactory, [
+        NodeFactory_NewAssignmentExpression(printerFactory, errorRecord as unknown as GoPtr<Node>, NodeFactory_NewVoidZeroExpression(printerFactory)),
+        callValues,
+      ])
+    : callValues;
+
+  const iteratorDecl = NewVariableDeclaration(factory, iterator as unknown as GoPtr<Node>, undefined, undefined, initializer);
+  iteratorDecl!.Loc = node!.Expression!.Loc;
+  const varDeclList = NewVariableDeclarationList(
+    factory,
+    NodeFactory_NewNodeList(factory, [
+      NewVariableDeclaration(factory, nonUserCode as unknown as GoPtr<Node>, undefined, undefined, NewKeywordExpression(factory, KindTrueKeyword)),
+      iteratorDecl,
+      NewVariableDeclaration(factory, result as unknown as GoPtr<Node>, undefined, undefined, undefined),
+    ]),
+    NodeFlagsNone,
+  );
+  varDeclList!.Loc = node!.Expression!.Loc;
+
+  const condition = NodeFactory_InlineExpressions(printerFactory, [
+    NodeFactory_NewAssignmentExpression(printerFactory, result as unknown as GoPtr<Node>, forawaitTransformer_createDownlevelAwait(receiver, callNext)),
+    NodeFactory_NewAssignmentExpression(printerFactory, done as unknown as GoPtr<Node>, getDone),
+    NewPrefixUnaryExpression(factory, KindExclamationToken, done as unknown as GoPtr<Node>),
+  ]);
+
+  const incrementor = NodeFactory_NewAssignmentExpression(printerFactory, nonUserCode as unknown as GoPtr<Node>, NewKeywordExpression(factory, KindTrueKeyword));
+
+  const forStatement = NewForStatement(
+    factory,
+    varDeclList,
+    condition,
+    incrementor,
+    forawaitTransformer_convertForOfStatementHead(receiver, node, getValue, nonUserCode as unknown as GoPtr<Node>),
+  );
+  forStatement!.Loc = node!.Loc;
+  EmitContext_AddEmitFlags(emitContext, forStatement, EFNoTokenTrailingSourceMaps);
+  EmitContext_SetOriginal(emitContext, forStatement, node as unknown as GoPtr<Node>);
+
+  const tryBlock = NewBlock(
+    factory,
+    NodeFactory_NewNodeList(factory, [
+      NodeFactory_RestoreEnclosingLabel(printerFactory, forStatement, outermostLabeledStatement),
+    ]),
+    true,
+  );
+
+  const catchBody = NewBlock(
+    factory,
+    NodeFactory_NewNodeList(factory, [
+      NewExpressionStatement(
+        factory,
+        NodeFactory_NewAssignmentExpression(
+          printerFactory,
+          errorRecord as unknown as GoPtr<Node>,
+          NewObjectLiteralExpression(
+            factory,
+            NodeFactory_NewNodeList(factory, [
+              NewPropertyAssignment(factory, undefined, NewIdentifier(factory, "error"), undefined, undefined, catchVariable as unknown as GoPtr<Node>),
+            ]),
+            false,
+          ),
+        ),
+      ),
+    ]),
+    false,
+  );
+  EmitContext_AddEmitFlags(emitContext, catchBody, EFSingleLine);
+  const catchClause = NewCatchClause(
+    factory,
+    NewVariableDeclaration(factory, catchVariable as unknown as GoPtr<Node>, undefined, undefined, undefined),
+    catchBody,
+  );
+
+  const innerIfCondition = NewBinaryExpression(
+    factory,
+    undefined,
+    NewBinaryExpression(
+      factory,
+      undefined,
+      NewPrefixUnaryExpression(factory, KindExclamationToken, nonUserCode as unknown as GoPtr<Node>),
+      undefined,
+      NewToken(factory, KindAmpersandAmpersandToken),
+      NewPrefixUnaryExpression(factory, KindExclamationToken, done as unknown as GoPtr<Node>),
+    ),
+    undefined,
+    NewToken(factory, KindAmpersandAmpersandToken),
+    NodeFactory_NewAssignmentExpression(
+      printerFactory,
+      returnMethod as unknown as GoPtr<Node>,
+      NewPropertyAccessExpression(factory, iterator as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "return"), NodeFlagsNone),
+    ),
+  );
+  const innerIfStatement = NewIfStatement(
+    factory,
+    innerIfCondition,
+    NewExpressionStatement(factory, forawaitTransformer_createDownlevelAwait(receiver, callReturn)),
+    undefined,
+  );
+  EmitContext_AddEmitFlags(emitContext, innerIfStatement, EFSingleLine);
+
+  const innerTryBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerIfStatement]), false);
+
+  const innerFinallyIf = NewIfStatement(
+    factory,
+    errorRecord as unknown as GoPtr<Node>,
+    NewThrowStatement(
+      factory,
+      NewPropertyAccessExpression(factory, errorRecord as unknown as GoPtr<Node>, undefined, NewIdentifier(factory, "error"), NodeFlagsNone),
+    ),
+    undefined,
+  );
+  EmitContext_AddEmitFlags(emitContext, innerFinallyIf, EFSingleLine);
+  const innerFinallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerFinallyIf]), false);
+  EmitContext_AddEmitFlags(emitContext, innerFinallyBlock, EFSingleLine);
+
+  const innerTryStatement = NewTryStatement(factory, innerTryBlock, undefined, innerFinallyBlock);
+  const finallyBlock = NewBlock(factory, NodeFactory_NewNodeList(factory, [innerTryStatement]), true);
+
+  return NewTryStatement(factory, tryBlock, catchClause, finallyBlock);
 }
 
 /**
@@ -989,7 +1399,7 @@ export function forawaitTransformer_visitFunctionExpression(receiver: GoPtr<fora
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionParameterList","kind":"method","status":"stub","sigHash":"9394db53c65477d17dc400a302912bc0af2d910325e85b98417fc02dae8dfd1c","bodyHash":"23d50ba7b11d3177c715523bb880083c6d7271a6f4db0bb017a65b23a2ac267f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionParameterList","kind":"method","status":"implemented","sigHash":"9394db53c65477d17dc400a302912bc0af2d910325e85b98417fc02dae8dfd1c","bodyHash":"23d50ba7b11d3177c715523bb880083c6d7271a6f4db0bb017a65b23a2ac267f"}
  *
  * Go source:
  * func (tx *forawaitTransformer) transformAsyncGeneratorFunctionParameterList(node *ast.Node) *ast.NodeList {
@@ -1019,7 +1429,33 @@ export function forawaitTransformer_visitFunctionExpression(receiver: GoPtr<fora
  * }
  */
 export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionParameterList");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  if (isSimpleParameterList(Node_Parameters(node))) {
+    return EmitContext_VisitParameters(emitContext, Node_ParameterList(node), visitor);
+  }
+  const newParameters: Array<GoPtr<Node>> = [];
+  for (const parameter of Node_Parameters(node)) {
+    const param = AsParameterDeclaration(parameter as unknown as GoPtr<Node>);
+    if (param!.Initializer !== undefined || param!.DotDotDotToken !== undefined) {
+      break;
+    }
+    const newParameter = NewParameterDeclaration(
+      factory,
+      undefined,
+      undefined,
+      NodeFactory_NewGeneratedNameForNodeEx(printerFactory, Node_Name(parameter as unknown as GoPtr<Node>), { Flags: GeneratedIdentifierFlagsReservedInNestedScopes } as AutoGenerateOptions),
+      undefined,
+      undefined,
+      undefined,
+    );
+    newParameters.push(newParameter);
+  }
+  const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
+  newParametersArray!.Loc = Node_ParameterList(node)!.Loc;
+  return newParametersArray;
 }
 
 /**

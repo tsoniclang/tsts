@@ -173,7 +173,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"implemented","sigHash":"f68645a75c9c070321c836ada363a304ee5283c27b43e1f2a137ddbfc7fa4394","bodyHash":"fff529fcf5bf7956e4f6cceb9c35ce769e63e2d00928fd6a8c5157cc8a7d393e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"stub","sigHash":"f68645a75c9c070321c836ada363a304ee5283c27b43e1f2a137ddbfc7fa4394","bodyHash":"fff529fcf5bf7956e4f6cceb9c35ce769e63e2d00928fd6a8c5157cc8a7d393e"}
  *
  * Go source:
  * func tscBuildCompilation(sys tsc.System, buildCommand *tsoptions.ParsedBuildCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -208,40 +208,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
  * }
  */
 export function tscBuildCompilation(sys: System, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: CommandLineTesting): CommandLineResult {
-  const locale = ParsedBuildCommandLine_Locale(buildCommand);
-  const reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, buildCommand!.CompilerOptions);
-
-  if (buildCommand!.Errors.length > 0) {
-    for (const err of buildCommand!.Errors) {
-      reportDiagnostic(err);
-    }
-    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as never };
-  }
-
-  const pprofDir = buildCommand!.CompilerOptions!.PprofDir;
-  let profileSession: ReturnType<typeof BeginProfiling> | undefined;
-  if (pprofDir !== "") {
-    profileSession = BeginProfiling(pprofDir, sys.Writer());
-  }
-
-  try {
-    if (Tristate_IsTrue(buildCommand!.CompilerOptions!.Help)) {
-      PrintVersion(sys, locale);
-      PrintBuildHelp(sys, locale, BuildOpts);
-      return { Status: ExitStatusSuccess, Watcher: undefined as never };
-    }
-
-    const orchestrator = NewOrchestrator({
-      Sys: sys,
-      Command: buildCommand,
-      Testing: testing,
-    });
-    return Orchestrator_Start(orchestrator);
-  } finally {
-    if (profileSession !== undefined) {
-      ProfileSession_Stop(profileSession);
-    }
-  }
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation");
 }
 
 /**
@@ -441,7 +408,7 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"implemented","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"stub","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
  *
  * Go source:
  * func performIncrementalCompilation(
@@ -494,36 +461,11 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
  * }
  */
 export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), extendedConfigCache, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
-  const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
-
-  const tr = startTracingIfNeeded(sys, config, testing);
-
-  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
-  const incrementalProgram = IncrementalNewProgram(program, oldProgram, IncrementalCreateHost(host), testing !== undefined);
-  const [result] = EmitAndReportStatistics({
-    Sys: sys,
-    ProgramLike: incrementalProgram,
-    Program: Program_GetProgram(incrementalProgram),
-    Config: config,
-    ReportDiagnostic: reportDiagnostic,
-    ReportErrorSummary: reportErrorSummary,
-    Writer: sys.Writer(),
-    CompileTimes: compileTimes,
-    Testing: testing,
-    Tracing: tr,
-  } as unknown as EmitInput);
-
-  stopTracing(sys, tr);
-
-  if (testing !== undefined) {
-    testing.OnProgram(incrementalProgram);
-  }
-  return { Status: result.Status, Watcher: undefined as never };
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"implemented","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"stub","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
  *
  * Go source:
  * func performCompilation(
@@ -567,27 +509,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
  * }
  */
 export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting): CommandLineResult {
-  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), extendedConfigCache, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
-
-  const tr = startTracingIfNeeded(sys, config, testing);
-
-  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
-  const [result] = EmitAndReportStatistics({
-    Sys: sys,
-    ProgramLike: program,
-    Program: program,
-    Config: config,
-    ReportDiagnostic: reportDiagnostic,
-    ReportErrorSummary: reportErrorSummary,
-    Writer: sys.Writer(),
-    CompileTimes: compileTimes,
-    Testing: testing,
-    Tracing: tr,
-  } as unknown as EmitInput);
-
-  stopTracing(sys, tr);
-
-  return { Status: result.Status, Watcher: undefined as never };
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation");
 }
 
 /**

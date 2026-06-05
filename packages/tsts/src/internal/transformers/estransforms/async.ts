@@ -1,40 +1,110 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList, NodeVisitor } from "../../ast/spine.js";
+import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { Node_Name } from "../../ast/spine.js";
 import type { AwaitExpression, CatchClause, ForInOrOfStatement, ForStatement, VariableDeclaration, VariableDeclarationList } from "../../ast/generated/data.js";
 import type { IdentifierNode } from "../../ast/generated/unions.js";
 import {
+  AsArrayLiteralExpression,
+  AsBindingPattern,
+  AsCatchClause,
+  AsForInOrOfStatement,
+  AsForStatement,
+  AsObjectLiteralExpression,
+  AsParameterDeclaration,
+  AsParenthesizedExpression,
   AsPostfixUnaryExpression,
   AsPrefixUnaryExpression,
+  AsPropertyAssignment,
+  AsShorthandPropertyAssignment,
+  AsSpreadAssignment,
+  AsSpreadElement,
+  AsVariableDeclaration,
+  AsVariableDeclarationList,
+  AsVariableStatement,
 } from "../../ast/generated/casts.js";
 import {
+  KindArrowFunction,
+  KindArrayLiteralExpression,
+  KindAsyncKeyword,
+  KindAwaitExpression,
+  KindBindingElement,
   KindBlock,
   KindCaseBlock,
   KindCaseClause,
   KindCatchClause,
+  KindClassDeclaration,
+  KindClassExpression,
+  KindConstructor,
   KindDefaultClause,
   KindDoStatement,
+  KindElementAccessExpression,
   KindForInStatement,
   KindForOfStatement,
   KindForStatement,
+  KindFunctionDeclaration,
+  KindFunctionExpression,
+  KindGetAccessor,
+  KindIdentifier,
   KindIfStatement,
   KindLabeledStatement,
+  KindMethodDeclaration,
   KindMinusMinusToken,
+  KindObjectLiteralExpression,
+  KindParameter,
+  KindParenthesizedExpression,
   KindPlusPlusToken,
+  KindPropertyAccessExpression,
+  KindPropertyAssignment,
+  KindSetAccessor,
+  KindShorthandPropertyAssignment,
+  KindSourceFile,
+  KindSpreadAssignment,
+  KindSpreadElement,
+  KindSuperKeyword,
   KindSwitchStatement,
   KindTryStatement,
+  KindVariableDeclaration,
   KindVariableStatement,
   KindWhileStatement,
   KindWithStatement,
 } from "../../ast/generated/kinds.js";
 import {
+  IsBlock,
+  IsIdentifier,
+  IsOmittedExpression,
+  IsPropertyAccessExpression,
+  IsPropertyAssignment,
   IsPostfixUnaryExpression,
   IsPrefixUnaryExpression,
+  IsVariableDeclarationList,
 } from "../../ast/generated/predicates.js";
+import { IsBindingPattern } from "../../ast/utilities.js";
+import { NodeFlagsBlockScoped, NodeFlagsNone } from "../../ast/generated/flags.js";
+import { Node_SubtreeFacts } from "../../ast/spine.js";
+import { SubtreeContainsAnyAwait, SubtreeContainsAwait } from "../../ast/subtreefacts.js";
+import { NewArrayLiteralExpression, NewBlock, NewExpressionStatement, NewIdentifier, NewParameterDeclaration, NewReturnStatement, NewSpreadElement, NewToken, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement, NewYieldExpression } from "../../ast/generated/factory.js";
+import { Node_Body, Node_Expression, Node_Initializer, Node_ParameterList, Node_Parameters, Node_StatementList } from "../../ast/ast.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewAwaiterHelper, NodeFactory_NewGeneratedNameForNodeEx, NodeFactory_NewUniqueNameEx, NodeFactory_InlineExpressions } from "../../printer/factory.js";
+import { NodeFactory_NewNodeList } from "../../ast/spine.js";
+import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
+import { EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AddInitializationStatement, EmitContext_AddVariableDeclaration, EmitContext_EmitFlags, EmitContext_EndAndMergeVariableEnvironmentList, EmitContext_MergeEnvironmentList, EmitContext_MostOriginal, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_VisitFunctionBody, EmitContext_VisitParameters } from "../../printer/emitcontext.js";
+import { EFCustomPrologue, EFNoLexicalArguments, EFStartOnNewLine } from "../../printer/emitflags.js";
+import { GeneratedIdentifierFlagsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
+import { IsFunctionLikeDeclaration } from "../../ast/utilities.js";
+import { ConvertBindingPatternToAssignmentPattern } from "../utilities.js";
+import { KindDotDotDotToken } from "../../ast/generated/kinds.js";
 import type { Set } from "../../collections/set.js";
+import { Set_Add, Set_Clone, Set_Delete, Set_Has } from "../../collections/set.js";
+import { NewSetWithSizeHint } from "../../collections/set.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitEmbeddedStatement, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
+import { superAccessState_initSuperAccessVisitor, superAccessState_trackSuperAccess } from "./utilities.js";
 import type { superAccessState } from "./utilities.js";
 
 /**
@@ -104,7 +174,7 @@ export interface asyncTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::newAsyncTransformer","kind":"func","status":"stub","sigHash":"c1d4bbacff6fb56b3b2490a7bd5e68e1e9e5ec6ac62f0ccbb294ef301529995c","bodyHash":"e6bf780bdc97c8a663d2aaae4678c0fee192397de0fcbb6ad6729f3923efb1db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::newAsyncTransformer","kind":"func","status":"implemented","sigHash":"c1d4bbacff6fb56b3b2490a7bd5e68e1e9e5ec6ac62f0ccbb294ef301529995c","bodyHash":"e6bf780bdc97c8a663d2aaae4678c0fee192397de0fcbb6ad6729f3923efb1db"}
  *
  * Go source:
  * func newAsyncTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -117,11 +187,26 @@ export interface asyncTransformer {
  * }
  */
 export function newAsyncTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::newAsyncTransformer");
+  const tx: asyncTransformer = {
+    __tsgoEmbedded0: {} as Transformer,
+    __tsgoEmbedded1: {} as superAccessState,
+    contextFlags: 0,
+    enclosingFunctionParameterNames: undefined,
+    lexicalArguments: { binding: undefined, used: false },
+    parentNode: undefined,
+    currentNode: undefined,
+    asyncBodyVisitor: undefined,
+    fallbackNodeVisitor: undefined,
+  };
+  const result = Transformer_NewTransformer(tx.__tsgoEmbedded0!, (node) => asyncTransformer_visit(tx, node), opts!.Context);
+  superAccessState_initSuperAccessVisitor(tx.__tsgoEmbedded1!, Transformer_EmitContext(tx.__tsgoEmbedded0!), Transformer_Factory(tx.__tsgoEmbedded0!));
+  tx.asyncBodyVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => asyncTransformer_visitAsyncBodyNode(tx, node));
+  tx.fallbackNodeVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => asyncTransformer_visitFallback(tx, node));
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitSourceFile","kind":"method","status":"stub","sigHash":"e38c76aedde1e191e9ead938ec3291b7251c4210cada82db0531bb0d683e799c","bodyHash":"c7b19aa2ba24d160877bcb8531c412bdec28696e162e185437128b301c78d34e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"e38c76aedde1e191e9ead938ec3291b7251c4210cada82db0531bb0d683e799c","bodyHash":"c7b19aa2ba24d160877bcb8531c412bdec28696e162e185437128b301c78d34e"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -137,7 +222,17 @@ export function newAsyncTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transf
  * }
  */
 export function asyncTransformer_visitSourceFile(receiver: GoPtr<asyncTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitSourceFile");
+  if (node!.IsDeclarationFile) {
+    return node as unknown as GoPtr<Node>;
+  }
+  asyncTransformer_setContextFlag(receiver, asyncContextNonTopLevel, false);
+  asyncTransformer_setContextFlag(receiver, asyncContextHasLexicalThis, false);
+  const visited = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
+  const helpers = EmitContext_ReadEmitHelpers(Transformer_EmitContext(receiver!.__tsgoEmbedded0!));
+  if (helpers !== undefined) {
+    EmitContext_AddEmitHelper(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), visited, ...helpers);
+  }
+  return visited;
 }
 
 /**
@@ -223,7 +318,7 @@ export function asyncTransformer_doWithContext(receiver: GoPtr<asyncTransformer>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitDefault","kind":"method","status":"stub","sigHash":"511101962b66551d6d256dabac810a8f1eb632094ce5c1e973d3da2779467865","bodyHash":"e834878ec9a876f0c22db21884b7650c0391375df688a3b3962b7bbc63f6a64e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitDefault","kind":"method","status":"implemented","sigHash":"511101962b66551d6d256dabac810a8f1eb632094ce5c1e973d3da2779467865","bodyHash":"e834878ec9a876f0c22db21884b7650c0391375df688a3b3962b7bbc63f6a64e"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitDefault(node *ast.Node) *ast.Node {
@@ -231,11 +326,11 @@ export function asyncTransformer_doWithContext(receiver: GoPtr<asyncTransformer>
  * }
  */
 export function asyncTransformer_visitDefault(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitDefault");
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.fallbackVisitor","kind":"method","status":"stub","sigHash":"23f4d295d67c6174abc7013f766d63f3e8405b5e59c4864747dd7c3428be2310","bodyHash":"7379c95ab6573fc3a7a0d093471f1739489700658247ac15cf3c1771693b3c39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.fallbackVisitor","kind":"method","status":"implemented","sigHash":"23f4d295d67c6174abc7013f766d63f3e8405b5e59c4864747dd7c3428be2310","bodyHash":"7379c95ab6573fc3a7a0d093471f1739489700658247ac15cf3c1771693b3c39"}
  *
  * Go source:
  * func (tx *asyncTransformer) fallbackVisitor(node *ast.Node) *ast.Node {
@@ -265,7 +360,31 @@ export function asyncTransformer_visitDefault(receiver: GoPtr<asyncTransformer>,
  * }
  */
 export function asyncTransformer_fallbackVisitor(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.fallbackVisitor");
+  if (receiver!.__tsgoEmbedded1!.capturedSuperProperties === undefined && receiver!.lexicalArguments.binding === undefined) {
+    return node;
+  }
+  superAccessState_trackSuperAccess(receiver!.__tsgoEmbedded1!, node);
+  switch (node!.Kind) {
+    case KindFunctionExpression:
+    case KindFunctionDeclaration:
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+    case KindConstructor:
+      return node;
+    case KindParameter:
+    case KindBindingElement:
+    case KindVariableDeclaration:
+      // fall through to visitEachChild
+      break;
+    case KindIdentifier:
+      if (receiver!.lexicalArguments.binding !== undefined && Node_Text(node) === "arguments" && !isNameOfPropertyAccessOrAssignment(receiver!.parentNode, node)) {
+        receiver!.lexicalArguments.used = true;
+        return receiver!.lexicalArguments.binding as unknown as GoPtr<Node>;
+      }
+      break;
+  }
+  return NodeVisitor_VisitEachChild((receiver!.fallbackNodeVisitor as ConcreteNodeVisitor), node);
 }
 
 /**
@@ -290,7 +409,7 @@ export function asyncTransformer_descendInto(receiver: GoPtr<asyncTransformer>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitFallback","kind":"method","status":"stub","sigHash":"0bf71532f8917e36dd2d23563f04a9bb55cb6b3dea35017b8a143499c848ccc9","bodyHash":"fa2e3eace51256565c07e6e7f4441456185ef3233b7d315c2358df258e0bfc96"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitFallback","kind":"method","status":"implemented","sigHash":"0bf71532f8917e36dd2d23563f04a9bb55cb6b3dea35017b8a143499c848ccc9","bodyHash":"fa2e3eace51256565c07e6e7f4441456185ef3233b7d315c2358df258e0bfc96"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitFallback(node *ast.Node) *ast.Node {
@@ -300,11 +419,14 @@ export function asyncTransformer_descendInto(receiver: GoPtr<asyncTransformer>, 
  * }
  */
 export function asyncTransformer_visitFallback(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitFallback");
+  const cleanup = asyncTransformer_descendInto(receiver, node);
+  const result = asyncTransformer_fallbackVisitor(receiver, node);
+  cleanup();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visit","kind":"method","status":"stub","sigHash":"2848ffce30a8a6797a57f68ab61e30c2c6e80839432e1a666f04108f4b223ff5","bodyHash":"ef101be8627c0a497af1b800e04052cb7f2668266425a93555c706ce38b9bab5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visit","kind":"method","status":"implemented","sigHash":"2848ffce30a8a6797a57f68ab61e30c2c6e80839432e1a666f04108f4b223ff5","bodyHash":"ef101be8627c0a497af1b800e04052cb7f2668266425a93555c706ce38b9bab5"}
  *
  * Go source:
  * func (tx *asyncTransformer) visit(node *ast.Node) *ast.Node {
@@ -345,11 +467,60 @@ export function asyncTransformer_visitFallback(receiver: GoPtr<asyncTransformer>
  * }
  */
 export function asyncTransformer_visit(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visit");
+  const cleanup = asyncTransformer_descendInto(receiver, node);
+  if ((Node_SubtreeFacts(node) & (SubtreeContainsAnyAwait | SubtreeContainsAwait)) === 0) {
+    const result = asyncTransformer_fallbackVisitor(receiver, node);
+    cleanup();
+    return result;
+  }
+  superAccessState_trackSuperAccess(receiver!.__tsgoEmbedded1!, node);
+  let result: GoPtr<Node>;
+  switch (node!.Kind) {
+    case KindAsyncKeyword:
+      // ES2017 async modifier should be elided for targets < ES2017
+      result = undefined;
+      break;
+    case KindSourceFile:
+      result = asyncTransformer_visitSourceFile(receiver, node as unknown as GoPtr<SourceFile>);
+      break;
+    case KindAwaitExpression:
+      result = asyncTransformer_visitAwaitExpression(receiver, node as unknown as GoPtr<AwaitExpression>);
+      break;
+    case KindMethodDeclaration:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitMethodDeclaration(tx, n), node);
+      break;
+    case KindFunctionDeclaration:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitFunctionDeclaration(tx, n), node);
+      break;
+    case KindFunctionExpression:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitFunctionExpression(tx, n), node);
+      break;
+    case KindArrowFunction:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel, (tx, n) => asyncTransformer_visitArrowFunction(tx, n), node);
+      break;
+    case KindGetAccessor:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitGetAccessorDeclaration(tx, n), node);
+      break;
+    case KindSetAccessor:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitSetAccessorDeclaration(tx, n), node);
+      break;
+    case KindConstructor:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitConstructorDeclaration(tx, n), node);
+      break;
+    case KindClassDeclaration:
+    case KindClassExpression:
+      result = asyncTransformer_doWithContext(receiver, asyncContextNonTopLevel | asyncContextHasLexicalThis, (tx, n) => asyncTransformer_visitDefault(tx, n), node);
+      break;
+    default:
+      result = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
+      break;
+  }
+  cleanup();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAsyncBodyNode","kind":"method","status":"stub","sigHash":"05c97509e59242700152bc4d60c834a029ef8ad33346e7f31db12d4eab7aaad2","bodyHash":"9f0730d2ad6004d520b9d25a29c6603e1359effe2a303b31d1ccd6bcfb30b33c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAsyncBodyNode","kind":"method","status":"implemented","sigHash":"05c97509e59242700152bc4d60c834a029ef8ad33346e7f31db12d4eab7aaad2","bodyHash":"9f0730d2ad6004d520b9d25a29c6603e1359effe2a303b31d1ccd6bcfb30b33c"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitAsyncBodyNode(node *ast.Node) *ast.Node {
@@ -383,11 +554,37 @@ export function asyncTransformer_visit(receiver: GoPtr<asyncTransformer>, node: 
  * }
  */
 export function asyncTransformer_visitAsyncBodyNode(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAsyncBodyNode");
+  if (isNodeWithPossibleHoistedDeclaration(node)) {
+    switch (node!.Kind) {
+      case KindVariableStatement:
+        return asyncTransformer_visitVariableStatementInAsyncBody(receiver, node);
+      case KindForStatement:
+        return asyncTransformer_visitForStatementInAsyncBody(receiver, AsForStatement(node)!);
+      case KindForInStatement:
+        return asyncTransformer_visitForInStatementInAsyncBody(receiver, AsForInOrOfStatement(node)!);
+      case KindForOfStatement:
+        return asyncTransformer_visitForOfStatementInAsyncBody(receiver, AsForInOrOfStatement(node)!);
+      case KindCatchClause:
+        return asyncTransformer_visitCatchClauseInAsyncBody(receiver, AsCatchClause(node)!);
+      case KindBlock:
+      case KindSwitchStatement:
+      case KindCaseBlock:
+      case KindCaseClause:
+      case KindDefaultClause:
+      case KindTryStatement:
+      case KindDoStatement:
+      case KindWhileStatement:
+      case KindIfStatement:
+      case KindWithStatement:
+      case KindLabeledStatement:
+        return NodeVisitor_VisitEachChild((receiver!.asyncBodyVisitor as ConcreteNodeVisitor), node);
+    }
+  }
+  return asyncTransformer_visit(receiver, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitCatchClauseInAsyncBody","kind":"method","status":"stub","sigHash":"260a9b56ce5af4c08f86ab2679efae4f511e255a2f428849483fc2d54d98aa96","bodyHash":"2b31109d1de2198da18fdf9cff28ce91548bb4ab6637484d988a3e38cee29542"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitCatchClauseInAsyncBody","kind":"method","status":"implemented","sigHash":"260a9b56ce5af4c08f86ab2679efae4f511e255a2f428849483fc2d54d98aa96","bodyHash":"2b31109d1de2198da18fdf9cff28ce91548bb4ab6637484d988a3e38cee29542"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitCatchClauseInAsyncBody(node *ast.CatchClause) *ast.Node {
@@ -418,11 +615,32 @@ export function asyncTransformer_visitAsyncBodyNode(receiver: GoPtr<asyncTransfo
  * }
  */
 export function asyncTransformer_visitCatchClauseInAsyncBody(receiver: GoPtr<asyncTransformer>, node: GoPtr<CatchClause>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitCatchClauseInAsyncBody");
+  const catchClauseNames: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0);
+  if (node!.VariableDeclaration !== undefined) {
+    asyncTransformer_recordDeclarationName(receiver, node!.VariableDeclaration as unknown as GoPtr<Node>, catchClauseNames);
+  }
+  // names declared in a catch variable are block scoped
+  let catchClauseUnshadowedNames: GoPtr<Set<string>> = undefined;
+  for (const escapedName of catchClauseNames!.M.keys()) {
+    if (receiver!.enclosingFunctionParameterNames !== undefined && Set_Has(receiver!.enclosingFunctionParameterNames, escapedName)) {
+      if (catchClauseUnshadowedNames === undefined) {
+        catchClauseUnshadowedNames = Set_Clone(receiver!.enclosingFunctionParameterNames as GoPtr<Set<string>>);
+      }
+      Set_Delete(catchClauseUnshadowedNames, escapedName);
+    }
+  }
+  if (catchClauseUnshadowedNames !== undefined) {
+    const savedEnclosingFunctionParameterNames = receiver!.enclosingFunctionParameterNames;
+    receiver!.enclosingFunctionParameterNames = catchClauseUnshadowedNames;
+    const result = NodeVisitor_VisitEachChild((receiver!.asyncBodyVisitor as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
+    receiver!.enclosingFunctionParameterNames = savedEnclosingFunctionParameterNames;
+    return result;
+  }
+  return NodeVisitor_VisitEachChild((receiver!.asyncBodyVisitor as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableStatementInAsyncBody","kind":"method","status":"stub","sigHash":"a0ba5c815298cf81b3683eeb5b5f0743368794196685c5736fc4d832382b1d84","bodyHash":"993f3285d2ec5564aa797eda2a3a8bf9d02103d7e48e5c14f1736888a2292ad4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableStatementInAsyncBody","kind":"method","status":"implemented","sigHash":"a0ba5c815298cf81b3683eeb5b5f0743368794196685c5736fc4d832382b1d84","bodyHash":"993f3285d2ec5564aa797eda2a3a8bf9d02103d7e48e5c14f1736888a2292ad4"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitVariableStatementInAsyncBody(node *ast.Node) *ast.Node {
@@ -438,7 +656,15 @@ export function asyncTransformer_visitCatchClauseInAsyncBody(receiver: GoPtr<asy
  * }
  */
 export function asyncTransformer_visitVariableStatementInAsyncBody(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableStatementInAsyncBody");
+  const declList = AsVariableStatement(node)!.DeclarationList;
+  if (asyncTransformer_isVariableDeclarationListWithCollidingName(receiver, declList as unknown as GoPtr<Node>)) {
+    const expression = asyncTransformer_visitVariableDeclarationListWithCollidingNames(receiver, AsVariableDeclarationList(declList as unknown as GoPtr<Node>)!, false);
+    if (expression !== undefined) {
+      return NewExpressionStatement(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, expression as unknown as GoPtr<never>);
+    }
+    return undefined;
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node);
 }
 
 /**
@@ -518,7 +744,7 @@ export function asyncTransformer_visitForStatementInAsyncBody(receiver: GoPtr<as
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAwaitExpression","kind":"method","status":"stub","sigHash":"541dee6880725c28ca9757339007d9e978b72fb34bd4e9701cc66b1667af67fc","bodyHash":"1c8cdda0b3461d8a5efed1dfb60618bfd462d56fef6186534d926461c9b6d4f9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAwaitExpression","kind":"method","status":"implemented","sigHash":"541dee6880725c28ca9757339007d9e978b72fb34bd4e9701cc66b1667af67fc","bodyHash":"1c8cdda0b3461d8a5efed1dfb60618bfd462d56fef6186534d926461c9b6d4f9"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitAwaitExpression(node *ast.AwaitExpression) *ast.Node {
@@ -536,7 +762,18 @@ export function asyncTransformer_visitForStatementInAsyncBody(receiver: GoPtr<as
  * }
  */
 export function asyncTransformer_visitAwaitExpression(receiver: GoPtr<asyncTransformer>, node: GoPtr<AwaitExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitAwaitExpression");
+  // do not downlevel a top-level await as it is module syntax...
+  if (asyncTransformer_inTopLevelContext(receiver)) {
+    return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
+  }
+  const yieldExpr = NewYieldExpression(
+    Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
+    undefined, // asteriskToken
+    NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(node as unknown as GoPtr<Node>)),
+  );
+  yieldExpr!.Loc = node!.Loc;
+  EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), yieldExpr, node as unknown as GoPtr<Node>);
+  return yieldExpr;
 }
 
 /**
@@ -779,7 +1016,7 @@ export function asyncTransformer_visitArrowFunction(receiver: GoPtr<asyncTransfo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.recordDeclarationName","kind":"method","status":"stub","sigHash":"03a643f986cc4a4f615ec0a7c62fdfb89f5f2b0b60dc6df2b20a6dea41af72a2","bodyHash":"1db659ad2aeb21a1b61b050e987081dbe25294199283c61d29f6e67984a4c6bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.recordDeclarationName","kind":"method","status":"implemented","sigHash":"03a643f986cc4a4f615ec0a7c62fdfb89f5f2b0b60dc6df2b20a6dea41af72a2","bodyHash":"1db659ad2aeb21a1b61b050e987081dbe25294199283c61d29f6e67984a4c6bd"}
  *
  * Go source:
  * func (tx *asyncTransformer) recordDeclarationName(node *ast.Node, names *collections.Set[string]) {
@@ -799,11 +1036,24 @@ export function asyncTransformer_visitArrowFunction(receiver: GoPtr<asyncTransfo
  * }
  */
 export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>, names: GoPtr<Set>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.recordDeclarationName");
+  const name = Node_Name(node);
+  if (name === undefined) {
+    return;
+  }
+  if (IsIdentifier(name)) {
+    Set_Add(names as GoPtr<Set<string>>, Node_Text(name));
+  } else if (IsBindingPattern(name)) {
+    const bp = AsBindingPattern(name)!;
+    for (const element of bp.Elements!.Nodes) {
+      if (!IsOmittedExpression(element)) {
+        asyncTransformer_recordDeclarationName(receiver, element, names);
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.isVariableDeclarationListWithCollidingName","kind":"method","status":"stub","sigHash":"e0b1594f1e4c7de4eb36db77ebd94127b5654a4c0c34d25218b81949fbf4dcb1","bodyHash":"9f1619d271857f96a023b1ca75668100240a2bb06e86e3c677d4830ca15642e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.isVariableDeclarationListWithCollidingName","kind":"method","status":"implemented","sigHash":"e0b1594f1e4c7de4eb36db77ebd94127b5654a4c0c34d25218b81949fbf4dcb1","bodyHash":"9f1619d271857f96a023b1ca75668100240a2bb06e86e3c677d4830ca15642e4"}
  *
  * Go source:
  * func (tx *asyncTransformer) isVariableDeclarationListWithCollidingName(node *ast.Node) bool {
@@ -814,11 +1064,16 @@ export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTran
  * }
  */
 export function asyncTransformer_isVariableDeclarationListWithCollidingName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.isVariableDeclarationListWithCollidingName");
+  if (node === undefined || !IsVariableDeclarationList(node)) {
+    return false;
+  }
+  const vdl = AsVariableDeclarationList(node)!;
+  return (node.Flags & NodeFlagsBlockScoped) === 0 &&
+    vdl.Declarations!.Nodes.some((n) => asyncTransformer_collidesWithParameterName(receiver, n));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableDeclarationListWithCollidingNames","kind":"method","status":"stub","sigHash":"c48445bc20db534c59c01de0cf8cab8dac895d3155137c038a4f13e39e136459","bodyHash":"2c13597c67f64c08409bc235f8fb05ac0e36325907cdd03b186ef8c47a3e25a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableDeclarationListWithCollidingNames","kind":"method","status":"implemented","sigHash":"c48445bc20db534c59c01de0cf8cab8dac895d3155137c038a4f13e39e136459","bodyHash":"2c13597c67f64c08409bc235f8fb05ac0e36325907cdd03b186ef8c47a3e25a2"}
  *
  * Go source:
  * func (tx *asyncTransformer) visitVariableDeclarationListWithCollidingNames(node *ast.VariableDeclarationList, hasReceiver bool) *ast.Node {
@@ -853,11 +1108,27 @@ export function asyncTransformer_isVariableDeclarationListWithCollidingName(rece
  * }
  */
 export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>, hasReceiver: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.visitVariableDeclarationListWithCollidingNames");
+  asyncTransformer_hoistVariableDeclarationList(receiver, node);
+  const variables: GoSlice<GoPtr<Node>> = node!.Declarations!.Nodes.filter((decl) => AsVariableDeclaration(decl)!.Initializer !== undefined);
+  if (variables === undefined || variables.length === 0) {
+    if (hasReceiver) {
+      const name = Node_Name(node!.Declarations!.Nodes[0]);
+      let target: GoPtr<Node>;
+      if (IsBindingPattern(name)) {
+        target = ConvertBindingPatternToAssignmentPattern(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), AsBindingPattern(name)!) as unknown as GoPtr<Node>;
+      } else {
+        target = name;
+      }
+      return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), target);
+    }
+    return undefined;
+  }
+  const expressions: GoSlice<GoPtr<Node>> = variables.map((variable) => asyncTransformer_transformInitializedVariable(receiver, AsVariableDeclaration(variable)!) as GoPtr<Node>);
+  return NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), expressions as unknown as GoSlice<GoPtr<never>>) as unknown as GoPtr<Node>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariableDeclarationList","kind":"method","status":"stub","sigHash":"a56456e0cbeaa2649d824348b7c83877c4ff974578e497b0f45f902a11aa8990","bodyHash":"e2c185f6dd94692c01e464dc6c8da87027c0d71d28eacda098c019eeec2b953f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariableDeclarationList","kind":"method","status":"implemented","sigHash":"a56456e0cbeaa2649d824348b7c83877c4ff974578e497b0f45f902a11aa8990","bodyHash":"e2c185f6dd94692c01e464dc6c8da87027c0d71d28eacda098c019eeec2b953f"}
  *
  * Go source:
  * func (tx *asyncTransformer) hoistVariableDeclarationList(node *ast.VariableDeclarationList) {
@@ -867,11 +1138,13 @@ export function asyncTransformer_visitVariableDeclarationListWithCollidingNames(
  * }
  */
 export function asyncTransformer_hoistVariableDeclarationList(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclarationList>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariableDeclarationList");
+  for (const decl of node!.Declarations!.Nodes) {
+    asyncTransformer_hoistVariable(receiver, decl);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariable","kind":"method","status":"stub","sigHash":"a0f4ea51721a0d1bb3a59edb686ecfce928cb59a6fc3493dd3e800511a69ac73","bodyHash":"fc7304230268c24bbda40a854822659710e158820fa68a92c706671e2602466f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariable","kind":"method","status":"implemented","sigHash":"a0f4ea51721a0d1bb3a59edb686ecfce928cb59a6fc3493dd3e800511a69ac73","bodyHash":"fc7304230268c24bbda40a854822659710e158820fa68a92c706671e2602466f"}
  *
  * Go source:
  * func (tx *asyncTransformer) hoistVariable(node *ast.Node) {
@@ -891,11 +1164,24 @@ export function asyncTransformer_hoistVariableDeclarationList(receiver: GoPtr<as
  * }
  */
 export function asyncTransformer_hoistVariable(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.hoistVariable");
+  const name = Node_Name(node);
+  if (name === undefined) {
+    return;
+  }
+  if (IsIdentifier(name)) {
+    EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name as unknown as GoPtr<never>);
+  } else if (IsBindingPattern(name)) {
+    const bp = AsBindingPattern(name)!;
+    for (const element of bp.Elements!.Nodes) {
+      if (!IsOmittedExpression(element)) {
+        asyncTransformer_hoistVariable(receiver, element);
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformInitializedVariable","kind":"method","status":"stub","sigHash":"ea89262e34539df9e88118b8299ee4af3577528048b5fde83fef8c6fa044fdad","bodyHash":"099a6eb31eb0aaa6343a793c2d01c40fec1f5e1dfb2076212c971665f456530e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformInitializedVariable","kind":"method","status":"implemented","sigHash":"ea89262e34539df9e88118b8299ee4af3577528048b5fde83fef8c6fa044fdad","bodyHash":"099a6eb31eb0aaa6343a793c2d01c40fec1f5e1dfb2076212c971665f456530e"}
  *
  * Go source:
  * func (tx *asyncTransformer) transformInitializedVariable(node *ast.VariableDeclaration) *ast.Node {
@@ -911,11 +1197,20 @@ export function asyncTransformer_hoistVariable(receiver: GoPtr<asyncTransformer>
  * }
  */
 export function asyncTransformer_transformInitializedVariable(receiver: GoPtr<asyncTransformer>, node: GoPtr<VariableDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformInitializedVariable");
+  let target: GoPtr<Node>;
+  const nameNode = Node_Name(node as unknown as GoPtr<Node>);
+  if (IsBindingPattern(nameNode)) {
+    target = ConvertBindingPatternToAssignmentPattern(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), AsBindingPattern(nameNode)!) as unknown as GoPtr<Node>;
+  } else {
+    target = nameNode;
+  }
+  const converted = NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), target as unknown as GoPtr<never>, node!.Initializer as unknown as GoPtr<never>);
+  EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), converted as unknown as GoPtr<Node>, node!.Loc);
+  return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), converted as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.collidesWithParameterName","kind":"method","status":"stub","sigHash":"0f3f819ba6fbf121fc0d687c47f8ae44b0da50ea8c233873906585d266331fce","bodyHash":"c83858d8d812b705b58bf8edc2cdfa0c962942c392381db66515ad05b836baa8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.collidesWithParameterName","kind":"method","status":"implemented","sigHash":"0f3f819ba6fbf121fc0d687c47f8ae44b0da50ea8c233873906585d266331fce","bodyHash":"c83858d8d812b705b58bf8edc2cdfa0c962942c392381db66515ad05b836baa8"}
  *
  * Go source:
  * func (tx *asyncTransformer) collidesWithParameterName(node *ast.Node) bool {
@@ -937,7 +1232,22 @@ export function asyncTransformer_transformInitializedVariable(receiver: GoPtr<as
  * }
  */
 export function asyncTransformer_collidesWithParameterName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.collidesWithParameterName");
+  const name = Node_Name(node);
+  if (name === undefined) {
+    return false;
+  }
+  if (IsIdentifier(name)) {
+    return receiver!.enclosingFunctionParameterNames !== undefined && Set_Has(receiver!.enclosingFunctionParameterNames as GoPtr<Set<string>>, Node_Text(name));
+  }
+  if (IsBindingPattern(name)) {
+    const bp = AsBindingPattern(name)!;
+    for (const element of bp.Elements!.Nodes) {
+      if (!IsOmittedExpression(element) && asyncTransformer_collidesWithParameterName(receiver, element)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -999,7 +1309,7 @@ export function asyncTransformer_transformMethodBody(receiver: GoPtr<asyncTransf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.createCaptureArgumentsStatement","kind":"method","status":"stub","sigHash":"b69c1db43226d7a154c9ab1d29ea3d07ce35765012ce9413cc43be838debf633","bodyHash":"dde23d77bd79edb338e651f68e8e78240f0508367dec094c75a1215b26f6d3c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.createCaptureArgumentsStatement","kind":"method","status":"implemented","sigHash":"b69c1db43226d7a154c9ab1d29ea3d07ce35765012ce9413cc43be838debf633","bodyHash":"dde23d77bd79edb338e651f68e8e78240f0508367dec094c75a1215b26f6d3c3"}
  *
  * Go source:
  * func (tx *asyncTransformer) createCaptureArgumentsStatement() *ast.Node {
@@ -1016,11 +1326,23 @@ export function asyncTransformer_transformMethodBody(receiver: GoPtr<asyncTransf
  * }
  */
 export function asyncTransformer_createCaptureArgumentsStatement(receiver: GoPtr<asyncTransformer>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.createCaptureArgumentsStatement");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const variable = NewVariableDeclaration(
+    factory,
+    receiver!.lexicalArguments.binding as unknown as GoPtr<never>,
+    undefined,
+    undefined,
+    NewIdentifier(factory, "arguments") as unknown as GoPtr<never>,
+  );
+  const declList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, [variable]) as unknown as GoPtr<never>, NodeFlagsNone);
+  const statement = NewVariableStatement(factory, undefined, declList as unknown as GoPtr<never>);
+  EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), statement, EFStartOnNewLine | EFCustomPrologue);
+  return statement;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformAsyncFunctionParameterList","kind":"method","status":"stub","sigHash":"a56cf6201405e520c093b2946c7aa56c37001e519da0adfe8576541450e541d5","bodyHash":"35c3f563bc40cf74bc6406e32cd2e79b99f18013a7e6403209c8827adc41a818"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformAsyncFunctionParameterList","kind":"method","status":"implemented","sigHash":"a56cf6201405e520c093b2946c7aa56c37001e519da0adfe8576541450e541d5","bodyHash":"35c3f563bc40cf74bc6406e32cd2e79b99f18013a7e6403209c8827adc41a818"}
  *
  * Go source:
  * func (tx *asyncTransformer) transformAsyncFunctionParameterList(node *ast.Node) *ast.NodeList {
@@ -1065,7 +1387,47 @@ export function asyncTransformer_createCaptureArgumentsStatement(receiver: GoPtr
  * }
  */
 export function asyncTransformer_transformAsyncFunctionParameterList(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.transformAsyncFunctionParameterList");
+  if (isSimpleParameterList(Node_Parameters(node))) {
+    return EmitContext_VisitParameters(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), Node_ParameterList(node), (Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor));
+  }
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const newParameters: GoSlice<GoPtr<Node>> = [];
+  for (const parameter of Node_Parameters(node) ?? []) {
+    const param = AsParameterDeclaration(parameter)!;
+    if (param.Initializer !== undefined || param.DotDotDotToken !== undefined) {
+      // for an arrow function, capture the remaining arguments in a rest parameter.
+      // for any other function/method this isn't necessary as we can just use `arguments`.
+      if (node!.Kind === KindArrowFunction) {
+        const restParameter = NewParameterDeclaration(
+          factory,
+          undefined,
+          NewToken(factory, KindDotDotDotToken),
+          NodeFactory_NewUniqueNameEx(printerFactory, "args", { Flags: GeneratedIdentifierFlagsReservedInNestedScopes, Prefix: "", Suffix: "" }) as unknown as GoPtr<never>,
+          undefined,
+          undefined,
+          undefined,
+        );
+        newParameters.push(restParameter);
+      }
+      break;
+    }
+    // for arrow functions we capture fixed parameters to forward to `__awaiter`. For all other functions
+    // we add fixed parameters to preserve the function's `length` property.
+    const newParameter = NewParameterDeclaration(
+      factory,
+      undefined,
+      undefined,
+      NodeFactory_NewGeneratedNameForNodeEx(printerFactory, param.name as unknown as GoPtr<Node>, { Flags: GeneratedIdentifierFlagsReservedInNestedScopes, Prefix: "", Suffix: "" }) as unknown as GoPtr<never>,
+      undefined,
+      undefined,
+      undefined,
+    );
+    newParameters.push(newParameter);
+  }
+  const newParametersArray = NodeFactory_NewNodeList(factory, newParameters);
+  newParametersArray!.Loc = Node_ParameterList(node)!.Loc;
+  return newParametersArray;
 }
 
 /**
@@ -1264,7 +1626,7 @@ export function asyncTransformer_transformAsyncFunctionBodyWorker(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.convertToFunctionBlock","kind":"method","status":"stub","sigHash":"c3d5999fc1975b022730aecb9ab16066e3a996bcecfef6bec3b23a8854338a39","bodyHash":"43d1822de130e51a9d1eb957e7cd62adaf8437f5c46e32d49a4612248cf69ff7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.convertToFunctionBlock","kind":"method","status":"implemented","sigHash":"c3d5999fc1975b022730aecb9ab16066e3a996bcecfef6bec3b23a8854338a39","bodyHash":"43d1822de130e51a9d1eb957e7cd62adaf8437f5c46e32d49a4612248cf69ff7"}
  *
  * Go source:
  * func (tx *asyncTransformer) convertToFunctionBlock(node *ast.Node) *ast.Node {
@@ -1282,11 +1644,23 @@ export function asyncTransformer_transformAsyncFunctionBodyWorker(receiver: GoPt
  * }
  */
 export function asyncTransformer_convertToFunctionBlock(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.convertToFunctionBlock");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  if (IsBlock(node)) {
+    return node;
+  }
+  const ret = NewReturnStatement(factory, node as unknown as GoPtr<never>);
+  ret!.Loc = node!.Loc;
+  EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), ret, node);
+  const list = NodeFactory_NewNodeList(factory, [ret]);
+  list!.Loc = node!.Loc;
+  const block = NewBlock(factory, list as unknown as GoPtr<never>, true);
+  block!.Loc = node!.Loc;
+  return block;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::assignmentTargetContainsSuperProperty","kind":"func","status":"stub","sigHash":"93e6c9d66e85ac1d001e47e6ea0f1949591170eaa6a21e39c98e9c9e955dc5b0","bodyHash":"01c0e77321941dc532e9b12ea2ce55b7cd2c568af7d3135abd19991397215c8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::assignmentTargetContainsSuperProperty","kind":"func","status":"implemented","sigHash":"93e6c9d66e85ac1d001e47e6ea0f1949591170eaa6a21e39c98e9c9e955dc5b0","bodyHash":"01c0e77321941dc532e9b12ea2ce55b7cd2c568af7d3135abd19991397215c8a"}
  *
  * Go source:
  * func assignmentTargetContainsSuperProperty(node *ast.Node) bool {
@@ -1321,7 +1695,40 @@ export function asyncTransformer_convertToFunctionBlock(receiver: GoPtr<asyncTra
  * }
  */
 export function assignmentTargetContainsSuperProperty(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::assignmentTargetContainsSuperProperty");
+  switch (node!.Kind) {
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression:
+      return Node_Expression(node)!.Kind === KindSuperKeyword;
+    case KindParenthesizedExpression:
+      return assignmentTargetContainsSuperProperty(AsParenthesizedExpression(node)!.Expression as unknown as GoPtr<Node>);
+    case KindArrayLiteralExpression:
+      return AsArrayLiteralExpression(node)!.Elements!.Nodes.some(assignmentTargetContainsSuperProperty);
+    case KindObjectLiteralExpression: {
+      for (const prop of AsObjectLiteralExpression(node)!.Properties!.Nodes) {
+        switch (prop!.Kind) {
+          case KindPropertyAssignment:
+            if (assignmentTargetContainsSuperProperty(AsPropertyAssignment(prop)!.Initializer as unknown as GoPtr<Node>)) {
+              return true;
+            }
+            break;
+          case KindShorthandPropertyAssignment:
+            if (assignmentTargetContainsSuperProperty(Node_Name(AsShorthandPropertyAssignment(prop) as unknown as GoPtr<Node>)!)) {
+              return true;
+            }
+            break;
+          case KindSpreadAssignment:
+            if (assignmentTargetContainsSuperProperty(AsSpreadAssignment(prop)!.Expression as unknown as GoPtr<Node>)) {
+              return true;
+            }
+            break;
+        }
+      }
+      return false;
+    }
+    case KindSpreadElement:
+      return assignmentTargetContainsSuperProperty(AsSpreadElement(node)!.Expression as unknown as GoPtr<Node>);
+  }
+  return false;
 }
 
 /**
@@ -1353,7 +1760,7 @@ export function isUpdateExpression(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.getOriginalIfFunctionLike","kind":"method","status":"stub","sigHash":"309d9131bb13e0105a92ff38dd33fff8f4ac8b7a0efd540fbc49ec3201fdfa44","bodyHash":"8e894e6db5500bca4c94f1197752f497ab1dd857eb824b40418ed7764d49974c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.getOriginalIfFunctionLike","kind":"method","status":"implemented","sigHash":"309d9131bb13e0105a92ff38dd33fff8f4ac8b7a0efd540fbc49ec3201fdfa44","bodyHash":"8e894e6db5500bca4c94f1197752f497ab1dd857eb824b40418ed7764d49974c"}
  *
  * Go source:
  * func (tx *asyncTransformer) getOriginalIfFunctionLike(node *ast.Node) *ast.Node {
@@ -1365,11 +1772,15 @@ export function isUpdateExpression(node: GoPtr<Node>): bool {
  * }
  */
 export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::method::asyncTransformer.getOriginalIfFunctionLike");
+  const original = EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node);
+  if (original !== undefined && IsFunctionLikeDeclaration(original)) {
+    return original;
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isNameOfPropertyAccessOrAssignment","kind":"func","status":"stub","sigHash":"45adc32f06add6b8d44dca689205edae9b5c9c2f2e7359b042759f36b87109b7","bodyHash":"8b9e731a8f88babb37453ca9261c9f0e5db23423c63274c03bc3a0ad0cf8ddf9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isNameOfPropertyAccessOrAssignment","kind":"func","status":"implemented","sigHash":"45adc32f06add6b8d44dca689205edae9b5c9c2f2e7359b042759f36b87109b7","bodyHash":"8b9e731a8f88babb37453ca9261c9f0e5db23423c63274c03bc3a0ad0cf8ddf9"}
  *
  * Go source:
  * func isNameOfPropertyAccessOrAssignment(parent *ast.Node, node *ast.Node) bool {
@@ -1379,11 +1790,13 @@ export function asyncTransformer_getOriginalIfFunctionLike(receiver: GoPtr<async
  * }
  */
 export function isNameOfPropertyAccessOrAssignment(parent: GoPtr<Node>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isNameOfPropertyAccessOrAssignment");
+  return parent !== undefined &&
+    (IsPropertyAccessExpression(parent) || IsPropertyAssignment(parent)) &&
+    Node_Name(parent) === node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isSimpleParameterList","kind":"func","status":"stub","sigHash":"aafb3df834aa6d85e376f550bb3c61bfc9e3918a9c9e5cf3e09fbc4b5aabc26c","bodyHash":"a93795926ac598af8707176a01ea63ed7bd8f5155ea0096c72bd00ee62201d14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isSimpleParameterList","kind":"func","status":"implemented","sigHash":"aafb3df834aa6d85e376f550bb3c61bfc9e3918a9c9e5cf3e09fbc4b5aabc26c","bodyHash":"a93795926ac598af8707176a01ea63ed7bd8f5155ea0096c72bd00ee62201d14"}
  *
  * Go source:
  * func isSimpleParameterList(params []*ast.Node) bool {
@@ -1397,7 +1810,13 @@ export function isNameOfPropertyAccessOrAssignment(parent: GoPtr<Node>, node: Go
  * }
  */
 export function isSimpleParameterList(params: GoSlice<GoPtr<Node>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/async.go::func::isSimpleParameterList");
+  for (const param of params ?? []) {
+    const p = AsParameterDeclaration(param)!;
+    if (p.Initializer !== undefined || !IsIdentifier(p.name)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**

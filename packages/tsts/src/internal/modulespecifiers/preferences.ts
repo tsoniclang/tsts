@@ -1,5 +1,6 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Node_Text } from "../ast/ast.js";
 import * as strings from "../../go/strings.js";
 import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js";
 import {
@@ -7,6 +8,7 @@ import {
   CompilerOptions_GetModuleResolutionKind,
   ModuleResolutionKindNode16,
   ModuleResolutionKindNodeNext,
+  ResolutionModeCommonJS,
   ResolutionModeESM,
   ResolutionModeNone,
 } from "../core/compileroptions.js";
@@ -44,7 +46,7 @@ export function shouldAllowImportingTsExtension(compilerOptions: GoPtr<CompilerO
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::usesExtensionsOnImports","kind":"func","status":"stub","sigHash":"ca9485891208ae5f15e0d38f9d136370b02822dd641b6949dfdc9541befd6920","bodyHash":"69bfa28c8b7e8d9891549b2919d658099f566131c31ab9d579452161316da7b0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::usesExtensionsOnImports","kind":"func","status":"implemented","sigHash":"ca9485891208ae5f15e0d38f9d136370b02822dd641b6949dfdc9541befd6920","bodyHash":"69bfa28c8b7e8d9891549b2919d658099f566131c31ab9d579452161316da7b0"}
  *
  * Go source:
  * func usesExtensionsOnImports(file SourceFileForSpecifierGeneration) bool {
@@ -58,11 +60,17 @@ export function shouldAllowImportingTsExtension(compilerOptions: GoPtr<CompilerO
  * }
  */
 export function usesExtensionsOnImports(file: SourceFileForSpecifierGeneration): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::usesExtensionsOnImports");
+  for (const ref of file.Imports()) {
+    const text = Node_Text(ref);
+    if (PathIsRelative(text) && !FileExtensionIsOneOf(text, ExtensionsNotSupportingExtensionlessResolution)) {
+      return HasTSFileExtension(text) || HasJSFileExtension(text);
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::inferPreference","kind":"func","status":"stub","sigHash":"dd2f3ce2f51425a7d6370accc0948d646de045f610568ad620fb8869b69b7b91","bodyHash":"b404a78e9fb76840c937a236a9d6a194e6e4197cd2d4a212831377d0c422d47c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::inferPreference","kind":"func","status":"implemented","sigHash":"dd2f3ce2f51425a7d6370accc0948d646de045f610568ad620fb8869b69b7b91","bodyHash":"b404a78e9fb76840c937a236a9d6a194e6e4197cd2d4a212831377d0c422d47c"}
  *
  * Go source:
  * func inferPreference(
@@ -107,7 +115,37 @@ export function usesExtensionsOnImports(file: SourceFileForSpecifierGeneration):
  * }
  */
 export function inferPreference(resolutionMode: ResolutionMode, sourceFile: SourceFileForSpecifierGeneration, moduleResolutionIsNodeNext: bool): ModuleSpecifierEnding {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::inferPreference");
+  let usesJsExtensions = false;
+  let specifiers = sourceFile !== undefined && sourceFile.Imports().length > 0
+    ? sourceFile.Imports()
+    : [];
+  // !!! TODO: JS support (sourceFile.IsJS() case omitted)
+
+  for (const specifier of specifiers) {
+    const path = Node_Text(specifier);
+    if (PathIsRelative(path)) {
+      // !!! TODO: proper resolutionMode support
+      if (moduleResolutionIsNodeNext && resolutionMode === ResolutionModeCommonJS) {
+        // We're trying to decide a preference for a CommonJS module specifier, but looking at an ESM import.
+        continue;
+      }
+      if (FileExtensionIsOneOf(path, ExtensionsNotSupportingExtensionlessResolution)) {
+        // These extensions are not optional, so do not indicate a preference.
+        continue;
+      }
+      if (HasTSFileExtension(path)) {
+        return ModuleSpecifierEndingTsExtension;
+      }
+      if (HasJSFileExtension(path)) {
+        usesJsExtensions = true;
+      }
+    }
+  }
+
+  if (usesJsExtensions) {
+    return ModuleSpecifierEndingJsExtension;
+  }
+  return ModuleSpecifierEndingMinimal;
 }
 
 /**
@@ -244,7 +282,7 @@ export function getPreferredEnding(prefs: UserPreferences, host: ModuleSpecifier
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"stub","sigHash":"526c81e2bad67b3df88ec66937d4eafcccf1ec64bee02703b1fa5c83326c7130","bodyHash":"6b9197e979443465e5e8c4f3e9787cf800a1667e4079421e3ea1ef58bcfc6cb6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::type::ModuleSpecifierPreferences","kind":"type","status":"implemented","sigHash":"526c81e2bad67b3df88ec66937d4eafcccf1ec64bee02703b1fa5c83326c7130","bodyHash":"6b9197e979443465e5e8c4f3e9787cf800a1667e4079421e3ea1ef58bcfc6cb6"}
  *
  * Go source:
  * ModuleSpecifierPreferences struct {
@@ -363,7 +401,7 @@ export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierPreferences","kind":"func","status":"stub","sigHash":"4d7b610b087e5c6c565c0a3d9dbadd8a62dc0a2e3de94af1f995b1bb629aa1ec","bodyHash":"d7048861aaa932bed12ff1569b6426db04357271ae7e35934bb89a23d6e7d54b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierPreferences","kind":"func","status":"implemented","sigHash":"4d7b610b087e5c6c565c0a3d9dbadd8a62dc0a2e3de94af1f995b1bb629aa1ec","bodyHash":"d7048861aaa932bed12ff1569b6426db04357271ae7e35934bb89a23d6e7d54b"}
  *
  * Go source:
  * func getModuleSpecifierPreferences(
@@ -412,5 +450,36 @@ export function GetAllowedEndingsInPreferredOrder(prefs: UserPreferences, host: 
  * }
  */
 export function getModuleSpecifierPreferences(prefs: UserPreferences, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, oldImportSpecifier: string): ModuleSpecifierPreferences {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/modulespecifiers/preferences.go::func::getModuleSpecifierPreferences");
+  const excludes = prefs.AutoImportSpecifierExcludeRegexes;
+  let relativePreference: RelativePreferenceKind = RelativePreferenceShortest;
+  if (oldImportSpecifier.length > 0) {
+    if (IsExternalModuleNameRelative(oldImportSpecifier)) {
+      relativePreference = RelativePreferenceRelative;
+    } else {
+      relativePreference = RelativePreferenceNonRelative;
+    }
+  } else {
+    switch (prefs.ImportModuleSpecifierPreference) {
+      case ImportModuleSpecifierPreferenceRelative:
+        relativePreference = RelativePreferenceRelative;
+        break;
+      case ImportModuleSpecifierPreferenceNonRelative:
+        relativePreference = RelativePreferenceNonRelative;
+        break;
+      case ImportModuleSpecifierPreferenceProjectRelative:
+        relativePreference = RelativePreferenceExternalNonRelative;
+        // all others are shortest
+        break;
+    }
+  }
+
+  const getAllowedEndingsInPreferredOrderFn = (syntaxImpliedNodeFormat: ResolutionMode): GoSlice<ModuleSpecifierEnding> => {
+    return GetAllowedEndingsInPreferredOrder(prefs, host, compilerOptions, importingSourceFile, oldImportSpecifier, syntaxImpliedNodeFormat);
+  };
+
+  return {
+    excludeRegexes: excludes,
+    relativePreference: relativePreference,
+    getAllowedEndingsInPreferredOrder: getAllowedEndingsInPreferredOrderFn,
+  };
 }

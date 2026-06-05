@@ -34,25 +34,30 @@ import {
   NewTypePredicateNode,
   NewTypeQueryNode,
   NewTypeReferenceNode,
+  NewOptionalTypeNode,
   NewUnionTypeNode,
 } from "../../ast/generated/factory.js";
-import { KindAbstractKeyword, KindAmpersandToken, KindAnyKeyword, KindAssertsKeyword, KindAsKeyword, KindAsteriskEqualsToken, KindAsteriskToken, KindBarToken, KindBigIntKeyword, KindBigIntLiteral, KindBooleanKeyword, KindCallSignature, KindCloseBraceToken, KindCloseBracketToken, KindCloseParenToken, KindColonToken, KindCommaToken, KindConstructSignature, KindDotToken, KindDotDotDotToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationToken, KindExtendsKeyword, KindFalseKeyword, KindFunctionKeyword, KindFunctionType, KindGetAccessor, KindGetKeyword, KindGreaterThanToken, KindImplementsKeyword, KindImportKeyword, KindInKeyword, KindInferKeyword, KindIntrinsicKeyword, KindIsKeyword, KindKeyOfKeyword, KindLessThanToken, KindMinusToken, KindNeverKeyword, KindNewKeyword, KindNullKeyword, KindNumberKeyword, KindNumericLiteral, KindNoSubstitutionTemplateLiteral, KindObjectKeyword, KindOpenBraceToken, KindOpenBracketToken, KindOpenParenToken, KindPlusToken, KindQuestionToken, KindQuestionQuestionToken, KindReadonlyKeyword, KindSetAccessor, KindSetKeyword, KindStringKeyword, KindStringLiteral, KindSymbolKeyword, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword, KindTypeKeyword, KindTypeOfKeyword, KindUndefinedKeyword, KindUniqueKeyword, KindUnknownKeyword, KindVoidKeyword } from "../../ast/generated/kinds.js";
+import { KindAbstractKeyword, KindAmpersandToken, KindAnyKeyword, KindAssertKeyword, KindAssertsKeyword, KindAsKeyword, KindAsteriskEqualsToken, KindAsteriskToken, KindBarToken, KindBigIntKeyword, KindBigIntLiteral, KindBooleanKeyword, KindCallSignature, KindCloseBraceToken, KindCloseBracketToken, KindCloseParenToken, KindColonToken, KindCommaToken, KindConstructSignature, KindDotToken, KindDotDotDotToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationToken, KindExtendsKeyword, KindFalseKeyword, KindFunctionKeyword, KindFunctionType, KindGetAccessor, KindGetKeyword, KindGreaterThanToken, KindImplementsKeyword, KindImportKeyword, KindInKeyword, KindInferKeyword, KindIntrinsicKeyword, KindIsKeyword, KindKeyOfKeyword, KindLessThanToken, KindMinusToken, KindNeverKeyword, KindNewKeyword, KindNullKeyword, KindNumberKeyword, KindNumericLiteral, KindNoSubstitutionTemplateLiteral, KindObjectKeyword, KindOpenBraceToken, KindOpenBracketToken, KindOpenParenToken, KindPlusToken, KindQuestionToken, KindQuestionQuestionToken, KindReadonlyKeyword, KindSetAccessor, KindSetKeyword, KindStringKeyword, KindStringLiteral, KindSymbolKeyword, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword, KindTypeKeyword, KindTypeOfKeyword, KindUndefinedKeyword, KindUniqueKeyword, KindUnknownKeyword, KindVoidKeyword, KindWithKeyword } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsDisallowConditionalTypesContext, NodeFlagsJavaScriptFile, NodeFlagsPossiblyContainsDynamicImport, NodeFlagsTypeExcludesFlags } from "../../ast/generated/flags.js";
-import { IsExpressionWithTypeArguments, IsModifierKind } from "../../ast/generated/predicates.js";
+import { IsExpressionWithTypeArguments, IsJSDocNullableType, IsModifierKind } from "../../ast/generated/predicates.js";
 import type { TypeNode } from "../../ast/generated/unions.js";
 import { Node_Pos } from "../../ast/spine.js";
+import { Node_Type, NodeFactory_NewModifier } from "../../ast/ast.js";
 import { Assert } from "../../debug/debug.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_Code, NewDiagnostic } from "../../ast/diagnostic.js";
 import { IfElse } from "../../core/core.js";
 import { NewTextRange } from "../../core/text.js";
+import { Arena_Clone, Arena_NewSlice1 } from "../../core/arena.js";
+import type { Arena } from "../../core/arena.js";
 import { LanguageVariantJSX } from "../../core/languagevariant.js";
-import { Constructor_type_notation_must_be_parenthesized_when_used_in_a_union_type, Constructor_type_notation_must_be_parenthesized_when_used_in_an_intersection_type, Function_type_notation_must_be_parenthesized_when_used_in_a_union_type, Function_type_notation_must_be_parenthesized_when_used_in_an_intersection_type, Line_break_not_permitted_here, Type_expected, X_0_expected } from "../../diagnostics/generated/messages.js";
-import { TokenToString } from "../../scanner/scanner.js";
+import { Constructor_type_notation_must_be_parenthesized_when_used_in_a_union_type, Constructor_type_notation_must_be_parenthesized_when_used_in_an_intersection_type, Function_type_notation_must_be_parenthesized_when_used_in_a_union_type, Function_type_notation_must_be_parenthesized_when_used_in_an_intersection_type, Import_assertions_have_been_replaced_by_import_attributes_Use_with_instead_of_assert, Line_break_not_permitted_here, The_parser_expected_to_find_a_1_to_match_the_0_token_here, Type_expected, X_0_expected } from "../../diagnostics/generated/messages.js";
+import { Scanner_TokenStart, TokenToString } from "../../scanner/scanner.js";
 import { tokenIsIdentifierOrKeyword } from "../../scanner/utilities.js";
 import { ParseFlagsType } from "../types.js";
 import { Parser_withJSDoc } from "../jsdoc.js";
 import { Parser_canParseSemicolon, Parser_checkJSSyntax, Parser_finishNode, Parser_isIndexSignature, Parser_isStartOfParameter, Parser_lookAhead, Parser_mark, Parser_nodePos, Parser_parseEntityName, Parser_parseModifiers, Parser_parseModifiersEx, Parser_parseOptional, Parser_parsePropertyOrMethodSignature, Parser_parseSemicolon, Parser_rewind, Parser_skipParameterStart } from "./support.js";
-import { Parser_createMissingList, Parser_newNodeList, Parser_parseBracketedList, Parser_parseDelimitedList, Parser_parseList, Parser_parseParameters } from "./lists.js";
+import { Parser_createMissingList, Parser_newModifierList, Parser_newNodeList, Parser_parseBracketedList, Parser_parseDelimitedList, Parser_parseList, Parser_parseParameters } from "./lists.js";
 import { Parser_isIdentifier, Parser_jsdocScannerInfo, Parser_parseContextualModifier, Parser_parseErrorAtCurrentToken, Parser_parseExpected, Parser_parseExpectedToken, Parser_parseIdentifier, Parser_parseIdentifierName, Parser_parseOptionalToken, Parser_parseTokenNode, Parser_reScanGreaterThanToken, Parser_reScanLessThanToken, Parser_nextToken, Parser_nextTokenIsIdentifier, Parser_nextTokenIsColonOrQuestionColon, Parser_nextTokenIsIdentifierOrKeywordOnSameLine, Parser_nextTokenIsOpenParenOrLessThan, Parser_setContextFlags, doInContext } from "./tokens-speculation.js";
 import { Parser_isBinaryOperator, Parser_isLiteralPropertyName, Parser_isStartOfExpression, Parser_nextIsStartOfExpression, Parser_nextTokenIsNewKeyword, Parser_nextTokenIsNumericOrBigIntLiteral, Parser_parseKeywordExpression, Parser_parseLeftHandSideExpressionOrHigher, Parser_parseLiteralExpression, Parser_parseLiteralOfTemplateSpan, Parser_parseSignatureMember, Parser_parseSimpleUnaryExpression, Parser_parseTemplateHead, Parser_parseUnaryExpressionOrHigher } from "./expressions.js";
 import { Parser_hasPrecedingLineBreak, Parser_nextIsNotDot, Parser_parseAccessorDeclaration, Parser_parseImportAttributes, Parser_parseIndexSignatureDeclaration } from "./statements-declarations.js";
@@ -269,7 +274,7 @@ export function Parser_parseIntersectionTypeOrHigher(receiver: GoPtr<Parser>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseUnionOrIntersectionType","kind":"method","status":"stub","sigHash":"c5e4f659e3adf4835e26bd3485c799f4cc22981e030407def2d659f7d90d6f75","bodyHash":"43f396b9d05906147a42ce417a37229e7885c140d0c67bfee49dd32a546e0c81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseUnionOrIntersectionType","kind":"method","status":"implemented","sigHash":"c5e4f659e3adf4835e26bd3485c799f4cc22981e030407def2d659f7d90d6f75","bodyHash":"43f396b9d05906147a42ce417a37229e7885c140d0c67bfee49dd32a546e0c81"}
  *
  * Go source:
  * func (p *Parser) parseUnionOrIntersectionType(operator ast.Kind, parseConstituentType func(p *Parser) *ast.TypeNode) *ast.TypeNode {
@@ -295,7 +300,31 @@ export function Parser_parseIntersectionTypeOrHigher(receiver: GoPtr<Parser>): G
  * }
  */
 export function Parser_parseUnionOrIntersectionType(receiver: GoPtr<Parser>, operator: Kind, parseConstituentType: (p: GoPtr<Parser>) => GoPtr<TypeNode>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseUnionOrIntersectionType");
+  const pos = Parser_nodePos(receiver);
+  const isUnionType = operator === KindBarToken;
+  const hasLeadingOperator = Parser_parseOptional(receiver, operator);
+  let typeNode: GoPtr<TypeNode>;
+  if (hasLeadingOperator) {
+    typeNode = Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType);
+  } else {
+    typeNode = parseConstituentType(receiver);
+  }
+  if (receiver!.token === operator || hasLeadingOperator) {
+    const types: GoSlice<GoPtr<Node>> = [typeNode as GoPtr<Node>];
+    while (Parser_parseOptional(receiver, operator)) {
+      types.push(Parser_parseFunctionOrConstructorTypeToError(receiver, isUnionType, parseConstituentType) as GoPtr<Node>);
+    }
+    typeNode = Parser_finishNode(
+      receiver,
+      Parser_createUnionOrIntersectionTypeNode(
+        receiver,
+        operator,
+        Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, types)),
+      ),
+      pos,
+    );
+  }
+  return typeNode;
 }
 
 /**
@@ -835,7 +864,7 @@ export function Parser_nextIsStartOfTypeOfImportType(receiver: GoPtr<Parser>): b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportType","kind":"method","status":"stub","sigHash":"060cd712d896172049f57be48497ee621aff213e1ec71d763d20a7b8aa4f957b","bodyHash":"ce7fedc3cc43dc159706348122e1333269b37eb65174947a779b321ca6ff6b2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportType","kind":"method","status":"implemented","sigHash":"060cd712d896172049f57be48497ee621aff213e1ec71d763d20a7b8aa4f957b","bodyHash":"ce7fedc3cc43dc159706348122e1333269b37eb65174947a779b321ca6ff6b2f"}
  *
  * Go source:
  * func (p *Parser) parseImportType() *ast.Node {
@@ -881,7 +910,45 @@ export function Parser_nextIsStartOfTypeOfImportType(receiver: GoPtr<Parser>): b
  * }
  */
 export function Parser_parseImportType(receiver: GoPtr<Parser>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportType");
+  receiver!.sourceFlags |= NodeFlagsPossiblyContainsDynamicImport;
+  const pos = Parser_nodePos(receiver);
+  const isTypeOf = Parser_parseOptional(receiver, KindTypeOfKeyword);
+  Parser_parseExpected(receiver, KindImportKeyword);
+  Parser_parseExpected(receiver, KindOpenParenToken);
+  const typeNode = Parser_parseType(receiver);
+  let attributes: GoPtr<Node> = undefined;
+  if (Parser_parseOptional(receiver, KindCommaToken)) {
+    const openBracePosition = Scanner_TokenStart(receiver!.scanner);
+    Parser_parseExpected(receiver, KindOpenBraceToken);
+    const currentToken = receiver!.token;
+    if (currentToken === KindWithKeyword || currentToken === KindAssertKeyword) {
+      if (currentToken === KindAssertKeyword) {
+        Parser_parseErrorAtCurrentToken(receiver, Import_assertions_have_been_replaced_by_import_attributes_Use_with_instead_of_assert);
+      }
+      Parser_nextToken(receiver);
+    } else {
+      Parser_parseErrorAtCurrentToken(receiver, X_0_expected, TokenToString(KindWithKeyword));
+    }
+    Parser_parseExpected(receiver, KindColonToken);
+    attributes = Parser_parseImportAttributes(receiver, currentToken, true /*skipKeyword*/);
+    Parser_parseOptional(receiver, KindCommaToken);
+    if (!Parser_parseExpected(receiver, KindCloseBraceToken)) {
+      if (receiver!.diagnostics.length !== 0) {
+        const lastDiagnostic = receiver!.diagnostics[receiver!.diagnostics.length - 1];
+        if (Diagnostic_Code(lastDiagnostic) === X_0_expected.code) {
+          const related = NewDiagnostic(undefined, NewTextRange(openBracePosition, openBracePosition), The_parser_expected_to_find_a_1_to_match_the_0_token_here, "{", "}");
+          Diagnostic_AddRelatedInfo(lastDiagnostic, related);
+        }
+      }
+    }
+  }
+  Parser_parseExpected(receiver, KindCloseParenToken);
+  let qualifier: GoPtr<Node> = undefined;
+  if (Parser_parseOptional(receiver, KindDotToken)) {
+    qualifier = Parser_parseEntityNameOfTypeReference(receiver);
+  }
+  const typeArguments = Parser_parseTypeArgumentsOfTypeReference(receiver);
+  return Parser_finishNode(receiver, NewImportTypeNode(receiver!.factory, isTypeOf, typeNode, attributes, qualifier, typeArguments), pos);
 }
 
 /**
@@ -1368,7 +1435,7 @@ export function Parser_scanStartOfNamedTupleElement(receiver: GoPtr<Parser>): bo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTupleElementType","kind":"method","status":"stub","sigHash":"090ec58db3d8c317f82993166a39fababe629ce4b02eb77c6efc15266f751849","bodyHash":"bbb669d4e437dab100fbb2353d7f7a33f02841f062f1fcd32d05599c3904aafc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTupleElementType","kind":"method","status":"implemented","sigHash":"090ec58db3d8c317f82993166a39fababe629ce4b02eb77c6efc15266f751849","bodyHash":"bbb669d4e437dab100fbb2353d7f7a33f02841f062f1fcd32d05599c3904aafc"}
  *
  * Go source:
  * func (p *Parser) parseTupleElementType() *ast.TypeNode {
@@ -1388,7 +1455,19 @@ export function Parser_scanStartOfNamedTupleElement(receiver: GoPtr<Parser>): bo
  * }
  */
 export function Parser_parseTupleElementType(receiver: GoPtr<Parser>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseTupleElementType");
+  const pos = Parser_nodePos(receiver);
+  if (Parser_parseOptional(receiver, KindDotDotDotToken)) {
+    return Parser_finishNode(receiver, NewRestTypeNode(receiver!.factory, Parser_parseType(receiver)), pos);
+  }
+  const typeNode = Parser_parseType(receiver);
+  if (IsJSDocNullableType(typeNode) && Node_Pos(typeNode) === Node_Pos(Node_Type(typeNode))) {
+    const node = NewOptionalTypeNode(receiver!.factory, Node_Type(typeNode));
+    node!.Flags = typeNode!.Flags;
+    node!.Loc = typeNode!.Loc;
+    Node_Type(typeNode)!.Parent = node;
+    return node;
+  }
+  return typeNode;
 }
 
 /**
@@ -1605,7 +1684,7 @@ export function Parser_parseFunctionOrConstructorType(receiver: GoPtr<Parser>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModifiersForConstructorType","kind":"method","status":"stub","sigHash":"2de5cbee9e81ff31a4a6b4b8b79b4ef03b184794f2a1735d04dace6e7381d33b","bodyHash":"8e56507912607fe9c326ae74c3222eb73438e252394910cdede49bca6ece878b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModifiersForConstructorType","kind":"method","status":"implemented","sigHash":"2de5cbee9e81ff31a4a6b4b8b79b4ef03b184794f2a1735d04dace6e7381d33b","bodyHash":"8e56507912607fe9c326ae74c3222eb73438e252394910cdede49bca6ece878b"}
  *
  * Go source:
  * func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
@@ -1620,7 +1699,14 @@ export function Parser_parseFunctionOrConstructorType(receiver: GoPtr<Parser>): 
  * }
  */
 export function Parser_parseModifiersForConstructorType(receiver: GoPtr<Parser>): GoPtr<ModifierList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModifiersForConstructorType");
+  if (receiver!.token === KindAbstractKeyword) {
+    const pos = Parser_nodePos(receiver);
+    const modifier = NodeFactory_NewModifier(receiver!.factory, receiver!.token);
+    Parser_nextToken(receiver);
+    Parser_finishNode(receiver, modifier, pos);
+    return Parser_newModifierList(receiver, modifier!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, modifier));
+  }
+  return undefined;
 }
 
 /**

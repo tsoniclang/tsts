@@ -21,7 +21,7 @@ export interface BuildInfoReader {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"41aa0d98e7be6aab2bbf8974ccc1007ce37161750d790fee18b3f3a73993c661"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"41aa0d98e7be6aab2bbf8974ccc1007ce37161750d790fee18b3f3a73993c661"}
  *
  * Go source:
  * var _ BuildInfoReader = (*buildInfoReader)(nil)
@@ -100,7 +100,7 @@ export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::func::ReadBuildInfoProgram","kind":"func","status":"implemented","sigHash":"aabfc1a4730dca7e74e80efbb98a5957de1dff563e1c77c8fbcf401f17e0b3c8","bodyHash":"277cba8bfccb75c29b9e38d195873c724803eb67346f2d602ebf96ff03c536f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::func::ReadBuildInfoProgram","kind":"func","status":"stub","sigHash":"aabfc1a4730dca7e74e80efbb98a5957de1dff563e1c77c8fbcf401f17e0b3c8","bodyHash":"277cba8bfccb75c29b9e38d195873c724803eb67346f2d602ebf96ff03c536f5"}
  *
  * Go source:
  * func ReadBuildInfoProgram(config *tsoptions.ParsedCommandLine, reader BuildInfoReader, host compiler.CompilerHost) *Program {
@@ -118,18 +118,5 @@ export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
  * }
  */
 export function ReadBuildInfoProgram(config: GoPtr<ParsedCommandLine>, reader: BuildInfoReader, host: CompilerHost): GoPtr<Program> {
-  // Read buildInfo file
-  const buildInfo = reader.ReadBuildInfo(config);
-  if (buildInfo === undefined || !BuildInfo_IsValidVersion(buildInfo) || !BuildInfo_IsIncremental(buildInfo)) {
-    return undefined;
-  }
-
-  // Convert to information that can be used to create incremental program
-  const incrementalProgram: Program = {
-    snapshot: buildInfoToSnapshot(buildInfo, config, host),
-    program: undefined,
-    host: undefined as never,
-    testingData: undefined,
-  };
-  return incrementalProgram;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::func::ReadBuildInfoProgram");
 }

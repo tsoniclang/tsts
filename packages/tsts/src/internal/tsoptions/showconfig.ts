@@ -1,7 +1,7 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set } from "../collections/ordered_map.js";
+import { NewOrderedMapWithSizeHint, OrderedMap_Delete, OrderedMap_Entries, OrderedMap_Set, OrderedMap_Keys } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import {
   CompilerOptions_GetAllowImportingTsExtensions,
@@ -22,6 +22,19 @@ import {
 import type { ComparePathsOptions } from "../tspath/path.js";
 import { GetNormalizedAbsolutePath, GetRelativePathFromFile } from "../tspath/path.js";
 import type { CommandLineOption } from "./commandlineoption.js";
+import {
+  CommandLineOption_EnumMap,
+  CommandLineOptionTypeBoolean,
+  CommandLineOptionTypeList,
+  CommandLineOptionTypeListOrElement,
+  CommandLineOptionTypeNumber,
+  CommandLineOptionTypeString,
+  CommandLineOption_Elements,
+} from "./commandlineoption.js";
+import * as diagnostics from "../diagnostics/generated/messages.js";
+import { Tristate_IsTrue, Tristate_IsFalse } from "../core/tristate.js";
+import type { Tristate } from "../core/tristate.js";
+import { GetDirectoryPath } from "../tspath/path.js";
 import { CommandLineCompilerOptionsMap, CommandLineOptionNameMap_Get, defaultIncludeSpec } from "./tsconfigparsing.js";
 import type { ParsedCommandLine } from "./parsedcommandline.js";
 import {
@@ -208,10 +221,8 @@ export interface TSConfig {
  * }
  */
 export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, configFileName: string): GoPtr<TSConfig> {
-  if (configFileName === "") {
-    configFileName = "tsconfig.json";
-  }
-  const normalizedConfigPath = GetNormalizedAbsolutePath(configFileName, ParsedCommandLine_GetCurrentDirectory(configParseResult));
+  const effectiveConfigFileName = configFileName === "" ? "tsconfig.json" : configFileName;
+  const normalizedConfigPath = GetNormalizedAbsolutePath(effectiveConfigFileName, ParsedCommandLine_GetCurrentDirectory(configParseResult));
   const comparePathsOptions: ComparePathsOptions = {
     CurrentDirectory: ParsedCommandLine_GetCurrentDirectory(configParseResult),
     UseCaseSensitiveFileNames: ParsedCommandLine_UseCaseSensitiveFileNames(configParseResult),
@@ -226,36 +237,31 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   }
 
   // Serialize compiler options
-  const optionMap = serializeCompilerOptions(ParsedCommandLine_CompilerOptions(configParseResult), normalizedConfigPath, comparePathsOptions);
+  const optionMap = serializeCompilerOptions(ParsedCommandLine_CompilerOptions(configParseResult), normalizedConfigPath, comparePathsOptions)!;
 
   // Remove command-line-only options from the output
-  for (const name of [
-    "showConfig", "configFile", "configFilePath", "help", "init",
-    "listFilesOnly", "listEmittedFiles", "project", "build", "version",
-  ]) {
+  for (const name of ["showConfig", "configFile", "configFilePath", "help", "init", "listFilesOnly", "listEmittedFiles", "project", "build", "version"]) {
     OrderedMap_Delete(optionMap, name);
   }
 
-  // Add implied compiler options (options that are derived from explicitly set options,
-  // such as moduleResolution implied by module, or useDefineForClassFields implied by target).
-  // This mirrors TypeScript's convertToTSConfig computedOptions logic.
+  // Add implied compiler options
   addImpliedOptions(optionMap, ParsedCommandLine_CompilerOptions(configParseResult), normalizedConfigPath, comparePathsOptions);
 
-  const config: GoPtr<TSConfig> = {
+  const config: TSConfig = {
     CompilerOptions: optionMap,
-    References: undefined as never,
-    Files: undefined as never,
-    Include: undefined as never,
-    Exclude: undefined as never,
+    References: [],
+    Files: [],
+    Include: [],
+    Exclude: [],
     CompileOnSave: undefined,
   };
 
   // Add references
   const refs = ParsedCommandLine_ProjectReferences(configParseResult);
-  if (refs !== undefined && refs.length > 0) {
+  if (refs.length > 0) {
     const references: GoSlice<unknown> = [];
     for (const r of refs) {
-      const ref: GoPtr<OrderedMap<string, unknown>> = NewOrderedMapWithSizeHint<string, unknown>(0);
+      const ref = NewOrderedMapWithSizeHint<string, unknown>(2 as int);
       OrderedMap_Set(ref, "path", r!.OriginalPath);
       if (r!.Circular) {
         OrderedMap_Set(ref, "circular", true);
@@ -271,19 +277,19 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
   }
 
   // Add include/exclude from configFileSpecs
-  if (configParseResult!.ConfigFile !== undefined && configParseResult!.ConfigFile!.configFileSpecs !== undefined) {
-    const specs = configParseResult!.ConfigFile!.configFileSpecs!;
+  const p = configParseResult!;
+  if (p.ConfigFile !== undefined && p.ConfigFile.configFileSpecs !== undefined) {
+    const specs = p.ConfigFile.configFileSpecs;
     const include = filterSameAsDefaultInclude(specs.validatedIncludeSpecs);
-    if (include !== undefined && include.length > 0) {
+    if (include.length > 0) {
       config.Include = include;
     }
     config.Exclude = specs.validatedExcludeSpecs;
   }
 
   // Add compileOnSave
-  if (configParseResult!.CompileOnSave !== undefined && configParseResult!.CompileOnSave!) {
-    const t = true;
-    config.CompileOnSave = t;
+  if (p.CompileOnSave !== undefined && p.CompileOnSave === true) {
+    config.CompileOnSave = true;
   }
 
   return config;
@@ -305,10 +311,10 @@ export function ConvertToTSConfig(configParseResult: GoPtr<ParsedCommandLine>, c
  */
 export function filterSameAsDefaultInclude(specs: GoSlice<string>): GoSlice<string> {
   if (specs.length === 0) {
-    return undefined as never;
+    return [];
   }
   if (specs.length === 1 && specs[0] === defaultIncludeSpec) {
-    return undefined as never;
+    return [];
   }
   return specs;
 }
@@ -344,7 +350,7 @@ export function getNameOfCompilerOptionValue(value: unknown, enumMap: GoPtr<Orde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeCompilerOptions","kind":"func","status":"stub","sigHash":"0d85c390d98ea221ce3507a7a38faac6ba61032e513b399dcfe742587a74ded6","bodyHash":"037ce6520b4ab738303425b726a88818100612e2d540af934d65cf5e524e2b4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeCompilerOptions","kind":"func","status":"implemented","sigHash":"0d85c390d98ea221ce3507a7a38faac6ba61032e513b399dcfe742587a74ded6","bodyHash":"037ce6520b4ab738303425b726a88818100612e2d540af934d65cf5e524e2b4e"}
  *
  * Go source:
  * func serializeCompilerOptions(options *core.CompilerOptions, configFilePath string, comparePathsOptions tspath.ComparePathsOptions) *collections.OrderedMap[string, any] {
@@ -461,7 +467,122 @@ export function getNameOfCompilerOptionValue(value: unknown, enumMap: GoPtr<Orde
  * }
  */
 export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, configFilePath: string, comparePathsOptions: ComparePathsOptions): GoPtr<OrderedMap> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeCompilerOptions");
+  const result = NewOrderedMapWithSizeHint<string, unknown>(32 as int);
+  const configDir = GetDirectoryPath(configFilePath);
+  const optionsObj = options as unknown as globalThis.Record<string, unknown>;
+
+  // Iterate over all keys of the CompilerOptions object (corresponds to Go struct fields)
+  for (const fieldName of globalThis.Object.keys(optionsObj)) {
+    const optionDecl = CommandLineOptionNameMap_Get(CommandLineCompilerOptionsMap, fieldName);
+    if (optionDecl === undefined) {
+      continue;
+    }
+
+    // Skip command-line-only and output formatting options
+    if (optionDecl.Category === diagnostics.Command_line_Options || optionDecl.Category === diagnostics.Output_Formatting) {
+      continue;
+    }
+
+    const fieldValue = optionsObj[fieldName];
+
+    // Skip zero values (unset options)
+    if (fieldValue === undefined || fieldValue === null || fieldValue === 0 || fieldValue === false || fieldValue === "") {
+      continue;
+    }
+    if (globalThis.Array.isArray(fieldValue) && (fieldValue as unknown[]).length === 0) {
+      continue;
+    }
+
+    const name = optionDecl.Name;
+    const value = fieldValue;
+
+    const enumMap = CommandLineOption_EnumMap(optionDecl);
+    if (enumMap !== undefined) {
+      // Enum option - convert numeric value to string name
+      const serialized = serializeEnumValue(value, enumMap);
+      if (serialized !== "") {
+        OrderedMap_Set(result, name, serialized);
+      }
+      continue;
+    }
+
+    switch (optionDecl.Kind) {
+      case CommandLineOptionTypeListOrElement:
+        // debug.Assert(false, "listOrElement option should not reach serialization")
+        break;
+      case CommandLineOptionTypeList: {
+        const elem = CommandLineOption_Elements(optionDecl);
+        if (elem !== undefined && elem.IsFilePath) {
+          // List of file paths - make relative
+          if (globalThis.Array.isArray(value)) {
+            const strs = value as GoSlice<string>;
+            const relPaths: GoSlice<string> = [];
+            for (const s of strs) {
+              const absPath = GetNormalizedAbsolutePath(s, configDir);
+              relPaths.push(GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
+            }
+            OrderedMap_Set(result, name, relPaths);
+            continue;
+          }
+        }
+        if (elem !== undefined && CommandLineOption_EnumMap(elem) !== undefined) {
+          // List of enum values (e.g., lib)
+          const elemMap = CommandLineOption_EnumMap(elem)!;
+          if (globalThis.Array.isArray(value)) {
+            const strs = value as GoSlice<string>;
+            const serialized: GoSlice<string> = [];
+            for (const s of strs) {
+              // lib values are already stored as the d.ts filename, need to find original key
+              const found = getNameOfCompilerOptionValue(s, elemMap);
+              if (found !== "") {
+                serialized.push(found);
+              } else {
+                serialized.push(s);
+              }
+            }
+            OrderedMap_Set(result, name, serialized);
+            continue;
+          }
+        }
+        OrderedMap_Set(result, name, value);
+        break;
+      }
+      case CommandLineOptionTypeString: {
+        if (optionDecl.IsFilePath) {
+          // File path option - make relative to config
+          if (typeof value === "string" && value !== "") {
+            const absPath = GetNormalizedAbsolutePath(value, configDir);
+            OrderedMap_Set(result, name, GetRelativePathFromFile(configFilePath, absPath, comparePathsOptions));
+            continue;
+          }
+        }
+        OrderedMap_Set(result, name, value);
+        break;
+      }
+      case CommandLineOptionTypeBoolean: {
+        // value may be a Tristate (number) or a plain boolean
+        if (typeof value === "number") {
+          const t = value as Tristate;
+          if (Tristate_IsTrue(t)) {
+            OrderedMap_Set(result, name, true);
+          } else if (Tristate_IsFalse(t)) {
+            OrderedMap_Set(result, name, false);
+          }
+        } else {
+          OrderedMap_Set(result, name, value);
+        }
+        break;
+      }
+      case CommandLineOptionTypeNumber:
+        OrderedMap_Set(result, name, value);
+        break;
+      default:
+        OrderedMap_Set(result, name, value);
+        break;
+    }
+  }
+
+  return result as GoPtr<OrderedMap>;
 }
 
 /**
@@ -503,7 +624,7 @@ export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::addImpliedOptions","kind":"func","status":"stub","sigHash":"74256e10878657e2876ffab7f9189602bed544e24d9fc5a4510f514ff40165f2","bodyHash":"11ca71ef15556acc28240d7e2dcac3d2821b49367655cb1a29f10aadfa28739d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::addImpliedOptions","kind":"func","status":"implemented","sigHash":"74256e10878657e2876ffab7f9189602bed544e24d9fc5a4510f514ff40165f2","bodyHash":"11ca71ef15556acc28240d7e2dcac3d2821b49367655cb1a29f10aadfa28739d"}
  *
  * Go source:
  * func addImpliedOptions(
@@ -557,7 +678,54 @@ export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap>): 
  * }
  */
 export function addImpliedOptions(optionMap: GoPtr<OrderedMap>, options: GoPtr<CompilerOptions>, arg: string, arg1: ComparePathsOptions): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::addImpliedOptions");
+  // Build the set of explicitly provided option JSON names (e.g., "module", "target").
+  const provided = new globalThis.Map<string, bool>();
+  OrderedMap_Keys(optionMap)((k: unknown): bool => {
+    provided.set(k as string, true);
+    return true;
+  });
+
+  const defaultOpts = {} as CompilerOptions;
+
+  for (const entry of impliedOptions) {
+    // Get the option declaration for this implied option (using case-insensitive lookup).
+    const optionDecl = CommandLineOptionNameMap_Get(CommandLineCompilerOptionsMap, entry.name);
+    if (optionDecl === undefined) {
+      continue;
+    }
+
+    // Skip if this option is already explicitly provided.
+    if (provided.get(optionDecl.Name) ?? false) {
+      continue;
+    }
+
+    // Check if any direct dependency is in the provided set.
+    if (!anyDependencyProvided(entry.dependencies, provided)) {
+      continue;
+    }
+
+    // Compute the effective value with current options and the default value with empty options.
+    const implied = entry.compute(options);
+    const defaultVal = entry.compute(defaultOpts);
+
+    // If the implied value equals the default, this option doesn't add useful information.
+    // For primitives (numbers, booleans, strings), === suffices; arrays we stringify-compare.
+    if (implied === defaultVal) {
+      continue;
+    }
+    if (globalThis.Array.isArray(implied) && globalThis.Array.isArray(defaultVal)) {
+      if (globalThis.JSON.stringify(implied) === globalThis.JSON.stringify(defaultVal)) {
+        continue;
+      }
+    }
+
+    // Serialize the implied value and add it to the option map.
+    const serialized = serializeImpliedOptionValue(optionDecl, implied);
+    if (serialized === undefined || serialized === null) {
+      continue;
+    }
+    OrderedMap_Set(optionMap, optionDecl.Name, serialized);
+  }
 }
 
 /**
@@ -585,7 +753,7 @@ export function anyDependencyProvided(dependencies: GoSlice<string>, provided: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeImpliedOptionValue","kind":"func","status":"stub","sigHash":"454fd699233371eb57b51f8de60a500f051f75414beb7620c5b1de1e01cf93a4","bodyHash":"958ccade7fd915e7845faad52f10fae24bc5c7b4a9d260ab50abd427c6bbbc84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeImpliedOptionValue","kind":"func","status":"implemented","sigHash":"454fd699233371eb57b51f8de60a500f051f75414beb7620c5b1de1e01cf93a4","bodyHash":"958ccade7fd915e7845faad52f10fae24bc5c7b4a9d260ab50abd427c6bbbc84"}
  *
  * Go source:
  * func serializeImpliedOptionValue(optionDecl *CommandLineOption, value any) any {
@@ -615,5 +783,29 @@ export function anyDependencyProvided(dependencies: GoSlice<string>, provided: G
  * }
  */
 export function serializeImpliedOptionValue(optionDecl: GoPtr<CommandLineOption>, value: unknown): unknown {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeImpliedOptionValue");
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  const enumMap = CommandLineOption_EnumMap(optionDecl);
+  if (enumMap !== undefined) {
+    const s = serializeEnumValue(value, enumMap);
+    if (s !== "") {
+      return s;
+    }
+    return undefined;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    // Could be a Tristate
+    const t = value as Tristate;
+    if (Tristate_IsTrue(t)) {
+      return true;
+    } else if (Tristate_IsFalse(t)) {
+      return false;
+    }
+    return undefined;
+  }
+  return value;
 }

@@ -1,11 +1,24 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
-import type { QualifiedName, SetAccessorDeclaration, TypeReferenceNode } from "../../ast/generated/data.js";
-import type { EntityName } from "../../ast/generated/unions.js";
+import { Node_Clone, Node_Name, NodeFactory_NewNodeList } from "../../ast/spine.js";
+import type { GetAccessorDeclaration, QualifiedName, SetAccessorDeclaration, TypeReferenceNode } from "../../ast/generated/data.js";
+import type { AccessorDeclaration, EntityName } from "../../ast/generated/unions.js";
+import { AsConditionalExpression, AsConditionalTypeNode, AsBinaryExpression, AsIdentifier, AsIntersectionTypeNode, AsLiteralTypeNode, AsParameterDeclaration, AsQualifiedName, AsTypeOperatorNode, AsTypePredicateNode, AsTypeReferenceNode, AsUnionTypeNode, AsPrefixUnaryExpression } from "../../ast/generated/casts.js";
+import { KindColonToken, KindGetAccessor, KindSetAccessor, KindClassDeclaration, KindClassExpression, KindMethodDeclaration, KindPropertyDeclaration, KindParameter, KindVoidKeyword, KindUndefinedKeyword, KindNeverKeyword, KindFunctionType, KindConstructorType, KindArrayType, KindTupleType, KindTypePredicate, KindBooleanKeyword, KindTemplateLiteralType, KindStringKeyword, KindObjectKeyword, KindLiteralType, KindNumberKeyword, KindBigIntKeyword, KindSymbolKeyword, KindTypeReference, KindIntersectionType, KindUnionType, KindConditionalType, KindTypeOperator, KindReadonlyKeyword, KindStringLiteral, KindNoSubstitutionTemplateLiteral, KindPrefixUnaryExpression, KindNumericLiteral, KindBigIntLiteral, KindTrueKeyword, KindFalseKeyword, KindNullKeyword, KindAnyKeyword, KindUnknownKeyword, KindIdentifier, KindJSDocNullableType, KindJSDocNonNullableType, KindJSDocOptionalType, KindQualifiedName, KindQuestionToken } from "../../ast/generated/kinds.js";
+import { IsBinaryExpression, IsConditionalExpression, IsIdentifier, IsLiteralTypeNode, IsNumericLiteral, IsParenthesizedExpression, IsPropertyAccessExpression, IsStringLiteral, IsTypeOfExpression, IsVoidExpression } from "../../ast/generated/predicates.js";
+import { GetAllAccessorDeclarations, GetFirstConstructorWithBody, GetRestParameterElementType, IsAsyncFunction, IsClassLike, IsFunctionLike, IsThisParameter, NodeIsPresent, SkipTypeParentheses } from "../../ast/utilities.js";
+import { Node_Body, Node_Expression, Node_Members, Node_ParameterList, Node_Text, Node_Type } from "../../ast/ast.js";
+import { EmitContext_AddVariableDeclaration, EmitContext_ParseNode, EmitContext_UnsetOriginal } from "../../printer/emitcontext.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
+import { TypeReferenceSerializationKindArrayLikeType, TypeReferenceSerializationKindBigIntLikeType, TypeReferenceSerializationKindBooleanType, TypeReferenceSerializationKindESSymbolType, TypeReferenceSerializationKindNumberLikeType, TypeReferenceSerializationKindObjectType, TypeReferenceSerializationKindPromise, TypeReferenceSerializationKindStringLikeType, TypeReferenceSerializationKindTypeWithCallSignature, TypeReferenceSerializationKindTypeWithConstructSignatureAndValue, TypeReferenceSerializationKindUnknown, TypeReferenceSerializationKindVoidNullableOrNeverType } from "../../printer/emitresolver.js";
 import type { NodeFactory } from "../../printer/factory.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewLogicalANDExpression, NodeFactory_NewStrictInequalityExpression, NodeFactory_NewTempVariable, NodeFactory_NewTypeCheck, NodeFactory_NewVoidZeroExpression } from "../../printer/factory.js";
+import { NewArrayLiteralExpression, NewConditionalExpression, NewIdentifier, NewPropertyAccessExpression, NewStringLiteral, NewToken, NewTypeOfExpression } from "../../ast/generated/factory.js";
+import { TokenFlagsNone } from "../../ast/tokenflags.js";
+import { NodeFlagsNone } from "../../ast/generated/flags.js";
+import { IsGeneratedIdentifier } from "../utilities.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::type::metadataSerializer","kind":"type","status":"implemented","sigHash":"6b0daffe0469d09ea80639f2e02158cafe11021b60fa00adcef956655fdb4f9a","bodyHash":"ca1584a5b89baff17b674fc06d7ae7d16c9068848745313fc73967e96303b0ab"}
@@ -137,7 +150,7 @@ export function metadataSerializer_SerializeReturnTypeOfNode(receiver: GoPtr<met
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorValueParameter","kind":"func","status":"stub","sigHash":"5f538f7c4606abae8f07ed05375ef6f797c84184ac395dc8ca6dd71797afc8e4","bodyHash":"b0f5b566c6a843ab12590c1860cc2af494a7e0975fb847caf7af788291f9faec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorValueParameter","kind":"func","status":"implemented","sigHash":"5f538f7c4606abae8f07ed05375ef6f797c84184ac395dc8ca6dd71797afc8e4","bodyHash":"b0f5b566c6a843ab12590c1860cc2af494a7e0975fb847caf7af788291f9faec"}
  *
  * Go source:
  * func getSetAccessorValueParameter(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -151,11 +164,17 @@ export function metadataSerializer_SerializeReturnTypeOfNode(receiver: GoPtr<met
  * }
  */
 export function getSetAccessorValueParameter(node: GoPtr<SetAccessorDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorValueParameter");
+  if (node !== undefined && node!.Parameters !== undefined && node!.Parameters!.Nodes.length > 0) {
+    if (node!.Parameters!.Nodes.length >= 2 && IsThisParameter(node!.Parameters!.Nodes[0])) {
+      return node!.Parameters!.Nodes[1];
+    }
+    return node!.Parameters!.Nodes[0];
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorTypeAnnotationNode","kind":"func","status":"stub","sigHash":"902ce01c43de69833b32b1ede652a733cca36e54d54ef5fedc8779587de4e3a8","bodyHash":"c0bead63eb288a744802abdb882a81e63ad7c10ec8859d9746df45b438a68460"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorTypeAnnotationNode","kind":"func","status":"implemented","sigHash":"902ce01c43de69833b32b1ede652a733cca36e54d54ef5fedc8779587de4e3a8","bodyHash":"c0bead63eb288a744802abdb882a81e63ad7c10ec8859d9746df45b438a68460"}
  *
  * Go source:
  * func getSetAccessorTypeAnnotationNode(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -167,11 +186,15 @@ export function getSetAccessorValueParameter(node: GoPtr<SetAccessorDeclaration>
  * }
  */
 export function getSetAccessorTypeAnnotationNode(node: GoPtr<SetAccessorDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getSetAccessorTypeAnnotationNode");
+  const p = getSetAccessorValueParameter(node);
+  if (p !== undefined && Node_Type(p) !== undefined) {
+    return Node_Type(p);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getAccessorTypeNode","kind":"func","status":"stub","sigHash":"d9980bda4630669f3b4fefdbc5bdc35f64c32d3f941dcea0e9d82a94ce780a71","bodyHash":"4107cbcc4e0a36e938e861b9a1603c02d0bd9a16c33fb91752509d7b06a009e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getAccessorTypeNode","kind":"func","status":"implemented","sigHash":"d9980bda4630669f3b4fefdbc5bdc35f64c32d3f941dcea0e9d82a94ce780a71","bodyHash":"4107cbcc4e0a36e938e861b9a1603c02d0bd9a16c33fb91752509d7b06a009e6"}
  *
  * Go source:
  * func getAccessorTypeNode(node *ast.Node, container *ast.Node) *ast.Node {
@@ -186,11 +209,19 @@ export function getSetAccessorTypeAnnotationNode(node: GoPtr<SetAccessorDeclarat
  * }
  */
 export function getAccessorTypeNode(node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getAccessorTypeNode");
+  const members = Node_Members(container) ?? [];
+  const accessors = GetAllAccessorDeclarations(members, node as GoPtr<AccessorDeclaration>);
+  if (accessors.SetAccessor !== undefined) {
+    return getSetAccessorTypeAnnotationNode(accessors.SetAccessor);
+  }
+  if (accessors.GetAccessor !== undefined) {
+    return (accessors.GetAccessor as GoPtr<GetAccessorDeclaration>)!.Type;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeOfNode","kind":"method","status":"stub","sigHash":"a9da4300d57708d34ae7b10e600f50cdcc2a33415fcfe5b31d50aeb9eb6078e0","bodyHash":"d3fd51c107ca901cad3dc98edda9989cb39231da8de0973fe1d9f2dee959583b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeOfNode","kind":"method","status":"implemented","sigHash":"a9da4300d57708d34ae7b10e600f50cdcc2a33415fcfe5b31d50aeb9eb6078e0","bodyHash":"d3fd51c107ca901cad3dc98edda9989cb39231da8de0973fe1d9f2dee959583b"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeOfNode(node *ast.Node, container *ast.Node) *ast.Node {
@@ -207,11 +238,25 @@ export function getAccessorTypeNode(node: GoPtr<Node>, container: GoPtr<Node>): 
  * }
  */
 export function metadataSerializer_serializeTypeOfNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeOfNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  switch (node!.Kind) {
+    case KindPropertyDeclaration:
+    case KindParameter:
+      return metadataSerializer_serializeTypeNode(receiver, Node_Type(node));
+    case KindGetAccessor:
+    case KindSetAccessor:
+      return metadataSerializer_serializeTypeNode(receiver, getAccessorTypeNode(node, container));
+    case KindClassDeclaration:
+    case KindClassExpression:
+    case KindMethodDeclaration:
+      return NewIdentifier(f, "Function");
+    default:
+      return NodeFactory_NewVoidZeroExpression(receiver!.f);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeParameterTypesOfNode","kind":"method","status":"stub","sigHash":"3c7eb5e0d7fe5116e01036774773cdad65b99057fd722c2d6ade5906429630bc","bodyHash":"d48a77e8020a861e1bb299acff81f65f0dc1ba1fdd668619c79f5f8921f74ab1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeParameterTypesOfNode","kind":"method","status":"implemented","sigHash":"3c7eb5e0d7fe5116e01036774773cdad65b99057fd722c2d6ade5906429630bc","bodyHash":"d48a77e8020a861e1bb299acff81f65f0dc1ba1fdd668619c79f5f8921f74ab1"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeParameterTypesOfNode(node *ast.Node, container *ast.Node) *ast.Node {
@@ -221,11 +266,11 @@ export function metadataSerializer_serializeTypeOfNode(receiver: GoPtr<metadataS
  * 	} else if ast.IsFunctionLike(node) && ast.NodeIsPresent(node.Body()) {
  * 		valueDeclaration = node
  * 	}
- * 
+ *
  * 	if valueDeclaration == nil {
  * 		return s.f.NewArrayLiteralExpression(s.f.NewNodeList([]*ast.Node{}), false)
  * 	}
- * 
+ *
  * 	var expressions []*ast.Node
  * 	parameters := getParametersOfDecoratedDeclaration(valueDeclaration, container)
  * 	for i, parameter := range parameters.Nodes {
@@ -242,11 +287,33 @@ export function metadataSerializer_serializeTypeOfNode(receiver: GoPtr<metadataS
  * }
  */
 export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeParameterTypesOfNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  const valueDeclaration: GoPtr<Node> = IsClassLike(node) ? GetFirstConstructorWithBody(node) :
+    (IsFunctionLike(node) && NodeIsPresent(Node_Body(node)) ? node : undefined);
+
+  if (valueDeclaration === undefined) {
+    return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, []), false);
+  }
+
+  const parameters = getParametersOfDecoratedDeclaration(valueDeclaration, container);
+  const nodes = parameters !== undefined ? parameters!.Nodes : [];
+  const expressions: GoPtr<Node>[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    const parameter = nodes[i];
+    if (i === 0 && IsIdentifier(Node_Name(parameter) as GoPtr<Node>) && Node_Text(Node_Name(parameter) as GoPtr<Node>) === "this") {
+      continue;
+    }
+    if (AsParameterDeclaration(parameter)!.DotDotDotToken !== undefined) {
+      expressions.push(metadataSerializer_serializeTypeNode(receiver, GetRestParameterElementType(Node_Type(parameter))));
+    } else {
+      expressions.push(metadataSerializer_serializeTypeOfNode(receiver, parameter, container));
+    }
+  }
+  return NewArrayLiteralExpression(f, NodeFactory_NewNodeList(f, expressions), false);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getParametersOfDecoratedDeclaration","kind":"func","status":"stub","sigHash":"773aa739bb81e64c12d4ae9c9fe2f25e431f9923170783db3d74d54dda812f8e","bodyHash":"6293050b0501b9ec9f9d01a41480bb0c64c46ac69ac2347e346d85a7c6b070cc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getParametersOfDecoratedDeclaration","kind":"func","status":"implemented","sigHash":"773aa739bb81e64c12d4ae9c9fe2f25e431f9923170783db3d74d54dda812f8e","bodyHash":"6293050b0501b9ec9f9d01a41480bb0c64c46ac69ac2347e346d85a7c6b070cc"}
  *
  * Go source:
  * func getParametersOfDecoratedDeclaration(node *ast.Node, container *ast.Node) *ast.NodeList {
@@ -260,11 +327,18 @@ export function metadataSerializer_serializeParameterTypesOfNode(receiver: GoPtr
  * }
  */
 export function getParametersOfDecoratedDeclaration(node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::func::getParametersOfDecoratedDeclaration");
+  if (container !== undefined && node!.Kind === KindGetAccessor) {
+    const members = Node_Members(container) ?? [];
+    const acc = GetAllAccessorDeclarations(members, node as GoPtr<AccessorDeclaration>);
+    if (acc.SetAccessor !== undefined) {
+      return acc.SetAccessor!.Parameters as GoPtr<NodeList>;
+    }
+  }
+  return Node_ParameterList(node) as GoPtr<NodeList>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeReturnTypeOfNode","kind":"method","status":"stub","sigHash":"3920d40183f603ac630d51fcffc89ee52682efd32aeeb490fbc88e10daf7a6f5","bodyHash":"e783c3e1070639998b7d11353675c4be1240b72f49ca5ed933a622c5ff930cfa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeReturnTypeOfNode","kind":"method","status":"implemented","sigHash":"3920d40183f603ac630d51fcffc89ee52682efd32aeeb490fbc88e10daf7a6f5","bodyHash":"e783c3e1070639998b7d11353675c4be1240b72f49ca5ed933a622c5ff930cfa"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeReturnTypeOfNode(node *ast.Node) *ast.Node {
@@ -277,20 +351,26 @@ export function getParametersOfDecoratedDeclaration(node: GoPtr<Node>, container
  * }
  */
 export function metadataSerializer_serializeReturnTypeOfNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeReturnTypeOfNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  if (IsFunctionLike(node) && Node_Type(node) !== undefined) {
+    return metadataSerializer_serializeTypeNode(receiver, Node_Type(node));
+  } else if (IsAsyncFunction(node)) {
+    return NewIdentifier(f, "Promise");
+  }
+  return NodeFactory_NewVoidZeroExpression(receiver!.f);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeNode","kind":"method","status":"stub","sigHash":"c22b8edb90b5263f00b3659b79bcf14b1b2f56d7b1b555ed795f5f40e0a434f1","bodyHash":"118e95af5196f143bc3e47b9faadd5395b020b033654be083dc90d38261b58e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeNode","kind":"method","status":"implemented","sigHash":"c22b8edb90b5263f00b3659b79bcf14b1b2f56d7b1b555ed795f5f40e0a434f1","bodyHash":"118e95af5196f143bc3e47b9faadd5395b020b033654be083dc90d38261b58e3"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeNode(node *ast.Node) *ast.Node {
  * 	if node == nil {
  * 		return s.f.NewIdentifier("Object")
  * 	}
- * 
+ *
  * 	node = ast.SkipTypeParentheses(node)
- * 
+ *
  * 	switch node.Kind {
  * 	case ast.KindVoidKeyword, ast.KindUndefinedKeyword, ast.KindNeverKeyword:
  * 		return s.f.NewVoidZeroExpression()
@@ -335,7 +415,7 @@ export function metadataSerializer_serializeReturnTypeOfNode(receiver: GoPtr<met
  * 		// TODO: why is `unique symbol` not handled as `Symbol`? This falls back to `Object`
  * 	case ast.KindTypeQuery, ast.KindIndexedAccessType, ast.KindMappedType, ast.KindTypeLiteral, ast.KindAnyKeyword, ast.KindUnknownKeyword, ast.KindThisType, ast.KindImportType:
  * 		break
- * 
+ *
  * 	// handle JSDoc types from an invalid parse
  * 	case ast.KindJSDocAllType, ast.KindJSDocVariadicType:
  * 		break
@@ -349,11 +429,86 @@ export function metadataSerializer_serializeReturnTypeOfNode(receiver: GoPtr<met
  * }
  */
 export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  if (node === undefined) {
+    return NewIdentifier(f, "Object");
+  }
+
+  const skipped = SkipTypeParentheses(node)!;
+
+  switch (skipped.Kind) {
+    case KindVoidKeyword:
+    case KindUndefinedKeyword:
+    case KindNeverKeyword:
+      return NodeFactory_NewVoidZeroExpression(receiver!.f);
+    case KindFunctionType:
+    case KindConstructorType:
+      return NewIdentifier(f, "Function");
+    case KindArrayType:
+    case KindTupleType:
+      return NewIdentifier(f, "Array");
+    case KindTypePredicate:
+      if (AsTypePredicateNode(skipped)!.AssertsModifier !== undefined) {
+        return NodeFactory_NewVoidZeroExpression(receiver!.f);
+      }
+      return NewIdentifier(f, "Boolean");
+    case KindBooleanKeyword:
+      return NewIdentifier(f, "Boolean");
+    case KindTemplateLiteralType:
+    case KindStringKeyword:
+      return NewIdentifier(f, "String");
+    case KindObjectKeyword:
+      return NewIdentifier(f, "Object");
+    case KindLiteralType:
+      return metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver, AsLiteralTypeNode(skipped)!.Literal);
+    case KindNumberKeyword:
+      return NewIdentifier(f, "Number");
+    case KindBigIntKeyword:
+      return NewIdentifier(f, "BigInt");
+    case KindSymbolKeyword:
+      return NewIdentifier(f, "Symbol");
+    case KindTypeReference:
+      return metadataSerializer_serializeTypeReferenceNode(receiver, AsTypeReferenceNode(skipped));
+    case KindIntersectionType:
+      return metadataSerializer_serializeUnionOrIntersectionConstituents(receiver, AsIntersectionTypeNode(skipped)!.Types!.Nodes, true);
+    case KindUnionType:
+      return metadataSerializer_serializeUnionOrIntersectionConstituents(receiver, AsUnionTypeNode(skipped)!.Types!.Nodes, false);
+    case KindConditionalType: {
+      const oldState = receiver!.c.serializingConditionalTypeBranch;
+      receiver!.c.serializingConditionalTypeBranch = true;
+      try {
+        return metadataSerializer_serializeUnionOrIntersectionConstituents(
+          receiver,
+          [AsConditionalTypeNode(skipped)!.TrueType, AsConditionalTypeNode(skipped)!.FalseType],
+          false,
+        );
+      } finally {
+        receiver!.c.serializingConditionalTypeBranch = oldState;
+      }
+    }
+    case KindTypeOperator:
+      if (AsTypeOperatorNode(skipped)!.Operator === KindReadonlyKeyword) {
+        return metadataSerializer_serializeTypeNode(receiver, Node_Type(skipped));
+      }
+      // TODO: unique symbol falls through to Object
+      break;
+    // handle JSDoc types from an invalid parse
+    case KindJSDocNullableType:
+    case KindJSDocNonNullableType:
+    case KindJSDocOptionalType:
+      return metadataSerializer_serializeTypeNode(receiver, Node_Type(skipped));
+    // These all fall through to "Object"
+    // KindTypeQuery, KindIndexedAccessType, KindMappedType, KindTypeLiteral,
+    // KindAnyKeyword, KindUnknownKeyword, KindThisType, KindImportType,
+    // KindJSDocAllType, KindJSDocVariadicType — no break needed in TS (fall through)
+    default:
+      break;
+  }
+  return NewIdentifier(f, "Object");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeUnionOrIntersectionConstituents","kind":"method","status":"stub","sigHash":"6d66fa056fef90ef201744676bcc1f8e8929dee813d24152c81031991741291f","bodyHash":"57a591e6cc93ccb6a3555adc28fac0bce286b495b4406e8346779eca3110ca32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeUnionOrIntersectionConstituents","kind":"method","status":"implemented","sigHash":"6d66fa056fef90ef201744676bcc1f8e8929dee813d24152c81031991741291f","bodyHash":"57a591e6cc93ccb6a3555adc28fac0bce286b495b4406e8346779eca3110ca32"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeUnionOrIntersectionConstituents(types []*ast.Node, isIntersection bool) *ast.Node {
@@ -367,28 +522,28 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
  * 			}
  * 			continue // Elide `never` in a union
  * 		}
- * 
+ *
  * 		if typeNode.Kind == ast.KindUnknownKeyword {
  * 			if !isIntersection {
  * 				return s.f.NewIdentifier("Object") // Reduce to `unknown` in a union
  * 			}
  * 			continue // Elide `unknown` in an intersection
  * 		}
- * 
+ *
  * 		if typeNode.Kind == ast.KindAnyKeyword {
  * 			return s.f.NewIdentifier("Object") // Reduce to `any` in a union or intersection
  * 		}
- * 
+ *
  * 		if !s.strictNullChecks && (ast.IsLiteralTypeNode(typeNode) && typeNode.AsLiteralTypeNode().Literal.Kind == ast.KindNullKeyword) || typeNode.Kind == ast.KindUndefinedKeyword {
  * 			continue // Elide null and undefined from unions for metadata, just like what we did prior to the implementation of strict null checks
  * 		}
- * 
+ *
  * 		serializedConstituent := s.serializeTypeNode(typeNode)
  * 		if ast.IsIdentifier(serializedConstituent) && serializedConstituent.AsIdentifier().Text == "Object" {
  * 			// One of the individual is global object, return immediately
  * 			return serializedConstituent
  * 		}
- * 
+ *
  * 		// If there exists union that is not `void 0` expression, check if the the common type is identifier.
  * 		// anything more complex and we will just default to Object
  * 		if serializedType != nil {
@@ -401,7 +556,7 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
  * 			serializedType = serializedConstituent
  * 		}
  * 	}
- * 
+ *
  * 	// If we were able to find common type, use it
  * 	if serializedType != nil {
  * 		return serializedType
@@ -410,11 +565,50 @@ export function metadataSerializer_serializeTypeNode(receiver: GoPtr<metadataSer
  * }
  */
 export function metadataSerializer_serializeUnionOrIntersectionConstituents(receiver: GoPtr<metadataSerializer>, types: GoSlice<GoPtr<Node>>, isIntersection: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeUnionOrIntersectionConstituents");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  let serializedType: GoPtr<Node> = undefined;
+  for (const rawTypeNode of types) {
+    const typeNode = SkipTypeParentheses(rawTypeNode)!;
+    if (typeNode.Kind === KindNeverKeyword) {
+      if (isIntersection) {
+        return NodeFactory_NewVoidZeroExpression(receiver!.f);
+      }
+      continue;
+    }
+    if (typeNode.Kind === KindUnknownKeyword) {
+      if (!isIntersection) {
+        return NewIdentifier(f, "Object");
+      }
+      continue;
+    }
+    if (typeNode.Kind === KindAnyKeyword) {
+      return NewIdentifier(f, "Object");
+    }
+    if (!receiver!.strictNullChecks &&
+        ((IsLiteralTypeNode(typeNode) && AsLiteralTypeNode(typeNode)!.Literal!.Kind === KindNullKeyword) ||
+         typeNode.Kind === KindUndefinedKeyword)) {
+      continue;
+    }
+    const serializedConstituent = metadataSerializer_serializeTypeNode(receiver, typeNode);
+    if (IsIdentifier(serializedConstituent) && AsIdentifier(serializedConstituent)!.Text === "Object") {
+      return serializedConstituent;
+    }
+    if (serializedType !== undefined) {
+      if (!metadataSerializer_equateSerializedTypeNodes(receiver, serializedType, serializedConstituent)) {
+        return NewIdentifier(f, "Object");
+      }
+    } else {
+      serializedType = serializedConstituent;
+    }
+  }
+  if (serializedType !== undefined) {
+    return serializedType;
+  }
+  return NodeFactory_NewVoidZeroExpression(receiver!.f);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeLiteralOfLiteralTypeNode","kind":"method","status":"stub","sigHash":"70d8898e0b74470f5c4bf671ac8db34e678e1ffa75d91c0199fb9cf98779ab4c","bodyHash":"5b21354661c55f985728e480950999d4cdccd2316a32201df41023bb0fd2ace8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeLiteralOfLiteralTypeNode","kind":"method","status":"implemented","sigHash":"70d8898e0b74470f5c4bf671ac8db34e678e1ffa75d91c0199fb9cf98779ab4c","bodyHash":"5b21354661c55f985728e480950999d4cdccd2316a32201df41023bb0fd2ace8"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeLiteralOfLiteralTypeNode(node *ast.Node) *ast.Node {
@@ -445,11 +639,36 @@ export function metadataSerializer_serializeUnionOrIntersectionConstituents(rece
  * }
  */
 export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeLiteralOfLiteralTypeNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  switch (node!.Kind) {
+    case KindStringLiteral:
+    case KindNoSubstitutionTemplateLiteral:
+      return NewIdentifier(f, "String");
+    case KindPrefixUnaryExpression: {
+      const operand = AsPrefixUnaryExpression(node)!.Operand;
+      if (operand!.Kind === KindNumericLiteral || operand!.Kind === KindBigIntLiteral) {
+        return metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver, operand);
+      }
+      // debug.FailBadSyntaxKind — fall through to undefined
+      return undefined;
+    }
+    case KindNumericLiteral:
+      return NewIdentifier(f, "Number");
+    case KindBigIntLiteral:
+      return NewIdentifier(f, "BigInt");
+    case KindTrueKeyword:
+    case KindFalseKeyword:
+      return NewIdentifier(f, "Boolean");
+    case KindNullKeyword:
+      return NodeFactory_NewVoidZeroExpression(receiver!.f);
+    default:
+      // debug.FailBadSyntaxKind
+      return undefined;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeReferenceNode","kind":"method","status":"stub","sigHash":"c462fbc54457bd998dee59b12cbbce58758ef2a0b8701bfc80367ed3b855bbf2","bodyHash":"e495735c280f6f2ea6c87cc6f03e249d8b8dd52bd6de27702008af403d6dc390"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeReferenceNode","kind":"method","status":"implemented","sigHash":"c462fbc54457bd998dee59b12cbbce58758ef2a0b8701bfc80367ed3b855bbf2","bodyHash":"e495735c280f6f2ea6c87cc6f03e249d8b8dd52bd6de27702008af403d6dc390"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeTypeReferenceNode(node *ast.TypeReferenceNode) *ast.Node {
@@ -464,7 +683,7 @@ export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: G
  * 		if s.c.serializingConditionalTypeBranch {
  * 			return s.f.NewIdentifier("Object")
  * 		}
- * 
+ *
  * 		serialized := s.serializeEntityNameAsExpressionFallback(node.TypeName)
  * 		temp := s.f.NewTempVariable()
  * 		s.ec.AddVariableDeclaration(temp)
@@ -475,37 +694,37 @@ export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: G
  * 			s.f.NewToken(ast.KindColonToken),
  * 			s.f.NewIdentifier("Object"),
  * 		)
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindTypeWithConstructSignatureAndValue:
  * 		return s.serializeEntityNameAsExpression(node.TypeName)
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindVoidNullableOrNeverType:
  * 		return s.f.NewVoidZeroExpression()
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindBigIntLikeType:
  * 		return s.f.NewIdentifier("BigInt")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindBooleanType:
  * 		return s.f.NewIdentifier("Boolean")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindNumberLikeType:
  * 		return s.f.NewIdentifier("Number")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindStringLikeType:
  * 		return s.f.NewIdentifier("String")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindArrayLikeType:
  * 		return s.f.NewIdentifier("Array")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindESSymbolType:
  * 		return s.f.NewIdentifier("Symbol")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindTypeWithCallSignature:
  * 		return s.f.NewIdentifier("Function")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindPromise:
  * 		return s.f.NewIdentifier("Promise")
- * 
+ *
  * 	case printer.TypeReferenceSerializationKindObjectType:
  * 		return s.f.NewIdentifier("Object")
  * 	default:
@@ -515,11 +734,59 @@ export function metadataSerializer_serializeLiteralOfLiteralTypeNode(receiver: G
  * }
  */
 export function metadataSerializer_serializeTypeReferenceNode(receiver: GoPtr<metadataSerializer>, node: GoPtr<TypeReferenceNode>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeTypeReferenceNode");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  const serialScope = receiver!.c.currentNameScope !== undefined ? receiver!.c.currentNameScope : receiver!.c.currentLexicalScope;
+  const kind = receiver!.resolver.GetTypeReferenceSerializationKind(
+    EmitContext_ParseNode(receiver!.ec, node!.TypeName as GoPtr<Node>),
+    EmitContext_ParseNode(receiver!.ec, serialScope),
+  );
+  switch (kind) {
+    case TypeReferenceSerializationKindUnknown: {
+      if (receiver!.c.serializingConditionalTypeBranch) {
+        return NewIdentifier(f, "Object");
+      }
+      const serialized = metadataSerializer_serializeEntityNameAsExpressionFallback(receiver, node!.TypeName);
+      const temp = NodeFactory_NewTempVariable(receiver!.f);
+      EmitContext_AddVariableDeclaration(receiver!.ec, temp);
+      return NewConditionalExpression(
+        f,
+        NodeFactory_NewTypeCheck(receiver!.f, NodeFactory_NewAssignmentExpression(receiver!.f, temp, serialized), "function"),
+        NewToken(f, KindQuestionToken),
+        temp,
+        NewToken(f, KindColonToken),
+        NewIdentifier(f, "Object"),
+      );
+    }
+    case TypeReferenceSerializationKindTypeWithConstructSignatureAndValue:
+      return metadataSerializer_serializeEntityNameAsExpression(receiver, node!.TypeName);
+    case TypeReferenceSerializationKindVoidNullableOrNeverType:
+      return NodeFactory_NewVoidZeroExpression(receiver!.f);
+    case TypeReferenceSerializationKindBigIntLikeType:
+      return NewIdentifier(f, "BigInt");
+    case TypeReferenceSerializationKindBooleanType:
+      return NewIdentifier(f, "Boolean");
+    case TypeReferenceSerializationKindNumberLikeType:
+      return NewIdentifier(f, "Number");
+    case TypeReferenceSerializationKindStringLikeType:
+      return NewIdentifier(f, "String");
+    case TypeReferenceSerializationKindArrayLikeType:
+      return NewIdentifier(f, "Array");
+    case TypeReferenceSerializationKindESSymbolType:
+      return NewIdentifier(f, "Symbol");
+    case TypeReferenceSerializationKindTypeWithCallSignature:
+      return NewIdentifier(f, "Function");
+    case TypeReferenceSerializationKindPromise:
+      return NewIdentifier(f, "Promise");
+    case TypeReferenceSerializationKindObjectType:
+      return NewIdentifier(f, "Object");
+    default:
+      // debug.AssertNever
+      return undefined;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpression","kind":"method","status":"stub","sigHash":"68b5ec73d0aecd6bc13296de9c2eaf01e4ad0dac7a15636ef8e55418e44d9fff","bodyHash":"22b016ea57819ceee31bcc6f355cb11cf2e24582f0971611fd93928e24bb60dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpression","kind":"method","status":"implemented","sigHash":"68b5ec73d0aecd6bc13296de9c2eaf01e4ad0dac7a15636ef8e55418e44d9fff","bodyHash":"22b016ea57819ceee31bcc6f355cb11cf2e24582f0971611fd93928e24bb60dc"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeEntityNameAsExpression(node *ast.EntityName) *ast.Node {
@@ -539,11 +806,25 @@ export function metadataSerializer_serializeTypeReferenceNode(receiver: GoPtr<me
  * }
  */
 export function metadataSerializer_serializeEntityNameAsExpression(receiver: GoPtr<metadataSerializer>, node: GoPtr<EntityName>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpression");
+  switch ((node as GoPtr<Node>)!.Kind) {
+    case KindIdentifier: {
+      const f = receiver!.f!.__tsgoEmbedded0!;
+      const coercible = { AsNodeFactory: (): typeof f => f };
+      const name = Node_Clone(node as GoPtr<Node>, coercible)!;
+      name.Loc = (node as GoPtr<Node>)!.Loc;
+      EmitContext_UnsetOriginal(receiver!.ec, name);
+      name.Parent = EmitContext_ParseNode(receiver!.ec, receiver!.c.currentLexicalScope);
+      return name;
+    }
+    case KindQualifiedName:
+      return metadataSerializer_serializeQualifiedNameAsExpression(receiver, AsQualifiedName(node as GoPtr<Node>));
+    default:
+      return undefined;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeQualifiedNameAsExpression","kind":"method","status":"stub","sigHash":"b5695722ad1600583c3a200f69122ce76592a659d5c2894b80e5428ca24cc83b","bodyHash":"cfa4634fcee7199d734799824f323e8e179b5166186a03993688306c420ca198"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeQualifiedNameAsExpression","kind":"method","status":"implemented","sigHash":"b5695722ad1600583c3a200f69122ce76592a659d5c2894b80e5428ca24cc83b","bodyHash":"cfa4634fcee7199d734799824f323e8e179b5166186a03993688306c420ca198"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeQualifiedNameAsExpression(node *ast.QualifiedName) *ast.Node {
@@ -551,11 +832,18 @@ export function metadataSerializer_serializeEntityNameAsExpression(receiver: GoP
  * }
  */
 export function metadataSerializer_serializeQualifiedNameAsExpression(receiver: GoPtr<metadataSerializer>, node: GoPtr<QualifiedName>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeQualifiedNameAsExpression");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  return NewPropertyAccessExpression(
+    f,
+    metadataSerializer_serializeEntityNameAsExpression(receiver, node!.Left),
+    undefined,
+    node!.Right,
+    NodeFlagsNone,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpressionFallback","kind":"method","status":"stub","sigHash":"ce1eda31313239045f0f2b397895bad3a38e89c803463dff40a2d70b56350c6b","bodyHash":"e0c83e757623183c7b9411c63104056d741e00ede07b5565a578ddc278dd9a41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpressionFallback","kind":"method","status":"implemented","sigHash":"ce1eda31313239045f0f2b397895bad3a38e89c803463dff40a2d70b56350c6b","bodyHash":"e0c83e757623183c7b9411c63104056d741e00ede07b5565a578ddc278dd9a41"}
  *
  * Go source:
  * func (s *metadataSerializer) serializeEntityNameAsExpressionFallback(node *ast.EntityName) *ast.Node {
@@ -582,11 +870,38 @@ export function metadataSerializer_serializeQualifiedNameAsExpression(receiver: 
  * }
  */
 export function metadataSerializer_serializeEntityNameAsExpressionFallback(receiver: GoPtr<metadataSerializer>, node: GoPtr<EntityName>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.serializeEntityNameAsExpressionFallback");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  if ((node as GoPtr<Node>)!.Kind === KindIdentifier) {
+    const copied = metadataSerializer_serializeEntityNameAsExpression(receiver, node);
+    return metadataSerializer_createCheckedValue(receiver, copied, copied);
+  }
+  if (AsQualifiedName(node as GoPtr<Node>)!.Left!.Kind === KindIdentifier) {
+    return metadataSerializer_createCheckedValue(
+      receiver,
+      metadataSerializer_serializeEntityNameAsExpression(receiver, AsQualifiedName(node as GoPtr<Node>)!.Left),
+      metadataSerializer_serializeEntityNameAsExpression(receiver, node),
+    );
+  }
+  const left = metadataSerializer_serializeEntityNameAsExpressionFallback(receiver, AsQualifiedName(node as GoPtr<Node>)!.Left);
+  const temp = NodeFactory_NewTempVariable(receiver!.f);
+  EmitContext_AddVariableDeclaration(receiver!.ec, temp);
+  return NodeFactory_NewLogicalANDExpression(
+    receiver!.f,
+    NodeFactory_NewLogicalANDExpression(
+      receiver!.f,
+      AsBinaryExpression(left)!.Left,
+      NodeFactory_NewStrictInequalityExpression(
+        receiver!.f,
+        NodeFactory_NewAssignmentExpression(receiver!.f, temp, AsBinaryExpression(left)!.Right),
+        NodeFactory_NewVoidZeroExpression(receiver!.f),
+      ),
+    ),
+    NewPropertyAccessExpression(f, temp, undefined, AsQualifiedName(node as GoPtr<Node>)!.Right, NodeFlagsNone),
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.createCheckedValue","kind":"method","status":"stub","sigHash":"7a1eb7d35a39cf90559635667c009229962f57618b5f0ee1724e5d945d03f365","bodyHash":"4d64569de9ea0ade8889b882a91cb27989373f5f318204fc5e633785905ab258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.createCheckedValue","kind":"method","status":"implemented","sigHash":"7a1eb7d35a39cf90559635667c009229962f57618b5f0ee1724e5d945d03f365","bodyHash":"4d64569de9ea0ade8889b882a91cb27989373f5f318204fc5e633785905ab258"}
  *
  * Go source:
  * func (s *metadataSerializer) createCheckedValue(left *ast.Node, right *ast.Node) *ast.Node {
@@ -597,11 +912,20 @@ export function metadataSerializer_serializeEntityNameAsExpressionFallback(recei
  * }
  */
 export function metadataSerializer_createCheckedValue(receiver: GoPtr<metadataSerializer>, left: GoPtr<Node>, right: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.createCheckedValue");
+  const f = receiver!.f!.__tsgoEmbedded0!;
+  return NodeFactory_NewLogicalANDExpression(
+    receiver!.f,
+    NodeFactory_NewStrictInequalityExpression(
+      receiver!.f,
+      NewTypeOfExpression(f, left),
+      NewStringLiteral(f, "undefined", TokenFlagsNone),
+    ),
+    right,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.equateSerializedTypeNodes","kind":"method","status":"stub","sigHash":"7443da1e7a72a7bb3b613ea600cbe57eed730b6b479f82271982b7c01eb70a95","bodyHash":"f62b9bfab75dd6418927c51ecbe6a84394ff4e53fbed4475b4dcd51733e43609"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.equateSerializedTypeNodes","kind":"method","status":"implemented","sigHash":"7443da1e7a72a7bb3b613ea600cbe57eed730b6b479f82271982b7c01eb70a95","bodyHash":"f62b9bfab75dd6418927c51ecbe6a84394ff4e53fbed4475b4dcd51733e43609"}
  *
  * Go source:
  * func (s *metadataSerializer) equateSerializedTypeNodes(left *ast.Node, right *ast.Node) bool {
@@ -644,5 +968,46 @@ export function metadataSerializer_createCheckedValue(receiver: GoPtr<metadataSe
  * }
  */
 export function metadataSerializer_equateSerializedTypeNodes(receiver: GoPtr<metadataSerializer>, left: GoPtr<Node>, right: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeserializer.go::method::metadataSerializer.equateSerializedTypeNodes");
+  if (IsGeneratedIdentifier(receiver!.ec, left)) {
+    return IsGeneratedIdentifier(receiver!.ec, right);
+  }
+  if (IsIdentifier(left)) {
+    return IsIdentifier(right) && Node_Text(left) === Node_Text(right);
+  }
+  if (IsPropertyAccessExpression(left)) {
+    return IsPropertyAccessExpression(right) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, Node_Expression(left), Node_Expression(right)) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, Node_Name(left) as GoPtr<Node>, Node_Name(right) as GoPtr<Node>);
+  }
+  if (IsVoidExpression(left)) {
+    return IsVoidExpression(right) &&
+      IsNumericLiteral(Node_Expression(left)) &&
+      IsNumericLiteral(Node_Expression(right)) &&
+      Node_Text(Node_Expression(left)) === "0" &&
+      Node_Text(Node_Expression(right)) === "0";
+  }
+  if (IsStringLiteral(left)) {
+    return IsStringLiteral(right) && Node_Text(left) === Node_Text(right);
+  }
+  if (IsTypeOfExpression(left)) {
+    return IsTypeOfExpression(right) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, Node_Expression(left), Node_Expression(right));
+  }
+  if (IsParenthesizedExpression(left)) {
+    return IsParenthesizedExpression(right) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, Node_Expression(left), Node_Expression(right));
+  }
+  if (IsConditionalExpression(left)) {
+    return IsConditionalExpression(right) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, AsConditionalExpression(left)!.Condition, AsConditionalExpression(right)!.Condition) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, AsConditionalExpression(left)!.WhenTrue, AsConditionalExpression(right)!.WhenTrue) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, AsConditionalExpression(left)!.WhenFalse, AsConditionalExpression(right)!.WhenFalse);
+  }
+  if (IsBinaryExpression(left)) {
+    return IsBinaryExpression(right) &&
+      AsBinaryExpression(left)!.OperatorToken!.Kind === AsBinaryExpression(right)!.OperatorToken!.Kind &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, AsBinaryExpression(left)!.Left, AsBinaryExpression(right)!.Left) &&
+      metadataSerializer_equateSerializedTypeNodes(receiver, AsBinaryExpression(left)!.Right, AsBinaryExpression(right)!.Right);
+  }
+  return false;
 }

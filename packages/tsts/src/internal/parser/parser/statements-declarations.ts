@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { Clone, SortFunc, Values } from "../../../go/slices.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import {
@@ -73,6 +74,7 @@ import {
   KindStaticKeyword,
   KindStringLiteral,
   KindSwitchKeyword,
+  KindTaggedTemplateExpression,
   KindThrowKeyword,
   KindTryKeyword,
   KindTypeKeyword,
@@ -98,6 +100,7 @@ import {
   NodeFlagsConst,
   NodeFlagsUsing,
   NodeFlagsAwaitUsing,
+  NodeFlagsReparsed,
 } from "../../ast/generated/flags.js";
 import {
   ModifierFlagsAsync,
@@ -157,9 +160,9 @@ import {
   NewWhileStatement,
   NewWithStatement,
 } from "../../ast/generated/factory.js";
-import { AsStringLiteral } from "../../ast/generated/casts.js";
+import { AsStringLiteral, AsTaggedTemplateExpression } from "../../ast/generated/casts.js";
 import { IsStringLiteral } from "../../ast/generated/predicates.js";
-import type { Expression, ForInitializer, Statement } from "../../ast/generated/unions.js";
+import type { Expression, ForInitializer, Statement, TokenNode } from "../../ast/generated/unions.js";
 import { Node_Pos, Node_End } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { SourceFileParseOptions } from "../../ast/parseoptions.js";
@@ -167,8 +170,31 @@ import { Some, IfElse } from "../../core/core.js";
 import type { ScriptKind } from "../../core/scriptkind.js";
 import type { TextRange } from "../../core/text.js";
 import { NewTextRange } from "../../core/text.js";
+import { Arena_NewSlice1 } from "../../core/arena.js";
+import type { Arena } from "../../core/arena.js";
+import { GetSpellingSuggestionForStrings } from "../../core/core.js";
 import * as diagnostics from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
+import { Message_Code } from "../../diagnostics/diagnostics.js";
+import { NewDiagnostic, Diagnostic_AddRelatedInfo, Diagnostic_Code } from "../../ast/diagnostic.js";
+import {
+  SourceFile_SetDiagnostics,
+  SourceFile_SetJSDocDiagnostics,
+  SourceFile_SetJSDiagnostics,
+  SourceFile_SetJSDocCache,
+  SourceFile_SetHasLazyJSDoc,
+  NodeFactory_NewModifier,
+  NodeFactory_NewSourceFile,
+  AsSourceFile,
+  Node_Text,
+} from "../../ast/ast.js";
+import type { Diagnostic } from "../../ast/diagnostic.js";
+import { NodeFactory_NodeCount, NodeFactory_TextCount } from "../../ast/spine.js";
+import { IsKeyword, IsInJSFile, CompareNodePositions } from "../../ast/utilities.js";
+import { SetExternalModuleIndicator } from "../../ast/parseoptions.js";
+import { IsDeclarationFileName } from "../../tspath/extension.js";
+import { ScriptKindJSON } from "../../core/scriptkind.js";
+import { collectExternalModuleReferences } from "../references.js";
 import {
   SkipTrivia,
   TokenToString,
@@ -180,6 +206,8 @@ import {
   Scanner_HasPrecedingJSDocLeadingAsterisks,
   Scanner_TokenFullStart,
   Scanner_TokenText,
+  Scanner_CommentDirectives,
+  Scanner_ContainsNonASCII,
 } from "../../scanner/scanner.js";
 import { tokenIsIdentifierOrKeyword } from "../utilities.js";
 import type { ParseFlags } from "../types.js";
@@ -199,18 +227,23 @@ import {
   PCImportAttributes,
   PCImportOrExportSpecifiers,
   PCParameters,
+  PCSourceElements,
   PCSwitchClauses,
   PCVariableDeclarations,
+  viableKeywordSuggestions,
 } from "./state.js";
 import {
   Parser_canParseSemicolon,
   Parser_finishNode,
+  Parser_initializeState,
   Parser_isIndexSignature,
+  Parser_isJavaScript,
   Parser_lookAhead,
   Parser_nodePos,
   Parser_parseCaseOrDefaultClause,
   Parser_parseEntityName,
   Parser_parseInitializer,
+  Parser_parseJSONText,
   Parser_parseModifiersEx,
   Parser_parseOptional,
   Parser_parseParameter,
@@ -223,9 +256,13 @@ import {
   Parser_rewind,
   Parser_canFollowModifier,
   Parser_overrideParentInImmediateChildren,
+  getCommentPragmas,
+  getParser,
   getSpaceSuggestion,
   isDeclareModifier,
   isReservedWord,
+  Parser_processPragmasIntoFields,
+  putParser,
 } from "./support.js";
 import {
   Parser_parseAssignmentExpressionOrHigher,
@@ -241,6 +278,8 @@ import {
   Parser_parseObjectBindingPattern,
   Parser_parseEnumMember,
   Parser_isStartOfExpression,
+  Parser_nextTokenIsTokenStringLiteral,
+  Parser_reparseTopLevelAwait,
 } from "./expressions.js";
 import {
   Parser_createMissingIdentifier,
@@ -275,8 +314,9 @@ import {
   Parser_skipRangeTrivia,
   Parser_setContextFlags,
   Parser_parseIdentifierUnlessAtSemicolon,
+  Parser_nextTokenIsFromKeywordOrEqualsToken,
 } from "./tokens-speculation.js";
-import { Parser_parseErrorAt } from "./errors-recovery.js";
+import { Parser_parseErrorAt, attachFileToDiagnostics, Parser_parseErrorAtRange } from "./errors-recovery.js";
 import {
   Parser_parseList,
   Parser_parseListIndex,
@@ -286,6 +326,8 @@ import {
   Parser_createMissingList,
   Parser_parseEmptyNodeList,
   modifierListHasAsync,
+  Parser_newModifierList,
+  Parser_newNodeList,
 } from "./lists.js";
 import {
   Parser_parseTypeParameters,
@@ -296,9 +338,10 @@ import {
   Parser_parseObjectTypeMembers,
   Parser_parseTypeAliasDeclaration,
 } from "./types.js";
+import { Parser_createJSDocCache } from "./jsx-jsdoc.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::ParseSourceFile","kind":"func","status":"stub","sigHash":"31f36166c647dbc2dee9793ebd53865364ccab4ac720b10f9e5098b59de22987","bodyHash":"e28cb8452ba15924af7ce7dcd5f32a5414e3a35e32d73f694bf230b5a32a2bd9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::ParseSourceFile","kind":"func","status":"implemented","sigHash":"31f36166c647dbc2dee9793ebd53865364ccab4ac720b10f9e5098b59de22987","bodyHash":"e28cb8452ba15924af7ce7dcd5f32a5414e3a35e32d73f694bf230b5a32a2bd9"}
  *
  * Go source:
  * func ParseSourceFile(opts ast.SourceFileParseOptions, sourceText string, scriptKind core.ScriptKind) *ast.SourceFile {
@@ -313,7 +356,17 @@ import {
  * }
  */
 export function ParseSourceFile(opts: SourceFileParseOptions, sourceText: string, scriptKind: ScriptKind): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::func::ParseSourceFile");
+  const p = getParser();
+  try {
+    Parser_initializeState(p, opts, sourceText, scriptKind);
+    Parser_nextToken(p);
+    if (p!.scriptKind === ScriptKindJSON) {
+      return Parser_parseJSONText(p);
+    }
+    return Parser_parseSourceFileWorker(p);
+  } finally {
+    putParser(p);
+  }
 }
 
 /**
@@ -369,7 +422,7 @@ export function Parser_hasPrecedingLineBreak(receiver: GoPtr<Parser>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseSourceFileWorker","kind":"method","status":"stub","sigHash":"96a083000013897269103663af94fa2be65d975e84a36a3cac0e0f404dc0993f","bodyHash":"58e6286f13cd60ada2143f8a0b0ae10fa1298b9754e73746c6f31a8299619ebb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseSourceFileWorker","kind":"method","status":"implemented","sigHash":"96a083000013897269103663af94fa2be65d975e84a36a3cac0e0f404dc0993f","bodyHash":"58e6286f13cd60ada2143f8a0b0ae10fa1298b9754e73746c6f31a8299619ebb"}
  *
  * Go source:
  * func (p *Parser) parseSourceFileWorker() *ast.SourceFile {
@@ -408,11 +461,42 @@ export function Parser_hasPrecedingLineBreak(receiver: GoPtr<Parser>): bool {
  * }
  */
 export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseSourceFileWorker");
+  const isDeclarationFile = IsDeclarationFileName(receiver!.opts!.FileName);
+  if (isDeclarationFile) {
+    receiver!.contextFlags |= NodeFlagsAmbient;
+  }
+  const pos = Parser_nodePos(receiver);
+  let statements = Parser_parseListIndex(receiver, PCSourceElements, Parser_parseToplevelStatement);
+  const end = Parser_nodePos(receiver);
+  const endJSDoc = Parser_jsdocScannerInfo(receiver);
+  const eof = Parser_parseTokenNode(receiver) as GoPtr<TokenNode>;
+  Parser_withJSDoc(receiver, eof, endJSDoc);
+  if (eof!.Kind !== KindEndOfFile) {
+    throw new globalThis.Error("Expected end of file token from scanner.");
+  }
+  if (receiver!.reparseList.length !== 0) {
+    statements = [...statements, ...receiver!.reparseList];
+    receiver!.reparseList = [];
+  }
+  const node = Parser_finishNode(receiver, NodeFactory_NewSourceFile(receiver!.factory, receiver!.opts!, receiver!.sourceText, Parser_newNodeList(receiver, NewTextRange(pos, end), statements), eof), pos);
+  let result = AsSourceFile(node);
+  Parser_finishSourceFile(receiver, result, isDeclarationFile);
+  if (!result!.IsDeclarationFile && result!.ExternalModuleIndicator !== undefined && receiver!.possibleAwaitSpans.length > 0) {
+    const reparse = Parser_finishNode(receiver, Parser_reparseTopLevelAwait(receiver, result), pos);
+    if (node !== reparse) {
+      result = AsSourceFile(reparse);
+      Parser_finishSourceFile(receiver, result, isDeclarationFile);
+    }
+  }
+  collectExternalModuleReferences(result);
+  if (IsInJSFile(node)) {
+    SourceFile_SetJSDiagnostics(result, attachFileToDiagnostics(receiver!.jsDiagnostics, result));
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.finishSourceFile","kind":"method","status":"stub","sigHash":"1eb9204e2181d19cbd13fd97fa97570987ac34936c87b268cee8402807f4c0e5","bodyHash":"27dad47bd9df611fdc2ea8853a0d3b498af7ff22d4ccaab0c36ff9fffe44910f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.finishSourceFile","kind":"method","status":"implemented","sigHash":"1eb9204e2181d19cbd13fd97fa97570987ac34936c87b268cee8402807f4c0e5","bodyHash":"27dad47bd9df611fdc2ea8853a0d3b498af7ff22d4ccaab0c36ff9fffe44910f"}
  *
  * Go source:
  * func (p *Parser) finishSourceFile(result *ast.SourceFile, isDeclarationFile bool) {
@@ -442,7 +526,29 @@ export function Parser_parseSourceFileWorker(receiver: GoPtr<Parser>): GoPtr<Sou
  * }
  */
 export function Parser_finishSourceFile(receiver: GoPtr<Parser>, result: GoPtr<SourceFile>, isDeclarationFile: bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.finishSourceFile");
+  result!.CommentDirectives = Scanner_CommentDirectives(receiver!.scanner);
+  result!.Pragmas = getCommentPragmas(receiver!.factory, receiver!.sourceText);
+  Parser_processPragmasIntoFields(receiver, result);
+  SourceFile_SetDiagnostics(result, attachFileToDiagnostics(receiver!.diagnostics, result));
+  SourceFile_SetJSDocDiagnostics(result, attachFileToDiagnostics(receiver!.jsdocDiagnostics, result));
+  result!.CommonJSModuleIndicator = receiver!.commonJSModuleIndicator;
+  result!.IsDeclarationFile = isDeclarationFile;
+  result!.ContainsNonASCII = Scanner_ContainsNonASCII(receiver!.scanner);
+  result!.LanguageVariant = receiver!.languageVariant;
+  result!.ScriptKind = receiver!.scriptKind;
+  result!.Flags |= receiver!.sourceFlags;
+  result!.Identifiers = receiver!.identifiers;
+  result!.NodeCount = NodeFactory_NodeCount(receiver!.factory);
+  result!.TextCount = NodeFactory_TextCount(receiver!.factory);
+  result!.IdentifierCount = receiver!.identifierCount;
+  SourceFile_SetJSDocCache(result, Parser_createJSDocCache(receiver) as GoMap<GoPtr<Node>, GoSlice<GoPtr<Node>>>);
+  // For non-JS files, enable lazy JSDoc parsing on demand
+  if (!Parser_isJavaScript(receiver)) {
+    SourceFile_SetHasLazyJSDoc(result, true);
+  }
+  SortFunc(receiver!.reparsedClones, CompareNodePositions);
+  result!.ReparsedClones = Clone(receiver!.reparsedClones)!;
+  SetExternalModuleIndicator(result, receiver!.opts!.ExternalModuleIndicatorOptions);
 }
 
 /**
@@ -2001,7 +2107,7 @@ export function Parser_parsePropertyDeclaration(receiver: GoPtr<Parser>, pos: in
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseErrorForMissingSemicolonAfter","kind":"method","status":"stub","sigHash":"539d55c11656158e211882de24ec2dfa841fb021f18dae6af059c110b670e9a6","bodyHash":"f1bef6e51a297f800966f27d2d964c4195ae12276a4fbd045e9f51edbccd5618"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseErrorForMissingSemicolonAfter","kind":"method","status":"implemented","sigHash":"539d55c11656158e211882de24ec2dfa841fb021f18dae6af059c110b670e9a6","bodyHash":"f1bef6e51a297f800966f27d2d964c4195ae12276a4fbd045e9f51edbccd5618"}
  *
  * Go source:
  * func (p *Parser) parseErrorForMissingSemicolonAfter(node *ast.Node) {
@@ -2061,7 +2167,62 @@ export function Parser_parsePropertyDeclaration(receiver: GoPtr<Parser>, pos: in
  * }
  */
 export function Parser_parseErrorForMissingSemicolonAfter(receiver: GoPtr<Parser>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseErrorForMissingSemicolonAfter");
+  // Tagged template literals are sometimes used in places where only simple strings are allowed, i.e.:
+  //   module `M1` {
+  //   ^^^^^^^^^^^ This block is parsed as a template literal like module`M1`.
+  if (node!.Kind === KindTaggedTemplateExpression) {
+    Parser_parseErrorAtRange(receiver, Parser_skipRangeTrivia(receiver, AsTaggedTemplateExpression(node)!.Template!.Loc), diagnostics.Module_declaration_names_may_only_use_or_quoted_strings);
+    return;
+  }
+  // Otherwise, if this isn't a well-known keyword-like identifier, give the generic fallback message.
+  let expressionText = "";
+  if (node!.Kind === KindIdentifier) {
+    expressionText = Node_Text(node);
+  }
+  if (expressionText === "") {
+    Parser_parseErrorAtCurrentToken(receiver, diagnostics.X_0_expected, TokenToString(KindSemicolonToken));
+    return;
+  }
+  const pos = SkipTrivia(receiver!.sourceText, Node_Pos(node));
+  // Some known keywords are likely signs of syntax being used improperly.
+  switch (expressionText) {
+    case "const":
+    case "let":
+    case "var":
+      Parser_parseErrorAt(receiver, pos, Node_End(node), diagnostics.Variable_declaration_not_allowed_at_this_location);
+      return;
+    case "declare":
+      // If a declared node failed to parse, it would have emitted a diagnostic already.
+      return;
+    case "interface":
+      Parser_parseErrorForInvalidName(receiver, diagnostics.Interface_name_cannot_be_0, diagnostics.Interface_must_be_given_a_name, KindOpenBraceToken);
+      return;
+    case "is":
+      Parser_parseErrorAt(receiver, pos, Scanner_TokenStart(receiver!.scanner), diagnostics.A_type_predicate_is_only_allowed_in_return_type_position_for_functions_and_methods);
+      return;
+    case "module":
+    case "namespace":
+      Parser_parseErrorForInvalidName(receiver, diagnostics.Namespace_name_cannot_be_0, diagnostics.Namespace_must_be_given_a_name, KindOpenBraceToken);
+      return;
+    case "type":
+      Parser_parseErrorForInvalidName(receiver, diagnostics.Type_alias_name_cannot_be_0, diagnostics.Type_alias_must_be_given_a_name, KindEqualsToken);
+      return;
+  }
+  // The user alternatively might have misspelled or forgotten to add a space after a common keyword.
+  let suggestion = GetSpellingSuggestionForStrings(expressionText, Values(viableKeywordSuggestions as GoSlice<string>));
+  if (suggestion === "") {
+    suggestion = getSpaceSuggestion(expressionText);
+  }
+  if (suggestion !== "") {
+    Parser_parseErrorAt(receiver, pos, Node_End(node), diagnostics.Unknown_keyword_or_identifier_Did_you_mean_0, suggestion);
+    return;
+  }
+  // Unknown tokens are handled with their own errors in the scanner
+  if (receiver!.token === KindUnknown) {
+    return;
+  }
+  // Otherwise, we know this some kind of unknown word, not just a missing expected semicolon.
+  Parser_parseErrorAt(receiver, pos, Node_End(node), diagnostics.Unexpected_keyword_or_identifier);
 }
 
 /**
@@ -2288,7 +2449,7 @@ export function Parser_parseModuleBlock(receiver: GoPtr<Parser>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleOrNamespaceDeclaration","kind":"method","status":"stub","sigHash":"fe7dd4854096dc00ac97f66c6e7aa53fb4c2a77e31582110d6d6d6a2def9f03e","bodyHash":"a245e6d6391e0241a3f31d25578b7d6434e414b6fb3770c4b6bc446d3a551c54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleOrNamespaceDeclaration","kind":"method","status":"implemented","sigHash":"fe7dd4854096dc00ac97f66c6e7aa53fb4c2a77e31582110d6d6d6a2def9f03e","bodyHash":"a245e6d6391e0241a3f31d25578b7d6434e414b6fb3770c4b6bc446d3a551c54"}
  *
  * Go source:
  * func (p *Parser) parseModuleOrNamespaceDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList, nested bool, keyword ast.Kind) *ast.Node {
@@ -2317,11 +2478,27 @@ export function Parser_parseModuleBlock(receiver: GoPtr<Parser>): GoPtr<Node> {
  * }
  */
 export function Parser_parseModuleOrNamespaceDeclaration(receiver: GoPtr<Parser>, pos: int, jsdoc: jsdocScannerInfo, modifiers: GoPtr<ModifierList>, nested: bool, keyword: Kind): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleOrNamespaceDeclaration");
+  const saveHasAwaitIdentifier = receiver!.statementHasAwaitIdentifier;
+  const name = nested ? Parser_parseIdentifierName(receiver) : Parser_parseIdentifier(receiver);
+  let body: GoPtr<Node>;
+  if (Parser_parseOptional(receiver, KindDotToken)) {
+    const implicitExport = NodeFactory_NewModifier(receiver!.factory, KindExportKeyword);
+    implicitExport!.Loc = NewTextRange(Parser_nodePos(receiver), Parser_nodePos(receiver));
+    implicitExport!.Flags = NodeFlagsReparsed;
+    const implicitModifiers = Parser_newModifierList(receiver, implicitExport!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, implicitExport));
+    body = Parser_parseModuleOrNamespaceDeclaration(receiver, Parser_nodePos(receiver), 0 as jsdocScannerInfo, implicitModifiers, true, keyword);
+  } else {
+    body = Parser_parseModuleBlock(receiver);
+  }
+  const result = Parser_finishNode(receiver, NewModuleDeclaration(receiver!.factory, modifiers, keyword, name, body), pos);
+  Parser_withJSDoc(receiver, result, jsdoc);
+  Parser_checkJSSyntax(receiver, result);
+  receiver!.statementHasAwaitIdentifier = saveHasAwaitIdentifier;
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportDeclarationOrImportEqualsDeclaration","kind":"method","status":"stub","sigHash":"a8d325856f2d7e82db9cb8573522e687c2d799ca4767e6be80abb4981c5168c1","bodyHash":"84c9633b7b63547a56e23b599b8863e016b3b2f6282b4a2a71d079368edf9f3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportDeclarationOrImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"a8d325856f2d7e82db9cb8573522e687c2d799ca4767e6be80abb4981c5168c1","bodyHash":"84c9633b7b63547a56e23b599b8863e016b3b2f6282b4a2a71d079368edf9f3e"}
  *
  * Go source:
  * func (p *Parser) parseImportDeclarationOrImportEqualsDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList) *ast.Statement {
@@ -2374,7 +2551,52 @@ export function Parser_parseModuleOrNamespaceDeclaration(receiver: GoPtr<Parser>
  * }
  */
 export function Parser_parseImportDeclarationOrImportEqualsDeclaration(receiver: GoPtr<Parser>, pos: int, jsdoc: jsdocScannerInfo, modifiers: GoPtr<ModifierList>): GoPtr<Statement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportDeclarationOrImportEqualsDeclaration");
+  Parser_parseExpected(receiver, KindImportKeyword);
+  const afterImportPos = Parser_nodePos(receiver);
+  // We don't parse the identifier here in await context, instead we will report a grammar error in the checker.
+  const saveHasAwaitIdentifier = receiver!.statementHasAwaitIdentifier;
+  let identifier: GoPtr<Node>;
+  if (Parser_isIdentifier(receiver)) {
+    identifier = Parser_parseIdentifier(receiver);
+  }
+  let phaseModifier: Kind = KindUnknown;
+  if (identifier !== undefined && Node_Text(identifier) === "type" &&
+    (receiver!.token !== KindFromKeyword || Parser_isIdentifier(receiver) && Parser_lookAhead(receiver, Parser_nextTokenIsFromKeywordOrEqualsToken)) &&
+    (Parser_isIdentifier(receiver) || Parser_tokenAfterImportDefinitelyProducesImportDeclaration(receiver))) {
+    phaseModifier = KindTypeKeyword;
+    identifier = undefined;
+    if (Parser_isIdentifier(receiver)) {
+      identifier = Parser_parseIdentifier(receiver);
+    }
+  } else if (identifier !== undefined && Node_Text(identifier) === "defer") {
+    let shouldParseAsDeferModifier: bool;
+    if (receiver!.token === KindFromKeyword) {
+      shouldParseAsDeferModifier = !Parser_lookAhead(receiver, Parser_nextTokenIsTokenStringLiteral);
+    } else {
+      shouldParseAsDeferModifier = receiver!.token !== KindCommaToken && receiver!.token !== KindEqualsToken;
+    }
+    if (shouldParseAsDeferModifier) {
+      phaseModifier = KindDeferKeyword;
+      identifier = undefined;
+      if (Parser_isIdentifier(receiver)) {
+        identifier = Parser_parseIdentifier(receiver);
+      }
+    }
+  }
+  if (identifier !== undefined && !Parser_tokenAfterImportedIdentifierDefinitelyProducesImportDeclaration(receiver) && phaseModifier !== KindDeferKeyword) {
+    const importEquals = Parser_checkJSSyntax(receiver, Parser_parseImportEqualsDeclaration(receiver, pos, jsdoc, modifiers, identifier, phaseModifier === KindTypeKeyword));
+    receiver!.statementHasAwaitIdentifier = saveHasAwaitIdentifier; // Import= declaration is always parsed in an Await context, no need to reparse
+    return importEquals;
+  }
+  const importClause = Parser_tryParseImportClause(receiver, identifier, afterImportPos, phaseModifier, false /*skipJSDocLeadingAsterisks*/);
+  receiver!.statementHasAwaitIdentifier = saveHasAwaitIdentifier; // import clause is always parsed in an Await context
+  const moduleSpecifier = Parser_parseModuleSpecifier(receiver);
+  const attributes = Parser_tryParseImportAttributes(receiver);
+  Parser_parseSemicolon(receiver);
+  const result = Parser_finishNode(receiver, NewImportDeclaration(receiver!.factory, modifiers, importClause, moduleSpecifier as GoPtr<Expression>, attributes), pos);
+  Parser_withJSDoc(receiver, result, jsdoc);
+  Parser_checkJSSyntax(receiver, result);
+  return result;
 }
 
 /**
@@ -2637,7 +2859,7 @@ export function Parser_parseNamedImports(receiver: GoPtr<Parser>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportSpecifier","kind":"method","status":"stub","sigHash":"f99eeb50d14c436d6c02d761d28c349d3ac07c72886e8c74766080b17d859844","bodyHash":"01ca2748d0d9cc45a05fb84ee5af8a6ed9b1a429dcf3587daae0b2ad1cbbb8cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportSpecifier","kind":"method","status":"implemented","sigHash":"f99eeb50d14c436d6c02d761d28c349d3ac07c72886e8c74766080b17d859844","bodyHash":"01ca2748d0d9cc45a05fb84ee5af8a6ed9b1a429dcf3587daae0b2ad1cbbb8cb"}
  *
  * Go source:
  * func (p *Parser) parseImportSpecifier() *ast.Node {
@@ -2656,11 +2878,22 @@ export function Parser_parseNamedImports(receiver: GoPtr<Parser>): GoPtr<Node> {
  * }
  */
 export function Parser_parseImportSpecifier(receiver: GoPtr<Parser>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportSpecifier");
+  const pos = Parser_nodePos(receiver);
+  const [isTypeOnly, propertyName, name] = Parser_parseImportOrExportSpecifier(receiver, KindImportSpecifier);
+  let identifierName: GoPtr<Node>;
+  if (name!.Kind === KindIdentifier) {
+    identifierName = name;
+  } else {
+    Parser_parseErrorAtRange(receiver, Parser_skipRangeTrivia(receiver, name!.Loc), diagnostics.Identifier_expected);
+    identifierName = Parser_newIdentifier(receiver, "");
+    Parser_finishNode(receiver, identifierName, Node_Pos(name));
+  }
+  const result = Parser_checkJSSyntax(receiver, Parser_finishNode(receiver, NewImportSpecifier(receiver!.factory, isTypeOnly, propertyName, identifierName), pos));
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportOrExportSpecifier","kind":"method","status":"stub","sigHash":"cd00be5710820818368d10866275edc074708129cae333158e961fd8639b37db","bodyHash":"aebb29f0dac6a5c0d3fd60aadf78c41458f82ba94a7d2531f374c9fb7b8a359d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportOrExportSpecifier","kind":"method","status":"implemented","sigHash":"cd00be5710820818368d10866275edc074708129cae333158e961fd8639b37db","bodyHash":"aebb29f0dac6a5c0d3fd60aadf78c41458f82ba94a7d2531f374c9fb7b8a359d"}
  *
  * Go source:
  * func (p *Parser) parseImportOrExportSpecifier(kind ast.Kind) (isTypeOnly bool, propertyName *ast.Node, name *ast.Node) {
@@ -2736,7 +2969,62 @@ export function Parser_parseImportSpecifier(receiver: GoPtr<Parser>): GoPtr<Node
  * }
  */
 export function Parser_parseImportOrExportSpecifier(receiver: GoPtr<Parser>, kind: Kind): [bool, GoPtr<Node>, GoPtr<Node>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportOrExportSpecifier");
+  let canParseAsKeyword = true;
+  const disallowKeywords = kind === KindImportSpecifier;
+  let [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
+  let isTypeOnly = false;
+  let propertyName: GoPtr<Node>;
+  if (name!.Kind === KindIdentifier && Node_Text(name) === "type") {
+    // If the first token of an import specifier is 'type', there are a lot of possibilities,
+    // especially if we see 'as' afterwards
+    if (receiver!.token === KindAsKeyword) {
+      // { type as ...? }
+      const firstAs = Parser_parseIdentifierName(receiver);
+      if (receiver!.token === KindAsKeyword) {
+        // { type as as ...? }
+        const secondAs = Parser_parseIdentifierName(receiver);
+        if (Parser_canParseModuleExportName(receiver)) {
+          // { type as as something }
+          // { type as as "something" }
+          isTypeOnly = true;
+          propertyName = firstAs;
+          [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
+          canParseAsKeyword = false;
+        } else {
+          // { type as as }
+          propertyName = name;
+          name = secondAs;
+          canParseAsKeyword = false;
+        }
+      } else if (Parser_canParseModuleExportName(receiver)) {
+        // { type as something }
+        // { type as "something" }
+        propertyName = name;
+        canParseAsKeyword = false;
+        [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
+      } else {
+        // { type as }
+        isTypeOnly = true;
+        name = firstAs;
+      }
+    } else if (Parser_canParseModuleExportName(receiver)) {
+      // { type something ...? }
+      // { type "something" ...? }
+      isTypeOnly = true;
+      [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
+    }
+  }
+  if (canParseAsKeyword && receiver!.token === KindAsKeyword) {
+    propertyName = name;
+    Parser_parseExpected(receiver, KindAsKeyword);
+    [name, nameOk] = Parser_parseModuleExportName(receiver, disallowKeywords);
+  }
+
+  if (!nameOk) {
+    Parser_parseErrorAtRange(receiver, Parser_skipRangeTrivia(receiver, name!.Loc), diagnostics.Identifier_expected);
+  }
+
+  return [isTypeOnly, propertyName, name];
 }
 
 /**
@@ -2752,7 +3040,7 @@ export function Parser_canParseModuleExportName(receiver: GoPtr<Parser>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleExportName","kind":"method","status":"stub","sigHash":"080a63cc73f675dc1c5ef057bed9e3be391679c5d6e1b2b2bd4bac287efdb546","bodyHash":"f4c44edcc99cadc0aab91380a900cf0e5b6368e85d906e0806809c68404ea819"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleExportName","kind":"method","status":"implemented","sigHash":"080a63cc73f675dc1c5ef057bed9e3be391679c5d6e1b2b2bd4bac287efdb546","bodyHash":"f4c44edcc99cadc0aab91380a900cf0e5b6368e85d906e0806809c68404ea819"}
  *
  * Go source:
  * func (p *Parser) parseModuleExportName(disallowKeywords bool) (node *ast.Node, nameOk bool) {
@@ -2768,7 +3056,15 @@ export function Parser_canParseModuleExportName(receiver: GoPtr<Parser>): bool {
  * }
  */
 export function Parser_parseModuleExportName(receiver: GoPtr<Parser>, disallowKeywords: bool): [GoPtr<Node>, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseModuleExportName");
+  let nameOk = true;
+
+  if (receiver!.token === KindStringLiteral) {
+    return [Parser_parseLiteralExpression(receiver, false /*intern*/), nameOk];
+  }
+  if (disallowKeywords && IsKeyword(receiver!.token) && !Parser_isIdentifier(receiver)) {
+    nameOk = false;
+  }
+  return [Parser_parseIdentifierName(receiver), nameOk];
 }
 
 /**
@@ -3156,7 +3452,7 @@ export function Parser_parseImportAttribute(receiver: GoPtr<Parser>): GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportAttributes","kind":"method","status":"stub","sigHash":"d88044dde7886cfe6bb416bea3b958748a46461cabb5d93b47b20e8f91532b00","bodyHash":"55c9fd4e5f0899888a6e8b0ee6c2d53042e2e093d8aae7094c8046eccacc4879"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportAttributes","kind":"method","status":"implemented","sigHash":"d88044dde7886cfe6bb416bea3b958748a46461cabb5d93b47b20e8f91532b00","bodyHash":"55c9fd4e5f0899888a6e8b0ee6c2d53042e2e093d8aae7094c8046eccacc4879"}
  *
  * Go source:
  * func (p *Parser) parseImportAttributes(token ast.Kind, skipKeyword bool) *ast.Node {
@@ -3186,7 +3482,29 @@ export function Parser_parseImportAttribute(receiver: GoPtr<Parser>): GoPtr<Node
  * }
  */
 export function Parser_parseImportAttributes(receiver: GoPtr<Parser>, token: Kind, skipKeyword: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseImportAttributes");
+  const pos = Parser_nodePos(receiver);
+  if (!skipKeyword) {
+    Parser_parseExpected(receiver, token);
+  }
+  let elements: GoPtr<NodeList>;
+  let multiLine = false;
+  const openBracePosition = Scanner_TokenStart(receiver!.scanner);
+  if (Parser_parseExpected(receiver, KindOpenBraceToken)) {
+    multiLine = Parser_hasPrecedingLineBreak(receiver);
+    elements = Parser_parseDelimitedList(receiver, PCImportAttributes, Parser_parseImportAttribute);
+    if (!Parser_parseExpected(receiver, KindCloseBraceToken)) {
+      if (receiver!.diagnostics.length !== 0) {
+        const lastDiagnostic = receiver!.diagnostics[receiver!.diagnostics.length - 1];
+        if (Diagnostic_Code(lastDiagnostic) === Message_Code(diagnostics.X_0_expected)) {
+          const related = NewDiagnostic(undefined, NewTextRange(openBracePosition, openBracePosition), diagnostics.The_parser_expected_to_find_a_1_to_match_the_0_token_here, "{", "}");
+          Diagnostic_AddRelatedInfo(lastDiagnostic, related);
+        }
+      }
+    }
+  } else {
+    elements = Parser_parseEmptyNodeList(receiver);
+  }
+  return Parser_finishNode(receiver, NewImportAttributes(receiver!.factory, token, elements, multiLine), pos);
 }
 
 /**

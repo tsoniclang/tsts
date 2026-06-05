@@ -2,9 +2,13 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList, SourceFile } from "../../ast/ast.js";
 import type { ArrowFunction, BinaryExpression, CatchClause, ConstructorDeclaration, ForInOrOfStatement, FunctionDeclaration, FunctionExpression, GetAccessorDeclaration, MethodDeclaration, ObjectLiteralExpression, ParameterDeclaration, SetAccessorDeclaration, VariableDeclaration, VariableStatement } from "../../ast/ast_generated.js";
+import { Node_Parameters } from "../../ast/ast.js";
+import { Node_SubtreeFacts } from "../../ast/spine.js";
+import { SubtreeContainsObjectRestOrSpread } from "../../ast/subtreefacts.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
+import { Transformer_NewTransformer } from "../transformer.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::type::objectRestSpreadTransformer","kind":"type","status":"stub","sigHash":"bbe05073778a62bda93186b24f160901f4fa35f78b8e08de61bd627c1c896fff","bodyHash":"90b5de35b19b85c86c591b1f38d85961c5b02bbd88058844381230313cabdf4a"}
@@ -144,7 +148,7 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread","kind":"method","status":"stub","sigHash":"0a5da916bcc5432b50def7216ef06d8c73ee8653aa211f3544ec6143e5c7af9e","bodyHash":"2261f4cefedda8bb72e85f802bbb7e86c24e71b8c39cc836fc403775d6337114"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread","kind":"method","status":"implemented","sigHash":"0a5da916bcc5432b50def7216ef06d8c73ee8653aa211f3544ec6143e5c7af9e","bodyHash":"2261f4cefedda8bb72e85f802bbb7e86c24e71b8c39cc836fc403775d6337114"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) collectParametersWithPrecedingObjectRestOrSpread(node *ast.Node) map[*ast.Node]struct{} {
@@ -160,7 +164,15 @@ export function objectRestSpreadTransformer_visitParameter(receiver: GoPtr<objec
  * }
  */
 export function objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.collectParametersWithPrecedingObjectRestOrSpread");
+  let result: GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }> = undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
+  for (const parameter of Node_Parameters(node) ?? []) {
+    if (result !== undefined) {
+      result.set(parameter as unknown as GoPtr<Node>, {});
+    } else if ((Node_SubtreeFacts(parameter as unknown as GoPtr<Node>) & SubtreeContainsObjectRestOrSpread) !== 0) {
+      result = new Map<GoPtr<Node>, { readonly __tsgoEmpty?: never }>();
+    }
+  }
+  return result;
 }
 
 /**
@@ -172,7 +184,7 @@ export function objectRestSpreadTransformer_collectParametersWithPrecedingObject
 export type oldParamScope = GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext","kind":"method","status":"stub","sigHash":"c5aa4db999a23612c13ee2bba9da70de79b4e6e67a2c214a0b7d17711a6bb75c","bodyHash":"f57eb7571a9acad994bea403a35fd235e0190b07f097a5400b7ae17bd938e509"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext","kind":"method","status":"implemented","sigHash":"c5aa4db999a23612c13ee2bba9da70de79b4e6e67a2c214a0b7d17711a6bb75c","bodyHash":"f57eb7571a9acad994bea403a35fd235e0190b07f097a5400b7ae17bd938e509"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) enterParameterListContext(node *ast.Node) oldParamScope {
@@ -182,11 +194,13 @@ export type oldParamScope = GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>
  * }
  */
 export function objectRestSpreadTransformer_enterParameterListContext(receiver: GoPtr<objectRestSpreadTransformer>, node: GoPtr<Node>): oldParamScope {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.enterParameterListContext");
+  const old = receiver!.parametersWithPrecedingObjectRestOrSpread;
+  receiver!.parametersWithPrecedingObjectRestOrSpread = objectRestSpreadTransformer_collectParametersWithPrecedingObjectRestOrSpread(receiver, node);
+  return old;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.exitParameterListContext","kind":"method","status":"stub","sigHash":"c779dba462e37b40a75b57892483ab220bd8bf842d93d5539eab4d3e6f266bf3","bodyHash":"3c259d32c56b14445acdc28aacbf4ed8f420a0ea37b50a93d8a9f28010522726"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.exitParameterListContext","kind":"method","status":"implemented","sigHash":"c779dba462e37b40a75b57892483ab220bd8bf842d93d5539eab4d3e6f266bf3","bodyHash":"3c259d32c56b14445acdc28aacbf4ed8f420a0ea37b50a93d8a9f28010522726"}
  *
  * Go source:
  * func (ch *objectRestSpreadTransformer) exitParameterListContext(scope oldParamScope) {
@@ -194,7 +208,7 @@ export function objectRestSpreadTransformer_enterParameterListContext(receiver: 
  * }
  */
 export function objectRestSpreadTransformer_exitParameterListContext(receiver: GoPtr<objectRestSpreadTransformer>, scope: oldParamScope): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::method::objectRestSpreadTransformer.exitParameterListContext");
+  receiver!.parametersWithPrecedingObjectRestOrSpread = scope;
 }
 
 /**
@@ -789,7 +803,7 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::func::newObjectRestSpreadTransformer","kind":"func","status":"stub","sigHash":"74be8eb7e2ec7f4bad0ca2d45f1bc72c822b0e59f135184c58ff75f817bb5e3d","bodyHash":"14fb65a58c82276e2b6074a54110c77dd9668ca6cfa9929d0d35772d802fd16e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::func::newObjectRestSpreadTransformer","kind":"func","status":"implemented","sigHash":"74be8eb7e2ec7f4bad0ca2d45f1bc72c822b0e59f135184c58ff75f817bb5e3d","bodyHash":"14fb65a58c82276e2b6074a54110c77dd9668ca6cfa9929d0d35772d802fd16e"}
  *
  * Go source:
  * func newObjectRestSpreadTransformer(opts *transformers.TransformOptions) *transformers.Transformer {
@@ -798,5 +812,12 @@ export function objectRestSpreadTransformer_chunkObjectLiteralElements(receiver:
  * }
  */
 export function newObjectRestSpreadTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/objectrestspread.go::func::newObjectRestSpreadTransformer");
+  const tx: objectRestSpreadTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    compilerOptions: opts!.CompilerOptions,
+    inExportedVariableStatement: false,
+    expressionResultIsUnused: false,
+    parametersWithPrecedingObjectRestOrSpread: undefined as unknown as GoMap<GoPtr<Node>, { readonly __tsgoEmpty?: never }>,
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => objectRestSpreadTransformer_visit(tx, node), opts!.Context);
 }

@@ -1,9 +1,23 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_End, Node_Modifiers, Node_Name, Node_Pos, NodeList_HasTrailingComma } from "../../ast/spine.js";
-import { IsArrowFunction, IsIdentifier } from "../../ast/generated/predicates.js";
+import { IsOptionalChain, SkipPartiallyEmittedExpressions, NodeIsSynthesized } from "../../ast/utilities.js";
+import { GetSourceFileOfNode } from "../../ast/utilities.js";
+import { ScriptKindJSON } from "../../core/scriptkind.js";
+import { ScriptTargetES2021 } from "../../core/compileroptions.js";
+import { TokenFlagsWithSpecifier } from "../../ast/tokenflags.js";
+import { TokenToString } from "../../scanner/scanner.js";
+import { Coalesce } from "../../core/core.js";
+import { KindAsteriskToken, KindAwaitExpression, KindBigIntLiteral, KindCallExpression, KindCloseParenToken, KindCommaToken, KindDeleteKeyword, KindDotDotDotToken, KindDotToken, KindFalseKeyword, KindFunctionExpression, KindImportKeyword, KindJsxElement, KindJsxFragment, KindJsxNamespacedName, KindJsxSelfClosingElement, KindMissingDeclaration, KindNewKeyword, KindNotEmittedStatement, KindNullKeyword, KindNumericLiteral, KindObjectLiteralExpression, KindOmittedExpression, KindOpenBracketToken, KindCloseBracketToken, KindOpenParenToken, KindPartiallyEmittedExpression, KindPlusToken, KindPlusPlusToken, KindMinusToken, KindMinusMinusToken, KindQuestionDotToken, KindQuestionQuestionToken, KindRegularExpressionLiteral, KindStringLiteral, KindSuperKeyword, KindSyntaxList, KindSyntheticExpression, KindSyntheticReferenceExpression, KindThisKeyword, KindTrueKeyword, KindTypeAssertionExpression, KindTypeOfKeyword, KindTypeOfExpression, KindExpressionWithTypeArguments, KindMetaProperty, KindUnknown, KindVoidExpression, KindVoidKeyword, KindAwaitKeyword, KindYieldExpression, KindYieldKeyword, KindNonNullExpression, KindAsExpression, KindSatisfiesExpression, KindConditionalExpression, KindBinaryExpression, KindPrefixUnaryExpression, KindPostfixUnaryExpression, KindSpreadElement, KindClassExpression, KindArrayLiteralExpression, KindElementAccessExpression, KindPropertyAccessExpression, KindTaggedTemplateExpression, KindParenthesizedExpression, KindArrowFunction, KindNewExpression, KindDeleteExpression, KindOpenBraceToken, KindCloseBraceToken } from "../../ast/generated/kinds.js";
+import { Printer_hasCommentsAtPosition, Printer_emitTrailingCommentsOfPosition, Printer_emitLeadingCommentsOfPosition } from "./comments.js";
+import { NodeFactory_NewModifier, NodeFactory_UpdateAsExpression, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateCallExpression, NodeFactory_UpdateConditionalExpression, NodeFactory_UpdateElementAccessExpression, NodeFactory_UpdateNonNullExpression, NodeFactory_UpdatePartiallyEmittedExpression, NodeFactory_UpdatePostfixUnaryExpression, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdateSatisfiesExpression, NodeFactory_UpdateTaggedTemplateExpression } from "../../ast/ast.js";
+import { NewTextRange } from "../../core/text.js";
+import { EFNoSourceMap, EFNoLeadingComments, EFNoTrailingComments } from "../emitflags.js";
+import { NewParenthesizedExpression as NodeFactory_NewParenthesizedExpression, NewPartiallyEmittedExpression as NodeFactory_NewPartiallyEmittedExpression } from "../../ast/generated/factory.js";
+import { EmitContext_ParseNode, EmitContext_SetOriginal, NewEmitContext } from "../emitcontext.js";
+import { IsArrowFunction, IsIdentifier, IsLiteralKind, IsNumericLiteral, IsPartiallyEmittedExpression, IsParenthesizedExpression, IsStringLiteral } from "../../ast/generated/predicates.js";
 import { IfElse } from "../../core/core.js";
 import type { ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingPattern, CallExpression, CallSignatureDeclaration, ClassExpression, ConditionalExpression, DeleteExpression, ElementAccessExpression, EnumMember, ExpressionStatement, FunctionExpression, JsxExpression, JsxSpreadAttribute, KeywordExpression, NewExpression, NonNullExpression, NoSubstitutionTemplateLiteral, NumericLiteral, ObjectLiteralExpression, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PropertyAccessExpression, RegularExpressionLiteral, SatisfiesExpression, SpreadAssignment, SpreadElement, StringLiteral, TaggedTemplateExpression, TemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, VoidExpression, YieldExpression } from "../../ast/generated/data.js";
 import type { EnumMemberNode, Expression, LiteralLikeNode, MemberName, ObjectLiteralElement, ParameterList, TemplateLiteral, TemplateMiddleOrTail } from "../../ast/generated/unions.js";
@@ -26,15 +40,18 @@ import {
   KindTemplateTail,
 } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
-import { AsArrowFunction, AsEnumMember, AsGetAccessorDeclaration, AsIdentifier, AsMethodDeclaration, AsNoSubstitutionTemplateLiteral, AsParameterDeclaration, AsPrivateIdentifier, AsPropertyAssignment, AsSetAccessorDeclaration, AsShorthandPropertyAssignment, AsSpreadAssignment, AsTemplateExpression, AsTemplateHead, AsTemplateMiddle, AsTemplateTail } from "../../ast/generated/casts.js";
+import { AsArrowFunction, AsBigIntLiteral, AsEnumMember, AsFunctionExpression, AsGetAccessorDeclaration, AsIdentifier, AsMethodDeclaration, AsNoSubstitutionTemplateLiteral, AsOmittedExpression, AsParameterDeclaration, AsPrivateIdentifier, AsPropertyAssignment, AsRegularExpressionLiteral, AsSetAccessorDeclaration, AsShorthandPropertyAssignment, AsSpreadAssignment, AsStringLiteral, AsTemplateExpression, AsTemplateHead, AsTemplateMiddle, AsTemplateTail, AsTypeOfExpression, AsBinaryExpression, AsPrefixUnaryExpression, AsPostfixUnaryExpression, AsYieldExpression, AsAsExpression, AsSatisfiesExpression, AsConditionalExpression, AsCallExpression, AsNewExpression, AsNonNullExpression, AsSpreadElement, AsParenthesizedExpression, AsDeleteExpression, AsVoidExpression, AsAwaitExpression, AsPartiallyEmittedExpression, AsNumericLiteral, AsTaggedTemplateExpression, AsKeywordExpression, AsMetaProperty, AsClassExpression, AsArrayLiteralExpression, AsObjectLiteralExpression, AsPropertyAccessExpression, AsElementAccessExpression, AsTypeAssertion, AsExpressionWithTypeArguments, AsJsxElement, AsJsxSelfClosingElement, AsJsxFragment, AsJsxSpreadAttribute, AsJsxExpression } from "../../ast/generated/casts.js";
+import { GetExpressionPrecedence, GetLeftmostExpression, OperatorPrecedenceAdditive, OperatorPrecedenceAssignment, OperatorPrecedenceBitwiseAND, OperatorPrecedenceBitwiseOR, OperatorPrecedenceBitwiseXOR, OperatorPrecedenceCoalesce, OperatorPrecedenceComma, OperatorPrecedenceConditional, OperatorPrecedenceDisallowComma, OperatorPrecedenceEquality, OperatorPrecedenceExponentiation, OperatorPrecedenceHighest, OperatorPrecedenceLeftHandSide, OperatorPrecedenceLogicalAND, OperatorPrecedenceLogicalOR, OperatorPrecedenceMember, OperatorPrecedenceMultiplicative, OperatorPrecedenceOptionalChain, OperatorPrecedenceParentheses, OperatorPrecedenceRelational, OperatorPrecedenceShift, OperatorPrecedenceUnary, OperatorPrecedenceUpdate, OperatorPrecedenceYield, OperatorPrecedenceLowest, OperatorPrecedenceSpread } from "../../ast/precedence.js";
 import type { OperatorPrecedence } from "../../ast/precedence.js";
-import { EmitContext_EmitFlags } from "../emitcontext.js";
+import { EmitContext_EmitFlags, EmitContext_TextSource, EmitContext_AddEmitFlags } from "../emitcontext.js";
+import { NameGenerator_MakeFileLevelOptimisticUniqueName } from "../namegenerator.js";
 import type { EmitContext } from "../emitcontext.js";
-import { EFIndirectCall } from "../emitflags.js";
+import { EFIndirectCall, EFNoAsciiEscaping } from "../emitflags.js";
 import {
   Printer_decreaseIndentIf,
   Printer_generateNameIfNeeded,
   Printer_increaseIndentIf,
+  Printer_emitStatement,
 } from "./statements-declarations.js";
 import {
   Printer_emitArgument,
@@ -58,6 +75,8 @@ import {
   Printer_emitSignature,
   Printer_emitToken,
   Printer_emitTokenNode,
+  Printer_emitTokenNodeEx,
+  Printer_emitPunctuationNode,
   Printer_enterNode,
   Printer_exitNode,
   Printer_generateAllNames,
@@ -69,31 +88,57 @@ import {
   Printer_writePunctuation,
   Printer_writeSpace,
   Printer_writeTrailingSemicolon,
+  Printer_writeOperator,
+  Printer_emitIdentifierReference,
+  Printer_getTextOfNode,
+  Printer_emitMetaProperty,
+  Printer_emitJsxElement,
+  Printer_emitJsxSelfClosingElement,
+  Printer_emitJsxFragment,
+  Printer_isFileLevelUniqueNameInCurrentFile,
 } from "./emit-core.js";
 import {
   Printer_emitHeritageClauseNode,
   Printer_emitTypeAnnotation,
   Printer_emitTypeArguments,
   Printer_emitTypeParameters,
+  Printer_emitTypeNodeOutsideExtends,
+  Printer_emitTypeAssertionExpression,
+  Printer_emitTypeOfExpression,
+  Printer_emitExpressionWithTypeArguments,
 } from "./types.js";
 import {
   Printer_emitClassElement,
   Printer_emitFunctionBodyNode,
 } from "./statements-declarations.js";
-import { Printer_emitTemplateSpanNode } from "./source-maps.js";
+import { Printer_emitTemplateSpanNode, Printer_getLinesBetweenNodes, Printer_writeLinesAndIndent, Printer_writeLineRepeat, Printer_writeLineSeparatorsAndIndentBefore, Printer_writeLineSeparatorsAfter, Printer_willEmitLeadingNewLine } from "./source-maps.js";
 import {
   getLiteralTextFlagsNeverAsciiEscape,
   getLiteralTextFlagsNone,
   getLiteralTextFlagsTerminateUnterminatedLiterals,
+  getLiteralTextFlagsAllowNumericSeparator,
+  getLiteralTextFlagsJsxAttributeEscape,
+  getLiteralText,
+  EscapeString,
+  escapeNonAsciiString,
+  escapeJsxAttributeString,
+  QuoteCharDoubleQuote,
+  isNewExpressionWithoutArguments,
+  isBinaryOperation,
+  mixingBinaryOperatorsRequiresParentheses,
+  isImmediatelyInvokedFunctionExpressionOrArrowFunction,
+  GetLinesBetweenPositions,
+  greatestEnd,
 } from "../utilities.js";
 import type { getLiteralTextFlags } from "../utilities.js";
-import type { Printer, PrinterOptions, PrintHandlers } from "./state.js";
+import type { Printer, PrinterOptions, PrintHandlers, WriteKind } from "./state.js";
 import type { ListFormat } from "./state.js";
 import {
   LFAllowTrailingComma,
   LFArrayBindingPatternElements,
   LFArrayLiteralExpressionElements,
   LFCallExpressionArguments,
+  LFNewExpressionArguments,
   LFClassHeritageClauses,
   LFClassMembers,
   LFNone,
@@ -103,10 +148,13 @@ import {
   LFSingleArrowParameter,
   LFTemplateExpressionSpans,
   WriteKindKeyword,
+  WriteKindOperator,
+  WriteKindPunctuation,
+  tefNoSourceMaps,
 } from "./state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::func::NewPrinter","kind":"func","status":"stub","sigHash":"925479666aa66f6fd4bf95732fac23255b36fdf6b9810635f7d1f9c54c7ce832","bodyHash":"ab59c158dca42e909a2ec6b5f1470205d16f21e55aca716de8ed602b1c210a9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::func::NewPrinter","kind":"func","status":"implemented","sigHash":"925479666aa66f6fd4bf95732fac23255b36fdf6b9810635f7d1f9c54c7ce832","bodyHash":"ab59c158dca42e909a2ec6b5f1470205d16f21e55aca716de8ed602b1c210a9e"}
  *
  * Go source:
  * func NewPrinter(options PrinterOptions, handlers PrintHandlers, emitContext *EmitContext) *Printer {
@@ -133,11 +181,56 @@ import {
  * }
  */
 export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::func::NewPrinter");
+  const printer: Printer = {
+    __tsgoEmbedded0: handlers,
+    Options: options,
+    emitContext: emitContext ?? NewEmitContext(),
+    currentSourceFile: undefined,
+    uniqueHelperNames: new Map(),
+    externalHelpersModuleName: undefined,
+    nextListElementPos: 0 as int,
+    writer: undefined!,
+    ownWriter: undefined!,
+    writeKind: 0 as WriteKind,
+    sourceMapsDisabled: false as bool,
+    sourceMapGenerator: undefined,
+    sourceMapSource: undefined!,
+    sourceMapSourceIndex: undefined!,
+    sourceMapSourceIsJson: false as bool,
+    sourceMapLineCharCache: undefined,
+    mostRecentSourceMapSource: undefined!,
+    mostRecentSourceMapSourceIndex: undefined!,
+    containerPos: -1 as int,
+    containerEnd: -1 as int,
+    declarationListContainerEnd: -1 as int,
+    detachedCommentsInfo: { data: [] },
+    commentsDisabled: options.RemoveComments,
+    inExtends: false as bool,
+    nameGenerator: {
+      Context: undefined,
+      IsFileLevelUniqueNameInCurrentFile: undefined!,
+      GetTextOfNode: undefined!,
+      nodeIdToGeneratedName: new Map(),
+      nodeIdToGeneratedPrivateName: new Map(),
+      autoGeneratedIdToGeneratedName: new Map(),
+      nameGenerationScope: undefined,
+      privateNameGenerationScope: undefined,
+      generatedNames: { M: new Map() },
+    },
+    makeFileLevelOptimisticUniqueName: undefined!,
+    commentStateArena: { data: [] },
+    sourceMapStateArena: { data: [] },
+  };
+  printer.emitContext = printer.emitContext ?? NewEmitContext();
+  printer.nameGenerator.Context = printer.emitContext;
+  printer.nameGenerator.GetTextOfNode = (node: GoPtr<Node>): string => Printer_getTextOfNode(printer, node, false as bool);
+  printer.nameGenerator.IsFileLevelUniqueNameInCurrentFile = (name: string, arg: bool): bool => Printer_isFileLevelUniqueNameInCurrentFile(printer, name, arg);
+  printer.makeFileLevelOptimisticUniqueName = (name: string): string => NameGenerator_MakeFileLevelOptimisticUniqueName(printer.nameGenerator, name);
+  return printer;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralTextOfNode","kind":"method","status":"stub","sigHash":"cd58c94045da8b27762e49d9fa864a0e4c96c0b9799f15840ec50dc19225ed59","bodyHash":"d4b2c82b1717c4a41762e4505663e16534db379b68adce2091e85bc333732080"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralTextOfNode","kind":"method","status":"implemented","sigHash":"cd58c94045da8b27762e49d9fa864a0e4c96c0b9799f15840ec50dc19225ed59","bodyHash":"d4b2c82b1717c4a41762e4505663e16534db379b68adce2091e85bc333732080"}
  *
  * Go source:
  * func (p *Printer) getLiteralTextOfNode(node *ast.LiteralLikeNode, sourceFile *ast.SourceFile, flags getLiteralTextFlags) string {
@@ -152,7 +245,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
  * 			case ast.KindIdentifier, ast.KindPrivateIdentifier, ast.KindJsxNamespacedName:
  * 				text = p.getTextOfNode(textSourceNode, false)
  * 			}
- * 
+ *
  * 			switch {
  * 			case flags&getLiteralTextFlagsJsxAttributeEscape != 0:
  * 				return "\"" + escapeJsxAttributeString(text, QuoteCharDoubleQuote) + "\""
@@ -174,7 +267,41 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
  * }
  */
 export function Printer_getLiteralTextOfNode(receiver: GoPtr<Printer>, node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<SourceFile>, flags: getLiteralTextFlags): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralTextOfNode");
+  if (IsStringLiteral(node)) {
+    const textSourceNode = EmitContext_TextSource(receiver!.emitContext, node);
+    if (textSourceNode !== undefined) {
+      let text: string;
+      switch (textSourceNode!.Kind) {
+        case KindIdentifier:
+        case KindPrivateIdentifier:
+        case KindJsxNamespacedName:
+          text = Printer_getTextOfNode(receiver, textSourceNode, false as bool);
+          break;
+        default:
+          if (textSourceNode!.Kind === KindNumericLiteral) {
+            text = AsNumericLiteral(textSourceNode)!.Text;
+          } else {
+            return Printer_getLiteralTextOfNode(receiver, textSourceNode, GetSourceFileOfNode(textSourceNode), flags);
+          }
+          break;
+      }
+      if ((flags & getLiteralTextFlagsJsxAttributeEscape) !== 0) {
+        return "\"" + escapeJsxAttributeString(text, QuoteCharDoubleQuote) + "\"";
+      } else if ((flags & getLiteralTextFlagsNeverAsciiEscape) !== 0 || (EmitContext_EmitFlags(receiver!.emitContext, node) & EFNoAsciiEscaping) !== 0) {
+        return "\"" + EscapeString(text, QuoteCharDoubleQuote) + "\"";
+      } else {
+        return "\"" + escapeNonAsciiString(text, QuoteCharDoubleQuote) + "\"";
+      }
+    }
+  }
+  // !!! Printer option to control whether to terminate unterminated literals
+  const flags1 = (EmitContext_EmitFlags(receiver!.emitContext, node) & EFNoAsciiEscaping) !== 0
+    ? (flags | getLiteralTextFlagsNeverAsciiEscape) as getLiteralTextFlags
+    : flags;
+  const flags2 = receiver!.Options.Target >= ScriptTargetES2021
+    ? (flags1 | getLiteralTextFlagsAllowNumericSeparator) as getLiteralTextFlags
+    : flags1;
+  return getLiteralText(node, Coalesce(sourceFile, receiver!.currentSourceFile) as GoPtr<SourceFile>, flags2);
 }
 
 /**
@@ -647,7 +774,7 @@ export function Printer_emitKeywordExpression(receiver: GoPtr<Printer>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitArrayLiteralExpressionElement","kind":"method","status":"stub","sigHash":"0c47e8f220800c99d31704c27d54c9728cb1d0889cc76659f80c8ddb22c0fb57","bodyHash":"8b98f8b50061701387ac1223b4dff2ea37941217eae6d327bcf147311d718ad2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitArrayLiteralExpressionElement","kind":"method","status":"implemented","sigHash":"0c47e8f220800c99d31704c27d54c9728cb1d0889cc76659f80c8ddb22c0fb57","bodyHash":"8b98f8b50061701387ac1223b4dff2ea37941217eae6d327bcf147311d718ad2"}
  *
  * Go source:
  * func (p *Printer) emitArrayLiteralExpressionElement(node *ast.Expression) {
@@ -655,7 +782,7 @@ export function Printer_emitKeywordExpression(receiver: GoPtr<Printer>, node: Go
  * }
  */
 export function Printer_emitArrayLiteralExpressionElement(receiver: GoPtr<Printer>, node: GoPtr<Expression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitArrayLiteralExpressionElement");
+  Printer_emitExpression(receiver, node, OperatorPrecedenceSpread);
 }
 
 /**
@@ -707,7 +834,7 @@ export function Printer_emitObjectLiteralExpression(receiver: GoPtr<Printer>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.mayNeedDotDotForPropertyAccess","kind":"method","status":"stub","sigHash":"f193e9a520b5d63b30d3d7101da59d46228c5b4389fa04c2f2d6606019486012","bodyHash":"294eea5f4060e0b2dd0798abb5d55042bfbcb9674b4b6427cd04cf4deeb577de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.mayNeedDotDotForPropertyAccess","kind":"method","status":"implemented","sigHash":"f193e9a520b5d63b30d3d7101da59d46228c5b4389fa04c2f2d6606019486012","bodyHash":"294eea5f4060e0b2dd0798abb5d55042bfbcb9674b4b6427cd04cf4deeb577de"}
  *
  * Go source:
  * func (p *Printer) mayNeedDotDotForPropertyAccess(expression *ast.Expression) bool {
@@ -726,11 +853,24 @@ export function Printer_emitObjectLiteralExpression(receiver: GoPtr<Printer>, no
  * }
  */
 export function Printer_mayNeedDotDotForPropertyAccess(receiver: GoPtr<Printer>, expression: GoPtr<Expression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.mayNeedDotDotForPropertyAccess");
+  const expr = SkipPartiallyEmittedExpressions(expression);
+  if (IsNumericLiteral(expr)) {
+    // check if numeric literal is a decimal literal that was originally written with a dot
+    const text = Printer_getLiteralTextOfNode(receiver, expr, undefined, getLiteralTextFlagsNeverAsciiEscape);
+    // If the number will be printed verbatim and it doesn't already contain a dot or an exponent indicator, add one
+    // if the expression doesn't have any comments that will be emitted.
+    return (
+      (AsNumericLiteral(expr)!.TokenFlags & TokenFlagsWithSpecifier) === 0 &&
+      !text.includes(TokenToString(KindDotToken)) &&
+      !text.includes("E") &&
+      !text.includes("e")
+    ) as bool;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPropertyAccessExpression","kind":"method","status":"stub","sigHash":"3cbeb4214d6119d1e66e7548bf2c874f3c8550c7734f69119a8ca4262312f6ba","bodyHash":"0248fd7094fe499449e32b232b877bf92af68ef054598c0761c4bcb16c71cc05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPropertyAccessExpression","kind":"method","status":"implemented","sigHash":"3cbeb4214d6119d1e66e7548bf2c874f3c8550c7734f69119a8ca4262312f6ba","bodyHash":"0248fd7094fe499449e32b232b877bf92af68ef054598c0761c4bcb16c71cc05"}
  *
  * Go source:
  * func (p *Printer) emitPropertyAccessExpression(node *ast.PropertyAccessExpression) {
@@ -767,11 +907,42 @@ export function Printer_mayNeedDotDotForPropertyAccess(receiver: GoPtr<Printer>,
  * }
  */
 export function Printer_emitPropertyAccessExpression(receiver: GoPtr<Printer>, node: GoPtr<PropertyAccessExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPropertyAccessExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Expression, IfElse(IsOptionalChain(node), OperatorPrecedenceOptionalChain, OperatorPrecedenceMember));
+  let token = node!.QuestionDotToken;
+  if (token === undefined) {
+    const newToken = NodeFactory_NewModifier(receiver!.emitContext!.Factory!.__tsgoEmbedded0, KindDotToken);
+    newToken!.Loc = NewTextRange(Node_End(node!.Expression), Node_Pos(Node_Name(node)));
+    EmitContext_AddEmitFlags(receiver!.emitContext, newToken, EFNoSourceMap);
+    token = newToken;
+  }
+  const linesBeforeDot = Printer_getLinesBetweenNodes(receiver, node, node!.Expression, token);
+  Printer_writeLineRepeat(receiver, linesBeforeDot);
+  Printer_increaseIndentIf(receiver, (linesBeforeDot > 0) as bool);
+  const shouldEmitDotDot =
+    token!.Kind !== KindQuestionDotToken &&
+    Printer_mayNeedDotDotForPropertyAccess(receiver, node!.Expression) &&
+    !receiver!.writer.HasTrailingComment() &&
+    !receiver!.writer.HasTrailingWhitespace();
+  if (shouldEmitDotDot) {
+    Printer_writePunctuation(receiver, ".");
+  }
+  if (node!.QuestionDotToken !== undefined) {
+    Printer_emitTokenNode(receiver, token);
+  } else {
+    Printer_emitToken(receiver, KindDotToken, Node_End(node!.Expression), WriteKindPunctuation, node);
+  }
+  const linesAfterDot = Printer_getLinesBetweenNodes(receiver, node, token, Node_Name(node));
+  Printer_writeLineRepeat(receiver, linesAfterDot);
+  Printer_increaseIndentIf(receiver, (linesAfterDot > 0) as bool);
+  Printer_emitMemberName(receiver, node!.name);
+  Printer_decreaseIndentIf(receiver, (linesAfterDot > 0) as bool);
+  Printer_decreaseIndentIf(receiver, (linesBeforeDot > 0) as bool);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitElementAccessExpression","kind":"method","status":"stub","sigHash":"edb98533d2fc343e8ffe24454a496c0f148900f90849952f5f42dece32ff272f","bodyHash":"3db341c0dd4c2900c78d029757bfa39370d13e34006f74b3c5398919cf821410"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitElementAccessExpression","kind":"method","status":"implemented","sigHash":"edb98533d2fc343e8ffe24454a496c0f148900f90849952f5f42dece32ff272f","bodyHash":"3db341c0dd4c2900c78d029757bfa39370d13e34006f74b3c5398919cf821410"}
  *
  * Go source:
  * func (p *Printer) emitElementAccessExpression(node *ast.ElementAccessExpression) {
@@ -785,11 +956,17 @@ export function Printer_emitPropertyAccessExpression(receiver: GoPtr<Printer>, n
  * }
  */
 export function Printer_emitElementAccessExpression(receiver: GoPtr<Printer>, node: GoPtr<ElementAccessExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitElementAccessExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Expression, IfElse(IsOptionalChain(node), OperatorPrecedenceOptionalChain, OperatorPrecedenceMember));
+  Printer_emitTokenNode(receiver, node!.QuestionDotToken);
+  Printer_emitToken(receiver, KindOpenBracketToken, greatestEnd(-1 as int, node!.Expression as unknown as { End: () => int }, node!.QuestionDotToken as unknown as { End: () => int }), WriteKindPunctuation, node);
+  Printer_emitExpression(receiver, node!.ArgumentExpression, OperatorPrecedenceComma);
+  Printer_emitToken(receiver, KindCloseBracketToken, Node_End(node!.ArgumentExpression), WriteKindPunctuation, node);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitCallee","kind":"method","status":"stub","sigHash":"dc251a6bc9a44064d677d642060409248a8717daa63133562bb1c21f2b71ed39","bodyHash":"a2a3a38468e125db1ee3b82e9e999015f3e028f7e27441c272ee5ccaff92fad7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitCallee","kind":"method","status":"implemented","sigHash":"dc251a6bc9a44064d677d642060409248a8717daa63133562bb1c21f2b71ed39","bodyHash":"a2a3a38468e125db1ee3b82e9e999015f3e028f7e27441c272ee5ccaff92fad7"}
  *
  * Go source:
  * func (p *Printer) emitCallee(callee *ast.Expression, parentNode *ast.Node) {
@@ -809,7 +986,19 @@ export function Printer_emitElementAccessExpression(receiver: GoPtr<Printer>, no
  * }
  */
 export function Printer_emitCallee(receiver: GoPtr<Printer>, callee: GoPtr<Expression>, parentNode: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitCallee");
+  if (Printer_shouldEmitIndirectCall(receiver, parentNode)) {
+    Printer_writePunctuation(receiver, "(");
+    Printer_writeLiteral(receiver, "0");
+    Printer_writePunctuation(receiver, ",");
+    Printer_writeSpace(receiver);
+    Printer_emitExpression(receiver, callee, OperatorPrecedenceComma);
+    Printer_writePunctuation(receiver, ")");
+  } else if (parentNode!.Kind === KindCallExpression && isNewExpressionWithoutArguments(SkipPartiallyEmittedExpressions(callee))) {
+    // Parenthesize `new C` inside of a CallExpression so it is treated as `(new C)()` and not `new C()`
+    Printer_emitExpression(receiver, callee, OperatorPrecedenceParentheses);
+  } else {
+    Printer_emitExpression(receiver, callee, IfElse(IsOptionalChain(parentNode), OperatorPrecedenceOptionalChain, OperatorPrecedenceMember));
+  }
 }
 
 /**
@@ -835,7 +1024,7 @@ export function Printer_emitCallExpression(receiver: GoPtr<Printer>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNewExpression","kind":"method","status":"stub","sigHash":"f5c512608dec1df270e647a42649d4e0d14172341b57fb8d922363d861a5eedc","bodyHash":"794606f532e331e72e32e605c1d4d4941182187a9cf04d8d2227faf739f1bf30"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNewExpression","kind":"method","status":"implemented","sigHash":"f5c512608dec1df270e647a42649d4e0d14172341b57fb8d922363d861a5eedc","bodyHash":"794606f532e331e72e32e605c1d4d4941182187a9cf04d8d2227faf739f1bf30"}
  *
  * Go source:
  * func (p *Printer) emitNewExpression(node *ast.NewExpression) {
@@ -854,7 +1043,18 @@ export function Printer_emitCallExpression(receiver: GoPtr<Printer>, node: GoPtr
  * }
  */
 export function Printer_emitNewExpression(receiver: GoPtr<Printer>, node: GoPtr<NewExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNewExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindNewKeyword, Node_Pos(node), WriteKindKeyword, node);
+  Printer_writeSpace(receiver);
+  if (SkipPartiallyEmittedExpressions(node!.Expression)!.Kind === KindCallExpression) {
+    // Parenthesize `C()` inside of a NewExpression so it is treated as `new (C())` and not `new C()`
+    Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceParentheses);
+  } else {
+    Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceMember);
+  }
+  Printer_emitTypeArguments(receiver, node, node!.TypeArguments);
+  Printer_emitList(receiver, Printer_emitArgument, node, node!.Arguments, LFNewExpressionArguments);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
@@ -908,7 +1108,7 @@ export function Printer_emitTaggedTemplateExpression(receiver: GoPtr<Printer>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitParenthesizedExpression","kind":"method","status":"stub","sigHash":"4073eb94b72a8c15465cd80bbc4a245e7bcbdaaa5d58ed74161cf252b20ea3cf","bodyHash":"345c5e0d0ec260154c82d077fde5bedc1f9e1ee2ca7908571b44c0777cdc693b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitParenthesizedExpression","kind":"method","status":"implemented","sigHash":"4073eb94b72a8c15465cd80bbc4a245e7bcbdaaa5d58ed74161cf252b20ea3cf","bodyHash":"345c5e0d0ec260154c82d077fde5bedc1f9e1ee2ca7908571b44c0777cdc693b"}
  *
  * Go source:
  * func (p *Printer) emitParenthesizedExpression(node *ast.ParenthesizedExpression) {
@@ -927,7 +1127,15 @@ export function Printer_emitTaggedTemplateExpression(receiver: GoPtr<Printer>, n
  * }
  */
 export function Printer_emitParenthesizedExpression(receiver: GoPtr<Printer>, node: GoPtr<ParenthesizedExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitParenthesizedExpression");
+  const state = Printer_enterNode(receiver, node);
+  const openParenPos = Printer_emitToken(receiver, KindOpenParenToken, Node_Pos(node), WriteKindPunctuation, node);
+  const indented = Printer_writeLineSeparatorsAndIndentBefore(receiver, node!.Expression, node);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceComma);
+  Printer_writeLineSeparatorsAfter(receiver, node!.Expression, node);
+  Printer_decreaseIndentIf(receiver, indented);
+  const closeParenPos = node!.Expression !== undefined ? Node_End(node!.Expression) : openParenPos;
+  Printer_emitToken(receiver, KindCloseParenToken, closeParenPos, WriteKindPunctuation, node);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
@@ -1011,7 +1219,7 @@ export function Printer_emitArrowFunction(receiver: GoPtr<Printer>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitDeleteExpression","kind":"method","status":"stub","sigHash":"34320705393a0499b99134e0af42ccc61ac1065afd8372b22514b557f67101dd","bodyHash":"b7c0927dd7d0deb8f61ae1cf78462ae2c62a8277c55905f8354bbcfa660f49a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitDeleteExpression","kind":"method","status":"implemented","sigHash":"34320705393a0499b99134e0af42ccc61ac1065afd8372b22514b557f67101dd","bodyHash":"b7c0927dd7d0deb8f61ae1cf78462ae2c62a8277c55905f8354bbcfa660f49a0"}
  *
  * Go source:
  * func (p *Printer) emitDeleteExpression(node *ast.DeleteExpression) {
@@ -1023,11 +1231,15 @@ export function Printer_emitArrowFunction(receiver: GoPtr<Printer>, node: GoPtr<
  * }
  */
 export function Printer_emitDeleteExpression(receiver: GoPtr<Printer>, node: GoPtr<DeleteExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitDeleteExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindDeleteKeyword, Node_Pos(node), WriteKindKeyword, node);
+  Printer_writeSpace(receiver);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceUnary);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitVoidExpression","kind":"method","status":"stub","sigHash":"8b3df196be7e770d45d21b7b0bee0bcb82c241d6acc9827e0d5315a3706d1dd9","bodyHash":"fb37725af761923646bff57f0883ca479cfa00ccc1d2411393056c6de837a110"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitVoidExpression","kind":"method","status":"implemented","sigHash":"8b3df196be7e770d45d21b7b0bee0bcb82c241d6acc9827e0d5315a3706d1dd9","bodyHash":"fb37725af761923646bff57f0883ca479cfa00ccc1d2411393056c6de837a110"}
  *
  * Go source:
  * func (p *Printer) emitVoidExpression(node *ast.VoidExpression) {
@@ -1039,11 +1251,15 @@ export function Printer_emitDeleteExpression(receiver: GoPtr<Printer>, node: GoP
  * }
  */
 export function Printer_emitVoidExpression(receiver: GoPtr<Printer>, node: GoPtr<VoidExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitVoidExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindVoidKeyword, Node_Pos(node), WriteKindKeyword, node);
+  Printer_writeSpace(receiver);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceUnary);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAwaitExpression","kind":"method","status":"stub","sigHash":"8554c82b464983d364e365af1cf8f5a7447b5bdd65c4a3ad0b987ba98ea83777","bodyHash":"368615266d2c6380ba30239dfbfd8915982e9777d81edbc0aeb4d4113f9faaf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAwaitExpression","kind":"method","status":"implemented","sigHash":"8554c82b464983d364e365af1cf8f5a7447b5bdd65c4a3ad0b987ba98ea83777","bodyHash":"368615266d2c6380ba30239dfbfd8915982e9777d81edbc0aeb4d4113f9faaf6"}
  *
  * Go source:
  * func (p *Printer) emitAwaitExpression(node *ast.AwaitExpression) {
@@ -1055,11 +1271,15 @@ export function Printer_emitVoidExpression(receiver: GoPtr<Printer>, node: GoPtr
  * }
  */
 export function Printer_emitAwaitExpression(receiver: GoPtr<Printer>, node: GoPtr<AwaitExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAwaitExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindAwaitKeyword, Node_Pos(node), WriteKindKeyword, node);
+  Printer_writeSpace(receiver);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceUnary);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPrefixUnaryExpression","kind":"method","status":"stub","sigHash":"ef03203ae33a2afdfa02e93cea8f5cd35c3fc4bfbe36c49a6ddab5b5b527af23","bodyHash":"2f4ac562378ec667f61171887ea49663f664280ddf8eec23ab97874ca75d262a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"ef03203ae33a2afdfa02e93cea8f5cd35c3fc4bfbe36c49a6ddab5b5b527af23","bodyHash":"2f4ac562378ec667f61171887ea49663f664280ddf8eec23ab97874ca75d262a"}
  *
  * Go source:
  * func (p *Printer) emitPrefixUnaryExpression(node *ast.PrefixUnaryExpression) {
@@ -1093,11 +1313,39 @@ export function Printer_emitAwaitExpression(receiver: GoPtr<Printer>, node: GoPt
  * }
  */
 export function Printer_emitPrefixUnaryExpression(receiver: GoPtr<Printer>, node: GoPtr<PrefixUnaryExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPrefixUnaryExpression");
+  const state = Printer_enterNode(receiver, node);
+  const operator = node!.Operator;
+  const operand = node!.Operand;
+  Printer_emitToken(receiver, operator, Node_Pos(node), WriteKindOperator, node);
+
+  // In some cases, we need to emit a space between the operator and the operand. One obvious case
+  // is when the operator is an identifier, like delete or typeof. We also need to do this for plus
+  // and minus expressions in certain cases. Specifically, consider the following two cases (parens
+  // are just for clarity of exposition, and not part of the source code):
+  //
+  //  (+(+1))
+  //  (+(++1))
+  //
+  // We need to emit a space in both cases. In the first case, the absence of a space will make
+  // the resulting expression a prefix increment operation. And in the second, it will make the resulting
+  // expression a prefix increment whose operand is a plus expression - (++(+x))
+  // The same is true of minus of course.
+  if (operand!.Kind === KindPrefixUnaryExpression) {
+    const inner = AsPrefixUnaryExpression(operand)!.Operator;
+    if (
+      (operator === KindPlusToken && (inner === KindPlusToken || inner === KindPlusPlusToken)) ||
+      (operator === KindMinusToken && (inner === KindMinusToken || inner === KindMinusMinusToken))
+    ) {
+      Printer_writeSpace(receiver);
+    }
+  }
+
+  Printer_emitExpression(receiver, node!.Operand, OperatorPrecedenceUnary);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixUnaryExpression","kind":"method","status":"stub","sigHash":"eccf8baa9cf66c374508b2b034b3e12a6d3723a021b0b6300b3a4a195102de59","bodyHash":"ffc6d7ec6ef15d00c11f8a8be215d70749c6470898edc6af9e57ce5335f8250f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"eccf8baa9cf66c374508b2b034b3e12a6d3723a021b0b6300b3a4a195102de59","bodyHash":"ffc6d7ec6ef15d00c11f8a8be215d70749c6470898edc6af9e57ce5335f8250f"}
  *
  * Go source:
  * func (p *Printer) emitPostfixUnaryExpression(node *ast.PostfixUnaryExpression) {
@@ -1108,11 +1356,14 @@ export function Printer_emitPrefixUnaryExpression(receiver: GoPtr<Printer>, node
  * }
  */
 export function Printer_emitPostfixUnaryExpression(receiver: GoPtr<Printer>, node: GoPtr<PostfixUnaryExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPostfixUnaryExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Operand, OperatorPrecedenceLeftHandSide);
+  Printer_emitToken(receiver, node!.Operator, Node_End(node!.Operand), WriteKindOperator, node);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralKindOfBinaryPlusOperand","kind":"method","status":"stub","sigHash":"704a5db1ef12049fd0c246876c7fde89fc92a48cc8a41d25d1c8ab0b9bdfd322","bodyHash":"c1cf19714a043cddcdd8dcedef53986c8fb5e73e66e7b7fc2e7b19b4fc0f8d14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralKindOfBinaryPlusOperand","kind":"method","status":"implemented","sigHash":"704a5db1ef12049fd0c246876c7fde89fc92a48cc8a41d25d1c8ab0b9bdfd322","bodyHash":"c1cf19714a043cddcdd8dcedef53986c8fb5e73e66e7b7fc2e7b19b4fc0f8d14"}
  *
  * Go source:
  * func (p *Printer) getLiteralKindOfBinaryPlusOperand(node *ast.Expression) ast.Kind {
@@ -1144,11 +1395,35 @@ export function Printer_emitPostfixUnaryExpression(receiver: GoPtr<Printer>, nod
  * }
  */
 export function Printer_getLiteralKindOfBinaryPlusOperand(receiver: GoPtr<Printer>, node: GoPtr<Expression>): Kind {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getLiteralKindOfBinaryPlusOperand");
+  const skipped = SkipPartiallyEmittedExpressions(node);
+
+  if (IsLiteralKind(skipped!.Kind)) {
+    return skipped!.Kind;
+  }
+
+  if (skipped!.Kind === KindBinaryExpression) {
+    const n = AsBinaryExpression(skipped);
+    if (n!.OperatorToken!.Kind === KindPlusToken) {
+      // !!! Determine if caching this is worthwhile over recomputing
+      ////if n.cachedLiteralKind != KindUnknown {
+      ////	return n.cachedLiteralKind;
+      ////}
+
+      const leftKind = Printer_getLiteralKindOfBinaryPlusOperand(receiver, n!.Left);
+      const literalKind = (IsLiteralKind(leftKind) && leftKind === Printer_getLiteralKindOfBinaryPlusOperand(receiver, n!.Right))
+        ? leftKind
+        : KindUnknown;
+
+      ////n.cachedLiteralKind = literalKind;
+      return literalKind;
+    }
+  }
+
+  return KindUnknown;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getBinaryExpressionPrecedence","kind":"method","status":"stub","sigHash":"72213047859f17c84ce14a87f8f3fce62582b9762d13ea160dc8e7795a20e555","bodyHash":"c99a733aea09d91f03fdd81a54b534cbaa305bd95df0f009df0baf71c739c61d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getBinaryExpressionPrecedence","kind":"method","status":"implemented","sigHash":"72213047859f17c84ce14a87f8f3fce62582b9762d13ea160dc8e7795a20e555","bodyHash":"c99a733aea09d91f03fdd81a54b534cbaa305bd95df0f009df0baf71c739c61d"}
  *
  * Go source:
  * func (p *Printer) getBinaryExpressionPrecedence(node *ast.BinaryExpression) (leftPrec ast.OperatorPrecedence, rightPrec ast.OperatorPrecedence) {
@@ -1222,11 +1497,86 @@ export function Printer_getLiteralKindOfBinaryPlusOperand(receiver: GoPtr<Printe
  * }
  */
 export function Printer_getBinaryExpressionPrecedence(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>): [OperatorPrecedence, OperatorPrecedence] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getBinaryExpressionPrecedence");
+  const precedence = GetExpressionPrecedence(node);
+  let leftPrec = precedence;
+  let rightPrec = precedence;
+  switch (precedence) {
+    case OperatorPrecedenceComma:
+      // No need to parenthesize the right operand when the binary operator and
+      // operand are both ,:
+      //  x,(a,b)     => x,a,b
+      break;
+    case OperatorPrecedenceAssignment:
+      // assignment is right-associative
+      leftPrec = OperatorPrecedenceConditional;
+      rightPrec = OperatorPrecedenceYield;
+      break;
+    case OperatorPrecedenceLogicalOR:
+      rightPrec = OperatorPrecedenceLogicalAND;
+      break;
+    case OperatorPrecedenceLogicalAND:
+      rightPrec = OperatorPrecedenceBitwiseOR;
+      break;
+    case OperatorPrecedenceBitwiseOR:
+      // No need to parenthesize the right operand when the binary operator and
+      // operand are both | due to the associative property of mathematics:
+      //  x|(a|b)     => x|a|b
+      break;
+    case OperatorPrecedenceBitwiseXOR:
+      // No need to parenthesize the right operand when the binary operator and
+      // operand are both ^ due to the associative property of mathematics:
+      //  x^(a^b)     => x^a^b
+      break;
+    case OperatorPrecedenceBitwiseAND:
+      // No need to parenthesize the right operand when the binary operator and
+      // operand are both & due to the associative property of mathematics:
+      //  x&(a&b)     => x&a&b
+      break;
+    case OperatorPrecedenceEquality:
+      rightPrec = OperatorPrecedenceRelational;
+      break;
+    case OperatorPrecedenceRelational:
+      rightPrec = OperatorPrecedenceShift;
+      break;
+    case OperatorPrecedenceShift:
+      rightPrec = OperatorPrecedenceAdditive;
+      break;
+    case OperatorPrecedenceAdditive:
+      if (node!.OperatorToken!.Kind === KindPlusToken && isBinaryOperation(node!.Right, KindPlusToken)) {
+        const leftKind = Printer_getLiteralKindOfBinaryPlusOperand(receiver, node!.Left);
+        if (IsLiteralKind(leftKind) && leftKind === Printer_getLiteralKindOfBinaryPlusOperand(receiver, node!.Right)) {
+          // No need to parenthesize the right operand when the binary operator
+          // is plus (+) if both the left and right operands consist solely of either
+          // literals of the same kind or binary plus (+) expressions for literals of
+          // the same kind (recursively).
+          //  "a"+(1+2)       => "a"+(1+2)
+          //  "a"+("b"+"c")   => "a"+"b"+"c"
+          break;
+        }
+      }
+      rightPrec = OperatorPrecedenceMultiplicative;
+      break;
+    case OperatorPrecedenceMultiplicative:
+      if (node!.OperatorToken!.Kind === KindAsteriskToken && isBinaryOperation(node!.Right, KindAsteriskToken)) {
+        // No need to parenthesize the right operand when the binary operator and
+        // operand are both * due to the associative property of mathematics:
+        //  x*(a*b)     => x*a*b
+        break;
+      }
+      rightPrec = OperatorPrecedenceExponentiation;
+      break;
+    case OperatorPrecedenceExponentiation:
+      // exponentiation is right-associative
+      leftPrec = OperatorPrecedenceUpdate;
+      break;
+    default:
+      throw new globalThis.Error(`unhandled precedence: ${precedence}`);
+  }
+  return [leftPrec, rightPrec];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitBinaryExpression","kind":"method","status":"stub","sigHash":"e4a7380c7cd96de717cb6d1665535f40b3176d9281bcb70122567e463b839417","bodyHash":"c0eb920a4f84854c02b2d22a721232f38fe330f486a2ad73d15b99691352a540"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitBinaryExpression","kind":"method","status":"implemented","sigHash":"e4a7380c7cd96de717cb6d1665535f40b3176d9281bcb70122567e463b839417","bodyHash":"c0eb920a4f84854c02b2d22a721232f38fe330f486a2ad73d15b99691352a540"}
  *
  * Go source:
  * func (p *Printer) emitBinaryExpression(node *ast.BinaryExpression) {
@@ -1251,11 +1601,30 @@ export function Printer_getBinaryExpressionPrecedence(receiver: GoPtr<Printer>, 
  * }
  */
 export function Printer_emitBinaryExpression(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitBinaryExpression");
+  let [leftPrec, rightPrec] = Printer_getBinaryExpressionPrecedence(receiver, node);
+  const emittedLeft = SkipPartiallyEmittedExpressions(node!.Left);
+  if (NodeIsSynthesized(emittedLeft) && emittedLeft!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(node!.OperatorToken!.Kind, AsBinaryExpression(emittedLeft)!.OperatorToken!.Kind)) {
+    leftPrec = OperatorPrecedenceHighest;
+  }
+  const emittedRight = SkipPartiallyEmittedExpressions(node!.Right);
+  if (NodeIsSynthesized(emittedRight) && emittedRight!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(node!.OperatorToken!.Kind, AsBinaryExpression(emittedRight)!.OperatorToken!.Kind)) {
+    rightPrec = OperatorPrecedenceHighest;
+  }
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Left, leftPrec);
+  const linesBeforeOperator = Printer_getLinesBetweenNodes(receiver, node, node!.Left, node!.OperatorToken);
+  const linesAfterOperator = Printer_getLinesBetweenNodes(receiver, node, node!.OperatorToken, node!.Right);
+  Printer_writeLinesAndIndent(receiver, linesBeforeOperator, (node!.OperatorToken!.Kind !== KindCommaToken) as bool /*writeSpaceIfNotIndenting*/);
+  Printer_emitTokenNodeEx(receiver, node!.OperatorToken, tefNoSourceMaps);
+  Printer_writeLinesAndIndent(receiver, linesAfterOperator, true as bool /*writeSpaceIfNotIndenting*/); // Binary operators should have a space before the comment starts
+  Printer_emitExpression(receiver, node!.Right, rightPrec);
+  Printer_decreaseIndentIf(receiver, (linesAfterOperator > 0) as bool);
+  Printer_decreaseIndentIf(receiver, (linesBeforeOperator > 0) as bool);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitShortCircuitExpression","kind":"method","status":"stub","sigHash":"9ea404e59d9e4bdee066638e7f80e9fb418de1af10c732337bd990206b518d78","bodyHash":"3d80cc07c77807dd82a98c58f49e35024fc52f1ff7dc1581f80863875f905cf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitShortCircuitExpression","kind":"method","status":"implemented","sigHash":"9ea404e59d9e4bdee066638e7f80e9fb418de1af10c732337bd990206b518d78","bodyHash":"3d80cc07c77807dd82a98c58f49e35024fc52f1ff7dc1581f80863875f905cf3"}
  *
  * Go source:
  * func (p *Printer) emitShortCircuitExpression(node *ast.Expression) {
@@ -1267,11 +1636,15 @@ export function Printer_emitBinaryExpression(receiver: GoPtr<Printer>, node: GoP
  * }
  */
 export function Printer_emitShortCircuitExpression(receiver: GoPtr<Printer>, node: GoPtr<Expression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitShortCircuitExpression");
+  if (isBinaryOperation(SkipPartiallyEmittedExpressions(node), KindQuestionQuestionToken)) {
+    Printer_emitExpression(receiver, node, OperatorPrecedenceCoalesce);
+  } else {
+    Printer_emitExpression(receiver, node, OperatorPrecedenceLogicalOR);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitConditionalExpression","kind":"method","status":"stub","sigHash":"af70a982bbeccf8eccd49471f39ed72916728c8b53b58632e1a716966e7c4e83","bodyHash":"0bb92cb7e4f4e3874ce973bd88a24d41bd2594d18e80641acd8d0f73fc6e0dd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitConditionalExpression","kind":"method","status":"implemented","sigHash":"af70a982bbeccf8eccd49471f39ed72916728c8b53b58632e1a716966e7c4e83","bodyHash":"0bb92cb7e4f4e3874ce973bd88a24d41bd2594d18e80641acd8d0f73fc6e0dd4"}
  *
  * Go source:
  * func (p *Printer) emitConditionalExpression(node *ast.ConditionalExpression) {
@@ -1297,7 +1670,25 @@ export function Printer_emitShortCircuitExpression(receiver: GoPtr<Printer>, nod
  * }
  */
 export function Printer_emitConditionalExpression(receiver: GoPtr<Printer>, node: GoPtr<ConditionalExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitConditionalExpression");
+  const state = Printer_enterNode(receiver, node);
+  const linesBeforeQuestion = Printer_getLinesBetweenNodes(receiver, node, node!.Condition, node!.QuestionToken);
+  const linesAfterQuestion = Printer_getLinesBetweenNodes(receiver, node, node!.QuestionToken, node!.WhenTrue);
+  const linesBeforeColon = Printer_getLinesBetweenNodes(receiver, node, node!.WhenTrue, node!.ColonToken);
+  const linesAfterColon = Printer_getLinesBetweenNodes(receiver, node, node!.ColonToken, node!.WhenFalse);
+  Printer_emitShortCircuitExpression(receiver, node!.Condition);
+  Printer_writeLinesAndIndent(receiver, linesBeforeQuestion, true as bool /*writeSpaceIfNotIndenting*/);
+  Printer_emitPunctuationNode(receiver, node!.QuestionToken);
+  Printer_writeLinesAndIndent(receiver, linesAfterQuestion, true as bool /*writeSpaceIfNotIndenting*/);
+  Printer_emitExpression(receiver, node!.WhenTrue, OperatorPrecedenceYield);
+  Printer_decreaseIndentIf(receiver, (linesAfterQuestion > 0) as bool);
+  Printer_decreaseIndentIf(receiver, (linesBeforeQuestion > 0) as bool);
+  Printer_writeLinesAndIndent(receiver, linesBeforeColon, true as bool /*writeSpaceIfNotIndenting*/);
+  Printer_emitPunctuationNode(receiver, node!.ColonToken);
+  Printer_writeLinesAndIndent(receiver, linesAfterColon, true as bool /*writeSpaceIfNotIndenting*/);
+  Printer_emitExpression(receiver, node!.WhenFalse, OperatorPrecedenceYield);
+  Printer_decreaseIndentIf(receiver, (linesAfterColon > 0) as bool);
+  Printer_decreaseIndentIf(receiver, (linesBeforeColon > 0) as bool);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
@@ -1319,7 +1710,7 @@ export function Printer_emitTemplateExpression(receiver: GoPtr<Printer>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitYieldExpression","kind":"method","status":"stub","sigHash":"5d4ce5a4a222682faf5c4b9280cb2b2e6e2161f34a4c8d0b89860f48fa9ed8f3","bodyHash":"73e29d4ce5845f9fc1c08d1bff87d6680e5780a4e2202d8854fc65c0f87fa812"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitYieldExpression","kind":"method","status":"implemented","sigHash":"5d4ce5a4a222682faf5c4b9280cb2b2e6e2161f34a4c8d0b89860f48fa9ed8f3","bodyHash":"73e29d4ce5845f9fc1c08d1bff87d6680e5780a4e2202d8854fc65c0f87fa812"}
  *
  * Go source:
  * func (p *Printer) emitYieldExpression(node *ast.YieldExpression) {
@@ -1334,11 +1725,18 @@ export function Printer_emitTemplateExpression(receiver: GoPtr<Printer>, node: G
  * }
  */
 export function Printer_emitYieldExpression(receiver: GoPtr<Printer>, node: GoPtr<YieldExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitYieldExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindYieldKeyword, Node_Pos(node), WriteKindKeyword, node);
+  Printer_emitPunctuationNode(receiver, node!.AsteriskToken);
+  if (node!.Expression !== undefined) {
+    Printer_writeSpace(receiver);
+    Printer_emitExpressionNoASI(receiver, node!.Expression, OperatorPrecedenceDisallowComma);
+  }
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadElement","kind":"method","status":"stub","sigHash":"6ecf99d373ff24f3328fef9fb38e279b21474f533aaa8ee369fc7684fa297a5b","bodyHash":"6b1251f6a50fb491120ec0ebf41f3b522bf7695fc35168a1a4c38a146e639d2a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadElement","kind":"method","status":"implemented","sigHash":"6ecf99d373ff24f3328fef9fb38e279b21474f533aaa8ee369fc7684fa297a5b","bodyHash":"6b1251f6a50fb491120ec0ebf41f3b522bf7695fc35168a1a4c38a146e639d2a"}
  *
  * Go source:
  * func (p *Printer) emitSpreadElement(node *ast.SpreadElement) {
@@ -1349,7 +1747,10 @@ export function Printer_emitYieldExpression(receiver: GoPtr<Printer>, node: GoPt
  * }
  */
 export function Printer_emitSpreadElement(receiver: GoPtr<Printer>, node: GoPtr<SpreadElement>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadElement");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitToken(receiver, KindDotDotDotToken, Node_Pos(node), WriteKindPunctuation, node);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceDisallowComma);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
@@ -1427,7 +1828,7 @@ export function Printer_emitOmittedExpression(receiver: GoPtr<Printer>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAsExpression","kind":"method","status":"stub","sigHash":"762f96c2b8bf0d7dee98c4a8a2c3c3aae8c8e173384f5dc27e6ce9c71891e029","bodyHash":"a74da5c2a393868759befedcbe99576c63e7631ba53ee11f2e424917e078d8ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAsExpression","kind":"method","status":"implemented","sigHash":"762f96c2b8bf0d7dee98c4a8a2c3c3aae8c8e173384f5dc27e6ce9c71891e029","bodyHash":"a74da5c2a393868759befedcbe99576c63e7631ba53ee11f2e424917e078d8ef"}
  *
  * Go source:
  * func (p *Printer) emitAsExpression(node *ast.AsExpression) {
@@ -1441,11 +1842,17 @@ export function Printer_emitOmittedExpression(receiver: GoPtr<Printer>, node: Go
  * }
  */
 export function Printer_emitAsExpression(receiver: GoPtr<Printer>, node: GoPtr<AsExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitAsExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceRelational);
+  Printer_writeSpace(receiver);
+  Printer_writeKeyword(receiver, "as");
+  Printer_writeSpace(receiver);
+  Printer_emitTypeNodeOutsideExtends(receiver, node!.Type);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSatisfiesExpression","kind":"method","status":"stub","sigHash":"b4a3a7efa5c1acad7769723759e6966acb782d6c12a4623201aaeae7b2b6d67f","bodyHash":"b3fb60c91b643d2f10ed2ce3e1036fb768a3c5e22c03af395daf5b407e7d4728"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSatisfiesExpression","kind":"method","status":"implemented","sigHash":"b4a3a7efa5c1acad7769723759e6966acb782d6c12a4623201aaeae7b2b6d67f","bodyHash":"b3fb60c91b643d2f10ed2ce3e1036fb768a3c5e22c03af395daf5b407e7d4728"}
  *
  * Go source:
  * func (p *Printer) emitSatisfiesExpression(node *ast.SatisfiesExpression) {
@@ -1459,11 +1866,17 @@ export function Printer_emitAsExpression(receiver: GoPtr<Printer>, node: GoPtr<A
  * }
  */
 export function Printer_emitSatisfiesExpression(receiver: GoPtr<Printer>, node: GoPtr<SatisfiesExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSatisfiesExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceRelational);
+  Printer_writeSpace(receiver);
+  Printer_writeKeyword(receiver, "satisfies");
+  Printer_writeSpace(receiver);
+  Printer_emitTypeNodeOutsideExtends(receiver, node!.Type);
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNonNullExpression","kind":"method","status":"stub","sigHash":"fd72d17f883936d8e8f68e5319f66b507fa4c33bcc90d7a28ec385d0163c3de1","bodyHash":"45458c0ac74b943f545ec0ec4d43ef976d159456a8d20c52b59c7dd8aae78e9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNonNullExpression","kind":"method","status":"implemented","sigHash":"fd72d17f883936d8e8f68e5319f66b507fa4c33bcc90d7a28ec385d0163c3de1","bodyHash":"45458c0ac74b943f545ec0ec4d43ef976d159456a8d20c52b59c7dd8aae78e9d"}
  *
  * Go source:
  * func (p *Printer) emitNonNullExpression(node *ast.NonNullExpression) {
@@ -1474,11 +1887,14 @@ export function Printer_emitSatisfiesExpression(receiver: GoPtr<Printer>, node: 
  * }
  */
 export function Printer_emitNonNullExpression(receiver: GoPtr<Printer>, node: GoPtr<NonNullExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitNonNullExpression");
+  const state = Printer_enterNode(receiver, node);
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceMember);
+  Printer_writeOperator(receiver, "!");
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPartiallyEmittedExpression","kind":"method","status":"stub","sigHash":"119b7079e17c9915b1e1efd7db4301b349dcbe256d7c2561f74a1d8a93fc3c67","bodyHash":"5346b51bb99a0e5d3afd5320daa90af2739871231f54cc3f83245a9e35529826"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPartiallyEmittedExpression","kind":"method","status":"implemented","sigHash":"119b7079e17c9915b1e1efd7db4301b349dcbe256d7c2561f74a1d8a93fc3c67","bodyHash":"5346b51bb99a0e5d3afd5320daa90af2739871231f54cc3f83245a9e35529826"}
  *
  * Go source:
  * func (p *Printer) emitPartiallyEmittedExpression(node *ast.PartiallyEmittedExpression) {
@@ -1516,11 +1932,39 @@ export function Printer_emitNonNullExpression(receiver: GoPtr<Printer>, node: Go
  * }
  */
 export function Printer_emitPartiallyEmittedExpression(receiver: GoPtr<Printer>, node: GoPtr<PartiallyEmittedExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitPartiallyEmittedExpression");
+  // avoid reprinting parens for nested partially emitted expressions
+  type StackEntry = { node: GoPtr<PartiallyEmittedExpression>; state: ReturnType<typeof Printer_enterNode> };
+  const stack: StackEntry[] = [];
+  let current = node;
+  for (;;) {
+    const state = Printer_enterNode(receiver, current);
+    const emitFlags = EmitContext_EmitFlags(receiver!.emitContext, current);
+    if ((emitFlags & EFNoLeadingComments) === 0 && Node_Pos(current) !== Node_Pos(current!.Expression)) {
+      Printer_emitTrailingCommentsOfPosition(receiver, Node_Pos(current!.Expression), false as bool /*prefixSpace*/, false as bool /*forceNoNewline*/);
+    }
+    stack.push({ node: current, state });
+    if (!IsPartiallyEmittedExpression(current!.Expression)) {
+      break;
+    }
+    current = AsPartiallyEmittedExpression(current!.Expression);
+  }
+
+  Printer_emitExpression(receiver, current!.Expression, OperatorPrecedenceLowest);
+
+  // unwind stack
+  while (stack.length > 0) {
+    const entry = stack.pop()!;
+    const emitFlags = EmitContext_EmitFlags(receiver!.emitContext, current);
+    if ((emitFlags & EFNoTrailingComments) === 0 && Node_End(current) !== Node_End(current!.Expression)) {
+      Printer_emitLeadingCommentsOfPosition(receiver, Node_End(current!.Expression));
+    }
+    Printer_exitNode(receiver, current, entry.state);
+    current = entry.node;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.parenthesizeExpressionForNoAsi","kind":"method","status":"stub","sigHash":"f71dbabc7310ab330d34af2a55c0731a1c2b920d75c05644b76c025784262b0b","bodyHash":"07cd171e7dd5fef1e776a8a543187fd78d4d8ca22c81da13fc77a8647cbe3d6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.parenthesizeExpressionForNoAsi","kind":"method","status":"implemented","sigHash":"f71dbabc7310ab330d34af2a55c0731a1c2b920d75c05644b76c025784262b0b","bodyHash":"07cd171e7dd5fef1e776a8a543187fd78d4d8ca22c81da13fc77a8647cbe3d6e"}
  *
  * Go source:
  * func (p *Printer) parenthesizeExpressionForNoAsi(node *ast.Expression) *ast.Expression {
@@ -1636,11 +2080,142 @@ export function Printer_emitPartiallyEmittedExpression(receiver: GoPtr<Printer>,
  * }
  */
 export function Printer_parenthesizeExpressionForNoAsi(receiver: GoPtr<Printer>, node: GoPtr<Expression>): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.parenthesizeExpressionForNoAsi");
+  if (!receiver!.commentsDisabled) {
+    const f = receiver!.emitContext!.Factory!.__tsgoEmbedded0;
+    switch ((node as GoPtr<Node>)!.Kind) {
+      case KindPartiallyEmittedExpression: {
+        if (Printer_willEmitLeadingNewLine(receiver, node)) {
+          const pee = AsPartiallyEmittedExpression(node as GoPtr<Node>);
+          const parseNode = EmitContext_ParseNode(receiver!.emitContext, node as GoPtr<Node>);
+          if (parseNode !== undefined && IsParenthesizedExpression(parseNode)) {
+            // If the original node was a parenthesized expression, restore it to preserve comment and source map emit
+            const parens = NodeFactory_NewParenthesizedExpression(f, pee!.Expression as GoPtr<Expression>);
+            EmitContext_SetOriginal(receiver!.emitContext, parens as GoPtr<Node>, node as GoPtr<Node>);
+            (parens as GoPtr<Node>)!.Loc = parseNode!.Loc;
+            return parens as GoPtr<Expression>;
+          }
+          return NodeFactory_NewParenthesizedExpression(f, node) as GoPtr<Expression>;
+        }
+        const pee2 = AsPartiallyEmittedExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdatePartiallyEmittedExpression(
+          f,
+          pee2,
+          Printer_parenthesizeExpressionForNoAsi(receiver, pee2!.Expression as GoPtr<Expression>),
+        ) as GoPtr<Expression>;
+      }
+      case KindPropertyAccessExpression: {
+        const pae = AsPropertyAccessExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdatePropertyAccessExpression(
+          f,
+          pae,
+          Printer_parenthesizeExpressionForNoAsi(receiver, pae!.Expression as GoPtr<Expression>),
+          pae!.QuestionDotToken,
+          pae!.name as GoPtr<MemberName>,
+          pae!.Flags,
+        ) as GoPtr<Expression>;
+      }
+      case KindElementAccessExpression: {
+        const eae = AsElementAccessExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateElementAccessExpression(
+          f,
+          eae,
+          Printer_parenthesizeExpressionForNoAsi(receiver, eae!.Expression as GoPtr<Expression>),
+          eae!.QuestionDotToken,
+          eae!.ArgumentExpression,
+          eae!.Flags,
+        ) as GoPtr<Expression>;
+      }
+      case KindCallExpression: {
+        const ce = AsCallExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateCallExpression(
+          f,
+          ce,
+          Printer_parenthesizeExpressionForNoAsi(receiver, ce!.Expression as GoPtr<Expression>),
+          ce!.QuestionDotToken,
+          ce!.TypeArguments,
+          ce!.Arguments,
+          ce!.Flags,
+        ) as GoPtr<Expression>;
+      }
+      case KindTaggedTemplateExpression: {
+        const tte = AsTaggedTemplateExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateTaggedTemplateExpression(
+          f,
+          tte,
+          Printer_parenthesizeExpressionForNoAsi(receiver, tte!.Tag as GoPtr<Expression>),
+          tte!.QuestionDotToken,
+          tte!.TypeArguments,
+          tte!.Template,
+          tte!.Flags,
+        ) as GoPtr<Expression>;
+      }
+      case KindPostfixUnaryExpression: {
+        const pue = AsPostfixUnaryExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdatePostfixUnaryExpression(
+          f,
+          pue,
+          Printer_parenthesizeExpressionForNoAsi(receiver, pue!.Operand as GoPtr<Expression>),
+          pue!.Operator,
+        ) as GoPtr<Expression>;
+      }
+      case KindBinaryExpression: {
+        const be = AsBinaryExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateBinaryExpression(
+          f,
+          be,
+          be!.modifiers,
+          Printer_parenthesizeExpressionForNoAsi(receiver, be!.Left as GoPtr<Expression>),
+          be!.Type,
+          be!.OperatorToken,
+          be!.Right,
+        ) as GoPtr<Expression>;
+      }
+      case KindConditionalExpression: {
+        const ce2 = AsConditionalExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateConditionalExpression(
+          f,
+          ce2,
+          Printer_parenthesizeExpressionForNoAsi(receiver, ce2!.Condition as GoPtr<Expression>),
+          ce2!.QuestionToken,
+          ce2!.WhenTrue,
+          ce2!.ColonToken,
+          ce2!.WhenFalse,
+        ) as GoPtr<Expression>;
+      }
+      case KindAsExpression: {
+        const ae = AsAsExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateAsExpression(
+          f,
+          ae,
+          Printer_parenthesizeExpressionForNoAsi(receiver, ae!.Expression as GoPtr<Expression>),
+          ae!.Type,
+        ) as GoPtr<Expression>;
+      }
+      case KindSatisfiesExpression: {
+        const se = AsSatisfiesExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateSatisfiesExpression(
+          f,
+          se,
+          Printer_parenthesizeExpressionForNoAsi(receiver, se!.Expression as GoPtr<Expression>),
+          se!.Type,
+        ) as GoPtr<Expression>;
+      }
+      case KindNonNullExpression: {
+        const nne = AsNonNullExpression(node as GoPtr<Node>);
+        return NodeFactory_UpdateNonNullExpression(
+          f,
+          nne,
+          Printer_parenthesizeExpressionForNoAsi(receiver, nne!.Expression as GoPtr<Expression>),
+          (node as GoPtr<Node>)!.Flags,
+        ) as GoPtr<Expression>;
+      }
+    }
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionNoASI","kind":"method","status":"stub","sigHash":"bec7a8e31f1f232984ec490d1b3dfde76ed9fbfa176623b15177980cbd01d33b","bodyHash":"20154102d3da80b50c61a1d1528730106a813464229b262e3bbf796bc62d14f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionNoASI","kind":"method","status":"implemented","sigHash":"bec7a8e31f1f232984ec490d1b3dfde76ed9fbfa176623b15177980cbd01d33b","bodyHash":"20154102d3da80b50c61a1d1528730106a813464229b262e3bbf796bc62d14f4"}
  *
  * Go source:
  * func (p *Printer) emitExpressionNoASI(node *ast.Expression, precedence ast.OperatorPrecedence) {
@@ -1649,11 +2224,12 @@ export function Printer_parenthesizeExpressionForNoAsi(receiver: GoPtr<Printer>,
  * }
  */
 export function Printer_emitExpressionNoASI(receiver: GoPtr<Printer>, node: GoPtr<Expression>, precedence: OperatorPrecedence): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionNoASI");
+  const parenthesized = Printer_parenthesizeExpressionForNoAsi(receiver, node);
+  Printer_emitExpression(receiver, parenthesized, precedence);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpression","kind":"method","status":"stub","sigHash":"34b08548ebae602b66a1dca09de6ee389531e48eabbb57d1d3a226b5ce4e1aee","bodyHash":"b4c3d3fb80126b6adc55290a36a070bd3f99b8e918542b2bb2640b4fb8d17e65"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpression","kind":"method","status":"implemented","sigHash":"34b08548ebae602b66a1dca09de6ee389531e48eabbb57d1d3a226b5ce4e1aee","bodyHash":"b4c3d3fb80126b6adc55290a36a070bd3f99b8e918542b2bb2640b4fb8d17e65"}
  *
  * Go source:
  * func (p *Printer) emitExpression(node *ast.Expression, precedence ast.OperatorPrecedence) {
@@ -1781,11 +2357,180 @@ export function Printer_emitExpressionNoASI(receiver: GoPtr<Printer>, node: GoPt
  * }
  */
 export function Printer_emitExpression(receiver: GoPtr<Printer>, node: GoPtr<Expression>, precedence: OperatorPrecedence): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpression");
+  const parens = GetExpressionPrecedence(SkipPartiallyEmittedExpressions(node)) < precedence;
+  if (parens) {
+    Printer_writePunctuation(receiver, "(");
+  }
+
+  switch (node!.Kind) {
+    // Keywords
+    case KindTrueKeyword:
+    case KindFalseKeyword:
+    case KindNullKeyword:
+      Printer_emitTokenNode(receiver, node);
+      break;
+    case KindThisKeyword:
+    case KindSuperKeyword:
+    case KindImportKeyword:
+      Printer_emitKeywordExpression(receiver, AsKeywordExpression(node));
+      break;
+
+    // Literals
+    case KindNumericLiteral:
+      Printer_emitNumericLiteral(receiver, AsNumericLiteral(node));
+      break;
+    case KindBigIntLiteral:
+      Printer_emitBigIntLiteral(receiver, AsBigIntLiteral(node));
+      break;
+    case KindStringLiteral:
+      Printer_emitStringLiteral(receiver, AsStringLiteral(node));
+      break;
+    case KindRegularExpressionLiteral:
+      Printer_emitRegularExpressionLiteral(receiver, AsRegularExpressionLiteral(node));
+      break;
+    case KindNoSubstitutionTemplateLiteral:
+      Printer_emitNoSubstitutionTemplateLiteral(receiver, AsNoSubstitutionTemplateLiteral(node));
+      break;
+
+    // Identifiers
+    case KindIdentifier:
+      Printer_emitIdentifierReference(receiver, AsIdentifier(node));
+      break;
+    case KindPrivateIdentifier:
+      Printer_emitPrivateIdentifier(receiver, AsPrivateIdentifier(node));
+      break;
+
+    // Expressions
+    case KindArrayLiteralExpression:
+      Printer_emitArrayLiteralExpression(receiver, AsArrayLiteralExpression(node));
+      break;
+    case KindObjectLiteralExpression:
+      Printer_emitObjectLiteralExpression(receiver, AsObjectLiteralExpression(node));
+      break;
+    case KindPropertyAccessExpression:
+      Printer_emitPropertyAccessExpression(receiver, AsPropertyAccessExpression(node));
+      break;
+    case KindElementAccessExpression:
+      Printer_emitElementAccessExpression(receiver, AsElementAccessExpression(node));
+      break;
+    case KindCallExpression:
+      Printer_emitCallExpression(receiver, AsCallExpression(node));
+      break;
+    case KindNewExpression:
+      Printer_emitNewExpression(receiver, AsNewExpression(node));
+      break;
+    case KindTaggedTemplateExpression:
+      Printer_emitTaggedTemplateExpression(receiver, AsTaggedTemplateExpression(node));
+      break;
+    case KindTypeAssertionExpression:
+      Printer_emitTypeAssertionExpression(receiver, AsTypeAssertion(node));
+      break;
+    case KindParenthesizedExpression:
+      Printer_emitParenthesizedExpression(receiver, AsParenthesizedExpression(node));
+      break;
+    case KindFunctionExpression:
+      Printer_emitFunctionExpression(receiver, AsFunctionExpression(node));
+      break;
+    case KindArrowFunction:
+      Printer_emitArrowFunction(receiver, AsArrowFunction(node));
+      break;
+    case KindDeleteExpression:
+      Printer_emitDeleteExpression(receiver, AsDeleteExpression(node));
+      break;
+    case KindTypeOfExpression:
+      Printer_emitTypeOfExpression(receiver, AsTypeOfExpression(node));
+      break;
+    case KindVoidExpression:
+      Printer_emitVoidExpression(receiver, AsVoidExpression(node));
+      break;
+    case KindAwaitExpression:
+      Printer_emitAwaitExpression(receiver, AsAwaitExpression(node));
+      break;
+    case KindPrefixUnaryExpression:
+      Printer_emitPrefixUnaryExpression(receiver, AsPrefixUnaryExpression(node));
+      break;
+    case KindPostfixUnaryExpression:
+      Printer_emitPostfixUnaryExpression(receiver, AsPostfixUnaryExpression(node));
+      break;
+    case KindBinaryExpression:
+      Printer_emitBinaryExpression(receiver, AsBinaryExpression(node));
+      break;
+    case KindConditionalExpression:
+      Printer_emitConditionalExpression(receiver, AsConditionalExpression(node));
+      break;
+    case KindTemplateExpression:
+      Printer_emitTemplateExpression(receiver, AsTemplateExpression(node));
+      break;
+    case KindYieldExpression:
+      Printer_emitYieldExpression(receiver, AsYieldExpression(node));
+      break;
+    case KindSpreadElement:
+      Printer_emitSpreadElement(receiver, AsSpreadElement(node));
+      break;
+    case KindClassExpression:
+      Printer_emitClassExpression(receiver, AsClassExpression(node));
+      break;
+    case KindOmittedExpression:
+      Printer_emitOmittedExpression(receiver, node);
+      break;
+    case KindAsExpression:
+      Printer_emitAsExpression(receiver, AsAsExpression(node));
+      break;
+    case KindNonNullExpression:
+      Printer_emitNonNullExpression(receiver, AsNonNullExpression(node));
+      break;
+    case KindExpressionWithTypeArguments:
+      Printer_emitExpressionWithTypeArguments(receiver, AsExpressionWithTypeArguments(node));
+      break;
+    case KindSatisfiesExpression:
+      Printer_emitSatisfiesExpression(receiver, AsSatisfiesExpression(node));
+      break;
+    case KindMetaProperty:
+      Printer_emitMetaProperty(receiver, AsMetaProperty(node));
+      break;
+    case KindSyntheticExpression:
+      throw new globalThis.Error("SyntheticExpression should never be printed.");
+    case KindMissingDeclaration:
+      break;
+
+    // JSX
+    case KindJsxElement:
+      Printer_emitJsxElement(receiver, AsJsxElement(node));
+      break;
+    case KindJsxSelfClosingElement:
+      Printer_emitJsxSelfClosingElement(receiver, AsJsxSelfClosingElement(node));
+      break;
+    case KindJsxFragment:
+      Printer_emitJsxFragment(receiver, AsJsxFragment(node));
+      break;
+
+    // Synthesized list
+    case KindSyntaxList:
+      throw new globalThis.Error("SyntaxList should not be printed");
+
+    // Transformation nodes
+    case KindNotEmittedStatement:
+      if (parens) {
+        Printer_writePunctuation(receiver, ")");
+      }
+      return;
+    case KindPartiallyEmittedExpression:
+      Printer_emitPartiallyEmittedExpression(receiver, AsPartiallyEmittedExpression(node));
+      break;
+    case KindSyntheticReferenceExpression:
+      throw new globalThis.Error("SyntheticReferenceExpression should not be printed");
+
+    default:
+      throw new globalThis.Error(`unexpected Expression: ${node!.Kind}`);
+  }
+
+  if (parens) {
+    Printer_writePunctuation(receiver, ")");
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionStatement","kind":"method","status":"stub","sigHash":"142d8b5af3132ac535d6baf016a72db592b0127b92b1532cc19f335613055d9b","bodyHash":"e2d642f917b5d0db8d2eb505a6ec21813cbcf1870f53c98e47ef14cea5d4b6dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionStatement","kind":"method","status":"implemented","sigHash":"142d8b5af3132ac535d6baf016a72db592b0127b92b1532cc19f335613055d9b","bodyHash":"e2d642f917b5d0db8d2eb505a6ec21813cbcf1870f53c98e47ef14cea5d4b6dd"}
  *
  * Go source:
  * func (p *Printer) emitExpressionStatement(node *ast.ExpressionStatement) {
@@ -1820,11 +2565,41 @@ export function Printer_emitExpression(receiver: GoPtr<Printer>, node: GoPtr<Exp
  * }
  */
 export function Printer_emitExpressionStatement(receiver: GoPtr<Printer>, node: GoPtr<ExpressionStatement>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitExpressionStatement");
+  const state = Printer_enterNode(receiver, node);
+
+  if (receiver!.currentSourceFile !== undefined && receiver!.currentSourceFile!.ScriptKind === ScriptKindJSON) {
+    // !!! In strada, this was handled by an undefined parenthesizerRule, so this is a hack.
+    Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceComma);
+  } else if (isImmediatelyInvokedFunctionExpressionOrArrowFunction(node!.Expression)) {
+    // For IIFEs, parenthesize just the callee (not the whole call), matching TypeScript's
+    // parenthesizeExpressionOfExpressionStatement which wraps the function/arrow in parens:
+    //   (function() { })()  -- not (function() { }())
+    Printer_emitIIFEWithParenthesizedCallee(receiver, node!.Expression);
+  } else {
+    switch (GetLeftmostExpression(node!.Expression, false as bool)!.Kind) {
+      case KindFunctionExpression:
+      case KindObjectLiteralExpression:
+        Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceParentheses);
+        break;
+      default:
+        Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceComma);
+        break;
+    }
+  }
+
+  // Emit semicolon in non json files
+  // or if json file that created synthesized expression(eg.define expression statement when --out and amd code generation)
+  if (receiver!.currentSourceFile === undefined ||
+    receiver!.currentSourceFile!.ScriptKind !== ScriptKindJSON ||
+    NodeIsSynthesized(node!.Expression)) {
+    Printer_writeTrailingSemicolon(receiver);
+  }
+
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIIFEWithParenthesizedCallee","kind":"method","status":"stub","sigHash":"47d76dfc50cee17f81512e78c873b3d9a32ae2bc77ee0e6726133c0e056e0522","bodyHash":"b554e05bc2fd968201babd6e1819353a7d69a226375669e378791bf4c83c2761"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIIFEWithParenthesizedCallee","kind":"method","status":"implemented","sigHash":"47d76dfc50cee17f81512e78c873b3d9a32ae2bc77ee0e6726133c0e056e0522","bodyHash":"b554e05bc2fd968201babd6e1819353a7d69a226375669e378791bf4c83c2761"}
  *
  * Go source:
  * func (p *Printer) emitIIFEWithParenthesizedCallee(node *ast.Expression) {
@@ -1842,11 +2617,21 @@ export function Printer_emitExpressionStatement(receiver: GoPtr<Printer>, node: 
  * }
  */
 export function Printer_emitIIFEWithParenthesizedCallee(receiver: GoPtr<Printer>, node: GoPtr<Expression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIIFEWithParenthesizedCallee");
+  // Walk through PartiallyEmittedExpression wrappers to find the call
+  const call = AsCallExpression(SkipPartiallyEmittedExpressions(node));
+  const state = Printer_enterNode(receiver, call);
+  // Emit the callee wrapped in parens
+  Printer_writePunctuation(receiver, "(");
+  Printer_emitExpression(receiver, call!.Expression, OperatorPrecedenceLowest);
+  Printer_writePunctuation(receiver, ")");
+  Printer_emitTokenNode(receiver, call!.QuestionDotToken);
+  Printer_emitTypeArguments(receiver, call, call!.TypeArguments);
+  Printer_emitList(receiver, Printer_emitArgument, call, call!.Arguments, LFCallExpressionArguments);
+  Printer_exitNode(receiver, call, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxSpreadAttribute","kind":"method","status":"stub","sigHash":"f297418bbdf32defca5a26a523319136d81afeea5bffd53cb6afdb370aa91282","bodyHash":"5f6be0929fe9310d25c63c45d8f70f38a5a9b2e304be88a47e8df3ee24fc885b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxSpreadAttribute","kind":"method","status":"implemented","sigHash":"f297418bbdf32defca5a26a523319136d81afeea5bffd53cb6afdb370aa91282","bodyHash":"5f6be0929fe9310d25c63c45d8f70f38a5a9b2e304be88a47e8df3ee24fc885b"}
  *
  * Go source:
  * func (p *Printer) emitJsxSpreadAttribute(node *ast.JsxSpreadAttribute) {
@@ -1858,11 +2643,15 @@ export function Printer_emitIIFEWithParenthesizedCallee(receiver: GoPtr<Printer>
  * }
  */
 export function Printer_emitJsxSpreadAttribute(receiver: GoPtr<Printer>, node: GoPtr<JsxSpreadAttribute>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxSpreadAttribute");
+  const state = Printer_enterNode(receiver, node);
+  Printer_writePunctuation(receiver, "{...");
+  Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceLowest);
+  Printer_writePunctuation(receiver, "}");
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxExpression","kind":"method","status":"stub","sigHash":"7e7fdb308b77a214a349468c719b241da633c105fb39fa477281577a86144686","bodyHash":"8e535d456779e7070d23b5ec3695bdba7905733787db7179d61a0d91f8e072dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxExpression","kind":"method","status":"implemented","sigHash":"7e7fdb308b77a214a349468c719b241da633c105fb39fa477281577a86144686","bodyHash":"8e535d456779e7070d23b5ec3695bdba7905733787db7179d61a0d91f8e072dc"}
  *
  * Go source:
  * func (p *Printer) emitJsxExpression(node *ast.JsxExpression) {
@@ -1882,11 +2671,24 @@ export function Printer_emitJsxSpreadAttribute(receiver: GoPtr<Printer>, node: G
  * }
  */
 export function Printer_emitJsxExpression(receiver: GoPtr<Printer>, node: GoPtr<JsxExpression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJsxExpression");
+  const state = Printer_enterNode(receiver, node);
+  if (node!.Expression !== undefined || (!receiver!.commentsDisabled && !NodeIsSynthesized(node) && Printer_hasCommentsAtPosition(receiver, Node_Pos(node)))) {
+    // preserve empty expressions if they contain comments!
+    const indented = (receiver!.currentSourceFile !== undefined && !NodeIsSynthesized(node) && GetLinesBetweenPositions(receiver!.currentSourceFile, Node_Pos(node), Node_End(node)) !== 0) as bool;
+    Printer_increaseIndentIf(receiver, indented);
+    const end = Printer_emitToken(receiver, KindOpenBraceToken, Node_Pos(node), WriteKindPunctuation, node);
+    Printer_emitTokenNode(receiver, node!.DotDotDotToken);
+    if (node!.Expression !== undefined) {
+      Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceDisallowComma);
+    }
+    Printer_emitToken(receiver, KindCloseBraceToken, greatestEnd(end, node!.Expression as unknown as { End: () => int }, node!.DotDotDotToken as unknown as { End: () => int }), WriteKindPunctuation, node);
+    Printer_decreaseIndentIf(receiver, indented);
+  }
+  Printer_exitNode(receiver, node, state);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadAssignment","kind":"method","status":"stub","sigHash":"ea2f307118d06bc97a316acf6625eb68267ed3ec90e24200530b355225ea8c84","bodyHash":"7898adc8b7d34034ddc450c12e058bcb51c756a5d2a6825a42467f983c10be2a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadAssignment","kind":"method","status":"implemented","sigHash":"ea2f307118d06bc97a316acf6625eb68267ed3ec90e24200530b355225ea8c84","bodyHash":"7898adc8b7d34034ddc450c12e058bcb51c756a5d2a6825a42467f983c10be2a"}
  *
  * Go source:
  * func (p *Printer) emitSpreadAssignment(node *ast.SpreadAssignment) {
@@ -1899,7 +2701,12 @@ export function Printer_emitJsxExpression(receiver: GoPtr<Printer>, node: GoPtr<
  * }
  */
 export function Printer_emitSpreadAssignment(receiver: GoPtr<Printer>, node: GoPtr<SpreadAssignment>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitSpreadAssignment");
+  const state = Printer_enterNode(receiver, node);
+  if (node!.Expression !== undefined) {
+    Printer_emitToken(receiver, KindDotDotDotToken, Node_Pos(node), WriteKindPunctuation, node);
+    Printer_emitExpression(receiver, node!.Expression, OperatorPrecedenceDisallowComma);
+  }
+  Printer_exitNode(receiver, node, state);
 }
 
 /**

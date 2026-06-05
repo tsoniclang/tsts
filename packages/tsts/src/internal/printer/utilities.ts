@@ -3,7 +3,8 @@ import type { GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { FormatUint } from "../../go/strconv.js";
 import { Builder, ToUpper } from "../../go/strings.js";
 import { DecodeRuneInString } from "../../go/unicode/utf8.js";
-import type { CommentRange } from "../ast/ast.js";
+import type { CommentRange, SourceFile, SourceFileLike } from "../ast/ast.js";
+import { SourceFile_Text, SourceFile_ECMALineMap, AsSourceFile } from "../ast/ast.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
@@ -17,18 +18,106 @@ import {
   KindAmpersandAmpersandToken,
   KindBarBarToken,
   KindQuestionQuestionToken,
+  KindParenthesizedExpression,
+  KindBinaryExpression,
+  KindNewExpression,
+  KindSingleLineCommentTrivia,
+  KindMultiLineCommentTrivia,
+  KindBigIntLiteral,
+  KindNoSubstitutionTemplateLiteral,
+  KindTemplateHead,
+  KindTemplateMiddle,
+  KindTemplateTail,
+  KindStringLiteral,
+  KindNumericLiteral,
+  KindRegularExpressionLiteral,
+  KindTypeParameter,
+  KindTemplateLiteralTypeSpan,
+  KindTemplateSpan,
+  KindDecorator,
+  KindHeritageClause,
+  KindTypeLiteral,
+  KindInterfaceDeclaration,
+  KindUnionType,
+  KindIntersectionType,
+  KindArrayLiteralExpression,
+  KindTupleType,
+  KindNamedImports,
+  KindNamedExports,
+  KindObjectLiteralExpression,
+  KindJsxAttributes,
+  KindCallExpression,
+  KindJsxElement,
+  KindJsxFragment,
+  KindJsxOpeningElement,
+  KindJsxSelfClosingElement,
+  KindBlock,
+  KindModuleBlock,
+  KindCaseClause,
+  KindDefaultClause,
+  KindCaseBlock,
+  KindEnumDeclaration,
+  KindSourceFile,
 } from "../ast/generated/kinds.js";
+import {
+  IsCallExpression,
+  IsArrowFunction,
+  IsFunctionExpression,
+  IsInterfaceDeclaration,
+  IsEnumMember,
+  IsInferTypeNode,
+} from "../ast/generated/predicates.js";
+import {
+  AsBinaryExpression,
+  AsCaseBlock,
+  AsCallExpression,
+  AsNewExpression,
+  AsUnionTypeNode,
+  AsIntersectionTypeNode,
+  AsTemplateExpression,
+  AsTemplateLiteralTypeNode,
+  AsInterfaceDeclaration,
+  AsStringLiteral,
+  AsNumericLiteral,
+  AsNoSubstitutionTemplateLiteral,
+  AsTemplateHead,
+  AsTemplateMiddle,
+  AsTemplateTail,
+} from "../ast/generated/casts.js";
+import {
+  IsPrologueDirective,
+  PositionIsSynthesized,
+  NodeIsSynthesized,
+  SkipPartiallyEmittedExpressions,
+  IsFunctionLike,
+  IsClassLike,
+  IsClassElement,
+  IsTypeElement,
+  IsJsxChild,
+  IsStatement,
+  IsTypeNode,
+  IsModifier,
+  IsUnterminatedLiteral,
+  IsFunctionExpressionOrArrowFunction,
+} from "../ast/utilities.js";
+import { IsTypeOrJSTypeAliasDeclaration } from "../ast/ast.js";
+import { Node_Expression, Node_ArgumentList, Node_TypeParameterList, Node_MemberList, Node_StatementList, Node_TypeArgumentList, Node_ElementList, Node_PropertyList, Node_Children, Node_Text, Node_RawText } from "../ast/ast.js";
+import { Node_Pos, Node_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
 import type { Expression, LiteralLikeNode, SourceFileNode } from "../ast/generated/unions.js";
-import { UTF16Len } from "../core/core.js";
+import { UTF16Len, IfElse } from "../core/core.js";
 import type { UTF16Offset } from "../core/core.js";
 import type { TextPos } from "../core/text.js";
+import { TextRange_Pos, TextRange_End } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
-import { ComputeLineOfPosition } from "../scanner/scanner.js";
+import { ComputeLineOfPosition, GetECMALineStarts, SkipTriviaEx } from "../scanner/scanner.js";
+import type { SkipTriviaOptions } from "../scanner/scanner.js";
+import { GetSourceTextOfNodeFromSourceFile } from "../scanner/utilities.js";
 import type { Source } from "../sourcemap/source.js";
-import { IsASCIILetter, IsDigit, IsWhiteSpaceSingleLine } from "../stringutil/util.js";
+import { IsASCIILetter, IsDigit, IsWhiteSpaceSingleLine, IsWhiteSpaceLike } from "../stringutil/util.js";
 import { GetBaseFileName } from "../tspath/path.js";
 import type { EmitContext } from "./emitcontext.js";
 import { GetDefaultIndentSize } from "./textwriter.js";
+import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
 // `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
@@ -435,7 +524,7 @@ export function escapeJsxAttributeString(s: string, quoteChar: QuoteChar): strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::canUseOriginalText","kind":"func","status":"stub","sigHash":"bc91b05b7aaa1a85db354109acc35beace7e2d0a9086c088f1b6d151435e36c2","bodyHash":"439b0f856244743bbdfa69eed16faa60dc33493689ab68743ec2ee957003fc11"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::canUseOriginalText","kind":"func","status":"implemented","sigHash":"bc91b05b7aaa1a85db354109acc35beace7e2d0a9086c088f1b6d151435e36c2","bodyHash":"439b0f856244743bbdfa69eed16faa60dc33493689ab68743ec2ee957003fc11"}
  *
  * Go source:
  * func canUseOriginalText(node *ast.LiteralLikeNode, flags getLiteralTextFlags) bool {
@@ -467,11 +556,32 @@ export function escapeJsxAttributeString(s: string, quoteChar: QuoteChar): strin
  * }
  */
 export function canUseOriginalText(node: GoPtr<LiteralLikeNode>, flags: getLiteralTextFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::canUseOriginalText");
+  // A synthetic node has no original text, nor does a node without a parent as we would be unable to find the
+  // containing SourceFile. We also cannot use the original text if the literal was unterminated and the caller has
+  // requested proper termination of unterminated literals
+  if (NodeIsSynthesized(node) || node!.Parent === undefined || ((flags & getLiteralTextFlagsTerminateUnterminatedLiterals) !== 0 && IsUnterminatedLiteral(node))) {
+    return false;
+  }
+
+  if (node!.Kind === KindNumericLiteral) {
+    const tokenFlags = AsNumericLiteral(node)!.TokenFlags;
+    // For a numeric literal, we cannot use the original text if the original text was an invalid literal
+    if ((tokenFlags & TokenFlagsIsInvalid) !== 0) {
+      return false;
+    }
+    // We also cannot use the original text if the literal contains numeric separators, but numeric separators
+    // are not permitted
+    if ((tokenFlags & TokenFlagsContainsSeparator) !== 0) {
+      return (flags & getLiteralTextFlagsAllowNumericSeparator) !== 0;
+    }
+  }
+
+  // Finally, we do not use the original text of a BigInt literal
+  return node!.Kind !== KindBigIntLiteral;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLiteralText","kind":"func","status":"stub","sigHash":"01453942aa321c406e4c0c8cdf4e99794293fc418649e0e3041bd46575fdd171","bodyHash":"9e5d323e94611264290ce3a9fe2948233107c8216880604a0f143482c4fdb3b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLiteralText","kind":"func","status":"implemented","sigHash":"01453942aa321c406e4c0c8cdf4e99794293fc418649e0e3041bd46575fdd171","bodyHash":"9e5d323e94611264290ce3a9fe2948233107c8216880604a0f143482c4fdb3b8"}
  *
  * Go source:
  * func getLiteralText(node *ast.LiteralLikeNode, sourceFile *ast.SourceFile, flags getLiteralTextFlags) string {
@@ -589,11 +699,128 @@ export function canUseOriginalText(node: GoPtr<LiteralLikeNode>, flags: getLiter
  * }
  */
 export function getLiteralText(node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<SourceFileNode>, flags: getLiteralTextFlags): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLiteralText");
+  // If we don't need to downlevel and we can reach the original source text using
+  // the node's parent reference, then simply get the text as it was originally written.
+  if (sourceFile !== undefined && canUseOriginalText(node, flags)) {
+    return GetSourceTextOfNodeFromSourceFile(sourceFile as unknown as GoPtr<SourceFile>, node, false /*includeTrivia*/);
+  }
+
+  // If we can't reach the original source text, use the canonical form if it's a number,
+  // or a (possibly escaped) quoted form of the original text if it's string-like.
+  switch (node!.Kind) {
+    case KindStringLiteral: {
+      const b = new Builder();
+      const quoteChar: QuoteChar = (AsStringLiteral(node)!.TokenFlags & TokenFlagsSingleQuote) !== 0
+        ? QuoteCharSingleQuote
+        : QuoteCharDoubleQuote;
+
+      const text = Node_Text(node);
+
+      // Write leading quote character
+      b.Grow(byteLen(text) + 2);
+      b.WriteRune(quoteChar);
+
+      // Write text
+      escapeStringWorker(text, quoteChar, flags, b);
+
+      // Write trailing quote character
+      b.WriteRune(quoteChar);
+      return b.String();
+    }
+
+    case KindNoSubstitutionTemplateLiteral:
+    case KindTemplateHead:
+    case KindTemplateMiddle:
+    case KindTemplateTail: {
+      // If a NoSubstitutionTemplateLiteral appears to have a substitution in it, the original text
+      // had to include a backslash: `not \${a} substitution`.
+      const b = new Builder();
+      const text = Node_Text(node);
+      const rawText = node!.Kind === KindNoSubstitutionTemplateLiteral
+        ? AsNoSubstitutionTemplateLiteral(node)!.RawText
+        : node!.Kind === KindTemplateHead
+          ? AsTemplateHead(node)!.RawText
+          : node!.Kind === KindTemplateMiddle
+            ? AsTemplateMiddle(node)!.RawText
+            : AsTemplateTail(node)!.RawText;
+      const raw = byteLen(rawText) > 0 || byteLen(text) === 0;
+
+      const textLen = raw ? byteLen(rawText) : byteLen(text);
+
+      // Write leading quote character
+      switch (node!.Kind) {
+        case KindNoSubstitutionTemplateLiteral:
+          b.Grow(2 + textLen);
+          b.WriteRune(0x60 /* '`' */);
+          break;
+        case KindTemplateHead:
+          b.Grow(3 + textLen);
+          b.WriteRune(0x60 /* '`' */);
+          break;
+        case KindTemplateMiddle:
+          b.Grow(3 + textLen);
+          b.WriteRune(0x7d /* '}' */);
+          break;
+        case KindTemplateTail:
+          b.Grow(2 + textLen);
+          b.WriteRune(0x7d /* '}' */);
+          break;
+      }
+
+      // Write text
+      if (byteLen(rawText) > 0 || byteLen(text) === 0) {
+        // If rawText is set, it is expected to be valid.
+        b.WriteString(rawText);
+      } else {
+        escapeStringWorker(text, QuoteCharBacktick, flags, b);
+      }
+
+      // Write trailing quote character
+      switch (node!.Kind) {
+        case KindNoSubstitutionTemplateLiteral:
+          b.WriteRune(0x60 /* '`' */);
+          break;
+        case KindTemplateHead:
+          b.WriteString("${");
+          break;
+        case KindTemplateMiddle:
+          b.WriteString("${");
+          break;
+        case KindTemplateTail:
+          b.WriteRune(0x60 /* '`' */);
+          break;
+      }
+      return b.String();
+    }
+
+    case KindNumericLiteral:
+    case KindBigIntLiteral:
+      return Node_Text(node);
+
+    case KindRegularExpressionLiteral:
+      if ((flags & getLiteralTextFlagsTerminateUnterminatedLiterals) !== 0 && IsUnterminatedLiteral(node)) {
+        const b = new Builder();
+        const text = Node_Text(node);
+        if (byteLen(text) > 0 && utf8Encoder.encode(text)[byteLen(text) - 1] === 0x5c /* '\\' */) {
+          b.Grow(2 + byteLen(text));
+          b.WriteString(text);
+          b.WriteString(" /");
+        } else {
+          b.Grow(1 + byteLen(text));
+          b.WriteString(text);
+          b.WriteString("/");
+        }
+        return b.String();
+      }
+      return Node_Text(node);
+
+    default:
+      throw new globalThis.Error("Unsupported LiteralLikeNode");
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNotPrologueDirective","kind":"func","status":"stub","sigHash":"97a47820c666d00e8fc0cff13f569c307a5066814162b082dc8cad3c34a48719","bodyHash":"81d21249fedcd689cd2f0176bd170a90a0640b27e61ba4ac0afbcccc7c6eadfc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNotPrologueDirective","kind":"func","status":"implemented","sigHash":"97a47820c666d00e8fc0cff13f569c307a5066814162b082dc8cad3c34a48719","bodyHash":"81d21249fedcd689cd2f0176bd170a90a0640b27e61ba4ac0afbcccc7c6eadfc"}
  *
  * Go source:
  * func isNotPrologueDirective(node *ast.Node) bool {
@@ -601,11 +828,11 @@ export function getLiteralText(node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<S
  * }
  */
 export function isNotPrologueDirective(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNotPrologueDirective");
+  return !IsPrologueDirective(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::RangeIsOnSingleLine","kind":"func","status":"stub","sigHash":"4a23d1c36f9cd4971f2e96982e28fb516c907ddd744a152e44422db8eae2c684","bodyHash":"3c86b619a076acf663ea64e6d0538e4cfaaad497f0f0a600953d557a92e0b007"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::RangeIsOnSingleLine","kind":"func","status":"implemented","sigHash":"4a23d1c36f9cd4971f2e96982e28fb516c907ddd744a152e44422db8eae2c684","bodyHash":"3c86b619a076acf663ea64e6d0538e4cfaaad497f0f0a600953d557a92e0b007"}
  *
  * Go source:
  * func RangeIsOnSingleLine(r core.TextRange, sourceFile *ast.SourceFile) bool {
@@ -613,11 +840,11 @@ export function isNotPrologueDirective(node: GoPtr<Node>): bool {
  * }
  */
 export function RangeIsOnSingleLine(r: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::RangeIsOnSingleLine");
+  return rangeStartIsOnSameLineAsRangeEnd(r, r, sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartPositionsAreOnSameLine","kind":"func","status":"stub","sigHash":"b6f9746de42d76569bd33e039a03d08ab29c5d95db2d0d1cdb5a2b36cab0b14d","bodyHash":"33b63e2527da7fd10d702a0d49a699c326571389abe0f4b1f0249e55b241bda0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartPositionsAreOnSameLine","kind":"func","status":"implemented","sigHash":"b6f9746de42d76569bd33e039a03d08ab29c5d95db2d0d1cdb5a2b36cab0b14d","bodyHash":"33b63e2527da7fd10d702a0d49a699c326571389abe0f4b1f0249e55b241bda0"}
  *
  * Go source:
  * func rangeStartPositionsAreOnSameLine(range1 core.TextRange, range2 core.TextRange, sourceFile *ast.SourceFile) bool {
@@ -629,11 +856,15 @@ export function RangeIsOnSingleLine(r: TextRange, sourceFile: GoPtr<SourceFileNo
  * }
  */
 export function rangeStartPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartPositionsAreOnSameLine");
+  return PositionsAreOnSameLine(
+    getStartPositionOfRange(range1, sourceFile, false /*includeComments*/),
+    getStartPositionOfRange(range2, sourceFile, false /*includeComments*/),
+    sourceFile,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndPositionsAreOnSameLine","kind":"func","status":"stub","sigHash":"ab9974b9b7a74219dc3ce533e44d8dee466f8ae3cf76695bb259b30fb7ce0f93","bodyHash":"07d7c003905cfa832e39f8a7f029e7d884f664ae884873195eca6ef80868195f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndPositionsAreOnSameLine","kind":"func","status":"implemented","sigHash":"ab9974b9b7a74219dc3ce533e44d8dee466f8ae3cf76695bb259b30fb7ce0f93","bodyHash":"07d7c003905cfa832e39f8a7f029e7d884f664ae884873195eca6ef80868195f"}
  *
  * Go source:
  * func rangeEndPositionsAreOnSameLine(range1 core.TextRange, range2 core.TextRange, sourceFile *ast.SourceFile) bool {
@@ -641,11 +872,11 @@ export function rangeStartPositionsAreOnSameLine(range1: TextRange, range2: Text
  * }
  */
 export function rangeEndPositionsAreOnSameLine(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndPositionsAreOnSameLine");
+  return PositionsAreOnSameLine(TextRange_End(range1), TextRange_End(range2), sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartIsOnSameLineAsRangeEnd","kind":"func","status":"stub","sigHash":"64e9342ac586a7398df7afe8f03c5f0d0888550f08afc38162c8972aed2eb696","bodyHash":"76bf5bb8a6c11bd6356f04c00cfbe6ec4eb0bdd8807d3188f1d3b1813f4f827f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartIsOnSameLineAsRangeEnd","kind":"func","status":"implemented","sigHash":"64e9342ac586a7398df7afe8f03c5f0d0888550f08afc38162c8972aed2eb696","bodyHash":"76bf5bb8a6c11bd6356f04c00cfbe6ec4eb0bdd8807d3188f1d3b1813f4f827f"}
  *
  * Go source:
  * func rangeStartIsOnSameLineAsRangeEnd(range1 core.TextRange, range2 core.TextRange, sourceFile *ast.SourceFile) bool {
@@ -653,11 +884,11 @@ export function rangeEndPositionsAreOnSameLine(range1: TextRange, range2: TextRa
  * }
  */
 export function rangeStartIsOnSameLineAsRangeEnd(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeStartIsOnSameLineAsRangeEnd");
+  return PositionsAreOnSameLine(getStartPositionOfRange(range1, sourceFile, false /*includeComments*/), TextRange_End(range2), sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndIsOnSameLineAsRangeStart","kind":"func","status":"stub","sigHash":"88985d7f331aebb608fcfedeb3774e883fb15a4e5dd2d7225fe22cfce207b78f","bodyHash":"4ee5f57538aaebf4be10d223c2c5bc8a0e6d17f155a18ac6b78b9364a42bd1c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndIsOnSameLineAsRangeStart","kind":"func","status":"implemented","sigHash":"88985d7f331aebb608fcfedeb3774e883fb15a4e5dd2d7225fe22cfce207b78f","bodyHash":"4ee5f57538aaebf4be10d223c2c5bc8a0e6d17f155a18ac6b78b9364a42bd1c8"}
  *
  * Go source:
  * func rangeEndIsOnSameLineAsRangeStart(range1 core.TextRange, range2 core.TextRange, sourceFile *ast.SourceFile) bool {
@@ -665,11 +896,11 @@ export function rangeStartIsOnSameLineAsRangeEnd(range1: TextRange, range2: Text
  * }
  */
 export function rangeEndIsOnSameLineAsRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::rangeEndIsOnSameLineAsRangeStart");
+  return PositionsAreOnSameLine(TextRange_End(range1), getStartPositionOfRange(range2, sourceFile, false /*includeComments*/), sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getStartPositionOfRange","kind":"func","status":"stub","sigHash":"7cd05030d609cfc1ee98cbba73739656a65ead3cc3fa02ba423c3db46865c7df","bodyHash":"4da7ecdecf78fbe7e7aa385521f956a88c9fcc192e18069055c35ab6813675da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getStartPositionOfRange","kind":"func","status":"implemented","sigHash":"7cd05030d609cfc1ee98cbba73739656a65ead3cc3fa02ba423c3db46865c7df","bodyHash":"4da7ecdecf78fbe7e7aa385521f956a88c9fcc192e18069055c35ab6813675da"}
  *
  * Go source:
  * func getStartPositionOfRange(r core.TextRange, sourceFile *ast.SourceFile, includeComments bool) int {
@@ -680,11 +911,14 @@ export function rangeEndIsOnSameLineAsRangeStart(range1: TextRange, range2: Text
  * }
  */
 export function getStartPositionOfRange(r: TextRange, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getStartPositionOfRange");
+  if (PositionIsSynthesized(TextRange_Pos(r))) {
+    return -1 as int;
+  }
+  return SkipTriviaEx(SourceFile_Text(AsSourceFile(sourceFile)!), TextRange_Pos(r), { StopAfterLineBreak: false, StopAtComments: includeComments, InJSDoc: false });
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::PositionsAreOnSameLine","kind":"func","status":"stub","sigHash":"503fa61979168bb6c74fc94a61ce428de6658d36927a2e796327fbd6062d137e","bodyHash":"aad63cb75637c22e368c84aabf6f6cad89f37bcfed2346fcc53c459e80e96253"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::PositionsAreOnSameLine","kind":"func","status":"implemented","sigHash":"503fa61979168bb6c74fc94a61ce428de6658d36927a2e796327fbd6062d137e","bodyHash":"aad63cb75637c22e368c84aabf6f6cad89f37bcfed2346fcc53c459e80e96253"}
  *
  * Go source:
  * func PositionsAreOnSameLine(pos1 int, pos2 int, sourceFile *ast.SourceFile) bool {
@@ -692,11 +926,11 @@ export function getStartPositionOfRange(r: TextRange, sourceFile: GoPtr<SourceFi
  * }
  */
 export function PositionsAreOnSameLine(pos1: int, pos2: int, sourceFile: GoPtr<SourceFileNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::PositionsAreOnSameLine");
+  return GetLinesBetweenPositions(sourceFile, pos1, pos2) === 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::GetLinesBetweenPositions","kind":"func","status":"stub","sigHash":"60560499c058aa9dca9d5b48aab3772ccc28cdb33fdbecc78610bcec41cd47fa","bodyHash":"054df492283cc0ba19901955441d91eeb459fdd36254d20d5e3407dd6e7b6654"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::GetLinesBetweenPositions","kind":"func","status":"implemented","sigHash":"60560499c058aa9dca9d5b48aab3772ccc28cdb33fdbecc78610bcec41cd47fa","bodyHash":"054df492283cc0ba19901955441d91eeb459fdd36254d20d5e3407dd6e7b6654"}
  *
  * Go source:
  * func GetLinesBetweenPositions(sourceFile *ast.SourceFile, pos1 int, pos2 int) int {
@@ -717,11 +951,28 @@ export function PositionsAreOnSameLine(pos1: int, pos2: int, sourceFile: GoPtr<S
  * }
  */
 export function GetLinesBetweenPositions(sourceFile: GoPtr<SourceFileNode>, pos1: int, pos2: int): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::GetLinesBetweenPositions");
+  if (pos1 === pos2) {
+    return 0 as int;
+  }
+  const sf = AsSourceFile(sourceFile);
+  const lineStarts = GetECMALineStarts({
+    Text: () => SourceFile_Text(sf),
+    ECMALineMap: () => SourceFile_ECMALineMap(sf),
+  });
+  const lower = IfElse(pos1 < pos2, pos1, pos2);
+  const isNegative = lower === pos2;
+  const upper = IfElse(isNegative, pos1, pos2);
+  const lowerLine = ComputeLineOfPosition(lineStarts, lower);
+  const upperLine = lowerLine + ComputeLineOfPosition(lineStarts.slice(lowerLine), upper);
+  if (isNegative) {
+    return (lowerLine - upperLine) as int;
+  } else {
+    return (upperLine - lowerLine) as int;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenRangeEndAndRangeStart","kind":"func","status":"stub","sigHash":"c09b4378069c7eb00fec78ffbe6f19723025b16b862da2a278125989dd496d8d","bodyHash":"dd7963df3cdd81226b526f436b3f8c66c769b46d0405ba90ce530dfad948a903"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenRangeEndAndRangeStart","kind":"func","status":"implemented","sigHash":"c09b4378069c7eb00fec78ffbe6f19723025b16b862da2a278125989dd496d8d","bodyHash":"dd7963df3cdd81226b526f436b3f8c66c769b46d0405ba90ce530dfad948a903"}
  *
  * Go source:
  * func getLinesBetweenRangeEndAndRangeStart(range1 core.TextRange, range2 core.TextRange, sourceFile *ast.SourceFile, includeSecondRangeComments bool) int {
@@ -730,11 +981,12 @@ export function GetLinesBetweenPositions(sourceFile: GoPtr<SourceFileNode>, pos1
  * }
  */
 export function getLinesBetweenRangeEndAndRangeStart(range1: TextRange, range2: TextRange, sourceFile: GoPtr<SourceFileNode>, includeSecondRangeComments: bool): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenRangeEndAndRangeStart");
+  const range2Start = getStartPositionOfRange(range2, sourceFile, includeSecondRangeComments);
+  return GetLinesBetweenPositions(sourceFile, TextRange_End(range1), range2Start);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter","kind":"func","status":"stub","sigHash":"950607840592060a275ba5d76980a8b0bec53f3e1d7a139e1bfcea9835eeb0f0","bodyHash":"c5bbcf5cd3e6f50eee5461139c445e6cae6f82306d08d0bd5701ad1158035fc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter","kind":"func","status":"implemented","sigHash":"950607840592060a275ba5d76980a8b0bec53f3e1d7a139e1bfcea9835eeb0f0","bodyHash":"c5bbcf5cd3e6f50eee5461139c445e6cae6f82306d08d0bd5701ad1158035fc7"}
  *
  * Go source:
  * func getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos int, stopPos int, sourceFile *ast.SourceFile, includeComments bool) int {
@@ -744,11 +996,13 @@ export function getLinesBetweenRangeEndAndRangeStart(range1: TextRange, range2: 
  * }
  */
 export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter");
+  const startPos = SkipTriviaEx(SourceFile_Text(AsSourceFile(sourceFile)!), pos, { StopAfterLineBreak: false, StopAtComments: includeComments, InJSDoc: false });
+  const prevPos = getPreviousNonWhitespacePosition(startPos, stopPos, sourceFile);
+  return GetLinesBetweenPositions(sourceFile, IfElse(prevPos >= 0, prevPos, stopPos), startPos);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndNextNonWhitespaceCharacter","kind":"func","status":"stub","sigHash":"f01c0c09d85e46b9421d15da6e44ffac90ff28e384e81c604548eae513885619","bodyHash":"9beb5cca291c546b06a85c0180642a94200a6ac2f472e256580591cbb09030d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndNextNonWhitespaceCharacter","kind":"func","status":"implemented","sigHash":"f01c0c09d85e46b9421d15da6e44ffac90ff28e384e81c604548eae513885619","bodyHash":"9beb5cca291c546b06a85c0180642a94200a6ac2f472e256580591cbb09030d9"}
  *
  * Go source:
  * func getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos int, stopPos int, sourceFile *ast.SourceFile, includeComments bool) int {
@@ -757,11 +1011,12 @@ export function getLinesBetweenPositionAndPrecedingNonWhitespaceCharacter(pos: i
  * }
  */
 export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>, includeComments: bool): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getLinesBetweenPositionAndNextNonWhitespaceCharacter");
+  const nextPos = SkipTriviaEx(SourceFile_Text(AsSourceFile(sourceFile)!), pos, { StopAfterLineBreak: false, StopAtComments: includeComments, InJSDoc: false });
+  return GetLinesBetweenPositions(sourceFile, pos, IfElse(stopPos < nextPos, stopPos, nextPos));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getPreviousNonWhitespacePosition","kind":"func","status":"stub","sigHash":"4d9067c10420424d9e98f5b6cd3919c097fea68d5a8b5d43cfe21dd9e09a8272","bodyHash":"c3fd890c2f1a94414a696a91621dc77444df4004cd0bdfea7e0e0aabe419116f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getPreviousNonWhitespacePosition","kind":"func","status":"implemented","sigHash":"4d9067c10420424d9e98f5b6cd3919c097fea68d5a8b5d43cfe21dd9e09a8272","bodyHash":"c3fd890c2f1a94414a696a91621dc77444df4004cd0bdfea7e0e0aabe419116f"}
  *
  * Go source:
  * func getPreviousNonWhitespacePosition(pos int, stopPos int, sourceFile *ast.SourceFile) int {
@@ -774,11 +1029,18 @@ export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, s
  * }
  */
 export function getPreviousNonWhitespacePosition(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getPreviousNonWhitespacePosition");
+  const text = SourceFile_Text(AsSourceFile(sourceFile)!);
+  const textBytes = utf8Encoder.encode(text);
+  for (let p = pos; p >= stopPos; p--) {
+    if (!IsWhiteSpaceLike(textBytes[p]!)) {
+      return p as int;
+    }
+  }
+  return -1 as int;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::siblingNodePositionsAreComparable","kind":"func","status":"stub","sigHash":"dcbc0b1dce9c401e9d0a31db4d537a8311efb5caafed385852e38992a6b574fd","bodyHash":"21f70aceba7ee743222e93bde25f676e0d20890e0b98e2af821290041082a546"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::siblingNodePositionsAreComparable","kind":"func","status":"implemented","sigHash":"dcbc0b1dce9c401e9d0a31db4d537a8311efb5caafed385852e38992a6b574fd","bodyHash":"21f70aceba7ee743222e93bde25f676e0d20890e0b98e2af821290041082a546"}
  *
  * Go source:
  * func siblingNodePositionsAreComparable(previousNode *ast.Node, nextNode *ast.Node) bool {
@@ -804,11 +1066,29 @@ export function getPreviousNonWhitespacePosition(pos: int, stopPos: int, sourceF
  * }
  */
 export function siblingNodePositionsAreComparable(previousNode: GoPtr<Node>, nextNode: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::siblingNodePositionsAreComparable");
+  if (Node_Pos(nextNode) < Node_End(previousNode)) {
+    return false;
+  }
+
+  // TODO(rbuckton)
+  // previousNode = getOriginalNode(previousNode);
+  // nextNode = getOriginalNode(nextNode);
+  const parent = previousNode!.Parent;
+  if (parent === undefined || parent !== nextNode!.Parent) {
+    return false;
+  }
+
+  const parentNodeArray = getContainingNodeArray(previousNode);
+  if (parentNodeArray !== undefined) {
+    const prevNodeIndex = parentNodeArray!.Nodes.indexOf(previousNode);
+    return prevNodeIndex >= 0 && parentNodeArray!.Nodes.indexOf(nextNode) === prevNodeIndex + 1;
+  }
+
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getContainingNodeArray","kind":"func","status":"stub","sigHash":"e3433cbd3881b78d7b101ff43f3d320e73c26d65506c3eccba2e7d6ea77a9c6b","bodyHash":"2381bf9c044b6d2c614292d83e1f943836c3328489899054b995aff516d4fcee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getContainingNodeArray","kind":"func","status":"implemented","sigHash":"e3433cbd3881b78d7b101ff43f3d320e73c26d65506c3eccba2e7d6ea77a9c6b","bodyHash":"2381bf9c044b6d2c614292d83e1f943836c3328489899054b995aff516d4fcee"}
  *
  * Go source:
  * func getContainingNodeArray(node *ast.Node) *ast.NodeList {
@@ -922,7 +1202,128 @@ export function siblingNodePositionsAreComparable(previousNode: GoPtr<Node>, nex
  * }
  */
 export function getContainingNodeArray(node: GoPtr<Node>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::getContainingNodeArray");
+  const parent = node!.Parent;
+  if (parent === undefined) {
+    return undefined;
+  }
+
+  switch (node!.Kind) {
+    case KindTypeParameter:
+      if (IsFunctionLike(parent) || IsClassLike(parent) || IsInterfaceDeclaration(parent) || IsTypeOrJSTypeAliasDeclaration(parent)) {
+        return Node_TypeParameterList(parent);
+      } else if (IsInferTypeNode(parent)) {
+        break; // no containing array for infer type's type parameter
+      } else {
+        throw new globalThis.Error(`Unexpected TypeParameter parent: ${parent!.Kind}`);
+      }
+      break;
+    case KindParameter:
+      return Node_FunctionLikeData(node!.Parent)!.Parameters;
+    case KindTemplateLiteralTypeSpan:
+      return AsTemplateLiteralTypeNode(node!.Parent)!.TemplateSpans;
+    case KindTemplateSpan:
+      return AsTemplateExpression(node!.Parent)!.TemplateSpans;
+    case KindDecorator:
+      if (canHaveDecorators(parent)) {
+        const modifiers = Node_Modifiers(parent);
+        if (modifiers !== undefined) {
+          return modifiers;
+        }
+      }
+      return undefined;
+    case KindHeritageClause:
+      if (IsClassLike(parent)) {
+        return Node_ClassLikeData(parent)!.HeritageClauses;
+      } else {
+        return AsInterfaceDeclaration(parent)!.HeritageClauses;
+      }
+  }
+
+  // TODO(rbuckton)
+  // if (ast.IsJSDocTag(node)) { ... }
+
+  switch (parent!.Kind) {
+    case KindTypeLiteral:
+    case KindInterfaceDeclaration:
+      if (IsTypeElement(node)) {
+        return Node_MemberList(parent);
+      }
+      break;
+    case KindUnionType:
+      return AsUnionTypeNode(parent)!.Types;
+    case KindIntersectionType:
+      return AsIntersectionTypeNode(parent)!.Types;
+    case KindArrayLiteralExpression:
+    case KindTupleType:
+    case KindNamedImports:
+    case KindNamedExports:
+      return Node_ElementList(parent);
+    case KindObjectLiteralExpression:
+    case KindJsxAttributes:
+      return Node_PropertyList(parent);
+    case KindCallExpression: {
+      const p = AsCallExpression(parent)!;
+      if (IsTypeNode(node)) {
+        return p.TypeArguments;
+      } else if (node !== p.Expression) {
+        return p.Arguments;
+      }
+      break;
+    }
+    case KindNewExpression: {
+      const p = AsNewExpression(parent)!;
+      if (IsTypeNode(node)) {
+        return p.TypeArguments;
+      } else if (node !== p.Expression) {
+        return p.Arguments;
+      }
+      break;
+    }
+    case KindJsxElement:
+    case KindJsxFragment:
+      if (IsJsxChild(node)) {
+        return Node_Children(parent);
+      }
+      break;
+    case KindJsxOpeningElement:
+    case KindJsxSelfClosingElement:
+      if (IsTypeNode(node)) {
+        return Node_TypeArgumentList(parent);
+      }
+      break;
+    case KindBlock:
+    case KindModuleBlock:
+    case KindCaseClause:
+    case KindDefaultClause:
+      return Node_StatementList(parent);
+    case KindCaseBlock:
+      return AsCaseBlock(parent)!.Clauses;
+    case KindClassDeclaration:
+    case KindClassExpression:
+      if (IsClassElement(node)) {
+        return Node_MemberList(parent);
+      }
+      break;
+    case KindEnumDeclaration:
+      if (IsEnumMember(node)) {
+        return Node_MemberList(parent);
+      }
+      break;
+    case KindSourceFile:
+      if (IsStatement(node)) {
+        return Node_StatementList(parent);
+      }
+      break;
+  }
+
+  if (IsModifier(node)) {
+    const modifiers = Node_Modifiers(parent);
+    if (modifiers !== undefined) {
+      return modifiers;
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -984,7 +1385,7 @@ export function originalNodesHaveSameParent(nodeA: GoPtr<Node>, nodeB: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::tryGetEnd","kind":"func","status":"stub","sigHash":"439864f5813b13771cded08ce99e19c30efa2523953389e9efffb11b127849c6","bodyHash":"7ce26f8fddad315c47c3da528fcf6815830804467cac467d0a5cd25f3d0b25d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::tryGetEnd","kind":"func","status":"implemented","sigHash":"439864f5813b13771cded08ce99e19c30efa2523953389e9efffb11b127849c6","bodyHash":"7ce26f8fddad315c47c3da528fcf6815830804467cac467d0a5cd25f3d0b25d4"}
  *
  * Go source:
  * func tryGetEnd(node interface{ End() int }) (int, bool) {
@@ -1014,12 +1415,15 @@ export function originalNodesHaveSameParent(nodeA: GoPtr<Node>, nodeB: GoPtr<Nod
  * 	return 0, false
  * }
  */
-export function tryGetEnd(node: { End: () => int }): [int, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::tryGetEnd");
+export function tryGetEnd(node: { End: () => int } | undefined): [int, bool] {
+  if (node === undefined) {
+    return [0 as int, false];
+  }
+  return [node.End(), true];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::greatestEnd","kind":"func","status":"stub","sigHash":"066c64a3add51f22c104776d4779bd53a697d898ed43dbaff3ad2dff4fe9c516","bodyHash":"d7fb8e969c1969a04f25be6199f4140cf1b16a35f409f997c1c4b9c4402e4563"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::greatestEnd","kind":"func","status":"implemented","sigHash":"066c64a3add51f22c104776d4779bd53a697d898ed43dbaff3ad2dff4fe9c516","bodyHash":"d7fb8e969c1969a04f25be6199f4140cf1b16a35f409f997c1c4b9c4402e4563"}
  *
  * Go source:
  * func greatestEnd(end int, nodes ...interface{ End() int }) int {
@@ -1032,12 +1436,19 @@ export function tryGetEnd(node: { End: () => int }): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<{ End: () => int }>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::greatestEnd");
+export function greatestEnd(end: int, ...nodes: Array<{ End: () => int } | undefined>): int {
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const node = nodes[i];
+    const [nodeEnd, ok] = tryGetEnd(node);
+    if (ok && (end as number) < (nodeEnd as number)) {
+      end = nodeEnd;
+    }
+  }
+  return end;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipSynthesizedParentheses","kind":"func","status":"stub","sigHash":"24c84225806b102bfb9b5b469149712d78d03af4102bbcd5a2dee8b6a9db6887","bodyHash":"21ff7d88b7ab16f32120f7b9b472dde456ae02472b6c0cab383edd18724c7607"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipSynthesizedParentheses","kind":"func","status":"implemented","sigHash":"24c84225806b102bfb9b5b469149712d78d03af4102bbcd5a2dee8b6a9db6887","bodyHash":"21ff7d88b7ab16f32120f7b9b472dde456ae02472b6c0cab383edd18724c7607"}
  *
  * Go source:
  * func skipSynthesizedParentheses(node *ast.Node) *ast.Node {
@@ -1048,11 +1459,14 @@ export function greatestEnd(end: int, ...nodes: Array<{ End: () => int }>): int 
  * }
  */
 export function skipSynthesizedParentheses(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipSynthesizedParentheses");
+  while (node!.Kind === KindParenthesizedExpression && NodeIsSynthesized(node)) {
+    node = Node_Expression(node);
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNewExpressionWithoutArguments","kind":"func","status":"stub","sigHash":"1e350dccdb2b9578dc557afd6c93de62f56c8d01d4c6fdaec6d28a6d762f43da","bodyHash":"304e2d20f40a0878863580e90fdb93c24e95744582cdcff3eb21dd845ddd6b97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNewExpressionWithoutArguments","kind":"func","status":"implemented","sigHash":"1e350dccdb2b9578dc557afd6c93de62f56c8d01d4c6fdaec6d28a6d762f43da","bodyHash":"304e2d20f40a0878863580e90fdb93c24e95744582cdcff3eb21dd845ddd6b97"}
  *
  * Go source:
  * func isNewExpressionWithoutArguments(node *ast.Node) bool {
@@ -1060,11 +1474,11 @@ export function skipSynthesizedParentheses(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isNewExpressionWithoutArguments(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isNewExpressionWithoutArguments");
+  return node!.Kind === KindNewExpression && Node_ArgumentList(node) === undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isBinaryOperation","kind":"func","status":"stub","sigHash":"0506a7ca356ba016f2783c05c73829a0ded0c3c12b412ce2f5b454389949e0f3","bodyHash":"a9e7c16af2d51b21df165d189a0ecb3989e895c737765f8926cde4c24a41b431"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isBinaryOperation","kind":"func","status":"implemented","sigHash":"0506a7ca356ba016f2783c05c73829a0ded0c3c12b412ce2f5b454389949e0f3","bodyHash":"a9e7c16af2d51b21df165d189a0ecb3989e895c737765f8926cde4c24a41b431"}
  *
  * Go source:
  * func isBinaryOperation(node *ast.Node, token ast.Kind) bool {
@@ -1074,7 +1488,8 @@ export function isNewExpressionWithoutArguments(node: GoPtr<Node>): bool {
  * }
  */
 export function isBinaryOperation(node: GoPtr<Node>, token: Kind): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isBinaryOperation");
+  node = SkipPartiallyEmittedExpressions(node);
+  return node!.Kind === KindBinaryExpression && AsBinaryExpression(node)!.OperatorToken!.Kind === token;
 }
 
 /**
@@ -1102,7 +1517,7 @@ export function mixingBinaryOperatorsRequiresParentheses(a: Kind, b: Kind): bool
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isImmediatelyInvokedFunctionExpressionOrArrowFunction","kind":"func","status":"stub","sigHash":"d591a512474c140ba8b369cf5fa07b65daf67417a4176e941e5504a85a29ff73","bodyHash":"3986d20eff18afc18d16c163afe580f9567368a8cd69529f3b5982a544e5fa5b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isImmediatelyInvokedFunctionExpressionOrArrowFunction","kind":"func","status":"implemented","sigHash":"d591a512474c140ba8b369cf5fa07b65daf67417a4176e941e5504a85a29ff73","bodyHash":"3986d20eff18afc18d16c163afe580f9567368a8cd69529f3b5982a544e5fa5b"}
  *
  * Go source:
  * func isImmediatelyInvokedFunctionExpressionOrArrowFunction(node *ast.Expression) bool {
@@ -1115,11 +1530,16 @@ export function mixingBinaryOperatorsRequiresParentheses(a: Kind, b: Kind): bool
  * }
  */
 export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: GoPtr<Expression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isImmediatelyInvokedFunctionExpressionOrArrowFunction");
+  node = SkipPartiallyEmittedExpressions(node);
+  if (!IsCallExpression(node)) {
+    return false;
+  }
+  node = SkipPartiallyEmittedExpressions(Node_Expression(node));
+  return IsFunctionExpression(node) || IsArrowFunction(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsFileLevelUniqueName","kind":"func","status":"stub","sigHash":"ea52aa7bb8bb4fa10dd521f946807cfe1027d209a1b682ecc409772f7c7bb724","bodyHash":"923abe2a9ba6ffd690249a85c3f7c6a53a06372df87c32833bba213c477cf7e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsFileLevelUniqueName","kind":"func","status":"implemented","sigHash":"ea52aa7bb8bb4fa10dd521f946807cfe1027d209a1b682ecc409772f7c7bb724","bodyHash":"923abe2a9ba6ffd690249a85c3f7c6a53a06372df87c32833bba213c477cf7e1"}
  *
  * Go source:
  * func IsFileLevelUniqueName(sourceFile *ast.SourceFile, name string, hasGlobalName func(string) bool) bool {
@@ -1130,8 +1550,11 @@ export function isImmediatelyInvokedFunctionExpressionOrArrowFunction(node: GoPt
  * 	return !ok
  * }
  */
-export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFileNode>, name: string, hasGlobalName: (arg0: string) => bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsFileLevelUniqueName");
+export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFileNode>, name: string, hasGlobalName: ((arg0: string) => bool) | undefined): bool {
+  if (hasGlobalName !== undefined && hasGlobalName(name)) {
+    return false;
+  }
+  return !AsSourceFile(sourceFile)!.Identifiers.has(name);
 }
 
 /**
@@ -1313,7 +1736,7 @@ export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, star
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipWhiteSpaceSingleLine","kind":"func","status":"stub","sigHash":"ecba82faecbca07ff9f5252ae5cf38ab3ed7616cc793543de05184d4f04288ff","bodyHash":"2f0b9115ba968760bdc66bc849744728ff8bcfa4e81bdcd3c57b5ee525cb68e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipWhiteSpaceSingleLine","kind":"func","status":"implemented","sigHash":"ecba82faecbca07ff9f5252ae5cf38ab3ed7616cc793543de05184d4f04288ff","bodyHash":"2f0b9115ba968760bdc66bc849744728ff8bcfa4e81bdcd3c57b5ee525cb68e4"}
  *
  * Go source:
  * func skipWhiteSpaceSingleLine(text string, pos *int) {
@@ -1326,12 +1749,23 @@ export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, star
  * 	}
  * }
  */
+// Note: GoPtr<int> for pos is used here to match the porter's generated signature for Go's *int.
+// Callers within this file pass a { v: int } box cast as GoPtr<int>. This works because
+// GoPtr<int> = int | undefined and at runtime the actual value is a mutable object box.
 export function skipWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::skipWhiteSpaceSingleLine");
+  const box = pos as unknown as { v: int };
+  const textBytes = utf8Encoder.encode(text);
+  while ((box.v as number) < textBytes.length) {
+    const [ch, size] = DecodeRuneInString(byteSlice(text, box.v));
+    if (!IsWhiteSpaceSingleLine(ch)) {
+      break;
+    }
+    box.v = ((box.v as number) + size) as int;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchWhiteSpaceSingleLine","kind":"func","status":"stub","sigHash":"c72d18a95e2e67716a42025cf4edf6fff671d737bd689748f1078d4f0707ab21","bodyHash":"7a7e9deab53358fad07530b3c63258cbe7d810f7650bc6c9a2d779b75e96a907"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchWhiteSpaceSingleLine","kind":"func","status":"implemented","sigHash":"c72d18a95e2e67716a42025cf4edf6fff671d737bd689748f1078d4f0707ab21","bodyHash":"7a7e9deab53358fad07530b3c63258cbe7d810f7650bc6c9a2d779b75e96a907"}
  *
  * Go source:
  * func matchWhiteSpaceSingleLine(text string, pos *int) bool {
@@ -1341,11 +1775,14 @@ export function skipWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): void {
  * }
  */
 export function matchWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchWhiteSpaceSingleLine");
+  const box = pos as unknown as { v: int };
+  const startPos = box.v;
+  skipWhiteSpaceSingleLine(text, pos);
+  return box.v !== startPos;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchRune","kind":"func","status":"stub","sigHash":"5be5809e31c266605347800f3fe9bdac7eb1866d83a3451bc53d6a74e9516c78","bodyHash":"28f95cba26bb5ffb980b81c2a276b69a8466d16278a5cbc6c7fcf52320a45d4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchRune","kind":"func","status":"implemented","sigHash":"5be5809e31c266605347800f3fe9bdac7eb1866d83a3451bc53d6a74e9516c78","bodyHash":"28f95cba26bb5ffb980b81c2a276b69a8466d16278a5cbc6c7fcf52320a45d4d"}
  *
  * Go source:
  * func matchRune(text string, pos *int, expected rune) bool {
@@ -1358,11 +1795,17 @@ export function matchWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): bool {
  * }
  */
 export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchRune");
+  const box = pos as unknown as { v: int };
+  const [ch, size] = DecodeRuneInString(byteSlice(text, box.v));
+  if (ch === expected) {
+    box.v = ((box.v as number) + size) as int;
+    return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchString","kind":"func","status":"stub","sigHash":"0d34383b231a1f5641cb7a53f19293ff996ce9cb7678a49f03efb61c549304f5","bodyHash":"ef8f80f21c703dc78891b6b225c6f7bf254236d99190b9b5a01fe802c1556a0f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchString","kind":"func","status":"implemented","sigHash":"0d34383b231a1f5641cb7a53f19293ff996ce9cb7678a49f03efb61c549304f5","bodyHash":"ef8f80f21c703dc78891b6b225c6f7bf254236d99190b9b5a01fe802c1556a0f"}
  *
  * Go source:
  * func matchString(text string, pos *int, expected string) bool {
@@ -1386,11 +1829,29 @@ export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool
  * }
  */
 export function matchString(text: string, pos: GoPtr<int>, expected: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchString");
+  const box = pos as unknown as { v: int };
+  const textBytes = utf8Encoder.encode(text);
+  const expectedBytes = utf8Encoder.encode(expected);
+  let textPos = box.v as number;
+  let expectedPos = 0;
+  while (expectedPos < expectedBytes.length) {
+    if (textPos >= textBytes.length) {
+      return false;
+    }
+    const [expectedRune, expectedSize] = DecodeRuneInString(byteSlice(expected, expectedPos));
+    const tempBox = { v: textPos as int };
+    if (!matchRune(text, tempBox as unknown as GoPtr<int>, expectedRune)) {
+      return false;
+    }
+    textPos = tempBox.v as number;
+    expectedPos += expectedSize;
+  }
+  box.v = textPos as int;
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchQuotedString","kind":"func","status":"stub","sigHash":"b13ed415a5fb632f44fac8a8cc9d67060a518180e5b8a6a1dae86566a1dcab27","bodyHash":"1beec3c8545cd5fb4797124ad7bc4c20669fd68dd24ec315d55aa5fb5b6ce755"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchQuotedString","kind":"func","status":"implemented","sigHash":"b13ed415a5fb632f44fac8a8cc9d67060a518180e5b8a6a1dae86566a1dcab27","bodyHash":"1beec3c8545cd5fb4797124ad7bc4c20669fd68dd24ec315d55aa5fb5b6ce755"}
  *
  * Go source:
  * func matchQuotedString(text string, pos *int) bool {
@@ -1416,11 +1877,36 @@ export function matchString(text: string, pos: GoPtr<int>, expected: string): bo
  * }
  */
 export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::matchQuotedString");
+  const box = pos as unknown as { v: int };
+  let textPos = box.v as number;
+  const textBytes = utf8Encoder.encode(text);
+  let quoteChar: GoRune;
+  const tempBox1 = { v: textPos as int };
+  if (matchRune(text, tempBox1 as unknown as GoPtr<int>, 0x27 /* '\'' */)) {
+    textPos = tempBox1.v as number;
+    quoteChar = 0x27;
+  } else {
+    const tempBox2 = { v: textPos as int };
+    if (matchRune(text, tempBox2 as unknown as GoPtr<int>, 0x22 /* '"' */)) {
+      textPos = tempBox2.v as number;
+      quoteChar = 0x22;
+    } else {
+      return false;
+    }
+  }
+  while (textPos < textBytes.length) {
+    const [ch, size] = DecodeRuneInString(byteSlice(text, textPos));
+    textPos += size;
+    if (ch === quoteChar) {
+      box.v = textPos as int;
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsRecognizedTripleSlashComment","kind":"func","status":"stub","sigHash":"cdbfa7b5df6917ee38733aa0cf2b0e0d8ce34c1266cad81feb7bfc8be6198979","bodyHash":"6748dfa1f26a9242cac72501fd4dbf0803749454f89cb2bf9d8dab4638df6b18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsRecognizedTripleSlashComment","kind":"func","status":"implemented","sigHash":"cdbfa7b5df6917ee38733aa0cf2b0e0d8ce34c1266cad81feb7bfc8be6198979","bodyHash":"6748dfa1f26a9242cac72501fd4dbf0803749454f89cb2bf9d8dab4638df6b18"}
  *
  * Go source:
  * func IsRecognizedTripleSlashComment(text string, commentRange ast.CommentRange) bool {
@@ -1481,11 +1967,69 @@ export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
  * }
  */
 export function IsRecognizedTripleSlashComment(text: string, commentRange: CommentRange): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsRecognizedTripleSlashComment");
+  const textBytes = utf8Encoder.encode(text);
+  if (
+    commentRange.Kind === KindSingleLineCommentTrivia &&
+    (TextRange_End(commentRange) - TextRange_Pos(commentRange)) > 2 &&
+    textBytes[TextRange_Pos(commentRange) + 1] === 0x2f /* '/' */ &&
+    textBytes[TextRange_Pos(commentRange) + 2] === 0x2f /* '/' */
+  ) {
+    const sub = byteSlice(text, TextRange_Pos(commentRange) + 3, TextRange_End(commentRange));
+    const posBox = { v: 0 as int };
+    const posRef = posBox as unknown as GoPtr<int>;
+    skipWhiteSpaceSingleLine(sub, posRef);
+    if (!matchRune(sub, posRef, 0x3c /* '<' */)) {
+      return false;
+    }
+    if (matchString(sub, posRef, "reference")) {
+      if (!matchWhiteSpaceSingleLine(sub, posRef)) {
+        return false;
+      }
+      if (
+        !matchString(sub, posRef, "path") &&
+        !matchString(sub, posRef, "types") &&
+        !matchString(sub, posRef, "lib") &&
+        !matchString(sub, posRef, "no-default-lib")
+      ) {
+        return false;
+      }
+      skipWhiteSpaceSingleLine(sub, posRef);
+      if (!matchRune(sub, posRef, 0x3d /* '=' */)) {
+        return false;
+      }
+      skipWhiteSpaceSingleLine(sub, posRef);
+      if (!matchQuotedString(sub, posRef)) {
+        return false;
+      }
+    } else if (matchString(sub, posRef, "amd-dependency")) {
+      if (!matchWhiteSpaceSingleLine(sub, posRef)) {
+        return false;
+      }
+      if (!matchString(sub, posRef, "path")) {
+        return false;
+      }
+      skipWhiteSpaceSingleLine(sub, posRef);
+      if (!matchRune(sub, posRef, 0x3d /* '=' */)) {
+        return false;
+      }
+      skipWhiteSpaceSingleLine(sub, posRef);
+      if (!matchQuotedString(sub, posRef)) {
+        return false;
+      }
+    } else if (matchString(sub, posRef, "amd-module")) {
+      skipWhiteSpaceSingleLine(sub, posRef);
+    } else {
+      return false;
+    }
+    const remaining = byteSlice(sub, posBox.v);
+    return remaining.indexOf("/>") !== -1;
+  }
+
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isJSDocLikeText","kind":"func","status":"stub","sigHash":"2b14d01e19d5ff159443b15cdb7fccdbb06ebca822307bcc3c2985024449c93c","bodyHash":"7acf5b16cbd75f758966da5559a1324c7142e4cdf545ef85687a5cf5c8310984"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isJSDocLikeText","kind":"func","status":"implemented","sigHash":"2b14d01e19d5ff159443b15cdb7fccdbb06ebca822307bcc3c2985024449c93c","bodyHash":"7acf5b16cbd75f758966da5559a1324c7142e4cdf545ef85687a5cf5c8310984"}
  *
  * Go source:
  * func isJSDocLikeText(text string, comment ast.CommentRange) bool {
@@ -1496,11 +2040,15 @@ export function IsRecognizedTripleSlashComment(text: string, commentRange: Comme
  * }
  */
 export function isJSDocLikeText(text: string, comment: CommentRange): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::isJSDocLikeText");
+  const textBytes = utf8Encoder.encode(text);
+  return comment.Kind === KindMultiLineCommentTrivia &&
+    (TextRange_End(comment) - TextRange_Pos(comment)) > 5 &&
+    textBytes[TextRange_Pos(comment) + 2] === 0x2a /* '*' */ &&
+    textBytes[TextRange_Pos(comment) + 3] !== 0x2f /* '/' */;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsPinnedComment","kind":"func","status":"stub","sigHash":"b9d6d4cab6b28a8c4d5f89536342fa81ffc2d492b07a4c38fba0f26f104a7f7a","bodyHash":"3e56281ff0c32f5657533e9bc8b0e26f9fe821de0e3b5839ad6dd2d7532b7ff8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsPinnedComment","kind":"func","status":"implemented","sigHash":"b9d6d4cab6b28a8c4d5f89536342fa81ffc2d492b07a4c38fba0f26f104a7f7a","bodyHash":"3e56281ff0c32f5657533e9bc8b0e26f9fe821de0e3b5839ad6dd2d7532b7ff8"}
  *
  * Go source:
  * func IsPinnedComment(text string, comment ast.CommentRange) bool {
@@ -1510,7 +2058,10 @@ export function isJSDocLikeText(text: string, comment: CommentRange): bool {
  * }
  */
 export function IsPinnedComment(text: string, comment: CommentRange): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/utilities.go::func::IsPinnedComment");
+  const textBytes = utf8Encoder.encode(text);
+  return comment.Kind === KindMultiLineCommentTrivia &&
+    (TextRange_End(comment) - TextRange_Pos(comment)) > 5 &&
+    textBytes[TextRange_Pos(comment) + 2] === 0x21 /* '!' */;
 }
 
 /**

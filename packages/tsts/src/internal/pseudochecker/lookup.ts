@@ -1,71 +1,176 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Node_Body, Node_Expression, Node_Initializer, Node_Parameters, Node_Symbol, Node_Type } from "../ast/ast.js";
+import { Node_ParameterList } from "../ast/ast.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import { Node_AsNode, Node_FunctionLikeData, Node_KindString } from "../ast/spine.js";
+import { Node_AsNode, Node_FunctionLikeData, Node_KindString, Node_Name } from "../ast/spine.js";
+import type { Symbol as AstSymbol } from "../ast/symbol.js";
 import type { ArrayLiteralExpression, GetAccessorDeclaration, ObjectLiteralExpression, ParameterDeclaration, PrefixUnaryExpression, SetAccessorDeclaration, TypeParameterDeclaration, VariableDeclaration } from "../ast/generated/data.js";
 import type { ParameterDeclarationNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
   KindArrayLiteralExpression,
   KindArrowFunction,
+  KindAsExpression,
   KindBigIntLiteral,
+  KindBinaryExpression,
+  KindBindingElement,
+  KindCallExpression,
   KindCallSignature,
+  KindClassExpression,
+  KindComputedPropertyName,
   KindConditionalType,
   KindConstructSignature,
   KindConstructor,
   KindConstructorType,
+  KindElementAccessExpression,
+  KindExportAssignment,
+  KindFalseKeyword,
   KindFunctionDeclaration,
   KindFunctionExpression,
   KindFunctionType,
   KindGetAccessor,
+  KindIdentifier,
   KindImportType,
   KindIndexSignature,
   KindIndexedAccessType,
   KindIntersectionType,
+  KindJSDocPropertyTag,
   KindJSDocSignature,
   KindMethodDeclaration,
   KindMethodSignature,
+  KindNoSubstitutionTemplateLiteral,
+  KindNullKeyword,
   KindNumericLiteral,
   KindObjectLiteralExpression,
+  KindOmittedExpression,
   KindOptionalType,
+  KindParameter,
   KindParenthesizedExpression,
   KindParenthesizedType,
+  KindPlusToken,
   KindPrefixUnaryExpression,
+  KindPrivateIdentifier,
+  KindPropertyAccessExpression,
   KindPropertyAssignment,
+  KindPropertyDeclaration,
+  KindPropertySignature,
+  KindQuestionToken,
   KindRestType,
   KindSetAccessor,
   KindShorthandPropertyAssignment,
+  KindSpreadAssignment,
   KindSpreadElement,
+  KindStringLiteral,
+  KindTemplateExpression,
   KindTemplateSpan,
+  KindTrueKeyword,
+  KindTypeAssertionExpression,
   KindTypeOperator,
   KindTypePredicate,
   KindTypeQuery,
   KindTypeReference,
   KindUnionType,
+  KindVariableDeclaration,
 } from "../ast/generated/kinds.js";
-import { AsGetAccessorDeclaration, AsIntersectionTypeNode, AsParameterDeclaration, AsParenthesizedTypeNode, AsSetAccessorDeclaration, AsTypeParameterDeclaration, AsUnionTypeNode } from "../ast/generated/casts.js";
-import { IsParameterDeclaration, IsTypePredicateNode } from "../ast/generated/predicates.js";
-import { Some } from "../core/core.js";
+import {
+  AsAsExpression,
+  AsExportAssignment,
+  AsGetAccessorDeclaration,
+  AsIdentifier,
+  AsIntersectionTypeNode,
+  AsMethodDeclaration,
+  AsParameterDeclaration,
+  AsParenthesizedExpression,
+  AsParenthesizedTypeNode,
+  AsPropertyAssignment,
+  AsPropertyDeclaration,
+  AsReturnStatement,
+  AsSetAccessorDeclaration,
+  AsTypeAssertion,
+  AsTypeParameterDeclaration,
+  AsUnionTypeNode,
+  AsVariableDeclaration,
+} from "../ast/generated/casts.js";
+import {
+  IsArrowFunction,
+  IsBlock,
+  IsCallExpression,
+  IsConstructorDeclaration,
+  IsFunctionDeclaration,
+  IsFunctionExpression,
+  IsGetAccessorDeclaration,
+  IsIdentifier,
+  IsJsxElement,
+  IsJsxExpression,
+  IsMethodDeclaration,
+  IsParameterDeclaration,
+  IsPropertyDeclaration,
+  IsSatisfiesExpression,
+  IsTemplateExpression,
+  IsTypePredicateNode,
+  IsVariableDeclaration,
+} from "../ast/generated/predicates.js";
+import { NodeFlagsThisNodeHasError } from "../ast/generated/flags.js";
+import { ModifierFlagsReadonly } from "../ast/modifierflags.js";
+import { FunctionFlagsAsyncGenerator, GetFunctionFlags } from "../ast/functionflags.js";
+import {
+  FindAncestor,
+  ForEachReturnStatement,
+  GetAssignmentDeclarationKind,
+  HasModifier,
+  IsAccessor,
+  IsAssertionExpression,
+  IsConstAssertion,
+  IsConstTypeReference,
+  IsFunctionLike,
+  IsPrimitiveLiteralValue,
+  IsVarConst,
+  IsVariableParameterOrProperty,
+  JSDeclarationKindObjectDefinePropertyExports,
+  JSDeclarationKindObjectDefinePropertyValue,
+  NodeIsMissing,
+} from "../ast/utilities.js";
+import { CountWhere, Every, Some } from "../core/core.js";
 import { FailBadSyntaxKind } from "../debug/debug.js";
 import type { PseudoChecker } from "./checker.js";
 import type { PseudoObjectElement, PseudoParameter, PseudoType } from "./type.js";
 import {
+  NewPseudoGetAccessor,
+  NewPseudoObjectMethod,
   NewPseudoParameter,
+  NewPseudoPropertyAssignment,
+  NewPseudoSetAccessor,
+  NewPseudoTypeBigIntLiteral,
   NewPseudoTypeDirect,
   NewPseudoTypeInferred,
   NewPseudoTypeInferredWithErrors,
+  NewPseudoTypeMaybeConstLocation,
   NewPseudoTypeNoResult,
+  NewPseudoTypeNumericLiteral,
+  NewPseudoTypeObjectLiteral,
   NewPseudoTypeSingleCallSignature,
+  NewPseudoTypeStringLiteral,
   NewPseudoTypeTuple,
+  NewPseudoTypeUnion,
   PseudoType_AsPseudoTypeDirect,
+  PseudoType_AsPseudoTypeInferred,
   PseudoType_AsPseudoTypeMaybeConstLocation,
   PseudoType_AsPseudoTypeUnion,
+  PseudoTypeBigInt,
+  PseudoTypeBoolean,
+  PseudoTypeFalse,
   PseudoTypeKindDirect,
   PseudoTypeKindInferred,
   PseudoTypeKindMaybeConstLocation,
   PseudoTypeKindNoResult,
   PseudoTypeKindUndefined,
   PseudoTypeKindUnion,
+  PseudoTypeNull,
+  PseudoTypeNumber,
+  PseudoTypeString,
+  PseudoTypeTrue,
+  PseudoTypeUndefined,
 } from "./type.js";
 
 // `ast.AllAccessorDeclarations` (internal/ast/utilities.go) is not yet ported to
@@ -156,7 +261,7 @@ export function PseudoChecker_GetTypeOfExpression(receiver: GoPtr<PseudoChecker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfDeclaration","kind":"method","status":"stub","sigHash":"e78a7bd0685491afef13c98a21d0430fbe1722724bbebef2d9668f7541322826","bodyHash":"177fa2f3b2099b9008d73e345077d2d6a31b46c51b4193af11cc5730004cd3eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"e78a7bd0685491afef13c98a21d0430fbe1722724bbebef2d9668f7541322826","bodyHash":"177fa2f3b2099b9008d73e345077d2d6a31b46c51b4193af11cc5730004cd3eb"}
  *
  * Go source:
  * func (ch *PseudoChecker) GetTypeOfDeclaration(node *ast.Node) *PseudoType {
@@ -195,11 +300,49 @@ export function PseudoChecker_GetTypeOfExpression(receiver: GoPtr<PseudoChecker>
  * }
  */
 export function PseudoChecker_GetTypeOfDeclaration(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetTypeOfDeclaration");
+  switch (node!.Kind) {
+    case KindParameter:
+      return PseudoChecker_typeFromParameter(receiver, AsParameterDeclaration(node));
+    case KindVariableDeclaration:
+      return PseudoChecker_typeFromVariable(receiver, AsVariableDeclaration(node));
+    case KindPropertySignature:
+    case KindPropertyDeclaration:
+    case KindJSDocPropertyTag:
+      return PseudoChecker_typeFromProperty(receiver, node);
+    case KindBindingElement:
+      return NewPseudoTypeNoResult(node);
+    case KindExportAssignment:
+      return PseudoChecker_typeFromExpression(receiver, AsExportAssignment(node)!.Expression);
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression:
+    case KindBinaryExpression:
+      return PseudoChecker_typeFromExpandoProperty(receiver, node);
+    case KindPropertyAssignment:
+    case KindShorthandPropertyAssignment:
+      return PseudoChecker_typeFromPropertyAssignment(receiver, node);
+    case KindCallExpression: {
+      switch (GetAssignmentDeclarationKind(node)) {
+        case JSDeclarationKindObjectDefinePropertyValue:
+          {
+            // !!!
+          }
+          break;
+        case JSDeclarationKindObjectDefinePropertyExports:
+          {
+            // !!!
+          }
+          break;
+      }
+      return NewPseudoTypeNoResult(node);
+    }
+    default:
+      FailBadSyntaxKind({ KindString: () => Node_KindString(node) }, "node needs to be an inferrable node");
+      return undefined;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPropertyAssignment","kind":"method","status":"stub","sigHash":"ba7f28fa5c9dff6b07fdf0ff34d5d475fe1b4e3b4075883702517ca59698e5e8","bodyHash":"54b415297307302c10a4f93f824f00d06bcab72333d97b2a007c91d6288f5a8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPropertyAssignment","kind":"method","status":"implemented","sigHash":"ba7f28fa5c9dff6b07fdf0ff34d5d475fe1b4e3b4075883702517ca59698e5e8","bodyHash":"54b415297307302c10a4f93f824f00d06bcab72333d97b2a007c91d6288f5a8a"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromPropertyAssignment(node *ast.Node) *PseudoType {
@@ -221,11 +364,24 @@ export function PseudoChecker_GetTypeOfDeclaration(receiver: GoPtr<PseudoChecker
  * }
  */
 export function PseudoChecker_typeFromPropertyAssignment(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPropertyAssignment");
+  const annotation = Node_Type(node);
+  if (annotation !== undefined) {
+    return NewPseudoTypeDirect(annotation);
+  }
+  if (node!.Kind === KindPropertyAssignment) {
+    const init = Node_Initializer(node);
+    if (init !== undefined) {
+      const expr = PseudoChecker_typeFromExpression(receiver, init);
+      if (expr !== undefined && (expr!.Kind !== PseudoTypeKindInferred || PseudoType_AsPseudoTypeInferred(expr)!.ErrorNodes.length > 0)) {
+        return expr;
+      }
+    }
+  }
+  return NewPseudoTypeNoResult(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"stub","sigHash":"b8c9125065bb98bcc0ab9e73998e6eddc91cd8cf14c78fed5da6414817ea43ca","bodyHash":"dcb1bf57e61f5bcb4da7d4623691ef2712936bd901d3a4f3eb5f45da6dc1016a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty","kind":"method","status":"implemented","sigHash":"b8c9125065bb98bcc0ab9e73998e6eddc91cd8cf14c78fed5da6414817ea43ca","bodyHash":"dcb1bf57e61f5bcb4da7d4623691ef2712936bd901d3a4f3eb5f45da6dc1016a"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpandoProperty(node *ast.Node) *PseudoType {
@@ -239,11 +395,15 @@ export function PseudoChecker_typeFromPropertyAssignment(receiver: GoPtr<PseudoC
  * }
  */
 export function PseudoChecker_typeFromExpandoProperty(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpandoProperty");
+  const declaredType = Node_Type(node);
+  if (declaredType !== undefined) {
+    return NewPseudoTypeDirect(declaredType);
+  }
+  return NewPseudoTypeNoResult(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromProperty","kind":"method","status":"stub","sigHash":"7741ca3e4bbf28590ac12d9274eefd62c63e5f26f84ed3145c23025a8eb9605d","bodyHash":"6949cb472a612e0aef65b0c8474f0209edb64f7cfef7faed37103ccf08b95844"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromProperty","kind":"method","status":"implemented","sigHash":"7741ca3e4bbf28590ac12d9274eefd62c63e5f26f84ed3145c23025a8eb9605d","bodyHash":"6949cb472a612e0aef65b0c8474f0209edb64f7cfef7faed37103ccf08b95844"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromProperty(node *ast.Node) *PseudoType {
@@ -273,11 +433,31 @@ export function PseudoChecker_typeFromExpandoProperty(receiver: GoPtr<PseudoChec
  * }
  */
 export function PseudoChecker_typeFromProperty(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromProperty");
+  const t = Node_Type(node);
+  if (t !== undefined) {
+    return NewPseudoTypeDirect(t);
+  }
+  if (IsPropertyDeclaration(node)) {
+    const init = Node_Initializer(node);
+    if (init !== undefined && !isContextuallyTyped(node)) {
+      if (HasModifier(node, ModifierFlagsReadonly) && IsTemplateExpression(init)) {
+        return NewPseudoTypeNoResult(node);
+      }
+      const expr = PseudoChecker_typeFromExpression(receiver, init);
+      if (expr !== undefined && (expr!.Kind !== PseudoTypeKindInferred || PseudoType_AsPseudoTypeInferred(expr)!.ErrorNodes.length > 0)) {
+        const propDecl = AsPropertyDeclaration(node);
+        if (expr!.Kind !== PseudoTypeKindDirect && propDecl!.PostfixToken !== undefined && propDecl!.PostfixToken!.Kind === KindQuestionToken) {
+          return addUndefinedIfDefinitelyRequired(expr);
+        }
+        return expr;
+      }
+    }
+  }
+  return NewPseudoTypeNoResult(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromVariable","kind":"method","status":"stub","sigHash":"e4b8ccccd0481814a9b255dc19989228d07374a84c502d56a2631b65558aa452","bodyHash":"4136cca2cb18636253ad1c8978435ca8d615ed695d1b1b51bac29a2be37e4592"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromVariable","kind":"method","status":"implemented","sigHash":"e4b8ccccd0481814a9b255dc19989228d07374a84c502d56a2631b65558aa452","bodyHash":"4136cca2cb18636253ad1c8978435ca8d615ed695d1b1b51bac29a2be37e4592"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromVariable(declaration *ast.VariableDeclaration) *PseudoType {
@@ -303,7 +483,24 @@ export function PseudoChecker_typeFromProperty(receiver: GoPtr<PseudoChecker>, n
  * }
  */
 export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, declaration: GoPtr<VariableDeclaration>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromVariable");
+  const t = declaration!.Type;
+  if (t !== undefined) {
+    return NewPseudoTypeDirect(t);
+  }
+  const init = declaration!.Initializer;
+  const sym = Node_Symbol(Node_AsNode(declaration));
+  if (init !== undefined && (sym!.Declarations.length === 1 || CountWhere(sym!.Declarations, IsVariableDeclaration) === 1)) {
+    if (!isContextuallyTyped(Node_AsNode(declaration))) {
+      if (IsVarConst(Node_AsNode(declaration)) && IsTemplateExpression(init)) {
+        return NewPseudoTypeNoResult(Node_AsNode(declaration));
+      }
+      const expr = PseudoChecker_typeFromExpression(receiver, init);
+      if (expr !== undefined && (expr!.Kind !== PseudoTypeKindInferred || PseudoType_AsPseudoTypeInferred(expr)!.ErrorNodes.length > 0)) {
+        return expr;
+      }
+    }
+  }
+  return NewPseudoTypeNoResult(Node_AsNode(declaration));
 }
 
 /**
@@ -387,11 +584,26 @@ export function PseudoChecker_getTypeAnnotationFromAllAccessorDeclarations(recei
  * }
  */
 export function PseudoChecker_getTypeAnnotationFromAccessor(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAccessor");
+  if (node === undefined) {
+    return undefined;
+  }
+  // !!! TODO: support ripping return type off of .FullSignature
+  if (node!.Kind === KindGetAccessor) {
+    return AsGetAccessorDeclaration(node)!.Type;
+  }
+  const set = AsSetAccessorDeclaration(node)!;
+  if (set.Parameters === undefined || set.Parameters!.Nodes.length < 1) {
+    return undefined;
+  }
+  const p = set.Parameters!.Nodes[0];
+  if (!IsParameterDeclaration(p)) {
+    return undefined;
+  }
+  return AsParameterDeclaration(p)!.Type;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isValueSignatureDeclaration","kind":"func","status":"stub","sigHash":"0f8c17b8c38271e7b61aefdd6c11c4d35c2520d23104c21c6ea6c02ce99a3bb7","bodyHash":"3e7dbd1d8ec88b2f6f5132084dc61ef33925e902db078f02ab0332c4eb56f070"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isValueSignatureDeclaration","kind":"func","status":"implemented","sigHash":"0f8c17b8c38271e7b61aefdd6c11c4d35c2520d23104c21c6ea6c02ce99a3bb7","bodyHash":"3e7dbd1d8ec88b2f6f5132084dc61ef33925e902db078f02ab0332c4eb56f070"}
  *
  * Go source:
  * func isValueSignatureDeclaration(node *ast.Node) bool {
@@ -399,11 +611,11 @@ export function PseudoChecker_getTypeAnnotationFromAccessor(receiver: GoPtr<Pseu
  * }
  */
 export function isValueSignatureDeclaration(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isValueSignatureDeclaration");
+  return IsFunctionExpression(node) || IsArrowFunction(node) || IsMethodDeclaration(node) || IsAccessor(node) || IsFunctionDeclaration(node) || IsConstructorDeclaration(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"stub","sigHash":"eb9eff182475121cf128223c7cb8435014ba73ceb8792c4ad93954d410afa07a","bodyHash":"0d2f409e1c73b9a45e5915f5d628452dd6b0fcdf1a03f506671c8e1df9528e38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature","kind":"method","status":"implemented","sigHash":"eb9eff182475121cf128223c7cb8435014ba73ceb8792c4ad93954d410afa07a","bodyHash":"0d2f409e1c73b9a45e5915f5d628452dd6b0fcdf1a03f506671c8e1df9528e38"}
  *
  * Go source:
  * func (ch *PseudoChecker) createReturnFromSignature(fn *ast.Node) *PseudoType {
@@ -422,11 +634,21 @@ export function isValueSignatureDeclaration(node: GoPtr<Node>): bool {
  * }
  */
 export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoChecker>, fn: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.createReturnFromSignature");
+  if (IsFunctionLike(fn)) {
+    const d = Node_FunctionLikeData(fn);
+    const r = d!.Type;
+    if (r !== undefined) {
+      return NewPseudoTypeDirect(r);
+    }
+  }
+  if (isValueSignatureDeclaration(fn)) {
+    return PseudoChecker_typeFromSingleReturnExpression(receiver, fn);
+  }
+  return NewPseudoTypeNoResult(fn);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"stub","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb","bodyHash":"ab00ff87266414e2212f3014310115a05129356368f5e77262a0da2d6eb8549d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression","kind":"method","status":"implemented","sigHash":"89d40ce570a89de3cf0de32cb626f1d666bb53f423ec025b399f923220b690bb","bodyHash":"ab00ff87266414e2212f3014310115a05129356368f5e77262a0da2d6eb8549d"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromSingleReturnExpression(fn *ast.Node) *PseudoType {
@@ -475,11 +697,51 @@ export function PseudoChecker_createReturnFromSignature(receiver: GoPtr<PseudoCh
  * }
  */
 export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<PseudoChecker>, fn: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromSingleReturnExpression");
+  let candidateExpr: GoPtr<Node> = undefined;
+  if (fn !== undefined && !NodeIsMissing(Node_Body(fn))) {
+    const flags = GetFunctionFlags(fn);
+    if ((flags & FunctionFlagsAsyncGenerator) !== 0) {
+      return NewPseudoTypeNoResult(fn);
+    }
+    const body = Node_Body(fn);
+    if (IsBlock(body)) {
+      ForEachReturnStatement(body, (stmt: GoPtr<Node>): bool => {
+        if (stmt!.Parent !== body) {
+          candidateExpr = undefined;
+          return true;
+        }
+        if (candidateExpr === undefined) {
+          candidateExpr = AsReturnStatement(stmt)!.Expression;
+        } else {
+          candidateExpr = undefined;
+          return true;
+        }
+        return false;
+      });
+    } else {
+      candidateExpr = body;
+    }
+  }
+  if (candidateExpr !== undefined) {
+    if (isContextuallyTyped(candidateExpr)) {
+      let t: GoPtr<Node> = undefined;
+      if (candidateExpr!.Kind === KindTypeAssertionExpression) {
+        t = AsTypeAssertion(candidateExpr)!.Type;
+      } else if (candidateExpr!.Kind === KindAsExpression) {
+        t = AsAsExpression(candidateExpr)!.Type;
+      }
+      if (t !== undefined && !IsConstTypeReference(t)) {
+        return NewPseudoTypeDirect(t);
+      }
+    } else {
+      return PseudoChecker_typeFromExpression(receiver, candidateExpr);
+    }
+  }
+  return NewPseudoTypeNoResult(fn);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"stub","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8","bodyHash":"813760a61e16b8a6f0be7529e7a35054d6d373beafb963d7d13e767eec12b97f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression","kind":"method","status":"implemented","sigHash":"a49440e6d1d06239602276deee61a0ec5855504e6e548dfc03a060a95de1daf8","bodyHash":"813760a61e16b8a6f0be7529e7a35054d6d373beafb963d7d13e767eec12b97f"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromExpression(node *ast.Node) *PseudoType {
@@ -536,11 +798,59 @@ export function PseudoChecker_typeFromSingleReturnExpression(receiver: GoPtr<Pse
  * }
  */
 export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromExpression");
+  switch (node!.Kind) {
+    case KindOmittedExpression:
+      return PseudoTypeUndefined;
+    case KindParenthesizedExpression:
+      return PseudoChecker_typeFromExpression(receiver, AsParenthesizedExpression(node)!.Expression);
+    case KindIdentifier:
+      if (AsIdentifier(node)!.Text === "undefined") {
+        return PseudoTypeUndefined;
+      }
+      break;
+    case KindNullKeyword:
+      return PseudoTypeNull;
+    case KindArrowFunction:
+    case KindFunctionExpression:
+      return PseudoChecker_typeFromFunctionLikeExpression(receiver, node);
+    case KindTypeAssertionExpression:
+      return PseudoChecker_typeFromTypeAssertion(receiver, AsTypeAssertion(node)!.Expression, AsTypeAssertion(node)!.Type);
+    case KindAsExpression:
+      return PseudoChecker_typeFromTypeAssertion(receiver, AsAsExpression(node)!.Expression, AsAsExpression(node)!.Type);
+    case KindPrefixUnaryExpression:
+      if (IsPrimitiveLiteralValue(node, true)) {
+        return PseudoChecker_typeFromPrimitiveLiteralPrefix(receiver, node as unknown as PrefixUnaryExpression);
+      }
+      break;
+    case KindArrayLiteralExpression:
+      return PseudoChecker_typeFromArrayLiteral(receiver, node as unknown as ArrayLiteralExpression);
+    case KindObjectLiteralExpression:
+      return PseudoChecker_typeFromObjectLiteral(receiver, node as unknown as ObjectLiteralExpression);
+    case KindClassExpression:
+      return NewPseudoTypeInferred(node);
+    case KindTemplateExpression:
+      if (IsInConstContext(node)) {
+        return NewPseudoTypeInferred(node);
+      }
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeInferred(node), PseudoTypeString);
+    case KindNumericLiteral:
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeNumericLiteral(node), PseudoTypeNumber);
+    case KindNoSubstitutionTemplateLiteral:
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeStringLiteral(node), PseudoTypeString);
+    case KindStringLiteral:
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeStringLiteral(node), PseudoTypeString);
+    case KindBigIntLiteral:
+      return NewPseudoTypeMaybeConstLocation(node, NewPseudoTypeBigIntLiteral(node), PseudoTypeBigInt);
+    case KindTrueKeyword:
+      return NewPseudoTypeMaybeConstLocation(node, PseudoTypeTrue, PseudoTypeBoolean);
+    case KindFalseKeyword:
+      return NewPseudoTypeMaybeConstLocation(node, PseudoTypeFalse, PseudoTypeBoolean);
+  }
+  return NewPseudoTypeInferred(node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"stub","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8","bodyHash":"6c3221ef20c28151cbcde104d910a0bc07398e95d5e674217cccde16a6e1c4cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"317156be4c7ce85b75a44044271d4492fbf33594a390a965a71828b0c8ca91b8","bodyHash":"6c3221ef20c28151cbcde104d910a0bc07398e95d5e674217cccde16a6e1c4cb"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromObjectLiteral(node *ast.ObjectLiteralExpression) *PseudoType {
@@ -591,7 +901,56 @@ export function PseudoChecker_typeFromExpression(receiver: GoPtr<PseudoChecker>,
  * }
  */
 export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ObjectLiteralExpression>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromObjectLiteral");
+  const errorNodes = PseudoChecker_canGetTypeFromObjectLiteral(receiver, node);
+  if (errorNodes.length > 0) {
+    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), errorNodes);
+  }
+  if (node!.Properties === undefined || node!.Properties!.Nodes.length === 0) {
+    return NewPseudoTypeObjectLiteral([]);
+  }
+  const results: GoSlice<GoPtr<PseudoObjectElement>> = [];
+  for (const e of node!.Properties!.Nodes) {
+    switch (e!.Kind) {
+      case KindMethodDeclaration: {
+        const optional = AsMethodDeclaration(e)!.PostfixToken !== undefined && AsMethodDeclaration(e)!.PostfixToken!.Kind === KindQuestionToken;
+        if (Node_FunctionLikeData(e)!.FullSignature !== undefined) {
+          results.push(NewPseudoPropertyAssignment(
+            false,
+            Node_Name(e),
+            optional,
+            NewPseudoTypeDirect(Node_FunctionLikeData(e)!.FullSignature),
+          ));
+        } else {
+          results.push(NewPseudoObjectMethod(
+            e,
+            Node_Name(e),
+            optional,
+            PseudoChecker_cloneTypeParameters(receiver, AsMethodDeclaration(e)!.TypeParameters as GoPtr<NodeList>),
+            PseudoChecker_cloneParameters(receiver, Node_ParameterList(e) as GoPtr<NodeList>),
+            PseudoChecker_createReturnFromSignature(receiver, e),
+          ));
+        }
+        break;
+      }
+      case KindPropertyAssignment:
+        results.push(NewPseudoPropertyAssignment(
+          false,
+          Node_Name(e),
+          AsPropertyAssignment(e)!.PostfixToken !== undefined && AsPropertyAssignment(e)!.PostfixToken!.Kind === KindQuestionToken,
+          PseudoChecker_typeFromExpression(receiver, Node_Initializer(e)),
+        ));
+        break;
+      case KindSetAccessor:
+      case KindGetAccessor: {
+        const member = PseudoChecker_getAccessorMember(receiver, e, Node_Name(e));
+        if (member !== undefined) {
+          results.push(member);
+        }
+        break;
+      }
+    }
+  }
+  return NewPseudoTypeObjectLiteral(results);
 }
 
 /**
@@ -643,7 +1002,7 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"stub","sigHash":"1226e2752992795fb28dd29b11d7a352292325d3a9b30f6a6a2b2ac098dbb865","bodyHash":"9ee4c24a0fe8f4e4c099d20bd2f4e53e1fcde9474f95d0168d5c20f25231e7fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral","kind":"method","status":"implemented","sigHash":"1226e2752992795fb28dd29b11d7a352292325d3a9b30f6a6a2b2ac098dbb865","bodyHash":"9ee4c24a0fe8f4e4c099d20bd2f4e53e1fcde9474f95d0168d5c20f25231e7fb"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromObjectLiteral(node *ast.ObjectLiteralExpression) []*ast.Node {
@@ -679,11 +1038,40 @@ export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, 
  * }
  */
 export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ObjectLiteralExpression>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromObjectLiteral");
+  if (node!.Properties === undefined || node!.Properties!.Nodes.length === 0) {
+    return [];
+  }
+  const errorNodes: GoPtr<Node>[] = [];
+  for (const e of node!.Properties!.Nodes) {
+    if ((e!.Flags & NodeFlagsThisNodeHasError) !== 0) {
+      errorNodes.push(e);
+      continue;
+    }
+    if (e!.Kind === KindShorthandPropertyAssignment || e!.Kind === KindSpreadAssignment) {
+      errorNodes.push(e);
+      continue;
+    }
+    const eName = Node_Name(e);
+    if ((eName!.Flags & NodeFlagsThisNodeHasError) !== 0) {
+      errorNodes.push(eName as GoPtr<Node>);
+      continue;
+    }
+    if (eName!.Kind === KindPrivateIdentifier) {
+      errorNodes.push(e);
+      continue;
+    }
+    if (eName!.Kind === KindComputedPropertyName) {
+      const expression = Node_Expression(eName as GoPtr<Node>);
+      if (!IsPrimitiveLiteralValue(expression, false)) {
+        errorNodes.push(eName as GoPtr<Node>);
+      }
+    }
+  }
+  return errorNodes;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"stub","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e","bodyHash":"73eca39ca2a5acbd51460d9e55b7df4d46221d1dffcb913439cdccb6fd0cfb02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"d189468655fb492cb45b2e34caf90746fe6eb76a6fb21e31d3c6980a25e5b57e","bodyHash":"73eca39ca2a5acbd51460d9e55b7df4d46221d1dffcb913439cdccb6fd0cfb02"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromArrayLiteral(node *ast.ArrayLiteralExpression) *PseudoType {
@@ -702,11 +1090,22 @@ export function PseudoChecker_canGetTypeFromObjectLiteral(receiver: GoPtr<Pseudo
  * }
  */
 export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ArrayLiteralExpression>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromArrayLiteral");
+  const errorNodes = PseudoChecker_canGetTypeFromArrayLiteral(receiver, node);
+  if (errorNodes.length > 0) {
+    return NewPseudoTypeInferredWithErrors(Node_AsNode(node), errorNodes);
+  }
+  if (IsInConstContext(Node_AsNode(node)) && isContextuallyTyped(Node_AsNode(node))) {
+    return NewPseudoTypeInferred(Node_AsNode(node));
+  }
+  const results: GoSlice<GoPtr<PseudoType>> = [];
+  for (const e of node!.Elements!.Nodes) {
+    results.push(PseudoChecker_typeFromExpression(receiver, e));
+  }
+  return NewPseudoTypeTuple(results);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"stub","sigHash":"78652ca9524c988036370168d3c17039f551f22c102d1f481746e117a6da3651","bodyHash":"4175eaffa62a3f80020dd170e88dabb13b3867763a16c30496e3ca63318dbc25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral","kind":"method","status":"implemented","sigHash":"78652ca9524c988036370168d3c17039f551f22c102d1f481746e117a6da3651","bodyHash":"4175eaffa62a3f80020dd170e88dabb13b3867763a16c30496e3ca63318dbc25"}
  *
  * Go source:
  * func (ch *PseudoChecker) canGetTypeFromArrayLiteral(node *ast.ArrayLiteralExpression) []*ast.Node {
@@ -722,11 +1121,19 @@ export function PseudoChecker_typeFromArrayLiteral(receiver: GoPtr<PseudoChecker
  * }
  */
 export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoChecker>, node: GoPtr<ArrayLiteralExpression>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.canGetTypeFromArrayLiteral");
+  if (!IsInConstContext(Node_AsNode(node))) {
+    return [Node_AsNode(node)];
+  }
+  for (const e of node!.Elements!.Nodes) {
+    if (e!.Kind === KindSpreadElement) {
+      return [e];
+    }
+  }
+  return [];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"stub","sigHash":"4e32ee959c1077231186f0c53bf9aaa47b3cebb5f978fea5ec2c0653e5a772cf","bodyHash":"67565545348bc20a5ff6935dbc1f121a9f46f1276313bde04b3d40f04f147a08"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind","kind":"func","status":"implemented","sigHash":"4e32ee959c1077231186f0c53bf9aaa47b3cebb5f978fea5ec2c0653e5a772cf","bodyHash":"67565545348bc20a5ff6935dbc1f121a9f46f1276313bde04b3d40f04f147a08"}
  *
  * Go source:
  * func isConstContextPropagatingKind(kind ast.Kind) bool {
@@ -740,11 +1147,22 @@ export function PseudoChecker_canGetTypeFromArrayLiteral(receiver: GoPtr<PseudoC
  * }
  */
 export function isConstContextPropagatingKind(kind: Kind): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isConstContextPropagatingKind");
+  switch (kind) {
+    case KindArrayLiteralExpression:
+    case KindObjectLiteralExpression:
+    case KindParenthesizedExpression:
+    case KindSpreadElement:
+    case KindPropertyAssignment:
+    case KindShorthandPropertyAssignment:
+    case KindTemplateSpan:
+    case KindPrefixUnaryExpression:
+      return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"stub","sigHash":"4785acdc832c3e0b6c20ce64ec94e0a15cdc8da9748bc95ef7ed5a6e057b2b49","bodyHash":"854d49cb912a212055e9af756454ed4f2907c87317006d041bd306511f6d3905"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext","kind":"func","status":"implemented","sigHash":"4785acdc832c3e0b6c20ce64ec94e0a15cdc8da9748bc95ef7ed5a6e057b2b49","bodyHash":"854d49cb912a212055e9af756454ed4f2907c87317006d041bd306511f6d3905"}
  *
  * Go source:
  * func IsInConstContext(node *ast.Node) bool {
@@ -760,11 +1178,17 @@ export function isConstContextPropagatingKind(kind: Kind): bool {
  * }
  */
 export function IsInConstContext(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::IsInConstContext");
+  const maybeAssertion = FindAncestor(
+    node!.Parent,
+    (n: GoPtr<Node>): bool => {
+      return IsAssertionExpression(n) || !isConstContextPropagatingKind(n!.Kind);
+    },
+  );
+  return IsConstAssertion(maybeAssertion);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPrimitiveLiteralPrefix","kind":"method","status":"stub","sigHash":"ab3b8b826136fabd5263e35bf395cb9492e5424d6e02a67b11e4eafacb854f5c","bodyHash":"41040bc0def17399773ab2740c814c704998d1447f0bd9263c9d22eb3341831f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPrimitiveLiteralPrefix","kind":"method","status":"implemented","sigHash":"ab3b8b826136fabd5263e35bf395cb9492e5424d6e02a67b11e4eafacb854f5c","bodyHash":"41040bc0def17399773ab2740c814c704998d1447f0bd9263c9d22eb3341831f"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromPrimitiveLiteralPrefix(node *ast.PrefixUnaryExpression) *PseudoType {
@@ -784,11 +1208,24 @@ export function IsInConstContext(node: GoPtr<Node>): bool {
  * }
  */
 export function PseudoChecker_typeFromPrimitiveLiteralPrefix(receiver: GoPtr<PseudoChecker>, node: GoPtr<PrefixUnaryExpression>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromPrimitiveLiteralPrefix");
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  let expr: GoPtr<Node> = nodeAsNode;
+  if (node!.Operator === KindPlusToken) {
+    expr = node!.Operand as unknown as GoPtr<Node>;
+  }
+  const inner = node!.Operand as unknown as GoPtr<Node>;
+  if (inner!.Kind === KindBigIntLiteral) {
+    return NewPseudoTypeMaybeConstLocation(nodeAsNode, NewPseudoTypeBigIntLiteral(expr), PseudoTypeBigInt);
+  }
+  if (inner!.Kind === KindNumericLiteral) {
+    return NewPseudoTypeMaybeConstLocation(nodeAsNode, NewPseudoTypeNumericLiteral(expr), PseudoTypeNumber);
+  }
+  FailBadSyntaxKind({ KindString: () => Node_KindString(inner) });
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromTypeAssertion","kind":"method","status":"stub","sigHash":"9e05471195a1fe901d0923d89525385756e6c931d48d79f8ee8f5f237868ac29","bodyHash":"141af64ff4846f6e4e703c7f0bec35dde2733406dd1853a6df71330f7b30ba2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromTypeAssertion","kind":"method","status":"implemented","sigHash":"9e05471195a1fe901d0923d89525385756e6c931d48d79f8ee8f5f237868ac29","bodyHash":"141af64ff4846f6e4e703c7f0bec35dde2733406dd1853a6df71330f7b30ba2c"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromTypeAssertion(expression *ast.Node, typeNode *ast.Node) *PseudoType {
@@ -799,11 +1236,14 @@ export function PseudoChecker_typeFromPrimitiveLiteralPrefix(receiver: GoPtr<Pse
  * }
  */
 export function PseudoChecker_typeFromTypeAssertion(receiver: GoPtr<PseudoChecker>, expression: GoPtr<Node>, typeNode: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromTypeAssertion");
+  if (IsConstTypeReference(typeNode)) {
+    return PseudoChecker_typeFromExpression(receiver, expression);
+  }
+  return NewPseudoTypeDirect(typeNode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"stub","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce","bodyHash":"403a1de86c69032ac88f0e70b9a115f48bcc24c1235f826fe336105ae6fb2820"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression","kind":"method","status":"implemented","sigHash":"7a8e5291c066eae9f0799a2635dcd3d18083094dcafd807b9a78d03637ab11ce","bodyHash":"403a1de86c69032ac88f0e70b9a115f48bcc24c1235f826fe336105ae6fb2820"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromFunctionLikeExpression(node *ast.Node) *PseudoType {
@@ -826,11 +1266,25 @@ export function PseudoChecker_typeFromTypeAssertion(receiver: GoPtr<PseudoChecke
  * }
  */
 export function PseudoChecker_typeFromFunctionLikeExpression(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromFunctionLikeExpression");
+  if (Node_FunctionLikeData(node)!.FullSignature !== undefined) {
+    return NewPseudoTypeDirect(Node_FunctionLikeData(node)!.FullSignature);
+  }
+  const returnType = PseudoChecker_createReturnFromSignature(receiver, node);
+  if (returnType!.Kind === PseudoTypeKindNoResult) {
+    return NewPseudoTypeInferred(node);
+  }
+  const typeParameters = PseudoChecker_cloneTypeParameters(receiver, Node_FunctionLikeData(node)!.TypeParameters as GoPtr<NodeList>);
+  const parameters = PseudoChecker_cloneParameters(receiver, Node_FunctionLikeData(node)!.Parameters as GoPtr<NodeList>);
+  return NewPseudoTypeSingleCallSignature(
+    node,
+    parameters,
+    typeParameters,
+    returnType,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneTypeParameters","kind":"method","status":"stub","sigHash":"478e4a6f64d7a5e19d7626609c4ca899ecff58164c6a2fddb49edfc9c5ec4d46","bodyHash":"8e240e98dc594e5e036000d3c3a7d8a9117c0885a951f7d4a36acfd020551029"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneTypeParameters","kind":"method","status":"implemented","sigHash":"478e4a6f64d7a5e19d7626609c4ca899ecff58164c6a2fddb49edfc9c5ec4d46","bodyHash":"8e240e98dc594e5e036000d3c3a7d8a9117c0885a951f7d4a36acfd020551029"}
  *
  * Go source:
  * func (ch *PseudoChecker) cloneTypeParameters(nodes *ast.NodeList) []*ast.TypeParameterDeclaration {
@@ -848,11 +1302,21 @@ export function PseudoChecker_typeFromFunctionLikeExpression(receiver: GoPtr<Pse
  * }
  */
 export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>, nodes: GoPtr<NodeList>): GoSlice<GoPtr<TypeParameterDeclaration>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneTypeParameters");
+  if (nodes === undefined) {
+    return [];
+  }
+  if (nodes!.Nodes.length === 0) {
+    return [];
+  }
+  const result: GoSlice<GoPtr<TypeParameterDeclaration>> = [];
+  for (const e of nodes!.Nodes) {
+    result.push(AsTypeParameterDeclaration(e));
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isUndefinedPseudoType","kind":"func","status":"stub","sigHash":"dc07fe45ed787ff2750f0dcfa8f75ce355b734dea07ec2f0e38badfb0696a12d","bodyHash":"32a3e8f0c07b6fa874f4e595095e92a739fa40f3f50b42f37dd365f325ec7853"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isUndefinedPseudoType","kind":"func","status":"implemented","sigHash":"dc07fe45ed787ff2750f0dcfa8f75ce355b734dea07ec2f0e38badfb0696a12d","bodyHash":"32a3e8f0c07b6fa874f4e595095e92a739fa40f3f50b42f37dd365f325ec7853"}
  *
  * Go source:
  * func isUndefinedPseudoType(t *PseudoType) bool {
@@ -860,11 +1324,11 @@ export function PseudoChecker_cloneTypeParameters(receiver: GoPtr<PseudoChecker>
  * }
  */
 export function isUndefinedPseudoType(t: GoPtr<PseudoType>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isUndefinedPseudoType");
+  return t!.Kind === PseudoTypeKindUndefined || (t!.Kind === PseudoTypeKindMaybeConstLocation && isUndefinedPseudoType(PseudoType_AsPseudoTypeMaybeConstLocation(t)!.ConstType));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::typeNodeCouldReferToUndefined","kind":"func","status":"stub","sigHash":"328eddc236093c5d48f2722e8373bea37f20c934a504bb8ccd45ab584c3301c3","bodyHash":"cc890cd3b7c7e1d55b61e3781e024aab58a2044f3a33d80a0e696489cd300ad1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::typeNodeCouldReferToUndefined","kind":"func","status":"implemented","sigHash":"328eddc236093c5d48f2722e8373bea37f20c934a504bb8ccd45ab584c3301c3","bodyHash":"cc890cd3b7c7e1d55b61e3781e024aab58a2044f3a33d80a0e696489cd300ad1"}
  *
  * Go source:
  * func typeNodeCouldReferToUndefined(node *ast.Node) bool {
@@ -893,11 +1357,34 @@ export function isUndefinedPseudoType(t: GoPtr<PseudoType>): bool {
  * }
  */
 export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::typeNodeCouldReferToUndefined");
+  while (node!.Kind === KindParenthesizedType) {
+    node = AsParenthesizedTypeNode(node)!.Type;
+  }
+  switch (node!.Kind) {
+    case KindTypeReference:
+    case KindIndexedAccessType:
+    case KindTypeQuery:
+    case KindOptionalType:
+    case KindRestType:
+    case KindImportType:
+      return true;
+    case KindIntersectionType:
+      return Some(AsIntersectionTypeNode(node)!.Types!.Nodes, typeNodeCouldReferToUndefined);
+    case KindUnionType:
+      return Some(AsUnionTypeNode(node)!.Types!.Nodes, typeNodeCouldReferToUndefined);
+    case KindConditionalType:
+      return true;
+    case KindTypeOperator:
+      return true;
+    case KindTypePredicate:
+      return true;
+    default:
+      return false;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"stub","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187","bodyHash":"3332494dbbc0cd1252628cb3396156696e8febc22605f30eb1abd34bbe7f81bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType","kind":"func","status":"implemented","sigHash":"762af540058e21f3aefa38758eb4dde0fac06bc9f4d775eb398125a6516f1187","bodyHash":"3332494dbbc0cd1252628cb3396156696e8febc22605f30eb1abd34bbe7f81bb"}
  *
  * Go source:
  * func couldAlreadyReferToUndefinedType(t *PseudoType) bool {
@@ -920,11 +1407,25 @@ export function typeNodeCouldReferToUndefined(node: GoPtr<Node>): bool {
  * }
  */
 export function couldAlreadyReferToUndefinedType(t: GoPtr<PseudoType>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::couldAlreadyReferToUndefinedType");
+  if (t!.Kind === PseudoTypeKindNoResult || t!.Kind === PseudoTypeKindInferred || isUndefinedPseudoType(t)) {
+    return true;
+  }
+  if (t!.Kind === PseudoTypeKindMaybeConstLocation) {
+    const mc = PseudoType_AsPseudoTypeMaybeConstLocation(t);
+    return couldAlreadyReferToUndefinedType(mc!.RegularType);
+  }
+  if (t!.Kind === PseudoTypeKindDirect) {
+    const node = PseudoType_AsPseudoTypeDirect(t)!.TypeNode;
+    return typeNodeCouldReferToUndefined(node);
+  }
+  if (t!.Kind === PseudoTypeKindUnion) {
+    return Some(PseudoType_AsPseudoTypeUnion(t)!.Types, couldAlreadyReferToUndefinedType);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isOptionalInitializedOrRestParameter","kind":"func","status":"stub","sigHash":"08d6b5b1e1caf9da28c07d2babf308db8fbafe3e30f7221ecab21d4439634f21","bodyHash":"0535185f1dde09b8dd8af7d41f047b603271a82264f3323408bc5fe31c279bd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isOptionalInitializedOrRestParameter","kind":"func","status":"implemented","sigHash":"08d6b5b1e1caf9da28c07d2babf308db8fbafe3e30f7221ecab21d4439634f21","bodyHash":"0535185f1dde09b8dd8af7d41f047b603271a82264f3323408bc5fe31c279bd8"}
  *
  * Go source:
  * func isOptionalInitializedOrRestParameter(node *ast.ParameterDeclarationNode) bool {
@@ -936,11 +1437,15 @@ export function couldAlreadyReferToUndefinedType(t: GoPtr<PseudoType>): bool {
  * }
  */
 export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclarationNode>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isOptionalInitializedOrRestParameter");
+  const p = AsParameterDeclaration(node);
+  if (p!.DotDotDotToken !== undefined || p!.Initializer !== undefined || p!.QuestionToken !== undefined) {
+    return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"stub","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9","bodyHash":"00b39adb003864d39cfcf739f651c2e7b4c4d93c96f3cfe562ac41818314ee81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired","kind":"func","status":"implemented","sigHash":"1da3334399e572e5768d65375c54567a27c77dbfd9ca0e219ebe4436398b1ad9","bodyHash":"00b39adb003864d39cfcf739f651c2e7b4c4d93c96f3cfe562ac41818314ee81"}
  *
  * Go source:
  * func addUndefinedIfDefinitelyRequired(expr *PseudoType) *PseudoType {
@@ -956,11 +1461,14 @@ export function isOptionalInitializedOrRestParameter(node: GoPtr<ParameterDeclar
  * }
  */
 export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::addUndefinedIfDefinitelyRequired");
+  if (couldAlreadyReferToUndefinedType(expr)) {
+    return expr;
+  }
+  return NewPseudoTypeUnion([expr, PseudoTypeUndefined]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameter","kind":"method","status":"stub","sigHash":"2e5ea3b5a7e5eaeee002ba1fc7b655b1aafc49885cf870ed9277a4de078a80f7","bodyHash":"cf3c94c88d3c9d4963c3ecc8d6403e8cc6ad349ab3af11cf8a6db7f57f8d329d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameter","kind":"method","status":"implemented","sigHash":"2e5ea3b5a7e5eaeee002ba1fc7b655b1aafc49885cf870ed9277a4de078a80f7","bodyHash":"cf3c94c88d3c9d4963c3ecc8d6403e8cc6ad349ab3af11cf8a6db7f57f8d329d"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromParameter(node *ast.ParameterDeclaration) *PseudoType {
@@ -996,12 +1504,63 @@ export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr
  * 	return NewPseudoTypeNoResult(node.AsNode())
  * }
  */
+// lastRequiredParamIndex returns the index just past the last required parameter.
+// A parameter is "required" if it has no question token, no initializer, and no rest token.
+function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
+  for (let i = params.length - 1; i >= 0; i--) {
+    if (!isOptionalInitializedOrRestParameter(params[i])) {
+      return (i + 1) as int;
+    }
+  }
+  return 0 as int;
+}
+
+function PseudoChecker_typeFromParameterWorker(receiver: GoPtr<PseudoChecker>, node: GoPtr<ParameterDeclaration>, selfIdx: int, lastRequired: int): GoPtr<PseudoType> {
+  const parent = node!.Parent;
+  if (parent!.Kind === KindSetAccessor) {
+    return PseudoChecker_GetTypeOfAccessor(receiver, parent);
+  }
+  const hasRequiredAfter = selfIdx < lastRequired - 1;
+  const declaredType = node!.Type;
+  if (declaredType !== undefined) {
+    const result = NewPseudoTypeDirect(declaredType);
+    if (receiver!.strictNullChecks && node!.Initializer !== undefined && hasRequiredAfter) {
+      return addUndefinedIfDefinitelyRequired(result);
+    }
+    return result;
+  }
+  if (node!.Initializer !== undefined && IsIdentifier(Node_Name(Node_AsNode(node))) && !isContextuallyTyped(Node_AsNode(node))) {
+    const expr = PseudoChecker_typeFromExpression(receiver, node!.Initializer as unknown as GoPtr<Node>);
+    if (!receiver!.strictNullChecks) {
+      return expr;
+    }
+    if (!hasRequiredAfter) {
+      return expr;
+    }
+    return addUndefinedIfDefinitelyRequired(expr);
+  }
+  return NewPseudoTypeNoResult(Node_AsNode(node));
+}
+
 export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, node: GoPtr<ParameterDeclaration>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromParameter");
+  const parent = node!.Parent;
+  if (parent!.Kind === KindSetAccessor) {
+    return PseudoChecker_GetTypeOfAccessor(receiver, parent);
+  }
+  if (node!.Initializer === undefined) {
+    if (node!.Type !== undefined) {
+      return NewPseudoTypeDirect(node!.Type);
+    }
+    return NewPseudoTypeNoResult(Node_AsNode(node));
+  }
+  const p = Node_Parameters(parent);
+  const selfIdx = p.indexOf(Node_AsNode(node)) as int;
+  const lastRequired = lastRequiredParamIndex(p);
+  return PseudoChecker_typeFromParameterWorker(receiver, node, selfIdx, lastRequired);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneParameters","kind":"method","status":"stub","sigHash":"877e9bb3c299bafe31a9cf616e9b35142e177381118c88224b517a723deae078","bodyHash":"d8fd2febdc93dc34ef07e059b024259ac91af5900d8c3446fa6692d667cdc733"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneParameters","kind":"method","status":"implemented","sigHash":"877e9bb3c299bafe31a9cf616e9b35142e177381118c88224b517a723deae078","bodyHash":"d8fd2febdc93dc34ef07e059b024259ac91af5900d8c3446fa6692d667cdc733"}
  *
  * Go source:
  * func (ch *PseudoChecker) cloneParameters(nodes *ast.NodeList) []*PseudoParameter {
@@ -1024,11 +1583,33 @@ export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, 
  * }
  */
 export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, nodes: GoPtr<NodeList>): GoSlice<GoPtr<PseudoParameter>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.cloneParameters");
+  if (nodes === undefined) {
+    return [];
+  }
+  if (nodes!.Nodes.length === 0) {
+    return [];
+  }
+  const lastRequired = lastRequiredParamIndex(nodes!.Nodes);
+  const result: GoSlice<GoPtr<PseudoParameter>> = [];
+  for (let i = 0; i < nodes!.Nodes.length; i++) {
+    const e = nodes!.Nodes[i];
+    const p = AsParameterDeclaration(e);
+    let optional = p!.QuestionToken !== undefined;
+    if (!optional && p!.Initializer !== undefined) {
+      optional = i >= lastRequired - 1;
+    }
+    result.push(NewPseudoParameter(
+      p!.DotDotDotToken !== undefined,
+      Node_Name(e),
+      optional,
+      PseudoChecker_typeFromParameterWorker(receiver, p, i as int, lastRequired),
+    ));
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isContextuallyTyped","kind":"func","status":"stub","sigHash":"8c94d3856488caadca77acf93e2092e109a0fe88aefe38dd4a90061658f7837f","bodyHash":"a4a8044b2c467831bb99efc6c15ce548bdde378cdf760a11ba524be89b252285"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isContextuallyTyped","kind":"func","status":"implemented","sigHash":"8c94d3856488caadca77acf93e2092e109a0fe88aefe38dd4a90061658f7837f","bodyHash":"a4a8044b2c467831bb99efc6c15ce548bdde378cdf760a11ba524be89b252285"}
  *
  * Go source:
  * func isContextuallyTyped(node *ast.Node) bool {
@@ -1048,5 +1629,16 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
  * }
  */
 export function isContextuallyTyped(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::func::isContextuallyTyped");
+  return FindAncestor(node!.Parent, (n: GoPtr<Node>): bool => {
+    if (IsCallExpression(n)) {
+      return true;
+    }
+    if (IsSatisfiesExpression(n)) {
+      return true;
+    }
+    if ((IsVariableParameterOrProperty(n) || IsAssertionExpression(n)) && Node_Type(n) !== undefined && !IsConstAssertion(n)) {
+      return true;
+    }
+    return IsJsxElement(n) || IsJsxExpression(n);
+  }) !== undefined;
 }

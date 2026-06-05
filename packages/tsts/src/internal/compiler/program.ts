@@ -514,7 +514,7 @@ export function Program_UsesUriStyleNodeCoreModules(receiver: GoPtr<Program>): T
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"9211ec5bcaa0345245688aba2615ed9d45b569522876a02a1f6040a4ace25b46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"9211ec5bcaa0345245688aba2615ed9d45b569522876a02a1f6040a4ace25b46"}
  *
  * Go source:
  * var _ checker.Program = (*Program)(nil)
@@ -605,7 +605,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"a124c4f6a47008ca4e3457fd95247b6cb4c9c33b70716c69b709067d1bb2518e","bodyHash":"4326c0257817239b27d2abe91f2f64d5fad21b33e7fd92f4d0de4b45eaf741b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram","kind":"func","status":"stub","sigHash":"a124c4f6a47008ca4e3457fd95247b6cb4c9c33b70716c69b709067d1bb2518e","bodyHash":"4326c0257817239b27d2abe91f2f64d5fad21b33e7fd92f4d0de4b45eaf741b5"}
  *
  * Go source:
  * func NewProgram(opts ProgramOptions) *Program {
@@ -620,38 +620,11 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
  * }
  */
 export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
-  const p: Program = {
-    opts,
-    checkerPool: undefined as never,
-    compilerCheckerPool: undefined,
-    comparePathsOptions: {
-      UseCaseSensitiveFileNames: false as bool,
-      CurrentDirectory: "",
-    },
-    usesUriStyleNodeCoreModules: undefined as never,
-    commonSourceDirectory: "",
-    commonSourceDirectoryOnce: undefined as never,
-    declarationDiagnosticCache: undefined as never,
-    programDiagnostics: [],
-    hasEmitBlockingDiagnostics: { M: new Map() } as Set<Path>,
-    sourceFilesToEmitOnce: undefined as never,
-    sourceFilesToEmit: [],
-    unresolvedImports: { value: undefined, once: undefined as never, initialized: undefined as never },
-    knownSymlinks: { value: undefined, once: undefined as never, initialized: undefined as never },
-    packageNames: { value: undefined, once: undefined as never, initialized: undefined as never },
-    hasTSFileOnce: undefined as never,
-    hasTSFile: false as bool,
-    packagesMapOnce: undefined as never,
-    packagesMap: new Map(),
-  };
-  (p as { __tsgoEmbedded0?: unknown }).__tsgoEmbedded0 = processAllProgramFiles(p.opts, Program_SingleThreaded(p));
-  Program_initCheckerPool(p);
-  Program_verifyCompilerOptions(p);
-  return p;
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"ff2b2e3adc932881837f79bac6418819fac436b08a638285345eeaeb79522f94","bodyHash":"eb70be145b4b5e9881ac232a8d2bcee6270b299311159a8823bb822f8d7ee382"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"stub","sigHash":"ff2b2e3adc932881837f79bac6418819fac436b08a638285345eeaeb79522f94","bodyHash":"eb70be145b4b5e9881ac232a8d2bcee6270b299311159a8823bb822f8d7ee382"}
  *
  * Go source:
  * func (p *Program) UpdateProgram(changedFilePath tspath.Path, newHost CompilerHost, createCheckerPool func(*Program) CheckerPool) (*Program, bool) {
@@ -699,59 +672,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * }
  */
 export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: CompilerHost, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, bool] {
-  const newOpts: ProgramOptions = { ...receiver!.opts };
-  newOpts.Host = newHost;
-  if (createCheckerPool !== undefined) {
-    newOpts.CreateCheckerPool = createCheckerPool;
-  }
-  const oldFile = receiver!.__tsgoEmbedded0!.filesByPath.get(changedFilePath);
-  const newFile = newHost.GetSourceFile(SourceFile_ParseOptions(oldFile));
-  const inRedirectFiles = receiver!.__tsgoEmbedded0!.redirectFilesByPath.has(changedFilePath);
-  const isRedirectTarget = receiver!.__tsgoEmbedded0!.redirectTargetsMap.has(changedFilePath);
-  if (inRedirectFiles || isRedirectTarget) {
-    return [NewProgram(newOpts), false as bool];
-  }
-  if (!canReplaceFileInProgram(oldFile, newFile)) {
-    return [NewProgram(newOpts), false as bool];
-  }
-  const result: Program = {
-    opts: newOpts,
-    comparePathsOptions: receiver!.comparePathsOptions,
-    ...(receiver!.__tsgoEmbedded0 !== undefined ? { __tsgoEmbedded0: receiver!.__tsgoEmbedded0 } : {}),
-    checkerPool: undefined as never,
-    compilerCheckerPool: undefined,
-    usesUriStyleNodeCoreModules: receiver!.usesUriStyleNodeCoreModules,
-    programDiagnostics: receiver!.programDiagnostics,
-    hasEmitBlockingDiagnostics: receiver!.hasEmitBlockingDiagnostics,
-    commonSourceDirectory: "",
-    commonSourceDirectoryOnce: undefined as never,
-    declarationDiagnosticCache: undefined as never,
-    sourceFilesToEmitOnce: undefined as never,
-    sourceFilesToEmit: [],
-    unresolvedImports: { value: undefined, once: undefined as never, initialized: undefined as never },
-    knownSymlinks: { value: undefined, once: undefined as never, initialized: undefined as never },
-    packageNames: { value: undefined, once: undefined as never, initialized: undefined as never },
-    hasTSFileOnce: undefined as never,
-    hasTSFile: false as bool,
-    packagesMapOnce: undefined as never,
-    packagesMap: new Map(),
-  };
-  lazyValue_tryReuse(result.unresolvedImports, receiver!.unresolvedImports);
-  lazyValue_tryReuse(result.knownSymlinks, receiver!.knownSymlinks);
-  lazyValue_tryReuse(result.packageNames, receiver!.packageNames);
-  Program_initCheckerPool(result);
-  const index = FindIndex(result.__tsgoEmbedded0!.files, (file: GoPtr<SourceFile>) => SourceFile_Path(file) === SourceFile_Path(newFile));
-  const newFiles = slices.Clone(result.__tsgoEmbedded0!.files)!;
-  newFiles[index] = newFile;
-  const newFilesByPath = maps.Clone(result.__tsgoEmbedded0!.filesByPath)!;
-  newFilesByPath.set(SourceFile_Path(newFile)!, newFile);
-  (result as unknown as { __tsgoEmbedded0: processedFiles }).__tsgoEmbedded0 = {
-    ...result.__tsgoEmbedded0!,
-    files: newFiles,
-    filesByPath: newFilesByPath,
-  };
-  updateFileIncludeProcessor(result);
-  return [result, true as bool];
+  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram");
 }
 
 /**
