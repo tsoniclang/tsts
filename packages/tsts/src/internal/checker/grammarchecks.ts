@@ -17,7 +17,7 @@ import {
   KindSwitchStatement, KindLabeledStatement, KindBreakStatement, KindContinueStatement, KindVariableDeclaration as KindVariableDeclarationNode, KindRegularExpressionLiteral,
   KindJSTypeAliasDeclaration, KindJSImportDeclaration, KindNamespaceImport, KindNamedImports, KindNamedExports, KindImportSpecifier, KindExportSpecifier, KindJsxSpreadAttribute,
   KindJSDocAugmentsTag, KindMetaProperty, KindTypeLiteral, KindIdentifier, KindExpressionWithTypeArguments, KindPrivateIdentifier, KindConstructorType, KindAwaitKeyword,
-  KindExtendsKeyword, KindImplementsKeyword,
+  KindExtendsKeyword, KindImplementsKeyword, KindObjectLiteralExpression,
 } from "../ast/generated/kinds.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
