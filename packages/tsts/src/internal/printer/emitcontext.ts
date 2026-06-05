@@ -126,7 +126,7 @@ export function NewEmitContext(): GoPtr<EmitContext> {
  * 	},
  * }
  */
-export let emitContextPool: Pool = undefined as never;
+export const emitContextPool: Pool = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::func::GetEmitContext","kind":"func","status":"stub","sigHash":"262e5bdbc4909895c8eeba2e455361f11a519c90925fa3ca63c47afb4e4b3306","bodyHash":"f95c0eee382091d36bbcf65efb5d516086d4881f87e45114a658ac85087ef1dd"}
@@ -267,21 +267,18 @@ export function EmitContext_StartVariableEnvironment(receiver: GoPtr<EmitContext
 export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<Statement>> {
   const c = receiver!;
   const scope = Stack_Pop(c.varScopeStack)!;
-  let statements: GoSlice<GoPtr<Statement>> = [];
-  if (scope.functions.length > 0) {
-    statements = slices.Clone(scope.functions)!;
-  }
-  if (scope.variables.length > 0) {
+  const baseFunctions = scope.functions.length > 0 ? slices.Clone(scope.functions)! : ([] as GoSlice<GoPtr<Statement>>);
+  const withVariables = scope.variables.length > 0 ? (() => {
     const f = c.Factory!.__tsgoEmbedded0!;
     const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsNone);
     const varStatement = NewVariableStatement(f, undefined, varDeclList);
     EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-    statements = [...statements, varStatement];
-  }
-  if (scope.initializationStatements.length > 0) {
-    statements = [...statements, ...scope.initializationStatements];
-  }
-  return [...statements, ...EmitContext_EndLexicalEnvironment(receiver)];
+    return [...baseFunctions, varStatement];
+  })() : baseFunctions;
+  const withInit = scope.initializationStatements.length > 0
+    ? [...withVariables, ...scope.initializationStatements]
+    : withVariables;
+  return [...withInit, ...EmitContext_EndLexicalEnvironment(receiver)];
 }
 
 /**
@@ -305,10 +302,7 @@ export function EmitContext_EndVariableEnvironment(receiver: GoPtr<EmitContext>)
  */
 export function EmitContext_EndAndMergeVariableEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  let nodes: GoSlice<GoPtr<Statement>> = [];
-  if (statements !== undefined) {
-    nodes = statements.Nodes;
-  }
+  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
 
   const [result, changed] = EmitContext_endAndMergeVariableEnvironment(receiver, nodes);
   if (changed) {
@@ -421,15 +415,12 @@ export function EmitContext_StartLexicalEnvironment(receiver: GoPtr<EmitContext>
 export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>): GoSlice<GoPtr<Statement>> {
   const c = receiver!;
   const scope = Stack_Pop(c.letScopeStack)!;
-  let statements: GoSlice<GoPtr<Statement>> = [];
-  if (scope.variables.length > 0) {
-    const f = c.Factory!.__tsgoEmbedded0!;
-    const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsLet);
-    const varStatement = NewVariableStatement(f, undefined, varDeclList);
-    EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
-    statements = [...statements, varStatement];
-  }
-  return statements;
+  if (scope.variables.length === 0) return [];
+  const f = c.Factory!.__tsgoEmbedded0!;
+  const varDeclList = NewVariableDeclarationList(f, NodeFactory_NewNodeList(f, scope.variables), NodeFlagsLet);
+  const varStatement = NewVariableStatement(f, undefined, varDeclList);
+  EmitContext_SetEmitFlags(receiver, varStatement, EFCustomPrologue);
+  return [varStatement];
 }
 
 /**
@@ -453,10 +444,7 @@ export function EmitContext_EndLexicalEnvironment(receiver: GoPtr<EmitContext>):
  */
 export function EmitContext_EndAndMergeLexicalEnvironmentList(receiver: GoPtr<EmitContext>, statements: GoPtr<StatementList>): GoPtr<StatementList> {
   const c = receiver!;
-  let nodes: GoSlice<GoPtr<Statement>> = [];
-  if (statements !== undefined) {
-    nodes = statements.Nodes;
-  }
+  const nodes: GoSlice<GoPtr<Statement>> = statements !== undefined ? statements.Nodes : [];
 
   const [result, changed] = EmitContext_endAndMergeLexicalEnvironment(receiver, nodes);
   if (changed) {
@@ -815,7 +803,7 @@ export interface AutoGenerateOptions {
  * Go source:
  * var nextAutoGenerateId atomic.Uint32
  */
-export let nextAutoGenerateId: Uint32 = undefined as never;
+export const nextAutoGenerateId: Uint32 = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateId","kind":"type","status":"stub","sigHash":"22b430b286a3594ead6596c4569e738bac99d6628924f6ca4f0ce42f95246271","bodyHash":"9f2be36e96e0cbe37d003c9ab771d961db8d8c50827b81f4b4d389759cc3e672"}
@@ -946,14 +934,10 @@ export function EmitContext_Original(receiver: GoPtr<EmitContext>, node: GoPtr<N
  * }
  */
 export function EmitContext_MostOriginal(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoPtr<Node> {
-  if (node !== undefined) {
-    let original = EmitContext_Original(receiver, node);
-    while (original !== undefined) {
-      node = original;
-      original = EmitContext_Original(receiver, node);
-    }
-  }
-  return node;
+  if (node === undefined) return undefined;
+  const original = EmitContext_Original(receiver, node);
+  if (original === undefined) return node;
+  return EmitContext_MostOriginal(receiver, original);
 }
 
 /**

@@ -465,7 +465,7 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeEnumValue","kind":"func","status":"stub","sigHash":"f8c182bb220faccfdbdac394af92c0d9de62fef019a359520704ff0b5c60b1bc","bodyHash":"fa40c889459956e735b9ddf4711de25a1012edb5332971c0c92d4d10f8a59217"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeEnumValue","kind":"func","status":"implemented","sigHash":"f8c182bb220faccfdbdac394af92c0d9de62fef019a359520704ff0b5c60b1bc","bodyHash":"fa40c889459956e735b9ddf4711de25a1012edb5332971c0c92d4d10f8a59217"}
  *
  * Go source:
  * func serializeEnumValue(value any, enumMap *collections.OrderedMap[string, any]) string {
@@ -486,7 +486,20 @@ export function serializeCompilerOptions(options: GoPtr<CompilerOptions>, config
  * }
  */
 export function serializeEnumValue(value: unknown, enumMap: GoPtr<OrderedMap>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/showconfig.go::func::serializeEnumValue");
+  if (typeof value === "number") {
+    const container = { result: "" };
+    OrderedMap_Entries(enumMap)((k: unknown, v: unknown): bool => {
+      if (typeof v === "number" && v === value) {
+        container.result = k as string;
+        return false as bool;
+      }
+      return true as bool;
+    });
+    if (container.result !== "") {
+      return container.result;
+    }
+  }
+  return getNameOfCompilerOptionValue(value, enumMap);
 }
 
 /**
