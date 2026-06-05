@@ -42,7 +42,7 @@ import { Node_ModifierFlags } from "../ast/ast.js";
 import { IsClassExpression, IsEnumDeclaration, IsInterfaceDeclaration, IsModuleDeclaration } from "../ast/generated/predicates.js";
 import { NodeFactory_NewModifierList } from "../ast/spine.js";
 import { CreateModifiersFromModifierFlags, IsClassLike, ReplaceModifiers } from "../ast/utilities.js";
-import { ModifierFlagsAmbient, ModifierFlagsExport } from "../ast/generated/flags.js";
+import { ModifierFlagsAmbient, ModifierFlagsExport } from "../ast/modifierflags.js";
 import { Filter } from "../core/core.js";
 import {
   FlagsIgnoreErrors,

@@ -3,7 +3,8 @@ import * as strings from "../../../go/strings.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_SubtreeFacts, Node_TemplateLiteralLikeData, NodeFactory_NewNodeList } from "../../ast/spine.js";
-import { AsSourceFile, GetSourceFileOfNode, IsExternalModule, Node_Expression, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
+import { AsSourceFile, Node_Expression, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
+import { GetSourceFileOfNode, IsExternalModule } from "../../ast/utilities.js";
 import type { TaggedTemplateExpression, TemplateSpan } from "../../ast/generated/data.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { TemplateLiteralLikeNodeBase } from "../../ast/generated/node.js";
@@ -20,7 +21,7 @@ import {
   NewVariableStatement,
 } from "../../ast/generated/factory.js";
 import { SubtreeContainsInvalidTemplateEscape } from "../../ast/subtreefacts.js";
-import { TokenFlagsContainsInvalidEscape, TokenFlagsNone } from "../../ast/tokenflags.js";
+import { TokenFlagsContainsInvalidEscape, TokenFlagsIsInvalid, TokenFlagsNone } from "../../ast/tokenflags.js";
 import type { NodeFactory } from "../../printer/factory.js";
 import {
   NodeFactory_NewAssignmentExpression,

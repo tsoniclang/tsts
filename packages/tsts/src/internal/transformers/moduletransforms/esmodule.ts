@@ -2,7 +2,7 @@ import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { bool } from "@tsonic/core/types.js";
 import type { HasFileName, Node, SourceFile } from "../../ast/ast.js";
 import {
-  AsSourceFile,
+  AsSourceFile, SourceFile_FileName, SourceFile_Path,
   NodeFactory_UpdateImportDeclaration, NodeFactory_UpdateExportDeclaration,
   NodeFactory_UpdateCallExpression, NodeFactory_UpdateSourceFile,
 } from "../../ast/ast.js";
@@ -56,6 +56,7 @@ import {
   NodeFactory_NewRewriteRelativeImportExtensionsHelper,
   NodeFactory_NewUniqueNameEx, NodeFactory_SplitCustomPrologue, NodeFactory_SplitStandardPrologue,
 } from "../../printer/factory.js";
+import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { TransformOptions } from "../chain.js";
 import { SingleOrMany } from "../utilities.js";
 import type { Transformer } from "../transformer.js";
@@ -245,7 +246,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
 
   const externalHelpersImportDeclaration = createExternalHelpersImportDeclarationIfNeeded(
     emitContext, result, receiver!.compilerOptions,
-    receiver!.getEmitModuleFormatOfFile(node!),
+    receiver!.getEmitModuleFormatOfFile({ FileName: () => SourceFile_FileName(node), Path: () => SourceFile_Path(node) }),
     false, /*hasExportStarsToExportValues*/
     false, /*hasImportStar*/
     false, /*hasImportDefault*/
@@ -258,8 +259,9 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     if (externalHelpersImportDeclaration !== undefined) {
       statements = [...statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration)];
     }
-    if (receiver!.importRequireStatements !== undefined) {
-      statements = [...statements, ...receiver!.importRequireStatements!.statements];
+    const importRequireStmts = receiver!.importRequireStatements;
+    if (importRequireStmts !== undefined) {
+      statements = [...statements, ...importRequireStmts.statements];
     }
     statements = [...statements, ...rest];
     const statementList = NodeFactory_NewNodeList(af, statements);
@@ -661,7 +663,7 @@ export function ESModuleTransformer_visitImportOrRequireCall(receiver: GoPtr<ESM
   }
 
   let args: GoSlice<GoPtr<Node>> = [argument as unknown as GoPtr<Node>];
-  const rest = FirstResult(NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1)));
+  const rest = NodeVisitor_VisitSlice(visitor, node!.Arguments!.Nodes.slice(1))[0];
   args = [...args, ...rest];
 
   const argumentList = NodeFactory_NewNodeList(af, args);
@@ -720,7 +722,7 @@ export function ESModuleTransformer_createRequireCall(receiver: GoPtr<ESModuleTr
   const af = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
 
-  const moduleName = getExternalModuleNameLiteral(pf!, node, receiver!.currentSourceFile, undefined /*host*/, undefined /*emitResolver*/, receiver!.compilerOptions);
+  const moduleName = getExternalModuleNameLiteral(pf!, node, receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*emitResolver*/, receiver!.compilerOptions);
 
   let args: GoSlice<GoPtr<Node>> = [];
   if (moduleName !== undefined) {

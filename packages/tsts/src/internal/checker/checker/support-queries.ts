@@ -77,8 +77,8 @@ import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { IsBindingElement, IsBinaryExpression, IsPropertyAssignment, IsShorthandPropertyAssignment, IsSpreadElement } from "../../ast/generated/predicates.js";
-import { GetCombinedModifierFlags, IsAssignmentOperator, IsClassElement, IsClassLike, IsJsxOpeningElement, IsJsxOpeningLikeElement, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
+import { IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsJsxOpeningElement, IsPropertyAssignment, IsShorthandPropertyAssignment, IsSpreadElement } from "../../ast/generated/predicates.js";
+import { GetCombinedModifierFlags, IsClassElement, IsClassLike, IsJsxOpeningLikeElement, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
 import { AsBinaryExpression, AsConditionalExpression, AsPrefixUnaryExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
@@ -126,7 +126,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  return LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.referenceKinds !== 0;
+  return (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds !== 0;
 }
 
 /**
@@ -766,7 +766,7 @@ export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location:
  * }
  */
 export function Checker_getSpreadIndices(receiver: GoPtr<Checker>, node: GoPtr<Node>): [int, int] {
-  const links = LinkStore_Get<GoPtr<Node>, ArrayLiteralLinks>(receiver!.arrayLiteralLinks, node)!;
+  const links = (LinkStore_Get(receiver!.arrayLiteralLinks, node) as GoPtr<ArrayLiteralLinks>)!;
   if (!links.indicesComputed) {
     let first = -1;
     let last = -1;

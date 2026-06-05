@@ -34,6 +34,7 @@ import { CheckFlagsLate } from "../ast/checkflags.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import {
   NodeFlagsNone,
+  SymbolFlagsAlias,
   SymbolFlagsClass,
   SymbolFlagsEnum,
   SymbolFlagsFunction,
@@ -819,7 +820,7 @@ export function NodeBuilderImpl_createElidedInformationPlaceholder(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.mapToTypeNodes","kind":"method","status":"stub","sigHash":"358c87c81519e49d1ca70ffc89d7fe092a67bf0ebb47d305a2bee61b6fe5baca","bodyHash":"447dffbfd088407ae77d3d3fc8b1db29250a28a1082a4ede7d86981a07a0b4b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.mapToTypeNodes","kind":"method","status":"implemented","sigHash":"358c87c81519e49d1ca70ffc89d7fe092a67bf0ebb47d305a2bee61b6fe5baca","bodyHash":"447dffbfd088407ae77d3d3fc8b1db29250a28a1082a4ede7d86981a07a0b4b8"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) mapToTypeNodes(list []*Type, isBareList bool) *ast.NodeList {
@@ -919,7 +920,7 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeTypeName","kind":"method","status":"stub","sigHash":"ffda5b4e68918be1c7defd337b5b637c23e34aa07b489aa2fe756bf466c07758","bodyHash":"027e24b45ea94e8be78f1237519376c6e7677f5a683c3ab5afd697a014266e0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeTypeName","kind":"method","status":"implemented","sigHash":"ffda5b4e68918be1c7defd337b5b637c23e34aa07b489aa2fe756bf466c07758","bodyHash":"027e24b45ea94e8be78f1237519376c6e7677f5a683c3ab5afd697a014266e0d"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeTypeName(node *ast.Node, isTypeOf bool, typeArguments *ast.NodeList) *ast.Node {
@@ -944,7 +945,16 @@ export function NodeBuilderImpl_mapToTypeNodes(receiver: GoPtr<NodeBuilderImpl>,
  * }
  */
 export function NodeBuilderImpl_serializeTypeName(receiver: GoPtr<NodeBuilderImpl>, node: GoPtr<Node>, isTypeOf: bool, typeArguments: GoPtr<NodeList>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeTypeName");
+  const meaning = isTypeOf ? SymbolFlagsValue : SymbolFlagsType;
+  const symbol = Checker_resolveEntityName(receiver!.ch, node, meaning, true, false, node);
+  if (symbol === undefined) {
+    return undefined;
+  }
+  const resolvedSymbol = (symbol!.Flags & SymbolFlagsAlias) !== 0 ? Checker_resolveAlias(receiver!.ch, symbol) : symbol;
+  if (Checker_IsSymbolAccessible(receiver!.ch, symbol, receiver!.ctx!.enclosingDeclaration, meaning, false).accessibility !== SymbolAccessibilityAccessible) {
+    return undefined;
+  }
+  return NodeBuilderImpl_symbolToTypeNode(receiver, resolvedSymbol, meaning, typeArguments);
 }
 
 /**
@@ -1053,7 +1063,7 @@ export function NodeBuilderImpl_tryReuseExistingTypeNode(receiver: GoPtr<NodeBui
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeNodeIsEquivalentToType","kind":"method","status":"stub","sigHash":"0d5c1b02a402d48a8c358c2531b80e9fe47fdbea6b298db625cbdfcca893ecd2","bodyHash":"a39e12b3178ad6bc67a8f4577b90013f191df57fb67fff35b53bd252a867f8ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeNodeIsEquivalentToType","kind":"method","status":"implemented","sigHash":"0d5c1b02a402d48a8c358c2531b80e9fe47fdbea6b298db625cbdfcca893ecd2","bodyHash":"a39e12b3178ad6bc67a8f4577b90013f191df57fb67fff35b53bd252a867f8ab"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeNodeIsEquivalentToType(annotatedDeclaration *ast.Node, t *Type, typeFromTypeNode *Type) bool {
@@ -1072,7 +1082,16 @@ export function NodeBuilderImpl_tryReuseExistingTypeNode(receiver: GoPtr<NodeBui
  * }
  */
 export function NodeBuilderImpl_typeNodeIsEquivalentToType(receiver: GoPtr<NodeBuilderImpl>, annotatedDeclaration: GoPtr<Node>, t: GoPtr<Type>, typeFromTypeNode: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeNodeIsEquivalentToType");
+  if (typeFromTypeNode === t) {
+    return true;
+  }
+  if (annotatedDeclaration === undefined) {
+    return false;
+  }
+  if (isOptionalDeclaration(annotatedDeclaration)) {
+    return Checker_getTypeWithFacts(receiver!.ch, t, TypeFactsNEUndefined) === typeFromTypeNode;
+  }
+  return false;
 }
 
 /**

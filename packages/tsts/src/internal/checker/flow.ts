@@ -3118,7 +3118,35 @@ export function Checker_getDiscriminantPropertyAccess(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_getCandidateDiscriminantPropertyAccess(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, expr: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getCandidateDiscriminantPropertyAccess");
+  if (IsBindingPattern(f!.reference) || IsFunctionExpressionOrArrowFunction(f!.reference) || IsObjectLiteralMethod(f!.reference)) {
+    if (IsIdentifier(expr)) {
+      const symbol = Checker_getResolvedSymbol(receiver, expr);
+      const declaration = Checker_getExportSymbolOfValueSymbolIfExported(receiver, symbol)!.ValueDeclaration;
+      if (declaration !== undefined && (IsBindingElement(declaration) || IsParameterDeclaration(declaration)) && f!.reference === declaration!.Parent && Node_Initializer(declaration) === undefined && !hasDotDotDotToken(declaration)) {
+        return declaration;
+      }
+    }
+  } else if (IsAccessExpression(expr)) {
+    if (Checker_isMatchingReference(receiver, f!.reference, Node_Expression(expr))) {
+      return expr;
+    }
+  } else if (IsIdentifier(expr)) {
+    const symbol = Checker_getResolvedSymbol(receiver, expr);
+    if (Checker_isConstantVariable(receiver, symbol)) {
+      const declaration = symbol!.ValueDeclaration;
+      let initializer = getCandidateVariableDeclarationInitializer(declaration);
+      if (initializer !== undefined && IsAccessExpression(initializer) && Checker_isMatchingReference(receiver, f!.reference, Node_Expression(initializer))) {
+        return initializer;
+      }
+      if (IsBindingElement(declaration) && Node_Initializer(declaration) === undefined) {
+        initializer = getCandidateVariableDeclarationInitializer(declaration!.Parent!.Parent);
+        if (initializer !== undefined && (IsIdentifier(initializer) || IsAccessExpression(initializer)) && Checker_isMatchingReference(receiver, f!.reference, initializer)) {
+          return declaration;
+        }
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -3135,7 +3163,13 @@ export function Checker_getCandidateDiscriminantPropertyAccess(receiver: GoPtr<C
  * }
  */
 export function getCandidateVariableDeclarationInitializer(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::func::getCandidateVariableDeclarationInitializer");
+  if (IsVariableDeclaration(node) && Node_Type(node) === undefined) {
+    const initializer = Node_Initializer(node);
+    if (initializer !== undefined) {
+      return SkipParentheses(initializer);
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -3154,7 +3188,14 @@ export function getCandidateVariableDeclarationInitializer(node: GoPtr<Node>): G
  * }
  */
 export function Checker_getEvolvingArrayType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getEvolvingArrayType");
+  const key: CachedTypeKey = { kind: CachedTypeKindEvolvingArrayType, typeId: elementType!.id };
+  let result = receiver!.cachedTypes.get(key);
+  if (result === undefined) {
+    result = Checker_newObjectType(receiver, ObjectFlagsEvolvingArray, undefined);
+    Type_AsEvolvingArrayType(result)!.elementType = elementType;
+    receiver!.cachedTypes.set(key, result);
+  }
+  return result;
 }
 
 /**
@@ -3169,7 +3210,10 @@ export function Checker_getEvolvingArrayType(receiver: GoPtr<Checker>, elementTy
  * }
  */
 export function Checker_getElementTypeOfEvolvingArrayType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getElementTypeOfEvolvingArrayType");
+  if (t!.objectFlags & ObjectFlagsEvolvingArray) {
+    return Type_AsEvolvingArrayType(t)!.elementType;
+  }
+  return receiver!.neverType;
 }
 
 /**
@@ -3190,7 +3234,16 @@ export function Checker_getElementTypeOfEvolvingArrayType(receiver: GoPtr<Checke
  * }
  */
 export function isEvolvingArrayTypeList(types: GoSlice<GoPtr<Type>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::func::isEvolvingArrayTypeList");
+  let hasEvolvingArrayType = false;
+  for (const t of types) {
+    if (!(t!.flags & TypeFlagsNever)) {
+      if (!(t!.objectFlags & ObjectFlagsEvolvingArray)) {
+        return false;
+      }
+      hasEvolvingArrayType = true;
+    }
+  }
+  return hasEvolvingArrayType;
 }
 
 /**
@@ -3210,7 +3263,16 @@ export function isEvolvingArrayTypeList(types: GoSlice<GoPtr<Type>>): bool {
  * }
  */
 export function Checker_isEvolvingArrayOperationTarget(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.isEvolvingArrayOperationTarget");
+  const root = Checker_getReferenceRoot(receiver, node);
+  const parent = root!.Parent;
+  const isLengthPushOrUnshift = IsPropertyAccessExpression(parent) &&
+    (Node_Name(parent)!.text === "length" ||
+      IsCallExpression(parent!.Parent) && IsIdentifier(Node_Name(parent)) && IsPushOrUnshiftIdentifier(Node_Name(parent)));
+  const isElementAssignment = IsElementAccessExpression(parent) && Node_Expression(parent) === root &&
+    IsBinaryExpression(parent!.Parent) && AsBinaryExpression(parent!.Parent)!.OperatorToken.Kind === KindEqualsToken &&
+    AsBinaryExpression(parent!.Parent)!.Left === parent && !IsAssignmentTarget(parent!.Parent) &&
+    Checker_isTypeAssignableToKind(receiver, Checker_getTypeOfExpression(receiver, AsElementAccessExpression(parent)!.ArgumentExpression), TypeFlagsNumberLike, false);
+  return isLengthPushOrUnshift || isElementAssignment;
 }
 
 /**
@@ -3227,7 +3289,12 @@ export function Checker_isEvolvingArrayOperationTarget(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_addEvolvingArrayElementType(receiver: GoPtr<Checker>, evolvingArrayType: GoPtr<Type>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.addEvolvingArrayElementType");
+  const newElementType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, Checker_getContextFreeTypeOfExpression(receiver, node)));
+  const elementType = Type_AsEvolvingArrayType(evolvingArrayType)!.elementType;
+  if (Checker_isTypeSubsetOf(receiver, newElementType, elementType)) {
+    return evolvingArrayType;
+  }
+  return Checker_getEvolvingArrayType(receiver, Checker_getUnionType(receiver, [elementType, newElementType]));
 }
 
 /**
@@ -3242,7 +3309,10 @@ export function Checker_addEvolvingArrayElementType(receiver: GoPtr<Checker>, ev
  * }
  */
 export function Checker_finalizeEvolvingArrayType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.finalizeEvolvingArrayType");
+  if (t!.objectFlags & ObjectFlagsEvolvingArray) {
+    return Checker_getFinalArrayType(receiver, Type_AsEvolvingArrayType(t));
+  }
+  return t;
 }
 
 /**
@@ -3257,7 +3327,10 @@ export function Checker_finalizeEvolvingArrayType(receiver: GoPtr<Checker>, t: G
  * }
  */
 export function Checker_getFinalArrayType(receiver: GoPtr<Checker>, t: GoPtr<EvolvingArrayType>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getFinalArrayType");
+  if (t!.finalArrayType === undefined) {
+    t!.finalArrayType = Checker_createFinalArrayType(receiver, t!.elementType);
+  }
+  return t!.finalArrayType;
 }
 
 /**
@@ -3932,7 +4005,7 @@ export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getTypeOfSwitchClause","kind":"method","status":"stub","sigHash":"99b1f904d6789c5694bc055ea968def7413f1d8aaa95d346a7cbcd05c3c84686","bodyHash":"9fedce3be65fa0820be8e717332341a9a0a58a7ec3ab1b3593cfa0eb15e33c88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getTypeOfSwitchClause","kind":"method","status":"implemented","sigHash":"99b1f904d6789c5694bc055ea968def7413f1d8aaa95d346a7cbcd05c3c84686","bodyHash":"9fedce3be65fa0820be8e717332341a9a0a58a7ec3ab1b3593cfa0eb15e33c88"}
  *
  * Go source:
  * func (c *Checker) getTypeOfSwitchClause(clause *ast.Node) *Type {
@@ -3943,7 +4016,10 @@ export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_getTypeOfSwitchClause(receiver: GoPtr<Checker>, clause: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getTypeOfSwitchClause");
+  if (clause!.Kind === KindCaseClause) {
+    return Checker_getRegularTypeOfLiteralType(receiver, Checker_getTypeOfExpression(receiver, Node_Expression(clause)));
+  }
+  return receiver!.neverType;
 }
 
 /**

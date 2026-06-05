@@ -3,9 +3,9 @@ import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { Node_Name } from "../../ast/spine.js";
-import type { AwaitExpression, Block, CatchClause, ConstructorDeclaration, ForInOrOfStatement, ForStatement, GetAccessorDeclaration, MethodDeclaration, SetAccessorDeclaration, VariableDeclaration, VariableDeclarationList } from "../../ast/generated/data.js";
-import type { ArrowFunction, FunctionDeclaration, FunctionExpression, IdentifierNode } from "../../ast/generated/unions.js";
+import { Node_Modifiers, Node_Name } from "../../ast/spine.js";
+import type { ArrowFunction, AwaitExpression, Block, CatchClause, ConstructorDeclaration, ForInOrOfStatement, ForStatement, FunctionDeclaration, FunctionExpression, GetAccessorDeclaration, MethodDeclaration, SetAccessorDeclaration, VariableDeclaration, VariableDeclarationList } from "../../ast/generated/data.js";
+import type { IdentifierNode } from "../../ast/generated/unions.js";
 import {
   AsArrowFunction,
   AsArrayLiteralExpression,
