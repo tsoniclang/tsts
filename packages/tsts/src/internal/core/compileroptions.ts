@@ -330,7 +330,7 @@ export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
  * Go source:
  * var EmptyCompilerOptions = &CompilerOptions{}
  */
-export let EmptyCompilerOptions: GoPtr<CompilerOptions> = undefined as never;
+export const EmptyCompilerOptions: GoPtr<CompilerOptions> = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"stub","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4","bodyHash":"78d95458b8e87bacaea1c14432a123baf45f19a8dbce2eb144482044b8c81a54"}
@@ -338,10 +338,10 @@ export let EmptyCompilerOptions: GoPtr<CompilerOptions> = undefined as never;
  * Go source:
  * var optionsType = reflect.TypeFor[CompilerOptions]()
  */
-export let optionsType: unknown = undefined as never;
+export const optionsType: unknown = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"stub","sigHash":"f7d4a926a50c11b48bf433a036d815a2acc0c65ae5238d38c2ccf8340be890b1","bodyHash":"3bedcaaecca6dcc7cad2f15a08f5ea19fa8855978b0ff2013714458ad0cc3e19"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone","kind":"method","status":"implemented","sigHash":"f7d4a926a50c11b48bf433a036d815a2acc0c65ae5238d38c2ccf8340be890b1","bodyHash":"3bedcaaecca6dcc7cad2f15a08f5ea19fa8855978b0ff2013714458ad0cc3e19"}
  *
  * Go source:
  * func (options *CompilerOptions) Clone() *CompilerOptions {
@@ -361,7 +361,7 @@ export let optionsType: unknown = undefined as never;
  * }
  */
 export function CompilerOptions_Clone(receiver: GoPtr<CompilerOptions>): GoPtr<CompilerOptions> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/compileroptions.go::method::CompilerOptions.Clone");
+  return { ...receiver! };
 }
 
 /**
