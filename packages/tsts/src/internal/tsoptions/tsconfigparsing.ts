@@ -27,48 +27,16 @@ import {
   CommandLineOptionTypeListOrElement,
   CommandLineOptionTypeObject,
   CommandLineOptionTypeString,
+  commandLineOptionsToMap,
   extraValidationLocale,
   extraValidationNone,
+  newCommandLineOption,
 } from "./commandlineoption.js";
 import type { CommandLineOption, CompilerOptionsValue } from "./commandlineoption.js";
 import { OptionsDeclarations } from "./declscompiler.js";
 import { typeAcquisitionDeclaration } from "./declstypeacquisition.js";
 import type { ParsedCommandLine } from "./parsedcommandline.js";
 
-// Constructs a CommandLineOption from a Go composite literal's named fields,
-// filling all remaining fields with their Go zero values. Mirrors the Go struct
-// literal semantics where unspecified fields take their type's zero value.
-function newCommandLineOption(fields: Partial<CommandLineOption>): CommandLineOption {
-  return {
-    Name: "",
-    ShortName: "",
-    Kind: "",
-    IsFilePath: false,
-    IsTSConfigOnly: false,
-    IsCommandLineOnly: false,
-    Description: undefined,
-    DefaultValueDescription: undefined,
-    ShowInSimplifiedHelpView: false,
-    Category: undefined,
-    extraValidation: extraValidationNone,
-    minValue: 0,
-    allowConfigDirTemplateSubstitution: false,
-    AffectsDeclarationPath: false,
-    AffectsProgramStructure: false,
-    AffectsSemanticDiagnostics: false,
-    AffectsBuildInfo: false,
-    AffectsBindDiagnostics: false,
-    AffectsSourceFile: false,
-    AffectsModuleResolution: false,
-    AffectsEmit: false,
-    allowJsFlag: false,
-    strictFlag: false,
-    transpileOptionValue: TSUnknown,
-    listPreserveFalsyValues: false,
-    ElementOptions: undefined as never,
-    ...fields,
-  };
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::extendsResult","kind":"type","status":"stub","sigHash":"c7aea5f73d967b08ac0528a1d8b41421b0c463f32ac68d98e843b3a3f34c9be2","bodyHash":"a9a5e4be3ccd0e78727df342c62c509aaaf6cc61a508b4445c448b8a516cc80d"}
@@ -1003,14 +971,7 @@ export function CommandLineOptionNameMap_Get(receiver: CommandLineOptionNameMap,
  * 	return result
  * }
  */
-export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLineOption>>): CommandLineOptionNameMap {
-  const result: CommandLineOptionNameMap = new globalThis.Map<string, GoPtr<CommandLineOption>>();
-  for (let i = 0; i < compilerOptions.length; i++) {
-    result.set(compilerOptions[i]!.Name, compilerOptions[i]);
-    result.set(strings.ToLower(compilerOptions[i]!.Name), compilerOptions[i]);
-  }
-  return result;
-}
+export { commandLineOptionsToMap };
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertMapToOptions","kind":"func","status":"stub","sigHash":"2099546fa2b212ab262c21918a9ad7d8d01578776ff55a8ae02ef835fad547ff","bodyHash":"19cf6bce2f87e925e869c86e7b15ffe8e3718bf1bf5b8571d2a183cb717a0eab"}

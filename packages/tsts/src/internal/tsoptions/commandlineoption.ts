@@ -1,11 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoMap, GoPtr } from "../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Set } from "../collections/set.js";
 import { NewSetFromItems } from "../collections/set.js";
 import type { Tristate } from "../core/tristate.js";
 import { TSUnknown } from "../core/tristate.js";
 import type { Message } from "../diagnostics/diagnostics.js";
+import * as strings from "../../go/strings.js";
 import type { CommandLineOptionNameMap } from "./tsconfigparsing.js";
 
 /**
@@ -118,7 +119,7 @@ export interface CommandLineOption {
   strictFlag: bool;
   transpileOptionValue: Tristate;
   listPreserveFalsyValues: bool;
-  ElementOptions: CommandLineOptionNameMap;
+  ElementOptions: CommandLineOptionNameMap | undefined;
 }
 
 /**
@@ -288,7 +289,7 @@ export function CommandLineOption_DisallowNullOrUndefined(receiver: GoPtr<Comman
  */
 // Constructs a CommandLineOption from a Go composite literal's named fields,
 // filling all remaining fields with their Go zero values.
-function newCommandLineOption(fields: Partial<CommandLineOption>): CommandLineOption {
+export function newCommandLineOption(fields: Partial<CommandLineOption>): CommandLineOption {
   return {
     Name: "",
     ShortName: "",
@@ -315,9 +316,18 @@ function newCommandLineOption(fields: Partial<CommandLineOption>): CommandLineOp
     strictFlag: false,
     transpileOptionValue: TSUnknown,
     listPreserveFalsyValues: false,
-    ElementOptions: undefined as never,
+    ElementOptions: undefined,
     ...fields,
   };
+}
+
+export function commandLineOptionsToMap(compilerOptions: GoSlice<GoPtr<CommandLineOption>>): CommandLineOptionNameMap {
+  const result: CommandLineOptionNameMap = new globalThis.Map<string, GoPtr<CommandLineOption>>();
+  for (let i = 0; i < compilerOptions.length; i++) {
+    result.set(compilerOptions[i]!.Name, compilerOptions[i]);
+    result.set(strings.ToLower(compilerOptions[i]!.Name), compilerOptions[i]);
+  }
+  return result;
 }
 
 export const commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> = new globalThis.Map<string, GoPtr<CommandLineOption>>([
