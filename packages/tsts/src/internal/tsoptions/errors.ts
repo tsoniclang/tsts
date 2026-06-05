@@ -1,13 +1,21 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
-import { Join } from "../../go/strings.js";
+import { Join, ToLower } from "../../go/strings.js";
+import { Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
+import { SourceFile_Text } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
+import { NewCompilerDiagnostic, NewDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
+import { NewTextRange, TextRange_Pos } from "../core/text.js";
+import { SkipTrivia } from "../scanner/scanner.js";
+import { NameMap_Get } from "./namemap.js";
 import { Filter } from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import {
+  Compiler_option_0_may_only_be_used_with_build,
+  Option_build_must_be_the_first_command_line_argument,
   Unknown_build_option_0,
   Unknown_compiler_option_0,
   Unknown_type_acquisition_option_0,
@@ -20,6 +28,7 @@ import {
   CommandLineOptionTypeList,
   CommandLineOptionTypeListOrElement,
 } from "./commandlineoption.js";
+import { commandLineParser_AlternateMode, commandLineParser_UnknownOptionDiagnostic } from "./commandlineparser.js";
 import type { commandLineParser } from "./commandlineparser.js";
 import type { AlternateModeDiagnostics } from "./diagnostics.js";
 
@@ -84,7 +93,7 @@ export function getCompilerOptionValueTypeString(option: GoPtr<CommandLineOption
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::method::commandLineParser.createUnknownOptionError","kind":"method","status":"stub","sigHash":"0dee86ecdf3af153093684f4163f78599afd58b4d432fdf051599a5821e6691a","bodyHash":"46f30d3d4ddde845500823f85f5301c1c55e4a4b8eb9cbbaf6f6b7d05b019a9e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::method::commandLineParser.createUnknownOptionError","kind":"method","status":"implemented","sigHash":"0dee86ecdf3af153093684f4163f78599afd58b4d432fdf051599a5821e6691a","bodyHash":"46f30d3d4ddde845500823f85f5301c1c55e4a4b8eb9cbbaf6f6b7d05b019a9e"}
  *
  * Go source:
  * func (parser *commandLineParser) createUnknownOptionError(
@@ -104,11 +113,18 @@ export function getCompilerOptionValueTypeString(option: GoPtr<CommandLineOption
  * }
  */
 export function commandLineParser_createUnknownOptionError(receiver: GoPtr<commandLineParser>, unknownOption: string, unknownOptionErrorText: string, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/errors.go::method::commandLineParser.createUnknownOptionError");
+  return createUnknownOptionError(
+    unknownOption,
+    commandLineParser_UnknownOptionDiagnostic(receiver),
+    unknownOptionErrorText,
+    node,
+    sourceFile,
+    commandLineParser_AlternateMode(receiver),
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createUnknownOptionError","kind":"func","status":"stub","sigHash":"56b100f696629e7b52712870caea559e0447003d0ba5c44351502afaed622674","bodyHash":"ff48bdaf533829f08d2cc00560db48234982fe077c43400cb4d6e1700375885c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createUnknownOptionError","kind":"func","status":"implemented","sigHash":"56b100f696629e7b52712870caea559e0447003d0ba5c44351502afaed622674","bodyHash":"ff48bdaf533829f08d2cc00560db48234982fe077c43400cb4d6e1700375885c"}
  *
  * Go source:
  * func createUnknownOptionError(
@@ -138,11 +154,21 @@ export function commandLineParser_createUnknownOptionError(receiver: GoPtr<comma
  * }
  */
 export function createUnknownOptionError(unknownOption: string, unknownOptionDiagnostic: GoPtr<Message>, unknownOptionErrorText: string, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, alternateMode: GoPtr<AlternateModeDiagnostics>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createUnknownOptionError");
+  if (alternateMode !== undefined && alternateMode.optionsNameMap !== undefined) {
+    const otherOption = NameMap_Get(alternateMode.optionsNameMap, ToLower(unknownOption));
+    if (otherOption !== undefined) {
+      const diagnostic = otherOption.Name === "build"
+        ? Option_build_must_be_the_first_command_line_argument
+        : alternateMode.diagnostic;
+      return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, node, diagnostic, unknownOption);
+    }
+  }
+  const errorText = unknownOptionErrorText === "" ? unknownOption : unknownOptionErrorText;
+  return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, node, unknownOptionDiagnostic, errorText);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFile","kind":"func","status":"stub","sigHash":"9f9766e09406c94acb5f0eaa2d5094eaf93011bb588bab6f00e30c17e7d04a59","bodyHash":"afd49e02933d09f8d81ff1b2f165766b109378664d0c6b720bfa4203f95345c9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFile","kind":"func","status":"implemented","sigHash":"9f9766e09406c94acb5f0eaa2d5094eaf93011bb588bab6f00e30c17e7d04a59","bodyHash":"afd49e02933d09f8d81ff1b2f165766b109378664d0c6b720bfa4203f95345c9"}
  *
  * Go source:
  * func CreateDiagnosticForNodeInSourceFile(sourceFile *ast.SourceFile, node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -150,11 +176,13 @@ export function createUnknownOptionError(unknownOption: string, unknownOptionDia
  * }
  */
 export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFile");
+  const text = SourceFile_Text(sourceFile);
+  const pos = SkipTrivia(text, TextRange_Pos(node!.Loc));
+  return NewDiagnostic(sourceFile, NewTextRange(pos, Node_End(node)), message, ...args);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic","kind":"func","status":"stub","sigHash":"bd11e000677b2f612495a12a668dbcc100f234c47b854c84831bc386df1f2a47","bodyHash":"507646fe087da5ba25b1893861ee96411341e0d46332a274dc6125065eec0bd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic","kind":"func","status":"implemented","sigHash":"bd11e000677b2f612495a12a668dbcc100f234c47b854c84831bc386df1f2a47","bodyHash":"507646fe087da5ba25b1893861ee96411341e0d46332a274dc6125065eec0bd4"}
  *
  * Go source:
  * func CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile *ast.SourceFile, node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -165,7 +193,10 @@ export function CreateDiagnosticForNodeInSourceFile(sourceFile: GoPtr<SourceFile
  * }
  */
 export function CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic");
+  if (sourceFile !== undefined && node !== undefined) {
+    return CreateDiagnosticForNodeInSourceFile(sourceFile, node, message, ...args);
+  }
+  return NewCompilerDiagnostic(message, ...args);
 }
 
 /**

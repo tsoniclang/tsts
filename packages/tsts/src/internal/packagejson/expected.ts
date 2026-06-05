@@ -20,7 +20,7 @@ export interface Expected<T = unknown> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.UnmarshalJSON","kind":"method","status":"stub","sigHash":"9b8483a42fe647f7a39db7f3368e9697ada696b748d0db98690cca9ad1067f70","bodyHash":"d40dd5710ef481d9514b2cf60ed31c2d3c1ee39c7c4a3fd02132a4e448eaeee1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.UnmarshalJSON","kind":"method","status":"implemented","sigHash":"9b8483a42fe647f7a39db7f3368e9697ada696b748d0db98690cca9ad1067f70","bodyHash":"d40dd5710ef481d9514b2cf60ed31c2d3c1ee39c7c4a3fd02132a4e448eaeee1"}
  *
  * Go source:
  * func (e *Expected[T]) UnmarshalJSON(data []byte) error {
@@ -47,7 +47,27 @@ export interface Expected<T = unknown> {
  * }
  */
 export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: GoSlice<byte>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.UnmarshalJSON");
+  const str = new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as number[]));
+  if (str === "null") {
+    receiver!.Null = true as bool;
+    receiver!.Valid = false as bool;
+    receiver!.actualJSONType = "null";
+    return undefined;
+  }
+  try {
+    receiver!.Value = globalThis.JSON.parse(str) as T;
+    receiver!.Valid = true as bool;
+  } catch (_) {
+    // leave Valid false
+  }
+  const first = data[0] ?? 0;
+  receiver!.actualJSONType =
+    first === 0x22 ? "string" :
+    first === 0x74 || first === 0x66 ? "boolean" :
+    first === 0x5b ? "array" :
+    first === 0x7b ? "object" :
+    "number";
+  return undefined;
 }
 
 /**
@@ -87,7 +107,7 @@ export function Expected_IsValid<T>(receiver: GoPtr<Expected<T>>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.ExpectedJSONType","kind":"method","status":"stub","sigHash":"625d2bc98f54f53650359714bbb4cda5a5ad44aea9c0ed9367c74879e6b67c06","bodyHash":"c5abe3603688eeb357e83b00fac9cb4aa3f548c1cd00d884be6b70de87f70936"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.ExpectedJSONType","kind":"method","status":"implemented","sigHash":"625d2bc98f54f53650359714bbb4cda5a5ad44aea9c0ed9367c74879e6b67c06","bodyHash":"c5abe3603688eeb357e83b00fac9cb4aa3f548c1cd00d884be6b70de87f70936"}
  *
  * Go source:
  * func (e *Expected[T]) ExpectedJSONType() string {
@@ -109,7 +129,13 @@ export function Expected_IsValid<T>(receiver: GoPtr<Expected<T>>): bool {
  * }
  */
 export function Expected_ExpectedJSONType<T>(receiver: GoPtr<Expected<T>>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/packagejson/expected.go::method::Expected.ExpectedJSONType");
+  const value = receiver !== undefined ? receiver.Value : undefined;
+  if (typeof value === "string") return "string";
+  if (typeof value === "boolean") return "boolean";
+  if (globalThis.Array.isArray(value)) return "array";
+  if (typeof value === "number") return "number";
+  if (value !== null && value !== undefined && typeof value === "object") return "object";
+  return "unknown";
 }
 
 /**
@@ -125,7 +151,7 @@ export function Expected_ActualJSONType<T>(receiver: GoPtr<Expected<T>>): string
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::func::ExpectedOf","kind":"func","status":"stub","sigHash":"9f196fa4f56681f6a3a5b110be018dc38c89a1ccce8b036d552934477122dbd2","bodyHash":"d12fb4753708aa6c4b99afd83d336685aee6104ba0a872f29753d1c34901d423"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/expected.go::func::ExpectedOf","kind":"func","status":"implemented","sigHash":"9f196fa4f56681f6a3a5b110be018dc38c89a1ccce8b036d552934477122dbd2","bodyHash":"d12fb4753708aa6c4b99afd83d336685aee6104ba0a872f29753d1c34901d423"}
  *
  * Go source:
  * func ExpectedOf[T any](value T) Expected[T] {
@@ -133,5 +159,11 @@ export function Expected_ActualJSONType<T>(receiver: GoPtr<Expected<T>>): string
  * }
  */
 export function ExpectedOf<T>(value: T): Expected<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/packagejson/expected.go::func::ExpectedOf");
+  const actualJSONType =
+    typeof value === "string" ? "string" :
+    typeof value === "boolean" ? "boolean" :
+    globalThis.Array.isArray(value) ? "array" :
+    typeof value === "number" ? "number" :
+    value !== null && value !== undefined && typeof value === "object" ? "object" : "unknown";
+  return { Value: value, Valid: true as bool, Null: false as bool, actualJSONType };
 }
