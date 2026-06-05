@@ -1,20 +1,141 @@
 import type { bool, int } from "@tsonic/core/types.js";
+import * as strconv from "../../go/strconv.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Pool } from "../../go/sync.js";
+import {
+  Node_Arguments,
+  Node_Expression,
+  Node_Initializer,
+  Node_PostfixToken,
+  Node_Text,
+} from "../ast/ast.js";
 import type { ModifierList, Node, NodeList, SourceFile } from "../ast/ast.js";
 import type { BinaryExpression } from "../ast/ast_generated.js";
+import {
+  AsBinaryExpression,
+  AsCallExpression,
+  AsConditionalExpression,
+  AsElementAccessExpression,
+  AsForStatement,
+  AsFunctionExpression,
+  AsPrefixUnaryExpression,
+  AsVariableDeclaration,
+} from "../ast/generated/casts.js";
+import {
+  KindAmpersandAmpersandEqualsToken,
+  KindArrowFunction,
+  KindBarBarEqualsToken,
+  KindBinaryExpression,
+  KindBlock,
+  KindCallExpression,
+  KindCallSignature,
+  KindCaseBlock,
+  KindCatchClause,
+  KindClassDeclaration,
+  KindClassExpression,
+  KindClassStaticBlockDeclaration,
+  KindCommaToken,
+  KindConditionalExpression,
+  KindConstructor,
+  KindConstructorType,
+  KindConstructSignature,
+  KindDoStatement,
+  KindElementAccessExpression,
+  KindEnumDeclaration,
+  KindEqualsEqualsEqualsToken,
+  KindEqualsEqualsToken,
+  KindEqualsToken,
+  KindExclamationEqualsEqualsToken,
+  KindExclamationEqualsToken,
+  KindExclamationToken,
+  KindForInStatement,
+  KindForOfStatement,
+  KindForStatement,
+  KindFunctionDeclaration,
+  KindFunctionExpression,
+  KindFunctionType,
+  KindGetAccessor,
+  KindIdentifier,
+  KindIfStatement,
+  KindIndexSignature,
+  KindInKeyword,
+  KindInstanceOfKeyword,
+  KindInterfaceDeclaration,
+  KindJSTypeAliasDeclaration,
+  KindJsxAttributes,
+  KindMappedType,
+  KindMetaProperty,
+  KindMethodDeclaration,
+  KindMethodSignature,
+  KindMinusToken,
+  KindModuleBlock,
+  KindModuleDeclaration,
+  KindNonNullExpression,
+  KindObjectLiteralExpression,
+  KindParenthesizedExpression,
+  KindPlusToken,
+  KindPrefixUnaryExpression,
+  KindPropertyAccessExpression,
+  KindPropertyDeclaration,
+  KindQuestionQuestionEqualsToken,
+  KindQuestionToken,
+  KindSetAccessor,
+  KindSourceFile,
+  KindSuperKeyword,
+  KindThisKeyword,
+  KindTypeAliasDeclaration,
+  KindTypeLiteral,
+  KindTypeOfExpression,
+  KindWhileStatement,
+} from "../ast/generated/kinds.js";
+import {
+  IsAssignmentOperator,
+  IsBinaryExpression,
+  IsCallExpression,
+  IsClassStaticBlockDeclaration,
+  IsFunctionDeclaration,
+  IsFunctionExpression,
+  IsIdentifier,
+  IsModuleDeclaration,
+  IsNumericLiteral,
+  IsParenthesizedExpression,
+  IsPrefixUnaryExpression,
+  IsPropertyAccessExpression,
+  IsTypeOfExpression,
+  IsVariableDeclaration,
+} from "../ast/generated/predicates.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
+import { FlowFlagsReferenced, FlowFlagsShared } from "../ast/flow.js";
 import type { FlowFlags, FlowLabel, FlowList, FlowNode } from "../ast/flow.js";
+import { NodeFlagsOptionalChain } from "../ast/nodeflags.js";
 import type { NodeFlags } from "../ast/nodeflags.js";
+import { InternalSymbolNamePrefix } from "../ast/symbol.js";
 import type { Symbol, SymbolTable } from "../ast/symbol.js";
+import { SymbolFlagsNone, SymbolFlagsOptional } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
+import {
+  GetSymbolId,
+  IsAccessExpression,
+  IsBooleanLiteral,
+  IsEntityNameExpression,
+  IsFunctionLike,
+  IsLeftHandSideExpression,
+  IsLogicalExpression,
+  IsLogicalOrCoalescingAssignmentExpression,
+  IsObjectLiteralOrClassExpressionMethodOrAccessor,
+  IsOptionalChain,
+  IsStringLiteralLike,
+  IsStringOrNumericLiteralLike,
+  SkipParentheses,
+} from "../ast/utilities.js";
 import type { ModuleInstanceState } from "../ast/utilities.js";
 import type { Set } from "../collections/set.js";
 import type { Arena } from "../core/arena.js";
+import { IfElse } from "../core/core.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ContainerFlags","kind":"type","status":"stub","sigHash":"068247eebc62ebe4c4b32ff608d4161dc758afa1a02341cf8ec341921dcd4c5d","bodyHash":"2fbc434e23f039c3fcc0dec2f41a450f3a94b32ea8cb8a767ea8f7ac402f3048"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ContainerFlags","kind":"type","status":"implemented","sigHash":"068247eebc62ebe4c4b32ff608d4161dc758afa1a02341cf8ec341921dcd4c5d","bodyHash":"2fbc434e23f039c3fcc0dec2f41a450f3a94b32ea8cb8a767ea8f7ac402f3048"}
  *
  * Go source:
  * ContainerFlags int32
@@ -64,7 +185,7 @@ export const ContainerFlagsIsThisContainer: ContainerFlags = 1 << 8;
 export const ContainerFlagsPropagatesThisKeyword: ContainerFlags = 1 << 9;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ExpandoAssignmentInfo","kind":"type","status":"stub","sigHash":"5f178645de4b442b313897929c258c60bc4ff9075d4be21e3a6e80c64e3cb96e","bodyHash":"600caeb126414e349a1a0d69d2ecea6a366dfc15b9526f56071a200f59cbee5f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ExpandoAssignmentInfo","kind":"type","status":"implemented","sigHash":"5f178645de4b442b313897929c258c60bc4ff9075d4be21e3a6e80c64e3cb96e","bodyHash":"600caeb126414e349a1a0d69d2ecea6a366dfc15b9526f56071a200f59cbee5f"}
  *
  * Go source:
  * ExpandoAssignmentInfo struct {
@@ -80,7 +201,7 @@ export interface ExpandoAssignmentInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::Binder","kind":"type","status":"stub","sigHash":"d88cd5c54702ec4c7ebe3ba4c7dafe90cb53ba710d40678602adeeea1b8cc714","bodyHash":"d79dba50e3594bc759b78254714c32fbccc9c1b3b0f7238d807622c8d7e7f2e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::Binder","kind":"type","status":"implemented","sigHash":"d88cd5c54702ec4c7ebe3ba4c7dafe90cb53ba710d40678602adeeea1b8cc714","bodyHash":"d79dba50e3594bc759b78254714c32fbccc9c1b3b0f7238d807622c8d7e7f2e5"}
  *
  * Go source:
  * Binder struct {
@@ -142,18 +263,18 @@ export interface Binder {
   inAssignmentPattern: bool;
   seenParseError: bool;
   symbolCount: int;
-  classifiableNames: Set;
-  notConstEnumOnlyModules: Set;
-  symbolArena: Arena;
-  flowNodeArena: Arena;
-  flowListArena: Arena;
-  singleDeclarationsArena: Arena;
+  classifiableNames: Set<string>;
+  notConstEnumOnlyModules: Set<GoPtr<Symbol>>;
+  symbolArena: Arena<Symbol>;
+  flowNodeArena: Arena<FlowNode>;
+  flowListArena: Arena<FlowList>;
+  singleDeclarationsArena: Arena<GoPtr<Node>>;
   expandoAssignments: GoSlice<ExpandoAssignmentInfo>;
   nestedCJSExports: GoSlice<GoPtr<Node>>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ActiveLabel","kind":"type","status":"stub","sigHash":"0e9ba95fd4ffc37701892003801d1d2b0ce185e434fad383068506bd6626a123","bodyHash":"66d5826ae05ba8bd67cdb74928667eb4a42437e6b94303a508ecce0422788547"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::type::ActiveLabel","kind":"type","status":"implemented","sigHash":"0e9ba95fd4ffc37701892003801d1d2b0ce185e434fad383068506bd6626a123","bodyHash":"66d5826ae05ba8bd67cdb74928667eb4a42437e6b94303a508ecce0422788547"}
  *
  * Go source:
  * ActiveLabel struct {
@@ -173,23 +294,23 @@ export interface ActiveLabel {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.BreakTarget","kind":"method","status":"stub","sigHash":"b693c7115dc9ccf871ce4284dbb26ee7b0afb48af33066095e0904cb1fdb4899","bodyHash":"6138d9260241cb88ef1754db55d8178f5c25af9f383bdb9467f96aa7b5bec15b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.BreakTarget","kind":"method","status":"implemented","sigHash":"b693c7115dc9ccf871ce4284dbb26ee7b0afb48af33066095e0904cb1fdb4899","bodyHash":"6138d9260241cb88ef1754db55d8178f5c25af9f383bdb9467f96aa7b5bec15b"}
  *
  * Go source:
  * func (label *ActiveLabel) BreakTarget() *ast.FlowNode    { return label.breakTarget }
  */
 export function ActiveLabel_BreakTarget(receiver: GoPtr<ActiveLabel>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.BreakTarget");
+  return receiver!.breakTarget;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.ContinueTarget","kind":"method","status":"stub","sigHash":"0379f850673ebb3260d54b4132c5ab995e527d4ce1255dd060a15950813ce0a4","bodyHash":"7dcd3ec290eda615d15de841c8e8623cb1b2a0db77a4eb531cf936b77517da99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.ContinueTarget","kind":"method","status":"implemented","sigHash":"0379f850673ebb3260d54b4132c5ab995e527d4ce1255dd060a15950813ce0a4","bodyHash":"7dcd3ec290eda615d15de841c8e8623cb1b2a0db77a4eb531cf936b77517da99"}
  *
  * Go source:
  * func (label *ActiveLabel) ContinueTarget() *ast.FlowNode { return label.continueTarget }
  */
 export function ActiveLabel_ContinueTarget(receiver: GoPtr<ActiveLabel>): GoPtr<FlowNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::method::ActiveLabel.ContinueTarget");
+  return receiver!.continueTarget;
 }
 
 /**
@@ -540,7 +661,7 @@ export function Binder_getDisplayName(receiver: GoPtr<Binder>, node: GoPtr<Node>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetSymbolNameForPrivateIdentifier","kind":"func","status":"stub","sigHash":"b5e2a4703169ae2dea1aaa7864d2fecad6e1c45065d94db196b340dc74b26cbf","bodyHash":"ff7e168f408dff2c0fa0e31b165a3dea4596d64fdaf436819d27f5bc0605545f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetSymbolNameForPrivateIdentifier","kind":"func","status":"implemented","sigHash":"b5e2a4703169ae2dea1aaa7864d2fecad6e1c45065d94db196b340dc74b26cbf","bodyHash":"ff7e168f408dff2c0fa0e31b165a3dea4596d64fdaf436819d27f5bc0605545f"}
  *
  * Go source:
  * func GetSymbolNameForPrivateIdentifier(containingClassSymbol *ast.Symbol, description string) string {
@@ -548,7 +669,7 @@ export function Binder_getDisplayName(receiver: GoPtr<Binder>, node: GoPtr<Node>
  * }
  */
 export function GetSymbolNameForPrivateIdentifier(containingClassSymbol: GoPtr<Symbol>, description: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetSymbolNameForPrivateIdentifier");
+  return InternalSymbolNamePrefix + "#" + strconv.Itoa(GetSymbolId(containingClassSymbol)) + "@" + description;
 }
 
 /**
@@ -840,7 +961,7 @@ export function Binder_newSingleDeclaration(receiver: GoPtr<Binder>, declaration
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNodeReferenced","kind":"func","status":"stub","sigHash":"c0f3a90a52186ef3a6b24170aa90085ff98f103ab7e090ac8ab77000a6648e23","bodyHash":"1a3257a7bbc17c766a1f355a4d2ebc79bce24725e228eaf29d6316d49b82e4e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNodeReferenced","kind":"func","status":"implemented","sigHash":"c0f3a90a52186ef3a6b24170aa90085ff98f103ab7e090ac8ab77000a6648e23","bodyHash":"1a3257a7bbc17c766a1f355a4d2ebc79bce24725e228eaf29d6316d49b82e4e3"}
  *
  * Go source:
  * func setFlowNodeReferenced(flow *ast.FlowNode) {
@@ -853,7 +974,12 @@ export function Binder_newSingleDeclaration(receiver: GoPtr<Binder>, declaration
  * }
  */
 export function setFlowNodeReferenced(flow: GoPtr<FlowNode>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::setFlowNodeReferenced");
+  // On first reference we set the Referenced flag, thereafter we set the Shared flag
+  if ((flow!.Flags & FlowFlagsReferenced) === 0) {
+    flow!.Flags = (flow!.Flags | FlowFlagsReferenced) as FlowFlags;
+  } else {
+    flow!.Flags = (flow!.Flags | FlowFlagsShared) as FlowFlags;
+  }
 }
 
 /**
@@ -1622,7 +1748,7 @@ export function Binder_bindDeferredExpandoAssignment(receiver: GoPtr<Binder>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getParentOfPropertyAssignment","kind":"func","status":"stub","sigHash":"209640ef03a1082af8b3865cb08781250f7cd175a5643a9755d47a5a147cd32e","bodyHash":"08fcaeaa1dfe2a192e611b42c3859c9cbdb9a1dd707e7a07bc55918b8ca07491"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getParentOfPropertyAssignment","kind":"func","status":"implemented","sigHash":"209640ef03a1082af8b3865cb08781250f7cd175a5643a9755d47a5a147cd32e","bodyHash":"08fcaeaa1dfe2a192e611b42c3859c9cbdb9a1dd707e7a07bc55918b8ca07491"}
  *
  * Go source:
  * func getParentOfPropertyAssignment(node *ast.Node) *ast.Node {
@@ -1636,7 +1762,13 @@ export function Binder_bindDeferredExpandoAssignment(receiver: GoPtr<Binder>, no
  * }
  */
 export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::getParentOfPropertyAssignment");
+  switch (node!.Kind) {
+    case KindBinaryExpression:
+      return Node_Expression(AsBinaryExpression(node)!.Left);
+    case KindCallExpression:
+      return Node_Arguments(node)![0];
+  }
+  throw new globalThis.Error("Unhandled case in getParentOfPropertyAssignment");
 }
 
 /**
@@ -2222,7 +2354,7 @@ export function Binder_checkStrictModeLabeledStatement(receiver: GoPtr<Binder>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEvalOrArgumentsIdentifier","kind":"func","status":"stub","sigHash":"fefd90b82eb90ab2ec62ff86cf99df0a3fc30bfff2bbce36d2349536e3f96ffe","bodyHash":"915f226886a99c374048dc67fe3235a5e042630fedef65b8b017595ec31de673"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEvalOrArgumentsIdentifier","kind":"func","status":"implemented","sigHash":"fefd90b82eb90ab2ec62ff86cf99df0a3fc30bfff2bbce36d2349536e3f96ffe","bodyHash":"915f226886a99c374048dc67fe3235a5e042630fedef65b8b017595ec31de673"}
  *
  * Go source:
  * func isEvalOrArgumentsIdentifier(node *ast.Node) bool {
@@ -2234,7 +2366,11 @@ export function Binder_checkStrictModeLabeledStatement(receiver: GoPtr<Binder>, 
  * }
  */
 export function isEvalOrArgumentsIdentifier(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEvalOrArgumentsIdentifier");
+  if (IsIdentifier(node)) {
+    const text = Node_Text(node);
+    return (text === "eval" || text === "arguments") as bool;
+  }
+  return false as bool;
 }
 
 /**
@@ -2709,7 +2845,7 @@ export function Binder_bindIterativeStatement(receiver: GoPtr<Binder>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isLogicalAssignmentExpression","kind":"func","status":"stub","sigHash":"d7586143c002c9c7891a97fb63ade48bb2428ac851993baf2c2c01fe29c05d42","bodyHash":"0b674d603d0eaef94d9fc0c5ea9215ae784e25db79115036efb472380ace4aeb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isLogicalAssignmentExpression","kind":"func","status":"implemented","sigHash":"d7586143c002c9c7891a97fb63ade48bb2428ac851993baf2c2c01fe29c05d42","bodyHash":"0b674d603d0eaef94d9fc0c5ea9215ae784e25db79115036efb472380ace4aeb"}
  *
  * Go source:
  * func isLogicalAssignmentExpression(node *ast.Node) bool {
@@ -2717,7 +2853,7 @@ export function Binder_bindIterativeStatement(receiver: GoPtr<Binder>, node: GoP
  * }
  */
 export function isLogicalAssignmentExpression(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isLogicalAssignmentExpression");
+  return IsLogicalOrCoalescingAssignmentExpression(SkipParentheses(node));
 }
 
 /**
@@ -3744,7 +3880,7 @@ export function setReturnFlowNode(node: GoPtr<Node>, returnFlowNode: GoPtr<FlowN
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isGeneratorFunctionExpression","kind":"func","status":"stub","sigHash":"f4b5319a73d66a4b22744cadebffef490f1d820f454b93b2964f03965a333262","bodyHash":"0bee2743d7073c10af13e89b84e1b7d7848f2340d3b1f27b6fe6785a6754ef29"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isGeneratorFunctionExpression","kind":"func","status":"implemented","sigHash":"f4b5319a73d66a4b22744cadebffef490f1d820f454b93b2964f03965a333262","bodyHash":"0bee2743d7073c10af13e89b84e1b7d7848f2340d3b1f27b6fe6785a6754ef29"}
  *
  * Go source:
  * func isGeneratorFunctionExpression(node *ast.Node) bool {
@@ -3752,7 +3888,7 @@ export function setReturnFlowNode(node: GoPtr<Node>, returnFlowNode: GoPtr<FlowN
  * }
  */
 export function isGeneratorFunctionExpression(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isGeneratorFunctionExpression");
+  return (IsFunctionExpression(node) && AsFunctionExpression(node)!.AsteriskToken !== undefined) as bool;
 }
 
 /**
@@ -3797,7 +3933,7 @@ export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::SetValueDeclaration","kind":"func","status":"stub","sigHash":"76c19ed95fed43864f40f066cced2492eefbb61f21926ce28ee98c95070eeae3","bodyHash":"dcd898a0906bd98b9d5f648fa97d449da0a76e7e674ceafa323c7f2dd82574a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::SetValueDeclaration","kind":"func","status":"implemented","sigHash":"76c19ed95fed43864f40f066cced2492eefbb61f21926ce28ee98c95070eeae3","bodyHash":"dcd898a0906bd98b9d5f648fa97d449da0a76e7e674ceafa323c7f2dd82574a6"}
  *
  * Go source:
  * func SetValueDeclaration(symbol *ast.Symbol, node *ast.Node) {
@@ -3812,11 +3948,20 @@ export function Binder_addDeclarationToSymbol(receiver: GoPtr<Binder>, symbol_: 
  * }
  */
 export function SetValueDeclaration(symbol_: GoPtr<Symbol>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::SetValueDeclaration");
+  const valueDeclaration = symbol_!.ValueDeclaration;
+  if (
+    valueDeclaration === undefined ||
+    (isAssignmentDeclaration(valueDeclaration) && !isAssignmentDeclaration(node)) ||
+    (valueDeclaration!.Kind !== node!.Kind && isEffectiveModuleDeclaration(valueDeclaration))
+  ) {
+    // Non-assignment declarations take precedence over assignment declarations and
+    // non-namespace declarations take precedence over namespace declarations.
+    symbol_!.ValueDeclaration = node;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetContainerFlags","kind":"func","status":"stub","sigHash":"3bd8de19948e1fbb658e69534b380dcf80fb3605a8d36cf9f34d044b73beabe3","bodyHash":"8bbb84fd065e1fc99a704b4cf5e9e29b04645caea7669b04ca835ea307f9a123"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetContainerFlags","kind":"func","status":"implemented","sigHash":"3bd8de19948e1fbb658e69534b380dcf80fb3605a8d36cf9f34d044b73beabe3","bodyHash":"8bbb84fd065e1fc99a704b4cf5e9e29b04645caea7669b04ca835ea307f9a123"}
  *
  * Go source:
  * func GetContainerFlags(node *ast.Node) ContainerFlags {
@@ -3864,11 +4009,71 @@ export function SetValueDeclaration(symbol_: GoPtr<Symbol>, node: GoPtr<Node>): 
  * }
  */
 export function GetContainerFlags(node: GoPtr<Node>): ContainerFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::GetContainerFlags");
+  switch (node!.Kind) {
+    case KindClassExpression:
+    case KindClassDeclaration:
+    case KindEnumDeclaration:
+    case KindObjectLiteralExpression:
+    case KindTypeLiteral:
+    case KindJsxAttributes:
+      return ContainerFlagsIsContainer;
+    case KindInterfaceDeclaration:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsInterface) as ContainerFlags;
+    case KindModuleDeclaration:
+    case KindTypeAliasDeclaration:
+    case KindJSTypeAliasDeclaration:
+    case KindMappedType:
+    case KindIndexSignature:
+      return (ContainerFlagsIsContainer | ContainerFlagsHasLocals) as ContainerFlags;
+    case KindSourceFile:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals) as ContainerFlags;
+    case KindGetAccessor:
+    case KindSetAccessor:
+    case KindMethodDeclaration:
+      if (IsObjectLiteralOrClassExpressionMethodOrAccessor(node)) {
+        return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals | ContainerFlagsIsFunctionLike | ContainerFlagsIsObjectLiteralOrClassExpressionMethodOrAccessor | ContainerFlagsIsThisContainer) as ContainerFlags;
+      }
+    // fallthrough
+    case KindConstructor:
+    case KindFunctionDeclaration:
+    case KindClassStaticBlockDeclaration:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals | ContainerFlagsIsFunctionLike | ContainerFlagsIsThisContainer) as ContainerFlags;
+    case KindMethodSignature:
+    case KindCallSignature:
+    case KindFunctionType:
+    case KindConstructSignature:
+    case KindConstructorType:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals | ContainerFlagsIsFunctionLike | ContainerFlagsPropagatesThisKeyword) as ContainerFlags;
+    case KindFunctionExpression:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals | ContainerFlagsIsFunctionLike | ContainerFlagsIsFunctionExpression | ContainerFlagsIsThisContainer) as ContainerFlags;
+    case KindArrowFunction:
+      return (ContainerFlagsIsContainer | ContainerFlagsIsControlFlowContainer | ContainerFlagsHasLocals | ContainerFlagsIsFunctionLike | ContainerFlagsIsFunctionExpression | ContainerFlagsPropagatesThisKeyword) as ContainerFlags;
+    case KindModuleBlock:
+      return ContainerFlagsIsControlFlowContainer;
+    case KindPropertyDeclaration:
+      if (Node_Initializer(node) !== undefined) {
+        return (ContainerFlagsIsControlFlowContainer | ContainerFlagsIsThisContainer) as ContainerFlags;
+      } else {
+        return ContainerFlagsNone;
+      }
+    case KindCatchClause:
+    case KindForStatement:
+    case KindForInStatement:
+    case KindForOfStatement:
+    case KindCaseBlock:
+      return (ContainerFlagsIsBlockScopedContainer | ContainerFlagsHasLocals) as ContainerFlags;
+    case KindBlock:
+      if (IsFunctionLike(node!.Parent) || IsClassStaticBlockDeclaration(node!.Parent)) {
+        return ContainerFlagsNone;
+      } else {
+        return (ContainerFlagsIsBlockScopedContainer | ContainerFlagsHasLocals) as ContainerFlags;
+      }
+  }
+  return ContainerFlagsNone;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingExpression","kind":"func","status":"stub","sigHash":"3cec27f4ffe1c974576cccd994dbf6139df50c9c7541f03cd5dd287c7848a578","bodyHash":"5aac37b89ba99622f37ed4ef6eed58670ae1fb9b263f6ab95b10620d411bdffe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingExpression","kind":"func","status":"implemented","sigHash":"3cec27f4ffe1c974576cccd994dbf6139df50c9c7541f03cd5dd287c7848a578","bodyHash":"5aac37b89ba99622f37ed4ef6eed58670ae1fb9b263f6ab95b10620d411bdffe"}
  *
  * Go source:
  * func isNarrowingExpression(expr *ast.Node) bool {
@@ -3890,11 +4095,29 @@ export function GetContainerFlags(node: GoPtr<Node>): ContainerFlags {
  * }
  */
 export function isNarrowingExpression(expr: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingExpression");
+  switch (expr!.Kind) {
+    case KindIdentifier:
+    case KindThisKeyword:
+      return true as bool;
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression:
+      return containsNarrowableReference(expr);
+    case KindCallExpression:
+      return hasNarrowableArgument(expr);
+    case KindParenthesizedExpression:
+    case KindNonNullExpression:
+    case KindTypeOfExpression:
+      return isNarrowingExpression(Node_Expression(expr));
+    case KindBinaryExpression:
+      return isNarrowingBinaryExpression(AsBinaryExpression(expr));
+    case KindPrefixUnaryExpression:
+      return (AsPrefixUnaryExpression(expr)!.Operator === KindExclamationToken && isNarrowingExpression(AsPrefixUnaryExpression(expr)!.Operand)) as bool;
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::containsNarrowableReference","kind":"func","status":"stub","sigHash":"6ed4664940a1bf1247b509f4a8d7403d05d08a8cd45951e702c3746f44dec76e","bodyHash":"9d472cf852e76f23df50d1867d0416c5d58117c6d677e01443d4da8ce9f67319"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::containsNarrowableReference","kind":"func","status":"implemented","sigHash":"6ed4664940a1bf1247b509f4a8d7403d05d08a8cd45951e702c3746f44dec76e","bodyHash":"9d472cf852e76f23df50d1867d0416c5d58117c6d677e01443d4da8ce9f67319"}
  *
  * Go source:
  * func containsNarrowableReference(expr *ast.Node) bool {
@@ -3911,11 +4134,23 @@ export function isNarrowingExpression(expr: GoPtr<Node>): bool {
  * }
  */
 export function containsNarrowableReference(expr: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::containsNarrowableReference");
+  if (isNarrowableReference(expr)) {
+    return true as bool;
+  }
+  if ((expr!.Flags & NodeFlagsOptionalChain) !== 0) {
+    switch (expr!.Kind) {
+      case KindPropertyAccessExpression:
+      case KindElementAccessExpression:
+      case KindCallExpression:
+      case KindNonNullExpression:
+        return containsNarrowableReference(Node_Expression(expr));
+    }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableReference","kind":"func","status":"stub","sigHash":"6f8e2147c0dbf95e3e6050125e0fea1b3a45956a3901ae51b71d2f89e4eb528a","bodyHash":"4e718fdd1b9b4edb1a6c88560c7fe567a7612d2eb35927416ba46a01f9afbaf0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableReference","kind":"func","status":"implemented","sigHash":"6f8e2147c0dbf95e3e6050125e0fea1b3a45956a3901ae51b71d2f89e4eb528a","bodyHash":"4e718fdd1b9b4edb1a6c88560c7fe567a7612d2eb35927416ba46a01f9afbaf0"}
  *
  * Go source:
  * func isNarrowableReference(node *ast.Node) bool {
@@ -3937,11 +4172,32 @@ export function containsNarrowableReference(expr: GoPtr<Node>): bool {
  * }
  */
 export function isNarrowableReference(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableReference");
+  switch (node!.Kind) {
+    case KindIdentifier:
+    case KindThisKeyword:
+    case KindSuperKeyword:
+    case KindMetaProperty:
+      return true as bool;
+    case KindPropertyAccessExpression:
+    case KindParenthesizedExpression:
+    case KindNonNullExpression:
+      return isNarrowableReference(Node_Expression(node));
+    case KindElementAccessExpression: {
+      const expr = AsElementAccessExpression(node);
+      return (IsStringOrNumericLiteralLike(expr!.ArgumentExpression) ||
+        (IsEntityNameExpression(expr!.ArgumentExpression) && isNarrowableReference(expr!.Expression))) as bool;
+    }
+    case KindBinaryExpression: {
+      const expr = AsBinaryExpression(node);
+      return ((expr!.OperatorToken!.Kind === KindCommaToken && isNarrowableReference(expr!.Right)) ||
+        (IsAssignmentOperator(expr!.OperatorToken!.Kind) && IsLeftHandSideExpression(expr!.Left))) as bool;
+    }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::hasNarrowableArgument","kind":"func","status":"stub","sigHash":"6751f18833472cef7d21f486b7625f50bf5d2906267a42bbd4d50ac43fb2c26c","bodyHash":"b43a6ecf8b6b47531df769cebb00b4ce75cb408d2a40b39c96d96d3acfd3e909"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::hasNarrowableArgument","kind":"func","status":"implemented","sigHash":"6751f18833472cef7d21f486b7625f50bf5d2906267a42bbd4d50ac43fb2c26c","bodyHash":"b43a6ecf8b6b47531df769cebb00b4ce75cb408d2a40b39c96d96d3acfd3e909"}
  *
  * Go source:
  * func hasNarrowableArgument(expr *ast.Node) bool {
@@ -3960,11 +4216,22 @@ export function isNarrowableReference(node: GoPtr<Node>): bool {
  * }
  */
 export function hasNarrowableArgument(expr: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::hasNarrowableArgument");
+  const call = AsCallExpression(expr);
+  for (const argument of call!.Arguments!.Nodes) {
+    if (containsNarrowableReference(argument)) {
+      return true as bool;
+    }
+  }
+  if (IsPropertyAccessExpression(call!.Expression)) {
+    if (containsNarrowableReference(Node_Expression(call!.Expression))) {
+      return true as bool;
+    }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingBinaryExpression","kind":"func","status":"stub","sigHash":"eeafb7f59d924e6116f3fc6192f9d3672f552ff8d37ab0dd64ed7695a31182be","bodyHash":"7cb3924915703a8556cff1e5ea73f2fd03aaff32a76d6d9bf476cf8a722a547a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingBinaryExpression","kind":"func","status":"implemented","sigHash":"eeafb7f59d924e6116f3fc6192f9d3672f552ff8d37ab0dd64ed7695a31182be","bodyHash":"7cb3924915703a8556cff1e5ea73f2fd03aaff32a76d6d9bf476cf8a722a547a"}
  *
  * Go source:
  * func isNarrowingBinaryExpression(expr *ast.BinaryExpression) bool {
@@ -3988,11 +4255,34 @@ export function hasNarrowableArgument(expr: GoPtr<Node>): bool {
  * }
  */
 export function isNarrowingBinaryExpression(expr: GoPtr<BinaryExpression>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingBinaryExpression");
+  switch (expr!.OperatorToken!.Kind) {
+    case KindEqualsToken:
+    case KindBarBarEqualsToken:
+    case KindAmpersandAmpersandEqualsToken:
+    case KindQuestionQuestionEqualsToken:
+      return containsNarrowableReference(expr!.Left);
+    case KindEqualsEqualsToken:
+    case KindExclamationEqualsToken:
+    case KindEqualsEqualsEqualsToken:
+    case KindExclamationEqualsEqualsToken: {
+      const left = SkipParentheses(expr!.Left);
+      const right = SkipParentheses(expr!.Right);
+      return (isNarrowableOperand(left) || isNarrowableOperand(right) ||
+        isNarrowingTypeOfOperands(right, left) || isNarrowingTypeOfOperands(left, right) ||
+        ((IsBooleanLiteral(right) && isNarrowingExpression(left)) || (IsBooleanLiteral(left) && isNarrowingExpression(right)))) as bool;
+    }
+    case KindInstanceOfKeyword:
+      return isNarrowableOperand(expr!.Left);
+    case KindInKeyword:
+      return isNarrowingExpression(expr!.Right);
+    case KindCommaToken:
+      return isNarrowingExpression(expr!.Right);
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableOperand","kind":"func","status":"stub","sigHash":"63495a6ffbcfea7a9846a14920885c50ce0d455b7adfd7ef79ddaf014994ec17","bodyHash":"c793f74a3cdeb1f0c16c0db42d671b5d8aab2abef2680651c158c7b462c1e97d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableOperand","kind":"func","status":"implemented","sigHash":"63495a6ffbcfea7a9846a14920885c50ce0d455b7adfd7ef79ddaf014994ec17","bodyHash":"c793f74a3cdeb1f0c16c0db42d671b5d8aab2abef2680651c158c7b462c1e97d"}
  *
  * Go source:
  * func isNarrowableOperand(expr *ast.Node) bool {
@@ -4012,11 +4302,24 @@ export function isNarrowingBinaryExpression(expr: GoPtr<BinaryExpression>): bool
  * }
  */
 export function isNarrowableOperand(expr: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowableOperand");
+  switch (expr!.Kind) {
+    case KindParenthesizedExpression:
+      return isNarrowableOperand(Node_Expression(expr));
+    case KindBinaryExpression: {
+      const binary = AsBinaryExpression(expr);
+      switch (binary!.OperatorToken!.Kind) {
+        case KindEqualsToken:
+          return isNarrowableOperand(binary!.Left);
+        case KindCommaToken:
+          return isNarrowableOperand(binary!.Right);
+      }
+    }
+  }
+  return containsNarrowableReference(expr);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingTypeOfOperands","kind":"func","status":"stub","sigHash":"86a5cc66332dd58f8517dc6e58b508f155062214b7fb1ab7bfdabbfad85aff1f","bodyHash":"85e0fd1fa7da69d0987da7839f693ff764c76340fdda52a41ac251c9dfe1305d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingTypeOfOperands","kind":"func","status":"implemented","sigHash":"86a5cc66332dd58f8517dc6e58b508f155062214b7fb1ab7bfdabbfad85aff1f","bodyHash":"85e0fd1fa7da69d0987da7839f693ff764c76340fdda52a41ac251c9dfe1305d"}
  *
  * Go source:
  * func isNarrowingTypeOfOperands(expr1 *ast.Node, expr2 *ast.Node) bool {
@@ -4024,7 +4327,7 @@ export function isNarrowableOperand(expr: GoPtr<Node>): bool {
  * }
  */
 export function isNarrowingTypeOfOperands(expr1: GoPtr<Node>, expr2: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isNarrowingTypeOfOperands");
+  return (IsTypeOfExpression(expr1) && isNarrowableOperand(Node_Expression(expr1)) && IsStringLiteralLike(expr2)) as bool;
 }
 
 /**
@@ -4108,7 +4411,7 @@ export function Binder_addDiagnostic(receiver: GoPtr<Binder>, diagnostic: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isSignedNumericLiteral","kind":"func","status":"stub","sigHash":"95340c6d23fc5ebb7934a750a51111a3aed736ef7f65e5f8458031a6b3fe39f6","bodyHash":"527e53c4df2f9a9ec1c8eff36e9f676232b616cdeaa11b452dc554cccd10ac90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isSignedNumericLiteral","kind":"func","status":"implemented","sigHash":"95340c6d23fc5ebb7934a750a51111a3aed736ef7f65e5f8458031a6b3fe39f6","bodyHash":"527e53c4df2f9a9ec1c8eff36e9f676232b616cdeaa11b452dc554cccd10ac90"}
  *
  * Go source:
  * func isSignedNumericLiteral(node *ast.Node) bool {
@@ -4120,11 +4423,15 @@ export function Binder_addDiagnostic(receiver: GoPtr<Binder>, diagnostic: GoPtr<
  * }
  */
 export function isSignedNumericLiteral(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isSignedNumericLiteral");
+  if (node!.Kind === KindPrefixUnaryExpression) {
+    const unary = AsPrefixUnaryExpression(node);
+    return ((unary!.Operator === KindPlusToken || unary!.Operator === KindMinusToken) && IsNumericLiteral(unary!.Operand)) as bool;
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getOptionalSymbolFlagForNode","kind":"func","status":"stub","sigHash":"0f2b9a3c292c93dd331e0fb74aad2c38e4ff25a6b04d97adfcecd6a9eca95101","bodyHash":"a3b2947d3b6b6a979732810b47cb660159981b35c32230d999c43d057c7fe0ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getOptionalSymbolFlagForNode","kind":"func","status":"implemented","sigHash":"0f2b9a3c292c93dd331e0fb74aad2c38e4ff25a6b04d97adfcecd6a9eca95101","bodyHash":"a3b2947d3b6b6a979732810b47cb660159981b35c32230d999c43d057c7fe0ad"}
  *
  * Go source:
  * func getOptionalSymbolFlagForNode(node *ast.Node) ast.SymbolFlags {
@@ -4133,11 +4440,16 @@ export function isSignedNumericLiteral(node: GoPtr<Node>): bool {
  * }
  */
 export function getOptionalSymbolFlagForNode(node: GoPtr<Node>): SymbolFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::getOptionalSymbolFlagForNode");
+  const postfixToken = Node_PostfixToken(node);
+  return IfElse(
+    (postfixToken !== undefined && postfixToken!.Kind === KindQuestionToken) as bool,
+    SymbolFlagsOptional,
+    SymbolFlagsNone,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isFunctionSymbol","kind":"func","status":"stub","sigHash":"7da02a4539dada1c29da221edc08b00785ca3c01175c4749c82ed0f9299a216d","bodyHash":"c82c2d3790511d9e91a71d8a0b105504a1b77a458efd475ed6549286e25268cd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isFunctionSymbol","kind":"func","status":"implemented","sigHash":"7da02a4539dada1c29da221edc08b00785ca3c01175c4749c82ed0f9299a216d","bodyHash":"c82c2d3790511d9e91a71d8a0b105504a1b77a458efd475ed6549286e25268cd"}
  *
  * Go source:
  * func isFunctionSymbol(symbol *ast.Symbol) bool {
@@ -4157,11 +4469,23 @@ export function getOptionalSymbolFlagForNode(node: GoPtr<Node>): SymbolFlags {
  * }
  */
 export function isFunctionSymbol(symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isFunctionSymbol");
+  const d = symbol_!.ValueDeclaration;
+  if (d !== undefined) {
+    if (IsFunctionDeclaration(d)) {
+      return true as bool;
+    }
+    if (IsVariableDeclaration(d)) {
+      const varDecl = AsVariableDeclaration(d);
+      if (varDecl!.Initializer !== undefined) {
+        return IsFunctionLike(varDecl!.Initializer);
+      }
+    }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isStatementCondition","kind":"func","status":"stub","sigHash":"879ba42fe044e4105ef36343e7891740de43d63c2374e5176cc1e6f75d88bb0f","bodyHash":"73524429af2b2fde4de4fd8766ec0d54001bc7b326307b92b7bb6354d7900de5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isStatementCondition","kind":"func","status":"implemented","sigHash":"879ba42fe044e4105ef36343e7891740de43d63c2374e5176cc1e6f75d88bb0f","bodyHash":"73524429af2b2fde4de4fd8766ec0d54001bc7b326307b92b7bb6354d7900de5"}
  *
  * Go source:
  * func isStatementCondition(node *ast.Node) bool {
@@ -4177,11 +4501,21 @@ export function isFunctionSymbol(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function isStatementCondition(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isStatementCondition");
+  switch (node!.Parent!.Kind) {
+    case KindIfStatement:
+    case KindWhileStatement:
+    case KindDoStatement:
+      return (Node_Expression(node!.Parent) === node) as bool;
+    case KindForStatement:
+      return (AsForStatement(node!.Parent)!.Condition === node) as bool;
+    case KindConditionalExpression:
+      return (AsConditionalExpression(node!.Parent)!.Condition === node) as bool;
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isTopLevelLogicalExpression","kind":"func","status":"stub","sigHash":"daad993da162f7c10e7be23cee8c8d76144133c2b75117b85f8fb11ffebed394","bodyHash":"ef763ed5021e912aa7392394f4e22896c4ffdf0eba817fbcad0b974a0a8c17f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isTopLevelLogicalExpression","kind":"func","status":"implemented","sigHash":"daad993da162f7c10e7be23cee8c8d76144133c2b75117b85f8fb11ffebed394","bodyHash":"ef763ed5021e912aa7392394f4e22896c4ffdf0eba817fbcad0b974a0a8c17f1"}
  *
  * Go source:
  * func isTopLevelLogicalExpression(node *ast.Node) bool {
@@ -4192,11 +4526,20 @@ export function isStatementCondition(node: GoPtr<Node>): bool {
  * }
  */
 export function isTopLevelLogicalExpression(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isTopLevelLogicalExpression");
+  let current: GoPtr<Node> = node;
+  while (
+    IsParenthesizedExpression(current!.Parent) ||
+    (IsPrefixUnaryExpression(current!.Parent) && AsPrefixUnaryExpression(current!.Parent)!.Operator === KindExclamationToken)
+  ) {
+    current = current!.Parent;
+  }
+  return (!isStatementCondition(current) &&
+    !IsLogicalExpression(current!.Parent) &&
+    !(IsOptionalChain(current!.Parent) && Node_Expression(current!.Parent) === current)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isAssignmentDeclaration","kind":"func","status":"stub","sigHash":"4f412d8be6c704f1fd4daa4d191eb1151413c55e8c2661219c98ed064eaf607a","bodyHash":"d3aefda74b4e2a70b431139bb8e73c23b2ad5d17d496d5db8faa0abbf49757c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isAssignmentDeclaration","kind":"func","status":"implemented","sigHash":"4f412d8be6c704f1fd4daa4d191eb1151413c55e8c2661219c98ed064eaf607a","bodyHash":"d3aefda74b4e2a70b431139bb8e73c23b2ad5d17d496d5db8faa0abbf49757c8"}
  *
  * Go source:
  * func isAssignmentDeclaration(decl *ast.Node) bool {
@@ -4204,11 +4547,11 @@ export function isTopLevelLogicalExpression(node: GoPtr<Node>): bool {
  * }
  */
 export function isAssignmentDeclaration(decl: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isAssignmentDeclaration");
+  return (IsBinaryExpression(decl) || IsAccessExpression(decl) || IsIdentifier(decl) || IsCallExpression(decl)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEffectiveModuleDeclaration","kind":"func","status":"stub","sigHash":"45a2e2e16d0f193ec1ef3644a7417fad99ac692dd696f2a1121f630ee58d5cbc","bodyHash":"d5a0526e8a3c617fa3e05d02b39d5513500a34fcfb901cc68369a4881f96c158"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEffectiveModuleDeclaration","kind":"func","status":"implemented","sigHash":"45a2e2e16d0f193ec1ef3644a7417fad99ac692dd696f2a1121f630ee58d5cbc","bodyHash":"d5a0526e8a3c617fa3e05d02b39d5513500a34fcfb901cc68369a4881f96c158"}
  *
  * Go source:
  * func isEffectiveModuleDeclaration(node *ast.Node) bool {
@@ -4216,5 +4559,5 @@ export function isAssignmentDeclaration(decl: GoPtr<Node>): bool {
  * }
  */
 export function isEffectiveModuleDeclaration(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/binder/binder.go::func::isEffectiveModuleDeclaration");
+  return (IsModuleDeclaration(node) || IsIdentifier(node)) as bool;
 }
