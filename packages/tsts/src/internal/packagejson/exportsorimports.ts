@@ -47,7 +47,7 @@ export interface ExportsOrImports {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"21c88ce41254efb67b7c345d1d4eca6a7cdb8ad5d146dc5f38d7ec60dbbafcf5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"21c88ce41254efb67b7c345d1d4eca6a7cdb8ad5d146dc5f38d7ec60dbbafcf5"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)

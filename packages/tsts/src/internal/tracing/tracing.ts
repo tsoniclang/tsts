@@ -8,6 +8,7 @@ import { Bool } from "../../go/sync/atomic.js";
 import type { Time } from "../../go/time.js";
 import { SourceFile_ECMALineMap, SourceFile_FileName, SourceFile_Text } from "../ast/ast.js";
 import type { SourceFile, SourceFileLike } from "../ast/ast.js";
+import { EscapeAllInternalSymbolNames } from "../ast/symbol.js";
 import { Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { Symbol } from "../ast/symbol.js";
@@ -253,7 +254,7 @@ export const PhaseEmit: Phase = "emit";
 export const PhaseSession: Phase = "session";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::StartTracing","kind":"func","status":"stub","sigHash":"f8a080c13c359705b29a921436a3d137cb4907b12330f2a0394850336b83a2e4","bodyHash":"96a524b12cacdca282d4c053ce0aadf5d6540b5206d622eb83ba604ab3081bfe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::StartTracing","kind":"func","status":"implemented","sigHash":"f8a080c13c359705b29a921436a3d137cb4907b12330f2a0394850336b83a2e4","bodyHash":"96a524b12cacdca282d4c053ce0aadf5d6540b5206d622eb83ba604ab3081bfe"}
  *
  * Go source:
  * func StartTracing(fs vfs.FS, traceDir string, configFilePath string, deterministic bool) (*Tracing, error) {
@@ -291,11 +292,49 @@ export const PhaseSession: Phase = "session";
  * }
  */
 export function StartTracing(fs: FS, traceDir: string, configFilePath: string, deterministic: bool): [GoPtr<Tracing>, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::func::StartTracing");
+  const traceContent = new Builder();
+  const traceStarted = new Bool();
+  const tr: Tracing = {
+    fs: fs,
+    traceDir: traceDir,
+    tracePath: CombinePaths(traceDir, traceFileName),
+    configFilePath: configFilePath,
+    legend: [],
+    tracers: [],
+    traceContent: traceContent,
+    traceStarted: traceStarted,
+    deterministic: deterministic,
+    timestampCounter: 0 as ulong,
+    startTime: {} as Time,
+    mu: new Mutex(),
+    flushErr: undefined,
+  };
+  tr.traceStarted.Store(true);
+
+  // Write the trace file header with metadata events
+  tr.traceContent.WriteString("[\n");
+
+  // Write metadata events (matching TypeScript's format)
+  const metaTs = Tracing_timestamp(tr);
+  Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "M", Cat: "__metadata", TS: metaTs, Name: "process_name", S: "", Dur: undefined, Args: new globalThis.Map([["name", "tsgo"]]) });
+  tr.traceContent.WriteString(",\n");
+  Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "M", Cat: "__metadata", TS: metaTs, Name: "thread_name", S: "", Dur: undefined, Args: new globalThis.Map([["name", "Main"]]) });
+  tr.traceContent.WriteString(",\n");
+  Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "M", Cat: "disabled-by-default-devtools.timeline", TS: metaTs, Name: "TracingStartedInBrowser", S: "", Dur: undefined, Args: undefined as unknown as GoMap<string, unknown> });
+
+  // Truncate any existing trace file with the header so subsequent AppendFile
+  // calls extend a clean file.
+  const err = tr.fs.WriteFile(tr.tracePath, tr.traceContent.String());
+  if (err !== undefined) {
+    return [undefined, Errorf("failed to write trace file header: %w", err)];
+  }
+  tr.traceContent.Reset();
+
+  return [tr, undefined];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.timestamp","kind":"method","status":"stub","sigHash":"7b52274f7d713d510dc1aac4a8e1f31e498084e240ba050f6b871fde75fcebc6","bodyHash":"f9b5765e3183bdf2a02a5cd15497698464424bab3a66006595e19d0aa2b68adb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.timestamp","kind":"method","status":"implemented","sigHash":"7b52274f7d713d510dc1aac4a8e1f31e498084e240ba050f6b871fde75fcebc6","bodyHash":"f9b5765e3183bdf2a02a5cd15497698464424bab3a66006595e19d0aa2b68adb"}
  *
  * Go source:
  * func (tr *Tracing) timestamp() float64 {
@@ -307,7 +346,13 @@ export function StartTracing(fs: FS, traceDir: string, configFilePath: string, d
  * }
  */
 export function Tracing_timestamp(receiver: GoPtr<Tracing>): double {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.timestamp");
+  const tr = receiver!;
+  if (tr.deterministic) {
+    tr.timestampCounter = ((tr.timestampCounter as unknown as number) + 1) as ulong;
+    return (tr.timestampCounter as unknown as number) as double;
+  }
+  // time.Since(tr.startTime).Nanoseconds() / 1000.0 — performance.now() gives ms, multiply by 1000 for microseconds
+  return (globalThis.performance.now() * 1000.0) as double;
 }
 
 /**
@@ -423,7 +468,7 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.Push","kind":"method","status":"stub","sigHash":"f718c05374a354a9bd493a2b4808be89935c9995e89990c29664a18f9c0d8253","bodyHash":"13d36e63bd430963a42f98246c9933d7e05d67f824fd1871d8aa49eaac7b126f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.Push","kind":"method","status":"implemented","sigHash":"f718c05374a354a9bd493a2b4808be89935c9995e89990c29664a18f9c0d8253","bodyHash":"13d36e63bd430963a42f98246c9933d7e05d67f824fd1871d8aa49eaac7b126f"}
  *
  * Go source:
  * func (tr *Tracing) Push(phase Phase, name string, args map[string]any, separateBeginAndEnd bool) func() {
@@ -483,7 +528,65 @@ export function Tracing_Instant(receiver: GoPtr<Tracing>, phase: Phase, name: st
  * }
  */
 export function Tracing_Push(receiver: GoPtr<Tracing>, phase: Phase, name: string, args: GoMap<string, unknown>, separateBeginAndEnd: bool): () => void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::Tracing.Push");
+  const tr = receiver;
+  if (tr === undefined || !tr.traceStarted.Load()) {
+    return (): void => {};
+  }
+
+  if (separateBeginAndEnd) {
+    tr.mu.Lock();
+    if (!tr.traceStarted.Load()) {
+      tr.mu.Unlock();
+      return (): void => {};
+    }
+    const ts = Tracing_timestamp(tr);
+    tr.traceContent.WriteString(",\n");
+    Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "B", Cat: phase as string, TS: ts, Name: name, S: "", Dur: undefined, Args: args });
+    Tracing_maybeFlushLocked(tr);
+    tr.mu.Unlock();
+
+    return (): void => {
+      tr.mu.Lock();
+      try {
+        if (!tr.traceStarted.Load()) {
+          return;
+        }
+        const endTs = Tracing_timestamp(tr);
+        tr.traceContent.WriteString(",\n");
+        Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "E", Cat: phase as string, TS: endTs, Name: name, S: "", Dur: undefined, Args: args });
+        Tracing_maybeFlushLocked(tr);
+      } finally {
+        tr.mu.Unlock();
+      }
+    };
+  }
+
+  // Sampled event: only record if duration crosses a sampling boundary.
+  // In deterministic mode, sampled events are skipped entirely to avoid flaky baselines.
+  if (tr.deterministic) {
+    return (): void => {};
+  }
+  const startMicros = (globalThis.performance.now() * 1000.0) as double;
+  const argsClone: GoMap<string, unknown> = new globalThis.Map(args);
+  return (): void => {
+    const endMicros = (globalThis.performance.now() * 1000.0) as double;
+    const dur = (endMicros as number - startMicros as number) as double;
+    const intervalMicros = (sampleInterval as number / 1000.0) as double;
+    if ((intervalMicros as number) - ((startMicros as number) % (intervalMicros as number)) > (dur as number)) {
+      return;
+    }
+    tr.mu.Lock();
+    try {
+      if (!tr.traceStarted.Load()) {
+        return;
+      }
+      tr.traceContent.WriteString(",\n");
+      Tracing_writeEvent(tr, { PID: 1, TID: 1, PH: "X", Cat: phase as string, TS: startMicros, Name: name, S: "", Dur: dur, Args: argsClone });
+      Tracing_maybeFlushLocked(tr);
+    } finally {
+      tr.mu.Unlock();
+    }
+  };
 }
 
 /**
@@ -696,7 +799,7 @@ export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: TracedTy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.DumpTypes","kind":"method","status":"stub","sigHash":"b119c267de31b5f4c742509c5db527378d5db1ac537ecaa34a7e6c346e860342","bodyHash":"56f8cb2d83dc9fbbf0c0e7c3895101938f1e8f190b34286c46a805b05d48b256"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.DumpTypes","kind":"method","status":"implemented","sigHash":"b119c267de31b5f4c742509c5db527378d5db1ac537ecaa34a7e6c346e860342","bodyHash":"56f8cb2d83dc9fbbf0c0e7c3895101938f1e8f190b34286c46a805b05d48b256"}
  *
  * Go source:
  * func (t *typeTracer) DumpTypes() error {
@@ -734,7 +837,40 @@ export function typeTracer_RecordType(receiver: GoPtr<typeTracer>, typ: TracedTy
  * }
  */
 export function typeTracer_DumpTypes(receiver: GoPtr<typeTracer>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.DumpTypes");
+  const t = receiver!;
+  // Copy the types slice under lock, then release so Display() calls during
+  // buildTypeDescriptor don't deadlock when they create new types
+  t.mu.Lock();
+  const types: GoSlice<TracedType> = [...t.types];
+  t.mu.Unlock();
+
+  if (types.length === 0) {
+    return undefined;
+  }
+
+  const sb = new Builder();
+  // Write opening bracket (no newline so type ID matches line number)
+  sb.WriteString("[");
+
+  const recursionIdentityMap: GoMap<unknown, int> = new globalThis.Map<unknown, int>();
+
+  for (let i = 0; i < types.length; i++) {
+    const typ = types[i]!;
+    const descriptor = typeTracer_buildTypeDescriptor(t, typ, recursionIdentityMap);
+
+    const err = MarshalWrite(sb, descriptor);
+    if (err !== undefined) {
+      return Errorf("failed to marshal type %d: %w", typ.Id(), err);
+    }
+
+    if (i < types.length - 1) {
+      sb.WriteString(",\n");
+    }
+  }
+
+  sb.WriteString("]\n");
+
+  return t.fs.WriteFile(t.typesPath, sb.String());
 }
 
 /**
@@ -838,7 +974,7 @@ export interface LineAndChar {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.buildTypeDescriptor","kind":"method","status":"stub","sigHash":"04a6b82115bb4c64bc764c4e925957f93321131049d34ac7b904ba88c3294b8f","bodyHash":"358963800d018eeae6200128b36497e486790b6453e02be3d7ceecb9e8670c5c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.buildTypeDescriptor","kind":"method","status":"implemented","sigHash":"04a6b82115bb4c64bc764c4e925957f93321131049d34ac7b904ba88c3294b8f","bodyHash":"358963800d018eeae6200128b36497e486790b6453e02be3d7ceecb9e8670c5c"}
  *
  * Go source:
  * func (t *typeTracer) buildTypeDescriptor(typ TracedType, recursionIdentityMap map[any]int) TypeDescriptor {
@@ -987,7 +1123,199 @@ export interface LineAndChar {
  * }
  */
 export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ: TracedType, recursionIdentityMap: GoMap<unknown, int>): TypeDescriptor {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tracing/tracing.go::method::typeTracer.buildTypeDescriptor");
+  const symbol = typ.Symbol();
+  const aliasSymbol = typ.AliasSymbol();
+
+  const desc: TypeDescriptor = {
+    ID: typ.Id(),
+    Flags: typ.FormatFlags(),
+    IntrinsicName: "",
+    SymbolName: "",
+    RecursionID: undefined,
+    IsTuple: false,
+    UnionTypes: [],
+    IntersectionTypes: [],
+    AliasTypeArguments: [],
+    KeyofType: undefined,
+    IndexedAccessObjectType: undefined,
+    IndexedAccessIndexType: undefined,
+    ConditionalCheckType: undefined,
+    ConditionalExtendsType: undefined,
+    ConditionalTrueType: undefined,
+    ConditionalFalseType: undefined,
+    SubstitutionBaseType: undefined,
+    ConstraintType: undefined,
+    InstantiatedType: undefined,
+    TypeArguments: [],
+    ReferenceLocation: undefined,
+    ReverseMappedSourceType: undefined,
+    ReverseMappedMappedType: undefined,
+    ReverseMappedConstraintType: undefined,
+    EvolvingArrayElementType: undefined,
+    EvolvingArrayFinalType: undefined,
+    DestructuringPattern: undefined,
+    FirstDeclaration: undefined,
+    Display: "",
+  };
+
+  // Assign a unique integer token per recursion identity, matching TypeScript's behavior.
+  if (typ.RecursionIdentity() !== undefined && typ.RecursionIdentity() !== null) {
+    const identity = typ.RecursionIdentity();
+    let token = recursionIdentityMap.get(identity);
+    const ok = recursionIdentityMap.has(identity);
+    if (!ok) {
+      token = recursionIdentityMap.size as int;
+      recursionIdentityMap.set(identity, token!);
+    }
+    desc.RecursionID = token;
+  }
+
+  // Intrinsic name
+  const intrinsicName = typ.IntrinsicName();
+  if (intrinsicName !== "") {
+    desc.IntrinsicName = intrinsicName;
+  }
+
+  // Symbol name - escape the internal symbol name prefix for valid JSON
+  if (aliasSymbol !== undefined) {
+    desc.SymbolName = EscapeAllInternalSymbolNames(aliasSymbol!.Name);
+  } else if (symbol !== undefined) {
+    desc.SymbolName = EscapeAllInternalSymbolNames(symbol!.Name);
+  }
+
+  // Tuple flag
+  if (typ.IsTuple()) {
+    desc.IsTuple = true;
+  }
+
+  // Union types
+  const unionTypes = typ.UnionTypes();
+  if (unionTypes.length > 0) {
+    desc.UnionTypes = mapTypeIds(unionTypes);
+  }
+
+  // Intersection types
+  const intersectionTypes = typ.IntersectionTypes();
+  if (intersectionTypes.length > 0) {
+    desc.IntersectionTypes = mapTypeIds(intersectionTypes);
+  }
+
+  // Alias type arguments
+  const aliasArgs = typ.AliasTypeArguments();
+  if (aliasArgs.length > 0) {
+    desc.AliasTypeArguments = mapTypeIds(aliasArgs);
+  }
+
+  // Index type (keyof)
+  const indexType = typ.IndexType();
+  if (indexType !== undefined && indexType !== null) {
+    desc.KeyofType = indexType.Id();
+  }
+
+  // Indexed access type
+  const objType = typ.IndexedAccessObjectType();
+  if (objType !== undefined && objType !== null) {
+    desc.IndexedAccessObjectType = objType.Id();
+  }
+  const idxType = typ.IndexedAccessIndexType();
+  if (idxType !== undefined && idxType !== null) {
+    desc.IndexedAccessIndexType = idxType.Id();
+  }
+
+  // Conditional type
+  if (typ.IsConditional()) {
+    const checkType = typ.ConditionalCheckType();
+    if (checkType !== undefined && checkType !== null) {
+      desc.ConditionalCheckType = checkType.Id();
+    }
+    const extendsType = typ.ConditionalExtendsType();
+    if (extendsType !== undefined && extendsType !== null) {
+      desc.ConditionalExtendsType = extendsType.Id();
+    }
+    const trueType = typ.ConditionalTrueType();
+    if (trueType !== undefined && trueType !== null) {
+      desc.ConditionalTrueType = trueType.Id() as int;
+    } else {
+      desc.ConditionalTrueType = -1 as int;
+    }
+    const falseType = typ.ConditionalFalseType();
+    if (falseType !== undefined && falseType !== null) {
+      desc.ConditionalFalseType = falseType.Id() as int;
+    } else {
+      desc.ConditionalFalseType = -1 as int;
+    }
+  }
+
+  // Substitution type
+  const baseType = typ.SubstitutionBaseType();
+  if (baseType !== undefined && baseType !== null) {
+    desc.SubstitutionBaseType = baseType.Id();
+  }
+  const constraintType = typ.SubstitutionConstraintType();
+  if (constraintType !== undefined && constraintType !== null) {
+    desc.ConstraintType = constraintType.Id();
+  }
+
+  // Reference type
+  const target = typ.ReferenceTarget();
+  if (target !== undefined && target !== null) {
+    desc.InstantiatedType = target.Id();
+  }
+  const refArgs = typ.ReferenceTypeArguments();
+  if (refArgs.length > 0) {
+    desc.TypeArguments = mapTypeIds(refArgs);
+  }
+  const refNode = typ.ReferenceNode();
+  if (refNode !== undefined) {
+    desc.ReferenceLocation = getLocation(refNode);
+  }
+
+  // Reverse mapped type
+  const sourceType = typ.ReverseMappedSourceType();
+  if (sourceType !== undefined && sourceType !== null) {
+    desc.ReverseMappedSourceType = sourceType.Id();
+  }
+  const mappedType = typ.ReverseMappedMappedType();
+  if (mappedType !== undefined && mappedType !== null) {
+    desc.ReverseMappedMappedType = mappedType.Id();
+  }
+  const revConstraintType = typ.ReverseMappedConstraintType();
+  if (revConstraintType !== undefined && revConstraintType !== null) {
+    desc.ReverseMappedConstraintType = revConstraintType.Id();
+  }
+
+  // Evolving array type
+  const elemType = typ.EvolvingArrayElementType();
+  if (elemType !== undefined && elemType !== null) {
+    desc.EvolvingArrayElementType = elemType.Id();
+  }
+  const finalType = typ.EvolvingArrayFinalType();
+  if (finalType !== undefined && finalType !== null) {
+    desc.EvolvingArrayFinalType = finalType.Id();
+  }
+
+  // Pattern (destructuring)
+  const pattern = typ.Pattern();
+  if (pattern !== undefined) {
+    desc.DestructuringPattern = getLocation(pattern);
+  }
+
+  // First declaration - prefer aliasSymbol, matching TypeScript's `aliasSymbol ?? symbol`
+  let firstDeclSymbol = aliasSymbol;
+  if (firstDeclSymbol === undefined) {
+    firstDeclSymbol = symbol;
+  }
+  if (firstDeclSymbol !== undefined && firstDeclSymbol!.Declarations.length > 0) {
+    desc.FirstDeclaration = getLocation(firstDeclSymbol!.Declarations[0]);
+  }
+
+  // Display text
+  const display = typ.Display();
+  if (display !== "") {
+    desc.Display = display;
+  }
+
+  return desc;
 }
 
 /**

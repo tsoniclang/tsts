@@ -1,9 +1,11 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
+import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
 import type { Decoder, Encoder, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
+import * as strconv from "../../go/strconv.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::type::OrderedMap","kind":"type","status":"implemented","sigHash":"671bcec921be98d7ca21605a749133736df54c2b4c9e9e08fe72c5ecd5265e1b","bodyHash":"bc8af819f23afd83c888135f21577068246145d683364cf6c276ac62c2caee43"}
@@ -510,7 +512,7 @@ export function OrderedMap_MarshalJSONTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::resolveKeyName","kind":"func","status":"stub","sigHash":"9c1bfb11e5032437d999dacf40d5012bb8d493d331cb620a6e34b27ff5d3732e","bodyHash":"1f1e2b72cf6df63d84533b0c10f676c23acd7ffb151f7aa20c9f4f43b600e86d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::resolveKeyName","kind":"func","status":"implemented","sigHash":"9c1bfb11e5032437d999dacf40d5012bb8d493d331cb620a6e34b27ff5d3732e","bodyHash":"1f1e2b72cf6df63d84533b0c10f676c23acd7ffb151f7aa20c9f4f43b600e86d"}
  *
  * Go source:
  * func resolveKeyName(k reflect.Value) (string, error) {
@@ -534,7 +536,18 @@ export function OrderedMap_MarshalJSONTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>
  * }
  */
 export function resolveKeyName(k: Value): [string, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/collections/ordered_map.go::func::resolveKeyName");
+  if (k.Kind() === reflect_String) {
+    return [k.String(), undefined];
+  }
+  // reflect.TypeAssert[encoding.TextMarshaler] is not available in TS port - skip
+  const kind = k.Kind();
+  if (kind === reflect_Int || kind === reflect_Int8 || kind === reflect_Int16 || kind === reflect_Int32 || kind === reflect_Int64) {
+    return [strconv.FormatInt(k.Int(), 10), undefined];
+  }
+  if (kind === reflect_Uint || kind === reflect_Uint8 || kind === reflect_Uint16 || kind === reflect_Uint32 || kind === reflect_Uint64 || kind === reflect_Uintptr) {
+    return [strconv.FormatUint(k.Uint(), 10), undefined];
+  }
+  throw new globalThis.Error("unexpected map key type");
 }
 
 /**

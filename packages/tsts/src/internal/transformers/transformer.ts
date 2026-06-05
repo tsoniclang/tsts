@@ -1,6 +1,7 @@
 import type { GoPtr } from "../../go/compat.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Node, NodeVisitor } from "../ast/spine.js";
+import { NodeVisitor_VisitSourceFile } from "../ast/visitor.js";
 import type { EmitContext as EmitContext_680f09ca } from "../printer/emitcontext.js";
 import { EmitContext_NewNodeVisitor, NewEmitContext } from "../printer/emitcontext.js";
 import type { NodeFactory } from "../printer/factory.js";
@@ -87,7 +88,7 @@ export function Transformer_Factory(receiver: GoPtr<Transformer>): GoPtr<NodeFac
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.TransformSourceFile","kind":"method","status":"stub","sigHash":"593431a64895bff97778164c286001ce5d4fdff297017da63b743bae495c01e3","bodyHash":"06f6065f1f3357b6e630255ea0b7245eb139f3aa72d5e2350f1a9f95d771b6d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.TransformSourceFile","kind":"method","status":"implemented","sigHash":"593431a64895bff97778164c286001ce5d4fdff297017da63b743bae495c01e3","bodyHash":"06f6065f1f3357b6e630255ea0b7245eb139f3aa72d5e2350f1a9f95d771b6d9"}
  *
  * Go source:
  * func (tx *Transformer) TransformSourceFile(file *ast.SourceFile) *ast.SourceFile {
@@ -95,5 +96,5 @@ export function Transformer_Factory(receiver: GoPtr<Transformer>): GoPtr<NodeFac
  * }
  */
 export function Transformer_TransformSourceFile(receiver: GoPtr<Transformer>, file: GoPtr<SourceFile>): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.TransformSourceFile");
+  return NodeVisitor_VisitSourceFile(receiver!.visitor, file);
 }

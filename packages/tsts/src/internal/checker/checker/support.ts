@@ -5,10 +5,14 @@ import type { Expression } from "../../ast/generated/unions.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
+import { SymbolFlagsAlias, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/generated/flags.js";
+import { ModifierFlagsNone, ModifierFlagsNonPublicAccessibilityModifier } from "../../ast/modifierflags.js";
+import type { ModifierFlags } from "../../ast/modifierflags.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Result } from "../../evaluator/evaluator.js";
 import { Map } from "../../core/core.js";
+import { LinkStore_Get } from "../../core/linkstore.js";
 import { RelationComparisonResultReportsUnmeasurable, RelationComparisonResultReportsUnreliable } from "../relater.js";
 import { Checker_compareTypesAssignableWorker } from "../relater.js";
 import { Checker_markNodeAssignmentsWorker } from "../flow.js";
@@ -17,8 +21,14 @@ import { SignatureKindConstruct, Type_Types, TypeFlagsNonPrimitive, TypeFlagsPri
 import { newEmitResolver } from "../emitresolver.js";
 import type { EmitResolver } from "../emitresolver.js";
 import type { Ternary, Type } from "../types.js";
+import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
+import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
+import { getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
+import { TernaryFalse, TernaryTrue } from "../types.js";
+import { Checker_addErrorOrSuggestion } from "./diagnostics.js";
 import { Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
 import { Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
+import { Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isReadonlySymbol } from "./symbols.js";
 import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
 
 /**
@@ -219,7 +229,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolReferenced","kind":"method","status":"stub","sigHash":"9d559ba705bd71a30f81d3ff86c7c3fd070af0c3b829dc3a2f1a8a765a19b850","bodyHash":"092dec53d97117e547064affd2a6356b852a4daad74c51ba6fc8087eb21bc901"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolReferenced","kind":"method","status":"implemented","sigHash":"9d559ba705bd71a30f81d3ff86c7c3fd070af0c3b829dc3a2f1a8a765a19b850","bodyHash":"092dec53d97117e547064affd2a6356b852a4daad74c51ba6fc8087eb21bc901"}
  *
  * Go source:
  * func (c *Checker) symbolReferenced(symbol *ast.Symbol, meaning ast.SymbolFlags) {
@@ -227,7 +237,7 @@ export function Checker_initializeChecker(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_symbolReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolReferenced");
+  LinkStore_Get(receiver!.symbolReferenceLinks, symbol_)!.referenceKinds |= meaning;
 }
 
 /**
@@ -677,7 +687,7 @@ export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.error","kind":"method","status":"stub","sigHash":"a1b3e7b0921a4a0464969d9cacee61da47b0195b35a5116cc39b62275a55e276","bodyHash":"d0185defd00c938f3571af313af18b28c25422bfe615014e7b42caddd3ce7596"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.error","kind":"method","status":"implemented","sigHash":"a1b3e7b0921a4a0464969d9cacee61da47b0195b35a5116cc39b62275a55e276","bodyHash":"d0185defd00c938f3571af313af18b28c25422bfe615014e7b42caddd3ce7596"}
  *
  * Go source:
  * func (c *Checker) error(location *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -687,11 +697,13 @@ export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: Go
  * }
  */
 export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.error");
+  const diagnostic = NewDiagnosticForNode(location, message, ...args);
+  DiagnosticCollection_Add(receiver!.diagnostics, diagnostic);
+  return diagnostic;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorSkippedOnNoEmit","kind":"method","status":"stub","sigHash":"eccf4deda6506c03ac1cd814106663bb77ea66de5f93cb7bf6f7b406f463d2be","bodyHash":"71393a7fc60e9de9b5ec25e754804e405bb4572c4cc09cebfe29abf835d75982"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorSkippedOnNoEmit","kind":"method","status":"implemented","sigHash":"eccf4deda6506c03ac1cd814106663bb77ea66de5f93cb7bf6f7b406f463d2be","bodyHash":"71393a7fc60e9de9b5ec25e754804e405bb4572c4cc09cebfe29abf835d75982"}
  *
  * Go source:
  * func (c *Checker) errorSkippedOnNoEmit(location *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -701,11 +713,13 @@ export function Checker_error(receiver: GoPtr<Checker>, location: GoPtr<Node>, m
  * }
  */
 export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorSkippedOnNoEmit");
+  const diagnostic = Checker_error(receiver, location, message, ...args);
+  Diagnostic_SetSkippedOnNoEmit(diagnostic);
+  return diagnostic;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorOrSuggestion","kind":"method","status":"stub","sigHash":"71dbc475f4dde8bddb12c0eece37fdb596119300f9162c2e631a818d5e676fee","bodyHash":"5cba5302220b40779cacbff7a6e2a7698097b7d83001e8623a27a6759468b357"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorOrSuggestion","kind":"method","status":"implemented","sigHash":"71dbc475f4dde8bddb12c0eece37fdb596119300f9162c2e631a818d5e676fee","bodyHash":"5cba5302220b40779cacbff7a6e2a7698097b7d83001e8623a27a6759468b357"}
  *
  * Go source:
  * func (c *Checker) errorOrSuggestion(isError bool, location *ast.Node, message *diagnostics.Message, args ...any) {
@@ -713,7 +727,7 @@ export function Checker_errorSkippedOnNoEmit(receiver: GoPtr<Checker>, location:
  * }
  */
 export function Checker_errorOrSuggestion(receiver: GoPtr<Checker>, isError: bool, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.errorOrSuggestion");
+  Checker_addErrorOrSuggestion(receiver, isError, NewDiagnosticForNode(location, message, ...args));
 }
 
 /**
@@ -882,7 +896,7 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValue","kind":"method","status":"stub","sigHash":"3679edde4f705b718f1763ecab39b4c4b5c48a0ddf616d617f2b9178fdf86661","bodyHash":"3394a62fb49e253e435824e1291c66be6f02e8635202a06c4f5042ff0a0f8bfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValue","kind":"method","status":"implemented","sigHash":"3679edde4f705b718f1763ecab39b4c4b5c48a0ddf616d617f2b9178fdf86661","bodyHash":"3394a62fb49e253e435824e1291c66be6f02e8635202a06c4f5042ff0a0f8bfd"}
  *
  * Go source:
  * func (c *Checker) symbolIsValue(symbol *ast.Symbol) bool {
@@ -890,11 +904,11 @@ export function Checker_findMixins(receiver: GoPtr<Checker>, types: GoSlice<GoPt
  * }
  */
 export function Checker_symbolIsValue(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValue");
+  return Checker_symbolIsValueEx(receiver, symbol_, false /*includeTypeOnlyMembers*/);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValueEx","kind":"method","status":"stub","sigHash":"b03686c80f420fe22dc9b2903a30fcbeff743c2310e91ca6d1f6983624e5ef46","bodyHash":"7462b7d1c3165216c6077c1eeeac583d063ba43f009a0b0a4a09bcf200314267"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValueEx","kind":"method","status":"implemented","sigHash":"b03686c80f420fe22dc9b2903a30fcbeff743c2310e91ca6d1f6983624e5ef46","bodyHash":"7462b7d1c3165216c6077c1eeeac583d063ba43f009a0b0a4a09bcf200314267"}
  *
  * Go source:
  * func (c *Checker) symbolIsValueEx(symbol *ast.Symbol, includeTypeOnlyMembers bool) bool {
@@ -903,7 +917,8 @@ export function Checker_symbolIsValue(receiver: GoPtr<Checker>, symbol_: GoPtr<S
  * }
  */
 export function Checker_symbolIsValueEx(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, includeTypeOnlyMembers: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.symbolIsValueEx");
+  return (symbol_!.flags & SymbolFlagsValue) !== 0 || ((symbol_!.flags & SymbolFlagsAlias) !== 0 &&
+    (Checker_getSymbolFlagsEx(receiver, symbol_, !includeTypeOnlyMembers, false /*excludeLocalMeanings*/) & SymbolFlagsValue) !== 0);
 }
 
 /**
@@ -968,7 +983,7 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.compareProperties","kind":"method","status":"stub","sigHash":"2b1210c14cc57ff655b13d795825b79d727c16e52325cc535a1fd45dbc33494c","bodyHash":"8a6cbe97379645d2a7e4a142d3acaa56e0511dd3047c4e7bb73e908256e00956"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.compareProperties","kind":"method","status":"implemented","sigHash":"2b1210c14cc57ff655b13d795825b79d727c16e52325cc535a1fd45dbc33494c","bodyHash":"8a6cbe97379645d2a7e4a142d3acaa56e0511dd3047c4e7bb73e908256e00956"}
  *
  * Go source:
  * func (c *Checker) compareProperties(sourceProp *ast.Symbol, targetProp *ast.Symbol, compareTypes func(source *Type, target *Type) Ternary) Ternary {
@@ -999,7 +1014,30 @@ export function Checker_evaluateEntity(receiver: GoPtr<Checker>, expr: GoPtr<Nod
  * }
  */
 export function Checker_compareProperties(receiver: GoPtr<Checker>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, compareTypes: (source: GoPtr<Type>, target: GoPtr<Type>) => Ternary): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.compareProperties");
+  // Two members are considered identical when
+  // - they are public properties with identical names, optionality, and types,
+  // - they are private or protected properties originating in the same declaration and having identical types
+  if (sourceProp === targetProp) {
+    return TernaryTrue;
+  }
+  const sourcePropAccessibility = getDeclarationModifierFlagsFromSymbol(sourceProp) & ModifierFlagsNonPublicAccessibilityModifier;
+  const targetPropAccessibility = getDeclarationModifierFlagsFromSymbol(targetProp) & ModifierFlagsNonPublicAccessibilityModifier;
+  if (sourcePropAccessibility !== targetPropAccessibility) {
+    return TernaryFalse;
+  }
+  if (sourcePropAccessibility !== ModifierFlagsNone) {
+    if (Checker_getTargetSymbol(receiver, sourceProp) !== Checker_getTargetSymbol(receiver, targetProp)) {
+      return TernaryFalse;
+    }
+  } else {
+    if ((sourceProp!.flags & SymbolFlagsOptional) !== (targetProp!.flags & SymbolFlagsOptional)) {
+      return TernaryFalse;
+    }
+  }
+  if (Checker_isReadonlySymbol(receiver, sourceProp) !== Checker_isReadonlySymbol(receiver, targetProp)) {
+    return TernaryFalse;
+  }
+  return compareTypes(Checker_getNonMissingTypeOfSymbol(receiver, sourceProp), Checker_getNonMissingTypeOfSymbol(receiver, targetProp));
 }
 
 /**

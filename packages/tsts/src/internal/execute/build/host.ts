@@ -30,7 +30,7 @@ import { parseCache_loadOrStore } from "./parseCache.js";
 import { BuildTask_loadOrStoreBuildInfo } from "./buildtask.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"stub","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a","bodyHash":"dee113d37bcff5b2be13c10f7b3d6f2614f02fdc08433c90264f5c0a4dc8b9d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::type::host","kind":"type","status":"implemented","sigHash":"4878a075c6246d276432fff1aab5b03ef485e8fc6f147876280d0e8e305a382a","bodyHash":"dee113d37bcff5b2be13c10f7b3d6f2614f02fdc08433c90264f5c0a4dc8b9d2"}
  *
  * Go source:
  * host struct {
@@ -58,7 +58,7 @@ export interface host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::varGroup::_+_+_","kind":"varGroup","status":"stub","sigHash":"5409f96379fff09ec0d93c04933563c7fc89b0b7eabeb5959ec3e982c6a69a9f","bodyHash":"638d6991a3569ce94e574bb91dbe2d9a850feaf3212b618736b2586804dde0fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::varGroup::_+_+_","kind":"varGroup","status":"implemented","sigHash":"5409f96379fff09ec0d93c04933563c7fc89b0b7eabeb5959ec3e982c6a69a9f","bodyHash":"638d6991a3569ce94e574bb91dbe2d9a850feaf3212b618736b2586804dde0fa"}
  *
  * Go source:
  * var (

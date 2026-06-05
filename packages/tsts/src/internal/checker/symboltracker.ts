@@ -25,7 +25,7 @@ export interface SymbolTrackerImpl {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl","kind":"func","status":"stub","sigHash":"aa81ec4495e050dfe9722a9c6f214546af9853725abde4bda16689746419bf26","bodyHash":"e8d00d40de29f34d80778f592a6d281380031b1cc81719624c605ebe420626c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl","kind":"func","status":"implemented","sigHash":"aa81ec4495e050dfe9722a9c6f214546af9853725abde4bda16689746419bf26","bodyHash":"e8d00d40de29f34d80778f592a6d281380031b1cc81719624c605ebe420626c8"}
  *
  * Go source:
  * func NewSymbolTrackerImpl(context *NodeBuilderContext, tracker nodebuilder.SymbolTracker) *SymbolTrackerImpl {
@@ -38,12 +38,21 @@ export interface SymbolTrackerImpl {
  * 			tracker = t.inner
  * 		}
  * 	}
- * 
+ *
  * 	return &SymbolTrackerImpl{context, tracker, false}
  * }
  */
 export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: SymbolTracker): GoPtr<SymbolTrackerImpl> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/symboltracker.go::func::NewSymbolTrackerImpl");
+  if (tracker !== undefined) {
+    for (;;) {
+      const t = tracker as unknown as GoPtr<SymbolTrackerImpl>;
+      if (t === undefined || !("inner" in (t as object) && "context" in (t as object) && "DisableTrackSymbol" in (t as object))) {
+        break;
+      }
+      tracker = t!.inner;
+    }
+  }
+  return { context, inner: tracker, DisableTrackSymbol: false };
 }
 
 /**

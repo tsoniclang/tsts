@@ -46,7 +46,7 @@ import { referenceMap_getReferencedBy } from "./referencemap.js";
 import { Program_GetSourceFiles as incremental_Program_GetSourceFiles } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"stub","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465","bodyHash":"f687f6a1dbb7e16ef44dcc273af4b914bcfd2ce0fb20ddb880d9ec40e20ca30f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::dtsMayChange","kind":"type","status":"implemented","sigHash":"161a83db43532f7d6c3498aef7567079f27b3d88380b01283197b3f6270c1465","bodyHash":"f687f6a1dbb7e16ef44dcc273af4b914bcfd2ce0fb20ddb880d9ec40e20ca30f"}
  *
  * Go source:
  * dtsMayChange map[tspath.Path]FileEmitKind
@@ -66,7 +66,7 @@ export function dtsMayChange_addFileToAffectedFilesPendingEmit(receiver: dtsMayC
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::updatedSignature","kind":"type","status":"stub","sigHash":"5d9dd1705a97a588213f44611880b83735dbe0fea78525cf843869b5195b25c5","bodyHash":"d87702b650739f69847e8c24ebbdc85732143490b212a73924a6c58d5b75d424"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::updatedSignature","kind":"type","status":"implemented","sigHash":"5d9dd1705a97a588213f44611880b83735dbe0fea78525cf843869b5195b25c5","bodyHash":"d87702b650739f69847e8c24ebbdc85732143490b212a73924a6c58d5b75d424"}
  *
  * Go source:
  * updatedSignature struct {
@@ -82,7 +82,7 @@ export interface updatedSignature {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::affectedFilesHandler","kind":"type","status":"stub","sigHash":"4be39f50583d43bff718a0a5d34c122692a7799c97890e3fcdaad96aab5a63d0","bodyHash":"e64aeb2963fa8f97b2c4d77547821721ca1cae8771e41515d2ecaea950d1e24c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/affectedfileshandler.go::type::affectedFilesHandler","kind":"type","status":"implemented","sigHash":"4be39f50583d43bff718a0a5d34c122692a7799c97890e3fcdaad96aab5a63d0","bodyHash":"e64aeb2963fa8f97b2c4d77547821721ca1cae8771e41515d2ecaea950d1e24c"}
  *
  * Go source:
  * affectedFilesHandler struct {

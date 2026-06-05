@@ -1,18 +1,64 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Once } from "../../go/sync.js";
+import { Atoi, Itoa } from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
+import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
+import type { Diagnostic } from "../ast/diagnostic.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Expression } from "../ast/generated/unions.js";
-import type { Diagnostic } from "../ast/diagnostic.js";
+import { newMapWithSizeHint, OrderedMap_Clone, OrderedMap_Entries, OrderedMap_Get, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
+import { MapFiltered } from "../core/core.js";
+import { Tristate_IsTrue } from "../core/tristate.js";
+import type { CompilerOptions } from "../core/compileroptions.js";
+import type { WatchOptions } from "../core/watchoptions.js";
+import type { BuildOptions } from "../core/buildoptions.js";
+import {
+  Cannot_read_file_0,
+  Option_0_can_only_be_specified_in_tsconfig_json_file_or_set_to_false_or_null_on_command_line,
+  Option_0_can_only_be_specified_in_tsconfig_json_file_or_set_to_null_on_command_line,
+  Option_0_requires_value_to_be_greater_than_1,
+  Options_0_and_1_cannot_be_combined,
+  Unterminated_quoted_string_in_response_file_0,
+} from "../diagnostics/generated/messages.js";
 import type { Message } from "../diagnostics/diagnostics.js";
+import { GetNormalizedAbsolutePath } from "../tspath/path.js";
+import type { ComparePathsOptions } from "../tspath/path.js";
 import type { FS } from "../vfs/vfs.js";
+import { IsWhiteSpaceLike } from "../stringutil/util.js";
 import type { CommandLineOption } from "./commandlineoption.js";
+import {
+  CommandLineOption_Elements,
+  CommandLineOption_EnumMap,
+  CommandLineOptionTypeBoolean,
+  CommandLineOptionTypeList,
+  CommandLineOptionTypeListOrElement,
+  CommandLineOptionTypeNumber,
+  CommandLineOptionTypeString,
+} from "./commandlineoption.js";
 import type { AlternateModeDiagnostics, ParseCommandLineWorkerDiagnostics } from "./diagnostics.js";
+import { buildOptionsDidYouMeanDiagnostics, CompilerOptionsDidYouMeanDiagnostics, watchOptionsDidYouMeanDiagnostics } from "./diagnostics.js";
+import { GetNameMapFromList, NameMap_Get, NameMap_GetOptionDeclarationFromName } from "./namemap.js";
+import { BuildNameMap, CompilerNameMap, WatchNameMap } from "./namemap.js";
 import type { NameMap } from "./namemap.js";
 import type { ParsedBuildCommandLine } from "./parsedbuildcommandline.js";
+import { NewParsedCommandLine } from "./parsedcommandline.js";
 import type { ParsedCommandLine } from "./parsedcommandline.js";
-import type { ParseConfigHost } from "./tsconfigparsing.js";
+import { TscBuildOption } from "./declsbuild.js";
+import type {
+  buildOptionsParser,
+  compilerOptionsParser,
+  optionParser,
+  watchOptionsParser,
+} from "./parsinghelpers.js";
+import {
+  convertToOptionsWithAbsolutePaths,
+  ParseCompilerOptions,
+} from "./parsinghelpers.js";
+import type { ParseConfigHost, CommandLineOptionNameMap } from "./tsconfigparsing.js";
+import { CommandLineCompilerOptionsMap, convertMapToOptions, validateJsonOptionValue } from "./tsconfigparsing.js";
+import { commandLineParser_createUnknownOptionError, createDiagnosticForInvalidEnumType, getCompilerOptionValueTypeString } from "./errors.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.AlternateMode","kind":"method","status":"implemented","sigHash":"b7a4cccfda5482aa6b416c22abfac4443b53ac96e25e4fbf2233fc1d6c068ac3","bodyHash":"056161029ee4944550f999527abb187aedbb19f7b8abeeaead760247ab8db584"}
@@ -89,7 +135,7 @@ export interface commandLineParser {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseCommandLine","kind":"func","status":"stub","sigHash":"562e3a384361cd843bc6d51c8fe529fb5a9fc4d9b2f88128540ac7356f5f8511","bodyHash":"f58d9dd1c394ddcc0f54f52158088b3059e9a903e3d4a7b27eb38654e893336a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseCommandLine","kind":"func","status":"implemented","sigHash":"562e3a384361cd843bc6d51c8fe529fb5a9fc4d9b2f88128540ac7356f5f8511","bodyHash":"f58d9dd1c394ddcc0f54f52158088b3059e9a903e3d4a7b27eb38654e893336a"}
  *
  * Go source:
  * func ParseCommandLine(
@@ -114,11 +160,29 @@ export interface commandLineParser {
  * }
  */
 export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfigHost): GoPtr<ParsedCommandLine> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseCommandLine");
+  if (commandLine === undefined || commandLine === null) {
+    commandLine = [];
+  }
+  const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host.FS());
+  const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, unknown>>), CommandLineCompilerOptionsMap, host.GetCurrentDirectory());
+  const compilerParser: compilerOptionsParser = { __tsgoEmbedded0: {} as CompilerOptions };
+  convertMapToOptions(optionsWithAbsolutePaths, compilerParser as unknown as optionParser);
+  const compilerOptions = compilerParser.__tsgoEmbedded0;
+  const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
+  convertMapToOptions(optionsWithAbsolutePaths, watchParser as unknown as optionParser);
+  const watchOptions = watchParser.__tsgoEmbedded0;
+  const result = NewParsedCommandLine(compilerOptions, parser!.fileNames, {
+    UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
+    CurrentDirectory: host.GetCurrentDirectory(),
+  });
+  result!.ParsedConfig!.WatchOptions = watchOptions;
+  result!.Errors = parser!.errors;
+  result!.Raw = parser!.options;
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseBuildCommandLine","kind":"func","status":"stub","sigHash":"0bcf99ad375f4adacac48e524467665ecba5dc50fcf1fc301eeb09baf42e5b39","bodyHash":"d61eebfc4372792713ccc1f3efaf09e16ad93632e5a4f4c59b4e8b261b65aadd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseBuildCommandLine","kind":"func","status":"implemented","sigHash":"0bcf99ad375f4adacac48e524467665ecba5dc50fcf1fc301eeb09baf42e5b39","bodyHash":"d61eebfc4372792713ccc1f3efaf09e16ad93632e5a4f4c59b4e8b261b65aadd"}
  *
  * Go source:
  * func ParseBuildCommandLine(
@@ -173,11 +237,59 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfig
  * }
  */
 export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseConfigHost): GoPtr<ParsedBuildCommandLine> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseBuildCommandLine");
+  if (commandLine === undefined || commandLine === null) {
+    commandLine = [];
+  }
+  const parser = parseCommandLineWorker(buildOptionsDidYouMeanDiagnostics, commandLine, host.FS());
+  const compilerOptions: CompilerOptions = {} as CompilerOptions;
+  OrderedMap_Entries(parser!.options as GoPtr<OrderedMap<string, unknown>>)((key: string, value: unknown): bool => {
+    const buildOption = NameMap_Get(BuildNameMap, key);
+    if (buildOption === TscBuildOption || buildOption === NameMap_Get(CompilerNameMap, key)) {
+      ParseCompilerOptions(key, value, compilerOptions);
+    }
+    return false;
+  });
+  const buildParser: buildOptionsParser = { __tsgoEmbedded0: {} as BuildOptions };
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, buildParser as unknown as optionParser);
+  const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, watchParser as unknown as optionParser);
+  let result: ParsedBuildCommandLine = {
+    BuildOptions: buildParser.__tsgoEmbedded0,
+    CompilerOptions: compilerOptions,
+    WatchOptions: watchParser.__tsgoEmbedded0,
+    Projects: parser!.fileNames,
+    Errors: parser!.errors,
+    Raw: parser!.options,
+    comparePathsOptions: {
+      UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
+      CurrentDirectory: host.GetCurrentDirectory(),
+    },
+    resolvedProjectPaths: undefined as never,
+    resolvedProjectPathsOnce: new Once(),
+    locale: undefined as never,
+    localeOnce: new Once(),
+  };
+  if (result.Projects.length === 0) {
+    result = { ...result, Projects: [...result.Projects, "."] };
+  }
+  // Nonsensical combinations
+  if (Tristate_IsTrue(result.BuildOptions!.Clean) && Tristate_IsTrue(result.BuildOptions!.Force)) {
+    result = { ...result, Errors: [...result.Errors, NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "clean", "force")] };
+  }
+  if (Tristate_IsTrue(result.BuildOptions!.Clean) && Tristate_IsTrue(result.BuildOptions!.Verbose)) {
+    result = { ...result, Errors: [...result.Errors, NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "clean", "verbose")] };
+  }
+  if (Tristate_IsTrue(result.BuildOptions!.Clean) && Tristate_IsTrue(result.CompilerOptions!.Watch)) {
+    result = { ...result, Errors: [...result.Errors, NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "clean", "watch")] };
+  }
+  if (Tristate_IsTrue(result.CompilerOptions!.Watch) && Tristate_IsTrue(result.BuildOptions!.Dry)) {
+    result = { ...result, Errors: [...result.Errors, NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "watch", "dry")] };
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::parseCommandLineWorker","kind":"func","status":"stub","sigHash":"0d67b3b6ec12f4c1b47f87aa81f7a9bd278b2808ae91078665fc8f89203c004a","bodyHash":"05395d4f47cff3b6d0a196084277a39a09c4ba5955ab222a31740bb5fab890ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::parseCommandLineWorker","kind":"func","status":"implemented","sigHash":"0d67b3b6ec12f4c1b47f87aa81f7a9bd278b2808ae91078665fc8f89203c004a","bodyHash":"05395d4f47cff3b6d0a196084277a39a09c4ba5955ab222a31740bb5fab890ce"}
  *
  * Go source:
  * func parseCommandLineWorker(
@@ -198,11 +310,21 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
  * }
  */
 export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics>, commandLine: GoSlice<string>, fs: FS): GoPtr<commandLineParser> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::parseCommandLineWorker");
+  const parser: commandLineParser = {
+    fs: fs,
+    workerDiagnostics: parseCommandLineWithDiagnostics,
+    fileNames: [],
+    options: newMapWithSizeHint<string, unknown>(0),
+    errors: [],
+    optionsMap: undefined,
+  };
+  parser.optionsMap = GetNameMapFromList(commandLineParser_OptionsDeclarations(parser));
+  commandLineParser_parseStrings(parser, commandLine);
+  return parser;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseStrings","kind":"method","status":"stub","sigHash":"367937963448225249aa9aa8b0554a96b59a22c7303a30b93f292c039220f30a","bodyHash":"f97740bf1e26f7f2b6ec2ae3c058a9b69f1c79325eb47a8e574e4f8f5c796d45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseStrings","kind":"method","status":"implemented","sigHash":"367937963448225249aa9aa8b0554a96b59a22c7303a30b93f292c039220f30a","bodyHash":"f97740bf1e26f7f2b6ec2ae3c058a9b69f1c79325eb47a8e574e4f8f5c796d45"}
  *
  * Go source:
  * func (p *commandLineParser) parseStrings(args []string) {
@@ -236,7 +358,34 @@ export function parseCommandLineWorker(parseCommandLineWithDiagnostics: GoPtr<Pa
  * }
  */
 export function commandLineParser_parseStrings(receiver: GoPtr<commandLineParser>, args: GoSlice<string>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseStrings");
+  const p = receiver!;
+  let i = 0;
+  while (i < args.length) {
+    const s = args[i]!;
+    i++;
+    if (s === "") {
+      continue;
+    }
+    const firstChar = s.charCodeAt(0);
+    if (firstChar === 64 /* '@' */) {
+      commandLineParser_parseResponseFile(p, s.slice(1));
+    } else if (firstChar === 45 /* '-' */) {
+      const inputOptionName = getInputOptionName(s);
+      const opt = NameMap_GetOptionDeclarationFromName(p.optionsMap, inputOptionName, true /*allowShort*/);
+      if (opt !== undefined) {
+        i = commandLineParser_parseOptionValue(p, args, i, opt, p.workerDiagnostics!.OptionTypeMismatchDiagnostic);
+      } else {
+        const watchOpt = NameMap_GetOptionDeclarationFromName(WatchNameMap, inputOptionName, true /*allowShort*/);
+        if (watchOpt !== undefined) {
+          i = commandLineParser_parseOptionValue(p, args, i, watchOpt, watchOptionsDidYouMeanDiagnostics!.OptionTypeMismatchDiagnostic);
+        } else {
+          p.errors = [...p.errors, commandLineParser_createUnknownOptionError(p, inputOptionName, s, undefined, undefined)];
+        }
+      }
+    } else {
+      p.fileNames = [...p.fileNames, s];
+    }
+  }
 }
 
 /**
@@ -254,7 +403,7 @@ export function getInputOptionName(input: string): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseResponseFile","kind":"method","status":"stub","sigHash":"2c89dbe560e0fa0c00fa3b994cbd27f49cf846b78df1a09568e024cd5695686e","bodyHash":"f907b223922c27f57cec5d02e75429749b5bb8c94615048b83799236042936a9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseResponseFile","kind":"method","status":"implemented","sigHash":"2c89dbe560e0fa0c00fa3b994cbd27f49cf846b78df1a09568e024cd5695686e","bodyHash":"f907b223922c27f57cec5d02e75429749b5bb8c94615048b83799236042936a9"}
  *
  * Go source:
  * func (p *commandLineParser) parseResponseFile(fileName string) {
@@ -266,11 +415,11 @@ export function getInputOptionName(input: string): string {
  * 		return read, err
  * 	}, p.errors)
  * 	p.errors = errors
- * 
+ *
  * 	if fileContents == "" {
  * 		return
  * 	}
- * 
+ *
  * 	var args []string
  * 	text := []rune(fileContents)
  * 	textLength := len(text)
@@ -305,17 +454,64 @@ export function getInputOptionName(input: string): string {
  * }
  */
 export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineParser>, fileName: string): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseResponseFile");
+  const p = receiver!;
+  // Note: the Go code normalizes the fileName using tspath.GetNormalizedAbsolutePath
+  // with currentDirectory, but the TS commandLineParser interface doesn't have currentDirectory.
+  // We use fileName as-is (matching the stub's Go source comment which omits currentDirectory).
+  const [fileContents, errors] = tryReadFile(fileName, (fn: string): [string, bool] => {
+    if (p.fs === undefined || p.fs === null) {
+      return ["", false];
+    }
+    const [read, err] = p.fs.ReadFile(fn);
+    return [read, err];
+  }, p.errors);
+  p.errors = errors;
+
+  if (fileContents === "") {
+    return;
+  }
+
+  const args: GoSlice<string> = [];
+  const text = [...fileContents]; // split into characters (runes)
+  const textLength = text.length;
+  let pos = 0;
+  while (pos < textLength) {
+    while (pos < textLength && text[pos]!.charCodeAt(0) <= 32 /* ' ' */) {
+      pos++;
+    }
+    if (pos >= textLength) {
+      break;
+    }
+    const start = pos;
+    if (text[pos]! === '"') {
+      pos++;
+      while (pos < textLength && text[pos]! !== '"') {
+        pos++;
+      }
+      if (pos < textLength) {
+        args.push(text.slice(start + 1, pos).join(""));
+        pos++;
+      } else {
+        p.errors = [...p.errors, NewCompilerDiagnostic(Unterminated_quoted_string_in_response_file_0, fileName)];
+      }
+    } else {
+      while (pos < textLength && text[pos]!.charCodeAt(0) > 32 /* ' ' */) {
+        pos++;
+      }
+      args.push(text.slice(start, pos).join(""));
+    }
+  }
+  commandLineParser_parseStrings(p, args);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::tryReadFile","kind":"func","status":"stub","sigHash":"a24f82b6b66c8b49644f5f0e5467ccdcbf953d690be7396a2707c41188849145","bodyHash":"023b1f679ce38b90db2d494d9682f0bc01b5dd9d1ddb25f1833105573f0bb5db"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::tryReadFile","kind":"func","status":"implemented","sigHash":"a24f82b6b66c8b49644f5f0e5467ccdcbf953d690be7396a2707c41188849145","bodyHash":"023b1f679ce38b90db2d494d9682f0bc01b5dd9d1ddb25f1833105573f0bb5db"}
  *
  * Go source:
  * func tryReadFile(fileName string, readFile func(string) (string, bool), errors []*ast.Diagnostic) (string, []*ast.Diagnostic) {
  * 	// this function adds a compiler diagnostic if the file cannot be read
  * 	text, e := readFile(fileName)
- * 
+ *
  * 	if !e || text == "" {
  * 		// !!! Divergence: the returned error will not give a useful message
  * 		// errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Cannot_read_file_0_Colon_1, *e));
@@ -326,11 +522,20 @@ export function commandLineParser_parseResponseFile(receiver: GoPtr<commandLineP
  * }
  */
 export function tryReadFile(fileName: string, readFile: (arg0: string) => [string, bool], errors: GoSlice<GoPtr<Diagnostic>>): [string, GoSlice<GoPtr<Diagnostic>>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::tryReadFile");
+  // this function adds a compiler diagnostic if the file cannot be read
+  let [text, e] = readFile(fileName);
+
+  if (!e || text === "") {
+    // !!! Divergence: the returned error will not give a useful message
+    // errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Cannot_read_file_0_Colon_1, *e));
+    text = "";
+    errors = [...errors, NewCompilerDiagnostic(Cannot_read_file_0, fileName)];
+  }
+  return [text, errors];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseOptionValue","kind":"method","status":"stub","sigHash":"bfa56544e75f49c873c7d19e48baf5368dcb24d80ae936cfd0970c7932e32319","bodyHash":"78b944d1b55172b2794f51a44c25e33eb636c6472fbbbf6175d5a50cc2997647"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseOptionValue","kind":"method","status":"implemented","sigHash":"bfa56544e75f49c873c7d19e48baf5368dcb24d80ae936cfd0970c7932e32319","bodyHash":"78b944d1b55172b2794f51a44c25e33eb636c6472fbbbf6175d5a50cc2997647"}
  *
  * Go source:
  * func (p *commandLineParser) parseOptionValue(
@@ -440,11 +645,120 @@ export function tryReadFile(fileName: string, readFile: (arg0: string) => [strin
  * }
  */
 export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLineParser>, args: GoSlice<string>, i: int, opt: GoPtr<CommandLineOption>, diag: GoPtr<Message>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseOptionValue");
+  const p = receiver!;
+  if (opt!.IsTSConfigOnly && i <= args.length) {
+    let optValue = "";
+    if (i < args.length) {
+      optValue = args[i]!;
+    }
+    if (optValue === "null") {
+      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, undefined);
+      i++;
+    } else if (opt!.Kind === CommandLineOptionTypeBoolean) {
+      if (optValue === "false") {
+        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, false);
+        i++;
+      } else {
+        if (optValue === "true") {
+          i++;
+        }
+        p.errors = [...p.errors, NewCompilerDiagnostic(Option_0_can_only_be_specified_in_tsconfig_json_file_or_set_to_false_or_null_on_command_line, opt!.Name)];
+      }
+    } else {
+      p.errors = [...p.errors, NewCompilerDiagnostic(Option_0_can_only_be_specified_in_tsconfig_json_file_or_set_to_null_on_command_line, opt!.Name)];
+      if (optValue.length !== 0 && !strings.HasPrefix(optValue, "-")) {
+        i++;
+      }
+    }
+  } else {
+    // Check to see if no argument was provided (e.g. "--locale" is the last command-line argument).
+    if (i >= args.length) {
+      if (opt!.Kind !== CommandLineOptionTypeBoolean) {
+        p.errors = [...p.errors, NewCompilerDiagnostic(diag, opt!.Name, getCompilerOptionValueTypeString(opt))];
+        if (opt!.Kind === CommandLineOptionTypeList) {
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, []);
+        } else if (opt!.Kind === "enum") {
+          p.errors = [...p.errors, createDiagnosticForInvalidEnumType(opt, undefined, undefined)];
+        }
+      } else {
+        OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, true);
+      }
+      return i;
+    }
+    if (args[i]! !== "null") {
+      switch (opt!.Kind) {
+        case CommandLineOptionTypeNumber: {
+          // !!! Make sure this parseInt matches JS parseInt
+          const [num, e] = Atoi(args[i]!);
+          if (e === undefined) {
+            if (num >= opt!.minValue) {
+              OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, num);
+            } else {
+              p.errors = [...p.errors, NewCompilerDiagnostic(Option_0_requires_value_to_be_greater_than_1, opt!.Name, Itoa(opt!.minValue))];
+            }
+          } else {
+            p.errors = [...p.errors, NewCompilerDiagnostic(diag, opt!.Name, "number")];
+          }
+          i++;
+          break;
+        }
+        case CommandLineOptionTypeBoolean: {
+          // boolean flag has optional value true, false, others
+          const optValue = args[i]!;
+
+          // check next argument as boolean flag value
+          if (optValue === "false") {
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, false);
+          } else {
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, true);
+          }
+          // try to consume next argument as value for boolean flag; do not consume argument if it is not "true" or "false"
+          if (optValue === "false" || optValue === "true") {
+            i++;
+          }
+          break;
+        }
+        case CommandLineOptionTypeString: {
+          const [val, err] = validateJsonOptionValue(opt, args[i]!, undefined, undefined);
+          if (err === undefined || err.length === 0) {
+            OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, val);
+          } else {
+            p.errors = [...p.errors, ...err];
+          }
+          i++;
+          break;
+        }
+        case CommandLineOptionTypeList: {
+          const [result, err] = commandLineParser_parseListTypeOption(p, opt, args[i]!);
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, result);
+          p.errors = [...p.errors, ...err];
+          if (result.length > 0 || err.length > 0) {
+            i++;
+          }
+          break;
+        }
+        case CommandLineOptionTypeListOrElement: {
+          // If not a primitive, the possible types are specified in what is effectively a map of options.
+          throw new globalThis.Error("listOrElement not supported here");
+        }
+        default: {
+          const [val, err] = convertJsonOptionOfEnumType(opt, strings.TrimFunc(args[i]!, IsWhiteSpaceLike), undefined, undefined);
+          OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, val);
+          p.errors = [...p.errors, ...err];
+          i++;
+          break;
+        }
+      }
+    } else {
+      OrderedMap_Set(p.options as GoPtr<OrderedMap<string, unknown>>, opt!.Name, undefined);
+      i++;
+    }
+  }
+  return i;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseListTypeOption","kind":"method","status":"stub","sigHash":"7d6a1ab08c5d4cb9afcd730cefa82a959f433b1b9e785a461614b8c1eccee2c4","bodyHash":"f84a8c07e35e1665c19d576b48c76ee9bd278a07d04c52b918cd6262eb1a7fd4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseListTypeOption","kind":"method","status":"implemented","sigHash":"7d6a1ab08c5d4cb9afcd730cefa82a959f433b1b9e785a461614b8c1eccee2c4","bodyHash":"f84a8c07e35e1665c19d576b48c76ee9bd278a07d04c52b918cd6262eb1a7fd4"}
  *
  * Go source:
  * func (p *commandLineParser) parseListTypeOption(opt *CommandLineOption, value string) ([]any, []*ast.Diagnostic) {
@@ -452,11 +766,11 @@ export function commandLineParser_parseOptionValue(receiver: GoPtr<commandLinePa
  * }
  */
 export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLineParser>, opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::method::commandLineParser.parseListTypeOption");
+  return ParseListTypeOption(opt, value);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseListTypeOption","kind":"func","status":"stub","sigHash":"9b147c03da5c20135894bb08966266e3a8217ae4e6d3788f64014ae7dfcc7690","bodyHash":"ea80b29e68862134b43504862791160f20ae5c7794a33e1c4a0554b9a271a2c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseListTypeOption","kind":"func","status":"implemented","sigHash":"9b147c03da5c20135894bb08966266e3a8217ae4e6d3788f64014ae7dfcc7690","bodyHash":"ea80b29e68862134b43504862791160f20ae5c7794a33e1c4a0554b9a271a2c8"}
  *
  * Go source:
  * func ParseListTypeOption(opt *CommandLineOption, value string) ([]any, []*ast.Diagnostic) {
@@ -505,11 +819,58 @@ export function commandLineParser_parseListTypeOption(receiver: GoPtr<commandLin
  * }
  */
 export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string): [GoSlice<unknown>, GoSlice<GoPtr<Diagnostic>>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::ParseListTypeOption");
+  value = strings.TrimSpace(value);
+  let errors: GoSlice<GoPtr<Diagnostic>> = [];
+  if (strings.HasPrefix(value, "-")) {
+    return [[], errors];
+  }
+  if (opt!.Kind === CommandLineOptionTypeListOrElement && !strings.ContainsRune(value, ",".charCodeAt(0))) {
+    const [val, err] = validateJsonOptionValue(opt, value, undefined, undefined);
+    if (err !== undefined && err.length !== 0) {
+      return [[], err];
+    }
+    return [[val as string], errors];
+  }
+  if (value === "") {
+    return [[], errors];
+  }
+  const values = strings.Split(value, ",");
+  const elementsKind = CommandLineOption_Elements(opt)!.Kind;
+  switch (elementsKind) {
+    case CommandLineOptionTypeString: {
+      const elements = MapFiltered(values, (v: string): [unknown, bool] => {
+        const [val, err] = validateJsonOptionValue(CommandLineOption_Elements(opt), v, undefined, undefined);
+        if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
+          return [val, true];
+        }
+        errors = [...errors, ...(err ?? [])];
+        return ["", false];
+      });
+      return [elements, errors];
+    }
+    case CommandLineOptionTypeBoolean:
+    case "object":
+    case CommandLineOptionTypeNumber: {
+      // do nothing: only string and enum/object types currently allowed as list entries
+      // !!! we don't actually have number list options, so I didn't implement number list parsing
+      throw new globalThis.Error("List of " + elementsKind + " is not yet supported.");
+    }
+    default: {
+      const result = MapFiltered(values, (v: string): [unknown, bool] => {
+        const [val, err] = convertJsonOptionOfEnumType(CommandLineOption_Elements(opt), strings.TrimFunc(v, IsWhiteSpaceLike), undefined, undefined);
+        if (typeof val === "string" && (err === undefined || err.length === 0) && val !== "") {
+          return [val, true];
+        }
+        errors = [...errors, ...(err ?? [])];
+        return ["", false];
+      });
+      return [result, errors];
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType","kind":"func","status":"stub","sigHash":"1e73b48b6273364dada906e24fa936e03652113afa5c578c3221f861d4629ba1","bodyHash":"fe1ef0b12861440f67da7f5bfd8c3cd49d42965c18d4aa82f38dfa58f8b050ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType","kind":"func","status":"implemented","sigHash":"1e73b48b6273364dada906e24fa936e03652113afa5c578c3221f861d4629ba1","bodyHash":"fe1ef0b12861440f67da7f5bfd8c3cd49d42965c18d4aa82f38dfa58f8b050ec"}
  *
  * Go source:
  * func convertJsonOptionOfEnumType(
@@ -534,5 +895,17 @@ export function ParseListTypeOption(opt: GoPtr<CommandLineOption>, value: string
  * }
  */
 export function convertJsonOptionOfEnumType(opt: GoPtr<CommandLineOption>, value: string, valueExpression: GoPtr<Expression>, sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineparser.go::func::convertJsonOptionOfEnumType");
+  if (value === "") {
+    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+  }
+  const key = strings.ToLower(value);
+  const typeMap = CommandLineOption_EnumMap(opt);
+  if (typeMap === undefined) {
+    return [undefined, undefined as unknown as GoSlice<GoPtr<Diagnostic>>];
+  }
+  const [val, ok] = OrderedMap_Get(typeMap as GoPtr<OrderedMap<string, unknown>>, key);
+  if (ok) {
+    return validateJsonOptionValue(opt, val, valueExpression, sourceFile);
+  }
+  return [undefined, [createDiagnosticForInvalidEnumType(opt, sourceFile, valueExpression)]];
 }

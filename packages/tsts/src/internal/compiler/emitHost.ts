@@ -95,7 +95,7 @@ import {
 import type { Program } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"stub","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b","bodyHash":"dc0f501b0419d89ed0f61f5c6ed9f3795209fe04cc433d9a41be9035ad8f5431"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b","bodyHash":"dc0f501b0419d89ed0f61f5c6ed9f3795209fe04cc433d9a41be9035ad8f5431"}
  *
  * Go source:
  * EmitHost interface {
@@ -121,7 +121,7 @@ export interface EmitHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"1eaf36d863aae7827b50dade1231962fb35afdcba2c376799613c49744f60ca3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"1eaf36d863aae7827b50dade1231962fb35afdcba2c376799613c49744f60ca3"}
  *
  * Go source:
  * var _ EmitHost = (*emitHost)(nil)
@@ -129,7 +129,7 @@ export interface EmitHost {
 export let __6e5ea12b_0: EmitHost = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"stub","sigHash":"82a8160ff4f5bebeb3e890a32bc68c27a504ee28ed1414475783e6f93c9ed5fb","bodyHash":"ec0aedbd3cd85f7ed02a0f05dd030e3ab5e099c642013dc9e6950c43b9867c27"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"implemented","sigHash":"82a8160ff4f5bebeb3e890a32bc68c27a504ee28ed1414475783e6f93c9ed5fb","bodyHash":"ec0aedbd3cd85f7ed02a0f05dd030e3ab5e099c642013dc9e6950c43b9867c27"}
  *
  * Go source:
  * emitHost struct {

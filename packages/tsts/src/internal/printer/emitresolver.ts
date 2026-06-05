@@ -12,7 +12,7 @@ import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.j
 import type { EmitContext } from "./emitcontext.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::SymbolAccessibility","kind":"type","status":"stub","sigHash":"91a84bd8a4b96a252e1c380495b26ea39e6837aa271d4628a091a7e7cf54aa7f","bodyHash":"2cbfbbca836bc49cf958e93d05edbdf2c684cbb8f7b6cf3a19a601f14c666ca3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::SymbolAccessibility","kind":"type","status":"implemented","sigHash":"91a84bd8a4b96a252e1c380495b26ea39e6837aa271d4628a091a7e7cf54aa7f","bodyHash":"2cbfbbca836bc49cf958e93d05edbdf2c684cbb8f7b6cf3a19a601f14c666ca3"}
  *
  * Go source:
  * SymbolAccessibility int32
@@ -20,7 +20,7 @@ import type { EmitContext } from "./emitcontext.js";
 export type SymbolAccessibility = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::constGroup::SymbolAccessibilityAccessible+SymbolAccessibilityNotAccessible+SymbolAccessibilityCannotBeNamed+SymbolAccessibilityNotResolved","kind":"constGroup","status":"stub","sigHash":"8c6be8bbcbbda4c9658c6b57526f69b309e1d9f0af2e81e6ddc0b59bfe9606a0","bodyHash":"13015621c74ffbdf501551eff909a820fd5cf32f58d98322b21af728040e96ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::constGroup::SymbolAccessibilityAccessible+SymbolAccessibilityNotAccessible+SymbolAccessibilityCannotBeNamed+SymbolAccessibilityNotResolved","kind":"constGroup","status":"implemented","sigHash":"8c6be8bbcbbda4c9658c6b57526f69b309e1d9f0af2e81e6ddc0b59bfe9606a0","bodyHash":"13015621c74ffbdf501551eff909a820fd5cf32f58d98322b21af728040e96ce"}
  *
  * Go source:
  * const (
@@ -30,13 +30,13 @@ export type SymbolAccessibility = int;
  * 	SymbolAccessibilityNotResolved
  * )
  */
-export const SymbolAccessibilityAccessible: SymbolAccessibility = undefined as never;
-export const SymbolAccessibilityNotAccessible: SymbolAccessibility = undefined as never;
-export const SymbolAccessibilityCannotBeNamed: SymbolAccessibility = undefined as never;
-export const SymbolAccessibilityNotResolved: SymbolAccessibility = undefined as never;
+export const SymbolAccessibilityAccessible: SymbolAccessibility = 0 as SymbolAccessibility;
+export const SymbolAccessibilityNotAccessible: SymbolAccessibility = 1 as SymbolAccessibility;
+export const SymbolAccessibilityCannotBeNamed: SymbolAccessibility = 2 as SymbolAccessibility;
+export const SymbolAccessibilityNotResolved: SymbolAccessibility = 3 as SymbolAccessibility;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::SymbolAccessibilityResult","kind":"type","status":"stub","sigHash":"dd0f0d4ad4190c466ffc061fd53f535a26287635d855f608a98e37be42542a4b","bodyHash":"16cb11f535132f3e54c25584bff5edee02b6d96692b5e7831e9783cffe50202c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::SymbolAccessibilityResult","kind":"type","status":"implemented","sigHash":"dd0f0d4ad4190c466ffc061fd53f535a26287635d855f608a98e37be42542a4b","bodyHash":"16cb11f535132f3e54c25584bff5edee02b6d96692b5e7831e9783cffe50202c"}
  *
  * Go source:
  * SymbolAccessibilityResult struct {
@@ -56,7 +56,7 @@ export interface SymbolAccessibilityResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::TypeReferenceSerializationKind","kind":"type","status":"stub","sigHash":"b81fa2fb2d0cfd0cf636c0046eaaed0f9fe00905261f8cd9a8fa8f23cade22f5","bodyHash":"f3a0f93e0a5119b3210c60b4147de2a384c4dc7a986352e89cc14742c8fc4c20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::TypeReferenceSerializationKind","kind":"type","status":"implemented","sigHash":"b81fa2fb2d0cfd0cf636c0046eaaed0f9fe00905261f8cd9a8fa8f23cade22f5","bodyHash":"f3a0f93e0a5119b3210c60b4147de2a384c4dc7a986352e89cc14742c8fc4c20"}
  *
  * Go source:
  * TypeReferenceSerializationKind int32
@@ -64,7 +64,7 @@ export interface SymbolAccessibilityResult {
 export type TypeReferenceSerializationKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::constGroup::TypeReferenceSerializationKindUnknown+TypeReferenceSerializationKindTypeWithConstructSignatureAndValue+TypeReferenceSerializationKindVoidNullableOrNeverType+TypeReferenceSerializationKindNumberLikeType+TypeReferenceSerializationKindBigIntLikeType+TypeReferenceSerializationKindStringLikeType+TypeReferenceSerializationKindBooleanType+TypeReferenceSerializationKindArrayLikeType+TypeReferenceSerializationKindESSymbolType+TypeReferenceSerializationKindPromise+TypeReferenceSerializationKindTypeWithCallSignature+TypeReferenceSerializationKindObjectType","kind":"constGroup","status":"stub","sigHash":"442cdf6d43448bbf5c2ed98442abcfa6d81a7b049fe634fc623d0718ecce6a6d","bodyHash":"71dec1f8d1af06e81a5259d0182bdb623983d4167ba2affe8e823e01a5572487"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::constGroup::TypeReferenceSerializationKindUnknown+TypeReferenceSerializationKindTypeWithConstructSignatureAndValue+TypeReferenceSerializationKindVoidNullableOrNeverType+TypeReferenceSerializationKindNumberLikeType+TypeReferenceSerializationKindBigIntLikeType+TypeReferenceSerializationKindStringLikeType+TypeReferenceSerializationKindBooleanType+TypeReferenceSerializationKindArrayLikeType+TypeReferenceSerializationKindESSymbolType+TypeReferenceSerializationKindPromise+TypeReferenceSerializationKindTypeWithCallSignature+TypeReferenceSerializationKindObjectType","kind":"constGroup","status":"implemented","sigHash":"442cdf6d43448bbf5c2ed98442abcfa6d81a7b049fe634fc623d0718ecce6a6d","bodyHash":"71dec1f8d1af06e81a5259d0182bdb623983d4167ba2affe8e823e01a5572487"}
  *
  * Go source:
  * const (
@@ -109,21 +109,21 @@ export type TypeReferenceSerializationKind = int;
  * 	TypeReferenceSerializationKindObjectType
  * )
  */
-export const TypeReferenceSerializationKindUnknown: int = undefined as never;
-export const TypeReferenceSerializationKindTypeWithConstructSignatureAndValue: int = undefined as never;
-export const TypeReferenceSerializationKindVoidNullableOrNeverType: int = undefined as never;
-export const TypeReferenceSerializationKindNumberLikeType: int = undefined as never;
-export const TypeReferenceSerializationKindBigIntLikeType: int = undefined as never;
-export const TypeReferenceSerializationKindStringLikeType: int = undefined as never;
-export const TypeReferenceSerializationKindBooleanType: int = undefined as never;
-export const TypeReferenceSerializationKindArrayLikeType: int = undefined as never;
-export const TypeReferenceSerializationKindESSymbolType: int = undefined as never;
-export const TypeReferenceSerializationKindPromise: int = undefined as never;
-export const TypeReferenceSerializationKindTypeWithCallSignature: int = undefined as never;
-export const TypeReferenceSerializationKindObjectType: int = undefined as never;
+export const TypeReferenceSerializationKindUnknown: int = 0 as int;
+export const TypeReferenceSerializationKindTypeWithConstructSignatureAndValue: int = 1 as int;
+export const TypeReferenceSerializationKindVoidNullableOrNeverType: int = 2 as int;
+export const TypeReferenceSerializationKindNumberLikeType: int = 3 as int;
+export const TypeReferenceSerializationKindBigIntLikeType: int = 4 as int;
+export const TypeReferenceSerializationKindStringLikeType: int = 5 as int;
+export const TypeReferenceSerializationKindBooleanType: int = 6 as int;
+export const TypeReferenceSerializationKindArrayLikeType: int = 7 as int;
+export const TypeReferenceSerializationKindESSymbolType: int = 8 as int;
+export const TypeReferenceSerializationKindPromise: int = 9 as int;
+export const TypeReferenceSerializationKindTypeWithCallSignature: int = 10 as int;
+export const TypeReferenceSerializationKindObjectType: int = 11 as int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::EmitResolver","kind":"type","status":"stub","sigHash":"4af1fb9a8ce053280f08714c5d92ab6205e0e2fd3c425435043c4d61662f7e5d","bodyHash":"823512c025c22bea548afdf719c6a2dc9a59c1ecc874bef5c15cf0ac8918863b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"4af1fb9a8ce053280f08714c5d92ab6205e0e2fd3c425435043c4d61662f7e5d","bodyHash":"823512c025c22bea548afdf719c6a2dc9a59c1ecc874bef5c15cf0ac8918863b"}
  *
  * Go source:
  * EmitResolver interface {

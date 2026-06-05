@@ -1,8 +1,10 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
-import { Some } from "../../core/core.js";
+import { Every, Some } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
-import { NodeDefault_AsNode } from "../../ast/spine.js";
+import { Node_Name, Node_SubtreeFacts, NodeDefault_AsNode } from "../../ast/spine.js";
+import { AsFunctionDeclaration } from "../../ast/generated/casts.js";
+import { Node_Elements, Node_Symbol, Node_Expression, GetClassExtendsHeritageElement } from "../../ast/ast.js";
 import type { FunctionDeclaration, TypeParameterDeclaration } from "../../ast/generated/data.js";
 import type { StatementList } from "../../ast/generated/unions.js";
 import {
@@ -37,6 +39,7 @@ import {
   IsBinaryExpression,
   IsBindingElement,
   IsCallSignatureDeclaration,
+  IsClassDeclaration,
   IsConstructSignatureDeclaration,
   IsConstructorDeclaration,
   IsElementAccessExpression,
@@ -47,25 +50,37 @@ import {
   IsGetAccessorDeclaration,
   IsImportEqualsDeclaration,
   IsIndexSignatureDeclaration,
+  IsInterfaceDeclaration,
   IsJSTypeAliasDeclaration,
+  IsMappedTypeNode,
   IsMethodDeclaration,
   IsMethodSignatureDeclaration,
+  IsModuleDeclaration,
+  IsOmittedExpression,
   IsParameterDeclaration,
   IsPropertyAccessExpression,
   IsPropertyDeclaration,
   IsPropertySignatureDeclaration,
   IsSetAccessorDeclaration,
+  IsSourceFile,
   IsTypeAliasDeclaration,
   IsTypeParameterDeclaration,
   IsVariableDeclaration,
 } from "../../ast/generated/predicates.js";
+import {
+  IsAmbientModule,
+  IsAnyImportOrReExport,
+  IsBindingPattern,
+  IsFunctionLike,
+  HasSyntacticModifier,
+} from "../../ast/utilities.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
 import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { DeclarationEmitHost } from "./transform.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"stub","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933","bodyHash":"0193b40fc4d14b1b5da8852c1dff25eed2eab9a176c8f40f532ff5e047a74227"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker","kind":"func","status":"implemented","sigHash":"7d7f40e3a8c63a70c2706f7e671f76debd787e6ecd343c7b0a1a101016f32933","bodyHash":"0193b40fc4d14b1b5da8852c1dff25eed2eab9a176c8f40f532ff5e047a74227"}
  *
  * Go source:
  * func needsScopeMarker(result *ast.Node) bool {
@@ -73,7 +88,7 @@ import type { DeclarationEmitHost } from "./transform.js";
  * }
  */
 export function needsScopeMarker(result: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::needsScopeMarker");
+  return (!IsAnyImportOrReExport(result) && !IsExportAssignment(result) && !HasSyntacticModifier(result, ModifierFlagsExport) && !IsAmbientModule(result)) as bool;
 }
 
 /**
@@ -216,7 +231,7 @@ export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, reso
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getBindingNameVisible","kind":"func","status":"stub","sigHash":"b22483ac11dd007659fc4b438344149334ee5fadc1fc543064026b239271843f","bodyHash":"c30c295ee6b82fc3e86f5366fa2f07a2b464e1d76abaf0eaad45bf1918824342"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getBindingNameVisible","kind":"func","status":"implemented","sigHash":"b22483ac11dd007659fc4b438344149334ee5fadc1fc543064026b239271843f","bodyHash":"c30c295ee6b82fc3e86f5366fa2f07a2b464e1d76abaf0eaad45bf1918824342"}
  *
  * Go source:
  * func getBindingNameVisible(resolver printer.EmitResolver, elem *ast.Node) bool {
@@ -242,11 +257,29 @@ export function isDeclarationAndNotVisible(emitContext: GoPtr<EmitContext>, reso
  * }
  */
 export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getBindingNameVisible");
+  if (IsOmittedExpression(elem)) {
+    return false as bool;
+  }
+  // TODO: parseArrayBindingElement _never_ parses out an OmittedExpression anymore, instead producing a nameless binding element
+  // Audit if OmittedExpression should be removed
+  if (Node_Name(elem) === undefined) {
+    return false as bool;
+  }
+  if (IsBindingPattern(Node_Name(elem))) {
+    // If any child binding pattern element has been marked visible (usually by collect linked aliases), then this is visible
+    for (const el of Node_Elements(Node_Name(elem))!) {
+      if (getBindingNameVisible(resolver, el)) {
+        return true as bool;
+      }
+    }
+    return false as bool;
+  } else {
+    return resolver.IsDeclarationVisible(elem) as bool;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"stub","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac","bodyHash":"cbf6d472c671faa96578fdd44173e96c18f85f228f8266f4ee8a818d2173b4ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration","kind":"func","status":"implemented","sigHash":"18333c60bdfe553107e0c66a5dd5aeaad7786d55145ce470992902561fa715ac","bodyHash":"cbf6d472c671faa96578fdd44173e96c18f85f228f8266f4ee8a818d2173b4ad"}
  *
  * Go source:
  * func isEnclosingDeclaration(node *ast.Node) bool {
@@ -262,7 +295,15 @@ export function getBindingNameVisible(resolver: EmitResolver, elem: GoPtr<Node>)
  * }
  */
 export function isEnclosingDeclaration(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::isEnclosingDeclaration");
+  return (IsSourceFile(node) ||
+    IsTypeAliasDeclaration(node) ||
+    IsJSTypeAliasDeclaration(node) ||
+    IsModuleDeclaration(node) ||
+    IsClassDeclaration(node) ||
+    IsInterfaceDeclaration(node) ||
+    IsFunctionLike(node) ||
+    IsIndexSignatureDeclaration(node) ||
+    IsMappedTypeNode(node)) as bool;
 }
 
 /**
@@ -314,7 +355,7 @@ export function maskModifierFlags(host: DeclarationEmitHost, node: GoPtr<Node>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::unwrapParenthesizedExpression","kind":"func","status":"stub","sigHash":"f1e11a8429623cb78e4afeeeb5dbad0a4b3940ee57b7aa34f7fb4fb1fe0929b4","bodyHash":"28c3378ac3ad425d509b82c64936c631c12b82cd9fb54a987172e89eaf755bc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::unwrapParenthesizedExpression","kind":"func","status":"implemented","sigHash":"f1e11a8429623cb78e4afeeeb5dbad0a4b3940ee57b7aa34f7fb4fb1fe0929b4","bodyHash":"28c3378ac3ad425d509b82c64936c631c12b82cd9fb54a987172e89eaf755bc7"}
  *
  * Go source:
  * func unwrapParenthesizedExpression(o *ast.Node) *ast.Node {
@@ -325,7 +366,10 @@ export function maskModifierFlags(host: DeclarationEmitHost, node: GoPtr<Node>, 
  * }
  */
 export function unwrapParenthesizedExpression(o: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::unwrapParenthesizedExpression");
+  while (o!.Kind === KindParenthesizedExpression) {
+    o = Node_Expression(o);
+  }
+  return o;
 }
 
 /**
@@ -341,7 +385,7 @@ export function isPrivateMethodTypeParameter(host: DeclarationEmitHost, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"stub","sigHash":"9f69d137b57130cdec0a098bc830b16299a5aba56531ccfc7ea955185a87eacd","bodyHash":"c2183f2ce74142e188233f377dfcd3a9f4ca352b3da0a91464894d0488d3d542"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties","kind":"func","status":"implemented","sigHash":"9f69d137b57130cdec0a098bc830b16299a5aba56531ccfc7ea955185a87eacd","bodyHash":"c2183f2ce74142e188233f377dfcd3a9f4ca352b3da0a91464894d0488d3d542"}
  *
  * Go source:
  * func shouldEmitFunctionProperties(input *ast.FunctionDeclaration) bool {
@@ -354,11 +398,16 @@ export function isPrivateMethodTypeParameter(host: DeclarationEmitHost, node: Go
  * }
  */
 export function shouldEmitFunctionProperties(input: GoPtr<FunctionDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::shouldEmitFunctionProperties");
+  if (input!.Body !== undefined) {
+    return true as bool;
+  }
+  return (!Every(Node_Symbol(NodeDefault_AsNode(input))!.Declarations, (decl: GoPtr<Node>) => {
+    return (!IsFunctionDeclaration(decl) || AsFunctionDeclaration(decl)!.Body === undefined) as bool;
+  })) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getEffectiveBaseTypeNode","kind":"func","status":"stub","sigHash":"44b42b4f12b8ede2a340739236e0234e7da73dd869f4702255a687b12e692ed2","bodyHash":"eccae320d8748f6c80c5cbc5bc5f476554a263fe86a7c26623839e736cb47036"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getEffectiveBaseTypeNode","kind":"func","status":"implemented","sigHash":"44b42b4f12b8ede2a340739236e0234e7da73dd869f4702255a687b12e692ed2","bodyHash":"eccae320d8748f6c80c5cbc5bc5f476554a263fe86a7c26623839e736cb47036"}
  *
  * Go source:
  * func getEffectiveBaseTypeNode(node *ast.Node) *ast.Node {
@@ -375,7 +424,16 @@ export function shouldEmitFunctionProperties(input: GoPtr<FunctionDeclaration>):
  * }
  */
 export function getEffectiveBaseTypeNode(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/util.go::func::getEffectiveBaseTypeNode");
+  const baseType = GetClassExtendsHeritageElement(node);
+  // !!! TODO: JSDoc support
+  // if (baseType && isInJSFile(node)) {
+  //     // Prefer an @augments tag because it may have type parameters.
+  //     const tag = getJSDocAugmentsTag(node);
+  //     if (tag) {
+  //         return tag.class;
+  //     }
+  // }
+  return baseType;
 }
 
 /**

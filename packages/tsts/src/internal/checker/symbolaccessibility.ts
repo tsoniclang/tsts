@@ -1,12 +1,44 @@
 import type { bool, int, ulong } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
-import type { SymbolId } from "../ast/ids.js";
+import type { NodeId, SymbolId } from "../ast/ids.js";
+import { GetNodeId, GetSymbolId } from "../ast/utilities.js";
 import type { Symbol, SymbolTable } from "../ast/symbol.js";
+import { InternalSymbolNameExportEquals } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
-import { SymbolFlagsNamespace, SymbolFlagsValue } from "../ast/generated/flags.js";
-import type { SymbolAccessibilityResult } from "../printer/emitresolver.js";
+import { SymbolFlagsNamespace, SymbolFlagsValue, SymbolFlagsAlias, SymbolFlagsType, SymbolFlagsTypeParameter, SymbolFlagsAssignment } from "../ast/generated/flags.js";
+import type { Kind } from "../ast/generated/kinds.js";
+import { GetDeclarationOfKind, IsGlobalSourceFile, IsExternalModule, IsAmbientModule, IsModuleWithStringLiteralName, IsExternalOrCommonJSModule, IsAccessExpression, IsModuleExportsAccessExpression, IsExportsIdentifier, IsInJSFile, IsExternalModuleImportEqualsDeclaration } from "../ast/utilities.js";
+import { IsSourceFile, IsClassExpression, IsModuleBlock, IsVariableDeclaration, IsTypeLiteralNode, IsNamespaceExportDeclaration, IsNamespaceExport } from "../ast/generated/predicates.js";
+import { FindAncestor } from "../ast/utilities.js";
+import { GetSourceFileOfNode } from "../ast/utilities.js";
+import { Node_Locals, Node_Initializer, Node_Type, Node_ModuleSpecifier } from "../ast/ast.js";
+import type { SourceFile } from "../ast/ast.js";
+import { SourceFile_Imports } from "../ast/ast.js";
+import { NodeIsSynthesized } from "../ast/spine.js";
+import type { LinkStore } from "../core/linkstore.js";
+import { LinkStore_Get } from "../core/linkstore.js";
+import { canHaveLocals } from "./utilities.js";
+import { getDeclarationsOfKind } from "./utilities.js";
+import { Some } from "../core/core.js";
 import type { Checker } from "./checker/state.js";
+import { Checker_getMergedSymbol, Checker_getSymbolOfDeclaration, Checker_getExportsOfSymbol, Checker_resolveExternalModuleName, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getParentOfSymbol, Checker_getSymbolIfSameReference } from "./checker/symbols.js";
+import { Checker_getDeclaredTypeOfSymbol, Checker_getTypeOfSymbol } from "./checker/types.js";
+import { Checker_checkExpressionCached } from "./checker/syntax-checking.js";
+import { Checker_sortSymbols, Checker_compareSymbolsWorker } from "./utilities.js";
+import { Checker_GetEmitResolver } from "./checker/support.js";
+import type { EmitResolver } from "./emitresolver.js";
+import { EmitResolver_hasVisibleDeclarations } from "./emitresolver.js";
+import type { SymbolNodeLinks, ContainingSymbolLinks, Type } from "./types.js";
+import { TypeFlagsObject } from "./types.js";
+import { Type_Symbol } from "./types.js";
+import type { SymbolAccessibilityResult, SymbolAccessibility } from "../printer/emitresolver.js";
+import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, SymbolAccessibilityCannotBeNamed } from "../printer/emitresolver.js";
+import { IsBinaryExpression } from "../ast/generated/predicates.js";
+import type { accessibleChainCacheKey } from "./types.js";
+import type { SymbolFormatFlags } from "./printer.js";
+import { SymbolFormatFlagsAllowAnyNodeKind } from "./printer.js";
+import { Checker_symbolToString, Checker_symbolToStringEx } from "./printer.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::method::Checker.IsTypeSymbolAccessible","kind":"method","status":"stub","sigHash":"440a2ce92fa318d7affc71ef085015b5296f863b84860c64ce4cbc198626c4a9","bodyHash":"b1471e7486983ecf11d899c18aa8c14cddd7dae610557101d1f841c5bf959069"}

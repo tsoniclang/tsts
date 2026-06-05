@@ -192,7 +192,7 @@ export function JSONValue_AsString(receiver: JSONValue): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"d74600c87224b4da6556fa3430fcbde298e7369f7760524bd9cdb130acd0ed8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"d74600c87224b4da6556fa3430fcbde298e7369f7760524bd9cdb130acd0ed8a"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*JSONValue)(nil)

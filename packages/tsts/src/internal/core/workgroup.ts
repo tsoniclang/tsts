@@ -64,7 +64,7 @@ export interface parallelWorkGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"feba0cf005bcf5d6e05729801a7e3a0c2dec8c34bc116a37e80ba8b18b51086f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"feba0cf005bcf5d6e05729801a7e3a0c2dec8c34bc116a37e80ba8b18b51086f"}
  *
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
@@ -123,7 +123,7 @@ export interface singleThreadedWorkGroup {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_::#2","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"5da122d1ae9804f860a2993b32f9f119e31b623bfbe89928747ab96e1006479e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"5da122d1ae9804f860a2993b32f9f119e31b623bfbe89928747ab96e1006479e"}
  *
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)

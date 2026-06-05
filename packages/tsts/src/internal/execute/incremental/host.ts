@@ -77,7 +77,7 @@ export function CreateHost(compilerHost: CompilerHost): Host {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::func::GetMTime","kind":"func","status":"stub","sigHash":"0428c75afb0c7742e7a230362ec7cf730f0d26fffaa1542c35e9c9fc57d9a385","bodyHash":"91cbc9c899d91cc504d1f416bf00ccb77b379b232b978f48e6009ddc0c07e912"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::func::GetMTime","kind":"func","status":"implemented","sigHash":"0428c75afb0c7742e7a230362ec7cf730f0d26fffaa1542c35e9c9fc57d9a385","bodyHash":"91cbc9c899d91cc504d1f416bf00ccb77b379b232b978f48e6009ddc0c07e912"}
  *
  * Go source:
  * func GetMTime(host compiler.CompilerHost, fileName string) time.Time {
@@ -90,5 +90,11 @@ export function CreateHost(compilerHost: CompilerHost): Host {
  * }
  */
 export function GetMTime(host: CompilerHost, fileName: string): Time {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/incremental/host.go::func::GetMTime");
+  type FileInfoWithModTime = { ModTime(): Time };
+  const stat = host.FS().Stat(fileName);
+  let mTime: Time = new Time();
+  if (stat !== undefined) {
+    mTime = (stat as unknown as FileInfoWithModTime).ModTime();
+  }
+  return mTime;
 }

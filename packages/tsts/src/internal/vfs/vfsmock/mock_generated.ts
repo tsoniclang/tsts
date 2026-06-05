@@ -5,7 +5,7 @@ import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"becd17795858d6bc1ce786ea719bd003a78794f0eae151fd48e00e3959292ac1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"becd17795858d6bc1ce786ea719bd003a78794f0eae151fd48e00e3959292ac1"}
  *
  * Go source:
  * var _ vfs.FS = &FSMock{}
@@ -13,7 +13,7 @@ import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 export let __611a48db_0: FS = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::type::FSMock","kind":"type","status":"stub","sigHash":"63137d3b9716b0d6541d9642ae022defa81415558200782dbaf65612ae45fa6b","bodyHash":"237f4b01b75bf87a26cb7cd26c4f96e0d6a5e3cb5190d95e3b50d7452063626d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::type::FSMock","kind":"type","status":"implemented","sigHash":"63137d3b9716b0d6541d9642ae022defa81415558200782dbaf65612ae45fa6b","bodyHash":"237f4b01b75bf87a26cb7cd26c4f96e0d6a5e3cb5190d95e3b50d7452063626d"}
  *
  * Go source:
  * FSMock struct {

@@ -37,8 +37,10 @@ import type { FS as cachedvfs_FS } from "../../vfs/cachedvfs/cachedvfs.js";
 import type { ExtendedConfigCache } from "../tsc/extendedconfigcache.js";
 import type { host } from "./host.js";
 import { Bool } from "../../../go/sync/atomic.js";
+import { Map as SyncGoMap } from "../../../go/sync.js";
 import * as strings from "../../../go/strings.js";
 import { Builder } from "../../../go/strings.js";
+import type { parseCache } from "./parseCache.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"stub","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
@@ -657,7 +659,7 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrClean","kind":"method","status":"stub","sigHash":"7d5f56d191ca2a8f9d05270b4da82798ad439398eca2dc68d650841d8dc293df","bodyHash":"88ac0456847aa9d5045c16d1a9046e9534c7dce6b3f83c5cdec3e43990285fcc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrClean","kind":"method","status":"implemented","sigHash":"7d5f56d191ca2a8f9d05270b4da82798ad439398eca2dc68d650841d8dc293df","bodyHash":"88ac0456847aa9d5045c16d1a9046e9534c7dce6b3f83c5cdec3e43990285fcc"}
  *
  * Go source:
  * func (o *Orchestrator) buildOrClean() tsc.CommandLineResult {
@@ -689,7 +691,38 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
  * }
  */
 export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): CommandLineResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrClean");
+  if (!Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Clean) && Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Verbose)) {
+    Orchestrator_createBuilderStatusReporter(receiver, undefined)(NewCompilerDiagnostic(
+      diagnostics.Projects_in_this_build_Colon_0,
+      strings.Join(core_Map(Orchestrator_Order(receiver), (p: string): string => "\r\n    * " + Orchestrator_relativeFileName(receiver, p)), ""),
+    ));
+  }
+  const buildResult: orchestratorResult = {
+    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined },
+    errors: [],
+    statistics: {
+      Projects: 0,
+      ProjectsBuilt: 0,
+      TimestampUpdates: 0,
+    } as import("../tsc/statistics.js").Statistics,
+    filesToDelete: [],
+  };
+  if (receiver!.errors.length === 0) {
+    buildResult.statistics.Projects = Orchestrator_Order(receiver).length;
+    Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
+      Orchestrator_buildOrCleanProject(receiver, task, path, buildResult);
+    });
+  } else {
+    // Circularity errors prevent any project from being built
+    buildResult.result.Status = ExitStatusProjectReferenceCycle_OutputsSkipped;
+    const reportDiagnostic = Orchestrator_createDiagnosticReporter(receiver, undefined);
+    for (const err of receiver!.errors) {
+      reportDiagnostic(err);
+    }
+    buildResult.errors = receiver!.errors;
+  }
+  orchestratorResult_report(buildResult, receiver);
+  return buildResult.result;
 }
 
 /**
@@ -746,7 +779,7 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrCleanProject","kind":"method","status":"stub","sigHash":"1fe90a62f3e8d0f67ade2d3b056d1511c739e6bce2ef44d2f38b28503225a083","bodyHash":"9c8b3bb4a7a120085a1feb0288f06bd91c55c47c1aff26cd1f56e21b46963b7f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrCleanProject","kind":"method","status":"implemented","sigHash":"1fe90a62f3e8d0f67ade2d3b056d1511c739e6bce2ef44d2f38b28503225a083","bodyHash":"9c8b3bb4a7a120085a1feb0288f06bd91c55c47c1aff26cd1f56e21b46963b7f"}
  *
  * Go source:
  * func (o *Orchestrator) buildOrCleanProject(task *BuildTask, path tspath.Path, buildResult *orchestratorResult) {
@@ -762,7 +795,24 @@ export function Orchestrator_rangeTask(receiver: GoPtr<Orchestrator>, f: (path: 
  * }
  */
 export function Orchestrator_buildOrCleanProject(receiver: GoPtr<Orchestrator>, task: GoPtr<BuildTask>, path: Path, buildResult: GoPtr<orchestratorResult>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.buildOrCleanProject");
+  task!.result = {
+    builder: new Builder(),
+    reportStatus: undefined as unknown as import("../tsc/diagnostics.js").DiagnosticReporter,
+    diagnosticReporter: undefined as unknown as import("../tsc/diagnostics.js").DiagnosticReporter,
+    exitStatus: 0 as import("../tsc/compile.js").ExitStatus,
+    statistics: undefined,
+    program: undefined,
+    buildKind: 0 as import("./buildtask.js").buildKind,
+    filesToDelete: [],
+  };
+  task!.result.reportStatus = Orchestrator_createBuilderStatusReporter(receiver, task);
+  task!.result.diagnosticReporter = Orchestrator_createDiagnosticReporter(receiver, task);
+  if (!Tristate_IsTrue(receiver!.opts.Command!.BuildOptions!.Clean)) {
+    BuildTask_buildProject(task, receiver, path);
+  } else {
+    BuildTask_cleanProject(task, receiver, path);
+  }
+  BuildTask_report(task, receiver, path, buildResult);
 }
 
 /**
@@ -808,7 +858,7 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"stub","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
  *
  * Go source:
  * func NewOrchestrator(opts Options) *Orchestrator {
@@ -839,6 +889,49 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 	return orchestrator
  * }
  */
+function newSyncMap(): SyncMap {
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap;
+}
+
+function newParseCache(): parseCache {
+  return { entries: newSyncMap() };
+}
+
 export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator");
+  const orchestrator: Orchestrator = {
+    opts,
+    comparePathsOptions: {
+      CurrentDirectory: opts.Sys.GetCurrentDirectory(),
+      UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
+    },
+    host: undefined,
+    tasks: newSyncMap() as GoPtr<SyncMap>,
+    order: [],
+    errors: [],
+    errorSummaryReporter: undefined as unknown as DiagnosticsReporter,
+    watchStatusReporter: undefined as unknown as DiagnosticReporter,
+  };
+  const extendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const innerHost: host = {
+    orchestrator,
+    host: NewCachedFSCompilerHost(
+      orchestrator.opts.Sys.GetCurrentDirectory(),
+      orchestrator.opts.Sys.FS(),
+      orchestrator.opts.Sys.DefaultLibraryPath(),
+      undefined as never,
+      undefined as never,
+    ),
+    extendedConfigCache,
+    sourceFiles: newParseCache() as unknown as host["sourceFiles"],
+    configTimes: newSyncMap(),
+    resolvedReferences: newParseCache() as unknown as host["resolvedReferences"],
+    mTimes: newSyncMap(),
+  };
+  orchestrator.host = innerHost;
+  if (Tristate_IsTrue(opts.Command!.CompilerOptions!.Watch)) {
+    orchestrator.watchStatusReporter = CreateWatchStatusReporter(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions, opts.Testing);
+  } else {
+    orchestrator.errorSummaryReporter = CreateReportErrorSummary(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions);
+  }
+  return orchestrator;
 }

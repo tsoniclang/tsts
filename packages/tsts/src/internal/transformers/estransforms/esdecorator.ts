@@ -1,12 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateForStatement, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration } from "../../ast/ast.js";
+import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateForStatement, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import type { Block, ClassDeclaration, ClassExpression, ConstructorDeclaration, ForStatement, ParameterDeclaration, PropertyDeclaration, TryStatement, BinaryExpression, SpreadElement, SpreadAssignment, PropertyAssignment, ShorthandPropertyAssignment, ArrayLiteralExpression, ObjectLiteralExpression, ParenthesizedExpression, ComputedPropertyName, TaggedTemplateExpression } from "../../ast/generated/data.js";
-import { AsBlock, AsCallExpression, AsClassDeclaration, AsClassExpression, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsForStatement, AsParameterDeclaration, AsPostfixUnaryExpression, AsPrefixUnaryExpression, AsPropertyAccessExpression, AsPropertyDeclaration, AsBinaryExpression, AsSpreadElement, AsSpreadAssignment, AsShorthandPropertyAssignment, AsPropertyAssignment, AsArrayLiteralExpression, AsObjectLiteralExpression, AsParenthesizedExpression, AsDecorator, AsMethodDeclaration, AsComputedPropertyName, AsTaggedTemplateExpression, AsTryStatement } from "../../ast/generated/casts.js";
+import { AsBlock, AsCallExpression, AsClassDeclaration, AsClassExpression, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsForStatement, AsParameterDeclaration, AsPostfixUnaryExpression, AsPrefixUnaryExpression, AsPropertyAccessExpression, AsPropertyDeclaration, AsBinaryExpression, AsSpreadElement, AsSpreadAssignment, AsShorthandPropertyAssignment, AsPropertyAssignment, AsArrayLiteralExpression, AsObjectLiteralExpression, AsParenthesizedExpression, AsDecorator, AsMethodDeclaration, AsComputedPropertyName, AsTaggedTemplateExpression, AsTryStatement, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsPartiallyEmittedExpression } from "../../ast/generated/casts.js";
 import { AsSourceFile } from "../../ast/ast.js";
 import type { Expression, IdentifierNode, MemberName, Statement, TokenNode } from "../../ast/generated/unions.js";
 import type { ClassLikeDeclaration } from "../../ast/generated/unions.js";
@@ -2806,7 +2806,7 @@ export function esDecoratorTransformer_appendDecorationStatement(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitMethodDeclaration","kind":"method","status":"stub","sigHash":"937056e65299d7f86fb429a653ec0cef03db97f5119329f5e99d9be3ba328e36","bodyHash":"a7b56fab80e4c84608f720a8ae9953c0aa1294fb2adc5c493ac75611c4211f82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"937056e65299d7f86fb429a653ec0cef03db97f5119329f5e99d9be3ba328e36","bodyHash":"a7b56fab80e4c84608f720a8ae9953c0aa1294fb2adc5c493ac75611c4211f82"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitMethodDeclaration(node *ast.Node) *ast.Node {
@@ -2827,11 +2827,28 @@ export function esDecoratorTransformer_appendDecorationStatement(receiver: GoPtr
  * }
  */
 export function esDecoratorTransformer_visitMethodDeclaration(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitMethodDeclaration");
+  const tx = receiver!;
+  const f = Transformer_Factory(tx.__tsgoEmbedded0!);
+  const factory = f!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  esDecoratorTransformer_enterClassElement(tx, node);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createMethodDescriptorObject);
+  if (result.descriptorName !== undefined) {
+    esDecoratorTransformer_exitClassElement(tx);
+    return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createMethodDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);
+  }
+  const parameters = NodeVisitor_VisitNodes(visitor, Node_ParameterList(node));
+  const body = NodeVisitor_VisitNode(visitor, Node_Body(node));
+  esDecoratorTransformer_exitClassElement(tx);
+  const method = AsMethodDeclaration(node);
+  return esDecoratorTransformer_finishClassElement(tx,
+    NodeFactory_UpdateMethodDeclaration(factory, method, result.modifiers, method!.AsteriskToken, result.name, undefined, undefined, parameters as never, undefined, undefined, body as never),
+    node,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitGetAccessorDeclaration","kind":"method","status":"stub","sigHash":"b5a5eb568ea97e1bfbc513b6260d0c4639b2a2194f83d17bdf4a180c84f37bf7","bodyHash":"e290e8f79f373efcff71d0a6767e0257ecd3e79ef6256e7dfe7dab5f8cec4a3e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitGetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"b5a5eb568ea97e1bfbc513b6260d0c4639b2a2194f83d17bdf4a180c84f37bf7","bodyHash":"e290e8f79f373efcff71d0a6767e0257ecd3e79ef6256e7dfe7dab5f8cec4a3e"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitGetAccessorDeclaration(node *ast.Node) *ast.Node {
@@ -2852,11 +2869,27 @@ export function esDecoratorTransformer_visitMethodDeclaration(receiver: GoPtr<es
  * }
  */
 export function esDecoratorTransformer_visitGetAccessorDeclaration(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitGetAccessorDeclaration");
+  const tx = receiver!;
+  const factory = Transformer_Factory(tx.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  esDecoratorTransformer_enterClassElement(tx, node);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createGetAccessorDescriptorObject);
+  if (result.descriptorName !== undefined) {
+    esDecoratorTransformer_exitClassElement(tx);
+    return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createGetAccessorDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);
+  }
+  const parameters = NodeVisitor_VisitNodes(visitor, Node_ParameterList(node));
+  const body = NodeVisitor_VisitNode(visitor, Node_Body(node));
+  esDecoratorTransformer_exitClassElement(tx);
+  const accessor = AsGetAccessorDeclaration(node);
+  return esDecoratorTransformer_finishClassElement(tx,
+    NodeFactory_UpdateGetAccessorDeclaration(factory, accessor, result.modifiers, result.name, undefined, parameters as never, undefined, undefined, body as never),
+    node,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitSetAccessorDeclaration","kind":"method","status":"stub","sigHash":"fdcb03180f7f96c51e9da455a966fdc17541355aef1cc997a4b86112e94d0eca","bodyHash":"68aa943b701ec3abb0bfc059902b15aeb25f49664cffc296c5179e807d959556"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitSetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"fdcb03180f7f96c51e9da455a966fdc17541355aef1cc997a4b86112e94d0eca","bodyHash":"68aa943b701ec3abb0bfc059902b15aeb25f49664cffc296c5179e807d959556"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitSetAccessorDeclaration(node *ast.Node) *ast.Node {
@@ -2877,7 +2910,23 @@ export function esDecoratorTransformer_visitGetAccessorDeclaration(receiver: GoP
  * }
  */
 export function esDecoratorTransformer_visitSetAccessorDeclaration(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitSetAccessorDeclaration");
+  const tx = receiver!;
+  const factory = Transformer_Factory(tx.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  esDecoratorTransformer_enterClassElement(tx, node);
+  const result = esDecoratorTransformer_partialTransformClassElement(tx, node, tx.classInfoStack, esDecoratorTransformer_createSetAccessorDescriptorObject);
+  if (result.descriptorName !== undefined) {
+    esDecoratorTransformer_exitClassElement(tx);
+    return esDecoratorTransformer_finishClassElement(tx, esDecoratorTransformer_createSetAccessorDescriptorForwarder(tx, result.modifiers, result.name, result.descriptorName), node);
+  }
+  const parameters = NodeVisitor_VisitNodes(visitor, Node_ParameterList(node));
+  const body = NodeVisitor_VisitNode(visitor, Node_Body(node));
+  esDecoratorTransformer_exitClassElement(tx);
+  const accessor = AsSetAccessorDeclaration(node);
+  return esDecoratorTransformer_finishClassElement(tx,
+    NodeFactory_UpdateSetAccessorDeclaration(factory, accessor, result.modifiers, result.name, undefined, parameters as never, undefined, undefined, body as never),
+    node,
+  );
 }
 
 /**
@@ -3409,7 +3458,7 @@ export function esDecoratorTransformer_visitElementAccessExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitParameterDeclaration","kind":"method","status":"stub","sigHash":"b1fb9485870e40d6c6b6afef130f00d121a5a52c9d5aacfcbe8ef46931dde28b","bodyHash":"4f66e21884222c9178061a89ea2c083cca9794cd3d5a1083a6fe165eade0e118"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitParameterDeclaration","kind":"method","status":"implemented","sigHash":"b1fb9485870e40d6c6b6afef130f00d121a5a52c9d5aacfcbe8ef46931dde28b","bodyHash":"4f66e21884222c9178061a89ea2c083cca9794cd3d5a1083a6fe165eade0e118"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitParameterDeclaration(node *ast.ParameterDeclaration) *ast.Node {
@@ -3441,7 +3490,34 @@ export function esDecoratorTransformer_visitElementAccessExpression(receiver: Go
  * }
  */
 export function esDecoratorTransformer_visitParameterDeclaration(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<ParameterDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitParameterDeclaration");
+  const tx = receiver!;
+  const ec = Transformer_EmitContext(tx.__tsgoEmbedded0!);
+  const f = Transformer_Factory(tx.__tsgoEmbedded0!);
+  const astFactory = f!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  let paramNode: GoPtr<Node> = node as GoPtr<Node>;
+  if (isNamedEvaluationAnd(ec, paramNode, isAnonymousClassNeedingAssignedName)) {
+    paramNode = transformNamedEvaluation(ec, paramNode, canIgnoreEmptyStringLiteralInAssignedName(node!.Initializer as GoPtr<Node>), "");
+    node = AsParameterDeclaration(paramNode);
+  }
+  const updated = NodeFactory_UpdateParameterDeclaration(
+    astFactory,
+    node,
+    undefined,
+    node!.DotDotDotToken,
+    NodeVisitor_VisitNode(visitor, node!.name as GoPtr<Node>) as never,
+    undefined,
+    undefined,
+    NodeVisitor_VisitNode(visitor, node!.Initializer as GoPtr<Node>) as never,
+  );
+  if (updated !== paramNode) {
+    EmitContext_SetCommentRange(ec, updated, paramNode!.Loc);
+    const newLoc = MoveRangePastModifiers(paramNode);
+    updated!.Loc = newLoc;
+    EmitContext_SetSourceMapRange(ec, updated, newLoc);
+    EmitContext_SetEmitFlags(ec, Node_Name(updated) as GoPtr<Node>, EFNoTrailingSourceMap);
+  }
+  return updated;
 }
 
 /**
@@ -4364,7 +4440,7 @@ export function esDecoratorTransformer_visitParenthesizedExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitPartiallyEmittedExpression","kind":"method","status":"stub","sigHash":"9ac3fe754bbdf8ba2b6d42adcf53e85c16389b637bd0a389ff39ede6644ded8e","bodyHash":"d8a06cb232b9072b327b6f23662fe4e7788f14252cafa92dd40923e44206ad84"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitPartiallyEmittedExpression","kind":"method","status":"implemented","sigHash":"9ac3fe754bbdf8ba2b6d42adcf53e85c16389b637bd0a389ff39ede6644ded8e","bodyHash":"d8a06cb232b9072b327b6f23662fe4e7788f14252cafa92dd40923e44206ad84"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) visitPartiallyEmittedExpression(node *ast.Node, discarded bool) *ast.Node {
@@ -4380,7 +4456,15 @@ export function esDecoratorTransformer_visitParenthesizedExpression(receiver: Go
  * }
  */
 export function esDecoratorTransformer_visitPartiallyEmittedExpression(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<Node>, discarded: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.visitPartiallyEmittedExpression");
+  const tx = receiver!;
+  const f = Transformer_Factory(tx.__tsgoEmbedded0!);
+  const astFactory = f!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  const pe = AsPartiallyEmittedExpression(node)!;
+  const expression = discarded
+    ? NodeVisitor_VisitNode(tx.discardedVisitor as ConcreteNodeVisitor, pe.Expression as GoPtr<Node>)
+    : NodeVisitor_VisitNode(visitor, pe.Expression as GoPtr<Node>);
+  return NodeFactory_UpdatePartiallyEmittedExpression(astFactory, pe, expression as GoPtr<Expression>);
 }
 
 /**

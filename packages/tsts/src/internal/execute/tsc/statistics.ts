@@ -18,7 +18,7 @@ import type { CommandLineTesting, CompileTimes } from "./compile.js";
 import type { EmitInput } from "./emit.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::tableRow","kind":"type","status":"stub","sigHash":"8a3043eda386dc1a36fa9805876121254bfa574c99fffdcb1e3ad0fdd939860b","bodyHash":"ffbea9d1516844522509e299c37f2cba4263255f428e8a56af22027e47e19c39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::tableRow","kind":"type","status":"implemented","sigHash":"8a3043eda386dc1a36fa9805876121254bfa574c99fffdcb1e3ad0fdd939860b","bodyHash":"ffbea9d1516844522509e299c37f2cba4263255f428e8a56af22027e47e19c39"}
  *
  * Go source:
  * tableRow struct {
@@ -32,7 +32,7 @@ export interface tableRow {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::table","kind":"type","status":"stub","sigHash":"39b5170ce0714793f1db7661bd29a89e9b3eb03a66e70093ca35ace8e0cb1710","bodyHash":"37f49ebd52921993995cd8a2d67055d186ae9ecb195763c49da5604f59569d81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::table","kind":"type","status":"implemented","sigHash":"39b5170ce0714793f1db7661bd29a89e9b3eb03a66e70093ca35ace8e0cb1710","bodyHash":"37f49ebd52921993995cd8a2d67055d186ae9ecb195763c49da5604f59569d81"}
  *
  * Go source:
  * table struct {
@@ -125,7 +125,7 @@ export function identifierCount(p: GoPtr<Program>): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::Statistics","kind":"type","status":"stub","sigHash":"d0df0f19c8630255df4d184704be6a41ad893ce2a4b2143188780d8e426a7ffc","bodyHash":"8b2d34a76ebfbf7f05e760d8e4cdd9e3326d2bb1da5a5e7565315b13e498bcd0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/statistics.go::type::Statistics","kind":"type","status":"implemented","sigHash":"d0df0f19c8630255df4d184704be6a41ad893ce2a4b2143188780d8e426a7ffc","bodyHash":"8b2d34a76ebfbf7f05e760d8e4cdd9e3326d2bb1da5a5e7565315b13e498bcd0"}
  *
  * Go source:
  * Statistics struct {

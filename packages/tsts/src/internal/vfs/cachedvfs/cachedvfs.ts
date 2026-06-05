@@ -8,7 +8,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"stub","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"3bdbd7415c67215a30a19c2aea69fc8f9ae4c754c629b781144ac763012aa85d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"3bdbd7415c67215a30a19c2aea69fc8f9ae4c754c629b781144ac763012aa85d"}
  *
  * Go source:
  * FS struct {

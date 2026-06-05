@@ -7,7 +7,7 @@ import type { SourceFile } from "../ast/ast.js";
 import type { SourceFileParseOptions } from "../ast/parseoptions.js";
 import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { SyncMap } from "../collections/syncmap.js";
-import { SyncMap_Delete, SyncMap_Range } from "../collections/syncmap.js";
+import { SyncMap_Delete, SyncMap_Load, SyncMap_Range, SyncMap_Store } from "../collections/syncmap.js";
 import type { SyncSet } from "../collections/syncset.js";
 import { SyncSet_Add, SyncSet_ToSlice } from "../collections/syncset.js";
 import type { CompilerHost } from "../compiler/host.js";
@@ -28,7 +28,7 @@ import type { Path } from "../tspath/path.js";
 import { From as cachedvfsFrom, FS_DisableAndClearCache } from "../vfs/cachedvfs/cachedvfs.js";
 import type { FS as VfsFS } from "../vfs/vfs.js";
 import type { FS as TrackingFS } from "../vfs/trackingvfs/trackingvfs.js";
-import type { FileWatcher } from "../vfs/vfswatch/vfswatch.js";
+import type { FileWatcher, WatchEntry } from "../vfs/vfswatch/vfswatch.js";
 import {
   NewFileWatcher,
   FileWatcher_Run,
@@ -36,6 +36,7 @@ import {
   FileWatcher_SetPollInterval,
   FileWatcher_WatchStateUninitialized,
   FileWatcher_HasChangesFromWatchState,
+  FileWatcher_WatchStateEntry,
 } from "../vfs/vfswatch/vfswatch.js";
 import * as diagnosticMessages from "../diagnostics/generated/messages.js";
 import { GetTraceWithWriterFromSys } from "./tsc/emit.js";
@@ -53,6 +54,7 @@ import type { CommandLineTesting, CompileAndEmitResult, CompileTimes, System, Wa
 import { CreateWatchStatusReporter } from "./tsc/diagnostics.js";
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
 import type { ExtendedConfigCache as ExtendedConfigCache_tsconfigparsing } from "../tsoptions/tsconfigparsing.js";
+import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
 import type { ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
 import { EmitFilesAndReportErrors } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
@@ -86,7 +88,7 @@ export interface watchCompilerHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::method::watchCompilerHost.GetSourceFile","kind":"method","status":"stub","sigHash":"a46cae9b723ebb7938a073f5d67c1af9937c7e4e0f3ff022e90fda7c44dc3cbd","bodyHash":"6dc4e4f5f42f88a677159bd1e38a35cf0e2a718d201b22b3566b5e0a373cfaae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::method::watchCompilerHost.GetSourceFile","kind":"method","status":"implemented","sigHash":"a46cae9b723ebb7938a073f5d67c1af9937c7e4e0f3ff022e90fda7c44dc3cbd","bodyHash":"6dc4e4f5f42f88a677159bd1e38a35cf0e2a718d201b22b3566b5e0a373cfaae"}
  *
  * Go source:
  * func (h *watchCompilerHost) GetSourceFile(opts ast.SourceFileParseOptions) *ast.SourceFile {
@@ -113,7 +115,28 @@ export interface watchCompilerHost {
  * }
  */
 export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHost>, opts: SourceFileParseOptions): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/watcher.go::method::watchCompilerHost.GetSourceFile");
+  type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
+  const info = receiver!.__tsgoEmbedded0!.FS().Stat(opts.FileName);
+
+  const [cached, ok] = SyncMap_Load(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+  if (ok) {
+    if (info !== undefined && (info as unknown as FileInfoWithModTime).ModTime().Equal(cached!.modTime)) {
+      return cached!.file;
+    }
+  }
+
+  const file = receiver!.__tsgoEmbedded0!.GetSourceFile(opts);
+  if (file !== undefined) {
+    if (info !== undefined) {
+      SyncMap_Store(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path, {
+        file,
+        modTime: (info as unknown as FileInfoWithModTime).ModTime() as unknown as Time,
+      });
+    }
+  } else {
+    SyncMap_Delete(receiver!.cache as SyncMap<Path, GoPtr<cachedSourceFile>>, opts.Path);
+  }
+  return file;
 }
 
 /**
@@ -177,7 +200,7 @@ function newSyncSet<T>(): SyncSet<T> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher","kind":"func","status":"stub","sigHash":"0e2d5121c1d046397f1a7ddb5f201fd49b57844625e305771faf15d864d02e49","bodyHash":"3d1989a8ae55a6bff236d90d814008c3c4126956c874c07741b4eafdd19efed4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher","kind":"func","status":"implemented","sigHash":"0e2d5121c1d046397f1a7ddb5f201fd49b57844625e305771faf15d864d02e49","bodyHash":"3d1989a8ae55a6bff236d90d814008c3c4126956c874c07741b4eafdd19efed4"}
  *
  * Go source:
  * func createWatcher(
@@ -211,7 +234,35 @@ function newSyncSet<T>(): SyncSet<T> {
  * }
  */
 export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting): GoPtr<Watcher> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/watcher.go::func::createWatcher");
+  const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
+  const w: Watcher = {
+    mu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["mu"],
+    sys,
+    configFileName: "",
+    config: configParseResult,
+    compilerOptionsFromCommandLine,
+    reportDiagnostic,
+    reportErrorSummary,
+    reportWatchStatus: CreateWatchStatusReporter(sys, ParsedCommandLine_Locale(configParseResult), ParsedCommandLine_CompilerOptions(configParseResult), testing),
+    testing,
+    program: undefined,
+    extendedConfigCache: undefined,
+    configModified: false,
+    configHasErrors: false,
+    configFilePaths: [],
+    sourceFileCache: sourceFileCache as unknown as SyncMap,
+    fileWatcher: undefined,
+  };
+  if (configParseResult!.ConfigFile !== undefined && configParseResult!.ConfigFile !== null) {
+    w.configFileName = configParseResult!.ConfigFile!.SourceFile!.FileName();
+  }
+  w.fileWatcher = NewFileWatcher(
+    sys.FS(),
+    WatchOptions_WatchInterval(configParseResult!.ParsedConfig!.WatchOptions),
+    (testing !== undefined && testing !== null) as bool,
+    () => Watcher_DoCycle(w),
+  );
+  return w;
 }
 
 /**
@@ -456,7 +507,7 @@ export function Watcher_compileAndEmit(receiver: GoPtr<Watcher>): CompileAndEmit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::method::Watcher.recheckTsConfig","kind":"method","status":"stub","sigHash":"6fcb7c239a4aa41c93efb434f155a2dfc180916e73693d437db374172661ebf5","bodyHash":"5e7352cb8697108f4b6ef476ce793bb822f429fbf9da15b138b793f1194d7b92"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::method::Watcher.recheckTsConfig","kind":"method","status":"implemented","sigHash":"6fcb7c239a4aa41c93efb434f155a2dfc180916e73693d437db374172661ebf5","bodyHash":"5e7352cb8697108f4b6ef476ce793bb822f429fbf9da15b138b793f1194d7b92"}
  *
  * Go source:
  * func (w *Watcher) recheckTsConfig() bool {
@@ -519,5 +570,69 @@ export function Watcher_compileAndEmit(receiver: GoPtr<Watcher>): CompileAndEmit
  * }
  */
 export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/watcher.go::method::Watcher.recheckTsConfig");
+  if (receiver!.configFileName === "") {
+    return false;
+  }
+
+  type FileInfoWithModTime = { ModTime(): { Equal(t: unknown): bool } };
+
+  if (!receiver!.configHasErrors && receiver!.configFilePaths.length > 0) {
+    let changed = false;
+    for (const path of receiver!.configFilePaths) {
+      const [old, ok] = FileWatcher_WatchStateEntry(receiver!.fileWatcher, path);
+      if (!ok) {
+        changed = true;
+        break;
+      }
+      const s = receiver!.sys.FS().Stat(path);
+      if (!old.Exists) {
+        if (s !== undefined && s !== null) {
+          changed = true;
+          break;
+        }
+      } else {
+        if (s === undefined || s === null || !(s as unknown as FileInfoWithModTime).ModTime().Equal(old.ModTime)) {
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) {
+      return false;
+    }
+  }
+
+  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(
+    receiver!.configFileName,
+    receiver!.compilerOptionsFromCommandLine,
+    undefined as never,
+    receiver!.sys as unknown as Parameters<typeof GetParsedCommandLineOfConfigFile>[3],
+    extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+  );
+  if (errors.length > 0) {
+    for (const e of errors) {
+      receiver!.reportDiagnostic(e);
+    }
+    receiver!.configHasErrors = true;
+    const errorCount = errors.length;
+    if (errorCount === 1) {
+      receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_1_error_Watching_for_file_changes));
+    } else {
+      receiver!.reportWatchStatus(NewCompilerDiagnostic(diagnosticMessages.Found_0_errors_Watching_for_file_changes, errorCount));
+    }
+    return true;
+  }
+  if (receiver!.configHasErrors) {
+    receiver!.configModified = true;
+  }
+  receiver!.configHasErrors = false;
+  receiver!.configFilePaths = [receiver!.configFileName, ...ParsedCommandLine_ExtendedSourceFiles(configParseResult)];
+  // reflect.DeepEqual equivalent: compare ParsedConfig by JSON equality
+  if (JSON.stringify(receiver!.config!.ParsedConfig) !== JSON.stringify(configParseResult!.ParsedConfig)) {
+    receiver!.configModified = true;
+  }
+  receiver!.config = configParseResult;
+  receiver!.extendedConfigCache = extendedConfigCache;
+  return false;
 }

@@ -7,8 +7,10 @@ import type { BinaryExpression } from "../../ast/generated/data.js";
 import type { Declaration } from "../../ast/generated/unions.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
-import { Checker_isTypeAssignableTo, Checker_isTypeComparableTo } from "../relater.js";
+import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo } from "../relater.js";
+import { TernaryFalse } from "../types.js";
 import { Checker_IsEmptyAnonymousObjectType } from "./types.js";
+import { Checker_compareProperties } from "./support.js";
 import {
   Type_Types,
   TypeFlagsAnyOrUnknown,
@@ -80,7 +82,7 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPropertyIdenticalTo","kind":"method","status":"stub","sigHash":"578bd58756cb448b6d4f02d3f72beb3a6bcf54392f9e12fcc782e0481b453676","bodyHash":"eda6ce5e33399402099106e8ab0c3b954a688591baa557fbb0d9fb9bd2f7d83a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPropertyIdenticalTo","kind":"method","status":"implemented","sigHash":"578bd58756cb448b6d4f02d3f72beb3a6bcf54392f9e12fcc782e0481b453676","bodyHash":"eda6ce5e33399402099106e8ab0c3b954a688591baa557fbb0d9fb9bd2f7d83a"}
  *
  * Go source:
  * func (c *Checker) isPropertyIdenticalTo(sourceProp *ast.Symbol, targetProp *ast.Symbol) bool {
@@ -88,7 +90,7 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
  * }
  */
 export function Checker_isPropertyIdenticalTo(receiver: GoPtr<Checker>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPropertyIdenticalTo");
+  return Checker_compareProperties(receiver, sourceProp, targetProp, (s: GoPtr<Type>, t: GoPtr<Type>) => Checker_compareTypesIdentical(receiver, s, t)) !== TernaryFalse;
 }
 
 /**

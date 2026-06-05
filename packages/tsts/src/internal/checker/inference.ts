@@ -4,15 +4,23 @@ import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
 import type { Node } from "../ast/spine.js";
+import { IsInJSFile } from "../ast/utilities.js";
+import { FromString } from "../jsnum/string.js";
 import { KindConstructor, KindMethodDeclaration, KindMethodSignature, KindUnknown } from "../ast/generated/kinds.js";
-import { AsMappedTypeNode } from "../ast/generated/casts.js";
-import type { Symbol } from "../ast/symbol.js";
+import { AsMappedTypeNode, AsTypeParameterDeclaration } from "../ast/generated/casts.js";
+import { IsMethodDeclaration, IsTypeParameterDeclaration } from "../ast/generated/predicates.js";
+import type { Symbol, SymbolTable } from "../ast/symbol.js";
+import { SymbolFlagsOptional, SymbolFlagsProperty } from "../ast/symbolflags.js";
+import { CheckFlagsReadonly, CheckFlagsReverseMapped } from "../ast/checkflags.js";
+import { LinkStore_Get } from "../core/linkstore.js";
 import {
   type Checker,
   type InferenceContext,
   type InferenceFlags,
   type InferenceInfo,
   type InferencePriority,
+  type IntraExpressionInferenceSite,
+  type ReverseMappedTypeKey,
   InferenceFlagsNoDefault,
   InferenceFlagsAnyDefault,
   InferenceFlagsNone,
@@ -32,15 +40,27 @@ import {
   getEndElementCount,
   getMappedTypeModifiers,
   isTupleType,
+  isLiteralType,
   someType,
+  applyStringMapping,
+  getNumberLiteralValue,
+  getBigIntLiteralValue,
+  getBooleanLiteralValue,
+  getStringLiteralValue,
+  InferencePriorityLiteralKeyof,
+  InferencePriorityNoConstraints,
+  InferencePrioritySubstituteSource,
   MappedTypeModifiersIncludeOptional,
+  MappedTypeModifiersIncludeReadonly,
 } from "./checker/state.js";
 import {
   Checker_clearActiveMapperCaches,
   Checker_getBaseConstraintOfType,
   Checker_getConstraintOfType,
   Checker_getConstraintTypeFromMappedType,
+  Checker_getDefaultConstraintOfConditionalType,
   Checker_getSubstitutionIntersection,
+  Checker_isNoInferType,
 } from "./checker/inference.js";
 import {
   Checker_getApplicableIndexInfo,
@@ -48,12 +68,15 @@ import {
   Checker_getConstraintOfTypeParameter,
   Checker_getDefaultFromTypeParameter,
   Checker_getErasedSignature,
+  Checker_getMinTypeArgumentCount,
+  Checker_fillMissingTypeArguments,
   Checker_getReturnTypeOfSignature,
   Checker_getSignaturesOfType,
   Checker_getTypeArguments,
   Checker_getTypeParameterFromMappedType,
   Checker_getTypeReferenceArity,
   Checker_getTypeWithThisArgument,
+  Checker_isApplicableIndexType,
 } from "./checker/signatures.js";
 import {
   Checker_distributeIndexOverObjectType,
@@ -62,12 +85,21 @@ import {
   Checker_getIndexType,
   Checker_getIndexTypeEx,
   Checker_getIndexedAccessType,
+  Checker_getLiteralTypeFromProperty,
   Checker_getNameTypeFromMappedType,
+  Checker_getPropertyOfType,
   Checker_getTypeOfSymbol,
+  Checker_isReadonlySymbol,
+  Checker_newIndexInfo,
+  Checker_newSymbol,
+  Checker_newSymbolEx,
+  Checker_setStructuredTypeMembers,
 } from "./checker/symbols.js";
 import {
   Checker_createArrayType,
   Checker_createArrayTypeEx,
+  Checker_getContextualType,
+  Checker_getContextualTypeForObjectLiteralMethod,
   Checker_createTupleType,
   Checker_createTupleTypeEx,
   Checker_filterType,
@@ -100,13 +132,19 @@ import {
   Checker_isReadonlyArrayType,
   Checker_mapType,
   Checker_maybeTypeOfKind,
+
+  Checker_isNonGenericObjectType,
+  Checker_newAnonymousType,
   Checker_newObjectType,
+  Checker_parseBigIntLiteralType,
+  Checker_removeMissingOrUndefinedType,
   Checker_removeMissingType,
 } from "./checker/types.js";
 import { Checker_newBackreferenceMapper, Checker_newInferenceTypeMapper, mergeTypeMappers, newMergedTypeMapper, newTypeMapper } from "./mapper.js";
 import type { TypeMapper } from "./mapper.js";
 import {
   type ExpandingFlags,
+  Checker_getAliasVariances,
   Checker_getEffectiveRestType,
   Checker_getParameterCount,
   Checker_getRestTypeAtPosition,
@@ -116,7 +154,11 @@ import {
   Checker_getUnmatchedProperty,
   Checker_getVariances,
   Checker_isDeeplyNestedType,
+  Checker_inferTypesFromTemplateLiteralType,
   Checker_isObjectTypeWithInferableIndex,
+  Checker_isTypeAssignableTo,
+  Checker_isTypeIdenticalTo,
+  Checker_isTypeMatchedByTemplateLiteralType,
   Checker_isTypeStrictSubtypeOf,
   Checker_isTypeSubtypeOf,
   Checker_sliceTupleType,
@@ -167,15 +209,27 @@ import {
   Type_Target,
   Type_TargetTupleType,
   Type_Types,
+  type IntrinsicType,
+  type TypeAliasLinks,
   TypeFlagsAny,
+  TypeFlagsBigInt,
+  TypeFlagsBigIntLike,
+  TypeFlagsBigIntLiteral,
+  TypeFlagsBoolean,
+  TypeFlagsBooleanLiteral,
   TypeFlagsConditional,
+  TypeFlagsEnum,
   TypeFlagsIndex,
   TypeFlagsIndexedAccess,
   TypeFlagsInstantiable,
   TypeFlagsIntersection,
   TypeFlagsNever,
   TypeFlagsNone,
+  TypeFlagsNull,
   TypeFlagsNullable,
+  TypeFlagsNumber,
+  TypeFlagsNumberLike,
+  TypeFlagsNumberLiteral,
   TypeFlagsObject,
   TypeFlagsPrimitive,
   TypeFlagsString,
@@ -185,15 +239,20 @@ import {
   TypeFlagsTemplateLiteral,
   TypeFlagsTypeParameter,
   TypeFlagsTypeVariable,
+  TypeFlagsUndefined,
   TypeFlagsUnion,
+  TypeFlagsStringOrNumberLiteralOrUnique,
   TypeFlagsUnionOrIntersection,
+  Type_AsIntrinsicType,
   VarianceFlagsContravariant,
   VarianceFlagsVarianceMask,
+  type ReverseMappedSymbolLinks,
+  type ValueSymbolLinks,
 } from "./types.js";
-import { isObjectLiteralType, isObjectOrArrayLiteralType } from "./utilities.js";
+import { IsTypeAny, isObjectLiteralType, isObjectOrArrayLiteralType, isValidBigIntString, isValidNumberString, pseudoBigIntToString } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"stub","sigHash":"b7240472cd57ef405f9a148ef9ec8af6dfa01c094e529face8ce9016e617e024","bodyHash":"b1e72e4107bd9fcb415e0fecb516f373102ceaf03cfcd48800acace853608ffd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceKey","kind":"type","status":"implemented","sigHash":"b7240472cd57ef405f9a148ef9ec8af6dfa01c094e529face8ce9016e617e024","bodyHash":"b1e72e4107bd9fcb415e0fecb516f373102ceaf03cfcd48800acace853608ffd"}
  *
  * Go source:
  * InferenceKey struct {
@@ -207,7 +266,7 @@ export interface InferenceKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"stub","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974","bodyHash":"3ef6d6ed84b307d9141888f89100d470e9d34ef4d066accda774781214b3ae42"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::type::InferenceState","kind":"type","status":"implemented","sigHash":"0c17beb7f8e5459a0131259e3a6a7159d051e78b01c378567ffc87e9c9348974","bodyHash":"3ef6d6ed84b307d9141888f89100d470e9d34ef4d066accda774781214b3ae42"}
  *
  * Go source:
  * InferenceState struct {
@@ -346,7 +405,7 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypes","kind":"method","status":"stub","sigHash":"4a180277141dbdbc23e2da739671cff9d0f8148ad64f7fcd366e8a2da725d96a","bodyHash":"b7636afd77b37b0236ed354eaa866d12d78f8d7770d30561a24e1720838459c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypes","kind":"method","status":"implemented","sigHash":"4a180277141dbdbc23e2da739671cff9d0f8148ad64f7fcd366e8a2da725d96a","bodyHash":"b7636afd77b37b0236ed354eaa866d12d78f8d7770d30561a24e1720838459c2"}
  *
  * Go source:
  * func (c *Checker) inferFromTypes(n *InferenceState, source *Type, target *Type) {
@@ -563,7 +622,217 @@ export function Checker_inferTypes(receiver: GoPtr<Checker>, inferences: GoSlice
  * }
  */
 export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromTypes");
+  const c = receiver!;
+  const state = n!;
+  if (!c.couldContainTypeVariables(target) || Checker_isNoInferType(c, target)) {
+    return;
+  }
+  if (source === c.wildcardType || source === c.blockedStringType) {
+    // We are inferring from an 'any' type. We want to infer this type for every type parameter
+    // referenced in the target type, so we record it as the propagation type and infer from the
+    // target to itself. Then, as we find candidates we substitute the propagation type.
+    const savePropagationType = state.propagationType;
+    state.propagationType = source;
+    Checker_inferFromTypes(c, state, target, target);
+    state.propagationType = savePropagationType;
+    return;
+  }
+  if (source!.alias !== undefined && target!.alias !== undefined && source!.alias!["symbol"] === target!.alias!["symbol"]) {
+    if (source!.alias!.typeArguments.length !== 0 || target!.alias!.typeArguments.length !== 0) {
+      // Source and target are types originating in the same generic type alias declaration.
+      // Simply infer from source type arguments to target type arguments, with defaults applied.
+      const aliasSymbol = source!.alias!["symbol"] as GoPtr<Symbol>;
+      const params = (LinkStore_Get(c.typeAliasLinks, aliasSymbol) as GoPtr<TypeAliasLinks>)!.typeParameters;
+      const minParams = Checker_getMinTypeArgumentCount(c, params);
+      const nodeIsInJsFile = IsInJSFile(aliasSymbol!.ValueDeclaration);
+      const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
+      const targetTypes = Checker_fillMissingTypeArguments(c, target!.alias!.typeArguments, params, minParams, nodeIsInJsFile);
+      Checker_inferFromTypeArguments(c, state, sourceTypes, targetTypes, Checker_getAliasVariances(c, aliasSymbol));
+    }
+    // And if there weren't any type arguments, there's no reason to run inference as the types must be the same.
+    return;
+  }
+  if (source === target && (source!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+    // When source and target are the same union or intersection type, just relate each constituent
+    // type to itself.
+    for (const t of Type_Types(source)) {
+      Checker_inferFromTypes(c, state, t, t);
+    }
+    return;
+  }
+  if ((target!.flags & TypeFlagsUnion) !== 0) {
+    let sourceTypes: GoSlice<GoPtr<Type>>;
+    if ((source!.flags & TypeFlagsUnion) !== 0) {
+      sourceTypes = Type_Types(source);
+    } else {
+      sourceTypes = [source];
+    }
+    // First, infer between identically matching source and target constituents and remove the
+    // matching types.
+    const [tempSources, tempTargets] = Checker_inferFromMatchingTypes(c, state, sourceTypes, Type_Distributed(target), Checker_isTypeOrBaseIdenticalTo);
+    // Next, infer between closely matching source and target constituents and remove
+    // the matching types. Types closely match when they are instantiations of the same
+    // object type or instantiations of the same type alias.
+    const [sources, targets] = Checker_inferFromMatchingTypes(c, state, tempSources, tempTargets, Checker_isTypeCloselyMatchedBy);
+    if (targets.length === 0) {
+      return;
+    }
+    let newTarget = Checker_getUnionType(c, targets);
+    if (sources.length === 0) {
+      // All source constituents have been matched and there is nothing further to infer from.
+      // However, simply making no inferences is undesirable because it could ultimately mean
+      // inferring a type parameter constraint. Instead, make a lower priority inference from
+      // the full source to whatever remains in the target. For example, when inferring from
+      // string to 'string | T', make a lower priority inference of string for T.
+      Checker_inferWithPriority(c, state, source, newTarget, InferencePriorityNakedTypeVariable);
+      return;
+    }
+    source = Checker_getUnionType(c, sources);
+    target = newTarget;
+  } else if ((target!.flags & TypeFlagsIntersection) !== 0 && !core.Every(Type_Types(target), (t: GoPtr<Type>): bool => Checker_isNonGenericObjectType(c, t))) {
+    // We reduce intersection types unless they're simple combinations of object types. For example,
+    // when inferring from 'string[] & { extra: any }' to 'string[] & T' we want to remove string[] and
+    // infer { extra: any } for T. But when inferring to 'string[] & Iterable<T>' we want to keep the
+    // string[] on the source side and infer string for T.
+    if ((source!.flags & TypeFlagsUnion) === 0) {
+      let sourceTypes2: GoSlice<GoPtr<Type>>;
+      if ((source!.flags & TypeFlagsIntersection) !== 0) {
+        sourceTypes2 = Type_Types(source);
+      } else {
+        sourceTypes2 = [source];
+      }
+      // Infer between identically matching source and target constituents and remove the matching types.
+      const [srcRes, tgtRes] = Checker_inferFromMatchingTypes(c, state, sourceTypes2, Type_Types(target), Checker_isTypeIdenticalTo);
+      if (srcRes.length === 0 || tgtRes.length === 0) {
+        return;
+      }
+      source = Checker_getIntersectionType(c, srcRes);
+      target = Checker_getIntersectionType(c, tgtRes);
+    }
+  }
+  if ((target!.flags & (TypeFlagsIndexedAccess | TypeFlagsSubstitution)) !== 0) {
+    if (Checker_isNoInferType(c, target)) {
+      return;
+    }
+    target = Checker_getActualTypeVariable(c, target);
+  }
+  if ((target!.flags & TypeFlagsTypeVariable) !== 0) {
+    // Skip inference if the source is "blocked", which is used by the language service to
+    // prevent inference on nodes currently being edited.
+    if (Checker_isFromInferenceBlockedSource(c, source)) {
+      return;
+    }
+    const inference = getInferenceInfoForType(state, target);
+    if (inference !== undefined) {
+      // If target is a type parameter, make an inference, unless the source type contains
+      // a "non-inferrable" type. Types with this flag set are markers used to prevent inference.
+      if ((source!.objectFlags & ObjectFlagsNonInferrableType) !== 0 || source === c.nonInferrableAnyType) {
+        return;
+      }
+      if (!inference.isFixed) {
+        const candidate = core.OrElse(state.propagationType, source);
+        if (candidate === c.blockedStringType) {
+          return;
+        }
+        if (state.priority < inference.priority) {
+          inference.candidates = [];
+          inference.contraCandidates = [];
+          inference.topLevel = true;
+          inference.priority = state.priority;
+        }
+        if (state.priority === inference.priority) {
+          // We make contravariant inferences only if we are in a pure contravariant position,
+          // i.e. only if we have not descended into a bivariant position.
+          if (state.contravariant && !state.bivariant) {
+            if (!slices.Contains(inference.contraCandidates, candidate)) {
+              inference.contraCandidates = [...inference.contraCandidates, candidate];
+              clearCachedInferences(state.inferences);
+            }
+          } else if (!slices.Contains(inference.candidates, candidate)) {
+            inference.candidates = [...inference.candidates, candidate];
+            clearCachedInferences(state.inferences);
+          }
+        }
+        if ((state.priority & InferencePriorityReturnType) === 0 && (target!.flags & TypeFlagsTypeParameter) !== 0 && inference.topLevel && !Checker_isTypeParameterAtTopLevel(c, state.originalTarget, target, 0)) {
+          inference.topLevel = false;
+          clearCachedInferences(state.inferences);
+        }
+      }
+      state.inferencePriority = Math.min(state.inferencePriority, state.priority);
+      return;
+    }
+    // Infer to the simplified version of an indexed access, if possible, to (hopefully) expose more bare type parameters to the inference engine
+    const simplified = Checker_getSimplifiedType(c, target, false);
+    if (simplified !== target) {
+      Checker_inferFromTypes(c, state, source, simplified);
+    } else if ((target!.flags & TypeFlagsIndexedAccess) !== 0) {
+      const indexType = Checker_getSimplifiedType(c, Type_AsIndexedAccessType(target)!.indexType, false);
+      // Generally simplifications of instantiable indexes are avoided to keep relationship checking correct, however if our target is an access, we can consider
+      // that key of that access to be "instantiated", since we're looking to find the inference goal in any way we can.
+      if ((indexType!.flags & TypeFlagsInstantiable) !== 0) {
+        const simplified2 = Checker_distributeIndexOverObjectType(c, Checker_getSimplifiedType(c, Type_AsIndexedAccessType(target)!.objectType, false), indexType, false);
+        if (simplified2 !== undefined && simplified2 !== target) {
+          Checker_inferFromTypes(c, state, source, simplified2);
+        }
+      }
+    }
+    return;
+  }
+  if (
+    (source!.objectFlags & ObjectFlagsReference) !== 0 &&
+    (target!.objectFlags & ObjectFlagsReference) !== 0 &&
+    (Type_Target(source) === Type_Target(target) || (Checker_isArrayType(c, source) && Checker_isArrayType(c, target))) &&
+    !(Type_AsTypeReference(source)!.node !== undefined && Type_AsTypeReference(target)!.node !== undefined)
+  ) {
+    // If source and target are references to the same generic type, infer from type arguments
+    Checker_inferFromTypeArguments(c, state, Checker_getTypeArguments(c, source), Checker_getTypeArguments(c, target), Checker_getVariances(c, Type_Target(source)));
+  } else if ((source!.flags & TypeFlagsIndex) !== 0 && (target!.flags & TypeFlagsIndex) !== 0) {
+    Checker_inferFromContravariantTypes(c, state, Type_AsIndexType(source)!.target, Type_AsIndexType(target)!.target);
+  } else if ((isLiteralType(source) || (source!.flags & TypeFlagsString) !== 0) && (target!.flags & TypeFlagsIndex) !== 0) {
+    const empty = Checker_createEmptyObjectTypeFromStringLiteral(c, source);
+    Checker_inferFromContravariantTypesWithPriority(c, state, empty, Type_AsIndexType(target)!.target, InferencePriorityLiteralKeyof);
+  } else if ((source!.flags & TypeFlagsIndexedAccess) !== 0 && (target!.flags & TypeFlagsIndexedAccess) !== 0) {
+    Checker_inferFromTypes(c, state, Type_AsIndexedAccessType(source)!.objectType, Type_AsIndexedAccessType(target)!.objectType);
+    Checker_inferFromTypes(c, state, Type_AsIndexedAccessType(source)!.indexType, Type_AsIndexedAccessType(target)!.indexType);
+  } else if ((source!.flags & TypeFlagsStringMapping) !== 0 && (target!.flags & TypeFlagsStringMapping) !== 0) {
+    if (source!.symbol === target!.symbol) {
+      Checker_inferFromTypes(c, state, Type_AsStringMappingType(source)!.target, Type_AsStringMappingType(target)!.target);
+    }
+  } else if ((source!.flags & TypeFlagsSubstitution) !== 0) {
+    Checker_inferFromTypes(c, state, Type_AsSubstitutionType(source)!.baseType, target);
+    // Make substitute inference at a lower priority
+    Checker_inferWithPriority(c, state, Checker_getSubstitutionIntersection(c, source), target, InferencePrioritySubstituteSource);
+  } else if ((target!.flags & TypeFlagsConditional) !== 0) {
+    Checker_invokeOnce(c, state, source, target, Checker_inferToConditionalType);
+  } else if ((target!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+    Checker_inferToMultipleTypes(c, state, source, Type_Types(target), target!.flags);
+  } else if ((source!.flags & TypeFlagsUnion) !== 0) {
+    // Source is a union or intersection type, infer from each constituent type
+    for (const sourceType of Type_Types(source)) {
+      Checker_inferFromTypes(c, state, sourceType, target);
+    }
+  } else if ((target!.flags & TypeFlagsTemplateLiteral) !== 0) {
+    Checker_inferToTemplateLiteralType(c, state, source, target as GoPtr<TemplateLiteralType>);
+  } else {
+    source = Checker_getReducedType(c, source);
+    if (Checker_isGenericMappedType(c, source) && Checker_isGenericMappedType(c, target)) {
+      Checker_invokeOnce(c, state, source, target, Checker_inferFromGenericMappedTypes);
+    }
+    if (!((state.priority & InferencePriorityNoConstraints) !== 0 && (source!.flags & (TypeFlagsIntersection | TypeFlagsInstantiable)) !== 0)) {
+      let apparentSource = Checker_getApparentType(c, source);
+      // getApparentType can return _any_ type, since an indexed access or conditional may simplify to any other type.
+      // If that occurs and it doesn't simplify to an object or intersection, we'll need to restart `inferFromTypes`
+      // with the simplified source.
+      if (apparentSource !== source && (apparentSource!.flags & (TypeFlagsObject | TypeFlagsIntersection)) === 0) {
+        Checker_inferFromTypes(c, state, apparentSource, target);
+        return;
+      }
+      source = apparentSource;
+    }
+    if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection)) !== 0) {
+      Checker_invokeOnce(c, state, source, target, Checker_inferFromObjectTypes);
+    }
+  }
 }
 
 /**
@@ -673,7 +942,7 @@ export function Checker_inferFromContravariantTypesIfStrictFunctionTypes(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.invokeOnce","kind":"method","status":"stub","sigHash":"c3c82f54655c62fc34057a63ee81a4b97d90d8c520a807129176b82acadbdc28","bodyHash":"3a74570effc02d5d58327c12727690660148f964ff559066cee716731cc1e464"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.invokeOnce","kind":"method","status":"implemented","sigHash":"c3c82f54655c62fc34057a63ee81a4b97d90d8c520a807129176b82acadbdc28","bodyHash":"3a74570effc02d5d58327c12727690660148f964ff559066cee716731cc1e464"}
  *
  * Go source:
  * func (c *Checker) invokeOnce(n *InferenceState, source *Type, target *Type, action func(c *Checker, n *InferenceState, source *Type, target *Type)) {
@@ -712,7 +981,41 @@ export function Checker_inferFromContravariantTypesIfStrictFunctionTypes(receive
  * }
  */
 export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>, action: (c: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>) => void): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.invokeOnce");
+  const c = receiver!;
+  const state = n!;
+  const key: InferenceKey = { s: source!.id, t: target!.id };
+  const existing = state.visited.get(key);
+  if (existing !== undefined) {
+    state.inferencePriority = Math.min(state.inferencePriority, existing);
+    return;
+  }
+  if (state.visited === undefined) {
+    state.visited = new Map<InferenceKey, InferencePriority>();
+  }
+  state.visited.set(key, InferencePriorityCircularity);
+  const saveInferencePriority = state.inferencePriority;
+  state.inferencePriority = InferencePriorityMaxValue;
+  // We stop inferring and report a circularity if we encounter duplicate recursion identities on both
+  // the source side and the target side.
+  const saveExpandingFlags = state.expandingFlags;
+  state.sourceStack = [...state.sourceStack, source];
+  state.targetStack = [...state.targetStack, target];
+  if (Checker_isDeeplyNestedType(c, source, state.sourceStack, 2)) {
+    state.expandingFlags |= ExpandingFlagsSource;
+  }
+  if (Checker_isDeeplyNestedType(c, target, state.targetStack, 2)) {
+    state.expandingFlags |= ExpandingFlagsTarget;
+  }
+  if (state.expandingFlags !== ExpandingFlagsBoth) {
+    action(c, state, source, target);
+  } else {
+    state.inferencePriority = InferencePriorityCircularity;
+  }
+  state.targetStack = state.targetStack.slice(0, state.targetStack.length - 1);
+  state.sourceStack = state.sourceStack.slice(0, state.sourceStack.length - 1);
+  state.expandingFlags = saveExpandingFlags;
+  state.visited.set(key, state.inferencePriority);
+  state.inferencePriority = Math.min(state.inferencePriority, saveInferencePriority);
 }
 
 /**
@@ -1013,7 +1316,7 @@ export function Checker_inferToConditionalType(receiver: GoPtr<Checker>, n: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToTemplateLiteralType","kind":"method","status":"stub","sigHash":"412609e94e900b0fa0930c4467276ad829245b8a13aa2192ea7945242ac286b9","bodyHash":"f56a9811f6f575b9a5de81ac8ed6e57876ef2987a4dbac4772820277c0df62d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToTemplateLiteralType","kind":"method","status":"implemented","sigHash":"412609e94e900b0fa0930c4467276ad829245b8a13aa2192ea7945242ac286b9","bodyHash":"f56a9811f6f575b9a5de81ac8ed6e57876ef2987a4dbac4772820277c0df62d0"}
  *
  * Go source:
  * func (c *Checker) inferToTemplateLiteralType(n *InferenceState, source *Type, target *TemplateLiteralType) {
@@ -1138,7 +1441,151 @@ export function Checker_inferToConditionalType(receiver: GoPtr<Checker>, n: GoPt
  * }
  */
 export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<TemplateLiteralType>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferToTemplateLiteralType");
+  const c = receiver!;
+  const matches = Checker_inferTypesFromTemplateLiteralType(c, source, target);
+  const types = target!.types;
+  // When the target template literal contains only placeholders (meaning that inference is intended to extract
+  // single characters and remainder strings) and inference fails to produce matches, we want to infer 'never' for
+  // each placeholder such that instantiation with the inferred value(s) produces 'never', a type for which an
+  // assignment check will fail. If we make no inferences, we'll likely end up with the constraint 'string' which,
+  // upon instantiation, would collapse all the placeholders to just 'string', and an assignment check might
+  // succeed. That would be a pointless and confusing outcome.
+  if (matches.length !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
+    outer: for (let i = 0; i < types.length; i++) {
+      const targetType = types[i];
+      let sourceType: GoPtr<Type>;
+      if (matches.length !== 0) {
+        sourceType = matches[i];
+      } else {
+        sourceType = c.neverType;
+      }
+      // If we are inferring from a string literal type to a type variable whose constraint includes one of the
+      // allowed template literal placeholder types, infer from a literal type corresponding to the constraint.
+      if ((sourceType!.flags & TypeFlagsStringLiteral) !== 0 && (targetType!.flags & TypeFlagsTypeVariable) !== 0) {
+        const inferenceContext = getInferenceInfoForType(n, targetType);
+        if (inferenceContext !== undefined) {
+          const constraint = Checker_getBaseConstraintOfType(c, inferenceContext.typeParameter);
+          if (constraint !== undefined && !IsTypeAny(constraint)) {
+            let allTypeFlags: TypeFlags = TypeFlagsNone;
+            for (const t of Type_Distributed(constraint)) {
+              allTypeFlags |= t!.flags;
+            }
+            // If the constraint contains `string`, we don't need to look for a more preferred type
+            if ((allTypeFlags & TypeFlagsString) === 0) {
+              const str = getStringLiteralValue(sourceType);
+              // If the type contains `number` or a number literal and the string isn't a valid number, exclude numbers
+              if ((allTypeFlags & TypeFlagsNumberLike) !== 0 && !isValidNumberString(str, true)) {
+                allTypeFlags &= ~TypeFlagsNumberLike;
+              }
+              // If the type contains `bigint` or a bigint literal and the string isn't a valid bigint, exclude bigints
+              if ((allTypeFlags & TypeFlagsBigIntLike) !== 0 && !isValidBigIntString(str, true)) {
+                allTypeFlags &= ~TypeFlagsBigIntLike;
+              }
+              const choose = (left: GoPtr<Type>, right: GoPtr<Type>): GoPtr<Type> => {
+                if ((right!.flags & allTypeFlags) === 0) {
+                  return left;
+                }
+                if ((left!.flags & TypeFlagsString) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsString) !== 0) {
+                  return sourceType;
+                }
+                if ((left!.flags & TypeFlagsTemplateLiteral) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsTemplateLiteral) !== 0 && Checker_isTypeMatchedByTemplateLiteralType(c, sourceType, right as GoPtr<TemplateLiteralType>, c.compareTypesAssignable)) {
+                  return sourceType;
+                }
+                if ((left!.flags & TypeFlagsStringMapping) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsStringMapping) !== 0 && str === applyStringMapping(right!.symbol, str)) {
+                  return sourceType;
+                }
+                if ((left!.flags & TypeFlagsStringLiteral) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsStringLiteral) !== 0 && getStringLiteralValue(right) === str) {
+                  return right;
+                }
+                if ((left!.flags & TypeFlagsNumber) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsNumber) !== 0) {
+                  return Checker_getNumberLiteralType(c, FromString(str));
+                }
+                if ((left!.flags & TypeFlagsEnum) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsEnum) !== 0) {
+                  return Checker_getNumberLiteralType(c, FromString(str));
+                }
+                if ((left!.flags & TypeFlagsNumberLiteral) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsNumberLiteral) !== 0 && getNumberLiteralValue(right) === FromString(str)) {
+                  return right;
+                }
+                if ((left!.flags & TypeFlagsBigInt) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsBigInt) !== 0) {
+                  return Checker_parseBigIntLiteralType(c, str);
+                }
+                if ((left!.flags & TypeFlagsBigIntLiteral) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsBigIntLiteral) !== 0 && pseudoBigIntToString(getBigIntLiteralValue(right)) === str) {
+                  return right;
+                }
+                if ((left!.flags & TypeFlagsBoolean) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsBoolean) !== 0) {
+                  if (str === "true") {
+                    return c.trueType;
+                  }
+                  if (str === "false") {
+                    return c.falseType;
+                  }
+                  return c.booleanType;
+                }
+                if ((left!.flags & TypeFlagsBooleanLiteral) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsBooleanLiteral) !== 0 && core.IfElse<string>(getBooleanLiteralValue(right), "true", "false") === str) {
+                  return right;
+                }
+                if ((left!.flags & TypeFlagsUndefined) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsUndefined) !== 0 && Type_AsIntrinsicType(right)!.intrinsicName === str) {
+                  return right;
+                }
+                if ((left!.flags & TypeFlagsNull) !== 0) {
+                  return left;
+                }
+                if ((right!.flags & TypeFlagsNull) !== 0 && Type_AsIntrinsicType(right)!.intrinsicName === str) {
+                  return right;
+                }
+                return left;
+              };
+              let matchingType: GoPtr<Type> = c.neverType;
+              for (const t of Type_Distributed(constraint)) {
+                matchingType = choose(matchingType, t);
+              }
+              if ((matchingType!.flags & TypeFlagsNever) === 0) {
+                Checker_inferFromTypes(c, n, matchingType, targetType);
+                continue outer;
+              }
+            }
+          }
+        }
+      }
+      Checker_inferFromTypes(c, n, sourceType, targetType);
+    }
+  }
 }
 
 /**
@@ -1430,7 +1877,7 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromProperties","kind":"method","status":"stub","sigHash":"649a03db3fc7e6d625c689fef927a008d03f32b46481f70d018394127ac94753","bodyHash":"dba6604a73d2d9e409bc72ac28858909c187574c1e9be34880cd3defae3ac324"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromProperties","kind":"method","status":"implemented","sigHash":"649a03db3fc7e6d625c689fef927a008d03f32b46481f70d018394127ac94753","bodyHash":"dba6604a73d2d9e409bc72ac28858909c187574c1e9be34880cd3defae3ac324"}
  *
  * Go source:
  * func (c *Checker) inferFromProperties(n *InferenceState, source *Type, target *Type) {
@@ -1444,7 +1891,14 @@ export function Checker_inferFromObjectTypes(receiver: GoPtr<Checker>, n: GoPtr<
  * }
  */
 export function Checker_inferFromProperties(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromProperties");
+  const c = receiver!;
+  const properties = Checker_getPropertiesOfObjectType(c, target);
+  for (const targetProp of properties) {
+    const sourceProp = Checker_getPropertyOfType(c, source, targetProp!.Name);
+    if (sourceProp !== undefined && !core.Some(sourceProp!.Declarations, (node: GoPtr<Node>): bool => Checker_isSkipDirectInferenceNode(c, node))) {
+      Checker_inferFromTypes(c, n, Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, sourceProp), (sourceProp!.Flags & SymbolFlagsOptional) !== 0), Checker_removeMissingType(c, Checker_getTypeOfSymbol(c, targetProp), (targetProp!.Flags & SymbolFlagsOptional) !== 0));
+    }
+  }
 }
 
 /**
@@ -1614,7 +2068,7 @@ export function Checker_applyToReturnTypes(receiver: GoPtr<Checker>, source: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIndexTypes","kind":"method","status":"stub","sigHash":"5dc3274071d510add868169007ab521e1905f5f94fc6a30e41f7c74c65d0c830","bodyHash":"25f1f7df568207cc0ffe4608ef8ffc55b4348bd09f68f117447f3b1ab7bbba8d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIndexTypes","kind":"method","status":"implemented","sigHash":"5dc3274071d510add868169007ab521e1905f5f94fc6a30e41f7c74c65d0c830","bodyHash":"25f1f7df568207cc0ffe4608ef8ffc55b4348bd09f68f117447f3b1ab7bbba8d"}
  *
  * Go source:
  * func (c *Checker) inferFromIndexTypes(n *InferenceState, source *Type, target *Type) {
@@ -1655,7 +2109,41 @@ export function Checker_applyToReturnTypes(receiver: GoPtr<Checker>, source: GoP
  * }
  */
 export function Checker_inferFromIndexTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceState>, source: GoPtr<Type>, target: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIndexTypes");
+  const c = receiver!;
+  // Inferences across mapped type index signatures are pretty much the same as inferences to homomorphic variables
+  let priority: InferencePriority = InferencePriorityNone;
+  if ((source!.objectFlags & target!.objectFlags & ObjectFlagsMapped) !== 0) {
+    priority = InferencePriorityHomomorphicMappedType;
+  }
+  const indexInfos = Checker_getIndexInfosOfType(c, target);
+  if (Checker_isObjectTypeWithInferableIndex(c, source)) {
+    for (const targetInfo of indexInfos) {
+      let propTypes: GoSlice<GoPtr<Type>> = [];
+      for (const prop of Checker_getPropertiesOfType(c, source)) {
+        if (Checker_isApplicableIndexType(c, Checker_getLiteralTypeFromProperty(c, prop, TypeFlagsStringOrNumberLiteralOrUnique, false), targetInfo!.keyType)) {
+          let propType = Checker_getTypeOfSymbol(c, prop);
+          if ((prop!.Flags & SymbolFlagsOptional) !== 0) {
+            propType = Checker_removeMissingOrUndefinedType(c, propType);
+          }
+          propTypes = [...propTypes, propType];
+        }
+      }
+      for (const info of Checker_getIndexInfosOfType(c, source)) {
+        if (Checker_isApplicableIndexType(c, info!.keyType, targetInfo!.keyType)) {
+          propTypes = [...propTypes, info!.valueType];
+        }
+      }
+      if (propTypes.length !== 0) {
+        Checker_inferWithPriority(c, n, Checker_getUnionType(c, propTypes), targetInfo!.valueType, priority);
+      }
+    }
+  }
+  for (const targetInfo of indexInfos) {
+    const sourceInfo = Checker_getApplicableIndexInfo(c, source, targetInfo!.keyType);
+    if (sourceInfo !== undefined) {
+      Checker_inferWithPriority(c, n, sourceInfo!.valueType, targetInfo!.valueType, priority);
+    }
+  }
 }
 
 /**
@@ -1769,7 +2257,7 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypeForHomomorphicMappedType","kind":"method","status":"stub","sigHash":"4cba3f18214a186fb35344206d4e25fc75ff2b3e9c918fe408cb809b02106d47","bodyHash":"1a0f825c9edc26a3d5597052a28e35db410bbd0fe28263a72110af72bfb30c1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypeForHomomorphicMappedType","kind":"method","status":"implemented","sigHash":"4cba3f18214a186fb35344206d4e25fc75ff2b3e9c918fe408cb809b02106d47","bodyHash":"1a0f825c9edc26a3d5597052a28e35db410bbd0fe28263a72110af72bfb30c1c"}
  *
  * Go source:
  * func (c *Checker) inferTypeForHomomorphicMappedType(source *Type, target *Type, constraint *Type) *Type {
@@ -1783,7 +2271,15 @@ export function Checker_inferToMappedType(receiver: GoPtr<Checker>, n: GoPtr<Inf
  * }
  */
 export function Checker_inferTypeForHomomorphicMappedType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, constraint: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferTypeForHomomorphicMappedType");
+  const c = receiver!;
+  const key: ReverseMappedTypeKey = { sourceId: source!.id, targetId: target!.id, constraintId: constraint!.id };
+  const cached = c.reverseHomomorphicMappedCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const t = Checker_createReverseMappedType(c, source, target, constraint);
+  c.reverseHomomorphicMappedCache.set(key, t);
+  return t;
 }
 
 /**
@@ -1897,7 +2393,7 @@ export function Checker_isPartiallyInferableType(receiver: GoPtr<Checker>, t: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferReverseMappedType","kind":"method","status":"stub","sigHash":"974c1dccfd7559ffab0fec2756581aaadfdc3341fb29de6112d9a88df8c6072d","bodyHash":"712e61a04ab59ea07520b443aa6ff0e7797be3c25c88f23c9f8115ac8bf334c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferReverseMappedType","kind":"method","status":"implemented","sigHash":"974c1dccfd7559ffab0fec2756581aaadfdc3341fb29de6112d9a88df8c6072d","bodyHash":"712e61a04ab59ea07520b443aa6ff0e7797be3c25c88f23c9f8115ac8bf334c1"}
  *
  * Go source:
  * func (c *Checker) inferReverseMappedType(source *Type, target *Type, constraint *Type) *Type {
@@ -1926,7 +2422,30 @@ export function Checker_isPartiallyInferableType(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_inferReverseMappedType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, constraint: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferReverseMappedType");
+  const c = receiver!;
+  const key: ReverseMappedTypeKey = { sourceId: source!.id, targetId: target!.id, constraintId: constraint!.id };
+  const cached = c.reverseMappedCache.get(key);
+  if (cached !== undefined) {
+    return core.OrElse(cached, c.unknownType);
+  }
+  c.reverseMappedSourceStack = [...c.reverseMappedSourceStack, source];
+  c.reverseMappedTargetStack = [...c.reverseMappedTargetStack, target];
+  const saveExpandingFlags = c.reverseExpandingFlags;
+  if (Checker_isDeeplyNestedType(receiver, source, c.reverseMappedSourceStack, 2)) {
+    c.reverseExpandingFlags |= ExpandingFlagsSource;
+  }
+  if (Checker_isDeeplyNestedType(receiver, target, c.reverseMappedTargetStack, 2)) {
+    c.reverseExpandingFlags |= ExpandingFlagsTarget;
+  }
+  let t: GoPtr<Type> = undefined;
+  if (c.reverseExpandingFlags !== ExpandingFlagsBoth) {
+    t = Checker_inferReverseMappedTypeWorker(receiver, source, target, constraint);
+  }
+  c.reverseMappedSourceStack = c.reverseMappedSourceStack.slice(0, c.reverseMappedSourceStack.length - 1);
+  c.reverseMappedTargetStack = c.reverseMappedTargetStack.slice(0, c.reverseMappedTargetStack.length - 1);
+  c.reverseExpandingFlags = saveExpandingFlags;
+  c.reverseMappedCache.set(key, t);
+  return t;
 }
 
 /**
@@ -1951,7 +2470,7 @@ export function Checker_inferReverseMappedTypeWorker(receiver: GoPtr<Checker>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.resolveReverseMappedTypeMembers","kind":"method","status":"stub","sigHash":"73c9ddd7acce50cc5d7d02a991aab19314838481d09365386e5e44eee3cf02fb","bodyHash":"ee0281c2a247a3fbe1e9fb859fb54fc7aa36af89c4e28ea3f8f4d94c2823e772"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.resolveReverseMappedTypeMembers","kind":"method","status":"implemented","sigHash":"73c9ddd7acce50cc5d7d02a991aab19314838481d09365386e5e44eee3cf02fb","bodyHash":"ee0281c2a247a3fbe1e9fb859fb54fc7aa36af89c4e28ea3f8f4d94c2823e772"}
  *
  * Go source:
  * func (c *Checker) resolveReverseMappedTypeMembers(t *Type) {
@@ -2001,11 +2520,48 @@ export function Checker_inferReverseMappedTypeWorker(receiver: GoPtr<Checker>, s
  * }
  */
 export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.resolveReverseMappedTypeMembers");
+  const c = receiver!;
+  const r = Type_AsReverseMappedType(t)!;
+  const indexInfo = Checker_getIndexInfoOfType(receiver, r.source, c.stringType);
+  const modifiers = getMappedTypeModifiers(r.mappedType);
+  const readonlyMask = (modifiers & MappedTypeModifiersIncludeReadonly) === 0;
+  const optionalMask = (modifiers & MappedTypeModifiersIncludeOptional) !== 0 ? 0 : SymbolFlagsOptional;
+  let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  if (indexInfo !== undefined) {
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, core.OrElse(Checker_inferReverseMappedType(receiver, indexInfo!.valueType, r.mappedType, r.constraintType), c.unknownType), readonlyMask && indexInfo!.isReadonly, undefined, [])];
+  }
+  const members: SymbolTable = new Map();
+  const limitedConstraint = Checker_getLimitedConstraint(receiver, t);
+  for (const prop of Checker_getPropertiesOfType(receiver, r.source)) {
+    if (limitedConstraint !== undefined) {
+      const propertyNameType = Checker_getLiteralTypeFromProperty(receiver, prop, TypeFlagsStringOrNumberLiteralOrUnique, false);
+      if (!Checker_isTypeAssignableTo(receiver, propertyNameType, limitedConstraint)) {
+        continue;
+      }
+    }
+    const checkFlags = CheckFlagsReverseMapped | (readonlyMask && Checker_isReadonlySymbol(receiver, prop) ? CheckFlagsReadonly : 0);
+    const inferredProp = Checker_newSymbolEx(receiver, SymbolFlagsProperty | (prop!.Flags & optionalMask), prop!.Name, checkFlags);
+    inferredProp!.Declarations = prop!.Declarations;
+    (LinkStore_Get(c.valueSymbolLinks, inferredProp) as GoPtr<ValueSymbolLinks>)!.nameType = (LinkStore_Get(c.valueSymbolLinks, prop) as GoPtr<ValueSymbolLinks>)!.nameType;
+    const links = (LinkStore_Get(c.ReverseMappedSymbolLinks, inferredProp) as GoPtr<ReverseMappedSymbolLinks>)!;
+    links.propertyType = Checker_getTypeOfSymbol(receiver, prop);
+    const constraintTarget = Type_AsIndexType(r.constraintType)!.target;
+    if ((constraintTarget!.flags & TypeFlagsIndexedAccess) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.objectType!.flags & TypeFlagsTypeParameter) !== 0 && (Type_AsIndexedAccessType(constraintTarget)!.indexType!.flags & TypeFlagsTypeParameter) !== 0) {
+      const newTypeParam = Type_AsIndexedAccessType(constraintTarget)!.objectType;
+      const newMappedType = Checker_replaceIndexedAccess(receiver, r.mappedType, constraintTarget, newTypeParam);
+      links.mappedType = newMappedType;
+      links.constraintType = Checker_getIndexType(receiver, newTypeParam);
+    } else {
+      links.mappedType = r.mappedType;
+      links.constraintType = r.constraintType;
+    }
+    members.set(prop!.Name, inferredProp);
+  }
+  Checker_setStructuredTypeMembers(receiver, t, members, [], [], indexInfos);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeOfReverseMappedSymbol","kind":"method","status":"stub","sigHash":"bad369f4e192a64b9717c361c082df0a047076eec075a5eef9a0c804fe11c3bd","bodyHash":"c52cd61a8fbee3a020c45a81d93eddc790b301a259c8a2ba84871ebd3f812efe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeOfReverseMappedSymbol","kind":"method","status":"implemented","sigHash":"bad369f4e192a64b9717c361c082df0a047076eec075a5eef9a0c804fe11c3bd","bodyHash":"c52cd61a8fbee3a020c45a81d93eddc790b301a259c8a2ba84871ebd3f812efe"}
  *
  * Go source:
  * func (c *Checker) getTypeOfReverseMappedSymbol(symbol *ast.Symbol) *Type {
@@ -2018,7 +2574,13 @@ export function Checker_resolveReverseMappedTypeMembers(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getTypeOfReverseMappedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeOfReverseMappedSymbol");
+  const c = receiver!;
+  const links = (LinkStore_Get(c.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!;
+  if (links.resolvedType === undefined) {
+    const reverseLinks = (LinkStore_Get(c.ReverseMappedSymbolLinks, symbol_) as GoPtr<ReverseMappedSymbolLinks>)!;
+    links.resolvedType = core.OrElse(Checker_inferReverseMappedType(receiver, reverseLinks.propertyType, reverseLinks.mappedType, reverseLinks.constraintType), c.unknownType);
+  }
+  return links.resolvedType;
 }
 
 /**
@@ -2067,7 +2629,7 @@ export function Checker_getLimitedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.replaceIndexedAccess","kind":"method","status":"stub","sigHash":"ab2619e727492f5a08e4c0fcb7ad78cfe8a371c1b641ad1aa4710c58b3f60c8c","bodyHash":"02a291cc78a51abcc1a7cec212b7a6c038435822a114e4f44842c4b4bfb3a50b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.replaceIndexedAccess","kind":"method","status":"implemented","sigHash":"ab2619e727492f5a08e4c0fcb7ad78cfe8a371c1b641ad1aa4710c58b3f60c8c","bodyHash":"02a291cc78a51abcc1a7cec212b7a6c038435822a114e4f44842c4b4bfb3a50b"}
  *
  * Go source:
  * func (c *Checker) replaceIndexedAccess(instantiable *Type, t *Type, replacement *Type) *Type {
@@ -2078,11 +2640,14 @@ export function Checker_getLimitedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
  * }
  */
 export function Checker_replaceIndexedAccess(receiver: GoPtr<Checker>, instantiable: GoPtr<Type>, t: GoPtr<Type>, replacement: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.replaceIndexedAccess");
+  return Checker_instantiateType(receiver, instantiable, newTypeMapper(
+    [Type_AsIndexedAccessType(t)!.indexType, Type_AsIndexedAccessType(t)!.objectType],
+    [Checker_getNumberLiteralType(receiver, 0), Checker_createTupleType(receiver, [replacement])]
+  ));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.typesDefinitelyUnrelated","kind":"method","status":"stub","sigHash":"598fe60dd971ca8a59c607b91aa51b92c3b31018aeb4044ef4161cb8a06d5547","bodyHash":"93e7deedfc45cda64bd26fc8e1b8143fc1439ff1ee44822ac555da471fe2d852"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.typesDefinitelyUnrelated","kind":"method","status":"implemented","sigHash":"598fe60dd971ca8a59c607b91aa51b92c3b31018aeb4044ef4161cb8a06d5547","bodyHash":"93e7deedfc45cda64bd26fc8e1b8143fc1439ff1ee44822ac555da471fe2d852"}
  *
  * Go source:
  * func (c *Checker) typesDefinitelyUnrelated(source *Type, target *Type) bool {
@@ -2096,11 +2661,15 @@ export function Checker_replaceIndexedAccess(receiver: GoPtr<Checker>, instantia
  * }
  */
 export function Checker_typesDefinitelyUnrelated(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.typesDefinitelyUnrelated");
+  if (isTupleType(source) && isTupleType(target)) {
+    return tupleTypesDefinitelyUnrelated(source, target);
+  }
+  return Checker_getUnmatchedProperty(receiver, source, target, false, true) !== undefined &&
+    Checker_getUnmatchedProperty(receiver, target, source, false, false) !== undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::tupleTypesDefinitelyUnrelated","kind":"func","status":"stub","sigHash":"f7b7c3b634f54df3780902b9ee2b60b8412b83e3b9fd33f9f16b731f19b28021","bodyHash":"320bfc08fb440ff6e1fb933d8d8460701583e6e90528818b0d4d3d0a5ce0ca76"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::tupleTypesDefinitelyUnrelated","kind":"func","status":"implemented","sigHash":"f7b7c3b634f54df3780902b9ee2b60b8412b83e3b9fd33f9f16b731f19b28021","bodyHash":"320bfc08fb440ff6e1fb933d8d8460701583e6e90528818b0d4d3d0a5ce0ca76"}
  *
  * Go source:
  * func tupleTypesDefinitelyUnrelated(source *Type, target *Type) bool {
@@ -2111,11 +2680,14 @@ export function Checker_typesDefinitelyUnrelated(receiver: GoPtr<Checker>, sourc
  * }
  */
 export function tupleTypesDefinitelyUnrelated(source: GoPtr<Type>, target: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::tupleTypesDefinitelyUnrelated");
+  const s = Type_TargetTupleType(source);
+  const t = Type_TargetTupleType(target);
+  return ((t!.combinedFlags & ElementFlagsVariadic) === 0 && t!.minLength > s!.minLength) ||
+    ((t!.combinedFlags & ElementFlagsVariable) === 0 && ((s!.combinedFlags & ElementFlagsVariable) !== 0 || t!.fixedLength < s!.fixedLength));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTupleTypeStructureMatching","kind":"method","status":"stub","sigHash":"b678fbe995e5e0f546464861b4e8bbe670c1b8f4259bb19ec28640063ce2c3b2","bodyHash":"57bbdeda6386f2214e89fb51fc7b56a1ae94a351297a6a7c65afe2aa22aece66"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTupleTypeStructureMatching","kind":"method","status":"implemented","sigHash":"b678fbe995e5e0f546464861b4e8bbe670c1b8f4259bb19ec28640063ce2c3b2","bodyHash":"57bbdeda6386f2214e89fb51fc7b56a1ae94a351297a6a7c65afe2aa22aece66"}
  *
  * Go source:
  * func (c *Checker) isTupleTypeStructureMatching(t1 *Type, t2 *Type) bool {
@@ -2131,11 +2703,21 @@ export function tupleTypesDefinitelyUnrelated(source: GoPtr<Type>, target: GoPtr
  * }
  */
 export function Checker_isTupleTypeStructureMatching(receiver: GoPtr<Checker>, t1: GoPtr<Type>, t2: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTupleTypeStructureMatching");
+  if (Checker_getTypeReferenceArity(receiver, t1) !== Checker_getTypeReferenceArity(receiver, t2)) {
+    return false;
+  }
+  const elementInfos1 = Type_TargetTupleType(t1)!.elementInfos;
+  const elementInfos2 = Type_TargetTupleType(t2)!.elementInfos;
+  for (let i = 0; i < elementInfos1.length; i++) {
+    if ((elementInfos1[i]!.flags & ElementFlagsVariable) !== (elementInfos2[i]!.flags & ElementFlagsVariable)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeOrBaseIdenticalTo","kind":"method","status":"stub","sigHash":"de4383667689817e85397f24c646bc23981562071f74e06ba9384b55b7cf7375","bodyHash":"d9bf51d4d2732d347bc3ca227f9a197d98bd9dd4272bd93331e42bd769f5c289"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeOrBaseIdenticalTo","kind":"method","status":"implemented","sigHash":"de4383667689817e85397f24c646bc23981562071f74e06ba9384b55b7cf7375","bodyHash":"d9bf51d4d2732d347bc3ca227f9a197d98bd9dd4272bd93331e42bd769f5c289"}
  *
  * Go source:
  * func (c *Checker) isTypeOrBaseIdenticalTo(s *Type, t *Type) bool {
@@ -2148,11 +2730,17 @@ export function Checker_isTupleTypeStructureMatching(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_isTypeOrBaseIdenticalTo(receiver: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeOrBaseIdenticalTo");
+  const c = receiver!;
+  if (t === c.missingType) {
+    return s === t;
+  }
+  return Checker_isTypeIdenticalTo(receiver, s, t) ||
+    ((t!.flags & TypeFlagsString) !== 0 && (s!.flags & TypeFlagsStringLiteral) !== 0) ||
+    ((t!.flags & TypeFlagsNumber) !== 0 && (s!.flags & TypeFlagsNumberLiteral) !== 0);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeCloselyMatchedBy","kind":"method","status":"stub","sigHash":"d8279b0b6de2d5a5f4c481f8c9691c244055d6e65d8dbb1a5cb31acbb4f261dc","bodyHash":"7abf4610a5bd0503d5d271439d99bc920deeaab39ce5e94856cabad63ea67191"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeCloselyMatchedBy","kind":"method","status":"implemented","sigHash":"d8279b0b6de2d5a5f4c481f8c9691c244055d6e65d8dbb1a5cb31acbb4f261dc","bodyHash":"7abf4610a5bd0503d5d271439d99bc920deeaab39ce5e94856cabad63ea67191"}
  *
  * Go source:
  * func (c *Checker) isTypeCloselyMatchedBy(s *Type, t *Type) bool {
@@ -2161,11 +2749,12 @@ export function Checker_isTypeOrBaseIdenticalTo(receiver: GoPtr<Checker>, s: GoP
  * }
  */
 export function Checker_isTypeCloselyMatchedBy(receiver: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeCloselyMatchedBy");
+  return ((s!.flags & TypeFlagsObject) !== 0 && (t!.flags & TypeFlagsObject) !== 0 && s!.symbol !== undefined && s!.symbol === t!.symbol) ||
+    (s!.alias !== undefined && t!.alias !== undefined && s!.alias!.typeArguments.length !== 0 && s!.alias!["symbol"] === t!.alias!["symbol"]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createEmptyObjectTypeFromStringLiteral","kind":"method","status":"stub","sigHash":"a68c06e1f0c604edced63aef51bbf5f7c4a1dab34699b21622d22cc95c0b3545","bodyHash":"4fa0aba765d410e308afd316dae35c2b28933359ced1028d196592ef087a598e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createEmptyObjectTypeFromStringLiteral","kind":"method","status":"implemented","sigHash":"a68c06e1f0c604edced63aef51bbf5f7c4a1dab34699b21622d22cc95c0b3545","bodyHash":"4fa0aba765d410e308afd316dae35c2b28933359ced1028d196592ef087a598e"}
  *
  * Go source:
  * func (c *Checker) createEmptyObjectTypeFromStringLiteral(t *Type) *Type {
@@ -2191,11 +2780,30 @@ export function Checker_isTypeCloselyMatchedBy(receiver: GoPtr<Checker>, s: GoPt
  * }
  */
 export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createEmptyObjectTypeFromStringLiteral");
+  const c = receiver!;
+  const members: SymbolTable = new Map();
+  for (const t2 of Type_Distributed(t)) {
+    if ((t2!.flags & TypeFlagsStringLiteral) === 0) {
+      continue;
+    }
+    const name = getStringLiteralValue(t2);
+    const literalProp = Checker_newSymbol(receiver, SymbolFlagsProperty, name);
+    (LinkStore_Get(c.valueSymbolLinks, literalProp) as GoPtr<ValueSymbolLinks>)!.resolvedType = c.anyType;
+    if (t2!.symbol !== undefined) {
+      literalProp!.Declarations = t2!.symbol!.Declarations;
+      literalProp!.ValueDeclaration = t2!.symbol!.ValueDeclaration;
+    }
+    members.set(name, literalProp);
+  }
+  let indexInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  if ((t!.flags & TypeFlagsString) !== 0) {
+    indexInfos = [Checker_newIndexInfo(receiver, c.stringType, c.emptyObjectType, false, undefined, [])];
+  }
+  return Checker_newAnonymousType(receiver, undefined, members, [], [], indexInfos);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContext","kind":"method","status":"stub","sigHash":"9d9eadeccda34131298ae31ead0aad3c05a3b90fedefb33d9f8464e9b7784864","bodyHash":"9862fab9f76519c52d757b8b1c4c1c083d81b39fe77280b4011f889bd0bb5572"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContext","kind":"method","status":"implemented","sigHash":"9d9eadeccda34131298ae31ead0aad3c05a3b90fedefb33d9f8464e9b7784864","bodyHash":"9862fab9f76519c52d757b8b1c4c1c083d81b39fe77280b4011f889bd0bb5572"}
  *
  * Go source:
  * func (c *Checker) newInferenceContext(typeParameters []*Type, signature *Signature, flags InferenceFlags, compareTypes TypeComparer) *InferenceContext {
@@ -2206,11 +2814,13 @@ export function Checker_createEmptyObjectTypeFromStringLiteral(receiver: GoPtr<C
  * }
  */
 export function Checker_newInferenceContext(receiver: GoPtr<Checker>, typeParameters: GoSlice<GoPtr<Type>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer): GoPtr<InferenceContext> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContext");
+  const c = receiver!;
+  const ct = compareTypes !== undefined ? compareTypes : c.compareTypesAssignable;
+  return Checker_newInferenceContextWorker(receiver, core.Map(typeParameters, newInferenceInfo), signature, flags, ct);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferenceContext","kind":"method","status":"stub","sigHash":"b528c8557efc41276497cfd0a0ece81df38ffc94e84beb7e3bce2cd5ff238da8","bodyHash":"f6e00d8c073892864f75139c1caa233e8ef774e4d4a50f84b0a1ad50c7a6a090"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferenceContext","kind":"method","status":"implemented","sigHash":"b528c8557efc41276497cfd0a0ece81df38ffc94e84beb7e3bce2cd5ff238da8","bodyHash":"f6e00d8c073892864f75139c1caa233e8ef774e4d4a50f84b0a1ad50c7a6a090"}
  *
  * Go source:
  * func (c *Checker) cloneInferenceContext(n *InferenceContext, extraFlags InferenceFlags) *InferenceContext {
@@ -2221,11 +2831,14 @@ export function Checker_newInferenceContext(receiver: GoPtr<Checker>, typeParame
  * }
  */
 export function Checker_cloneInferenceContext(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, extraFlags: InferenceFlags): GoPtr<InferenceContext> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferenceContext");
+  if (n === undefined) {
+    return undefined;
+  }
+  return Checker_newInferenceContextWorker(receiver, core.Map(n!.inferences, cloneInferenceInfo), n!.signature, n!.flags | extraFlags, n!.compareTypes);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferredPartOfContext","kind":"method","status":"stub","sigHash":"5494df88169cd173775b5f3ee1adbec489ccace52f60371081cfcdf04a80d9fd","bodyHash":"4556cd82622a921a32b3e5f484e133d41af729c94b5a93e5c31432d7c9394628"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferredPartOfContext","kind":"method","status":"implemented","sigHash":"5494df88169cd173775b5f3ee1adbec489ccace52f60371081cfcdf04a80d9fd","bodyHash":"4556cd82622a921a32b3e5f484e133d41af729c94b5a93e5c31432d7c9394628"}
  *
  * Go source:
  * func (c *Checker) cloneInferredPartOfContext(n *InferenceContext) *InferenceContext {
@@ -2237,11 +2850,15 @@ export function Checker_cloneInferenceContext(receiver: GoPtr<Checker>, n: GoPtr
  * }
  */
 export function Checker_cloneInferredPartOfContext(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoPtr<InferenceContext> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.cloneInferredPartOfContext");
+  const inferences = core.Filter(n!.inferences, hasInferenceCandidates);
+  if (inferences.length === 0) {
+    return undefined;
+  }
+  return Checker_newInferenceContextWorker(receiver, core.Map(inferences, cloneInferenceInfo), n!.signature, n!.flags, n!.compareTypes);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContextWorker","kind":"method","status":"stub","sigHash":"59fccbc304520d0e5bd1f60884e44dc146d0792a36b7732eb31419c430c3bbef","bodyHash":"b968d990f2712e0aa186d860a1916dbc77ac0656ddda0362ba25e00593e4487d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContextWorker","kind":"method","status":"implemented","sigHash":"59fccbc304520d0e5bd1f60884e44dc146d0792a36b7732eb31419c430c3bbef","bodyHash":"b968d990f2712e0aa186d860a1916dbc77ac0656ddda0362ba25e00593e4487d"}
  *
  * Go source:
  * func (c *Checker) newInferenceContextWorker(inferences []*InferenceInfo, signature *Signature, flags InferenceFlags, compareTypes TypeComparer) *InferenceContext {
@@ -2257,11 +2874,25 @@ export function Checker_cloneInferredPartOfContext(receiver: GoPtr<Checker>, n: 
  * }
  */
 export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, inferences: GoSlice<GoPtr<InferenceInfo>>, signature: GoPtr<Signature>, flags: InferenceFlags, compareTypes: TypeComparer): GoPtr<InferenceContext> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.newInferenceContextWorker");
+  const n: InferenceContext = {
+    inferences,
+    signature,
+    flags,
+    compareTypes,
+    mapper: undefined,
+    nonFixingMapper: undefined,
+    returnMapper: undefined,
+    outerReturnMapper: undefined,
+    inferredTypeParameters: [],
+    intraExpressionInferenceSites: [],
+  };
+  n.mapper = Checker_newInferenceTypeMapper(receiver, n, true);
+  n.nonFixingMapper = Checker_newInferenceTypeMapper(receiver, n, false);
+  return n;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.addIntraExpressionInferenceSite","kind":"method","status":"stub","sigHash":"70c18c660739d5b3e4243ece9e777f0e93f91ee38b86f886c3828552f7940c39","bodyHash":"78271f2d3b8fd6ac2cd7efc0ed742c054a54843e07ce7afbe9f6b98cf3a2c81d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.addIntraExpressionInferenceSite","kind":"method","status":"implemented","sigHash":"70c18c660739d5b3e4243ece9e777f0e93f91ee38b86f886c3828552f7940c39","bodyHash":"78271f2d3b8fd6ac2cd7efc0ed742c054a54843e07ce7afbe9f6b98cf3a2c81d"}
  *
  * Go source:
  * func (c *Checker) addIntraExpressionInferenceSite(n *InferenceContext, node *ast.Node, t *Type) {
@@ -2269,11 +2900,12 @@ export function Checker_newInferenceContextWorker(receiver: GoPtr<Checker>, infe
  * }
  */
 export function Checker_addIntraExpressionInferenceSite(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, node: GoPtr<Node>, t: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.addIntraExpressionInferenceSite");
+  const site: IntraExpressionInferenceSite = { node, t };
+  n!.intraExpressionInferenceSites = [...n!.intraExpressionInferenceSites, site];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIntraExpressionSites","kind":"method","status":"stub","sigHash":"fe6c9d866b17472080941654c236f9941a730b34c341eea1ec49db87349c3eb6","bodyHash":"d946a8e22e7c3ffdd3baadd3d1ed1934bbe6ebe9a383b1357bbbd980ca972e1e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIntraExpressionSites","kind":"method","status":"implemented","sigHash":"fe6c9d866b17472080941654c236f9941a730b34c341eea1ec49db87349c3eb6","bodyHash":"d946a8e22e7c3ffdd3baadd3d1ed1934bbe6ebe9a383b1357bbbd980ca972e1e"}
  *
  * Go source:
  * func (c *Checker) inferFromIntraExpressionSites(n *InferenceContext) {
@@ -2292,11 +2924,22 @@ export function Checker_addIntraExpressionInferenceSite(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.inferFromIntraExpressionSites");
+  for (const site of n!.intraExpressionInferenceSites) {
+    let contextualType: GoPtr<Type>;
+    if (IsMethodDeclaration(site.node)) {
+      contextualType = Checker_getContextualTypeForObjectLiteralMethod(receiver, site.node, ContextFlagsNoConstraints);
+    } else {
+      contextualType = Checker_getContextualType(receiver, site.node, ContextFlagsNoConstraints);
+    }
+    if (contextualType !== undefined) {
+      Checker_inferTypes(receiver, n!.inferences, site.t, contextualType, InferencePriorityNone, false);
+    }
+  }
+  n!.intraExpressionInferenceSites = [];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredType","kind":"method","status":"stub","sigHash":"436a997c39ab435c05948be5e6daf128288aeec093ec139ffeb8092f98b82931","bodyHash":"93777b5af3ccc033fc95ecbba08bb7460666f77b99316c7a4447ed1d127cc4ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredType","kind":"method","status":"implemented","sigHash":"436a997c39ab435c05948be5e6daf128288aeec093ec139ffeb8092f98b82931","bodyHash":"93777b5af3ccc033fc95ecbba08bb7460666f77b99316c7a4447ed1d127cc4ac"}
  *
  * Go source:
  * func (c *Checker) getInferredType(n *InferenceContext, index int) *Type {
@@ -2389,11 +3032,80 @@ export function Checker_inferFromIntraExpressionSites(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>, index: int): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredType");
+  const c = receiver!;
+  const inference = n!.inferences[index];
+  if (inference!.inferredType === undefined) {
+    if (inference!.typeParameter === c.errorType) {
+      return inference!.typeParameter;
+    }
+    let inferredType: GoPtr<Type> = undefined;
+    let fallbackType: GoPtr<Type> = undefined;
+    if (n!.signature !== undefined) {
+      let inferredCovariantType: GoPtr<Type> = undefined;
+      if (inference!.candidates.length !== 0) {
+        inferredCovariantType = Checker_getCovariantInference(receiver, inference, n!.signature);
+      }
+      let inferredContravariantType: GoPtr<Type> = undefined;
+      if (inference!.contraCandidates.length !== 0) {
+        inferredContravariantType = Checker_getContravariantInference(receiver, inference);
+      }
+      if (inferredCovariantType !== undefined || inferredContravariantType !== undefined) {
+        const preferCovariantType = inferredCovariantType !== undefined && (inferredContravariantType === undefined ||
+          ((inferredCovariantType!.flags & (TypeFlagsNever | TypeFlagsAny)) === 0 &&
+            core.Some(inference!.contraCandidates, (t) => Checker_isTypeAssignableTo(receiver, inferredCovariantType, t)) &&
+            core.Every(n!.inferences, (other) =>
+              (other !== inference && Checker_getConstraintOfTypeParameter(receiver, other!.typeParameter) !== inference!.typeParameter) ||
+              core.Every(other!.candidates, (t) => Checker_isTypeAssignableTo(receiver, t, inferredCovariantType))
+            )));
+        if (preferCovariantType) {
+          inferredType = inferredCovariantType;
+          fallbackType = inferredContravariantType;
+        } else {
+          inferredType = inferredContravariantType;
+          fallbackType = inferredCovariantType;
+        }
+      } else if ((n!.flags & InferenceFlagsNoDefault) !== 0) {
+        inferredType = c.silentNeverType;
+      } else {
+        const defaultType = Checker_getDefaultFromTypeParameter(receiver, inference!.typeParameter);
+        if (defaultType !== undefined) {
+          inferredType = Checker_instantiateType(receiver, defaultType, mergeTypeMappers(Checker_newBackreferenceMapper(receiver, n, index), n!.nonFixingMapper));
+        }
+      }
+    } else {
+      inferredType = Checker_getTypeFromInference(receiver, inference);
+    }
+    inference!.inferredType = inferredType;
+    if (inference!.inferredType === undefined) {
+      inference!.inferredType = (n!.flags & InferenceFlagsAnyDefault) !== 0 ? c.anyType : c.unknownType;
+    }
+    const constraint = Checker_getConstraintOfTypeParameter(receiver, inference!.typeParameter);
+    if (constraint !== undefined) {
+      const instantiatedConstraint = Checker_instantiateType(receiver, constraint, n!.nonFixingMapper);
+      if (inferredType !== undefined) {
+        const constraintWithThis = Checker_getTypeWithThisArgument(receiver, instantiatedConstraint, inferredType, false);
+        if (n!.compareTypes(inferredType, constraintWithThis, false) === TernaryFalse) {
+          let filteredByConstraint: GoPtr<Type> = undefined;
+          if (inference!.priority === InferencePriorityReturnType) {
+            filteredByConstraint = Checker_mapType(receiver, inferredType, (t) =>
+              n!.compareTypes(t, constraintWithThis, false) !== TernaryFalse ? t : c.neverType
+            );
+          }
+          inferredType = (filteredByConstraint !== undefined && (filteredByConstraint!.flags & TypeFlagsNever) === 0) ? filteredByConstraint : undefined;
+        }
+      }
+      if (inferredType === undefined) {
+        inferredType = (fallbackType !== undefined && n!.compareTypes(fallbackType, Checker_getTypeWithThisArgument(receiver, instantiatedConstraint, fallbackType, false), false) !== TernaryFalse) ? fallbackType : instantiatedConstraint;
+      }
+      inference!.inferredType = inferredType;
+    }
+    Checker_clearActiveMapperCaches(receiver);
+  }
+  return inference!.inferredType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredTypes","kind":"method","status":"stub","sigHash":"583f4f1e0f9c25a4c2c1d4ffaf143891a04e1d015f045ff471b808ad79c3ddb2","bodyHash":"a17d4f3623701add598b4ada989e11af2326258e92310b0f5ff601b09565b9ee"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredTypes","kind":"method","status":"implemented","sigHash":"583f4f1e0f9c25a4c2c1d4ffaf143891a04e1d015f045ff471b808ad79c3ddb2","bodyHash":"a17d4f3623701add598b4ada989e11af2326258e92310b0f5ff601b09565b9ee"}
  *
  * Go source:
  * func (c *Checker) getInferredTypes(n *InferenceContext) []*Type {
@@ -2405,11 +3117,15 @@ export function Checker_getInferredType(receiver: GoPtr<Checker>, n: GoPtr<Infer
  * }
  */
 export function Checker_getInferredTypes(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getInferredTypes");
+  const result: GoSlice<GoPtr<Type>> = new Array(n!.inferences.length);
+  for (let i = 0; i < n!.inferences.length; i++) {
+    result[i] = Checker_getInferredType(receiver, n, i);
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getMapperFromContext","kind":"method","status":"stub","sigHash":"35d9fa0e0c9e8a543a505e9b26097d2c4988dbfbc17f258da5a78058ceeb15d7","bodyHash":"f74bfc3dd191a2a5db7eb9d9b3f35b7d4d0f632f1f3f75626d050b031a03388a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getMapperFromContext","kind":"method","status":"implemented","sigHash":"35d9fa0e0c9e8a543a505e9b26097d2c4988dbfbc17f258da5a78058ceeb15d7","bodyHash":"f74bfc3dd191a2a5db7eb9d9b3f35b7d4d0f632f1f3f75626d050b031a03388a"}
  *
  * Go source:
  * func (c *Checker) getMapperFromContext(n *InferenceContext) *TypeMapper {
@@ -2420,11 +3136,14 @@ export function Checker_getInferredTypes(receiver: GoPtr<Checker>, n: GoPtr<Infe
  * }
  */
 export function Checker_getMapperFromContext(receiver: GoPtr<Checker>, n: GoPtr<InferenceContext>): GoPtr<TypeMapper> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getMapperFromContext");
+  if (n === undefined) {
+    return undefined;
+  }
+  return n!.mapper;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createOuterReturnMapper","kind":"method","status":"stub","sigHash":"9f16c4f3842e8c70de181bc3d19443fba103fbe7a1885836c5bbed762f4d16b7","bodyHash":"3ff69f66861630764636e7c47d4337bf9590de9d1d9013b45a2d4e1bf4a851d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createOuterReturnMapper","kind":"method","status":"implemented","sigHash":"9f16c4f3842e8c70de181bc3d19443fba103fbe7a1885836c5bbed762f4d16b7","bodyHash":"3ff69f66861630764636e7c47d4337bf9590de9d1d9013b45a2d4e1bf4a851d2"}
  *
  * Go source:
  * func (c *Checker) createOuterReturnMapper(context *InferenceContext) *TypeMapper {
@@ -2439,11 +3158,18 @@ export function Checker_getMapperFromContext(receiver: GoPtr<Checker>, n: GoPtr<
  * }
  */
 export function Checker_createOuterReturnMapper(receiver: GoPtr<Checker>, context: GoPtr<InferenceContext>): GoPtr<TypeMapper> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.createOuterReturnMapper");
+  if (context!.outerReturnMapper === undefined) {
+    let mapper = Checker_cloneInferenceContext(receiver, context, InferenceFlagsNone)!.mapper;
+    if (context!.returnMapper !== undefined) {
+      mapper = newMergedTypeMapper(context!.returnMapper, mapper);
+    }
+    context!.outerReturnMapper = mapper;
+  }
+  return context!.outerReturnMapper;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCovariantInference","kind":"method","status":"stub","sigHash":"8ee8b6d1b614215a709734f80d63d28aae9572278501fb9d95c8a969afaca3fd","bodyHash":"96940c39de4293b4cdfb8d740694cb83f034d911a0e99ecc3e75a5cac91f6e72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCovariantInference","kind":"method","status":"implemented","sigHash":"8ee8b6d1b614215a709734f80d63d28aae9572278501fb9d95c8a969afaca3fd","bodyHash":"96940c39de4293b4cdfb8d740694cb83f034d911a0e99ecc3e75a5cac91f6e72"}
  *
  * Go source:
  * func (c *Checker) getCovariantInference(inference *InferenceInfo, signature *Signature) *Type {
@@ -2476,11 +3202,28 @@ export function Checker_createOuterReturnMapper(receiver: GoPtr<Checker>, contex
  * }
  */
 export function Checker_getCovariantInference(receiver: GoPtr<Checker>, inference: GoPtr<InferenceInfo>, signature: GoPtr<Signature>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCovariantInference");
+  const candidates = Checker_unionObjectAndArrayLiteralCandidates(receiver, inference!.candidates);
+  const primitiveConstraint = Checker_hasPrimitiveConstraint(receiver, inference!.typeParameter) || Checker_isConstTypeVariable(receiver, inference!.typeParameter, 0);
+  const widenLiteralTypes = !primitiveConstraint && inference!.topLevel && (inference!.isFixed || !Checker_isTypeParameterAtTopLevelInReturnType(receiver, signature, inference!.typeParameter));
+  let baseCandidates: GoSlice<GoPtr<Type>>;
+  if (primitiveConstraint) {
+    baseCandidates = core.SameMap(candidates, (t) => Checker_getRegularTypeOfLiteralType(receiver, t));
+  } else if (widenLiteralTypes) {
+    baseCandidates = core.SameMap(candidates, (t) => Checker_getWidenedLiteralType(receiver, t));
+  } else {
+    baseCandidates = candidates;
+  }
+  let unwidenedType: GoPtr<Type>;
+  if ((inference!.priority & InferencePriorityPriorityImpliesCombination) !== 0) {
+    unwidenedType = Checker_getUnionTypeEx(receiver, baseCandidates, UnionReductionSubtype, undefined, undefined);
+  } else {
+    unwidenedType = Checker_getCommonSupertype(receiver, baseCandidates);
+  }
+  return Checker_getWidenedType(receiver, unwidenedType);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getContravariantInference","kind":"method","status":"stub","sigHash":"b427074a49c090693dcd22621aa167322c19cbc58cc16024015133ce4afd02ce","bodyHash":"9d2c1e0a6d9ba46c86278ddde6c02eed2aeb50ade691d56df75fffa0799c46c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getContravariantInference","kind":"method","status":"implemented","sigHash":"b427074a49c090693dcd22621aa167322c19cbc58cc16024015133ce4afd02ce","bodyHash":"9d2c1e0a6d9ba46c86278ddde6c02eed2aeb50ade691d56df75fffa0799c46c5"}
  *
  * Go source:
  * func (c *Checker) getContravariantInference(inference *InferenceInfo) *Type {
@@ -2491,11 +3234,14 @@ export function Checker_getCovariantInference(receiver: GoPtr<Checker>, inferenc
  * }
  */
 export function Checker_getContravariantInference(receiver: GoPtr<Checker>, inference: GoPtr<InferenceInfo>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getContravariantInference");
+  if ((inference!.priority & InferencePriorityPriorityImpliesCombination) !== 0) {
+    return Checker_getIntersectionType(receiver, inference!.contraCandidates);
+  }
+  return Checker_getCommonSubtype(receiver, inference!.contraCandidates);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.unionObjectAndArrayLiteralCandidates","kind":"method","status":"stub","sigHash":"d29654e592b0fa2db4241a6aeff1efe6ddeff595d003c3b2a7a73303b1fcc070","bodyHash":"7536462343a0bd36d6b7d92a1192d620037630ca262ac81070e106b49819573a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.unionObjectAndArrayLiteralCandidates","kind":"method","status":"implemented","sigHash":"d29654e592b0fa2db4241a6aeff1efe6ddeff595d003c3b2a7a73303b1fcc070","bodyHash":"7536462343a0bd36d6b7d92a1192d620037630ca262ac81070e106b49819573a"}
  *
  * Go source:
  * func (c *Checker) unionObjectAndArrayLiteralCandidates(candidates []*Type) []*Type {
@@ -2511,11 +3257,19 @@ export function Checker_getContravariantInference(receiver: GoPtr<Checker>, infe
  * }
  */
 export function Checker_unionObjectAndArrayLiteralCandidates(receiver: GoPtr<Checker>, candidates: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.unionObjectAndArrayLiteralCandidates");
+  if (candidates.length > 1) {
+    const objectLiterals = core.Filter(candidates, isObjectOrArrayLiteralType);
+    if (objectLiterals.length !== 0) {
+      const literalsType = Checker_getUnionTypeEx(receiver, objectLiterals, UnionReductionSubtype, undefined, undefined);
+      const nonLiteralTypes = core.Filter(candidates, (t) => !isObjectOrArrayLiteralType(t));
+      return core.Concatenate(nonLiteralTypes, [literalsType]);
+    }
+  }
+  return candidates;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.hasPrimitiveConstraint","kind":"method","status":"stub","sigHash":"4e8b08c5cb250dff58992b60e84690476edb9226d10f78c7bb45f5eaa7237b58","bodyHash":"41893395075b0dda1affd60b60ed525bccbbcb04e85ae0ae4642b21cd03c2340"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.hasPrimitiveConstraint","kind":"method","status":"implemented","sigHash":"4e8b08c5cb250dff58992b60e84690476edb9226d10f78c7bb45f5eaa7237b58","bodyHash":"41893395075b0dda1affd60b60ed525bccbbcb04e85ae0ae4642b21cd03c2340"}
  *
  * Go source:
  * func (c *Checker) hasPrimitiveConstraint(t *Type) bool {
@@ -2530,11 +3284,18 @@ export function Checker_unionObjectAndArrayLiteralCandidates(receiver: GoPtr<Che
  * }
  */
 export function Checker_hasPrimitiveConstraint(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.hasPrimitiveConstraint");
+  let constraint = Checker_getConstraintOfTypeParameter(receiver, t);
+  if (constraint !== undefined) {
+    if ((constraint!.flags & TypeFlagsConditional) !== 0) {
+      constraint = Checker_getDefaultConstraintOfConditionalType(receiver, constraint);
+    }
+    return Checker_maybeTypeOfKind(receiver, constraint, TypeFlagsPrimitive | TypeFlagsIndex | TypeFlagsTemplateLiteral | TypeFlagsStringMapping);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevel","kind":"method","status":"stub","sigHash":"92a91dd8fd28fb263c767ee5d1a5af0279184c7e6e1c932d7686c573533e14c7","bodyHash":"6b18a0c100c5d22a615ea5021d0ad44ecde9ac01db427bf92e5bbb10cea7840c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevel","kind":"method","status":"implemented","sigHash":"92a91dd8fd28fb263c767ee5d1a5af0279184c7e6e1c932d7686c573533e14c7","bodyHash":"6b18a0c100c5d22a615ea5021d0ad44ecde9ac01db427bf92e5bbb10cea7840c"}
  *
  * Go source:
  * func (c *Checker) isTypeParameterAtTopLevel(t *Type, tp *Type, depth int) bool {
@@ -2546,11 +3307,15 @@ export function Checker_hasPrimitiveConstraint(receiver: GoPtr<Checker>, t: GoPt
  * }
  */
 export function Checker_isTypeParameterAtTopLevel(receiver: GoPtr<Checker>, t: GoPtr<Type>, tp: GoPtr<Type>, depth: int): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevel");
+  return t === tp ||
+    ((t!.flags & TypeFlagsUnionOrIntersection) !== 0 && core.Some(Type_Types(t), (u) => Checker_isTypeParameterAtTopLevel(receiver, u, tp, depth))) ||
+    (depth < 3 && (t!.flags & TypeFlagsConditional) !== 0 &&
+      (Checker_isTypeParameterAtTopLevel(receiver, Checker_getTrueTypeFromConditionalType(receiver, t), tp, depth + 1) ||
+        Checker_isTypeParameterAtTopLevel(receiver, Checker_getFalseTypeFromConditionalType(receiver, t), tp, depth + 1)));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevelInReturnType","kind":"method","status":"stub","sigHash":"3339484dba66835cb052ff42ecc416df5c9e14f8f236b496e8104ce6fba5dbf9","bodyHash":"c55f42de0f95b4bb6372ff24d9773942a2ec16991a84a07cea6f6075ca1745b7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevelInReturnType","kind":"method","status":"implemented","sigHash":"3339484dba66835cb052ff42ecc416df5c9e14f8f236b496e8104ce6fba5dbf9","bodyHash":"c55f42de0f95b4bb6372ff24d9773942a2ec16991a84a07cea6f6075ca1745b7"}
  *
  * Go source:
  * func (c *Checker) isTypeParameterAtTopLevelInReturnType(signature *Signature, typeParameter *Type) bool {
@@ -2562,11 +3327,15 @@ export function Checker_isTypeParameterAtTopLevel(receiver: GoPtr<Checker>, t: G
  * }
  */
 export function Checker_isTypeParameterAtTopLevelInReturnType(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, typeParameter: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isTypeParameterAtTopLevelInReturnType");
+  const typePredicate = Checker_getTypePredicateOfSignature(receiver, signature);
+  if (typePredicate !== undefined) {
+    return typePredicate!.t !== undefined && Checker_isTypeParameterAtTopLevel(receiver, typePredicate!.t, typeParameter, 0);
+  }
+  return Checker_isTypeParameterAtTopLevel(receiver, Checker_getReturnTypeOfSignature(receiver, signature), typeParameter, 0);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeFromInference","kind":"method","status":"stub","sigHash":"6527ce679905978335a72c3f6d99fc74e3289921157a6d0d9db84b70752f5f07","bodyHash":"2c43c0ef65a0e72f5e7e5a8bdea04e714d6bbe7147d309e0fed6ba26d57772d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeFromInference","kind":"method","status":"implemented","sigHash":"6527ce679905978335a72c3f6d99fc74e3289921157a6d0d9db84b70752f5f07","bodyHash":"2c43c0ef65a0e72f5e7e5a8bdea04e714d6bbe7147d309e0fed6ba26d57772d3"}
  *
  * Go source:
  * func (c *Checker) getTypeFromInference(inference *InferenceInfo) *Type {
@@ -2580,11 +3349,17 @@ export function Checker_isTypeParameterAtTopLevelInReturnType(receiver: GoPtr<Ch
  * }
  */
 export function Checker_getTypeFromInference(receiver: GoPtr<Checker>, inference: GoPtr<InferenceInfo>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getTypeFromInference");
+  if (inference!.candidates.length !== 0) {
+    return Checker_getUnionTypeEx(receiver, inference!.candidates, UnionReductionSubtype, undefined, undefined);
+  }
+  if (inference!.contraCandidates.length !== 0) {
+    return Checker_getIntersectionType(receiver, inference!.contraCandidates);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::getInferenceInfoForType","kind":"func","status":"stub","sigHash":"6dc30468afb4f833a0b7d2894ac199dfdd760843425c269c8ade9569f9171ff0","bodyHash":"7be652ec21307a1324631ff580d189454dd2e765868cbfa6821bf7543e7f3a95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::getInferenceInfoForType","kind":"func","status":"implemented","sigHash":"6dc30468afb4f833a0b7d2894ac199dfdd760843425c269c8ade9569f9171ff0","bodyHash":"7be652ec21307a1324631ff580d189454dd2e765868cbfa6821bf7543e7f3a95"}
  *
  * Go source:
  * func getInferenceInfoForType(n *InferenceState, t *Type) *InferenceInfo {
@@ -2599,11 +3374,18 @@ export function Checker_getTypeFromInference(receiver: GoPtr<Checker>, inference
  * }
  */
 export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>): GoPtr<InferenceInfo> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::getInferenceInfoForType");
+  if ((t!.flags & TypeFlagsTypeVariable) !== 0) {
+    for (const inference of n!.inferences) {
+      if (t === inference!.typeParameter) {
+        return inference;
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSupertype","kind":"method","status":"stub","sigHash":"a2aeb838ef13f722866f72f28cae2d0e5305b1f0bbf9e6cc3f881ab5ccc89a66","bodyHash":"40572e350761402336729d701089a44cb9cb04693db5d776fcd5e9645fa175bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSupertype","kind":"method","status":"implemented","sigHash":"a2aeb838ef13f722866f72f28cae2d0e5305b1f0bbf9e6cc3f881ab5ccc89a66","bodyHash":"40572e350761402336729d701089a44cb9cb04693db5d776fcd5e9645fa175bc"}
  *
  * Go source:
  * func (c *Checker) getCommonSupertype(types []*Type) *Type {
@@ -2634,11 +3416,28 @@ export function getInferenceInfoForType(n: GoPtr<InferenceState>, t: GoPtr<Type>
  * }
  */
 export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSupertype");
+  const c = receiver!;
+  if (types.length === 1) {
+    return types[0];
+  }
+  let primaryTypes = types;
+  if (c.strictNullChecks) {
+    primaryTypes = core.SameMap(types, (t) => Checker_filterType(receiver, t, (u) => (u!.flags & TypeFlagsNullable) === 0));
+  }
+  let supertype: GoPtr<Type>;
+  if (Checker_literalTypesWithSameBaseType(receiver, primaryTypes)) {
+    supertype = Checker_getUnionType(receiver, primaryTypes);
+  } else {
+    supertype = Checker_getSingleCommonSupertype(receiver, primaryTypes);
+  }
+  if (core.Same(primaryTypes, types)) {
+    return supertype;
+  }
+  return Checker_getNullableType(receiver, supertype, Checker_getCombinedTypeFlags(receiver, types) & TypeFlagsNullable);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getSingleCommonSupertype","kind":"method","status":"stub","sigHash":"ee451f49830c1b5014012d1be9fb5e19ae9f1dece2f0820498a7af50d32be90b","bodyHash":"2b7d1a341dc3dc6073f4e6784549600665d8e9bd24ed0ebfc8c854e620f37d7f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getSingleCommonSupertype","kind":"method","status":"implemented","sigHash":"ee451f49830c1b5014012d1be9fb5e19ae9f1dece2f0820498a7af50d32be90b","bodyHash":"2b7d1a341dc3dc6073f4e6784549600665d8e9bd24ed0ebfc8c854e620f37d7f"}
  *
  * Go source:
  * func (c *Checker) getSingleCommonSupertype(types []*Type) *Type {
@@ -2653,11 +3452,15 @@ export function Checker_getCommonSupertype(receiver: GoPtr<Checker>, types: GoSl
  * }
  */
 export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getSingleCommonSupertype");
+  const candidate = Checker_findLeftmostType(receiver, types, Checker_isTypeStrictSubtypeOf);
+  if (core.Every(types, (t) => t === candidate || Checker_isTypeStrictSubtypeOf(receiver, t, candidate))) {
+    return candidate;
+  }
+  return Checker_findLeftmostType(receiver, types, Checker_isTypeSubtypeOf);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.findLeftmostType","kind":"method","status":"stub","sigHash":"3ab31df0cdb61deb752bbb158879ac0b3cff778dfce47b146b2787970b71329b","bodyHash":"923485be0a3d60e542c608a36ebeeef3c301c1e3ffefa846f34bfb2bf384dbc2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.findLeftmostType","kind":"method","status":"implemented","sigHash":"3ab31df0cdb61deb752bbb158879ac0b3cff778dfce47b146b2787970b71329b","bodyHash":"923485be0a3d60e542c608a36ebeeef3c301c1e3ffefa846f34bfb2bf384dbc2"}
  *
  * Go source:
  * func (c *Checker) findLeftmostType(types []*Type, f func(c *Checker, s *Type, t *Type) bool) *Type {
@@ -2671,11 +3474,17 @@ export function Checker_getSingleCommonSupertype(receiver: GoPtr<Checker>, types
  * }
  */
 export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, f: (c: GoPtr<Checker>, s: GoPtr<Type>, t: GoPtr<Type>) => bool): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.findLeftmostType");
+  let candidate: GoPtr<Type> = undefined;
+  for (const t of types) {
+    if (candidate === undefined || f(receiver, candidate, t)) {
+      candidate = t;
+    }
+  }
+  return candidate;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSubtype","kind":"method","status":"stub","sigHash":"78071e4485bb19dca5764c3fbe9234a4a1637b94369229b67930d65fb79258b7","bodyHash":"4d0ed1d8cdd89b30022b3d49da6d082db9b3b9fdbf08e06d7748787ac1b56040"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSubtype","kind":"method","status":"implemented","sigHash":"78071e4485bb19dca5764c3fbe9234a4a1637b94369229b67930d65fb79258b7","bodyHash":"4d0ed1d8cdd89b30022b3d49da6d082db9b3b9fdbf08e06d7748787ac1b56040"}
  *
  * Go source:
  * func (c *Checker) getCommonSubtype(types []*Type) *Type {
@@ -2689,11 +3498,17 @@ export function Checker_findLeftmostType(receiver: GoPtr<Checker>, types: GoSlic
  * }
  */
 export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCommonSubtype");
+  let subtype: GoPtr<Type> = undefined;
+  for (const t of types) {
+    if (subtype === undefined || Checker_isTypeSubtypeOf(receiver, t, subtype)) {
+      subtype = t;
+    }
+  }
+  return subtype;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCombinedTypeFlags","kind":"method","status":"stub","sigHash":"a430ab1e505ad7152cf8f3ec98c1e5f1ae600d62eea3b1191af30524362081f2","bodyHash":"f5e612b2c567f9001c67ef49ae349c7049e0be56cd69266528e26db63cd7e32f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCombinedTypeFlags","kind":"method","status":"implemented","sigHash":"a430ab1e505ad7152cf8f3ec98c1e5f1ae600d62eea3b1191af30524362081f2","bodyHash":"f5e612b2c567f9001c67ef49ae349c7049e0be56cd69266528e26db63cd7e32f"}
  *
  * Go source:
  * func (c *Checker) getCombinedTypeFlags(types []*Type) TypeFlags {
@@ -2709,11 +3524,19 @@ export function Checker_getCommonSubtype(receiver: GoPtr<Checker>, types: GoSlic
  * }
  */
 export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): TypeFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.getCombinedTypeFlags");
+  let flags = TypeFlagsNone;
+  for (const t of types) {
+    if ((t!.flags & TypeFlagsUnion) !== 0) {
+      flags |= Checker_getCombinedTypeFlags(receiver, Type_Types(t));
+    } else {
+      flags |= t!.flags;
+    }
+  }
+  return flags;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.literalTypesWithSameBaseType","kind":"method","status":"stub","sigHash":"ee6c941b3f5a1c327b7eda793a50c1a4bef43ffc744d54b4a5aa457a663dbdb3","bodyHash":"bb5b8443c256488d0a8d28118d62f6fb368fed5130ea961c140b21801a462749"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.literalTypesWithSameBaseType","kind":"method","status":"implemented","sigHash":"ee6c941b3f5a1c327b7eda793a50c1a4bef43ffc744d54b4a5aa457a663dbdb3","bodyHash":"bb5b8443c256488d0a8d28118d62f6fb368fed5130ea961c140b21801a462749"}
  *
  * Go source:
  * func (c *Checker) literalTypesWithSameBaseType(types []*Type) bool {
@@ -2733,11 +3556,24 @@ export function Checker_getCombinedTypeFlags(receiver: GoPtr<Checker>, types: Go
  * }
  */
 export function Checker_literalTypesWithSameBaseType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.literalTypesWithSameBaseType");
+  const c = receiver!;
+  let commonBaseType: GoPtr<Type> = undefined;
+  for (const t of types) {
+    if ((t!.flags & TypeFlagsNever) === 0) {
+      const baseType = Checker_getBaseTypeOfLiteralType(receiver, t);
+      if (commonBaseType === undefined) {
+        commonBaseType = baseType;
+      }
+      if (baseType === t || baseType !== commonBaseType) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isFromInferenceBlockedSource","kind":"method","status":"stub","sigHash":"ae885bf9c1cff1d87daae785e240c67b51d54628741ac21a9efca1dfbf74cb09","bodyHash":"b9d2aa4ae89acdbaab1c5d66373143ec5861f7ce6a30cae0da6ac775e2f85a3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isFromInferenceBlockedSource","kind":"method","status":"implemented","sigHash":"ae885bf9c1cff1d87daae785e240c67b51d54628741ac21a9efca1dfbf74cb09","bodyHash":"b9d2aa4ae89acdbaab1c5d66373143ec5861f7ce6a30cae0da6ac775e2f85a3a"}
  *
  * Go source:
  * func (c *Checker) isFromInferenceBlockedSource(t *Type) bool {
@@ -2745,11 +3581,11 @@ export function Checker_literalTypesWithSameBaseType(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_isFromInferenceBlockedSource(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isFromInferenceBlockedSource");
+  return t!.symbol !== undefined && core.Some(t!.symbol!.Declarations, (node) => Checker_isSkipDirectInferenceNode(receiver, node));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isSkipDirectInferenceNode","kind":"method","status":"stub","sigHash":"c014130cd446a3724dc2ebc489998d146746cc81837a2eac828054cca6784540","bodyHash":"eb7f8c3bdfb6aacecaa26ab1a46f1490ccc8aa4a2786724117cd0b8ec2236257"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isSkipDirectInferenceNode","kind":"method","status":"implemented","sigHash":"c014130cd446a3724dc2ebc489998d146746cc81837a2eac828054cca6784540","bodyHash":"eb7f8c3bdfb6aacecaa26ab1a46f1490ccc8aa4a2786724117cd0b8ec2236257"}
  *
  * Go source:
  * func (c *Checker) isSkipDirectInferenceNode(node *ast.Node) bool {
@@ -2757,11 +3593,12 @@ export function Checker_isFromInferenceBlockedSource(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_isSkipDirectInferenceNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.isSkipDirectInferenceNode");
+  const c = receiver!;
+  return Set_Has(c.skipDirectInferenceNodes, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::newInferenceInfo","kind":"func","status":"stub","sigHash":"e28df7f6bec1c7ec663ccdeae1afe71df15b37fac35b93e388c4e32522a14df6","bodyHash":"be1f3d2440bd0c726d25365d0ecf7043d95ebb34e448639eb5579e8691faf662"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::newInferenceInfo","kind":"func","status":"implemented","sigHash":"e28df7f6bec1c7ec663ccdeae1afe71df15b37fac35b93e388c4e32522a14df6","bodyHash":"be1f3d2440bd0c726d25365d0ecf7043d95ebb34e448639eb5579e8691faf662"}
  *
  * Go source:
  * func newInferenceInfo(typeParameter *Type) *InferenceInfo {
@@ -2769,11 +3606,11 @@ export function Checker_isSkipDirectInferenceNode(receiver: GoPtr<Checker>, node
  * }
  */
 export function newInferenceInfo(typeParameter: GoPtr<Type>): GoPtr<InferenceInfo> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::newInferenceInfo");
+  return { typeParameter, priority: InferencePriorityMaxValue, topLevel: true, impliedArity: -1, candidates: [], contraCandidates: [], inferredType: undefined, isFixed: false };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::cloneInferenceInfo","kind":"func","status":"stub","sigHash":"f99201cb5ec216c33f77ead613a44bb0f16b000c0ccd516f08ba2b1c76189bd8","bodyHash":"8375c797df0bef3c982c65ca8f664fb2ec99401accf1204d63d2d635b2cf86e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::cloneInferenceInfo","kind":"func","status":"implemented","sigHash":"f99201cb5ec216c33f77ead613a44bb0f16b000c0ccd516f08ba2b1c76189bd8","bodyHash":"8375c797df0bef3c982c65ca8f664fb2ec99401accf1204d63d2d635b2cf86e7"}
  *
  * Go source:
  * func cloneInferenceInfo(info *InferenceInfo) *InferenceInfo {
@@ -2790,11 +3627,20 @@ export function newInferenceInfo(typeParameter: GoPtr<Type>): GoPtr<InferenceInf
  * }
  */
 export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceInfo> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::cloneInferenceInfo");
+  return {
+    typeParameter: info!.typeParameter,
+    candidates: (slices.Clone(info!.candidates) ?? []) as GoSlice<GoPtr<Type>>,
+    contraCandidates: (slices.Clone(info!.contraCandidates) ?? []) as GoSlice<GoPtr<Type>>,
+    inferredType: info!.inferredType,
+    priority: info!.priority,
+    topLevel: info!.topLevel,
+    isFixed: info!.isFixed,
+    impliedArity: info!.impliedArity,
+  };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::clearCachedInferences","kind":"func","status":"stub","sigHash":"9548eacb14d0d7d0b0ca1c15f57a8b7c733305e21fd32cdaac4dd0708e9a5a90","bodyHash":"2187bffff0cd5da4210ab4954b1f52eb7c51a5b87180934cd75dd75606c7efaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::clearCachedInferences","kind":"func","status":"implemented","sigHash":"9548eacb14d0d7d0b0ca1c15f57a8b7c733305e21fd32cdaac4dd0708e9a5a90","bodyHash":"2187bffff0cd5da4210ab4954b1f52eb7c51a5b87180934cd75dd75606c7efaf"}
  *
  * Go source:
  * func clearCachedInferences(inferences []*InferenceInfo) {
@@ -2806,11 +3652,15 @@ export function cloneInferenceInfo(info: GoPtr<InferenceInfo>): GoPtr<InferenceI
  * }
  */
 export function clearCachedInferences(inferences: GoSlice<GoPtr<InferenceInfo>>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::clearCachedInferences");
+  for (const inference of inferences) {
+    if (!inference!.isFixed) {
+      inference!.inferredType = undefined;
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidates","kind":"func","status":"stub","sigHash":"23c108297f792f1ee582b0b1c556bdb8dd1bdc7bc7de0dd6dd91b3f29a5a9a33","bodyHash":"a4ed319f711447dc68a73b538196cf1c906a6899f394fbb0db70463b8e4cb696"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidates","kind":"func","status":"implemented","sigHash":"23c108297f792f1ee582b0b1c556bdb8dd1bdc7bc7de0dd6dd91b3f29a5a9a33","bodyHash":"a4ed319f711447dc68a73b538196cf1c906a6899f394fbb0db70463b8e4cb696"}
  *
  * Go source:
  * func hasInferenceCandidates(info *InferenceInfo) bool {
@@ -2818,11 +3668,11 @@ export function clearCachedInferences(inferences: GoSlice<GoPtr<InferenceInfo>>)
  * }
  */
 export function hasInferenceCandidates(info: GoPtr<InferenceInfo>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidates");
+  return info!.candidates.length !== 0 || info!.contraCandidates.length !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidatesOrDefault","kind":"func","status":"stub","sigHash":"54950d22e067691420244e06a6fbc594c255ded90cb31348fd6eef520aea1e3b","bodyHash":"88fafc288a982269f2771ba59234b217b854457cb5a4303a147d7f1741ed4af7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidatesOrDefault","kind":"func","status":"implemented","sigHash":"54950d22e067691420244e06a6fbc594c255ded90cb31348fd6eef520aea1e3b","bodyHash":"88fafc288a982269f2771ba59234b217b854457cb5a4303a147d7f1741ed4af7"}
  *
  * Go source:
  * func hasInferenceCandidatesOrDefault(info *InferenceInfo) bool {
@@ -2830,11 +3680,11 @@ export function hasInferenceCandidates(info: GoPtr<InferenceInfo>): bool {
  * }
  */
 export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasInferenceCandidatesOrDefault");
+  return info!.candidates.length !== 0 || info!.contraCandidates.length !== 0 || hasTypeParameterDefault(info!.typeParameter);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasTypeParameterDefault","kind":"func","status":"stub","sigHash":"08b04fa427001f2a8524d03f79aefac9fbc6059fb2c22004208bdc885aefd10b","bodyHash":"9324e115c0f1e7399a9573174929e51cdc26f84bc89d19cab34e3132d36e6231"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasTypeParameterDefault","kind":"func","status":"implemented","sigHash":"08b04fa427001f2a8524d03f79aefac9fbc6059fb2c22004208bdc885aefd10b","bodyHash":"9324e115c0f1e7399a9573174929e51cdc26f84bc89d19cab34e3132d36e6231"}
  *
  * Go source:
  * func hasTypeParameterDefault(tp *Type) bool {
@@ -2849,11 +3699,18 @@ export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): boo
  * }
  */
 export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasTypeParameterDefault");
+  if (tp!.symbol !== undefined) {
+    for (const d of tp!.symbol!.Declarations) {
+      if (IsTypeParameterDeclaration(d) && AsTypeParameterDeclaration(d)!.DefaultType !== undefined) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasOverlappingInferences","kind":"func","status":"stub","sigHash":"0de84bb5324d9094fe318c19033cd706ca3e1d4da86692fb627a61d17a0baf52","bodyHash":"4801d81d98be861427f37400bd0c301d59701b330d893096011f2769746451ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasOverlappingInferences","kind":"func","status":"implemented","sigHash":"0de84bb5324d9094fe318c19033cd706ca3e1d4da86692fb627a61d17a0baf52","bodyHash":"4801d81d98be861427f37400bd0c301d59701b330d893096011f2769746451ab"}
  *
  * Go source:
  * func hasOverlappingInferences(a []*InferenceInfo, b []*InferenceInfo) bool {
@@ -2866,11 +3723,16 @@ export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
  * }
  */
 export function hasOverlappingInferences(a: GoSlice<GoPtr<InferenceInfo>>, b: GoSlice<GoPtr<InferenceInfo>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::func::hasOverlappingInferences");
+  for (let i = 0; i < a.length; i++) {
+    if (hasInferenceCandidates(a[i]) && hasInferenceCandidates(b[i])) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.mergeInferences","kind":"method","status":"stub","sigHash":"2641efe30b985e82e8f8141bbc8ab1e1bf258abb7499f905ac89df4ded0388be","bodyHash":"32015f14f6cf3a2252710f56871b207823f7f03f4190de9957bf94415609dad3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.mergeInferences","kind":"method","status":"implemented","sigHash":"2641efe30b985e82e8f8141bbc8ab1e1bf258abb7499f905ac89df4ded0388be","bodyHash":"32015f14f6cf3a2252710f56871b207823f7f03f4190de9957bf94415609dad3"}
  *
  * Go source:
  * func (c *Checker) mergeInferences(target []*InferenceInfo, source []*InferenceInfo) {
@@ -2882,5 +3744,9 @@ export function hasOverlappingInferences(a: GoSlice<GoPtr<InferenceInfo>>, b: Go
  * }
  */
 export function Checker_mergeInferences(receiver: GoPtr<Checker>, target: GoSlice<GoPtr<InferenceInfo>>, source: GoSlice<GoPtr<InferenceInfo>>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/inference.go::method::Checker.mergeInferences");
+  for (let i = 0; i < target.length; i++) {
+    if (!hasInferenceCandidates(target[i]) && hasInferenceCandidates(source[i])) {
+      target[i] = source[i];
+    }
+  }
 }

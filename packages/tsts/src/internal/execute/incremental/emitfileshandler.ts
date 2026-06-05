@@ -53,7 +53,7 @@ import type { DiagnosticsOrBuildInfoDiagnosticsWithFileName, emitSignature, File
 import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"stub","sigHash":"31f6da710657a6cf30883c75b819cbb029dc74228219b5ef999776b1d3e26e59","bodyHash":"b514029a6cc46f502243219e2a3c85568fca34dadd062aa2a02a0ca0bd34f46e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitUpdate","kind":"type","status":"implemented","sigHash":"31f6da710657a6cf30883c75b819cbb029dc74228219b5ef999776b1d3e26e59","bodyHash":"b514029a6cc46f502243219e2a3c85568fca34dadd062aa2a02a0ca0bd34f46e"}
  *
  * Go source:
  * emitUpdate struct {
@@ -69,7 +69,7 @@ export interface emitUpdate {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitFilesHandler","kind":"type","status":"stub","sigHash":"641c2242c0bbd61cdb0125738752919a03f29a2aac06b2b5b4ecb8b86fb70512","bodyHash":"bdf74c91c73866c87bf90476ae3ad5ca75eaaa2313a1e5c68c36fee7ab3d7ac9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/emitfileshandler.go::type::emitFilesHandler","kind":"type","status":"implemented","sigHash":"641c2242c0bbd61cdb0125738752919a03f29a2aac06b2b5b4ecb8b86fb70512","bodyHash":"bdf74c91c73866c87bf90476ae3ad5ca75eaaa2313a1e5c68c36fee7ab3d7ac9"}
  *
  * Go source:
  * emitFilesHandler struct {

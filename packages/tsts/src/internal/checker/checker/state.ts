@@ -1,33 +1,53 @@
-import type { bool, int, uint } from "@tsonic/core/types.js";
+import type { bool, byte, int, uint } from "@tsonic/core/types.js";
 import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
+import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import type { Mutex, Once } from "../../../go/sync.js";
-import { Uint32 } from "../../../go/sync/atomic.js";
+import { Uint32, Uint64 } from "../../../go/sync/atomic.js";
+import * as strconv from "../../../go/strconv.js";
+import * as gostrings from "../../../go/strings.js";
+import * as utf8 from "../../../go/unicode/utf8.js";
+import { Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
+import { IsAnyExportAssignment, Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_IsTypeOnly, Node_Locals, Node_ModuleSpecifier, Node_Parameters, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameters, SourceFile_FileName } from "../../ast/ast.js";
+import type { HasFileName, PatternAmbientModule, SourceFile, SourceFileMetaData, StringLiteralLike } from "../../ast/ast.js";
+import { AsArrayTypeNode, AsElementAccessExpression, AsExportSpecifier, AsImportAttribute, AsImportAttributes, AsImportDeclaration, AsImportEqualsDeclaration, AsMappedTypeNode, AsParameterDeclaration, AsSyntheticExpression, AsTypeParameterDeclaration, AsTypeReferenceNode, AsIndexedAccessTypeNode } from "../../ast/generated/casts.js";
 import type { NodeFactory } from "../../ast/generated/factory.js";
+import { CheckFlagsContainsPrivate, CheckFlagsSyntheticMethod } from "../../ast/checkflags.js";
+import { GetFunctionFlags, FunctionFlagsAsyncGenerator } from "../../ast/functionflags.js";
+import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBooleanKeyword, KindClassDeclaration, KindComputedPropertyName, KindConstructor, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExpressionWithTypeArguments, KindExternalModuleReference, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindIdentifier, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindIndexedAccessType, KindInterfaceDeclaration, KindJSImportDeclaration, KindLiteralType, KindMethodDeclaration, KindMethodSignature, KindMinusToken, KindNamespaceImport, KindNeverKeyword, KindNumberKeyword, KindObjectKeyword, KindPropertyDeclaration, KindPropertySignature, KindQualifiedName, KindSetAccessor, KindStringKeyword, KindSuperKeyword, KindSymbolKeyword, KindThisKeyword, KindTypeAliasDeclaration, KindTypeReference, KindUndefinedKeyword, KindUnknownKeyword, KindVariableStatement, KindVoidKeyword, KindAnyKeyword } from "../../ast/generated/kinds.js";
+import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
 import type { Declaration, IdentifierNode, TypeNode } from "../../ast/generated/unions.js";
+import { NodeFlagsAmbient } from "../../ast/generated/flags.js";
 import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import type { HasFileName, PatternAmbientModule, SourceFile, SourceFileMetaData, StringLiteralLike } from "../../ast/ast.js";
+import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import type { FlowNode } from "../../ast/flow.js";
 import type { NodeId, SymbolId } from "../../ast/ids.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
 import type { Set } from "../../collections/set.js";
 import type { Arena } from "../../core/arena.js";
+import { ModuleKindCommonJS, ModuleKindESNext } from "../../core/compileroptions.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, ScriptTarget } from "../../core/compileroptions.js";
+import { Every, Find, IfElse, LastOrNil, Map, Some } from "../../core/core.js";
 import type { LinkStore } from "../../core/linkstore.js";
+import { ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax, ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax_Adjust_the_type_field_in_the_nearest_package_json_to_make_this_file_an_ECMAScript_module_or_adjust_your_verbatimModuleSyntax_module_and_moduleResolution_settings_in_TypeScript } from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Evaluator } from "../../evaluator/evaluator.js";
+import { FromString } from "../../jsnum/string.js";
 import type { Number } from "../../jsnum/jsnum.js";
 import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
 import type { ModeAwareCache } from "../../module/cache.js";
 import type { ResolvedModule } from "../../module/types.js";
 import type { ModuleSpecifierGenerationHost } from "../../modulespecifiers/types.js";
+import { DeclarationNameToString } from "../../scanner/utilities.js";
 import type { Scanner } from "../../scanner/scanner.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../../tsoptions/parsedcommandline.js";
 import type { Path } from "../../tspath/path.js";
+import { ExtensionCjs, ExtensionCts, ExtensionIsTs, ExtensionJson, FileExtensionIsOneOf } from "../../tspath/extension.js";
+import { FindAncestor, GetClassLikeDeclarationOfSymbol, GetContainingFunction, GetExtendsHeritageClauseElement, GetImmediatelyInvokedFunctionExpression, GetModuleInstanceState, GetNameOfDeclaration, GetSourceFileOfNode, GetThisContainer, GetThisParameter, IsCallOrNewExpression, IsEntityNameExpression, IsExternalOrCommonJSModule, IsForInOrOfStatement, IsFunctionLike, IsParameterPropertyDeclaration, IsPrivateIdentifierClassElementDeclaration, IsStatic, IsStringLiteralLike, IsThisParameter, ModuleInstanceStateConstEnumOnly, ModuleInstanceStateInstantiated, NodeIsPresent, WalkUpParenthesizedExpressions } from "../../ast/utilities.js";
 import type { EmitResolver } from "../emitresolver.js";
 import type { FlowState, SharedFlow } from "../flow.js";
 import type { InferenceState } from "../inference.js";
@@ -35,7 +55,16 @@ import type { JsxElementLinks } from "../jsx.js";
 import type { TypeMapper } from "../mapper.js";
 import type { ExpandingFlags, IntersectionState, Relater, Relation, RelationComparisonResult } from "../relater.js";
 import type { Tracer } from "../tracer.js";
+import { CompareTypes, getPropertyNameFromType, isNumericLiteralName, isTypeAlias, NewDiagnosticForNode } from "../utilities.js";
+import { ElementFlagsFixed, ElementFlagsRequired, ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariadic, ObjectFlagsAnonymous, ObjectFlagsMapped, ObjectFlagsPrimitiveUnion, ObjectFlagsReference, ObjectFlagsTuple, SignatureFlagsHasLiteralTypes, SignatureFlagsHasRestParameter, TernaryFalse, TernaryTrue, Type_AsLiteralType, Type_AsMappedType, Type_AsTypeReference, Type_AsUnionType, Type_Target, Type_TargetTupleType, Type_Types, TypeFlagsBoolean, TypeFlagsEnumLiteral, TypeFlagsIndex, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNull, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnionOrIntersection, TypeFlagsUnit, TypeFlagsVoid, TypeFlagsFreshable, TypeFlagsStringOrNumberLiteral } from "../types.js";
 import type { AccessFlags, AliasSymbolLinks, ArrayLiteralLinks, AssertionLinks, ContainingSymbolLinks, DeclaredTypeLinks, DeferredSymbolLinks, ElementFlags, EnumMemberLinks, ExportTypeLinks, IndexInfo, LateBoundLinks, MappedSymbolLinks, MarkedAssignmentSymbolLinks, MembersAndExportsLinks, ModuleSymbolLinks, NodeLinks, ReverseMappedSymbolLinks, Signature, SignatureLinks, SourceFileLinks, SpreadLinks, SwitchStatementLinks, SymbolNodeLinks, SymbolReferenceLinks, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeAliasLinks, TypeComparer, TypeFlags, TypeId, TypeNodeLinks, TypePredicate, ValueSymbolLinks, VarianceFlags, VarianceLinks } from "../types.js";
+import { BinarySearchFunc, Insert } from "../../../go/slices.js";
+import { keyBuilder_writeByte, keyBuilder_writeInt, keyBuilder_writeString } from "./support.js";
+import { keyBuilder_hash } from "./support-queries.js";
+import { keyBuilder_writeType, keyBuilder_writeTypes, keyBuilder_writeGenericTypeReferences } from "./types.js";
+import { keyBuilder_writeNode, keyBuilder_writeNodeId } from "./syntax-checking.js";
+import { keyBuilder_writeAlias, keyBuilder_writeSymbol } from "./symbols.js";
+import { Checker_getTypeArguments } from "./signatures.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CheckMode","kind":"type","status":"implemented","sigHash":"2d62e9eb34ed3aaeeef2b15a3fcc8e2c38feacbf9b95170eff1c8a8946192235","bodyHash":"fd000c0f73136e37569f36cab9cec7e26a980eacd1124f26b93cc8ecf94fc319"}
@@ -340,7 +369,7 @@ export interface CachedSignatureKey {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::SignatureKeyErased+SignatureKeyCanonical+SignatureKeyBase+SignatureKeyInner+SignatureKeyOuter","kind":"varGroup","status":"stub","sigHash":"204b94ffcdea50d2b91c0f24f56a2040d900cf223fb19f0e7419650ed295bd51","bodyHash":"726053d5d5123902e46dd4ffdef85174e4f2c6d0ac0024dd1cccac6d3a62f992"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::SignatureKeyErased+SignatureKeyCanonical+SignatureKeyBase+SignatureKeyInner+SignatureKeyOuter","kind":"varGroup","status":"implemented","sigHash":"204b94ffcdea50d2b91c0f24f56a2040d900cf223fb19f0e7419650ed295bd51","bodyHash":"726053d5d5123902e46dd4ffdef85174e4f2c6d0ac0024dd1cccac6d3a62f992"}
  *
  * Go source:
  * var (
@@ -351,11 +380,11 @@ export interface CachedSignatureKey {
  * 	SignatureKeyOuter     = CacheHashKey(xxh3.HashString128(">"))
  * )
  */
-export let SignatureKeyErased: CacheHashKey = undefined as never;
-export let SignatureKeyCanonical: CacheHashKey = undefined as never;
-export let SignatureKeyBase: CacheHashKey = undefined as never;
-export let SignatureKeyInner: CacheHashKey = undefined as never;
-export let SignatureKeyOuter: CacheHashKey = undefined as never;
+export let SignatureKeyErased: CacheHashKey = xxh3.HashString128("-") as unknown as CacheHashKey;
+export let SignatureKeyCanonical: CacheHashKey = xxh3.HashString128("*") as unknown as CacheHashKey;
+export let SignatureKeyBase: CacheHashKey = xxh3.HashString128("#") as unknown as CacheHashKey;
+export let SignatureKeyInner: CacheHashKey = xxh3.HashString128("<") as unknown as CacheHashKey;
+export let SignatureKeyOuter: CacheHashKey = xxh3.HashString128(">") as unknown as CacheHashKey;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::StringMappingKey","kind":"type","status":"implemented","sigHash":"36d0b3230681a2ba96631d0fce4219fc2162e5500fc39060aad3e0497e2db767","bodyHash":"10cfb3db96c6b66442f6a60f0d29262d0fa27f53d2dffa9870799bfe93a5e443"}
@@ -2115,7 +2144,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createFileIndexMap","kind":"func","status":"stub","sigHash":"95ff2e42b6a1e5a028d5365e8869f1f3ff0e890b8e58e6cf2f5c669e1f2f7a34","bodyHash":"dafc540ec98bd5b237f2273607631006f78ead5794f8a9ce10c5eff478a7a8fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createFileIndexMap","kind":"func","status":"implemented","sigHash":"95ff2e42b6a1e5a028d5365e8869f1f3ff0e890b8e58e6cf2f5c669e1f2f7a34","bodyHash":"dafc540ec98bd5b237f2273607631006f78ead5794f8a9ce10c5eff478a7a8fb"}
  *
  * Go source:
  * func createFileIndexMap(files []*ast.SourceFile) map[*ast.SourceFile]int {
@@ -2127,11 +2156,15 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
  * }
  */
 export function createFileIndexMap(files: GoSlice<GoPtr<SourceFile>>): GoMap<GoPtr<SourceFile>, int> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::createFileIndexMap");
+  const result: GoMap<GoPtr<SourceFile>, int> = new globalThis.Map();
+  for (let i = 0; i < files.length; i++) {
+    result.set(files[i], i);
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::countGlobalSymbols","kind":"func","status":"stub","sigHash":"418d7ba4e7fadfc63ab1977a04223e1b54c1966fbd229e5ab708cd4896b12eba","bodyHash":"8aba0416730ba94456c757f51a3e2d1528bea1c6efea3f2007b266bb7a091136"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::countGlobalSymbols","kind":"func","status":"implemented","sigHash":"418d7ba4e7fadfc63ab1977a04223e1b54c1966fbd229e5ab708cd4896b12eba","bodyHash":"8aba0416730ba94456c757f51a3e2d1528bea1c6efea3f2007b266bb7a091136"}
  *
  * Go source:
  * func countGlobalSymbols(files []*ast.SourceFile) int {
@@ -2145,11 +2178,20 @@ export function createFileIndexMap(files: GoSlice<GoPtr<SourceFile>>): GoMap<GoP
  * }
  */
 export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::countGlobalSymbols");
+  let count = 0;
+  for (const file of files) {
+    if (!IsExternalOrCommonJSModule(file)) {
+      const locals = Node_Locals(file as unknown as GoPtr<Node>);
+      if (locals !== undefined) {
+        count += locals.size;
+      }
+    }
+  }
+  return count;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getGlobalTypeDeclaration","kind":"func","status":"stub","sigHash":"bd8684c9f5fc16ae5da2685a0589fbd71b3e2cbd3ba1284df14f986386d18312","bodyHash":"6b0f5a6a6fe9f2d9fc406c89953d81893987215476d51c9e4491d290bc74c3e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getGlobalTypeDeclaration","kind":"func","status":"implemented","sigHash":"bd8684c9f5fc16ae5da2685a0589fbd71b3e2cbd3ba1284df14f986386d18312","bodyHash":"6b0f5a6a6fe9f2d9fc406c89953d81893987215476d51c9e4491d290bc74c3e0"}
  *
  * Go source:
  * func getGlobalTypeDeclaration(symbol *ast.Symbol) *ast.Declaration {
@@ -2163,7 +2205,16 @@ export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
  * }
  */
 export function getGlobalTypeDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getGlobalTypeDeclaration");
+  for (const declaration of symbol_!.Declarations) {
+    switch (declaration!.Kind) {
+      case KindClassDeclaration:
+      case KindInterfaceDeclaration:
+      case KindEnumDeclaration:
+      case KindTypeAliasDeclaration:
+        return declaration as unknown as GoPtr<Declaration>;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2191,7 +2242,7 @@ export function isES2015OrLaterConstructorName(s: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"stub","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376","bodyHash":"2c24498cd0e6cd6c1fd27a069bea95a46ae4db6ad6f60b012a30e9a81742a211"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"implemented","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376","bodyHash":"2c24498cd0e6cd6c1fd27a069bea95a46ae4db6ad6f60b012a30e9a81742a211"}
  *
  * Go source:
  * var primitiveTypeAliasSuggestions = sync.OnceValue(func() map[string]*ast.Symbol {
@@ -2212,10 +2263,30 @@ export function isES2015OrLaterConstructorName(s: string): bool {
  * 	return result
  * })
  */
-export let primitiveTypeAliasSuggestions: unknown = undefined as never;
+let _primitiveTypeAliasSuggestionsCache: GoMap<string, GoPtr<Symbol>> | undefined;
+function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
+  if (_primitiveTypeAliasSuggestionsCache === undefined) {
+    const result: GoMap<string, GoPtr<Symbol>> = new globalThis.Map();
+    const pairs: Array<{ primitive: string; builtin: string }> = [
+      { primitive: "string", builtin: "String" },
+      { primitive: "number", builtin: "Number" },
+      { primitive: "boolean", builtin: "Boolean" },
+      { primitive: "object", builtin: "Object" },
+      { primitive: "bigint", builtin: "BigInt" },
+      { primitive: "symbol", builtin: "Symbol" },
+    ];
+    for (const e of pairs) {
+      const sym: Symbol = { Flags: (SymbolFlagsTypeAlias | SymbolFlagsTransient) as unknown as SymbolFlags, CheckFlags: 0, Name: e.primitive, Declarations: [], ValueDeclaration: undefined, Members: undefined, Exports: undefined, id: new Uint64(), Parent: undefined, ExportSymbol: undefined };
+      result.set(e.builtin, sym);
+    }
+    _primitiveTypeAliasSuggestionsCache = result;
+  }
+  return _primitiveTypeAliasSuggestionsCache;
+}
+export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _getPrimitiveTypeAliasSuggestionsMap;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getPrimitiveTypeAliasSuggestions","kind":"func","status":"stub","sigHash":"31752245a24445d07b9fc08e958179dada3115b651b3f6d7e65ddad88786ec2e","bodyHash":"ac84d7bc9a45cb66178cdc79b233232e34a9f589cc96b4bba3d05f205455497c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getPrimitiveTypeAliasSuggestions","kind":"func","status":"implemented","sigHash":"31752245a24445d07b9fc08e958179dada3115b651b3f6d7e65ddad88786ec2e","bodyHash":"ac84d7bc9a45cb66178cdc79b233232e34a9f589cc96b4bba3d05f205455497c"}
  *
  * Go source:
  * func getPrimitiveTypeAliasSuggestions(symbols ast.SymbolTable) iter.Seq[*ast.Symbol] {
@@ -2231,11 +2302,19 @@ export let primitiveTypeAliasSuggestions: unknown = undefined as never;
  * }
  */
 export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable): GoSeq<GoPtr<Symbol>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getPrimitiveTypeAliasSuggestions");
+  return (yield_: (s: GoPtr<Symbol>) => bool): void => {
+    for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions()) {
+      if (symbols !== undefined && symbols.has(builtinName)) {
+        if (!yield_(suggestion)) {
+          return;
+        }
+      }
+    }
+  };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isImmediatelyUsedInInitializerOfBlockScopedVariable","kind":"func","status":"stub","sigHash":"4250f1994b5a7942aa2e256365b8bbff86ff7b5643e7a1542d0121ef0006135f","bodyHash":"f4567bc9fa84f8fd1275fb1b2810ce2878bf12a75a5cadf85d0110dfccef8fde"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isImmediatelyUsedInInitializerOfBlockScopedVariable","kind":"func","status":"implemented","sigHash":"4250f1994b5a7942aa2e256365b8bbff86ff7b5643e7a1542d0121ef0006135f","bodyHash":"f4567bc9fa84f8fd1275fb1b2810ce2878bf12a75a5cadf85d0110dfccef8fde"}
  *
  * Go source:
  * func isImmediatelyUsedInInitializerOfBlockScopedVariable(declaration *ast.Node, usage *ast.Node, declContainer *ast.Node) bool {
@@ -2253,11 +2332,20 @@ export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable): GoSeq<Go
  * }
  */
 export function isImmediatelyUsedInInitializerOfBlockScopedVariable(declaration: GoPtr<Node>, usage: GoPtr<Node>, declContainer: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isImmediatelyUsedInInitializerOfBlockScopedVariable");
+  switch (declaration!.Parent!.Parent!.Kind) {
+    case KindVariableStatement:
+    case KindForStatement:
+    case KindForOfStatement:
+      if (isSameScopeDescendentOf(usage, declaration, declContainer)) {
+        return true;
+      }
+  }
+  const grandparent = declaration!.Parent!.Parent;
+  return IsForInOrOfStatement(grandparent) && isSameScopeDescendentOf(usage, Node_Expression(grandparent), declContainer);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSameScopeDescendentOf","kind":"func","status":"stub","sigHash":"4607ad7714abf12b5fcc8268b1d1c91a32705a99583fa69c29e787b41a8b7b51","bodyHash":"1590a993cf689ed6b2362f80939ea089084e101d31d7864c8f78f10d80f03fd6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSameScopeDescendentOf","kind":"func","status":"implemented","sigHash":"4607ad7714abf12b5fcc8268b1d1c91a32705a99583fa69c29e787b41a8b7b51","bodyHash":"1590a993cf689ed6b2362f80939ea089084e101d31d7864c8f78f10d80f03fd6"}
  *
  * Go source:
  * func isSameScopeDescendentOf(initial *ast.Node, parent *ast.Node, stopAt *ast.Node) bool {
@@ -2276,11 +2364,22 @@ export function isImmediatelyUsedInInitializerOfBlockScopedVariable(declaration:
  * }
  */
 export function isSameScopeDescendentOf(initial: GoPtr<Node>, parent: GoPtr<Node>, stopAt: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSameScopeDescendentOf");
+  if (parent === undefined) {
+    return false;
+  }
+  for (let n: GoPtr<Node> = initial; n !== undefined; n = n!.Parent) {
+    if (n === parent) {
+      return true;
+    }
+    if (n === stopAt || (IsFunctionLike(n) && (GetImmediatelyInvokedFunctionExpression(n) === undefined || (GetFunctionFlags(n) & FunctionFlagsAsyncGenerator) !== 0))) {
+      return false;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPropertyImmediatelyReferencedWithinDeclaration","kind":"func","status":"stub","sigHash":"1ff9df61a23dbc5523e116708f3421779cb54146e2c571e05bd872eb35521cb6","bodyHash":"dd4f749d06fd0acee740de70cf039d0726f1629ba2522edb9ec77f70f7f9b0f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPropertyImmediatelyReferencedWithinDeclaration","kind":"func","status":"implemented","sigHash":"1ff9df61a23dbc5523e116708f3421779cb54146e2c571e05bd872eb35521cb6","bodyHash":"dd4f749d06fd0acee740de70cf039d0726f1629ba2522edb9ec77f70f7f9b0f2"}
  *
  * Go source:
  * func isPropertyImmediatelyReferencedWithinDeclaration(declaration *ast.Node, usage *ast.Node, stopAtAnyPropertyDeclaration bool) bool {
@@ -2310,11 +2409,31 @@ export function isSameScopeDescendentOf(initial: GoPtr<Node>, parent: GoPtr<Node
  * }
  */
 export function isPropertyImmediatelyReferencedWithinDeclaration(declaration: GoPtr<Node>, usage: GoPtr<Node>, stopAtAnyPropertyDeclaration: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPropertyImmediatelyReferencedWithinDeclaration");
+  if (Node_End(usage) > Node_End(declaration)) {
+    return false;
+  }
+  for (let node: GoPtr<Node> = usage; node !== undefined && node !== declaration; node = node!.Parent) {
+    switch (node!.Kind) {
+      case KindArrowFunction:
+        return false;
+      case KindPropertyDeclaration:
+        return stopAtAnyPropertyDeclaration &&
+          ((IsPropertyDeclaration(declaration) && node!.Parent === declaration!.Parent) ||
+            (IsParameterPropertyDeclaration(declaration, declaration!.Parent) && node!.Parent === declaration!.Parent!.Parent));
+      case KindBlock:
+        switch (node!.Parent!.Kind) {
+          case KindMethodDeclaration:
+          case KindGetAccessor:
+          case KindSetAccessor:
+            return false;
+        }
+    }
+  }
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstancePropertyWithInitializerOrPrivateIdentifierProperty","kind":"func","status":"stub","sigHash":"c7c2582b79839900e7d8d155eeacbeb7b880183842bb9be35ddbc83af318676b","bodyHash":"c791c5a12a30e5b735790000d700101923b2e2f020aac5a62613214dd0316f82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstancePropertyWithInitializerOrPrivateIdentifierProperty","kind":"func","status":"implemented","sigHash":"c7c2582b79839900e7d8d155eeacbeb7b880183842bb9be35ddbc83af318676b","bodyHash":"c791c5a12a30e5b735790000d700101923b2e2f020aac5a62613214dd0316f82"}
  *
  * Go source:
  * func isInstancePropertyWithInitializerOrPrivateIdentifierProperty(n *ast.Node) bool {
@@ -2322,11 +2441,11 @@ export function isPropertyImmediatelyReferencedWithinDeclaration(declaration: Go
  * }
  */
 export function isInstancePropertyWithInitializerOrPrivateIdentifierProperty(n: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstancePropertyWithInitializerOrPrivateIdentifierProperty");
+  return IsPrivateIdentifierClassElementDeclaration(n) || (IsPropertyDeclaration(n) && !IsStatic(n) && Node_Initializer(n) !== undefined);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::superCallIsRootLevelInConstructor","kind":"func","status":"stub","sigHash":"25001c45d2dea77d585202bf74b41aa1d9427f5e77d2792261307c95b6631390","bodyHash":"16b157e905db61ec057a5718758e57842040e01355287580a9965ee174ecceb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::superCallIsRootLevelInConstructor","kind":"func","status":"implemented","sigHash":"25001c45d2dea77d585202bf74b41aa1d9427f5e77d2792261307c95b6631390","bodyHash":"16b157e905db61ec057a5718758e57842040e01355287580a9965ee174ecceb8"}
  *
  * Go source:
  * func superCallIsRootLevelInConstructor(superCall *ast.Node, body *ast.Node) bool {
@@ -2335,11 +2454,12 @@ export function isInstancePropertyWithInitializerOrPrivateIdentifierProperty(n: 
  * }
  */
 export function superCallIsRootLevelInConstructor(superCall: GoPtr<Node>, body: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::superCallIsRootLevelInConstructor");
+  const superCallParent = WalkUpParenthesizedExpressions(superCall!.Parent as unknown as GoPtr<import("../../ast/generated/unions.js").Expression>);
+  return IsExpressionStatement(superCallParent) && superCallParent!.Parent === body;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::nodeImmediatelyReferencesSuperOrThis","kind":"func","status":"stub","sigHash":"06c3e6f83b0b6ddea30b639aa158b68004055fe9b88e2430a354184dfeed96ee","bodyHash":"fa75b500de63d8e9231adbbcd8a65c797e6f44f6923ae02d7d6b85ba4f5f9c4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::nodeImmediatelyReferencesSuperOrThis","kind":"func","status":"implemented","sigHash":"06c3e6f83b0b6ddea30b639aa158b68004055fe9b88e2430a354184dfeed96ee","bodyHash":"fa75b500de63d8e9231adbbcd8a65c797e6f44f6923ae02d7d6b85ba4f5f9c4c"}
  *
  * Go source:
  * func nodeImmediatelyReferencesSuperOrThis(node *ast.Node) bool {
@@ -2358,7 +2478,25 @@ export function superCallIsRootLevelInConstructor(superCall: GoPtr<Node>, body: 
  * }
  */
 export function nodeImmediatelyReferencesSuperOrThis(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::nodeImmediatelyReferencesSuperOrThis");
+  switch (node!.Kind) {
+    case KindSuperKeyword:
+    case KindThisKeyword:
+      return true;
+    case KindArrowFunction:
+    case KindFunctionDeclaration:
+    case KindFunctionExpression:
+    case KindPropertyDeclaration:
+      return false;
+    case KindBlock:
+      switch (node!.Parent!.Kind) {
+        case KindConstructor:
+        case KindMethodDeclaration:
+        case KindGetAccessor:
+        case KindSetAccessor:
+          return false;
+      }
+  }
+  return Node_ForEachChild(node, nodeImmediatelyReferencesSuperOrThis);
 }
 
 /**
@@ -2376,7 +2514,7 @@ export interface InheritanceInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstantiatedModule","kind":"func","status":"stub","sigHash":"0161a8962287a32a1e4db76b90545867677e533def767ad10ef17fd67d2e762c","bodyHash":"e36a29c84be21d39ad99990fded6258963bb13851bfff93aa10276af6379c342"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstantiatedModule","kind":"func","status":"implemented","sigHash":"0161a8962287a32a1e4db76b90545867677e533def767ad10ef17fd67d2e762c","bodyHash":"e36a29c84be21d39ad99990fded6258963bb13851bfff93aa10276af6379c342"}
  *
  * Go source:
  * func isInstantiatedModule(node *ast.Node, preserveConstEnums bool) bool {
@@ -2385,11 +2523,12 @@ export interface InheritanceInfo {
  * }
  */
 export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isInstantiatedModule");
+  const moduleState = GetModuleInstanceState(node);
+  return moduleState === ModuleInstanceStateInstantiated || (preserveConstEnums && moduleState === ModuleInstanceStateConstEnumOnly);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstNonAmbientClassOrFunctionDeclaration","kind":"func","status":"stub","sigHash":"f4f836bdf0cedb210a4fbdc5c4d522890b1a61ad7319ea4c5995cc83985b6931","bodyHash":"ff7edbfb106c2ddd86a32926f3fb8466a282af5151d5075837a3bf49db1579f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstNonAmbientClassOrFunctionDeclaration","kind":"func","status":"implemented","sigHash":"f4f836bdf0cedb210a4fbdc5c4d522890b1a61ad7319ea4c5995cc83985b6931","bodyHash":"ff7edbfb106c2ddd86a32926f3fb8466a282af5151d5075837a3bf49db1579f0"}
  *
  * Go source:
  * func getFirstNonAmbientClassOrFunctionDeclaration(symbol *ast.Symbol) *ast.Node {
@@ -2402,11 +2541,16 @@ export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool
  * }
  */
 export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstNonAmbientClassOrFunctionDeclaration");
+  for (const declaration of symbol_!.Declarations) {
+    if ((IsClassDeclaration(declaration) || (IsFunctionDeclaration(declaration) && NodeIsPresent(Node_Body(declaration)))) && (declaration!.Flags & NodeFlagsAmbient) === 0) {
+      return declaration;
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeJsonImportAttribute","kind":"func","status":"stub","sigHash":"0fbc0542daf70539b2ae1492b38fb4812f971f88886d1a471f14e85a905e57c1","bodyHash":"7083290841016419c32cdf39ae3864bbac536588ae440ffa977ecb81f2173ebf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeJsonImportAttribute","kind":"func","status":"implemented","sigHash":"0fbc0542daf70539b2ae1492b38fb4812f971f88886d1a471f14e85a905e57c1","bodyHash":"7083290841016419c32cdf39ae3864bbac536588ae440ffa977ecb81f2173ebf"}
  *
  * Go source:
  * func hasTypeJsonImportAttribute(node *ast.Node) bool {
@@ -2417,11 +2561,15 @@ export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symb
  * }
  */
 export function hasTypeJsonImportAttribute(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeJsonImportAttribute");
+  const attributes = AsImportDeclaration(node)!.Attributes;
+  return attributes !== undefined && Some(AsImportAttributes(attributes as unknown as GoPtr<Node>)!.Attributes!.Nodes, (attr: GoPtr<Node>): bool => {
+    const ia = AsImportAttribute(attr);
+    return Node_Text(Node_Name(attr) as unknown as GoPtr<Node>) === "type" && IsStringLiteralLike(ia!.Value as unknown as GoPtr<Node>) && Node_Text(ia!.Value as unknown as GoPtr<Node>) === "json";
+  });
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getVerbatimModuleSyntaxErrorMessage","kind":"func","status":"stub","sigHash":"18c489850928347a609d8fff5b656adbedc1f954dc45f9b7a2d364005340d8bb","bodyHash":"be5201e482efc4d3c9c7c9a7649fbc3c3722c6449fe39c2db94a2c8edcd846d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getVerbatimModuleSyntaxErrorMessage","kind":"func","status":"implemented","sigHash":"18c489850928347a609d8fff5b656adbedc1f954dc45f9b7a2d364005340d8bb","bodyHash":"be5201e482efc4d3c9c7c9a7649fbc3c3722c6449fe39c2db94a2c8edcd846d0"}
  *
  * Go source:
  * func getVerbatimModuleSyntaxErrorMessage(node *ast.Node) *diagnostics.Message {
@@ -2437,11 +2585,16 @@ export function hasTypeJsonImportAttribute(node: GoPtr<Node>): bool {
  * }
  */
 export function getVerbatimModuleSyntaxErrorMessage(node: GoPtr<Node>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getVerbatimModuleSyntaxErrorMessage");
+  const sourceFile = GetSourceFileOfNode(node);
+  const fileName = SourceFile_FileName(sourceFile);
+  if (FileExtensionIsOneOf(fileName, [ExtensionCts, ExtensionCjs])) {
+    return ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax;
+  }
+  return ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax_Adjust_the_type_field_in_the_nearest_package_json_to_make_this_file_an_ECMAScript_module_or_adjust_your_verbatimModuleSyntax_module_and_moduleResolution_settings_in_TypeScript;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNotOverload","kind":"func","status":"stub","sigHash":"df73efee1afe84bd17535e1ceb6bf40a8305be00e3c862d71771bf9fa9741323","bodyHash":"2fb24f2624a847755695ee8ab23386853bd3743566a0adf71e216ae3dd1ed80a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNotOverload","kind":"func","status":"implemented","sigHash":"df73efee1afe84bd17535e1ceb6bf40a8305be00e3c862d71771bf9fa9741323","bodyHash":"2fb24f2624a847755695ee8ab23386853bd3743566a0adf71e216ae3dd1ed80a"}
  *
  * Go source:
  * func isNotOverload(node *ast.Node) bool {
@@ -2449,11 +2602,11 @@ export function getVerbatimModuleSyntaxErrorMessage(node: GoPtr<Node>): GoPtr<Me
  * }
  */
 export function isNotOverload(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNotOverload");
+  return (!IsFunctionDeclaration(node) && !IsMethodDeclaration(node)) || Node_Body(node) !== undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isES2015OrLaterIterable","kind":"func","status":"stub","sigHash":"2951b2e7d6965811cba6b8fda16898da8e26a2569772f5c666568e224ddfc255","bodyHash":"5581ab78146ad26b4cdf97d581eb02dd918d6c68632c36c69260be1abbfb0d7e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isES2015OrLaterIterable","kind":"func","status":"implemented","sigHash":"2951b2e7d6965811cba6b8fda16898da8e26a2569772f5c666568e224ddfc255","bodyHash":"5581ab78146ad26b4cdf97d581eb02dd918d6c68632c36c69260be1abbfb0d7e"}
  *
  * Go source:
  * func isES2015OrLaterIterable(n string) bool {
@@ -2465,7 +2618,20 @@ export function isNotOverload(node: GoPtr<Node>): bool {
  * }
  */
 export function isES2015OrLaterIterable(n: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isES2015OrLaterIterable");
+  switch (n) {
+    case "Float32Array":
+    case "Float64Array":
+    case "Int16Array":
+    case "Int32Array":
+    case "Int8Array":
+    case "NodeList":
+    case "Uint16Array":
+    case "Uint32Array":
+    case "Uint8Array":
+    case "Uint8ClampedArray":
+      return true;
+  }
+  return false;
 }
 
 /**
@@ -2489,7 +2655,7 @@ export const UnusedKindLocal: UnusedKind = 0;
 export const UnusedKindParameter: UnusedKind = 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isIdentifierThatStartsWithUnderscore","kind":"func","status":"stub","sigHash":"bb619c1a63666b5622bb86126bacb37cae19ba1fddfb254a5e1cef95c427ab2d","bodyHash":"bd032702a2f298fc89f8839e458920b36d83e74a84806cf924348899732e1022"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isIdentifierThatStartsWithUnderscore","kind":"func","status":"implemented","sigHash":"bb619c1a63666b5622bb86126bacb37cae19ba1fddfb254a5e1cef95c427ab2d","bodyHash":"bd032702a2f298fc89f8839e458920b36d83e74a84806cf924348899732e1022"}
  *
  * Go source:
  * func isIdentifierThatStartsWithUnderscore(node *ast.Node) bool {
@@ -2497,11 +2663,12 @@ export const UnusedKindParameter: UnusedKind = 1;
  * }
  */
 export function isIdentifierThatStartsWithUnderscore(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isIdentifierThatStartsWithUnderscore");
+  const text = Node_Text(node);
+  return IsIdentifier(node) && text !== "" && text[0] === "_";
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::importClauseFromImported","kind":"func","status":"stub","sigHash":"2ff621e49521219486943460848fe4725f2604313884687755cc4b09e3171000","bodyHash":"4be779ee77e105e593846b41da5968e8872beeeace78874ff98cce7ff6b569c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::importClauseFromImported","kind":"func","status":"implemented","sigHash":"2ff621e49521219486943460848fe4725f2604313884687755cc4b09e3171000","bodyHash":"4be779ee77e105e593846b41da5968e8872beeeace78874ff98cce7ff6b569c4"}
  *
  * Go source:
  * func importClauseFromImported(node *ast.Node) *ast.Node {
@@ -2516,11 +2683,18 @@ export function isIdentifierThatStartsWithUnderscore(node: GoPtr<Node>): bool {
  * }
  */
 export function importClauseFromImported(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::importClauseFromImported");
+  switch (node!.Kind) {
+    case KindImportClause:
+      return node;
+    case KindNamespaceImport:
+      return node!.Parent;
+    default:
+      return node!.Parent!.Parent;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeParameterByName","kind":"func","status":"stub","sigHash":"52812411c2b2fdf266ef74198c1552214f8dc9abb42631f07789de68ec25ce2f","bodyHash":"448f66dad945c98e7e6bccb50af05ddb502a757b1e4e99e0529b0956916d5e59"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeParameterByName","kind":"func","status":"implemented","sigHash":"52812411c2b2fdf266ef74198c1552214f8dc9abb42631f07789de68ec25ce2f","bodyHash":"448f66dad945c98e7e6bccb50af05ddb502a757b1e4e99e0529b0956916d5e59"}
  *
  * Go source:
  * func hasTypeParameterByName(typeParameters []*Type, name string) bool {
@@ -2530,11 +2704,13 @@ export function importClauseFromImported(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function hasTypeParameterByName(typeParameters: GoSlice<GoPtr<Type>>, name: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasTypeParameterByName");
+  return Some(typeParameters, (tp: GoPtr<Type>): bool => {
+    return tp!["symbol"] !== undefined && tp!["symbol"]!.Name === name;
+  });
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUniqueTypeParameterName","kind":"func","status":"stub","sigHash":"05fe41a6c309e3818b71b89ccad6bf38a6ecc43f9eac4cc9e5c7fd6cf2b18c81","bodyHash":"5afb62d0dc1223ede4a8c25dba941bab04f2bd5e8a5664d784fca65b47ecbe2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUniqueTypeParameterName","kind":"func","status":"implemented","sigHash":"05fe41a6c309e3818b71b89ccad6bf38a6ecc43f9eac4cc9e5c7fd6cf2b18c81","bodyHash":"5afb62d0dc1223ede4a8c25dba941bab04f2bd5e8a5664d784fca65b47ecbe2c"}
  *
  * Go source:
  * func getUniqueTypeParameterName(typeParameters []*Type, baseName string) string {
@@ -2552,11 +2728,21 @@ export function hasTypeParameterByName(typeParameters: GoSlice<GoPtr<Type>>, nam
  * }
  */
 export function getUniqueTypeParameterName(typeParameters: GoSlice<GoPtr<Type>>, baseName: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUniqueTypeParameterName");
+  while (baseName.length > 1 && baseName[baseName.length - 1] >= "0" && baseName[baseName.length - 1] <= "9") {
+    baseName = baseName.slice(0, baseName.length - 1);
+  }
+  let index = 1;
+  for (;;) {
+    const augmentedName = baseName + strconv.Itoa(index);
+    if (!hasTypeParameterByName(typeParameters, augmentedName)) {
+      return augmentedName;
+    }
+    index++;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSpreadIntoCallOrNew","kind":"func","status":"stub","sigHash":"007b37e74e35fc3ab77937095bf46e43d64f1ef5fd0d5e85741d3f4a4916b5e3","bodyHash":"6cffd645a4f7bf771627339229bb2a8e51262a092962a6c32d16a7174873a8d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSpreadIntoCallOrNew","kind":"func","status":"implemented","sigHash":"007b37e74e35fc3ab77937095bf46e43d64f1ef5fd0d5e85741d3f4a4916b5e3","bodyHash":"6cffd645a4f7bf771627339229bb2a8e51262a092962a6c32d16a7174873a8d3"}
  *
  * Go source:
  * func isSpreadIntoCallOrNew(node *ast.Node) bool {
@@ -2565,11 +2751,12 @@ export function getUniqueTypeParameterName(typeParameters: GoSlice<GoPtr<Type>>,
  * }
  */
 export function isSpreadIntoCallOrNew(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSpreadIntoCallOrNew");
+  const parent = WalkUpParenthesizedExpressions(node!.Parent as unknown as GoPtr<import("../../ast/generated/unions.js").Expression>);
+  return IsSpreadElement(parent) && IsCallOrNewExpression(parent!.Parent);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::someSignature","kind":"func","status":"stub","sigHash":"d1e35f1ab95c2a74b3fb72ffbd11a784b74473ec24b248840876e16d69af1256","bodyHash":"3a4dc9a75ca874adb62099d1870205005bdfb83fe13d858663d4f3c87a1fefc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::someSignature","kind":"func","status":"implemented","sigHash":"d1e35f1ab95c2a74b3fb72ffbd11a784b74473ec24b248840876e16d69af1256","bodyHash":"3a4dc9a75ca874adb62099d1870205005bdfb83fe13d858663d4f3c87a1fefc5"}
  *
  * Go source:
  * func someSignature(signatures []*Signature, f func(s *Signature) bool) bool {
@@ -2582,7 +2769,12 @@ export function isSpreadIntoCallOrNew(node: GoPtr<Node>): bool {
  * }
  */
 export function someSignature(signatures: GoSlice<GoPtr<Signature>>, f: (s: GoPtr<Signature>) => bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::someSignature");
+  for (const sig of signatures) {
+    if ((sig!.composite !== undefined && sig!.composite!.isUnion && Some(sig!.composite!.signatures, f)) || (sig!.composite === undefined && f(sig))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -2616,7 +2808,7 @@ export interface CallState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasLiteralTypes","kind":"func","status":"stub","sigHash":"6464f908c0fcec8147eb70e5d6598c7d76d3fdff01211c430ebdc90ed9a637ba","bodyHash":"95f3d1a097aac9ce18b47d3260210ec81b1ecbd0c1f0cf289edf398bfdd6af0f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasLiteralTypes","kind":"func","status":"implemented","sigHash":"6464f908c0fcec8147eb70e5d6598c7d76d3fdff01211c430ebdc90ed9a637ba","bodyHash":"95f3d1a097aac9ce18b47d3260210ec81b1ecbd0c1f0cf289edf398bfdd6af0f"}
  *
  * Go source:
  * func signatureHasLiteralTypes(s *Signature) bool {
@@ -2624,11 +2816,11 @@ export interface CallState {
  * }
  */
 export function signatureHasLiteralTypes(s: GoPtr<Signature>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasLiteralTypes");
+  return (s!.flags & SignatureFlagsHasLiteralTypes) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::acceptsVoid","kind":"func","status":"stub","sigHash":"e811caa39ec18ecc293eda4437a2f0df0507ff694e214424a012c5520a297e36","bodyHash":"96f8cdcada18f4458e7192836abc1aaa663388db2460ac49b8e39bf346be7648"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::acceptsVoid","kind":"func","status":"implemented","sigHash":"e811caa39ec18ecc293eda4437a2f0df0507ff694e214424a012c5520a297e36","bodyHash":"96f8cdcada18f4458e7192836abc1aaa663388db2460ac49b8e39bf346be7648"}
  *
  * Go source:
  * func acceptsVoid(t *Type) bool {
@@ -2636,11 +2828,11 @@ export function signatureHasLiteralTypes(s: GoPtr<Signature>): bool {
  * }
  */
 export function acceptsVoid(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::acceptsVoid");
+  return (t!.flags & TypeFlagsVoid) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getErrorNodeForCallNode","kind":"func","status":"stub","sigHash":"f50c4633809815b2fb6a62c6afd4cab9ddaeec2182996790e474d1b6aec33fcc","bodyHash":"6311f501ad5c6b8807d49110c74fa7089974f747218cb8a424dc005ee743066c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getErrorNodeForCallNode","kind":"func","status":"implemented","sigHash":"f50c4633809815b2fb6a62c6afd4cab9ddaeec2182996790e474d1b6aec33fcc","bodyHash":"6311f501ad5c6b8807d49110c74fa7089974f747218cb8a424dc005ee743066c"}
  *
  * Go source:
  * func getErrorNodeForCallNode(node *ast.Node) *ast.Node {
@@ -2654,11 +2846,17 @@ export function acceptsVoid(t: GoPtr<Type>): bool {
  * }
  */
 export function getErrorNodeForCallNode(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getErrorNodeForCallNode");
+  if (IsCallExpression(node)) {
+    node = Node_Expression(node);
+    if (IsPropertyAccessExpression(node)) {
+      node = Node_Name(node) as unknown as GoPtr<Node>;
+    }
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasCommonDomTypeName","kind":"func","status":"stub","sigHash":"5308acf01f1acbae10878775a715ebec3aa499958298d67db34c6ac86e4ee993","bodyHash":"eb4df1da98c2871182b12ef0f2a037917e1a6cf4832789c2a916b1e3896a10d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasCommonDomTypeName","kind":"func","status":"implemented","sigHash":"5308acf01f1acbae10878775a715ebec3aa499958298d67db34c6ac86e4ee993","bodyHash":"eb4df1da98c2871182b12ef0f2a037917e1a6cf4832789c2a916b1e3896a10d0"}
  *
  * Go source:
  * func hasCommonDomTypeName(t *Type) bool {
@@ -2670,11 +2868,15 @@ export function getErrorNodeForCallNode(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function hasCommonDomTypeName(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::hasCommonDomTypeName");
+  if (t!["symbol"] === undefined) {
+    return false;
+  }
+  const name = t!["symbol"]!.Name;
+  return name === "EventTarget" || name === "Node" || name === "Element" || (gostrings.HasPrefix(name, "HTML") && gostrings.HasSuffix(name, "Element"));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getThisParameterFromNodeContext","kind":"func","status":"stub","sigHash":"dda173a16f795a931d4db0661824bac84a30773410a12198aec1593e4dc293f6","bodyHash":"457dc311a2a9e476c6a252cbb062c59b713c5ceddd2fe106814b24042af85246"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getThisParameterFromNodeContext","kind":"func","status":"implemented","sigHash":"dda173a16f795a931d4db0661824bac84a30773410a12198aec1593e4dc293f6","bodyHash":"457dc311a2a9e476c6a252cbb062c59b713c5ceddd2fe106814b24042af85246"}
  *
  * Go source:
  * func getThisParameterFromNodeContext(node *ast.Node) *ast.Node {
@@ -2686,7 +2888,11 @@ export function hasCommonDomTypeName(t: GoPtr<Type>): bool {
  * }
  */
 export function getThisParameterFromNodeContext(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getThisParameterFromNodeContext");
+  const thisContainer = GetThisContainer(node, false, false);
+  if (thisContainer !== undefined && IsFunctionLike(thisContainer)) {
+    return GetThisParameter(thisContainer);
+  }
+  return undefined;
 }
 
 /**
@@ -2714,7 +2920,7 @@ export const PredicateSemanticsNever: PredicateSemantics = 1 << 1;
 export const PredicateSemanticsSometimes: int = PredicateSemanticsAlways | PredicateSemanticsNever;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createDiagnosticForNode","kind":"func","status":"stub","sigHash":"6cf225f51d25f062d9fd1b3c0bb27fe6744e9d928f43e08b3167e655a83fe1b6","bodyHash":"332b0e58fb8f40e54da2b97f929c157b3b9305cba31cbfc93c8cc3105780df18"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::createDiagnosticForNode","kind":"func","status":"implemented","sigHash":"6cf225f51d25f062d9fd1b3c0bb27fe6744e9d928f43e08b3167e655a83fe1b6","bodyHash":"332b0e58fb8f40e54da2b97f929c157b3b9305cba31cbfc93c8cc3105780df18"}
  *
  * Go source:
  * func createDiagnosticForNode(node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -2722,11 +2928,11 @@ export const PredicateSemanticsSometimes: int = PredicateSemanticsAlways | Predi
  * }
  */
 export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::createDiagnosticForNode");
+  return NewDiagnosticForNode(node, message, ...args);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAdjustedNodeForError","kind":"func","status":"stub","sigHash":"d4c7754916ec61eeee6a752fa0f39a9df94d0e8b003efce6b832229be746311a","bodyHash":"e009225e37912c76cb69290b974d012f2932ba92ed3d72671e12d0d4e45e5ef8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAdjustedNodeForError","kind":"func","status":"implemented","sigHash":"d4c7754916ec61eeee6a752fa0f39a9df94d0e8b003efce6b832229be746311a","bodyHash":"e009225e37912c76cb69290b974d012f2932ba92ed3d72671e12d0d4e45e5ef8"}
  *
  * Go source:
  * func getAdjustedNodeForError(node *ast.Node) *ast.Node {
@@ -2738,11 +2944,15 @@ export function createDiagnosticForNode(node: GoPtr<Node>, message: GoPtr<Messag
  * }
  */
 export function getAdjustedNodeForError(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAdjustedNodeForError");
+  const name = GetNameOfDeclaration(node);
+  if (name !== undefined) {
+    return name;
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstDeclaration","kind":"func","status":"stub","sigHash":"f79a7ef05f0a4606a5d7ffb66cbea15be2828a8c75e393c1d2ec5b5836bb53f3","bodyHash":"9e406279b27f3a6ab4a689bf26e394b96a8e9c9a72b2bc0ddf618e29b088cc81"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstDeclaration","kind":"func","status":"implemented","sigHash":"f79a7ef05f0a4606a5d7ffb66cbea15be2828a8c75e393c1d2ec5b5836bb53f3","bodyHash":"9e406279b27f3a6ab4a689bf26e394b96a8e9c9a72b2bc0ddf618e29b088cc81"}
  *
  * Go source:
  * func getFirstDeclaration(symbol *ast.Symbol) *ast.Node {
@@ -2753,11 +2963,14 @@ export function getAdjustedNodeForError(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function getFirstDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getFirstDeclaration");
+  if (symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 0) {
+    return symbol_!.Declarations[0];
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getExcludedSymbolFlags","kind":"func","status":"stub","sigHash":"9ef6cffd25ef95f7a5bd952966c4b8086349c4f0761cefb8a4ec1d6f08cfa73e","bodyHash":"19c481684b3c78a126e9d5dea49ae11d9b946ac46e44f705aebdd51713edebf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getExcludedSymbolFlags","kind":"func","status":"implemented","sigHash":"9ef6cffd25ef95f7a5bd952966c4b8086349c4f0761cefb8a4ec1d6f08cfa73e","bodyHash":"19c481684b3c78a126e9d5dea49ae11d9b946ac46e44f705aebdd51713edebf8"}
  *
  * Go source:
  * func getExcludedSymbolFlags(flags ast.SymbolFlags) ast.SymbolFlags {
@@ -2814,11 +3027,28 @@ export function getFirstDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
  * }
  */
 export function getExcludedSymbolFlags(flags: SymbolFlags): SymbolFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getExcludedSymbolFlags");
+  let result: SymbolFlags = 0;
+  if (flags & SymbolFlagsBlockScopedVariable) result |= SymbolFlagsBlockScopedVariableExcludes;
+  if (flags & SymbolFlagsFunctionScopedVariable) result |= SymbolFlagsFunctionScopedVariableExcludes;
+  if (flags & SymbolFlagsProperty) result |= SymbolFlagsPropertyExcludes;
+  if (flags & SymbolFlagsEnumMember) result |= SymbolFlagsEnumMemberExcludes;
+  if (flags & SymbolFlagsFunction) result |= SymbolFlagsFunctionExcludes;
+  if (flags & SymbolFlagsClass) result |= SymbolFlagsClassExcludes;
+  if (flags & SymbolFlagsInterface) result |= SymbolFlagsInterfaceExcludes;
+  if (flags & SymbolFlagsRegularEnum) result |= SymbolFlagsRegularEnumExcludes;
+  if (flags & SymbolFlagsConstEnum) result |= SymbolFlagsConstEnumExcludes;
+  if (flags & SymbolFlagsValueModule) result |= SymbolFlagsValueModuleExcludes;
+  if (flags & SymbolFlagsMethod) result |= SymbolFlagsMethodExcludes;
+  if (flags & SymbolFlagsGetAccessor) result |= SymbolFlagsGetAccessorExcludes;
+  if (flags & SymbolFlagsSetAccessor) result |= SymbolFlagsSetAccessorExcludes;
+  if (flags & SymbolFlagsTypeParameter) result |= SymbolFlagsTypeParameterExcludes;
+  if (flags & SymbolFlagsTypeAlias) result |= SymbolFlagsTypeAliasExcludes;
+  if (flags & SymbolFlagsAlias) result |= SymbolFlagsAliasExcludes;
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModuleSpecifierFromNode","kind":"func","status":"stub","sigHash":"85501584eb738fb89ab9705e104f878ed6eabe6f1769ca18d8861575ee6c5de5","bodyHash":"7416ba2d5722562fb9213acbf319e121a5b13d3681b14e909a54c9cf8ed2db4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModuleSpecifierFromNode","kind":"func","status":"implemented","sigHash":"85501584eb738fb89ab9705e104f878ed6eabe6f1769ca18d8861575ee6c5de5","bodyHash":"7416ba2d5722562fb9213acbf319e121a5b13d3681b14e909a54c9cf8ed2db4a"}
  *
  * Go source:
  * func getModuleSpecifierFromNode(node *ast.Node) *ast.Node {
@@ -2832,11 +3062,17 @@ export function getExcludedSymbolFlags(flags: SymbolFlags): SymbolFlags {
  * }
  */
 export function getModuleSpecifierFromNode(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModuleSpecifierFromNode");
+  switch (node!.Kind) {
+    case KindImportDeclaration:
+    case KindJSImportDeclaration:
+    case KindExportDeclaration:
+      return Node_ModuleSpecifier(node) as unknown as GoPtr<Node>;
+  }
+  throw new globalThis.Error("Unhandled case in getModuleSpecifierFromNode");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::resolutionExtensionIsTSOrJson","kind":"func","status":"stub","sigHash":"75c943611d4ab5ad21a037b95b597011420528d617ce8de3e00e5d226a59e67f","bodyHash":"c29ce93e2904cd52bb1c6b9ae5c760274ad6f9280022ab40c8f9e854d8a15392"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::resolutionExtensionIsTSOrJson","kind":"func","status":"implemented","sigHash":"75c943611d4ab5ad21a037b95b597011420528d617ce8de3e00e5d226a59e67f","bodyHash":"c29ce93e2904cd52bb1c6b9ae5c760274ad6f9280022ab40c8f9e854d8a15392"}
  *
  * Go source:
  * func resolutionExtensionIsTSOrJson(ext string) bool {
@@ -2844,11 +3080,11 @@ export function getModuleSpecifierFromNode(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function resolutionExtensionIsTSOrJson(ext: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::resolutionExtensionIsTSOrJson");
+  return ExtensionIsTs(ext) || ext === ExtensionJson;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isESMFormatImportImportingCommonjsFormatFile","kind":"func","status":"stub","sigHash":"61476f69e23e2a2dc70b6348ebf1442ca7b04467b5d829b0532f4db13ce6f905","bodyHash":"6f3d5a163c2033ae1ffe259cb0554bf63df724a01ded10721a95ecd2b59e493b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isESMFormatImportImportingCommonjsFormatFile","kind":"func","status":"implemented","sigHash":"61476f69e23e2a2dc70b6348ebf1442ca7b04467b5d829b0532f4db13ce6f905","bodyHash":"6f3d5a163c2033ae1ffe259cb0554bf63df724a01ded10721a95ecd2b59e493b"}
  *
  * Go source:
  * func isESMFormatImportImportingCommonjsFormatFile(usageMode core.ResolutionMode, targetMode core.ResolutionMode) bool {
@@ -2856,7 +3092,7 @@ export function resolutionExtensionIsTSOrJson(ext: string): bool {
  * }
  */
 export function isESMFormatImportImportingCommonjsFormatFile(usageMode: ResolutionMode, targetMode: ResolutionMode): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isESMFormatImportImportingCommonjsFormatFile");
+  return usageMode === ModuleKindESNext && targetMode === ModuleKindCommonJS;
 }
 
 /**
@@ -2882,7 +3118,7 @@ export interface ExportCollision {
 export type ExportCollisionTable = GoMap<string, GoPtr<ExportCollision>>;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasRestParameter","kind":"func","status":"stub","sigHash":"19e994eec21f1d91a8c3391fa2e5c9ca912a9ab7b44fa81d766cfa290a582afb","bodyHash":"d899216fdb94648e213523c6873d110a1c52685c33cc093eee3652f8d7f35df7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasRestParameter","kind":"func","status":"implemented","sigHash":"19e994eec21f1d91a8c3391fa2e5c9ca912a9ab7b44fa81d766cfa290a582afb","bodyHash":"d899216fdb94648e213523c6873d110a1c52685c33cc093eee3652f8d7f35df7"}
  *
  * Go source:
  * func signatureHasRestParameter(sig *Signature) bool {
@@ -2890,11 +3126,11 @@ export type ExportCollisionTable = GoMap<string, GoPtr<ExportCollision>>;
  * }
  */
 export function signatureHasRestParameter(sig: GoPtr<Signature>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::signatureHasRestParameter");
+  return (sig!.flags & SignatureFlagsHasRestParameter) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite32","kind":"func","status":"stub","sigHash":"809c760fc9e2fc52d3f5c00ff613ee0b4d93a31b8b32c42cf1cf1b46f2969a67","bodyHash":"3198c299d8c4f0afdc89a81cc9b5cd7a6012af69d0baae34781a3af97573f2cb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite32","kind":"func","status":"implemented","sigHash":"809c760fc9e2fc52d3f5c00ff613ee0b4d93a31b8b32c42cf1cf1b46f2969a67","bodyHash":"3198c299d8c4f0afdc89a81cc9b5cd7a6012af69d0baae34781a3af97573f2cb"}
  *
  * Go source:
  * func hashWrite32[T ~int32 | ~uint32](h *xxh3.Hasher, value T) {
@@ -2908,11 +3144,17 @@ export function signatureHasRestParameter(sig: GoPtr<Signature>): bool {
  * }
  */
 export function hashWrite32<T>(h: GoPtr<Hasher>, value: T): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite32");
+  const v = value as unknown as number;
+  (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
+    v & 0xff,
+    (v >> 8) & 0xff,
+    (v >> 16) & 0xff,
+    (v >> 24) & 0xff,
+  ]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite64","kind":"func","status":"stub","sigHash":"78cb29d77c889f27a3848cd4c754d34c071620ef4bdce5f178940f29700d7bef","bodyHash":"cbe7a436c3c0af7601caeca6adeb49770389fd51ecc33a0d00590ecc12064157"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite64","kind":"func","status":"implemented","sigHash":"78cb29d77c889f27a3848cd4c754d34c071620ef4bdce5f178940f29700d7bef","bodyHash":"cbe7a436c3c0af7601caeca6adeb49770389fd51ecc33a0d00590ecc12064157"}
  *
  * Go source:
  * func hashWrite64[T ~int | ~uint | ~int64 | ~uint64](h *xxh3.Hasher, value T) {
@@ -2930,7 +3172,17 @@ export function hashWrite32<T>(h: GoPtr<Hasher>, value: T): void {
  * }
  */
 export function hashWrite64<T>(h: GoPtr<Hasher>, value: T): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::hashWrite64");
+  const v = value as unknown as number;
+  (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
+    v & 0xff,
+    (v >> 8) & 0xff,
+    (v >> 16) & 0xff,
+    (v >> 24) & 0xff,
+    (v >> 32) & 0xff,
+    (v >> 40) & 0xff,
+    (v >> 48) & 0xff,
+    (v >> 56) & 0xff,
+  ]);
 }
 
 /**
@@ -2954,7 +3206,7 @@ export interface keyBuilder {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeListKey","kind":"func","status":"stub","sigHash":"ace82340c364953c9d4dc94406edea5c86498799d48cf1d7b61ed6bbc1bf6655","bodyHash":"bccc59c07535c894a2e78802f4c8720402eb1b87783f4881b845bd6ff7566b67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeListKey","kind":"func","status":"implemented","sigHash":"ace82340c364953c9d4dc94406edea5c86498799d48cf1d7b61ed6bbc1bf6655","bodyHash":"bccc59c07535c894a2e78802f4c8720402eb1b87783f4881b845bd6ff7566b67"}
  *
  * Go source:
  * func getTypeListKey(types []*Type) CacheHashKey {
@@ -2964,11 +3216,13 @@ export interface keyBuilder {
  * }
  */
 export function getTypeListKey(types: GoSlice<GoPtr<Type>>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeListKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeTypes(b, types);
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAliasKey","kind":"func","status":"stub","sigHash":"cd96c7cf3a45508c0eb1567727875cabcbd0047906ae0fff1b1627f3902c5b64","bodyHash":"2377c2a570d66de32da275c862c63f84a4c96106d83f56b7e438502e01432c1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAliasKey","kind":"func","status":"implemented","sigHash":"cd96c7cf3a45508c0eb1567727875cabcbd0047906ae0fff1b1627f3902c5b64","bodyHash":"2377c2a570d66de32da275c862c63f84a4c96106d83f56b7e438502e01432c1a"}
  *
  * Go source:
  * func getAliasKey(alias *TypeAlias) CacheHashKey {
@@ -2978,11 +3232,13 @@ export function getTypeListKey(types: GoSlice<GoPtr<Type>>): CacheHashKey {
  * }
  */
 export function getAliasKey(alias: GoPtr<TypeAlias>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getAliasKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeAlias(b, alias);
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUnionKey","kind":"func","status":"stub","sigHash":"2536306e42506a7e8ba5bbe59ef5998bdcd2cf520ed85ee56fe62c3c8adced4f","bodyHash":"4346e84db625a98188d08b6450213941fc5e10be78cb4b4412c3a7ea6a8c2968"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUnionKey","kind":"func","status":"implemented","sigHash":"2536306e42506a7e8ba5bbe59ef5998bdcd2cf520ed85ee56fe62c3c8adced4f","bodyHash":"4346e84db625a98188d08b6450213941fc5e10be78cb4b4412c3a7ea6a8c2968"}
  *
  * Go source:
  * func getUnionKey(types []*Type, origin *Type, alias *TypeAlias) CacheHashKey {
@@ -3010,11 +3266,29 @@ export function getAliasKey(alias: GoPtr<TypeAlias>): CacheHashKey {
  * }
  */
 export function getUnionKey(types: GoSlice<GoPtr<Type>>, origin: GoPtr<Type>, alias: GoPtr<TypeAlias>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getUnionKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  if (origin === undefined) {
+    keyBuilder_writeTypes(b, types);
+  } else if (origin!.flags & TypeFlagsUnion) {
+    keyBuilder_writeByte(b, "|".charCodeAt(0));
+    keyBuilder_writeTypes(b, Type_Types(origin));
+  } else if (origin!.flags & TypeFlagsIntersection) {
+    keyBuilder_writeByte(b, "&".charCodeAt(0));
+    keyBuilder_writeTypes(b, Type_Types(origin));
+  } else if (origin!.flags & TypeFlagsIndex) {
+    keyBuilder_writeByte(b, "#".charCodeAt(0));
+    keyBuilder_writeType(b, origin);
+    keyBuilder_writeByte(b, "|".charCodeAt(0));
+    keyBuilder_writeTypes(b, types);
+  } else {
+    throw new globalThis.Error("Unhandled case in getUnionKey");
+  }
+  keyBuilder_writeAlias(b, alias);
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIntersectionKey","kind":"func","status":"stub","sigHash":"e27eaa451cc61080b1693a9dd2e3ea4b1855762d9152211f4f4ff4815e6ab4ea","bodyHash":"fcbf8732a3af4644ce3827f34ae9828f6f81ec4c8bee2aa3cb6d5b98e6248cce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIntersectionKey","kind":"func","status":"implemented","sigHash":"e27eaa451cc61080b1693a9dd2e3ea4b1855762d9152211f4f4ff4815e6ab4ea","bodyHash":"fcbf8732a3af4644ce3827f34ae9828f6f81ec4c8bee2aa3cb6d5b98e6248cce"}
  *
  * Go source:
  * func getIntersectionKey(types []*Type, flags IntersectionFlags, alias *TypeAlias) CacheHashKey {
@@ -3029,11 +3303,18 @@ export function getUnionKey(types: GoSlice<GoPtr<Type>>, origin: GoPtr<Type>, al
  * }
  */
 export function getIntersectionKey(types: GoSlice<GoPtr<Type>>, flags: IntersectionFlags, alias: GoPtr<TypeAlias>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIntersectionKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeTypes(b, types);
+  if ((flags & IntersectionFlagsNoConstraintReduction) === 0) {
+    keyBuilder_writeAlias(b, alias);
+  } else {
+    keyBuilder_writeByte(b, "*".charCodeAt(0));
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTupleKey","kind":"func","status":"stub","sigHash":"62144678236a2313bcbddb065685655bd7f19582be5fd188d5e0e617cdd6188d","bodyHash":"96c4a57e9f92617287ef27aa6d5af0309fe877b4292218d368dd65f88d6f7ffe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTupleKey","kind":"func","status":"implemented","sigHash":"62144678236a2313bcbddb065685655bd7f19582be5fd188d5e0e617cdd6188d","bodyHash":"96c4a57e9f92617287ef27aa6d5af0309fe877b4292218d368dd65f88d6f7ffe"}
  *
  * Go source:
  * func getTupleKey(elementInfos []TupleElementInfo, readonly bool) CacheHashKey {
@@ -3060,11 +3341,29 @@ export function getIntersectionKey(types: GoSlice<GoPtr<Type>>, flags: Intersect
  * }
  */
 export function getTupleKey(elementInfos: GoSlice<TupleElementInfo>, readonly: bool): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTupleKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  for (const e of elementInfos) {
+    if (e.flags & ElementFlagsRequired) {
+      keyBuilder_writeByte(b, "#".charCodeAt(0));
+    } else if (e.flags & ElementFlagsOptional) {
+      keyBuilder_writeByte(b, "?".charCodeAt(0));
+    } else if (e.flags & ElementFlagsRest) {
+      keyBuilder_writeByte(b, ".".charCodeAt(0));
+    } else {
+      keyBuilder_writeByte(b, "*".charCodeAt(0));
+    }
+    if (e.labeledDeclaration !== undefined) {
+      keyBuilder_writeNode(b, e.labeledDeclaration);
+    }
+  }
+  if (readonly) {
+    keyBuilder_writeByte(b, "!".charCodeAt(0));
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeAliasInstantiationKey","kind":"func","status":"stub","sigHash":"d67319951187617489974390bbd467730dde4c0fc14b281f6f62c179c22a0d47","bodyHash":"e94012df2bdc55bd8bd89467105799fbdac3551e96e7f4e32167ff00aa2746a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeAliasInstantiationKey","kind":"func","status":"implemented","sigHash":"d67319951187617489974390bbd467730dde4c0fc14b281f6f62c179c22a0d47","bodyHash":"e94012df2bdc55bd8bd89467105799fbdac3551e96e7f4e32167ff00aa2746a8"}
  *
  * Go source:
  * func getTypeAliasInstantiationKey(typeArguments []*Type, alias *TypeAlias) CacheHashKey {
@@ -3072,11 +3371,11 @@ export function getTupleKey(elementInfos: GoSlice<TupleElementInfo>, readonly: b
  * }
  */
 export function getTypeAliasInstantiationKey(typeArguments: GoSlice<GoPtr<Type>>, alias: GoPtr<TypeAlias>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeAliasInstantiationKey");
+  return getTypeInstantiationKey(typeArguments, alias, false);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeInstantiationKey","kind":"func","status":"stub","sigHash":"987afdbaff0b76dd82d3701a1326dd1b83c2a9db5f759cea06efbcbc5c34536e","bodyHash":"8ce319f7a88e29b747bfa622ecc014077aaa5ebe192ac4af6b3a0c4cfed23dd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeInstantiationKey","kind":"func","status":"implemented","sigHash":"987afdbaff0b76dd82d3701a1326dd1b83c2a9db5f759cea06efbcbc5c34536e","bodyHash":"8ce319f7a88e29b747bfa622ecc014077aaa5ebe192ac4af6b3a0c4cfed23dd8"}
  *
  * Go source:
  * func getTypeInstantiationKey(typeArguments []*Type, alias *TypeAlias, singleSignature bool) CacheHashKey {
@@ -3090,11 +3389,17 @@ export function getTypeAliasInstantiationKey(typeArguments: GoSlice<GoPtr<Type>>
  * }
  */
 export function getTypeInstantiationKey(typeArguments: GoSlice<GoPtr<Type>>, alias: GoPtr<TypeAlias>, singleSignature: bool): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeInstantiationKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeTypes(b, typeArguments);
+  keyBuilder_writeAlias(b, alias);
+  if (singleSignature) {
+    keyBuilder_writeByte(b, "!".charCodeAt(0));
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIndexedAccessKey","kind":"func","status":"stub","sigHash":"d62d2e63ca8fa72f151b694c022b03ecb224d1d65693896461f7f48e0e38a2d9","bodyHash":"a475999c1a6b50f45a7517a8feeacdddccbcb3e66e7e8971dc14e8cf28425e49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIndexedAccessKey","kind":"func","status":"implemented","sigHash":"d62d2e63ca8fa72f151b694c022b03ecb224d1d65693896461f7f48e0e38a2d9","bodyHash":"a475999c1a6b50f45a7517a8feeacdddccbcb3e66e7e8971dc14e8cf28425e49"}
  *
  * Go source:
  * func getIndexedAccessKey(objectType *Type, indexType *Type, accessFlags AccessFlags, alias *TypeAlias) CacheHashKey {
@@ -3107,11 +3412,16 @@ export function getTypeInstantiationKey(typeArguments: GoSlice<GoPtr<Type>>, ali
  * }
  */
 export function getIndexedAccessKey(objectType: GoPtr<Type>, indexType: GoPtr<Type>, accessFlags: AccessFlags, alias: GoPtr<TypeAlias>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getIndexedAccessKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeType(b, objectType);
+  keyBuilder_writeType(b, indexType);
+  hashWrite32(b.h, accessFlags);
+  keyBuilder_writeAlias(b, alias);
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTemplateTypeKey","kind":"func","status":"stub","sigHash":"d3c7e6765e9a294118c2efe19a92eb2db1ac472ac4ad42ce70456bbd067c583d","bodyHash":"635920d0b26fa3809f9301fd0b19230b7fdd644310d3bb7f55b2f4a940e1c27d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTemplateTypeKey","kind":"func","status":"implemented","sigHash":"d3c7e6765e9a294118c2efe19a92eb2db1ac472ac4ad42ce70456bbd067c583d","bodyHash":"635920d0b26fa3809f9301fd0b19230b7fdd644310d3bb7f55b2f4a940e1c27d"}
  *
  * Go source:
  * func getTemplateTypeKey(texts []string, types []*Type) CacheHashKey {
@@ -3129,11 +3439,21 @@ export function getIndexedAccessKey(objectType: GoPtr<Type>, indexType: GoPtr<Ty
  * }
  */
 export function getTemplateTypeKey(texts: GoSlice<string>, types: GoSlice<GoPtr<Type>>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTemplateTypeKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeTypes(b, types);
+  keyBuilder_writeByte(b, "|".charCodeAt(0));
+  for (const s of texts) {
+    keyBuilder_writeInt(b, s.length);
+  }
+  keyBuilder_writeByte(b, "|".charCodeAt(0));
+  for (const s of texts) {
+    keyBuilder_writeString(b, s);
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getConditionalTypeKey","kind":"func","status":"stub","sigHash":"9b3e2d5b37ddb9e6dbeb9a1213512254dd56df13cbc3d1e3c256c9fc7a1932f8","bodyHash":"459ab74ac49c3a8ad555511191dac749a3324ce8f80437fd26245a9093e324ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getConditionalTypeKey","kind":"func","status":"implemented","sigHash":"9b3e2d5b37ddb9e6dbeb9a1213512254dd56df13cbc3d1e3c256c9fc7a1932f8","bodyHash":"459ab74ac49c3a8ad555511191dac749a3324ce8f80437fd26245a9093e324ab"}
  *
  * Go source:
  * func getConditionalTypeKey(typeArguments []*Type, alias *TypeAlias, forConstraint bool) CacheHashKey {
@@ -3147,11 +3467,17 @@ export function getTemplateTypeKey(texts: GoSlice<string>, types: GoSlice<GoPtr<
  * }
  */
 export function getConditionalTypeKey(typeArguments: GoSlice<GoPtr<Type>>, alias: GoPtr<TypeAlias>, forConstraint: bool): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getConditionalTypeKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeTypes(b, typeArguments);
+  keyBuilder_writeAlias(b, alias);
+  if (forConstraint) {
+    keyBuilder_writeByte(b, "!".charCodeAt(0));
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getRelationKey","kind":"func","status":"stub","sigHash":"36c2f12e97b87e880c681bd40302aab0aa5170d953f1deb36ccb848286eb4223","bodyHash":"efe123b66dac31f225e25a91783fa47808cbb0ca26c92a159f9d1638e2b3259f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getRelationKey","kind":"func","status":"implemented","sigHash":"36c2f12e97b87e880c681bd40302aab0aa5170d953f1deb36ccb848286eb4223","bodyHash":"efe123b66dac31f225e25a91783fa47808cbb0ca26c92a159f9d1638e2b3259f"}
  *
  * Go source:
  * func getRelationKey(source *Type, target *Type, intersectionState IntersectionState, isIdentity bool, ignoreConstraints bool) (CacheHashKey, bool) {
@@ -3173,11 +3499,27 @@ export function getConditionalTypeKey(typeArguments: GoSlice<GoPtr<Type>>, alias
  * }
  */
 export function getRelationKey(source: GoPtr<Type>, target: GoPtr<Type>, intersectionState: IntersectionState, isIdentity: bool, ignoreConstraints: bool): [CacheHashKey, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getRelationKey");
+  if (isIdentity && source!.id > target!.id) {
+    const tmp = source;
+    source = target;
+    target = tmp;
+  }
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  let constrained = false;
+  if (isTypeReferenceWithGenericArguments(source) && isTypeReferenceWithGenericArguments(target)) {
+    keyBuilder_writeByte(b, "g".charCodeAt(0));
+    constrained = keyBuilder_writeGenericTypeReferences(b, source, target, ignoreConstraints);
+  } else {
+    keyBuilder_writeByte(b, "s".charCodeAt(0));
+    keyBuilder_writeType(b, source);
+    keyBuilder_writeType(b, target);
+  }
+  hashWrite32(b.h, intersectionState);
+  return [keyBuilder_hash(b), constrained];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNodeListKey","kind":"func","status":"stub","sigHash":"f389892147d69e22a0294bdc8ca7a3f1f4fd09c9464a877d69dfcf328cf10a55","bodyHash":"572dab59e8e0445792c112d5132df52350eff128f9a5e0c31cca579acbdcaeb1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNodeListKey","kind":"func","status":"implemented","sigHash":"f389892147d69e22a0294bdc8ca7a3f1f4fd09c9464a877d69dfcf328cf10a55","bodyHash":"572dab59e8e0445792c112d5132df52350eff128f9a5e0c31cca579acbdcaeb1"}
  *
  * Go source:
  * func getNodeListKey(nodes []*ast.Node) CacheHashKey {
@@ -3190,11 +3532,16 @@ export function getRelationKey(source: GoPtr<Type>, target: GoPtr<Type>, interse
  * }
  */
 export function getNodeListKey(nodes: GoSlice<GoPtr<Node>>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNodeListKey");
+  const b: keyBuilder = { h: xxh3.New() as unknown as Hasher };
+  keyBuilder_writeInt(b, nodes !== undefined ? nodes.length : 0);
+  for (const n of nodes) {
+    keyBuilder_writeNode(b, n);
+  }
+  return keyBuilder_hash(b);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTypeReferenceWithGenericArguments","kind":"func","status":"stub","sigHash":"ea7d11e71ebcad08e9390904706dd90907f5025b3ebe88ddc51584514a9e2056","bodyHash":"6577c71d9d517e91f2fcc75bb3c106290382fed7fd0a15a248d18e27114a64d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTypeReferenceWithGenericArguments","kind":"func","status":"implemented","sigHash":"ea7d11e71ebcad08e9390904706dd90907f5025b3ebe88ddc51584514a9e2056","bodyHash":"6577c71d9d517e91f2fcc75bb3c106290382fed7fd0a15a248d18e27114a64d0"}
  *
  * Go source:
  * func isTypeReferenceWithGenericArguments(t *Type) bool {
@@ -3204,11 +3551,13 @@ export function getNodeListKey(nodes: GoSlice<GoPtr<Node>>): CacheHashKey {
  * }
  */
 export function isTypeReferenceWithGenericArguments(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTypeReferenceWithGenericArguments");
+  return isNonDeferredTypeReference(t) && Some(Checker_getTypeArguments(t!.checker, t), (arg: GoPtr<Type>): bool => {
+    return (arg!.flags & TypeFlagsTypeParameter) !== 0 || isTypeReferenceWithGenericArguments(arg);
+  });
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNonDeferredTypeReference","kind":"func","status":"stub","sigHash":"442bc19a096cc4c2ac82f20df86cc1fb0a917eddb889c6839f7f032c589760c4","bodyHash":"d426962f666c245f440d8005fd26a2adc4e31007378d95709ba26d98301f1dd3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNonDeferredTypeReference","kind":"func","status":"implemented","sigHash":"442bc19a096cc4c2ac82f20df86cc1fb0a917eddb889c6839f7f032c589760c4","bodyHash":"d426962f666c245f440d8005fd26a2adc4e31007378d95709ba26d98301f1dd3"}
  *
  * Go source:
  * func isNonDeferredTypeReference(t *Type) bool {
@@ -3216,11 +3565,11 @@ export function isTypeReferenceWithGenericArguments(t: GoPtr<Type>): bool {
  * }
  */
 export function isNonDeferredTypeReference(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isNonDeferredTypeReference");
+  return (t!.objectFlags & ObjectFlagsReference) !== 0 && Type_AsTypeReference(t)!.node === undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnconstrainedTypeParameter","kind":"func","status":"stub","sigHash":"0f419a62665b9584de71d6c0ac556f587584d37170cb06bc36b3092e109a63ad","bodyHash":"149bba5944b2a682d55e7a285387d51b3cac7762bce1442a5232f9b8b1f45ae5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnconstrainedTypeParameter","kind":"func","status":"implemented","sigHash":"0f419a62665b9584de71d6c0ac556f587584d37170cb06bc36b3092e109a63ad","bodyHash":"149bba5944b2a682d55e7a285387d51b3cac7762bce1442a5232f9b8b1f45ae5"}
  *
  * Go source:
  * func isUnconstrainedTypeParameter(tp *Type) bool {
@@ -3240,7 +3589,19 @@ export function isNonDeferredTypeReference(t: GoPtr<Type>): bool {
  * }
  */
 export function isUnconstrainedTypeParameter(tp: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnconstrainedTypeParameter");
+  let target = Type_Target(tp);
+  if (target === undefined) {
+    target = tp;
+  }
+  if (target!["symbol"] === undefined) {
+    return false;
+  }
+  for (const d of (target!["symbol"]!.Declarations ?? [])) {
+    if (IsTypeParameterDeclaration(d) && (AsTypeParameterDeclaration(d)!.Constraint !== undefined || IsMappedTypeNode(d!.Parent) || IsInferTypeNode(d!.Parent))) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -3268,7 +3629,7 @@ export const thisAssignmentDeclarationConstructor: thisAssignmentDeclarationKind
 export const thisAssignmentDeclarationMethod: thisAssignmentDeclarationKind = 3; // methods only; look in base first, and if not found, union all declaration types plus undefined
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::findIndexInfo","kind":"func","status":"stub","sigHash":"c3e78c4e61d79929ed7834364eea7ab2eab39d364216c57eebd6a0780010efd5","bodyHash":"66b6b613494e0f5d2ecfebedc3594ed8e89dfb7496ced41434374956d4bbabc4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::findIndexInfo","kind":"func","status":"implemented","sigHash":"c3e78c4e61d79929ed7834364eea7ab2eab39d364216c57eebd6a0780010efd5","bodyHash":"66b6b613494e0f5d2ecfebedc3594ed8e89dfb7496ced41434374956d4bbabc4"}
  *
  * Go source:
  * func findIndexInfo(indexInfos []*IndexInfo, keyType *Type) *IndexInfo {
@@ -3281,11 +3642,16 @@ export const thisAssignmentDeclarationMethod: thisAssignmentDeclarationKind = 3;
  * }
  */
 export function findIndexInfo(indexInfos: GoSlice<GoPtr<IndexInfo>>, keyType: GoPtr<Type>): GoPtr<IndexInfo> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::findIndexInfo");
+  for (const info of indexInfos) {
+    if (info!.keyType === keyType) {
+      return info;
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBaseTypeNodeOfClass","kind":"func","status":"stub","sigHash":"b722ed3f103d9e485606ab2d5f79b66e6d57965b114fa02972fc97c9435a5b6a","bodyHash":"07578170e863fc4d681b6aa7aa1161c3d7b2d0673d0842bc1fad32416d08378b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBaseTypeNodeOfClass","kind":"func","status":"implemented","sigHash":"b722ed3f103d9e485606ab2d5f79b66e6d57965b114fa02972fc97c9435a5b6a","bodyHash":"07578170e863fc4d681b6aa7aa1161c3d7b2d0673d0842bc1fad32416d08378b"}
  *
  * Go source:
  * func getBaseTypeNodeOfClass(t *Type) *ast.Node {
@@ -3297,11 +3663,15 @@ export function findIndexInfo(indexInfos: GoSlice<GoPtr<IndexInfo>>, keyType: Go
  * }
  */
 export function getBaseTypeNodeOfClass(t: GoPtr<Type>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBaseTypeNodeOfClass");
+  const decl = GetClassLikeDeclarationOfSymbol(t!["symbol"]);
+  if (decl !== undefined) {
+    return GetExtendsHeritageClauseElement(decl);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTargetType","kind":"func","status":"stub","sigHash":"121983b3090a85aa8b0a0e9ad2c9625c8f051a47a10abc176135b0f315bb323e","bodyHash":"3bfd422631a27e516a063df7251745b30050ad0a3c9fd3fa9e85626720ed4b1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTargetType","kind":"func","status":"implemented","sigHash":"121983b3090a85aa8b0a0e9ad2c9625c8f051a47a10abc176135b0f315bb323e","bodyHash":"3bfd422631a27e516a063df7251745b30050ad0a3c9fd3fa9e85626720ed4b1f"}
  *
  * Go source:
  * func getTargetType(t *Type) *Type {
@@ -3312,11 +3682,14 @@ export function getBaseTypeNodeOfClass(t: GoPtr<Type>): GoPtr<Node> {
  * }
  */
 export function getTargetType(t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTargetType");
+  if ((t!.objectFlags & ObjectFlagsReference) !== 0) {
+    return Type_Target(t);
+  }
+  return t;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLateBindableAST","kind":"func","status":"stub","sigHash":"01334c286a29e1bb5dda941dabcfdd02e8d3795869026eb19b5fb491b2c53bd3","bodyHash":"15e0db3aa28fc7f99f236aeff49abb7288e30eba1c050d3721673be00e61428d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLateBindableAST","kind":"func","status":"implemented","sigHash":"01334c286a29e1bb5dda941dabcfdd02e8d3795869026eb19b5fb491b2c53bd3","bodyHash":"15e0db3aa28fc7f99f236aeff49abb7288e30eba1c050d3721673be00e61428d"}
  *
  * Go source:
  * func isLateBindableAST(node *ast.Node) bool {
@@ -3331,11 +3704,17 @@ export function getTargetType(t: GoPtr<Type>): GoPtr<Type> {
  * }
  */
 export function isLateBindableAST(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLateBindableAST");
+  let expr: GoPtr<Node> = undefined;
+  if (IsComputedPropertyName(node)) {
+    expr = Node_Expression(node);
+  } else if (IsElementAccessExpression(node)) {
+    expr = AsElementAccessExpression(node)!.ArgumentExpression as unknown as GoPtr<Node>;
+  }
+  return expr !== undefined && IsEntityNameExpression(expr);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEffectiveSetAccessorTypeAnnotationNode","kind":"func","status":"stub","sigHash":"b765a7ef198195d76b68d99af12d0c278f5de0c083714b20644bb4db3aaed405","bodyHash":"81859292dbc9d30c466dadf553bd631ca6b206624d9aa956d2ae789d3c50afd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEffectiveSetAccessorTypeAnnotationNode","kind":"func","status":"implemented","sigHash":"b765a7ef198195d76b68d99af12d0c278f5de0c083714b20644bb4db3aaed405","bodyHash":"81859292dbc9d30c466dadf553bd631ca6b206624d9aa956d2ae789d3c50afd8"}
  *
  * Go source:
  * func getEffectiveSetAccessorTypeAnnotationNode(node *ast.Node) *ast.Node {
@@ -3347,11 +3726,15 @@ export function isLateBindableAST(node: GoPtr<Node>): bool {
  * }
  */
 export function getEffectiveSetAccessorTypeAnnotationNode(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEffectiveSetAccessorTypeAnnotationNode");
+  const param = getSetAccessorValueParameter(node);
+  if (param !== undefined) {
+    return Node_Type(param);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSetAccessorValueParameter","kind":"func","status":"stub","sigHash":"62d7cd899a8c62652029946ceb5afae8658be7543cdb411db55db5407f151819","bodyHash":"8fe64ef8855be4889d8225c675909105b17fba331d599bf6d3d6668220edabe8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSetAccessorValueParameter","kind":"func","status":"implemented","sigHash":"62d7cd899a8c62652029946ceb5afae8658be7543cdb411db55db5407f151819","bodyHash":"8fe64ef8855be4889d8225c675909105b17fba331d599bf6d3d6668220edabe8"}
  *
  * Go source:
  * func getSetAccessorValueParameter(accessor *ast.Node) *ast.Node {
@@ -3364,11 +3747,16 @@ export function getEffectiveSetAccessorTypeAnnotationNode(node: GoPtr<Node>): Go
  * }
  */
 export function getSetAccessorValueParameter(accessor: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSetAccessorValueParameter");
+  const parameters = Node_Parameters(accessor);
+  if (parameters !== undefined && parameters.length > 0) {
+    const hasThis = parameters.length === 2 && IsThisParameter(parameters[0] as unknown as GoPtr<Node>);
+    return parameters[IfElse(hasThis, 1, 0)] as unknown as GoPtr<Node>;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::mayReturnNever","kind":"func","status":"stub","sigHash":"d3063087746ed980441d490d56defdc8bfe06795d25b56a6acb585f6d098e016","bodyHash":"44ba303297ebeef993ff57950744cdcded5f09a1ca1a2e87e0519df57bb2078e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::mayReturnNever","kind":"func","status":"implemented","sigHash":"d3063087746ed980441d490d56defdc8bfe06795d25b56a6acb585f6d098e016","bodyHash":"44ba303297ebeef993ff57950744cdcded5f09a1ca1a2e87e0519df57bb2078e"}
  *
  * Go source:
  * func mayReturnNever(fn *ast.Node) bool {
@@ -3382,11 +3770,18 @@ export function getSetAccessorValueParameter(accessor: GoPtr<Node>): GoPtr<Node>
  * }
  */
 export function mayReturnNever(fn: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::mayReturnNever");
+  switch (fn!.Kind) {
+    case KindFunctionExpression:
+    case KindArrowFunction:
+      return true;
+    case KindMethodDeclaration:
+      return IsObjectLiteralExpression(fn!.Parent);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThisless","kind":"func","status":"stub","sigHash":"bd4191bc89226c2ce154a45a0d2d401db523cef6fa897bf87ea6af216b711ec8","bodyHash":"92f411b3e2bd1e4f20daff6e5e54b967ead36821e1a055277ad8ef06a255b48a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThisless","kind":"func","status":"implemented","sigHash":"bd4191bc89226c2ce154a45a0d2d401db523cef6fa897bf87ea6af216b711ec8","bodyHash":"92f411b3e2bd1e4f20daff6e5e54b967ead36821e1a055277ad8ef06a255b48a"}
  *
  * Go source:
  * func isThisless(symbol *ast.Symbol) bool {
@@ -3405,11 +3800,27 @@ export function mayReturnNever(fn: GoPtr<Node>): bool {
  * }
  */
 export function isThisless(symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThisless");
+  if (symbol_!.Declarations !== undefined && symbol_!.Declarations.length === 1) {
+    const declaration = symbol_!.Declarations[0];
+    if (declaration !== undefined) {
+      switch (declaration!.Kind) {
+        case KindPropertyDeclaration:
+        case KindPropertySignature:
+          return isThislessVariableLikeDeclaration(declaration);
+        case KindMethodDeclaration:
+        case KindMethodSignature:
+        case KindConstructor:
+        case KindGetAccessor:
+        case KindSetAccessor:
+          return isThislessFunctionLikeDeclaration(declaration);
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessVariableLikeDeclaration","kind":"func","status":"stub","sigHash":"ef56ce2c3e79ebb0c7384ca7c801e7b35e3f7c44c58185163dc465ebc60946c2","bodyHash":"6ef89353d643ba974755dae3026fa9407c05883ecf9eca41f155467ccb5a502f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessVariableLikeDeclaration","kind":"func","status":"implemented","sigHash":"ef56ce2c3e79ebb0c7384ca7c801e7b35e3f7c44c58185163dc465ebc60946c2","bodyHash":"6ef89353d643ba974755dae3026fa9407c05883ecf9eca41f155467ccb5a502f"}
  *
  * Go source:
  * func isThislessVariableLikeDeclaration(node *ast.Node) bool {
@@ -3421,11 +3832,15 @@ export function isThisless(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function isThislessVariableLikeDeclaration(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessVariableLikeDeclaration");
+  const typeNode = Node_Type(node);
+  if (typeNode !== undefined) {
+    return isThislessType(typeNode);
+  }
+  return Node_Initializer(node) === undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessType","kind":"func","status":"stub","sigHash":"1256ff27020eed6f33bf75cf05cf1c4c954f14ec4233488526765beebb81bd35","bodyHash":"e22ff1613cff66ce950f92c8606bf1ef91c0cd9784184dfc6a59acc17a1115b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessType","kind":"func","status":"implemented","sigHash":"1256ff27020eed6f33bf75cf05cf1c4c954f14ec4233488526765beebb81bd35","bodyHash":"e22ff1613cff66ce950f92c8606bf1ef91c0cd9784184dfc6a59acc17a1115b5"}
  *
  * Go source:
  * func isThislessType(node *ast.Node) bool {
@@ -3442,11 +3857,30 @@ export function isThislessVariableLikeDeclaration(node: GoPtr<Node>): bool {
  * }
  */
 export function isThislessType(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessType");
+  switch (node!.Kind) {
+    case KindAnyKeyword:
+    case KindUnknownKeyword:
+    case KindStringKeyword:
+    case KindNumberKeyword:
+    case KindBigIntKeyword:
+    case KindBooleanKeyword:
+    case KindSymbolKeyword:
+    case KindObjectKeyword:
+    case KindVoidKeyword:
+    case KindUndefinedKeyword:
+    case KindNeverKeyword:
+    case KindLiteralType:
+      return true;
+    case KindArrayType:
+      return isThislessType(AsArrayTypeNode(node)!.ElementType as unknown as GoPtr<Node>);
+    case KindTypeReference:
+      return Every(Node_TypeArguments(node) as unknown as GoSlice<GoPtr<Node>>, isThislessType);
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessFunctionLikeDeclaration","kind":"func","status":"stub","sigHash":"9ea351819d58b783f707e54d1261fa3c4978a520191ecbe14a0546285225b911","bodyHash":"7469d1ae2f50021f2100dd72311bb90eb04fca9ef403807f63145baf13dcb4e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessFunctionLikeDeclaration","kind":"func","status":"implemented","sigHash":"9ea351819d58b783f707e54d1261fa3c4978a520191ecbe14a0546285225b911","bodyHash":"7469d1ae2f50021f2100dd72311bb90eb04fca9ef403807f63145baf13dcb4e5"}
  *
  * Go source:
  * func isThislessFunctionLikeDeclaration(node *ast.Node) bool {
@@ -3457,11 +3891,14 @@ export function isThislessType(node: GoPtr<Node>): bool {
  * }
  */
 export function isThislessFunctionLikeDeclaration(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessFunctionLikeDeclaration");
+  const returnType = Node_Type(node);
+  return (IsConstructorDeclaration(node) || (returnType !== undefined && isThislessType(returnType))) &&
+    Every(Node_Parameters(node) as unknown as GoSlice<GoPtr<Node>>, isThislessVariableLikeDeclaration) &&
+    Every(Node_TypeParameters(node) as unknown as GoSlice<GoPtr<Node>>, isThislessTypeParameter);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessTypeParameter","kind":"func","status":"stub","sigHash":"603c6f240aecb818f70ef74db43172597e44abfd354e1a990a79f296fa60701d","bodyHash":"484b23d78e90c41f77fec23bea781f92a46b32bc82343a0de3d15841aba0c0ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessTypeParameter","kind":"func","status":"implemented","sigHash":"603c6f240aecb818f70ef74db43172597e44abfd354e1a990a79f296fa60701d","bodyHash":"484b23d78e90c41f77fec23bea781f92a46b32bc82343a0de3d15841aba0c0ff"}
  *
  * Go source:
  * func isThislessTypeParameter(node *ast.Node) bool {
@@ -3470,11 +3907,12 @@ export function isThislessFunctionLikeDeclaration(node: GoPtr<Node>): bool {
  * }
  */
 export function isThislessTypeParameter(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isThislessTypeParameter");
+  const constraint = AsTypeParameterDeclaration(node)!.Constraint;
+  return constraint === undefined || isThislessType(constraint as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPrototypeProperty","kind":"func","status":"stub","sigHash":"1bed757f06ed15e1875d1b6d72f00f0745dfd604c8a108b396e694f0c3f88ed3","bodyHash":"ed27c52d1535f0a2238354d81fb780109960c41c2da32ad9be6b12122a148c2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPrototypeProperty","kind":"func","status":"implemented","sigHash":"1bed757f06ed15e1875d1b6d72f00f0745dfd604c8a108b396e694f0c3f88ed3","bodyHash":"ed27c52d1535f0a2238354d81fb780109960c41c2da32ad9be6b12122a148c2f"}
  *
  * Go source:
  * func isPrototypeProperty(symbol *ast.Symbol) bool {
@@ -3482,11 +3920,11 @@ export function isThislessTypeParameter(node: GoPtr<Node>): bool {
  * }
  */
 export function isPrototypeProperty(symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isPrototypeProperty");
+  return (symbol_!.Flags & SymbolFlagsMethod) !== 0 || (symbol_!.CheckFlags & CheckFlagsSyntheticMethod) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isConflictingPrivateProperty","kind":"func","status":"stub","sigHash":"d923c6023024e4804a47df3212611a06e7f3c2856109df9a14d8a646c7c854f4","bodyHash":"a212ffd2d7ede5c1038086c0db33a9a0391ef8b9845513b17afe8edb54161538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isConflictingPrivateProperty","kind":"func","status":"implemented","sigHash":"d923c6023024e4804a47df3212611a06e7f3c2856109df9a14d8a646c7c854f4","bodyHash":"a212ffd2d7ede5c1038086c0db33a9a0391ef8b9845513b17afe8edb54161538"}
  *
  * Go source:
  * func isConflictingPrivateProperty(prop *ast.Symbol) bool {
@@ -3495,11 +3933,11 @@ export function isPrototypeProperty(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function isConflictingPrivateProperty(prop: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isConflictingPrivateProperty");
+  return prop!.ValueDeclaration === undefined && (prop!.CheckFlags & CheckFlagsContainsPrivate) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModifiedReadonlyState","kind":"func","status":"stub","sigHash":"a7e07894c9be1f29a05a4f34d09a89cde1b615db87683f9ceb76c85b2ebab0a3","bodyHash":"3073b1d83a759abeefc34db00fb97a2b1af0ba640229aed930677c393e76e826"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModifiedReadonlyState","kind":"func","status":"implemented","sigHash":"a7e07894c9be1f29a05a4f34d09a89cde1b615db87683f9ceb76c85b2ebab0a3","bodyHash":"3073b1d83a759abeefc34db00fb97a2b1af0ba640229aed930677c393e76e826"}
  *
  * Go source:
  * func getModifiedReadonlyState(state bool, modifiers MappedTypeModifiers) bool {
@@ -3513,11 +3951,17 @@ export function isConflictingPrivateProperty(prop: GoPtr<Symbol>): bool {
  * }
  */
 export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModifiers): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getModifiedReadonlyState");
+  if (modifiers & MappedTypeModifiersIncludeReadonly) {
+    return true;
+  }
+  if (modifiers & MappedTypeModifiersExcludeReadonly) {
+    return false;
+  }
+  return state;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::instantiateList","kind":"func","status":"stub","sigHash":"798e854f616764de539ed579444d2f17223799cceca6e9a93fc3240c96f9352f","bodyHash":"7b17b8347c08316e70f737f1b13268d32285c2638c2495faedf478bd087ee945"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::instantiateList","kind":"func","status":"implemented","sigHash":"798e854f616764de539ed579444d2f17223799cceca6e9a93fc3240c96f9352f","bodyHash":"7b17b8347c08316e70f737f1b13268d32285c2638c2495faedf478bd087ee945"}
  *
  * Go source:
  * func instantiateList[T comparable](c *Checker, values []T, m *TypeMapper, instantiator func(c *Checker, value T, m *TypeMapper) T) []T {
@@ -3537,11 +3981,24 @@ export function getModifiedReadonlyState(state: bool, modifiers: MappedTypeModif
  * }
  */
 export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, values: GoSlice<T>, m: GoPtr<TypeMapper>, instantiator: (c: GoPtr<Checker>, value: T, m: GoPtr<TypeMapper>) => T): GoSlice<T> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::instantiateList");
+  for (let i = 0; i < (values !== undefined ? values.length : 0); i++) {
+    const value = values![i];
+    const mapped = instantiator(c, value, m);
+    if (mapped !== value) {
+      const result: T[] = new Array(values!.length) as T[];
+      for (let k = 0; k < i; k++) result[k] = values![k];
+      result[i] = mapped;
+      for (let j = i + 1; j < values!.length; j++) {
+        result[j] = instantiator(c, values![j], m);
+      }
+      return result;
+    }
+  }
+  return values;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSymbolPath","kind":"func","status":"stub","sigHash":"26ca0a5ad8eb7cdd9b4bf69394ce248af9f77098b454b1073c54af56cef1ff36","bodyHash":"f9972b43259df35f1d7262066ad238a05b5d6c2e5adb5e48f9c0fb6d0796c399"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSymbolPath","kind":"func","status":"implemented","sigHash":"26ca0a5ad8eb7cdd9b4bf69394ce248af9f77098b454b1073c54af56cef1ff36","bodyHash":"f9972b43259df35f1d7262066ad238a05b5d6c2e5adb5e48f9c0fb6d0796c399"}
  *
  * Go source:
  * func getSymbolPath(symbol *ast.Symbol) string {
@@ -3552,7 +4009,10 @@ export function instantiateList<T extends GoComparable>(c: GoPtr<Checker>, value
  * }
  */
 export function getSymbolPath(symbol_: GoPtr<Symbol>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getSymbolPath");
+  if (symbol_!.Parent !== undefined) {
+    return getSymbolPath(symbol_!.Parent) + "." + symbol_!.Name;
+  }
+  return symbol_!.Name;
 }
 
 /**
@@ -3578,7 +4038,7 @@ export interface TupleNormalizer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStartElementCount","kind":"func","status":"stub","sigHash":"b0df1b0993f926ea7c3bd56b0c6a611903deec7d146e7b8f01d31455794596ce","bodyHash":"b3812de150abe8f704ea0327fbedc1675cc4ad8f8ddc56437eab8a319478fbac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStartElementCount","kind":"func","status":"implemented","sigHash":"b0df1b0993f926ea7c3bd56b0c6a611903deec7d146e7b8f01d31455794596ce","bodyHash":"b3812de150abe8f704ea0327fbedc1675cc4ad8f8ddc56437eab8a319478fbac"}
  *
  * Go source:
  * func getStartElementCount(t *TupleType, flags ElementFlags) int {
@@ -3591,11 +4051,17 @@ export interface TupleNormalizer {
  * }
  */
 export function getStartElementCount(t: GoPtr<TupleType>, flags: ElementFlags): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStartElementCount");
+  const infos = t!.elementInfos;
+  for (let i = 0; i < (infos !== undefined ? infos.length : 0); i++) {
+    if ((infos![i].flags & flags) === 0) {
+      return i;
+    }
+  }
+  return infos !== undefined ? infos.length : 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEndElementCount","kind":"func","status":"stub","sigHash":"3d648327f08c7e009a3687f254cf401f9d8fcb52a6ff53cac07f682b6b094c4a","bodyHash":"3d0a518702e38fbdcf4340779faa64fa13cc8b8a4661a947c547c71d7a0399e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEndElementCount","kind":"func","status":"implemented","sigHash":"3d648327f08c7e009a3687f254cf401f9d8fcb52a6ff53cac07f682b6b094c4a","bodyHash":"3d0a518702e38fbdcf4340779faa64fa13cc8b8a4661a947c547c71d7a0399e1"}
  *
  * Go source:
  * func getEndElementCount(t *TupleType, flags ElementFlags) int {
@@ -3608,11 +4074,18 @@ export function getStartElementCount(t: GoPtr<TupleType>, flags: ElementFlags): 
  * }
  */
 export function getEndElementCount(t: GoPtr<TupleType>, flags: ElementFlags): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getEndElementCount");
+  const infos = t!.elementInfos;
+  const len = infos !== undefined ? infos.length : 0;
+  for (let i = len; i > 0; i--) {
+    if ((infos![i - 1].flags & flags) === 0) {
+      return len - i;
+    }
+  }
+  return len;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTotalFixedElementCount","kind":"func","status":"stub","sigHash":"ee19bec1fc42ebbe4f329ef351f8359f32149926ebbfa980360c5d5a203075a4","bodyHash":"be113b1bf115e48c87812fed09c854f682ae3e7f367189183b9413afa1cbaecd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTotalFixedElementCount","kind":"func","status":"implemented","sigHash":"ee19bec1fc42ebbe4f329ef351f8359f32149926ebbfa980360c5d5a203075a4","bodyHash":"be113b1bf115e48c87812fed09c854f682ae3e7f367189183b9413afa1cbaecd"}
  *
  * Go source:
  * func getTotalFixedElementCount(t *TupleType) int {
@@ -3620,11 +4093,11 @@ export function getEndElementCount(t: GoPtr<TupleType>, flags: ElementFlags): in
  * }
  */
 export function getTotalFixedElementCount(t: GoPtr<TupleType>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTotalFixedElementCount");
+  return t!.fixedLength + getEndElementCount(t, ElementFlagsFixed);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTupleType","kind":"func","status":"stub","sigHash":"6405fa1756b06cb132958e96c2c043bd79f3cc002d3b195ebdaad6d2155c6867","bodyHash":"8e9db78f652a720bc8b6dffa8b0b0b1873b27cbf0fca80350eceb8ebcdfa1df3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTupleType","kind":"func","status":"implemented","sigHash":"6405fa1756b06cb132958e96c2c043bd79f3cc002d3b195ebdaad6d2155c6867","bodyHash":"8e9db78f652a720bc8b6dffa8b0b0b1873b27cbf0fca80350eceb8ebcdfa1df3"}
  *
  * Go source:
  * func isTupleType(t *Type) bool {
@@ -3632,11 +4105,11 @@ export function getTotalFixedElementCount(t: GoPtr<TupleType>): int {
  * }
  */
 export function isTupleType(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isTupleType");
+  return (t!.objectFlags & ObjectFlagsReference) !== 0 && (Type_Target(t)!.objectFlags & ObjectFlagsTuple) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isMutableTupleType","kind":"func","status":"stub","sigHash":"ddccb9cfebc136ab472b9e9bd11a03ae953111321f75a8c9033043c5c85274af","bodyHash":"08a66534c18cc9aae03ac030a56c1f979e02b37dc18a6fe5c3b9a706239a0e53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isMutableTupleType","kind":"func","status":"implemented","sigHash":"ddccb9cfebc136ab472b9e9bd11a03ae953111321f75a8c9033043c5c85274af","bodyHash":"08a66534c18cc9aae03ac030a56c1f979e02b37dc18a6fe5c3b9a706239a0e53"}
  *
  * Go source:
  * func isMutableTupleType(t *Type) bool {
@@ -3644,11 +4117,11 @@ export function isTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isMutableTupleType(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isMutableTupleType");
+  return isTupleType(t) && !Type_TargetTupleType(t)!.readonly;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isGenericTupleType","kind":"func","status":"stub","sigHash":"a6ced7c017b12df1a672526cdd3af947d507c6a12f7da3ef2d0e82f9afb0c730","bodyHash":"53a37d6a5582cba9f80ccc03e182081a2a2ba778a7c37c68cd8ce6779d4705de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isGenericTupleType","kind":"func","status":"implemented","sigHash":"a6ced7c017b12df1a672526cdd3af947d507c6a12f7da3ef2d0e82f9afb0c730","bodyHash":"53a37d6a5582cba9f80ccc03e182081a2a2ba778a7c37c68cd8ce6779d4705de"}
  *
  * Go source:
  * func isGenericTupleType(t *Type) bool {
@@ -3656,11 +4129,11 @@ export function isMutableTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isGenericTupleType(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isGenericTupleType");
+  return isTupleType(t) && (Type_TargetTupleType(t)!.combinedFlags & ElementFlagsVariadic) !== 0;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSingleElementGenericTupleType","kind":"func","status":"stub","sigHash":"b0d2e630ac656d8450e1b69950ebfa2e7b263972129993d43c49ef6fedd0c72e","bodyHash":"fc1467cfdd7a70591da61408eed9df7ad9d09d3e9f014cecc9496d20cc3ba3f7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSingleElementGenericTupleType","kind":"func","status":"implemented","sigHash":"b0d2e630ac656d8450e1b69950ebfa2e7b263972129993d43c49ef6fedd0c72e","bodyHash":"fc1467cfdd7a70591da61408eed9df7ad9d09d3e9f014cecc9496d20cc3ba3f7"}
  *
  * Go source:
  * func isSingleElementGenericTupleType(t *Type) bool {
@@ -3668,11 +4141,12 @@ export function isGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isSingleElementGenericTupleType");
+  const ttt = Type_TargetTupleType(t);
+  return isGenericTupleType(t) && (ttt !== undefined && ttt!.elementInfos !== undefined ? ttt!.elementInfos.length : 0) === 1;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLocalTypeAlias","kind":"func","status":"stub","sigHash":"720c62262de5b0c642164e3306e8326d2c49bf0069bd2f0e1c79ec780cc10eea","bodyHash":"8dd0206be7e4fb4f7d7d28a7a38fa145c1e1f1d4e1384620bddad49754252cb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLocalTypeAlias","kind":"func","status":"implemented","sigHash":"720c62262de5b0c642164e3306e8326d2c49bf0069bd2f0e1c79ec780cc10eea","bodyHash":"8dd0206be7e4fb4f7d7d28a7a38fa145c1e1f1d4e1384620bddad49754252cb3"}
  *
  * Go source:
  * func isLocalTypeAlias(symbol *ast.Symbol) bool {
@@ -3681,11 +4155,12 @@ export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLocalTypeAlias");
+  const declaration = Find(symbol_!.Declarations, isTypeAlias);
+  return declaration !== undefined && GetContainingFunction(declaration) !== undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeReferenceName","kind":"func","status":"stub","sigHash":"7e8a6ebe81dd03568b5cae60e7d1b081baa5e738a5b2a4886fd158d998058e9f","bodyHash":"b5f6b7b4f533bef86f2cedc353f7b92c14cd0f6486e5fdf925e042a55dddc04c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeReferenceName","kind":"func","status":"implemented","sigHash":"7e8a6ebe81dd03568b5cae60e7d1b081baa5e738a5b2a4886fd158d998058e9f","bodyHash":"b5f6b7b4f533bef86f2cedc353f7b92c14cd0f6486e5fdf925e042a55dddc04c"}
  *
  * Go source:
  * func getTypeReferenceName(node *ast.Node) *ast.Node {
@@ -3704,11 +4179,21 @@ export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function getTypeReferenceName(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getTypeReferenceName");
+  switch (node!.Kind) {
+    case KindTypeReference:
+      return AsTypeReferenceNode(node)!.TypeName as unknown as GoPtr<Node>;
+    case KindExpressionWithTypeArguments: {
+      const expr = Node_Expression(node);
+      if (IsEntityNameExpression(expr)) {
+        return expr;
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnaryTupleTypeNode","kind":"func","status":"stub","sigHash":"699c52277e37594f7ca855249dcb0ff6419b66893973eeffd1f57a3b1671b515","bodyHash":"0afb541a20bf134246c7f8a44a4c890e65e1baf1c63b1823ec15b2552493d7c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnaryTupleTypeNode","kind":"func","status":"implemented","sigHash":"699c52277e37594f7ca855249dcb0ff6419b66893973eeffd1f57a3b1671b515","bodyHash":"0afb541a20bf134246c7f8a44a4c890e65e1baf1c63b1823ec15b2552493d7c8"}
  *
  * Go source:
  * func isUnaryTupleTypeNode(node *ast.Node) bool {
@@ -3716,11 +4201,12 @@ export function getTypeReferenceName(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isUnaryTupleTypeNode(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isUnaryTupleTypeNode");
+  const elements = Node_Elements(node);
+  return IsTupleTypeNode(node) && elements !== undefined && elements.length === 1;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isFreshLiteralType","kind":"func","status":"stub","sigHash":"0bdbb1b0fbd389a50ffa85ee702566ede5136350ab5143efa479ee2ed08703b2","bodyHash":"db7bf7ba013c0166a50e4ce5540be67f160ccde22eb5fd72eec4a7617d1521d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isFreshLiteralType","kind":"func","status":"implemented","sigHash":"0bdbb1b0fbd389a50ffa85ee702566ede5136350ab5143efa479ee2ed08703b2","bodyHash":"db7bf7ba013c0166a50e4ce5540be67f160ccde22eb5fd72eec4a7617d1521d2"}
  *
  * Go source:
  * func isFreshLiteralType(t *Type) bool {
@@ -3728,11 +4214,11 @@ export function isUnaryTupleTypeNode(node: GoPtr<Node>): bool {
  * }
  */
 export function isFreshLiteralType(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::isFreshLiteralType");
+  return (t!.flags & TypeFlagsFreshable) !== 0 && Type_AsLiteralType(t)!.freshType === t;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStringLiteralValue","kind":"func","status":"stub","sigHash":"79cac8ba573e51d135514fe585fc0746d3c777a8e4ef7f550f5b4c94aeaf7aac","bodyHash":"d31f750927bf4bdcb0b6010b6737ca4d3d2022ee228e51cc558a74d2ccfb71fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStringLiteralValue","kind":"func","status":"implemented","sigHash":"79cac8ba573e51d135514fe585fc0746d3c777a8e4ef7f550f5b4c94aeaf7aac","bodyHash":"d31f750927bf4bdcb0b6010b6737ca4d3d2022ee228e51cc558a74d2ccfb71fe"}
  *
  * Go source:
  * func getStringLiteralValue(t *Type) string {
@@ -3740,11 +4226,11 @@ export function isFreshLiteralType(t: GoPtr<Type>): bool {
  * }
  */
 export function getStringLiteralValue(t: GoPtr<Type>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getStringLiteralValue");
+  return Type_AsLiteralType(t)!.value as unknown as string;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNumberLiteralValue","kind":"func","status":"stub","sigHash":"0182028087c8e398b6fdefcd503b844ef9f71be3284f9e6ed2b640903da55b32","bodyHash":"647b6f83831d9ad39d39b7c657a112ae9e0570b913daac76d383922c95b5b569"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNumberLiteralValue","kind":"func","status":"implemented","sigHash":"0182028087c8e398b6fdefcd503b844ef9f71be3284f9e6ed2b640903da55b32","bodyHash":"647b6f83831d9ad39d39b7c657a112ae9e0570b913daac76d383922c95b5b569"}
  *
  * Go source:
  * func getNumberLiteralValue(t *Type) jsnum.Number {
@@ -3752,11 +4238,11 @@ export function getStringLiteralValue(t: GoPtr<Type>): string {
  * }
  */
 export function getNumberLiteralValue(t: GoPtr<Type>): Number {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getNumberLiteralValue");
+  return Type_AsLiteralType(t)!.value as unknown as Number;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBigIntLiteralValue","kind":"func","status":"stub","sigHash":"0f90c7fa451e60b37c871e0ff5838e48d8aadf5e3e8c5f66248d208884ee9b07","bodyHash":"61042fad91eb20b9f8c55763f600f490cd8ed026bbdf4883f71c255f98403d0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBigIntLiteralValue","kind":"func","status":"implemented","sigHash":"0f90c7fa451e60b37c871e0ff5838e48d8aadf5e3e8c5f66248d208884ee9b07","bodyHash":"61042fad91eb20b9f8c55763f600f490cd8ed026bbdf4883f71c255f98403d0c"}
  *
  * Go source:
  * func getBigIntLiteralValue(t *Type) jsnum.PseudoBigInt {
@@ -3764,11 +4250,11 @@ export function getNumberLiteralValue(t: GoPtr<Type>): Number {
  * }
  */
 export function getBigIntLiteralValue(t: GoPtr<Type>): PseudoBigInt {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBigIntLiteralValue");
+  return Type_AsLiteralType(t)!.value as unknown as PseudoBigInt;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBooleanLiteralValue","kind":"func","status":"stub","sigHash":"8f151c5d364cb2358f96e9446bf5e70947058ef5b8da29ab53aa40242f7f07c5","bodyHash":"bbf07871b126adaeb1dec375c9f12d455adb9483be2fcf9b2e0dd9622188177a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBooleanLiteralValue","kind":"func","status":"implemented","sigHash":"8f151c5d364cb2358f96e9446bf5e70947058ef5b8da29ab53aa40242f7f07c5","bodyHash":"bbf07871b126adaeb1dec375c9f12d455adb9483be2fcf9b2e0dd9622188177a"}
  *
  * Go source:
  * func getBooleanLiteralValue(t *Type) bool {
@@ -3776,11 +4262,11 @@ export function getBigIntLiteralValue(t: GoPtr<Type>): PseudoBigInt {
  * }
  */
 export function getBooleanLiteralValue(t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::getBooleanLiteralValue");
+  return Type_AsLiteralType(t)!.value as unknown as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLiteralType","kind":"func","status":"stub","sigHash":"b40f1a2ef210d7b5701828bfde100cc4ce9d6846b79c6814130efc136ee00db0","bodyHash":"6acb733ea00179902583b623ca2507797740a33916800f7eca2345ab8548f66f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::isLiteralType","kind":"func","status":"implemented","sigHash":"b40f1a2ef210d7b5701828bfde100cc4ce9d6846b79c6814130efc136ee00db0","bodyHash":"6acb733ea00179902583b623ca2507797740a33916800f7eca2345ab8548f66f"}
  *
  * Go source:
  * func isLiteralType(t *Type) bool {

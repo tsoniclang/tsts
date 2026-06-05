@@ -5,11 +5,12 @@ import { Uint32 } from "../../go/sync/atomic.js";
 import * as maps from "../../go/maps.js";
 import * as slices from "../../go/slices.js";
 import type { Node, NodeVisitor } from "../ast/spine.js";
-import { Node_AsNode, Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList } from "../ast/spine.js";
+import type { NodeFactoryCoercible } from "../ast/spine.js";
+import { Node_AsNode, Node_Clone, Node_Modifiers, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { BlockOrExpression, Expression, FunctionDeclarationNode, IdentifierNode, MemberName, ParameterList, Statement, StatementList, StringLiteralNode, TypeNode, VariableDeclarationNode } from "../ast/generated/unions.js";
 import type { ParameterDeclaration } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
-import { NodeFactory_UpdateBlock } from "../ast/ast.js";
+import { NodeFactory_UpdateBlock, NodeFactory_UpdateParameterDeclaration } from "../ast/ast.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindColonToken, KindQuestionToken } from "../ast/generated/kinds.js";
 import { NodeFlagsLet, NodeFlagsNone, NodeFlagsSynthesized } from "../ast/generated/flags.js";
@@ -42,7 +43,7 @@ import { GeneratedIdentifierFlags_IsNode } from "./generatedidentifierflags.js";
 import type { EmitHelper } from "./helpers.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::EmitContext","kind":"type","status":"stub","sigHash":"6d5f48a2b47922c7624b8c9a29245f8616e2ace7e8c5704549fa66ece9746147","bodyHash":"b083d2b71a33dd0938a450bcb8507be1d6919e9ba4428dd4671613a61c5bb95b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::EmitContext","kind":"type","status":"implemented","sigHash":"6d5f48a2b47922c7624b8c9a29245f8616e2ace7e8c5704549fa66ece9746147","bodyHash":"b083d2b71a33dd0938a450bcb8507be1d6919e9ba4428dd4671613a61c5bb95b"}
  *
  * Go source:
  * EmitContext struct {
@@ -72,7 +73,7 @@ export interface EmitContext {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::environmentFlags","kind":"type","status":"stub","sigHash":"5c402b92fe7a3c9460624a9c34785d02bbbf1877e43007cea315e1296fc9391e","bodyHash":"ac3a922abcf83e92c419d043fbb489cc539c9d5d80fbcea4775bd53b1cc8f9fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::environmentFlags","kind":"type","status":"implemented","sigHash":"5c402b92fe7a3c9460624a9c34785d02bbbf1877e43007cea315e1296fc9391e","bodyHash":"ac3a922abcf83e92c419d043fbb489cc539c9d5d80fbcea4775bd53b1cc8f9fa"}
  *
  * Go source:
  * environmentFlags int
@@ -94,7 +95,7 @@ export const environmentFlagsInParameters: environmentFlags = 1 << 0; // current
 export const environmentFlagsVariablesHoistedInParameters: environmentFlags = 1 << 1; // a temp variable was hoisted while visiting a parameter list
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::varScope","kind":"type","status":"stub","sigHash":"1aba1a18b011caf135d9fc5e200b6c504db0f22cb8c0063626d1d36fd7e75e68","bodyHash":"646291e63051089401a309685fe402e8964e761ceeb0598368c5848215be48de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::varScope","kind":"type","status":"implemented","sigHash":"1aba1a18b011caf135d9fc5e200b6c504db0f22cb8c0063626d1d36fd7e75e68","bodyHash":"646291e63051089401a309685fe402e8964e761ceeb0598368c5848215be48de"}
  *
  * Go source:
  * varScope struct {
@@ -908,7 +909,7 @@ export function EmitContext_getNodeForGeneratedNameWorker(receiver: GoPtr<EmitCo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateOptions","kind":"type","status":"stub","sigHash":"dd43c52864172fc1078fa1874ed8556bd9abfa69c82d4af5934a125db3611230","bodyHash":"93ac5fe93ba61dfbc68b7439b02b888874a5245ef5b426a808230fd631fbd894"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateOptions","kind":"type","status":"implemented","sigHash":"dd43c52864172fc1078fa1874ed8556bd9abfa69c82d4af5934a125db3611230","bodyHash":"93ac5fe93ba61dfbc68b7439b02b888874a5245ef5b426a808230fd631fbd894"}
  *
  * Go source:
  * AutoGenerateOptions struct {
@@ -932,7 +933,7 @@ export interface AutoGenerateOptions {
 export const nextAutoGenerateId: Uint32 = new Uint32();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateId","kind":"type","status":"stub","sigHash":"22b430b286a3594ead6596c4569e738bac99d6628924f6ca4f0ce42f95246271","bodyHash":"9f2be36e96e0cbe37d003c9ab771d961db8d8c50827b81f4b4d389759cc3e672"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateId","kind":"type","status":"implemented","sigHash":"22b430b286a3594ead6596c4569e738bac99d6628924f6ca4f0ce42f95246271","bodyHash":"9f2be36e96e0cbe37d003c9ab771d961db8d8c50827b81f4b4d389759cc3e672"}
  *
  * Go source:
  * AutoGenerateId uint32
@@ -940,7 +941,7 @@ export const nextAutoGenerateId: Uint32 = new Uint32();
 export type AutoGenerateId = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateInfo","kind":"type","status":"stub","sigHash":"8e07756aa8fdb3679b58a34c78d90856754cc16a2185e236ae3a08e1536db1d3","bodyHash":"188eeae350882738e4392b3f33a138a792fee49dd957410124167d7f6decffce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::AutoGenerateInfo","kind":"type","status":"implemented","sigHash":"8e07756aa8fdb3679b58a34c78d90856754cc16a2185e236ae3a08e1536db1d3","bodyHash":"188eeae350882738e4392b3f33a138a792fee49dd957410124167d7f6decffce"}
  *
  * Go source:
  * AutoGenerateInfo struct {
@@ -1087,7 +1088,7 @@ export function EmitContext_ParseNode(receiver: GoPtr<EmitContext>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::emitNodeFlags","kind":"type","status":"stub","sigHash":"b073a332896d32f7cd131dac9bf400a781d542c8f058946630926efca14dcd60","bodyHash":"1bbf6b651231fc3b25b6d637c247cbe48b6155ea2f789d32718edb28355d17be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::emitNodeFlags","kind":"type","status":"implemented","sigHash":"b073a332896d32f7cd131dac9bf400a781d542c8f058946630926efca14dcd60","bodyHash":"1bbf6b651231fc3b25b6d637c247cbe48b6155ea2f789d32718edb28355d17be"}
  *
  * Go source:
  * emitNodeFlags uint32
@@ -1107,7 +1108,7 @@ export const hasCommentRange: emitNodeFlags = 1 << 0;
 export const hasSourceMapRange: emitNodeFlags = 1 << 1;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::SynthesizedComment","kind":"type","status":"stub","sigHash":"e1a9f2a8e8b53cbe4055fc124853ded15b11939bda1f3ceafd3bf5c6e2da3ed0","bodyHash":"3679d9505845263e8f1f6a525b83930f43dbdd4f9fde99d4d3208fd3c69fc0ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::SynthesizedComment","kind":"type","status":"implemented","sigHash":"e1a9f2a8e8b53cbe4055fc124853ded15b11939bda1f3ceafd3bf5c6e2da3ed0","bodyHash":"3679d9505845263e8f1f6a525b83930f43dbdd4f9fde99d4d3208fd3c69fc0ca"}
  *
  * Go source:
  * SynthesizedComment struct {
@@ -1127,7 +1128,7 @@ export interface SynthesizedComment {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::emitNode","kind":"type","status":"stub","sigHash":"3991ab9fd28c20522a3ae6e491ea9a17ec1ad7abce8d7ea49aeebee472ea27d2","bodyHash":"a2b06ff0ce65fced978221748549ff4ffd530c55a6e4960793156f505bbf2cf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::type::emitNode","kind":"type","status":"implemented","sigHash":"3991ab9fd28c20522a3ae6e491ea9a17ec1ad7abce8d7ea49aeebee472ea27d2","bodyHash":"a2b06ff0ce65fced978221748549ff4ffd530c55a6e4960793156f505bbf2cf3"}
  *
  * Go source:
  * emitNode struct {
@@ -1847,7 +1848,7 @@ export function EmitContext_addDefaultValueAssignmentIfNeeded(receiver: GoPtr<Em
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForBindingPattern","kind":"method","status":"stub","sigHash":"bcee5e66bb42102ac6dda70ba66279c411bf394807db205a8d8f75b3a8747b9f","bodyHash":"1ada008778c12d0c8763c7901298d00d2f0b6a667a97fecd900351d538845dfd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForBindingPattern","kind":"method","status":"implemented","sigHash":"bcee5e66bb42102ac6dda70ba66279c411bf394807db205a8d8f75b3a8747b9f","bodyHash":"1ada008778c12d0c8763c7901298d00d2f0b6a667a97fecd900351d538845dfd"}
  *
  * Go source:
  * func (c *EmitContext) addDefaultValueAssignmentForBindingPattern(parameter *ast.ParameterDeclaration) *ast.Node {
@@ -1887,11 +1888,51 @@ export function EmitContext_addDefaultValueAssignmentIfNeeded(receiver: GoPtr<Em
  * }
  */
 export function EmitContext_addDefaultValueAssignmentForBindingPattern(receiver: GoPtr<EmitContext>, parameter: GoPtr<ParameterDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForBindingPattern");
+  const c = receiver!;
+  const f = c.Factory!;
+  const baseF = f.__tsgoEmbedded0!;
+  let initNode: GoPtr<Node>;
+  if (parameter!.Initializer !== undefined) {
+    initNode = NewConditionalExpression(
+      baseF,
+      NodeFactory_NewStrictEqualityExpression(f, NodeFactory_NewGeneratedNameForNode(f, Node_AsNode(parameter)), NodeFactory_NewVoidZeroExpression(f)) as GoPtr<Expression>,
+      NewToken(baseF, KindQuestionToken),
+      parameter!.Initializer as GoPtr<Expression>,
+      NewToken(baseF, KindColonToken),
+      NodeFactory_NewGeneratedNameForNode(f, Node_AsNode(parameter)) as GoPtr<Expression>,
+    );
+  } else {
+    initNode = NodeFactory_NewGeneratedNameForNode(f, Node_AsNode(parameter));
+  }
+  EmitContext_AddInitializationStatement(receiver, NewVariableStatement(
+    baseF,
+    undefined,
+    NewVariableDeclarationList(
+      baseF,
+      NodeFactory_NewNodeList(baseF, [NewVariableDeclaration(
+        baseF,
+        Node_Name(parameter),
+        undefined,
+        parameter!.Type,
+        initNode as GoPtr<Expression>,
+      )]),
+      NodeFlagsNone,
+    ),
+  ));
+  return NodeFactory_UpdateParameterDeclaration(
+    baseF,
+    parameter,
+    Node_Modifiers(Node_AsNode(parameter)),
+    parameter!.DotDotDotToken,
+    NodeFactory_NewGeneratedNameForNode(f, Node_AsNode(parameter)),
+    parameter!.QuestionToken,
+    parameter!.Type,
+    undefined,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForInitializer","kind":"method","status":"stub","sigHash":"b1932ca7d46fc7be423ca82e9d7b552b201ef58128884f1622fa55f4cac4d334","bodyHash":"e4cdae889f6fd3193659630800b7cf88ccd717291a43541d0e82da4034e0935b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForInitializer","kind":"method","status":"implemented","sigHash":"b1932ca7d46fc7be423ca82e9d7b552b201ef58128884f1622fa55f4cac4d334","bodyHash":"e4cdae889f6fd3193659630800b7cf88ccd717291a43541d0e82da4034e0935b"}
  *
  * Go source:
  * func (c *EmitContext) addDefaultValueAssignmentForInitializer(parameter *ast.ParameterDeclaration, name *ast.Node, initializer *ast.Node) *ast.Node {
@@ -1924,7 +1965,34 @@ export function EmitContext_addDefaultValueAssignmentForBindingPattern(receiver:
  * }
  */
 export function EmitContext_addDefaultValueAssignmentForInitializer(receiver: GoPtr<EmitContext>, parameter: GoPtr<ParameterDeclaration>, name: GoPtr<Node>, initializer: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/emitcontext.go::method::EmitContext.addDefaultValueAssignmentForInitializer");
+  const c = receiver!;
+  const f = c.Factory!;
+  const baseF = f.__tsgoEmbedded0!;
+  EmitContext_AddEmitFlags(receiver, initializer, EFNoSourceMap | EFNoComments);
+  const nameClone = Node_Clone(name, baseF as unknown as NodeFactoryCoercible);
+  EmitContext_AddEmitFlags(receiver, nameClone, EFNoSourceMap);
+  const initAssignment = NodeFactory_NewAssignmentExpression(f, nameClone as GoPtr<Expression>, initializer as GoPtr<Expression>);
+  initAssignment!.Loc = parameter!.Loc;
+  EmitContext_AddEmitFlags(receiver, initAssignment, EFNoComments);
+  const initBlock = NewBlock(baseF, NodeFactory_NewNodeList(baseF, [NewExpressionStatement(baseF, initAssignment as GoPtr<Expression>)]), false as bool);
+  initBlock!.Loc = parameter!.Loc;
+  EmitContext_AddEmitFlags(receiver, initBlock, EFSingleLine | EFNoTrailingSourceMap | EFNoTokenSourceMaps | EFNoComments);
+  EmitContext_AddInitializationStatement(receiver, NewIfStatement(
+    baseF,
+    NodeFactory_NewTypeCheck(f, Node_Clone(name, baseF as unknown as NodeFactoryCoercible), "undefined") as GoPtr<Expression>,
+    initBlock as GoPtr<Statement>,
+    undefined,
+  ));
+  return NodeFactory_UpdateParameterDeclaration(
+    baseF,
+    parameter,
+    Node_Modifiers(Node_AsNode(parameter)),
+    parameter!.DotDotDotToken,
+    Node_Name(parameter),
+    parameter!.QuestionToken,
+    parameter!.Type,
+    undefined,
+  );
 }
 
 /**

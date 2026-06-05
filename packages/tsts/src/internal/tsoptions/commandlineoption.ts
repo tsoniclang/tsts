@@ -8,6 +8,18 @@ import { TSUnknown } from "../core/tristate.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import * as strings from "../../go/strings.js";
 import type { CommandLineOptionNameMap } from "./tsconfigparsing.js";
+import {
+  fallbackEnumMap,
+  jsxOptionMap,
+  LibMap,
+  moduleDetectionOptionMap,
+  moduleOptionMap,
+  moduleResolutionOptionMap,
+  newLineOptionMap,
+  targetOptionMap,
+  watchDirectoryEnumMap,
+  watchFileEnumMap,
+} from "./enummaps.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::type::CommandLineOptionKind","kind":"type","status":"implemented","sigHash":"c8f201add3454d31edf99485739310a8aedb1f1cfe566de059b461899ef7913f","bodyHash":"cac4255e78f9d18136c0af3d56004a513fbfef7ff5c62d31d38267e6c8c6ecb5"}
@@ -164,7 +176,7 @@ export function CommandLineOption_DeprecatedKeys(receiver: GoPtr<CommandLineOpti
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::method::CommandLineOption.EnumMap","kind":"method","status":"stub","sigHash":"1d0662d29f9c90d3e8e6c3232133c94ffb031dfa222470202d53202b34ec464d","bodyHash":"e3ce7c4aa27f8c9bae94a883b59828c320678b869fd7f79b20f1a6f9993c8e31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::method::CommandLineOption.EnumMap","kind":"method","status":"implemented","sigHash":"1d0662d29f9c90d3e8e6c3232133c94ffb031dfa222470202d53202b34ec464d","bodyHash":"e3ce7c4aa27f8c9bae94a883b59828c320678b869fd7f79b20f1a6f9993c8e31"}
  *
  * Go source:
  * func (o *CommandLineOption) EnumMap() *collections.OrderedMap[string, any] {
@@ -175,7 +187,11 @@ export function CommandLineOption_DeprecatedKeys(receiver: GoPtr<CommandLineOpti
  * }
  */
 export function CommandLineOption_EnumMap(receiver: GoPtr<CommandLineOption>): GoPtr<OrderedMap> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::method::CommandLineOption.EnumMap");
+  const o = receiver!;
+  if (o.Kind !== CommandLineOptionTypeEnum) {
+    return undefined;
+  }
+  return commandLineOptionEnumMap.get(o.Name);
 }
 
 /**
@@ -404,7 +420,7 @@ export const commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> 
 ]);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionEnumMap","kind":"varGroup","status":"stub","sigHash":"a301347231d5e418911578fe0680dcf763fce61d2945cb6b036c0a94d068f3cf","bodyHash":"0fb6decef34e751eda6b545f4b806469f2a21064f81bb83bf106fab949e98510"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionEnumMap","kind":"varGroup","status":"implemented","sigHash":"a301347231d5e418911578fe0680dcf763fce61d2945cb6b036c0a94d068f3cf","bodyHash":"0fb6decef34e751eda6b545f4b806469f2a21064f81bb83bf106fab949e98510"}
  *
  * Go source:
  * var commandLineOptionEnumMap = map[string]*collections.OrderedMap[string, any]{
@@ -420,7 +436,18 @@ export const commandLineOptionElements: GoMap<string, GoPtr<CommandLineOption>> 
  * 	"fallbackPolling":  fallbackEnumMap,
  * }
  */
-export let commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap>> = undefined as never;
+export const commandLineOptionEnumMap: GoMap<string, GoPtr<OrderedMap>> = new globalThis.Map<string, GoPtr<OrderedMap>>([
+  ["lib", LibMap as GoPtr<OrderedMap>],
+  ["moduleResolution", moduleResolutionOptionMap as GoPtr<OrderedMap>],
+  ["module", moduleOptionMap as GoPtr<OrderedMap>],
+  ["target", targetOptionMap as GoPtr<OrderedMap>],
+  ["moduleDetection", moduleDetectionOptionMap as GoPtr<OrderedMap>],
+  ["jsx", jsxOptionMap as GoPtr<OrderedMap>],
+  ["newLine", newLineOptionMap as GoPtr<OrderedMap>],
+  ["watchFile", watchFileEnumMap as GoPtr<OrderedMap>],
+  ["watchDirectory", watchDirectoryEnumMap as GoPtr<OrderedMap>],
+  ["fallbackPolling", fallbackEnumMap as GoPtr<OrderedMap>],
+]);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/commandlineoption.go::varGroup::commandLineOptionDeprecated","kind":"varGroup","status":"implemented","sigHash":"e9905821905d457a4ce0cbfd522cb6c6c35d728eeadca17830af492602561c56","bodyHash":"be72e14b58cc46cb333e3d006d08a458cb1277c4333296dde3312255900e8554"}

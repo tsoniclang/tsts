@@ -1,10 +1,50 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { NodeFactory_NewNodeList } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
+import { NewHeritageClause, NewIdentifier, NewMethodDeclaration, NewPropertyDeclaration, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../ast/generated/factory.js";
+import { AsMethodSignatureDeclaration, AsPropertySignatureDeclaration } from "../ast/generated/casts.js";
+import { KindMethodSignature, KindPropertySignature } from "../ast/generated/kinds.js";
+import {
+  SymbolFlagsAlias,
+  SymbolFlagsBlockScopedVariable,
+  SymbolFlagsClass,
+  SymbolFlagsEnum,
+  SymbolFlagsFunction,
+  SymbolFlagsFunctionScopedVariable,
+  SymbolFlagsInterface,
+  SymbolFlagsMethod,
+  SymbolFlagsNamespace,
+  SymbolFlagsNamespaceModule,
+  SymbolFlagsProperty,
+  SymbolFlagsPrototype,
+  SymbolFlagsType,
+  SymbolFlagsTypeAlias,
+  SymbolFlagsValueModule,
+} from "../ast/generated/flags.js";
+import { NodeFlagsLet } from "../ast/generated/flags.js";
+import { HasStaticModifier, IsClassLike } from "../ast/utilities.js";
+import {
+  GetExtendsHeritageClauseElements,
+  GetImplementsHeritageClauseElements,
+} from "../ast/utilities.js";
+import { KindExtendsKeyword, KindImplementsKeyword } from "../ast/generated/kinds.js";
+import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
+import { Node_Modifiers, Node_Name } from "../ast/spine.js";
+import { IsPrivateIdentifier } from "../ast/generated/predicates.js";
 import type { Symbol } from "../ast/symbol.js";
+import { NewSetWithSizeHint, Set_Add, Set_Has, Set_Len } from "../collections/set.js";
+import type { Set } from "../collections/set.js";
 import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
-import type { Type } from "./types.js";
+import { NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper, NodeBuilderImpl_serializeTypeForDeclaration } from "./nodebuilderimpl.js";
+import { Checker_getIndexInfoOfType, Checker_getIndexInfosOfType } from "./checker/symbols.js";
+import { Checker_getTypeWithThisArgument } from "./checker/signatures.js";
+import { Checker_getPropertiesOfType, Checker_getTargetType, Checker_getWidenedType } from "./checker/types.js";
+import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
+import { Checker_isTypeIdenticalTo } from "./relater.js";
+import type { IndexInfo, Type } from "./types.js";
+import { Type_AsInterfaceType } from "./types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::isExpanding","kind":"func","status":"implemented","sigHash":"9b279eca2e40e261f2446006fbc1b56d8ce3ba4865e66b15e3b6b8ef7999c75d","bodyHash":"62e25613c92855d0d4521a198c1f9693ba529fb502dc79f384cb5018c53fb6ab"}
@@ -19,7 +59,7 @@ export function isExpanding(ctx: GoPtr<NodeBuilderContext>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.expandSymbolForHover","kind":"method","status":"stub","sigHash":"e651e1aa811c80e2fed5b93f82610a2dc83b41d63ae6fdf2feebacb1dd2c0b03","bodyHash":"22ebabe904fa7c93dfd63d15a49c9a69be8e257de3b3800fed11b0fd29490f72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.expandSymbolForHover","kind":"method","status":"implemented","sigHash":"e651e1aa811c80e2fed5b93f82610a2dc83b41d63ae6fdf2feebacb1dd2c0b03","bodyHash":"22ebabe904fa7c93dfd63d15a49c9a69be8e257de3b3800fed11b0fd29490f72"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) expandSymbolForHover(symbol *ast.Symbol) []*ast.Node {
@@ -49,7 +89,32 @@ export function isExpanding(ctx: GoPtr<NodeBuilderContext>): bool {
  * }
  */
 export function NodeBuilderImpl_expandSymbolForHover(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.expandSymbolForHover");
+  let results: GoSlice<GoPtr<Node>> = [];
+  if ((symbol_!.Flags & SymbolFlagsEnum) !== 0) {
+    const node = NodeBuilderImpl_expandEnumDecl(receiver, symbol_);
+    if (node !== undefined) {
+      results = [...results, node];
+    }
+  }
+  if ((symbol_!.Flags & SymbolFlagsClass) !== 0) {
+    const node = NodeBuilderImpl_expandClassDecl(receiver, symbol_);
+    if (node !== undefined) {
+      results = [...results, node];
+    }
+  }
+  if ((symbol_!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0) {
+    const node = NodeBuilderImpl_expandModuleDecl(receiver, symbol_);
+    if (node !== undefined) {
+      results = [...results, node];
+    }
+  }
+  if ((symbol_!.Flags & SymbolFlagsInterface) !== 0 && (symbol_!.Flags & SymbolFlagsClass) === 0) {
+    const node = NodeBuilderImpl_expandInterfaceDecl(receiver, symbol_);
+    if (node !== undefined) {
+      results = [...results, node];
+    }
+  }
+  return results;
 }
 
 /**
@@ -244,7 +309,7 @@ export function NodeBuilderImpl_addClassModifiers(receiver: GoPtr<NodeBuilderImp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::typeElementsToClassElements","kind":"func","status":"stub","sigHash":"fec6888a4ffce61b40f0c04eecb5093f4b755be9351a399caadac33bc59a9172","bodyHash":"4c77267f193e376662e544769086a5e8d7d9a44d05a9ed2c0e966fc54a62ef52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::typeElementsToClassElements","kind":"func","status":"implemented","sigHash":"fec6888a4ffce61b40f0c04eecb5093f4b755be9351a399caadac33bc59a9172","bodyHash":"4c77267f193e376662e544769086a5e8d7d9a44d05a9ed2c0e966fc54a62ef52"}
  *
  * Go source:
  * func typeElementsToClassElements(f *ast.NodeFactory, members []*ast.Node) []*ast.Node {
@@ -262,7 +327,20 @@ export function NodeBuilderImpl_addClassModifiers(receiver: GoPtr<NodeBuilderImp
  * }
  */
 export function typeElementsToClassElements(f: GoPtr<NodeFactory>, members: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::typeElementsToClassElements");
+  return members.map((m) => {
+    switch (m!.Kind) {
+      case KindPropertySignature: {
+        const ps = AsPropertySignatureDeclaration(m)!;
+        return NewPropertyDeclaration(f, Node_Modifiers(m), ps.name, ps.PostfixToken, ps.Type, undefined);
+      }
+      case KindMethodSignature: {
+        const ms = AsMethodSignatureDeclaration(m)!;
+        return NewMethodDeclaration(f, Node_Modifiers(m), undefined, ms.name, ms.PostfixToken, ms.TypeParameters, ms.Parameters, ms.Type, undefined, undefined);
+      }
+      default:
+        return m;
+    }
+  });
 }
 
 /**
@@ -315,7 +393,7 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.hoverHeritageClauses","kind":"method","status":"stub","sigHash":"8f17f209a2d455b93eb361b8057b014b4a7401cc480c22b432f587bd518b99a5","bodyHash":"14b73d23eeead1b367aa376481ac8d4916cb7ed7de4905cb7f9603fbe2c2b13a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.hoverHeritageClauses","kind":"method","status":"implemented","sigHash":"8f17f209a2d455b93eb361b8057b014b4a7401cc480c22b432f587bd518b99a5","bodyHash":"14b73d23eeead1b367aa376481ac8d4916cb7ed7de4905cb7f9603fbe2c2b13a"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) hoverHeritageClauses(declarations []*ast.Node) []*ast.Node {
@@ -341,7 +419,24 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
  * }
  */
 export function NodeBuilderImpl_hoverHeritageClauses(receiver: GoPtr<NodeBuilderImpl>, declarations: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.hoverHeritageClauses");
+  let extendsTypes: GoSlice<GoPtr<Node>> = [];
+  let implementsTypes: GoSlice<GoPtr<Node>> = [];
+  for (const declaration of declarations) {
+    for (const heritageElement of GetExtendsHeritageClauseElements(declaration)) {
+      extendsTypes = [...extendsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+    }
+    for (const heritageElement of GetImplementsHeritageClauseElements(declaration)) {
+      implementsTypes = [...implementsTypes, NodeFactory_DeepCloneNode(receiver!.f, heritageElement)];
+    }
+  }
+  let heritageClauses: GoSlice<GoPtr<Node>> = [];
+  if (extendsTypes.length > 0) {
+    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindExtendsKeyword, NodeFactory_NewNodeList(receiver!.f, extendsTypes))];
+  }
+  if (implementsTypes.length > 0) {
+    heritageClauses = [...heritageClauses, NewHeritageClause(receiver!.f, KindImplementsKeyword, NodeFactory_NewNodeList(receiver!.f, implementsTypes))];
+  }
+  return heritageClauses;
 }
 
 /**
@@ -429,7 +524,7 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeIndexSignaturesOfType","kind":"method","status":"stub","sigHash":"4012a72542ff5dc640b4d5dea6020341118b65fafc79767e3a62060ba808cc67","bodyHash":"c9428d6736171798313a646334f0e9fc5564b5a9bd5ea4e053eed9aff9e2e4c1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeIndexSignaturesOfType","kind":"method","status":"implemented","sigHash":"4012a72542ff5dc640b4d5dea6020341118b65fafc79767e3a62060ba808cc67","bodyHash":"c9428d6736171798313a646334f0e9fc5564b5a9bd5ea4e053eed9aff9e2e4c1"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeIndexSignaturesOfType(input *Type, baseType *Type) []*ast.Node {
@@ -447,11 +542,21 @@ export function NodeBuilderImpl_serializeConstructors(receiver: GoPtr<NodeBuilde
  * }
  */
 export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<NodeBuilderImpl>, input: GoPtr<Type>, baseType: GoPtr<Type>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeIndexSignaturesOfType");
+  let result: GoSlice<GoPtr<Node>> = [];
+  for (const info of Checker_getIndexInfosOfType(receiver!.ch, input)) {
+    if (baseType !== undefined) {
+      const baseInfo = Checker_getIndexInfoOfType(receiver!.ch, baseType, info!.keyType);
+      if (baseInfo !== undefined && Checker_isTypeIdenticalTo(receiver!.ch, info!.valueType, baseInfo!.valueType)) {
+        continue;
+      }
+    }
+    result = [...result, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, undefined)];
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeNamespaceMember","kind":"method","status":"stub","sigHash":"9b84cbb43a32fad43a71bf5b7715dcfa221bc14be8af0f30712a526b5589d660","bodyHash":"34f27b5f416d88863b98f43c1b1fbb79261e898b60956ca490b1502b89dead63"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeNamespaceMember","kind":"method","status":"implemented","sigHash":"9b84cbb43a32fad43a71bf5b7715dcfa221bc14be8af0f30712a526b5589d660","bodyHash":"34f27b5f416d88863b98f43c1b1fbb79261e898b60956ca490b1502b89dead63"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeNamespaceMember(resolved *ast.Symbol, name string) *ast.Node {
@@ -482,7 +587,31 @@ export function NodeBuilderImpl_serializeIndexSignaturesOfType(receiver: GoPtr<N
  * }
  */
 export function NodeBuilderImpl_serializeNamespaceMember(receiver: GoPtr<NodeBuilderImpl>, resolved: GoPtr<Symbol>, name: string): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.serializeNamespaceMember");
+  if ((resolved!.Flags & SymbolFlagsTypeAlias) !== 0) {
+    return NodeBuilderImpl_serializeTypeAliasForNamespace(receiver, resolved, name);
+  } else if ((resolved!.Flags & SymbolFlagsEnum) !== 0) {
+    return NodeBuilderImpl_expandEnumDecl(receiver, resolved);
+  } else if ((resolved!.Flags & SymbolFlagsClass) !== 0) {
+    return NodeBuilderImpl_expandClassDecl(receiver, resolved);
+  } else if ((resolved!.Flags & SymbolFlagsInterface) !== 0) {
+    return NodeBuilderImpl_expandInterfaceDecl(receiver, resolved);
+  } else if ((resolved!.Flags & (SymbolFlagsValueModule | SymbolFlagsNamespaceModule)) !== 0) {
+    return NodeBuilderImpl_expandModuleDecl(receiver, resolved);
+  } else {
+    const t = Checker_getWidenedType(receiver!.ch, Checker_getTypeOfSymbol(receiver!.ch, resolved));
+    receiver!.ctx!.approximateLength += name.length + 5;
+    return NewVariableStatement(
+      receiver!.f,
+      undefined,
+      NewVariableDeclarationList(
+        receiver!.f,
+        NodeFactory_NewNodeList(receiver!.f, [
+          NewVariableDeclaration(receiver!.f, NewIdentifier(receiver!.f, name), undefined, NodeBuilderImpl_serializeTypeForDeclaration(receiver, undefined, t, resolved, true as bool), undefined),
+        ]),
+        NodeFlagsLet,
+      ),
+    );
+  }
 }
 
 /**
@@ -651,7 +780,7 @@ export function NodeBuilderImpl_serializeTypeAliasForNamespace(receiver: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.filterInheritedProperties","kind":"method","status":"stub","sigHash":"fd93479878ce292c0aa5c857ac9dbbbc007af8616acf9652a3b62395ff3af687","bodyHash":"745fc839994e834e20c185d30aca30737d079b5b8dba2c6d6ebd678292161e9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.filterInheritedProperties","kind":"method","status":"implemented","sigHash":"fd93479878ce292c0aa5c857ac9dbbbc007af8616acf9652a3b62395ff3af687","bodyHash":"745fc839994e834e20c185d30aca30737d079b5b8dba2c6d6ebd678292161e9d"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) filterInheritedProperties(t *Type, baseTypes []*Type, properties []*ast.Symbol) []*ast.Symbol {
@@ -682,11 +811,31 @@ export function NodeBuilderImpl_serializeTypeAliasForNamespace(receiver: GoPtr<N
  * }
  */
 export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>, baseTypes: GoSlice<GoPtr<Type>>, properties: GoSlice<GoPtr<Symbol>>): GoSlice<GoPtr<Symbol>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.filterInheritedProperties");
+  if (baseTypes.length === 0) {
+    return properties;
+  }
+  const propsByName = new globalThis.Map<string, GoPtr<Symbol>>();
+  for (const p of properties) {
+    propsByName.set(p!.Name, p);
+  }
+  const inherited: GoPtr<Set<string>> = NewSetWithSizeHint<string>(0);
+  for (const base of baseTypes) {
+    const baseWithThis = Checker_getTypeWithThisArgument(receiver!.ch, base, Type_AsInterfaceType(Checker_getTargetType(receiver!.ch, t))!.thisType, false as bool);
+    for (const prop of Checker_getPropertiesOfType(receiver!.ch, baseWithThis)) {
+      const existing = propsByName.get(prop!.Name);
+      if (existing !== undefined && prop!.Parent === existing!.Parent) {
+        Set_Add(inherited, prop!.Name);
+      }
+    }
+  }
+  if (Set_Len(inherited) === 0) {
+    return properties;
+  }
+  return properties.filter((p) => !Set_Has(inherited, p!.Name));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.isNamespaceMember","kind":"method","status":"stub","sigHash":"0f3bb9e95e676e9cf8a12b759c20b01fa995697b39d2e5ca0d92a8d9bb4400f9","bodyHash":"5ed6f5f521886176a73bf664bb25730f4adbc9ede831bebcab0e16ba4e49bb2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.isNamespaceMember","kind":"method","status":"implemented","sigHash":"0f3bb9e95e676e9cf8a12b759c20b01fa995697b39d2e5ca0d92a8d9bb4400f9","bodyHash":"5ed6f5f521886176a73bf664bb25730f4adbc9ede831bebcab0e16ba4e49bb2c"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) isNamespaceMember(p *ast.Symbol) bool {
@@ -695,11 +844,14 @@ export function NodeBuilderImpl_filterInheritedProperties(receiver: GoPtr<NodeBu
  * }
  */
 export function NodeBuilderImpl_isNamespaceMember(receiver: GoPtr<NodeBuilderImpl>, p: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::method::NodeBuilderImpl.isNamespaceMember");
+  return (
+    (p!.Flags & (SymbolFlagsType | SymbolFlagsNamespace | SymbolFlagsAlias)) !== 0 ||
+    !((p!.Flags & SymbolFlagsPrototype) !== 0 || p!.Name === "prototype" || (p!.ValueDeclaration !== undefined && HasStaticModifier(p!.ValueDeclaration) && IsClassLike(p!.ValueDeclaration!.Parent)))
+  ) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::isHashPrivate","kind":"func","status":"stub","sigHash":"ade27b6844259ed8aa42b7f51bfef607fbe7114917c27d0cd6b192ca918bf006","bodyHash":"eb24be276c7b44c6a75d1609ae62293b65385541a1460577e115a22e7fd3304b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::isHashPrivate","kind":"func","status":"implemented","sigHash":"ade27b6844259ed8aa42b7f51bfef607fbe7114917c27d0cd6b192ca918bf006","bodyHash":"eb24be276c7b44c6a75d1609ae62293b65385541a1460577e115a22e7fd3304b"}
  *
  * Go source:
  * func isHashPrivate(s *ast.Symbol) bool {
@@ -707,5 +859,5 @@ export function NodeBuilderImpl_isNamespaceMember(receiver: GoPtr<NodeBuilderImp
  * }
  */
 export function isHashPrivate(s: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilder_hover.go::func::isHashPrivate");
+  return (s!.ValueDeclaration !== undefined && Node_Name(s!.ValueDeclaration) !== undefined && IsPrivateIdentifier(Node_Name(s!.ValueDeclaration))) as bool;
 }

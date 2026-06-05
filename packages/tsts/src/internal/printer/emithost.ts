@@ -7,7 +7,7 @@ import type { Path } from "../tspath/path.js";
 import type { EmitResolver } from "./emitresolver.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emithost.go::type::EmitHost","kind":"type","status":"stub","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b","bodyHash":"5824fbdddcfa79228815746e7c18c8837e83754070f0a6e3fb680936ba26c57e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/emithost.go::type::EmitHost","kind":"type","status":"implemented","sigHash":"86d3825eb042c6035fe2cb5b2b3b1f40c7a5774c29d4ec77071e82aed8b8c86b","bodyHash":"5824fbdddcfa79228815746e7c18c8837e83754070f0a6e3fb680936ba26c57e"}
  *
  * Go source:
  * EmitHost interface {

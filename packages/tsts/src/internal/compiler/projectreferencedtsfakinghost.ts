@@ -33,7 +33,7 @@ import {
 } from "./projectreferencefilemapper.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingHost","kind":"type","status":"stub","sigHash":"99a59785b073b41d30212b9f83c4afba08c180bd8b61ba139673f890dfe7054d","bodyHash":"0a74f14d6611f9a4617321f7aa2f3e0eed6b114afb055660222a8547f1901867"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingHost","kind":"type","status":"implemented","sigHash":"99a59785b073b41d30212b9f83c4afba08c180bd8b61ba139673f890dfe7054d","bodyHash":"0a74f14d6611f9a4617321f7aa2f3e0eed6b114afb055660222a8547f1901867"}
  *
  * Go source:
  * projectReferenceDtsFakingHost struct {
@@ -47,7 +47,7 @@ export interface projectReferenceDtsFakingHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"1cef503f05dfcffb796e2ef6587f72aba4cfd076455a452610e42da898746249"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"1cef503f05dfcffb796e2ef6587f72aba4cfd076455a452610e42da898746249"}
  *
  * Go source:
  * var _ module.ResolutionHost = (*projectReferenceDtsFakingHost)(nil)
@@ -119,7 +119,7 @@ export function projectReferenceDtsFakingHost_GetCurrentDirectory(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingVfs","kind":"type","status":"stub","sigHash":"0dc96e6b8608ebbcec0e98108f04fb3157bb0b34edd29bd8809bd1cc8220d29c","bodyHash":"89a8f4525d10411227ce22b5aa444b49bab73cec93a68f4d7d3a4252a71148f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::type::projectReferenceDtsFakingVfs","kind":"type","status":"implemented","sigHash":"0dc96e6b8608ebbcec0e98108f04fb3157bb0b34edd29bd8809bd1cc8220d29c","bodyHash":"89a8f4525d10411227ce22b5aa444b49bab73cec93a68f4d7d3a4252a71148f1"}
  *
  * Go source:
  * projectReferenceDtsFakingVfs struct {
@@ -135,7 +135,7 @@ export interface projectReferenceDtsFakingVfs {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_::#2","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"ec4db191ffd6c018fdababeedd9f0a8b4d994ae42c3cfb70fc410966dfd0d21b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"ec4db191ffd6c018fdababeedd9f0a8b4d994ae42c3cfb70fc410966dfd0d21b"}
  *
  * Go source:
  * var _ vfs.FS = (*projectReferenceDtsFakingVfs)(nil)

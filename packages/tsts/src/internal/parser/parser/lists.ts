@@ -31,9 +31,13 @@ import {
   KindStringLiteral,
 } from "../../ast/generated/kinds.js";
 import { NodeFlagsAwaitContext, NodeFlagsYieldContext } from "../../ast/generated/flags.js";
+import { IsJSTypeAliasDeclaration, IsJSImportDeclaration } from "../../ast/generated/predicates.js";
 import { Some } from "../../core/core.js";
+import { Arena_Clone } from "../../core/arena.js";
+import type { Arena } from "../../core/arena.js";
 import type { TextRange } from "../../core/text.js";
 import { NewTextRange } from "../../core/text.js";
+import { An_enum_member_name_must_be_followed_by_a_or } from "../../diagnostics/generated/messages.js";
 import type { ParseFlags } from "../types.js";
 import { ParseFlagsAwait, ParseFlagsType, ParseFlagsYield } from "../types.js";
 import { tokenIsIdentifierOrKeyword } from "../utilities.js";
@@ -48,9 +52,11 @@ import {
 import {
   Parser_canParseSemicolon,
   Parser_checkJSSyntax,
+  Parser_hasPrecedingLineBreak,
   Parser_isStartOfParameter,
   Parser_lookAhead,
   Parser_nodePos,
+  Parser_parseOptional,
   Parser_parseParameterEx,
   isAsyncModifier,
 } from "./support.js";
@@ -64,6 +70,7 @@ import {
   Parser_isInSomeParsingContext,
   Parser_nextToken,
   Parser_nextTokenIsSlash,
+  Parser_parseErrorAtCurrentToken,
   Parser_parseExpected,
   Parser_parsingContextErrors,
   Parser_setContextFlags,
@@ -119,7 +126,7 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseListIndex","kind":"method","status":"stub","sigHash":"1d1024ac238a1e697aeefe86d57f12bb4cacec3322cbbcc395f5234bae911a77","bodyHash":"86567cedd0ff7297dfbd74b9ec0e4d0146c770ea24602e14ba29fa6da7e6892a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseListIndex","kind":"method","status":"implemented","sigHash":"1d1024ac238a1e697aeefe86d57f12bb4cacec3322cbbcc395f5234bae911a77","bodyHash":"86567cedd0ff7297dfbd74b9ec0e4d0146c770ea24602e14ba29fa6da7e6892a"}
  *
  * Go source:
  * func (p *Parser) parseListIndex(kind ParsingContext, parseElement func(p *Parser, index int) *ast.Node) []*ast.Node {
@@ -155,7 +162,35 @@ export function isMissingNodeList(list: GoPtr<NodeList>): bool {
  * }
  */
 export function Parser_parseListIndex(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>, index: int) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseListIndex");
+  const saveParsingContexts = receiver!.parsingContexts;
+  receiver!.parsingContexts |= 1 << kind;
+  const outerReparseList = receiver!.reparseList;
+  receiver!.reparseList = [];
+  let list: Array<GoPtr<Node>> = [];
+  for (let i = 0; !Parser_isListTerminator(receiver, kind); i++) {
+    if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
+      const elt = parseElement(receiver, list.length);
+      if (receiver!.reparseList.length !== 0) {
+        for (const e of receiver!.reparseList) {
+          // Propagate @typedef type alias declarations outwards to a context that permits them.
+          if ((IsJSTypeAliasDeclaration(e) || IsJSImportDeclaration(e)) && kind !== PCSourceElements && kind !== PCBlockStatements) {
+            outerReparseList.push(e);
+          } else {
+            list.push(e);
+          }
+        }
+        receiver!.reparseList = [];
+      }
+      list.push(elt);
+      continue;
+    }
+    if (Parser_abortParsingListOrMoveToNextToken(receiver, kind)) {
+      break;
+    }
+  }
+  receiver!.reparseList = outerReparseList;
+  receiver!.parsingContexts = saveParsingContexts;
+  return Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, list);
 }
 
 /**
@@ -175,7 +210,7 @@ export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"stub","sigHash":"535b3a85ba41764406588faf13e3a1fd9335d6ae51b44086d6a294f9079abf54","bodyHash":"2f9ddfe81301f5e980596969bf910138bb1a6d5dbfea0d023e53d1bfc5dcdf8b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList","kind":"method","status":"implemented","sigHash":"535b3a85ba41764406588faf13e3a1fd9335d6ae51b44086d6a294f9079abf54","bodyHash":"2f9ddfe81301f5e980596969bf910138bb1a6d5dbfea0d023e53d1bfc5dcdf8b"}
  *
  * Go source:
  * func (p *Parser) parseDelimitedList(kind ParsingContext, parseElement func(p *Parser) *ast.Node) *ast.NodeList {
@@ -236,7 +271,60 @@ export function Parser_parseList(receiver: GoPtr<Parser>, kind: ParsingContext, 
  * }
  */
 export function Parser_parseDelimitedList(receiver: GoPtr<Parser>, kind: ParsingContext, parseElement: (p: GoPtr<Parser>) => GoPtr<Node>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseDelimitedList");
+  const pos = Parser_nodePos(receiver);
+  const saveParsingContexts = receiver!.parsingContexts;
+  receiver!.parsingContexts |= 1 << kind;
+  let list: Array<GoPtr<Node>> = [];
+  for (;;) {
+    if (Parser_isListElement(receiver, kind, false /*inErrorRecovery*/)) {
+      const startPos = Parser_nodePos(receiver);
+      const element = parseElement(receiver);
+      if (element === undefined) {
+        receiver!.parsingContexts = saveParsingContexts;
+        // Return nil to indicate parseElement failed
+        return undefined;
+      }
+      list.push(element);
+      if (Parser_parseOptional(receiver, KindCommaToken)) {
+        // No need to check for a zero length node since we know we parsed a comma
+        continue;
+      }
+      if (Parser_isListTerminator(receiver, kind)) {
+        break;
+      }
+      // We didn't get a comma, and the list wasn't terminated, explicitly parse
+      // out a comma so we give a good error message.
+      if (receiver!.token !== KindCommaToken && kind === PCEnumMembers) {
+        Parser_parseErrorAtCurrentToken(receiver, An_enum_member_name_must_be_followed_by_a_or);
+      } else {
+        Parser_parseExpected(receiver, KindCommaToken);
+      }
+      // If the token was a semicolon, and the caller allows that, then skip it and
+      // continue.  This ensures we get back on track and don't result in tons of
+      // parse errors.  For example, this can happen when people do things like use
+      // a semicolon to delimit object literal members.   Note: we'll have already
+      // reported an error when we called parseExpected above.
+      if ((kind === PCObjectLiteralMembers || kind === PCImportAttributes) && receiver!.token === KindSemicolonToken && !Parser_hasPrecedingLineBreak(receiver)) {
+        Parser_nextToken(receiver);
+      }
+      if (startPos === Parser_nodePos(receiver)) {
+        // What we're parsing isn't actually remotely recognizable as a element and we've consumed no tokens whatsoever
+        // Consume a token to advance the parser in some way and avoid an infinite loop
+        // This can happen when we're speculatively parsing parenthesized expressions which we think may be arrow functions,
+        // or when a modifier keyword which is disallowed as a parameter name (ie, `static` in strict mode) is supplied
+        Parser_nextToken(receiver);
+      }
+      continue;
+    }
+    if (Parser_isListTerminator(receiver, kind)) {
+      break;
+    }
+    if (Parser_abortParsingListOrMoveToNextToken(receiver, kind)) {
+      break;
+    }
+  }
+  receiver!.parsingContexts = saveParsingContexts;
+  return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), Arena_Clone(receiver!.nodeSliceArena as GoPtr<Arena<GoPtr<Node>>>, list));
 }
 
 /**

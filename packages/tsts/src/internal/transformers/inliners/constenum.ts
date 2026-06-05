@@ -1,15 +1,28 @@
-import type { byte, int } from "@tsonic/core/types.js";
+import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import { Builder, Index } from "../../../go/strings.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { KindElementAccessExpression, KindMinusToken, KindMultiLineCommentTrivia, KindPropertyAccessExpression } from "../../ast/generated/kinds.js";
+import { NewBigIntLiteral, NewIdentifier, NewNumericLiteral, NewPrefixUnaryExpression, NewStringLiteral } from "../../ast/generated/factory.js";
+import { TokenFlagsNone } from "../../ast/tokenflags.js";
+import { NodeIsSynthesized } from "../../ast/utilities.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { CompilerOptions_GetIsolatedModules } from "../../core/compileroptions.js";
+import { Tristate_IsFalseOrUnknown } from "../../core/tristate.js";
 import { Fail } from "../../debug/debug.js";
+import type { Number as JsNumber } from "../../jsnum/jsnum.js";
+import { Number_Abs, Number_IsInf, Number_IsNaN } from "../../jsnum/jsnum.js";
+import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
+import { Number_String } from "../../jsnum/string.js";
+import { EmitContext_AddSyntheticTrailingComment, EmitContext_MostOriginal, EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
+import { GetTextOfNode } from "../../scanner/utilities.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
-import { Transformer_NewTransformer } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
+import { NodeVisitor_VisitEachChild } from "../../ast/visitor.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. `strings.Index` likewise returns
@@ -71,7 +84,7 @@ export function NewConstEnumInliningTransformer(opt: GoPtr<TransformOptions>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::method::ConstEnumInliningTransformer.visit","kind":"method","status":"stub","sigHash":"35aa6753d09b1c46da81bb717bb90e4fa9770fccbee16e4692a5a94fcca89b66","bodyHash":"e31d926fe05494c1c4c64d12f6a1babec522b9d03e2a465bd26cd1bd12357bb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::method::ConstEnumInliningTransformer.visit","kind":"method","status":"implemented","sigHash":"35aa6753d09b1c46da81bb717bb90e4fa9770fccbee16e4692a5a94fcca89b66","bodyHash":"e31d926fe05494c1c4c64d12f6a1babec522b9d03e2a465bd26cd1bd12357bb3"}
  *
  * Go source:
  * func (tx *ConstEnumInliningTransformer) visit(node *ast.Node) *ast.Node {
@@ -129,7 +142,63 @@ export function NewConstEnumInliningTransformer(opt: GoPtr<TransformOptions>): G
  * }
  */
 export function ConstEnumInliningTransformer_visit(receiver: GoPtr<ConstEnumInliningTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/inliners/constenum.go::method::ConstEnumInliningTransformer.visit");
+  const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = printerFactory!.__tsgoEmbedded0!;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  switch (node!.Kind) {
+    case KindPropertyAccessExpression:
+    case KindElementAccessExpression: {
+      const parse = EmitContext_ParseNode(emitCtx, node);
+      if (parse === undefined) {
+        return NodeVisitor_VisitEachChild(visitor, node);
+      }
+      const value = receiver!.emitResolver.GetConstantValue(parse);
+      if (value !== undefined && value !== null) {
+        let replacement: GoPtr<Node>;
+        if (typeof value === "number") {
+          const v = value as JsNumber;
+          if (Number_IsInf(v)) {
+            if (Number_Abs(v) === v) {
+              replacement = NewIdentifier(astFactory, "Infinity");
+            } else {
+              replacement = NewPrefixUnaryExpression(astFactory, KindMinusToken, NewIdentifier(astFactory, "Infinity"));
+            }
+          } else if (Number_IsNaN(v)) {
+            replacement = NewIdentifier(astFactory, "NaN");
+          } else if (Number_Abs(v) === v) {
+            replacement = NewNumericLiteral(astFactory, Number_String(v), TokenFlagsNone);
+          } else {
+            replacement = NewPrefixUnaryExpression(astFactory, KindMinusToken, NewNumericLiteral(astFactory, Number_String(Number_Abs(v)), TokenFlagsNone));
+          }
+        } else if (typeof value === "string") {
+          replacement = NewStringLiteral(astFactory, value, TokenFlagsNone);
+        } else {
+          // PseudoBigInt - technically not supported, handled for completeness
+          const v = value as PseudoBigInt;
+          if (v.Base10Value === "") {
+            replacement = NewBigIntLiteral(astFactory, "0", TokenFlagsNone);
+          } else if (!v.Negative) {
+            replacement = NewBigIntLiteral(astFactory, v.Base10Value, TokenFlagsNone);
+          } else {
+            replacement = NewPrefixUnaryExpression(astFactory, KindMinusToken, NewBigIntLiteral(astFactory, v.Base10Value, TokenFlagsNone));
+          }
+        }
+
+        if (Tristate_IsFalseOrUnknown(receiver!.compilerOptions!.RemoveComments)) {
+          const original = EmitContext_MostOriginal(emitCtx, node);
+          if (original !== undefined && !NodeIsSynthesized(original)) {
+            const originalText = GetTextOfNode(original);
+            const escapedText = safeMultiLineComment(originalText);
+            EmitContext_AddSyntheticTrailingComment(emitCtx, replacement, KindMultiLineCommentTrivia, escapedText, false as bool);
+          }
+        }
+        return replacement;
+      }
+      return NodeVisitor_VisitEachChild(visitor, node);
+    }
+  }
+  return NodeVisitor_VisitEachChild(visitor, node);
 }
 
 /**

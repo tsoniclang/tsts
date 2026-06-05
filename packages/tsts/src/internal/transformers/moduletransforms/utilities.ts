@@ -2,14 +2,21 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name, NodeFactory_NewNodeList } from "../../ast/spine.js";
+import { Node_Text } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Expression, IdentifierNode, LiteralExpression, Statement, StringLiteralNode } from "../../ast/generated/unions.js";
 import { KindEnumDeclaration, KindModuleDeclaration } from "../../ast/generated/kinds.js";
-import { IsIdentifier } from "../../ast/generated/predicates.js";
-import { NewExportDeclaration, NewNamedExports } from "../../ast/generated/factory.js";
+import { IsIdentifier, IsStringLiteral } from "../../ast/generated/predicates.js";
+import { AsStringLiteral } from "../../ast/generated/casts.js";
+import { NewExportDeclaration, NewNamedExports, NewStringLiteral } from "../../ast/generated/factory.js";
+import { TokenFlagsNone } from "../../ast/tokenflags.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
+import { ShouldRewriteModuleSpecifier } from "../../core/core.js";
+import { ChangeExtension } from "../../tspath/extension.js";
+import { GetOutputExtension } from "../../outputpaths/outputpaths.js";
+import { GetExternalModuleName } from "../../ast/utilities.js";
 import type { EmitContext } from "../../printer/emitcontext.js";
-import { EmitContext_GetAutoGenerateInfo, EmitContext_MostOriginal } from "../../printer/emitcontext.js";
+import { EmitContext_AssignCommentAndSourceMapRanges, EmitContext_GetAutoGenerateInfo, EmitContext_MostOriginal, EmitContext_SetOriginal } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { NodeFactory } from "../../printer/factory.js";
 import { GeneratedIdentifierFlags_IsFileLevel, GeneratedIdentifierFlags_IsOptimistic, GeneratedIdentifierFlags_IsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
@@ -42,7 +49,7 @@ export function isDeclarationNameOfEnumOrNamespace(emitContext: GoPtr<EmitContex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::rewriteModuleSpecifier","kind":"func","status":"stub","sigHash":"2a2c22228384ecaa74332c5ba52312b4025457fda5e0066cca919ab98e76b487","bodyHash":"3b74c7a916939c0b44a346f875fc6ebca36485158d5fb36bb85e760ddfae8892"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::rewriteModuleSpecifier","kind":"func","status":"implemented","sigHash":"2a2c22228384ecaa74332c5ba52312b4025457fda5e0066cca919ab98e76b487","bodyHash":"3b74c7a916939c0b44a346f875fc6ebca36485158d5fb36bb85e760ddfae8892"}
  *
  * Go source:
  * func rewriteModuleSpecifier(emitContext *printer.EmitContext, node *ast.Expression, compilerOptions *core.CompilerOptions) *ast.Expression {
@@ -60,7 +67,18 @@ export function isDeclarationNameOfEnumOrNamespace(emitContext: GoPtr<EmitContex
  * }
  */
 export function rewriteModuleSpecifier(emitContext: GoPtr<EmitContext>, node: GoPtr<Expression>, compilerOptions: GoPtr<CompilerOptions>): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::rewriteModuleSpecifier");
+  if (node === undefined || !IsStringLiteral(node as unknown as GoPtr<Node>) || !ShouldRewriteModuleSpecifier(Node_Text(node as unknown as GoPtr<Node>), compilerOptions)) {
+    return node;
+  }
+  const nodeText = Node_Text(node as unknown as GoPtr<Node>);
+  const updatedText = ChangeExtension(nodeText, GetOutputExtension(nodeText, compilerOptions!.Jsx));
+  if (updatedText !== nodeText) {
+    const updated = NewStringLiteral(emitContext!.Factory!.__tsgoEmbedded0!, updatedText, AsStringLiteral(node as unknown as GoPtr<Node>)!.TokenFlags);
+    EmitContext_SetOriginal(emitContext, updated, node as unknown as GoPtr<Node>);
+    EmitContext_AssignCommentAndSourceMapRanges(emitContext, updated, node as unknown as GoPtr<Node>);
+    return updated as unknown as GoPtr<Expression>;
+  }
+  return node;
 }
 
 /**
@@ -90,7 +108,7 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral","kind":"func","status":"stub","sigHash":"332f3906d02f3957621ee33167bfa1acd3c6b1bbbc072635ec7d0237090bc214","bodyHash":"61a61fa3ea9fdaf998b027e378ba6446533ba8f18f649bfccba7e70f6ee05613"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral","kind":"func","status":"implemented","sigHash":"332f3906d02f3957621ee33167bfa1acd3c6b1bbbc072635ec7d0237090bc214","bodyHash":"61a61fa3ea9fdaf998b027e378ba6446533ba8f18f649bfccba7e70f6ee05613"}
  *
  * Go source:
  * func getExternalModuleNameLiteral(factory *printer.NodeFactory, importNode *ast.Node /*ImportDeclaration | ExportDeclaration | ImportEqualsDeclaration | ImportCall* /, sourceFile *ast.SourceFile, host any /*EmitHost* /, resolver printer.EmitResolver, compilerOptions *core.CompilerOptions) *ast.StringLiteralNode {
@@ -109,7 +127,18 @@ export function createEmptyImports(factory: GoPtr<NodeFactory>): GoPtr<Statement
  * }
  */
 export function getExternalModuleNameLiteral(factory: GoPtr<NodeFactory>, importNode: GoPtr<Node>, sourceFile: GoPtr<SourceFile>, host: unknown, resolver: EmitResolver, compilerOptions: GoPtr<CompilerOptions>): GoPtr<StringLiteralNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/moduletransforms/utilities.go::func::getExternalModuleNameLiteral");
+  const moduleName = GetExternalModuleName(importNode);
+  if (moduleName !== undefined && IsStringLiteral(moduleName as unknown as GoPtr<Node>)) {
+    let name = tryGetModuleNameFromDeclaration(importNode, host, factory, resolver, compilerOptions);
+    if (name === undefined) {
+      name = tryRenameExternalModule(factory, moduleName as unknown as GoPtr<LiteralExpression>, sourceFile);
+    }
+    if (name === undefined) { // !!! propagate token flags (will produce new diffs)
+      name = NewStringLiteral(factory!.__tsgoEmbedded0!, Node_Text(moduleName as unknown as GoPtr<Node>), TokenFlagsNone) as unknown as GoPtr<StringLiteralNode>;
+    }
+    return name;
+  }
+  return undefined;
 }
 
 /**

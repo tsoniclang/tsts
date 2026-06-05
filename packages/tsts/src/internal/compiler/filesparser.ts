@@ -58,7 +58,7 @@ import {
 import * as strings from "../../go/strings.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"stub","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5","bodyHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5","bodyHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
  *
  * Go source:
  * parseTask struct {
@@ -439,7 +439,7 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::resolvedRef","kind":"type","status":"stub","sigHash":"b745f422a6fb663c016c9c88ce4ddf26a08d1363b9d0388124d82091d751d53d","bodyHash":"d498a8ac78f30feb947e61fcf62d99074a76585ce8827e15528737c6a9c8e2fa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::resolvedRef","kind":"type","status":"implemented","sigHash":"b745f422a6fb663c016c9c88ce4ddf26a08d1363b9d0388124d82091d751d53d","bodyHash":"d498a8ac78f30feb947e61fcf62d99074a76585ce8827e15528737c6a9c8e2fa"}
  *
  * Go source:
  * resolvedRef struct {
@@ -507,7 +507,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::filesParser","kind":"type","status":"stub","sigHash":"eeb31d9c280c841ed07aa4ae9205776d8829e5534bd5ad7204cecfd91efd4c49","bodyHash":"78ce5e466819582f0ecdfb097eebd983c5b6d0ef4e624a0b205376ecfda66b0f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::filesParser","kind":"type","status":"implemented","sigHash":"eeb31d9c280c841ed07aa4ae9205776d8829e5534bd5ad7204cecfd91efd4c49","bodyHash":"78ce5e466819582f0ecdfb097eebd983c5b6d0ef4e624a0b205376ecfda66b0f"}
  *
  * Go source:
  * filesParser struct {
@@ -579,7 +579,7 @@ export function putParseTaskData(td: GoPtr<parseTaskData>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTaskData","kind":"type","status":"stub","sigHash":"d7e90acd5b01b1a59e7566423ae6e309820fc4321ba2c8b7b03f137b80507667","bodyHash":"40fb88623f3adf4d02baaa108ddbe27d93394e1c715d4b25a0bfb4f649d414e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTaskData","kind":"type","status":"implemented","sigHash":"d7e90acd5b01b1a59e7566423ae6e309820fc4321ba2c8b7b03f137b80507667","bodyHash":"40fb88623f3adf4d02baaa108ddbe27d93394e1c715d4b25a0bfb4f649d414e6"}
  *
  * Go source:
  * parseTaskData struct {

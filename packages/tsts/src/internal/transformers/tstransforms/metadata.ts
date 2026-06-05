@@ -1,17 +1,29 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node } from "../../ast/spine.js";
-import { NodeFactory_NewNodeList } from "../../ast/spine.js";
+import { NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../../ast/spine.js";
 import type { ClassDeclaration, ClassExpression, GetAccessorDeclaration, MethodDeclaration, PropertyDeclaration, SetAccessorDeclaration } from "../../ast/generated/data.js";
 import { NewArrowFunction, NewDecorator, NewIdentifier, NewObjectLiteralExpression, NewPropertyAssignment, NewToken } from "../../ast/generated/factory.js";
-import { KindEqualsGreaterThanToken, KindGetAccessor, KindMethodDeclaration, KindPropertyDeclaration, KindSetAccessor } from "../../ast/generated/kinds.js";
+import { KindBlock, KindCaseBlock, KindClassDeclaration, KindClassExpression, KindDefaultKeyword, KindEqualsGreaterThanToken, KindExportKeyword, KindGetAccessor, KindMethodDeclaration, KindModuleBlock, KindPropertyDeclaration, KindSetAccessor, KindSourceFile } from "../../ast/generated/kinds.js";
+import { IsDecorator } from "../../ast/generated/predicates.js";
+import { ClassElementOrClassElementParameterIsDecorated, ClassOrConstructorParameterIsDecorated, GetFirstConstructorWithBody, HasDecorators, IsClassLike, IsModifier } from "../../ast/utilities.js";
+import { NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdatePropertyDeclaration } from "../../ast/ast.js";
+import { Node_SubtreeFacts } from "../../ast/spine.js";
+import { SubtreeContainsDecorators } from "../../ast/subtreefacts.js";
+import { Filter } from "../../core/core.js";
+import { CompilerOptions_GetEmitScriptTarget, CompilerOptions_GetStrictOptionValue } from "../../core/compileroptions.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
+import { EmitContext_AddEmitHelper, EmitContext_ReadEmitHelpers } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import { NodeFactory_NewMetadataHelper } from "../../printer/factory.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
-import { Transformer_Factory } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import type { metadataSerializer } from "./typeserializer.js";
-import { metadataSerializer_SerializeParameterTypesOfNode, metadataSerializer_SerializeReturnTypeOfNode, metadataSerializer_SerializeTypeOfNode } from "./typeserializer.js";
+import { metadataSerializer_SerializeParameterTypesOfNode, metadataSerializer_SerializeReturnTypeOfNode, metadataSerializer_SerializeTypeOfNode, newMetadataSerializer } from "./typeserializer.js";
+import { Node_Modifiers } from "../../ast/spine.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::constGroup::USE_NEW_TYPE_METADATA_FORMAT","kind":"constGroup","status":"implemented","sigHash":"1894d9bf8ed1a1868a2c3b304b8ced2e4c9d440b32fbdb8bb4035c3bb2a8ac7d","bodyHash":"4e17399c6ef1528bc329ec7cd4a6526a1e79de90637dc1a9797d0726418ef13c"}
@@ -47,7 +59,7 @@ export interface MetadataTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::func::NewMetadataTransformer","kind":"func","status":"stub","sigHash":"ded46d7397187561b63f38a4e609ea34fab1e7a3a80471cef2632d8fa1c5ec5c","bodyHash":"d3593ece354042d55b1942b22d4ebd695185bd5927e229ebf820730aa1487d82"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::func::NewMetadataTransformer","kind":"func","status":"implemented","sigHash":"ded46d7397187561b63f38a4e609ea34fab1e7a3a80471cef2632d8fa1c5ec5c","bodyHash":"d3593ece354042d55b1942b22d4ebd695185bd5927e229ebf820730aa1487d82"}
  *
  * Go source:
  * func NewMetadataTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -60,11 +72,20 @@ export interface MetadataTransformer {
  * }
  */
 export function NewMetadataTransformer(opt: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::func::NewMetadataTransformer");
+  const tx: MetadataTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    legacyDecorators: Tristate_IsTrue(opt!.CompilerOptions!.ExperimentalDecorators) as bool,
+    resolver: opt!.EmitResolver,
+    serializer: undefined,
+    strictNullChecks: CompilerOptions_GetStrictOptionValue(opt!.CompilerOptions, opt!.CompilerOptions!.StrictNullChecks) as bool,
+    parent: undefined,
+    currentLexicalScope: undefined,
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => MetadataTransformer_visit(tx, node), opt!.Context);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visit","kind":"method","status":"stub","sigHash":"6a725d7bfb78b92078fb10e6132a5e66bf179077ef4c6ac427734c98f4df72fe","bodyHash":"5078f8225051e8183e22d1333c86ac4a7f5cba77c89ee89d96756d2d58a9c699"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visit","kind":"method","status":"implemented","sigHash":"6a725d7bfb78b92078fb10e6132a5e66bf179077ef4c6ac427734c98f4df72fe","bodyHash":"5078f8225051e8183e22d1333c86ac4a7f5cba77c89ee89d96756d2d58a9c699"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visit(node *ast.Node) *ast.Node {
@@ -105,7 +126,58 @@ export function NewMetadataTransformer(opt: GoPtr<TransformOptions>): GoPtr<Tran
  * }
  */
 export function MetadataTransformer_visit(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visit");
+  if ((Node_SubtreeFacts(node) & SubtreeContainsDecorators) === 0) {
+    return node;
+  }
+
+  const tx = receiver!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
+
+  switch (node!.Kind) {
+    case KindMethodDeclaration:
+      return MetadataTransformer_visitMethodDeclaration(receiver, node as unknown as GoPtr<MethodDeclaration>);
+    case KindSetAccessor:
+      return MetadataTransformer_visitSetAccessor(receiver, node as unknown as GoPtr<SetAccessorDeclaration>);
+    case KindGetAccessor:
+      return MetadataTransformer_visitGetAccessor(receiver, node as unknown as GoPtr<GetAccessorDeclaration>);
+    case KindPropertyDeclaration:
+      return MetadataTransformer_visitPropertyDeclaration(receiver, node as unknown as GoPtr<PropertyDeclaration>);
+    case KindSourceFile: {
+      const savedParent = tx.parent;
+      tx.parent = undefined;
+      const savedScope0 = tx.currentLexicalScope;
+      tx.currentLexicalScope = node;
+      tx.serializer = newMetadataSerializer(tx.resolver, Transformer_Factory(tx.__tsgoEmbedded0), Transformer_EmitContext(tx.__tsgoEmbedded0), tx.strictNullChecks);
+      let updated: GoPtr<Node>;
+      try {
+        updated = NodeVisitor_VisitEachChild(visitor, node);
+        EmitContext_AddEmitHelper(Transformer_EmitContext(tx.__tsgoEmbedded0), updated, ...EmitContext_ReadEmitHelpers(Transformer_EmitContext(tx.__tsgoEmbedded0)));
+      } finally {
+        MetadataTransformer_setCurrentLexicalScope(receiver, savedScope0);
+        MetadataTransformer_setParent(receiver, savedParent);
+      }
+      return updated!;
+    }
+    case KindModuleBlock:
+    case KindBlock:
+    case KindCaseBlock: {
+      const oldScope = tx.currentLexicalScope;
+      tx.currentLexicalScope = node;
+      let result: GoPtr<Node>;
+      try {
+        result = NodeVisitor_VisitEachChild(visitor, node);
+      } finally {
+        MetadataTransformer_setCurrentLexicalScope(receiver, oldScope);
+      }
+      return result!;
+    }
+    case KindClassDeclaration:
+      return MetadataTransformer_visitClassDeclaration(receiver, node as unknown as GoPtr<ClassDeclaration>);
+    case KindClassExpression:
+      return MetadataTransformer_visitClassExpression(receiver, node as unknown as GoPtr<ClassExpression>);
+    default:
+      return NodeVisitor_VisitEachChild(visitor, node);
+  }
 }
 
 /**
@@ -135,7 +207,7 @@ export function MetadataTransformer_setCurrentLexicalScope(receiver: GoPtr<Metad
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassExpression","kind":"method","status":"stub","sigHash":"7e4b84c111b963fb5f8d4d91d149dd25956f736b6be4b924caa6013b785a0a12","bodyHash":"8f925d9ae5c4c5d40e3aed23b792c1a70bd90843d5cb18d6d62d334d4c886274"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"7e4b84c111b963fb5f8d4d91d149dd25956f736b6be4b924caa6013b785a0a12","bodyHash":"8f925d9ae5c4c5d40e3aed23b792c1a70bd90843d5cb18d6d62d334d4c886274"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitClassExpression(node *ast.ClassExpression) *ast.Node {
@@ -158,11 +230,36 @@ export function MetadataTransformer_setCurrentLexicalScope(receiver: GoPtr<Metad
  * }
  */
 export function MetadataTransformer_visitClassExpression(receiver: GoPtr<MetadataTransformer>, node: GoPtr<ClassExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassExpression");
+  const tx = receiver!;
+  const oldParent = tx.parent;
+  tx.parent = node as unknown as GoPtr<Node>;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  let result: GoPtr<Node>;
+  try {
+    if (!ClassOrConstructorParameterIsDecorated(tx.legacyDecorators, nodeAsNode)) {
+      result = NodeVisitor_VisitEachChild(visitor, nodeAsNode);
+    } else {
+      const modifiers = MetadataTransformer_injectClassTypeMetadata(receiver, NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)), nodeAsNode);
+      result = NodeFactory_UpdateClassExpression(
+        astFactory,
+        node,
+        modifiers,
+        NodeVisitor_VisitNode(visitor, node!.name as unknown as GoPtr<Node>),
+        NodeVisitor_VisitNodes(visitor, node!.TypeParameters),
+        NodeVisitor_VisitNodes(visitor, node!.HeritageClauses),
+        NodeVisitor_VisitNodes(visitor, node!.Members),
+      );
+    }
+  } finally {
+    MetadataTransformer_setParent(receiver, oldParent);
+  }
+  return result!;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassDeclaration","kind":"method","status":"stub","sigHash":"c7ffec6275286e3dbc7a5f0daeadcde48684520b1906086d1ca1df4c47a33f75","bodyHash":"710300997cb471008e1656bc9b08ecdae915308beebc62679732591ac9f693ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"c7ffec6275286e3dbc7a5f0daeadcde48684520b1906086d1ca1df4c47a33f75","bodyHash":"710300997cb471008e1656bc9b08ecdae915308beebc62679732591ac9f693ad"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitClassDeclaration(node *ast.ClassDeclaration) *ast.Node {
@@ -185,11 +282,36 @@ export function MetadataTransformer_visitClassExpression(receiver: GoPtr<Metadat
  * }
  */
 export function MetadataTransformer_visitClassDeclaration(receiver: GoPtr<MetadataTransformer>, node: GoPtr<ClassDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitClassDeclaration");
+  const tx = receiver!;
+  const oldParent = tx.parent;
+  tx.parent = node as unknown as GoPtr<Node>;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  let result: GoPtr<Node>;
+  try {
+    if (!ClassOrConstructorParameterIsDecorated(tx.legacyDecorators, nodeAsNode)) {
+      result = NodeVisitor_VisitEachChild(visitor, nodeAsNode);
+    } else {
+      const modifiers = MetadataTransformer_injectClassTypeMetadata(receiver, NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)), nodeAsNode);
+      result = NodeFactory_UpdateClassDeclaration(
+        astFactory,
+        node,
+        modifiers,
+        NodeVisitor_VisitNode(visitor, node!.name as unknown as GoPtr<Node>),
+        NodeVisitor_VisitNodes(visitor, node!.TypeParameters),
+        NodeVisitor_VisitNodes(visitor, node!.HeritageClauses),
+        NodeVisitor_VisitNodes(visitor, node!.Members),
+      );
+    }
+  } finally {
+    MetadataTransformer_setParent(receiver, oldParent);
+  }
+  return result!;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitPropertyDeclaration","kind":"method","status":"stub","sigHash":"6c409a23d811c0e933edeef15c2e20f1f49a40f6fd609de60a6e6eec11b84bba","bodyHash":"0a572a106f668a6e2710f658ec8301e41560c97c1264d84c26205340917da9ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitPropertyDeclaration","kind":"method","status":"implemented","sigHash":"6c409a23d811c0e933edeef15c2e20f1f49a40f6fd609de60a6e6eec11b84bba","bodyHash":"0a572a106f668a6e2710f658ec8301e41560c97c1264d84c26205340917da9ac"}
  *
  * Go source:
  * func (tx *MetadataTransformer) visitPropertyDeclaration(node *ast.PropertyDeclaration) *ast.Node {
@@ -209,7 +331,24 @@ export function MetadataTransformer_visitClassDeclaration(receiver: GoPtr<Metada
  * }
  */
 export function MetadataTransformer_visitPropertyDeclaration(receiver: GoPtr<MetadataTransformer>, node: GoPtr<PropertyDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.visitPropertyDeclaration");
+  const tx = receiver!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  if (!HasDecorators(nodeAsNode)) {
+    return NodeVisitor_VisitEachChild(visitor, nodeAsNode);
+  }
+
+  const modifiers = MetadataTransformer_injectClassElementTypeMetadata(receiver, NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)), nodeAsNode, tx.parent);
+  return NodeFactory_UpdatePropertyDeclaration(
+    astFactory,
+    node,
+    modifiers,
+    NodeVisitor_VisitNode(visitor, node!.name as unknown as GoPtr<Node>),
+    NodeVisitor_VisitNode(visitor, node!.PostfixToken as unknown as GoPtr<Node>),
+    NodeVisitor_VisitNode(visitor, node!.Type as unknown as GoPtr<Node>),
+    NodeVisitor_VisitNode(visitor, node!.Initializer as unknown as GoPtr<Node>),
+  );
 }
 
 /**
@@ -293,7 +432,7 @@ export function MetadataTransformer_visitGetAccessor(receiver: GoPtr<MetadataTra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassTypeMetadata","kind":"method","status":"stub","sigHash":"c2589e88b72f0183dfc7e49fdf632c95322e40d5524c7055e92d38af54407cfe","bodyHash":"e0c1479c394a3dff006ffb7147d21bac4f48989a5918a6b6ea3c8c4fbdb41de8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassTypeMetadata","kind":"method","status":"implemented","sigHash":"c2589e88b72f0183dfc7e49fdf632c95322e40d5524c7055e92d38af54407cfe","bodyHash":"e0c1479c394a3dff006ffb7147d21bac4f48989a5918a6b6ea3c8c4fbdb41de8"}
  *
  * Go source:
  * func (tx *MetadataTransformer) injectClassTypeMetadata(list *ast.ModifierList, node *ast.Node) *ast.ModifierList {
@@ -331,11 +470,42 @@ export function MetadataTransformer_visitGetAccessor(receiver: GoPtr<MetadataTra
  * }
  */
 export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<MetadataTransformer>, list: GoPtr<ModifierList>, node: GoPtr<Node>): GoPtr<ModifierList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassTypeMetadata");
+  const tx = receiver!;
+  const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
+  const metadata = MetadataTransformer_getTypeMetadata(receiver, node, node);
+  if (metadata.length > 0) {
+    let originalNodes: GoSlice<GoPtr<Node>> = [];
+    if (list !== undefined) {
+      originalNodes = list!.Nodes ?? [];
+    }
+    if (originalNodes.length === 0) {
+      const res = NodeFactory_NewModifierList(factory, metadata);
+      if (list !== undefined) {
+        res!.Loc = list!.Loc;
+      }
+      return res;
+    }
+    let modifiersArray: GoSlice<GoPtr<Node>> = [];
+    if (IsModifier(originalNodes[0]) && (originalNodes[0]!.Kind === KindDefaultKeyword || originalNodes[0]!.Kind === KindExportKeyword)) {
+      modifiersArray = [...modifiersArray, originalNodes[0]];
+      if (originalNodes.length > 1 && (originalNodes[1]!.Kind === KindDefaultKeyword || originalNodes[1]!.Kind === KindExportKeyword)) {
+        modifiersArray = [...modifiersArray, originalNodes[1]];
+      }
+    }
+    const restStart = modifiersArray.length;
+    const decos = Filter(originalNodes, IsDecorator);
+    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    const otherModifiers = Filter(originalNodes.slice(restStart), IsModifier);
+    modifiersArray = [...modifiersArray, ...otherModifiers];
+    const res = NodeFactory_NewModifierList(factory, modifiersArray);
+    res!.Loc = list!.Loc;
+    return res;
+  }
+  return list;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassElementTypeMetadata","kind":"method","status":"stub","sigHash":"19991ff546382a19f8e46712294792407118d309e10333360f96d46eb7fd25ef","bodyHash":"231ab6ab869444bfd4aa6aa3f7e6d25a2af0ad0d4799d73a349e0b42f099f4f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassElementTypeMetadata","kind":"method","status":"implemented","sigHash":"19991ff546382a19f8e46712294792407118d309e10333360f96d46eb7fd25ef","bodyHash":"231ab6ab869444bfd4aa6aa3f7e6d25a2af0ad0d4799d73a349e0b42f099f4f8"}
  *
  * Go source:
  * func (tx *MetadataTransformer) injectClassElementTypeMetadata(list *ast.ModifierList, node *ast.Node, container *ast.Node) *ast.ModifierList {
@@ -372,7 +542,37 @@ export function MetadataTransformer_injectClassTypeMetadata(receiver: GoPtr<Meta
  * }
  */
 export function MetadataTransformer_injectClassElementTypeMetadata(receiver: GoPtr<MetadataTransformer>, list: GoPtr<ModifierList>, node: GoPtr<Node>, container: GoPtr<Node>): GoPtr<ModifierList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.injectClassElementTypeMetadata");
+  const tx = receiver!;
+  const factory = Transformer_Factory(tx.__tsgoEmbedded0)!;
+  if (!IsClassLike(container)) {
+    return list;
+  }
+  if (!ClassElementOrClassElementParameterIsDecorated(tx.legacyDecorators, node, container)) {
+    return list;
+  }
+  const metadata = MetadataTransformer_getTypeMetadata(receiver, node, container);
+  if (metadata.length > 0) {
+    let originalNodes: GoSlice<GoPtr<Node>> = [];
+    if (list !== undefined) {
+      originalNodes = list!.Nodes ?? [];
+    }
+    if (originalNodes.length === 0) {
+      const res = NodeFactory_NewModifierList(factory, metadata);
+      if (list !== undefined) {
+        res!.Loc = list!.Loc;
+      }
+      return res;
+    }
+    let modifiersArray: GoSlice<GoPtr<Node>> = [];
+    const decos = Filter(originalNodes, IsDecorator);
+    modifiersArray = [...modifiersArray, ...decos, ...metadata];
+    const modifiers = Filter(originalNodes, IsModifier);
+    modifiersArray = [...modifiersArray, ...modifiers];
+    const res = NodeFactory_NewModifierList(factory, modifiersArray);
+    res!.Loc = list!.Loc;
+    return res;
+  }
+  return list;
 }
 
 /**
@@ -664,7 +864,7 @@ export function MetadataTransformer_shouldAddReturnTypeMetadata(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddParamTypesMetadata","kind":"method","status":"stub","sigHash":"2c8548a7e392dcc928f8c9a343f1294535aa1a0c7e5fe4db2b3f3d41e1877952","bodyHash":"a85ef58600661a030405c64347ca050b6acfd14489fe5152a2586e1ca866323d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddParamTypesMetadata","kind":"method","status":"implemented","sigHash":"2c8548a7e392dcc928f8c9a343f1294535aa1a0c7e5fe4db2b3f3d41e1877952","bodyHash":"a85ef58600661a030405c64347ca050b6acfd14489fe5152a2586e1ca866323d"}
  *
  * Go source:
  * func (tx *MetadataTransformer) shouldAddParamTypesMetadata(node *ast.Node) bool {
@@ -678,5 +878,14 @@ export function MetadataTransformer_shouldAddReturnTypeMetadata(receiver: GoPtr<
  * }
  */
 export function MetadataTransformer_shouldAddParamTypesMetadata(receiver: GoPtr<MetadataTransformer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/metadata.go::method::MetadataTransformer.shouldAddParamTypesMetadata");
+  switch (node!.Kind) {
+    case KindClassDeclaration:
+    case KindClassExpression:
+      return (GetFirstConstructorWithBody(node) !== undefined) as bool;
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+      return true;
+  }
+  return false;
 }

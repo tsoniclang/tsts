@@ -1,12 +1,54 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
+import { Node_Expression, Node_Text, Node_Type } from "../../ast/ast.js";
 import type { SignatureDeclaration } from "../../ast/generated/unions.js";
+import {
+  KindArrowFunction,
+  KindArrayLiteralExpression,
+  KindBarBarToken,
+  KindBigIntLiteral,
+  KindCallSignature,
+  KindClassExpression,
+  KindConditionalExpression,
+  KindConstructor,
+  KindFalseKeyword,
+  KindFunctionDeclaration,
+  KindFunctionExpression,
+  KindFunctionType,
+  KindGetAccessor,
+  KindIdentifier,
+  KindJsxElement,
+  KindJsxExpression,
+  KindJsxSelfClosingElement,
+  KindMethodDeclaration,
+  KindMethodSignature,
+  KindNoSubstitutionTemplateLiteral,
+  KindNullKeyword,
+  KindNumericLiteral,
+  KindObjectLiteralExpression,
+  KindParenthesizedExpression,
+  KindPropertyAccessExpression,
+  KindQuestionQuestionToken,
+  KindRegularExpressionLiteral,
+  KindSetAccessor,
+  KindStringLiteral,
+  KindTemplateExpression,
+  KindTrueKeyword,
+  KindUndefinedKeyword,
+  KindVoidExpression,
+} from "../../ast/generated/kinds.js";
+import { CheckFlagsHasNeverType, CheckFlagsNonUniformAndLiteral } from "../../ast/checkflags.js";
+import { IsBinaryExpression, IsModuleBlock, IsPropertyDeclaration, IsSourceFile } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
+import { SymbolFlagsOptional } from "../../ast/generated/flags.js";
+import { AsBinaryExpression, AsConditionalExpression } from "../../ast/generated/casts.js";
+import { FindAncestor, GetImmediatelyInvokedFunctionExpression, IsFunctionLike, OEKAll, SkipOuterExpressions, SkipParentheses } from "../../ast/utilities.js";
 import {
   TypeFlagsAnyOrUnknown,
   TypeFlagsBigInt,
   TypeFlagsBigIntLiteral,
+  TypeFlagsNever,
   TypeFlagsNull,
   TypeFlagsNumber,
   TypeFlagsNumberLiteral,
@@ -24,7 +66,7 @@ import {
   Checker_isGenericTypeWithUnionConstraint,
   Checker_isNoInferType,
 } from "./inference.js";
-import { Checker_getSyntheticElementAccess } from "./symbols.js";
+import { Checker_getSyntheticElementAccess, Checker_getTypeOfSymbol } from "./symbols.js";
 import { Checker_checkExpressionEx } from "./syntax-checking.js";
 import {
   Checker_filterType,
@@ -34,6 +76,9 @@ import {
 } from "./types.js";
 import {
   CheckModeInferential,
+  PredicateSemanticsAlways,
+  PredicateSemanticsNever,
+  PredicateSemanticsSometimes,
   TypeFactsTruthy,
   getNumberLiteralValue,
   getStringLiteralValue,
@@ -41,6 +86,13 @@ import {
   someType,
 } from "./state.js";
 import type { Checker, CheckMode, PredicateSemantics } from "./state.js";
+import { Checker_getResolvedSymbol } from "./symbols.js";
+import { Checker_error } from "./support.js";
+import {
+  An_expression_of_type_void_cannot_be_tested_for_truthiness,
+  This_kind_of_expression_is_always_falsy,
+  This_kind_of_expression_is_always_truthy,
+} from "../../diagnostics/generated/messages.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"stub","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d","bodyHash":"66802dea0e176c6062ef7e0b44d9d10f2f2a8c9b1bae7d16b006c6d05b9c3044"}
@@ -93,7 +145,7 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateParent","kind":"method","status":"stub","sigHash":"5d5b47ef4c3a3d51ca7072a8acbc3731fff80ef845b93a50812dfb702beb6cd3","bodyHash":"9e8a1e75b418c00955c001a701658ac96ee1388e001004a72a94f24596170cc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateParent","kind":"method","status":"implemented","sigHash":"5d5b47ef4c3a3d51ca7072a8acbc3731fff80ef845b93a50812dfb702beb6cd3","bodyHash":"9e8a1e75b418c00955c001a701658ac96ee1388e001004a72a94f24596170cc5"}
  *
  * Go source:
  * func (c *Checker) getTypePredicateParent(node *ast.Node) *ast.SignatureDeclaration {
@@ -109,7 +161,20 @@ export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<SignatureDeclaration> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypePredicateParent");
+  const parent = node!.Parent;
+  switch (parent!.Kind) {
+    case KindArrowFunction:
+    case KindCallSignature:
+    case KindFunctionDeclaration:
+    case KindFunctionExpression:
+    case KindFunctionType:
+    case KindMethodDeclaration:
+    case KindMethodSignature:
+      if (node === Node_Type(parent)) {
+        return parent as GoPtr<SignatureDeclaration>;
+      }
+  }
+  return undefined;
 }
 
 /**
@@ -158,7 +223,7 @@ export function Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberTy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyTypes","kind":"method","status":"stub","sigHash":"89723afd90d8696f6daafdafede3e44a75f12409f701542fc417d60278056db8","bodyHash":"074c27d724fda68d64b8b253726a57c30ce811238962b2d27edbc425819cfa97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyTypes","kind":"method","status":"implemented","sigHash":"89723afd90d8696f6daafdafede3e44a75f12409f701542fc417d60278056db8","bodyHash":"074c27d724fda68d64b8b253726a57c30ce811238962b2d27edbc425819cfa97"}
  *
  * Go source:
  * func (c *Checker) checkTestingKnownTruthyTypes(condExpr *ast.Node, condType *Type, body *ast.Node) {
@@ -171,7 +236,16 @@ export function Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberTy
  * }
  */
 export function Checker_checkTestingKnownTruthyTypes(receiver: GoPtr<Checker>, condExpr: GoPtr<Node>, condType: GoPtr<Type>, body: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTestingKnownTruthyTypes");
+  condExpr = SkipParentheses(condExpr);
+  Checker_checkTestingKnownTruthyType(receiver, condExpr, condType, body);
+  while (
+    IsBinaryExpression(condExpr) &&
+    (AsBinaryExpression(condExpr)!.OperatorToken!.Kind === KindBarBarToken ||
+      AsBinaryExpression(condExpr)!.OperatorToken!.Kind === KindQuestionQuestionToken)
+  ) {
+    condExpr = SkipParentheses(AsBinaryExpression(condExpr)!.Left);
+    Checker_checkTestingKnownTruthyType(receiver, condExpr, condType, body);
+  }
 }
 
 /**
@@ -306,7 +380,7 @@ export function Checker_getFlowTypeOfAccessExpression(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getControlFlowContainer","kind":"method","status":"stub","sigHash":"71ce273dd5b459bacd9e005ef2525b814d7330f10eaf79a4b482933e0171ba37","bodyHash":"b6f1b3ab08cfdc85445a1b718f55ebb4b923298a902d109371d15dc34c3ad7ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getControlFlowContainer","kind":"method","status":"implemented","sigHash":"71ce273dd5b459bacd9e005ef2525b814d7330f10eaf79a4b482933e0171ba37","bodyHash":"b6f1b3ab08cfdc85445a1b718f55ebb4b923298a902d109371d15dc34c3ad7ef"}
  *
  * Go source:
  * func (c *Checker) getControlFlowContainer(node *ast.Node) *ast.Node {
@@ -316,7 +390,12 @@ export function Checker_getFlowTypeOfAccessExpression(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_getControlFlowContainer(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getControlFlowContainer");
+  return FindAncestor(node!.Parent, (n) =>
+    (IsFunctionLike(n) && GetImmediatelyInvokedFunctionExpression(n) === undefined) ||
+    IsModuleBlock(n) ||
+    IsSourceFile(n) ||
+    IsPropertyDeclaration(n),
+  );
 }
 
 /**
@@ -338,7 +417,7 @@ export function Checker_getFlowTypeOfProperty(receiver: GoPtr<Checker>, referenc
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessOfType","kind":"method","status":"stub","sigHash":"57a888003555306acb8494d386081bf67c32f668cd7fb75925f1a0ef1321290f","bodyHash":"5977167b26e179fcbfbf4c7aa9fbf72187b22be1b5ba0302a4a15058ed03f10b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessOfType","kind":"method","status":"implemented","sigHash":"57a888003555306acb8494d386081bf67c32f668cd7fb75925f1a0ef1321290f","bodyHash":"5977167b26e179fcbfbf4c7aa9fbf72187b22be1b5ba0302a4a15058ed03f10b"}
  *
  * Go source:
  * func (c *Checker) checkTruthinessOfType(t *Type, node *ast.Node) *Type {
@@ -354,11 +433,19 @@ export function Checker_getFlowTypeOfProperty(receiver: GoPtr<Checker>, referenc
  * }
  */
 export function Checker_checkTruthinessOfType(receiver: GoPtr<Checker>, t: GoPtr<Type>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTruthinessOfType");
+  if ((t!.flags & TypeFlagsVoid) !== 0) {
+    Checker_error(receiver, node, An_expression_of_type_void_cannot_be_tested_for_truthiness);
+    return t;
+  }
+  const semantics = Checker_getSyntacticTruthySemantics(receiver, node);
+  if (semantics !== PredicateSemanticsSometimes) {
+    Checker_error(receiver, node, semantics === PredicateSemanticsAlways ? This_kind_of_expression_is_always_truthy : This_kind_of_expression_is_always_falsy);
+  }
+  return t;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticTruthySemantics","kind":"method","status":"stub","sigHash":"aafd356f28695e827a1259a861021e3831401335c8e3da0a20bae5d51ced09d1","bodyHash":"4ec6b5d3b3de70cd64a3d91386dceb76d96f68cca646025716c9617f7328589a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticTruthySemantics","kind":"method","status":"implemented","sigHash":"aafd356f28695e827a1259a861021e3831401335c8e3da0a20bae5d51ced09d1","bodyHash":"4ec6b5d3b3de70cd64a3d91386dceb76d96f68cca646025716c9617f7328589a"}
  *
  * Go source:
  * func (c *Checker) getSyntacticTruthySemantics(node *ast.Node) PredicateSemantics {
@@ -391,7 +478,41 @@ export function Checker_checkTruthinessOfType(receiver: GoPtr<Checker>, t: GoPtr
  * }
  */
 export function Checker_getSyntacticTruthySemantics(receiver: GoPtr<Checker>, node: GoPtr<Node>): PredicateSemantics {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticTruthySemantics");
+  node = SkipOuterExpressions(node, OEKAll);
+  switch (node!.Kind) {
+    case KindNumericLiteral:
+      if (Node_Text(node) === "0" || Node_Text(node) === "1") {
+        return PredicateSemanticsSometimes;
+      }
+      return PredicateSemanticsAlways;
+    case KindArrayLiteralExpression:
+    case KindArrowFunction:
+    case KindBigIntLiteral:
+    case KindClassExpression:
+    case KindFunctionExpression:
+    case KindJsxElement:
+    case KindJsxSelfClosingElement:
+    case KindObjectLiteralExpression:
+    case KindRegularExpressionLiteral:
+      return PredicateSemanticsAlways;
+    case KindVoidExpression:
+    case KindNullKeyword:
+      return PredicateSemanticsNever;
+    case KindNoSubstitutionTemplateLiteral:
+    case KindStringLiteral:
+      if (Node_Text(node) !== "") {
+        return PredicateSemanticsAlways;
+      }
+      return PredicateSemanticsNever;
+    case KindConditionalExpression:
+      return (Checker_getSyntacticTruthySemantics(receiver, AsConditionalExpression(node)!.WhenTrue) |
+        Checker_getSyntacticTruthySemantics(receiver, AsConditionalExpression(node)!.WhenFalse)) as PredicateSemantics;
+    case KindIdentifier:
+      if (Checker_getResolvedSymbol(receiver, node) === receiver!.undefinedSymbol) {
+        return PredicateSemanticsNever;
+      }
+  }
+  return PredicateSemanticsSometimes;
 }
 
 /**
@@ -559,7 +680,7 @@ export function Checker_getTypePredicateFromBody(receiver: GoPtr<Checker>, fn: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDiscriminantWithNeverType","kind":"method","status":"stub","sigHash":"4fd66392a9407397da9e3d70b1261e390723f76767fda4539301bb2555f75e33","bodyHash":"f0bcb402918ffbf982f70518ebd820aa66a36b3d1b4ce0c9a1df1c77283a014d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDiscriminantWithNeverType","kind":"method","status":"implemented","sigHash":"4fd66392a9407397da9e3d70b1261e390723f76767fda4539301bb2555f75e33","bodyHash":"f0bcb402918ffbf982f70518ebd820aa66a36b3d1b4ce0c9a1df1c77283a014d"}
  *
  * Go source:
  * func (c *Checker) isDiscriminantWithNeverType(prop *ast.Symbol) bool {
@@ -569,7 +690,11 @@ export function Checker_getTypePredicateFromBody(receiver: GoPtr<Checker>, fn: G
  * }
  */
 export function Checker_isDiscriminantWithNeverType(receiver: GoPtr<Checker>, prop: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDiscriminantWithNeverType");
+  return (
+    (prop!.Flags & SymbolFlagsOptional) === 0 &&
+    (prop!.CheckFlags & (CheckFlagsNonUniformAndLiteral | CheckFlagsHasNeverType)) === CheckFlagsNonUniformAndLiteral &&
+    (Checker_getTypeOfSymbol(receiver, prop)!.flags & TypeFlagsNever) !== 0
+  );
 }
 
 /**
@@ -684,7 +809,7 @@ export function Checker_getDefinitelyFalsyPartOfType(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"stub","sigHash":"e9a504f885ec16cafbd9323e6d8cdbc4d961da219c9fa4b14a3d2d0bc7317caa","bodyHash":"356c17428bc0d393e00939216b9b692a4ef873c6f6b271fa4158900141fdd22c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue","kind":"method","status":"implemented","sigHash":"e9a504f885ec16cafbd9323e6d8cdbc4d961da219c9fa4b14a3d2d0bc7317caa","bodyHash":"356c17428bc0d393e00939216b9b692a4ef873c6f6b271fa4158900141fdd22c"}
  *
  * Go source:
  * func (c *Checker) isPossiblyDiscriminantValue(node *ast.Node) bool {
@@ -701,7 +826,27 @@ export function Checker_getDefinitelyFalsyPartOfType(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_isPossiblyDiscriminantValue(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isPossiblyDiscriminantValue");
+  switch (node!.Kind) {
+    case KindStringLiteral:
+    case KindNumericLiteral:
+    case KindBigIntLiteral:
+    case KindNoSubstitutionTemplateLiteral:
+    case KindTemplateExpression:
+    case KindTrueKeyword:
+    case KindFalseKeyword:
+    case KindNullKeyword:
+    case KindIdentifier:
+    case KindUndefinedKeyword:
+      return true;
+    case KindPropertyAccessExpression:
+    case KindParenthesizedExpression:
+      return Checker_isPossiblyDiscriminantValue(receiver, Node_Expression(node));
+    case KindJsxExpression: {
+      const expression = Node_Expression(node);
+      return expression === undefined || Checker_isPossiblyDiscriminantValue(receiver, expression);
+    }
+  }
+  return false;
 }
 
 /**

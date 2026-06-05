@@ -6,7 +6,7 @@ import type { CompilerOptions } from "../../core/compileroptions.js";
 import { EmitContext_NewNotEmittedStatement } from "../../printer/emitcontext.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
-import { Transformer_EmitContext } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_NewTransformer } from "../transformer.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::type::TypeEraserTransformer","kind":"type","status":"implemented","sigHash":"bdb90c2faa90cf896efb0849699ba9fae98beb7beb98d285e9da5884a17f7648","bodyHash":"058402a91184c90a80f6900dde5f432284290b1838798a9284c5e90ea71e461a"}
@@ -27,7 +27,7 @@ export interface TypeEraserTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::func::NewTypeEraserTransformer","kind":"func","status":"stub","sigHash":"53b3e285a69881af65a2487e556bd94560651a4b3806431a557f2e6039edd82f","bodyHash":"fec9e81a116ec6aa1009585bebe43017149a3f9b82bd9e0f6dc0226784ccbb97"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::func::NewTypeEraserTransformer","kind":"func","status":"implemented","sigHash":"53b3e285a69881af65a2487e556bd94560651a4b3806431a557f2e6039edd82f","bodyHash":"fec9e81a116ec6aa1009585bebe43017149a3f9b82bd9e0f6dc0226784ccbb97"}
  *
  * Go source:
  * func NewTypeEraserTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -38,7 +38,15 @@ export interface TypeEraserTransformer {
  * }
  */
 export function NewTypeEraserTransformer(opt: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/typeeraser.go::func::NewTypeEraserTransformer");
+  const compilerOptions = opt!.CompilerOptions;
+  const emitContext = opt!.Context;
+  const tx: TypeEraserTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    compilerOptions: compilerOptions,
+    parentNode: undefined,
+    currentNode: undefined,
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => TypeEraserTransformer_visit(tx, node), emitContext);
 }
 
 /**

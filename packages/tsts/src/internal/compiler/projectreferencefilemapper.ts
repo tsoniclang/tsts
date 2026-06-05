@@ -20,7 +20,7 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 import type { ProgramOptions } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"stub","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6","bodyHash":"c70ffa65c0a7cbf4488dcb61bb0f1edc90d7ae2469629d6e4783f50b6301ad94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6","bodyHash":"c70ffa65c0a7cbf4488dcb61bb0f1edc90d7ae2469629d6e4783f50b6301ad94"}
  *
  * Go source:
  * projectReferenceFileMapper struct {

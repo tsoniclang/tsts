@@ -15,7 +15,7 @@ import type { NameGenerator } from "../namegenerator.js";
 import type { lineCharacterCache } from "../utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrinterOptions","kind":"type","status":"stub","sigHash":"e05c9b3336abcef2ef37a751378d949c3d6e7064f9bce544fdcba0c8fa66a958","bodyHash":"4c7efb44ac24239eda3ed0e7d022159d8f5d9785dae83438b399025455c55e9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrinterOptions","kind":"type","status":"implemented","sigHash":"e05c9b3336abcef2ef37a751378d949c3d6e7064f9bce544fdcba0c8fa66a958","bodyHash":"4c7efb44ac24239eda3ed0e7d022159d8f5d9785dae83438b399025455c55e9f"}
  *
  * Go source:
  * PrinterOptions struct {
@@ -54,7 +54,7 @@ export interface PrinterOptions {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrintHandlers","kind":"type","status":"stub","sigHash":"f62453a560569c829ada5cc0c2ce8be833c1ef6e0d4250c4acb1617c7e4cdc55","bodyHash":"bce28de34be34e21bed7e3f2f56e9c02456f9835563a3e6bc4cbdb7240c020da"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::PrintHandlers","kind":"type","status":"implemented","sigHash":"f62453a560569c829ada5cc0c2ce8be833c1ef6e0d4250c4acb1617c7e4cdc55","bodyHash":"bce28de34be34e21bed7e3f2f56e9c02456f9835563a3e6bc4cbdb7240c020da"}
  *
  * Go source:
  * PrintHandlers struct {
@@ -127,7 +127,7 @@ export interface PrintHandlers {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::Printer","kind":"type","status":"stub","sigHash":"fcfaf25a4675b1c48962bca97058109f3fc983a6115ab3083bfaa783c635607e","bodyHash":"2d98aa0744498b1ccc81fe5065344ce3d6a89de81b96a93cd53b6f35cc528b7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::Printer","kind":"type","status":"implemented","sigHash":"fcfaf25a4675b1c48962bca97058109f3fc983a6115ab3083bfaa783c635607e","bodyHash":"2d98aa0744498b1ccc81fe5065344ce3d6a89de81b96a93cd53b6f35cc528b7c"}
  *
  * Go source:
  * Printer struct {
@@ -193,7 +193,7 @@ export interface Printer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::detachedCommentsInfo","kind":"type","status":"stub","sigHash":"3970aa080ef2767a66f0ee8df2f09b615abadff9afcf0f8c56887e6060a4cd67","bodyHash":"49d0943cf7858a5e1ae7cb46810f38c736d1ab424b6a25b8b4b60d250089aac8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::detachedCommentsInfo","kind":"type","status":"implemented","sigHash":"3970aa080ef2767a66f0ee8df2f09b615abadff9afcf0f8c56887e6060a4cd67","bodyHash":"49d0943cf7858a5e1ae7cb46810f38c736d1ab424b6a25b8b4b60d250089aac8"}
  *
  * Go source:
  * detachedCommentsInfo struct {
@@ -207,7 +207,7 @@ export interface detachedCommentsInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentState","kind":"type","status":"stub","sigHash":"926dadfcef3fa3f73fe7a8ea8588a46c607cae86d19331c9140ba5968598c517","bodyHash":"0124d32cc9034dbfb1562e64c32015e4b7a059a483386a85dc0886b057fe0df3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentState","kind":"type","status":"implemented","sigHash":"926dadfcef3fa3f73fe7a8ea8588a46c607cae86d19331c9140ba5968598c517","bodyHash":"0124d32cc9034dbfb1562e64c32015e4b7a059a483386a85dc0886b057fe0df3"}
  *
  * Go source:
  * commentState struct {
@@ -227,7 +227,7 @@ export interface commentState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::sourceMapState","kind":"type","status":"stub","sigHash":"a68ff8de837fa3fc6a6f9ad5ab796aaa2b65a8e5366cdc0741f1fb9c2a95ae9d","bodyHash":"576a247cceb189c86e5295c1ed63a8cc59568c0d953af66091b7159b66c3a69c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::sourceMapState","kind":"type","status":"implemented","sigHash":"a68ff8de837fa3fc6a6f9ad5ab796aaa2b65a8e5366cdc0741f1fb9c2a95ae9d","bodyHash":"576a247cceb189c86e5295c1ed63a8cc59568c0d953af66091b7159b66c3a69c"}
  *
  * Go source:
  * sourceMapState struct {
@@ -243,7 +243,7 @@ export interface sourceMapState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::printerState","kind":"type","status":"stub","sigHash":"11057588982d3f230c8498bfee870042d0a88f3a4e7698edb227364499229f62","bodyHash":"242d829da1b02353715675ece3a66b0d68c00956e667cb948883dfc89a30f295"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::printerState","kind":"type","status":"implemented","sigHash":"11057588982d3f230c8498bfee870042d0a88f3a4e7698edb227364499229f62","bodyHash":"242d829da1b02353715675ece3a66b0d68c00956e667cb948883dfc89a30f295"}
  *
  * Go source:
  * printerState struct {
@@ -257,7 +257,7 @@ export interface printerState {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::WriteKind","kind":"type","status":"stub","sigHash":"cff0cd2c0ce98ae8e1d007610b529ba1f2cb8488272b8ce547e528877633be17","bodyHash":"c17d0f3a968fef6a2bf529b5a823a0827e769e79e1b6c39d22c152756b29e8ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::WriteKind","kind":"type","status":"implemented","sigHash":"cff0cd2c0ce98ae8e1d007610b529ba1f2cb8488272b8ce547e528877633be17","bodyHash":"c17d0f3a968fef6a2bf529b5a823a0827e769e79e1b6c39d22c152756b29e8ea"}
  *
  * Go source:
  * WriteKind int
@@ -265,7 +265,7 @@ export interface printerState {
 export type WriteKind = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::WriteKindNone+WriteKindKeyword+WriteKindOperator+WriteKindPunctuation+WriteKindStringLiteral+WriteKindParameter+WriteKindProperty+WriteKindComment+WriteKindLiteral","kind":"constGroup","status":"stub","sigHash":"f857e88bbd770a526a1409900bf938f7c504daa712f75842be7b9b8a96a57f4f","bodyHash":"98067c5f12d438bbee5189e77a0ab115d66989aff33acc3e8c4e9d20b7fafa68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::WriteKindNone+WriteKindKeyword+WriteKindOperator+WriteKindPunctuation+WriteKindStringLiteral+WriteKindParameter+WriteKindProperty+WriteKindComment+WriteKindLiteral","kind":"constGroup","status":"implemented","sigHash":"f857e88bbd770a526a1409900bf938f7c504daa712f75842be7b9b8a96a57f4f","bodyHash":"98067c5f12d438bbee5189e77a0ab115d66989aff33acc3e8c4e9d20b7fafa68"}
  *
  * Go source:
  * const (
@@ -280,18 +280,18 @@ export type WriteKind = int;
  * 	WriteKindLiteral
  * )
  */
-export const WriteKindNone: WriteKind = undefined as never;
-export const WriteKindKeyword: WriteKind = undefined as never;
-export const WriteKindOperator: WriteKind = undefined as never;
-export const WriteKindPunctuation: WriteKind = undefined as never;
-export const WriteKindStringLiteral: WriteKind = undefined as never;
-export const WriteKindParameter: WriteKind = undefined as never;
-export const WriteKindProperty: WriteKind = undefined as never;
-export const WriteKindComment: WriteKind = undefined as never;
-export const WriteKindLiteral: WriteKind = undefined as never;
+export const WriteKindNone: WriteKind = 0;
+export const WriteKindKeyword: WriteKind = 1;
+export const WriteKindOperator: WriteKind = 2;
+export const WriteKindPunctuation: WriteKind = 3;
+export const WriteKindStringLiteral: WriteKind = 4;
+export const WriteKindParameter: WriteKind = 5;
+export const WriteKindProperty: WriteKind = 6;
+export const WriteKindComment: WriteKind = 7;
+export const WriteKindLiteral: WriteKind = 8;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentSeparator","kind":"type","status":"stub","sigHash":"563a47c13ee551302187f172cb5cde7c504d640dc6e5386babd6b1734cabf941","bodyHash":"14db9e627ce5ccf7b13eeb029b91b7deb12733d2f0b85dc7b4780d9c041bbbad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::commentSeparator","kind":"type","status":"implemented","sigHash":"563a47c13ee551302187f172cb5cde7c504d640dc6e5386babd6b1734cabf941","bodyHash":"14db9e627ce5ccf7b13eeb029b91b7deb12733d2f0b85dc7b4780d9c041bbbad"}
  *
  * Go source:
  * commentSeparator uint32
@@ -299,7 +299,7 @@ export const WriteKindLiteral: WriteKind = undefined as never;
 export type commentSeparator = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::commentSeparatorNone+commentSeparatorBefore+commentSeparatorAfter","kind":"constGroup","status":"stub","sigHash":"a2a79165f3b5e5fbbbc4c2b324ec30896284bed59c16f00ba415b9f8252fad08","bodyHash":"bc5a40dfeaef1fd2298fea9d89aab404cfb5b603428bc6f67e2dae1e2f82cf91"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::commentSeparatorNone+commentSeparatorBefore+commentSeparatorAfter","kind":"constGroup","status":"implemented","sigHash":"a2a79165f3b5e5fbbbc4c2b324ec30896284bed59c16f00ba415b9f8252fad08","bodyHash":"bc5a40dfeaef1fd2298fea9d89aab404cfb5b603428bc6f67e2dae1e2f82cf91"}
  *
  * Go source:
  * const (
@@ -308,12 +308,12 @@ export type commentSeparator = uint;
  * 	commentSeparatorAfter
  * )
  */
-export const commentSeparatorNone: commentSeparator = undefined as never;
-export const commentSeparatorBefore: commentSeparator = undefined as never;
-export const commentSeparatorAfter: commentSeparator = undefined as never;
+export const commentSeparatorNone: commentSeparator = 0;
+export const commentSeparatorBefore: commentSeparator = 1;
+export const commentSeparatorAfter: commentSeparator = 2;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::tokenEmitFlags","kind":"type","status":"stub","sigHash":"525979afb92adb5c028cfc4227291d6d0c4297954f83a6c3743a31f66fb12de1","bodyHash":"f0795874869c058db20479aee1ba55ac1e184a898642ee096876680bf242495c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::tokenEmitFlags","kind":"type","status":"implemented","sigHash":"525979afb92adb5c028cfc4227291d6d0c4297954f83a6c3743a31f66fb12de1","bodyHash":"f0795874869c058db20479aee1ba55ac1e184a898642ee096876680bf242495c"}
  *
  * Go source:
  * tokenEmitFlags uint32
@@ -321,7 +321,7 @@ export const commentSeparatorAfter: commentSeparator = undefined as never;
 export type tokenEmitFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::tefNoComments+tefIndentLeadingComments+tefNoSourceMaps+tefNone","kind":"constGroup","status":"stub","sigHash":"a86d6c8334930890a3002ea14ea47b2d7ea6aadfaff0ddd13d668ae2263ec45d","bodyHash":"c6000ff791a40b622bcf7cee63934f3e0c5f809e1fde39ade5b9b16390513d13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::tefNoComments+tefIndentLeadingComments+tefNoSourceMaps+tefNone","kind":"constGroup","status":"implemented","sigHash":"a86d6c8334930890a3002ea14ea47b2d7ea6aadfaff0ddd13d668ae2263ec45d","bodyHash":"c6000ff791a40b622bcf7cee63934f3e0c5f809e1fde39ade5b9b16390513d13"}
  *
  * Go source:
  * const (
@@ -332,13 +332,13 @@ export type tokenEmitFlags = uint;
  * 	tefNone tokenEmitFlags = 0
  * )
  */
-export const tefNoComments: tokenEmitFlags = undefined as never;
-export const tefIndentLeadingComments: tokenEmitFlags = undefined as never;
-export const tefNoSourceMaps: tokenEmitFlags = undefined as never;
-export const tefNone: tokenEmitFlags = undefined as never;
+export const tefNoComments: tokenEmitFlags = 1 << 0;
+export const tefIndentLeadingComments: tokenEmitFlags = 1 << 1;
+export const tefNoSourceMaps: tokenEmitFlags = 1 << 2;
+export const tefNone: tokenEmitFlags = 0;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::ListFormat","kind":"type","status":"stub","sigHash":"a4e14d03530120f1663ecbd3e112a96550946479937a20e890b806d00e4d15eb","bodyHash":"54acf5f2e63d036e62be55efe2ac6efde563d526d56d39062d38f8ceec015991"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::type::ListFormat","kind":"type","status":"implemented","sigHash":"a4e14d03530120f1663ecbd3e112a96550946479937a20e890b806d00e4d15eb","bodyHash":"54acf5f2e63d036e62be55efe2ac6efde563d526d56d39062d38f8ceec015991"}
  *
  * Go source:
  * ListFormat int
@@ -346,7 +346,7 @@ export const tefNone: tokenEmitFlags = undefined as never;
 export type ListFormat = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::LFNone+LFSingleLine+LFMultiLine+LFPreserveLines+LFLinesMask+LFNotDelimited+LFBarDelimited+LFAmpersandDelimited+LFCommaDelimited+LFAsteriskDelimited+LFDelimitersMask+LFAllowTrailingComma+LFIndented+LFSpaceBetweenBraces+LFSpaceBetweenSiblings+LFBraces+LFParenthesis+LFAngleBrackets+LFSquareBrackets+LFBracketsMask+LFOptionalIfNil+LFOptionalIfEmpty+LFOptional+LFPreferNewLine+LFNoTrailingNewLine+LFNoInterveningComments+LFNoSpaceIfEmpty+LFSingleElement+LFSpaceAfterList+LFModifiers+LFHeritageClauses+LFSingleLineTypeLiteralMembers+LFMultiLineTypeLiteralMembers+LFSingleLineTupleTypeElements+LFMultiLineTupleTypeElements+LFUnionTypeConstituents+LFIntersectionTypeConstituents+LFObjectBindingPatternElements+LFArrayBindingPatternElements+LFObjectLiteralExpressionProperties+LFImportAttributes+LFArrayLiteralExpressionElements+LFCommaListElements+LFCallExpressionArguments+LFNewExpressionArguments+LFTemplateExpressionSpans+LFSingleLineBlockStatements+LFMultiLineBlockStatements+LFVariableDeclarationList+LFSingleLineFunctionBodyStatements+LFMultiLineFunctionBodyStatements+LFClassHeritageClauses+LFClassMembers+LFInterfaceMembers+LFEnumMembers+LFCaseBlockClauses+LFNamedImportsOrExportsElements+LFJsxElementOrFragmentChildren+LFJsxElementAttributes+LFCaseOrDefaultClauseStatements+LFHeritageClauseTypes+LFSourceFileStatements+LFDecorators+LFTypeArguments+LFTypeParameters+LFParameters+LFSingleArrowParameter+LFIndexSignatureParameters+LFJSDocComment+LFImportClauseEntries","kind":"constGroup","status":"stub","sigHash":"b6a4554872a04b2300e984ead8bb621efc9cdfe93ac9df72242d803e71c69416","bodyHash":"15139928f8518dd260c3c0bc322390f7c3efaba40a56b25d7220e914734a1b02"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::constGroup::LFNone+LFSingleLine+LFMultiLine+LFPreserveLines+LFLinesMask+LFNotDelimited+LFBarDelimited+LFAmpersandDelimited+LFCommaDelimited+LFAsteriskDelimited+LFDelimitersMask+LFAllowTrailingComma+LFIndented+LFSpaceBetweenBraces+LFSpaceBetweenSiblings+LFBraces+LFParenthesis+LFAngleBrackets+LFSquareBrackets+LFBracketsMask+LFOptionalIfNil+LFOptionalIfEmpty+LFOptional+LFPreferNewLine+LFNoTrailingNewLine+LFNoInterveningComments+LFNoSpaceIfEmpty+LFSingleElement+LFSpaceAfterList+LFModifiers+LFHeritageClauses+LFSingleLineTypeLiteralMembers+LFMultiLineTypeLiteralMembers+LFSingleLineTupleTypeElements+LFMultiLineTupleTypeElements+LFUnionTypeConstituents+LFIntersectionTypeConstituents+LFObjectBindingPatternElements+LFArrayBindingPatternElements+LFObjectLiteralExpressionProperties+LFImportAttributes+LFArrayLiteralExpressionElements+LFCommaListElements+LFCallExpressionArguments+LFNewExpressionArguments+LFTemplateExpressionSpans+LFSingleLineBlockStatements+LFMultiLineBlockStatements+LFVariableDeclarationList+LFSingleLineFunctionBodyStatements+LFMultiLineFunctionBodyStatements+LFClassHeritageClauses+LFClassMembers+LFInterfaceMembers+LFEnumMembers+LFCaseBlockClauses+LFNamedImportsOrExportsElements+LFJsxElementOrFragmentChildren+LFJsxElementAttributes+LFCaseOrDefaultClauseStatements+LFHeritageClauseTypes+LFSourceFileStatements+LFDecorators+LFTypeArguments+LFTypeParameters+LFParameters+LFSingleArrowParameter+LFIndexSignatureParameters+LFJSDocComment+LFImportClauseEntries","kind":"constGroup","status":"implemented","sigHash":"b6a4554872a04b2300e984ead8bb621efc9cdfe93ac9df72242d803e71c69416","bodyHash":"15139928f8518dd260c3c0bc322390f7c3efaba40a56b25d7220e914734a1b02"}
  *
  * Go source:
  * const (
@@ -437,73 +437,88 @@ export type ListFormat = int;
  * 	LFImportClauseEntries               ListFormat = LFImportAttributes // Deprecated: Use LFImportAttributes
  * )
  */
-export const LFNone: ListFormat = undefined as never;
-export const LFSingleLine: ListFormat = undefined as never;
-export const LFMultiLine: ListFormat = undefined as never;
-export const LFPreserveLines: ListFormat = undefined as never;
-export const LFLinesMask: ListFormat = undefined as never;
-export const LFNotDelimited: ListFormat = undefined as never;
-export const LFBarDelimited: ListFormat = undefined as never;
-export const LFAmpersandDelimited: ListFormat = undefined as never;
-export const LFCommaDelimited: ListFormat = undefined as never;
-export const LFAsteriskDelimited: ListFormat = undefined as never;
-export const LFDelimitersMask: ListFormat = undefined as never;
-export const LFAllowTrailingComma: ListFormat = undefined as never;
-export const LFIndented: ListFormat = undefined as never;
-export const LFSpaceBetweenBraces: ListFormat = undefined as never;
-export const LFSpaceBetweenSiblings: ListFormat = undefined as never;
-export const LFBraces: ListFormat = undefined as never;
-export const LFParenthesis: ListFormat = undefined as never;
-export const LFAngleBrackets: ListFormat = undefined as never;
-export const LFSquareBrackets: ListFormat = undefined as never;
-export const LFBracketsMask: ListFormat = undefined as never;
-export const LFOptionalIfNil: ListFormat = undefined as never;
-export const LFOptionalIfEmpty: ListFormat = undefined as never;
-export const LFOptional: ListFormat = undefined as never;
-export const LFPreferNewLine: ListFormat = undefined as never;
-export const LFNoTrailingNewLine: ListFormat = undefined as never;
-export const LFNoInterveningComments: ListFormat = undefined as never;
-export const LFNoSpaceIfEmpty: ListFormat = undefined as never;
-export const LFSingleElement: ListFormat = undefined as never;
-export const LFSpaceAfterList: ListFormat = undefined as never;
-export const LFModifiers: ListFormat = undefined as never;
-export const LFHeritageClauses: ListFormat = undefined as never;
-export const LFSingleLineTypeLiteralMembers: ListFormat = undefined as never;
-export const LFMultiLineTypeLiteralMembers: ListFormat = undefined as never;
-export const LFSingleLineTupleTypeElements: ListFormat = undefined as never;
-export const LFMultiLineTupleTypeElements: ListFormat = undefined as never;
-export const LFUnionTypeConstituents: ListFormat = undefined as never;
-export const LFIntersectionTypeConstituents: ListFormat = undefined as never;
-export const LFObjectBindingPatternElements: ListFormat = undefined as never;
-export const LFArrayBindingPatternElements: ListFormat = undefined as never;
-export const LFObjectLiteralExpressionProperties: ListFormat = undefined as never;
-export const LFImportAttributes: ListFormat = undefined as never;
-export const LFArrayLiteralExpressionElements: ListFormat = undefined as never;
-export const LFCommaListElements: ListFormat = undefined as never;
-export const LFCallExpressionArguments: ListFormat = undefined as never;
-export const LFNewExpressionArguments: ListFormat = undefined as never;
-export const LFTemplateExpressionSpans: ListFormat = undefined as never;
-export const LFSingleLineBlockStatements: ListFormat = undefined as never;
-export const LFMultiLineBlockStatements: ListFormat = undefined as never;
-export const LFVariableDeclarationList: ListFormat = undefined as never;
-export const LFSingleLineFunctionBodyStatements: ListFormat = undefined as never;
-export const LFMultiLineFunctionBodyStatements: ListFormat = undefined as never;
-export const LFClassHeritageClauses: ListFormat = undefined as never;
-export const LFClassMembers: ListFormat = undefined as never;
-export const LFInterfaceMembers: ListFormat = undefined as never;
-export const LFEnumMembers: ListFormat = undefined as never;
-export const LFCaseBlockClauses: ListFormat = undefined as never;
-export const LFNamedImportsOrExportsElements: ListFormat = undefined as never;
-export const LFJsxElementOrFragmentChildren: ListFormat = undefined as never;
-export const LFJsxElementAttributes: ListFormat = undefined as never;
-export const LFCaseOrDefaultClauseStatements: ListFormat = undefined as never;
-export const LFHeritageClauseTypes: ListFormat = undefined as never;
-export const LFSourceFileStatements: ListFormat = undefined as never;
-export const LFDecorators: ListFormat = undefined as never;
-export const LFTypeArguments: ListFormat = undefined as never;
-export const LFTypeParameters: ListFormat = undefined as never;
-export const LFParameters: ListFormat = undefined as never;
-export const LFSingleArrowParameter: ListFormat = undefined as never;
-export const LFIndexSignatureParameters: ListFormat = undefined as never;
-export const LFJSDocComment: ListFormat = undefined as never;
-export const LFImportClauseEntries: ListFormat = undefined as never;
+export const LFNone: ListFormat = 0;
+
+// Line separators
+export const LFSingleLine: ListFormat = 0;      // Prints the list on a single line (default).
+export const LFMultiLine: ListFormat = 1 << 0;  // Prints the list on multiple lines.
+export const LFPreserveLines: ListFormat = 1 << 1; // Prints the list using line preservation if possible.
+export const LFLinesMask: ListFormat = LFSingleLine | LFMultiLine | LFPreserveLines;
+
+// Delimiters
+export const LFNotDelimited: ListFormat = 0;       // There is no delimiter between list items (default).
+export const LFBarDelimited: ListFormat = 1 << 2;  // Each list item is space-and-bar (" |") delimited.
+export const LFAmpersandDelimited: ListFormat = 1 << 3; // Each list item is space-and-ampersand (" &") delimited.
+export const LFCommaDelimited: ListFormat = 1 << 4;  // Each list item is comma (",") delimited.
+export const LFAsteriskDelimited: ListFormat = 1 << 5; // Each list item is asterisk ("\n *") delimited, used with JSDoc.
+export const LFDelimitersMask: ListFormat = LFBarDelimited | LFAmpersandDelimited | LFCommaDelimited | LFAsteriskDelimited;
+
+export const LFAllowTrailingComma: ListFormat = 1 << 6; // Write a trailing comma (",") if present.
+
+// Whitespace
+export const LFIndented: ListFormat = 1 << 7;            // The list should be indented.
+export const LFSpaceBetweenBraces: ListFormat = 1 << 8;  // Inserts a space after the opening brace and before the closing brace.
+export const LFSpaceBetweenSiblings: ListFormat = 1 << 9; // Inserts a space between each sibling node.
+
+// Brackets/Braces
+export const LFBraces: ListFormat = 1 << 10;         // The list is surrounded by "{" and "}".
+export const LFParenthesis: ListFormat = 1 << 11;    // The list is surrounded by "(" and ")".
+export const LFAngleBrackets: ListFormat = 1 << 12;  // The list is surrounded by "<" and ">".
+export const LFSquareBrackets: ListFormat = 1 << 13; // The list is surrounded by "[" and "]".
+export const LFBracketsMask: ListFormat = LFBraces | LFParenthesis | LFAngleBrackets | LFSquareBrackets;
+
+export const LFOptionalIfNil: ListFormat = 1 << 14;   // Do not emit brackets if the list is nil.
+export const LFOptionalIfEmpty: ListFormat = 1 << 15; // Do not emit brackets if the list is empty.
+export const LFOptional: ListFormat = LFOptionalIfNil | LFOptionalIfEmpty;
+
+// Other
+export const LFPreferNewLine: ListFormat = 1 << 16;         // Prefer adding a LineTerminator between synthesized nodes.
+export const LFNoTrailingNewLine: ListFormat = 1 << 17;     // Do not emit a trailing NewLine for a MultiLine list.
+export const LFNoInterveningComments: ListFormat = 1 << 18; // Do not emit comments between each node
+export const LFNoSpaceIfEmpty: ListFormat = 1 << 19;        // If the literal is empty, do not add spaces between braces.
+export const LFSingleElement: ListFormat = 1 << 20;
+export const LFSpaceAfterList: ListFormat = 1 << 21; // Add space after list
+
+// Precomputed Formats
+export const LFModifiers: ListFormat = LFSingleLine | LFSpaceBetweenSiblings | LFNoInterveningComments | LFSpaceAfterList;
+export const LFHeritageClauses: ListFormat = LFSingleLine | LFSpaceBetweenSiblings;
+export const LFSingleLineTypeLiteralMembers: ListFormat = LFSingleLine | LFSpaceBetweenBraces | LFSpaceBetweenSiblings;
+export const LFMultiLineTypeLiteralMembers: ListFormat = LFMultiLine | LFIndented | LFOptionalIfEmpty;
+
+export const LFSingleLineTupleTypeElements: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFMultiLineTupleTypeElements: ListFormat = LFCommaDelimited | LFIndented | LFSpaceBetweenSiblings | LFMultiLine;
+export const LFUnionTypeConstituents: ListFormat = LFBarDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFIntersectionTypeConstituents: ListFormat = LFAmpersandDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFObjectBindingPatternElements: ListFormat = LFSingleLine | LFAllowTrailingComma | LFSpaceBetweenBraces | LFCommaDelimited | LFSpaceBetweenSiblings | LFNoSpaceIfEmpty;
+export const LFArrayBindingPatternElements: ListFormat = LFSingleLine | LFAllowTrailingComma | LFCommaDelimited | LFSpaceBetweenSiblings | LFNoSpaceIfEmpty;
+export const LFObjectLiteralExpressionProperties: ListFormat = LFPreserveLines | LFCommaDelimited | LFSpaceBetweenSiblings | LFSpaceBetweenBraces | LFIndented | LFBraces | LFNoSpaceIfEmpty;
+export const LFImportAttributes: ListFormat = LFPreserveLines | LFCommaDelimited | LFSpaceBetweenSiblings | LFSpaceBetweenBraces | LFIndented | LFBraces | LFNoSpaceIfEmpty;
+export const LFArrayLiteralExpressionElements: ListFormat = LFPreserveLines | LFCommaDelimited | LFSpaceBetweenSiblings | LFAllowTrailingComma | LFIndented | LFSquareBrackets;
+export const LFCommaListElements: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFCallExpressionArguments: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFParenthesis;
+export const LFNewExpressionArguments: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFParenthesis | LFOptionalIfNil;
+export const LFTemplateExpressionSpans: ListFormat = LFSingleLine | LFNoInterveningComments;
+export const LFSingleLineBlockStatements: ListFormat = LFSpaceBetweenBraces | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFMultiLineBlockStatements: ListFormat = LFIndented | LFMultiLine;
+export const LFVariableDeclarationList: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFSingleLineFunctionBodyStatements: ListFormat = LFSingleLine | LFSpaceBetweenSiblings | LFSpaceBetweenBraces;
+export const LFMultiLineFunctionBodyStatements: ListFormat = LFMultiLine;
+export const LFClassHeritageClauses: ListFormat = LFSingleLine;
+export const LFClassMembers: ListFormat = LFIndented | LFMultiLine;
+export const LFInterfaceMembers: ListFormat = LFIndented | LFMultiLine;
+export const LFEnumMembers: ListFormat = LFCommaDelimited | LFIndented | LFMultiLine;
+export const LFCaseBlockClauses: ListFormat = LFIndented | LFMultiLine;
+export const LFNamedImportsOrExportsElements: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFAllowTrailingComma | LFSingleLine | LFSpaceBetweenBraces | LFNoSpaceIfEmpty;
+export const LFJsxElementOrFragmentChildren: ListFormat = LFSingleLine | LFNoInterveningComments;
+export const LFJsxElementAttributes: ListFormat = LFSingleLine | LFSpaceBetweenSiblings | LFNoInterveningComments;
+export const LFCaseOrDefaultClauseStatements: ListFormat = LFIndented | LFMultiLine | LFNoTrailingNewLine | LFOptionalIfEmpty;
+export const LFHeritageClauseTypes: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFSourceFileStatements: ListFormat = LFMultiLine | LFNoTrailingNewLine;
+export const LFDecorators: ListFormat = LFMultiLine | LFOptional | LFSpaceAfterList;
+export const LFTypeArguments: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFAngleBrackets | LFOptional;
+export const LFTypeParameters: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFAngleBrackets | LFOptional;
+export const LFParameters: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFParenthesis;
+export const LFSingleArrowParameter: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine;
+export const LFIndexSignatureParameters: ListFormat = LFCommaDelimited | LFSpaceBetweenSiblings | LFSingleLine | LFIndented | LFSquareBrackets;
+export const LFJSDocComment: ListFormat = LFMultiLine | LFAsteriskDelimited;
+export const LFImportClauseEntries: ListFormat = LFImportAttributes; // Deprecated: Use LFImportAttributes
