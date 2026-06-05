@@ -31,6 +31,7 @@ import { Coalesce, FirstOrNil, FirstResult, IfElse } from "../../core/core.js";
 import type { TextRange } from "../../core/text.js";
 import { FileExtensionIsOneOf, SupportedJSExtensionsFlat } from "../../tspath/extension.js";
 import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
+import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { NodeFactory as PrinterNodeFactory } from "../../printer/factory.js";
 import { NodeFactory_InlineExpressions, NodeFactory_NewAssignmentExpression, NodeFactory_NewCommaExpression, NodeFactory_NewExportStarHelper, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewImportDefaultHelper, NodeFactory_NewImportStarHelper, NodeFactory_NewRewriteRelativeImportExtensionsHelper, NodeFactory_NewStringLiteralFromNode, NodeFactory_NewTempVariable, NodeFactory_NewTrueExpression, NodeFactory_NewUniqueNameEx, NodeFactory_NewVoidZeroExpression, NodeFactory_SplitCustomPrologue, NodeFactory_SplitStandardPrologue, NodeFactory_GetDeclarationName, NodeFactory_GetLocalName, NodeFactory_GetExportName } from "../../printer/factory.js";
 import { EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AddVariableDeclaration, EmitContext_AssignCommentAndSourceMapRanges, EmitContext_EndAndMergeVariableEnvironment, EmitContext_GetAutoGenerateInfo, EmitContext_MostOriginal, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetCommentRange, EmitContext_SetEmitFlags, EmitContext_SetOriginal, EmitContext_StartVariableEnvironment, EmitContext_VisitIterationBody } from "../../printer/emitcontext.js";
@@ -1486,7 +1487,7 @@ export function CommonJSModuleTransformer_createRequireCall(receiver: GoPtr<Comm
   const f = pf!.__tsgoEmbedded0!;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
   let args: GoSlice<GoPtr<Expression>> = [];
-  const moduleName = getExternalModuleNameLiteral(pf, node, receiver!.currentSourceFile, undefined /*host*/, undefined /*resolver*/, receiver!.compilerOptions);
+  const moduleName = getExternalModuleNameLiteral(pf, node, receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*resolver*/, receiver!.compilerOptions);
   if (moduleName !== undefined) {
     args = [rewriteModuleSpecifier(emitContext, moduleName, receiver!.compilerOptions)];
   }
@@ -3960,7 +3961,7 @@ export function CommonJSModuleTransformer_visitImportCallExpression(receiver: Go
   if (receiver!.moduleKind === ModuleKindNone && receiver!.languageVersion >= ScriptTargetES2020) {
     return NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
   }
-  const externalModuleName = getExternalModuleNameLiteral(pf, Node_AsNode(node), receiver!.currentSourceFile, undefined /*host*/, undefined /*resolver*/, receiver!.compilerOptions);
+  const externalModuleName = getExternalModuleNameLiteral(pf, Node_AsNode(node), receiver!.currentSourceFile, undefined /*host*/, undefined as unknown as EmitResolver /*resolver*/, receiver!.compilerOptions);
   const firstArgument = NodeVisitor_VisitNode(visitor, FirstOrNil(node!.Arguments?.Nodes ?? [])) as GoPtr<Expression>;
   let argument: GoPtr<Expression>;
   if (externalModuleName !== undefined && (firstArgument === undefined || !IsStringLiteral(firstArgument) || Node_Text(firstArgument) !== Node_Text(externalModuleName))) {

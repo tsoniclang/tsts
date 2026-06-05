@@ -1,20 +1,21 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, ModifierList, Node, SourceFile } from "../../ast/ast.js";
-import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration } from "../../ast/ast.js";
-import type { BinaryExpression, BindingElement, BindingPattern, CallSignatureDeclaration, ClassDeclaration, ClassElementList, ConditionalTypeNode, ConstructorDeclaration, ConstructorTypeNode, ConstructSignatureDeclaration, Declaration, EnumDeclaration, ExpressionWithTypeArguments, FunctionDeclaration, FunctionTypeNode, GetAccessorDeclaration, HeritageClause, HeritageClauseList, ImportDeclaration, ImportEqualsDeclaration, ImportTypeNode, IndexSignatureDeclaration, InterfaceDeclaration, JSDocAllType, JSDocNonNullableType, JSDocNullableType, JSDocOptionalType, JSDocParameterOrPropertyTag, JSDocTypeExpression, JSDocTypeLiteral, JSDocVariadicType, LiteralTypeNode, MappedTypeNode, MethodDeclaration, MethodSignatureDeclaration, ModuleDeclaration, NodeFactory, ParameterDeclaration, ParameterList, PropertyDeclaration, PropertySignatureDeclaration, SetAccessorDeclaration, StatementList, TokenNode, TypeAliasDeclaration, TypeParameterDeclaration, TypeParameterList, TypeReferenceNode, VariableDeclaration, VariableStatement, ExportSpecifierList, VariableDeclarationNodeList, VariableDeclarationListNode } from "../../ast/ast_generated.js";
+import { SourceFile_Text, SourceFile_FileName, AsSourceFile, SourceFile_IsJS, Node_Symbol, Node_Initializer, Node_Type, Node_Expression, Node_Parameters, Node_ParameterList, Node_Elements, Node_IsTypeOnly, Node_ModuleSpecifier, NodeFactory_NewModifier, Node_Text, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateExpressionWithTypeArguments, Node_Arguments, NodeFactory_UpdateFunctionDeclaration, Node_StatementList, NodeFactory_UpdateSourceFile } from "../../ast/ast.js";
+import type { BinaryExpression, BindingElement, BindingPattern, CallSignatureDeclaration, ClassDeclaration, ClassElementList, ConditionalTypeNode, ConstructorDeclaration, ConstructorTypeNode, ConstructSignatureDeclaration, Declaration, EnumDeclaration, ExpressionWithTypeArguments, FunctionDeclaration, FunctionTypeNode, GetAccessorDeclaration, HeritageClause, HeritageClauseList, ImportDeclaration, ImportEqualsDeclaration, ImportTypeNode, IndexSignatureDeclaration, InterfaceDeclaration, JSDocAllType, JSDocNonNullableType, JSDocNullableType, JSDocOptionalType, JSDocParameterOrPropertyTag, JSDocTypeExpression, JSDocTypeLiteral, JSDocVariadicType, LiteralTypeNode, MappedTypeNode, MethodDeclaration, MethodSignatureDeclaration, ModuleDeclaration, NodeFactory, ParameterDeclaration, ParameterList, PropertyDeclaration, PropertySignatureDeclaration, SetAccessorDeclaration, StatementList, TokenNode, TypeAliasDeclaration, TypeParameterDeclaration, TypeParameterList, TypeReferenceNode, VariableDeclaration, VariableDeclarationList, VariableStatement, ExportSpecifierList, VariableDeclarationNodeList, VariableDeclarationListNode } from "../../ast/ast_generated.js";
 import { AsIdentifier, AsParameterDeclaration, AsBinaryExpression, AsBindingElement, AsBindingPattern, AsClassDeclaration, AsConstructorDeclaration, AsEnumMember, AsExpressionWithTypeArguments, AsFunctionDeclaration, AsGetAccessorDeclaration, AsHeritageClause, AsImportClause, AsImportDeclaration, AsInterfaceDeclaration, AsModuleBlock, AsModuleDeclaration, AsNamedImports, AsSetAccessorDeclaration, AsSyntaxList, AsTypeAliasDeclaration, AsVariableDeclarationList, AsFunctionExpression, AsArrowFunction, AsEnumDeclaration, AsExternalModuleReference, AsLiteralTypeNode, AsExportDeclaration, AsExportAssignment, AsVariableStatement, AsImportEqualsDeclaration, AsElementAccessExpression, NewExportDeclaration, NewNamedExports, NewTypeLiteralNode, NewUnionTypeNode, NewArrayTypeNode, NewKeywordTypeNode, NewKeywordExpression, NewLiteralTypeNode, NewToken, NewBindingPattern, NewIdentifier, NewPrivateIdentifier, NewPropertyDeclaration, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement, NewExportAssignment, NewSyntaxList, NewModuleDeclaration, NewModuleBlock, NewPropertySignatureDeclaration, NewParameterDeclaration, NewExportSpecifier, NewFunctionDeclaration, NewPrefixUnaryExpression, NewNumericLiteral, NewStringLiteral, NewHeritageClause, NewExpressionWithTypeArguments, NewNamedImports, NewImportDeclaration, NewImportClause, NewImportEqualsDeclaration, NewExternalModuleReference, NewEnumMember, NewClassDeclaration, NewConstructorDeclaration, NewInterfaceDeclaration, NewMethodDeclaration, NewMethodSignatureDeclaration, NewConstructSignatureDeclaration, NewCallSignatureDeclaration, NewIndexSignatureDeclaration, NewGetAccessorDeclaration, NewSetAccessorDeclaration, NewTypeParameterDeclaration, NewMappedTypeNode, NewConstructorTypeNode, NewFunctionTypeNode, NewConditionalTypeNode, NewImportTypeNode, NewBindingElement, NewTypeAliasDeclaration, NewEnumDeclaration } from "../../ast/ast_generated.js";
 import { KindSyntaxList, KindParameter, KindGlobalKeyword, KindNamespaceKeyword, KindModuleBlock, KindAnyKeyword, KindUndefinedKeyword, KindNullKeyword, KindExclamationToken, KindQuestionToken, KindDeclareKeyword, KindExportKeyword, KindMinusToken, KindImportDeclaration, KindJSImportDeclaration, KindImportEqualsDeclaration, KindModuleDeclaration, KindTypeLiteral, KindMappedType, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindJsxText, KindSourceFile, KindSemicolonClassElement, KindFunctionDeclaration, KindInterfaceDeclaration, KindClassDeclaration, KindEnumDeclaration, KindVariableStatement, KindExportDeclaration, KindExportAssignment, KindBreakStatement, KindContinueStatement, KindDebuggerStatement, KindDoStatement, KindEmptyStatement, KindForInStatement, KindForOfStatement, KindForStatement, KindIfStatement, KindLabeledStatement, KindReturnStatement, KindSwitchStatement, KindThrowStatement, KindTryStatement, KindWhileStatement, KindWithStatement, KindNotEmittedStatement, KindBlock, KindMissingDeclaration, KindExpressionStatement, KindHeritageClause, KindMethodSignature, KindMethodDeclaration, KindConstructSignature, KindConstructor, KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindPropertySignature, KindCallSignature, KindIndexSignature, KindVariableDeclaration, KindTypeParameter, KindExpressionWithTypeArguments, KindTypeReference, KindConditionalType, KindFunctionType, KindConstructorType, KindImportType, KindTypeQuery, KindTupleType, KindJSDocTypeExpression, KindJSDocTypeLiteral, KindJSDocPropertyTag, KindJSDocAllType, KindJSDocNullableType, KindJSDocNonNullableType, KindJSDocOptionalType, KindJSDocVariadicType, KindMappedType as KindMappedTypeKind, KindExtendsKeyword, KindIdentifier, KindOmittedExpression, KindArrayBindingPattern, KindObjectBindingPattern, KindBindingElement, KindStaticKeyword, KindUnknown, KindDefaultKeyword, KindExternalModuleReference, KindDeferKeyword, KindNamespaceImport, KindFunctionExpression, KindArrowFunction } from "../../ast/generated/kinds.js";
-import { IsBindingPattern, IsBinaryExpression, IsIdentifier, IsPrivateIdentifier, IsSourceFile, IsOmittedExpression, IsImportEqualsDeclaration, IsPropertyAccessExpression, IsElementAccessExpression, IsVariableDeclaration, IsStringLiteral, IsComputedPropertyName, IsObjectLiteralExpression, IsTypeLiteralNode, IsParameterDeclaration, IsSetAccessorDeclaration, IsClassDeclaration, IsInterfaceDeclaration, IsFunctionDeclaration, IsExportAssignment, IsBindingElement, IsArrowFunction, IsFunctionExpression, IsJSTypeAliasDeclaration, IsModuleDeclaration } from "../../ast/generated/predicates.js";
+import { IsBinaryExpression, IsIdentifier, IsPrivateIdentifier, IsSourceFile, IsOmittedExpression, IsImportEqualsDeclaration, IsPropertyAccessExpression, IsElementAccessExpression, IsVariableDeclaration, IsStringLiteral, IsComputedPropertyName, IsObjectLiteralExpression, IsTypeLiteralNode, IsParameterDeclaration, IsSetAccessorDeclaration, IsClassDeclaration, IsInterfaceDeclaration, IsFunctionDeclaration, IsExportAssignment, IsBindingElement, IsArrowFunction, IsFunctionExpression, IsJSTypeAliasDeclaration, IsModuleDeclaration } from "../../ast/generated/predicates.js";
 import { ModifierFlagsAll, ModifierFlagsPrivate, ModifierFlagsExport, ModifierFlagsDefault, ModifierFlagsAmbient, ModifierFlagsNone, ModifierFlagsParameterPropertyModifier } from "../../ast/modifierflags.js";
 import { NodeFlagsConst, NodeFlagsNone, NodeFlagsAmbient, NodeFlagsReparsed, SymbolFlagsAssignment } from "../../ast/generated/flags.js";
-import { GetNodeId, IsParseTreeNode, IsExternalOrCommonJSModule, IsInJSFile, IsExpandoPropertyDeclaration, IsDeclaration, HasDynamicName, IsEntityNameExpression, IsEntityName, IsFunctionLike, NodeIsPresent, GetCombinedModifierFlags, CreateModifiersFromModifierFlags, ReplaceModifiers, GetThisParameter, GetAssignmentDeclarationKind, GetElementOrPropertyAccessName, GetLeftmostAccessExpression, GetExternalModuleImportEqualsDeclarationExpression, IsLateVisibilityPaintedStatement, IsExternalModuleIndicator, IsGlobalScopeAugmentation, IsVarUsing, IsVarAwaitUsing, HasSyntacticModifier, HasInferredType, IsFunctionExpressionOrArrowFunction, IsPrimitiveLiteralValue, IsNonContextualKeyword, IsLiteralImportTypeNode, IsImplicitlyExportedJSTypeAlias, CanHaveModifiers, GetFirstConstructorWithBody, JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty, JSDeclarationKindProperty, JSDeclarationKindObjectDefinePropertyExports, IsModifier, IsVariableDeclarationInitializedToRequire } from "../../ast/utilities.js";
+import { GetNodeId, IsParseTreeNode, IsExternalOrCommonJSModule, IsInJSFile, IsExpandoPropertyDeclaration, IsDeclaration, HasDynamicName, IsEntityNameExpression, IsEntityName, IsFunctionLike, NodeIsPresent, GetCombinedModifierFlags, CreateModifiersFromModifierFlags, ReplaceModifiers, GetThisParameter, GetAssignmentDeclarationKind, GetElementOrPropertyAccessName, GetLeftmostAccessExpression, GetExternalModuleImportEqualsDeclarationExpression, IsLateVisibilityPaintedStatement, IsExternalModuleIndicator, IsGlobalScopeAugmentation, IsVarUsing, IsVarAwaitUsing, HasSyntacticModifier, HasInferredType, IsFunctionExpressionOrArrowFunction, IsPrimitiveLiteralValue, IsNonContextualKeyword, IsLiteralImportTypeNode, IsImplicitlyExportedJSTypeAlias, CanHaveModifiers, GetFirstConstructorWithBody, JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty, JSDeclarationKindProperty, JSDeclarationKindObjectDefinePropertyExports, IsModifier, IsVariableDeclarationInitializedToRequire, IsBindingPattern } from "../../ast/utilities.js";
 import { InternalSymbolNameExportEquals } from "../../ast/symbol.js";
 import type { Symbol as AstSymbol } from "../../ast/symbol.js";
+import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import type { NodeVisitor } from "../../ast/spine.js";
-import { Node_Name, Node_Modifiers, NodeFactory_NewNodeList, NodeFactory_AsNodeFactory, Node_FunctionLikeData, updateNode, NodeFactory_NewModifierList, cloneNode, Node_DeclarationData, Node_LocalsContainerData } from "../../ast/spine.js";
+import { Node_Name, Node_Modifiers, NodeFactory_NewNodeList, NodeFactory_AsNodeFactory, Node_FunctionLikeData, updateNode, NodeFactory_NewModifierList, cloneNode, Node_DeclarationData, Node_LocalsContainerData, Node_Pos, Node_End } from "../../ast/spine.js";
 import type { Set } from "../../collections/set.js";
 import { Set_Has, Set_Add } from "../../collections/set.js";
 import type { CompilerOptions, ResolutionMode } from "../../core/compileroptions.js";
@@ -40,8 +41,11 @@ import { IsIdentifierText } from "../../scanner/utilities.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_Visitor, Transformer_NewTransformer } from "../transformer.js";
 import { IsOriginalNodeSingleLine } from "../utilities.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { NodeVisitor_VisitNode, NodeVisitor_VisitNodes, NodeVisitor_VisitEachChild, NodeVisitor_VisitSlice } from "../../ast/visitor.js";
+import { AsMappedTypeNode, AsMethodSignatureDeclaration, AsMethodDeclaration, AsConstructSignatureDeclaration, AsPropertyDeclaration, AsPropertySignatureDeclaration, AsCallSignatureDeclaration, AsIndexSignatureDeclaration, AsVariableDeclaration, AsTypeParameterDeclaration, AsTypeReferenceNode, AsConditionalTypeNode, AsFunctionTypeNode, AsConstructorTypeNode, AsImportTypeNode, AsTypeQueryNode, AsJSDocTypeExpression, AsJSDocTypeLiteral, AsJSDocParameterOrPropertyTag, AsJSDocAllType, AsJSDocNullableType, AsJSDocNonNullableType, AsJSDocOptionalType, AsJSDocVariadicType } from "../../ast/generated/casts.js";
 import { FlagsMultilineObjectLiterals, FlagsWriteClassExpressionAsTypeLiteral, FlagsUseTypeOfFunction, FlagsUseStructuralFallback, FlagsAllowEmptyTuple, FlagsGenerateNamesForShadowedTypeParams, FlagsNoTruncation, InternalFlagsAllowUnresolvedNames, InternalFlagsNoSyntacticPrinter } from "../../nodebuilder/types.js";
+import type { InternalFlags } from "../../nodebuilder/types.js";
 import { NewSymbolTracker } from "./tracker.js";
 import type { SymbolAccessibilityDiagnostic } from "./diagnostics.js";
 import { createGetSymbolAccessibilityDiagnosticForNode, createGetSymbolAccessibilityDiagnosticForNodeName, type GetSymbolAccessibilityDiagnostic } from "./diagnostics.js";
@@ -155,6 +159,16 @@ export interface DeclarationTransformer {
   bindingNameVisitor: GoPtr<NodeVisitor>;
 }
 
+// TODO: implement visitBindingName (used by bindingNameVisitor)
+export function DeclarationTransformer_visitBindingName(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>): GoPtr<Node> {
+  throw new Error("TSGO_UNIMPLEMENTED: DeclarationTransformer_visitBindingName");
+}
+
+// TODO: implement transformCjsRequireVariableDeclaration
+export function DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
+  throw new Error("TSGO_UNIMPLEMENTED: DeclarationTransformer_transformCjsRequireVariableDeclaration");
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::func::NewDeclarationTransformer","kind":"func","status":"implemented","sigHash":"86e2ffb5034dbb8eb3dbca8531bc911df6fe113bccd753377fb1e23845c11eb0","bodyHash":"f397a999a4b40f307a8b0e34db54e7ea77ab8036337e9af37778f0936237c76f"}
  *
@@ -218,7 +232,7 @@ export function NewDeclarationTransformer(host: DeclarationEmitHost, context: Go
     enclosingDeclaration: undefined,
     resultHasExternalModuleIndicator: false,
     suppressNewDiagnosticContexts: false,
-    lateStatementReplacementMap: new Map(),
+    lateStatementReplacementMap: new globalThis.Map(),
     expandoHosts: { entries: undefined } as unknown as Set,
     rawReferencedFiles: [],
     rawTypeReferenceDirectives: [],
@@ -332,30 +346,30 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
     return false;
   }
   if (parseTreeNode!.Kind === KindParameter) {
-    const params = parseTreeNode!.Parent!.Parameters();
+    const params = Node_ParameterList(parseTreeNode!.Parent!);
     let paramIdx = -1;
     for (let i = 0; i < params!.Nodes.length; i++) {
-      if (params!.Nodes[i]!.AsNode() === parseTreeNode) {
+      if (params!.Nodes[i] === parseTreeNode) {
         paramIdx = i;
         break;
       }
     }
     let previousSibling: GoPtr<Node> = undefined;
     if (paramIdx > 0) {
-      previousSibling = params!.Nodes[paramIdx - 1]!.AsNode();
+      previousSibling = params!.Nodes[paramIdx - 1];
     }
     const text = SourceFile_Text(sourceFile);
     let commentRanges: GoSlice<CommentRange> = [];
     if (previousSibling !== undefined) {
-      const trailingPos = SkipTriviaEx(text, previousSibling!.End() + 1, { StopAtComments: true });
-      GetTrailingCommentRanges(NodeFactory_AsNodeFactory(Transformer_Factory(receiver!.__tsgoEmbedded0)), text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
-      GetLeadingCommentRanges(NodeFactory_AsNodeFactory(Transformer_Factory(receiver!.__tsgoEmbedded0)), text, node!.Pos())((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
+      const trailingPos = SkipTriviaEx(text, Node_End(previousSibling!) + 1, { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
+      GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, Node_Pos(node!))((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
     } else {
-      const trailingPos = SkipTriviaEx(text, node!.Pos(), { StopAtComments: true });
-      GetTrailingCommentRanges(NodeFactory_AsNodeFactory(Transformer_Factory(receiver!.__tsgoEmbedded0)), text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
+      const trailingPos = SkipTriviaEx(text, Node_Pos(node!), { StopAfterLineBreak: false, StopAtComments: true, InJSDoc: false });
+      GetTrailingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, text, trailingPos)((comment: CommentRange) => { commentRanges = [...commentRanges, comment]; return false; });
     }
     if (commentRanges.length > 0) {
-      return hasInternalAnnotation(commentRanges[commentRanges.length - 1], sourceFile);
+      return hasInternalAnnotation(commentRanges[commentRanges.length - 1]!, sourceFile);
     }
     return false;
   }
@@ -383,9 +397,9 @@ export function DeclarationTransformer_isInternalDeclaration(receiver: GoPtr<Dec
  */
 export function DeclarationTransformer_getLeadingCommentRangesOfNode(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): GoSeq<CommentRange> {
   if (node === undefined || node!.Kind === KindJsxText) {
-    return undefined;
+    return (_yield: (c: CommentRange) => bool): void => {};
   }
-  return GetLeadingCommentRanges(NodeFactory_AsNodeFactory(Transformer_Factory(receiver!.__tsgoEmbedded0)), SourceFile_Text(sourceFile), node!.Pos());
+  return GetLeadingCommentRanges(Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0, SourceFile_Text(sourceFile), Node_Pos(node!));
 }
 
 /**
@@ -398,7 +412,7 @@ export function DeclarationTransformer_getLeadingCommentRangesOfNode(receiver: G
  * }
  */
 export function hasInternalAnnotation(commentRange: CommentRange, sourceFile: GoPtr<SourceFile>): bool {
-  const comment = SourceFile_Text(sourceFile).slice(commentRange.Pos(), commentRange.End());
+  const comment = SourceFile_Text(sourceFile).slice(commentRange.pos, commentRange.end);
   return comment.includes("@internal") as bool;
 }
 
@@ -428,7 +442,7 @@ export const declarationEmitNodeBuilderFlags: int = (FlagsMultilineObjectLiteral
  * Go source:
  * const declarationEmitInternalNodeBuilderFlags = nodebuilder.InternalFlagsAllowUnresolvedNames
  */
-export const declarationEmitInternalNodeBuilderFlags: unknown = InternalFlagsAllowUnresolvedNames;
+export const declarationEmitInternalNodeBuilderFlags: InternalFlags = InternalFlagsAllowUnresolvedNames;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.visit","kind":"method","status":"implemented","sigHash":"76f128f47c9e048e0b634c96f39631818d4072cebc07c3fcfd35a1f486bb0b2d","bodyHash":"57b1ef484a5737536c55a250392ff9a4e4c5807ddf5cdb69a4d3cafce33868d1"}
@@ -580,17 +594,17 @@ export function throwDiagnostic(result: SymbolAccessibilityResult): GoPtr<Symbol
  */
 export function DeclarationTransformer_visitSourceFile(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
   if (node!.IsDeclarationFile) {
-    return node!.AsNode();
+    return node;
   }
   receiver!.needsDeclare = true;
   receiver!.needsScopeFixMarker = false;
   receiver!.resultHasScopeMarker = false;
-  receiver!.enclosingDeclaration = node!.AsNode();
+  receiver!.enclosingDeclaration = node;
   receiver!.state!.getSymbolAccessibilityDiagnostic = throwDiagnostic;
   receiver!.resultHasExternalModuleIndicator = false;
   receiver!.suppressNewDiagnosticContexts = false;
   receiver!.state!.lateMarkedStatements = [];
-  receiver!.lateStatementReplacementMap = new Map();
+  receiver!.lateStatementReplacementMap = new globalThis.Map();
   receiver!.expandoHosts = { entries: undefined } as unknown as Set;
   receiver!.rawReferencedFiles = [];
   receiver!.rawTypeReferenceDirectives = [];
@@ -661,15 +675,15 @@ export function DeclarationTransformer_collectFileReferences(receiver: GoPtr<Dec
  */
 export function DeclarationTransformer_transformSourceFile(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const statements = NodeVisitor_VisitNodes(visitor, node!.Statements as GoPtr<StatementList>);
   let combinedStatements = DeclarationTransformer_transformAndReplaceLatePaintedStatements(receiver, statements);
   combinedStatements!.Loc = statements!.Loc;
   if (IsExternalOrCommonJSModule(node)) {
-    if (IsInJSFile(node!.AsNode())) {
-      const exportEquals = Node_Symbol(node!.AsNode()) !== undefined
-        ? Node_Symbol(node!.AsNode())!.Exports !== undefined
-          ? Node_Symbol(node!.AsNode())!.Exports!.get(InternalSymbolNameExportEquals)
+    if (IsInJSFile(node)) {
+      const exportEquals = Node_Symbol(node) !== undefined
+        ? Node_Symbol(node)!.Exports !== undefined
+          ? Node_Symbol(node)!.Exports!.get(InternalSymbolNameExportEquals)
           : undefined
         : undefined;
       if (exportEquals !== undefined && exportEquals!.Declarations !== undefined && exportEquals!.Declarations.length > 1) {
@@ -682,19 +696,19 @@ export function DeclarationTransformer_transformSourceFile(receiver: GoPtr<Decla
       }
     }
     if (!receiver!.resultHasExternalModuleIndicator || (receiver!.needsScopeFixMarker && !receiver!.resultHasScopeMarker)) {
-      const marker = createEmptyExports(NodeFactory_AsNodeFactory(factory));
-      const newList = NodeFactory_NewNodeList(factory, [...combinedStatements!.Nodes, marker]);
+      const marker = createEmptyExports(factory!.__tsgoEmbedded0);
+      const newList = NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, [...combinedStatements!.Nodes, marker]);
       newList!.Loc = combinedStatements!.Loc;
       combinedStatements = newList as GoPtr<StatementList>;
     }
   }
   const outputFilePath = GetDirectoryPath(NormalizeSlashes(receiver!.declarationFilePath));
-  const result = factory!.UpdateSourceFile(node, combinedStatements, node!.EndOfFileToken);
-  result!.AsSourceFile()!.LibReferenceDirectives = DeclarationTransformer_getLibReferences(receiver);
-  result!.AsSourceFile()!.TypeReferenceDirectives = DeclarationTransformer_getTypeReferences(receiver);
-  result!.AsSourceFile()!.IsDeclarationFile = true;
-  result!.AsSourceFile()!.ReferencedFiles = DeclarationTransformer_getReferencedFiles(receiver, outputFilePath);
-  return result!.AsNode();
+  const result = NodeFactory_UpdateSourceFile(factory!.__tsgoEmbedded0, node, combinedStatements, node!.EndOfFileToken);
+  AsSourceFile(result!)!.LibReferenceDirectives = DeclarationTransformer_getLibReferences(receiver);
+  AsSourceFile(result!)!.TypeReferenceDirectives = DeclarationTransformer_getTypeReferences(receiver);
+  AsSourceFile(result!)!.IsDeclarationFile = true;
+  AsSourceFile(result!)!.ReferencedFiles = DeclarationTransformer_getReferencedFiles(receiver, outputFilePath);
+  return result;
 }
 
 /**
@@ -847,7 +861,7 @@ export function DeclarationTransformer_transformAndReplaceLatePaintedStatements(
       results.push(replacement);
     }
   }
-  return NodeFactory_NewNodeList(factory, results) as GoPtr<StatementList>;
+  return NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, results) as GoPtr<StatementList>;
 }
 
 /**
@@ -1174,7 +1188,7 @@ export function DeclarationTransformer_getTypeReferences(receiver: GoPtr<Declara
  */
 export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>): GoPtr<Node> {
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   if (DeclarationTransformer_shouldStripInternal(receiver, input)) {
     return undefined;
   }
@@ -1184,16 +1198,16 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
     }
     if (HasDynamicName(input)) {
       if (receiver!.state!.isolatedDeclarations) {
-        if (!receiver!.resolver.IsDefinitelyReferenceToGlobalSymbolObject(input!.Name()!.Expression())) {
+        if (!receiver!.resolver.IsDefinitelyReferenceToGlobalSymbolObject(Node_Expression(Node_Name(input)))) {
           if (IsClassDeclaration(input!.Parent) || IsObjectLiteralExpression(input!.Parent)) {
             SymbolTrackerSharedState_addDiagnostic(receiver!.state!, createDiagnosticForNode(input, diagnosticMessages.Computed_property_names_on_class_or_object_literals_cannot_be_inferred_with_isolatedDeclarations));
             return undefined;
-          } else if ((IsInterfaceDeclaration(input!.Parent) || IsTypeLiteralNode(input!.Parent)) && !IsEntityNameExpression(input!.Name()!.Expression())) {
+          } else if ((IsInterfaceDeclaration(input!.Parent) || IsTypeLiteralNode(input!.Parent)) && !IsEntityNameExpression(Node_Expression(Node_Name(input)))) {
             SymbolTrackerSharedState_addDiagnostic(receiver!.state!, createDiagnosticForNode(input, diagnosticMessages.Computed_properties_must_be_number_or_string_literals_variables_or_dotted_expressions_with_isolatedDeclarations));
             return undefined;
           }
         }
-      } else if (!receiver!.resolver.IsLateBound(EmitContext_ParseNode(emitContext, input)) || !IsEntityNameExpression(input!.Name()!.Expression())) {
+      } else if (!receiver!.resolver.IsLateBound(EmitContext_ParseNode(emitContext, input)) || !IsEntityNameExpression(Node_Expression(Node_Name(input)))) {
         return undefined;
       }
     }
@@ -1224,19 +1238,19 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
   let result: GoPtr<Node>;
   switch (input!.Kind) {
     case KindMappedType:
-      result = DeclarationTransformer_transformMappedTypeNode(receiver, input!.AsMappedTypeNode());
+      result = DeclarationTransformer_transformMappedTypeNode(receiver, AsMappedTypeNode(input));
       break;
     case KindHeritageClause:
       result = DeclarationTransformer_transformHeritageClause(receiver, AsHeritageClause(input));
       break;
     case KindMethodSignature:
-      result = DeclarationTransformer_transformMethodSignatureDeclaration(receiver, input!.AsMethodSignatureDeclaration());
+      result = DeclarationTransformer_transformMethodSignatureDeclaration(receiver, AsMethodSignatureDeclaration(input));
       break;
     case KindMethodDeclaration:
-      result = DeclarationTransformer_transformMethodDeclaration(receiver, input!.AsMethodDeclaration());
+      result = DeclarationTransformer_transformMethodDeclaration(receiver, AsMethodDeclaration(input));
       break;
     case KindConstructSignature:
-      result = DeclarationTransformer_transformConstructSignatureDeclaration(receiver, input!.AsConstructSignatureDeclaration());
+      result = DeclarationTransformer_transformConstructSignatureDeclaration(receiver, AsConstructSignatureDeclaration(input));
       break;
     case KindConstructor:
       result = DeclarationTransformer_transformConstructorDeclaration(receiver, AsConstructorDeclaration(input));
@@ -1248,43 +1262,43 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
       result = DeclarationTransformer_transformSetAccessorDeclaration(receiver, AsSetAccessorDeclaration(input));
       break;
     case KindPropertyDeclaration:
-      result = DeclarationTransformer_transformPropertyDeclaration(receiver, input!.AsPropertyDeclaration());
+      result = DeclarationTransformer_transformPropertyDeclaration(receiver, AsPropertyDeclaration(input));
       break;
     case KindPropertySignature:
-      result = DeclarationTransformer_transformPropertySignatureDeclaration(receiver, input!.AsPropertySignatureDeclaration());
+      result = DeclarationTransformer_transformPropertySignatureDeclaration(receiver, AsPropertySignatureDeclaration(input));
       break;
     case KindCallSignature:
-      result = DeclarationTransformer_transformCallSignatureDeclaration(receiver, input!.AsCallSignatureDeclaration());
+      result = DeclarationTransformer_transformCallSignatureDeclaration(receiver, AsCallSignatureDeclaration(input));
       break;
     case KindIndexSignature:
-      result = DeclarationTransformer_transformIndexSignatureDeclaration(receiver, input!.AsIndexSignatureDeclaration());
+      result = DeclarationTransformer_transformIndexSignatureDeclaration(receiver, AsIndexSignatureDeclaration(input));
       break;
     case KindVariableDeclaration:
-      result = DeclarationTransformer_transformVariableDeclaration(receiver, input!.AsVariableDeclaration());
+      result = DeclarationTransformer_transformVariableDeclaration(receiver, AsVariableDeclaration(input));
       break;
     case KindTypeParameter:
-      result = DeclarationTransformer_transformTypeParameterDeclaration(receiver, input!.AsTypeParameterDeclaration());
+      result = DeclarationTransformer_transformTypeParameterDeclaration(receiver, AsTypeParameterDeclaration(input));
       break;
     case KindExpressionWithTypeArguments:
       result = DeclarationTransformer_transformExpressionWithTypeArguments(receiver, AsExpressionWithTypeArguments(input));
       break;
     case KindTypeReference:
-      result = DeclarationTransformer_transformTypeReference(receiver, input!.AsTypeReferenceNode());
+      result = DeclarationTransformer_transformTypeReference(receiver, AsTypeReferenceNode(input));
       break;
     case KindConditionalType:
-      result = DeclarationTransformer_transformConditionalTypeNode(receiver, input!.AsConditionalTypeNode());
+      result = DeclarationTransformer_transformConditionalTypeNode(receiver, AsConditionalTypeNode(input));
       break;
     case KindFunctionType:
-      result = DeclarationTransformer_transformFunctionTypeNode(receiver, input!.AsFunctionTypeNode());
+      result = DeclarationTransformer_transformFunctionTypeNode(receiver, AsFunctionTypeNode(input));
       break;
     case KindConstructorType:
-      result = DeclarationTransformer_transformConstructorTypeNode(receiver, input!.AsConstructorTypeNode());
+      result = DeclarationTransformer_transformConstructorTypeNode(receiver, AsConstructorTypeNode(input));
       break;
     case KindImportType:
-      result = DeclarationTransformer_transformImportTypeNode(receiver, input!.AsImportTypeNode());
+      result = DeclarationTransformer_transformImportTypeNode(receiver, AsImportTypeNode(input));
       break;
     case KindTypeQuery:
-      DeclarationTransformer_checkEntityNameVisibility(receiver, input!.AsTypeQueryNode()!.ExprName, receiver!.enclosingDeclaration);
+      DeclarationTransformer_checkEntityNameVisibility(receiver, AsTypeQueryNode(input)!.ExprName, receiver!.enclosingDeclaration);
       result = NodeVisitor_VisitEachChild(visitor, input);
       break;
     case KindTupleType: {
@@ -1297,28 +1311,28 @@ export function DeclarationTransformer_visitDeclarationSubtree(receiver: GoPtr<D
       break;
     }
     case KindJSDocTypeExpression:
-      result = DeclarationTransformer_transformJSDocTypeExpression(receiver, input!.AsJSDocTypeExpression());
+      result = DeclarationTransformer_transformJSDocTypeExpression(receiver, AsJSDocTypeExpression(input));
       break;
     case KindJSDocTypeLiteral:
-      result = DeclarationTransformer_transformJSDocTypeLiteral(receiver, input!.AsJSDocTypeLiteral());
+      result = DeclarationTransformer_transformJSDocTypeLiteral(receiver, AsJSDocTypeLiteral(input));
       break;
     case KindJSDocPropertyTag:
-      result = DeclarationTransformer_transformJSDocPropertyTag(receiver, input!.AsJSDocParameterOrPropertyTag());
+      result = DeclarationTransformer_transformJSDocPropertyTag(receiver, AsJSDocParameterOrPropertyTag(input));
       break;
     case KindJSDocAllType:
-      result = DeclarationTransformer_transformJSDocAllType(receiver, input!.AsJSDocAllType());
+      result = DeclarationTransformer_transformJSDocAllType(receiver, AsJSDocAllType(input));
       break;
     case KindJSDocNullableType:
-      result = DeclarationTransformer_transformJSDocNullableType(receiver, input!.AsJSDocNullableType());
+      result = DeclarationTransformer_transformJSDocNullableType(receiver, AsJSDocNullableType(input));
       break;
     case KindJSDocNonNullableType:
-      result = DeclarationTransformer_transformJSDocNonNullableType(receiver, input!.AsJSDocNonNullableType());
+      result = DeclarationTransformer_transformJSDocNonNullableType(receiver, AsJSDocNonNullableType(input));
       break;
     case KindJSDocOptionalType:
-      result = DeclarationTransformer_transformJSDocOptionalType(receiver, input!.AsJSDocOptionalType());
+      result = DeclarationTransformer_transformJSDocOptionalType(receiver, AsJSDocOptionalType(input));
       break;
     case KindJSDocVariadicType:
-      result = DeclarationTransformer_transformJSDocVariadicType(receiver, input!.AsJSDocVariadicType());
+      result = DeclarationTransformer_transformJSDocVariadicType(receiver, AsJSDocVariadicType(input));
       break;
     default:
       result = NodeVisitor_VisitEachChild(visitor, input);
@@ -1358,9 +1372,9 @@ export function DeclarationTransformer_checkName(receiver: GoPtr<DeclarationTran
   if (!receiver!.suppressNewDiagnosticContexts) {
     receiver!.state!.getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNodeName(node);
   }
-  receiver!.state!.errorNameNode = node!.Name();
+  receiver!.state!.errorNameNode = Node_Name(node);
   // debug.Assert(HasDynamicName(node)) - Should only be called with dynamic names
-  const entityName = node!.Name()!.Expression();
+  const entityName = Node_Expression(Node_Name(node));
   DeclarationTransformer_checkEntityNameVisibility(receiver, entityName, receiver!.enclosingDeclaration);
   if (!receiver!.suppressNewDiagnosticContexts) {
     receiver!.state!.getSymbolAccessibilityDiagnostic = oldDiag;
@@ -1393,8 +1407,8 @@ export function DeclarationTransformer_checkName(receiver: GoPtr<DeclarationTran
  */
 export function DeclarationTransformer_transformMappedTypeNode(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<MappedTypeNode>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const readonlyToken = input!.ReadonlyToken;
   const typeParameter = NodeVisitor_VisitNode(visitor, input!.TypeParameter);
   const nameType = NodeVisitor_VisitNode(visitor, input!.NameType);
@@ -1403,9 +1417,9 @@ export function DeclarationTransformer_transformMappedTypeNode(receiver: GoPtr<D
     ? NewKeywordTypeNode(astFactory, KindAnyKeyword)
     : NodeVisitor_VisitNode(visitor, input!.Type);
   if (readonlyToken !== input!.ReadonlyToken || typeParameter !== input!.TypeParameter || nameType !== input!.NameType || questionToken !== input!.QuestionToken || typeNode !== input!.Type) {
-    return updateNode(NewMappedTypeNode(astFactory, readonlyToken, typeParameter, nameType, questionToken, typeNode, undefined), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewMappedTypeNode(astFactory, readonlyToken, typeParameter, nameType, questionToken, typeNode, undefined), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1432,24 +1446,24 @@ export function DeclarationTransformer_transformMappedTypeNode(receiver: GoPtr<D
  */
 export function DeclarationTransformer_transformHeritageClause(receiver: GoPtr<DeclarationTransformer>, clause: GoPtr<HeritageClause>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const retainedClauses = Filter(clause!.Types!.Nodes, (t: GoPtr<Node>): bool => {
     const ewta = AsExpressionWithTypeArguments(t);
     return (IsEntityNameExpression(ewta!.Expression) ||
-      (clause!.Token === KindExtendsKeyword && t!.Expression()!.Kind === KindNullKeyword)) as bool;
+      (clause!.Token === KindExtendsKeyword && Node_Expression(t)!.Kind === KindNullKeyword)) as bool;
   });
   if (retainedClauses.length === 0) {
     return undefined;
   }
   if (retainedClauses.length === clause!.Types!.Nodes.length) {
-    return NodeVisitor_VisitEachChild(visitor, clause!.AsNode());
+    return NodeVisitor_VisitEachChild(visitor, clause);
   }
-  const newTypes = NodeVisitor_VisitNodes(visitor, NodeFactory_NewNodeList(factory, retainedClauses));
+  const newTypes = NodeVisitor_VisitNodes(visitor, NodeFactory_NewNodeList(factory!.__tsgoEmbedded0, retainedClauses));
   if (newTypes !== clause!.Types) {
-    return updateNode(NewHeritageClause(astFactory, clause!.Token, newTypes), clause!.AsNode(), astFactory!.hooks);
+    return updateNode(NewHeritageClause(astFactory, clause!.Token, newTypes), clause, astFactory!.hooks);
   }
-  return clause!.AsNode();
+  return clause;
 }
 
 /**
@@ -1474,23 +1488,23 @@ export function DeclarationTransformer_transformHeritageClause(receiver: GoPtr<D
  * }
  */
 export function DeclarationTransformer_transformImportTypeNode(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<ImportTypeNode>): GoPtr<Node> {
-  if (!IsLiteralImportTypeNode(input!.AsNode())) {
-    return input!.AsNode();
+  if (!IsLiteralImportTypeNode(input)) {
+    return input;
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
+  const astFactory = factory!.__tsgoEmbedded0;
   const argLiteral = AsLiteralTypeNode(input!.Argument);
-  const newLiteral = DeclarationTransformer_rewriteModuleSpecifier(receiver, input!.AsNode(), argLiteral!.Literal);
+  const newLiteral = DeclarationTransformer_rewriteModuleSpecifier(receiver, input, argLiteral!.Literal);
   // UpdateLiteralTypeNode inline
   const updatedArgument: GoPtr<Node> = newLiteral !== argLiteral!.Literal
-    ? updateNode(NewLiteralTypeNode(astFactory, newLiteral), argLiteral!.AsNode(), astFactory!.hooks)
-    : argLiteral!.AsNode();
+    ? updateNode(NewLiteralTypeNode(astFactory, newLiteral), argLiteral, astFactory!.hooks)
+    : argLiteral;
   // UpdateImportTypeNode inline
-  const typeArguments = NodeVisitor_VisitNodes(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.TypeArguments);
+  const typeArguments = NodeVisitor_VisitNodes(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input!.TypeArguments);
   if (updatedArgument !== input!.Argument || typeArguments !== input!.TypeArguments) {
-    return updateNode(NewImportTypeNode(astFactory, input!.IsTypeOf, updatedArgument, input!.Attributes, input!.Qualifier, typeArguments), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewImportTypeNode(astFactory, input!.IsTypeOf, updatedArgument, input!.Attributes, input!.Qualifier, typeArguments), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1509,16 +1523,16 @@ export function DeclarationTransformer_transformImportTypeNode(receiver: GoPtr<D
  */
 export function DeclarationTransformer_transformConstructorTypeNode(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<ConstructorTypeNode>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
-  const modifiers = DeclarationTransformer_ensureModifiers(receiver, input!.AsNode());
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const modifiers = DeclarationTransformer_ensureModifiers(receiver, input);
   const typeParameters = NodeVisitor_VisitNodes(visitor, input!.TypeParameters);
-  const parameters = DeclarationTransformer_updateParamList(receiver, input!.AsNode(), input!.Parameters);
+  const parameters = DeclarationTransformer_updateParamList(receiver, input, input!.Parameters);
   const type = NodeVisitor_VisitNode(visitor, input!.Type);
   if (modifiers !== input!.modifiers || typeParameters !== input!.TypeParameters || parameters !== input!.Parameters || type !== input!.Type) {
-    return updateNode(NewConstructorTypeNode(astFactory, modifiers, typeParameters, parameters, type), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewConstructorTypeNode(astFactory, modifiers, typeParameters, parameters, type), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1536,15 +1550,15 @@ export function DeclarationTransformer_transformConstructorTypeNode(receiver: Go
  */
 export function DeclarationTransformer_transformFunctionTypeNode(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<FunctionTypeNode>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const typeParameters = NodeVisitor_VisitNodes(visitor, input!.TypeParameters);
-  const parameters = DeclarationTransformer_updateParamList(receiver, input!.AsNode(), input!.Parameters);
+  const parameters = DeclarationTransformer_updateParamList(receiver, input, input!.Parameters);
   const type = NodeVisitor_VisitNode(visitor, input!.Type);
   if (typeParameters !== input!.TypeParameters || parameters !== input!.Parameters || type !== input!.Type) {
-    return updateNode(NewFunctionTypeNode(astFactory, typeParameters, parameters, type), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewFunctionTypeNode(astFactory, typeParameters, parameters, type), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1571,8 +1585,8 @@ export function DeclarationTransformer_transformFunctionTypeNode(receiver: GoPtr
  */
 export function DeclarationTransformer_transformConditionalTypeNode(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<ConditionalTypeNode>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const checkType = NodeVisitor_VisitNode(visitor, input!.CheckType);
   const extendsType = NodeVisitor_VisitNode(visitor, input!.ExtendsType);
   const oldEnclosingDecl = receiver!.enclosingDeclaration;
@@ -1581,9 +1595,9 @@ export function DeclarationTransformer_transformConditionalTypeNode(receiver: Go
   receiver!.enclosingDeclaration = oldEnclosingDecl;
   const falseType = NodeVisitor_VisitNode(visitor, input!.FalseType);
   if (checkType !== input!.CheckType || extendsType !== input!.ExtendsType || trueType !== input!.TrueType || falseType !== input!.FalseType) {
-    return updateNode(NewConditionalTypeNode(astFactory, checkType, extendsType, trueType, falseType), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewConditionalTypeNode(astFactory, checkType, extendsType, trueType, falseType), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1597,7 +1611,7 @@ export function DeclarationTransformer_transformConditionalTypeNode(receiver: Go
  */
 export function DeclarationTransformer_transformTypeReference(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<TypeReferenceNode>): GoPtr<Node> {
   DeclarationTransformer_checkEntityNameVisibility(receiver, input!.TypeName, receiver!.enclosingDeclaration);
-  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.AsNode());
+  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input);
 }
 
 /**
@@ -1615,7 +1629,7 @@ export function DeclarationTransformer_transformExpressionWithTypeArguments(rece
   if (IsEntityName(input!.Expression) || IsEntityNameExpression(input!.Expression)) {
     DeclarationTransformer_checkEntityNameVisibility(receiver, input!.Expression, receiver!.enclosingDeclaration);
   }
-  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.AsNode());
+  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input);
 }
 
 /**
@@ -1639,10 +1653,10 @@ export function DeclarationTransformer_transformExpressionWithTypeArguments(rece
 export function DeclarationTransformer_transformTypeParameterDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<TypeParameterDeclaration>): GoPtr<Node> {
   if (isPrivateMethodTypeParameter(receiver!.host, input) && (input!.DefaultType !== undefined || input!.Constraint !== undefined)) {
     const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-    const astFactory = NodeFactory_AsNodeFactory(factory);
-    return updateNode(NewTypeParameterDeclaration(astFactory, input!.modifiers, input!.name, undefined, input!.Expression, undefined), input!.AsNode(), astFactory!.hooks);
+    const astFactory = factory!.__tsgoEmbedded0;
+    return updateNode(NewTypeParameterDeclaration(astFactory, input!.modifiers, input!.name, undefined, input!.Expression, undefined), input, astFactory!.hooks);
   }
-  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.AsNode());
+  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input);
 }
 
 /**
@@ -1665,21 +1679,21 @@ export function DeclarationTransformer_transformTypeParameterDeclaration(receive
  * }
  */
 export function DeclarationTransformer_transformVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
-  if (receiver!.state!.currentSourceFile!.CommonJSModuleIndicator !== undefined && IsVariableDeclarationInitializedToRequire(input!.AsNode())) {
+  if (receiver!.state!.currentSourceFile!.CommonJSModuleIndicator !== undefined && IsVariableDeclarationInitializedToRequire(input)) {
     return DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver, input);
   }
-  if (IsBindingPattern(input!.AsNode().Name())) {
-    return DeclarationTransformer_recreateBindingPattern(receiver, AsBindingPattern(input!.AsNode().Name()));
+  if (IsBindingPattern(Node_Name(input))) {
+    return DeclarationTransformer_recreateBindingPattern(receiver, AsBindingPattern(Node_Name(input)));
   }
   receiver!.suppressNewDiagnosticContexts = true;
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const typeNode = DeclarationTransformer_ensureType(receiver, input!.AsNode(), false);
-  const initializer = DeclarationTransformer_ensureNoInitializer(receiver, input!.AsNode());
+  const astFactory = factory!.__tsgoEmbedded0;
+  const typeNode = DeclarationTransformer_ensureType(receiver, input, false);
+  const initializer = DeclarationTransformer_ensureNoInitializer(receiver, input);
   if (typeNode !== input!.Type || initializer !== input!.Initializer) {
-    return updateNode(NewVariableDeclaration(astFactory, input!.name, undefined, typeNode, initializer), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewVariableDeclaration(astFactory, input!.name, undefined, typeNode, initializer), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1730,7 +1744,7 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
   if (results.length === 1) {
     return results[0];
   }
-  return NewSyntaxList(NodeFactory_AsNodeFactory(factory), results);
+  return NewSyntaxList(factory!.__tsgoEmbedded0, results);
 }
 
 /**
@@ -1756,18 +1770,18 @@ export function DeclarationTransformer_recreateBindingPattern(receiver: GoPtr<De
  * }
  */
 export function DeclarationTransformer_recreateBindingElement(receiver: GoPtr<DeclarationTransformer>, e: GoPtr<BindingElement>): GoPtr<Node> {
-  if (e!.AsNode().Name() === undefined) {
+  if (Node_Name(e) === undefined) {
     return undefined;
   }
-  if (!getBindingNameVisible(receiver!.resolver, e!.AsNode())) {
+  if (!getBindingNameVisible(receiver!.resolver, e)) {
     return undefined;
   }
-  if (IsBindingPattern(e!.AsNode().Name())) {
-    return DeclarationTransformer_recreateBindingPattern(receiver, AsBindingPattern(e!.AsNode().Name()));
+  if (IsBindingPattern(Node_Name(e))) {
+    return DeclarationTransformer_recreateBindingPattern(receiver, AsBindingPattern(Node_Name(e)));
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  return NewVariableDeclaration(astFactory, e!.AsNode().Name(), undefined, DeclarationTransformer_ensureType(receiver, e!.AsNode(), false), undefined);
+  const astFactory = factory!.__tsgoEmbedded0;
+  return NewVariableDeclaration(astFactory, Node_Name(e), undefined, DeclarationTransformer_ensureType(receiver, e, false), undefined);
 }
 
 /**
@@ -1789,18 +1803,18 @@ export function DeclarationTransformer_recreateBindingElement(receiver: GoPtr<De
  */
 export function DeclarationTransformer_transformIndexSignatureDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<IndexSignatureDeclaration>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   let t: GoPtr<Node> = NodeVisitor_VisitNode(visitor, input!.Type);
   if (t === undefined) {
     t = NewKeywordTypeNode(astFactory, KindAnyKeyword);
   }
-  const modifiers = DeclarationTransformer_ensureModifiers(receiver, input!.AsNode());
-  const parameters = DeclarationTransformer_updateParamList(receiver, input!.AsNode(), input!.Parameters);
+  const modifiers = DeclarationTransformer_ensureModifiers(receiver, input);
+  const parameters = DeclarationTransformer_updateParamList(receiver, input, input!.Parameters);
   if (modifiers !== input!.modifiers || parameters !== input!.Parameters || t !== input!.Type) {
-    return updateNode(NewIndexSignatureDeclaration(astFactory, modifiers, parameters, t), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewIndexSignatureDeclaration(astFactory, modifiers, parameters, t), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -1818,14 +1832,14 @@ export function DeclarationTransformer_transformIndexSignatureDeclaration(receiv
  */
 export function DeclarationTransformer_transformCallSignatureDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<CallSignatureDeclaration>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
-  const astFactory = NodeFactory_AsNodeFactory(factory);
-  const typeParameters = DeclarationTransformer_ensureTypeParams(receiver, input!.AsNode(), input!.TypeParameters);
-  const parameters = DeclarationTransformer_updateParamList(receiver, input!.AsNode(), input!.Parameters);
-  const typeNode = DeclarationTransformer_ensureType(receiver, input!.AsNode(), false);
+  const astFactory = factory!.__tsgoEmbedded0;
+  const typeParameters = DeclarationTransformer_ensureTypeParams(receiver, input, input!.TypeParameters);
+  const parameters = DeclarationTransformer_updateParamList(receiver, input, input!.Parameters);
+  const typeNode = DeclarationTransformer_ensureType(receiver, input, false);
   if (typeParameters !== input!.TypeParameters || parameters !== input!.Parameters || typeNode !== input!.Type) {
-    return updateNode(NewCallSignatureDeclaration(astFactory, typeParameters, parameters, typeNode), input!.AsNode(), astFactory!.hooks);
+    return updateNode(NewCallSignatureDeclaration(astFactory, typeParameters, parameters, typeNode), input, astFactory!.hooks);
   }
-  return input!.AsNode();
+  return input;
 }
 
 /**
@@ -2721,7 +2735,7 @@ export function DeclarationTransformer_ensureType(receiver: GoPtr<DeclarationTra
       }
       // otherwise, fall back to full serialization
     } else {
-      return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0), nodeType);
+      return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, nodeType);
     }
   }
   const oldErrorNameNode = receiver!.state!.errorNameNode;
@@ -2941,7 +2955,7 @@ export function DeclarationTransformer_transformTypeAliasDeclaration(receiver: G
   receiver!.needsDeclare = false;
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const modifiers = DeclarationTransformer_ensureModifiers(receiver, input);
   const typeParameters = NodeVisitor_VisitNodes(visitor, input!.TypeParameters);
   const type = NodeVisitor_VisitNode(visitor, input!.Type);
@@ -2969,7 +2983,7 @@ export function DeclarationTransformer_transformTypeAliasDeclaration(receiver: G
 export function DeclarationTransformer_transformInterfaceDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<InterfaceDeclaration>): GoPtr<Node> {
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const modifiers = DeclarationTransformer_ensureModifiers(receiver, input);
   const typeParameters = NodeVisitor_VisitNodes(visitor, input!.TypeParameters);
   const heritageClauses = NodeVisitor_VisitNodes(visitor, input!.HeritageClauses);
@@ -3098,7 +3112,7 @@ export function DeclarationTransformer_transformModuleDeclaration(receiver: GoPt
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const mods = DeclarationTransformer_ensureModifiers(receiver, input);
   const saveNeedsDeclare = receiver!.needsDeclare;
   receiver!.needsDeclare = false;
@@ -3130,7 +3144,7 @@ export function DeclarationTransformer_transformModuleDeclaration(receiver: GoPt
     const lateStatements: GoPtr<StatementList> = (!IsGlobalScopeAugmentation(input) && !receiver!.resultHasScopeMarker && !hasScopeMarker(lateStatementsResult))
       ? (receiver!.needsScopeFixMarker
           ? NodeFactory_NewNodeList(astFactory, [...lateStatementsResult!.Nodes, createEmptyExports(astFactory)]) as GoPtr<StatementList>
-          : NodeVisitor_VisitNodes(EmitContext_NewNodeVisitor(emitContext, (s) => DeclarationTransformer_stripExportModifiers(receiver, s)), lateStatementsResult) as GoPtr<StatementList>)
+          : NodeVisitor_VisitNodes(EmitContext_NewNodeVisitor(emitContext, (s) => DeclarationTransformer_stripExportModifiers(receiver, s)) as ConcreteNodeVisitor, lateStatementsResult) as GoPtr<StatementList>)
       : lateStatementsResult;
     const moduleBlock = AsModuleBlock(inner)!;
     const newBody = updateNode(NewModuleBlock(astFactory, lateStatements), inner, astFactory!.hooks);
@@ -3345,7 +3359,7 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
 
   receiver!.state!.errorNameNode = input!.name;
   SymbolTrackerImpl_PushErrorFallbackNode(receiver!.tracker, input);
@@ -3414,8 +3428,8 @@ export function DeclarationTransformer_transformClassDeclaration(receiver: GoPtr
     if (extendsClause !== undefined) {
       const extendsEwta = AsExpressionWithTypeArguments(extendsClause)!;
       if (!IsEntityNameExpression(extendsEwta!.Expression) && extendsEwta!.Expression!.Kind !== KindNullKeyword) {
-        const oldId = (NodeIsPresent(input!.name) && IsIdentifier(input!.name) && input!.name!.Text.length > 0)
-          ? input!.name!.Text
+        const oldId = (NodeIsPresent(input!.name) && IsIdentifier(input!.name) && AsIdentifier(input!.name)!.Text.length > 0)
+          ? AsIdentifier(input!.name)!.Text
           : "default";
         const newId = NodeFactory_NewUniqueNameEx(factory, oldId + "_base", { Flags: GeneratedIdentifierFlagsOptimistic, Prefix: "", Suffix: "" });
         receiver!.state!.getSymbolAccessibilityDiagnostic = (_result: SymbolAccessibilityResult): GoPtr<SymbolAccessibilityDiagnostic> => ({
@@ -3556,7 +3570,7 @@ export function DeclarationTransformer_transformVariableStatement(receiver: GoPt
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const declList = AsVariableDeclarationList(input!.DeclarationList)!;
   const visible = declList.Declarations!.Nodes.some((decl) => getBindingNameVisible(receiver!.resolver, decl));
   if (!visible) {
@@ -3792,7 +3806,7 @@ export function DeclarationTransformer_ensureTypeParams(receiver: GoPtr<Declarat
   if (receiver!.host.GetEffectiveDeclarationFlags(EmitContext_ParseNode(emitContext, node), ModifierFlagsPrivate) !== 0) {
     return undefined;
   }
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const visited = NodeVisitor_VisitNodes(visitor, params);
   if (visited !== undefined) {
     return visited;
@@ -3967,7 +3981,7 @@ export function DeclarationTransformer_filterBindingPatternInitializers(receiver
   const astFactory = factory!.__tsgoEmbedded0;
   // TODO: visitor to avoid always making new nodes?
   const elements: GoSlice<GoPtr<Node>> = [];
-  for (const elem of Node_Elements(node)) {
+  for (const elem of Node_Elements(node)!) {
     if (elem!.Kind === KindOmittedExpression) {
       elements.push(elem);
       continue;
@@ -4231,7 +4245,7 @@ export function DeclarationTransformer_transformImportDeclaration(receiver: GoPt
  * }
  */
 export function DeclarationTransformer_transformJSDocTypeExpression(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<JSDocTypeExpression>): GoPtr<Node> {
-  return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.Type);
+  return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input!.Type);
 }
 
 /**
@@ -4249,7 +4263,7 @@ export function DeclarationTransformer_transformJSDocTypeLiteral(receiver: GoPtr
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const [members] = NodeVisitor_VisitSlice(visitor, input!.JSDocPropertyTags);
   const replacement = NewTypeLiteralNode(astFactory, NodeFactory_NewNodeList(astFactory, members));
   EmitContext_SetOriginal(emitContext, replacement, input);
@@ -4276,7 +4290,7 @@ export function DeclarationTransformer_transformJSDocPropertyTag(receiver: GoPtr
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const replacement = NewPropertySignatureDeclaration(astFactory, undefined, NodeVisitor_VisitNode(visitor, input!.TagName), undefined, NodeVisitor_VisitNode(visitor, input!.TypeExpression), undefined);
   EmitContext_SetOriginal(emitContext, replacement, input);
   return replacement;
@@ -4318,7 +4332,7 @@ export function DeclarationTransformer_transformJSDocNullableType(receiver: GoPt
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const replacement = NewUnionTypeNode(astFactory, NodeFactory_NewNodeList(astFactory, [
     NodeVisitor_VisitNode(visitor, input!.Type),
     NewLiteralTypeNode(astFactory, NewKeywordExpression(astFactory, KindNullKeyword)),
@@ -4336,7 +4350,7 @@ export function DeclarationTransformer_transformJSDocNullableType(receiver: GoPt
  * }
  */
 export function DeclarationTransformer_transformJSDocNonNullableType(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<JSDocNonNullableType>): GoPtr<Node> {
-  return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0), input!.Type);
+  return NodeVisitor_VisitNode(Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor, input!.Type);
 }
 
 /**
@@ -4353,7 +4367,7 @@ export function DeclarationTransformer_transformJSDocVariadicType(receiver: GoPt
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const replacement = NewArrayTypeNode(astFactory, NodeVisitor_VisitNode(visitor, input!.Type));
   EmitContext_SetOriginal(emitContext, replacement, input);
   return replacement;
@@ -4376,7 +4390,7 @@ export function DeclarationTransformer_transformJSDocOptionalType(receiver: GoPt
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
   const astFactory = factory!.__tsgoEmbedded0;
   const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
-  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   const replacement = NewUnionTypeNode(astFactory, NodeFactory_NewNodeList(astFactory, [
     NodeVisitor_VisitNode(visitor, input!.Type),
     NewKeywordTypeNode(astFactory, KindUndefinedKeyword),
@@ -4573,7 +4587,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
   const synthesizedNamespace = NewModuleDeclaration(astFactory, undefined, KindNamespaceKeyword, name, NewModuleBlock(astFactory, NodeFactory_NewNodeList(astFactory, [])));
   synthesizedNamespace!.Parent = receiver!.enclosingDeclaration;
   (Node_DeclarationData(synthesizedNamespace) as unknown as { Symbol?: GoPtr<AstSymbol> })!.Symbol = host;
-  (Node_LocalsContainerData(synthesizedNamespace) as unknown as { Locals?: GoMap<string, GoPtr<AstSymbol>> })!.Locals = new Map();
+  (Node_LocalsContainerData(synthesizedNamespace) as unknown as { Locals?: GoMap<string, GoPtr<AstSymbol>> })!.Locals = new globalThis.Map();
   const saveDiag = receiver!.state!.getSymbolAccessibilityDiagnostic;
   receiver!.state!.getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(node as unknown as GoPtr<Node>);
   const t = receiver!.resolver.CreateTypeOfExpression(emitContext, left, synthesizedNamespace, declarationEmitNodeBuilderFlags, declarationEmitInternalNodeBuilderFlags | InternalFlagsNoSyntacticPrinter, SymbolTrackerImpl_AsSymbolTracker(receiver!.tracker));

@@ -347,9 +347,9 @@ export function configFileSpecs_getMatchedIncludeSpec(receiver: GoPtr<configFile
   }
   for (let index = 0; index < receiver!.validatedIncludeSpecs.length; index++) {
     const spec = receiver!.validatedIncludeSpecs[index];
-    const includeMatcher = NewSpecMatcher([spec], comparePathsOptions.CurrentDirectory, UsageFiles, comparePathsOptions.UseCaseSensitiveFileNames);
+    const includeMatcher = NewSpecMatcher([spec!], comparePathsOptions.CurrentDirectory, UsageFiles, comparePathsOptions.UseCaseSensitiveFileNames);
     if (includeMatcher !== undefined && SpecMatcher_MatchString(includeMatcher, fileName)) {
-      return receiver!.validatedIncludeSpecsBeforeSubstitution[index];
+      return receiver!.validatedIncludeSpecsBeforeSubstitution[index]!;
     }
   }
   return "";
@@ -379,8 +379,8 @@ export function configFileSpecs_getMatchedFileSpec(receiver: GoPtr<configFileSpe
   const filePath = ToPath(fileName, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames);
   for (let index = 0; index < receiver!.validatedFilesSpec.length; index++) {
     const spec = receiver!.validatedFilesSpec[index];
-    if (ToPath(spec, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames) === filePath) {
-      return receiver!.validatedFilesSpecBeforeSubstitution[index];
+    if (ToPath(spec!, comparePathsOptions.CurrentDirectory, comparePathsOptions.UseCaseSensitiveFileNames) === filePath) {
+      return receiver!.validatedFilesSpecBeforeSubstitution[index]!;
     }
   }
   return "";
@@ -750,8 +750,8 @@ export interface jsonConversionNotifier {
  */
 export function convertConfigFileToObject(sourceFile: GoPtr<SourceFile>, jsonConversionNotifier: GoPtr<jsonConversionNotifier>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
-  if ((sourceFile!.Statements.Nodes?.length ?? 0) > 0) {
-    rootExpression = Node_Expression(sourceFile!.Statements.Nodes[0]) as GoPtr<Expression>;
+  if ((sourceFile!.Statements!.Nodes?.length ?? 0) > 0) {
+    rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;
   }
   if (rootExpression !== undefined && rootExpression!.Kind !== KindObjectLiteralExpression) {
     let baseFileName = "tsconfig.json";
@@ -1672,7 +1672,7 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     result = newMapWithSizeHint<string, unknown>(0) as GoPtr<OrderedMap>;
   }
   const errors: GoPtr<Diagnostic>[] = [];
-  for (const element of (node!.Properties.Nodes ?? [])) {
+  for (const element of (node!.Properties!.Nodes! ?? [])) {
     if (element!.Kind !== KindPropertyAssignment) {
       errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.Property_assignment_expected));
       continue;
@@ -1887,8 +1887,8 @@ export function ParseJsonConfigFileContent(json: unknown, host: ParseConfigHost,
  */
 export function convertToObject(sourceFile: GoPtr<SourceFile>): [unknown, GoSlice<GoPtr<Diagnostic>>] {
   let rootExpression: GoPtr<Expression> = undefined;
-  if (sourceFile!.Statements.Nodes.length !== 0) {
-    rootExpression = Node_Expression(sourceFile!.Statements.Nodes[0]) as GoPtr<Expression>;
+  if (sourceFile!.Statements!.Nodes!.length !== 0) {
+    rootExpression = Node_Expression(sourceFile!.Statements!.Nodes![0]) as GoPtr<Expression>;
   }
   return convertToJson(sourceFile, rootExpression, true /*returnValue*/, undefined /*jsonConversionNotifier*/);
 }
@@ -1961,7 +1961,7 @@ export function getDefaultTypeAcquisition(configFileName: string): GoPtr<TypeAcq
 export function convertCompilerOptionsFromJsonWorker(jsonOptions: unknown, basePath: string, configFileName: string): [GoPtr<CompilerOptions>, GoSlice<GoPtr<Diagnostic>>] {
   const options = getDefaultCompilerOptions(configFileName);
   const parser: compilerOptionsParser = { __tsgoEmbedded0: options };
-  const [, errors] = convertOptionsFromJson(CommandLineCompilerOptionsMap, jsonOptions, basePath, parser);
+  const [, errors] = convertOptionsFromJson(CommandLineCompilerOptionsMap, jsonOptions, basePath, parser as unknown as optionParser);
   if (configFileName !== "") {
     options!.ConfigFilePath = NormalizeSlashes(configFileName);
   }
@@ -1981,7 +1981,7 @@ export function convertCompilerOptionsFromJsonWorker(jsonOptions: unknown, baseP
 export function convertTypeAcquisitionFromJsonWorker(jsonOptions: unknown, basePath: string, configFileName: string): [GoPtr<TypeAcquisition>, GoSlice<GoPtr<Diagnostic>>] {
   const options = getDefaultTypeAcquisition(configFileName);
   const parser: typeAcquisitionParser = { __tsgoEmbedded0: options };
-  const [, errors] = convertOptionsFromJson(typeAcquisitionDeclaration.ElementOptions as CommandLineOptionNameMap, jsonOptions, basePath, parser);
+  const [, errors] = convertOptionsFromJson(typeAcquisitionDeclaration!.ElementOptions as CommandLineOptionNameMap, jsonOptions, basePath, parser as unknown as optionParser);
   return [options, errors];
 }
 
@@ -2457,10 +2457,9 @@ export function parseConfig(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigS
       OrderedMap_Set(ownRawMap, "compileOnSave", result.compileOnSave);
     }
     if (sourceFile !== undefined) {
-      Set_Keys(result.extendedSourceFiles)((extendedSourceFile: string): bool => {
-        sourceFile!.ExtendedSourceFiles = core.InsertSorted(sourceFile!.ExtendedSourceFiles, extendedSourceFile, cmp.Compare);
-        return false;
-      });
+      for (const [extendedSourceFile] of Set_Keys(result.extendedSourceFiles)) {
+        sourceFile!.ExtendedSourceFiles = core.InsertSorted(sourceFile!.ExtendedSourceFiles, extendedSourceFile as string, cmp.Compare) as GoSlice<string>;
+      }
     }
     ownConfig!.options = mergeCompilerOptions(result.options, ownConfig!.options, ownConfig!.raw);
     // ownConfig.watchOptions = ...
@@ -3178,7 +3177,7 @@ export function GetOptionsSyntaxByArrayElementValue(objectLiteral: GoPtr<ObjectL
  */
 export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralExpression>, key: string, callback: (property: GoPtr<PropertyAssignment>) => GoPtr<T>, ...key2: Array<string>): GoPtr<T> {
   if (objectLiteral !== undefined) {
-    for (const property of (objectLiteral!.Properties.Nodes ?? [])) {
+    for (const property of (objectLiteral!.Properties!.Nodes! ?? [])) {
       if (!IsPropertyAssignment(property)) {
         continue;
       }
@@ -3256,7 +3255,7 @@ export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoSlice<str
       if (result === undefined) {
         result = Clone(list) as string[];
       }
-      result![i] = getSubstitutedPathWithConfigDirTemplate(element, basePath);
+      result![i] = getSubstitutedPathWithConfigDirTemplate(element!, basePath);
     }
   }
   if (result !== undefined) {
@@ -3464,10 +3463,10 @@ export function removeWildcardFilesWithLowerPriorityExtension(file: string, wild
   }
   for (let i = extensionGroup.length - 1; i >= 0; i--) {
     const ext = extensionGroup[i];
-    if (FileExtensionIs(file, ext)) {
+    if (FileExtensionIs(file, ext!)) {
       return;
     }
-    const lowerPriorityPath = keyMapper(ChangeExtension(file, ext));
+    const lowerPriorityPath = keyMapper(ChangeExtension(file, ext!));
     OrderedMap_Delete(wildcardFiles as GoPtr<OrderedMap<string, string>>, lowerPriorityPath);
   }
 }
@@ -3718,10 +3717,10 @@ export function GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOption
     return supportedExtensions;
   }
   if (core.Same(supportedExtensions, AllSupportedExtensions)) {
-    return AllSupportedExtensionsWithJson;
+    return AllSupportedExtensionsWithJson as GoSlice<GoSlice<string>>;
   }
   if (core.Same(supportedExtensions, SupportedTSExtensions)) {
-    return SupportedTSExtensionsWithJson;
+    return SupportedTSExtensionsWithJson as GoSlice<GoSlice<string>>;
   }
   return Concat(supportedExtensions, [[ExtensionJson]]);
 }

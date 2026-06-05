@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
-import type { Node, NodeList } from "../ast/spine.js";
+import type { Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
 import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
 import type { LabeledStatement } from "../ast/generated/data.js";
@@ -47,8 +47,8 @@ import { TokenFlagsNone } from "../ast/tokenflags.js";
 import { IfElse } from "../core/core.js";
 import type { ScriptTarget } from "../core/compileroptions.js";
 import type { TextRange } from "../core/text.js";
-import type { AutoGenerateOptions, EmitContext } from "./emitcontext.js";
-import { AutoGenerateInfo, EmitContext_AddEmitFlags, EmitContext_AssignCommentAndSourceMapRanges, EmitContext_CommentRange, EmitContext_EmitFlags, EmitContext_HasAutoGenerateInfo, EmitContext_RequestEmitHelper, EmitContext_SetEmitFlags, EmitContext_SourceMapRange, EmitContext_getNodeForGeneratedNameWorker, EmitContext_onClone, EmitContext_onCreate, EmitContext_onUpdate, nextAutoGenerateId } from "./emitcontext.js";
+import type { AutoGenerateOptions, EmitContext, AutoGenerateId, AutoGenerateInfo } from "./emitcontext.js";
+import { EmitContext_AddEmitFlags, EmitContext_AssignCommentAndSourceMapRanges, EmitContext_CommentRange, EmitContext_EmitFlags, EmitContext_HasAutoGenerateInfo, EmitContext_RequestEmitHelper, EmitContext_SetEmitFlags, EmitContext_SourceMapRange, EmitContext_getNodeForGeneratedNameWorker, EmitContext_onClone, EmitContext_onCreate, EmitContext_onUpdate, nextAutoGenerateId } from "./emitcontext.js";
 import type { EmitFlags } from "./emitflags.js";
 import { EFAsyncFunctionBody, EFCustomPrologue, EFExportName, EFHelperName, EFLocalName, EFNoComments, EFNoSourceMap, EFNone, EFReuseTempVariableScope } from "./emitflags.js";
 import { addDisposableResourceHelper, asyncDelegatorHelper, asyncGeneratorHelper, asyncValuesHelper, awaiterHelper, awaitHelper, classPrivateFieldGetHelper, classPrivateFieldInHelper, classPrivateFieldSetHelper, decorateHelper, disposeResourcesHelper, esDecorateHelper, exportStarHelper, importDefaultHelper, importStarHelper, makeTemplateObjectHelper, metadataHelper, paramHelper, propKeyHelper, restHelper, rewriteRelativeImportExtensionsHelper, runInitializersHelper, setFunctionNameHelper } from "./helpers.js";
@@ -678,7 +678,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
   const f = receiver!;
   if (IsQualifiedName(node)) {
     const left = NodeFactory_CreateExpressionFromEntityName(f, AsQualifiedName(node)!.Left);
-    const right = Node_Clone(AsQualifiedName(node)!.Right, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)!);
+    const right = Node_Clone(AsQualifiedName(node)!.Right, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)! as unknown as NodeFactoryCoercible);
     right!.Loc = AsQualifiedName(node)!.Right!.Loc;
     // TODO(rbuckton): Does this need to be parented?
     right!.Parent = AsQualifiedName(node)!.Right!.Parent;
@@ -686,7 +686,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
     propAccess!.Loc = node!.Loc;
     return propAccess;
   }
-  const res = Node_Clone(node, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)!);
+  const res = Node_Clone(node, NodeFactory_AsNodeFactory(f.__tsgoEmbedded0)! as unknown as NodeFactoryCoercible);
   res!.Loc = node!.Loc;
   // TODO(rbuckton): Does this need to be parented?
   res!.Parent = node!.Parent;
@@ -1093,7 +1093,7 @@ export function NodeFactory_getName(receiver: GoPtr<NodeFactory>, node: GoPtr<De
   }
 
   if (nodeName !== undefined) {
-    const name = Node_Clone(nodeName as unknown as GoPtr<Node>, receiver!.__tsgoEmbedded0!) as GoPtr<IdentifierNode>;
+    const name = Node_Clone(nodeName as unknown as GoPtr<Node>, receiver!.__tsgoEmbedded0! as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
     let flags = emitFlags;
     if (!opts.AllowComments) {
       flags = (flags | EFNoComments) as EmitFlags;
@@ -1202,7 +1202,7 @@ export function NodeFactory_GetDeclarationNameEx(receiver: GoPtr<NodeFactory>, n
 export function NodeFactory_GetNamespaceMemberName(receiver: GoPtr<NodeFactory>, ns: GoPtr<IdentifierNode>, name: GoPtr<IdentifierNode>, opts: NameOptions): GoPtr<IdentifierNode> {
   const f = receiver!.__tsgoEmbedded0!;
   if (!EmitContext_HasAutoGenerateInfo(receiver!.emitContext, name)) {
-    name = Node_Clone(name as unknown as GoPtr<Node>, f) as GoPtr<IdentifierNode>;
+    name = Node_Clone(name as unknown as GoPtr<Node>, f as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
   }
   const qualifiedName = NewPropertyAccessExpression(f, ns, undefined, name, NodeFlagsNone);
   EmitContext_AssignCommentAndSourceMapRanges(receiver!.emitContext, qualifiedName, name as unknown as GoPtr<Node>);

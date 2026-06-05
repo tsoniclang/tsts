@@ -481,8 +481,8 @@ export function Printer_emitFunctionBody(receiver: GoPtr<Printer>, body: GoPtr<B
   // Without this, trailing comments from the original method declaration
   // (e.g., "// Error") leak into synthesized comma expressions when methods
   // are hoisted into pending expressions.
-  if (receiver!.OnBeforeEmitNode !== undefined) {
-    receiver!.OnBeforeEmitNode(Node_AsNode(body));
+  if (receiver!.__tsgoEmbedded0?.OnBeforeEmitNode !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnBeforeEmitNode(Node_AsNode(body));
   }
 
   Printer_generateNames(receiver, Node_AsNode(body));
@@ -512,8 +512,8 @@ export function Printer_emitFunctionBody(receiver: GoPtr<Printer>, body: GoPtr<B
   ////p.emitTokenEx(ast.KindCloseBraceToken, body.Statements.End(), WriteKindPunctuation, body.AsNode(), tefNone)
   Printer_emitTokenEx(receiver, KindCloseBraceToken, NodeList_End(body!.Statements), WriteKindPunctuation, Node_AsNode(body), tefNoComments);
 
-  if (receiver!.OnAfterEmitNode !== undefined) {
-    receiver!.OnAfterEmitNode(Node_AsNode(body));
+  if (receiver!.__tsgoEmbedded0?.OnAfterEmitNode !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnAfterEmitNode(Node_AsNode(body));
   }
 }
 

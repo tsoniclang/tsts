@@ -6,7 +6,8 @@ import type { GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import type { CommentRange, FileReference, SourceFile } from "../../ast/ast.js";
 import { AsSourceFile, SourceFile_Text, SourceFile_ECMALineMap } from "../../ast/ast.js";
 import { Node_End, Node_Pos, NodeFactory_AsNodeFactory } from "../../ast/spine.js";
-import type { Node, NodeFactory } from "../../ast/spine.js";
+import type { Node } from "../../ast/spine.js";
+import type { NodeFactory } from "../factory.js";
 import { KindJsxExpression, KindJsxText, KindMultiLineCommentTrivia, KindNotEmittedStatement, KindSingleLineCommentTrivia, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import type { StatementList } from "../../ast/generated/unions.js";
@@ -30,10 +31,12 @@ import { EFNoLeadingComments, EFNoNestedComments, EFNoTrailingComments } from ".
 import type { EmitFlags } from "../emitflags.js";
 import { GetDefaultIndentSize, getIndentString } from "../textwriter.js";
 import { calculateIndent, IsRecognizedTripleSlashComment, IsPinnedComment, isJSDocLikeText, PositionsAreOnSameLine } from "../utilities.js";
-import { Printer_emitPos, Printer_writeLine } from "./source-maps.js";
+import { Printer_writeLine } from "./source-maps.js";
+import { Printer_emitPos } from "./emit-core.js";
 import { commentSeparatorAfter, commentSeparatorBefore, commentSeparatorNone, tefIndentLeadingComments, tefNoComments } from "./state.js";
 import type { commentSeparator, commentState, detachedCommentsInfo, Printer, tokenEmitFlags } from "./state.js";
-import { Printer_increaseIndentIf, Printer_decreaseIndentIf, Printer_writeSpace } from "./statements-declarations.js";
+import { Printer_increaseIndentIf, Printer_decreaseIndentIf } from "./statements-declarations.js";
+import { Printer_writeSpace } from "./emit-core.js";
 import { Printer_emitStatement } from "./statements-declarations.js";
 
 /**
@@ -69,7 +72,7 @@ export function Printer_writeCommentRange(receiver: GoPtr<Printer>, comment: Com
 
   const text = SourceFile_Text(receiver!.currentSourceFile);
   const lineMap = SourceFile_ECMALineMap(receiver!.currentSourceFile);
-  Printer_writeCommentRangeWorker(receiver, text, lineMap, comment.Kind, comment.TextRange);
+  Printer_writeCommentRangeWorker(receiver, text, lineMap, comment.Kind, comment);
 }
 
 /**

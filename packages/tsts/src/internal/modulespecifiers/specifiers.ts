@@ -1,10 +1,12 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
 import * as strings from "../../go/strings.js";
-import { FindAncestor, GetSourceFileOfModule, IsModuleAugmentationExternal, IsModuleDeclaration, IsModuleWithStringLiteralName, IsSourceFile, Node_Expression, Node_Name, Node_Symbol, Node_Text } from "../ast/ast.js";
+import { Node_Expression, Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { HasFileName, Node, SourceFile } from "../ast/ast.js";
 import { KindExportAssignment } from "../ast/generated/kinds.js";
-import { IsModuleDeclaration as IsModuleDeclarationPred, IsSourceFile as IsSourceFilePred } from "../ast/generated/predicates.js";
+import { IsModuleDeclaration, IsModuleDeclaration as IsModuleDeclarationPred, IsSourceFile, IsSourceFile as IsSourceFilePred } from "../ast/generated/predicates.js";
+import { Node_Name } from "../ast/spine.js";
+import { FindAncestor, GetSourceFileOfModule, IsModuleAugmentationExternal, IsModuleWithStringLiteralName } from "../ast/utilities.js";
 import { InternalSymbolNameExportEquals } from "../ast/symbol.js";
 import type { Symbol } from "../ast/symbol.js";
 import { SymbolFlagsAlias } from "../ast/symbolflags.js";
@@ -27,9 +29,9 @@ import { Pattern_IsValid } from "../core/pattern.js";
 import type { Pattern as PatternType } from "../core/pattern.js";
 import { IndexAfter, Some } from "../core/core.js";
 import { AssertNever } from "../debug/debug.js";
-import { GetConditions, IsApplicableVersionedTypesKey, MatchPatternOrExact, TryParsePatterns } from "../module/resolver.js";
+import { GetConditions, MatchPatternOrExact, TryParsePatterns } from "../module/resolver.js";
 import { ResolvedModule_IsResolved } from "../module/types.js";
-import { GetPackageNameFromTypesPackageName, TryGetJSExtensionForFile as ModuleTryGetJSExtensionForFile } from "../module/util.js";
+import { GetPackageNameFromTypesPackageName, IsApplicableVersionedTypesKey, TryGetJSExtensionForFile as ModuleTryGetJSExtensionForFile } from "../module/util.js";
 import { GetOutputDeclarationFileNameWorker, GetOutputJSFileNameWorker } from "../outputpaths/outputpaths.js";
 import { ExportsOrImports_AsArray, ExportsOrImports_AsObject, ExportsOrImports_IsSubpaths } from "../packagejson/exportsorimports.js";
 import type { ExportsOrImports } from "../packagejson/exportsorimports.js";
@@ -52,9 +54,11 @@ import {
   ExtensionTs,
   ExtensionsNotSupportingExtensionlessResolution,
   FileExtensionIsOneOf,
+  GetDeclarationFileExtension,
   HasImplementationTSFileExtension,
   HasTSFileExtension,
   IsDeclarationFileName,
+  RemoveExtension,
   RemoveFileExtension,
   TryGetExtensionFromPath,
 } from "../tspath/extension.js";
@@ -98,8 +102,8 @@ import {
   ResultKindRelative,
 } from "./types.js";
 import type { CheckerShape, MatchingMode, ModulePath, ModuleSpecifierEnding, ModuleSpecifierGenerationHost, ModuleSpecifierOptions, ResultKind, SourceFileForSpecifierGeneration, UserPreferences } from "./types.js";
+import { CountPathComponents } from "./compare.js";
 import {
-  CountPathComponents,
   GetNodeModulePathParts,
   IsExcludedByRegex,
   PathIsBareSpecifier,
@@ -206,7 +210,7 @@ export function GetModuleSpecifiersWithInfo(moduleSymbol: GoPtr<Symbol>, checker
   }
 
   // Use original source file name when file is from project reference output
-  const moduleFileName = host.GetSourceOfProjectReferenceIfOutputIncluded(moduleSourceFile);
+  const moduleFileName = host.GetSourceOfProjectReferenceIfOutputIncluded(moduleSourceFile as unknown as HasFileName);
 
   return GetModuleSpecifiersForFileWithInfo(importingSourceFile, moduleFileName, compilerOptions, host, userPreferences, options, forAutoImports);
 }
@@ -327,7 +331,7 @@ export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, c
       continue;
     }
 
-    const sym = possibleContainer.Symbol()!.Exports[InternalSymbolNameExportEquals];
+    const sym = Node_Symbol(possibleContainer)!.Exports.get(InternalSymbolNameExportEquals);
     if (sym === undefined) {
       continue;
     }
@@ -683,7 +687,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
       host.GetGlobalTypingsCacheLocation(),
       GetDirectoryPath(fullImportedFileName),
       (realPathDirectory: string): [boolean, boolean] => {
-        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), ToPath(realPathDirectory, cwd, host.UseCaseSensitiveFileNames()).EnsureTrailingDirectorySeparator() as any);
+        const [symlinkSet, ok] = SyncMap_Load(KnownSymlinks_DirectoriesByRealpath(symlinkCache), EnsureTrailingDirectorySeparator(ToPath(realPathDirectory, cwd, host.UseCaseSensitiveFileNames())) as any);
         if (!ok) {
           return [false, false]; // Continue to ancestor directory
         }
@@ -1320,7 +1324,7 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
     return fileName;
   }
 
-  const noExtension = tspath.RemoveFileExtension(fileName);
+  const noExtension = RemoveFileExtension(fileName);
   if (fileName === noExtension) {
     return fileName;
   }
@@ -1331,14 +1335,14 @@ export function processEnding(fileName: string, allowedEndings: GoSlice<ModuleSp
     return fileName;
   }
   if (FileExtensionIsOneOf(fileName, [ExtensionDmts, ExtensionDcts])) {
-    const inputExt = tspath.GetDeclarationFileExtension(fileName);
+    const inputExt = GetDeclarationFileExtension(fileName);
     const ext = GetJSExtensionForDeclarationFileExtension(inputExt);
-    return tspath.RemoveExtension(fileName, inputExt) + ext;
+    return RemoveExtension(fileName, inputExt) + ext;
   }
   if (FileExtensionIsOneOf(fileName, [ExtensionMts, ExtensionCts])) {
     return noExtension + getJSExtensionForFile(fileName, options);
   }
-  if (!FileExtensionIsOneOf(fileName, [tspath.ExtensionDts]) && FileExtensionIsOneOf(fileName, [tspath.ExtensionTs]) && strings.Contains(fileName, ".d.")) {
+  if (!FileExtensionIsOneOf(fileName, [ExtensionDts]) && FileExtensionIsOneOf(fileName, [ExtensionTs]) && strings.Contains(fileName, ".d.")) {
     // `foo.d.json.ts` and the like - remap back to `foo.json`
     const result = TryGetRealFileNameForNonJSDeclarationFileName(fileName);
     if (result !== "") {

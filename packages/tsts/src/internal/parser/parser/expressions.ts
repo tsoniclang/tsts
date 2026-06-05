@@ -299,7 +299,7 @@ import {
  * }
  */
 export function Parser_validateJsonObjectLiteral(receiver: GoPtr<Parser>, sourceFile: GoPtr<SourceFile>, node: GoPtr<ObjectLiteralExpression>): void {
-  for (const element of node!.Properties.Nodes) {
+  for (const element of node!.Properties!.Nodes!) {
     if (element!.Kind !== KindPropertyAssignment) {
       receiver!.diagnostics.push(NewDiagnostic(sourceFile, getErrorSpanForNode(receiver!.sourceText, element), Property_assignment_expected));
       continue;
@@ -425,7 +425,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     const nextAwaitStatement = receiver!.possibleAwaitSpans[i];
     // append all non-await statements between afterAwaitStatement and nextAwaitStatement
     const prevStatement = sourceFile!.Statements!.Nodes[afterAwaitStatement];
-    const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement];
+    const nextStatement = sourceFile!.Statements!.Nodes[nextAwaitStatement!];
     statements.push(...sourceFile!.Statements!.Nodes.slice(afterAwaitStatement, nextAwaitStatement));
 
     // append all diagnostics associated with the copied range
@@ -454,7 +454,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     Scanner_ResetPos(receiver!.scanner, Node_Pos(nextStatement));
     Parser_nextToken(receiver);
 
-    afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1];
+    afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
     while (receiver!.token !== KindEndOfFile) {
       const startPos = Scanner_TokenFullStart(receiver!.scanner);
       const statement = Parser_parseStatement(receiver);
@@ -472,7 +472,7 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
           // we ate into the next statement, so we must continue reparsing the next span
           i += 2;
           if (i < receiver!.possibleAwaitSpans.length) {
-            afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1];
+            afterAwaitStatement = receiver!.possibleAwaitSpans[i + 1]!;
           } else {
             afterAwaitStatement = sourceFile!.Statements!.Nodes.length;
           }
@@ -1790,7 +1790,7 @@ export function Parser_parseModifiersForArrowFunction(receiver: GoPtr<Parser>): 
     const pos = Parser_nodePos(receiver);
     Parser_nextToken(receiver);
     const modifier = Parser_finishNode(receiver, NodeFactory_NewModifier(receiver!.factory, KindAsyncKeyword), pos);
-    return Parser_newModifierList(receiver, modifier!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena, modifier));
+    return Parser_newModifierList(receiver, modifier!.Loc, Arena_NewSlice1(receiver!.nodeSliceArena, modifier) as GoSlice<GoPtr<Node>>);
   }
   return undefined;
 }

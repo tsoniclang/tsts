@@ -1332,8 +1332,8 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
     // if all modifier-likes are `Decorator`, simply emit the list as decorators.
     Printer_emitList(receiver, Printer_emitModifierLike, parentNode, modifiers as unknown as GoPtr<NodeList>, LFDecorators);
   } else {
-    if (receiver!.OnBeforeEmitNodeList !== undefined) {
-      receiver!.OnBeforeEmitNodeList(modifiers as unknown as GoPtr<NodeList>);
+    if (receiver!.__tsgoEmbedded0?.OnBeforeEmitNodeList !== undefined) {
+      receiver!.__tsgoEmbedded0!.OnBeforeEmitNodeList(modifiers as unknown as GoPtr<NodeList>);
     }
 
     // partition modifiers into contiguous chunks of `Modifier` or `Decorator`
@@ -1381,8 +1381,8 @@ export function Printer_emitModifierList(receiver: GoPtr<Printer>, parentNode: G
       pos++;
     }
 
-    if (receiver!.OnAfterEmitNodeList !== undefined) {
-      receiver!.OnAfterEmitNodeList(modifiers as unknown as GoPtr<NodeList>);
+    if (receiver!.__tsgoEmbedded0?.OnAfterEmitNodeList !== undefined) {
+      receiver!.__tsgoEmbedded0!.OnAfterEmitNodeList(modifiers as unknown as GoPtr<NodeList>);
     }
   }
 
@@ -1951,7 +1951,7 @@ export function Printer_emitConciseBody(receiver: GoPtr<Printer>, node: GoPtr<Bl
     // Wrap in ParenthesizedExpression to ensure parens are emitted after any leading
     // PartiallyEmittedExpression comments, matching TypeScript's factory-time wrapping
     // via parenthesizeConciseBodyOfArrowFunction.
-    const paren = NewParenthesizedExpression(receiver!.emitContext!.Factory, node as unknown as GoPtr<Expression>);
+    const paren = NewParenthesizedExpression(receiver!.emitContext!.Factory!.__tsgoEmbedded0, node as unknown as GoPtr<Expression>);
     paren!.Loc = (node as unknown as GoPtr<Node>)!.Loc;
     Printer_emitExpression(receiver, paren as unknown as GoPtr<Expression>, OperatorPrecedenceLowest);
   } else if (IsExpression(node)) {
@@ -3797,7 +3797,7 @@ export function Printer_generateName(receiver: GoPtr<Printer>, name: GoPtr<Membe
  */
 export function Printer_isFileLevelUniqueNameInCurrentFile(receiver: GoPtr<Printer>, name: string, _arg: bool): bool {
   if (receiver!.currentSourceFile !== undefined) {
-    return IsFileLevelUniqueName(receiver!.currentSourceFile, name, receiver!.HasGlobalName);
+    return IsFileLevelUniqueName(receiver!.currentSourceFile, name, receiver!.__tsgoEmbedded0?.HasGlobalName);
   } else {
     return true as bool;
   }
@@ -3821,8 +3821,8 @@ export function Printer_isFileLevelUniqueNameInCurrentFile(receiver: GoPtr<Print
  */
 export function Printer_enterNode(receiver: GoPtr<Printer>, node: GoPtr<Node>): printerState {
   const state = {} as printerState;
-  if (receiver!.OnBeforeEmitNode !== undefined) {
-    receiver!.OnBeforeEmitNode(node);
+  if (receiver!.__tsgoEmbedded0?.OnBeforeEmitNode !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnBeforeEmitNode(node);
   }
   state.commentState = Printer_emitCommentsBeforeNode(receiver, node);
   state.sourceMapState = Printer_emitSourceMapsBeforeNode(receiver, node);
@@ -3845,8 +3845,8 @@ export function Printer_enterNode(receiver: GoPtr<Printer>, node: GoPtr<Node>): 
 export function Printer_exitNode(receiver: GoPtr<Printer>, node: GoPtr<Node>, previousState: printerState): void {
   Printer_emitSourceMapsAfterNode(receiver, node, previousState.sourceMapState);
   Printer_emitCommentsAfterNode(receiver, node, previousState.commentState);
-  if (receiver!.OnAfterEmitNode !== undefined) {
-    receiver!.OnAfterEmitNode(node);
+  if (receiver!.__tsgoEmbedded0?.OnAfterEmitNode !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnAfterEmitNode(node);
   }
 }
 
@@ -3872,8 +3872,8 @@ export function Printer_exitNode(receiver: GoPtr<Printer>, node: GoPtr<Node>, pr
  */
 export function Printer_enterTokenNode(receiver: GoPtr<Printer>, node: GoPtr<Node>, flags: tokenEmitFlags): printerState {
   const state = {} as printerState;
-  if (receiver!.OnBeforeEmitToken !== undefined) {
-    receiver!.OnBeforeEmitToken(node);
+  if (receiver!.__tsgoEmbedded0?.OnBeforeEmitToken !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnBeforeEmitToken(node);
   }
   if ((flags & tefNoComments) === 0) {
     state.commentState = Printer_emitCommentsBeforeNode(receiver, node);
@@ -3900,8 +3900,8 @@ export function Printer_enterTokenNode(receiver: GoPtr<Printer>, node: GoPtr<Nod
 export function Printer_exitTokenNode(receiver: GoPtr<Printer>, node: GoPtr<Node>, previousState: printerState): void {
   Printer_emitSourceMapsAfterNode(receiver, node, previousState.sourceMapState);
   Printer_emitCommentsAfterNode(receiver, node, previousState.commentState);
-  if (receiver!.OnAfterEmitToken !== undefined) {
-    receiver!.OnAfterEmitToken(node);
+  if (receiver!.__tsgoEmbedded0?.OnAfterEmitToken !== undefined) {
+    receiver!.__tsgoEmbedded0!.OnAfterEmitToken(node);
   }
 }
 

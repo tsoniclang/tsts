@@ -1,8 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
+import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { ModifierList_Clone, Node_Clone, NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
-import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_Text } from "../../ast/ast.js";
+import { AsSourceFile, Node_Body, Node_MemberList, Node_Members, Node_Expression, Node_Initializer, Node_ParameterList, Node_Text } from "../../ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_KindString, Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import { NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateExpressionStatement, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdatePrefixUnaryExpression, NodeFactory_UpdatePostfixUnaryExpression, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdateCallExpression, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateElementAccessExpression, NodeFactory_UpdateTryStatement } from "../../ast/ast.js";
 import type { BinaryExpression, BindingElement, CallExpression, ClassDeclaration, ClassExpression, ComputedPropertyName, ConstructorDeclaration, ElementAccessExpression, ExportAssignment, ExpressionStatement, ExpressionWithTypeArguments, ForStatement, Identifier, ParameterDeclaration, ParenthesizedExpression, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, TaggedTemplateExpression, VariableDeclaration, VariableStatement } from "../../ast/generated/data.js";
@@ -362,7 +362,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     currentClassContainer: undefined,
     currentClassElement: undefined,
     classAliases: new globalThis.Map(),
-    enclosingClassDeclarations: { M: new globalThis.Set() },
+    enclosingClassDeclarations: { M: new globalThis.Map() },
     inIterationStatement: false,
     insideComputedPropertyName: false,
     parentNode: undefined,
@@ -387,7 +387,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
   tx.shouldTransformThisInStaticInitializers = languageVersion < ScriptTargetES2022;
   tx.shouldTransformSuperInStaticInitializers = tx.shouldTransformThisInStaticInitializers;
 
-  const result = Transformer_NewTransformer(tx, (node) => classFieldsTransformer_visit(tx, node), opts!.Context);
+  const result = Transformer_NewTransformer(tx as unknown as GoPtr<Transformer>, (node) => classFieldsTransformer_visit(tx, node), opts!.Context);
   tx.modifierVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitModifier(tx, node));
   tx.discardedValueVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitDiscardedValue(tx, node));
   tx.heritageClauseVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitHeritageClause(tx, node));
@@ -990,7 +990,7 @@ export function classFieldsTransformer_visitIdentifier(receiver: GoPtr<classFiel
   if (declaration !== undefined) {
     const alias = receiver!.classAliases.get(declaration);
     if (alias !== undefined && Set_Has(receiver!.enclosingClassDeclarations, declaration)) {
-      const clone = Node_Clone(alias, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<IdentifierNode>;
+      const clone = Node_Clone(alias, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
       EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), clone, node!.Loc);
       EmitContext_SetCommentRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), clone, node!.Loc);
       return clone;
@@ -1342,7 +1342,7 @@ export function classFieldsTransformer_injectPendingExpressions(receiver: GoPtr<
     if (IsParenthesizedExpression(expression)) {
       receiver!.pendingExpressions = [...receiver!.pendingExpressions, Node_Expression(expression)];
       expression = NodeFactory_UpdateParenthesizedExpression(
-        Transformer_Factory(receiver!.__tsgoEmbedded0!),
+        Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
         AsParenthesizedExpression(expression),
         NodeFactory_InlineExpressions(Transformer_Factory(receiver!.__tsgoEmbedded0!), receiver!.pendingExpressions),
       );
@@ -1386,7 +1386,7 @@ export function classFieldsTransformer_visitComputedPropertyName(receiver: GoPtr
   receiver!.lexicalEnvironment = savedLexicalEnvironment;
   receiver!.insideComputedPropertyName = savedInsideComputedPropertyName;
   return NodeFactory_UpdateComputedPropertyName(
-    Transformer_Factory(receiver!.__tsgoEmbedded0!),
+    Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
     node,
     classFieldsTransformer_injectPendingExpressions(receiver, expression),
   );
@@ -1839,8 +1839,8 @@ export function classFieldsTransformer_transformAutoAccessor(receiver: GoPtr<cla
   if (IsComputedPropertyName(name) && !IsSimpleInlineableExpression(AsComputedPropertyName(name)!.Expression)) {
     const cacheAssignment = findComputedPropertyNameCacheAssignment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), name);
     if (cacheAssignment !== undefined) {
-      getterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!), AsComputedPropertyName(name)!, NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), AsComputedPropertyName(name)!.Expression)) as GoPtr<PropertyName>;
-      setterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!), AsComputedPropertyName(name)!, cacheAssignment!.Left) as GoPtr<PropertyName>;
+      getterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, AsComputedPropertyName(name)!, NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), AsComputedPropertyName(name)!.Expression)) as GoPtr<PropertyName>;
+      setterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, AsComputedPropertyName(name)!, cacheAssignment!.Left) as GoPtr<PropertyName>;
     } else {
       const temp = NodeFactory_NewTempVariable(Transformer_Factory(receiver!.__tsgoEmbedded0!));
       EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp, AsComputedPropertyName(name)!.Expression!.Loc);
@@ -1848,8 +1848,8 @@ export function classFieldsTransformer_transformAutoAccessor(receiver: GoPtr<cla
       const expression = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), AsComputedPropertyName(name)!.Expression);
       const assignment = NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, expression);
       EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), assignment, AsComputedPropertyName(name)!.Expression!.Loc);
-      getterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!), AsComputedPropertyName(name)!, assignment) as GoPtr<PropertyName>;
-      setterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!), AsComputedPropertyName(name)!, temp) as GoPtr<PropertyName>;
+      getterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, AsComputedPropertyName(name)!, assignment) as GoPtr<PropertyName>;
+      setterName = NodeFactory_UpdateComputedPropertyName(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, AsComputedPropertyName(name)!, temp) as GoPtr<PropertyName>;
     }
   }
 
@@ -2062,9 +2062,7 @@ export function classFieldsTransformer_transformPublicFieldInitializer(receiver:
       Node_Initializer(node as unknown as GoPtr<Node>) !== undefined || CompilerOptions_GetUseDefineForClassFields(receiver!.compilerOptions),
     );
     if (expr !== undefined) {
-      for (const e of flattenCommaList(expr)) {
-        classFieldsTransformer_addPendingExpressions(receiver, e);
-      }
+      flattenCommaList(expr)((e) => { classFieldsTransformer_addPendingExpressions(receiver, e); return false; });
     }
 
     // When target >= ES2022 (i.e., !shouldTransformPrivateElementsOrClassStaticBlocks) and we
@@ -2704,7 +2702,7 @@ export function classFieldsTransformer_visitExpressionStatement(receiver: GoPtr<
 export function classFieldsTransformer_createCopiableReceiverExpr(receiver: GoPtr<classFieldsTransformer>, receiver1: GoPtr<Expression>): [GoPtr<Expression>, GoPtr<Expression>] {
   let clone: GoPtr<Expression> = receiver1;
   if (!NodeIsSynthesized(receiver1)) {
-    clone = Node_Clone(receiver1, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<Expression>;
+    clone = Node_Clone(receiver1, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<Expression>;
   }
   if (IsSimpleInlineableExpression(receiver1)) {
     return [clone, undefined];
@@ -2786,7 +2784,7 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
       return NodeFactory_UpdateCallExpression(
         Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
         node,
-        NodeFactory_NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), visitedTarget, node!.QuestionDotToken, NodeFactory_NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!), "call"), NodeFlagsOptionalChain),
+        NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, visitedTarget, node!.QuestionDotToken, NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, "call"), NodeFlagsOptionalChain),
         undefined,
         undefined,
         NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, allArgs),
@@ -2796,7 +2794,7 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
     return NodeFactory_UpdateCallExpression(
       Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
       node,
-      NodeFactory_NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), visitedTarget, undefined, NodeFactory_NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!), "call"), NodeFlagsNone),
+      NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, visitedTarget, undefined, NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, "call"), NodeFlagsNone),
       undefined,
       undefined,
       NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, allArgs),
@@ -2806,7 +2804,7 @@ export function classFieldsTransformer_visitCallExpression(receiver: GoPtr<class
 
   if (receiver!.shouldTransformSuperInStaticInitializers && receiver!.currentClassElement !== undefined &&
     IsSuperProperty(node!.Expression) &&
-    classFieldsTransformer_isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
+    isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
     receiver!.lexicalEnvironment !== undefined && receiver!.lexicalEnvironment.data !== undefined &&
     receiver!.lexicalEnvironment.data.classConstructor !== undefined) {
     const invocation = NodeFactory_NewFunctionCallCall(
@@ -2881,7 +2879,7 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
     const [thisArg, target] = classFieldsTransformer_createCallBinding(receiver, node!.Tag);
     const bindExpr = NewCallExpression(
       Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
-      NodeFactory_NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), target), undefined, NodeFactory_NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!), "bind"), NodeFlagsNone),
+      NewPropertyAccessExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), target), undefined, NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, "bind"), NodeFlagsNone),
       undefined,
       undefined,
       NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, [NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), thisArg) as GoPtr<Node>]),
@@ -2900,14 +2898,14 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
 
   if (receiver!.shouldTransformSuperInStaticInitializers && receiver!.currentClassElement !== undefined &&
     IsSuperProperty(node!.Tag) &&
-    classFieldsTransformer_isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
+    isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
     receiver!.lexicalEnvironment !== undefined && receiver!.lexicalEnvironment.data !== undefined &&
     receiver!.lexicalEnvironment.data.classConstructor !== undefined) {
     const invocation = NodeFactory_NewFunctionBindCall(
       Transformer_Factory(receiver!.__tsgoEmbedded0!),
       NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Tag),
       receiver!.lexicalEnvironment.data.classConstructor,
-      undefined,
+      [],
     );
     EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), invocation, node as unknown as GoPtr<Node>);
     invocation!.Loc = node!.Loc;
@@ -3268,14 +3266,14 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
     if (IsPropertyAccessExpression(left as unknown as GoPtr<Node>) && IsPrivateIdentifier(AsPropertyAccessExpression(left as unknown as GoPtr<Node>)!.name)) {
       const info = classFieldsTransformer_accessPrivateIdentifier(receiver, AsPropertyAccessExpression(left as unknown as GoPtr<Node>)!.name);
       if (info !== undefined) {
-        const result = classFieldsTransformer_createPrivateIdentifierAssignment(receiver, info, AsPropertyAccessExpression(left as unknown as GoPtr<Node>)!.Expression, node!.Right as unknown as GoPtr<Expression>, node!.OperatorToken.Kind);
+        const result = classFieldsTransformer_createPrivateIdentifierAssignment(receiver, info, AsPropertyAccessExpression(left as unknown as GoPtr<Node>)!.Expression, node!.Right as unknown as GoPtr<Expression>, node!.OperatorToken!.Kind);
         EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), result, node as unknown as GoPtr<Node>);
         result!.Loc = node!.Loc;
         return result as unknown as GoPtr<Node>;
       }
     } else if (receiver!.shouldTransformSuperInStaticInitializers && receiver!.currentClassElement !== undefined &&
       IsSuperProperty(node!.Left as unknown as GoPtr<Node>) &&
-      classFieldsTransformer_isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
+      isStaticPropertyDeclarationOrClassStaticBlock(receiver!.currentClassElement) &&
       receiver!.lexicalEnvironment !== undefined && receiver!.lexicalEnvironment.data !== undefined) {
       const data = receiver!.lexicalEnvironment.data;
       if ((data.facts & classFactsClassWasDecorated) !== 0) {
@@ -3298,7 +3296,7 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
         }
         if (setterName !== undefined) {
           let expression: GoPtr<Expression> = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Right as unknown as GoPtr<Node>) as GoPtr<Expression>;
-          if (IsCompoundAssignment(node!.OperatorToken.Kind)) {
+          if (IsCompoundAssignment(node!.OperatorToken!.Kind)) {
             let getterName: GoPtr<Expression> = setterName;
             if (!IsSimpleInlineableExpression(setterName)) {
               getterName = NodeFactory_NewTempVariable(Transformer_Factory(receiver!.__tsgoEmbedded0!));
@@ -3318,7 +3316,7 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
               undefined,
               superPropertyGet as unknown as GoPtr<Expression>,
               undefined,
-              NewToken(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, GetNonAssignmentOperatorForCompoundAssignment(node!.OperatorToken.Kind)),
+              NewToken(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, GetNonAssignmentOperatorForCompoundAssignment(node!.OperatorToken!.Kind)),
               expression,
             ) as unknown as GoPtr<Expression>;
             expression!.Loc = node!.Loc;
@@ -3354,7 +3352,7 @@ export function classFieldsTransformer_visitBinaryExpression(receiver: GoPtr<cla
     }
   }
 
-  if (node!.OperatorToken.Kind === KindInKeyword && IsPrivateIdentifier(node!.Left as unknown as GoPtr<Node>)) {
+  if (node!.OperatorToken!.Kind === KindInKeyword && IsPrivateIdentifier(node!.Left as unknown as GoPtr<Node>)) {
     return classFieldsTransformer_transformPrivateIdentifierInInExpression(receiver, node);
   }
 
@@ -3471,7 +3469,7 @@ export function classFieldsTransformer_createPrivateIdentifierAssignment(receive
     ) as unknown as GoPtr<Expression>;
   }
 
-  EmitContext_SetCommentRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), recv as unknown as GoPtr<Node>, { pos: -1, end: recv!.End });
+  EmitContext_SetCommentRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), recv as unknown as GoPtr<Node>, { pos: -1, end: Node_End(recv) });
 
   switch (info!.kind) {
     case PrivateIdentifierKindAccessor:
@@ -3520,7 +3518,7 @@ export function classFieldsTransformer_createPrivateIdentifierAssignment(receive
  * }
  */
 export function classFieldsTransformer_getPrivateInstanceMethodsAndAccessors(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  return Filter(Node_Members(node), isNonStaticMethodOrAccessorWithPrivateName);
+  return Filter(Node_Members(node) ?? [], isNonStaticMethodOrAccessorWithPrivateName);
 }
 
 /**
@@ -3616,7 +3614,7 @@ export function classFieldsTransformer_memberContainsConstructorReference(receiv
  * }
  */
 export function classFieldsTransformer_classContainsConstructorReference(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): bool {
-  for (const member of Node_Members(node)) {
+  for (const member of Node_Members(node) ?? []) {
     if (classFieldsTransformer_memberContainsConstructorReference(receiver, member, node)) {
       return true;
     }
@@ -3714,7 +3712,7 @@ export function classFieldsTransformer_getClassFacts(receiver: GoPtr<classFields
   let containsInstancePrivateElements: bool = false;
   let containsInstanceAutoAccessors: bool = false;
 
-  for (const member of Node_Members(node)) {
+  for (const member of Node_Members(node) ?? []) {
     if (IsStatic(member)) {
       if (Node_Name(member) !== undefined && (IsPrivateIdentifier(Node_Name(member)) || IsAutoAccessorPropertyDeclaration(member)) &&
         receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
@@ -3796,6 +3794,8 @@ export function classFieldsTransformer_visitExpressionWithTypeArgumentsInHeritag
   if ((facts & classFactsNeedsClassSuperReference) !== 0) {
     const temp = NodeFactory_NewTempVariableEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), {
       Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
+      Prefix: "",
+      Suffix: "",
     });
     EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp);
     classFieldsTransformer_getClassLexicalEnvironment(receiver)!.superClassReference = temp;
@@ -4059,9 +4059,11 @@ export function classFieldsTransformer_visitClassDeclarationInNewClassLexicalEnv
     } else {
       const temp = NodeFactory_NewTempVariableEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), {
         Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
+        Prefix: "",
+        Suffix: "",
       });
       EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp);
-      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<IdentifierNode>;
+      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
       pendingClassReferenceAssignment = NodeFactory_NewAssignmentExpression(
         Transformer_Factory(receiver!.__tsgoEmbedded0!),
         temp,
@@ -4359,13 +4361,15 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
     } else {
       temp = NodeFactory_NewTempVariableEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), {
         Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
+        Prefix: "",
+        Suffix: "",
       });
       if (classFieldsTransformer_classExpressionNeedsBlockScopedTemp(receiver)) {
         EmitContext_AddLexicalDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp!);
       } else {
         EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp!);
       }
-      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<IdentifierNode>;
+      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
     }
   }
 
@@ -4383,16 +4387,18 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
         (receiver!.shouldTransformInitializers && IsInitializedProperty(n)));
 
     const willHavePrivatePendingExpressions = receiver!.shouldTransformPrivateElementsOrClassStaticBlocks &&
-      Some(Node_Members(node), (n: GoPtr<Node>) =>
+      Some(Node_Members(node) ?? [], (n: GoPtr<Node>) =>
         IsPrivateIdentifierClassElementDeclaration(n) && !HasStaticModifier(n) && classFieldsTransformer_shouldTransformClassElementToWeakMap(receiver, n));
     const willNeedTempWrapper = hasTransformableStatics || willHavePrivatePendingExpressions;
 
     if (isClassWithConstructorReference && willNeedTempWrapper && classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor === undefined) {
       temp = NodeFactory_NewTempVariableEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), {
         Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
+        Prefix: "",
+        Suffix: "",
       });
       deferTempDeclaration = true;
-      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<IdentifierNode>;
+      classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
     }
     const aliasForReg = classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor;
     if (isClassWithConstructorReference && willNeedTempWrapper && aliasForReg !== undefined) {
@@ -4432,13 +4438,15 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
       if (temp === undefined) {
         temp = NodeFactory_NewTempVariableEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), {
           Flags: GeneratedIdentifierFlagsReservedInNestedScopes,
+          Prefix: "",
+          Suffix: "",
         });
         if (classFieldsTransformer_classExpressionNeedsBlockScopedTemp(receiver)) {
           EmitContext_AddLexicalDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp!);
         } else {
           EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp!);
         }
-        classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<IdentifierNode>;
+        classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor = Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<IdentifierNode>;
         if (isClassWithConstructorReference) {
           receiver!.classAliases.set(EmitContext_MostOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node), classFieldsTransformer_getClassLexicalEnvironment(receiver)!.classConstructor);
         }
@@ -4447,7 +4455,7 @@ export function classFieldsTransformer_visitClassExpressionInNewClassLexicalEnvi
       expressions = [...expressions, NodeFactory_NewAssignmentExpression(Transformer_Factory(receiver!.__tsgoEmbedded0!), temp, classExpression as GoPtr<Expression>)];
       expressions = [...expressions, ...receiver!.pendingExpressions];
       expressions = [...expressions, ...classFieldsTransformer_generateInitializedPropertyExpressionsOrClassStaticBlock(receiver, staticPropertiesOrClassStaticBlocks, temp)];
-      expressions = [...expressions, Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!)) as GoPtr<Expression>];
+      expressions = [...expressions, Node_Clone(temp, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible) as GoPtr<Expression>];
     } else {
       expressions = [...expressions, classExpression as GoPtr<Expression>];
     }
@@ -4716,7 +4724,7 @@ export function classFieldsTransformer_transformClassMembers(receiver: GoPtr<cla
     if (classFieldsTransformer_shouldTransformAutoAccessorsInCurrentClass(receiver)) {
       for (const member of Node_Members(node) ?? []) {
         if (IsAutoAccessorPropertyDeclaration(member)) {
-          const storageName = NodeFactory_NewGeneratedPrivateNameForNodeEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), Node_Name(member)!, { Suffix: "_accessor_storage" });
+          const storageName = NodeFactory_NewGeneratedPrivateNameForNodeEx(Transformer_Factory(receiver!.__tsgoEmbedded0!), Node_Name(member)!, { Flags: 0, Prefix: "", Suffix: "_accessor_storage" });
           if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks ||
             (shouldTransformPrivateStaticElementsInClass && HasStaticModifier(member))) {
             classFieldsTransformer_addPrivateIdentifierPropertyDeclarationToEnvironment(receiver, member, storageName);
@@ -5730,7 +5738,7 @@ export function classFieldsTransformer_transformPropertyWorker(receiver: GoPtr<c
     // A parameter-property declaration always overrides the initializer. The only time a parameter-property
     // declaration *should* have an initializer is when decorators have added initializers that need to run before
     // any other initializer
-    const localName = Node_Clone(propertyName, Transformer_Factory(receiver!.__tsgoEmbedded0!));
+    const localName = Node_Clone(propertyName, Transformer_Factory(receiver!.__tsgoEmbedded0!) as unknown as NodeFactoryCoercible);
     if (initializer !== undefined) {
       // unwrap `(__runInitializers(this, _instanceExtraInitializers), void 0)`
       if (IsParenthesizedExpression(initializer) &&
@@ -6102,7 +6110,6 @@ export function classFieldsTransformer_addPrivateIdentifierPropertyDeclarationTo
           Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!,
           NewIdentifier(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, "WeakMap"),
           undefined, /*typeArguments*/
-          undefined, /*questionDotToken*/
           NodeFactory_NewNodeList(Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!, []),
         ),
       ),
