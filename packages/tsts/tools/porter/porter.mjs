@@ -397,14 +397,29 @@ export function scanTsUnits(root) {
           path: path.relative(repoRoot, file).split(path.sep).join("/"),
           metadata,
         });
-        // Check if the next TS export throws TSGO_UNIMPLEMENTED.
-        // TSGO_UNIMPLEMENTED never appears in Go source, so scanning the whole region
-        // between this @tsgo-unit block and the next export declaration is safe.
+        // Check if the first TS export after the JSDoc block throws TSGO_UNIMPLEMENTED.
+        // We skip the JSDoc body (Go source) and only inspect the first export declaration's body.
         const afterPos = regex.lastIndex;
-        const nextUnitMatch = text.indexOf('@tsgo-unit', afterPos);
-        const regionEnd = nextUnitMatch >= 0 ? nextUnitMatch : afterPos + 50000;
-        const region = text.slice(afterPos, regionEnd);
-        units[units.length - 1].hasUnimplThrow = region.includes('TSGO_UNIMPLEMENTED');
+        const bigSnippet = text.slice(afterPos, afterPos + 50000);
+        // Skip JSDoc: find */ then the next "export " keyword
+        const docEnd = bigSnippet.indexOf('*/');
+        const exportStart = docEnd >= 0 ? bigSnippet.indexOf('\nexport ', docEnd) : bigSnippet.indexOf('\nexport ');
+        let hasUnimplThrow = false;
+        if (exportStart >= 0) {
+          // Find the first { that opens the body of this export
+          const afterExport = bigSnippet.slice(exportStart, exportStart + 3000);
+          const braceIdx = afterExport.indexOf('{');
+          if (braceIdx >= 0) {
+            let depth = 0, bodyEnd = -1;
+            for (let j = braceIdx; j < Math.min(braceIdx + 2500, afterExport.length); j++) {
+              if (afterExport[j] === '{') depth++;
+              else if (afterExport[j] === '}') { depth--; if (depth === 0) { bodyEnd = j; break; } }
+            }
+            const body = bodyEnd >= 0 ? afterExport.slice(braceIdx, bodyEnd + 1) : afterExport.slice(braceIdx, braceIdx + 2500);
+            hasUnimplThrow = body.includes('TSGO_UNIMPLEMENTED');
+          }
+        }
+        units[units.length - 1].hasUnimplThrow = hasUnimplThrow;
       } catch (error) {
         fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
       }
