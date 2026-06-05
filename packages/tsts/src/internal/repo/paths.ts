@@ -35,7 +35,7 @@ import type { bool } from "@tsonic/core/types.js";
  * 	panic("could not find go.mod above " + filename)
  * })
  */
-export let rootPath: unknown = undefined as never;
+export const rootPath: unknown = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::func::RootPath","kind":"func","status":"stub","sigHash":"25eabb046687ed118017fa3f0ed296e235701fbc559ebb753551a3f79b8465d5","bodyHash":"315c05883fb1675f7c7ee1758a228dd23bdf5d382d294f1a42ca1c8dce2b6b0b"}
@@ -57,7 +57,7 @@ export function RootPath(): string {
  * 	return filepath.Join(rootPath(), "_submodules", "TypeScript")
  * })
  */
-export let typeScriptSubmodulePath: unknown = undefined as never;
+export const typeScriptSubmodulePath: unknown = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::func::TypeScriptSubmodulePath","kind":"func","status":"stub","sigHash":"5dedbac102d94ff7892b0c21a535de701ccb5467e95f58e05cdff68b37cd002d","bodyHash":"ee4d827a7b3e436ea9b8661abc1873939811852ba09ee20a3e60e6678040ff39"}
@@ -79,7 +79,7 @@ export function TypeScriptSubmodulePath(): string {
  * 	return filepath.Join(rootPath(), "testdata")
  * })
  */
-export let testDataPath: unknown = undefined as never;
+export const testDataPath: unknown = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::func::TestDataPath","kind":"func","status":"stub","sigHash":"d5378b1759e3413d0bb5f2afb79ea4be43f7bc2fdef4735a980a63ce687f3e34","bodyHash":"611ec0a58882c07791f71c8a94bbe7843e3bcf727a519dbf179f58fadfdf9f51"}
@@ -108,7 +108,7 @@ export function TestDataPath(): string {
  * 	return true
  * })
  */
-export let typeScriptSubmoduleExists: unknown = undefined as never;
+export const typeScriptSubmoduleExists: unknown = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/repo/paths.go::func::TypeScriptSubmoduleExists","kind":"func","status":"stub","sigHash":"451c0d34479719cd9f459227d93466aedc711f30647c68381e36bab012637fa3","bodyHash":"95026a986eb5ee1dc4f32472fa57363f33828073bffc2123b302d2eaa0b8dabe"}

@@ -148,7 +148,7 @@ export function NewChangeTrackerWriter(newline: string, indentSize: int): GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.GetPrintHandlers","kind":"method","status":"stub","sigHash":"e05edf69eb861f9658617c9916c3c7d410673f180ae3286d814613e3c8d7c0a4","bodyHash":"9bc147b8bf8dcb487062f14297919b48be7f159d5fc102986146908171f59bca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.GetPrintHandlers","kind":"method","status":"implemented","sigHash":"e05edf69eb861f9658617c9916c3c7d410673f180ae3286d814613e3c8d7c0a4","bodyHash":"9bc147b8bf8dcb487062f14297919b48be7f159d5fc102986146908171f59bca"}
  *
  * Go source:
  * func (ct *ChangeTrackerWriter) GetPrintHandlers() PrintHandlers {
@@ -187,7 +187,39 @@ export function NewChangeTrackerWriter(newline: string, indentSize: int): GoPtr<
  * }
  */
 export function ChangeTrackerWriter_GetPrintHandlers(receiver: GoPtr<ChangeTrackerWriter>): PrintHandlers {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.GetPrintHandlers");
+  return {
+    HasGlobalName: (_name: string): bool => false as bool,
+    OnBeforeEmitNode: (nodeOpt: GoPtr<Node>): void => {
+      if (nodeOpt !== undefined) {
+        ChangeTrackerWriter_setPos(receiver, Node_as_triviaPositionKey(nodeOpt));
+      }
+    },
+    OnAfterEmitNode: (nodeOpt: GoPtr<Node>): void => {
+      if (nodeOpt !== undefined) {
+        ChangeTrackerWriter_setEnd(receiver, Node_as_triviaPositionKey(nodeOpt));
+      }
+    },
+    OnBeforeEmitNodeList: (nodesOpt: GoPtr<NodeList>): void => {
+      if (nodesOpt !== undefined) {
+        ChangeTrackerWriter_setPos(receiver, NodeList_as_triviaPositionKey(nodesOpt));
+      }
+    },
+    OnAfterEmitNodeList: (nodesOpt: GoPtr<NodeList>): void => {
+      if (nodesOpt !== undefined) {
+        ChangeTrackerWriter_setEnd(receiver, NodeList_as_triviaPositionKey(nodesOpt));
+      }
+    },
+    OnBeforeEmitToken: (nodeOpt: GoPtr<Node>): void => {
+      if (nodeOpt !== undefined) {
+        ChangeTrackerWriter_setPos(receiver, Node_as_triviaPositionKey(nodeOpt));
+      }
+    },
+    OnAfterEmitToken: (nodeOpt: GoPtr<Node>): void => {
+      if (nodeOpt !== undefined) {
+        ChangeTrackerWriter_setEnd(receiver, Node_as_triviaPositionKey(nodeOpt));
+      }
+    },
+  };
 }
 
 /**
