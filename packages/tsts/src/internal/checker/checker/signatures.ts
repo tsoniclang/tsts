@@ -7,24 +7,32 @@ import type { ParameterDeclarationNode } from "../../ast/ast_generated.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { FunctionFlags } from "../../ast/functionflags.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
+import { InternalSymbolNameIndex } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { newTypeMapper, newSimpleTypeMapper } from "../mapper.js";
 import type { TypeMapper } from "../mapper.js";
 import type { Relation } from "../relater.js";
-import { IsTypeAny, isLateBoundName, isTypeAlias, hasDotDotDotToken, isNumericLiteralName, isNodeDescendantOf } from "../utilities.js";
-import { ContextFlags, IndexInfo, ObjectFlagsAnonymous, ObjectFlagsMembersResolved, ObjectFlagsReference, Signature, SignatureFlags, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct, TernaryFalse, Type, TypeComparer, TypeFlags, TypeFlagsAny, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNullable, TypeFlagsObject, TypeFlagsStringLiteral, TypeFlagsStructuredType, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsVoid, TypePredicate, TypeReference, Type_Types } from "../types.js";
-import type { SignatureKind } from "../types.js";
-import { CallState, CheckModeInferential, CheckModeNormal, CheckModeSkipGenericFunctions, Checker, CheckMode, InferenceContext, IterationTypeKind, IterationTypes, isSpreadArgument, isTupleType, signatureHasRestParameter, thisAssignmentDeclarationKind, thisAssignmentDeclarationNone, thisAssignmentDeclarationTyped, thisAssignmentDeclarationConstructor, thisAssignmentDeclarationMethod, isIdentifierThatStartsWithUnderscore, getStringLiteralValue, isUnitType } from "./state.js";
+import { IsTypeAny, isLateBoundName, isTypeAlias, hasDotDotDotToken, isNumericLiteralName, isNodeDescendantOf, getContainingObjectLiteral, nodeStartsNewLexicalEnvironment, isSuperCall } from "../utilities.js";
+import { ContextFlags, ContextFlagsNone, IndexInfo, ObjectFlagsAnonymous, ObjectFlagsMembersResolved, ObjectFlagsReference, Signature, SignatureFlags, SignatureFlagsNone, SignatureFlagsPropagatingFlags, SignatureKindCall, SignatureKindConstruct, TernaryFalse, Type, TypeComparer, TypeFlags, TypeFlagsAny, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNullable, TypeFlagsObject, TypeFlagsStringLiteral, TypeFlagsStructuredType, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsVoid, TypePredicate, TypeReference, Type_AsIntersectionType, Type_AsTypeParameter, Type_Distributed, Type_Types } from "../types.js";
+import type { SignatureKind, ValueSymbolLinks } from "../types.js";
+import { CallState, CheckModeInferential, CheckModeNormal, CheckModeSkipGenericFunctions, Checker, CheckMode, InferenceContext, IterationTypeKind, IterationTypes, isSpreadArgument, isTupleType, signatureHasRestParameter, thisAssignmentDeclarationKind, thisAssignmentDeclarationNone, thisAssignmentDeclarationTyped, thisAssignmentDeclarationConstructor, thisAssignmentDeclarationMethod, isIdentifierThatStartsWithUnderscore, getStringLiteralValue, isUnitType, hasTypeParameterByName, getUniqueTypeParameterName } from "./state.js";
 import type { IterationUse, InferencePriority } from "./state.js";
-import { GetThisParameter, GetNameOfDeclaration, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, IsInJSFile, NodeKindIs, IsAccessExpression, IsFunctionLike, IsOptionalChain, IsOptionalChainRoot, FindAncestorOrQuit, FindAncestorTrue, FindAncestorQuit, FindAncestorFalse, IsCallOrNewExpression, GetThisContainer, GetContainingClass, IsThisParameter, HasAccessorModifier, SkipOuterExpressions, OEKAll, GetAssignmentDeclarationKind, JSDeclarationKindThisProperty, IsStringOrNumericLiteralLike, IsMethodOrAccessor, GetDeclarationOfKind, IsClassLike, IsStatic } from "../../ast/utilities.js";
+import { GetThisParameter, GetNameOfDeclaration, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, IsInJSFile, NodeKindIs, IsAccessExpression, IsFunctionLike, IsOptionalChain, IsOptionalChainRoot, FindAncestorOrQuit, FindAncestorTrue, FindAncestorQuit, FindAncestorFalse, IsCallOrNewExpression, GetThisContainer, GetContainingClass, IsThisParameter, HasAccessorModifier, SkipOuterExpressions, OEKAll, GetAssignmentDeclarationKind, JSDeclarationKindThisProperty, IsStringOrNumericLiteralLike, IsMethodOrAccessor, GetDeclarationOfKind, IsClassLike, IsStatic, GetRestParameterElementType, HasStaticModifier, IsPartOfTypeNode } from "../../ast/utilities.js";
 import type { FindAncestorResult } from "../../ast/utilities.js";
-import { IsGetAccessorDeclaration, IsTypeParameterDeclaration, IsParenthesizedExpression, IsCallExpression, IsTaggedTemplateExpression, IsDecorator, IsIdentifier, IsPropertyAccessExpression, IsBinaryExpression, IsParameterDeclaration, IsBindingElement, IsConstructorDeclaration, IsFunctionLikeDeclaration, IsFunctionDeclaration, IsMethodDeclaration, IsArrowFunction, IsFunctionExpression, IsInterfaceDeclaration, IsVariableDeclaration } from "../../ast/generated/predicates.js";
-import { SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, NodeFlagsReparsed, SymbolFlagsClass, SymbolFlagsFunction } from "../../ast/generated/flags.js";
-import { KindInterfaceDeclaration, KindClassDeclaration, KindClassExpression, KindPropertyDeclaration, KindMethodDeclaration, KindGetAccessor, KindSetAccessor, KindParameter, KindElementAccessExpression, KindCallSignature, KindConstructSignature, KindMethodSignature, KindFunctionType, KindConstructorType, KindFunctionDeclaration, KindFunctionExpression, KindArrowFunction, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindMappedType, KindConditionalType, KindAnyKeyword } from "../../ast/generated/kinds.js";
+import { IsGetAccessorDeclaration, IsTypeParameterDeclaration, IsParenthesizedExpression, IsCallExpression, IsTaggedTemplateExpression, IsDecorator, IsIdentifier, IsPropertyAccessExpression, IsBinaryExpression, IsParameterDeclaration, IsBindingElement, IsConstructorDeclaration, IsFunctionLikeDeclaration, IsFunctionDeclaration, IsMethodDeclaration, IsArrowFunction, IsFunctionExpression, IsInterfaceDeclaration, IsVariableDeclaration, IsSetAccessorDeclaration, IsComputedPropertyName, IsPropertyDeclaration } from "../../ast/generated/predicates.js";
+import { SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, NodeFlagsReparsed, SymbolFlagsClass, SymbolFlagsFunction, SymbolFlagsProperty, SymbolFlagsFunctionScopedVariable } from "../../ast/generated/flags.js";
+import { KindInterfaceDeclaration, KindClassDeclaration, KindClassExpression, KindPropertyDeclaration, KindMethodDeclaration, KindGetAccessor, KindSetAccessor, KindParameter, KindElementAccessExpression, KindCallSignature, KindConstructSignature, KindMethodSignature, KindFunctionType, KindConstructorType, KindFunctionDeclaration, KindFunctionExpression, KindArrowFunction, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindMappedType, KindConditionalType, KindAnyKeyword, KindPropertyAssignment, KindThisKeyword, KindIdentifier, KindPropertyAccessExpression } from "../../ast/generated/kinds.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
 import { IsNumericLiteral } from "../../ast/generated/predicates.js";
-import { Node_FunctionLikeData } from "../../ast/spine.js";
+import { Node_FunctionLikeData, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
 import { NewFunctionTypeNode, NewKeywordTypeNode } from "../../ast/generated/factory.js";
+import { Node_Body, Node_Text, Node_Expression, Node_Initializer, Node_Type } from "../../ast/ast.js";
+import { CheckFlagsIndexSymbol } from "../../ast/checkflags.js";
+import { LinkStore_Get } from "../../core/linkstore.js";
+import { Arena_New } from "../../core/arena.js";
+import { Checker_newSymbol, Checker_getIndexInfosOfType, Checker_getLiteralTypeFromPropertyName, Checker_getResolvedSymbol } from "./symbols.js";
+import { Checker_getTypeOfExpression, Checker_getApparentTypeOfContextualType, Checker_mapType } from "./types.js";
+import { Checker_IsArgumentsSymbol } from "../services.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetTypeAliasTypeParameters","kind":"method","status":"stub","sigHash":"0b4f54cda41fb6e460b50792c13ecf63a5a90b07e65ca4c27484c2ebd3b2b5d9","bodyHash":"02fa6e6ef34ba705f2d33b3f81000aaa91ecff0d2cb63d373a5a89e9c30a511d"}
@@ -321,7 +329,7 @@ export function Checker_checkConstructorDeclaration(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findFirstSuperCall","kind":"method","status":"stub","sigHash":"73fbff4d7b96acba4102b12439c63e3be86bc89577599858b01610d57214d87f","bodyHash":"9fc094126407a5cc2740ca6276bde6c6f9aa2017e2a67afa7469f995f2724878"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findFirstSuperCall","kind":"method","status":"implemented","sigHash":"73fbff4d7b96acba4102b12439c63e3be86bc89577599858b01610d57214d87f","bodyHash":"9fc094126407a5cc2740ca6276bde6c6f9aa2017e2a67afa7469f995f2724878"}
  *
  * Go source:
  * func (c *Checker) findFirstSuperCall(node *ast.Node) *ast.Node {
@@ -342,7 +350,19 @@ export function Checker_checkConstructorDeclaration(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_findFirstSuperCall(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findFirstSuperCall");
+  let superCall: GoPtr<Node> = undefined;
+  const visit = (n: GoPtr<Node>): bool => {
+    if (isSuperCall(n)) {
+      superCall = n;
+      return true;
+    }
+    if (IsFunctionLike(n)) {
+      return false;
+    }
+    return Node_ForEachChild(n, visit);
+  };
+  visit(node);
+  return superCall;
 }
 
 /**
@@ -1267,7 +1287,7 @@ export function Checker_getOuterInferenceTypeParameters(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUniqueTypeParameters","kind":"method","status":"stub","sigHash":"a8f6b7a7ba6f542459d9d14e38d9b94b70bbb7d6b677186930b0066041be13d4","bodyHash":"20f11181e84231a304325a8d5eb67cbdd94f8b009047352fb3816753347cdb4d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUniqueTypeParameters","kind":"method","status":"implemented","sigHash":"a8f6b7a7ba6f542459d9d14e38d9b94b70bbb7d6b677186930b0066041be13d4","bodyHash":"20f11181e84231a304325a8d5eb67cbdd94f8b009047352fb3816753347cdb4d"}
  *
  * Go source:
  * func (c *Checker) getUniqueTypeParameters(context *InferenceContext, typeParameters []*Type) []*Type {
@@ -1298,7 +1318,30 @@ export function Checker_getOuterInferenceTypeParameters(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getUniqueTypeParameters(receiver: GoPtr<Checker>, context: GoPtr<InferenceContext>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUniqueTypeParameters");
+  let oldTypeParameters: GoSlice<GoPtr<Type>> = undefined;
+  let newTypeParameters: GoSlice<GoPtr<Type>> = undefined;
+  let result: GoSlice<GoPtr<Type>> = [] as GoSlice<GoPtr<Type>>;
+  for (const tp of (typeParameters ?? [])) {
+    const name = tp!["symbol"]!.Name;
+    if (hasTypeParameterByName(context!.inferredTypeParameters, name) || hasTypeParameterByName(result, name)) {
+      const newName = getUniqueTypeParameterName(core.Concatenate(context!.inferredTypeParameters, result), name);
+      const symbol_ = Checker_newSymbol(receiver, SymbolFlagsTypeParameter, newName);
+      const newTypeParameter = Checker_newTypeParameter(receiver, symbol_);
+      Type_AsTypeParameter(newTypeParameter)!.target = tp;
+      oldTypeParameters = [...(oldTypeParameters ?? []), tp] as GoSlice<GoPtr<Type>>;
+      newTypeParameters = [...(newTypeParameters ?? []), newTypeParameter] as GoSlice<GoPtr<Type>>;
+      result = [...result, newTypeParameter] as GoSlice<GoPtr<Type>>;
+    } else {
+      result = [...result, tp] as GoSlice<GoPtr<Type>>;
+    }
+  }
+  if ((newTypeParameters ?? []).length !== 0) {
+    const mapper = newTypeMapper(oldTypeParameters!, newTypeParameters!);
+    for (const tp of (newTypeParameters ?? [])) {
+      Type_AsTypeParameter(tp)!.mapper = mapper;
+    }
+  }
+  return result;
 }
 
 /**
@@ -3355,7 +3398,7 @@ export function Checker_isValidConstAssertionArgument(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newParameter","kind":"method","status":"stub","sigHash":"4f45a98e35c0a184597db1219c45a0d52d30f8de881ac6e314bc5c16c7f603da","bodyHash":"3536521fa8e83d5cb800c9df6c90a517914942bdf9a2326908e7b34d81fd0693"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newParameter","kind":"method","status":"implemented","sigHash":"4f45a98e35c0a184597db1219c45a0d52d30f8de881ac6e314bc5c16c7f603da","bodyHash":"3536521fa8e83d5cb800c9df6c90a517914942bdf9a2326908e7b34d81fd0693"}
  *
  * Go source:
  * func (c *Checker) newParameter(name string, t *Type) *ast.Symbol {
@@ -3365,7 +3408,9 @@ export function Checker_isValidConstAssertionArgument(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_newParameter(receiver: GoPtr<Checker>, name: string, t: GoPtr<Type>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newParameter");
+  const symbol_ = Checker_newSymbol(receiver, SymbolFlagsFunctionScopedVariable, name);
+  (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType = t;
+  return symbol_;
 }
 
 /**
@@ -4275,7 +4320,7 @@ export function Checker_getSignatureInstantiation(receiver: GoPtr<Checker>, sig:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.cloneSignature","kind":"method","status":"stub","sigHash":"8af0f1860c9a904b18cbaf6085e763141df33b52a9b03ed6a70a611c2f9d8914","bodyHash":"d23ca55b0ce15a06416fc1b6dad61fa59727a473c2a93a77d9f67937847fac05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.cloneSignature","kind":"method","status":"implemented","sigHash":"8af0f1860c9a904b18cbaf6085e763141df33b52a9b03ed6a70a611c2f9d8914","bodyHash":"d23ca55b0ce15a06416fc1b6dad61fa59727a473c2a93a77d9f67937847fac05"}
  *
  * Go source:
  * func (c *Checker) cloneSignature(sig *Signature) *Signature {
@@ -4287,7 +4332,11 @@ export function Checker_getSignatureInstantiation(receiver: GoPtr<Checker>, sig:
  * }
  */
 export function Checker_cloneSignature(receiver: GoPtr<Checker>, sig: GoPtr<Signature>): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.cloneSignature");
+  const result = Checker_newSignature(receiver, (sig!.flags & SignatureFlagsPropagatingFlags) as SignatureFlags, sig!.declaration, sig!.typeParameters, sig!.thisParameter, sig!.parameters, undefined, undefined, sig!.minArgumentCount as int);
+  result!.target = sig;
+  result!.mapper = sig!.mapper;
+  result!.composite = sig!.composite;
+  return result;
 }
 
 /**
@@ -6638,7 +6687,7 @@ export function Checker_newTypeParameter(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSignature","kind":"method","status":"stub","sigHash":"0705401fb9577a843532c59e2aa1c1a769ceeffe13f757fde471312170e710eb","bodyHash":"c1ceb9b79769bfb204097068fee384def9051c14b159f4337db02fc78bcbe454"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSignature","kind":"method","status":"implemented","sigHash":"0705401fb9577a843532c59e2aa1c1a769ceeffe13f757fde471312170e710eb","bodyHash":"c1ceb9b79769bfb204097068fee384def9051c14b159f4337db02fc78bcbe454"}
  *
  * Go source:
  * func (c *Checker) newSignature(flags SignatureFlags, declaration *ast.Node, typeParameters []*Type, thisParameter *ast.Symbol, parameters []*ast.Symbol, resolvedReturnType *Type, resolvedTypePredicate *TypePredicate, minArgumentCount int) *Signature {
@@ -6656,7 +6705,17 @@ export function Checker_newTypeParameter(receiver: GoPtr<Checker>, symbol_: GoPt
  * }
  */
 export function Checker_newSignature(receiver: GoPtr<Checker>, flags: SignatureFlags, declaration: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, thisParameter: GoPtr<Symbol>, parameters: GoSlice<GoPtr<Symbol>>, resolvedReturnType: GoPtr<Type>, resolvedTypePredicate: GoPtr<TypePredicate>, minArgumentCount: int): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSignature");
+  const sig = Arena_New(receiver!.signatureArena) as GoPtr<Signature>;
+  sig!.flags = flags;
+  sig!.declaration = declaration;
+  sig!.typeParameters = typeParameters;
+  sig!.parameters = parameters ?? [] as GoSlice<GoPtr<Symbol>>;
+  sig!.thisParameter = thisParameter;
+  sig!.resolvedReturnType = resolvedReturnType;
+  sig!.resolvedTypePredicate = resolvedTypePredicate;
+  sig!.minArgumentCount = minArgumentCount as int;
+  sig!.resolvedMinArgumentCount = -1;
+  return sig;
 }
 
 /**
@@ -6707,7 +6766,7 @@ export function Checker_isThisPropertyAccessInConstructor(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringConstructor","kind":"method","status":"stub","sigHash":"bd91440e14fcf77953406a37832c5355497ed517064245d102397538a0835ba7","bodyHash":"8d9ba3562f06af39c2a2f9d8d4bf6606537748c66a21035d84e0f959418af9dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringConstructor","kind":"method","status":"implemented","sigHash":"bd91440e14fcf77953406a37832c5355497ed517064245d102397538a0835ba7","bodyHash":"8d9ba3562f06af39c2a2f9d8d4bf6606537748c66a21035d84e0f959418af9dc"}
  *
  * Go source:
  * func (c *Checker) getDeclaringConstructor(symbol *ast.Symbol) *ast.Node {
@@ -6721,7 +6780,13 @@ export function Checker_isThisPropertyAccessInConstructor(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getDeclaringConstructor(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaringConstructor");
+  for (const declaration of symbol_!.Declarations) {
+    const container = GetThisContainer(declaration, false, false);
+    if (container !== undefined && IsConstructorDeclaration(container)) {
+      return container;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -6784,7 +6849,7 @@ export function Checker_typeHasCallOrConstructSignatures(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getParameterTypeNodeForDecoratorCheck","kind":"method","status":"stub","sigHash":"021354f7072638b3c19a8458e7e01d7762efcb2666a970ccc06c41e972c07d2a","bodyHash":"02e1f661fa365598ee35588a5354cfecb7a87611b069569713dd363d6f7c66eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getParameterTypeNodeForDecoratorCheck","kind":"method","status":"implemented","sigHash":"021354f7072638b3c19a8458e7e01d7762efcb2666a970ccc06c41e972c07d2a","bodyHash":"02e1f661fa365598ee35588a5354cfecb7a87611b069569713dd363d6f7c66eb"}
  *
  * Go source:
  * func (c *Checker) getParameterTypeNodeForDecoratorCheck(node *ast.ParameterDeclarationNode) *ast.Node {
@@ -6796,7 +6861,11 @@ export function Checker_typeHasCallOrConstructSignatures(receiver: GoPtr<Checker
  * }
  */
 export function Checker_getParameterTypeNodeForDecoratorCheck(receiver: GoPtr<Checker>, node: GoPtr<ParameterDeclarationNode>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getParameterTypeNodeForDecoratorCheck");
+  const typeNode = Node_Type(node);
+  if (node!.AsParameterDeclaration()!.DotDotDotToken !== undefined) {
+    return GetRestParameterElementType(typeNode);
+  }
+  return typeNode;
 }
 
 /**
@@ -7537,7 +7606,7 @@ export function Checker_newCallSignature(receiver: GoPtr<Checker>, typeParameter
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexSignaturesAtLocation","kind":"method","status":"stub","sigHash":"6113503a2d4a4c270ebb1ae9557e3b78913db52a231615bb944e349683ee5b06","bodyHash":"b50814545541ee8be525df7b8e1bf91b04965382bdc67c16cd6b76d3607ce2c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexSignaturesAtLocation","kind":"method","status":"implemented","sigHash":"6113503a2d4a4c270ebb1ae9557e3b78913db52a231615bb944e349683ee5b06","bodyHash":"b50814545541ee8be525df7b8e1bf91b04965382bdc67c16cd6b76d3607ce2c3"}
  *
  * Go source:
  * func (c *Checker) getIndexSignaturesAtLocation(node *ast.Node) []*ast.Node {
@@ -7557,11 +7626,23 @@ export function Checker_newCallSignature(receiver: GoPtr<Checker>, typeParameter
  * }
  */
 export function Checker_getIndexSignaturesAtLocation(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexSignaturesAtLocation");
+  let signatures: GoSlice<GoPtr<Node>> = undefined;
+  if (IsIdentifier(node) && IsPropertyAccessExpression(node!.Parent) && Node_Name(node!.Parent) === node) {
+    const keyType = Checker_getLiteralTypeFromPropertyName(receiver, node);
+    const objectType = Checker_getTypeOfExpression(receiver, Node_Expression(node!.Parent));
+    for (const t of (Type_Distributed(objectType) ?? [])) {
+      for (const info of (Checker_getApplicableIndexInfos(receiver, t, keyType) ?? [])) {
+        if (info!.declaration !== undefined) {
+          signatures = core.AppendIfUnique(signatures, info!.declaration);
+        }
+      }
+    }
+  }
+  return signatures;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThisPropertyAndThisTyped","kind":"method","status":"stub","sigHash":"a7884962d081ce51fa7dd6ed39efe0fa0740e3b307a33fa6190179b70c5807f7","bodyHash":"c88d92f261e0d7d4d2c09e5e9e94e17094573cf17198e8fc1dd169ae09900c74"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThisPropertyAndThisTyped","kind":"method","status":"implemented","sigHash":"a7884962d081ce51fa7dd6ed39efe0fa0740e3b307a33fa6190179b70c5807f7","bodyHash":"c88d92f261e0d7d4d2c09e5e9e94e17094573cf17198e8fc1dd169ae09900c74"}
  *
  * Go source:
  * func (c *Checker) isThisPropertyAndThisTyped(node *ast.Node) bool {
@@ -7580,11 +7661,22 @@ export function Checker_getIndexSignaturesAtLocation(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_isThisPropertyAndThisTyped(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isThisPropertyAndThisTyped");
+  if (Node_Expression(node)!.Kind === KindThisKeyword) {
+    const container = GetThisContainer(node, false, false);
+    if (IsFunctionLike(container)) {
+      const containingLiteral = getContainingObjectLiteral(container);
+      if (containingLiteral !== undefined) {
+        const contextualType = Checker_getApparentTypeOfContextualType(receiver, containingLiteral, ContextFlagsNone);
+        const t = Checker_getThisTypeOfObjectLiteralFromContextualType(receiver, containingLiteral, contextualType);
+        return t !== undefined && !IsTypeAny(t);
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeOfObjectLiteralFromContextualType","kind":"method","status":"stub","sigHash":"8f81b707d95da893ac2e909acab23493ce8851e7c64db00704a0f9a970cff1d9","bodyHash":"9c24538b3478d3264a6d896b18eaa45cbcbce9bfe137661ebca9533e43a4e0e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeOfObjectLiteralFromContextualType","kind":"method","status":"implemented","sigHash":"8f81b707d95da893ac2e909acab23493ce8851e7c64db00704a0f9a970cff1d9","bodyHash":"9c24538b3478d3264a6d896b18eaa45cbcbce9bfe137661ebca9533e43a4e0e9"}
  *
  * Go source:
  * func (c *Checker) getThisTypeOfObjectLiteralFromContextualType(containingLiteral *ast.Node, contextualType *Type) *Type {
@@ -7605,11 +7697,25 @@ export function Checker_isThisPropertyAndThisTyped(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_getThisTypeOfObjectLiteralFromContextualType(receiver: GoPtr<Checker>, containingLiteral: GoPtr<Node>, contextualType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeOfObjectLiteralFromContextualType");
+  let literal = containingLiteral;
+  let t = contextualType;
+  for (;;) {
+    if (t === undefined) { break; }
+    const thisType = Checker_getThisTypeFromContextualType(receiver, t);
+    if (thisType !== undefined) {
+      return thisType;
+    }
+    if (literal!.Parent!.Kind !== KindPropertyAssignment) {
+      break;
+    }
+    literal = literal!.Parent!.Parent;
+    t = Checker_getApparentTypeOfContextualType(receiver, literal, ContextFlagsNone);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeFromContextualType","kind":"method","status":"stub","sigHash":"81d63c55f9fd5cc8ffeae110e6d7567e3d41dab804aeec0cf6cc423761ba9e0b","bodyHash":"672cab718e8f5da56a2504bdcd3eea09f61b907627e0057d3bb11f9cc3350bc0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeFromContextualType","kind":"method","status":"implemented","sigHash":"81d63c55f9fd5cc8ffeae110e6d7567e3d41dab804aeec0cf6cc423761ba9e0b","bodyHash":"672cab718e8f5da56a2504bdcd3eea09f61b907627e0057d3bb11f9cc3350bc0"}
  *
  * Go source:
  * func (c *Checker) getThisTypeFromContextualType(t *Type) *Type {
@@ -7629,7 +7735,19 @@ export function Checker_getThisTypeOfObjectLiteralFromContextualType(receiver: G
  * }
  */
 export function Checker_getThisTypeFromContextualType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getThisTypeFromContextualType");
+  return Checker_mapType(receiver, t, (t: GoPtr<Type>): GoPtr<Type> => {
+    if ((t!.flags & TypeFlagsIntersection) !== 0) {
+      for (const inner of (Type_Types(t) ?? [])) {
+        const typeArg = Checker_getThisTypeArgument(receiver, inner);
+        if (typeArg !== undefined) {
+          return typeArg;
+        }
+      }
+      return undefined;
+    } else {
+      return Checker_getThisTypeArgument(receiver, t);
+    }
+  });
 }
 
 /**
@@ -7663,7 +7781,7 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol","kind":"method","status":"stub","sigHash":"a40817fe1af41ea59c2da8e72d9850088ef890ade45f2e789374df947fa9e7c5","bodyHash":"74ac15ed3ed74c01b2426c8687027941d736cb99a64e2c0fab87abd42939938d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol","kind":"method","status":"implemented","sigHash":"a40817fe1af41ea59c2da8e72d9850088ef890ade45f2e789374df947fa9e7c5","bodyHash":"74ac15ed3ed74c01b2426c8687027941d736cb99a64e2c0fab87abd42939938d"}
  *
  * Go source:
  * func (c *Checker) getApplicableIndexSymbol(t *Type, keyType *Type) *ast.Symbol {
@@ -7696,11 +7814,36 @@ export function Checker_getApplicableIndexInfos(receiver: GoPtr<Checker>, t: GoP
  * }
  */
 export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: GoPtr<Type>, keyType: GoPtr<Type>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getApplicableIndexSymbol");
+  const info = Checker_getApplicableIndexInfo(receiver, t, keyType);
+  if (info !== undefined && info !== receiver!.anyBaseTypeIndexInfo) {
+    if (info!.indexSymbol === undefined) {
+      let declarations: GoSlice<GoPtr<Node>> = undefined;
+      if (info!.declaration !== undefined) {
+        declarations = [info!.declaration] as GoSlice<GoPtr<Node>>;
+      } else {
+        for (const inf of (Checker_getIndexInfosOfType(receiver, t) ?? [])) {
+          if (inf!.declaration !== undefined && Checker_isApplicableIndexType(receiver, keyType, inf!.keyType)) {
+            declarations = [...(declarations ?? []), inf!.declaration] as GoSlice<GoPtr<Node>>;
+          }
+        }
+      }
+      if ((declarations ?? []).length !== 0) {
+        const symbol_ = Checker_newSymbol(receiver, SymbolFlagsProperty, InternalSymbolNameIndex);
+        symbol_!.CheckFlags |= CheckFlagsIndexSymbol;
+        symbol_!.Declarations = declarations;
+        symbol_!.ValueDeclaration = declarations![0];
+        symbol_!.Parent = t!["symbol"];
+        (LinkStore_Get(receiver!.valueSymbolLinks, symbol_) as GoPtr<ValueSymbolLinks>)!.resolvedType = info!.valueType;
+        info!.indexSymbol = symbol_;
+      }
+    }
+    return info!.indexSymbol;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containsArgumentsReference","kind":"method","status":"stub","sigHash":"d4ce4269801db06d19db13e54b586d39a519483923f2b47cb713e8f8c7ccd862","bodyHash":"7f8b145dfec356ee7f3ab9d1c6b5673b2c947cb744ead9fd3d2c2a59bd6027e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containsArgumentsReference","kind":"method","status":"implemented","sigHash":"d4ce4269801db06d19db13e54b586d39a519483923f2b47cb713e8f8c7ccd862","bodyHash":"7f8b145dfec356ee7f3ab9d1c6b5673b2c947cb744ead9fd3d2c2a59bd6027e9"}
  *
  * Go source:
  * func (c *Checker) containsArgumentsReference(node *ast.Node) bool {
@@ -7741,5 +7884,40 @@ export function Checker_getApplicableIndexSymbol(receiver: GoPtr<Checker>, t: Go
  * }
  */
 export function Checker_containsArgumentsReference(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containsArgumentsReference");
+  if (Node_Body(node) === undefined) {
+    return false;
+  }
+  const cached = receiver!.cachedArgumentsReferenced.get(node);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const visit = (n: GoPtr<Node>): bool => {
+    if (n === undefined) {
+      return false;
+    }
+    switch (n!.Kind) {
+      case KindIdentifier:
+        return Node_Text(n) === receiver!.argumentsSymbol!.Name && Checker_IsArgumentsSymbol(receiver, Checker_getResolvedSymbol(receiver, n));
+      case KindPropertyDeclaration:
+      case KindMethodDeclaration:
+      case KindGetAccessor:
+      case KindSetAccessor:
+        if (IsComputedPropertyName(Node_Name(n))) {
+          return visit(Node_Name(n));
+        }
+        break;
+      case KindPropertyAccessExpression:
+      case KindElementAccessExpression:
+        return visit(Node_Expression(n));
+      case KindPropertyAssignment:
+        return visit(Node_Initializer(n));
+    }
+    if (nodeStartsNewLexicalEnvironment(n) || IsPartOfTypeNode(n)) {
+      return false;
+    }
+    return Node_ForEachChild(n, visit);
+  };
+  const containsArguments = visit(Node_Body(node));
+  receiver!.cachedArgumentsReferenced.set(node, containsArguments);
+  return containsArguments;
 }

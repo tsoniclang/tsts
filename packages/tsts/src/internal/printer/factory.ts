@@ -973,9 +973,7 @@ export function NodeFactory_updateOuterExpression(receiver: GoPtr<NodeFactory>, 
     case KindParenthesizedExpression:
       return NodeFactory_UpdateParenthesizedExpression(f, AsParenthesizedExpression(outerExpression), expression);
     case KindTypeAssertionExpression:
-      // NodeFactory_UpdateTypeAssertion is not yet ported; match Go's runtime behaviour
-      // (it would panic with "not implemented") rather than silently mis-handling this.
-      throw new globalThis.Error("TSGO_UNIMPLEMENTED NodeFactory_UpdateTypeAssertion (KindTypeAssertionExpression in updateOuterExpression)");
+      throw new globalThis.Error(`Unexpected outer expression kind: ${outerExpression!.Kind}`);
     case KindAsExpression:
       return NodeFactory_UpdateAsExpression(f, AsAsExpression(outerExpression), expression, Node_Type(outerExpression));
     case KindSatisfiesExpression:

@@ -62,6 +62,8 @@ import { AsExportAssignment, AsBinaryExpression, AsElementAccessExpression, AsSh
 import { NodeFlagsAmbient, NodeFlagsReparsed } from "../../ast/generated/flags.js";
 import { SymbolFlagsAlias, SymbolFlagsModuleExports, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsInJSFile, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
+import { Node_Expression, Node_Type, Node_ElementList, Node_PropertyList, Node_Properties, Node_Elements, Node_Initializer } from "../../ast/ast.js";
+import { Node_Name } from "../../ast/spine.js";
 import { NewDiagnosticChain } from "../../ast/diagnostic.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
@@ -329,7 +331,7 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.areDeclarationFlagsIdentical","kind":"method","status":"stub","sigHash":"8a1aeba8b831e17fca88a174e5fc62a51381cdda9df3eff35e5abe85eed2780a","bodyHash":"0d6a0bbe32afc13624c3a9a372f5e097702e1d333e5fb55cd6a187702e11766c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.areDeclarationFlagsIdentical","kind":"method","status":"implemented","sigHash":"8a1aeba8b831e17fca88a174e5fc62a51381cdda9df3eff35e5abe85eed2780a","bodyHash":"0d6a0bbe32afc13624c3a9a372f5e097702e1d333e5fb55cd6a187702e11766c"}
  *
  * Go source:
  * func (c *Checker) areDeclarationFlagsIdentical(left *ast.Declaration, right *ast.Declaration) bool {
@@ -345,11 +347,18 @@ export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: Go
  * }
  */
 export function Checker_areDeclarationFlagsIdentical(receiver: GoPtr<Checker>, left: GoPtr<Declaration>, right: GoPtr<Declaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.areDeclarationFlagsIdentical");
+  if ((IsParameterDeclaration(left as GoPtr<Node>) && IsVariableDeclaration(right as GoPtr<Node>)) || (IsVariableDeclaration(left as GoPtr<Node>) && IsParameterDeclaration(right as GoPtr<Node>))) {
+    return true;
+  }
+  if (isOptionalDeclaration(left as GoPtr<Node>) !== isOptionalDeclaration(right as GoPtr<Node>)) {
+    return false;
+  }
+  const interestingFlags = ModifierFlagsPrivate | ModifierFlagsProtected | ModifierFlagsAsync | ModifierFlagsAbstract | ModifierFlagsReadonly | ModifierFlagsStatic;
+  return (getSelectedModifierFlags(left as GoPtr<Node>, interestingFlags) === getSelectedModifierFlags(right as GoPtr<Node>, interestingFlags)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSatisfiesExpression","kind":"method","status":"stub","sigHash":"698f7d11a65d816ba71672b34da4fef21a1681e3749a6afe9a1939a6bfbb09a0","bodyHash":"aecabc50b40ecd9bfaacef47982f804bc58ccfd2caaa9c1d9d14de6ae5f6b29d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSatisfiesExpression","kind":"method","status":"implemented","sigHash":"698f7d11a65d816ba71672b34da4fef21a1681e3749a6afe9a1939a6bfbb09a0","bodyHash":"aecabc50b40ecd9bfaacef47982f804bc58ccfd2caaa9c1d9d14de6ae5f6b29d"}
  *
  * Go source:
  * func (c *Checker) checkSatisfiesExpression(node *ast.Node) *Type {
@@ -366,7 +375,16 @@ export function Checker_areDeclarationFlagsIdentical(receiver: GoPtr<Checker>, l
  * }
  */
 export function Checker_checkSatisfiesExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSatisfiesExpression");
+  const typeNode = Node_Type(node);
+  Checker_checkSourceElement(receiver, typeNode);
+  const exprType = Checker_checkExpression(receiver, Node_Expression(node));
+  const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
+  if (Checker_isErrorType(receiver, targetType)) {
+    return targetType;
+  }
+  const errorNode = IfElse((typeNode!.Flags & NodeFlagsReparsed) !== 0, typeNode, node);
+  Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, exprType, targetType, errorNode, Node_Expression(node), Type_0_does_not_satisfy_the_expected_type_1, undefined);
+  return exprType;
 }
 
 /**

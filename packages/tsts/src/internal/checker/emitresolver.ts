@@ -2,14 +2,14 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice, GoMap } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
-import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression } from "../ast/ast.js";
-import { Node_Name } from "../ast/spine.js";
+import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer } from "../ast/ast.js";
+import { Node_Name, Node_AsNode } from "../ast/spine.js";
 import type { Node as NodeSpine } from "../ast/spine.js";
-import type { Declaration, ElementAccessExpression, IdentifierNode, ImportDeclaration, SignatureDeclaration } from "../ast/ast_generated.js";
-import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName } from "../ast/generated/casts.js";
-import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression } from "../ast/generated/predicates.js";
+import type { Declaration, ElementAccessExpression, IdentifierNode, ImportDeclaration, SignatureDeclaration, ImportAttributes } from "../ast/ast_generated.js";
+import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes } from "../ast/generated/casts.js";
+import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression, IsBindingElement, IsImportDeclaration } from "../ast/generated/predicates.js";
 import { IsBindingPattern } from "../ast/utilities.js";
-import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSTypeAlias, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsBindingElement, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode } from "../ast/utilities.js";
+import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSTypeAlias, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode } from "../ast/utilities.js";
 import type { JSDeclarationKind } from "../ast/utilities.js";
 import { JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty } from "../ast/utilities.js";
 import { CheckFlagsLate } from "../ast/checkflags.js";
@@ -18,12 +18,15 @@ import type { ModifierFlags } from "../ast/modifierflags.js";
 import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsConstEnumOnlyModule, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import { NodeFlagsAmbient, NodeFlagsJSDoc } from "../ast/generated/flags.js";
-import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration } from "../ast/generated/kinds.js";
+import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken } from "../ast/generated/kinds.js";
+import { NewKeywordTypeNode, NewKeywordExpression, NewStringLiteral, NewNumericLiteral, NewBigIntLiteral, NewPrefixUnaryExpression } from "../ast/generated/factory.js";
+import type { TokenFlags } from "../ast/tokenflags.js";
+import { TokenFlagsNone } from "../ast/tokenflags.js";
 import { NewReferenceResolver } from "../binder/referenceresolver.js";
 import type { ReferenceResolverHooks } from "../binder/referenceresolver.js";
 import type { ReferenceResolver } from "../binder/referenceresolver.js";
 import { CompilerOptions_ShouldPreserveConstEnums } from "../core/compileroptions.js";
-import type { ResolutionMode, CompilerOptions, ImportAttributes } from "../core/compileroptions.js";
+import type { ResolutionMode, CompilerOptions } from "../core/compileroptions.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { TSTrue, TSFalse, TSUnknown } from "../core/tristate.js";
@@ -33,26 +36,29 @@ import type { Result } from "../evaluator/evaluator.js";
 import { FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
 import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import type { EmitContext } from "../printer/emitcontext.js";
+import { EmitContext_ParseNode } from "../printer/emitcontext.js";
 import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, SymbolAccessibilityNotResolved, TypeReferenceSerializationKindUnknown, TypeReferenceSerializationKindPromise, TypeReferenceSerializationKindTypeWithConstructSignatureAndValue, TypeReferenceSerializationKindTypeWithCallSignature, TypeReferenceSerializationKindObjectType, TypeReferenceSerializationKindVoidNullableOrNeverType, TypeReferenceSerializationKindBooleanType, TypeReferenceSerializationKindNumberLikeType, TypeReferenceSerializationKindBigIntLikeType, TypeReferenceSerializationKindStringLikeType, TypeReferenceSerializationKindArrayLikeType, TypeReferenceSerializationKindESSymbolType } from "../printer/emitresolver.js";
 import type { EmitResolver as EmitResolver_969b36a1, SymbolAccessibilityResult, TypeReferenceSerializationKind, SymbolAccessibility } from "../printer/emitresolver.js";
 import { Some, Every } from "../core/core.js";
-import { Node_ForEachChild } from "../ast/spine.js";
+import { Node_ForEachChild, SourceFile_ForEachChild } from "../ast/spine.js";
 import type { Visitor } from "../ast/spine.js";
 import { NewNodeBuilder } from "./nodebuilder.js";
 import type { NodeBuilder } from "./nodebuilder.js";
 import { NodeBuilder_SerializeReturnTypeForSignature, NodeBuilder_SerializeTypeParametersForSignature, NodeBuilder_SerializeTypeForDeclaration, NodeBuilder_SerializeTypeForExpression, NodeBuilder_SymbolToExpression, NodeBuilder_TypeToTypeNode, NodeBuilder_IndexInfoToIndexSignatureDeclaration, NodeBuilder_TryJSTypeNodeToTypeNode } from "./nodebuilder.js";
 import { Checker_getJsxFactoryEntity, Checker_getJsxFragmentFactoryEntity } from "./jsx.js";
 import { Checker_isOptionalParameter } from "./utilities.js";
-import { isDeclarationReadonly, isOptionalDeclaration, containsNonMissingUndefinedType, getAnyImportSyntax } from "./utilities.js";
-import { Checker_getSymbolOfDeclaration, Checker_getSignaturesOfSymbol, Checker_getMergedSymbol, Checker_getExportsOfModule, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getSymbolFlagsEx, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getTypeOnlyAliasDeclaration, Checker_getTypeOnlyAliasDeclarationEx, Checker_resolveEntityName, Checker_getDeclaredTypeOfSymbol, Checker_getReferencedValueOrAliasSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbol, Checker_getGlobalSymbol, Checker_getMembersOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexInfosOfIndexSymbol, Checker_getParentOfSymbol, Checker_resolveExternalModuleSymbol, Checker_hasLateBindableName } from "./checker/symbols.js";
+import { isDeclarationReadonly, isOptionalDeclaration, containsNonMissingUndefinedType, getAnyImportSyntax, pseudoBigIntToString } from "./utilities.js";
+import { Checker_getSymbolOfDeclaration, Checker_getMergedSymbol, Checker_getExportsOfModule, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getSymbolFlagsEx, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getTypeOnlyAliasDeclaration, Checker_getTypeOnlyAliasDeclarationEx, Checker_resolveEntityName, Checker_getDeclaredTypeOfSymbol, Checker_getReferencedValueOrAliasSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbol, Checker_getGlobalSymbol, Checker_getMembersOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexInfosOfIndexSymbol, Checker_getParentOfSymbol, Checker_resolveExternalModuleSymbol, Checker_hasLateBindableName, Checker_getTargetOfExportSpecifier, Checker_getExternalModuleFileFromDeclaration } from "./checker/symbols.js";
 import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
 import { Checker_computeEnumMemberValues } from "./checker/symbols.js";
+import { Checker_getSignaturesOfSymbol } from "./checker/signatures.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { Checker_getTypeFromTypeNode, Checker_containsUndefinedType, Checker_isFunctionType, Checker_isArrayType, Checker_getPropertiesOfType } from "./checker/types.js";
 import { Checker_isConstructorType } from "./checker/signatures.js";
 import { Checker_isTypeAssignableToKind } from "./checker/relations.js";
 import { Checker_getCombinedModifierFlagsCached } from "./checker/support-queries.js";
-import { Checker_getThisContainer, Checker_markLinkedReferences, ReferenceHintUnspecified } from "./checker/support-queries.js";
+import { Checker_getThisContainer, Checker_markLinkedReferences } from "./checker/support-queries.js";
+import { ReferenceHintUnspecified } from "./checker/state.js";
 import { Checker_IsSymbolAccessible } from "./symbolaccessibility.js";
 import { Checker_GetEffectiveDeclarationFlags, Checker_GetResolutionModeOverride } from "./exports.js";
 import { Checker_GetConstantValue } from "./services.js";
@@ -60,9 +66,13 @@ import { Checker_tryGetElementAccessExpressionName } from "./flow.js";
 import { Checker_getResolvedSymbolOrNil } from "./checker/symbols.js";
 import { isFreshLiteralType, isConstEnumSymbol, isTupleType } from "./checker/state.js";
 import type { Checker, ReferenceHint } from "./checker/state.js";
-import { TypeFlagsAnyOrUnknown, TypeFlagsVoid, TypeFlagsNullable, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsBigIntLike, TypeFlagsStringLike, TypeFlagsEnumLike, TypeFlagsESSymbolLike, TypeFlagsLiteral } from "./types.js";
-import type { AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo } from "./types.js";
+import { TypeFlagsAnyOrUnknown, TypeFlagsVoid, TypeFlagsNullable, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsBigIntLike, TypeFlagsStringLike, TypeFlagsEnumLike, TypeFlagsESSymbolLike, TypeFlagsLiteral, TypeFlagsNever } from "./types.js";
+import type { AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo, LiteralType } from "./types.js";
+import { Type_AsLiteralType } from "./types.js";
 import type { NodeId } from "../ast/ids.js";
+import type { Symbol } from "../ast/symbol.js";
+import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
+import { Number_String, Number_Abs } from "../jsnum/jsnum.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e1a5f15cb940355789a75a1e6811da03657057f2f3447bd2d7e304ca1756361f"}
@@ -972,7 +982,8 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     }
   }
 
-  const aliasesToMakeVisible: GoSlice<GoPtr<Node>> = aliasesToMakeVisibleSet !== undefined ? Array.from(aliasesToMakeVisibleSet!.values()) : [];
+  const aliasesMap = aliasesToMakeVisibleSet as unknown as (Map<NodeId, GoPtr<Node>> | undefined);
+  const aliasesToMakeVisible: GoSlice<GoPtr<Node>> = aliasesMap !== undefined ? Array.from(aliasesMap.values()) : [];
   return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: aliasesToMakeVisible, ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
 }
 
@@ -1081,12 +1092,12 @@ export function EmitResolver_IsImplementationOfOverload(receiver: GoPtr<EmitReso
 export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<EmitResolver>, decl: GoPtr<ImportDeclaration>): bool {
   if (!IsParseTreeNode(decl as unknown as GoPtr<Node>)) { return false as bool; }
   const file = GetSourceFileOfNode(decl as unknown as GoPtr<Node>);
-  if (file === undefined || file!.Symbol === undefined) { return false as bool; }
+  if (file === undefined || Node_Symbol(file as unknown as GoPtr<Node>) === undefined) { return false as bool; }
   const importTarget = EmitResolver_GetExternalModuleFileFromDeclaration(receiver, decl as unknown as GoPtr<Node>);
   if (importTarget === undefined) { return false as bool; }
   if (importTarget === file) { return false as bool; }
   receiver!.checkerMu!.Lock();
-  const exports = Checker_getExportsOfModule(receiver!.checker, file!.Symbol);
+  const exports = Checker_getExportsOfModule(receiver!.checker, Node_Symbol(file as unknown as GoPtr<Node>));
   for (const [, s] of exports) {
     const merged = Checker_getMergedSymbol(receiver!.checker, s);
     if (merged !== s) {
@@ -1189,11 +1200,12 @@ export function EmitResolver_RequiresAddingImplicitUndefined(receiver: GoPtr<Emi
  * }
  */
 export function EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver: GoPtr<EmitResolver>, declaration: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.RequiresAddingImplicitUndefinedUnsafe");
+  if (!IsParseTreeNode(declaration)) { return false as bool; }
+  return EmitResolver_requiresAddingImplicitUndefined(receiver, declaration, symbol_, enclosingDeclaration);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefined","kind":"method","status":"stub","sigHash":"00a49f3511a7d9bb6d8adff81ad7f071eddcab42983eb6fdcafaef69e079489b","bodyHash":"634b0a127b317f4be0c942e1000ac4e55841fa53f347dc19644caa99647eb2c5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"00a49f3511a7d9bb6d8adff81ad7f071eddcab42983eb6fdcafaef69e079489b","bodyHash":"634b0a127b317f4be0c942e1000ac4e55841fa53f347dc19644caa99647eb2c5"}
  *
  * Go source:
  * func (r *EmitResolver) requiresAddingImplicitUndefined(declaration *ast.Node, symbol *ast.Symbol, enclosingDeclaration *ast.Node) bool {
@@ -1217,11 +1229,32 @@ export function EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver: GoP
  * }
  */
 export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<EmitResolver>, declaration: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefined");
+  if (!IsParseTreeNode(declaration)) { return false as bool; }
+  switch (declaration!.Kind) {
+    case KindPropertyDeclaration:
+    case KindPropertySignature:
+    case KindJSDocPropertyTag: {
+      if (symbol_ === undefined) {
+        symbol_ = Checker_getSymbolOfDeclaration(receiver!.checker, declaration);
+      }
+      const t = Checker_getTypeOfSymbol(receiver!.checker, symbol_);
+      return ((symbol_!.Flags & SymbolFlagsProperty) !== 0) &&
+             ((symbol_!.Flags & SymbolFlagsOptional) !== 0) &&
+             (isOptionalDeclaration(declaration) as unknown as bool) &&
+             (LinkStore_Has<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_) as bool) &&
+             ((LinkStore_Get<GoPtr<Symbol>, ReverseMappedSymbolLinks>(receiver!.checker!.ReverseMappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>, symbol_) as ReverseMappedSymbolLinks).mappedType !== undefined) &&
+             (containsNonMissingUndefinedType(receiver!.checker, t) as unknown as bool) as bool;
+    }
+    case KindParameter:
+    case KindJSDocParameterTag:
+      return EmitResolver_requiresAddingImplicitUndefinedWorker(receiver, declaration, enclosingDeclaration);
+    default:
+      throw new globalThis.Error("Node cannot possibly require adding undefined");
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefinedWorker","kind":"method","status":"stub","sigHash":"7c4d341cd258348d4b1fbf88b8b220f3d027c6044447d1d359df2a50066fa16b","bodyHash":"53237a8b50798adba0585a36172ddce293d633622c0441dd4845db490856687e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefinedWorker","kind":"method","status":"implemented","sigHash":"7c4d341cd258348d4b1fbf88b8b220f3d027c6044447d1d359df2a50066fa16b","bodyHash":"53237a8b50798adba0585a36172ddce293d633622c0441dd4845db490856687e"}
  *
  * Go source:
  * func (r *EmitResolver) requiresAddingImplicitUndefinedWorker(parameter *ast.Node, enclosingDeclaration *ast.Node) bool {
@@ -1229,11 +1262,11 @@ export function EmitResolver_requiresAddingImplicitUndefined(receiver: GoPtr<Emi
  * }
  */
 export function EmitResolver_requiresAddingImplicitUndefinedWorker(receiver: GoPtr<EmitResolver>, parameter: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.requiresAddingImplicitUndefinedWorker");
+  return ((EmitResolver_isRequiredInitializedParameter(receiver, parameter, enclosingDeclaration) || EmitResolver_isOptionalUninitializedParameterProperty(receiver, parameter)) && !EmitResolver_declaredParameterTypeContainsUndefined(receiver, parameter)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.declaredParameterTypeContainsUndefined","kind":"method","status":"stub","sigHash":"9aebeb6532826c197c29671210921fa9ffe23c7eddf515d412ea13195987fc52","bodyHash":"b0ee11d123c7e7a03b6f782015a32fab3b761a5724a0f06e8d64c79ff5214cf7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.declaredParameterTypeContainsUndefined","kind":"method","status":"implemented","sigHash":"9aebeb6532826c197c29671210921fa9ffe23c7eddf515d412ea13195987fc52","bodyHash":"b0ee11d123c7e7a03b6f782015a32fab3b761a5724a0f06e8d64c79ff5214cf7"}
  *
  * Go source:
  * func (r *EmitResolver) declaredParameterTypeContainsUndefined(parameter *ast.Node) bool {
@@ -1250,11 +1283,14 @@ export function EmitResolver_requiresAddingImplicitUndefinedWorker(receiver: GoP
  * }
  */
 export function EmitResolver_declaredParameterTypeContainsUndefined(receiver: GoPtr<EmitResolver>, parameter: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.declaredParameterTypeContainsUndefined");
+  const typeNode = Node_Type(parameter);
+  if (typeNode === undefined) { return false as bool; }
+  const t = Checker_getTypeFromTypeNode(receiver!.checker, typeNode);
+  return (Checker_isErrorType(receiver!.checker, t) || Checker_containsUndefinedType(receiver!.checker, t)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalUninitializedParameterProperty","kind":"method","status":"stub","sigHash":"28e7c6942fba0ceaf1b740ba85f6996f414baec006ae92f88cc3c3bf45b4ef7c","bodyHash":"31ef2b5b99a909987e95d8f225c84a48ad19e8ec80b05e04cf58c5c2c475b3bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalUninitializedParameterProperty","kind":"method","status":"implemented","sigHash":"28e7c6942fba0ceaf1b740ba85f6996f414baec006ae92f88cc3c3bf45b4ef7c","bodyHash":"31ef2b5b99a909987e95d8f225c84a48ad19e8ec80b05e04cf58c5c2c475b3bc"}
  *
  * Go source:
  * func (r *EmitResolver) isOptionalUninitializedParameterProperty(parameter *ast.Node) bool {
@@ -1265,11 +1301,14 @@ export function EmitResolver_declaredParameterTypeContainsUndefined(receiver: Go
  * }
  */
 export function EmitResolver_isOptionalUninitializedParameterProperty(receiver: GoPtr<EmitResolver>, parameter: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalUninitializedParameterProperty");
+  return (receiver!.checker!.strictNullChecks &&
+          EmitResolver_isOptionalParameter(receiver, parameter) &&
+          Node_Initializer(parameter) === undefined &&
+          HasSyntacticModifier(parameter, ModifierFlagsParameterPropertyModifier)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isRequiredInitializedParameter","kind":"method","status":"stub","sigHash":"6535d89b3fab6380348a900164647716e2ed4015f825a4303080983ad82bce31","bodyHash":"979526ec82b83eb74d0665dcf40029b7cbebcc4d866e59744c01bff78cf20317"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isRequiredInitializedParameter","kind":"method","status":"implemented","sigHash":"6535d89b3fab6380348a900164647716e2ed4015f825a4303080983ad82bce31","bodyHash":"979526ec82b83eb74d0665dcf40029b7cbebcc4d866e59744c01bff78cf20317"}
  *
  * Go source:
  * func (r *EmitResolver) isRequiredInitializedParameter(parameter *ast.Node, enclosingDeclaration *ast.Node) bool {
@@ -1283,11 +1322,17 @@ export function EmitResolver_isOptionalUninitializedParameterProperty(receiver: 
  * }
  */
 export function EmitResolver_isRequiredInitializedParameter(receiver: GoPtr<EmitResolver>, parameter: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isRequiredInitializedParameter");
+  if (!receiver!.checker!.strictNullChecks || EmitResolver_isOptionalParameter(receiver, parameter) || Node_Initializer(parameter) === undefined) {
+    return false as bool;
+  }
+  if (HasSyntacticModifier(parameter, ModifierFlagsParameterPropertyModifier)) {
+    return (enclosingDeclaration !== undefined && IsFunctionLikeDeclaration(enclosingDeclaration)) as bool;
+  }
+  return true as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalParameter","kind":"method","status":"stub","sigHash":"cbdad5682cd469be2d6b817b518cdb94eef85b190e0e76e6c9b4e1ac0e13bff5","bodyHash":"8add18d817130b79a06c99b4e717dc51381f70920c0417951deee07ce3dfe105"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalParameter","kind":"method","status":"implemented","sigHash":"cbdad5682cd469be2d6b817b518cdb94eef85b190e0e76e6c9b4e1ac0e13bff5","bodyHash":"8add18d817130b79a06c99b4e717dc51381f70920c0417951deee07ce3dfe105"}
  *
  * Go source:
  * func (r *EmitResolver) isOptionalParameter(node *ast.Node) bool {
@@ -1295,11 +1340,11 @@ export function EmitResolver_isRequiredInitializedParameter(receiver: GoPtr<Emit
  * }
  */
 export function EmitResolver_isOptionalParameter(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isOptionalParameter");
+  return Checker_isOptionalParameter(receiver!.checker, node);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLiteralConstDeclaration","kind":"method","status":"stub","sigHash":"b435651d1125685d2a357275bab64b122b2c8e923bd57f2841a8725acfb70a4e","bodyHash":"89e94b860c31440dc4100cb8348d620f9c33b535c799430f6927cd801f82b93a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLiteralConstDeclaration","kind":"method","status":"implemented","sigHash":"b435651d1125685d2a357275bab64b122b2c8e923bd57f2841a8725acfb70a4e","bodyHash":"89e94b860c31440dc4100cb8348d620f9c33b535c799430f6927cd801f82b93a"}
  *
  * Go source:
  * func (r *EmitResolver) IsLiteralConstDeclaration(node *ast.Node) bool {
@@ -1316,11 +1361,18 @@ export function EmitResolver_isOptionalParameter(receiver: GoPtr<EmitResolver>, 
  * }
  */
 export function EmitResolver_IsLiteralConstDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsLiteralConstDeclaration");
+  if (!IsParseTreeNode(node)) { return false as bool; }
+  if ((isDeclarationReadonly(node) as unknown as bool) || (IsVariableDeclaration(node) && IsVarConst(node))) {
+    receiver!.checkerMu!.Lock();
+    const result = isFreshLiteralType(Checker_getTypeOfSymbol(receiver!.checker, Checker_getSymbolOfDeclaration(receiver!.checker, node))) as bool;
+    receiver!.checkerMu!.Unlock();
+    return result;
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclarationUnsafe","kind":"method","status":"stub","sigHash":"d879c3cb5459a3775b59e7f71c0ef4120bd1c85910019c6dc8f04d5cfef6f410","bodyHash":"a969920964043f4c569643a69a0e533159df1091de5fa29a2f081c1e1e7d36f0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclarationUnsafe","kind":"method","status":"implemented","sigHash":"d879c3cb5459a3775b59e7f71c0ef4120bd1c85910019c6dc8f04d5cfef6f410","bodyHash":"a969920964043f4c569643a69a0e533159df1091de5fa29a2f081c1e1e7d36f0"}
  *
  * Go source:
  * func (r *EmitResolver) IsExpandoFunctionDeclarationUnsafe(node *ast.Node) bool {
@@ -1339,11 +1391,16 @@ export function EmitResolver_IsLiteralConstDeclaration(receiver: GoPtr<EmitResol
  * }
  */
 export function EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclarationUnsafe");
+  if (!IsParseTreeNode(node)) { return false as bool; }
+  const props = EmitResolver_GetPropertiesOfContainerFunction(receiver, node);
+  for (const p of props) {
+    if (IsExpandoPropertyDeclaration(p!.ValueDeclaration)) { return true as bool; }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclaration","kind":"method","status":"stub","sigHash":"ef85f65cf3f392cd8bea618b857ab46b1a2b6b76d6ed3a060353568a2577d218","bodyHash":"7639c03b624c3f991535833de9ebe9c40ecdc71dc5d6a4dcf0d8e23aece9ea2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclaration","kind":"method","status":"implemented","sigHash":"ef85f65cf3f392cd8bea618b857ab46b1a2b6b76d6ed3a060353568a2577d218","bodyHash":"7639c03b624c3f991535833de9ebe9c40ecdc71dc5d6a4dcf0d8e23aece9ea2f"}
  *
  * Go source:
  * func (r *EmitResolver) IsExpandoFunctionDeclaration(node *ast.Node) bool {
@@ -1353,11 +1410,14 @@ export function EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver: GoPtr<
  * }
  */
 export function EmitResolver_IsExpandoFunctionDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsExpandoFunctionDeclaration");
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver, node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isSymbolAccessible","kind":"method","status":"stub","sigHash":"1a060ae5a6cdfa7ed0c0274d6b40a47feaf66f8f6c3748adb0d349b9a78d83a6","bodyHash":"482f80e6b6325524081003d7f2af01ad4e5c916d36f612c84584bf2817c59ff5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isSymbolAccessible","kind":"method","status":"implemented","sigHash":"1a060ae5a6cdfa7ed0c0274d6b40a47feaf66f8f6c3748adb0d349b9a78d83a6","bodyHash":"482f80e6b6325524081003d7f2af01ad4e5c916d36f612c84584bf2817c59ff5"}
  *
  * Go source:
  * func (r *EmitResolver) isSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasToMarkVisible bool) printer.SymbolAccessibilityResult {
@@ -1365,11 +1425,11 @@ export function EmitResolver_IsExpandoFunctionDeclaration(receiver: GoPtr<EmitRe
  * }
  */
 export function EmitResolver_isSymbolAccessible(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isSymbolAccessible");
+  return Checker_IsSymbolAccessible(receiver!.checker, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsSymbolAccessible","kind":"method","status":"stub","sigHash":"25a09ce277e54cfcae1d28a15d5af3ec5ce19d118ae88dd8de7629983c1cff28","bodyHash":"203ad94a55b328c6bea6e5726fd3e00f00e21d4041310edb3b1cca203430ac31"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsSymbolAccessible","kind":"method","status":"implemented","sigHash":"25a09ce277e54cfcae1d28a15d5af3ec5ce19d118ae88dd8de7629983c1cff28","bodyHash":"203ad94a55b328c6bea6e5726fd3e00f00e21d4041310edb3b1cca203430ac31"}
  *
  * Go source:
  * func (r *EmitResolver) IsSymbolAccessible(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, shouldComputeAliasToMarkVisible bool) printer.SymbolAccessibilityResult {
@@ -1381,11 +1441,11 @@ export function EmitResolver_isSymbolAccessible(receiver: GoPtr<EmitResolver>, s
  * }
  */
 export function EmitResolver_IsSymbolAccessible(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsSymbolAccessible");
+  return EmitResolver_isSymbolAccessible(receiver, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isConstEnumOrConstEnumOnlyModule","kind":"func","status":"stub","sigHash":"55d841918a92ed5c2c67ea7b6d8fa0359e2ea281c23c8953dc793fda495b3dca","bodyHash":"a2d41aaabe390d42221701002e1516de3c195f0aca1f32893766700c71431d19"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isConstEnumOrConstEnumOnlyModule","kind":"func","status":"implemented","sigHash":"55d841918a92ed5c2c67ea7b6d8fa0359e2ea281c23c8953dc793fda495b3dca","bodyHash":"a2d41aaabe390d42221701002e1516de3c195f0aca1f32893766700c71431d19"}
  *
  * Go source:
  * func isConstEnumOrConstEnumOnlyModule(s *ast.Symbol) bool {
@@ -1393,11 +1453,11 @@ export function EmitResolver_IsSymbolAccessible(receiver: GoPtr<EmitResolver>, s
  * }
  */
 export function isConstEnumOrConstEnumOnlyModule(s: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isConstEnumOrConstEnumOnlyModule");
+  return (isConstEnumSymbol(s) || (s!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsReferencedAliasDeclaration","kind":"method","status":"stub","sigHash":"717f24e25b198ea905902e5cda747cbff3ba8b6d3aa86cafaaba334235f3d48f","bodyHash":"37852013bca78e03c6af2ec1602a79d633852eb992a50268562fa9ed7d7f1581"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsReferencedAliasDeclaration","kind":"method","status":"implemented","sigHash":"717f24e25b198ea905902e5cda747cbff3ba8b6d3aa86cafaaba334235f3d48f","bodyHash":"37852013bca78e03c6af2ec1602a79d633852eb992a50268562fa9ed7d7f1581"}
  *
  * Go source:
  * func (r *EmitResolver) IsReferencedAliasDeclaration(node *ast.Node) bool {
@@ -1405,10 +1465,10 @@ export function isConstEnumOrConstEnumOnlyModule(s: GoPtr<Symbol>): bool {
  * 	if !c.canCollectSymbolAliasAccessibilityData || !ast.IsParseTreeNode(node) {
  * 		return true
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	if ast.IsAliasSymbolDeclaration(node) {
  * 		if symbol := c.getSymbolOfDeclaration(node); symbol != nil {
  * 			aliasLinks := c.aliasSymbolLinks.Get(symbol)
@@ -1427,11 +1487,32 @@ export function isConstEnumOrConstEnumOnlyModule(s: GoPtr<Symbol>): bool {
  * }
  */
 export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsReferencedAliasDeclaration");
+  const c = receiver!.checker;
+  if (!c!.canCollectSymbolAliasAccessibilityData || !IsParseTreeNode(node)) { return true as bool; }
+  receiver!.checkerMu!.Lock();
+  let result = false as bool;
+  if (IsAliasSymbolDeclaration(node)) {
+    const symbol = Checker_getSymbolOfDeclaration(c, node);
+    if (symbol !== undefined) {
+      const aliasLinks = LinkStore_Get<GoPtr<Symbol>, AliasSymbolLinks>(c!.aliasSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, AliasSymbolLinks>, symbol) as AliasSymbolLinks;
+      if (aliasLinks.referenced) {
+        result = true as bool;
+      } else {
+        const target = aliasLinks.aliasTarget;
+        if (target !== undefined && (Node_ModifierFlags(node) & ModifierFlagsExport) !== 0 &&
+            (Checker_getSymbolFlags(c, target) & SymbolFlagsValue) !== 0 &&
+            (CompilerOptions_ShouldPreserveConstEnums(c!.compilerOptions) || !isConstEnumOrConstEnumOnlyModule(target))) {
+          result = true as bool;
+        }
+      }
+    }
+  }
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsValueAliasDeclaration","kind":"method","status":"stub","sigHash":"6eb06098100beddb69c05b21b1f82ac058a34aa8688bb865973d4f65252e1d29","bodyHash":"713d138434ef0b7ecd5c2ce8db971c9204b985bb1b504b24e796b48e71d1b4b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsValueAliasDeclaration","kind":"method","status":"implemented","sigHash":"6eb06098100beddb69c05b21b1f82ac058a34aa8688bb865973d4f65252e1d29","bodyHash":"713d138434ef0b7ecd5c2ce8db971c9204b985bb1b504b24e796b48e71d1b4b3"}
  *
  * Go source:
  * func (r *EmitResolver) IsValueAliasDeclaration(node *ast.Node) bool {
@@ -1439,24 +1520,29 @@ export function EmitResolver_IsReferencedAliasDeclaration(receiver: GoPtr<EmitRe
  * 	if !c.canCollectSymbolAliasAccessibilityData || !ast.IsParseTreeNode(node) {
  * 		return true
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.isValueAliasDeclarationWorker(node)
  * }
  */
 export function EmitResolver_IsValueAliasDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsValueAliasDeclaration");
+  const c = receiver!.checker;
+  if (!c!.canCollectSymbolAliasAccessibilityData || !IsParseTreeNode(node)) { return true as bool; }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_isValueAliasDeclarationWorker(receiver, node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isValueAliasDeclarationWorker","kind":"method","status":"stub","sigHash":"650d97f1b4538d75dede6bc80cb02898b55bdb549d465bc418225789a66cc083","bodyHash":"0c1f3a58c356bfe8783c1a253ca3fe932dbd5448c17995cd428b375d4ee4044a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isValueAliasDeclarationWorker","kind":"method","status":"implemented","sigHash":"650d97f1b4538d75dede6bc80cb02898b55bdb549d465bc418225789a66cc083","bodyHash":"0c1f3a58c356bfe8783c1a253ca3fe932dbd5448c17995cd428b375d4ee4044a"}
  *
  * Go source:
  * func (r *EmitResolver) isValueAliasDeclarationWorker(node *ast.Node) bool {
  * 	c := r.checker
- * 
+ *
  * 	switch node.Kind {
  * 	case ast.KindImportEqualsDeclaration:
  * 		return r.isAliasResolvedToValue(c.getSymbolOfDeclaration(node), false /*excludeTypeOnlyValues* /)
@@ -1484,11 +1570,40 @@ export function EmitResolver_IsValueAliasDeclaration(receiver: GoPtr<EmitResolve
  * }
  */
 export function EmitResolver_isValueAliasDeclarationWorker(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isValueAliasDeclarationWorker");
+  const c = receiver!.checker;
+  switch (node!.Kind) {
+    case KindImportEqualsDeclaration:
+      return EmitResolver_isAliasResolvedToValue(receiver, Checker_getSymbolOfDeclaration(c, node), false as bool);
+    case KindImportClause:
+    case KindNamespaceImport:
+    case KindImportSpecifier:
+    case KindExportSpecifier: {
+      const symbol = Checker_getSymbolOfDeclaration(c, node);
+      return (symbol !== undefined && EmitResolver_isAliasResolvedToValue(receiver, symbol, true as bool)) as bool;
+    }
+    case KindExportDeclaration: {
+      const exportClause = AsExportDeclaration(node)!.ExportClause;
+      return (exportClause !== undefined && (IsNamespaceExport(exportClause) ||
+          Some(Node_Elements(exportClause) ?? [], receiver!.isValueAliasDeclaration))) as bool;
+    }
+    case KindExportAssignment: {
+      if (Node_Expression(node) !== undefined && Node_Expression(node)!.Kind === KindIdentifier) {
+        return EmitResolver_isAliasResolvedToValue(receiver, Checker_getSymbolOfDeclaration(c, node), true as bool);
+      }
+      return true as bool;
+    }
+    case KindBinaryExpression: {
+      if (isCommonJSModuleExports(node) && IsIdentifier(AsBinaryExpression(node)!.Right as unknown as GoPtr<Node>)) {
+        return EmitResolver_isAliasResolvedToValue(receiver, Checker_getSymbolOfDeclaration(c, node), true as bool);
+      }
+      break;
+    }
+  }
+  return false as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isAliasResolvedToValue","kind":"method","status":"stub","sigHash":"b5795d926058ff57cae27d522ffbc91d550208b22e1532ec95646f7dfb851b43","bodyHash":"aabb566cc4e6b2f01a3fdbb34991c76dd5074350267826da3ec3691c14beee5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isAliasResolvedToValue","kind":"method","status":"implemented","sigHash":"b5795d926058ff57cae27d522ffbc91d550208b22e1532ec95646f7dfb851b43","bodyHash":"aabb566cc4e6b2f01a3fdbb34991c76dd5074350267826da3ec3691c14beee5e"}
  *
  * Go source:
  * func (r *EmitResolver) isAliasResolvedToValue(symbol *ast.Symbol, excludeTypeOnlyValues bool) bool {
@@ -1517,11 +1632,25 @@ export function EmitResolver_isValueAliasDeclarationWorker(receiver: GoPtr<EmitR
  * }
  */
 export function EmitResolver_isAliasResolvedToValue(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, excludeTypeOnlyValues: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.isAliasResolvedToValue");
+  const c = receiver!.checker;
+  if (symbol_ === undefined) { return false as bool; }
+  if (symbol_!.ValueDeclaration !== undefined) {
+    const container = GetSourceFileOfNode(symbol_!.ValueDeclaration);
+    if (container !== undefined) {
+      const fileSymbol = Checker_getSymbolOfDeclaration(c, container as unknown as GoPtr<Node>);
+      Checker_resolveExternalModuleSymbol(c, fileSymbol, false as bool);
+    }
+  }
+  const target = Checker_getExportSymbolOfValueSymbolIfExported(c, Checker_resolveAlias(c, symbol_));
+  if (target === c!.unknownSymbol) {
+    return (!excludeTypeOnlyValues || Checker_getTypeOnlyAliasDeclaration(c, symbol_) === undefined) as bool;
+  }
+  return ((Checker_getSymbolFlagsEx(c, symbol_, excludeTypeOnlyValues, true as bool) & SymbolFlagsValue) !== 0 &&
+         (CompilerOptions_ShouldPreserveConstEnums(c!.compilerOptions) || !isConstEnumOrConstEnumOnlyModule(target))) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsTopLevelValueImportEqualsWithEntityName","kind":"method","status":"stub","sigHash":"d7740a9ec1a77e662fef5b7050f33bb691439aa61a55e83a0ec00e0898928802","bodyHash":"37c124c02032a5b721519b499521a81ffa90e400c32a954f4d7753f87d0d6007"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsTopLevelValueImportEqualsWithEntityName","kind":"method","status":"implemented","sigHash":"d7740a9ec1a77e662fef5b7050f33bb691439aa61a55e83a0ec00e0898928802","bodyHash":"37c124c02032a5b721519b499521a81ffa90e400c32a954f4d7753f87d0d6007"}
  *
  * Go source:
  * func (r *EmitResolver) IsTopLevelValueImportEqualsWithEntityName(node *ast.Node) bool {
@@ -1536,25 +1665,39 @@ export function EmitResolver_isAliasResolvedToValue(receiver: GoPtr<EmitResolver
  * 		(ast.NodeIsMissing(node.AsImportEqualsDeclaration().ModuleReference) || node.AsImportEqualsDeclaration().ModuleReference.Kind == ast.KindExternalModuleReference) {
  * 		return false
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.isAliasResolvedToValue(c.getSymbolOfDeclaration(node), false /*excludeTypeOnlyValues* /)
  * }
  */
 export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.IsTopLevelValueImportEqualsWithEntityName");
+  const c = receiver!.checker;
+  if (!c!.canCollectSymbolAliasAccessibilityData) { return true as bool; }
+  if (!IsParseTreeNode(node) || node!.Kind !== KindImportEqualsDeclaration || node!.Parent!.Kind !== KindSourceFile) {
+    return false as bool;
+  }
+  if (IsImportEqualsDeclaration(node)) {
+    const moduleRef = AsImportEqualsDeclaration(node)!.ModuleReference;
+    if (!NodeIsPresent(moduleRef) || moduleRef!.Kind === KindExternalModuleReference) {
+      return false as bool;
+    }
+  }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_isAliasResolvedToValue(receiver, Checker_getSymbolOfDeclaration(c, node), false as bool);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"stub","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"ff63d59a057dd43e7f41ad1a872b6fdeada0fa90704228268fd7a5470d38a590"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively","kind":"method","status":"implemented","sigHash":"474ac0a224404c1495e94bb611991095ec65e482008121a7f8f5df45f861b99c","bodyHash":"ff63d59a057dd43e7f41ad1a872b6fdeada0fa90704228268fd7a5470d38a590"}
  *
  * Go source:
  * func (r *EmitResolver) MarkLinkedReferencesRecursively(file *ast.SourceFile) {
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	if file != nil {
  * 		var visit ast.Visitor
  * 		visit = func(n *ast.Node) bool {
@@ -1573,29 +1716,48 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
  * }
  */
 export function EmitResolver_MarkLinkedReferencesRecursively(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.MarkLinkedReferencesRecursively");
+  receiver!.checkerMu!.Lock();
+  if (file !== undefined) {
+    const visit: Visitor = (n: GoPtr<Node>): bool => {
+      if (IsImportEqualsDeclaration(n) && (Node_ModifierFlags(n) & ModifierFlagsExport) === 0) {
+        return false as bool;
+      }
+      if (IsImportDeclaration(n)) {
+        return false as bool;
+      }
+      Checker_markLinkedReferences(receiver!.checker, n, ReferenceHintUnspecified, undefined, undefined);
+      Node_ForEachChild(n, visit);
+      return false as bool;
+    };
+    SourceFile_ForEachChild(file, visit);
+  }
+  receiver!.checkerMu!.Unlock();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetExternalModuleFileFromDeclaration","kind":"method","status":"stub","sigHash":"f71583282ec6da51469717f1202d4fae5c11dc8e85065d015eb84f17a5128b7d","bodyHash":"66bbe4ce5b39d9a494b64409d08de979fbe910ffa140aa1980ae462f2088276d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetExternalModuleFileFromDeclaration","kind":"method","status":"implemented","sigHash":"f71583282ec6da51469717f1202d4fae5c11dc8e85065d015eb84f17a5128b7d","bodyHash":"66bbe4ce5b39d9a494b64409d08de979fbe910ffa140aa1980ae462f2088276d"}
  *
  * Go source:
  * func (r *EmitResolver) GetExternalModuleFileFromDeclaration(declaration *ast.Node) *ast.SourceFile {
  * 	if !ast.IsParseTreeNode(declaration) {
  * 		return nil
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
  * 	return r.checker.getExternalModuleFileFromDeclaration(declaration)
  * }
  */
 export function EmitResolver_GetExternalModuleFileFromDeclaration(receiver: GoPtr<EmitResolver>, declaration: GoPtr<Node>): GoPtr<SourceFile> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetExternalModuleFileFromDeclaration");
+  if (!IsParseTreeNode(declaration)) { return undefined; }
+  receiver!.checkerMu!.Lock();
+  const result = Checker_getExternalModuleFileFromDeclaration(receiver!.checker, declaration);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.getReferenceResolver","kind":"method","status":"stub","sigHash":"9a7d1e2f7a6101fef19047756bfa994288dc43f36c7a16b6710d0f26af62619e","bodyHash":"3d16b11bd0b9143f43ed644052bba279ce9fde4cfe6f154a28df57519c42c766"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.getReferenceResolver","kind":"method","status":"implemented","sigHash":"9a7d1e2f7a6101fef19047756bfa994288dc43f36c7a16b6710d0f26af62619e","bodyHash":"3d16b11bd0b9143f43ed644052bba279ce9fde4cfe6f154a28df57519c42c766"}
  *
  * Go source:
  * func (r *EmitResolver) getReferenceResolver() binder.ReferenceResolver {
@@ -1615,30 +1777,47 @@ export function EmitResolver_GetExternalModuleFileFromDeclaration(receiver: GoPt
  * }
  */
 export function EmitResolver_getReferenceResolver(receiver: GoPtr<EmitResolver>): ReferenceResolver {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.getReferenceResolver");
+  if (receiver!.referenceResolver === undefined) {
+    const hooks: ReferenceResolverHooks = {
+      ResolveName: receiver!.checker!.resolveName,
+      GetResolvedSymbol: Checker_getResolvedSymbolOrNil.bind(undefined, receiver!.checker),
+      GetMergedSymbol: Checker_getMergedSymbol.bind(undefined, receiver!.checker),
+      GetParentOfSymbol: Checker_getParentOfSymbol.bind(undefined, receiver!.checker),
+      GetSymbolOfDeclaration: Checker_getSymbolOfDeclaration.bind(undefined, receiver!.checker),
+      GetTypeOnlyAliasDeclaration: Checker_getTypeOnlyAliasDeclarationEx.bind(undefined, receiver!.checker),
+      GetExportSymbolOfValueSymbolIfExported: Checker_getExportSymbolOfValueSymbolIfExported.bind(undefined, receiver!.checker),
+      GetElementAccessExpressionName: Checker_tryGetElementAccessExpressionName.bind(undefined, receiver!.checker),
+    };
+    receiver!.referenceResolver = NewReferenceResolver(receiver!.checker!.compilerOptions, hooks);
+  }
+  return receiver!.referenceResolver;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedExportContainer","kind":"method","status":"stub","sigHash":"3ca25ab164d051213a962f34d38323c06ec0ef2c68029cecb60892f7513dd9ad","bodyHash":"d87c2036c6993a2015ffbe297777de85fd7a2d456e2959de78c1d58d9d059965"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedExportContainer","kind":"method","status":"implemented","sigHash":"3ca25ab164d051213a962f34d38323c06ec0ef2c68029cecb60892f7513dd9ad","bodyHash":"d87c2036c6993a2015ffbe297777de85fd7a2d456e2959de78c1d58d9d059965"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedExportContainer(node *ast.IdentifierNode, prefixLocals bool) *ast.Node /*SourceFile|ModuleDeclaration|EnumDeclaration* / {
  * 	if !ast.IsParseTreeNode(node) {
  * 		return nil
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.getReferenceResolver().GetReferencedExportContainer(node, prefixLocals)
  * }
  */
 export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedExportContainer");
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return undefined; }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedExportContainer(node, prefixLocals);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.SetReferencedImportDeclaration","kind":"method","status":"stub","sigHash":"b5b8412c2f0ef7be54ea2e7290ca9d4f3999d88e46509c479c9d3e66d0c77dba","bodyHash":"7aeb570c71739686b9b807ad8064f82ea31fb4560e25deecb2621ade1739e860"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.SetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"b5b8412c2f0ef7be54ea2e7290ca9d4f3999d88e46509c479c9d3e66d0c77dba","bodyHash":"7aeb570c71739686b9b807ad8064f82ea31fb4560e25deecb2621ade1739e860"}
  *
  * Go source:
  * func (r *EmitResolver) SetReferencedImportDeclaration(node *ast.IdentifierNode, ref *ast.Declaration) {
@@ -1648,11 +1827,13 @@ export function EmitResolver_GetReferencedExportContainer(receiver: GoPtr<EmitRe
  * }
  */
 export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.SetReferencedImportDeclaration");
+  receiver!.checkerMu!.Lock();
+  (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>) as JSXLinks).importRef = ref as unknown as GoPtr<Node>;
+  receiver!.checkerMu!.Unlock();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedImportDeclaration","kind":"method","status":"stub","sigHash":"9777eb7297cb07d97a36464f0547131283dd17a9d0dc18aabdb565192e36b5c5","bodyHash":"98df8d2c6b056e1e00281fb2c30cdbcabd40f498d7bf56cb6213d417da4124b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedImportDeclaration","kind":"method","status":"implemented","sigHash":"9777eb7297cb07d97a36464f0547131283dd17a9d0dc18aabdb565192e36b5c5","bodyHash":"98df8d2c6b056e1e00281fb2c30cdbcabd40f498d7bf56cb6213d417da4124b6"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedImportDeclaration(node *ast.IdentifierNode) *ast.Declaration {
@@ -1661,7 +1842,7 @@ export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<Emit
  * 	if !ast.IsParseTreeNode(node) {
  * 		return r.jsxLinks.Get(node).importRef
  * 	}
- * 
+ *
  * 	symbol := r.checker.getReferencedValueOrAliasSymbol(node)
  * 	if ast.IsNonLocalAlias(symbol, ast.SymbolFlagsValue) && r.checker.getTypeOnlyAliasDeclarationEx(symbol, ast.SymbolFlagsValue) == nil {
  * 		return r.checker.getDeclarationOfAliasSymbol(symbol)
@@ -1670,64 +1851,88 @@ export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<Emit
  * }
  */
 export function EmitResolver_GetReferencedImportDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedImportDeclaration");
+  receiver!.checkerMu!.Lock();
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) {
+    const result = (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>) as JSXLinks).importRef as unknown as GoPtr<Declaration>;
+    receiver!.checkerMu!.Unlock();
+    return result;
+  }
+  const symbol = Checker_getReferencedValueOrAliasSymbol(receiver!.checker, node as unknown as GoPtr<Node>);
+  let result: GoPtr<Declaration> = undefined;
+  if (IsNonLocalAlias(symbol, SymbolFlagsValue as SymbolFlags) && Checker_getTypeOnlyAliasDeclarationEx(receiver!.checker, symbol, SymbolFlagsValue as SymbolFlags) === undefined) {
+    result = Checker_getDeclarationOfAliasSymbol(receiver!.checker, symbol) as unknown as GoPtr<Declaration>;
+  }
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclaration","kind":"method","status":"stub","sigHash":"803806a7359f7d4db410f9b3040a67107fb7b683612295599c65908a68d08546","bodyHash":"a8bf1e38bd7b83104c1823513c43e67653098f08488e96986e395a23fbfc1889"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclaration","kind":"method","status":"implemented","sigHash":"803806a7359f7d4db410f9b3040a67107fb7b683612295599c65908a68d08546","bodyHash":"a8bf1e38bd7b83104c1823513c43e67653098f08488e96986e395a23fbfc1889"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedValueDeclaration(node *ast.IdentifierNode) *ast.Declaration {
  * 	if !ast.IsParseTreeNode(node) {
  * 		return nil
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.getReferenceResolver().GetReferencedValueDeclaration(node)
  * }
  */
 export function EmitResolver_GetReferencedValueDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoPtr<Declaration> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclaration");
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return undefined; }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclaration(node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"stub","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa","bodyHash":"5e5adc4ee3583ab55fe00181c683b78596a409630cbafb6c93aa40f111942e1a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations","kind":"method","status":"implemented","sigHash":"674b6496f4eee784f978466051e5fe86f2d4c34405d21aa6c01df25bfed8a8aa","bodyHash":"5e5adc4ee3583ab55fe00181c683b78596a409630cbafb6c93aa40f111942e1a"}
  *
  * Go source:
  * func (r *EmitResolver) GetReferencedValueDeclarations(node *ast.IdentifierNode) []*ast.Declaration {
  * 	if !ast.IsParseTreeNode(node) {
  * 		return nil
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.getReferenceResolver().GetReferencedValueDeclarations(node)
  * }
  */
 export function EmitResolver_GetReferencedValueDeclarations(receiver: GoPtr<EmitResolver>, node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedValueDeclarations");
+  if (!IsParseTreeNode(node as unknown as GoPtr<Node>)) { return []; }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedValueDeclarations(node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetElementAccessExpressionName","kind":"method","status":"stub","sigHash":"b5d005c2b4dd3f43d471430fc55e53e10fd5357e33710abfd06d2247654f668a","bodyHash":"89f5953ca1d7ec68fc7ffbbb8d6b7b2aab44b38ccdebb889566543ef13b45226"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetElementAccessExpressionName","kind":"method","status":"implemented","sigHash":"b5d005c2b4dd3f43d471430fc55e53e10fd5357e33710abfd06d2247654f668a","bodyHash":"89f5953ca1d7ec68fc7ffbbb8d6b7b2aab44b38ccdebb889566543ef13b45226"}
  *
  * Go source:
  * func (r *EmitResolver) GetElementAccessExpressionName(expression *ast.ElementAccessExpression) string {
  * 	if !ast.IsParseTreeNode(expression.AsNode()) {
  * 		return ""
  * 	}
- * 
+ *
  * 	r.checkerMu.Lock()
  * 	defer r.checkerMu.Unlock()
- * 
+ *
  * 	return r.getReferenceResolver().GetElementAccessExpressionName(expression)
  * }
  */
 export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<EmitResolver>, expression: GoPtr<ElementAccessExpression>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetElementAccessExpressionName");
+  if (!IsParseTreeNode(Node_AsNode(expression as unknown as GoPtr<Node>))) { return ""; }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_getReferenceResolver(receiver).GetElementAccessExpressionName(expression);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**

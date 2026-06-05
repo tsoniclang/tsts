@@ -1,79 +1,56 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
-import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_FlowNodeData, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_Name } from "../../ast/ast.js";
-import type { Node, SourceFile } from "../../ast/ast.js";
+import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_Name, Node_TagName, Node_Symbol } from "../../ast/ast.js";
+import type { Node, SourceFile, Expression } from "../../ast/ast.js";
+import type { FlowNode } from "../../ast/flow.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import { CompareDiagnostics } from "../../ast/diagnostic.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
-import { KindClassDeclaration, KindClassExpression, KindEnumDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindMethodDeclaration, KindModuleDeclaration, KindParameter, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment } from "../../ast/generated/kinds.js";
+import { KindCallExpression, KindClassDeclaration, KindClassExpression, KindDecorator, KindElementAccessExpression, KindEnumDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindJsxOpeningElement, KindJsxSelfClosingElement, KindMethodDeclaration, KindModuleDeclaration, KindNewExpression, KindNullKeyword, KindParameter, KindPropertyAccessExpression, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment, KindTaggedTemplateExpression, KindTypeReference } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/kind_generated.js";
 import { NodeFlagsUnreachable } from "../../ast/nodeflags.js";
 import { IsBindingPattern, IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
+import { InternalSymbolNameComputed } from "../../ast/symbol.js";
 import { SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsGetAccessor, SymbolFlagsInterface, SymbolFlagsModule, SymbolFlagsNamespace, SymbolFlagsNamespaceModule, SymbolFlagsOptional, SymbolFlagsType, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/symbolflags.js";
-import { IsClassLike, IsDeprecatedDeclarationWithCachedFlags, IsFunctionExpressionOrArrowFunction, IsFunctionLikeDeclaration, GetInvokedExpression, GetJSDocDeprecatedTag, GetSourceFileOfNode, IsEnumConst, IsEntityNameExpression, IsInstantiatedModule, IsParameterPropertyDeclaration, IsPotentiallyExecutableNode, IsPlainJSFile, IsStatic, IsTypeDeclaration } from "../../ast/utilities.js";
+import { IsBindingPattern, IsClassLike, IsDeprecatedDeclarationWithCachedFlags, IsFunctionExpressionOrArrowFunction, IsFunctionLikeDeclaration, GetInvokedExpression, GetJSDocDeprecatedTag, GetSourceFileOfNode, IsEnumConst, IsEntityNameExpression, IsInstantiatedModule, IsParameterPropertyDeclaration, IsPotentiallyExecutableNode, IsPlainJSFile, IsStatic, IsTypeDeclaration, SkipParentheses } from "../../ast/utilities.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import { SourceFile_FileName } from "../../ast/ast.js";
-import { Node_End } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_Pos } from "../../ast/spine.js";
+import { AsPropertyDeclaration, AsHeritageClause, AsQualifiedName, AsTaggedTemplateExpression, AsElementAccessExpression, AsTypeReferenceNode } from "../../ast/generated/casts.js";
 import { Set_Has, Set_Add } from "../../collections/set.js";
 import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
-import { IfElse, Every, Some, Filter, Find } from "../../core/core.js";
+import { IfElse, Every, Some, Filter, Find, OrElse } from "../../core/core.js";
 import { LinkStore_Get, LinkStore_Has } from "../../core/linkstore.js";
 import { NodeCoreModules } from "../../core/nodemodules.js";
-import { NewTextRange } from "../../core/text.js";
+import { NewTextRange, TextRange_ContainsInclusive } from "../../core/text.js";
 import { TSFalse } from "../../core/tristate.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
-import { Declaration_name_conflicts_with_built_in_global_identifier_0, X_0_was_exported_here, X_0_was_imported_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_namespace_here, Cannot_access_0_1_because_0_is_a_type_but_not_a_namespace_Did_you_mean_to_retrieve_the_type_of_the_property_1_in_0_with_0_1, Cannot_use_namespace_0_as_a_value, Cannot_use_namespace_0_as_a_type, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_es2015_or_later, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Did_you_mean_to_use_1_in_0, X_0_refers_to_a_value_but_is_being_used_as_a_type_here_Did_you_mean_typeof_0, Cannot_find_name_0_Did_you_mean_the_static_member_1_0, Cannot_find_name_0_Did_you_mean_the_instance_member_this_0, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, An_interface_cannot_extend_a_primitive_type_like_0_It_can_only_extend_other_named_object_types, A_class_cannot_extend_a_primitive_type_like_0_Classes_can_only_extend_constructable_values, A_class_cannot_implement_a_primitive_type_like_0_It_can_only_implement_other_named_object_types, Unreachable_code_detected, X_0_is_deprecated, The_declaration_was_marked_as_deprecated_here, The_signature_0_of_1_is_deprecated, Unable_to_resolve_signature_of_class_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_parameter_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_property_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_method_decorator_when_called_as_an_expression, Type_0_must_have_a_Symbol_asyncIterator_method_that_returns_an_async_iterator, Type_0_must_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_can_only_be_iterated_through_when_using_the_downlevelIteration_flag_or_with_a_target_of_es2015_or_higher, Type_0_is_not_an_array_type_or_a_string_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_is_not_an_array_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, UnusedKindLocal, UnusedKindParameter, TypeFactsIsNull, TypeFactsIsNull as TypeFactsIsNull_, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, Object_is_of_type_unknown, X_0_is_of_type_unknown, Object_is_possibly_null, Object_is_possibly_null_or_undefined, Object_is_possibly_undefined, X_0_is_possibly_null, X_0_is_possibly_null_or_undefined, X_0_is_possibly_undefined, The_value_0_cannot_be_used_here, Cannot_invoke_an_object_which_is_possibly_null, Cannot_invoke_an_object_which_is_possibly_null_or_undefined, Cannot_invoke_an_object_which_is_possibly_undefined, Type_0_has_no_call_signatures, Type_0_has_no_construct_signatures, Not_all_constituents_of_type_0_are_callable, Not_all_constituents_of_type_0_are_constructable, No_constituent_of_type_0_is_callable, No_constituent_of_type_0_is_constructable, Each_member_of_the_union_type_0_has_signatures_but_none_of_those_signatures_are_compatible_with_each_other, Each_member_of_the_union_type_0_has_construct_signatures_but_none_of_those_signatures_are_compatible_with_each_other, This_expression_is_not_callable, This_expression_is_not_constructable, This_expression_is_not_callable_because_it_is_a_get_accessor_Did_you_mean_to_use_it_without, Did_you_forget_to_use_await, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead, Operator_0_cannot_be_applied_to_types_1_and_2, This_comparison_appears_to_be_unintentional_because_the_types_0_and_1_have_no_overlap, Cannot_find_name_0, Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function, No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun_and_then_add_bun_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later, Cannot_extend_an_interface_0_Did_you_mean_implements, A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter, Expected_at_least_0_arguments_but_got_1, Expected_0_arguments_but_got_1, Expected_0_arguments_but_got_1_Did_you_forget_to_include_void_in_your_type_argument_to_Promise, No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments, No_overload_matches_this_call, The_last_overload_gave_the_following_error, The_last_overload_is_declared_here, An_argument_matching_this_binding_pattern_was_not_provided, An_argument_for_0_was_not_provided, Arguments_for_the_rest_parameter_0_were_not_provided, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_0, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_at_least_0, Expected_0_type_arguments_but_got_1, No_overload_expects_0_type_arguments_but_overloads_do_exist_that_expect_either_1_or_2_type_arguments, Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Type_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations, Cannot_redeclare_block_scoped_variable_0, Duplicate_identifier_0, X_0_was_also_declared_here, X_and_here, X_0_is_referenced_directly_or_indirectly_in_its_own_type_annotation, X_0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer, Circular_definition_of_import_alias_0, Object_literal_s_property_0_implicitly_has_an_1_type, An_import_alias_cannot_reference_a_declaration_that_was_exported_using_export_type, An_import_alias_cannot_reference_a_declaration_that_was_imported_using_import_type, Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor as _MsgInit } from "../../diagnostics/generated/messages.js";
+import { Declaration_name_conflicts_with_built_in_global_identifier_0, X_0_was_exported_here, X_0_was_imported_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_namespace_here, Cannot_access_0_1_because_0_is_a_type_but_not_a_namespace_Did_you_mean_to_retrieve_the_type_of_the_property_1_in_0_with_0_1, Cannot_use_namespace_0_as_a_value, Cannot_use_namespace_0_as_a_type, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_es2015_or_later, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Did_you_mean_to_use_1_in_0, X_0_refers_to_a_value_but_is_being_used_as_a_type_here_Did_you_mean_typeof_0, Cannot_find_name_0_Did_you_mean_the_static_member_1_0, Cannot_find_name_0_Did_you_mean_the_instance_member_this_0, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, An_interface_cannot_extend_a_primitive_type_like_0_It_can_only_extend_other_named_object_types, A_class_cannot_extend_a_primitive_type_like_0_Classes_can_only_extend_constructable_values, A_class_cannot_implement_a_primitive_type_like_0_It_can_only_implement_other_named_object_types, Unreachable_code_detected, X_0_is_deprecated, The_declaration_was_marked_as_deprecated_here, The_signature_0_of_1_is_deprecated, Unable_to_resolve_signature_of_class_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_parameter_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_property_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_method_decorator_when_called_as_an_expression, Type_0_must_have_a_Symbol_asyncIterator_method_that_returns_an_async_iterator, Type_0_must_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_can_only_be_iterated_through_when_using_the_downlevelIteration_flag_or_with_a_target_of_es2015_or_higher, Type_0_is_not_an_array_type_or_a_string_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_is_not_an_array_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, Object_is_of_type_unknown, X_0_is_of_type_unknown, Object_is_possibly_null, Object_is_possibly_null_or_undefined, Object_is_possibly_undefined, X_0_is_possibly_null, X_0_is_possibly_null_or_undefined, X_0_is_possibly_undefined, The_value_0_cannot_be_used_here, Cannot_invoke_an_object_which_is_possibly_null, Cannot_invoke_an_object_which_is_possibly_null_or_undefined, Cannot_invoke_an_object_which_is_possibly_undefined, Type_0_has_no_call_signatures, Type_0_has_no_construct_signatures, Not_all_constituents_of_type_0_are_callable, Not_all_constituents_of_type_0_are_constructable, No_constituent_of_type_0_is_callable, No_constituent_of_type_0_is_constructable, Each_member_of_the_union_type_0_has_signatures_but_none_of_those_signatures_are_compatible_with_each_other, Each_member_of_the_union_type_0_has_construct_signatures_but_none_of_those_signatures_are_compatible_with_each_other, This_expression_is_not_callable, This_expression_is_not_constructable, This_expression_is_not_callable_because_it_is_a_get_accessor_Did_you_mean_to_use_it_without, Did_you_forget_to_use_await, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead, Operator_0_cannot_be_applied_to_types_1_and_2, This_comparison_appears_to_be_unintentional_because_the_types_0_and_1_have_no_overlap, Cannot_find_name_0, Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function, No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun_and_then_add_bun_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later, Cannot_extend_an_interface_0_Did_you_mean_implements, A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter, Expected_at_least_0_arguments_but_got_1, Expected_0_arguments_but_got_1, Expected_0_arguments_but_got_1_Did_you_forget_to_include_void_in_your_type_argument_to_Promise, No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments, No_overload_matches_this_call, The_last_overload_gave_the_following_error, The_last_overload_is_declared_here, An_argument_matching_this_binding_pattern_was_not_provided, An_argument_for_0_was_not_provided, Arguments_for_the_rest_parameter_0_were_not_provided, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_0, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_at_least_0, Expected_0_type_arguments_but_got_1, No_overload_expects_0_type_arguments_but_overloads_do_exist_that_expect_either_1_or_2_type_arguments, Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Type_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations, Cannot_redeclare_block_scoped_variable_0, Duplicate_identifier_0, X_0_was_also_declared_here, X_and_here, X_0_is_referenced_directly_or_indirectly_in_its_own_type_annotation, X_0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer, Circular_definition_of_import_alias_0, Object_literal_s_property_0_implicitly_has_an_1_type, An_import_alias_cannot_reference_a_declaration_that_was_exported_using_export_type, An_import_alias_cannot_reference_a_declaration_that_was_imported_using_import_type, Type_0_is_not_an_array_type_or_a_string_type, Type_0_is_not_an_array_type } from "../../diagnostics/generated/messages.js";
 import { GetTokenPosOfNode, SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { DeclarationNameToString, GetTextOfNode } from "../../scanner/utilities.js";
 import type { Signature, SignatureKind, Type } from "../types.js";
-import { SignatureFlagsIsSignatureCandidateForOverloadFailure, TypeFlagsAny, TypeFlagsNever, TypeFlagsNullable, TypeFlagsUnion, TypeFlagsUnknown, ObjectFlagsContainsWideningType, ExportTypeLinks } from "../types.js";
-import { Type_Types } from "../types.js";
+import { SignatureFlagsIsSignatureCandidateForOverloadFailure, TypeFlagsAny, TypeFlagsNever, TypeFlagsNullable, TypeFlagsUnion, TypeFlagsUnknown, ObjectFlagsContainsWideningType } from "../types.js";
+import type { ExportTypeLinks } from "../types.js";
+import { Type_Types, Type_AsInterfaceType } from "../types.js";
 import { NewDiagnosticForNode, NewDiagnosticChainForNode, entityNameToString, isTypeReferenceIdentifier, tryGetPropertyAccessOrIdentifierToString, isObjectLiteralType } from "../utilities.js";
 import { IsInTypeQuery } from "../utilities.js";
 import { Checker_checkNotCanceled } from "../utilities.js";
 import type { CallState, Checker, IterationUse, TypeFacts, UnusedKind, WideningKind } from "./state.js";
-import type { int } from "@tsonic/core/types.js";
-import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_FlowNodeData, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_Name, SourceFile_FileName } from "../../ast/ast.js";
-import { Diagnostic_AddRelatedInfo, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain, CompareDiagnostics } from "../../ast/diagnostic.js";
-import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
-import { KindClassDeclaration, KindClassExpression, KindEnumDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindMethodDeclaration, KindModuleDeclaration, KindParameter, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment } from "../../ast/generated/kinds.js";
-import { NodeFlagsUnreachable } from "../../ast/nodeflags.js";
-import { IsBindingPattern, IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
-import { SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsGetAccessor, SymbolFlagsInterface, SymbolFlagsModule, SymbolFlagsNamespace, SymbolFlagsNamespaceModule, SymbolFlagsType, SymbolFlagsValue } from "../../ast/generated/flags.js";
-import type { NodeFlags } from "../../ast/generated/flags.js";
-import { IsClassLike, IsDeprecatedDeclarationWithCachedFlags, IsFunctionExpressionOrArrowFunction, IsFunctionLikeDeclaration, GetInvokedExpression, GetJSDocDeprecatedTag, GetSourceFileOfNode, IsEnumConst, IsEntityNameExpression, IsInstantiatedModule, IsParameterPropertyDeclaration, IsPotentiallyExecutableNode, IsPlainJSFile, IsStatic, IsTypeDeclaration } from "../../ast/utilities.js";
-import { Node_End } from "../../ast/spine.js";
-import { Set_Has, Set_Add } from "../../collections/set.js";
-import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
-import { IfElse, Every, Some, Filter, Find } from "../../core/core.js";
-import { LinkStore_Get, LinkStore_Has } from "../../core/linkstore.js";
-import { NodeCoreModules } from "../../core/nodemodules.js";
-import { NewTextRange } from "../../core/text.js";
-import { TSFalse, Tristate_IsTrue } from "../../core/tristate.js";
-import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
-import { Declaration_name_conflicts_with_built_in_global_identifier_0, X_0_was_exported_here, X_0_was_imported_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_namespace_here, Cannot_access_0_1_because_0_is_a_type_but_not_a_namespace_Did_you_mean_to_retrieve_the_type_of_the_property_1_in_0_with_0_1, Cannot_use_namespace_0_as_a_value, Cannot_use_namespace_0_as_a_type, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_es2015_or_later, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Did_you_mean_to_use_1_in_0, X_0_refers_to_a_value_but_is_being_used_as_a_type_here_Did_you_mean_typeof_0, Cannot_find_name_0_Did_you_mean_the_static_member_1_0, Cannot_find_name_0_Did_you_mean_the_instance_member_this_0, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, An_interface_cannot_extend_a_primitive_type_like_0_It_can_only_extend_other_named_object_types, A_class_cannot_extend_a_primitive_type_like_0_Classes_can_only_extend_constructable_values, A_class_cannot_implement_a_primitive_type_like_0_It_can_only_implement_other_named_object_types, Unreachable_code_detected, X_0_is_deprecated, The_declaration_was_marked_as_deprecated_here, The_signature_0_of_1_is_deprecated, Unable_to_resolve_signature_of_class_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_parameter_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_property_decorator_when_called_as_an_expression, Unable_to_resolve_signature_of_method_decorator_when_called_as_an_expression, Type_0_must_have_a_Symbol_asyncIterator_method_that_returns_an_async_iterator, Type_0_must_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_can_only_be_iterated_through_when_using_the_downlevelIteration_flag_or_with_a_target_of_es2015_or_higher, Type_0_is_not_an_array_type_or_a_string_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, Type_0_is_not_an_array_type_or_does_not_have_a_Symbol_iterator_method_that_returns_an_iterator, Object_is_of_type_unknown, X_0_is_of_type_unknown, Object_is_possibly_null, Object_is_possibly_null_or_undefined, Object_is_possibly_undefined, X_0_is_possibly_null, X_0_is_possibly_null_or_undefined, X_0_is_possibly_undefined, The_value_0_cannot_be_used_here, Cannot_invoke_an_object_which_is_possibly_null, Cannot_invoke_an_object_which_is_possibly_null_or_undefined, Cannot_invoke_an_object_which_is_possibly_undefined, Type_0_has_no_call_signatures, Type_0_has_no_construct_signatures, Not_all_constituents_of_type_0_are_callable, Not_all_constituents_of_type_0_are_constructable, No_constituent_of_type_0_is_callable, No_constituent_of_type_0_is_constructable, Each_member_of_the_union_type_0_has_signatures_but_none_of_those_signatures_are_compatible_with_each_other, Each_member_of_the_union_type_0_has_construct_signatures_but_none_of_those_signatures_are_compatible_with_each_other, This_expression_is_not_callable, This_expression_is_not_constructable, This_expression_is_not_callable_because_it_is_a_get_accessor_Did_you_mean_to_use_it_without, Did_you_forget_to_use_await, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead, Operator_0_cannot_be_applied_to_types_1_and_2, This_comparison_appears_to_be_unintentional_because_the_types_0_and_1_have_no_overlap, Cannot_find_name_0, Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function, No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun, Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun_and_then_add_bun_to_the_types_field_in_your_tsconfig, Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later, Cannot_extend_an_interface_0_Did_you_mean_implements, A_spread_argument_must_either_have_a_tuple_type_or_be_passed_to_a_rest_parameter, Expected_at_least_0_arguments_but_got_1, Expected_0_arguments_but_got_1, Expected_0_arguments_but_got_1_Did_you_forget_to_include_void_in_your_type_argument_to_Promise, No_overload_expects_0_arguments_but_overloads_do_exist_that_expect_either_1_or_2_arguments, No_overload_matches_this_call, The_last_overload_gave_the_following_error, The_last_overload_is_declared_here, An_argument_matching_this_binding_pattern_was_not_provided, An_argument_for_0_was_not_provided, Arguments_for_the_rest_parameter_0_were_not_provided, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_0, The_runtime_will_invoke_the_decorator_with_1_arguments_but_the_decorator_expects_at_least_0, Expected_0_type_arguments_but_got_1, No_overload_expects_0_type_arguments_but_overloads_do_exist_that_expect_either_1_or_2_type_arguments, Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Type_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor, Enum_declarations_can_only_merge_with_namespace_or_other_enum_declarations, Cannot_redeclare_block_scoped_variable_0, Duplicate_identifier_0, X_0_was_also_declared_here, X_and_here, X_0_is_referenced_directly_or_indirectly_in_its_own_type_annotation, X_0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer, Circular_definition_of_import_alias_0, Object_literal_s_property_0_implicitly_has_an_1_type, An_import_alias_cannot_reference_a_declaration_that_was_exported_using_export_type, An_import_alias_cannot_reference_a_declaration_that_was_imported_using_import_type } from "../../diagnostics/generated/messages.js";
-import { GetTokenPosOfNode, SkipTrivia, TokenToString } from "../../scanner/scanner.js";
-import { DeclarationNameToString, GetTextOfNode } from "../../scanner/utilities.js";
-import { SignatureFlagsIsSignatureCandidateForOverloadFailure, TypeFlagsAny, TypeFlagsNever, TypeFlagsNullable, TypeFlagsUnion, TypeFlagsUnknown, ObjectFlagsContainsWideningType } from "../types.js";
-import type { ExportTypeLinks } from "../types.js";
-import { Type_Types } from "../types.js";
-import { NewDiagnosticForNode, NewDiagnosticChainForNode, entityNameToString, isTypeReferenceIdentifier, tryGetPropertyAccessOrIdentifierToString, isObjectLiteralType } from "../utilities.js";
-import { IsInTypeQuery, Checker_checkNotCanceled } from "../utilities.js";
 import { createDiagnosticForNode, getAdjustedNodeForError, getFirstDeclaration, isES2015OrLaterConstructorName, isES2015OrLaterIterable, isPrimitiveTypeName, TypeFactsIsNull, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, UnusedKindLocal, UnusedKindParameter, WideningKindNormal, IterationTypeKindReturn, IterationTypeKindYield, IterationTypeKindNext } from "./state.js";
 import { Checker_error } from "./support.js";
 import { Checker_getThisContainer, Checker_addImplementationSuccessElaboration } from "./support-queries.js";
 import { Checker_getCombinedNodeFlagsCached, Checker_errorAndMaybeSuggestAwait, Checker_checkSourceFile } from "./syntax-checking.js";
-import { Checker_getContextualSignatureForFunctionLikeDeclaration, Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_getMinTypeArgumentCount, Checker_getParameterCount, Checker_getMinArgumentCount, Checker_getReturnTypeOfSignature, Checker_getSignaturesOfType, Checker_getSpreadArgumentIndex, Checker_getTypeArguments, Checker_hasCorrectTypeArgumentArity, Checker_hasEffectiveRestParameter, Checker_isSignatureApplicable, Checker_checkTypeArguments, Checker_resolveUntypedCall, Checker_getIterationTypeOfIterable } from "./signatures.js";
-import { Checker_checkTypeAssignableTo, Checker_checkTypeAssignableToEx, Checker_getTypeNamesForErrorDisplay, Checker_isTypeAssignableTo } from "../relater.js";
-import { Checker_getDeclaredTypeOfSymbol, Checker_getPropertyOfType, Checker_getSymbolFlags, Checker_getSymbolOfDeclaration, Checker_getTypeOfSymbol, Checker_resolveEntityName, Checker_resolveSymbol, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getParentOfSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getTypeOnlyDeclarationOfEntityName, Checker_getEntityNameForExtendingInterface } from "./symbols.js";
+import { Checker_getContextualSignatureForFunctionLikeDeclaration, Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_getMinTypeArgumentCount, Checker_getReturnTypeOfSignature, Checker_getSignaturesOfType, Checker_getSpreadArgumentIndex, Checker_getTypeArguments, Checker_hasCorrectTypeArgumentArity, Checker_isSignatureApplicable, Checker_checkTypeArguments, Checker_resolveUntypedCall } from "./signatures.js";
+import { Checker_checkTypeAssignableTo, Checker_checkTypeAssignableToEx, Checker_getTypeNamesForErrorDisplay, Checker_isTypeAssignableTo, Checker_getParameterCount, Checker_getMinArgumentCount, Checker_hasEffectiveRestParameter } from "../relater.js";
+import { Checker_createTypeFromGenericGlobalType, Checker_getDeclaredTypeOfSymbol, Checker_getPropertyOfType, Checker_getSymbolFlags, Checker_getSymbolOfDeclaration, Checker_getTypeOfSymbol, Checker_resolveEntityName, Checker_resolveSymbol, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getParentOfSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getTypeOnlyDeclarationOfEntityName, Checker_getEntityNameForExtendingInterface } from "./symbols.js";
 import { Checker_symbolToString, Checker_TypeToString, Checker_signatureToString } from "../printer.js";
-import { Checker_getAwaitedTypeOfPromise, Checker_GetNonNullableType, Checker_getTypeFacts, Checker_getAwaitedType, Checker_isArrayOrTupleType, Checker_isEmptyObjectType, Checker_isGenericType, Checker_getPropertiesOfObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_maybeMappedType, Checker_getBaseTypesIfUnrelated, Checker_reportImplicitAny } from "./types.js";
+import { Checker_getAwaitedTypeOfPromise, Checker_GetNonNullableType, Checker_getTypeFacts, Checker_getAwaitedType, Checker_isArrayOrTupleType, Checker_isEmptyObjectType, Checker_isGenericType, Checker_getPropertiesOfObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_maybeMappedType, Checker_getBaseTypesIfUnrelated, Checker_reportImplicitAny, Checker_getIterationTypeOfIterable } from "./types.js";
 import { Checker_isReachableFlowNode } from "../flow.js";
 import * as slices from "../../../go/slices.js";
 
@@ -111,7 +88,7 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForInvalidInitializer","kind":"method","status":"stub","sigHash":"545bc6dc60215ddada3483404be71e382f2c6d901475546357e886af6780c1e5","bodyHash":"a3e2fe29f59c3e992abffb0e961ff8d1280d2be59b21ea7d5ccb39ae8036c473"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForInvalidInitializer","kind":"method","status":"implemented","sigHash":"545bc6dc60215ddada3483404be71e382f2c6d901475546357e886af6780c1e5","bodyHash":"a3e2fe29f59c3e992abffb0e961ff8d1280d2be59b21ea7d5ccb39ae8036c473"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForInvalidInitializer(errorLocation *ast.Node, name string, propertyWithInvalidInitializer *ast.Node, result *ast.Symbol) bool {
@@ -133,11 +110,23 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
  * }
  */
 export function Checker_checkAndReportErrorForInvalidInitializer(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, propertyWithInvalidInitializer: GoPtr<Node>, result: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForInvalidInitializer");
+  const c = receiver!;
+  if (!CompilerOptions_GetEmitStandardClassFields(c.compilerOptions)) {
+    if (errorLocation !== undefined && result === undefined && Checker_checkAndReportErrorForMissingPrefix(receiver, errorLocation, name)) {
+      return true;
+    }
+    const prop = AsPropertyDeclaration(propertyWithInvalidInitializer);
+    const message = IfElse(errorLocation !== undefined && prop!.Type !== undefined && TextRange_ContainsInclusive(prop!.Type!.Loc, Node_Pos(errorLocation)),
+      Type_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor,
+      Initializer_of_instance_member_variable_0_cannot_reference_identifier_1_declared_in_the_constructor);
+    Checker_error(receiver, errorLocation, message, DeclarationNameToString(Node_Name(prop)), name);
+    return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForMissingPrefix","kind":"method","status":"stub","sigHash":"18fec22445b3cef2b8732ec7c40f63337829008c60880632232cab440959b11b","bodyHash":"4b956a1db6478786cc99f7595cc59ce153db1fcc962234b13dde9f05ef28bed5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForMissingPrefix","kind":"method","status":"implemented","sigHash":"18fec22445b3cef2b8732ec7c40f63337829008c60880632232cab440959b11b","bodyHash":"4b956a1db6478786cc99f7595cc59ce153db1fcc962234b13dde9f05ef28bed5"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForMissingPrefix(errorLocation *ast.Node, name string) bool {
@@ -173,11 +162,36 @@ export function Checker_checkAndReportErrorForInvalidInitializer(receiver: GoPtr
  * }
  */
 export function Checker_checkAndReportErrorForMissingPrefix(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForMissingPrefix");
+  const c = receiver!;
+  if (!IsIdentifier(errorLocation) || Node_Text(errorLocation) !== name || isTypeReferenceIdentifier(errorLocation) || IsInTypeQuery(errorLocation)) {
+    return false;
+  }
+  const container = Checker_getThisContainer(receiver, errorLocation, false as bool, false as bool);
+  for (let location = container; location!.Parent !== undefined; location = location!.Parent) {
+    if (IsClassLike(location!.Parent)) {
+      const classSymbol = Checker_getSymbolOfDeclaration(receiver, location!.Parent);
+      if (classSymbol === undefined) {
+        break;
+      }
+      const constructorType = Checker_getTypeOfSymbol(receiver, classSymbol);
+      if (Checker_getPropertyOfType(receiver, constructorType, name) !== undefined) {
+        Checker_error(receiver, errorLocation, Cannot_find_name_0_Did_you_mean_the_static_member_1_0, name, Checker_symbolToString(receiver, classSymbol));
+        return true;
+      }
+      if (location === container && !IsStatic(location)) {
+        const instanceType = Type_AsInterfaceType(Checker_getDeclaredTypeOfSymbol(receiver, classSymbol))!.thisType;
+        if (Checker_getPropertyOfType(receiver, instanceType, name) !== undefined) {
+          Checker_error(receiver, errorLocation, Cannot_find_name_0_Did_you_mean_the_instance_member_this_0, name);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsNamespace","kind":"method","status":"stub","sigHash":"1a5465f5cb71210ce9c66203b82a59640bedf3f9cc5d804102cf93ba7e087ea7","bodyHash":"462340466bef5b58c911a67382fc9666c090be80d3287a9df403d564a728eb6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsNamespace","kind":"method","status":"implemented","sigHash":"1a5465f5cb71210ce9c66203b82a59640bedf3f9cc5d804102cf93ba7e087ea7","bodyHash":"462340466bef5b58c911a67382fc9666c090be80d3287a9df403d564a728eb6e"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForUsingTypeAsNamespace(errorLocation *ast.Node, name string, meaning ast.SymbolFlags) bool {
@@ -202,11 +216,28 @@ export function Checker_checkAndReportErrorForMissingPrefix(receiver: GoPtr<Chec
  * }
  */
 export function Checker_checkAndReportErrorForUsingTypeAsNamespace(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsNamespace");
+  const c = receiver!;
+  if (meaning === SymbolFlagsNamespace) {
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsNamespace) as SymbolFlags, undefined, false as bool, false as bool));
+    if (symbol !== undefined) {
+      const parent = errorLocation!.Parent;
+      if (IsQualifiedName(parent)) {
+        const propName = Node_Text(AsQualifiedName(parent)!.Right);
+        const propType = Checker_getPropertyOfType(receiver, Checker_getDeclaredTypeOfSymbol(receiver, symbol), propName);
+        if (propType !== undefined) {
+          Checker_error(receiver, parent, Cannot_access_0_1_because_0_is_a_type_but_not_a_namespace_Did_you_mean_to_retrieve_the_type_of_the_property_1_in_0_with_0_1, name, propName);
+          return true;
+        }
+      }
+      Checker_error(receiver, errorLocation, X_0_only_refers_to_a_type_but_is_being_used_as_a_namespace_here, name);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExportingPrimitiveType","kind":"method","status":"stub","sigHash":"4aa8fd510c1fb35a2d0738c5287544f29f30187c7013589da4e2d0a3b137d0ae","bodyHash":"f07fa3514735334d11d8892bd19371b498c07f3030207e96a50390b080cc0b39"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExportingPrimitiveType","kind":"method","status":"implemented","sigHash":"4aa8fd510c1fb35a2d0738c5287544f29f30187c7013589da4e2d0a3b137d0ae","bodyHash":"f07fa3514735334d11d8892bd19371b498c07f3030207e96a50390b080cc0b39"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForExportingPrimitiveType(errorLocation *ast.Node, name string) bool {
@@ -218,11 +249,16 @@ export function Checker_checkAndReportErrorForUsingTypeAsNamespace(receiver: GoP
  * }
  */
 export function Checker_checkAndReportErrorForExportingPrimitiveType(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExportingPrimitiveType");
+  const c = receiver!;
+  if (isPrimitiveTypeName(name) && errorLocation!.Parent!.Kind === KindExportSpecifier) {
+    Checker_error(receiver, errorLocation, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, name);
+    return true;
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingNamespaceAsTypeOrValue","kind":"method","status":"stub","sigHash":"0d029e232b7b6952e7700bfd75c6c7794ef8c5a43056bb2a767519b1e5aef711","bodyHash":"de23ff341c240d3e83b621869bb39e712d5838eec7003535b93a8a7cea723418"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingNamespaceAsTypeOrValue","kind":"method","status":"implemented","sigHash":"0d029e232b7b6952e7700bfd75c6c7794ef8c5a43056bb2a767519b1e5aef711","bodyHash":"de23ff341c240d3e83b621869bb39e712d5838eec7003535b93a8a7cea723418"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForUsingNamespaceAsTypeOrValue(errorLocation *ast.Node, name string, meaning ast.SymbolFlags) bool {
@@ -243,11 +279,25 @@ export function Checker_checkAndReportErrorForExportingPrimitiveType(receiver: G
  * }
  */
 export function Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingNamespaceAsTypeOrValue");
+  const c = receiver!;
+  if ((meaning & ((SymbolFlagsValue & ~SymbolFlagsType) as SymbolFlags)) !== 0) {
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, SymbolFlagsNamespaceModule, undefined, false as bool, false as bool));
+    if (symbol !== undefined) {
+      Checker_error(receiver, errorLocation, Cannot_use_namespace_0_as_a_value, name);
+      return true;
+    }
+  } else if ((meaning & ((SymbolFlagsType & ~SymbolFlagsValue) as SymbolFlags)) !== 0) {
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, SymbolFlagsModule, undefined, false as bool, false as bool));
+    if (symbol !== undefined) {
+      Checker_error(receiver, errorLocation, Cannot_use_namespace_0_as_a_type, name);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsValue","kind":"method","status":"stub","sigHash":"708fc07da39463f993e39abde0e8538b685108304c6552f09c94c5b41b7b430d","bodyHash":"5007957548c7e8186343de7d5d40ea3426bd41b52ed27d8f74835c84799bc0ff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsValue","kind":"method","status":"implemented","sigHash":"708fc07da39463f993e39abde0e8538b685108304c6552f09c94c5b41b7b430d","bodyHash":"5007957548c7e8186343de7d5d40ea3426bd41b52ed27d8f74835c84799bc0ff"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForUsingTypeAsValue(errorLocation *ast.Node, name string, meaning ast.SymbolFlags) bool {
@@ -288,11 +338,45 @@ export function Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue(receiv
  * }
  */
 export function Checker_checkAndReportErrorForUsingTypeAsValue(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingTypeAsValue");
+  const c = receiver!;
+  if ((meaning & SymbolFlagsValue) !== 0) {
+    if (isPrimitiveTypeName(name)) {
+      const grandparent = errorLocation!.Parent!.Parent;
+      if (grandparent !== undefined && grandparent!.Parent !== undefined && IsHeritageClause(grandparent)) {
+        const heritageKind = AsHeritageClause(grandparent)!.Token;
+        const containerKind = grandparent!.Parent!.Kind;
+        if (containerKind === KindInterfaceDeclaration && heritageKind === KindExtendsKeyword) {
+          Checker_error(receiver, errorLocation, An_interface_cannot_extend_a_primitive_type_like_0_It_can_only_extend_other_named_object_types, name);
+        } else if (IsClassLike(grandparent!.Parent) && heritageKind === KindExtendsKeyword) {
+          Checker_error(receiver, errorLocation, A_class_cannot_extend_a_primitive_type_like_0_Classes_can_only_extend_constructable_values, name);
+        } else if (IsClassLike(grandparent!.Parent) && heritageKind === KindImplementsKeyword) {
+          Checker_error(receiver, errorLocation, A_class_cannot_implement_a_primitive_type_like_0_It_can_only_implement_other_named_object_types, name);
+        }
+      } else {
+        Checker_error(receiver, errorLocation, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here, name);
+      }
+      return true;
+    }
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (SymbolFlagsType & ~SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
+    if (symbol !== undefined) {
+      const allFlags = Checker_getSymbolFlags(receiver, symbol);
+      if ((allFlags & SymbolFlagsValue) === 0) {
+        if (isES2015OrLaterConstructorName(name)) {
+          Checker_error(receiver, errorLocation, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_es2015_or_later, name);
+        } else if (Checker_maybeMappedType(receiver, errorLocation, symbol)) {
+          Checker_error(receiver, errorLocation, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here_Did_you_mean_to_use_1_in_0, name, IfElse(name === "K", "P", "K"));
+        } else {
+          Checker_error(receiver, errorLocation, X_0_only_refers_to_a_type_but_is_being_used_as_a_value_here, name);
+        }
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingValueAsType","kind":"method","status":"stub","sigHash":"df1df0124dc999518fe86396d461c02395ec5d46c4c7a18683a2ccf9e935f213","bodyHash":"a48bebe23a22d5e548995c642a627133ae9c461414bd78e40c10d8fab7459758"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingValueAsType","kind":"method","status":"implemented","sigHash":"df1df0124dc999518fe86396d461c02395ec5d46c4c7a18683a2ccf9e935f213","bodyHash":"a48bebe23a22d5e548995c642a627133ae9c461414bd78e40c10d8fab7459758"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForUsingValueAsType(errorLocation *ast.Node, name string, meaning ast.SymbolFlags) bool {
@@ -307,11 +391,19 @@ export function Checker_checkAndReportErrorForUsingTypeAsValue(receiver: GoPtr<C
  * }
  */
 export function Checker_checkAndReportErrorForUsingValueAsType(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>, name: string, meaning: SymbolFlags): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForUsingValueAsType");
+  const c = receiver!;
+  if ((meaning & ((SymbolFlagsType & ~SymbolFlagsNamespace) as SymbolFlags)) !== 0) {
+    const symbol = Checker_resolveSymbol(receiver, c.resolveName(errorLocation, name, (~SymbolFlagsType & SymbolFlagsValue) as SymbolFlags, undefined, false as bool, false as bool));
+    if (symbol !== undefined && (symbol!.Flags & SymbolFlagsNamespace) === 0) {
+      Checker_error(receiver, errorLocation, X_0_refers_to_a_value_but_is_being_used_as_a_type_here_Did_you_mean_typeof_0, name);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypeOnlyDeclarationRelatedInfo","kind":"method","status":"stub","sigHash":"51d27b67eac687aa55c2c01c9ca535c18a3ae159383ab03484917f24a4651162","bodyHash":"c6295903298928bc25cb6ec4592cb99ffd2a33757ac2071a5e49098cbb531596"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypeOnlyDeclarationRelatedInfo","kind":"method","status":"implemented","sigHash":"51d27b67eac687aa55c2c01c9ca535c18a3ae159383ab03484917f24a4651162","bodyHash":"c6295903298928bc25cb6ec4592cb99ffd2a33757ac2071a5e49098cbb531596"}
  *
  * Go source:
  * func (c *Checker) addTypeOnlyDeclarationRelatedInfo(diagnostic *ast.Diagnostic, typeOnlyDeclaration *ast.Node, name string) *ast.Diagnostic {
@@ -323,11 +415,15 @@ export function Checker_checkAndReportErrorForUsingValueAsType(receiver: GoPtr<C
  * }
  */
 export function Checker_addTypeOnlyDeclarationRelatedInfo(receiver: GoPtr<Checker>, diagnostic: GoPtr<Diagnostic>, typeOnlyDeclaration: GoPtr<Node>, name: string): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypeOnlyDeclarationRelatedInfo");
+  if (typeOnlyDeclaration === undefined) {
+    return diagnostic;
+  }
+  const isExport = IsExportSpecifier(typeOnlyDeclaration) || IsExportDeclaration(typeOnlyDeclaration) || IsNamespaceExport(typeOnlyDeclaration);
+  return Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(typeOnlyDeclaration, IfElse(isExport, X_0_was_exported_here, X_0_was_imported_here), name));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementUnreachable","kind":"method","status":"stub","sigHash":"ae4de570e8c52b2371dc2b6d6103c3eeb2a9912c21110e95edfe69f1edb417bf","bodyHash":"2a460073990ef3630e770cec79e6eccf7bb97095850167139598708afa7c2057"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementUnreachable","kind":"method","status":"implemented","sigHash":"ae4de570e8c52b2371dc2b6d6103c3eeb2a9912c21110e95edfe69f1edb417bf","bodyHash":"2a460073990ef3630e770cec79e6eccf7bb97095850167139598708afa7c2057"}
  *
  * Go source:
  * func (c *Checker) checkSourceElementUnreachable(node *ast.Node) bool {
@@ -392,11 +488,49 @@ export function Checker_addTypeOnlyDeclarationRelatedInfo(receiver: GoPtr<Checke
  * }
  */
 export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementUnreachable");
+  const c = receiver!;
+  if (!IsPotentiallyExecutableNode(node)) {
+    return false;
+  }
+  if (Set_Has(c.reportedUnreachableNodes, node)) {
+    return true;
+  }
+  if (!Checker_isSourceElementUnreachable(receiver, node)) {
+    return false;
+  }
+  Set_Add(c.reportedUnreachableNodes, node);
+  const sourceFile = GetSourceFileOfNode(node);
+  let startNode = node;
+  let endNode = node;
+  const parent = node!.Parent;
+  if (Node_CanHaveStatements(parent)) {
+    const statements = Node_Statements(parent);
+    if (statements !== undefined) {
+      const offset = slices.Index(statements, node);
+      if (offset >= 0) {
+        const first = offset;
+        let last = offset;
+        for (let i = offset + 1; i < statements.length; i++) {
+          const nextNode = statements[i];
+          if (!IsPotentiallyExecutableNode(nextNode) || !Checker_isSourceElementUnreachable(receiver, nextNode)) {
+            break;
+          }
+          last = i;
+          Set_Add(c.reportedUnreachableNodes, nextNode);
+        }
+        startNode = statements[first];
+        endNode = statements[last];
+      }
+    }
+  }
+  const start = GetTokenPosOfNode(startNode, sourceFile, false as bool);
+  const diagnostic = NewDiagnostic(sourceFile, NewTextRange(start, Node_End(endNode)), Unreachable_code_detected);
+  Checker_addErrorOrSuggestion(receiver, c.compilerOptions!.AllowUnreachableCode === TSFalse, diagnostic);
+  return true;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSourceElementUnreachable","kind":"method","status":"stub","sigHash":"099e433da0304d11df3e05e3b321b9649c5128ae2c97f5927404f35808a574c4","bodyHash":"c377c210e7200a825d9d0e3f85c469b61fdc227fafaa6983e57d42098ce513a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSourceElementUnreachable","kind":"method","status":"implemented","sigHash":"099e433da0304d11df3e05e3b321b9649c5128ae2c97f5927404f35808a574c4","bodyHash":"c377c210e7200a825d9d0e3f85c469b61fdc227fafaa6983e57d42098ce513a6"}
  *
  * Go source:
  * func (c *Checker) isSourceElementUnreachable(node *ast.Node) bool {
@@ -420,11 +554,30 @@ export function Checker_checkSourceElementUnreachable(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_isSourceElementUnreachable(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isSourceElementUnreachable");
+  const c = receiver!;
+  if ((node!.Flags & NodeFlagsUnreachable) !== 0) {
+    switch (node!.Kind) {
+      case KindEnumDeclaration:
+        return !IsEnumConst(node) || CompilerOptions_ShouldPreserveConstEnums(c.compilerOptions);
+      case KindModuleDeclaration:
+        return IsInstantiatedModule(node, CompilerOptions_ShouldPreserveConstEnums(c.compilerOptions));
+      default:
+        return true;
+    }
+  } else {
+    const flowNodeData = Node_FlowNodeData(node);
+    if (flowNodeData !== undefined) {
+      const flowNode = (flowNodeData as unknown as { FlowNode?: GoPtr<FlowNode> }).FlowNode;
+      if (flowNode !== undefined) {
+        return !Checker_isReachableFlowNode(receiver, flowNode);
+      }
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeprecatedSuggestionNode","kind":"method","status":"stub","sigHash":"6a3ec218d229f75f55b76cabfe38a396b43d9f8c15e56cbb8f1e58a8ef358537","bodyHash":"ee9def3b32579643f446ea7fb51535605c751563726f98e7488a2ae0559df2aa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeprecatedSuggestionNode","kind":"method","status":"implemented","sigHash":"6a3ec218d229f75f55b76cabfe38a396b43d9f8c15e56cbb8f1e58a8ef358537","bodyHash":"ee9def3b32579643f446ea7fb51535605c751563726f98e7488a2ae0559df2aa"}
  *
  * Go source:
  * func (c *Checker) getDeprecatedSuggestionNode(node *ast.Node) *ast.Node {
@@ -450,11 +603,34 @@ export function Checker_isSourceElementUnreachable(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeprecatedSuggestionNode");
+  node = SkipParentheses(node as GoPtr<Expression>) as GoPtr<Node>;
+  switch (node!.Kind) {
+    case KindCallExpression:
+    case KindDecorator:
+    case KindNewExpression:
+      return Checker_getDeprecatedSuggestionNode(receiver, Node_Expression(node));
+    case KindTaggedTemplateExpression:
+      return Checker_getDeprecatedSuggestionNode(receiver, AsTaggedTemplateExpression(node)!.Tag as GoPtr<Node>);
+    case KindJsxOpeningElement:
+    case KindJsxSelfClosingElement:
+      return Checker_getDeprecatedSuggestionNode(receiver, Node_TagName(node));
+    case KindElementAccessExpression:
+      return AsElementAccessExpression(node)!.ArgumentExpression as GoPtr<Node>;
+    case KindPropertyAccessExpression:
+      return Node_Name(node);
+    case KindTypeReference: {
+      const typeName = AsTypeReferenceNode(node)!.TypeName as GoPtr<Node>;
+      if (IsQualifiedName(typeName)) {
+        return AsQualifiedName(typeName)!.Right as GoPtr<Node>;
+      }
+      break;
+    }
+  }
+  return node;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportDuplicateMemberErrors","kind":"method","status":"stub","sigHash":"aedff69d55ee29d6583d4e30dbe212e9c7658884128770d1d870883abfdd2c22","bodyHash":"2f5e104c2673d5a02ec181ff898f61ef887b8cb23fa1d93f1c3999fe426c4d62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportDuplicateMemberErrors","kind":"method","status":"implemented","sigHash":"aedff69d55ee29d6583d4e30dbe212e9c7658884128770d1d870883abfdd2c22","bodyHash":"2f5e104c2673d5a02ec181ff898f61ef887b8cb23fa1d93f1c3999fe426c4d62"}
  *
  * Go source:
  * func (c *Checker) reportDuplicateMemberErrors(node *ast.Node, name string, checkStatic bool, isStatic bool, message *diagnostics.Message) {
@@ -474,11 +650,27 @@ export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: string, checkStatic: bool, isStatic: bool, message: GoPtr<Message>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportDuplicateMemberErrors");
+  for (const member of Node_Members(node)) {
+    if (IsConstructorDeclaration(member)) {
+      for (const param of Node_Parameters(member)) {
+        if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
+          const symbol = Checker_getSymbolOfDeclaration(receiver, param);
+          if (symbol!.Name === name) {
+            Checker_error(receiver, Node_Name(param), message, Checker_symbolToString(receiver, symbol));
+          }
+        }
+      }
+    } else {
+      const symbol = Checker_getSymbolOfDeclaration(receiver, member);
+      if (symbol !== undefined && symbol!.Name === name && (!checkStatic || isStatic === IsStatic(member))) {
+        Checker_error(receiver, Node_Name(member), message, Checker_symbolToString(receiver, symbol));
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.issueMemberSpecificError","kind":"method","status":"stub","sigHash":"8534ca39c472c9366efc02900585a053b4f4cb901b742452532495dfeace78be","bodyHash":"16051da22f00f9f804ab4c3f553ea7b297489a565116eeaa59b1637595c170bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.issueMemberSpecificError","kind":"method","status":"implemented","sigHash":"8534ca39c472c9366efc02900585a053b4f4cb901b742452532495dfeace78be","bodyHash":"16051da22f00f9f804ab4c3f553ea7b297489a565116eeaa59b1637595c170bb"}
  *
  * Go source:
  * func (c *Checker) issueMemberSpecificError(node *ast.Node, typeWithThis *Type, baseWithThis *Type, broadDiag *diagnostics.Message) {
@@ -508,11 +700,32 @@ export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeWithThis: GoPtr<Type>, baseWithThis: GoPtr<Type>, broadDiag: GoPtr<Message>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.issueMemberSpecificError");
+  const c = receiver!;
+  let issuedMemberError = false;
+  for (const member of Node_Members(node)) {
+    if (IsStatic(member)) {
+      continue;
+    }
+    const declaredProp = Node_Symbol(member);
+    if (declaredProp !== undefined && declaredProp!.Name !== InternalSymbolNameComputed) {
+      const prop = Checker_getPropertyOfType(receiver, typeWithThis, declaredProp!.Name);
+      const baseProp = Checker_getPropertyOfType(receiver, baseWithThis, declaredProp!.Name);
+      if (prop !== undefined && baseProp !== undefined) {
+        const diags: GoSlice<GoPtr<Diagnostic>> = [];
+        if (!Checker_checkTypeAssignableToEx(receiver, Checker_getTypeOfSymbol(receiver, prop), Checker_getTypeOfSymbol(receiver, baseProp), OrElse(Node_Name(member), member), undefined, diags)) {
+          DiagnosticsCollection_Add(c.diagnostics, NewDiagnosticChain(diags[0], Property_0_in_type_1_is_not_assignable_to_the_same_property_in_base_type_2, Checker_symbolToString(receiver, declaredProp), Checker_TypeToString(receiver, typeWithThis), Checker_TypeToString(receiver, baseWithThis)));
+          issuedMemberError = true;
+        }
+      }
+    }
+  }
+  if (!issuedMemberError) {
+    Checker_checkTypeAssignableTo(receiver, typeWithThis, baseWithThis, OrElse(Node_Name(node), node), broadDiag);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportTypeNotIterableError","kind":"method","status":"stub","sigHash":"4d75bb2879c0271f9191855816ae3f3b0fa2fc4a968dab69e86b3071ed8492ce","bodyHash":"1cfd1da29ab31cf458e272f7e44b4022f3797e2692d1802f5be26a5e487fe7a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportTypeNotIterableError","kind":"method","status":"implemented","sigHash":"4d75bb2879c0271f9191855816ae3f3b0fa2fc4a968dab69e86b3071ed8492ce","bodyHash":"1cfd1da29ab31cf458e272f7e44b4022f3797e2692d1802f5be26a5e487fe7a2"}
  *
  * Go source:
  * func (c *Checker) reportTypeNotIterableError(errorNode *ast.Node, t *Type, allowAsyncIterables bool) *ast.Diagnostic {
@@ -531,11 +744,20 @@ export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_reportTypeNotIterableError(receiver: GoPtr<Checker>, errorNode: GoPtr<Node>, t: GoPtr<Type>, allowAsyncIterables: bool): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportTypeNotIterableError");
+  const c = receiver!;
+  const message = allowAsyncIterables
+    ? Type_0_must_have_a_Symbol_asyncIterator_method_that_returns_an_async_iterator
+    : Type_0_must_have_a_Symbol_iterator_method_that_returns_an_iterator;
+  const suggestAwait: bool = Checker_getAwaitedTypeOfPromise(receiver, t) !== undefined || (!allowAsyncIterables &&
+    IsForOfStatement(errorNode!.Parent) &&
+    Node_Expression(errorNode!.Parent) === errorNode &&
+    c.getGlobalAsyncIterableType() !== c.emptyGenericType &&
+    Checker_isTypeAssignableTo(receiver, t, Checker_createTypeFromGenericGlobalType(receiver, c.getGlobalAsyncIterableType(), [c.anyType, c.anyType, c.anyType])));
+  return Checker_errorAndMaybeSuggestAwait(receiver, errorNode, suggestAwait, message, Checker_TypeToString(receiver, t));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIterationDiagnosticDetails","kind":"method","status":"stub","sigHash":"a44d145e07c1faad36e4c32ae4aac0700f1f8e69231dff5ffefb11093af1585a","bodyHash":"4260a6be92b46f9dc011d710daaaac36f1968f9f2e180a5b0962f0475ada789c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIterationDiagnosticDetails","kind":"method","status":"implemented","sigHash":"a44d145e07c1faad36e4c32ae4aac0700f1f8e69231dff5ffefb11093af1585a","bodyHash":"4260a6be92b46f9dc011d710daaaac36f1968f9f2e180a5b0962f0475ada789c"}
  *
  * Go source:
  * func (c *Checker) getIterationDiagnosticDetails(use IterationUse, inputType *Type, allowsStrings bool) (*diagnostics.Message, bool) {
@@ -553,7 +775,17 @@ export function Checker_reportTypeNotIterableError(receiver: GoPtr<Checker>, err
  * }
  */
 export function Checker_getIterationDiagnosticDetails(receiver: GoPtr<Checker>, use: IterationUse, inputType: GoPtr<Type>, allowsStrings: bool): [GoPtr<Message>, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIterationDiagnosticDetails");
+  const yieldType = Checker_getIterationTypeOfIterable(receiver, use, IterationTypeKindYield, inputType, undefined);
+  if (yieldType !== undefined) {
+    return [Type_0_can_only_be_iterated_through_when_using_the_downlevelIteration_flag_or_with_a_target_of_es2015_or_higher, false];
+  }
+  if (inputType!["symbol"] !== undefined && isES2015OrLaterIterable(inputType!["symbol"]!.Name)) {
+    return [Type_0_can_only_be_iterated_through_when_using_the_downlevelIteration_flag_or_with_a_target_of_es2015_or_higher, true];
+  }
+  if (allowsStrings) {
+    return [Type_0_is_not_an_array_type_or_a_string_type, true];
+  }
+  return [Type_0_is_not_an_array_type, true];
 }
 
 /**
