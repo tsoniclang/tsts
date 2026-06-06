@@ -16,7 +16,7 @@ import type { NodeFlags } from "../../ast/generated/flags.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
-import { Node_Locals, SourceFile_Text, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label } from "../../ast/ast.js";
+import { Node_Locals, SourceFile_Text, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
@@ -45,14 +45,14 @@ import {
   IsBindingPattern, SkipParentheses, SkipOuterExpressions, IsInJSFile,
   OEKParentheses, OEKSatisfies, OEKExcludeJSDocTypeAssertion,
   OEKAssertions, GetCombinedNodeFlags, IsFunctionLike,
-  GetNodeId,
+  GetNodeId, ForEachReturnStatement,
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
 import { ScriptTargetES2021 } from "../../core/compileroptions.js";
 import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt } from "./support.js";
 import { Checker_checkReflectCollision, Checker_checkWeakMapSetCollision } from "./support.js";
-import { Checker_isSideEffectFree } from "./support-queries.js";
+import { Checker_isSideEffectFree, Checker_isContextSensitive } from "./support-queries.js";
 import {
   Checker_registerForUnusedIdentifiersCheck, Checker_checkVariableDeclarationList,
   Checker_checkVariableLikeDeclaration, Checker_checkExternalModuleExports,
@@ -62,7 +62,7 @@ import {
   Checker_getIndexedAccessType, Checker_needCollisionCheckForIdentifier,
 } from "./symbols.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType } from "./flow-narrowing.js";
-import { Checker_isCanceled, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode } from "../utilities.js";
+import { Checker_isCanceled, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression } from "../utilities.js";
 import {
   Checker_checkGrammarStatementInAmbientContext, Checker_grammarErrorOnFirstToken,
   Checker_grammarErrorOnNode, Checker_checkGrammarVariableDeclarationList,
@@ -2650,7 +2650,7 @@ export function Checker_findContextualNode(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveReturnExpression","kind":"method","status":"stub","sigHash":"e780b821073388e6df48be3c74e2e26bf649cb1f85b28247b9046c2e34d3114f","bodyHash":"e76b31fd306a0c6f7d635a0112527a5d874ac9a9789462413ea0730c24d7b881"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveReturnExpression","kind":"method","status":"implemented","sigHash":"e780b821073388e6df48be3c74e2e26bf649cb1f85b28247b9046c2e34d3114f","bodyHash":"e76b31fd306a0c6f7d635a0112527a5d874ac9a9789462413ea0730c24d7b881"}
  *
  * Go source:
  * func (c *Checker) hasContextSensitiveReturnExpression(node *ast.Node) bool {
@@ -2670,11 +2670,21 @@ export function Checker_findContextualNode(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_hasContextSensitiveReturnExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveReturnExpression");
+  if (Node_TypeParameters(node) !== undefined || Node_Type(node) !== undefined) {
+    return false;
+  }
+  const body = Node_Body(node);
+  if (body === undefined) {
+    return false;
+  }
+  if (!IsBlock(body)) {
+    return Checker_isContextSensitive(receiver, body);
+  }
+  return ForEachReturnStatement(body, (statement: GoPtr<Node>) => Node_Expression(statement) !== undefined && Checker_isContextSensitive(receiver, Node_Expression(statement)));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveYieldExpression","kind":"method","status":"stub","sigHash":"e4fda5b194a4a9df590fd102de48e3e1423b69765a05e3e773b4ff0f40545881","bodyHash":"a10175883ca2bcbf8e3aeea1396993a640cc04c575379d8fca2c7b03f3bd9630"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveYieldExpression","kind":"method","status":"implemented","sigHash":"e4fda5b194a4a9df590fd102de48e3e1423b69765a05e3e773b4ff0f40545881","bodyHash":"a10175883ca2bcbf8e3aeea1396993a640cc04c575379d8fca2c7b03f3bd9630"}
  *
  * Go source:
  * func (c *Checker) hasContextSensitiveYieldExpression(node *ast.Node) bool {
@@ -2682,5 +2692,6 @@ export function Checker_hasContextSensitiveReturnExpression(receiver: GoPtr<Chec
  * }
  */
 export function Checker_hasContextSensitiveYieldExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasContextSensitiveYieldExpression");
+  const body = Node_Body(node);
+  return (GetFunctionFlags(node) & FunctionFlagsGenerator) !== 0 && body !== undefined && forEachYieldExpression(body, (expr: GoPtr<Node>) => Checker_isContextSensitive(receiver, expr));
 }
