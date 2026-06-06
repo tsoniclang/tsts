@@ -132,7 +132,7 @@ export interface EmitResolver {
   checkerMu: GoPtr<Mutex>;
   isValueAliasDeclaration: (node: GoPtr<Node>) => bool;
   aliasMarkingVisitor: (node: GoPtr<Node>) => bool;
-  referenceResolver: ReferenceResolver;
+  referenceResolver: ReferenceResolver | undefined;
   jsxLinks: LinkStore<GoPtr<Node>, JSXLinks>;
   declarationLinks: LinkStore<GoPtr<Node>, DeclarationLinks>;
   declarationFileLinks: LinkStore<GoPtr<Node>, DeclarationFileLinks>;
@@ -209,7 +209,7 @@ export function newEmitResolver(checker: GoPtr<Checker>): GoPtr<EmitResolver> {
     checkerMu: checker!.mu,
     isValueAliasDeclaration: (node: GoPtr<Node>) => EmitResolver_isValueAliasDeclarationWorker(e, node),
     aliasMarkingVisitor: (node: GoPtr<Node>) => EmitResolver_aliasMarkingVisitorWorker(e, node),
-    referenceResolver: undefined as unknown as ReferenceResolver,
+    referenceResolver: undefined,
     jsxLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, JSXLinks>,
     declarationLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, DeclarationLinks>,
     declarationFileLinks: { entries: new Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, DeclarationFileLinks>,
