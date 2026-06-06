@@ -351,7 +351,7 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
   let referenceResolver: ReferenceResolver;
   if (importElisionEnabled || jsxTransformEnabled || !CompilerOptions_GetIsolatedModules(options) || Tristate_IsTrue(options!.EmitDecoratorMetadata)) {
     emitResolver.MarkLinkedReferencesRecursively(sourceFile);
-    referenceResolver = emitResolver as unknown as ReferenceResolver;
+    referenceResolver = emitResolver;
   } else {
     referenceResolver = NewReferenceResolver(options, {} as ReferenceResolverHooks);
   }

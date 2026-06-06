@@ -2510,7 +2510,7 @@ export function DeclarationTransformer_transformCommonJSExport(receiver: GoPtr<D
       DeclarationTransformer_preserveJsDoc(receiver, statement, input);
       DeclarationTransformer_removeAllComments(receiver, assignment);
       return NewSyntaxList(astFactory, [statement, assignment]);
-    } else if (receiver!.host.GetEmitResolver().__tsgoEmbedded0?.GetReferencedValueDeclaration(AsIdentifier(name)!) === input || receiver!.host.GetEmitResolver().__tsgoEmbedded0?.GetReferencedValueDeclaration(AsIdentifier(name)!) === undefined) {
+    } else if (receiver!.host.GetEmitResolver().GetReferencedValueDeclaration(AsIdentifier(name)!) === input || receiver!.host.GetEmitResolver().GetReferencedValueDeclaration(AsIdentifier(name)!) === undefined) {
       // only inline to a export var if the `name` lookup points at this assignment or nothing
       // export var name: Type
       SymbolTrackerImpl_PushErrorFallbackNode(receiver!.tracker, input);
@@ -4560,7 +4560,7 @@ export function DeclarationTransformer_transformExpandoAssignment(receiver: GoPt
   if (ns === undefined || ns!.Kind !== KindIdentifier) {
     return undefined;
   }
-  const declaration = receiver!.resolver.__tsgoEmbedded0?.GetReferencedValueDeclaration(AsIdentifier(ns)!);
+  const declaration = receiver!.resolver.GetReferencedValueDeclaration(AsIdentifier(ns)!);
   if (declaration === undefined) {
     return undefined;
   }
@@ -4752,7 +4752,7 @@ export function extractExpandoHostParams(node: GoPtr<Node>): [GoPtr<TypeParamete
  */
 export function DeclarationTransformer_tryGetPropertyName(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>): string {
   if (IsElementAccessExpression(node)) {
-    return receiver!.resolver.__tsgoEmbedded0?.GetElementAccessExpressionName(AsElementAccessExpression(node)!) ?? "";
+    return receiver!.resolver.GetElementAccessExpressionName(AsElementAccessExpression(node)!);
   }
   if (IsPropertyAccessExpression(node)) {
     return Node_Text(Node_Name(node)!);

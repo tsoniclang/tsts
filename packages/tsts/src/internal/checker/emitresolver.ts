@@ -5,7 +5,7 @@ import type { Node, SourceFile } from "../ast/ast.js";
 import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer } from "../ast/ast.js";
 import { Node_Name, Node_AsNode } from "../ast/spine.js";
 import type { Node as NodeSpine } from "../ast/spine.js";
-import type { Declaration, ElementAccessExpression, IdentifierNode, ImportDeclaration, SignatureDeclaration, ImportAttributes } from "../ast/ast_generated.js";
+import type { Declaration, ElementAccessExpression, EntityName, IdentifierNode, ImportDeclaration, SignatureDeclaration, ImportAttributes } from "../ast/ast_generated.js";
 import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes } from "../ast/generated/casts.js";
 import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression, IsBindingElement, IsImportDeclaration } from "../ast/generated/predicates.js";
 import { IsBindingPattern } from "../ast/utilities.js";
@@ -77,14 +77,6 @@ import { Number_Abs } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e1a5f15cb940355789a75a1e6811da03657057f2f3447bd2d7e304ca1756361f"}
- *
- * Go source:
- * var _ printer.EmitResolver = (*EmitResolver)(nil)
- */
-export let __69112d2a_0: EmitResolver_969b36a1 = undefined as never;
-
-/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"stub","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
  *
  * Go source:
@@ -145,6 +137,59 @@ export interface EmitResolver {
   declarationLinks: LinkStore<GoPtr<Node>, DeclarationLinks>;
   declarationFileLinks: LinkStore<GoPtr<Node>, DeclarationFileLinks>;
 }
+
+export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolver>): EmitResolver_969b36a1 {
+  return {
+    GetReferencedExportContainer: (node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> => EmitResolver_GetReferencedExportContainer(receiver, node, prefixLocals),
+    GetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedImportDeclaration(receiver, node),
+    GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclaration(receiver, node),
+    GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> => EmitResolver_GetReferencedValueDeclarations(receiver, node),
+    GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string => EmitResolver_GetElementAccessExpressionName(receiver, expression),
+    IsReferencedAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsReferencedAliasDeclaration(receiver, node),
+    IsValueAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsValueAliasDeclaration(receiver, node),
+    IsTopLevelValueImportEqualsWithEntityName: (node: GoPtr<Node>): bool => EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver, node),
+    MarkLinkedReferencesRecursively: (file: GoPtr<SourceFile>): void => EmitResolver_MarkLinkedReferencesRecursively(receiver, file),
+    GetExternalModuleFileFromDeclaration: (node: GoPtr<Node>): GoPtr<SourceFile> => EmitResolver_GetExternalModuleFileFromDeclaration(receiver, node),
+    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => EmitResolver_GetEffectiveDeclarationFlags(receiver, node, flags),
+    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => EmitResolver_GetResolutionModeOverride(receiver, node),
+    GetTypeReferenceSerializationKind: (name: GoPtr<EntityName>, serialScope: GoPtr<Node>): TypeReferenceSerializationKind => EmitResolver_GetTypeReferenceSerializationKind(receiver, name, serialScope),
+    GetConstantValue: (node: GoPtr<Node>): unknown => EmitResolver_GetConstantValue(receiver, node),
+    GetJsxFactoryEntity: (location: GoPtr<Node>): GoPtr<Node> => EmitResolver_GetJsxFactoryEntity(receiver, location),
+    GetJsxFragmentFactoryEntity: (location: GoPtr<Node>): GoPtr<Node> => EmitResolver_GetJsxFragmentFactoryEntity(receiver, location),
+    SetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void => EmitResolver_SetReferencedImportDeclaration(receiver, node, ref),
+    PrecalculateDeclarationEmitVisibility: (file: GoPtr<SourceFile>): void => EmitResolver_PrecalculateDeclarationEmitVisibility(receiver, file),
+    IsSymbolAccessible: (symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult => EmitResolver_IsSymbolAccessible(receiver, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible),
+    IsEntityNameVisible: (entityName: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): SymbolAccessibilityResult => EmitResolver_IsEntityNameVisible(receiver, entityName, enclosingDeclaration),
+    IsExpandoFunctionDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsExpandoFunctionDeclaration(receiver, node),
+    IsExpandoFunctionDeclarationUnsafe: (node: GoPtr<Node>): bool => EmitResolver_IsExpandoFunctionDeclarationUnsafe(receiver, node),
+    IsLiteralConstDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsLiteralConstDeclaration(receiver, node),
+    RequiresAddingImplicitUndefined: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefined(receiver, node, symbol_, enclosingDeclaration),
+    IsDeclarationVisible: (node: GoPtr<Node>): bool => EmitResolver_IsDeclarationVisible(receiver, node),
+    IsImportRequiredByAugmentation: (decl: GoPtr<ImportDeclaration>): bool => EmitResolver_IsImportRequiredByAugmentation(receiver, decl),
+    IsDefinitelyReferenceToGlobalSymbolObject: (node: GoPtr<Node>): bool => EmitResolver_IsDefinitelyReferenceToGlobalSymbolObject(receiver, node),
+    IsImplementationOfOverload: (node: GoPtr<SignatureDeclaration>): bool => EmitResolver_IsImplementationOfOverload(receiver, node),
+    GetEnumMemberValue: (node: GoPtr<Node>): Result => EmitResolver_GetEnumMemberValue(receiver, node),
+    IsLateBound: (node: GoPtr<Node>): bool => EmitResolver_IsLateBound(receiver, node),
+    IsOptionalParameter: (node: GoPtr<Node>): bool => EmitResolver_IsOptionalParameter(receiver, node),
+    GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> => EmitResolver_GetPropertiesOfContainerFunction(receiver, node),
+    RequiresAddingImplicitUndefinedUnsafe: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver, node, symbol_, enclosingDeclaration),
+    CreateTypeOfDeclaration: (emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfDeclaration(receiver, emitContext, declaration, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateReturnTypeOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateTypeParametersOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateLiteralConstValue: (emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateLiteralConstValue(receiver, emitContext, node, tracker),
+    CreateTypeOfExpression: (emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfExpression(receiver, emitContext, expression, enclosingDeclaration, flags, internalFlags, tracker),
+    CreateLateBoundIndexSignatures: (emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateLateBoundIndexSignatures(receiver, emitContext, container, enclosingDeclaration, flags, internalFlags, tracker),
+    TryJSTypeNodeToTypeNode: (emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_TryJSTypeNodeToTypeNode(receiver, emitContext, typeNode, enclosingDeclaration, flags, internalFlags, tracker),
+  };
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e1a5f15cb940355789a75a1e6811da03657057f2f3447bd2d7e304ca1756361f"}
+ *
+ * Go source:
+ * var _ printer.EmitResolver = (*EmitResolver)(nil)
+ */
+export let __69112d2a_0: EmitResolver_969b36a1 = EmitResolver_as_printer_EmitResolver(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::newEmitResolver","kind":"func","status":"implemented","sigHash":"e8ab1c6cca31adfe867b8620cfea290b7ce4f2d6e1342ae750685f5756b1de15","bodyHash":"ca19d30b08865c24a57e04c917429eba0e918d3edda07e6a54617098e0b9a378"}

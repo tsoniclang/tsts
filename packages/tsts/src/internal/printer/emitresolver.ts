@@ -177,8 +177,7 @@ export const TypeReferenceSerializationKindObjectType: int = 11 as int;
  * 	TryJSTypeNodeToTypeNode(emitContext *EmitContext, typeNode *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node
  * }
  */
-export interface EmitResolver {
-  readonly __tsgoEmbedded0?: ReferenceResolver;
+export interface EmitResolver extends ReferenceResolver {
   IsReferencedAliasDeclaration(node: GoPtr<Node>): bool;
   IsValueAliasDeclaration(node: GoPtr<Node>): bool;
   IsTopLevelValueImportEqualsWithEntityName(node: GoPtr<Node>): bool;
