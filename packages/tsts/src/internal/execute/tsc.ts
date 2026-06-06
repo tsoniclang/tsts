@@ -30,8 +30,8 @@ import { CombinePaths, ForEachAncestorDirectory, NormalizePath } from "../tspath
 import { Tristate_IsTrue } from "../core/tristate.js";
 import { CompilerOptions_IsIncremental } from "../core/compileroptions.js";
 import { NewCachedFSCompilerHost } from "../compiler/host.js";
-import { NewProgram } from "../compiler/program.js";
-import type { ProgramLike, ProgramOptions } from "../compiler/program.js";
+import { NewProgram, Program_as_compiler_ProgramLike } from "../compiler/program.js";
+import type { ProgramOptions } from "../compiler/program.js";
 import {
   Options_0_and_1_cannot_be_combined,
   Option_project_cannot_be_mixed_with_source_files_on_a_command_line,
@@ -46,6 +46,7 @@ import {
 import {
   NewProgram as IncrementalNewProgram,
   Program_GetProgram,
+  Program_as_compiler_ProgramLike as IncrementalProgram_as_compiler_ProgramLike,
 } from "./incremental/program.js";
 import { CreateHost as IncrementalCreateHost } from "./incremental/host.js";
 import { BeginProfiling, ProfileSession_Stop } from "../pprof/pprof.js";
@@ -673,7 +674,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
   compileTimes!.ChangesComputeTime = (sys.Now() as TimeWithSub2).Sub(changesComputeStart) as import("../../go/time.js").Duration;
   const [result] = EmitAndReportStatistics({
     Sys: sys,
-    ProgramLike: incrementalProgram as unknown as ProgramLike,
+    ProgramLike: IncrementalProgram_as_compiler_ProgramLike(incrementalProgram),
     Program: Program_GetProgram(incrementalProgram),
     Config: config,
     ReportDiagnostic: reportDiagnostic,
@@ -749,7 +750,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
   compileTimes!.ParseTime = (sys.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
   const [result] = EmitAndReportStatistics({
     Sys: sys,
-    ProgramLike: program as unknown as ProgramLike,
+    ProgramLike: Program_as_compiler_ProgramLike(program),
     Program: program,
     Config: config,
     ReportDiagnostic: reportDiagnostic,

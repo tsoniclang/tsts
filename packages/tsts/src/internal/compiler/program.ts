@@ -3618,7 +3618,7 @@ export interface SourceMapEmitResult {
  */
 export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: EmitOptions): GoPtr<EmitResult> {
   if (options.EmitOnly !== 3 /* EmitOnlyForcedDts */) {
-    const result = HandleNoEmitOnError(ctx, receiver as unknown as ProgramLike, options.TargetSourceFile);
+    const result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
     if (result !== undefined) {
       return result;
     }
@@ -3740,6 +3740,26 @@ export interface ProgramLike {
   CommonSourceDirectory(): string;
   IsSourceFileDefaultLibrary(path: Path): bool;
   Program(): GoPtr<Program>;
+}
+
+export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): ProgramLike {
+  return {
+    Options: (): GoPtr<CompilerOptions> => Program_Options(receiver),
+    GetSourceFile: (path: string): GoPtr<SourceFile> => Program_GetSourceFile(receiver, path),
+    GetSourceFiles: (): GoSlice<GoPtr<SourceFile>> => Program_GetSourceFiles(receiver),
+    GetConfigFileParsingDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetConfigFileParsingDiagnostics(receiver),
+    GetSyntacticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSyntacticDiagnostics(receiver, ctx, file),
+    GetBindDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetBindDiagnostics(receiver, ctx, file),
+    GetProgramDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetProgramDiagnostics(receiver),
+    GetGlobalDiagnostics: (ctx: Context): GoSlice<GoPtr<Diagnostic>> => Program_GetGlobalDiagnostics(receiver, ctx),
+    GetSemanticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSemanticDiagnostics(receiver, ctx, file),
+    GetDeclarationDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetDeclarationDiagnostics(receiver, ctx, file),
+    GetSuggestionDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSuggestionDiagnostics(receiver, ctx, file),
+    Emit: (ctx: Context, options: EmitOptions): GoPtr<EmitResult> => Program_Emit(receiver, ctx, options),
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    IsSourceFileDefaultLibrary: (path: Path): bool => Program_IsSourceFileDefaultLibrary(receiver, path),
+    Program: (): GoPtr<Program> => receiver,
+  };
 }
 
 /**

@@ -33,7 +33,7 @@ import { BuildInfoRootInfoReader_GetBuildInfoFileInfo, BuildInfoRootInfoReader_R
 import type { BuildInfoRootInfoReader } from "../incremental/buildInfo.js";
 import { FileInfo_Version } from "../incremental/snapshot.js";
 import type { FileInfo } from "../incremental/snapshot.js";
-import { NewProgram as incremental_NewProgram } from "../incremental/program.js";
+import { NewProgram as incremental_NewProgram, Program_as_compiler_ProgramLike as incremental_Program_as_compiler_ProgramLike } from "../incremental/program.js";
 import { NewProgram as compiler_NewProgram } from "../../compiler/program.js";
 import { EmitAndReportStatistics, GetTraceWithWriterFromSys } from "../tsc/emit.js";
 import { QuietDiagnosticsReporter } from "../tsc/diagnostics.js";
@@ -598,7 +598,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
 
   const [result, statistics] = EmitAndReportStatistics({
     Sys: orchestrator!.opts.Sys,
-    ProgramLike: receiver!.result!.program as unknown as import("../../compiler/program.js").ProgramLike,
+    ProgramLike: incremental_Program_as_compiler_ProgramLike(receiver!.result!.program),
     Program: program,
     Config: receiver!.resolved,
     ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
