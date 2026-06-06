@@ -1,7 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Node } from "../../ast/spine.js";
+import { Node_Modifiers } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Node_Body, Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Properties, Node_Symbol, Node_Text } from "../../ast/ast.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -80,9 +82,10 @@ import type { Kind } from "../../ast/generated/kinds.js";
 import { NodeFlagsAmbient, NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing, SymbolFlagsAlias, SymbolFlagsFunction, SymbolFlagsValue, SymbolFlagsVariable } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsIdentifier, IsJsxOpeningElement, IsParenthesizedExpression, IsPropertyAssignment, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
-import { GetCombinedModifierFlags, GetDeclarationOfKind, IsClassElement, IsClassLike, IsConstAssertion, IsFunctionLikeDeclaration, IsJsxOpeningLikeElement, IsRequireCall, NodeIsPresent, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
-import { AsBinaryExpression, AsConditionalExpression, AsPrefixUnaryExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
+import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsExportAssignment, IsExportSpecifier, IsIdentifier, IsImportEqualsDeclaration, IsJsxOpeningElement, IsJsxOpeningFragment, IsParenthesizedExpression, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
+import { CanHaveDecorators, GetCombinedModifierFlags, GetDeclarationOfKind, HasDecorators, IsClassElement, IsClassLike, IsConstAssertion, IsExpressionNode, IsFunctionLikeDeclaration, IsJsxOpeningLikeElement, IsPartOfTypeNode, IsPropertyAccessOrQualifiedName, IsRequireCall, NodeCanBeDecorated, NodeIsPresent, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
+import { AsBinaryExpression, AsConditionalExpression, AsImportEqualsDeclaration, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
+import type { ExportSpecifierNode, IdentifierNode } from "../../ast/generated/unions.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { Checker_combineTypeMappers, newTypeMapper, TypeMapper_Map } from "../mapper.js";
@@ -95,9 +98,10 @@ import { isObjectLiteralType, CreateModeMismatchDetails, NewDiagnosticForNode } 
 import { Checker_chooseOverload, Checker_getSignatureFromDeclaration, Checker_isValidConstAssertionArgument } from "./signatures.js";
 import { Checker_getContextualType, Checker_getOptionalType, Checker_getPropertiesOfType, Checker_isConstTypeVariable } from "./types.js";
 import { Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
-import { Checker_getPropertyOfObjectType, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_isContextSensitiveFunctionLikeDeclaration, Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
+import { Checker_checkExternalImportOrExportDeclaration, Checker_getPropertyOfObjectType, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_isContextSensitiveFunctionLikeDeclaration, Checker_isExactOptionalPropertyMismatch, Checker_markDecoratorAliasReferenced, Checker_markExportSpecifierAliasReferenced, Checker_markIdentifierAliasReferenced, Checker_markImportEqualsAliasReferenced, Checker_markJsxAliasReferenced, Checker_markPropertyAliasReferenced } from "./symbols.js";
 import type { CacheHashKey, CallState, Checker, IterationTypeKind, keyBuilder, ReferenceHint, WideningContext } from "./state.js";
-import { isTupleType, IterationTypeKindYield } from "./state.js";
+import { isInternalModuleImportEqualsDeclaration, isTupleType, IterationTypeKindYield, ReferenceHintDecorator, ReferenceHintExportAssignment, ReferenceHintExportImportEquals, ReferenceHintExportSpecifier, ReferenceHintIdentifier, ReferenceHintJsx, ReferenceHintProperty, ReferenceHintUnspecified, shouldMarkIdentifierAliasReferenced } from "./state.js";
+import { Checker_markExportAssignmentAliasReferenced } from "./relations.js";
 import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
 
 /**
@@ -746,7 +750,7 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"stub","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a","bodyHash":"c7ad211d7a4abb12fe7ff041b0fa8aa1c1429c37a1896387180a157094ff3f83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences","kind":"method","status":"implemented","sigHash":"9d4446b6e2a0c90550e3b4560025f3613ee6c849fef58a70a9b4156820b0170a","bodyHash":"c7ad211d7a4abb12fe7ff041b0fa8aa1c1429c37a1896387180a157094ff3f83"}
  *
  * Go source:
  * func (c *Checker) markLinkedReferences(location *ast.Node, hint ReferenceHint, propSymbol *ast.Symbol, parentType *Type) {
@@ -842,7 +846,99 @@ export function Checker_getTailRecursionRoot(receiver: GoPtr<Checker>, newType: 
  * }
  */
 export function Checker_markLinkedReferences(receiver: GoPtr<Checker>, location: GoPtr<Node>, hint: ReferenceHint, propSymbol: GoPtr<Symbol>, parentType: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.markLinkedReferences");
+  if (!receiver!.canCollectSymbolAliasAccessibilityData) {
+    return;
+  }
+  if (((location!.Flags & NodeFlagsAmbient) !== 0) && !IsPropertySignatureDeclaration(location) && !IsPropertyDeclaration(location)) {
+    return;
+  }
+  switch (hint) {
+    case ReferenceHintIdentifier:
+      Checker_markIdentifierAliasReferenced(receiver, location as GoPtr<IdentifierNode>);
+      return;
+    case ReferenceHintProperty:
+      Checker_markPropertyAliasReferenced(receiver, location, propSymbol, parentType);
+      return;
+    case ReferenceHintExportAssignment:
+      Checker_markExportAssignmentAliasReferenced(receiver, location);
+      return;
+    case ReferenceHintJsx:
+      Checker_markJsxAliasReferenced(receiver, location);
+      return;
+    case ReferenceHintExportImportEquals:
+      Checker_markImportEqualsAliasReferenced(receiver, location);
+      return;
+    case ReferenceHintExportSpecifier:
+      Checker_markExportSpecifierAliasReferenced(receiver, location as GoPtr<ExportSpecifierNode>);
+      return;
+    case ReferenceHintDecorator:
+      Checker_markDecoratorAliasReferenced(receiver, location);
+      return;
+    case ReferenceHintUnspecified:
+      if (
+        IsIdentifier(location) &&
+        (
+          IsExpressionNode(location) ||
+          IsShorthandPropertyAssignment(location!.Parent) ||
+          (IsImportEqualsDeclaration(location!.Parent) && AsImportEqualsDeclaration(location!.Parent)!.ModuleReference === location)
+        ) &&
+        shouldMarkIdentifierAliasReferenced(location as GoPtr<IdentifierNode>)
+      ) {
+        if (IsPropertyAccessOrQualifiedName(location!.Parent)) {
+          const left = IsPropertyAccessExpression(location!.Parent) ? Node_Expression(location!.Parent) : AsQualifiedName(location!.Parent)!.Left as GoPtr<Node>;
+          if (left !== location) {
+            return;
+          }
+        }
+        Checker_markIdentifierAliasReferenced(receiver, location as GoPtr<IdentifierNode>);
+        return;
+      }
+      if (IsPropertyAccessOrQualifiedName(location)) {
+        let topProp = location;
+        while (IsPropertyAccessOrQualifiedName(topProp)) {
+          if (IsPartOfTypeNode(topProp)) {
+            return;
+          }
+          topProp = topProp!.Parent;
+        }
+        Checker_markPropertyAliasReferenced(receiver, location, undefined, undefined);
+        return;
+      }
+      if (IsExportAssignment(location)) {
+        Checker_markExportAssignmentAliasReferenced(receiver, location);
+        return;
+      }
+      if (IsJsxOpeningLikeElement(location) || IsJsxOpeningFragment(location)) {
+        Checker_markJsxAliasReferenced(receiver, location);
+        return;
+      }
+      if (IsImportEqualsDeclaration(location)) {
+        if (isInternalModuleImportEqualsDeclaration(location) || Checker_checkExternalImportOrExportDeclaration(receiver, location)) {
+          Checker_markImportEqualsAliasReferenced(receiver, location);
+          return;
+        }
+        return;
+      }
+      if (IsExportSpecifier(location)) {
+        Checker_markExportSpecifierAliasReferenced(receiver, location as GoPtr<ExportSpecifierNode>);
+        return;
+      }
+      if (!Tristate_IsTrue(receiver!.compilerOptions!.EmitDecoratorMetadata)) {
+        return;
+      }
+      if (
+        !CanHaveDecorators(location) ||
+        !HasDecorators(location) ||
+        Node_Modifiers(location) === undefined ||
+        !NodeCanBeDecorated(receiver!.legacyDecorators, location, location!.Parent, location!.Parent!.Parent)
+      ) {
+        return;
+      }
+      Checker_markDecoratorAliasReferenced(receiver, location);
+      return;
+    default:
+      throw new globalThis.Error("Unhandled reference hint");
+  }
 }
 
 /**
