@@ -6,7 +6,7 @@ import type { Node, NodeList } from "../ast/spine.js";
 import { Node_AsNode, Node_FunctionLikeData, Node_KindString, Node_Name } from "../ast/spine.js";
 import type { Symbol as AstSymbol } from "../ast/symbol.js";
 import type { ArrayLiteralExpression, GetAccessorDeclaration, ObjectLiteralExpression, ParameterDeclaration, PrefixUnaryExpression, SetAccessorDeclaration, TypeParameterDeclaration, VariableDeclaration } from "../ast/generated/data.js";
-import type { ParameterDeclarationNode } from "../ast/generated/unions.js";
+import type { AccessorDeclaration, ParameterDeclarationNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
   KindArrayLiteralExpression,
@@ -118,6 +118,7 @@ import {
   FindAncestor,
   ForEachReturnStatement,
   GetAssignmentDeclarationKind,
+  GetAllAccessorDeclarationsForDeclaration,
   HasModifier,
   IsAccessor,
   IsAssertionExpression,
@@ -131,6 +132,7 @@ import {
   JSDeclarationKindObjectDefinePropertyValue,
   NodeIsMissing,
 } from "../ast/utilities.js";
+import type { AllAccessorDeclarations } from "../ast/utilities.js";
 import { CountWhere, Every, Some } from "../core/core.js";
 import { FailBadSyntaxKind } from "../debug/debug.js";
 import type { PseudoChecker } from "./checker.js";
@@ -172,18 +174,6 @@ import {
   PseudoTypeTrue,
   PseudoTypeUndefined,
 } from "./type.js";
-
-// `ast.AllAccessorDeclarations` (internal/ast/utilities.go) is not yet ported to
-// the spine/generated AST split. The only references to it in this file are in
-// stub units that are blocked on the same unported `ast/utilities.go` helpers
-// (`GetAllAccessorDeclarationsForDeclaration`), so this placeholder mirrors the
-// Go struct shape purely to keep the file tsc-clean until that package lands.
-interface AllAccessorDeclarations {
-  FirstAccessor: GoPtr<Node>;
-  SecondAccessor: GoPtr<Node>;
-  SetAccessor: GoPtr<SetAccessorDeclaration>;
-  GetAccessor: GoPtr<GetAccessorDeclaration>;
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.GetReturnTypeOfSignature","kind":"method","status":"implemented","sigHash":"1855ca2a41c0c7f8defa6ad836870cc5e79a17863177c8787c5fc9e383b33c67","bodyHash":"e758730e23dc178289852656367655fce4fc6a18b5173a9c42fa08fe7b9874cf"}
@@ -504,7 +494,7 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"stub","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f","bodyHash":"5e9750ed6d3c9d4bf559186063abe94fd4cb2e6c577996bc259218fbcaa74224"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor","kind":"method","status":"implemented","sigHash":"a2d8d1959af831388c70e2ffff5da25479a6f074a06f97672c078427796e659f","bodyHash":"5e9750ed6d3c9d4bf559186063abe94fd4cb2e6c577996bc259218fbcaa74224"}
  *
  * Go source:
  * func (ch *PseudoChecker) typeFromAccessor(accessor *ast.Node) *PseudoType {
@@ -520,7 +510,15 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
  * }
  */
 export function PseudoChecker_typeFromAccessor(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>): GoPtr<PseudoType> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.typeFromAccessor");
+  const accessorDeclarations = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations);
+  const accessorType = PseudoChecker_getTypeAnnotationFromAllAccessorDeclarations(receiver, accessor, accessorDeclarations);
+  if (accessorType !== undefined && !IsTypePredicateNode(accessorType)) {
+    return NewPseudoTypeDirect(accessorType);
+  }
+  if (accessorDeclarations.GetAccessor !== undefined) {
+    return PseudoChecker_createReturnFromSignature(receiver, Node_AsNode(accessorDeclarations.GetAccessor));
+  }
+  return NewPseudoTypeNoResult(accessor);
 }
 
 /**
@@ -542,7 +540,7 @@ export function PseudoChecker_inferAccessorType(receiver: GoPtr<PseudoChecker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAllAccessorDeclarations","kind":"method","status":"stub","sigHash":"1d0e0a751fb7aa01af56c012bf7fc7c325f34f1e1b9ae4e5029706b2d3a7eab9","bodyHash":"07f6c4458171becd0e7b99baafaa70d57f74b674068f7507d6e419e2197dbb72"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAllAccessorDeclarations","kind":"method","status":"implemented","sigHash":"1d0e0a751fb7aa01af56c012bf7fc7c325f34f1e1b9ae4e5029706b2d3a7eab9","bodyHash":"07f6c4458171becd0e7b99baafaa70d57f74b674068f7507d6e419e2197dbb72"}
  *
  * Go source:
  * func (ch *PseudoChecker) getTypeAnnotationFromAllAccessorDeclarations(node *ast.Node, accessors ast.AllAccessorDeclarations) *ast.Node {
@@ -557,7 +555,14 @@ export function PseudoChecker_inferAccessorType(receiver: GoPtr<PseudoChecker>, 
  * }
  */
 export function PseudoChecker_getTypeAnnotationFromAllAccessorDeclarations(receiver: GoPtr<PseudoChecker>, node: GoPtr<Node>, accessors: AllAccessorDeclarations): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getTypeAnnotationFromAllAccessorDeclarations");
+  let accessorType = PseudoChecker_getTypeAnnotationFromAccessor(receiver, node);
+  if (accessorType === undefined && node !== accessors.FirstAccessor) {
+    accessorType = PseudoChecker_getTypeAnnotationFromAccessor(receiver, accessors.FirstAccessor);
+  }
+  if (accessorType === undefined && accessors.SecondAccessor !== undefined && node !== accessors.SecondAccessor) {
+    accessorType = PseudoChecker_getTypeAnnotationFromAccessor(receiver, accessors.SecondAccessor);
+  }
+  return accessorType;
 }
 
 /**
@@ -954,7 +959,7 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"stub","sigHash":"27c3a56df69a565adda57a91f5f6d0d8b0c4073c905454a4a21c80444ae515ff","bodyHash":"265e7f34d87197a225839bf9fe6b4fc74c4f6402bebd79676c9347d031a3833f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember","kind":"method","status":"implemented","sigHash":"27c3a56df69a565adda57a91f5f6d0d8b0c4073c905454a4a21c80444ae515ff","bodyHash":"265e7f34d87197a225839bf9fe6b4fc74c4f6402bebd79676c9347d031a3833f"}
  *
  * Go source:
  * func (ch *PseudoChecker) getAccessorMember(accessor *ast.Node, name *ast.Node) *PseudoObjectElement {
@@ -998,7 +1003,37 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
  * }
  */
 export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>, name: GoPtr<Node>): GoPtr<PseudoObjectElement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pseudochecker/lookup.go::method::PseudoChecker.getAccessorMember");
+  const allAccessors = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations);
+
+  if (allAccessors.GetAccessor !== undefined && allAccessors.GetAccessor.Type !== undefined &&
+    allAccessors.SetAccessor !== undefined && allAccessors.SetAccessor.Parameters !== undefined && allAccessors.SetAccessor.Parameters.Nodes.length > 0 && AsParameterDeclaration(allAccessors.SetAccessor.Parameters.Nodes[0])!.Type !== undefined) {
+    if (IsGetAccessorDeclaration(accessor)) {
+      return NewPseudoGetAccessor(
+        accessor,
+        name,
+        false,
+        PseudoChecker_typeFromAccessor(receiver, accessor),
+      );
+    }
+    return NewPseudoSetAccessor(
+      accessor,
+      name,
+      false,
+      PseudoChecker_cloneParameters(receiver, AsSetAccessorDeclaration(accessor)!.Parameters as GoPtr<NodeList>)[0],
+    );
+  }
+
+  if (accessor === allAccessors.FirstAccessor) {
+    const accessorType = PseudoChecker_typeFromAccessor(receiver, accessor);
+    const readonly = IsGetAccessorDeclaration(accessor) && allAccessors.SecondAccessor === undefined;
+    return NewPseudoPropertyAssignment(
+      readonly,
+      name,
+      false,
+      accessorType,
+    );
+  }
+  return undefined;
 }
 
 /**

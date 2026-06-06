@@ -1,10 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/ast.js";
+import { Node_Symbol, Node_Text } from "../ast/ast.js";
 import type { ImportAttributes } from "../ast/ast_generated.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
+import { FindAncestor, GetFirstIdentifier, GetSourceFileOfNode, IsDeclaration } from "../ast/utilities.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import type { Checker, UnionReduction } from "./checker/state.js";
@@ -14,12 +16,14 @@ import { Checker_getDeclaredTypeOfSymbol, Checker_getEffectiveDeclarationFlags, 
 import { Checker_fillMissingTypeArguments, Checker_getBaseConstructorTypeOfClass, Checker_getConstraintOfTypeParameter, Checker_getContextualTypeForArgumentAtIndex, Checker_getDefaultFromTypeParameter, Checker_getIndexSignaturesAtLocation, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getMinTypeArgumentCount, Checker_getRestTypeOfSignature, Checker_getResolvedSignature, Checker_getReturnTypeOfSignature, Checker_getSignaturesOfType, Checker_getTypeArguments, Checker_typeHasCallOrConstructSignatures } from "./checker/signatures.js";
 import { Checker_getBaseConstraintOfType } from "./checker/inference.js";
 import { Checker_getResolutionModeOverride } from "./checker/classes.js";
+import { Checker_GetEmitResolver } from "./checker/support.js";
 import { Checker_isContextSensitive } from "./checker/support-queries.js";
 import { Checker_tryFindAmbientModule } from "./checker/modules.js";
+import { EmitResolver_RequiresAddingImplicitUndefined } from "./emitresolver.js";
 import { Checker_getTypePredicateOfSignature, Checker_hasEffectiveRestParameter, Checker_isTypeAssignableTo } from "./relater.js";
 import { Checker_typePredicateToString } from "./printer.js";
 import { Checker_getExpandedParameters } from "./nodebuilderimpl.js";
-import { Checker_getJsxNamespace } from "./jsx.js";
+import { Checker_getJsxFragmentFactoryEntity, Checker_getJsxNamespace } from "./jsx.js";
 import { getDeclarationModifierFlagsFromSymbol } from "./utilities.js";
 import type { ContextFlags, IndexInfo, Signature, SignatureKind, Type, TypePredicate } from "./types.js";
 
@@ -660,7 +664,7 @@ export function Checker_GetJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetJsxFragmentFactory","kind":"method","status":"stub","sigHash":"23352382a4789fd2ff1ebc986af2682659fd766517c7559a1595ef835ee89ec4","bodyHash":"886332830da2d0490f3936900df166afb78521627ba7c4d3f61e2643bbfb2f12"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetJsxFragmentFactory","kind":"method","status":"implemented","sigHash":"23352382a4789fd2ff1ebc986af2682659fd766517c7559a1595ef835ee89ec4","bodyHash":"886332830da2d0490f3936900df166afb78521627ba7c4d3f61e2643bbfb2f12"}
  *
  * Go source:
  * func (c *Checker) GetJsxFragmentFactory(location *ast.Node) string {
@@ -672,11 +676,15 @@ export function Checker_GetJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
  * }
  */
 export function Checker_GetJsxFragmentFactory(receiver: GoPtr<Checker>, location: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.GetJsxFragmentFactory");
+  const entity = Checker_getJsxFragmentFactoryEntity(receiver, location);
+  if (entity !== undefined) {
+    return Node_Text(GetFirstIdentifier(entity));
+  }
+  return "";
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.ResolveName","kind":"method","status":"stub","sigHash":"dad4ab91ef0148affc8367e3b9291776daed8078561744c4903c8b2d23d83bfc","bodyHash":"36822481f34b3f8f3f7be8332169ffcdbfd91dcf37ac3bb618fe96016373c250"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.ResolveName","kind":"method","status":"implemented","sigHash":"dad4ab91ef0148affc8367e3b9291776daed8078561744c4903c8b2d23d83bfc","bodyHash":"36822481f34b3f8f3f7be8332169ffcdbfd91dcf37ac3bb618fe96016373c250"}
  *
  * Go source:
  * func (c *Checker) ResolveName(name string, location *ast.Node, meaning ast.SymbolFlags, excludeGlobals bool) *ast.Symbol {
@@ -684,7 +692,7 @@ export function Checker_GetJsxFragmentFactory(receiver: GoPtr<Checker>, location
  * }
  */
 export function Checker_ResolveName(receiver: GoPtr<Checker>, name: string, location: GoPtr<Node>, meaning: SymbolFlags, excludeGlobals: bool): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.ResolveName");
+  return receiver!.resolveName(location, name, meaning, undefined, true as bool, excludeGlobals);
 }
 
 /**
@@ -844,7 +852,7 @@ export function Checker_GetUnionTypeEx(receiver: GoPtr<Checker>, types: GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.RequiresAddingImplicitUndefined","kind":"method","status":"stub","sigHash":"00a90dadba25b302220601f28cef87398dc37f197f5fe8df0222285969eca169","bodyHash":"bc74277e24cca65ee019003bd60231dd339da15433656a812df83bb00ac5d4f4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.RequiresAddingImplicitUndefined","kind":"method","status":"implemented","sigHash":"00a90dadba25b302220601f28cef87398dc37f197f5fe8df0222285969eca169","bodyHash":"bc74277e24cca65ee019003bd60231dd339da15433656a812df83bb00ac5d4f4"}
  *
  * Go source:
  * func (c *Checker) RequiresAddingImplicitUndefined(node *ast.Node) bool {
@@ -860,5 +868,13 @@ export function Checker_GetUnionTypeEx(receiver: GoPtr<Checker>, types: GoSlice<
  * }
  */
 export function Checker_RequiresAddingImplicitUndefined(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/exports.go::method::Checker.RequiresAddingImplicitUndefined");
+  let enclosingDeclaration = FindAncestor(node, IsDeclaration);
+  if (enclosingDeclaration === undefined) {
+    enclosingDeclaration = GetSourceFileOfNode(node) as GoPtr<Node>;
+  }
+  const symbol_ = Node_Symbol(node);
+  if (symbol_ === undefined) {
+    return false;
+  }
+  return EmitResolver_RequiresAddingImplicitUndefined(Checker_GetEmitResolver(receiver), node, symbol_, enclosingDeclaration);
 }
