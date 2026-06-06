@@ -1672,7 +1672,7 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExtendingInterface","kind":"method","status":"stub","sigHash":"ae66925e8598966cd73fcc9b88e1a96461cdb1f144af00189f40ab419776f0ac","bodyHash":"3348decdb8179b73388d170c45fd5694c7ee6f8879c3c536e257be758993fefd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExtendingInterface","kind":"method","status":"implemented","sigHash":"ae66925e8598966cd73fcc9b88e1a96461cdb1f144af00189f40ab419776f0ac","bodyHash":"3348decdb8179b73388d170c45fd5694c7ee6f8879c3c536e257be758993fefd"}
  *
  * Go source:
  * func (c *Checker) checkAndReportErrorForExtendingInterface(errorLocation *ast.Node) bool {
@@ -1685,7 +1685,12 @@ export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, appare
  * }
  */
 export function Checker_checkAndReportErrorForExtendingInterface(receiver: GoPtr<Checker>, errorLocation: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAndReportErrorForExtendingInterface");
+  const expression = Checker_getEntityNameForExtendingInterface(receiver, errorLocation);
+  if (expression !== undefined && Checker_resolveEntityName(receiver, expression, SymbolFlagsInterface, true, false, undefined) !== undefined) {
+    Checker_error(receiver, errorLocation, Cannot_extend_an_interface_0_Did_you_mean_implements, GetTextOfNode(expression));
+    return true;
+  }
+  return false;
 }
 
 /**
