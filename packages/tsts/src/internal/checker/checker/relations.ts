@@ -87,12 +87,12 @@ import { NewDiagnosticChain } from "../../ast/diagnostic.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { AssignmentKindNone, getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
 import { ModifierFlagsAbstract, ModifierFlagsAsync, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsReadonly, ModifierFlagsStatic } from "../../ast/modifierflags.js";
-import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo, Checker_checkTypeAssignableToAndOptionallyElaborate } from "../relater.js";
+import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo, Checker_checkTypeAssignableToAndOptionallyElaborate, Checker_isTypeDerivedFrom, Checker_isTypeRelatedTo } from "../relater.js";
 import { TernaryFalse } from "../types.js";
 import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition } from "../types.js";
 import type { AccessFlags } from "../types.js";
-import { Checker_IsEmptyAnonymousObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_filterType, Checker_getNumberLiteralType, Checker_createArrayType, Checker_mapType, Checker_getTypeWithFacts, Checker_getRegularTypeOfLiteralType, Checker_checkNonNullType, Checker_hasTypeFacts, Checker_getTypeFromTypeNode, Checker_maybeTypeOfKind, Checker_checkIteratedTypeOrElementType, Checker_isArrayLikeType, Checker_getPropertiesOfType, Checker_getBaseTypes, Checker_getTypeOfExpression, Checker_instantiateType } from "./types.js";
-import { Checker_getTypeOfPropertyOfType, Checker_resolveDeclaredMembers, Checker_isNamedMember, Checker_getLiteralTypeFromPropertyName, Checker_getPropertyOfType, Checker_markPropertyAsReferenced, Checker_checkPropertyAccessibility, Checker_getIndexedAccessTypeEx, Checker_getIndexedAccessTypeOrUndefined, Checker_getTypeOfPropertyInBaseClass, Checker_getExportSymbolOfValueSymbolIfExported, Checker_resolveEntityName, Checker_getTypeOnlyAliasDeclarationEx, Checker_getSymbolFlagsEx, Checker_getSymbolFlags, Checker_getDeclarationOfAliasSymbol, Checker_markAliasReferenced, Checker_checkPropertyAccessExpression, Checker_getTypeFromPropertyDescriptor, Checker_checkExternalModuleExports, Checker_isReadonlySymbol, Checker_getResolvedSymbol, Checker_checkComputedPropertyName, Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx, Checker_getMembersOfSymbol } from "./symbols.js";
+import { Checker_IsEmptyAnonymousObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_filterType, Checker_getNumberLiteralType, Checker_createArrayType, Checker_mapType, Checker_getTypeWithFacts, Checker_getRegularTypeOfLiteralType, Checker_checkNonNullType, Checker_hasTypeFacts, Checker_getTypeFromTypeNode, Checker_maybeTypeOfKind, Checker_checkIteratedTypeOrElementType, Checker_isArrayLikeType, Checker_getPropertiesOfType, Checker_getBaseTypes, Checker_getTypeOfExpression, Checker_instantiateType, Checker_isGenericMappedType, Checker_isEmptyResolvedType, Checker_getTargetType } from "./types.js";
+import { Checker_getTypeOfPropertyOfType, Checker_resolveDeclaredMembers, Checker_isNamedMember, Checker_getLiteralTypeFromPropertyName, Checker_getPropertyOfType, Checker_markPropertyAsReferenced, Checker_checkPropertyAccessibility, Checker_getIndexedAccessTypeEx, Checker_getIndexedAccessTypeOrUndefined, Checker_getTypeOfPropertyInBaseClass, Checker_getExportSymbolOfValueSymbolIfExported, Checker_resolveEntityName, Checker_getTypeOnlyAliasDeclarationEx, Checker_getSymbolFlagsEx, Checker_getSymbolFlags, Checker_getDeclarationOfAliasSymbol, Checker_markAliasReferenced, Checker_checkPropertyAccessExpression, Checker_getTypeFromPropertyDescriptor, Checker_checkExternalModuleExports, Checker_isReadonlySymbol, Checker_getResolvedSymbol, Checker_checkComputedPropertyName, Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx, Checker_getMembersOfSymbol, Checker_resolveStructuredTypeMembers } from "./symbols.js";
 import { Checker_getTypeWithThisArgument, Checker_isConstructorDeclaredThisProperty, Checker_getRestType, Checker_getTypeArguments } from "./signatures.js";
 import { Checker_getTypeOfSymbol } from "./symbols.js";
 import { Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
@@ -121,14 +121,19 @@ import {
   WideningKindNormal,
   everyType,
   getBooleanLiteralValue,
+  getTypeListKey,
   getVerbatimModuleSyntaxErrorMessage,
   isTupleType,
+  isUnitType,
   thisAssignmentDeclarationConstructor,
   thisAssignmentDeclarationMethod,
   thisAssignmentDeclarationTyped,
   getBaseTypeNodeOfClass,
 } from "./state.js";
 import type { CachedTypeKey, InheritanceInfo, TypeFacts, WideningKind } from "./state.js";
+import { Checker_getBaseConstraintOrType } from "./inference.js";
+import { Tracer_Instant } from "../tracer.js";
+import { PhaseCheckTypes } from "../../tracing/tracing.js";
 import { Checker_sliceTupleType } from "../relater.js";
 import {
   ObjectFlagsClass,
@@ -159,8 +164,11 @@ import {
   TypeFlagsStringLike,
   TypeFlagsStringLiteral,
   TypeFlagsStringMapping,
+  TypeFlagsIntersection,
+  TypeFlagsInstantiableNonPrimitive,
   TypeFlagsTemplateLiteral,
   TypeFlagsTypeParameter,
+  TypeFlagsStructuredOrInstantiable,
   TypeFlagsUndefined,
   TypeFlagsUnion,
   TypeFlagsUniqueESSymbol,
@@ -1197,7 +1205,7 @@ export function Checker_getAssignmentDeclarationInitializerType(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.removeSubtypes","kind":"method","status":"stub","sigHash":"8b4040210ef6ee2012d6a9e44f9e29175dd761be10cb1ebea4b0be4df8282508","bodyHash":"f01794532ae15f1b019b2a0b80256ec0b0012c987f74d563d5c4e6f20ce00b37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.removeSubtypes","kind":"method","status":"implemented","sigHash":"8b4040210ef6ee2012d6a9e44f9e29175dd761be10cb1ebea4b0be4df8282508","bodyHash":"f01794532ae15f1b019b2a0b80256ec0b0012c987f74d563d5c4e6f20ce00b37"}
  *
  * Go source:
  * func (c *Checker) removeSubtypes(types []*Type, hasObjectTypes bool) []*Type {
@@ -1290,8 +1298,81 @@ export function Checker_getAssignmentDeclarationInitializerType(receiver: GoPtr<
  * 	return types
  * }
  */
-export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, hasObjectTypes: bool): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.removeSubtypes");
+export function Checker_removeSubtypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, hasObjectTypes: bool): GoPtr<GoSlice<GoPtr<Type>>> {
+  if (types.length < 2) {
+    return types;
+  }
+  const key = getTypeListKey(types);
+  const cached = receiver!.subtypeReductionCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const hasEmptyObject = hasObjectTypes && types.some((t) =>
+    (t!.flags & TypeFlagsObject) !== 0 &&
+    !Checker_isGenericMappedType(receiver, t) &&
+    Checker_isEmptyResolvedType(receiver, Checker_resolveStructuredTypeMembers(receiver, t)),
+  );
+  const length = types.length;
+  let i = length;
+  let count = 0;
+  while (i > 0) {
+    i--;
+    const source = types[i]!;
+    if (hasEmptyObject || (source!.flags & TypeFlagsStructuredOrInstantiable) !== 0) {
+      if ((source!.flags & TypeFlagsTypeParameter) !== 0 && (Checker_getBaseConstraintOrType(receiver, source)!.flags & TypeFlagsUnion) !== 0) {
+        if (Checker_isTypeRelatedTo(receiver, source, Checker_getUnionType(receiver, types.map((t) => t === source ? receiver!.neverType : t)), receiver!.strictSubtypeRelation)) {
+          types = slices.Delete(types, i, i + 1);
+        }
+        continue;
+      }
+      let keyProperty: GoPtr<Symbol>;
+      let keyPropertyType: GoPtr<Type>;
+      if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsInstantiableNonPrimitive)) !== 0) {
+        keyProperty = Checker_getPropertiesOfType(receiver, source).find((p) => isUnitType(Checker_getTypeOfSymbol(receiver, p)));
+      }
+      if (keyProperty !== undefined) {
+        keyPropertyType = Checker_getRegularTypeOfLiteralType(receiver, Checker_getTypeOfSymbol(receiver, keyProperty));
+      }
+      for (const target of types) {
+        if (source === target) {
+          continue;
+        }
+        if (count === 100000) {
+          const estimatedCount = (Math.trunc(count / (length - i)) * length);
+          if (estimatedCount > 1000000) {
+            if (receiver!.tracer !== undefined) {
+              Tracer_Instant(receiver!.tracer, PhaseCheckTypes, "removeSubtypes_DepthLimit", new globalThis.Map<string, unknown>([["estimatedCount", estimatedCount]]));
+            }
+            Checker_error(receiver, receiver!.currentNode, Expression_produces_a_union_type_that_is_too_complex_to_represent);
+            return undefined;
+          }
+        }
+        count++;
+        if (keyProperty !== undefined && (target!.flags & (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsInstantiableNonPrimitive)) !== 0) {
+          const propertyType = Checker_getTypeOfPropertyOfType(receiver, target, keyProperty!.Name);
+          if (propertyType !== undefined && isUnitType(propertyType) && Checker_getRegularTypeOfLiteralType(receiver, propertyType) !== keyPropertyType) {
+            continue;
+          }
+        }
+        if ((source === receiver!.emptyObjectType || source === receiver!.unknownEmptyObjectType) && target!.symbol !== undefined && Checker_IsEmptyAnonymousObjectType(receiver, target)) {
+          continue;
+        }
+        if (
+          Checker_isTypeRelatedTo(receiver, source, target, receiver!.strictSubtypeRelation) &&
+          (
+            (Checker_getTargetType(receiver, source)!.objectFlags & ObjectFlagsClass) === 0 ||
+            (Checker_getTargetType(receiver, target)!.objectFlags & ObjectFlagsClass) === 0 ||
+            Checker_isTypeDerivedFrom(receiver, source, target)
+          )
+        ) {
+          types = slices.Delete(types, i, i + 1);
+          break;
+        }
+      }
+    }
+  }
+  receiver!.subtypeReductionCache.set(key, types);
+  return types;
 }
 
 /**
