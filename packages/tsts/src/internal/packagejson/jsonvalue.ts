@@ -201,7 +201,13 @@ export function JSONValue_AsString(receiver: JSONValue): string {
  * Go source:
  * var _ json.UnmarshalerFrom = (*JSONValue)(nil)
  */
-export let __d3c38d60_0: UnmarshalerFrom = undefined as never;
+export let __d3c38d60_0: UnmarshalerFrom = JSONValue_as_json_UnmarshalerFrom(undefined);
+
+export function JSONValue_as_json_UnmarshalerFrom(receiver: GoPtr<JSONValue>): UnmarshalerFrom {
+  return {
+    UnmarshalJSONFrom: (decoder: Decoder): GoError => JSONValue_UnmarshalJSONFrom(receiver, decoder),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::method::JSONValue.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"58ef06a751824f99c92048a67b7f9d966b45b19de3cf4d80037651e90d90c95d","bodyHash":"0594928fcdea39e2c2de53a060bedc345134654336b84437caa9bca3158cf30b"}

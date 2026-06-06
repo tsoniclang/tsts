@@ -52,7 +52,13 @@ export interface ExportsOrImports {
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)
  */
-export const __fac7894a_0: UnmarshalerFrom = undefined as never;
+export const __fac7894a_0: UnmarshalerFrom = ExportsOrImports_as_json_UnmarshalerFrom(undefined);
+
+export function ExportsOrImports_as_json_UnmarshalerFrom(receiver: GoPtr<ExportsOrImports>): UnmarshalerFrom {
+  return {
+    UnmarshalJSONFrom: (decoder: Decoder): GoError => ExportsOrImports_UnmarshalJSONFrom(receiver, decoder),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::method::ExportsOrImports.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"0bedde69f9b9c17ba4aa81a22db4515bd14cfc176f980e625a93a90f66079e2d","bodyHash":"a9d52932cf2087e5ccb1be24c80282f75b783eacd9a7b4e7deb666781165af39"}
