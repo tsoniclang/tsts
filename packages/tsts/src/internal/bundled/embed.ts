@@ -1,6 +1,7 @@
-import type { bool, long } from "@tsonic/core/types.js";
+import type { bool, int, long } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry, FileInfo as FileInfo_2d3efe16, FileMode } from "../../go/io/fs.js";
+import { ModeDir, ModeIrregular, ModeSymlink } from "../../go/io/fs.js";
 import { Time } from "../../go/time.js";
 import * as strings from "../../go/strings.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs/vfs.js";
@@ -77,18 +78,9 @@ export interface wrappedFS {
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)
  */
-export let __eb693fb3_0: FS = undefined as never;
+export let __eb693fb3_0: FS = wrappedFS_as_vfs_FS(undefined);
 
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::func::wrapFS","kind":"func","status":"implemented","sigHash":"47cfe8da7e0cd5cc2c1c0216f3222db8d8e58c9f41164fe2c18174a5c0f956af","bodyHash":"3b618fc8f3a6e3ba6dfdfd96b6150bd885c8d229bad285f4722c071568f1140a"}
- *
- * Go source:
- * func wrapFS(fs vfs.FS) vfs.FS {
- * 	return &wrappedFS{fs: fs}
- * }
- */
-export function wrapFS(fsArg: FS): FS {
-  const receiver: wrappedFS = { fs: fsArg };
+export function wrappedFS_as_vfs_FS(receiver: GoPtr<wrappedFS>): FS {
   return {
     UseCaseSensitiveFileNames: () => wrappedFS_UseCaseSensitiveFileNames(receiver),
     FileExists: (path: string) => wrappedFS_FileExists(receiver, path),
@@ -103,6 +95,18 @@ export function wrapFS(fsArg: FS): FS {
     WalkDir: (root: string, walkFn: WalkDirFunc) => wrappedFS_WalkDir(receiver, root, walkFn),
     Realpath: (path: string) => wrappedFS_Realpath(receiver, path),
   };
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::func::wrapFS","kind":"func","status":"implemented","sigHash":"47cfe8da7e0cd5cc2c1c0216f3222db8d8e58c9f41164fe2c18174a5c0f956af","bodyHash":"3b618fc8f3a6e3ba6dfdfd96b6150bd885c8d229bad285f4722c071568f1140a"}
+ *
+ * Go source:
+ * func wrapFS(fs vfs.FS) vfs.FS {
+ * 	return &wrappedFS{fs: fs}
+ * }
+ */
+export function wrapFS(fsArg: FS): FS {
+  return wrappedFS_as_vfs_FS({ fs: fsArg });
 }
 
 /**
@@ -196,7 +200,9 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
  * 	fs.FileInfoToDirEntry(&fileInfo{name: "libs", mode: fs.ModeDir}),
  * }
  */
-export let rootEntries: GoSlice<DirEntry> = undefined as never;
+export let rootEntries: GoSlice<DirEntry> = [
+  fileInfo_as_io_fs_DirEntry({ name: "libs", mode: ModeDir, size: 0 as long }),
+];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.Stat","kind":"method","status":"stub","sigHash":"812fc06d7c7368a66cc078e05e801c33874b41a18a50a41a0436c8d2a6478b7c","bodyHash":"7eb7a34e0d03deb3152762e4fb37f11ef61849f8ca35f1e8d015f2e66a29743d"}
@@ -402,8 +408,28 @@ export interface fileInfo {
  * 	_ fs.DirEntry = (*fileInfo)(nil)
  * )
  */
-export let ____85348954_0: FileInfo_2d3efe16 = undefined as never;
-export let ____85348954_1: DirEntry = undefined as never;
+export let ____85348954_0: FileInfo_2d3efe16 = fileInfo_as_io_fs_FileInfo(undefined);
+export let ____85348954_1: DirEntry = fileInfo_as_io_fs_DirEntry(undefined);
+
+export function fileInfo_as_io_fs_FileInfo(receiver: GoPtr<fileInfo>): FileInfo_2d3efe16 {
+  return {
+    Name: (): string => fileInfo_Name(receiver),
+    Size: (): int => fileInfo_Size(receiver) as unknown as int,
+    Mode: (): FileMode => fileInfo_Mode(receiver),
+    ModTime: (): Date => fileInfo_ModTime(receiver) as unknown as Date,
+    IsDir: (): bool => fileInfo_IsDir(receiver),
+    Sys: (): unknown => fileInfo_Sys(receiver),
+  };
+}
+
+export function fileInfo_as_io_fs_DirEntry(receiver: GoPtr<fileInfo>): DirEntry {
+  return {
+    Name: (): string => fileInfo_Name(receiver),
+    IsDir: (): bool => fileInfo_IsDir(receiver),
+    Type: (): FileMode => fileInfo_Type(receiver),
+    Info: (): [FileInfo_2d3efe16, GoError] => fileInfo_Info(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.IsDir","kind":"method","status":"implemented","sigHash":"46e731976895c34cc5422d5bd1aa06a85d77b6eaa86166775cb7680bb89c7ad5","bodyHash":"815c7b929b4ed799d69fb78ea6e8e3d65bdbf6bd06e3709d5320c485fb7e7c88"}
@@ -414,7 +440,7 @@ export let ____85348954_1: DirEntry = undefined as never;
  * }
  */
 export function fileInfo_IsDir(receiver: GoPtr<fileInfo>): bool {
-  return (receiver!.mode as unknown as { IsDir(): bool }).IsDir();
+  return (((receiver!.mode as unknown as number) & (ModeDir as unknown as number)) !== 0) as bool;
 }
 
 /**
@@ -486,7 +512,7 @@ export function fileInfo_Sys(_receiver: GoPtr<fileInfo>): unknown {
  * }
  */
 export function fileInfo_Info(receiver: GoPtr<fileInfo>): [FileInfo_2d3efe16, GoError] {
-  return [receiver as unknown as FileInfo_2d3efe16, undefined];
+  return [fileInfo_as_io_fs_FileInfo(receiver), undefined];
 }
 
 /**
@@ -498,5 +524,5 @@ export function fileInfo_Info(receiver: GoPtr<fileInfo>): [FileInfo_2d3efe16, Go
  * }
  */
 export function fileInfo_Type(receiver: GoPtr<fileInfo>): FileMode {
-  return (receiver!.mode as unknown as { Type(): FileMode }).Type();
+  return ((receiver!.mode as unknown as number) & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number) | (ModeIrregular as unknown as number))) as unknown as FileMode;
 }

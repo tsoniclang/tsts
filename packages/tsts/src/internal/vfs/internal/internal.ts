@@ -208,20 +208,22 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * }
  */
 export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: string): Entries {
-  const result: Entries = { Files: [], Directories: [] };
+  const result: Entries = { Files: [], Directories: [], Symlinks: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() };
 
-  const addToResult = (name: string, mode: FileModeValue, _isLink: bool): bool => {
+  const addToResult = (name: string, mode: FileModeValue, isLink: bool): bool => {
     if (mode.IsDir()) {
       result.Directories.push(name);
-      return true;
-    }
-
-    if (mode.IsRegular()) {
+    } else if (mode.IsRegular()) {
       result.Files.push(name);
-      return true;
+    } else {
+      return false;
     }
 
-    return false;
+    if (isLink) {
+      result.Symlinks!.set(name, {});
+    }
+
+    return true;
   };
 
   for (const entry of Common_getEntries(receiver, path)) {

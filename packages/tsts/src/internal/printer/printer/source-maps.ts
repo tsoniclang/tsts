@@ -1164,7 +1164,7 @@ export function Printer_EmitSourceFile(receiver: GoPtr<Printer>, sourceFile: GoP
  */
 export function Printer_setSourceFile(receiver: GoPtr<Printer>, sourceFile: GoPtr<SourceFile>): void {
   receiver!.currentSourceFile = sourceFile;
-  receiver!.uniqueHelperNames = undefined as never;
+  receiver!.uniqueHelperNames = undefined;
   receiver!.externalHelpersModuleName = undefined;
   if (sourceFile !== undefined) {
     if ((EmitContext_EmitFlags(receiver!.emitContext, EmitContext_MostOriginal(receiver!.emitContext, NodeDefault_AsNode(sourceFile))) & EFExternalHelpers) !== 0) {
