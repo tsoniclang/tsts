@@ -5,7 +5,7 @@ import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::SymbolTracker","kind":"type","status":"stub","sigHash":"26b43a48169d1c79acfa978c9744770335c5a2d9095fdf93009281e487346220","bodyHash":"9d29dcb20ae9b48d48e110f003a56d95043ec4b923b7bbcbb944be964c029061"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::SymbolTracker","kind":"type","status":"implemented","sigHash":"26b43a48169d1c79acfa978c9744770335c5a2d9095fdf93009281e487346220","bodyHash":"9d29dcb20ae9b48d48e110f003a56d95043ec4b923b7bbcbb944be964c029061"}
  *
  * Go source:
  * SymbolTracker interface {
@@ -40,7 +40,7 @@ export interface SymbolTracker {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::Flags","kind":"type","status":"stub","sigHash":"35e85ac044b21065a025313a94bcdb2debbcca435127893fa7bbb32bd19c7904","bodyHash":"de79cc4f5e88e1a6633bf979d13ad1c2ce5ef161b52bdb56e87abbc1c317fcc1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::Flags","kind":"type","status":"implemented","sigHash":"35e85ac044b21065a025313a94bcdb2debbcca435127893fa7bbb32bd19c7904","bodyHash":"de79cc4f5e88e1a6633bf979d13ad1c2ce5ef161b52bdb56e87abbc1c317fcc1"}
  *
  * Go source:
  * Flags uint32
@@ -126,7 +126,7 @@ export const FlagsInTypeAlias: Flags = 1 << 23 as Flags;
 export const FlagsInInitialEntityName: Flags = 1 << 24 as Flags;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::InternalFlags","kind":"type","status":"stub","sigHash":"8b43ac46a51e12a9ff91c6cf16502b78b6eeff4b5f5f3c574ffa73379f437e26","bodyHash":"ea17b00948a4185cf12714173de63f900f5f4637f2d01943a86305bbd1b6c86e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::InternalFlags","kind":"type","status":"implemented","sigHash":"8b43ac46a51e12a9ff91c6cf16502b78b6eeff4b5f5f3c574ffa73379f437e26","bodyHash":"ea17b00948a4185cf12714173de63f900f5f4637f2d01943a86305bbd1b6c86e"}
  *
  * Go source:
  * InternalFlags int32

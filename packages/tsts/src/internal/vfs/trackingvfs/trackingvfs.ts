@@ -6,7 +6,7 @@ import { SyncSet_Add } from "../../collections/syncset.js";
 import type { Entries, FileInfo, FS as FS_2329d319, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::type::FS","kind":"type","status":"stub","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"30053028ff3bfe5aabf6bdf1e75cb3da747df28dd72f5cc762348189001806e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"30053028ff3bfe5aabf6bdf1e75cb3da747df28dd72f5cc762348189001806e2"}
  *
  * Go source:
  * FS struct {
