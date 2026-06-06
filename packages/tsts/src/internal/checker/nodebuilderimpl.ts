@@ -5,7 +5,7 @@ import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { BindingName, Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
-import { AsBindingElement, AsElementAccessExpression, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
+import { AsBindingElement, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
 import { IsBindingElement, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
@@ -13,12 +13,20 @@ import {
   KindAnyKeyword,
   KindArrowFunction,
   KindBindingElement,
+  KindCallSignature,
   KindClassExpression,
+  KindConstructor,
+  KindConstructorType,
+  KindConstructSignature,
   KindDotDotDotToken,
   KindExportDeclaration,
   KindExportSpecifier,
   KindExternalModuleReference,
+  KindFunctionDeclaration,
   KindFunctionExpression,
+  KindFunctionType,
+  KindGetAccessor,
+  KindIndexSignature,
   KindImportClause,
   KindImportDeclaration,
   KindImportEqualsDeclaration,
@@ -29,16 +37,20 @@ import {
   KindMinusToken,
   KindModuleBlock,
   KindMultiLineCommentTrivia,
+  KindMethodDeclaration,
+  KindMethodSignature,
   KindNamespaceExport,
   KindNamespaceImport,
   KindParameter,
   KindQuestionToken,
   KindAssertsKeyword,
   KindReadonlyKeyword,
+  KindSetAccessor,
   KindSourceFile,
   KindTypeParameter,
   KindUndefinedKeyword,
   KindVariableDeclaration,
+  KindWithKeyword,
 } from "../ast/generated/kinds.js";
 import type { Symbol } from "../ast/symbol.js";
 import { InternalSymbolNameDefault, InternalSymbolNameExportEquals, InternalSymbolNameMissing, InternalSymbolNamePrefix } from "../ast/symbol.js";
@@ -70,6 +82,7 @@ import {
   GetDeclarationOfKind,
   GetFirstIdentifier,
   GetNameOfDeclaration,
+  GetNodeId,
   GetSourceFileOfModule,
   GetSourceFileOfNode,
   GetSymbolId,
@@ -81,22 +94,38 @@ import {
   IsModifier,
   IsRequireCall,
   IsStatic,
+  NewHasFileName,
   NodeIsSynthesized,
   WalkUpParenthesizedTypes,
 } from "../ast/utilities.js";
 import { NewNodeVisitor, NodeVisitor_VisitEachChild } from "../ast/visitor.js";
-import type { NodeVisitorHooks } from "../ast/visitor.js";
+import type { NodeVisitor as AstNodeVisitor, NodeVisitorHooks } from "../ast/visitor.js";
 import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
+import { ModifierFlagsAbstract, ModifiersToFlags } from "../ast/modifierflags.js";
 import {
+  NewArrowFunction,
+  NewBlock,
+  NewCallSignatureDeclaration,
   NewComputedPropertyName,
+  NewConstructSignatureDeclaration,
+  NewConstructorDeclaration,
+  NewConstructorTypeNode,
   NewExpressionWithTypeArguments,
+  NewFunctionDeclaration,
+  NewFunctionExpression,
+  NewFunctionTypeNode,
+  NewGetAccessorDeclaration,
   NewIdentifier,
+  NewImportAttribute,
+  NewImportAttributes,
   NewImportTypeNode,
   NewIndexedAccessTypeNode,
   NewKeywordTypeNode,
   NewElementAccessExpression,
   NewLiteralTypeNode,
+  NewMethodDeclaration,
+  NewMethodSignatureDeclaration,
   NewNumericLiteral,
   NewParameterDeclaration,
   NewParenthesizedTypeNode,
@@ -106,6 +135,7 @@ import {
   NewStringLiteral,
   NewThisTypeNode,
   NewToken,
+  NewSetAccessorDeclaration,
   NewTypeParameterDeclaration,
   NewTypePredicateNode,
   NewTypeQueryNode,
@@ -113,7 +143,7 @@ import {
   NewUnionTypeNode,
   NewIndexSignatureDeclaration,
 } from "../ast/generated/factory.js";
-import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement } from "../ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
 import { Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
@@ -124,7 +154,7 @@ import { Every, Filter, FirstNonNil, Map as CoreMap, Some } from "../core/core.j
 import { LanguageVariantStandard } from "../core/languagevariant.js";
 import { DeclarationNameToString, IsIdentifierText } from "../scanner/utilities.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
-import { ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
+import { CompilerOptions_GetModuleResolutionKind, ModuleKindCommonJS, ModuleKindESNext, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has, LinkStore_TryGet } from "../core/linkstore.js";
 import type { ModeAwareCache } from "../module/cache.js";
@@ -132,6 +162,7 @@ import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.j
 import {
   FlagsAllowAnonymousIdentifier,
   FlagsAllowEmptyIndexInfoType,
+  FlagsAllowNodeModulesRelativePaths,
   FlagsAllowQualifiedNameInPlaceOfIdentifier,
   FlagsForbidIndexedAccessSymbolReferences,
   FlagsGenerateNamesForShadowedTypeParams,
@@ -139,6 +170,7 @@ import {
   FlagsInTypeAlias,
   FlagsNoTruncation,
   FlagsOmitParameterModifiers,
+  FlagsOmitThisParameter,
   FlagsSuppressAnyReturnType,
   FlagsUseAliasDefinedOutsideCurrentScope,
   FlagsUseFullyQualifiedType,
@@ -147,6 +179,7 @@ import {
   FlagsUseStructuralFallback,
   FlagsUseTypeOfFunction,
   FlagsUseSingleQuotesForStringLiteralType,
+  FlagsWriteTypeArgumentsOfSignature,
   FlagsWriteTypeParametersInQualifiedName,
   InternalFlagsDoNotIncludeSymbolChain,
   InternalFlagsWriteComputedProps,
@@ -166,7 +199,7 @@ import { SymbolAccessibilityAccessible } from "../printer/emitresolver.js";
 import { NewPseudoChecker } from "../pseudochecker/checker.js";
 import type { PseudoChecker } from "../pseudochecker/checker.js";
 import type { Checker, Host } from "./checker/state.js";
-import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, someType, TypeFactsNEUndefined } from "./checker/state.js";
+import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, isTupleType, signatureHasRestParameter, someType, TypeFactsNEUndefined } from "./checker/state.js";
 import {
   Checker_getDefaultFromTypeParameter,
   Checker_getConstraintOfTypeParameter,
@@ -174,9 +207,11 @@ import {
   Checker_getMinTypeArgumentCount,
   Checker_getOuterTypeParametersOfClassOrInterface,
   Checker_getSignatureFromDeclaration,
+  Checker_getReturnTypeOfSignature,
   Checker_getTypeArguments,
   Checker_getTypeParametersFromDeclaration,
   Checker_instantiateSignature,
+  Checker_isLateBindableIndexSignature,
   Checker_newSignature,
   Checker_newTypeParameter,
 } from "./checker/signatures.js";
@@ -190,6 +225,7 @@ import {
   Checker_getTypeWithFacts,
   Checker_getWidenedType,
   Checker_instantiateType,
+  Checker_createArrayType,
   Checker_newAnonymousType,
 } from "./checker/types.js";
 import { Checker_getConstraintDeclaration } from "./checker/inference.js";
@@ -234,13 +270,19 @@ import { Checker_valueToString } from "./printer.js";
 import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols, IsTypeAny } from "./utilities.js";
 import { PathIsRelative } from "../tspath/path.js";
 import { CountPathComponents } from "../modulespecifiers/compare.js";
+import type { ModuleSpecifierGenerationHost, SourceFileForSpecifierGeneration } from "../modulespecifiers/types.js";
+import { ImportModuleSpecifierEndingPreferenceJs, ImportModuleSpecifierEndingPreferenceNone, ImportModuleSpecifierPreferenceProjectRelative } from "../modulespecifiers/types.js";
+import { GetModuleSpecifiers } from "../modulespecifiers/specifiers.js";
+import type { ModeAwareCacheKey } from "../module/types.js";
 import type { SymbolAccessibilityResult } from "../printer/emitresolver.js";
 import { NodeBuilderImpl_tryReuseExistingNodeHelper } from "./nodecopy.js";
 import { Checker_checkExpression } from "./checker/syntax-checking.js";
 import { FromString } from "../jsnum/string.js";
-import { UnquoteString } from "../stringutil/util.js";
+import { StripQuotes, UnquoteString } from "../stringutil/util.js";
 import { Set_Has } from "../collections/set.js";
 import { NodeBuilderImpl_pseudoReturnTypeMatchesPredicate, NodeBuilderImpl_pseudoTypeEquivalentToType, NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback } from "./pseudotypenodebuilder.js";
+import { NodeBuilderImpl_addSymbolTypeToContext } from "./nodebuilderscopes.js";
+import { PseudoChecker_GetReturnTypeOfSignature } from "../pseudochecker/lookup.js";
 import * as slices from "../../go/slices.js";
 
 /**
@@ -1527,7 +1569,7 @@ export function NodeBuilderImpl_symbolToEntityNameNode(receiver: GoPtr<NodeBuild
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeNode","kind":"method","status":"stub","sigHash":"c21625fc3a6804c965beee6c5d6c9002f03250f9faf0ea108dd8e0bfef15d3bb","bodyHash":"5b5deb3ff1ae1b14d3368ed96f3a6d17f1cb6e3f0e21901a88bc1e39b1c4981e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeNode","kind":"method","status":"implemented","sigHash":"c21625fc3a6804c965beee6c5d6c9002f03250f9faf0ea108dd8e0bfef15d3bb","bodyHash":"5b5deb3ff1ae1b14d3368ed96f3a6d17f1cb6e3f0e21901a88bc1e39b1c4981e"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) symbolToTypeNode(symbol *ast.Symbol, mask ast.SymbolFlags, typeArguments *ast.NodeList) *ast.TypeNode {
@@ -1637,7 +1679,100 @@ export function NodeBuilderImpl_symbolToEntityNameNode(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_symbolToTypeNode(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, mask: SymbolFlags, typeArguments: GoPtr<NodeList>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeNode");
+  const chain = NodeBuilderImpl_lookupSymbolChain(receiver, symbol_, mask, (receiver!.ctx!.flags & FlagsUseAliasDefinedOutsideCurrentScope) === 0);
+  if (chain.length === 0) {
+    return undefined;
+  }
+  const isTypeOf = mask === SymbolFlagsValue;
+  if (Some(chain[0]!.Declarations, hasNonGlobalAugmentationExternalModuleSymbol)) {
+    const nonRootParts = chain.length > 1
+      ? NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, chain.length - 1, 1, typeArguments)
+      : undefined;
+    let typeParameterNodes = typeArguments;
+    if (typeParameterNodes === undefined) {
+      typeParameterNodes = NodeBuilderImpl_lookupTypeParameterNodes(receiver, chain, 0);
+    }
+    const contextOriginal = receiver!.ctx!.enclosingDeclaration !== undefined ? EmitContext_MostOriginal(receiver!.e, receiver!.ctx!.enclosingDeclaration) : undefined;
+    const contextFile = contextOriginal !== undefined ? GetSourceFileOfNode(contextOriginal) : undefined;
+    const targetFile = GetSourceFileOfModule(chain[0]);
+    let specifier = "";
+    let attributes: GoPtr<Node>;
+    const moduleResolutionKind = CompilerOptions_GetModuleResolutionKind(receiver!.ch!.compilerOptions);
+    if (moduleResolutionKind === ModuleResolutionKindNode16 || moduleResolutionKind === ModuleResolutionKindNodeNext) {
+      if (targetFile !== undefined && contextFile !== undefined) {
+        const targetHasFileName = NewHasFileName(SourceFile_FileName(targetFile), SourceFile_Path(targetFile));
+        const contextHasFileName = NewHasFileName(SourceFile_FileName(contextFile), SourceFile_Path(contextFile));
+        if (receiver!.ch!.program.GetEmitModuleFormatOfFile(targetHasFileName) === ModuleKindESNext &&
+          receiver!.ch!.program.GetEmitModuleFormatOfFile(targetHasFileName) !== receiver!.ch!.program.GetEmitModuleFormatOfFile(contextHasFileName)) {
+          specifier = NodeBuilderImpl_getSpecifierForModuleSymbol(receiver, chain[0], ResolutionModeESM);
+          attributes = NewImportAttributes(
+            receiver!.f,
+            KindWithKeyword,
+            NodeFactory_NewNodeList(receiver!.f, [NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, "import") as GoPtr<Expression>)]),
+            false as bool,
+          );
+        }
+      }
+    }
+    if (specifier.length === 0) {
+      specifier = NodeBuilderImpl_getSpecifierForModuleSymbol(receiver, chain[0], ResolutionModeNone);
+    }
+    if ((receiver!.ctx!.flags & FlagsAllowNodeModulesRelativePaths) === 0 && specifier.includes("/node_modules/")) {
+      const oldSpecifier = specifier;
+      if (moduleResolutionKind === ModuleResolutionKindNode16 || moduleResolutionKind === ModuleResolutionKindNodeNext) {
+        let swappedMode = ResolutionModeESM;
+        if (contextFile !== undefined) {
+          const contextHasFileName = NewHasFileName(SourceFile_FileName(contextFile), SourceFile_Path(contextFile));
+          if (receiver!.ch!.program.GetEmitModuleFormatOfFile(contextHasFileName) === ModuleKindESNext) {
+            swappedMode = ModuleKindCommonJS as ResolutionMode;
+          }
+        }
+        specifier = NodeBuilderImpl_getSpecifierForModuleSymbol(receiver, chain[0], swappedMode);
+        if (specifier.includes("/node_modules/")) {
+          specifier = oldSpecifier;
+        } else {
+          const modeStr = swappedMode === ResolutionModeESM ? "import" : "require";
+          attributes = NewImportAttributes(
+            receiver!.f,
+            KindWithKeyword,
+            NodeFactory_NewNodeList(receiver!.f, [NewImportAttribute(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, "resolution-mode") as never, NodeBuilderImpl_newStringLiteral(receiver, modeStr) as GoPtr<Expression>)]),
+            false as bool,
+          );
+        }
+      }
+      if (attributes === undefined) {
+        receiver!.ctx!.encounteredError = true;
+        receiver!.ctx!.tracker!.ReportLikelyUnsafeImportRequiredError(oldSpecifier, symbol_!.Name);
+      }
+    }
+    const lit = NewLiteralTypeNode(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, specifier)) as GoPtr<TypeNode>;
+    receiver!.ctx!.approximateLength += specifier.length + 10;
+    if (nonRootParts === undefined || IsEntityName(nonRootParts)) {
+      return NewImportTypeNode(receiver!.f, isTypeOf, lit, attributes as never, nonRootParts as GoPtr<EntityName>, typeParameterNodes) as GoPtr<TypeNode>;
+    }
+    const splitNode = getTopmostIndexedAccessType(AsIndexedAccessTypeNode(nonRootParts));
+    const qualifier = AsTypeReferenceNode(splitNode!.ObjectType)!.TypeName;
+    return NewIndexedAccessTypeNode(
+      receiver!.f,
+      NewImportTypeNode(receiver!.f, isTypeOf, lit, attributes as never, qualifier, typeParameterNodes) as GoPtr<TypeNode>,
+      splitNode!.IndexType,
+    ) as GoPtr<TypeNode>;
+  }
+  const entityName = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, chain.length - 1, 0, typeArguments);
+  if (IsIndexedAccessTypeNode(entityName)) {
+    return entityName as GoPtr<TypeNode>;
+  }
+  if (IsEntityName(entityName)) {
+    if (isTypeOf) {
+      return NewTypeQueryNode(receiver!.f, entityName as GoPtr<EntityName>, undefined) as GoPtr<TypeNode>;
+    }
+    return NewTypeReferenceNode(receiver!.f, entityName as GoPtr<EntityName>, typeArguments) as GoPtr<TypeNode>;
+  }
+  if (isTypeOf && IsExpressionWithTypeArguments(entityName)) {
+    const expr = AsExpressionWithTypeArguments(entityName);
+    return NewTypeQueryNode(receiver!.f, NodeFactory_DeepCloneNode(receiver!.f, expr!.Expression) as GoPtr<EntityName>, expr!.TypeArguments) as GoPtr<TypeNode>;
+  }
+  return entityName as GoPtr<TypeNode>;
 }
 
 /**
@@ -2689,7 +2824,7 @@ export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getSpecifierForModuleSymbol","kind":"method","status":"stub","sigHash":"35c5e29a10beb2a0e48afb6513d6865f7f693d6d0f921710d4a6ba2d3040affc","bodyHash":"9299314269e608b2a9a21809e1fb17e7681678be3dd2c14cb6efe579da0f9c3f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getSpecifierForModuleSymbol","kind":"method","status":"implemented","sigHash":"35c5e29a10beb2a0e48afb6513d6865f7f693d6d0f921710d4a6ba2d3040affc","bodyHash":"9299314269e608b2a9a21809e1fb17e7681678be3dd2c14cb6efe579da0f9c3f"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) getSpecifierForModuleSymbol(symbol *ast.Symbol, overrideImportMode core.ResolutionMode) string {
@@ -2773,7 +2908,77 @@ export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): G
  * }
  */
 export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, overrideImportMode: ResolutionMode): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.getSpecifierForModuleSymbol");
+  let file = GetDeclarationOfKind(symbol_, KindSourceFile);
+  if (file === undefined) {
+    const equivalentSymbol = FirstNonNil(symbol_!.Declarations, (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_));
+    if (equivalentSymbol !== undefined) {
+      file = GetDeclarationOfKind(equivalentSymbol, KindSourceFile);
+    }
+  }
+  if (file === undefined && isAmbientModuleSymbolName(symbol_!.Name)) {
+    return StripQuotes(symbol_!.Name);
+  }
+  if (receiver!.ctx!.enclosingFile === undefined) {
+    if (isAmbientModuleSymbolName(symbol_!.Name)) {
+      return StripQuotes(symbol_!.Name);
+    }
+    return SourceFile_FileName(GetSourceFileOfModule(symbol_)!);
+  }
+  const enclosingDeclaration = EmitContext_MostOriginal(receiver!.e, receiver!.ctx!.enclosingDeclaration);
+  let originalModuleSpecifier: GoPtr<Node>;
+  if (canHaveModuleSpecifier(enclosingDeclaration)) {
+    originalModuleSpecifier = TryGetModuleSpecifierFromDeclaration(enclosingDeclaration);
+  }
+  const contextFile = receiver!.ctx!.enclosingFile;
+  const contextHasFileName = NewHasFileName(SourceFile_FileName(contextFile), SourceFile_Path(contextFile));
+  let resolutionMode = overrideImportMode;
+  if (resolutionMode === ResolutionModeNone && originalModuleSpecifier !== undefined) {
+    resolutionMode = receiver!.ch!.program.GetEmitSyntaxForUsageLocation(contextHasFileName, originalModuleSpecifier as never);
+  } else if (resolutionMode === ResolutionModeNone && contextFile !== undefined) {
+    resolutionMode = receiver!.ch!.program.GetImpliedNodeFormatForEmit(contextHasFileName) as unknown as ResolutionMode;
+  }
+  const cacheKey: ModeAwareCacheKey = { Name: String(SourceFile_Path(contextFile)), Mode: resolutionMode };
+  const links = LinkStore_Get<GoPtr<Symbol>, NodeBuilderSymbolLinks>(receiver!.symbolLinks as unknown as LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>, symbol_);
+  if (links!.specifierCache === undefined) {
+    links!.specifierCache = new globalThis.Map() as ModeAwareCache<string>;
+  }
+  if (links!.specifierCache.has(cacheKey)) {
+    return links!.specifierCache.get(cacheKey) as string;
+  }
+  const host = (receiver!.ctx!.host.__tsgoEmbedded0 ?? receiver!.ctx!.host) as unknown as ModuleSpecifierGenerationHost;
+  const specifierCompilerOptions = receiver!.ch!.compilerOptions;
+  const specifierPref = ImportModuleSpecifierPreferenceProjectRelative;
+  let endingPref = ImportModuleSpecifierEndingPreferenceNone;
+  if (resolutionMode === ResolutionModeESM) {
+    endingPref = ImportModuleSpecifierEndingPreferenceJs;
+  }
+  const importingSourceFile: SourceFileForSpecifierGeneration = {
+    Path: () => SourceFile_Path(contextFile),
+    FileName: () => SourceFile_FileName(contextFile),
+    Imports: () => SourceFile_Imports(contextFile) as never,
+    IsJS: () => SourceFile_IsJS(contextFile),
+  };
+  const allSpecifiers = GetModuleSpecifiers(
+    symbol_,
+    receiver!.ch as never,
+    specifierCompilerOptions,
+    importingSourceFile,
+    host,
+    {
+      ImportModuleSpecifierPreference: specifierPref,
+      ImportModuleSpecifierEnding: endingPref,
+      AutoImportSpecifierExcludeRegexes: [],
+    },
+    { OverrideImportMode: overrideImportMode },
+    false as bool,
+  );
+  if (allSpecifiers.length === 0) {
+    links!.specifierCache.set(cacheKey, "");
+    return "";
+  }
+  const specifier = allSpecifiers[0] ?? "";
+  links!.specifierCache.set(cacheKey, specifier);
+  return specifier;
 }
 
 /**
@@ -3508,7 +3713,7 @@ export function NodeBuilderImpl_cloneBindingName(receiver: GoPtr<NodeBuilderImpl
   if (IsComputedPropertyName(node) && Checker_isLateBindableName(receiver!.ch, node)) {
     NodeBuilderImpl_trackComputedName(receiver, Node_Expression(node), receiver!.ctx!.enclosingDeclaration);
   }
-  let visited = NodeVisitor_VisitEachChild(receiver!.cloneBindingNameVisitor, node);
+  let visited = NodeVisitor_VisitEachChild(receiver!.cloneBindingNameVisitor as unknown as GoPtr<AstNodeVisitor>, node);
   if (IsBindingElement(visited)) {
     const bindingElement = AsBindingElement(visited);
     visited = NodeFactory_UpdateBindingElement(
@@ -3898,7 +4103,7 @@ export function NodeBuilderImpl_tryGetThisParameterDeclaration(receiver: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeReturnTypeForSignature","kind":"method","status":"stub","sigHash":"f05f188513e65eb9af078058b7e5b434e03b9b69ea9284469083dc62b873549b","bodyHash":"c9e0242de6e3ea11aa6a63c75d670d87ace2d85e3f259536aa1ae9ae0e2418b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeReturnTypeForSignature","kind":"method","status":"implemented","sigHash":"f05f188513e65eb9af078058b7e5b434e03b9b69ea9284469083dc62b873549b","bodyHash":"c9e0242de6e3ea11aa6a63c75d670d87ace2d85e3f259536aa1ae9ae0e2418b4"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeReturnTypeForSignature(signature *Signature, tryReuse bool) *ast.Node {
@@ -3957,7 +4162,50 @@ export function NodeBuilderImpl_tryGetThisParameterDeclaration(receiver: GoPtr<N
  * }
  */
 export function NodeBuilderImpl_serializeReturnTypeForSignature(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>, tryReuse: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeReturnTypeForSignature");
+  const suppressAny = (receiver!.ctx!.flags & FlagsSuppressAnyReturnType) !== 0;
+  const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
+  if (suppressAny) {
+    receiver!.ctx!.flags &= ~FlagsSuppressAnyReturnType;
+  }
+  let returnTypeNode: GoPtr<Node>;
+  let returnType: GoPtr<Type>;
+  if (signature!.declaration !== undefined && !NodeIsSynthesized(signature!.declaration)) {
+    const symbol_ = Checker_getSymbolOfDeclaration(receiver!.ch, signature!.declaration);
+    returnType = receiver!.ctx!.enclosingSymbolTypes.get(GetSymbolId(symbol_));
+    if (returnType === undefined) {
+      returnType = Checker_instantiateType(receiver!.ch, Checker_getReturnTypeOfSignature(receiver!.ch, signature), receiver!.ctx!.mapper);
+    }
+  } else {
+    returnType = Checker_getReturnTypeOfSignature(receiver!.ch, signature);
+  }
+  if (!(suppressAny && IsTypeAny(returnType))) {
+    if (!NodeBuilderImpl_isActivelyExpanding(receiver) && tryReuse && receiver!.ctx!.enclosingDeclaration !== undefined && signature!.declaration !== undefined && !NodeIsSynthesized(signature!.declaration)) {
+      const declarationSymbol = Checker_getSymbolOfDeclaration(receiver!.ch, signature!.declaration);
+      const restore = NodeBuilderImpl_addSymbolTypeToContext(receiver, declarationSymbol, returnType);
+      let pt = PseudoChecker_GetReturnTypeOfSignature(receiver!.pc, signature!.declaration);
+      if (NodeBuilderImpl_pseudoTypeEquivalentToType(receiver, pt, returnType, false as bool, !receiver!.ctx!.suppressReportInferenceFallback)) {
+        const typePredicate = Checker_getTypePredicateOfSignature(receiver!.ch, signature);
+        if (typePredicate !== undefined && !NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(receiver, pt, typePredicate)) {
+          if (!receiver!.ctx!.suppressReportInferenceFallback) {
+            receiver!.ctx!.tracker!.ReportInferenceFallback(signature!.declaration);
+          }
+          pt = undefined;
+        }
+        if (pt !== undefined) {
+          returnTypeNode = NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver, pt, returnType);
+        }
+      }
+      restore();
+    }
+    if (returnTypeNode === undefined) {
+      returnTypeNode = NodeBuilderImpl_serializeInferredReturnTypeForSignature(receiver, signature, returnType);
+    }
+  }
+  if (returnTypeNode === undefined && !suppressAny) {
+    returnTypeNode = NewKeywordTypeNode(receiver!.f, KindAnyKeyword);
+  }
+  restoreFlags();
+  return returnTypeNode;
 }
 
 /**
@@ -4770,7 +5018,7 @@ export function getTypeAliasForTypeLiteral(c: GoPtr<Checker>, t: GoPtr<Type>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldWriteTypeOfFunctionSymbol","kind":"method","status":"stub","sigHash":"1e53cb0acba9fdb648e90206c92e85ae75009f1b77fdbc69b4903d5fd217e276","bodyHash":"80e0e2dcd7976d5177c05d322d73da49b0ab26348296af53ee335acd27ab5df8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldWriteTypeOfFunctionSymbol","kind":"method","status":"implemented","sigHash":"1e53cb0acba9fdb648e90206c92e85ae75009f1b77fdbc69b4903d5fd217e276","bodyHash":"80e0e2dcd7976d5177c05d322d73da49b0ab26348296af53ee335acd27ab5df8"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) shouldWriteTypeOfFunctionSymbol(symbol *ast.Symbol, typeId TypeId) bool {
@@ -4799,11 +5047,30 @@ export function getTypeAliasForTypeLiteral(c: GoPtr<Checker>, t: GoPtr<Type>): G
  * }
  */
 export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, typeId: TypeId): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.shouldWriteTypeOfFunctionSymbol");
+  const isStaticMethodSymbol = (symbol_!.Flags & SymbolFlagsMethod) !== 0 && Some(symbol_!.Declarations, (declaration) =>
+    IsStatic(declaration) && !Checker_isLateBindableIndexSignature(receiver!.ch, GetNameOfDeclaration(declaration)));
+  let isNonLocalFunctionSymbol = false;
+  if ((symbol_!.Flags & SymbolFlagsFunction) !== 0) {
+    if (symbol_!.Parent !== undefined) {
+      isNonLocalFunctionSymbol = true;
+    } else {
+      for (const declaration of symbol_!.Declarations ?? []) {
+        if (declaration!.Parent!.Kind === KindSourceFile || declaration!.Parent!.Kind === KindModuleBlock) {
+          isNonLocalFunctionSymbol = true;
+          break;
+        }
+      }
+    }
+  }
+  if (isStaticMethodSymbol || isNonLocalFunctionSymbol) {
+    return ((receiver!.ctx!.flags & FlagsUseTypeOfFunction) !== 0 || Set_Has(receiver!.ctx!.visitedTypes, typeId)) &&
+      ((receiver!.ctx!.flags & FlagsUseStructuralFallback) === 0 || Checker_IsValueSymbolAccessible(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration));
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAnonymousTypeNode","kind":"method","status":"stub","sigHash":"285e186205ffbad43d027b1ab0fdecb15195f2e2bdfca46b2e2f093a272fc6b5","bodyHash":"0fa100739ecc4567a357134614eaccdc509ec249e7963d87c9b59122db375989"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAnonymousTypeNode","kind":"method","status":"implemented","sigHash":"285e186205ffbad43d027b1ab0fdecb15195f2e2bdfca46b2e2f093a272fc6b5","bodyHash":"0fa100739ecc4567a357134614eaccdc509ec249e7963d87c9b59122db375989"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createAnonymousTypeNode(t *Type) *ast.TypeNode {
@@ -4811,7 +5078,7 @@ export function NodeBuilderImpl_shouldWriteTypeOfFunctionSymbol(receiver: GoPtr<
  * }
  */
 export function NodeBuilderImpl_createAnonymousTypeNode(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAnonymousTypeNode");
+  return NodeBuilderImpl_createAnonymousTypeNodeEx(receiver, t, false as bool, false as bool);
 }
 
 /**
@@ -4917,7 +5184,7 @@ export function NodeBuilderImpl_getTypeFromTypeNode(receiver: GoPtr<NodeBuilderI
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeOrCircularityElision","kind":"method","status":"stub","sigHash":"42c6e07758cfcbc1a1dcf9264a648b75432983b9e133a47ab93160ad143c8186","bodyHash":"e3ddab90f1f6083489cca1d205683754a0798cc147c7d590795fa6a21351a4dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeOrCircularityElision","kind":"method","status":"implemented","sigHash":"42c6e07758cfcbc1a1dcf9264a648b75432983b9e133a47ab93160ad143c8186","bodyHash":"e3ddab90f1f6083489cca1d205683754a0798cc147c7d590795fa6a21351a4dc"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeToTypeNodeOrCircularityElision(t *Type) *ast.TypeNode {
@@ -4935,7 +5202,17 @@ export function NodeBuilderImpl_getTypeFromTypeNode(receiver: GoPtr<NodeBuilderI
  * }
  */
 export function NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeOrCircularityElision");
+  if ((t!.flags & TypeFlagsUnion) !== 0) {
+    if (Set_Has(receiver!.ctx!.visitedTypes, t!.id)) {
+      if ((receiver!.ctx!.flags & FlagsAllowAnonymousIdentifier) === 0) {
+        receiver!.ctx!.encounteredError = true;
+        receiver!.ctx!.tracker!.ReportCyclicStructureError();
+      }
+      return NodeBuilderImpl_createElidedInformationPlaceholder(receiver);
+    }
+    return NodeBuilderImpl_visitAndTransformType(receiver, t, NodeBuilderImpl_typeToTypeNode);
+  }
+  return NodeBuilderImpl_typeToTypeNode(receiver, t);
 }
 
 /**

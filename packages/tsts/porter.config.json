@@ -41,6 +41,8 @@
     "go/reflect.ts",
     "go/math.ts",
     "go/bytes.ts",
+    "go/bufio.ts",
+    "go/encoding/binary.ts",
     "go/path.ts",
     "go/path/filepath.ts",
     "go/time.ts",
@@ -50,8 +52,10 @@
     "go/regexp.ts",
     "go/encoding/base64.ts",
     "go/encoding/json.ts",
+    "go/flag.ts",
     "go/github.com/go-json-experiment/json.ts",
     "go/github.com/go-json-experiment/json/jsontext.ts",
+    "go/net/url.ts",
     "go/context.ts"
   ],
   "tsFilePolicies": [
