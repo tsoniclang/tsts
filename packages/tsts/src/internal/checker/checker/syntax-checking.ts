@@ -45,10 +45,11 @@ import {
   IsBindingPattern, SkipParentheses, SkipOuterExpressions, IsInJSFile,
   OEKParentheses, OEKSatisfies, OEKExcludeJSDocTypeAssertion,
   OEKAssertions, GetCombinedNodeFlags, IsFunctionLike,
+  GetNodeId,
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
-import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred } from "./support.js";
+import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt } from "./support.js";
 import { Checker_isSideEffectFree } from "./support-queries.js";
 import {
   Checker_registerForUnusedIdentifiersCheck, Checker_checkVariableDeclarationList,
@@ -2528,7 +2529,7 @@ export function Checker_getTargetOfAccessExpression(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNodeId","kind":"method","status":"stub","sigHash":"c0cb923cca4a69efd3893a320648d1180c5da04ebcba7f28a32c11bbec05c35f","bodyHash":"baede69fb5525a0915d48ccfc7cb9ab8ecb9df7c08fd5d5ae6a6f3a1c35da675"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNodeId","kind":"method","status":"implemented","sigHash":"c0cb923cca4a69efd3893a320648d1180c5da04ebcba7f28a32c11bbec05c35f","bodyHash":"baede69fb5525a0915d48ccfc7cb9ab8ecb9df7c08fd5d5ae6a6f3a1c35da675"}
  *
  * Go source:
  * func (b *keyBuilder) writeNodeId(id ast.NodeId) {
@@ -2536,11 +2537,11 @@ export function Checker_getTargetOfAccessExpression(receiver: GoPtr<Checker>, no
  * }
  */
 export function keyBuilder_writeNodeId(receiver: GoPtr<keyBuilder>, id: NodeId): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNodeId");
+  keyBuilder_writeInt(receiver, id as unknown as int);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNode","kind":"method","status":"stub","sigHash":"edd7b6215c913669037aafebd700d0830cab192e1b875fbc81a556a00d4d27af","bodyHash":"c3a2e36ebeda30c63374ae9ea55db557e7e7630887d45b58952be23c34b3732e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNode","kind":"method","status":"implemented","sigHash":"edd7b6215c913669037aafebd700d0830cab192e1b875fbc81a556a00d4d27af","bodyHash":"c3a2e36ebeda30c63374ae9ea55db557e7e7630887d45b58952be23c34b3732e"}
  *
  * Go source:
  * func (b *keyBuilder) writeNode(node *ast.Node) {
@@ -2550,7 +2551,9 @@ export function keyBuilder_writeNodeId(receiver: GoPtr<keyBuilder>, id: NodeId):
  * }
  */
 export function keyBuilder_writeNode(receiver: GoPtr<keyBuilder>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeNode");
+  if (node !== undefined) {
+    keyBuilder_writeNodeId(receiver, GetNodeId(node));
+  }
 }
 
 /**
