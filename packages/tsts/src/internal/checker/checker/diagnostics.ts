@@ -2252,7 +2252,7 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isErrorType","kind":"method","status":"stub","sigHash":"a6d51ca14443f14460b775745964be72a1864efc008ef088c59c424e1a83432c","bodyHash":"77b104972e7da782f4367e6d7efe0023dbb8e9b4ba9868d220dcb4ddb752ee11"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isErrorType","kind":"method","status":"implemented","sigHash":"a6d51ca14443f14460b775745964be72a1864efc008ef088c59c424e1a83432c","bodyHash":"77b104972e7da782f4367e6d7efe0023dbb8e9b4ba9868d220dcb4ddb752ee11"}
  *
  * Go source:
  * func (c *Checker) isErrorType(t *Type) bool {
@@ -2262,5 +2262,5 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
  * }
  */
 export function Checker_isErrorType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isErrorType");
+  return (t === receiver!.errorType || ((t!.flags & TypeFlagsAny) !== 0 && t!.alias !== undefined)) as bool;
 }
