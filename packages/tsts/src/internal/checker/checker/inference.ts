@@ -65,6 +65,7 @@ import {
   ObjectFlagsAnonymous,
   ObjectFlagsInstantiated,
   ObjectFlagsInstantiationExpressionType,
+  ObjectFlagsNone,
   ObjectFlagsSingleSignatureType,
   ObjectFlagsCouldContainTypeVariablesComputed,
   ObjectFlagsCouldContainTypeVariables,
@@ -78,11 +79,14 @@ import type {
   TypeFlags,
   ConditionalType,
   ConditionalRoot,
+  ConstrainedType,
   IndexFlags,
   AccessFlags,
   TupleElementInfo,
-  ConstrainedType,
   ObjectType,
+  StringMappingType,
+  SubstitutionType,
+  TypeData,
   TypeNodeLinks,
 } from "../types.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -120,7 +124,7 @@ import type {
   TypeSystemEntity,
   TypeSystemPropertyName,
 } from "./state.js";
-import { Checker_instantiateType, Checker_getTypeFromTypeNode, Checker_mapType, Checker_getUnionType, Checker_getIntersectionType, Checker_getReducedType, Checker_getSimplifiedType, Checker_isGenericTupleType, Checker_maybeTypeOfKind, Checker_getConditionalType, Checker_isEmptyLiteralType, Checker_isEmptyArrayLiteralType, Checker_getWidenedLiteralTypeForInitializer, Checker_reportImplicitAny, Checker_IsEmptyAnonymousObjectType, Checker_getTemplateLiteralType, Checker_createTupleTypeEx, Checker_getElementTypes, Checker_isPatternLiteralType, Checker_isPatternLiteralPlaceholderType, Checker_isGenericMappedType, Checker_isArrayOrTupleType, Checker_getActualTypeVariable, Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getStringLiteralType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getTypeOfExpression, Checker_instantiateAnonymousType, Checker_instantiateMappedType, Checker_createDeferredTypeReference } from "./types.js";
+import { Checker_instantiateType, Checker_getTypeFromTypeNode, Checker_mapType, Checker_getUnionType, Checker_getIntersectionType, Checker_getReducedType, Checker_getSimplifiedType, Checker_isGenericTupleType, Checker_maybeTypeOfKind, Checker_getConditionalType, Checker_isEmptyLiteralType, Checker_isEmptyArrayLiteralType, Checker_getWidenedLiteralTypeForInitializer, Checker_reportImplicitAny, Checker_IsEmptyAnonymousObjectType, Checker_getTemplateLiteralType, Checker_createTupleTypeEx, Checker_getElementTypes, Checker_isPatternLiteralType, Checker_isPatternLiteralPlaceholderType, Checker_isGenericMappedType, Checker_isArrayOrTupleType, Checker_getActualTypeVariable, Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getStringLiteralType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getTypeOfExpression, Checker_instantiateAnonymousType, Checker_instantiateMappedType, Checker_createDeferredTypeReference, Checker_newType } from "./types.js";
 import { Checker_getTypeOfSymbol, Checker_getWriteTypeOfSymbol, Checker_instantiateSymbol, Checker_instantiateTypeWithAlias, Checker_instantiateTypeAlias, Checker_getDeclaredTypeOfSymbol, Checker_getNameTypeFromMappedType, Checker_isMappedTypeGenericIndexedAccess, Checker_getIndexedAccessTypeOrUndefined, Checker_substituteIndexedMappedType, Checker_isGenericIndexType, Checker_getIndexTypeForMappedType, Checker_mapTypeWithAlias, Checker_getSymbolOfDeclaration } from "./symbols.js";
 import { Checker_getConstraintOfTypeParameter, Checker_getConstraintFromTypeParameter, Checker_fillMissingTypeArguments, Checker_getMinTypeArgumentCount, Checker_isTypeParameterPossiblyReferenced, Checker_getTypeParameterFromMappedType, Checker_getOuterTypeParameters, Checker_getDeclaredTypeOfTypeParameter, Checker_getRestrictiveTypeParameter, Checker_getContextualTypeForArgument } from "./signatures.js";
 import { Checker_error } from "./support.js";
@@ -1294,7 +1298,7 @@ export function Checker_getImpliedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newStringMappingType","kind":"method","status":"stub","sigHash":"3aff1f05ac8039a689388dcd109d371928a78459b251f300764d172b34a1bc0b","bodyHash":"1db267b70296cad3e096fb8b8fe14fd1feaf297c4ae31093f284205e5f5baa6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newStringMappingType","kind":"method","status":"implemented","sigHash":"3aff1f05ac8039a689388dcd109d371928a78459b251f300764d172b34a1bc0b","bodyHash":"1db267b70296cad3e096fb8b8fe14fd1feaf297c4ae31093f284205e5f5baa6f"}
  *
  * Go source:
  * func (c *Checker) newStringMappingType(symbol *ast.Symbol, target *Type) *Type {
@@ -1306,11 +1310,17 @@ export function Checker_getImpliedConstraint(receiver: GoPtr<Checker>, t: GoPtr<
  * }
  */
 export function Checker_newStringMappingType(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, target: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newStringMappingType");
+  const data = {
+    resolvedBaseConstraint: undefined,
+    target,
+  } as unknown as StringMappingType & ConstrainedType;
+  const t = Checker_newType(receiver, TypeFlagsStringMapping, ObjectFlagsNone, data as unknown as TypeData);
+  t!["symbol"] = symbol_;
+  return t;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSubstitutionType","kind":"method","status":"stub","sigHash":"bfc885d6bb16ae7f9b1b30db1782b177801c27e140bf10750146a5be5c64535a","bodyHash":"16f63417758d7ef015caa4db26f24e67408e22610143ad08f0759c1287366c80"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSubstitutionType","kind":"method","status":"implemented","sigHash":"bfc885d6bb16ae7f9b1b30db1782b177801c27e140bf10750146a5be5c64535a","bodyHash":"16f63417758d7ef015caa4db26f24e67408e22610143ad08f0759c1287366c80"}
  *
  * Go source:
  * func (c *Checker) newSubstitutionType(baseType *Type, constraint *Type) *Type {
@@ -1321,7 +1331,12 @@ export function Checker_newStringMappingType(receiver: GoPtr<Checker>, symbol_: 
  * }
  */
 export function Checker_newSubstitutionType(receiver: GoPtr<Checker>, baseType: GoPtr<Type>, constraint: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newSubstitutionType");
+  const data = {
+    resolvedBaseConstraint: undefined,
+    baseType,
+    constraint,
+  } as unknown as SubstitutionType & ConstrainedType;
+  return Checker_newType(receiver, TypeFlagsSubstitution, ObjectFlagsNone, data as unknown as TypeData);
 }
 
 /**
