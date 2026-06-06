@@ -2,6 +2,7 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import { Every } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
+import { Node_Comments } from "../../ast/ast.js";
 import { KindJSDocLink, KindJSDocLinkCode, KindJSDocLinkPlain } from "../../ast/generated/kinds.js";
 import { Node_Name } from "../../ast/spine.js";
 import type { Signature } from "../types.js";
@@ -11,7 +12,7 @@ import { signatureHasRestParameter } from "./state.js";
 import type { Checker, CheckMode } from "./state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments","kind":"method","status":"stub","sigHash":"e58b196d503c8592581005e0aae4f2c48e3fff65d2a70e506e53edf7d1d4328e","bodyHash":"ee1f4de7ef19cba84bcce53e6d1c01e94f2bf23d3c2bd11984492beb812f548e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments","kind":"method","status":"implemented","sigHash":"e58b196d503c8592581005e0aae4f2c48e3fff65d2a70e506e53edf7d1d4328e","bodyHash":"ee1f4de7ef19cba84bcce53e6d1c01e94f2bf23d3c2bd11984492beb812f548e"}
  *
  * Go source:
  * func (c *Checker) checkJSDocComments(node *ast.Node) {
@@ -21,7 +22,9 @@ import type { Checker, CheckMode } from "./state.js";
  * }
  */
 export function Checker_checkJSDocComments(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkJSDocComments");
+  for (const comment of Node_Comments(node) ?? []) {
+    Checker_checkJSDocComment(receiver, comment);
+  }
 }
 
 /**

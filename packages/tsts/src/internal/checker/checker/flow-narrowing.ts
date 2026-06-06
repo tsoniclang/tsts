@@ -1,7 +1,8 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
-import { Node_Expression, Node_Text, Node_Type } from "../../ast/ast.js";
+import { Node_Name } from "../../ast/spine.js";
+import { Node_Elements, Node_Expression, Node_Text, Node_Type } from "../../ast/ast.js";
 import type { SignatureDeclaration } from "../../ast/generated/unions.js";
 import {
   KindArrowFunction,
@@ -39,7 +40,7 @@ import {
   KindVoidExpression,
 } from "../../ast/generated/kinds.js";
 import { CheckFlagsHasNeverType, CheckFlagsNonUniformAndLiteral } from "../../ast/checkflags.js";
-import { IsBinaryExpression, IsModuleBlock, IsPropertyDeclaration, IsSourceFile } from "../../ast/generated/predicates.js";
+import { IsArrayBindingPattern, IsBinaryExpression, IsIdentifier, IsModuleBlock, IsObjectBindingPattern, IsPropertyDeclaration, IsSourceFile } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { SymbolFlagsOptional } from "../../ast/generated/flags.js";
 import { AsBinaryExpression, AsConditionalExpression } from "../../ast/generated/casts.js";
@@ -89,6 +90,7 @@ import type { Checker, CheckMode, PredicateSemantics } from "./state.js";
 import { Checker_getResolvedSymbol } from "./symbols.js";
 import { Checker_error } from "./support.js";
 import {
+  A_type_predicate_cannot_reference_element_0_in_a_binding_pattern,
   An_expression_of_type_void_cannot_be_tested_for_truthiness,
   This_kind_of_expression_is_always_falsy,
   This_kind_of_expression_is_always_truthy,
@@ -178,7 +180,7 @@ export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIfTypePredicateVariableIsDeclaredInBindingPattern","kind":"method","status":"stub","sigHash":"3a053da61b0d243ae8c9547ac4b753424b376377356f06f2d1c173b63d23981d","bodyHash":"9ac8552d841ef25ec49f911c9d69a9fe2783049244a6d07f63a41e1a5897f66f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIfTypePredicateVariableIsDeclaredInBindingPattern","kind":"method","status":"implemented","sigHash":"3a053da61b0d243ae8c9547ac4b753424b376377356f06f2d1c173b63d23981d","bodyHash":"9ac8552d841ef25ec49f911c9d69a9fe2783049244a6d07f63a41e1a5897f66f"}
  *
  * Go source:
  * func (c *Checker) checkIfTypePredicateVariableIsDeclaredInBindingPattern(pattern *ast.Node, predicateVariableNode *ast.Node, predicateVariableName string) bool {
@@ -201,7 +203,22 @@ export function Checker_getTypePredicateParent(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver: GoPtr<Checker>, pattern: GoPtr<Node>, predicateVariableNode: GoPtr<Node>, predicateVariableName: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIfTypePredicateVariableIsDeclaredInBindingPattern");
+  for (const element of Node_Elements(pattern) ?? []) {
+    const name = Node_Name(element);
+    if (name === undefined) {
+      continue;
+    }
+    if (IsIdentifier(name) && Node_Text(name) === predicateVariableName) {
+      Checker_error(receiver, predicateVariableNode, A_type_predicate_cannot_reference_element_0_in_a_binding_pattern, predicateVariableName);
+      return true;
+    }
+    if (IsArrayBindingPattern(name) || IsObjectBindingPattern(name)) {
+      if (Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver, name, predicateVariableNode, predicateVariableName)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
