@@ -314,9 +314,6 @@ export function Checker_createNameResolverForSuggestion(receiver: GoPtr<Checker>
     SymbolReferenced: (symbol_, meaning) => Checker_symbolReferenced(receiver, symbol_, meaning),
     SetRequiresScopeChangeCache: (node, value) => Checker_setRequiresScopeChangeCache(receiver, node, value),
     GetRequiresScopeChangeCache: (node) => Checker_getRequiresScopeChangeCache(receiver, node),
-    OnPropertyWithInvalidInitializer: (_location, _name, _declaration, _result) => false as bool,
-    OnFailedToResolveSymbol: (_location, _name, _meaning, _nameNotFoundMessage) => { /* no-op for suggestion resolver */ },
-    OnSuccessfullyResolvedSymbol: (_location, _result, _meaning, _lastLocation, _assocDecl, _withinDeferred) => { /* no-op for suggestion resolver */ },
   };
 }
 
@@ -464,7 +461,7 @@ export function Checker_getSuggestedSymbolForNonexistentSymbol(receiver: GoPtr<C
  * 	return c.getSpellingSuggestionForName(name, core.ConcatenateSeq(maps.Values(symbols), extras), meaning)
  * }
  */
-export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker>, symbols: SymbolTable, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
+export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker>, symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
   const symbol_ = Checker_getSymbol(receiver, symbols, name, meaning);
   if (symbol_ !== undefined) {
     return symbol_;
@@ -473,7 +470,8 @@ export function Checker_getSuggestionForSymbolNameLookup(receiver: GoPtr<Checker
   if ((meaning & SymbolFlagsGlobalLookup) !== 0) {
     extras = getPrimitiveTypeAliasSuggestions(symbols);
   }
-  return Checker_getSpellingSuggestionForName(receiver, name, ConcatenateSeq(symbols.values() as unknown as GoSeq<GoPtr<Symbol>>, extras ?? ([] as unknown as GoSeq<GoPtr<Symbol>>)), meaning);
+  const symbolValues = symbols === undefined ? ([] as unknown as GoSeq<GoPtr<Symbol>>) : (symbols.values() as unknown as GoSeq<GoPtr<Symbol>>);
+  return Checker_getSpellingSuggestionForName(receiver, name, ConcatenateSeq(symbolValues, extras ?? ([] as unknown as GoSeq<GoPtr<Symbol>>)), meaning);
 }
 
 /**
@@ -1098,8 +1096,8 @@ export function Checker_getImmediateAliasedSymbol(receiver: GoPtr<Checker>, symb
  * 	return nil
  * }
  */
-export function Checker_getSymbol(receiver: GoPtr<Checker>, symbols: SymbolTable, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
-  if ((meaning & SymbolFlagsAll) !== 0) {
+export function Checker_getSymbol(receiver: GoPtr<Checker>, symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
+  if (symbols !== undefined && (meaning & SymbolFlagsAll) !== 0) {
     const symbol_ = Checker_getMergedSymbol(receiver, symbols.get(name));
     if (symbol_ !== undefined) {
       if ((symbol_!.Flags & meaning) !== 0) {

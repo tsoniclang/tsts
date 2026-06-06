@@ -266,7 +266,7 @@ export function referenceResolver_getReferencedValueSymbol(receiver: GoPtr<refer
   if (receiver!.resolver === undefined) {
     receiver!.resolver = {
       CompilerOptions: receiver!.options,
-    } as unknown as NameResolver;
+    };
   }
 
   return NameResolver_Resolve(receiver!.resolver, location, Node_Text(reference), SymbolFlagsExportValue | SymbolFlagsValue | SymbolFlagsAlias, undefined, false, false);

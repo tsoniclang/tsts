@@ -2315,7 +2315,7 @@ export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _
  * 	}
  * }
  */
-export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable): GoSeq<GoPtr<Symbol>> {
+export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): GoSeq<GoPtr<Symbol>> {
   return (yield_: (s: GoPtr<Symbol>) => bool): void => {
     for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions()) {
       if (symbols !== undefined && symbols.has(builtinName)) {
