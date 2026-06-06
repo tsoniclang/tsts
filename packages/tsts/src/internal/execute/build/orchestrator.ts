@@ -104,12 +104,12 @@ export interface orchestratorResult {
  */
 export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o: GoPtr<Orchestrator>): void {
   if (Tristate_IsTrue(o!.opts.Command!.CompilerOptions!.Watch)) {
-    o!.watchStatusReporter(NewCompilerDiagnostic(
+    o!.watchStatusReporter!(NewCompilerDiagnostic(
       IfElse(receiver!.errors.length === 1, diagnostics.Found_1_error_Watching_for_file_changes, diagnostics.Found_0_errors_Watching_for_file_changes),
       receiver!.errors.length,
     ));
   } else {
-    o!.errorSummaryReporter(receiver!.errors);
+    o!.errorSummaryReporter!(receiver!.errors);
   }
   if (receiver!.filesToDelete !== undefined && receiver!.filesToDelete !== null) {
     Orchestrator_createBuilderStatusReporter(o, undefined)(
@@ -151,8 +151,8 @@ export interface Orchestrator {
   tasks: GoPtr<SyncMap>;
   order: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
-  errorSummaryReporter: DiagnosticsReporter;
-  watchStatusReporter: DiagnosticReporter;
+  errorSummaryReporter: DiagnosticsReporter | undefined;
+  watchStatusReporter: DiagnosticReporter | undefined;
 }
 
 /**
@@ -520,7 +520,7 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
  */
 export function Orchestrator_Start(receiver: GoPtr<Orchestrator>): CommandLineResult {
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
-    receiver!.watchStatusReporter(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
+    receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
   }
   Orchestrator_GenerateGraph(receiver, undefined);
   const result = Orchestrator_buildOrClean(receiver);
@@ -654,7 +654,7 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
     return;
   }
 
-  receiver!.watchStatusReporter(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
+  receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
   if (needsConfigUpdate.Load()) {
     Orchestrator_GenerateGraphReusingOldTasks(receiver);
   }
@@ -914,8 +914,8 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
     tasks: newSyncMap(),
     order: [],
     errors: [],
-    errorSummaryReporter: undefined as unknown as DiagnosticsReporter,
-    watchStatusReporter: undefined as unknown as DiagnosticReporter,
+    errorSummaryReporter: undefined,
+    watchStatusReporter: undefined,
   };
   const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const innerHost: host = {
