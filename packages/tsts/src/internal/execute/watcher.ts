@@ -198,7 +198,7 @@ export function Watcher_as_tsc_Watcher(receiver: GoPtr<Watcher>): Watcher_c5dada
 }
 
 function newSyncMap<K, V>(): SyncMap<K, V> {
-  return { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() };
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() };
 }
 
 function newSyncSet<T>(): SyncSet<T> {

@@ -379,7 +379,7 @@ export interface InfoCache {
  */
 export function NewInfoCache(currentDirectory: string, useCaseSensitiveFileNames: bool): GoPtr<InfoCache> {
   return {
-    cache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() },
+    cache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() },
     currentDirectory,
     useCaseSensitiveFileNames,
   };

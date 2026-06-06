@@ -486,7 +486,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
     // !!! convert to options with absolute paths is usually done here, but for ease of implementation, it's done in `tsoptions.ParseCommandLine()`
     const compilerOptionsFromCommandLine = ParsedCommandLine_CompilerOptions(commandLine);
     let configForCompilation = commandLine;
-    const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, GoPtr<extendedConfigCacheEntry>> };
+    const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, GoPtr<extendedConfigCacheEntry>> };
     const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
     if (configFileName !== "") {
       const configStart = sys.Now();
