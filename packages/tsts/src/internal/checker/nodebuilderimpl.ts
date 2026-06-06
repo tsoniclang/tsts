@@ -5,7 +5,7 @@ import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { BindingName, Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
-import { AsBindingElement, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
+import { AsBindingElement, AsConditionalTypeNode, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
 import { IsBindingElement, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
@@ -37,6 +37,7 @@ import {
   KindMinusToken,
   KindModuleBlock,
   KindMultiLineCommentTrivia,
+  KindNeverKeyword,
   KindMethodDeclaration,
   KindMethodSignature,
   KindNamespaceExport,
@@ -70,6 +71,7 @@ import {
   SymbolFlagsMethod,
   SymbolFlagsInterface,
   SymbolFlagsOptional,
+  SymbolFlagsPrototype,
   SymbolFlagsTransient,
   SymbolFlagsType,
   SymbolFlagsObjectLiteral,
@@ -103,13 +105,14 @@ import { NewNodeVisitor, NodeVisitor_VisitEachChild } from "../ast/visitor.js";
 import type { NodeVisitor as AstNodeVisitor, NodeVisitorHooks } from "../ast/visitor.js";
 import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
-import { ModifierFlagsAbstract, ModifiersToFlags } from "../ast/modifierflags.js";
+import { ModifierFlagsAbstract, ModifierFlagsPrivate, ModifierFlagsProtected, ModifiersToFlags } from "../ast/modifierflags.js";
 import {
   NewArrowFunction,
   NewBlock,
   NewCallSignatureDeclaration,
   NewComputedPropertyName,
   NewConstructSignatureDeclaration,
+  NewConditionalTypeNode,
   NewConstructorDeclaration,
   NewConstructorTypeNode,
   NewExpressionWithTypeArguments,
@@ -117,6 +120,7 @@ import {
   NewFunctionExpression,
   NewFunctionTypeNode,
   NewGetAccessorDeclaration,
+  NewInferTypeNode,
   NewIdentifier,
   NewImportAttribute,
   NewImportAttributes,
@@ -127,11 +131,13 @@ import {
   NewLiteralTypeNode,
   NewMethodDeclaration,
   NewMethodSignatureDeclaration,
+  NewNotEmittedTypeElement,
   NewNumericLiteral,
   NewParameterDeclaration,
   NewParenthesizedTypeNode,
   NewPrefixUnaryExpression,
   NewPropertyAccessExpression,
+  NewPropertySignatureDeclaration,
   NewQualifiedName,
   NewStringLiteral,
   NewThisTypeNode,
@@ -141,6 +147,7 @@ import {
   NewTypePredicateNode,
   NewTypeQueryNode,
   NewTypeReferenceNode,
+  NewTypeLiteralNode,
   NewUnionTypeNode,
   NewIndexSignatureDeclaration,
 } from "../ast/generated/factory.js";
@@ -168,7 +175,9 @@ import {
   FlagsForbidIndexedAccessSymbolReferences,
   FlagsGenerateNamesForShadowedTypeParams,
   FlagsInInitialEntityName,
+  FlagsInObjectTypeLiteral,
   FlagsInTypeAlias,
+  FlagsMultilineObjectLiterals,
   FlagsNoTruncation,
   FlagsOmitParameterModifiers,
   FlagsOmitThisParameter,
@@ -180,6 +189,7 @@ import {
   FlagsUseStructuralFallback,
   FlagsUseTypeOfFunction,
   FlagsUseSingleQuotesForStringLiteralType,
+  FlagsWriteClassExpressionAsTypeLiteral,
   FlagsWriteTypeArgumentsOfSignature,
   FlagsWriteTypeParametersInQualifiedName,
   InternalFlagsDoNotIncludeSymbolChain,
@@ -207,6 +217,7 @@ import {
   Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias,
   Checker_getMinTypeArgumentCount,
   Checker_getOuterTypeParametersOfClassOrInterface,
+  Checker_getOrCreateTypeFromSignature,
   Checker_getSignatureFromDeclaration,
   Checker_getReturnTypeOfSignature,
   Checker_getTypeArguments,
@@ -221,12 +232,16 @@ import {
   Checker_getHomomorphicTypeVariable,
   Checker_getOptionalType,
   Checker_getRegularTypeOfExpression,
+  Checker_getFalseTypeFromConditionalType,
+  Checker_getTrueTypeFromConditionalType,
   Checker_getTypeFromTypeNode,
   Checker_getTypeFromTypeReference,
   Checker_getTypeWithFacts,
   Checker_getWidenedType,
+  Checker_getIntersectionType,
   Checker_instantiateType,
   Checker_createArrayType,
+  Checker_isGenericMappedType,
   Checker_newAnonymousType,
 } from "./checker/types.js";
 import { Checker_getConstraintDeclaration } from "./checker/inference.js";
@@ -259,6 +274,7 @@ import {
   Checker_newSymbolEx,
   Checker_resolveAlias,
   Checker_resolveEntityName,
+  Checker_resolveStructuredTypeMembers,
 } from "./checker/symbols.js";
 import { Checker_getTypeParameterModifiers } from "./relater.js";
 import { Checker_GetEmitResolver } from "./checker/support.js";
@@ -266,7 +282,7 @@ import { Checker_getTupleElementLabel, Checker_getTypePredicateOfSignature, Chec
 import type { TypeMapper } from "./mapper.js";
 import { newTypeMapper, prependTypeMapping, TypeMapper_Map } from "./mapper.js";
 import type { IndexInfo, InterfaceType, LiteralType, MappedType, ReverseMappedSymbolLinks, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeId, TypeParameter, TypePredicate, TypeReference, UniqueESSymbolType, ValueSymbolLinks } from "./types.js";
-import { ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsReference, SignatureFlagsAbstract, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsConditionalType, Type_AsInterfaceType, Type_AsLiteralType, Type_AsStructuredType, Type_AsTypeReference, Type_AsTupleType, Type_AsUnionType, Type_AsUniqueESSymbolType, Type_Target, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringLike, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUniqueESSymbol, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
+import { ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsMapped, ObjectFlagsReference, ObjectFlagsReverseMapped, SignatureFlagsAbstract, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsConditionalType, Type_AsInterfaceType, Type_AsLiteralType, Type_AsMappedType, Type_AsStructuredType, Type_AsTypeReference, Type_AsTupleType, Type_Types, Type_AsUniqueESSymbolType, Type_Target, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringLike, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUniqueESSymbol, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
 import { Checker_valueToString } from "./printer.js";
 import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols, IsTypeAny } from "./utilities.js";
 import { PathIsRelative } from "../tspath/path.js";
@@ -284,6 +300,7 @@ import { Set_Add, Set_Delete, Set_Has } from "../collections/set.js";
 import { NodeBuilderImpl_pseudoReturnTypeMatchesPredicate, NodeBuilderImpl_pseudoTypeEquivalentToType, NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback } from "./pseudotypenodebuilder.js";
 import { NodeBuilderImpl_addSymbolTypeToContext, NodeBuilderImpl_enterNewScope } from "./nodebuilderscopes.js";
 import { PseudoChecker_GetReturnTypeOfSignature } from "../pseudochecker/lookup.js";
+import { isExpanding } from "./nodebuilder_hover.js";
 import * as slices from "../../go/slices.js";
 
 /**
@@ -3973,22 +3990,24 @@ export interface SignatureToSignatureDeclarationOptions {
  */
 export function NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>, kind: Kind, options: GoPtr<SignatureToSignatureDeclarationOptions>): GoPtr<Node> {
   const typeParameters: GoSlice<GoPtr<Node>> = [];
-  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0];
-  const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signature!.typeParameters, signature!.parameters, signature!.mapper);
+  const expandedParams = Checker_getExpandedParameters(receiver!.ch, signature, true)[0] ?? [];
+  const signatureParameters = signature!.parameters ?? [];
+  const signatureTypeParameters = signature!.typeParameters ?? [];
+  const cleanup = NodeBuilderImpl_enterNewScope(receiver, signature!.declaration, expandedParams, signatureTypeParameters, signatureParameters, signature!.mapper);
   receiver!.ctx!.approximateLength += 3;
   if ((receiver!.ctx!.flags & FlagsWriteTypeArgumentsOfSignature) !== 0 && signature!.target !== undefined && signature!.mapper !== undefined && signature!.target!.typeParameters.length !== 0) {
     for (const parameter of signature!.target!.typeParameters) {
       typeParameters.push(NodeBuilderImpl_typeToTypeNode(receiver, Checker_instantiateType(receiver!.ch, parameter, signature!.mapper)));
     }
   } else {
-    for (const parameter of signature!.typeParameters ?? []) {
+    for (const parameter of signatureTypeParameters) {
       typeParameters.push(NodeBuilderImpl_typeParameterToDeclaration(receiver, parameter));
     }
   }
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags &= ~FlagsSuppressAnyReturnType;
   const parameterSource = Some(expandedParams, (p) => p !== expandedParams[expandedParams.length - 1] && (p!.CheckFlags & CheckFlagsRestParameter) !== 0)
-    ? signature!.parameters
+    ? signatureParameters
     : expandedParams;
   let parameters: GoSlice<GoPtr<Node>> = parameterSource.map((parameter) => NodeBuilderImpl_symbolToParameterDeclaration(receiver, parameter, kind === KindConstructor));
   const thisParameter = (receiver!.ctx!.flags & FlagsOmitThisParameter) !== 0 ? undefined : NodeBuilderImpl_tryGetThisParameterDeclaration(receiver, signature);
@@ -4165,18 +4184,18 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
         const duplicates: GoSlice<int> = [];
         const uniqueNames = new globalThis.Map<string, bool>();
         for (let i = 0; i < names.length; i++) {
-          if (uniqueNames.has(names[i])) {
+          if (uniqueNames.has(names[i]!)) {
             duplicates.push(i);
           } else {
-            uniqueNames.set(names[i], true);
+            uniqueNames.set(names[i]!, true);
           }
         }
         const counters = new globalThis.Map<string, int>();
         for (const i of duplicates) {
-          let counter = counters.get(names[i]) ?? 1;
+          let counter = counters.get(names[i]!) ?? 1;
           let name = "";
           while (true) {
-            name = `${names[i]}_${counter}`;
+            name = `${names[i]!}_${counter}`;
             if (uniqueNames.has(name)) {
               counter++;
               continue;
@@ -4185,7 +4204,7 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
             break;
           }
           names[i] = name;
-          counters.set(names[i], counter + 1);
+          counters.set(names[i]!, counter + 1);
         }
       }
       return names;
@@ -4195,8 +4214,8 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
       const associatedNames = getUniqAssociatedNamesFromTupleType(tupleRestType, tupleRestSymbol);
       const targetTuple = Type_AsTupleType(Type_Target(tupleRestType))!;
       const restParams = elementTypes.map((type_, index) => {
-        const name = associatedNames[index];
-        const flags = targetTuple.elementInfos[index].flags;
+        const name = associatedNames[index]!;
+        const flags = targetTuple.elementInfos[index]!.flags;
         let checkFlags: CheckFlags = CheckFlagsNone;
         if ((flags & ElementFlagsVariable) !== 0) {
           checkFlags = CheckFlagsRestParameter;
@@ -4213,8 +4232,8 @@ export function Checker_getExpandedParameters(receiver: GoPtr<Checker>, sig: GoP
     if (isTupleType(restType)) {
       return [expandSignatureParametersWithTupleMembers(restType, restIndex, restSymbol)];
     }
-    if (!skipUnionExpanding && (restType!.flags & TypeFlagsUnion) !== 0 && Every(Type_AsUnionType(restType)!.types, isTupleType)) {
-      return Type_AsUnionType(restType)!.types.map((type_) => expandSignatureParametersWithTupleMembers(type_, restIndex, restSymbol));
+    if (!skipUnionExpanding && (restType!.flags & TypeFlagsUnion) !== 0 && Every(Type_Types(restType), isTupleType)) {
+      return Type_Types(restType).map((type_) => expandSignatureParametersWithTupleMembers(type_, restIndex, restSymbol));
     }
   }
   return [sig!.parameters];
@@ -5005,7 +5024,7 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodesFromResolvedType","kind":"method","status":"stub","sigHash":"be0db50174cf167e5b5b2b59c34f6f8b2227ce79bde646637f1c49f79ba2b14b","bodyHash":"1df256817cb198ee00437f8195f346b252757d37cef0b56c9861fbd5ccede826"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodesFromResolvedType","kind":"method","status":"implemented","sigHash":"be0db50174cf167e5b5b2b59c34f6f8b2227ce79bde646637f1c49f79ba2b14b","bodyHash":"1df256817cb198ee00437f8195f346b252757d37cef0b56c9861fbd5ccede826"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createTypeNodesFromResolvedType(resolvedType *StructuredType) *ast.NodeList {
@@ -5072,11 +5091,65 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
  * }
  */
 export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<NodeBuilderImpl>, resolvedType: GoPtr<StructuredType>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodesFromResolvedType");
+  if (NodeBuilderImpl_checkTruncationLength(receiver)) {
+    if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
+      const elem = NewNotEmittedTypeElement(receiver!.f);
+      return NodeFactory_NewNodeList(receiver!.f, [EmitContext_AddSyntheticLeadingComment(receiver!.e, elem, KindMultiLineCommentTrivia, "elided", false) as GoPtr<TypeElement>]);
+    }
+    return NodeFactory_NewNodeList(receiver!.f, [NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, "..."), undefined, undefined, undefined) as GoPtr<TypeElement>]);
+  }
+  let typeElements: GoSlice<GoPtr<TypeElement>> = [];
+  for (const signature of StructuredType_CallSignatures(resolvedType)) {
+    typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindCallSignature, undefined) as GoPtr<TypeElement>);
+  }
+  for (const signature of StructuredType_ConstructSignatures(resolvedType)) {
+    if ((signature!.flags & SignatureFlagsAbstract) !== 0) {
+      continue;
+    }
+    typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>);
+  }
+  const resolvedObjectFlags = resolvedType!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.objectFlags;
+  for (const info of resolvedType!.indexInfos ?? []) {
+    typeElements.push(NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, (resolvedObjectFlags & ObjectFlagsReverseMapped) !== 0 ? NodeBuilderImpl_createElidedInformationPlaceholder(receiver) : undefined) as GoPtr<TypeElement>);
+  }
+  const properties = resolvedType!.properties ?? [];
+  if (properties.length === 0) {
+    return NodeFactory_NewNodeList(receiver!.f, typeElements);
+  }
+  let i = 0;
+  for (const propertySymbol of properties) {
+    if (isExpanding(receiver!.ctx) && (propertySymbol!.Flags & SymbolFlagsPrototype) !== 0) {
+      continue;
+    }
+    i++;
+    if ((receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0) {
+      if ((propertySymbol!.Flags & SymbolFlagsPrototype) !== 0) {
+        continue;
+      }
+      if ((getDeclarationModifierFlagsFromSymbol(propertySymbol) & (ModifierFlagsPrivate | ModifierFlagsProtected)) !== 0) {
+        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
+      }
+      if (IsPrivateIdentifierSymbol(propertySymbol)) {
+        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
+      }
+    }
+    if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < properties.length - 1)) {
+      if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
+        typeElements[typeElements.length - 1] = EmitContext_AddSyntheticLeadingComment(typeElements[typeElements.length - 1], KindMultiLineCommentTrivia, `... ${properties.length - i} more elided ...`, false) as GoPtr<TypeElement>;
+      } else {
+        const text = `... ${properties.length - i} more ...`;
+        typeElements.push(NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined) as GoPtr<TypeElement>);
+      }
+      typeElements = NodeBuilderImpl_addPropertyToElementList(receiver, properties[properties.length - 1], typeElements);
+      break;
+    }
+    typeElements = NodeBuilderImpl_addPropertyToElementList(receiver, propertySymbol, typeElements);
+  }
+  return typeElements.length !== 0 ? NodeFactory_NewNodeList(receiver!.f, typeElements) : undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodeFromObjectType","kind":"method","status":"stub","sigHash":"7b59a9696a22f521ee99cb6bcf857b48d222d0e01955a3a7bc33ba174d45f28a","bodyHash":"b933a59b3079fab9654b1c478565073a6089a8397c0932db7fbb698bbe0eaa6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodeFromObjectType","kind":"method","status":"implemented","sigHash":"7b59a9696a22f521ee99cb6bcf857b48d222d0e01955a3a7bc33ba174d45f28a","bodyHash":"b933a59b3079fab9654b1c478565073a6089a8397c0932db7fbb698bbe0eaa6f"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createTypeNodeFromObjectType(t *Type) *ast.TypeNode {
@@ -5140,7 +5213,46 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
  * }
  */
 export function NodeBuilderImpl_createTypeNodeFromObjectType(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createTypeNodeFromObjectType");
+  if (Checker_isGenericMappedType(receiver!.ch, t) || ((t!.objectFlags & ObjectFlagsMapped) !== 0 && Type_AsMappedType(t)!.containsError)) {
+    return NodeBuilderImpl_createMappedTypeNodeFromType(receiver, t);
+  }
+  const resolved = Checker_resolveStructuredTypeMembers(receiver!.ch, t);
+  const callSigs = StructuredType_CallSignatures(resolved);
+  const ctorSigs = StructuredType_ConstructSignatures(resolved);
+  if ((resolved!.properties ?? []).length === 0 && (resolved!.indexInfos ?? []).length === 0) {
+    if (callSigs.length === 0 && ctorSigs.length === 0) {
+      receiver!.ctx!.approximateLength += 2;
+      const result = NewTypeLiteralNode(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []));
+      EmitContext_SetEmitFlags(receiver!.e, result, EFSingleLine);
+      return result as GoPtr<TypeNode>;
+    }
+    if (callSigs.length === 1 && ctorSigs.length === 0) {
+      return NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, callSigs[0], KindFunctionType, undefined) as GoPtr<TypeNode>;
+    }
+    if (ctorSigs.length === 1 && callSigs.length === 0) {
+      return NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, ctorSigs[0], KindConstructorType, undefined) as GoPtr<TypeNode>;
+    }
+  }
+  const abstractSignatures = Filter(ctorSigs, (signature) => (signature!.flags & SignatureFlagsAbstract) !== 0);
+  if (abstractSignatures.length > 0) {
+    const types = abstractSignatures.map((signature) => Checker_getOrCreateTypeFromSignature(receiver!.ch, signature));
+    const propertyCount = (receiver!.ctx!.flags & FlagsWriteClassExpressionAsTypeLiteral) !== 0
+      ? (resolved!.properties ?? []).filter((property) => (property!.Flags & SymbolFlagsPrototype) === 0).length
+      : (resolved!.properties ?? []).length;
+    const typeElementCount = callSigs.length + (ctorSigs.length - abstractSignatures.length) + (resolved!.indexInfos ?? []).length + propertyCount;
+    if (typeElementCount !== 0) {
+      types.push(NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver, resolved));
+    }
+    return NodeBuilderImpl_typeToTypeNode(receiver, Checker_getIntersectionType(receiver!.ch, types));
+  }
+  const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
+  receiver!.ctx!.flags |= FlagsInObjectTypeLiteral;
+  const members = NodeBuilderImpl_createTypeNodesFromResolvedType(receiver, resolved);
+  restoreFlags();
+  const typeLiteralNode = NewTypeLiteralNode(receiver!.f, members as never);
+  receiver!.ctx!.approximateLength += 2;
+  EmitContext_SetEmitFlags(receiver!.e, typeLiteralNode, (receiver!.ctx!.flags & FlagsMultilineObjectLiterals) !== 0 ? 0 : EFSingleLine);
+  return typeLiteralNode as GoPtr<TypeNode>;
 }
 
 /**
@@ -5366,7 +5478,7 @@ export function NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.conditionalTypeToTypeNode","kind":"method","status":"stub","sigHash":"ffe0d6d883e4f46d855e8ec7d1e3615398d3dad2c630a5e24daf0232ce6c2988","bodyHash":"e3a040fb662ea86dd885327f8e51eb5675123f790f355b43387b89998d6deb9c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.conditionalTypeToTypeNode","kind":"method","status":"implemented","sigHash":"ffe0d6d883e4f46d855e8ec7d1e3615398d3dad2c630a5e24daf0232ce6c2988","bodyHash":"e3a040fb662ea86dd885327f8e51eb5675123f790f355b43387b89998d6deb9c"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) conditionalTypeToTypeNode(_t *Type) *ast.TypeNode {
@@ -5416,7 +5528,38 @@ export function NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver: GoP
  * }
  */
 export function NodeBuilderImpl_conditionalTypeToTypeNode(receiver: GoPtr<NodeBuilderImpl>, _t: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.conditionalTypeToTypeNode");
+  if (NodeBuilderImpl_checkTruncationLength(receiver)) {
+    return NodeBuilderImpl_createElidedInformationPlaceholder(receiver);
+  }
+  const t = Type_AsConditionalType(_t);
+  const checkTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, t!.checkType);
+  receiver!.ctx!.approximateLength += 15;
+  if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && t!.root!.isDistributive && (t!.checkType!.flags & TypeFlagsTypeParameter) === 0) {
+    const newParam = Checker_newTypeParameter(receiver!.ch, Checker_newSymbol(receiver!.ch, SymbolFlagsTypeParameter, "T"));
+    const name = NodeBuilderImpl_typeParameterToName(receiver, newParam);
+    const newTypeVariable = NewTypeReferenceNode(receiver!.f, name, undefined);
+    receiver!.ctx!.approximateLength += 37;
+    const newMapper = prependTypeMapping(t!.root!.checkType, newParam, t!.mapper);
+    const saveInferTypeParameters = receiver!.ctx!.inferTypeParameters;
+    receiver!.ctx!.inferTypeParameters = t!.root!.inferTypeParameters;
+    const extendsTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, Checker_instantiateType(receiver!.ch, t!.root!.extendsType, newMapper));
+    receiver!.ctx!.inferTypeParameters = saveInferTypeParameters;
+    const rootNode = AsConditionalTypeNode(t!.root!.node)!;
+    const trueTypeNode = NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver, Checker_instantiateType(receiver!.ch, NodeBuilderImpl_getTypeFromTypeNode(receiver, rootNode.TrueType, false), newMapper));
+    const falseTypeNode = NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver, Checker_instantiateType(receiver!.ch, NodeBuilderImpl_getTypeFromTypeNode(receiver, rootNode.FalseType, false), newMapper));
+    const newId = NodeFactory_DeepCloneNode(receiver!.f, AsTypeReferenceNode(newTypeVariable)!.TypeName);
+    const syntheticExtendsNode = NewInferTypeNode(receiver!.f, NewTypeParameterDeclaration(receiver!.f, undefined, newId as never, undefined, undefined, undefined));
+    const innerCheckConditionalNode = NewConditionalTypeNode(receiver!.f, newTypeVariable, extendsTypeNode, trueTypeNode, falseTypeNode);
+    const syntheticTrueNode = NewConditionalTypeNode(receiver!.f, NewTypeReferenceNode(receiver!.f, NodeFactory_DeepCloneNode(receiver!.f, name) as never, undefined), NodeFactory_DeepCloneNode(receiver!.f, checkTypeNode) as GoPtr<TypeNode>, innerCheckConditionalNode as GoPtr<TypeNode>, NewKeywordTypeNode(receiver!.f, KindNeverKeyword));
+    return NewConditionalTypeNode(receiver!.f, checkTypeNode, syntheticExtendsNode as GoPtr<TypeNode>, syntheticTrueNode as GoPtr<TypeNode>, NewKeywordTypeNode(receiver!.f, KindNeverKeyword)) as GoPtr<TypeNode>;
+  }
+  const saveInferTypeParameters = receiver!.ctx!.inferTypeParameters;
+  receiver!.ctx!.inferTypeParameters = t!.root!.inferTypeParameters;
+  const extendsTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, t!.extendsType);
+  receiver!.ctx!.inferTypeParameters = saveInferTypeParameters;
+  const trueTypeNode = NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver, Checker_getTrueTypeFromConditionalType(receiver!.ch, _t));
+  const falseTypeNode = NodeBuilderImpl_typeToTypeNodeOrCircularityElision(receiver, Checker_getFalseTypeFromConditionalType(receiver!.ch, _t));
+  return NewConditionalTypeNode(receiver!.f, checkTypeNode, extendsTypeNode, trueTypeNode, falseTypeNode) as GoPtr<TypeNode>;
 }
 
 /**
