@@ -6,7 +6,7 @@ import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { BindingName, Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
 import { AsBindingElement, AsConditionalTypeNode, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
-import { IsBindingElement, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeReferenceNode } from "../ast/generated/predicates.js";
+import { IsBindingElement, IsClassDeclaration, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeQueryNode, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
@@ -92,6 +92,7 @@ import {
   IsAmbientModule,
   CanHaveModifiers,
   CreateModifiersFromModifierFlags,
+  IsClassLike,
   IsEntityName,
   IsLiteralImportTypeNode,
   IsModifier,
@@ -230,6 +231,7 @@ import {
 import {
   Checker_getDeclaredTypeOfClassOrInterface,
   Checker_getHomomorphicTypeVariable,
+  Checker_getBaseTypeVariableOfClass,
   Checker_getOptionalType,
   Checker_getRegularTypeOfExpression,
   Checker_getFalseTypeFromConditionalType,
@@ -5135,7 +5137,7 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     }
     if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < properties.length - 1)) {
       if ((receiver!.ctx!.flags & FlagsNoTruncation) !== 0) {
-        typeElements[typeElements.length - 1] = EmitContext_AddSyntheticLeadingComment(typeElements[typeElements.length - 1], KindMultiLineCommentTrivia, `... ${properties.length - i} more elided ...`, false) as GoPtr<TypeElement>;
+        typeElements[typeElements.length - 1] = EmitContext_AddSyntheticLeadingComment(receiver!.e, typeElements[typeElements.length - 1], KindMultiLineCommentTrivia, `... ${properties.length - i} more elided ...`, false) as GoPtr<TypeElement>;
       } else {
         const text = `... ${properties.length - i} more ...`;
         typeElements.push(NewPropertySignatureDeclaration(receiver!.f, undefined, NewIdentifier(receiver!.f, text), undefined, undefined, undefined) as GoPtr<TypeElement>);
