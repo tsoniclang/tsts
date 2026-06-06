@@ -1,14 +1,16 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
+import { NewTextRange } from "../core/text.js";
 import { NodeFlagsReparsed } from "./generated/flags.js";
 import type { ModifierList, Node } from "./spine.js";
 import type { NodeFactory } from "./generated/factory.js";
+import { ModifierList_Clone, NodeList_Clone, NodeList_HasTrailingComma, Node_Clone, Node_VisitEachChild } from "./spine.js";
 import { SetParentInChildren } from "./utilities.js";
 import type { NodeVisitor } from "./visitor.js";
-import { NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "./visitor.js";
+import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "./visitor.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"stub","sigHash":"4bb96716323ea0bc24d6348cead293a463b42b52fd3a7bbfe9dd14416f7a0f52","bodyHash":"b4f577e5430740724ada7d9937b4c032f4fd4fb86c6f0f59e7c90854aff34088"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor","kind":"func","status":"implemented","sigHash":"4bb96716323ea0bc24d6348cead293a463b42b52fd3a7bbfe9dd14416f7a0f52","bodyHash":"b4f577e5430740724ada7d9937b4c032f4fd4fb86c6f0f59e7c90854aff34088"}
  *
  * Go source:
  * func getDeepCloneVisitor(f *NodeFactory, syntheticLocation bool) *NodeVisitor {
@@ -77,24 +79,57 @@ import { NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "./visitor.js"
  * }
  */
 export function getDeepCloneVisitor(f: GoPtr<NodeFactory>, syntheticLocation: bool): GoPtr<NodeVisitor> {
-  // STUB (blocked): the faithful body constructs `NewNodeVisitor(visit, f,
-  // NodeVisitorHooks{ VisitNodes, VisitModifiers })` — a *partial* hook literal
-  // — and inside both the visit closure and the hooks it coerces the concrete
-  // `*NodeFactory` to `NodeFactoryCoercible` via `node.Clone(f)` /
-  // `nodes.Clone(v.Factory)`. Two co-landing siblings make this currently
-  // unportable type-clean:
-  //   1. ./visitor.ts (NodeVisitor wave): `NodeVisitorHooks` declares all 9 hook
-  //      fields as required, non-nullable functions, but TS-Go (and this
-  //      function) build a partial literal. The nil-able hook modeling lives in
-  //      that wave; `NewNodeVisitor` there is itself still a stub.
-  //   2. ./generated/factory.ts: the generated `NodeFactory` is a pure data
-  //      interface with no `AsNodeFactory` method, so a `GoPtr<NodeFactory>` is
-  //      not assignable to `NodeFactoryCoercible` (see spine.ts). The
-  //      `NodeFactory`-satisfies-`NodeFactoryCoercible` resolution belongs to the
-  //      factory/spine layer, not here.
-  // Faithfully porting the body now would require a cast or a divergent local
-  // adapter (both forbidden), so this unit stays a stub pending those waves.
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/deepclone.go::func::getDeepCloneVisitor");
+  let visitor: GoPtr<NodeVisitor>;
+  const syntheticNodeLocation = () => NewTextRange(-1 as int, -1 as int);
+  const trailingCommaLocation = () => NewTextRange(-2 as int, -2 as int);
+  visitor = NewNodeVisitor(
+    (node: GoPtr<Node>): GoPtr<Node> => {
+      const visited = Node_VisitEachChild(node, visitor);
+      if (visited !== node) {
+        if (syntheticLocation) {
+          visited!.Loc = syntheticNodeLocation();
+        }
+        return visited;
+      }
+      const cloned = Node_Clone(node, f!);
+      if (syntheticLocation) {
+        cloned!.Loc = syntheticNodeLocation();
+      }
+      return cloned;
+    },
+    f,
+    {
+      VisitNodes: (nodes, nodeVisitor) => {
+        if (nodes === undefined) {
+          return undefined;
+        }
+        const visited = NodeVisitor_VisitNodes(nodeVisitor, nodes);
+        const newList = visited !== nodes ? visited : NodeList_Clone(nodes, nodeVisitor!.Factory!);
+        if (syntheticLocation) {
+          newList!.Loc = syntheticNodeLocation();
+          if (NodeList_HasTrailingComma(nodes)) {
+            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+          }
+        }
+        return newList;
+      },
+      VisitModifiers: (nodes, nodeVisitor) => {
+        if (nodes === undefined) {
+          return undefined;
+        }
+        const visited = NodeVisitor_VisitModifiers(nodeVisitor, nodes);
+        const newList: GoPtr<ModifierList> = visited !== nodes ? visited : ModifierList_Clone(nodes, nodeVisitor!.Factory);
+        if (syntheticLocation) {
+          newList!.Loc = syntheticNodeLocation();
+          if (NodeList_HasTrailingComma(nodes)) {
+            newList!.Nodes[newList!.Nodes.length - 1]!.Loc = trailingCommaLocation();
+          }
+        }
+        return newList;
+      },
+    },
+  );
+  return visitor;
 }
 
 /**

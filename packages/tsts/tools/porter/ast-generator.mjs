@@ -872,6 +872,7 @@ function emitNodeFactoryStruct(schema, lines) {
 
   lines.push(`export interface NodeFactory {`);
   lines.push(`  hooks: NodeFactoryHooks;`);
+  lines.push(`  AsNodeFactory(): GoPtr<NodeFactory>;`);
   for (const { field, type } of arenaFields) {
     lines.push(`  ${field}?: Arena<${type}>;`);
   }

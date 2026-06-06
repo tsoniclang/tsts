@@ -4,7 +4,8 @@ import * as slices from "../../../go/slices.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { AsSourceFile, Node_ArgumentList, Node_ElementList, Node_Initializer, Node_ParameterList, Node_PropertyList, Node_Statement, Node_StatementList, Node_Text, Node_TypeArgumentList, Node_TypeParameterList } from "../../ast/ast.js";
-import { Node_AsNode, Node_End, Node_Pos, Node_Modifiers, Node_Name, Node_FunctionLikeData, NodeDefault_AsNode, NodeDefault_Modifiers, NodeDefault_Name, NodeList_End, NodeList_HasTrailingComma, NodeList_Pos } from "../../ast/spine.js";
+import { Node_AsNode, Node_End, Node_Pos, Node_Modifiers, Node_Name, Node_FunctionLikeData, NodeDefault_AsNode, NodeDefault_Modifiers, NodeDefault_Name, NodeList_End, NodeList_HasTrailingComma, NodeList_Pos, Node_Clone } from "../../ast/spine.js";
+import { NodeFlagsNone } from "../../ast/generated/flags.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import {
   KindArrayBindingPattern,
@@ -198,7 +199,7 @@ import {
   AsVariableStatement,
 } from "../../ast/generated/casts.js";
 import type { AccessorDeclarationBase } from "../../ast/generated/node.js";
-import { NewParenthesizedExpression } from "../../ast/generated/factory.js";
+import { NewParenthesizedExpression, NewPropertyAccessExpression } from "../../ast/generated/factory.js";
 import type { BindingElement, CaseOrDefaultClause, ComputedPropertyName, ConstructorDeclaration, ConstructSignatureDeclaration, Decorator, GetAccessorDeclaration, Identifier, IfStatement, ForStatement, ImportClause as ImportClauseData, ImportDeclaration, ImportSpecifier, IndexSignatureDeclaration, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxFragment, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxText, MetaProperty, MethodDeclaration, MethodSignatureDeclaration, ParameterDeclaration, PrivateIdentifier, PropertyAssignment, PropertyDeclaration, PropertySignatureDeclaration, QualifiedName, SetAccessorDeclaration, ShorthandPropertyAssignment } from "../../ast/generated/data.js";
 import type { BindingElementNode, BindingName, BlockOrExpression, CaseOrDefaultClauseNode, DeclarationName, EntityName, Expression, IdentifierNode, JsxAttributeLike, JsxAttributeName, JsxAttributeValue, JsxChild, JsxTagNameExpression, LiteralLikeNode, MemberName, ModifierLike, ParameterDeclarationNode, ParameterList, PropertyName, Statement, StringLiteralNode, TokenNode, TypeNode } from "../../ast/generated/unions.js";
 import type { Symbol } from "../../ast/symbol.js";
@@ -213,6 +214,8 @@ import type { EmitHelper } from "../helpers.js";
 import { compareEmitHelpers } from "../helpers.js";
 import { IsFileLevelUniqueName, lineCharacterCache_getLineAndCharacter } from "../utilities.js";
 import { Generator_AddSourceMapping } from "../../sourcemap/generator.js";
+import { NodeFactory_NewUniqueNameEx } from "../factory.js";
+import { GeneratedIdentifierFlagsFileLevel, GeneratedIdentifierFlagsOptimistic } from "../generatedidentifierflags.js";
 import { NameGenerator_GenerateName, NameGenerator_PopScope, NameGenerator_PushScope } from "../namegenerator.js";
 import { NewTextWriter } from "../textwriter.js";
 import { Printer_emitCallSignature, Printer_emitEnumMember, Printer_emitExpression, Printer_emitJsxExpression, Printer_emitJsxSpreadAttribute, Printer_emitKeywordExpression, Printer_emitObjectBindingPattern, Printer_emitArrayBindingPattern, Printer_emitPropertyAccessExpression, Printer_emitSpreadAssignment, Printer_emitStringLiteral, Printer_emitNoSubstitutionTemplateLiteral, Printer_emitNumericLiteral, Printer_emitBigIntLiteral, Printer_emitTemplateHead, Printer_emitTemplateMiddle, Printer_emitTemplateTail, Printer_writeLiteral } from "./expressions.js";
@@ -905,7 +908,7 @@ export function Printer_emitIdentifierNameNode(receiver: GoPtr<Printer>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName","kind":"method","status":"stub","sigHash":"81cf2cc152c5172459d93e9a4b6ff48f92205259350f0974fd13b16b28cd6506","bodyHash":"ea1ef78c5725e6d71cfc80ae73c86d5a5897349d910bccfc209251a5642a8049"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName","kind":"method","status":"implemented","sigHash":"81cf2cc152c5172459d93e9a4b6ff48f92205259350f0974fd13b16b28cd6506","bodyHash":"ea1ef78c5725e6d71cfc80ae73c86d5a5897349d910bccfc209251a5642a8049"}
  *
  * Go source:
  * func (p *Printer) getUniqueHelperName(name string) *ast.IdentifierNode {
@@ -918,22 +921,28 @@ export function Printer_emitIdentifierNameNode(receiver: GoPtr<Printer>, node: G
  * 	}
  * 	return helperName.Clone(p.emitContext.Factory)
  * }
- *
- * STUB (blocked): the cached-path `return helperName.Clone(p.emitContext.Factory)`
- * passes the printer `*NodeFactory` where `Node.Clone` expects a
- * `NodeFactoryCoercible`. Per the documented codebase state (see
- * ../../ast/deepclone.ts), the generated/printer `NodeFactory` is a pure data
- * interface with no `AsNodeFactory()` method, so a `GoPtr<NodeFactory>` is not
- * assignable to `NodeFactoryCoercible`. Resolving that belongs to the
- * factory/spine layer; porting the body now would require a forbidden cast or a
- * divergent local adapter, so this unit stays a stub pending that wave.
  */
 export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: string): GoPtr<IdentifierNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.getUniqueHelperName");
+  const helperName = receiver!.uniqueHelperNames!.get(name);
+  if (helperName === undefined) {
+    const newHelperName = NodeFactory_NewUniqueNameEx(
+      receiver!.emitContext!.Factory,
+      name,
+      {
+        Flags: (GeneratedIdentifierFlagsFileLevel | GeneratedIdentifierFlagsOptimistic) >>> 0,
+        Prefix: "",
+        Suffix: "",
+      },
+    );
+    Printer_generateName(receiver, newHelperName);
+    receiver!.uniqueHelperNames!.set(name, newHelperName);
+    return newHelperName;
+  }
+  return Node_Clone(helperName, receiver!.emitContext!.Factory!) as GoPtr<IdentifierNode>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIdentifierReference","kind":"method","status":"stub","sigHash":"8f1a2e31d1447ca33a227720bdf4b093e5880b8700cd159b7b7091c8f42cea19","bodyHash":"c3d688806c9ec79ae4a896c8395745a53d12249be6af6e9f2096c62563361575"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIdentifierReference","kind":"method","status":"implemented","sigHash":"8f1a2e31d1447ca33a227720bdf4b093e5880b8700cd159b7b7091c8f42cea19","bodyHash":"c3d688806c9ec79ae4a896c8395745a53d12249be6af6e9f2096c62563361575"}
  *
  * Go source:
  * func (p *Printer) emitIdentifierReference(node *ast.Identifier) {
@@ -965,12 +974,25 @@ export function Printer_getUniqueHelperName(receiver: GoPtr<Printer>, name: stri
  * }
  */
 export function Printer_emitIdentifierReference(receiver: GoPtr<Printer>, node: GoPtr<Identifier>): void {
-  // Both helper-name substitution branches depend on blocked Clone/getUniqueHelperName;
-  // leave them as stubs and implement only the common fall-through path.
   if ((receiver!.externalHelpersModuleName !== undefined || receiver!.uniqueHelperNames !== undefined) &&
     (EmitContext_EmitFlags(receiver!.emitContext, NodeDefault_AsNode(node)) & EFHelperName) !== 0) {
-    // These branches are blocked (depend on Clone / getUniqueHelperName)
-    throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitIdentifierReference (helper name path)");
+    if (receiver!.externalHelpersModuleName !== undefined) {
+      const helper = NewPropertyAccessExpression(
+        receiver!.emitContext!.Factory!.AsNodeFactory(),
+        Node_Clone(receiver!.externalHelpersModuleName, receiver!.emitContext!.Factory!) as GoPtr<Expression>,
+        undefined,
+        Node_Clone(NodeDefault_AsNode(node), receiver!.emitContext!.Factory!) as GoPtr<MemberName>,
+        NodeFlagsNone,
+      );
+      EmitContext_AssignCommentAndSourceMapRanges(receiver!.emitContext, helper, NodeDefault_AsNode(node));
+      Printer_emitPropertyAccessExpression(receiver, AsPropertyAccessExpression(helper));
+      return;
+    }
+    if (receiver!.uniqueHelperNames !== undefined) {
+      const helperName = Printer_getUniqueHelperName(receiver, node!.Text);
+      EmitContext_AssignCommentAndSourceMapRanges(receiver!.emitContext, helperName, NodeDefault_AsNode(node));
+      node = AsIdentifier(helperName);
+    }
   }
 
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));

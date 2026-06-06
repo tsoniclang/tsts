@@ -76,6 +76,7 @@ type OuterExpressionKinds = int;
  */
 export interface NodeFactory {
   readonly __tsgoEmbedded0?: NodeFactory_88523d1c;
+  AsNodeFactory(): GoPtr<NodeFactory_88523d1c>;
   emitContext: GoPtr<EmitContext>;
 }
 
@@ -95,14 +96,16 @@ export interface NodeFactory {
  * }
  */
 export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> {
+  const embedded = NewAstNodeFactory({
+    OnCreate: (node) => EmitContext_onCreate(context, node),
+    OnUpdate: (updated, original) => EmitContext_onUpdate(context, updated, original),
+    OnClone: (updated, original) => EmitContext_onClone(context, updated, original),
+  })!;
   return {
     // Go embeds the value `*ast.NewNodeFactory(...)`; the `*` dereference is
     // expressed here via the non-null assertion on the returned GoPtr.
-    __tsgoEmbedded0: NewAstNodeFactory({
-      OnCreate: (node) => EmitContext_onCreate(context, node),
-      OnUpdate: (updated, original) => EmitContext_onUpdate(context, updated, original),
-      OnClone: (updated, original) => EmitContext_onClone(context, updated, original),
-    })!,
+    __tsgoEmbedded0: embedded,
+    AsNodeFactory: () => NodeFactory_AsNodeFactory(embedded),
     emitContext: context,
   };
 }
