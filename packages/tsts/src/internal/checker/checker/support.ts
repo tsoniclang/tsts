@@ -104,13 +104,20 @@ import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import { Assert } from "../../debug/debug.js";
 import {
   All_destructured_elements_are_unused,
+  An_async_iterator_must_have_a_next_method,
+  An_iterator_must_have_a_next_method,
   A_const_assertion_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals,
   Compiler_reserves_name_0_when_emitting_private_identifier_downlevel,
   Conversion_of_type_0_to_type_1_may_be_a_mistake_because_neither_type_sufficiently_overlaps_with_the_other_If_this_was_intentional_convert_the_expression_to_unknown_first,
   Did_you_mean_0,
   Duplicate_identifier_0_Compiler_reserves_name_1_when_emitting_super_references_in_static_initializers,
+  The_0_property_of_an_async_iterator_must_be_a_method,
+  The_0_property_of_an_iterator_must_be_a_method,
   This_condition_will_always_return_0,
   This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled,
+  The_type_returned_by_the_0_method_of_an_async_iterator_must_be_a_promise_for_a_type_with_a_value_property,
+  The_type_returned_by_the_0_method_of_an_iterator_must_have_a_value_property,
+  Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member,
   We_can_only_write_a_type_for_0_by_adding_a_type_for_the_entire_parameter_here,
   X_0_is_an_unused_renaming_of_1_Did_you_intend_to_use_it_as_a_type_annotation,
 } from "../../diagnostics/generated/messages.js";
@@ -136,12 +143,12 @@ import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { DeclarationNameToString } from "../../scanner/utilities.js";
 import { TernaryFalse, TernaryTrue } from "../types.js";
 import { Checker_addErrorOrSuggestion, Checker_checkSourceElementUnreachable, Checker_isErrorType, Checker_unusedIsError } from "./diagnostics.js";
-import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDocType, Checker_checkMappedType, Checker_checkTemplateLiteralType, Checker_checkTupleType, Checker_checkTypeLiteral, Checker_checkTypeOperator, Checker_checkTypeQuery, Checker_checkTypeReferenceNode, Checker_checkUnionOrIntersectionType, Checker_couldContainTypeVariablesWorker, Checker_getBaseTypeOfLiteralType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getTypeFromTypeNode, Checker_getWidenedType, Checker_IsEmptyAnonymousObjectType } from "./types.js";
+import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDocType, Checker_checkMappedType, Checker_checkTemplateLiteralType, Checker_checkTupleType, Checker_checkTypeLiteral, Checker_checkTypeOperator, Checker_checkTypeQuery, Checker_checkTypeReferenceNode, Checker_checkUnionOrIntersectionType, Checker_couldContainTypeVariablesWorker, Checker_getAwaitedTypeEx, Checker_getBaseTypeOfLiteralType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getTypeFromTypeNode, Checker_getWidenedType, Checker_IsEmptyAnonymousObjectType } from "./types.js";
 import { Checker_checkConstructorDeclaration, Checker_checkParameter, Checker_checkPropertySignature, Checker_checkSignatureDeclaration, Checker_checkThisType, Checker_checkTypeParameter, Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker, Checker_isValidConstAssertionArgument } from "./signatures.js";
-import { Checker_checkAccessorDeclaration, Checker_checkClassDeclaration, Checker_checkClassStaticBlockDeclaration, Checker_checkEnumDeclaration, Checker_checkEnumMember, Checker_checkExportDeclaration, Checker_checkFunctionDeclaration, Checker_checkImportDeclaration, Checker_checkImportEqualsDeclaration, Checker_checkImportType, Checker_checkIndexedAccessType, Checker_checkInterfaceDeclaration, Checker_checkMethodDeclaration, Checker_checkMissingDeclaration, Checker_checkModuleDeclaration, Checker_checkNamedTupleMember, Checker_checkPropertyDeclaration, Checker_checkTypeAliasDeclaration, Checker_checkVariableDeclaration, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_evaluateEnumMember, Checker_getEnumMemberValue, Checker_getGlobalSymbol, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isBlockScopedNameDeclaredBeforeUse, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_getSymbolOfDeclaration, Checker_resolveExportByName } from "./symbols.js";
+import { Checker_checkAccessorDeclaration, Checker_checkClassDeclaration, Checker_checkClassStaticBlockDeclaration, Checker_checkEnumDeclaration, Checker_checkEnumMember, Checker_checkExportDeclaration, Checker_checkFunctionDeclaration, Checker_checkImportDeclaration, Checker_checkImportEqualsDeclaration, Checker_checkImportType, Checker_checkIndexedAccessType, Checker_checkInterfaceDeclaration, Checker_checkMethodDeclaration, Checker_checkMissingDeclaration, Checker_checkModuleDeclaration, Checker_checkNamedTupleMember, Checker_checkPropertyDeclaration, Checker_checkTypeAliasDeclaration, Checker_checkVariableDeclaration, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_evaluateEnumMember, Checker_getEnumMemberValue, Checker_getGlobalSymbol, Checker_getGlobalTypesResolver, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isBlockScopedNameDeclaredBeforeUse, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_getSymbolOfDeclaration, Checker_resolveExportByName } from "./symbols.js";
 import { Checker_checkBlock, Checker_checkBreakOrContinueStatement, Checker_checkDoStatement, Checker_checkExpressionEx, Checker_checkExpressionStatement, Checker_checkForInStatement, Checker_checkForOfStatement, Checker_checkForStatement, Checker_checkIfStatement, Checker_checkLabeledStatement, Checker_checkNodeDeferred, Checker_checkReturnStatement, Checker_checkSwitchStatement, Checker_checkThrowStatement, Checker_checkTryStatement, Checker_checkVariableStatement, Checker_checkWhileStatement, Checker_checkWithStatement, Checker_reportUnusedVariable } from "./syntax-checking.js";
 import { createDiagnosticForNode } from "./state.js";
-import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
+import type { CacheHashKey, Checker, CheckMode, IterationTypesResolver, keyBuilder, UnusedKind } from "./state.js";
 import type { AssertionLinks } from "../types.js";
 import { Checker_checkTypePredicate } from "./flow-narrowing.js";
 import { Checker_checkInferType } from "./inference.js";
@@ -219,7 +226,7 @@ export function Checker_initializeClosures(receiver: GoPtr<Checker>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeIterationResolvers","kind":"method","status":"stub","sigHash":"8a872a7dea5689ae143df68cd6d1470054e2aa60f81dc6e07bc6a9b1b6b6f403","bodyHash":"f16a1445b73ffe9127886e3e2480abab48f8a5a6cd74e98eaccc95c34acb34dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeIterationResolvers","kind":"method","status":"implemented","sigHash":"8a872a7dea5689ae143df68cd6d1470054e2aa60f81dc6e07bc6a9b1b6b6f403","bodyHash":"f16a1445b73ffe9127886e3e2480abab48f8a5a6cd74e98eaccc95c34acb34dd"}
  *
  * Go source:
  * func (c *Checker) initializeIterationResolvers() {
@@ -260,7 +267,36 @@ export function Checker_initializeClosures(receiver: GoPtr<Checker>): void {
  * }
  */
 export function Checker_initializeIterationResolvers(receiver: GoPtr<Checker>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.initializeIterationResolvers");
+  receiver!.syncIterationTypesResolver = {
+    iteratorSymbolName: "iterator",
+    getGlobalIteratorType: receiver!.getGlobalIteratorType,
+    getGlobalIterableType: receiver!.getGlobalIterableType,
+    getGlobalIterableTypeChecked: receiver!.getGlobalIterableTypeChecked,
+    getGlobalIterableIteratorType: receiver!.getGlobalIterableIteratorType,
+    getGlobalIterableIteratorTypeChecked: receiver!.getGlobalIterableIteratorTypeChecked,
+    getGlobalIteratorObjectType: receiver!.getGlobalIteratorObjectType,
+    getGlobalGeneratorType: receiver!.getGlobalGeneratorType,
+    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, ["ArrayIterator", "MapIterator", "SetIterator", "StringIterator"], 1, false),
+    resolveIterationType: (t: GoPtr<Type>, _errorNode: GoPtr<Node>): GoPtr<Type> => t,
+    mustHaveANextMethodDiagnostic: An_iterator_must_have_a_next_method,
+    mustBeAMethodDiagnostic: The_0_property_of_an_iterator_must_be_a_method,
+    mustHaveAValueDiagnostic: The_type_returned_by_the_0_method_of_an_iterator_must_have_a_value_property,
+  } satisfies IterationTypesResolver;
+  receiver!.asyncIterationTypesResolver = {
+    iteratorSymbolName: "asyncIterator",
+    getGlobalIteratorType: receiver!.getGlobalAsyncIteratorType,
+    getGlobalIterableType: receiver!.getGlobalAsyncIterableType,
+    getGlobalIterableTypeChecked: receiver!.getGlobalAsyncIterableTypeChecked,
+    getGlobalIterableIteratorType: receiver!.getGlobalAsyncIterableIteratorType,
+    getGlobalIterableIteratorTypeChecked: receiver!.getGlobalAsyncIterableIteratorTypeChecked,
+    getGlobalIteratorObjectType: receiver!.getGlobalAsyncIteratorObjectType,
+    getGlobalGeneratorType: receiver!.getGlobalAsyncGeneratorType,
+    getGlobalBuiltinIteratorTypes: Checker_getGlobalTypesResolver(receiver, ["ReadableStreamAsyncIterator"], 1, false),
+    resolveIterationType: (t: GoPtr<Type>, errorNode: GoPtr<Node>): GoPtr<Type> => Checker_getAwaitedTypeEx(receiver, t, errorNode, Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member),
+    mustHaveANextMethodDiagnostic: An_async_iterator_must_have_a_next_method,
+    mustBeAMethodDiagnostic: The_0_property_of_an_async_iterator_must_be_a_method,
+    mustHaveAValueDiagnostic: The_type_returned_by_the_0_method_of_an_async_iterator_must_be_a_promise_for_a_type_with_a_value_property,
+  } satisfies IterationTypesResolver;
 }
 
 /**
