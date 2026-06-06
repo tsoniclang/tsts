@@ -2589,7 +2589,7 @@ export function Printer_emitCatchClause(receiver: GoPtr<Printer>, node: GoPtr<Ca
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJSDocNode","kind":"method","status":"stub","sigHash":"85bd24b8ba7f3a6f1e5d0dcc615a047707d7e9482a863b17f74c905273458a04","bodyHash":"0462ef6530c092accbdc4956cb613188d43c27721b463a3afd4ac97a214606e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJSDocNode","kind":"method","status":"implemented","sigHash":"85bd24b8ba7f3a6f1e5d0dcc615a047707d7e9482a863b17f74c905273458a04","bodyHash":"0462ef6530c092accbdc4956cb613188d43c27721b463a3afd4ac97a214606e8"}
  *
  * Go source:
  * func (p *Printer) emitJSDocNode(node *ast.Node) {
@@ -2598,7 +2598,8 @@ export function Printer_emitCatchClause(receiver: GoPtr<Printer>, node: GoPtr<Ca
  * }
  */
 export function Printer_emitJSDocNode(receiver: GoPtr<Printer>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/printer.go::method::Printer.emitJSDocNode");
+  // !!!
+  throw new globalThis.Error("not implemented");
 }
 
 /**
