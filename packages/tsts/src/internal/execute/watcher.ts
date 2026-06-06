@@ -54,9 +54,8 @@ import {
 import type { CommandLineTesting, CompileAndEmitResult, CompileTimes, System, Watcher as Watcher_c5dada01 } from "./tsc/compile.js";
 import { CreateWatchStatusReporter } from "./tsc/diagnostics.js";
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
-import type { ExtendedConfigCache as ExtendedConfigCache_tsconfigparsing } from "../tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
-import type { ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
+import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
 import { EmitFilesAndReportErrors } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
 
@@ -297,12 +296,12 @@ export function createWatcher(sys: System, configParseResult: GoPtr<ParsedComman
  */
 export function Watcher_start(receiver: GoPtr<Watcher>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
-  receiver!.extendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  receiver!.extendedConfigCache = { m: newSyncMap() };
   const host = NewCompilerHost(
     receiver!.sys.GetCurrentDirectory(),
     receiver!.sys.FS(),
     receiver!.sys.DefaultLibraryPath(),
-    receiver!.extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
   receiver!.program = ReadBuildInfoProgram(receiver!.config, NewBuildInfoReader(host), host);
@@ -430,7 +429,7 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
     receiver!.sys.GetCurrentDirectory(),
     trackingFSAsVfsFS(tfs),
     receiver!.sys.DefaultLibraryPath(),
-    receiver!.extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
 
@@ -609,13 +608,13 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     }
   }
 
-  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(
     receiver!.configFileName,
     receiver!.compilerOptionsFromCommandLine,
     undefined as never,
     receiver!.sys as unknown as Parameters<typeof GetParsedCommandLineOfConfigFile>[3],
-    extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
   );
   if (errors.length > 0) {
     for (const e of errors) {

@@ -13,7 +13,6 @@ import type { Message } from "../../diagnostics/diagnostics.js";
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
 import { ParsedCommandLine_ConfigName, ParsedCommandLine_GetBuildInfoFileName } from "../../tsoptions/parsedcommandline.js";
 import { GetParsedCommandLineOfConfigFilePath } from "../../tsoptions/tsconfigparsing.js";
-import type { ExtendedConfigCache as ExtendedConfigCache_tsconfigparsing } from "../../tsoptions/tsconfigparsing.js";
 import { FileExtensionIs } from "../../tspath/path.js";
 import type { Path } from "../../tspath/path.js";
 import { IsDeclarationFileName, ExtensionJson } from "../../tspath/extension.js";
@@ -22,7 +21,7 @@ import type { BuildInfo } from "../incremental/buildInfo.js";
 import type { Host } from "../incremental/host.js";
 import { GetMTime as incremental_GetMTime } from "../incremental/host.js";
 import type { BuildInfoReader } from "../incremental/incremental.js";
-import type { ExtendedConfigCache } from "../tsc/extendedconfigcache.js";
+import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache } from "../tsc/extendedconfigcache.js";
 import type { Orchestrator } from "./orchestrator.js";
 import { Orchestrator_toPath, Orchestrator_getTask } from "./orchestrator.js";
 import type { parseCache } from "./parseCache.js";
@@ -196,7 +195,7 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
         commandLineRaw = wrapped;
       }
     }
-    const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), receiver!.extendedConfigCache as ExtendedConfigCache_tsconfigparsing);
+    const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache));
     const configTime = (receiver!.orchestrator!.opts.Sys.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
     SyncMap_Store(receiver!.configTimes, p, configTime);
     return commandLine;

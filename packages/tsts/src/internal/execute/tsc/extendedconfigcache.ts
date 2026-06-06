@@ -17,7 +17,6 @@ import type { Path } from "../../tspath/path.js";
  */
 export interface ExtendedConfigCache {
   m: SyncMap<Path, GoPtr<extendedConfigCacheEntry>>;
-  GetExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry>;
 }
 
 /**
