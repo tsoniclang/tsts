@@ -55,7 +55,7 @@ import { BuildOpts } from "../tsoptions/declsbuild.js";
 import { NewOrchestrator, Orchestrator_Start } from "./build/orchestrator.js";
 import { EmitAndReportStatistics } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
-import { createWatcher, Watcher_start } from "./watcher.js";
+import { createWatcher, Watcher_as_tsc_Watcher, Watcher_start } from "./watcher.js";
 import type { CommandLineResult, CommandLineTesting, CompileTimes, ExitStatus, System } from "./tsc/compile.js";
 import {
   ExitStatusSuccess,
@@ -231,7 +231,7 @@ export function tscBuildCompilation(sys: System, buildCommand: GoPtr<ParsedBuild
     for (const err of buildCommand!.Errors) {
       reportDiagnostic(err);
     }
-    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
   }
 
   const pprofDir = buildCommand!.CompilerOptions!.PprofDir;
@@ -244,7 +244,7 @@ export function tscBuildCompilation(sys: System, buildCommand: GoPtr<ParsedBuild
     if (Tristate_IsTrue(buildCommand!.CompilerOptions!.Help)) {
       PrintVersion(sys, locale);
       PrintBuildHelp(sys, locale, BuildOpts);
-      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
     const orchestrator = NewOrchestrator({ Sys: sys, Command: buildCommand, Testing: testing });
@@ -413,7 +413,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
     for (const e of commandLine!.Errors) {
       reportDiagnostic(e);
     }
-    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
   }
 
   const pprofDir = ParsedCommandLine_CompilerOptions(commandLine)!.PprofDir;
@@ -425,28 +425,28 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
   try {
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Init)) {
       WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap>);
-      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Version)) {
       PrintVersion(sys, locale);
-      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Help) || Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.All)) {
       PrintHelp(sys, locale, commandLine);
-      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Watch) && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ListFilesOnly)) {
       reportDiagnostic(NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "watch", "listFilesOnly"));
-      return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
     }
 
     if (ParsedCommandLine_CompilerOptions(commandLine)!.Project !== "") {
       if (ParsedCommandLine_FileNames(commandLine).length !== 0) {
         reportDiagnostic(NewCompilerDiagnostic(Option_project_cannot_be_mixed_with_source_files_on_a_command_line));
-        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
       }
 
       const fileOrDirectory = NormalizePath(ParsedCommandLine_CompilerOptions(commandLine)!.Project);
@@ -454,13 +454,13 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
         configFileName = CombinePaths(fileOrDirectory, "tsconfig.json");
         if (!sys.FS().FileExists(configFileName)) {
           reportDiagnostic(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, configFileName));
-          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       } else {
         configFileName = fileOrDirectory;
         if (!sys.FS().FileExists(configFileName)) {
           reportDiagnostic(NewCompilerDiagnostic(The_specified_path_does_not_exist_Colon_0, fileOrDirectory));
-          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       }
     } else if (!Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.IgnoreConfig) || ParsedCommandLine_FileNames(commandLine).length === 0) {
@@ -470,7 +470,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
         if (configFileName !== "") {
           // Error to not specify config file
           reportDiagnostic(NewCompilerDiagnostic(X_tsconfig_json_is_present_but_will_not_be_loaded_if_files_are_specified_on_commandline_Use_ignoreConfig_to_skip_this_error));
-          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
         }
       } else if (configFileName === "") {
         if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ShowConfig)) {
@@ -479,7 +479,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
           PrintVersion(sys, locale);
           PrintHelp(sys, locale, commandLine);
         }
-        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined };
       }
     }
 
@@ -509,7 +509,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
         for (const e of errors) {
           reportDiagnostic(e);
         }
-        return { Status: ExitStatusDiagnosticsPresent_OutputsGenerated, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        return { Status: ExitStatusDiagnosticsPresent_OutputsGenerated, Watcher: undefined };
       }
       configForCompilation = configParseResult;
       // Updater to reflect pretty
@@ -519,7 +519,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
     const reportErrorSummary = CreateReportErrorSummary(sys, locale, ParsedCommandLine_CompilerOptions(configForCompilation));
     if (Tristate_IsTrue(compilerOptionsFromCommandLine!.ShowConfig)) {
       showConfig(sys, configForCompilation, configFileName);
-      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: undefined };
     }
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(configForCompilation)!.Watch)) {
       const watcher = createWatcher(
@@ -531,7 +531,7 @@ export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine
         testing,
       );
       Watcher_start(watcher);
-      return { Status: ExitStatusSuccess, Watcher: watcher as unknown as import("./tsc/compile.js").Watcher };
+      return { Status: ExitStatusSuccess, Watcher: Watcher_as_tsc_Watcher(watcher) };
     } else if (CompilerOptions_IsIncremental(ParsedCommandLine_CompilerOptions(configForCompilation))) {
       return performIncrementalCompilation(
         sys,
@@ -691,7 +691,7 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
   if (testing !== undefined) {
     testing.OnProgram(incrementalProgram);
   }
-  return { Status: result.Status, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+  return { Status: result.Status, Watcher: undefined };
 }
 
 /**
@@ -764,7 +764,7 @@ export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>
 
   stopTracing(sys, tr);
 
-  return { Status: result.Status, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+  return { Status: result.Status, Watcher: undefined };
 }
 
 /**

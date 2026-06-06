@@ -156,12 +156,18 @@ export interface Orchestrator {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8df5ee902b902bae8873b016f2fdb528c344be93f113c5f408fde2185f0ff258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8df5ee902b902bae8873b016f2fdb528c344be93f113c5f408fde2185f0ff258"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Orchestrator)(nil)
  */
-export let __a05f111f_0: Watcher = undefined as never;
+export let __a05f111f_0: Watcher = Orchestrator_as_tsc_Watcher(undefined);
+
+export function Orchestrator_as_tsc_Watcher(receiver: GoPtr<Orchestrator>): Watcher {
+  return {
+    DoCycle: (): void => Orchestrator_DoCycle(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.relativeFileName","kind":"method","status":"implemented","sigHash":"72ff97cf7be6af75d0bcb0a972d3c887eec0137ae80fdd7bf9ec0abf11edc9b4","bodyHash":"ff945d4da9c439fd6783fed02507cb9daab99b679d06699e3d94c0ebfe74591a"}
@@ -520,7 +526,7 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>): CommandLineRe
   const result = Orchestrator_buildOrClean(receiver);
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
     Orchestrator_Watch(receiver);
-    result.Watcher = receiver as unknown as Watcher;
+    result.Watcher = Orchestrator_as_tsc_Watcher(receiver);
   }
   return result;
 }
@@ -698,7 +704,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
     ));
   }
   const buildResult: orchestratorResult = {
-    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined as unknown as import("../tsc/compile.js").Watcher },
+    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined },
     errors: [],
     statistics: {
       Projects: 0,

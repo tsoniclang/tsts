@@ -184,12 +184,18 @@ export interface Watcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e42466e9d55431436fd56f71ca20518e1ef306e5d2a89e987baac34aafe69adc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e42466e9d55431436fd56f71ca20518e1ef306e5d2a89e987baac34aafe69adc"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Watcher)(nil)
  */
-export let __30d59bfd_0: Watcher_c5dada01 = undefined as never;
+export let __30d59bfd_0: Watcher_c5dada01 = Watcher_as_tsc_Watcher(undefined);
+
+export function Watcher_as_tsc_Watcher(receiver: GoPtr<Watcher>): Watcher_c5dada01 {
+  return {
+    DoCycle: (): void => Watcher_DoCycle(receiver),
+  };
+}
 
 function newSyncMap<K, V>(): SyncMap<K, V> {
   return { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() };
