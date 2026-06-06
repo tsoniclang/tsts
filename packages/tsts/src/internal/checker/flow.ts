@@ -95,7 +95,7 @@ import { Checker_error } from "./checker/support.js";
 import { Member_0_implicitly_has_an_1_type } from "../diagnostics/generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowType","kind":"type","status":"stub","sigHash":"bc02a5461036608265091398679db2e7b0cb752f9d0a59b23a5678f16c24f02c","bodyHash":"7465c9c089b5303ec8615aa727b2669e5592a430905d1a3987212c329855f3d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowType","kind":"type","status":"implemented","sigHash":"bc02a5461036608265091398679db2e7b0cb752f9d0a59b23a5678f16c24f02c","bodyHash":"7465c9c089b5303ec8615aa727b2669e5592a430905d1a3987212c329855f3d4"}
  *
  * Go source:
  * FlowType struct {
@@ -140,7 +140,7 @@ export function Checker_newFlowType(receiver: GoPtr<Checker>, t: GoPtr<Type>, in
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::SharedFlow","kind":"type","status":"stub","sigHash":"787b3fcb7e50568b7942ae6dcca6257ab12f9ced5f9cde63f334523932b72995","bodyHash":"99caec8338f5898c9c150c692974a1276a97dc9cde23cb72bce2ef586b6d8aa4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::SharedFlow","kind":"type","status":"implemented","sigHash":"787b3fcb7e50568b7942ae6dcca6257ab12f9ced5f9cde63f334523932b72995","bodyHash":"99caec8338f5898c9c150c692974a1276a97dc9cde23cb72bce2ef586b6d8aa4"}
  *
  * Go source:
  * SharedFlow struct {
@@ -154,7 +154,7 @@ export interface SharedFlow {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowState","kind":"type","status":"stub","sigHash":"46df3c12b9f8fde1d4d141ef6bbc3c0f644f3dbeaa603ae02f171ee45e35f821","bodyHash":"eb27780cc8668408cbb7dc110659c02ae81fc931fe46785439856c79b8056950"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowState","kind":"type","status":"implemented","sigHash":"46df3c12b9f8fde1d4d141ef6bbc3c0f644f3dbeaa603ae02f171ee45e35f821","bodyHash":"eb27780cc8668408cbb7dc110659c02ae81fc931fe46785439856c79b8056950"}
  *
  * Go source:
  * FlowState struct {

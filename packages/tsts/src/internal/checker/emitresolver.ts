@@ -77,7 +77,7 @@ import { Number_Abs } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"stub","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
  *
  * Go source:
  * JSXLinks struct {
@@ -89,7 +89,7 @@ export interface JSXLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"stub","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f","bodyHash":"4247c597fb66dc2dfad3458c2912b3b42c005bf1f8dea782fccf70811374cea3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f","bodyHash":"4247c597fb66dc2dfad3458c2912b3b42c005bf1f8dea782fccf70811374cea3"}
  *
  * Go source:
  * DeclarationLinks struct {
@@ -101,7 +101,7 @@ export interface DeclarationLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"stub","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548","bodyHash":"dc7bbcbb9771249fa55f7f164d48be2cd6184f594940d3f43789d52a0b05fa0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548","bodyHash":"dc7bbcbb9771249fa55f7f164d48be2cd6184f594940d3f43789d52a0b05fa0c"}
  *
  * Go source:
  * DeclarationFileLinks struct {
@@ -113,7 +113,7 @@ export interface DeclarationFileLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"stub","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
  *
  * Go source:
  * EmitResolver struct {

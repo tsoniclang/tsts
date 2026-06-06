@@ -40,7 +40,7 @@ import {
 import type { IntrinsicType, Type } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::Tracer","kind":"type","status":"stub","sigHash":"f6f6cd010e9b895165c298c7bce581689d14754cbe933633c3878896feab31c3","bodyHash":"a85968b149300409ddc7bc9e41b6a21837139fba413b368f02c7ef1b03cd95dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::Tracer","kind":"type","status":"implemented","sigHash":"f6f6cd010e9b895165c298c7bce581689d14754cbe933633c3878896feab31c3","bodyHash":"a85968b149300409ddc7bc9e41b6a21837139fba413b368f02c7ef1b03cd95dc"}
  *
  * Go source:
  * Tracer struct {
@@ -102,7 +102,7 @@ export function Tracer_Instant(receiver: GoPtr<Tracer>, phase: Phase, name: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::tracedTypeAdapter","kind":"type","status":"stub","sigHash":"34a478bcd924f0c355cebc624d5dc8b868aed28725c4fac42544c6f374b4b6cd","bodyHash":"7325849dc7b72ee8721061d8e81f4ffc02b20bca841aa9230f982ef65a2cf67a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::type::tracedTypeAdapter","kind":"type","status":"implemented","sigHash":"34a478bcd924f0c355cebc624d5dc8b868aed28725c4fac42544c6f374b4b6cd","bodyHash":"7325849dc7b72ee8721061d8e81f4ffc02b20bca841aa9230f982ef65a2cf67a"}
  *
  * Go source:
  * tracedTypeAdapter struct {
@@ -116,12 +116,12 @@ export interface tracedTypeAdapter {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"0a8cd138a3f0247ca1d46d94c821fcdf3df1d3a112a09a2af0ee241fa9444790"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"0a8cd138a3f0247ca1d46d94c821fcdf3df1d3a112a09a2af0ee241fa9444790"}
  *
  * Go source:
  * var _ tracing.TracedType = (*tracedTypeAdapter)(nil)
  */
-export let __88a6f671_0: TracedType = undefined as never;
+export const __88a6f671_0: (t: GoPtr<Type>) => TracedType = wrapType;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::method::tracedTypeAdapter.Id","kind":"method","status":"implemented","sigHash":"1b5527e62eddf3209bac5d770df27dc9fd21a153ab2cf9a0163fbeb8ec218011","bodyHash":"243119c609768300ad153d96a1858edd0c54b28fb824be1cf41a626d1a2eedb5"}

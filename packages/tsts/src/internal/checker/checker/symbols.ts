@@ -49,7 +49,7 @@ import { Checker_error } from "./support.js";
 import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters, Node_ModifierFlags, Node_TypeArguments, Node_Expression, Node_PropertyName, Node_PropertyNameOrName, Node_ModuleSpecifier } from "../../ast/ast.js";
 import { Set_Has, Set_Len, Set_Add } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
-import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType } from "./types.js";
+import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
 import { Checker_isReadonlyAssignmentDeclaration } from "./relations.js";
 import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration, Checker_isErrorType } from "./diagnostics.js";
@@ -425,7 +425,7 @@ export function Checker_onFailedToResolveSymbol(receiver: GoPtr<Checker>, errorL
  * }
  */
 export function Checker_getSuggestedLibForNonExistentName(receiver: GoPtr<Checker>, name: string): string {
-  const featureMap = (getFeatureMap as () => GoMap<string, GoSlice<{ lib: string }>>)();
+  const featureMap = getFeatureMap();
   const typeFeatures = featureMap?.get(name);
   if (typeFeatures !== undefined && typeFeatures.length > 0) {
     return typeFeatures[0]!.lib;
@@ -4981,7 +4981,7 @@ export function Checker_reportNonexistentProperty(receiver: GoPtr<Checker>, prop
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedLibForNonExistentProperty","kind":"method","status":"stub","sigHash":"ae2390239ec144b258e7cfd6cf608a5bcf2a8f7673fa1f62590f93388802f3da","bodyHash":"3e1951d2e561bb688cb6a57ac806ec45c31c54ff49d4b92550a27c12cd3c41fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedLibForNonExistentProperty","kind":"method","status":"implemented","sigHash":"ae2390239ec144b258e7cfd6cf608a5bcf2a8f7673fa1f62590f93388802f3da","bodyHash":"3e1951d2e561bb688cb6a57ac806ec45c31c54ff49d4b92550a27c12cd3c41fd"}
  *
  * Go source:
  * func (c *Checker) getSuggestedLibForNonExistentProperty(missingProperty string, containingType *Type) string {
@@ -5000,7 +5000,18 @@ export function Checker_reportNonexistentProperty(receiver: GoPtr<Checker>, prop
  * }
  */
 export function Checker_getSuggestedLibForNonExistentProperty(receiver: GoPtr<Checker>, missingProperty: string, containingType: GoPtr<Type>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedLibForNonExistentProperty");
+  const container = Checker_getApparentType(receiver, containingType)!.symbol;
+  if (container !== undefined) {
+    const typeFeatures = getFeatureMap().get(container.Name);
+    if (typeFeatures !== undefined) {
+      for (const entry of typeFeatures) {
+        if (entry.props.includes(missingProperty)) {
+          return entry.lib;
+        }
+      }
+    }
+  }
+  return "";
 }
 
 /**
