@@ -45,8 +45,8 @@ import { getGlobalTypeDeclaration, getPrimitiveTypeAliasSuggestions, TypeSystemP
 import { getFeatureMap, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode, Checker_isUncheckedJSSuggestion, isThisProperty, isExclamationToken, IsInTypeQuery, getEnclosingContainer, isTopLevelInExternalModuleAugmentation, hasExportAssignmentSymbol, isNumericLiteralName, isReservedMemberName, isTypeUsableAsPropertyName } from "../utilities.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { Type_AsInterfaceType, Type_AsTypeReference, Type_AsConstrainedType, Type_Types } from "../types.js";
-import { TypeFlagsUndefined, TypeFlagsESSymbolLike, TypeFlagsIndexedAccess, TypeFlagsIndex, TypeFlagsNever, TypeFlagsAnyOrUnknown, TypeFlagsStructuredType, ObjectFlagsNone, ObjectFlagsIsGenericIndexType, ObjectFlagsObjectLiteral, ObjectFlagsNonInferrableType, SymbolFormatFlagsDoNotIncludeSymbolChain, SymbolFormatFlagsAllowAnyNodeKind, MembersOrExportsResolutionKindResolvedExports, MembersOrExportsResolutionKindResolvedMembers, IndexFlagsNone, AccessFlagsNone } from "../types.js";
+import { Type_AsInterfaceType, Type_AsTypeReference, Type_AsConstrainedType, Type_Types, Type_AsStructuredType } from "../types.js";
+import { TypeFlagsUndefined, TypeFlagsESSymbolLike, TypeFlagsIndexedAccess, TypeFlagsIndex, TypeFlagsNever, TypeFlagsAnyOrUnknown, TypeFlagsStructuredType, ObjectFlagsNone, ObjectFlagsIsGenericIndexType, ObjectFlagsObjectLiteral, ObjectFlagsNonInferrableType, SymbolFormatFlagsDoNotIncludeSymbolChain, SymbolFormatFlagsAllowAnyNodeKind, MembersOrExportsResolutionKindResolvedExports, MembersOrExportsResolutionKindResolvedMembers, IndexFlagsNone, AccessFlagsNone, ObjectFlagsMembersResolved } from "../types.js";
 import { InterfaceType_TypeParameters } from "../types.js";
 import { LanguageFeatureMinimumTarget, NodeCheckFlagsContainsClassWithPrivateIdentifiers, NodeCheckFlagsEnumValuesComputed, NodeCheckFlagsInitializerIsUndefinedComputed, NodeCheckFlagsTypeChecked } from "../types.js";
 import { Checker_error, keyBuilder_writeByte, keyBuilder_writeInt } from "./support.js";
@@ -11384,7 +11384,7 @@ export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.setStructuredTypeMembers","kind":"method","status":"stub","sigHash":"e649ac184d5bc5716185caa88aca7227728b47c57cf0911559c52bf0ef5b77cf","bodyHash":"2dcec9b0b626b5cc4b4637449daa6b8a758c97a63b9dacd40ea1da6117c1d350"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.setStructuredTypeMembers","kind":"method","status":"implemented","sigHash":"e649ac184d5bc5716185caa88aca7227728b47c57cf0911559c52bf0ef5b77cf","bodyHash":"2dcec9b0b626b5cc4b4637449daa6b8a758c97a63b9dacd40ea1da6117c1d350"}
  *
  * Go source:
  * func (c *Checker) setStructuredTypeMembers(t *Type, members ast.SymbolTable, callSignatures []*Signature, constructSignatures []*Signature, indexInfos []*IndexInfo) {
@@ -11411,7 +11411,26 @@ export function Checker_newUniqueESSymbolType(receiver: GoPtr<Checker>, symbol_:
  * }
  */
 export function Checker_setStructuredTypeMembers(receiver: GoPtr<Checker>, t: GoPtr<Type>, members: SymbolTable, callSignatures: GoSlice<GoPtr<Signature>>, constructSignatures: GoSlice<GoPtr<Signature>>, indexInfos: GoSlice<GoPtr<IndexInfo>>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.setStructuredTypeMembers");
+  t!.objectFlags |= ObjectFlagsMembersResolved;
+  const data = Type_AsStructuredType(t);
+  data!.members = members;
+  data!.properties = Checker_getNamedMembers(receiver, members, t!["symbol"]);
+  if (callSignatures.length !== 0) {
+    if (constructSignatures.length !== 0) {
+      data!.signatures = callSignatures.concat(constructSignatures);
+    } else {
+      data!.signatures = callSignatures.slice();
+    }
+    data!.callSignatureCount = callSignatures.length;
+  } else {
+    if (constructSignatures.length !== 0) {
+      data!.signatures = constructSignatures.slice();
+    } else {
+      data!.signatures = [];
+    }
+    data!.callSignatureCount = 0;
+  }
+  data!.indexInfos = indexInfos.slice();
 }
 
 /**
