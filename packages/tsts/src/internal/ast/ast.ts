@@ -5450,6 +5450,13 @@ export function SourceFile_Path(receiver: GoPtr<SourceFile>): Path_79c49227 {
   return receiver!.parseOptions.Path;
 }
 
+export function SourceFile_as_ast_HasFileName(receiver: GoPtr<SourceFile>): HasFileName {
+  return {
+    FileName: (): string => SourceFile_FileName(receiver),
+    Path: (): Path_79c49227 => SourceFile_Path(receiver),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.Imports","kind":"method","status":"implemented","sigHash":"279edf65bfae1dd40e7b89d6530ce9196979a40832ae39c8437c0bd7250bb028","bodyHash":"134e49d263c3481c7a03c1d229e18cada6e75cc87b7bc34f6033f1bea7352c99"}
  *

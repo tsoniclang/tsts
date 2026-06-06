@@ -8,7 +8,7 @@ import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import { BindSourceFile } from "../binder/binder.js";
 import type { CheckJsDirective, CommentDirective, FileReference, HasFileName, Node, SourceFile, SourceFileMetaData, SourceFileLike, StringLiteralLike, Visitor } from "../ast/ast.js";
-import { CommentDirectiveKindIgnore, CommentDirectiveKindExpectError } from "../ast/ast.js";
+import { CommentDirectiveKindIgnore, CommentDirectiveKindExpectError, SourceFile_as_ast_HasFileName } from "../ast/ast.js";
 import { NewDiagnostic, NewCompilerDiagnostic, CompareDiagnostics, EqualDiagnosticsNoRelatedInfo, EqualDiagnostics } from "../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
 import { Diagnostic_Pos, Diagnostic_Code, Diagnostic_RelatedInformation, Diagnostic_SkippedOnNoEmit, Diagnostic_AddMessageChain, Diagnostic_Clone, Diagnostic_SetRelatedInfo, Diagnostic_Localize } from "../ast/diagnostic.js";
@@ -69,7 +69,7 @@ import type { ComparePathsOptions, Path } from "../tspath/path.js";
 import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
 import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath, type OutputPathsHost } from "../outputpaths/outputpaths.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
-import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo } from "./checkerpool.js";
+import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo, checkerPool_as_compiler_CheckerPool } from "./checkerpool.js";
 import type { checkerPool, CheckerPool } from "./checkerpool.js";
 import { newCheckerPoolWithTracing } from "./checkerpool.js";
 import { getSourceFilesToEmit, sourceFileMayBeEmitted, getDeclarationDiagnostics, emitter_emit } from "./emitter.js";
@@ -247,7 +247,7 @@ export interface packageNamesInfo {
  */
 export interface Program {
   opts: ProgramOptions;
-  checkerPool: CheckerPool;
+  checkerPool: CheckerPool | undefined;
   compilerCheckerPool: GoPtr<checkerPool>;
   comparePathsOptions: ComparePathsOptions;
   readonly __tsgoEmbedded0?: processedFiles;
@@ -638,7 +638,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
   const pf = processAllProgramFiles(opts, singleThreaded);
   const p: Program = {
     opts,
-    checkerPool: undefined as unknown as CheckerPool,
+    checkerPool: undefined,
     compilerCheckerPool: undefined,
     comparePathsOptions: { UseCaseSensitiveFileNames: false as bool, CurrentDirectory: "" },
     __tsgoEmbedded0: pf,
@@ -744,7 +744,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   const resultPackageNames: lazyValue<packageNamesInfo> = { value: undefined, once: new Once(), initialized: new Bool() };
   const result: Program = {
     opts: newOpts,
-    checkerPool: undefined as unknown as CheckerPool,
+    checkerPool: undefined,
     compilerCheckerPool: undefined,
     comparePathsOptions: receiver!.comparePathsOptions,
     __tsgoEmbedded0: resultPf,
@@ -803,7 +803,7 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
     receiver!.checkerPool = receiver!.opts.CreateCheckerPool(receiver);
   } else {
     const pool = newCheckerPoolWithTracing(receiver, receiver!.opts.Tracing);
-    receiver!.checkerPool = pool as unknown as CheckerPool;
+    receiver!.checkerPool = checkerPool_as_compiler_CheckerPool(pool);
     receiver!.compilerCheckerPool = pool;
   }
 }
@@ -1087,7 +1087,7 @@ export function Program_GetTypeChecker(receiver: GoPtr<Program>, ctx: Context): 
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerNonExclusive(receiver!.compilerCheckerPool);
   }
-  return receiver!.checkerPool.GetChecker(ctx, undefined);
+  return receiver!.checkerPool!.GetChecker(ctx, undefined);
 }
 
 /**
@@ -1121,7 +1121,7 @@ export function Program_GetTypeCheckerForFile(receiver: GoPtr<Program>, ctx: Con
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileNonExclusive(receiver!.compilerCheckerPool, file);
   }
-  return receiver!.checkerPool.GetChecker(ctx, file);
+  return receiver!.checkerPool!.GetChecker(ctx, file);
 }
 
 /**
@@ -1139,7 +1139,7 @@ export function Program_GetTypeCheckerForFileExclusive(receiver: GoPtr<Program>,
   if (receiver!.compilerCheckerPool !== undefined) {
     return checkerPool_getCheckerForFileExclusive(receiver!.compilerCheckerPool, ctx, file);
   }
-  return receiver!.checkerPool.GetChecker(ctx, file);
+  return receiver!.checkerPool!.GetChecker(ctx, file);
 }
 
 /**
@@ -1355,7 +1355,7 @@ export function Program_collectCheckerDiagnosticsFromFiles(receiver: GoPtr<Progr
       if (Program_SkipTypeChecking(receiver, file, false as bool)) {
         continue;
       }
-      const [c, done] = receiver!.checkerPool.GetChecker(ctx, file);
+      const [c, done] = receiver!.checkerPool!.GetChecker(ctx, file);
       diagnostics[i] = collect(ctx, c, file);
       done();
     }
@@ -4314,7 +4314,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
         }
         const resolvedModules = receiver!.__tsgoEmbedded0!.resolvedModules.get(SourceFile_Path(file));
         if (resolvedModules !== undefined) {
-          const mode = Program_GetModeForUsageLocation(receiver, file as unknown as HasFileName, imp as unknown as GoPtr<StringLiteralLike>);
+          const mode = Program_GetModeForUsageLocation(receiver, SourceFile_as_ast_HasFileName(file), imp as unknown as GoPtr<StringLiteralLike>);
           let resolvedModule: unknown = undefined;
           for (const [k, v] of resolvedModules) {
             if (k.Name === impText && k.Mode === mode) {

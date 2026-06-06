@@ -55,7 +55,13 @@ export interface checkerPool {
  * Go source:
  * var _ CheckerPool = (*checkerPool)(nil)
  */
-export let __34031131_0: CheckerPool = undefined as never;
+export let __34031131_0: CheckerPool = checkerPool_as_compiler_CheckerPool(undefined);
+
+export function checkerPool_as_compiler_CheckerPool(receiver: GoPtr<checkerPool>): CheckerPool {
+  return {
+    GetChecker: (ctx: Context, file: GoPtr<SourceFile>): [GoPtr<Checker>, () => void] => checkerPool_GetChecker(receiver, ctx, file),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::func::newCheckerPool","kind":"func","status":"implemented","sigHash":"166e4959543a17d547b22ee4264d922ed4cabd9adeaa8a75759e6f7392883bdf","bodyHash":"8889d04f05490b17ee812701674dde250bb3c02bd6bc663f542f2fd7033faf19"}
