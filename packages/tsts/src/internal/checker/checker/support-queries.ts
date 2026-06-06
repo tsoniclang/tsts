@@ -3,8 +3,9 @@ import { Filter, IfElse, Map as core_Map, OrElse, Some } from "../../core/core.j
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Properties, Node_Text } from "../../ast/ast.js";
+import { Node_Body, Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Properties, Node_Symbol, Node_Text } from "../../ast/ast.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import { Diagnostic_SetRepopulateInfo, RepopulateModeMismatch } from "../../ast/diagnostic.js";
 import {
   KindAmpersandAmpersandToken,
@@ -80,7 +81,7 @@ import { NodeFlagsAmbient, NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsC
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsIdentifier, IsJsxOpeningElement, IsParenthesizedExpression, IsPropertyAssignment, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
-import { GetCombinedModifierFlags, GetDeclarationOfKind, IsClassElement, IsClassLike, IsConstAssertion, IsJsxOpeningLikeElement, IsRequireCall, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
+import { GetCombinedModifierFlags, GetDeclarationOfKind, IsClassElement, IsClassLike, IsConstAssertion, IsFunctionLikeDeclaration, IsJsxOpeningLikeElement, IsRequireCall, NodeIsPresent, NodeKindIs, SkipParentheses } from "../../ast/utilities.js";
 import { AsBinaryExpression, AsConditionalExpression, AsPrefixUnaryExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
@@ -91,12 +92,13 @@ import type { ArrayLiteralLinks, SymbolReferenceLinks } from "../types.js";
 import { ContextFlagsNone, ObjectFlagsContainsSpread, TypeFlagsConditional, TypeFlagsNever, TypeFlagsUnion, Type_AsConditionalType, Type_Distributed } from "../types.js";
 import type { ConditionalRoot, Signature, Type } from "../types.js";
 import { isObjectLiteralType, CreateModeMismatchDetails, NewDiagnosticForNode } from "../utilities.js";
-import { Checker_isValidConstAssertionArgument } from "./signatures.js";
+import { Checker_chooseOverload, Checker_getSignatureFromDeclaration, Checker_isValidConstAssertionArgument } from "./signatures.js";
 import { Checker_getContextualType, Checker_getOptionalType, Checker_getPropertiesOfType, Checker_isConstTypeVariable } from "./types.js";
 import { Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
 import { Checker_getPropertyOfObjectType, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_isContextSensitiveFunctionLikeDeclaration, Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
 import type { CacheHashKey, CallState, Checker, IterationTypeKind, keyBuilder, ReferenceHint, WideningContext } from "./state.js";
 import { isTupleType, IterationTypeKindYield } from "./state.js";
+import { The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible } from "../../diagnostics/generated/messages.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIteratorResult","kind":"method","status":"implemented","sigHash":"c68abca3eb06cf808f42dbcbaa7b5579291a43e12a0eda979bc92ec57c49ee0a","bodyHash":"a948f5c897e476bee78001ddb233ed427012e1ed328d507cb9bae7c1ec73bb34"}
@@ -133,7 +135,7 @@ export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addImplementationSuccessElaboration","kind":"method","status":"stub","sigHash":"acb7d88587e2e89c8fd34143e26626149e1f899f42bf2c704f814544ee3b2fbf","bodyHash":"3e3a9a82c6e7104e19b9175e41aa07778df7343f379c060a8e8b5f4a1761e715"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addImplementationSuccessElaboration","kind":"method","status":"implemented","sigHash":"acb7d88587e2e89c8fd34143e26626149e1f899f42bf2c704f814544ee3b2fbf","bodyHash":"3e3a9a82c6e7104e19b9175e41aa07778df7343f379c060a8e8b5f4a1761e715"}
  *
  * Go source:
  * func (c *Checker) addImplementationSuccessElaboration(s *CallState, failed *Signature, diagnostic *ast.Diagnostic) {
@@ -157,7 +159,31 @@ export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
  * }
  */
 export function Checker_addImplementationSuccessElaboration(receiver: GoPtr<Checker>, s: GoPtr<CallState>, failed: GoPtr<Signature>, diagnostic: GoPtr<Diagnostic>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addImplementationSuccessElaboration");
+  if (failed!.declaration !== undefined && Node_Symbol(failed!.declaration) !== undefined) {
+    const declarations = Node_Symbol(failed!.declaration)!.Declarations;
+    if (declarations.length > 1) {
+      const implementation = declarations.find((declaration) =>
+        IsFunctionLikeDeclaration(declaration) && NodeIsPresent(Node_Body(declaration))
+      );
+      if (implementation !== undefined) {
+        const candidate = Checker_getSignatureFromDeclaration(receiver, implementation);
+        const localState = {
+          ...s!,
+          candidates: [candidate],
+          isSingleNonGenericCandidate: candidate!.typeParameters.length === 0,
+        } as CallState;
+        if (Checker_chooseOverload(receiver, localState, receiver!.assignableRelation) !== undefined) {
+          Diagnostic_AddRelatedInfo(
+            diagnostic,
+            NewDiagnosticForNode(
+              implementation,
+              The_call_would_have_succeeded_against_this_implementation_but_implementation_signatures_of_overloads_are_not_externally_visible,
+            ),
+          );
+        }
+      }
+    }
+  }
 }
 
 /**
