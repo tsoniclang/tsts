@@ -4835,7 +4835,7 @@ export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseType","kind":"method","status":"stub","sigHash":"f18c34d9d8876ffefb0a018918334e41d5666ba44b413a14af8b1e53df3c9092","bodyHash":"2a797334b7fd30e992d0c327dacd4288492ce1b5acd1b8066fdbd8f5a49c7f23"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseType","kind":"method","status":"implemented","sigHash":"f18c34d9d8876ffefb0a018918334e41d5666ba44b413a14af8b1e53df3c9092","bodyHash":"2a797334b7fd30e992d0c327dacd4288492ce1b5acd1b8066fdbd8f5a49c7f23"}
  *
  * Go source:
  * func (c *Checker) createPromiseType(promisedType *Type) *Type {
@@ -4851,11 +4851,16 @@ export function Checker_checkAndAggregateYieldOperandTypes(receiver: GoPtr<Check
  * }
  */
 export function Checker_createPromiseType(receiver: GoPtr<Checker>, promisedType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseType");
+  const globalPromiseType = receiver!.getGlobalPromiseTypeChecked();
+  if (globalPromiseType !== receiver!.emptyGenericType) {
+    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType);
+    return Checker_createTypeReference(receiver, globalPromiseType, [promisedType]);
+  }
+  return receiver!.unknownType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseLikeType","kind":"method","status":"stub","sigHash":"e367927f706cf7c2b438083b828f1da26d4ffe08b385d75cd70ac1d8b3c253fc","bodyHash":"91e50d0cced6b49f515a8816c0322b8dd1a248ee13b100378f9046c30cbfa58c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseLikeType","kind":"method","status":"implemented","sigHash":"e367927f706cf7c2b438083b828f1da26d4ffe08b385d75cd70ac1d8b3c253fc","bodyHash":"91e50d0cced6b49f515a8816c0322b8dd1a248ee13b100378f9046c30cbfa58c"}
  *
  * Go source:
  * func (c *Checker) createPromiseLikeType(promisedType *Type) *Type {
@@ -4871,7 +4876,12 @@ export function Checker_createPromiseType(receiver: GoPtr<Checker>, promisedType
  * }
  */
 export function Checker_createPromiseLikeType(receiver: GoPtr<Checker>, promisedType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createPromiseLikeType");
+  const globalPromiseLikeType = receiver!.getGlobalPromiseLikeType();
+  if (globalPromiseLikeType !== receiver!.emptyGenericType) {
+    promisedType = core.OrElse(Checker_getAwaitedTypeNoAlias(receiver, Checker_unwrapAwaitedType(receiver, promisedType)), receiver!.unknownType);
+    return Checker_createTypeReference(receiver, globalPromiseLikeType, [promisedType]);
+  }
+  return receiver!.unknownType;
 }
 
 /**
@@ -11708,7 +11718,7 @@ export function Checker_convertAutoToAny(receiver: GoPtr<Checker>, t: GoPtr<Type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitedType","kind":"method","status":"stub","sigHash":"3824071cbc50895fa33e985093870f650a6a43a22c72eb6a9e939c2761760b7a","bodyHash":"9fb98a13ba3873e6b6c99b8365c27f568289a37a9ee37569da9b9381aef43246"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitedType","kind":"method","status":"implemented","sigHash":"3824071cbc50895fa33e985093870f650a6a43a22c72eb6a9e939c2761760b7a","bodyHash":"9fb98a13ba3873e6b6c99b8365c27f568289a37a9ee37569da9b9381aef43246"}
  *
  * Go source:
  * func (c *Checker) checkAwaitedType(t *Type, withAlias bool, errorNode *ast.Node, diagnosticMessage *diagnostics.Message) *Type {
@@ -11725,7 +11735,16 @@ export function Checker_convertAutoToAny(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_checkAwaitedType(receiver: GoPtr<Checker>, t: GoPtr<Type>, withAlias: bool, errorNode: GoPtr<Node>, diagnosticMessage: GoPtr<Message>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitedType");
+  let awaitedType: GoPtr<Type>;
+  if (withAlias) {
+    awaitedType = Checker_getAwaitedTypeEx(receiver, t, errorNode, diagnosticMessage);
+  } else {
+    awaitedType = Checker_getAwaitedTypeNoAliasEx(receiver, t, errorNode, diagnosticMessage);
+  }
+  if (awaitedType !== undefined) {
+    return awaitedType;
+  }
+  return receiver!.errorType;
 }
 
 /**
