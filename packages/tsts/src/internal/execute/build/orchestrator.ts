@@ -1,5 +1,5 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
@@ -573,7 +573,7 @@ export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>): void {
  */
 export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
   const oldCache = receiver!.host!.mTimes;
-  receiver!.host!.mTimes = {} as SyncMap;
+  receiver!.host!.mTimes = newSyncMap();
   Orchestrator_rangeTask(receiver, (_path: Path, task: GoPtr<BuildTask>): void => {
     BuildTask_updateWatch(task, receiver, oldCache);
   });
@@ -595,9 +595,9 @@ export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
 export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
   const cachesVfs = receiver!.host!.host.FS() as unknown as cachedvfs_FS;
   FS_ClearCache(cachesVfs);
-  receiver!.host!.extendedConfigCache = { m: {} as SyncMap } as ExtendedConfigCache;
+  receiver!.host!.extendedConfigCache = { m: newSyncMap() };
   parseCache_reset(receiver!.host!.sourceFiles);
-  receiver!.host!.configTimes = {} as SyncMap;
+  receiver!.host!.configTimes = newSyncMap();
 }
 
 /**
@@ -895,8 +895,8 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 	return orchestrator
  * }
  */
-function newSyncMap(): SyncMap {
-  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap;
+function newSyncMap<K extends GoComparable = unknown, V = unknown>(): SyncMap<K, V> {
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<K, V>;
 }
 
 function newParseCache(): parseCache {
@@ -911,13 +911,13 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
       UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
     },
     host: undefined,
-    tasks: newSyncMap() as GoPtr<SyncMap>,
+    tasks: newSyncMap(),
     order: [],
     errors: [],
     errorSummaryReporter: undefined as unknown as DiagnosticsReporter,
     watchStatusReporter: undefined as unknown as DiagnosticReporter,
   };
-  const extendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const innerHost: host = {
     orchestrator,
     host: NewCachedFSCompilerHost(
