@@ -49,6 +49,9 @@
     "go/runtime.ts",
     "go/regexp.ts",
     "go/encoding/base64.ts",
+    "go/encoding/json.ts",
+    "go/github.com/go-json-experiment/json.ts",
+    "go/github.com/go-json-experiment/json/jsontext.ts",
     "go/context.ts"
   ],
   "tsFilePolicies": [

@@ -4,9 +4,9 @@ import type { Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../ast/s
 import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
-import type { Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
-import { AsElementAccessExpression, AsIdentifier, AsImportTypeNode, AsIndexedAccessTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
-import { IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeReferenceNode } from "../ast/generated/predicates.js";
+import type { BindingName, Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
+import { AsBindingElement, AsElementAccessExpression, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
+import { IsBindingElement, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {
@@ -14,18 +14,27 @@ import {
   KindArrowFunction,
   KindBindingElement,
   KindClassExpression,
+  KindDotDotDotToken,
   KindExportDeclaration,
   KindExportSpecifier,
+  KindExternalModuleReference,
   KindFunctionExpression,
   KindImportClause,
   KindImportDeclaration,
   KindImportEqualsDeclaration,
   KindImportSpecifier,
   KindImportType,
+  KindJSDocImportTag,
+  KindJSDocParameterTag,
   KindMinusToken,
+  KindModuleBlock,
   KindMultiLineCommentTrivia,
   KindNamespaceExport,
   KindNamespaceImport,
+  KindParameter,
+  KindQuestionToken,
+  KindAssertsKeyword,
+  KindReadonlyKeyword,
   KindSourceFile,
   KindTypeParameter,
   KindUndefinedKeyword,
@@ -33,7 +42,7 @@ import {
 } from "../ast/generated/kinds.js";
 import type { Symbol } from "../ast/symbol.js";
 import { InternalSymbolNameDefault, InternalSymbolNameExportEquals, InternalSymbolNameMissing, InternalSymbolNamePrefix } from "../ast/symbol.js";
-import { CheckFlagsInstantiated, CheckFlagsLate, CheckFlagsReverseMapped } from "../ast/checkflags.js";
+import { CheckFlagsInstantiated, CheckFlagsLate, CheckFlagsOptionalParameter, CheckFlagsRestParameter, CheckFlagsReverseMapped } from "../ast/checkflags.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import {
   NodeFlagsNone,
@@ -41,9 +50,14 @@ import {
   SymbolFlagsAlias,
   SymbolFlagsClass,
   SymbolFlagsEnum,
+  SymbolFlagsEnumMember,
   SymbolFlagsExportValue,
   SymbolFlagsFunction,
+  SymbolFlagsFunctionScopedVariable,
   SymbolFlagsMethod,
+  SymbolFlagsInterface,
+  SymbolFlagsOptional,
+  SymbolFlagsTransient,
   SymbolFlagsType,
   SymbolFlagsObjectLiteral,
   SymbolFlagsTypeLiteral,
@@ -60,12 +74,17 @@ import {
   GetSourceFileOfNode,
   GetSymbolId,
   IsAmbientModule,
+  CanHaveModifiers,
+  CreateModifiersFromModifierFlags,
   IsEntityName,
   IsLiteralImportTypeNode,
+  IsModifier,
+  IsRequireCall,
+  IsStatic,
   NodeIsSynthesized,
   WalkUpParenthesizedTypes,
 } from "../ast/utilities.js";
-import { NewNodeVisitor } from "../ast/visitor.js";
+import { NewNodeVisitor, NodeVisitor_VisitEachChild } from "../ast/visitor.js";
 import type { NodeVisitorHooks } from "../ast/visitor.js";
 import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
@@ -74,18 +93,29 @@ import {
   NewExpressionWithTypeArguments,
   NewIdentifier,
   NewImportTypeNode,
+  NewIndexedAccessTypeNode,
   NewKeywordTypeNode,
+  NewElementAccessExpression,
+  NewLiteralTypeNode,
   NewNumericLiteral,
+  NewParameterDeclaration,
+  NewParenthesizedTypeNode,
   NewPrefixUnaryExpression,
   NewPropertyAccessExpression,
   NewQualifiedName,
   NewStringLiteral,
+  NewThisTypeNode,
+  NewToken,
+  NewTypeParameterDeclaration,
+  NewTypePredicateNode,
+  NewTypeQueryNode,
   NewTypeReferenceNode,
   NewUnionTypeNode,
+  NewIndexSignatureDeclaration,
 } from "../ast/generated/factory.js";
-import { Node_Expression, Node_TypeArgumentList, Node_TypeArguments } from "../ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
-import { Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
+import { Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
 import type { Set } from "../collections/set.js";
 import type { MultiMap } from "../collections/multimap.js";
@@ -101,16 +131,21 @@ import type { ModeAwareCache } from "../module/cache.js";
 import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import {
   FlagsAllowAnonymousIdentifier,
+  FlagsAllowEmptyIndexInfoType,
   FlagsAllowQualifiedNameInPlaceOfIdentifier,
+  FlagsForbidIndexedAccessSymbolReferences,
   FlagsGenerateNamesForShadowedTypeParams,
   FlagsInInitialEntityName,
   FlagsInTypeAlias,
   FlagsNoTruncation,
+  FlagsOmitParameterModifiers,
   FlagsSuppressAnyReturnType,
   FlagsUseAliasDefinedOutsideCurrentScope,
   FlagsUseFullyQualifiedType,
   FlagsUseInstantiationExpressions,
   FlagsUseOnlyExternalAliasing,
+  FlagsUseStructuralFallback,
+  FlagsUseTypeOfFunction,
   FlagsUseSingleQuotesForStringLiteralType,
   FlagsWriteTypeParametersInQualifiedName,
   InternalFlagsDoNotIncludeSymbolChain,
@@ -134,6 +169,7 @@ import type { Checker, Host } from "./checker/state.js";
 import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, someType, TypeFactsNEUndefined } from "./checker/state.js";
 import {
   Checker_getDefaultFromTypeParameter,
+  Checker_getConstraintOfTypeParameter,
   Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias,
   Checker_getMinTypeArgumentCount,
   Checker_getOuterTypeParametersOfClassOrInterface,
@@ -156,6 +192,7 @@ import {
   Checker_instantiateType,
   Checker_newAnonymousType,
 } from "./checker/types.js";
+import { Checker_getConstraintDeclaration } from "./checker/inference.js";
 import { Checker_IsLibSymbolForHoverVerbosity, Checker_IsLibTypeForHoverVerbosity } from "./services.js";
 import {
   Checker_getAliasForSymbolInContainer,
@@ -178,6 +215,8 @@ import {
   Checker_getSymbolOfDeclaration,
   Checker_getSymbolOfNode,
   Checker_getTargetSymbol,
+  Checker_getTypeOfSymbol,
+  Checker_isLateBindableName,
   Checker_getWriteTypeOfSymbol,
   Checker_newSymbol,
   Checker_newSymbolEx,
@@ -190,15 +229,18 @@ import { Checker_getTypePredicateOfSignature, Checker_instantiateTypePredicate }
 import type { TypeMapper } from "./mapper.js";
 import { newTypeMapper, prependTypeMapping, TypeMapper_Map } from "./mapper.js";
 import type { IndexInfo, InterfaceType, LiteralType, MappedType, ReverseMappedSymbolLinks, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeId, TypeParameter, TypePredicate, TypeReference, UniqueESSymbolType, ValueSymbolLinks } from "./types.js";
-import { InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsReference, SignatureFlagsAbstract, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsInterfaceType, Type_AsLiteralType, Type_AsStructuredType, Type_AsTypeReference, Type_AsUniqueESSymbolType, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringLike, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUniqueESSymbol, TypeFlagsUnion } from "./types.js";
+import { InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsIsClassInstanceClone, ObjectFlagsReference, SignatureFlagsAbstract, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsInterfaceType, Type_AsLiteralType, Type_AsStructuredType, Type_AsTypeReference, Type_AsUniqueESSymbolType, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsConditional, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsObject, TypeFlagsStringLike, TypeFlagsStringOrNumberLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUniqueESSymbol, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
 import { Checker_valueToString } from "./printer.js";
-import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols } from "./utilities.js";
+import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols, IsTypeAny } from "./utilities.js";
 import { PathIsRelative } from "../tspath/path.js";
 import { CountPathComponents } from "../modulespecifiers/compare.js";
 import type { SymbolAccessibilityResult } from "../printer/emitresolver.js";
 import { NodeBuilderImpl_tryReuseExistingNodeHelper } from "./nodecopy.js";
 import { Checker_checkExpression } from "./checker/syntax-checking.js";
 import { FromString } from "../jsnum/string.js";
+import { UnquoteString } from "../stringutil/util.js";
+import { Set_Has } from "../collections/set.js";
+import { NodeBuilderImpl_pseudoReturnTypeMatchesPredicate, NodeBuilderImpl_pseudoTypeEquivalentToType, NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback } from "./pseudotypenodebuilder.js";
 import * as slices from "../../go/slices.js";
 
 /**
@@ -1413,7 +1455,7 @@ export function NodeBuilderImpl_symbolToName(receiver: GoPtr<NodeBuilderImpl>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createEntityNameFromSymbolChain","kind":"method","status":"stub","sigHash":"8bd983db204b7e2b2a2fb5effd5c251d9720e23e6aec363410e3a5889f1c976a","bodyHash":"932358061d3c13ad9aeed7e87a6b400b74051e6e809e17a473ad4e2d5f644957"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createEntityNameFromSymbolChain","kind":"method","status":"implemented","sigHash":"8bd983db204b7e2b2a2fb5effd5c251d9720e23e6aec363410e3a5889f1c976a","bodyHash":"932358061d3c13ad9aeed7e87a6b400b74051e6e809e17a473ad4e2d5f644957"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createEntityNameFromSymbolChain(chain []*ast.Symbol, index int) *ast.Node {
@@ -1444,7 +1486,24 @@ export function NodeBuilderImpl_symbolToName(receiver: GoPtr<NodeBuilderImpl>, s
  * }
  */
 export function NodeBuilderImpl_createEntityNameFromSymbolChain(receiver: GoPtr<NodeBuilderImpl>, chain: GoSlice<GoPtr<Symbol>>, index: int): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createEntityNameFromSymbolChain");
+  const symbol_ = chain[index];
+  if (index === 0) {
+    receiver!.ctx!.flags |= FlagsInInitialEntityName;
+  }
+  const symbolName = NodeBuilderImpl_getNameOfSymbolAsWritten(receiver, symbol_);
+  if (index === 0) {
+    receiver!.ctx!.flags ^= FlagsInInitialEntityName;
+  }
+  const identifier = NodeBuilderImpl_newIdentifier(receiver, symbolName, symbol_);
+  EmitContext_AddEmitFlags(receiver!.e, identifier, EFNoAsciiEscaping);
+  if (index > 0) {
+    return NewQualifiedName(
+      receiver!.f,
+      NodeBuilderImpl_createEntityNameFromSymbolChain(receiver, chain, index - 1) as GoPtr<EntityName>,
+      identifier as GoPtr<IdentifierNode>,
+    );
+  }
+  return identifier;
 }
 
 /**
@@ -1600,7 +1659,7 @@ export function getTopmostIndexedAccessType(node: GoPtr<IndexedAccessTypeNode>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAccessFromSymbolChain","kind":"method","status":"stub","sigHash":"4112f0cbecbc6a1843bde1e5106e189cbc9f161a7842c053858ed8fe80490fd1","bodyHash":"5d6a8411c057018b052a641ca20c63898a0371df3756c6775d087dd227724ec7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAccessFromSymbolChain","kind":"method","status":"implemented","sigHash":"4112f0cbecbc6a1843bde1e5106e189cbc9f161a7842c053858ed8fe80490fd1","bodyHash":"5d6a8411c057018b052a641ca20c63898a0371df3756c6775d087dd227724ec7"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createAccessFromSymbolChain(chain []*ast.Symbol, index int, stopper int, overrideTypeArguments *ast.NodeList) *ast.Node {
@@ -1700,7 +1759,94 @@ export function getTopmostIndexedAccessType(node: GoPtr<IndexedAccessTypeNode>):
  * }
  */
 export function NodeBuilderImpl_createAccessFromSymbolChain(receiver: GoPtr<NodeBuilderImpl>, chain: GoSlice<GoPtr<Symbol>>, index: int, stopper: int, overrideTypeArguments: GoPtr<NodeList>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createAccessFromSymbolChain");
+  let typeParameterNodes = overrideTypeArguments;
+  if (index !== chain.length - 1) {
+    typeParameterNodes = NodeBuilderImpl_lookupTypeParameterNodes(receiver, chain, index);
+  }
+  const symbol_ = chain[index];
+  const parent = index > 0 ? chain[index - 1] : undefined;
+  let symbolName = "";
+  if (index === 0) {
+    receiver!.ctx!.flags |= FlagsInInitialEntityName;
+    symbolName = NodeBuilderImpl_getNameOfSymbolAsWritten(receiver, symbol_);
+    receiver!.ctx!.approximateLength += symbolName.length + 1;
+    receiver!.ctx!.flags ^= FlagsInInitialEntityName;
+  } else if (parent !== undefined) {
+    const exports = Checker_getExportsOfSymbol(receiver!.ch, parent);
+    if (exports !== undefined) {
+      const res = exports.get(symbol_!.Name);
+      if (symbol_!.Name !== InternalSymbolNameExportEquals && !isLateBoundName(symbol_!.Name) && res !== undefined && Checker_getSymbolIfSameReference(receiver!.ch, res, symbol_) !== undefined) {
+        symbolName = symbol_!.Name;
+      } else {
+        const results = new globalThis.Map<GoPtr<Symbol>, string>();
+        for (const [name, ex] of exports) {
+          if (Checker_getSymbolIfSameReference(receiver!.ch, ex, symbol_) !== undefined && !isLateBoundName(name) && name !== InternalSymbolNameExportEquals) {
+            results.set(ex, name);
+          }
+        }
+        const resultSymbols = [...results.keys()];
+        if (resultSymbols.length > 0) {
+          resultSymbols.sort((left, right) => receiver!.ch!.compareSymbols(left, right));
+          symbolName = results.get(resultSymbols[0]) ?? "";
+        }
+      }
+    }
+  }
+  if (symbolName.length === 0) {
+    let name: GoPtr<Node>;
+    for (const declaration of symbol_!.Declarations ?? []) {
+      name = GetNameOfDeclaration(declaration);
+      if (name !== undefined) {
+        break;
+      }
+    }
+    if (name !== undefined && IsComputedPropertyName(name) && IsEntityName(Node_Expression(name))) {
+      const lhs = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, index - 1, stopper, overrideTypeArguments);
+      if (IsEntityName(lhs)) {
+        return NewIndexedAccessTypeNode(
+          receiver!.f,
+          NewParenthesizedTypeNode(receiver!.f, NewTypeQueryNode(receiver!.f, lhs as GoPtr<EntityName>, undefined) as GoPtr<TypeNode>) as GoPtr<TypeNode>,
+          NewTypeQueryNode(receiver!.f, Node_Expression(name) as GoPtr<EntityName>, undefined) as GoPtr<TypeNode>,
+        );
+      }
+      return lhs;
+    }
+    symbolName = NodeBuilderImpl_getNameOfSymbolAsWritten(receiver, symbol_);
+  }
+  receiver!.ctx!.approximateLength += symbolName.length + 1;
+  if ((receiver!.ctx!.flags & FlagsForbidIndexedAccessSymbolReferences) === 0 && parent !== undefined) {
+    const members = Checker_getMembersOfSymbol(receiver!.ch, parent);
+    const member = members?.get(symbol_!.Name);
+    if (member !== undefined && Checker_getSymbolIfSameReference(receiver!.ch, member, symbol_) !== undefined) {
+      const lhs = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, index - 1, stopper, overrideTypeArguments);
+      if (IsIndexedAccessTypeNode(lhs)) {
+        return NewIndexedAccessTypeNode(
+          receiver!.f,
+          lhs as GoPtr<TypeNode>,
+          NewLiteralTypeNode(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, symbolName)) as GoPtr<TypeNode>,
+        );
+      }
+      return NewIndexedAccessTypeNode(
+        receiver!.f,
+        NewTypeReferenceNode(receiver!.f, lhs as GoPtr<EntityName>, typeParameterNodes) as GoPtr<TypeNode>,
+        NewLiteralTypeNode(receiver!.f, NodeBuilderImpl_newStringLiteral(receiver, symbolName)) as GoPtr<TypeNode>,
+      );
+    }
+  }
+  const identifier = NodeBuilderImpl_newIdentifier(receiver, symbolName, symbol_);
+  EmitContext_AddEmitFlags(receiver!.e, identifier, EFNoAsciiEscaping);
+  if (index > stopper) {
+    const lhs = NodeBuilderImpl_createAccessFromSymbolChain(receiver, chain, index - 1, stopper, overrideTypeArguments);
+    if ((receiver!.ctx!.flags & FlagsUseInstantiationExpressions) === 0 || (IsEntityName(lhs) && (typeParameterNodes === undefined || typeParameterNodes.Nodes.length === 0))) {
+      return NewQualifiedName(receiver!.f, lhs as GoPtr<EntityName>, identifier as GoPtr<IdentifierNode>);
+    }
+    return NodeBuilderImpl_createExpressionWithTypeArguments(
+      receiver,
+      NewPropertyAccessExpression(receiver!.f, NodeBuilderImpl_createAccessExpression(receiver, lhs), undefined, identifier as GoPtr<IdentifierNode>, NodeFlagsNone) as GoPtr<Expression>,
+      typeParameterNodes,
+    );
+  }
+  return identifier;
 }
 
 /**
@@ -1718,7 +1864,7 @@ export function NodeBuilderImpl_symbolToExpression(receiver: GoPtr<NodeBuilderIm
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createExpressionFromSymbolChain","kind":"method","status":"stub","sigHash":"bacc30233525b8b3ed9f17630c0849144c8418f0e75e11d834771d90ecd0be94","bodyHash":"01b94e64e1f30c98aa5d8ddebc0b79af1da8568a5c9f33b76fe7e3d4f34d9538"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createExpressionFromSymbolChain","kind":"method","status":"implemented","sigHash":"bacc30233525b8b3ed9f17630c0849144c8418f0e75e11d834771d90ecd0be94","bodyHash":"01b94e64e1f30c98aa5d8ddebc0b79af1da8568a5c9f33b76fe7e3d4f34d9538"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createExpressionFromSymbolChain(chain []*ast.Symbol, index int) *ast.Expression {
@@ -1776,7 +1922,60 @@ export function NodeBuilderImpl_symbolToExpression(receiver: GoPtr<NodeBuilderIm
  * }
  */
 export function NodeBuilderImpl_createExpressionFromSymbolChain(receiver: GoPtr<NodeBuilderImpl>, chain: GoSlice<GoPtr<Symbol>>, index: int): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createExpressionFromSymbolChain");
+  const typeParameterNodes = NodeBuilderImpl_lookupExpressionChainTypeArgumentNodes(receiver, chain, index);
+  const symbol_ = chain[index];
+  if (index === 0) {
+    receiver!.ctx!.flags |= FlagsInInitialEntityName;
+  }
+  let symbolName = NodeBuilderImpl_getNameOfSymbolAsWritten(receiver, symbol_);
+  if (index === 0) {
+    receiver!.ctx!.flags ^= FlagsInInitialEntityName;
+  }
+  if (startsWithSingleOrDoubleQuote(symbolName) && Some(symbol_!.Declarations, hasNonGlobalAugmentationExternalModuleSymbol)) {
+    const specifier = NodeBuilderImpl_getSpecifierForModuleSymbol(receiver, symbol_, ResolutionModeNone);
+    receiver!.ctx!.approximateLength += 2 + specifier.length;
+    return NodeBuilderImpl_newStringLiteral(receiver, specifier) as GoPtr<Expression>;
+  }
+  if (index === 0 || canUsePropertyAccess(symbolName)) {
+    const identifier = NodeBuilderImpl_newIdentifier(receiver, symbolName, symbol_);
+    EmitContext_AddEmitFlags(receiver!.e, identifier, EFNoAsciiEscaping);
+    receiver!.ctx!.approximateLength += 1 + symbolName.length;
+    if (index > 0) {
+      const result = NewPropertyAccessExpression(
+        receiver!.f,
+        NodeBuilderImpl_createExpressionFromSymbolChain(receiver, chain, index - 1),
+        undefined,
+        identifier as GoPtr<IdentifierNode>,
+        NodeFlagsNone,
+      );
+      EmitContext_AddEmitFlags(receiver!.e, result, EFNoIndentation);
+      return NodeBuilderImpl_createExpressionWithTypeArguments(receiver, result as GoPtr<Expression>, typeParameterNodes);
+    }
+    return NodeBuilderImpl_createExpressionWithTypeArguments(receiver, identifier as GoPtr<Expression>, typeParameterNodes);
+  }
+  if (startsWithSquareBracket(symbolName)) {
+    symbolName = symbolName.slice(1, -1);
+  }
+  let expression: GoPtr<Expression>;
+  if (startsWithSingleOrDoubleQuote(symbolName) && (symbol_!.Flags & SymbolFlagsEnumMember) === 0) {
+    const literalText = UnquoteString(symbolName);
+    receiver!.ctx!.approximateLength += literalText.length + 2;
+    expression = NodeBuilderImpl_newStringLiteralEx(receiver, literalText, symbolName[0] === "'") as GoPtr<Expression>;
+  } else if (String(FromString(symbolName)) === symbolName) {
+    receiver!.ctx!.approximateLength += symbolName.length;
+    expression = NewNumericLiteral(receiver!.f, symbolName, TokenFlagsNone) as GoPtr<Expression>;
+  }
+  if (expression === undefined) {
+    receiver!.ctx!.approximateLength += symbolName.length;
+    expression = NodeBuilderImpl_newIdentifier(receiver, symbolName, symbol_) as GoPtr<Expression>;
+    EmitContext_AddEmitFlags(receiver!.e, expression, EFNoAsciiEscaping);
+  }
+  receiver!.ctx!.approximateLength += 2;
+  return NodeBuilderImpl_createExpressionWithTypeArguments(
+    receiver,
+    NewElementAccessExpression(receiver!.f, NodeBuilderImpl_createExpressionFromSymbolChain(receiver, chain, index - 1), undefined, expression, NodeFlagsNone) as GoPtr<Expression>,
+    typeParameterNodes,
+  );
 }
 
 /**
@@ -2377,7 +2576,7 @@ export function canHaveModuleSpecifier(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::TryGetModuleSpecifierFromDeclaration","kind":"func","status":"stub","sigHash":"460f7df27b6af8db51f3b6a6c9f936798cc635b95cd663037f1ba65e9fd648a2","bodyHash":"4449a744272db36eadcf2e8661b204be7388cd59cc4f6a43eb5859dd3950a9ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::TryGetModuleSpecifierFromDeclaration","kind":"func","status":"implemented","sigHash":"460f7df27b6af8db51f3b6a6c9f936798cc635b95cd663037f1ba65e9fd648a2","bodyHash":"4449a744272db36eadcf2e8661b204be7388cd59cc4f6a43eb5859dd3950a9ab"}
  *
  * Go source:
  * func TryGetModuleSpecifierFromDeclaration(node *ast.Node) *ast.Node {
@@ -2389,11 +2588,15 @@ export function canHaveModuleSpecifier(node: GoPtr<Node>): bool {
  * }
  */
 export function TryGetModuleSpecifierFromDeclaration(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::TryGetModuleSpecifierFromDeclaration");
+  const res = tryGetModuleSpecifierFromDeclarationWorker(node);
+  if (res === undefined || !IsStringLiteral(res)) {
+    return undefined;
+  }
+  return res;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::tryGetModuleSpecifierFromDeclarationWorker","kind":"func","status":"stub","sigHash":"b06d5992925a773c9ec0dfe22406dcc1ec29ebdfc2d9ceeae0862e20fc49d3c5","bodyHash":"59d3977f64974fc24d14c22fd8451aeff21616441b6c5b5d255c54d151ccae4a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::tryGetModuleSpecifierFromDeclarationWorker","kind":"func","status":"implemented","sigHash":"b06d5992925a773c9ec0dfe22406dcc1ec29ebdfc2d9ceeae0862e20fc49d3c5","bodyHash":"59d3977f64974fc24d14c22fd8451aeff21616441b6c5b5d255c54d151ccae4a"}
  *
  * Go source:
  * func tryGetModuleSpecifierFromDeclarationWorker(node *ast.Node) *ast.Node {
@@ -2445,7 +2648,44 @@ export function TryGetModuleSpecifierFromDeclaration(node: GoPtr<Node>): GoPtr<N
  * }
  */
 export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::tryGetModuleSpecifierFromDeclarationWorker");
+  switch (node!.Kind) {
+    case KindVariableDeclaration:
+    case KindBindingElement: {
+      const requireCall = FindAncestor(Node_Initializer(node), (current) => IsRequireCall(current, true as bool));
+      if (requireCall === undefined) {
+        return undefined;
+      }
+      return Node_Arguments(requireCall)![0];
+    }
+    case KindImportDeclaration:
+    case KindExportDeclaration:
+    case KindJSDocImportTag:
+      return Node_ModuleSpecifier(node);
+    case KindImportEqualsDeclaration: {
+      const ref = AsImportEqualsDeclaration(node)!.ModuleReference;
+      if (ref!.Kind !== KindExternalModuleReference) {
+        return undefined;
+      }
+      return Node_Expression(ref);
+    }
+    case KindImportClause:
+      return Node_ModuleSpecifier(node!.Parent);
+    case KindNamespaceExport:
+      return Node_ModuleSpecifier(node!.Parent);
+    case KindNamespaceImport:
+      return Node_ModuleSpecifier(node!.Parent!.Parent);
+    case KindExportSpecifier:
+      return Node_ModuleSpecifier(node!.Parent!.Parent);
+    case KindImportSpecifier:
+      return Node_ModuleSpecifier(node!.Parent!.Parent!.Parent);
+    case KindImportType:
+      if (IsLiteralImportTypeNode(node)) {
+        return AsLiteralTypeNode(AsImportTypeNode(node)!.Argument)!.Literal;
+      }
+      return undefined;
+    default:
+      return undefined;
+  }
 }
 
 /**
@@ -2537,7 +2777,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclarationWithConstraint","kind":"method","status":"stub","sigHash":"205bc0601b5e3cd5058e32db0a75ccc53b009a85a45430ab0e76b400c88e7597","bodyHash":"fd46f5fe353343f13e4364479aa136eff8bc33861f5e904963926a1f3008caaf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclarationWithConstraint","kind":"method","status":"implemented","sigHash":"205bc0601b5e3cd5058e32db0a75ccc53b009a85a45430ab0e76b400c88e7597","bodyHash":"fd46f5fe353343f13e4364479aa136eff8bc33861f5e904963926a1f3008caaf"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeParameterToDeclarationWithConstraint(typeParameter *Type, constraintNode *ast.TypeNode) *ast.TypeParameterDeclarationNode {
@@ -2565,7 +2805,22 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
  * }
  */
 export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>, constraintNode: GoPtr<TypeNode>): GoPtr<TypeParameterDeclarationNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclarationWithConstraint");
+  const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
+  receiver!.ctx!.flags &= ~FlagsWriteTypeParametersInQualifiedName;
+  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind));
+  const modifiersList = modifiers.length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
+  const name = NodeBuilderImpl_typeParameterToName(receiver, typeParameter);
+  const defaultParameter = Checker_getDefaultFromTypeParameter(receiver!.ch, typeParameter);
+  const defaultParameterDeclarationNode = defaultParameter !== undefined ? NodeBuilderImpl_typeToTypeNode(receiver, defaultParameter) : undefined;
+  restoreFlags();
+  return NewTypeParameterDeclaration(
+    receiver!.f,
+    modifiersList,
+    name as GoPtr<IdentifierNode>,
+    constraintNode,
+    undefined,
+    defaultParameterDeclarationNode,
+  ) as GoPtr<TypeParameterDeclarationNode>;
 }
 
 /**
@@ -2927,7 +3182,7 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNode","kind":"method","status":"stub","sigHash":"177dc48bbdc0fa840784acd061a234fee00b51993451281e379b8ef783b8522f","bodyHash":"75a32f0be8816082be87abc53509de8fcf0ccf38ed23423e7675a5cbaa6cee1e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNode","kind":"method","status":"implemented","sigHash":"177dc48bbdc0fa840784acd061a234fee00b51993451281e379b8ef783b8522f","bodyHash":"75a32f0be8816082be87abc53509de8fcf0ccf38ed23423e7675a5cbaa6cee1e"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typePredicateToTypePredicateNode(predicate *TypePredicate) *ast.Node {
@@ -2954,11 +3209,22 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
  * }
  */
 export function NodeBuilderImpl_typePredicateToTypePredicateNode(receiver: GoPtr<NodeBuilderImpl>, predicate: GoPtr<TypePredicate>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNode");
+  const assertsModifier = (predicate!.kind === TypePredicateKindAssertsIdentifier || predicate!.kind === TypePredicateKindAssertsThis)
+    ? NewToken(receiver!.f, KindAssertsKeyword)
+    : undefined;
+  let parameterName: GoPtr<Node>;
+  if (predicate!.kind === TypePredicateKindIdentifier || predicate!.kind === TypePredicateKindAssertsIdentifier) {
+    parameterName = NewIdentifier(receiver!.f, predicate!.parameterName);
+    EmitContext_AddEmitFlags(receiver!.e, parameterName, EFNoAsciiEscaping);
+  } else {
+    parameterName = NewThisTypeNode(receiver!.f);
+  }
+  const typeNode = predicate!.t !== undefined ? NodeBuilderImpl_typeToTypeNode(receiver, predicate!.t) : undefined;
+  return NewTypePredicateNode(receiver!.f, assertsModifier as never, parameterName as never, typeNode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeHelperWithPossibleReusableTypeNode","kind":"method","status":"stub","sigHash":"5105d17227307e88a6b0fe085d882fded9be0819cd562b69d5939f810245b4be","bodyHash":"9e336dd8a27646820b732e162b424fed2cb65b6639a54be35caeb562947fad77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeHelperWithPossibleReusableTypeNode","kind":"method","status":"implemented","sigHash":"5105d17227307e88a6b0fe085d882fded9be0819cd562b69d5939f810245b4be","bodyHash":"9e336dd8a27646820b732e162b424fed2cb65b6639a54be35caeb562947fad77"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeToTypeNodeHelperWithPossibleReusableTypeNode(t *Type, typeNode *ast.TypeNode) *ast.TypeNode {
@@ -2976,11 +3242,21 @@ export function NodeBuilderImpl_typePredicateToTypePredicateNode(receiver: GoPtr
  * }
  */
 export function NodeBuilderImpl_typeToTypeNodeHelperWithPossibleReusableTypeNode(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>, typeNode: GoPtr<TypeNode>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeToTypeNodeHelperWithPossibleReusableTypeNode");
+  if (t === undefined) {
+    return NewKeywordTypeNode(receiver!.f, KindAnyKeyword) as GoPtr<TypeNode>;
+  }
+  if (!NodeBuilderImpl_isActivelyExpanding(receiver) && typeNode !== undefined && NodeBuilderImpl_getTypeFromTypeNode(receiver, typeNode, false as bool) === t) {
+    const reused = NodeBuilderImpl_tryReuseExistingNodeHelper(receiver, typeNode);
+    if (reused !== undefined) {
+      NodeBuilderImpl_checkTypeExpandability(receiver, t);
+      return reused;
+    }
+  }
+  return NodeBuilderImpl_typeToTypeNode(receiver, t);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclaration","kind":"method","status":"stub","sigHash":"6fccdc3ca47a34a5a81a6f84b772e16468f6102e550c64cac0574853a301b7cf","bodyHash":"1e1ada8a3d525cb931458a434145a82fc906d5da72a8662cbbb183ece26d6bc2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclaration","kind":"method","status":"implemented","sigHash":"6fccdc3ca47a34a5a81a6f84b772e16468f6102e550c64cac0574853a301b7cf","bodyHash":"1e1ada8a3d525cb931458a434145a82fc906d5da72a8662cbbb183ece26d6bc2"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeParameterToDeclaration(parameter *Type) *ast.Node {
@@ -2993,11 +3269,15 @@ export function NodeBuilderImpl_typeToTypeNodeHelperWithPossibleReusableTypeNode
  * }
  */
 export function NodeBuilderImpl_typeParameterToDeclaration(receiver: GoPtr<NodeBuilderImpl>, parameter: GoPtr<Type>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParameterToDeclaration");
+  const constraint = Checker_getConstraintOfTypeParameter(receiver!.ch, parameter);
+  const constraintNode = constraint !== undefined
+    ? NodeBuilderImpl_typeToTypeNodeHelperWithPossibleReusableTypeNode(receiver, constraint, Checker_getConstraintDeclaration(receiver!.ch, parameter) as GoPtr<TypeNode>)
+    : undefined;
+  return NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver, parameter, constraintNode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeParameterDeclarations","kind":"method","status":"stub","sigHash":"102a8b7c3a89105042ca73b1c21597f6aebabe6af0642683db15661fe32b7721","bodyHash":"e3b04cdef9e22534d331b349359dacf3bed736e4f14a8a43bbcb36854bcd4afa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeParameterDeclarations","kind":"method","status":"implemented","sigHash":"102a8b7c3a89105042ca73b1c21597f6aebabe6af0642683db15661fe32b7721","bodyHash":"e3b04cdef9e22534d331b349359dacf3bed736e4f14a8a43bbcb36854bcd4afa"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) symbolToTypeParameterDeclarations(symbol *ast.Symbol) []*ast.Node {
@@ -3005,11 +3285,11 @@ export function NodeBuilderImpl_typeParameterToDeclaration(receiver: GoPtr<NodeB
  * }
  */
 export function NodeBuilderImpl_symbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToTypeParameterDeclarations");
+  return NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiver, symbol_);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParametersToTypeParameterDeclarations","kind":"method","status":"stub","sigHash":"54a5f81c6ecb718ee941edad8da0bd611ddc4a954d677d78156813f62b13fc74","bodyHash":"0cad470717b0b4ce5700ca4c4fb3e081db67e0c2fac69772a15151ebdb7cb33a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParametersToTypeParameterDeclarations","kind":"method","status":"implemented","sigHash":"54a5f81c6ecb718ee941edad8da0bd611ddc4a954d677d78156813f62b13fc74","bodyHash":"0cad470717b0b4ce5700ca4c4fb3e081db67e0c2fac69772a15151ebdb7cb33a"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typeParametersToTypeParameterDeclarations(symbol *ast.Symbol) []*ast.Node {
@@ -3032,11 +3312,27 @@ export function NodeBuilderImpl_symbolToTypeParameterDeclarations(receiver: GoPt
  * }
  */
 export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typeParametersToTypeParameterDeclarations");
+  const targetSymbol = Checker_getTargetSymbol(receiver!.ch, symbol_);
+  if ((targetSymbol!.Flags & (SymbolFlagsClass | SymbolFlagsInterface | SymbolFlagsAlias)) !== 0) {
+    const results: GoSlice<GoPtr<Node>> = [];
+    const params = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
+    for (const param of params ?? []) {
+      results.push(NodeBuilderImpl_typeParameterToDeclaration(receiver, param));
+    }
+    return results;
+  }
+  if ((targetSymbol!.Flags & SymbolFlagsFunction) !== 0) {
+    const results: GoSlice<GoPtr<Node>> = [];
+    for (const param of Checker_getTypeParametersFromDeclaration(receiver!.ch, symbol_!.ValueDeclaration) ?? []) {
+      results.push(NodeBuilderImpl_typeParameterToDeclaration(receiver, param));
+    }
+    return results;
+  }
+  return undefined!;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::getEffectiveParameterDeclaration","kind":"func","status":"stub","sigHash":"6a63cf3e5247a19a6de66ce7d20301cd82f28113bfd3e289d4c44bb68b2e0e95","bodyHash":"b4673b9d5f2df7a079acea1e7d3589c9d80aa4790a1ee6aa60f70819107c85d1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::getEffectiveParameterDeclaration","kind":"func","status":"implemented","sigHash":"6a63cf3e5247a19a6de66ce7d20301cd82f28113bfd3e289d4c44bb68b2e0e95","bodyHash":"b4673b9d5f2df7a079acea1e7d3589c9d80aa4790a1ee6aa60f70819107c85d1"}
  *
  * Go source:
  * func getEffectiveParameterDeclaration(symbol *ast.Symbol) *ast.Node {
@@ -3051,11 +3347,18 @@ export function NodeBuilderImpl_typeParametersToTypeParameterDeclarations(receiv
  * }
  */
 export function getEffectiveParameterDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::func::getEffectiveParameterDeclaration");
+  const parameterDeclaration = GetDeclarationOfKind(symbol_, KindParameter);
+  if (parameterDeclaration !== undefined) {
+    return parameterDeclaration;
+  }
+  if ((symbol_!.Flags & SymbolFlagsTransient) === 0) {
+    return GetDeclarationOfKind(symbol_, KindJSDocParameterTag);
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToParameterDeclaration","kind":"method","status":"stub","sigHash":"35650e77c2e2e44bd43e04d4a1dcd8ebb23065fe546404e3eca3da8ac11b59eb","bodyHash":"a08565a2a284e5501c31b05bd1a3013ed9cb912a073063916d20c77ef68aa021"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToParameterDeclaration","kind":"method","status":"implemented","sigHash":"35650e77c2e2e44bd43e04d4a1dcd8ebb23065fe546404e3eca3da8ac11b59eb","bodyHash":"a08565a2a284e5501c31b05bd1a3013ed9cb912a073063916d20c77ef68aa021"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) symbolToParameterDeclaration(parameterSymbol *ast.Symbol, preserveModifierFlags bool) *ast.Node {
@@ -3096,11 +3399,37 @@ export function getEffectiveParameterDeclaration(symbol_: GoPtr<Symbol>): GoPtr<
  * }
  */
 export function NodeBuilderImpl_symbolToParameterDeclaration(receiver: GoPtr<NodeBuilderImpl>, parameterSymbol: GoPtr<Symbol>, preserveModifierFlags: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.symbolToParameterDeclaration");
+  const parameterDeclaration = getEffectiveParameterDeclaration(parameterSymbol);
+  const parameterType = Checker_getTypeOfSymbol(receiver!.ch, parameterSymbol);
+  const parameterTypeNode = NodeBuilderImpl_serializeTypeForDeclaration(receiver, parameterDeclaration as GoPtr<Declaration>, parameterType, parameterSymbol, true as bool);
+  let modifiers: GoPtr<NodeList>;
+  if ((receiver!.ctx!.flags & FlagsOmitParameterModifiers) === 0 && preserveModifierFlags && parameterDeclaration !== undefined && CanHaveModifiers(parameterDeclaration)) {
+    const originals = Filter(Node_ModifierNodes(parameterDeclaration) ?? [], IsModifier);
+    const clones = CoreMap(originals, (node) => Node_Clone(node, receiver!.f as unknown as NodeFactoryCoercible));
+    if (clones.length > 0) {
+      modifiers = NodeFactory_NewModifierList(receiver!.f, clones);
+    }
+  }
+  const isRest = ((parameterDeclaration !== undefined && isRestParameter(parameterDeclaration)) || (parameterSymbol!.CheckFlags & CheckFlagsRestParameter) !== 0) as bool;
+  const dotDotDotToken = isRest ? NewToken(receiver!.f, KindDotDotDotToken) : undefined;
+  const name = NodeBuilderImpl_parameterToParameterDeclarationName(receiver, parameterSymbol, parameterDeclaration);
+  const isOptional = ((parameterDeclaration !== undefined && Checker_isOptionalParameter(receiver!.ch, parameterDeclaration)) || (parameterSymbol!.CheckFlags & CheckFlagsOptionalParameter) !== 0) as bool;
+  const questionToken = isOptional ? NewToken(receiver!.f, KindQuestionToken) : undefined;
+  const parameterNode = NewParameterDeclaration(
+    receiver!.f,
+    modifiers as never,
+    dotDotDotToken as never,
+    name as GoPtr<BindingName>,
+    questionToken as never,
+    parameterTypeNode as GoPtr<TypeNode>,
+    undefined,
+  );
+  receiver!.ctx!.approximateLength += parameterSymbol!.Name.length + 3;
+  return parameterNode;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.parameterToParameterDeclarationName","kind":"method","status":"stub","sigHash":"06e2e92fed8e7182b1ef53c1134cd8c96f2cb7e488d19172edfa8c310fbfdadd","bodyHash":"e0c7f342673b7c62ff8d59de31e67b50d20c8f755d668348cdf00be0b543b1e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.parameterToParameterDeclarationName","kind":"method","status":"implemented","sigHash":"06e2e92fed8e7182b1ef53c1134cd8c96f2cb7e488d19172edfa8c310fbfdadd","bodyHash":"e0c7f342673b7c62ff8d59de31e67b50d20c8f755d668348cdf00be0b543b1e6"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) parameterToParameterDeclarationName(parameterSymbol *ast.Symbol, parameterDeclaration *ast.Node) *ast.Node {
@@ -3126,11 +3455,27 @@ export function NodeBuilderImpl_symbolToParameterDeclaration(receiver: GoPtr<Nod
  * }
  */
 export function NodeBuilderImpl_parameterToParameterDeclarationName(receiver: GoPtr<NodeBuilderImpl>, parameterSymbol: GoPtr<Symbol>, parameterDeclaration: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.parameterToParameterDeclarationName");
+  if (parameterDeclaration === undefined || Node_Name(parameterDeclaration) === undefined) {
+    return NodeBuilderImpl_newIdentifier(receiver, parameterSymbol!.Name, parameterSymbol);
+  }
+  const name = Node_Name(parameterDeclaration);
+  if (IsIdentifier(name)) {
+    const cloned = NodeFactory_DeepCloneNode(receiver!.f, name);
+    EmitContext_SetEmitFlags(receiver!.e, cloned, EFNoAsciiEscaping);
+    receiver!.idToSymbol!.set(cloned as GoPtr<IdentifierNode>, parameterSymbol);
+    return cloned;
+  }
+  if (IsQualifiedName(name)) {
+    const cloned = NodeFactory_DeepCloneNode(receiver!.f, AsQualifiedName(name)!.Right);
+    EmitContext_SetEmitFlags(receiver!.e, cloned, EFNoAsciiEscaping);
+    receiver!.idToSymbol!.set(cloned as GoPtr<IdentifierNode>, parameterSymbol);
+    return cloned;
+  }
+  return NodeBuilderImpl_cloneBindingName(receiver, name);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.cloneBindingName","kind":"method","status":"stub","sigHash":"fdf2f13ce73bd568102dfec22c507d49638a1adfe9e956280854d1727b2a8836","bodyHash":"bab1046dea626256b300d74e2d33907f7bf997d8e65566e118301546e2f5fb49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.cloneBindingName","kind":"method","status":"implemented","sigHash":"fdf2f13ce73bd568102dfec22c507d49638a1adfe9e956280854d1727b2a8836","bodyHash":"bab1046dea626256b300d74e2d33907f7bf997d8e65566e118301546e2f5fb49"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) cloneBindingName(node *ast.Node) *ast.Node {
@@ -3160,7 +3505,26 @@ export function NodeBuilderImpl_parameterToParameterDeclarationName(receiver: Go
  * }
  */
 export function NodeBuilderImpl_cloneBindingName(receiver: GoPtr<NodeBuilderImpl>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.cloneBindingName");
+  if (IsComputedPropertyName(node) && Checker_isLateBindableName(receiver!.ch, node)) {
+    NodeBuilderImpl_trackComputedName(receiver, Node_Expression(node), receiver!.ctx!.enclosingDeclaration);
+  }
+  let visited = NodeVisitor_VisitEachChild(receiver!.cloneBindingNameVisitor, node);
+  if (IsBindingElement(visited)) {
+    const bindingElement = AsBindingElement(visited);
+    visited = NodeFactory_UpdateBindingElement(
+      receiver!.f,
+      bindingElement,
+      bindingElement!.DotDotDotToken,
+      bindingElement!.PropertyName,
+      Node_Name(visited) as GoPtr<BindingName>,
+      undefined,
+    );
+  }
+  if (!NodeIsSynthesized(visited)) {
+    visited = NodeFactory_DeepCloneNode(receiver!.f, visited);
+  }
+  EmitContext_SetEmitFlags(receiver!.e, visited, EFSingleLine | EFNoAsciiEscaping);
+  return visited;
 }
 
 /**
@@ -3180,7 +3544,7 @@ export function NodeBuilderImpl_serializeTypeForExpression(receiver: GoPtr<NodeB
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeInferredReturnTypeForSignature","kind":"method","status":"stub","sigHash":"6a09ab82e719078c46afc6c4a376800493e3e2b5788622aa378b7ac2fd3af1e8","bodyHash":"278a43732f0a543ff1561f13aeee7262c62b106179167d5ee4ebb410054c5b52"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeInferredReturnTypeForSignature","kind":"method","status":"implemented","sigHash":"6a09ab82e719078c46afc6c4a376800493e3e2b5788622aa378b7ac2fd3af1e8","bodyHash":"278a43732f0a543ff1561f13aeee7262c62b106179167d5ee4ebb410054c5b52"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) serializeInferredReturnTypeForSignature(signature *Signature, returnType *Type) *ast.Node {
@@ -3204,11 +3568,24 @@ export function NodeBuilderImpl_serializeTypeForExpression(receiver: GoPtr<NodeB
  * }
  */
 export function NodeBuilderImpl_serializeInferredReturnTypeForSignature(receiver: GoPtr<NodeBuilderImpl>, signature: GoPtr<Signature>, returnType: GoPtr<Type>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.serializeInferredReturnTypeForSignature");
+  const oldSuppressReportInferenceFallback = receiver!.ctx!.suppressReportInferenceFallback;
+  receiver!.ctx!.suppressReportInferenceFallback = true;
+  const typePredicate = Checker_getTypePredicateOfSignature(receiver!.ch, signature);
+  let returnTypeNode: GoPtr<Node>;
+  if (typePredicate !== undefined) {
+    const predicate = receiver!.ctx!.mapper !== undefined
+      ? Checker_instantiateTypePredicate(receiver!.ch, typePredicate, receiver!.ctx!.mapper)
+      : typePredicate;
+    returnTypeNode = NodeBuilderImpl_typePredicateToTypePredicateNodeHelper(receiver, predicate);
+  } else {
+    returnTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, returnType);
+  }
+  receiver!.ctx!.suppressReportInferenceFallback = oldSuppressReportInferenceFallback;
+  return returnTypeNode;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNodeHelper","kind":"method","status":"stub","sigHash":"d52dde89c745ce63ca8936bb376dbd1db0989d92845625cb93181c2684d5b682","bodyHash":"2852df3f11b8fcada90b5e67698921c8893866cd97789c4417eb5f210936a17f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNodeHelper","kind":"method","status":"implemented","sigHash":"d52dde89c745ce63ca8936bb376dbd1db0989d92845625cb93181c2684d5b682","bodyHash":"2852df3f11b8fcada90b5e67698921c8893866cd97789c4417eb5f210936a17f"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) typePredicateToTypePredicateNodeHelper(typePredicate *TypePredicate) *ast.Node {
@@ -3233,7 +3610,18 @@ export function NodeBuilderImpl_serializeInferredReturnTypeForSignature(receiver
  * }
  */
 export function NodeBuilderImpl_typePredicateToTypePredicateNodeHelper(receiver: GoPtr<NodeBuilderImpl>, typePredicate: GoPtr<TypePredicate>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.typePredicateToTypePredicateNodeHelper");
+  const assertsModifier = (typePredicate!.kind === TypePredicateKindAssertsThis || typePredicate!.kind === TypePredicateKindAssertsIdentifier)
+    ? NewToken(receiver!.f, KindAssertsKeyword)
+    : undefined;
+  let parameterName: GoPtr<Node>;
+  if (typePredicate!.kind === TypePredicateKindIdentifier || typePredicate!.kind === TypePredicateKindAssertsIdentifier) {
+    parameterName = NodeBuilderImpl_newIdentifier(receiver, typePredicate!.parameterName, undefined);
+    EmitContext_SetEmitFlags(receiver!.e, parameterName, EFNoAsciiEscaping);
+  } else {
+    parameterName = NewThisTypeNode(receiver!.f);
+  }
+  const typeNode = typePredicate!.t !== undefined ? NodeBuilderImpl_typeToTypeNode(receiver, typePredicate!.t) : undefined;
+  return NewTypePredicateNode(receiver!.f, assertsModifier as never, parameterName as never, typeNode);
 }
 
 /**
@@ -3573,7 +3961,7 @@ export function NodeBuilderImpl_serializeReturnTypeForSignature(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.indexInfoToIndexSignatureDeclarationHelper","kind":"method","status":"stub","sigHash":"8ea9817652ce8aa095a17630f1e7a34f96e7762958efa796541a9ea0c0910ac8","bodyHash":"da1ecbca33ebcdcdc89cd4143d0d58a759fbe34504c6a2599556d5d805e3f627"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.indexInfoToIndexSignatureDeclarationHelper","kind":"method","status":"implemented","sigHash":"8ea9817652ce8aa095a17630f1e7a34f96e7762958efa796541a9ea0c0910ac8","bodyHash":"da1ecbca33ebcdcdc89cd4143d0d58a759fbe34504c6a2599556d5d805e3f627"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) indexInfoToIndexSignatureDeclarationHelper(indexInfo *IndexInfo, typeNode *ast.TypeNode) *ast.Node {
@@ -3601,7 +3989,27 @@ export function NodeBuilderImpl_serializeReturnTypeForSignature(receiver: GoPtr<
  * }
  */
 export function NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver: GoPtr<NodeBuilderImpl>, indexInfo: GoPtr<IndexInfo>, typeNode: GoPtr<TypeNode>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.indexInfoToIndexSignatureDeclarationHelper");
+  const name = getNameFromIndexInfo(indexInfo);
+  const indexerTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, indexInfo!.keyType);
+  const indexingParameter = NewParameterDeclaration(receiver!.f, undefined, undefined, NodeBuilderImpl_newIdentifier(receiver, name, undefined) as GoPtr<BindingName>, undefined, indexerTypeNode, undefined);
+  let resolvedTypeNode = typeNode;
+  if (resolvedTypeNode === undefined) {
+    if (indexInfo!.valueType === undefined) {
+      resolvedTypeNode = NewKeywordTypeNode(receiver!.f, KindAnyKeyword) as GoPtr<TypeNode>;
+    } else {
+      resolvedTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, indexInfo!.valueType);
+    }
+  }
+  if (indexInfo!.valueType === undefined && (receiver!.ctx!.flags & FlagsAllowEmptyIndexInfoType) === 0) {
+    receiver!.ctx!.encounteredError = true;
+  }
+  receiver!.ctx!.approximateLength += name.length + 4;
+  let modifiers: GoPtr<NodeList>;
+  if (indexInfo!.isReadonly) {
+    receiver!.ctx!.approximateLength += 9;
+    modifiers = NodeFactory_NewModifierList(receiver!.f, [NodeFactory_NewModifier(receiver!.f, KindReadonlyKeyword)]);
+  }
+  return NewIndexSignatureDeclaration(receiver!.f, modifiers as never, NodeFactory_NewNodeList(receiver!.f, [indexingParameter]), resolvedTypeNode);
 }
 
 /**
@@ -5291,7 +5699,7 @@ export function NodeBuilderImpl_createExpressionWithTypeArguments(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupInstantiatedTypeArgumentNodes","kind":"method","status":"stub","sigHash":"5a82887a323e0f5c3ccb8e2adf7ac9c58a6715d769e2d79fa6bc44b585fe23e0","bodyHash":"681c7c4f6ecf635b133c92436a975488e2ce04dcdbcdb5072da207da4cfbc0e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupInstantiatedTypeArgumentNodes","kind":"method","status":"implemented","sigHash":"5a82887a323e0f5c3ccb8e2adf7ac9c58a6715d769e2d79fa6bc44b585fe23e0","bodyHash":"681c7c4f6ecf635b133c92436a975488e2ce04dcdbcdb5072da207da4cfbc0e7"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) lookupInstantiatedTypeArgumentNodes(chain []*ast.Symbol, index int) *ast.TypeParameterList {
@@ -5318,11 +5726,28 @@ export function NodeBuilderImpl_createExpressionWithTypeArguments(receiver: GoPt
  * }
  */
 export function NodeBuilderImpl_lookupInstantiatedTypeArgumentNodes(receiver: GoPtr<NodeBuilderImpl>, chain: GoSlice<GoPtr<Symbol>>, index: int): GoPtr<TypeParameterList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupInstantiatedTypeArgumentNodes");
+  if (NodeBuilderImpl_shouldWriteTypeParametersInQualifiedName(receiver, chain, index)) {
+    const symbol_ = chain[index];
+    const nextSymbol = chain[index + 1];
+    if ((nextSymbol!.CheckFlags & CheckFlagsInstantiated) === 0) {
+      return undefined;
+    }
+    let targetSymbol = symbol_;
+    if ((symbol_!.Flags & SymbolFlagsAlias) !== 0) {
+      targetSymbol = Checker_resolveAlias(receiver!.ch, symbol_);
+    }
+    let params = NodeBuilderImpl_getTypeParametersOfClassOrInterface(receiver, targetSymbol);
+    const targetMapper = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.ch!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, nextSymbol)!.mapper;
+    if (targetMapper !== undefined) {
+      params = CoreMap(params, (param) => TypeMapper_Map(targetMapper, param));
+    }
+    return NodeBuilderImpl_mapToTypeNodes(receiver, params, false as bool) as GoPtr<TypeParameterList>;
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupExpressionChainTypeArgumentNodes","kind":"method","status":"stub","sigHash":"8e5f7188bc4fb046d762d3c0430bbb819f67804a39abeeb3f1dabf3ddc20649f","bodyHash":"9da36aaac153c8ee95aaea607088637ee69f469af46398d6db6e4dffb92062c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupExpressionChainTypeArgumentNodes","kind":"method","status":"implemented","sigHash":"8e5f7188bc4fb046d762d3c0430bbb819f67804a39abeeb3f1dabf3ddc20649f","bodyHash":"9da36aaac153c8ee95aaea607088637ee69f469af46398d6db6e4dffb92062c3"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) lookupExpressionChainTypeArgumentNodes(chain []*ast.Symbol, index int) *ast.TypeParameterList {
@@ -5345,7 +5770,20 @@ export function NodeBuilderImpl_lookupInstantiatedTypeArgumentNodes(receiver: Go
  * }
  */
 export function NodeBuilderImpl_lookupExpressionChainTypeArgumentNodes(receiver: GoPtr<NodeBuilderImpl>, chain: GoSlice<GoPtr<Symbol>>, index: int): GoPtr<TypeParameterList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.lookupExpressionChainTypeArgumentNodes");
+  if (NodeBuilderImpl_shouldWriteTypeParametersInQualifiedName(receiver, chain, index)) {
+    const symbol_ = chain[index];
+    const symbolId = GetSymbolId(symbol_);
+    if (!receiver!.ctx!.hasCreatedTypeParameterSymbolList) {
+      receiver!.ctx!.hasCreatedTypeParameterSymbolList = true;
+      receiver!.ctx!.typeParameterSymbolList = new globalThis.Map();
+    }
+    if (receiver!.ctx!.typeParameterSymbolList!.has(symbolId)) {
+      return undefined;
+    }
+    receiver!.ctx!.typeParameterSymbolList!.set(symbolId, {} as { readonly __tsgoEmpty?: never });
+    return NodeBuilderImpl_lookupInstantiatedTypeArgumentNodes(receiver, chain, index);
+  }
+  return undefined;
 }
 
 /**
