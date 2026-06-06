@@ -1,8 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
-import { Node_AsNode, Node_Pos, Node_End, Node_Name } from "../../ast/spine.js";
+import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
+import { Contains as slicesContains } from "../../../go/slices.js";
 import {
   AsBinaryExpression, AsSyntheticExpression, AsIfStatement, AsForStatement,
   AsForInOrOfStatement, AsSwitchStatement, AsTryStatement, AsCatchClause,
@@ -88,7 +89,7 @@ import {
   Checker_checkNonNullType, Checker_checkNonNullExpression, Checker_getTypeFromTypeNode,
   Checker_getUnaryResultType, Checker_checkArithmeticOperandType, Checker_bothAreBigIntLike,
   Checker_checkNullishCoalesceOperands, Checker_checkFunctionExpressionOrObjectLiteralMethodDeferred,
-  Checker_hasTypeFacts, Checker_getTypeFacts, Checker_checkAwaitedType,
+  Checker_hasTypeFacts, Checker_getTypeFacts, Checker_checkAwaitedType, Checker_isFunctionType, Checker_isEmptyObjectType,
 } from "./types.js";
 import { Checker_isReachableFlowNode } from "../flow.js";
 import type { FlowNode } from "../../ast/flow.js";
@@ -101,7 +102,7 @@ import {
   Checker_isUnwrappedReturnTypeUndefinedVoidOrAny, Checker_isIndirectCall,
 } from "./signatures.js";
 import { Checker_checkJsxSelfClosingElementDeferred, Checker_checkJsxElementDeferred } from "../jsx.js";
-import { createDiagnosticForNode } from "./state.js";
+import { createDiagnosticForNode, everyContainedType, hasCommonDomTypeName } from "./state.js";
 import { Every, IfElse, OrElse } from "../../core/core.js";
 import { OrderedSet_Add, OrderedSet_Values, OrderedSet_Clear } from "../../collections/ordered_set.js";
 import { Set_Clear } from "../../collections/set.js";
@@ -1686,7 +1687,7 @@ export function Checker_getEffectiveCheckNode(receiver: GoPtr<Checker>, argument
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericFunctionReturningFunction","kind":"method","status":"stub","sigHash":"94646c88f0c73adf7aa7e7c0dca2ef8814c8292a3a7f5dfe11766da8315b629c","bodyHash":"a4b99dd56e6e615a3f54010bad5ba3c415adcfe321b06443534024c41cca405d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericFunctionReturningFunction","kind":"method","status":"implemented","sigHash":"94646c88f0c73adf7aa7e7c0dca2ef8814c8292a3a7f5dfe11766da8315b629c","bodyHash":"a4b99dd56e6e615a3f54010bad5ba3c415adcfe321b06443534024c41cca405d"}
  *
  * Go source:
  * func (c *Checker) isGenericFunctionReturningFunction(signature *Signature) bool {
@@ -1694,7 +1695,7 @@ export function Checker_getEffectiveCheckNode(receiver: GoPtr<Checker>, argument
  * }
  */
 export function Checker_isGenericFunctionReturningFunction(receiver: GoPtr<Checker>, signature: GoPtr<Signature>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericFunctionReturningFunction");
+  return signature!.typeParameters.length !== 0 && Checker_isFunctionType(receiver, Checker_getReturnTypeOfSignature(receiver, signature));
 }
 
 /**
@@ -2023,7 +2024,7 @@ export function Checker_checkSyntheticExpression(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containerSeemsToBeEmptyDomElement","kind":"method","status":"stub","sigHash":"371efe70a947606aad0e287268fe581c63f87fce5fea53ab33358a79010d12d2","bodyHash":"8dbbfbf6ddbcb82e6cd210c56db23b26d0108a98e9883ff1238383f531101026"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containerSeemsToBeEmptyDomElement","kind":"method","status":"implemented","sigHash":"371efe70a947606aad0e287268fe581c63f87fce5fea53ab33358a79010d12d2","bodyHash":"8dbbfbf6ddbcb82e6cd210c56db23b26d0108a98e9883ff1238383f531101026"}
  *
  * Go source:
  * func (c *Checker) containerSeemsToBeEmptyDomElement(containingType *Type) bool {
@@ -2031,7 +2032,7 @@ export function Checker_checkSyntheticExpression(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_containerSeemsToBeEmptyDomElement(receiver: GoPtr<Checker>, containingType: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.containerSeemsToBeEmptyDomElement");
+  return !slicesContains(receiver!.compilerOptions!.Lib ?? [], "lib.dom.d.ts") && everyContainedType(containingType, hasCommonDomTypeName) && Checker_isEmptyObjectType(receiver, containingType);
 }
 
 /**
@@ -2605,7 +2606,7 @@ export function Checker_getCombinedNodeFlagsCached(receiver: GoPtr<Checker>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.functionHasImplicitReturn","kind":"method","status":"stub","sigHash":"95e0923b49be139ed7b595fb828b41caba456a45b858c4457a8ce9c606075dfb","bodyHash":"e81dd3ec59d0f16f97f115d8a5d7fed3de22e4ae82ca84caef2ff1eb123bf4e5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.functionHasImplicitReturn","kind":"method","status":"implemented","sigHash":"95e0923b49be139ed7b595fb828b41caba456a45b858c4457a8ce9c606075dfb","bodyHash":"e81dd3ec59d0f16f97f115d8a5d7fed3de22e4ae82ca84caef2ff1eb123bf4e5"}
  *
  * Go source:
  * func (c *Checker) functionHasImplicitReturn(fn *ast.Node) bool {
@@ -2614,7 +2615,8 @@ export function Checker_getCombinedNodeFlagsCached(receiver: GoPtr<Checker>, nod
  * }
  */
 export function Checker_functionHasImplicitReturn(receiver: GoPtr<Checker>, fn: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.functionHasImplicitReturn");
+  const endFlowNode = (Node_BodyData(fn) as unknown as { EndFlowNode: GoPtr<FlowNode> }).EndFlowNode;
+  return endFlowNode !== undefined && Checker_isReachableFlowNode(receiver, endFlowNode);
 }
 
 /**

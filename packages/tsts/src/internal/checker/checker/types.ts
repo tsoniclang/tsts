@@ -25,7 +25,7 @@ import type { ResolvedModule } from "../../module/types.js";
 import type { TypeMapper } from "../mapper.js";
 import { TypeMapper_Map } from "../mapper.js";
 import type { ConditionalRoot, ContextFlags, ElementFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UnionType, IntersectionType, TemplateLiteralType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType } from "../types.js";
-import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ObjectFlagsReference, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, Type_Mapper, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, ObjectFlagsNone, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType } from "../types.js";
+import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ObjectFlagsReference, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, Type_Mapper, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, ObjectFlagsNone, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType, TypeFormatFlagsWriteArrayAsGenericType } from "../types.js";
 import type { orderedSet } from "../utilities.js";
 import { CompareTypes, IsTypeAny, NewDiagnosticForNode, isDeclarationReadonly, orderedSet_contains, orderedSet_add, entityNameToString } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionReduction, WideningContext, WideningKind, CachedTypeKey, CacheHashKey } from "./state.js";
@@ -38,7 +38,7 @@ import { Checker_getMinArgumentCount, Checker_reportDiagnostic, Checker_checkTyp
 import { Checker_reportTypeNotIterableError, Checker_addDeferredDiagnostic, Checker_getIterationDiagnosticDetails, Checker_checkNonNullTypeWithReporter, Checker_reportObjectPossiblyNullOrUndefinedError, Checker_reportCircularityError } from "./diagnostics.js";
 import { Checker_getPropertyNameForKnownSymbolName, Checker_includeUndefinedInIndexSignature } from "../flow.js";
 import { Checker_checkSourceElement, Checker_checkSourceElements, Checker_error, keyBuilder_writeByte, keyBuilder_writeInt } from "./support.js";
-import { Checker_TypeToString } from "../printer.js";
+import { Checker_TypeToString, Checker_TypeToStringEx } from "../printer.js";
 import { Checker_checkGrammarTypeOperatorNode, Checker_checkGrammarRegularExpressionLiteral, Checker_grammarErrorOnNode } from "../grammarchecks.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { Checker_isYieldIteratorResult, Checker_isReturnIteratorResult, Checker_errorAndMaybeSuggestAwait, Checker_checkExpressionEx, Checker_checkExpression, Checker_checkNodeDeferred, Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
@@ -4595,7 +4595,7 @@ export function Checker_resolveBaseTypesOfInterface(receiver: GoPtr<Checker>, t:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularBaseType","kind":"method","status":"stub","sigHash":"8d4fc21e784d02ef9174e50f45fb3f23010904fc6aaaa4344aef356186f715d9","bodyHash":"057e7d3c50e1d6e65a201672fa00889c4ae8936f3180073ca18c2c3fd49ee21a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularBaseType","kind":"method","status":"implemented","sigHash":"8d4fc21e784d02ef9174e50f45fb3f23010904fc6aaaa4344aef356186f715d9","bodyHash":"057e7d3c50e1d6e65a201672fa00889c4ae8936f3180073ca18c2c3fd49ee21a"}
  *
  * Go source:
  * func (c *Checker) reportCircularBaseType(node *ast.Node, t *Type) {
@@ -4603,7 +4603,7 @@ export function Checker_resolveBaseTypesOfInterface(receiver: GoPtr<Checker>, t:
  * }
  */
 export function Checker_reportCircularBaseType(receiver: GoPtr<Checker>, node: GoPtr<Node>, t: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularBaseType");
+  Checker_error(receiver, node, diagnosticsMessages.Type_0_recursively_references_itself_as_a_base_type, Checker_TypeToStringEx(receiver, t, undefined, TypeFormatFlagsWriteArrayAsGenericType, undefined));
 }
 
 /**
@@ -9340,7 +9340,7 @@ export function Checker_isEmptyResolvedType(receiver: GoPtr<Checker>, t: GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isEmptyObjectType","kind":"method","status":"stub","sigHash":"bf83ef478016505b36a94d63d10afe225bfa141dbfa70f2ea4226b4c49c79601","bodyHash":"a0d0a3a8f865119dbee935823bc4d9d9d69d855d43e33f9270923f0e9f7aa3e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isEmptyObjectType","kind":"method","status":"implemented","sigHash":"bf83ef478016505b36a94d63d10afe225bfa141dbfa70f2ea4226b4c49c79601","bodyHash":"a0d0a3a8f865119dbee935823bc4d9d9d69d855d43e33f9270923f0e9f7aa3e3"}
  *
  * Go source:
  * func (c *Checker) isEmptyObjectType(t *Type) bool {
@@ -9358,7 +9358,17 @@ export function Checker_isEmptyResolvedType(receiver: GoPtr<Checker>, t: GoPtr<S
  * }
  */
 export function Checker_isEmptyObjectType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isEmptyObjectType");
+  switch (true) {
+    case (t!.flags & TypeFlagsObject) !== 0:
+      return !Checker_isGenericMappedType(receiver, t) && Checker_isEmptyResolvedType(receiver, Checker_resolveStructuredTypeMembers(receiver, t));
+    case (t!.flags & TypeFlagsNonPrimitive) !== 0:
+      return true;
+    case (t!.flags & TypeFlagsUnion) !== 0:
+      return core.Some(Type_Types(t), (tt) => Checker_isEmptyObjectType(receiver, tt));
+    case (t!.flags & TypeFlagsIntersection) !== 0:
+      return core.Every(Type_Types(t), (tt) => Checker_isEmptyObjectType(receiver, tt));
+  }
+  return false;
 }
 
 /**
@@ -10814,7 +10824,7 @@ export function Checker_getContextualTypeForConditionalOperand(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassDecoratorContextType","kind":"method","status":"stub","sigHash":"e9e6ab0e6c6984d30c5232a9f6efed608ec8d22149198ce87287628aa6638261","bodyHash":"00cba903d6d9fb0ef2fb8cbb27b96f37c9cd65622125edc0fa0b95733e42f7ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassDecoratorContextType","kind":"method","status":"implemented","sigHash":"e9e6ab0e6c6984d30c5232a9f6efed608ec8d22149198ce87287628aa6638261","bodyHash":"00cba903d6d9fb0ef2fb8cbb27b96f37c9cd65622125edc0fa0b95733e42f7ce"}
  *
  * Go source:
  * func (c *Checker) newClassDecoratorContextType(classType *Type) *Type {
@@ -10822,11 +10832,11 @@ export function Checker_getContextualTypeForConditionalOperand(receiver: GoPtr<C
  * }
  */
 export function Checker_newClassDecoratorContextType(receiver: GoPtr<Checker>, classType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassDecoratorContextType(), [classType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMethodDecoratorContextType","kind":"method","status":"stub","sigHash":"fd7b677fb903077372343e1d0159f51e709687ff475e6e98701c66ecac327415","bodyHash":"96db162b90614e06867b459f6691eb48d1e4e71e6280daf23ddbfdde06dc902e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMethodDecoratorContextType","kind":"method","status":"implemented","sigHash":"fd7b677fb903077372343e1d0159f51e709687ff475e6e98701c66ecac327415","bodyHash":"96db162b90614e06867b459f6691eb48d1e4e71e6280daf23ddbfdde06dc902e"}
  *
  * Go source:
  * func (c *Checker) newClassMethodDecoratorContextType(classType *Type, valueType *Type) *Type {
@@ -10834,11 +10844,11 @@ export function Checker_newClassDecoratorContextType(receiver: GoPtr<Checker>, c
  * }
  */
 export function Checker_newClassMethodDecoratorContextType(receiver: GoPtr<Checker>, classType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMethodDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassMethodDecoratorContextType(), [classType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassGetterDecoratorContextType","kind":"method","status":"stub","sigHash":"4234f76b1667dd6be635f37343fa3ba266cc635f347973f1c0e9de5ef8cbb676","bodyHash":"b498fd7b9aac28c15f39bc3b4a0c2b1cdfa8aa3da4f3d12c8579d34e25565e0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassGetterDecoratorContextType","kind":"method","status":"implemented","sigHash":"4234f76b1667dd6be635f37343fa3ba266cc635f347973f1c0e9de5ef8cbb676","bodyHash":"b498fd7b9aac28c15f39bc3b4a0c2b1cdfa8aa3da4f3d12c8579d34e25565e0c"}
  *
  * Go source:
  * func (c *Checker) newClassGetterDecoratorContextType(classType *Type, valueType *Type) *Type {
@@ -10846,11 +10856,11 @@ export function Checker_newClassMethodDecoratorContextType(receiver: GoPtr<Check
  * }
  */
 export function Checker_newClassGetterDecoratorContextType(receiver: GoPtr<Checker>, classType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassGetterDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassGetterDecoratorContextType(), [classType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassSetterDecoratorContextType","kind":"method","status":"stub","sigHash":"4e33d2454d526f0adb1283d92fcf6d8582618052b6c368762b86d3eafb755710","bodyHash":"7b2e4c545d5c2c208a1c0bc98f8336e4586b950a34358b70bd4701e1d9bfb8ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassSetterDecoratorContextType","kind":"method","status":"implemented","sigHash":"4e33d2454d526f0adb1283d92fcf6d8582618052b6c368762b86d3eafb755710","bodyHash":"7b2e4c545d5c2c208a1c0bc98f8336e4586b950a34358b70bd4701e1d9bfb8ed"}
  *
  * Go source:
  * func (c *Checker) newClassSetterDecoratorContextType(classType *Type, valueType *Type) *Type {
@@ -10858,11 +10868,11 @@ export function Checker_newClassGetterDecoratorContextType(receiver: GoPtr<Check
  * }
  */
 export function Checker_newClassSetterDecoratorContextType(receiver: GoPtr<Checker>, classType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassSetterDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassSetterDecoratorContextType(), [classType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorContextType","kind":"method","status":"stub","sigHash":"c66de1b84cccce465ae8e30986df40a64314a926b6048f57190358ac07a7ca99","bodyHash":"aa2d17723c61e9c34f55badc3933747567d3ff562a690c1af01f8c59f1ddb6d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorContextType","kind":"method","status":"implemented","sigHash":"c66de1b84cccce465ae8e30986df40a64314a926b6048f57190358ac07a7ca99","bodyHash":"aa2d17723c61e9c34f55badc3933747567d3ff562a690c1af01f8c59f1ddb6d3"}
  *
  * Go source:
  * func (c *Checker) newClassAccessorDecoratorContextType(thisType *Type, valueType *Type) *Type {
@@ -10870,11 +10880,11 @@ export function Checker_newClassSetterDecoratorContextType(receiver: GoPtr<Check
  * }
  */
 export function Checker_newClassAccessorDecoratorContextType(receiver: GoPtr<Checker>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassAccessorDecoratorContextType(), [thisType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorContextType","kind":"method","status":"stub","sigHash":"fcf90db8b7b6d62064b880a0dd07b410970add7b9521b21301b86295d71b50f9","bodyHash":"74e621278a3eee5869477958fcbb9e74aaa5b39e0586cd6a380f06edbf2188d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorContextType","kind":"method","status":"implemented","sigHash":"fcf90db8b7b6d62064b880a0dd07b410970add7b9521b21301b86295d71b50f9","bodyHash":"74e621278a3eee5869477958fcbb9e74aaa5b39e0586cd6a380f06edbf2188d3"}
  *
  * Go source:
  * func (c *Checker) newClassFieldDecoratorContextType(thisType *Type, valueType *Type) *Type {
@@ -10882,11 +10892,11 @@ export function Checker_newClassAccessorDecoratorContextType(receiver: GoPtr<Che
  * }
  */
 export function Checker_newClassFieldDecoratorContextType(receiver: GoPtr<Checker>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorContextType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassFieldDecoratorContextType(), [thisType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorTargetType","kind":"method","status":"stub","sigHash":"51bf0bc714248545f91d2c4afc25452680771415a6ac580855714b24a55cc9fe","bodyHash":"220afd5e06fc535b87dfd6fec9fdf1474f7aa54859551ea9a82110dbc0ee9a2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorTargetType","kind":"method","status":"implemented","sigHash":"51bf0bc714248545f91d2c4afc25452680771415a6ac580855714b24a55cc9fe","bodyHash":"220afd5e06fc535b87dfd6fec9fdf1474f7aa54859551ea9a82110dbc0ee9a2b"}
  *
  * Go source:
  * func (c *Checker) newClassAccessorDecoratorTargetType(thisType *Type, valueType *Type) *Type {
@@ -10894,11 +10904,11 @@ export function Checker_newClassFieldDecoratorContextType(receiver: GoPtr<Checke
  * }
  */
 export function Checker_newClassAccessorDecoratorTargetType(receiver: GoPtr<Checker>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorTargetType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassAccessorDecoratorTargetType(), [thisType, valueType]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorResultType","kind":"method","status":"stub","sigHash":"23453c7c81bf221efade2b9d5ce92e78405d22c250cecdbe05d220563b53940a","bodyHash":"b943df205a5fd796d25bfc5a40672aac5319f5c303e9fd1553d617cc6f680727"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorResultType","kind":"method","status":"implemented","sigHash":"23453c7c81bf221efade2b9d5ce92e78405d22c250cecdbe05d220563b53940a","bodyHash":"b943df205a5fd796d25bfc5a40672aac5319f5c303e9fd1553d617cc6f680727"}
  *
  * Go source:
  * func (c *Checker) newClassAccessorDecoratorResultType(thisType *Type, valueType *Type) *Type {
@@ -10906,7 +10916,7 @@ export function Checker_newClassAccessorDecoratorTargetType(receiver: GoPtr<Chec
  * }
  */
 export function Checker_newClassAccessorDecoratorResultType(receiver: GoPtr<Checker>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassAccessorDecoratorResultType");
+  return Checker_tryCreateTypeReference(receiver, receiver!.getGlobalClassAccessorDecoratorResultType(), [thisType, valueType]);
 }
 
 /**
