@@ -22,7 +22,7 @@ import {
 } from "../tspath/path.js";
 import { IsDeclarationFileName } from "../tspath/extension.js";
 import type { Path } from "../tspath/path.js";
-import { From as cachedvfs_From } from "../vfs/cachedvfs/cachedvfs.js";
+import { From as cachedvfs_From, FS_as_vfs_FS as cachedvfsAsVfsFS } from "../vfs/cachedvfs/cachedvfs.js";
 import type { FS as FS_2ed33005 } from "../vfs/cachedvfs/cachedvfs.js";
 import type { Entries, FileInfo, FS as FS_c26bca9d, WalkDirFunc } from "../vfs/vfs.js";
 import type { fileLoader } from "./fileloader.js";
@@ -52,7 +52,14 @@ export interface projectReferenceDtsFakingHost {
  * Go source:
  * var _ module.ResolutionHost = (*projectReferenceDtsFakingHost)(nil)
  */
-export let __1046bc8a_0: ResolutionHost = undefined as never;
+export let __1046bc8a_0: ResolutionHost = projectReferenceDtsFakingHost_as_module_ResolutionHost(undefined);
+
+export function projectReferenceDtsFakingHost_as_module_ResolutionHost(receiver: GoPtr<projectReferenceDtsFakingHost>): ResolutionHost {
+  return {
+    FS: (): FS_c26bca9d => projectReferenceDtsFakingHost_FS(receiver),
+    GetCurrentDirectory: (): string => projectReferenceDtsFakingHost_GetCurrentDirectory(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::func::newProjectReferenceDtsFakingHost","kind":"func","status":"implemented","sigHash":"4729644a2e27a6113e16ed92d375b4bb743e69147d5a180f71446f8e22512ce6","bodyHash":"fb845c84f6f3d6b6531115a99968c587b1da976c9f7b028ac071d6bc23ef7c60"}
@@ -86,12 +93,9 @@ export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): Res
   };
   const host: projectReferenceDtsFakingHost = {
     host: loader!.opts.Host,
-    fs: cachedvfs_From(vfsObj as unknown as FS_c26bca9d),
+    fs: cachedvfs_From(projectReferenceDtsFakingVfs_as_vfs_FS(vfsObj)),
   };
-  return {
-    FS: (): FS_c26bca9d => projectReferenceDtsFakingHost_FS(host),
-    GetCurrentDirectory: (): string => projectReferenceDtsFakingHost_GetCurrentDirectory(host),
-  };
+  return projectReferenceDtsFakingHost_as_module_ResolutionHost(host);
 }
 
 /**
@@ -103,7 +107,7 @@ export function newProjectReferenceDtsFakingHost(loader: GoPtr<fileLoader>): Res
  * }
  */
 export function projectReferenceDtsFakingHost_FS(receiver: GoPtr<projectReferenceDtsFakingHost>): FS_c26bca9d {
-  return receiver!.fs as unknown as FS_c26bca9d;
+  return cachedvfsAsVfsFS(receiver!.fs);
 }
 
 /**
@@ -140,7 +144,24 @@ export interface projectReferenceDtsFakingVfs {
  * Go source:
  * var _ vfs.FS = (*projectReferenceDtsFakingVfs)(nil)
  */
-export let __fca3b3b1_0: FS_c26bca9d = undefined as never;
+export let __fca3b3b1_0: FS_c26bca9d = projectReferenceDtsFakingVfs_as_vfs_FS(undefined);
+
+export function projectReferenceDtsFakingVfs_as_vfs_FS(receiver: GoPtr<projectReferenceDtsFakingVfs>): FS_c26bca9d {
+  return {
+    UseCaseSensitiveFileNames: (): bool => projectReferenceDtsFakingVfs_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => projectReferenceDtsFakingVfs_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => projectReferenceDtsFakingVfs_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => projectReferenceDtsFakingVfs_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => projectReferenceDtsFakingVfs_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => projectReferenceDtsFakingVfs_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => projectReferenceDtsFakingVfs_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => projectReferenceDtsFakingVfs_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => projectReferenceDtsFakingVfs_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => projectReferenceDtsFakingVfs_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => projectReferenceDtsFakingVfs_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => projectReferenceDtsFakingVfs_Realpath(receiver, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencedtsfakinghost.go::method::projectReferenceDtsFakingVfs.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"8af5ab81dae25f2eef6026113bd0204057925d04b33c1ae5c645d486b6933456","bodyHash":"ca477bdeb90ea815faee2d7587e38d1246933170e6ece26398781eebdf7606f4"}

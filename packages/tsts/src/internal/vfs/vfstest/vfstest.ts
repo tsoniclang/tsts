@@ -2,7 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
 import { AsType } from "../../../go/errors.js";
 import { Sprintf, Errorf } from "../../../go/fmt.js";
-import type { DirEntry, File, FileInfo, FileMode, ReadDirFile } from "../../../go/io/fs.js";
+import type { DirEntry, File, FileInfo, FileMode, FS as GoFS, ReadDirFile } from "../../../go/io/fs.js";
 import { ErrNotExist, FileInfoToDirEntry, ModeDir, ModeSymlink } from "../../../go/io/fs.js";
 import { RWMutex } from "../../../go/sync.js";
 import type { MapFile, MapFS as MapFS_5332fda7 } from "../../../go/testing/fstest.js";
@@ -134,8 +134,32 @@ export function clockImpl_SinceStart(receiver: GoPtr<clockImpl>): Duration {
  * 	_ iovfs.WritableFS = (*MapFS)(nil)
  * )
  */
-export let ____34464f57_0: RealpathFS = undefined as never;
-export let ____34464f57_1: WritableFS = undefined as never;
+export let ____34464f57_0: RealpathFS = MapFS_as_iovfs_RealpathFS(undefined);
+export let ____34464f57_1: WritableFS = MapFS_as_iovfs_WritableFS(undefined);
+
+export function MapFS_as_io_fs_FS(receiver: GoPtr<MapFS>): GoFS {
+  return {
+    Open: (name: string): [File, GoError] => MapFS_Open(receiver, name),
+  };
+}
+
+export function MapFS_as_iovfs_RealpathFS(receiver: GoPtr<MapFS>): RealpathFS {
+  return {
+    ...MapFS_as_io_fs_FS(receiver),
+    Realpath: (path: string): [string, GoError] => MapFS_Realpath(receiver, path),
+  };
+}
+
+export function MapFS_as_iovfs_WritableFS(receiver: GoPtr<MapFS>): WritableFS {
+  return {
+    ...MapFS_as_io_fs_FS(receiver),
+    WriteFile: (path: string, data: string, perm: FileMode): GoError => MapFS_WriteFile(receiver, path, data, perm),
+    AppendFile: (path: string, data: string, perm: FileMode): GoError => MapFS_AppendFile(receiver, path, data, perm),
+    MkdirAll: (path: string, perm: FileMode): GoError => MapFS_MkdirAll(receiver, path, perm),
+    Remove: (path: string): GoError => MapFS_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => MapFS_Chtimes(receiver, path, aTime, mTime),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfstest/vfstest.go::type::sys","kind":"type","status":"implemented","sigHash":"9643e898f78e27ee306cb9ad0c75737bc14358e54daba45c5da7585f2dc64feb","bodyHash":"272946b4766f48910da800b95c0bc83949f9b7cd9f504067f7e1c885f8038d1a"}
@@ -289,7 +313,7 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
     throw new globalThis.Error("mixed posix and windows paths");
   }
 
-  return From(convertMapFS(mfs as unknown as MapFS_5332fda7, useCaseSensitiveFileNames, clock) as unknown as import("../../../go/io/fs.js").FS, useCaseSensitiveFileNames) as unknown as FS;
+  return From(MapFS_as_io_fs_FS(convertMapFS(mfs as unknown as MapFS_5332fda7, useCaseSensitiveFileNames, clock)), useCaseSensitiveFileNames);
 }
 
 /**

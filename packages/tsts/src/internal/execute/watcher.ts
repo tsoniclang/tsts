@@ -25,9 +25,10 @@ import {
   ParsedCommandLine_ReloadFileNamesOfParsedCommandLine,
 } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
-import { From as cachedvfsFrom, FS_DisableAndClearCache } from "../vfs/cachedvfs/cachedvfs.js";
+import { From as cachedvfsFrom, FS_as_vfs_FS as cachedvfsAsVfsFS, FS_DisableAndClearCache } from "../vfs/cachedvfs/cachedvfs.js";
 import type { FS as VfsFS } from "../vfs/vfs.js";
 import type { FS as TrackingFS } from "../vfs/trackingvfs/trackingvfs.js";
+import { FS_as_vfs_FS as trackingFSAsVfsFS } from "../vfs/trackingvfs/trackingvfs.js";
 import type { FileWatcher, WatchEntry } from "../vfs/vfswatch/vfswatch.js";
 import {
   NewFileWatcher,
@@ -53,14 +54,13 @@ import {
 import type { CommandLineTesting, CompileAndEmitResult, CompileTimes, System, Watcher as Watcher_c5dada01 } from "./tsc/compile.js";
 import { CreateWatchStatusReporter } from "./tsc/diagnostics.js";
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
-import type { ExtendedConfigCache as ExtendedConfigCache_tsconfigparsing } from "../tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
-import type { ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
+import { ExtendedConfigCache_as_tsoptions_ExtendedConfigCache, type ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
 import { EmitFilesAndReportErrors } from "./tsc/emit.js";
 import type { EmitInput } from "./tsc/emit.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::cachedSourceFile","kind":"type","status":"stub","sigHash":"09687ae4d0bc82215aab8c91746d0029f4280a603b1e1c93497af1183820b31d","bodyHash":"d8cbeff6207c7c328d055bc4a712ff6c00e4ab0b726cdd0ec198ed1ff9651acb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::cachedSourceFile","kind":"type","status":"implemented","sigHash":"09687ae4d0bc82215aab8c91746d0029f4280a603b1e1c93497af1183820b31d","bodyHash":"d8cbeff6207c7c328d055bc4a712ff6c00e4ab0b726cdd0ec198ed1ff9651acb"}
  *
  * Go source:
  * cachedSourceFile struct {
@@ -74,7 +74,7 @@ export interface cachedSourceFile {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchCompilerHost","kind":"type","status":"stub","sigHash":"eb3c7200342a1a34fb91c95ca7076a8eda6eed0a985019ec60d54bfd7b9cc291","bodyHash":"ce7346e77b8cb4af4af48914b1cf6e56cef5dd98bd01b2e97738d8dd431b7677"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::watchCompilerHost","kind":"type","status":"implemented","sigHash":"eb3c7200342a1a34fb91c95ca7076a8eda6eed0a985019ec60d54bfd7b9cc291","bodyHash":"ce7346e77b8cb4af4af48914b1cf6e56cef5dd98bd01b2e97738d8dd431b7677"}
  *
  * Go source:
  * watchCompilerHost struct {
@@ -140,7 +140,7 @@ export function watchCompilerHost_GetSourceFile(receiver: GoPtr<watchCompilerHos
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::Watcher","kind":"type","status":"stub","sigHash":"3c7720db1dd07fc5ed867242203119169d9e8b287c5f9fa9070d8b37e7c6e4e8","bodyHash":"ff8d52e8d6e5f0793b96008b45fa9eb4687e9208a5773fb631e1160d7b8811de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::type::Watcher","kind":"type","status":"implemented","sigHash":"3c7720db1dd07fc5ed867242203119169d9e8b287c5f9fa9070d8b37e7c6e4e8","bodyHash":"ff8d52e8d6e5f0793b96008b45fa9eb4687e9208a5773fb631e1160d7b8811de"}
  *
  * Go source:
  * Watcher struct {
@@ -184,12 +184,18 @@ export interface Watcher {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e42466e9d55431436fd56f71ca20518e1ef306e5d2a89e987baac34aafe69adc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/watcher.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e42466e9d55431436fd56f71ca20518e1ef306e5d2a89e987baac34aafe69adc"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Watcher)(nil)
  */
-export let __30d59bfd_0: Watcher_c5dada01 = undefined as never;
+export let __30d59bfd_0: Watcher_c5dada01 = Watcher_as_tsc_Watcher(undefined);
+
+export function Watcher_as_tsc_Watcher(receiver: GoPtr<Watcher>): Watcher_c5dada01 {
+  return {
+    DoCycle: (): void => Watcher_DoCycle(receiver),
+  };
+}
 
 function newSyncMap<K, V>(): SyncMap<K, V> {
   return { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() };
@@ -290,12 +296,12 @@ export function createWatcher(sys: System, configParseResult: GoPtr<ParsedComman
  */
 export function Watcher_start(receiver: GoPtr<Watcher>): void {
   // mu.Lock() / Unlock() omitted: TSTS is single-threaded
-  receiver!.extendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  receiver!.extendedConfigCache = { m: newSyncMap() };
   const host = NewCompilerHost(
     receiver!.sys.GetCurrentDirectory(),
     receiver!.sys.FS(),
     receiver!.sys.DefaultLibraryPath(),
-    receiver!.extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
   receiver!.program = ReadBuildInfoProgram(receiver!.config, NewBuildInfoReader(host), host);
@@ -416,14 +422,14 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const cached = cachedvfsFrom(receiver!.sys.FS());
   const tfsSeenFiles: SyncSet<string> = newSyncSet<string>();
   const tfs: TrackingFS = {
-    Inner: cached as never,
+    Inner: cachedvfsAsVfsFS(cached),
     SeenFiles: tfsSeenFiles,
   };
   const innerHost = NewCompilerHost(
     receiver!.sys.GetCurrentDirectory(),
-    tfs as unknown as VfsFS,
+    trackingFSAsVfsFS(tfs),
     receiver!.sys.DefaultLibraryPath(),
-    receiver!.extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver!.extendedConfigCache),
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),
   );
 
@@ -602,13 +608,13 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
     }
   }
 
-  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(
     receiver!.configFileName,
     receiver!.compilerOptionsFromCommandLine,
     undefined as never,
     receiver!.sys as unknown as Parameters<typeof GetParsedCommandLineOfConfigFile>[3],
-    extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
+    ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
   );
   if (errors.length > 0) {
     for (const e of errors) {

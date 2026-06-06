@@ -33,13 +33,13 @@ import { BuildInfoRootInfoReader_GetBuildInfoFileInfo, BuildInfoRootInfoReader_R
 import type { BuildInfoRootInfoReader } from "../incremental/buildInfo.js";
 import { FileInfo_Version } from "../incremental/snapshot.js";
 import type { FileInfo } from "../incremental/snapshot.js";
-import { NewProgram as incremental_NewProgram } from "../incremental/program.js";
+import { NewProgram as incremental_NewProgram, Program_as_compiler_ProgramLike as incremental_Program_as_compiler_ProgramLike } from "../incremental/program.js";
 import { NewProgram as compiler_NewProgram } from "../../compiler/program.js";
 import { EmitAndReportStatistics, GetTraceWithWriterFromSys } from "../tsc/emit.js";
 import { QuietDiagnosticsReporter } from "../tsc/diagnostics.js";
-import { compilerHost_FS, compilerHost_DefaultLibraryPath, compilerHost_GetCurrentDirectory, compilerHost_Trace, compilerHost_GetSourceFile, compilerHost_GetResolvedProjectReference } from "./compilerHost.js";
+import { compilerHost_as_compiler_CompilerHost } from "./compilerHost.js";
 import type { compilerHost } from "./compilerHost.js";
-import { host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_loadOrStoreMTime, host_storeMTimeFromOldCache } from "./host.js";
+import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_loadOrStoreMTime, host_storeMTimeFromOldCache } from "./host.js";
 import type { BuildInfo } from "../incremental/buildInfo.js";
 import type { Program } from "../incremental/program.js";
 import { ExitStatusDiagnosticsPresent_OutputsSkipped, ExitStatusDiagnosticsPresent_OutputsGenerated } from "../tsc/compile.js";
@@ -63,7 +63,7 @@ import {
 import type { upToDateStatus, inputOutputName, inputOutputFileAndTime, fileAndTime, upstreamErrors as upstreamErrorsType } from "./uptodatestatus.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"stub","sigHash":"8c03b00054d12667434aa9865344ed51a963464cc953ccc045330af752ae7f64","bodyHash":"bb679ff4d632cbca47e250b78139b0d261ac5dea6fb7c63c797f9312068c508b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::updateKind","kind":"type","status":"implemented","sigHash":"8c03b00054d12667434aa9865344ed51a963464cc953ccc045330af752ae7f64","bodyHash":"bb679ff4d632cbca47e250b78139b0d261ac5dea6fb7c63c797f9312068c508b"}
  *
  * Go source:
  * updateKind uint
@@ -85,7 +85,7 @@ export const updateKindConfig: updateKind = 1 as updateKind;
 export const updateKindUpdate: updateKind = 2 as updateKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildKind","kind":"type","status":"stub","sigHash":"344994cd5c7b5b4023a9a5209b718b11244bbabd359d09d6df83f09865209774","bodyHash":"ff5be7e5f52df5284afb3fbf58630c5bc89f63dee0247bf307e20e1c5ad8d5b4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildKind","kind":"type","status":"implemented","sigHash":"344994cd5c7b5b4023a9a5209b718b11244bbabd359d09d6df83f09865209774","bodyHash":"ff5be7e5f52df5284afb3fbf58630c5bc89f63dee0247bf307e20e1c5ad8d5b4"}
  *
  * Go source:
  * buildKind uint
@@ -107,7 +107,7 @@ export const buildKindPseudo: buildKind = 1 as buildKind;
 export const buildKindProgram: buildKind = 2 as buildKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::upstreamTask","kind":"type","status":"stub","sigHash":"227681c3f47bb373dca94fb4d279a918b60a446fbf2501a402c14af12657eeac","bodyHash":"8ea69ca73f4ebeb538abf00c43cb66c6b73bb728438aea8361f4a215ce2c0a62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::upstreamTask","kind":"type","status":"implemented","sigHash":"227681c3f47bb373dca94fb4d279a918b60a446fbf2501a402c14af12657eeac","bodyHash":"8ea69ca73f4ebeb538abf00c43cb66c6b73bb728438aea8361f4a215ce2c0a62"}
  *
  * Go source:
  * upstreamTask struct {
@@ -121,7 +121,7 @@ export interface upstreamTask {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildInfoEntry","kind":"type","status":"stub","sigHash":"6b1d91b1a61c8b3a905f09c065f92527fdb7ffffff4590076d05cf5d3073c8a5","bodyHash":"bd18acdcaf6efc722395fa960730bb76d3528edf0316e01de4c69b1fc7f772fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::buildInfoEntry","kind":"type","status":"implemented","sigHash":"6b1d91b1a61c8b3a905f09c065f92527fdb7ffffff4590076d05cf5d3073c8a5","bodyHash":"bd18acdcaf6efc722395fa960730bb76d3528edf0316e01de4c69b1fc7f772fc"}
  *
  * Go source:
  * buildInfoEntry struct {
@@ -139,7 +139,7 @@ export interface buildInfoEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::taskResult","kind":"type","status":"stub","sigHash":"3baf60fd109fc43e5ff90f3be3e9e9b4ccddc36f859229075bf2b8db3f660529","bodyHash":"e2750beffd04a5d3b74c19ad1c42e608e59c4a19232087aa168e234d1c4977e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::taskResult","kind":"type","status":"implemented","sigHash":"3baf60fd109fc43e5ff90f3be3e9e9b4ccddc36f859229075bf2b8db3f660529","bodyHash":"e2750beffd04a5d3b74c19ad1c42e608e59c4a19232087aa168e234d1c4977e0"}
  *
  * Go source:
  * taskResult struct {
@@ -165,7 +165,7 @@ export interface taskResult {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"stub","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4","bodyHash":"9dd475e2fed102340bfc05a450a05d80a6bd5bafd1641dc23a11889f2eaf04f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::type::BuildTask","kind":"type","status":"implemented","sigHash":"8ef3499f641ea3f1a8e77d8e314ababe95b98a958114957a486eb90328ced7f4","bodyHash":"9dd475e2fed102340bfc05a450a05d80a6bd5bafd1641dc23a11889f2eaf04f5"}
  *
  * Go source:
  * BuildTask struct {
@@ -571,8 +571,8 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Force)) {
     oldProgram = ReadBuildInfoProgram(
       receiver!.resolved,
-      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[1],
-      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[2],
+      host_as_incremental_BuildInfoReader(orchestrator!.host),
+      host_as_compiler_CompilerHost(orchestrator!.host),
     );
   }
   compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
@@ -583,14 +583,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
     orchestrator!.opts.Testing,
   );
-  const buildCompilerHost: import("../../compiler/host.js").CompilerHost = {
-    FS: (): import("../../vfs/vfs.js").FS => compilerHost_FS({ host: orchestrator!.host, trace } as compilerHost),
-    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath({ host: orchestrator!.host, trace } as compilerHost),
-    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory({ host: orchestrator!.host, trace } as compilerHost),
-    Trace: (msg, ...args): void => compilerHost_Trace({ host: orchestrator!.host, trace } as compilerHost, msg, ...args),
-    GetSourceFile: (opts): GoPtr<import("../../ast/ast.js").SourceFile> => compilerHost_GetSourceFile({ host: orchestrator!.host, trace } as compilerHost, opts),
-    GetResolvedProjectReference: (fileName, p): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> => compilerHost_GetResolvedProjectReference({ host: orchestrator!.host, trace } as compilerHost, fileName, p),
-  };
+  const buildCompilerHost = compilerHost_as_compiler_CompilerHost({ host: orchestrator!.host, trace } as compilerHost);
   const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
   compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
 
@@ -605,7 +598,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
 
   const [result, statistics] = EmitAndReportStatistics({
     Sys: orchestrator!.opts.Sys,
-    ProgramLike: receiver!.result!.program as unknown as import("../../compiler/program.js").ProgramLike,
+    ProgramLike: incremental_Program_as_compiler_ProgramLike(receiver!.result!.program),
     Program: program,
     Config: receiver!.resolved,
     ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),

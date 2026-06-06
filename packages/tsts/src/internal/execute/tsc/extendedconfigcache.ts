@@ -17,7 +17,6 @@ import type { Path } from "../../tspath/path.js";
  */
 export interface ExtendedConfigCache {
   m: SyncMap<Path, GoPtr<extendedConfigCacheEntry>>;
-  GetExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry>;
 }
 
 /**
@@ -30,7 +29,7 @@ export interface ExtendedConfigCache {
  * }
  */
 export interface extendedConfigCacheEntry {
-  readonly __tsgoEmbedded0?: GoPtr<ExtendedConfigCacheEntry>;
+  __tsgoEmbedded0?: GoPtr<ExtendedConfigCacheEntry>;
   mu: Mutex;
 }
 
@@ -40,7 +39,14 @@ export interface extendedConfigCacheEntry {
  * Go source:
  * var _ tsoptions.ExtendedConfigCache = (*ExtendedConfigCache)(nil)
  */
-export let __a568fcce_0: ExtendedConfigCache_f02f7376 = undefined as never;
+export let __a568fcce_0: ExtendedConfigCache_f02f7376 = ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(undefined);
+
+export function ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver: GoPtr<ExtendedConfigCache>): ExtendedConfigCache_f02f7376 {
+  return {
+    GetExtendedConfig: (fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry> =>
+      ExtendedConfigCache_GetExtendedConfig(receiver, fileName, path, resolutionStack, host),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/extendedconfigcache.go::method::ExtendedConfigCache.GetExtendedConfig","kind":"method","status":"implemented","sigHash":"342a3b886bfc1e80e056264bcc745ac2adf85e0f9513581e058fde8934fa6dbf","bodyHash":"437779406ea0323ad1a80d546e49f9c85af904ede419108d463643d30a4183ef"}
@@ -59,7 +65,7 @@ export function ExtendedConfigCache_GetExtendedConfig(receiver: GoPtr<ExtendedCo
   const [entry, loaded] = ExtendedConfigCache_loadOrStoreNewLockedEntry(receiver, path);
   try {
     if (!loaded) {
-      (entry as extendedConfigCacheEntry & { __tsgoEmbedded0: GoPtr<ExtendedConfigCacheEntry> }).__tsgoEmbedded0 = ParseExtendedConfig(fileName, path, resolutionStack, host, receiver as unknown as ExtendedConfigCache_f02f7376);
+      entry!.__tsgoEmbedded0 = ParseExtendedConfig(fileName, path, resolutionStack, host, ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(receiver));
     }
     return entry!.__tsgoEmbedded0;
   } finally {

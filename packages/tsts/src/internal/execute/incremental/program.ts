@@ -94,7 +94,27 @@ export interface Program {
  * Go source:
  * var _ compiler.ProgramLike = (*Program)(nil)
  */
-export let __9846d1d6_0: ProgramLike = undefined as never;
+export let __9846d1d6_0: ProgramLike = Program_as_compiler_ProgramLike(undefined);
+
+export function Program_as_compiler_ProgramLike(receiver: GoPtr<Program>): ProgramLike {
+  return {
+    Options: (): GoPtr<CompilerOptions> => Program_Options(receiver),
+    GetSourceFile: (path: string): GoPtr<SourceFile> => Program_GetSourceFile(receiver, path),
+    GetSourceFiles: (): GoSlice<GoPtr<SourceFile>> => Program_GetSourceFiles(receiver),
+    GetConfigFileParsingDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetConfigFileParsingDiagnostics(receiver),
+    GetSyntacticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSyntacticDiagnostics(receiver, ctx, file),
+    GetBindDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetBindDiagnostics(receiver, ctx, file),
+    GetProgramDiagnostics: (): GoSlice<GoPtr<Diagnostic>> => Program_GetProgramDiagnostics(receiver),
+    GetGlobalDiagnostics: (ctx: Context): GoSlice<GoPtr<Diagnostic>> => Program_GetGlobalDiagnostics(receiver, ctx),
+    GetSemanticDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSemanticDiagnostics(receiver, ctx, file),
+    GetDeclarationDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetDeclarationDiagnostics(receiver, ctx, file),
+    GetSuggestionDiagnostics: (ctx: Context, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> => Program_GetSuggestionDiagnostics(receiver, ctx, file),
+    Emit: (ctx: Context, options: EmitOptions): GoPtr<EmitResult> => Program_Emit(receiver, ctx, options),
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    IsSourceFileDefaultLibrary: (path: Path): bool => Program_IsSourceFileDefaultLibrary(receiver, path),
+    Program: (): GoPtr<Program_22a0a6ce> => Program_Program(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"3df5f6a3788f3fb352092e53e324630656089873eed39eddad307a11d05014c2","bodyHash":"8e871b7861682297cf1696551207473f296f7d4dc7aeb5a0e3f8a9987caad200"}
@@ -522,7 +542,7 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
   if (Tristate_IsTrue(receiver!.snapshot!.options!.NoEmit)) {
     result = { EmitSkipped: true as bool, Diagnostics: [], EmittedFiles: [], SourceMaps: [] } as EmitResult;
   } else {
-    result = HandleNoEmitOnError(ctx, receiver as unknown as ProgramLike, options.TargetSourceFile);
+    result = HandleNoEmitOnError(ctx, Program_as_compiler_ProgramLike(receiver), options.TargetSourceFile);
     if (ctx.Err() !== undefined) {
       return undefined;
     }

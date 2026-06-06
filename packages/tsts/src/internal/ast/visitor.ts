@@ -9,7 +9,7 @@ import type { NodeFactory } from "./generated/factory.js";
 import { KindSyntaxList } from "./generated/kinds.js";
 import type { BlockOrExpression, ParameterList, Statement, StatementList, TokenNode } from "./generated/unions.js";
 import type { ModifierList, Node, NodeList, NodeVisitor as NodeVisitorBrand } from "./spine.js";
-import { NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
+import { NewNodeFactory, NodeDefault_AsNode, NodeFactory_NewModifierList, NodeFactory_NewNodeList, Node_VisitEachChild } from "./spine.js";
 
 // NodeVisitor
 
@@ -46,15 +46,15 @@ export interface NodeVisitor extends NodeVisitorBrand {
  * }
  */
 export interface NodeVisitorHooks {
-  VisitNode: (node: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>;
-  VisitToken: (node: GoPtr<TokenNode>, v: GoPtr<NodeVisitor>) => GoPtr<Node>;
-  VisitNodes: (nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>;
-  VisitModifiers: (nodes: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>) => GoPtr<ModifierList>;
-  VisitEmbeddedStatement: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;
-  VisitIterationBody: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;
-  VisitParameters: (nodes: GoPtr<ParameterList>, v: GoPtr<NodeVisitor>) => GoPtr<ParameterList>;
-  VisitFunctionBody: (node: GoPtr<BlockOrExpression>, v: GoPtr<NodeVisitor>) => GoPtr<BlockOrExpression>;
-  VisitTopLevelStatements: (nodes: GoPtr<StatementList>, v: GoPtr<NodeVisitor>) => GoPtr<StatementList>;
+  VisitNode?: (node: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>;
+  VisitToken?: (node: GoPtr<TokenNode>, v: GoPtr<NodeVisitor>) => GoPtr<Node>;
+  VisitNodes?: (nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>;
+  VisitModifiers?: (nodes: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>) => GoPtr<ModifierList>;
+  VisitEmbeddedStatement?: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;
+  VisitIterationBody?: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;
+  VisitParameters?: (nodes: GoPtr<ParameterList>, v: GoPtr<NodeVisitor>) => GoPtr<ParameterList>;
+  VisitFunctionBody?: (node: GoPtr<BlockOrExpression>, v: GoPtr<NodeVisitor>) => GoPtr<BlockOrExpression>;
+  VisitTopLevelStatements?: (nodes: GoPtr<StatementList>, v: GoPtr<NodeVisitor>) => GoPtr<StatementList>;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface NodeVisitorHooks {
  * }
  */
 export function NewNodeVisitor(visit: (node: GoPtr<Node>) => GoPtr<Node>, factory: GoPtr<NodeFactory>, hooks: NodeVisitorHooks): GoPtr<NodeVisitor> {
-  const resolvedFactory = factory === undefined ? ({} as NodeFactory) : factory;
+  const resolvedFactory = factory === undefined ? NewNodeFactory({}) : factory;
   return { Visit: visit, Factory: resolvedFactory, Hooks: hooks };
 }
 

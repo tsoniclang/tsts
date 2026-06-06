@@ -386,6 +386,13 @@ export function compilerOptionsParser_UnknownOptionDiagnostic(receiver: GoPtr<co
   return extraKeyDiagnostics("compilerOptions");
 }
 
+export function compilerOptionsParser_as_optionParser(receiver: GoPtr<compilerOptionsParser>): optionParser {
+  return {
+    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => compilerOptionsParser_ParseOption(receiver, key, value),
+    UnknownOptionDiagnostic: (): GoPtr<Message> => compilerOptionsParser_UnknownOptionDiagnostic(receiver),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::watchOptionsParser","kind":"type","status":"implemented","sigHash":"717d985b9f4fbd959ea3dfa0bc4cefe234d97044ef558bdc4da4842c6f42d279","bodyHash":"9e3449cfacdb4ce17607d42cf450131ed77f40afdd891dcf5455088da61fc283"}
  *
@@ -421,6 +428,13 @@ export function watchOptionsParser_ParseOption(receiver: GoPtr<watchOptionsParse
  */
 export function watchOptionsParser_UnknownOptionDiagnostic(receiver: GoPtr<watchOptionsParser>): GoPtr<Message> {
   return extraKeyDiagnostics("watchOptions");
+}
+
+export function watchOptionsParser_as_optionParser(receiver: GoPtr<watchOptionsParser>): optionParser {
+  return {
+    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => watchOptionsParser_ParseOption(receiver, key, value),
+    UnknownOptionDiagnostic: (): GoPtr<Message> => watchOptionsParser_UnknownOptionDiagnostic(receiver),
+  };
 }
 
 /**
@@ -460,6 +474,13 @@ export function typeAcquisitionParser_UnknownOptionDiagnostic(receiver: GoPtr<ty
   return extraKeyDiagnostics("typeAcquisition");
 }
 
+export function typeAcquisitionParser_as_optionParser(receiver: GoPtr<typeAcquisitionParser>): optionParser {
+  return {
+    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => typeAcquisitionParser_ParseOption(receiver, key, value),
+    UnknownOptionDiagnostic: (): GoPtr<Message> => typeAcquisitionParser_UnknownOptionDiagnostic(receiver),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/parsinghelpers.go::type::buildOptionsParser","kind":"type","status":"implemented","sigHash":"2d4b139a2ed61f670d76f2f1f88010d9e88ef2137637c36959d2b404301ea721","bodyHash":"175101c1fd9d6b92c236fa198b07dedeb319571032fee1e7a6362786f043c099"}
  *
@@ -495,6 +516,13 @@ export function buildOptionsParser_ParseOption(receiver: GoPtr<buildOptionsParse
  */
 export function buildOptionsParser_UnknownOptionDiagnostic(receiver: GoPtr<buildOptionsParser>): GoPtr<Message> {
   return extraKeyDiagnostics("buildOptions");
+}
+
+export function buildOptionsParser_as_optionParser(receiver: GoPtr<buildOptionsParser>): optionParser {
+  return {
+    ParseOption: (key: string, value: unknown): GoSlice<GoPtr<Diagnostic>> => buildOptionsParser_ParseOption(receiver, key, value),
+    UnknownOptionDiagnostic: (): GoPtr<Message> => buildOptionsParser_UnknownOptionDiagnostic(receiver),
+  };
 }
 
 /**

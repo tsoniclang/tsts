@@ -14,7 +14,7 @@ import { Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } 
 import { NodeFactory_NewTempVariable } from "../../printer/factory.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalcatch.go::type::optionalCatchTransformer","kind":"type","status":"stub","sigHash":"3011be7d52deec581e1efe8bc36962dc6bc0e545892e93866e9425326b15e948","bodyHash":"19bb8324119c0fd2ba82c3352a7abf4bf8f9e2a5e30b836798241cdb63153449"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalcatch.go::type::optionalCatchTransformer","kind":"type","status":"implemented","sigHash":"3011be7d52deec581e1efe8bc36962dc6bc0e545892e93866e9425326b15e948","bodyHash":"19bb8324119c0fd2ba82c3352a7abf4bf8f9e2a5e30b836798241cdb63153449"}
  *
  * Go source:
  * optionalCatchTransformer struct {

@@ -10,7 +10,7 @@ import type { SourceFile } from "../../ast/ast.js";
 import { Node_Attributes, Node_Expression, Node_Initializer, Node_Properties, Node_PropertyName, Node_Statements, Node_TagName, Node_Text, SourceFile_FileName, SourceFile_Text } from "../../ast/ast.js";
 import type { JsxAttribute, JsxElement, JsxExpression, JsxFragment, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, ObjectLiteralExpression } from "../../ast/generated/data.js";
 import type { Expression, JsxChild, ObjectLiteralElement } from "../../ast/generated/unions.js";
-import { AsImportSpecifier, AsJsxAttribute, AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxNamespacedName, AsJsxOpeningFragment, AsJsxSelfClosingElement, AsJsxSpreadAttribute, AsJsxText, AsObjectLiteralExpression, AsQualifiedName, AsStringLiteral, AsVariableDeclaration } from "../../ast/generated/casts.js";
+import { AsIdentifier, AsImportSpecifier, AsJsxAttribute, AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxNamespacedName, AsJsxOpeningFragment, AsJsxSelfClosingElement, AsJsxSpreadAttribute, AsJsxText, AsObjectLiteralExpression, AsQualifiedName, AsStringLiteral, AsVariableDeclaration } from "../../ast/generated/casts.js";
 import { NewArrayLiteralExpression, NewBindingElement, NewBindingPattern, NewCallExpression, NewIdentifier, NewImportClause, NewImportDeclaration, NewImportSpecifier, NewKeywordExpression, NewNamedImports, NewNumericLiteral, NewObjectLiteralExpression, NewPropertyAccessExpression, NewPropertyAssignment, NewSpreadAssignment, NewSpreadElement, NewStringLiteral, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
 import { KindJsxAttribute, KindJsxElement, KindJsxExpression, KindJsxFragment, KindJsxOpeningElement, KindJsxOpeningFragment, KindJsxSelfClosingElement, KindJsxSpreadAttribute, KindJsxText, KindNullKeyword, KindObjectBindingPattern, KindSourceFile, KindString, KindStringLiteral, KindUnknown } from "../../ast/generated/kinds.js";
 import { IsIdentifier, IsJsxAttribute, IsJsxElement, IsJsxExpression, IsJsxFragment, IsJsxNamespacedName, IsJsxSelfClosingElement, IsJsxSpreadAttribute, IsModuleDeclaration, IsObjectLiteralExpression, IsPropertyAssignment, IsQualifiedName, IsSourceFile, IsSpreadAssignment, IsStringLiteral } from "../../ast/generated/predicates.js";
@@ -1536,7 +1536,7 @@ export function JSXTransformer_createReactNamespace(receiver: GoPtr<JSXTransform
 
   // If the identifier refers to an exported member of a namespace, substitute with
   // a qualified namespace property access (e.g., `React` -> `M.React`).
-  const container = receiver!.emitResolver!.__tsgoEmbedded0!.GetReferencedExportContainer(react as unknown as GoPtr<Node>, false /*prefixLocals*/);
+  const container = receiver!.emitResolver!.GetReferencedExportContainer(AsIdentifier(react as unknown as GoPtr<Node>)!, false /*prefixLocals*/);
   if (container !== undefined && IsModuleDeclaration(container as unknown as GoPtr<Node>)) {
     const containerName = NodeFactory_NewGeneratedNameForNode(factory, container as unknown as GoPtr<Node>);
     return NewPropertyAccessExpression(astFactory, containerName, undefined, react as unknown as GoPtr<Node>, NodeFlagsNone);

@@ -23,7 +23,7 @@ interface DirEntryMethods {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::type::Common","kind":"type","status":"stub","sigHash":"cc65d17e65e9de241504cec36dc63839e4025fb80c1511fe3b145c1cdb1af9ba","bodyHash":"83ca938ae0a7f2ee0c5582ef0ae8cf46aec5dbe5c930ac981b04a7300526f448"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::type::Common","kind":"type","status":"implemented","sigHash":"cc65d17e65e9de241504cec36dc63839e4025fb80c1511fe3b145c1cdb1af9ba","bodyHash":"83ca938ae0a7f2ee0c5582ef0ae8cf46aec5dbe5c930ac981b04a7300526f448"}
  *
  * Go source:
  * Common struct {

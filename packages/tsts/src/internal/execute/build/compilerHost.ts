@@ -29,7 +29,18 @@ export interface compilerHost {
  * Go source:
  * var _ compiler.CompilerHost = (*compilerHost)(nil)
  */
-export let __56b7611d_0: CompilerHost = undefined as never;
+export let __56b7611d_0: CompilerHost = compilerHost_as_compiler_CompilerHost(undefined);
+
+export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHost>): CompilerHost {
+  return {
+    FS: (): FS_d7943d56 => compilerHost_FS(receiver),
+    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath(receiver),
+    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory(receiver),
+    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => compilerHost_Trace(receiver, msg, ...args),
+    GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => compilerHost_GetSourceFile(receiver, opts),
+    GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => compilerHost_GetResolvedProjectReference(receiver, fileName, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::method::compilerHost.FS","kind":"method","status":"implemented","sigHash":"7ac0a1648e426ff99ce6a3ac7e77e71a456472c1a332481b2b8db77fe0a4e059","bodyHash":"42172599a24a12bc5ece2e684eb2b12cbcc88f81ae02481050cc5e06779766fe"}

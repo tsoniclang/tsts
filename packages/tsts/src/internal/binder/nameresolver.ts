@@ -52,18 +52,18 @@ import { Cannot_access_0_from_another_file_without_qualification_when_1_is_enabl
  */
 export interface NameResolver {
   CompilerOptions: GoPtr<CompilerOptions>;
-  GetSymbolOfDeclaration: (node: GoPtr<Node>) => GoPtr<Symbol>;
-  Error: (location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>) => GoPtr<Diagnostic>;
-  Globals: SymbolTable;
-  ArgumentsSymbol: GoPtr<Symbol>;
-  RequireSymbol: GoPtr<Symbol>;
-  Lookup: (symbols: SymbolTable, name: string, meaning: SymbolFlags) => GoPtr<Symbol>;
-  SymbolReferenced: (symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void;
-  SetRequiresScopeChangeCache: (node: GoPtr<Node>, value: Tristate) => void;
-  GetRequiresScopeChangeCache: (node: GoPtr<Node>) => Tristate;
-  OnPropertyWithInvalidInitializer: (location: GoPtr<Node>, name: string, declaration: GoPtr<Node>, result: GoPtr<Symbol>) => bool;
-  OnFailedToResolveSymbol: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>) => void;
-  OnSuccessfullyResolvedSymbol: (location: GoPtr<Node>, result: GoPtr<Symbol>, meaning: SymbolFlags, lastLocation: GoPtr<Node>, associatedDeclarationForContainingInitializerOrBindingName: GoPtr<Node>, withinDeferredContext: bool) => void;
+  GetSymbolOfDeclaration?: (node: GoPtr<Node>) => GoPtr<Symbol>;
+  Error?: (location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>) => GoPtr<Diagnostic>;
+  Globals?: SymbolTable;
+  ArgumentsSymbol?: GoPtr<Symbol>;
+  RequireSymbol?: GoPtr<Symbol>;
+  Lookup?: (symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags) => GoPtr<Symbol>;
+  SymbolReferenced?: (symbol_: GoPtr<Symbol>, meaning: SymbolFlags) => void;
+  SetRequiresScopeChangeCache?: (node: GoPtr<Node>, value: Tristate) => void;
+  GetRequiresScopeChangeCache?: (node: GoPtr<Node>) => Tristate;
+  OnPropertyWithInvalidInitializer?: (location: GoPtr<Node>, name: string, declaration: GoPtr<Node>, result: GoPtr<Symbol>) => bool;
+  OnFailedToResolveSymbol?: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>) => void;
+  OnSuccessfullyResolvedSymbol?: (location: GoPtr<Node>, result: GoPtr<Symbol>, meaning: SymbolFlags, lastLocation: GoPtr<Node>, associatedDeclarationForContainingInitializerOrBindingName: GoPtr<Node>, withinDeferredContext: bool) => void;
 }
 
 /**
@@ -919,12 +919,12 @@ export function NameResolver_getSymbolOfDeclaration(receiver: GoPtr<NameResolver
  * 	return nil
  * }
  */
-export function NameResolver_lookup(receiver: GoPtr<NameResolver>, symbols: SymbolTable, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
+export function NameResolver_lookup(receiver: GoPtr<NameResolver>, symbols: SymbolTable | undefined, name: string, meaning: SymbolFlags): GoPtr<Symbol> {
   if (receiver!.Lookup !== undefined) {
     return receiver!.Lookup(symbols, name, meaning);
   }
   // Default implementation does not support following aliases or merged symbols
-  if (meaning !== 0) {
+  if (symbols !== undefined && meaning !== 0) {
     const symbol_ = symbols.get(name);
     if (symbol_ !== undefined) {
       if ((symbol_!.Flags & meaning) !== 0) {

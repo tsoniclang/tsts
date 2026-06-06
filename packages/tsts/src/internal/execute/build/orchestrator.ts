@@ -1,5 +1,5 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
@@ -43,7 +43,7 @@ import { Builder } from "../../../go/strings.js";
 import type { parseCache } from "./parseCache.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"stub","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
  *
  * Go source:
  * Options struct {
@@ -59,7 +59,7 @@ export interface Options {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"stub","sigHash":"8ed1815afef001927a40cb48a20d8e8330f1a075fcfae11e8581fd64a39186c9","bodyHash":"a1ed589b2a0d747bea2ec47282401deff0ac2f3a723cabe23cd94ac831dca679"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::orchestratorResult","kind":"type","status":"implemented","sigHash":"8ed1815afef001927a40cb48a20d8e8330f1a075fcfae11e8581fd64a39186c9","bodyHash":"a1ed589b2a0d747bea2ec47282401deff0ac2f3a723cabe23cd94ac831dca679"}
  *
  * Go source:
  * orchestratorResult struct {
@@ -104,12 +104,12 @@ export interface orchestratorResult {
  */
 export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o: GoPtr<Orchestrator>): void {
   if (Tristate_IsTrue(o!.opts.Command!.CompilerOptions!.Watch)) {
-    o!.watchStatusReporter(NewCompilerDiagnostic(
+    o!.watchStatusReporter!(NewCompilerDiagnostic(
       IfElse(receiver!.errors.length === 1, diagnostics.Found_1_error_Watching_for_file_changes, diagnostics.Found_0_errors_Watching_for_file_changes),
       receiver!.errors.length,
     ));
   } else {
-    o!.errorSummaryReporter(receiver!.errors);
+    o!.errorSummaryReporter!(receiver!.errors);
   }
   if (receiver!.filesToDelete !== undefined && receiver!.filesToDelete !== null) {
     Orchestrator_createBuilderStatusReporter(o, undefined)(
@@ -127,7 +127,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"stub","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"e05f5ba48f3744ecc8508f03d5b85fa7b27841fc13a92d0513c3cdfe66c8b8eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"e05f5ba48f3744ecc8508f03d5b85fa7b27841fc13a92d0513c3cdfe66c8b8eb"}
  *
  * Go source:
  * Orchestrator struct {
@@ -151,17 +151,23 @@ export interface Orchestrator {
   tasks: GoPtr<SyncMap>;
   order: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
-  errorSummaryReporter: DiagnosticsReporter;
-  watchStatusReporter: DiagnosticReporter;
+  errorSummaryReporter: DiagnosticsReporter | undefined;
+  watchStatusReporter: DiagnosticReporter | undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8df5ee902b902bae8873b016f2fdb528c344be93f113c5f408fde2185f0ff258"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"8df5ee902b902bae8873b016f2fdb528c344be93f113c5f408fde2185f0ff258"}
  *
  * Go source:
  * var _ tsc.Watcher = (*Orchestrator)(nil)
  */
-export let __a05f111f_0: Watcher = undefined as never;
+export let __a05f111f_0: Watcher = Orchestrator_as_tsc_Watcher(undefined);
+
+export function Orchestrator_as_tsc_Watcher(receiver: GoPtr<Orchestrator>): Watcher {
+  return {
+    DoCycle: (): void => Orchestrator_DoCycle(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.relativeFileName","kind":"method","status":"implemented","sigHash":"72ff97cf7be6af75d0bcb0a972d3c887eec0137ae80fdd7bf9ec0abf11edc9b4","bodyHash":"ff945d4da9c439fd6783fed02507cb9daab99b679d06699e3d94c0ebfe74591a"}
@@ -514,13 +520,13 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
  */
 export function Orchestrator_Start(receiver: GoPtr<Orchestrator>): CommandLineResult {
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
-    receiver!.watchStatusReporter(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
+    receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
   }
   Orchestrator_GenerateGraph(receiver, undefined);
   const result = Orchestrator_buildOrClean(receiver);
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
     Orchestrator_Watch(receiver);
-    result.Watcher = receiver as unknown as Watcher;
+    result.Watcher = Orchestrator_as_tsc_Watcher(receiver);
   }
   return result;
 }
@@ -567,7 +573,7 @@ export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>): void {
  */
 export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
   const oldCache = receiver!.host!.mTimes;
-  receiver!.host!.mTimes = {} as SyncMap;
+  receiver!.host!.mTimes = newSyncMap();
   Orchestrator_rangeTask(receiver, (_path: Path, task: GoPtr<BuildTask>): void => {
     BuildTask_updateWatch(task, receiver, oldCache);
   });
@@ -589,9 +595,9 @@ export function Orchestrator_updateWatch(receiver: GoPtr<Orchestrator>): void {
 export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
   const cachesVfs = receiver!.host!.host.FS() as unknown as cachedvfs_FS;
   FS_ClearCache(cachesVfs);
-  receiver!.host!.extendedConfigCache = { m: {} as SyncMap } as ExtendedConfigCache;
+  receiver!.host!.extendedConfigCache = { m: newSyncMap() };
   parseCache_reset(receiver!.host!.sourceFiles);
-  receiver!.host!.configTimes = {} as SyncMap;
+  receiver!.host!.configTimes = newSyncMap();
 }
 
 /**
@@ -648,7 +654,7 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
     return;
   }
 
-  receiver!.watchStatusReporter(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
+  receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.File_change_detected_Starting_incremental_compilation));
   if (needsConfigUpdate.Load()) {
     Orchestrator_GenerateGraphReusingOldTasks(receiver);
   }
@@ -698,7 +704,7 @@ export function Orchestrator_buildOrClean(receiver: GoPtr<Orchestrator>): Comman
     ));
   }
   const buildResult: orchestratorResult = {
-    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined as unknown as import("../tsc/compile.js").Watcher },
+    result: { Status: 0 as import("../tsc/compile.js").ExitStatus, Watcher: undefined },
     errors: [],
     statistics: {
       Projects: 0,
@@ -889,8 +895,8 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
  * 	return orchestrator
  * }
  */
-function newSyncMap(): SyncMap {
-  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap;
+function newSyncMap<K extends GoComparable = unknown, V = unknown>(): SyncMap<K, V> {
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<K, V>;
 }
 
 function newParseCache(): parseCache {
@@ -905,13 +911,13 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
       UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
     },
     host: undefined,
-    tasks: newSyncMap() as GoPtr<SyncMap>,
+    tasks: newSyncMap(),
     order: [],
     errors: [],
-    errorSummaryReporter: undefined as unknown as DiagnosticsReporter,
-    watchStatusReporter: undefined as unknown as DiagnosticReporter,
+    errorSummaryReporter: undefined,
+    watchStatusReporter: undefined,
   };
-  const extendedConfigCache = { m: newSyncMap() } as unknown as ExtendedConfigCache;
+  const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const innerHost: host = {
     orchestrator,
     host: NewCachedFSCompilerHost(

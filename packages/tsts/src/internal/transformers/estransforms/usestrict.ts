@@ -38,7 +38,7 @@ export function NewUseStrictTransformer(opts: GoPtr<TransformOptions>): GoPtr<Tr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/usestrict.go::type::useStrictTransformer","kind":"type","status":"stub","sigHash":"a68c19d03737bc2502213f9abf1cc3c91f261993492b39c90f55470ec691e76b","bodyHash":"906f681eba4e183c774464f764d5f9d04f71eab87eef20a0fc0c2af1f21c965a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/usestrict.go::type::useStrictTransformer","kind":"type","status":"implemented","sigHash":"a68c19d03737bc2502213f9abf1cc3c91f261993492b39c90f55470ec691e76b","bodyHash":"906f681eba4e183c774464f764d5f9d04f71eab87eef20a0fc0c2af1f21c965a"}
  *
  * Go source:
  * useStrictTransformer struct {

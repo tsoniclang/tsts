@@ -15,11 +15,11 @@ import type { Generator } from "../sourcemap/generator.js";
 import type { Tracing } from "../tracing/tracing.js";
 import type { TransformOptions } from "../transformers/chain.js";
 import type { DeclarationTransformer } from "../transformers/declarations/transform.js";
-import type { DeclarationEmitHost } from "../transformers/declarations/transform.js";
 import type { Transformer } from "../transformers/transformer.js";
 import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
 import type { EmitHost } from "./emitHost.js";
+import { EmitHost_as_declarations_DeclarationEmitHost, EmitHost_as_printer_EmitHost } from "./emitHost.js";
 import type { EmitResult, SourceMapEmitResult, WriteFileData } from "./program.js";
 import { IsInJSFile, IsJsonSourceFile, IsSourceFileJS } from "../ast/utilities.js";
 import { SourceFile_FileName, SourceFile_Path } from "../ast/ast.js";
@@ -146,7 +146,7 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
  */
 export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, declarationFilePath: string, declarationMapPath: string): GoSlice<GoPtr<DeclarationTransformer>> {
   const e = receiver!;
-  const transform = NewDeclarationTransformer(e.host as unknown as DeclarationEmitHost, emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host), emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
   return [transform];
 }
 
@@ -172,7 +172,7 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
     popTrace = pop;
   }
   let sf = sourceFile;
-  for (const transformer of getScriptTransformers(emitContext, e.host as unknown as EmitHost_b6591a53, sf)) {
+  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host), sf)) {
     sf = Transformer_TransformSourceFile(transformer, sf);
   }
   if (popTrace !== undefined) {
@@ -351,7 +351,7 @@ export function getScriptTransformers(emitContext: GoPtr<EmitContext>, host: Emi
   let referenceResolver: ReferenceResolver;
   if (importElisionEnabled || jsxTransformEnabled || !CompilerOptions_GetIsolatedModules(options) || Tristate_IsTrue(options!.EmitDecoratorMetadata)) {
     emitResolver.MarkLinkedReferencesRecursively(sourceFile);
-    referenceResolver = emitResolver as unknown as ReferenceResolver;
+    referenceResolver = emitResolver;
   } else {
     referenceResolver = NewReferenceResolver(options, {} as ReferenceResolverHooks);
   }
@@ -793,7 +793,7 @@ export function emitter_writeText(receiver: GoPtr<emitter>, fileName: string, te
   if (e.writeFile !== undefined) {
     return e.writeFile(fileName, text, data);
   }
-  return (e.host as unknown as EmitHost_b6591a53).WriteFile(fileName, text);
+  return EmitHost_as_printer_EmitHost(e.host).WriteFile(fileName, text);
 }
 
 /**
@@ -1014,6 +1014,17 @@ export interface SourceFileMayBeEmittedHost {
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
 }
 
+export function EmitHost_as_emitter_SourceFileMayBeEmittedHost(receiver: EmitHost): SourceFileMayBeEmittedHost {
+  return {
+    Options: (): GoPtr<CompilerOptions> => receiver.Options(),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => receiver.GetProjectReferenceFromSource(path),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => receiver.IsSourceFileFromExternalLibrary(file),
+    GetCurrentDirectory: (): string => receiver.GetCurrentDirectory(),
+    UseCaseSensitiveFileNames: (): bool => receiver.UseCaseSensitiveFileNames(),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => receiver.SourceFiles(),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::sourceFileMayBeEmitted","kind":"func","status":"implemented","sigHash":"d118009010869662095554f8b30ef9c13c4fe5ffeacba94989f117f844d4f559","bodyHash":"411602782d47b26495a5fad024d820287c4c8c43e95bddbb17e1c1c0abc06a56"}
  *
@@ -1186,12 +1197,12 @@ export function isSourceFileNotJson(file: GoPtr<SourceFile>): bool {
  */
 export function getDeclarationDiagnostics(host: EmitHost, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   // TODO: use p.getSourceFilesToEmit cache
-  const fullFiles = Filter(getSourceFilesToEmit(host as unknown as SourceFileMayBeEmittedHost, file, false), isSourceFileNotJson);
+  const fullFiles = Filter(getSourceFilesToEmit(EmitHost_as_emitter_SourceFileMayBeEmittedHost(host), file, false), isSourceFileNotJson);
   if (!Some(fullFiles, (f) => f === file)) {
     return [];
   }
   const options = host.Options();
-  const transform = NewDeclarationTransformer(host as unknown as DeclarationEmitHost, undefined, options, "", "");
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host), undefined, options, "", "");
   Transformer_TransformSourceFile(transform as GoPtr<Transformer>, file);
   return DeclarationTransformer_GetDiagnostics(transform);
 }

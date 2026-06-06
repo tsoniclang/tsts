@@ -15,6 +15,7 @@ import {
   SourceFile_FileName,
   SourceFile_Imports,
   SourceFile_Path,
+  SourceFile_as_ast_HasFileName,
 } from "../ast/ast.js";
 import type { FileReference, HasFileName, Node, SourceFile, SourceFileMetaData, StringLiteralLike } from "../ast/ast.js";
 import {
@@ -282,7 +283,14 @@ export interface DuplicateSourceFile {
  * Go source:
  * var _ ast.HasFileName = (*redirectsFile)(nil)
  */
-export let __386f9302_0: HasFileName = undefined as never;
+export let __386f9302_0: HasFileName = redirectsFile_as_ast_HasFileName(undefined);
+
+export function redirectsFile_as_ast_HasFileName(receiver: GoPtr<redirectsFile>): HasFileName {
+  return {
+    FileName: (): string => redirectsFile_FileName(receiver),
+    Path: (): Path_9073472b => redirectsFile_Path(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::redirectsFile.FileName","kind":"method","status":"implemented","sigHash":"75f16d7260cdae7adab9134a6e3293c46bcac545ff2222df21ccd9a2b326c537","bodyHash":"6a52ade887033bafb1496dc973e98f22ed49ea433c3596388a9bf86f248c4787"}
@@ -1180,7 +1188,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
       const ref = file!.TypeReferenceDirectives[index]!;
-      const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, file as unknown as HasFileName);
+      const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
       const resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, meta, GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirect as unknown as ResolvedProjectReference));
       const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, ref.FileName, fileName, resolutionMode, redirect as unknown as ResolvedProjectReference);
       let innerTraceDone: (() => void) | undefined;
@@ -1360,7 +1368,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     const isJavaScriptFile = IsSourceFileJS(file);
     const isExternalModuleFile = IsExternalModule(file);
 
-    const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, file as unknown as HasFileName);
+    const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
     const optionsForFile = GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirect as unknown as ResolvedProjectReference);
     if (isJavaScriptFile || (!file!.IsDeclarationFile && (CompilerOptions_GetIsolatedModules(optionsForFile) || isExternalModuleFile))) {
       if (Tristate_IsTrue(optionsForFile!.ImportHelpers)) {

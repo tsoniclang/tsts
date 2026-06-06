@@ -42,8 +42,10 @@ import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
 import type { ModeAwareCache } from "../../module/cache.js";
 import type { ResolvedModule } from "../../module/types.js";
 import type { ModuleSpecifierGenerationHost } from "../../modulespecifiers/types.js";
+import type { InfoCacheEntry } from "../../packagejson/cache.js";
 import { DeclarationNameToString } from "../../scanner/utilities.js";
 import type { Scanner } from "../../scanner/scanner.js";
+import type { KnownSymlinks } from "../../symlinks/knownsymlinks.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../../tsoptions/parsedcommandline.js";
 import type { Path } from "../../tspath/path.js";
 import { ExtensionCjs, ExtensionCts, ExtensionIsTs, ExtensionJson, FileExtensionIsOneOf } from "../../tspath/extension.js";
@@ -1247,6 +1249,18 @@ export interface WideningContext {
  */
 export interface Program {
   readonly __tsgoEmbedded0?: Host;
+  GetSymlinkCache(): GoPtr<KnownSymlinks>;
+  GetGlobalTypingsCacheLocation(): string;
+  UseCaseSensitiveFileNames(): bool;
+  GetCurrentDirectory(): string;
+  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
+  GetRedirectTargets(path: Path): GoSlice<string>;
+  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
+  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
+  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
+  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
+  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
+  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
   Options(): GoPtr<CompilerOptions>;
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
   BindSourceFiles(): void;
@@ -1277,7 +1291,7 @@ export interface Program {
  * 	modulespecifiers.ModuleSpecifierGenerationHost
  * }
  */
-export interface Host {
+export interface Host extends ModuleSpecifierGenerationHost {
   readonly __tsgoEmbedded0?: ModuleSpecifierGenerationHost;
 }
 
@@ -2301,7 +2315,7 @@ export let primitiveTypeAliasSuggestions: () => GoMap<string, GoPtr<Symbol>> = _
  * 	}
  * }
  */
-export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable): GoSeq<GoPtr<Symbol>> {
+export function getPrimitiveTypeAliasSuggestions(symbols: SymbolTable | undefined): GoSeq<GoPtr<Symbol>> {
   return (yield_: (s: GoPtr<Symbol>) => bool): void => {
     for (const [builtinName, suggestion] of primitiveTypeAliasSuggestions()) {
       if (symbols !== undefined && symbols.has(builtinName)) {

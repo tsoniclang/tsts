@@ -50,7 +50,7 @@ export interface Replacements {
  */
 export function Wrap(fs: FS, replacements: Replacements): FS {
   const w: wrappedFS = { fs, replacements };
-  return w as unknown as FS;
+  return wrappedFS_as_vfs_FS(w);
 }
 
 /**
@@ -289,4 +289,21 @@ export function wrappedFS_Realpath(receiver: GoPtr<wrappedFS>, path: string): st
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)
  */
-export let __f805346f_0: FS = undefined as never;
+export let __f805346f_0: FS = wrappedFS_as_vfs_FS(undefined);
+
+export function wrappedFS_as_vfs_FS(receiver: GoPtr<wrappedFS>): FS {
+  return {
+    UseCaseSensitiveFileNames: (): bool => wrappedFS_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => wrappedFS_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => wrappedFS_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => wrappedFS_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => wrappedFS_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => wrappedFS_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => wrappedFS_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => wrappedFS_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => wrappedFS_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => wrappedFS_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => wrappedFS_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => wrappedFS_Realpath(receiver, path),
+  };
+}

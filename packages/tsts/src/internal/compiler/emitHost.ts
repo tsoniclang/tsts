@@ -2,61 +2,15 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { FileReference, HasFileName, Node, SourceFile, StringLiteralLike } from "../ast/ast.js";
-import type { Declaration, ElementAccessExpression, EntityName, IdentifierNode, ImportDeclaration, SignatureDeclaration } from "../ast/ast_generated.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
-import type { Symbol } from "../ast/symbol.js";
-import type { SymbolFlags } from "../ast/symbolflags.js";
 import { Checker_GetEmitResolver } from "../checker/checker/support.js";
-import {
-  EmitResolver_CreateLateBoundIndexSignatures,
-  EmitResolver_CreateLiteralConstValue,
-  EmitResolver_CreateReturnTypeOfSignatureDeclaration,
-  EmitResolver_CreateTypeOfDeclaration,
-  EmitResolver_CreateTypeOfExpression,
-  EmitResolver_CreateTypeParametersOfSignatureDeclaration,
-  EmitResolver_GetConstantValue,
-  EmitResolver_GetEffectiveDeclarationFlags,
-  EmitResolver_GetElementAccessExpressionName,
-  EmitResolver_GetEnumMemberValue,
-  EmitResolver_GetExternalModuleFileFromDeclaration,
-  EmitResolver_GetJsxFactoryEntity,
-  EmitResolver_GetJsxFragmentFactoryEntity,
-  EmitResolver_GetPropertiesOfContainerFunction,
-  EmitResolver_GetReferencedExportContainer,
-  EmitResolver_GetReferencedImportDeclaration,
-  EmitResolver_GetReferencedValueDeclaration,
-  EmitResolver_GetReferencedValueDeclarations,
-  EmitResolver_GetResolutionModeOverride,
-  EmitResolver_GetTypeReferenceSerializationKind,
-  EmitResolver_IsDeclarationVisible,
-  EmitResolver_IsDefinitelyReferenceToGlobalSymbolObject,
-  EmitResolver_IsEntityNameVisible,
-  EmitResolver_IsExpandoFunctionDeclaration,
-  EmitResolver_IsExpandoFunctionDeclarationUnsafe,
-  EmitResolver_IsImplementationOfOverload,
-  EmitResolver_IsImportRequiredByAugmentation,
-  EmitResolver_IsLateBound,
-  EmitResolver_IsLiteralConstDeclaration,
-  EmitResolver_IsOptionalParameter,
-  EmitResolver_IsReferencedAliasDeclaration,
-  EmitResolver_IsSymbolAccessible,
-  EmitResolver_IsTopLevelValueImportEqualsWithEntityName,
-  EmitResolver_IsValueAliasDeclaration,
-  EmitResolver_MarkLinkedReferencesRecursively,
-  EmitResolver_PrecalculateDeclarationEmitVisibility,
-  EmitResolver_RequiresAddingImplicitUndefined,
-  EmitResolver_RequiresAddingImplicitUndefinedUnsafe,
-  EmitResolver_SetReferencedImportDeclaration,
-  EmitResolver_TryJSTypeNodeToTypeNode,
-} from "../checker/emitresolver.js";
+import { EmitResolver_as_printer_EmitResolver } from "../checker/emitresolver.js";
 import type { CompilerOptions, ModuleKind, ResolutionMode } from "../core/compileroptions.js";
-import type { Result } from "../evaluator/evaluator.js";
 import type { ResolvedModule } from "../module/types.js";
-import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import type { InfoCacheEntry } from "../packagejson/cache.js";
-import type { EmitContext } from "../printer/emitcontext.js";
 import type { EmitHost as EmitHost_cf9bdcc7 } from "../printer/emithost.js";
-import type { EmitResolver, SymbolAccessibilityResult, TypeReferenceSerializationKind } from "../printer/emitresolver.js";
+import type { EmitResolver } from "../printer/emitresolver.js";
+import type { ModuleSpecifierGenerationHost } from "../modulespecifiers/types.js";
 import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
 import type { DeclarationEmitHost, OutputPaths } from "../transformers/declarations/transform.js";
 import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
@@ -118,6 +72,25 @@ export interface EmitHost {
   GetCurrentDirectory(): string;
   CommonSourceDirectory(): string;
   IsEmitBlocked(file: string): bool;
+  GetSymlinkCache(): GoPtr<KnownSymlinks>;
+  GetGlobalTypingsCacheLocation(): string;
+  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
+  GetRedirectTargets(path: Path): GoSlice<string>;
+  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
+  FileExists(path: string): bool;
+  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
+  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
+  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
+  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
+  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
+  GetSourceFileFromReference(origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile>;
+  GetOutputPathsFor(file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths;
+  GetResolutionModeOverride(node: GoPtr<Node>): ResolutionMode;
+  GetEffectiveDeclarationFlags(node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags;
+  GetEmitResolver(): EmitResolver;
+  WriteFile(fileName: string, text: string): GoError;
+  GetEmitModuleFormatOfFile(file: HasFileName): ModuleKind;
+  IsSourceFileFromExternalLibrary(file: GoPtr<SourceFile>): bool;
 }
 
 /**
@@ -126,7 +99,115 @@ export interface EmitHost {
  * Go source:
  * var _ EmitHost = (*emitHost)(nil)
  */
-export let __6e5ea12b_0: EmitHost = undefined as never;
+export let __6e5ea12b_0: EmitHost = emitHost_as_compiler_EmitHost(undefined);
+
+export function EmitHost_as_printer_EmitHost(receiver: EmitHost): EmitHost_cf9bdcc7 {
+  return receiver.__tsgoEmbedded0!;
+}
+
+export function EmitHost_as_declarations_DeclarationEmitHost(receiver: EmitHost): DeclarationEmitHost {
+  return receiver.__tsgoEmbedded1!;
+}
+
+export function emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver: GoPtr<emitHost>): ModuleSpecifierGenerationHost {
+  return {
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+  };
+}
+
+export function emitHost_as_printer_EmitHost(receiver: GoPtr<emitHost>): EmitHost_cf9bdcc7 {
+  return {
+    Options: (): GoPtr<CompilerOptions> => emitHost_Options(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => emitHost_SourceFiles(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
+    WriteFile: (fileName: string, text: string): GoError => emitHost_WriteFile(receiver, fileName, text),
+    GetEmitModuleFormatOfFile: (file: HasFileName): ModuleKind => emitHost_GetEmitModuleFormatOfFile(receiver, file),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => emitHost_IsSourceFileFromExternalLibrary(receiver, file),
+  };
+}
+
+export function emitHost_as_declarations_DeclarationEmitHost(receiver: GoPtr<emitHost>): DeclarationEmitHost {
+  return {
+    __tsgoEmbedded0: emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+    GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
+    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+  };
+}
+
+export function emitHost_as_outputpaths_OutputPathsHost(receiver: GoPtr<emitHost>): OutputPathsHost {
+  return {
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+  };
+}
+
+export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHost {
+  return {
+    __tsgoEmbedded0: emitHost_as_printer_EmitHost(receiver),
+    __tsgoEmbedded1: emitHost_as_declarations_DeclarationEmitHost(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+    GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
+    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    Options: (): GoPtr<CompilerOptions> => emitHost_Options(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => emitHost_SourceFiles(receiver),
+    IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
+    WriteFile: (fileName: string, text: string): GoError => emitHost_WriteFile(receiver, fileName, text),
+    GetEmitModuleFormatOfFile: (file: HasFileName): ModuleKind => emitHost_GetEmitModuleFormatOfFile(receiver, file),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => emitHost_IsSourceFileFromExternalLibrary(receiver, file),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"implemented","sigHash":"82a8160ff4f5bebeb3e890a32bc68c27a504ee28ed1414475783e6f93c9ed5fb","bodyHash":"ec0aedbd3cd85f7ed02a0f05dd030e3ab5e099c642013dc9e6950c43b9867c27"}
@@ -156,51 +237,7 @@ export interface emitHost {
  */
 export function newEmitHost(ctx: Context, program: GoPtr<Program>, file: GoPtr<SourceFile>): [GoPtr<emitHost>, () => void] {
   const [checker, done] = Program_GetTypeCheckerForFile(program, ctx, file);
-  const r = Checker_GetEmitResolver(checker);
-  const emitResolver: EmitResolver = {
-    __tsgoEmbedded0: {
-      GetReferencedExportContainer: (node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> => EmitResolver_GetReferencedExportContainer(r, node, prefixLocals),
-      GetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedImportDeclaration(r, node),
-      GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclaration(r, node),
-      GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> => EmitResolver_GetReferencedValueDeclarations(r, node),
-      GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string => EmitResolver_GetElementAccessExpressionName(r, expression),
-    },
-    IsReferencedAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsReferencedAliasDeclaration(r, node),
-    IsValueAliasDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsValueAliasDeclaration(r, node),
-    IsTopLevelValueImportEqualsWithEntityName: (node: GoPtr<Node>): bool => EmitResolver_IsTopLevelValueImportEqualsWithEntityName(r, node),
-    MarkLinkedReferencesRecursively: (file: GoPtr<SourceFile>): void => EmitResolver_MarkLinkedReferencesRecursively(r, file),
-    GetExternalModuleFileFromDeclaration: (node: GoPtr<Node>): GoPtr<SourceFile> => EmitResolver_GetExternalModuleFileFromDeclaration(r, node),
-    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => EmitResolver_GetEffectiveDeclarationFlags(r, node, flags),
-    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => EmitResolver_GetResolutionModeOverride(r, node),
-    GetTypeReferenceSerializationKind: (name: GoPtr<EntityName>, serialScope: GoPtr<Node>): TypeReferenceSerializationKind => EmitResolver_GetTypeReferenceSerializationKind(r, name, serialScope),
-    GetConstantValue: (node: GoPtr<Node>): unknown => EmitResolver_GetConstantValue(r, node),
-    GetJsxFactoryEntity: (location: GoPtr<Node>): GoPtr<Node> => EmitResolver_GetJsxFactoryEntity(r, location),
-    GetJsxFragmentFactoryEntity: (location: GoPtr<Node>): GoPtr<Node> => EmitResolver_GetJsxFragmentFactoryEntity(r, location),
-    SetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>, ref: GoPtr<Declaration>): void => EmitResolver_SetReferencedImportDeclaration(r, node, ref),
-    PrecalculateDeclarationEmitVisibility: (file: GoPtr<SourceFile>): void => EmitResolver_PrecalculateDeclarationEmitVisibility(r, file),
-    IsSymbolAccessible: (symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult => EmitResolver_IsSymbolAccessible(r, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible),
-    IsEntityNameVisible: (entityName: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>): SymbolAccessibilityResult => EmitResolver_IsEntityNameVisible(r, entityName, enclosingDeclaration),
-    IsExpandoFunctionDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsExpandoFunctionDeclaration(r, node),
-    IsExpandoFunctionDeclarationUnsafe: (node: GoPtr<Node>): bool => EmitResolver_IsExpandoFunctionDeclarationUnsafe(r, node),
-    IsLiteralConstDeclaration: (node: GoPtr<Node>): bool => EmitResolver_IsLiteralConstDeclaration(r, node),
-    RequiresAddingImplicitUndefined: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefined(r, node, symbol_, enclosingDeclaration),
-    IsDeclarationVisible: (node: GoPtr<Node>): bool => EmitResolver_IsDeclarationVisible(r, node),
-    IsImportRequiredByAugmentation: (decl: GoPtr<ImportDeclaration>): bool => EmitResolver_IsImportRequiredByAugmentation(r, decl),
-    IsDefinitelyReferenceToGlobalSymbolObject: (node: GoPtr<Node>): bool => EmitResolver_IsDefinitelyReferenceToGlobalSymbolObject(r, node),
-    IsImplementationOfOverload: (node: GoPtr<SignatureDeclaration>): bool => EmitResolver_IsImplementationOfOverload(r, node),
-    GetEnumMemberValue: (node: GoPtr<Node>): Result => EmitResolver_GetEnumMemberValue(r, node),
-    IsLateBound: (node: GoPtr<Node>): bool => EmitResolver_IsLateBound(r, node),
-    IsOptionalParameter: (node: GoPtr<Node>): bool => EmitResolver_IsOptionalParameter(r, node),
-    GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> => EmitResolver_GetPropertiesOfContainerFunction(r, node),
-    RequiresAddingImplicitUndefinedUnsafe: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefinedUnsafe(r, node, symbol_, enclosingDeclaration),
-    CreateTypeOfDeclaration: (emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfDeclaration(r, emitContext, declaration, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateReturnTypeOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateReturnTypeOfSignatureDeclaration(r, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateTypeParametersOfSignatureDeclaration: (emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateTypeParametersOfSignatureDeclaration(r, emitContext, signatureDeclaration, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateLiteralConstValue: (emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateLiteralConstValue(r, emitContext, node, tracker),
-    CreateTypeOfExpression: (emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfExpression(r, emitContext, expression, enclosingDeclaration, flags, internalFlags, tracker),
-    CreateLateBoundIndexSignatures: (emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> => EmitResolver_CreateLateBoundIndexSignatures(r, emitContext, container, enclosingDeclaration, flags, internalFlags, tracker),
-    TryJSTypeNodeToTypeNode: (emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_TryJSTypeNodeToTypeNode(r, emitContext, typeNode, enclosingDeclaration, flags, internalFlags, tracker),
-  };
+  const emitResolver = EmitResolver_as_printer_EmitResolver(Checker_GetEmitResolver(checker));
   return [{ program, emitResolver }, done];
 }
 
@@ -358,11 +395,7 @@ export function emitHost_GetEffectiveDeclarationFlags(receiver: GoPtr<emitHost>,
  * }
  */
 export function emitHost_GetOutputPathsFor(receiver: GoPtr<emitHost>, file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths {
-  const host: OutputPathsHost = {
-    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
-    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
-    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
-  };
+  const host = emitHost_as_outputpaths_OutputPathsHost(receiver);
   const result = GetOutputPathsFor(file, emitHost_Options(receiver), host, forceDtsPaths);
   return {
     DeclarationFilePath: (): string => OutputPaths_DeclarationFilePath(result),

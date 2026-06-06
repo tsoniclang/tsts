@@ -151,9 +151,9 @@ export function visitModifiers(v: Visitor, modifiers: GoPtr<ModifierList>): bool
  * }
  */
 export interface NodeFactoryHooks {
-  OnCreate: GoPtr<(node: GoPtr<Node>) => void>;
-  OnUpdate: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
-  OnClone: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
+  OnCreate?: GoPtr<(node: GoPtr<Node>) => void>;
+  OnUpdate?: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
+  OnClone?: GoPtr<(node: GoPtr<Node>, original: GoPtr<Node>) => void>;
 }
 
 /**
@@ -568,7 +568,12 @@ export function invert(yield_: (v: GoPtr<Node>) => bool): Visitor {
 // lazily-initialized (single-threaded model), so a zero-valued factory is just
 // the hooks plus zero counters.
 function newNodeFactory(hooks: NodeFactoryHooks): GoPtr<NodeFactory> {
-  const factory: NodeFactory = { hooks: hooks, nodeCount: 0 as int, textCount: 0 as int };
+  const factory: NodeFactory = {
+    hooks: hooks,
+    nodeCount: 0 as int,
+    textCount: 0 as int,
+    AsNodeFactory: () => factory,
+  };
   return factory;
 }
 

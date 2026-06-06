@@ -12,6 +12,31 @@ import type { Path as Path_73a9f36e } from "../tspath/path.js";
 import type { HasFileName, Pragma, SourceFile, SourceFileMetaData, StringLiteralLike } from "./ast.js";
 import {
   IsDeclarationNode,
+  NodeFactory_UpdateArrowFunction,
+  NodeFactory_UpdateClassDeclaration,
+  NodeFactory_UpdateClassExpression,
+  NodeFactory_UpdateConstructorDeclaration,
+  NodeFactory_UpdateConstructorTypeNode,
+  NodeFactory_UpdateEnumDeclaration,
+  NodeFactory_UpdateExportAssignment,
+  NodeFactory_UpdateExportDeclaration,
+  NodeFactory_UpdateFunctionDeclaration,
+  NodeFactory_UpdateFunctionExpression,
+  NodeFactory_UpdateGetAccessorDeclaration,
+  NodeFactory_UpdateImportDeclaration,
+  NodeFactory_UpdateImportEqualsDeclaration,
+  NodeFactory_UpdateIndexSignatureDeclaration,
+  NodeFactory_UpdateInterfaceDeclaration,
+  NodeFactory_UpdateMethodDeclaration,
+  NodeFactory_UpdateMethodSignatureDeclaration,
+  NodeFactory_UpdateModuleDeclaration,
+  NodeFactory_UpdateParameterDeclaration,
+  NodeFactory_UpdatePropertyDeclaration,
+  NodeFactory_UpdatePropertySignatureDeclaration,
+  NodeFactory_UpdateSetAccessorDeclaration,
+  NodeFactory_UpdateTypeAliasDeclaration,
+  NodeFactory_UpdateTypeParameterDeclaration,
+  NodeFactory_UpdateVariableStatement,
   Node_Expression,
   Node_Initializer,
   Node_ModifierFlags,
@@ -31,13 +56,20 @@ import {
 import type { AccessorDeclaration, BinaryExpression, ClassElement, ClassLikeDeclaration, Expression, ExpressionWithTypeArgumentsNode, GetAccessorDeclaration, JsxChild, LiteralLikeNode, NodeFactory, ParameterDeclarationNode, SetAccessorDeclaration, Statement, TokenNode, TypeNode } from "./generated/index.js";
 import {
   AsArrayTypeNode,
+  AsArrowFunction,
   AsBinaryExpression,
   AsBindingElement,
   AsCallExpression,
   AsClassDeclaration,
   AsClassExpression,
+  AsConstructorDeclaration,
+  AsConstructorTypeNode,
   AsElementAccessExpression,
+  AsEnumDeclaration,
+  AsExportAssignment,
   AsExportDeclaration,
+  AsFunctionDeclaration,
+  AsFunctionExpression,
   AsForInOrOfStatement,
   AsForStatement,
   AsGetAccessorDeclaration,
@@ -45,6 +77,7 @@ import {
   AsImportClause,
   AsImportDeclaration,
   AsImportEqualsDeclaration,
+  AsIndexSignatureDeclaration,
   AsImportTypeNode,
   AsInterfaceDeclaration,
   AsJSDoc,
@@ -52,15 +85,20 @@ import {
   AsJsxText,
   AsLiteralTypeNode,
   AsMetaProperty,
+  AsMethodDeclaration,
+  AsMethodSignatureDeclaration,
   AsModuleDeclaration,
   AsParameterDeclaration,
   AsPostfixUnaryExpression,
   AsPrefixUnaryExpression,
+  AsPropertyDeclaration,
   AsPropertyAccessExpression,
+  AsPropertySignatureDeclaration,
   AsQualifiedName,
   AsSetAccessorDeclaration,
   AsShorthandPropertyAssignment,
   AsTaggedTemplateExpression,
+  AsTypeAliasDeclaration,
   AsTypeParameterDeclaration,
   AsTypeReferenceNode,
   AsVariableDeclarationList,
@@ -452,16 +490,19 @@ import {
   Node_IsTypeOnly,
   Node_JSDoc,
   Node_Label,
+  Node_MemberList,
   Node_Members,
   Node_ModuleSpecifier,
   Node_ParameterList,
   Node_Parameters,
+  Node_PostfixToken,
   Node_Properties,
   Node_PropertyNameOrName,
   Node_QuestionToken,
   Node_Statements,
   Node_TagName,
   Node_TypeArguments,
+  Node_TypeParameterList,
   Node_TypeParameters,
 } from "./ast.js";
 import {
@@ -8352,7 +8393,7 @@ export function GetThisParameter(signature: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ReplaceModifiers","kind":"func","status":"stub","sigHash":"0a2128ab8f88a474c56f348c1edc82e5de62aecde7b89c48023c73f93758d4c0","bodyHash":"0b5c0160d0f4a3624ceb09c4d7c1bf60ab881e982614a401a1b63efff48cad64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ReplaceModifiers","kind":"func","status":"implemented","sigHash":"0a2128ab8f88a474c56f348c1edc82e5de62aecde7b89c48023c73f93758d4c0","bodyHash":"0b5c0160d0f4a3624ceb09c4d7c1bf60ab881e982614a401a1b63efff48cad64"}
  *
  * Go source:
  * func ReplaceModifiers(factory *NodeFactory, node *Node, modifierArray *ModifierList) *Node {
@@ -8593,7 +8634,283 @@ export function GetThisParameter(signature: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function ReplaceModifiers(factory: GoPtr<NodeFactory>, node: GoPtr<Node>, modifierArray: GoPtr<ModifierList>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::ReplaceModifiers");
+  switch (node!.Kind) {
+    case KindTypeParameter: {
+      const declaration = AsTypeParameterDeclaration(node);
+      return NodeFactory_UpdateTypeParameterDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        Node_Name(node),
+        declaration!.Constraint,
+        declaration!.Expression,
+        declaration!.DefaultType,
+      );
+    }
+    case KindParameter: {
+      const declaration = AsParameterDeclaration(node);
+      return NodeFactory_UpdateParameterDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        declaration!.DotDotDotToken,
+        Node_Name(node),
+        Node_QuestionToken(node),
+        Node_Type(node),
+        Node_Initializer(node),
+      );
+    }
+    case KindConstructorType:
+      return NodeFactory_UpdateConstructorTypeNode(
+        factory,
+        AsConstructorTypeNode(node),
+        modifierArray,
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+      );
+    case KindPropertySignature:
+      return NodeFactory_UpdatePropertySignatureDeclaration(
+        factory,
+        AsPropertySignatureDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_PostfixToken(node),
+        Node_Type(node),
+        Node_Initializer(node),
+      );
+    case KindPropertyDeclaration:
+      return NodeFactory_UpdatePropertyDeclaration(
+        factory,
+        AsPropertyDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_PostfixToken(node),
+        Node_Type(node),
+        Node_Initializer(node),
+      );
+    case KindMethodSignature:
+      return NodeFactory_UpdateMethodSignatureDeclaration(
+        factory,
+        AsMethodSignatureDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_PostfixToken(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+      );
+    case KindMethodDeclaration: {
+      const declaration = AsMethodDeclaration(node);
+      return NodeFactory_UpdateMethodDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        declaration!.AsteriskToken,
+        Node_Name(node),
+        Node_PostfixToken(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindConstructor: {
+      const declaration = AsConstructorDeclaration(node);
+      return NodeFactory_UpdateConstructorDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindGetAccessor: {
+      const declaration = AsGetAccessorDeclaration(node);
+      return NodeFactory_UpdateGetAccessorDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindSetAccessor: {
+      const declaration = AsSetAccessorDeclaration(node);
+      return NodeFactory_UpdateSetAccessorDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindIndexSignature:
+      return NodeFactory_UpdateIndexSignatureDeclaration(
+        factory,
+        AsIndexSignatureDeclaration(node),
+        modifierArray,
+        Node_ParameterList(node),
+        Node_Type(node),
+      );
+    case KindFunctionExpression: {
+      const declaration = AsFunctionExpression(node);
+      return NodeFactory_UpdateFunctionExpression(
+        factory,
+        declaration,
+        modifierArray,
+        declaration!.AsteriskToken,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindArrowFunction: {
+      const declaration = AsArrowFunction(node);
+      return NodeFactory_UpdateArrowFunction(
+        factory,
+        declaration,
+        modifierArray,
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        declaration!.EqualsGreaterThanToken,
+        Node_Body(node),
+      );
+    }
+    case KindClassExpression:
+      return NodeFactory_UpdateClassExpression(
+        factory,
+        AsClassExpression(node),
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        AsClassExpression(node)!.HeritageClauses,
+        Node_MemberList(node),
+      );
+    case KindVariableStatement:
+      return NodeFactory_UpdateVariableStatement(
+        factory,
+        AsVariableStatement(node),
+        modifierArray,
+        AsVariableStatement(node)!.DeclarationList,
+      );
+    case KindFunctionDeclaration: {
+      const declaration = AsFunctionDeclaration(node);
+      return NodeFactory_UpdateFunctionDeclaration(
+        factory,
+        declaration,
+        modifierArray,
+        declaration!.AsteriskToken,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        Node_ParameterList(node),
+        Node_Type(node),
+        declaration!.FullSignature,
+        Node_Body(node),
+      );
+    }
+    case KindClassDeclaration:
+      return NodeFactory_UpdateClassDeclaration(
+        factory,
+        AsClassDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        AsClassDeclaration(node)!.HeritageClauses,
+        Node_MemberList(node),
+      );
+    case KindInterfaceDeclaration:
+      return NodeFactory_UpdateInterfaceDeclaration(
+        factory,
+        AsInterfaceDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        AsInterfaceDeclaration(node)!.HeritageClauses,
+        Node_MemberList(node),
+      );
+    case KindTypeAliasDeclaration:
+      return NodeFactory_UpdateTypeAliasDeclaration(
+        factory,
+        AsTypeAliasDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_TypeParameterList(node),
+        Node_Type(node),
+      );
+    case KindEnumDeclaration:
+      return NodeFactory_UpdateEnumDeclaration(
+        factory,
+        AsEnumDeclaration(node),
+        modifierArray,
+        Node_Name(node),
+        Node_MemberList(node),
+      );
+    case KindModuleDeclaration:
+      return NodeFactory_UpdateModuleDeclaration(
+        factory,
+        AsModuleDeclaration(node),
+        modifierArray,
+        AsModuleDeclaration(node)!.Keyword,
+        Node_Name(node),
+        Node_Body(node),
+      );
+    case KindImportEqualsDeclaration:
+      return NodeFactory_UpdateImportEqualsDeclaration(
+        factory,
+        AsImportEqualsDeclaration(node),
+        modifierArray,
+        Node_IsTypeOnly(node),
+        Node_Name(node),
+        AsImportEqualsDeclaration(node)!.ModuleReference,
+      );
+    case KindImportDeclaration:
+      return NodeFactory_UpdateImportDeclaration(
+        factory,
+        AsImportDeclaration(node),
+        modifierArray,
+        Node_ImportClause(node),
+        Node_ModuleSpecifier(node),
+        AsImportDeclaration(node)!.Attributes,
+      );
+    case KindExportAssignment:
+      return NodeFactory_UpdateExportAssignment(
+        factory,
+        AsExportAssignment(node),
+        modifierArray,
+        AsExportAssignment(node)!.IsExportEquals,
+        Node_Type(node),
+        Node_Expression(node),
+      );
+    case KindExportDeclaration:
+      return NodeFactory_UpdateExportDeclaration(
+        factory,
+        AsExportDeclaration(node),
+        modifierArray,
+        Node_IsTypeOnly(node),
+        AsExportDeclaration(node)!.ExportClause,
+        Node_ModuleSpecifier(node),
+        AsExportDeclaration(node)!.Attributes,
+      );
+  }
+  throw new globalThis.Error(`Node that does not have modifiers tried to have modifier replaced: ${node!.Kind}`);
 }
 
 /**

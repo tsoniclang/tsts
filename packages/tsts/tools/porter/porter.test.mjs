@@ -1197,6 +1197,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
 test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
   const files = buildAstGeneratedFiles(baseConfig, "rev-ast-2");
   const factory = files.get("internal/ast/generated/factory.ts");
+  assert.match(factory, /export interface NodeFactory \{[\s\S]*?AsNodeFactory\(\): GoPtr<NodeFactory>;/);
   assert.match(
     factory,
     /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, Identifier_as_nodeData\(data\)\);/,

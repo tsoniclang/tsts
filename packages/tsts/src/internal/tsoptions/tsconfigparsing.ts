@@ -78,10 +78,8 @@ import {
   parseJsonToStringKey,
   parseProjectReference,
   mergeCompilerOptions,
-  compilerOptionsParser_ParseOption,
-  compilerOptionsParser_UnknownOptionDiagnostic,
-  typeAcquisitionParser_ParseOption,
-  typeAcquisitionParser_UnknownOptionDiagnostic,
+  compilerOptionsParser_as_optionParser,
+  typeAcquisitionParser_as_optionParser,
   ParseCompilerOptions,
   ParseTypeAcquisition,
 } from "./parsinghelpers.js";
@@ -1961,7 +1959,7 @@ export function getDefaultTypeAcquisition(configFileName: string): GoPtr<TypeAcq
 export function convertCompilerOptionsFromJsonWorker(jsonOptions: unknown, basePath: string, configFileName: string): [GoPtr<CompilerOptions>, GoSlice<GoPtr<Diagnostic>>] {
   const options = getDefaultCompilerOptions(configFileName);
   const parser: compilerOptionsParser = { __tsgoEmbedded0: options };
-  const [, errors] = convertOptionsFromJson(CommandLineCompilerOptionsMap, jsonOptions, basePath, parser as unknown as optionParser);
+  const [, errors] = convertOptionsFromJson(CommandLineCompilerOptionsMap, jsonOptions, basePath, compilerOptionsParser_as_optionParser(parser));
   if (configFileName !== "") {
     options!.ConfigFilePath = NormalizeSlashes(configFileName);
   }
@@ -1981,7 +1979,7 @@ export function convertCompilerOptionsFromJsonWorker(jsonOptions: unknown, baseP
 export function convertTypeAcquisitionFromJsonWorker(jsonOptions: unknown, basePath: string, configFileName: string): [GoPtr<TypeAcquisition>, GoSlice<GoPtr<Diagnostic>>] {
   const options = getDefaultTypeAcquisition(configFileName);
   const parser: typeAcquisitionParser = { __tsgoEmbedded0: options };
-  const [, errors] = convertOptionsFromJson(typeAcquisitionDeclaration!.ElementOptions as CommandLineOptionNameMap, jsonOptions, basePath, parser as unknown as optionParser);
+  const [, errors] = convertOptionsFromJson(typeAcquisitionDeclaration!.ElementOptions as CommandLineOptionNameMap, jsonOptions, basePath, typeAcquisitionParser_as_optionParser(parser));
   return [options, errors];
 }
 

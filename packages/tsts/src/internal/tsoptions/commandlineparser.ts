@@ -49,12 +49,14 @@ import { TscBuildOption } from "./declsbuild.js";
 import type {
   buildOptionsParser,
   compilerOptionsParser,
-  optionParser,
   watchOptionsParser,
 } from "./parsinghelpers.js";
 import {
+  buildOptionsParser_as_optionParser,
+  compilerOptionsParser_as_optionParser,
   convertToOptionsWithAbsolutePaths,
   ParseCompilerOptions,
+  watchOptionsParser_as_optionParser,
 } from "./parsinghelpers.js";
 import type { ParseConfigHost, CommandLineOptionNameMap } from "./tsconfigparsing.js";
 import { CommandLineCompilerOptionsMap, convertMapToOptions, validateJsonOptionValue } from "./tsconfigparsing.js";
@@ -166,10 +168,10 @@ export function ParseCommandLine(commandLine: GoSlice<string>, host: ParseConfig
   const parser = parseCommandLineWorker(CompilerOptionsDidYouMeanDiagnostics, commandLine, host.FS());
   const optionsWithAbsolutePaths = convertToOptionsWithAbsolutePaths(OrderedMap_Clone(parser!.options as GoPtr<OrderedMap<string, unknown>>), CommandLineCompilerOptionsMap, host.GetCurrentDirectory());
   const compilerParser: compilerOptionsParser = { __tsgoEmbedded0: {} as CompilerOptions };
-  convertMapToOptions(optionsWithAbsolutePaths, compilerParser as unknown as optionParser);
+  convertMapToOptions(optionsWithAbsolutePaths, compilerOptionsParser_as_optionParser(compilerParser));
   const compilerOptions = compilerParser.__tsgoEmbedded0;
   const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
-  convertMapToOptions(optionsWithAbsolutePaths, watchParser as unknown as optionParser);
+  convertMapToOptions(optionsWithAbsolutePaths, watchOptionsParser_as_optionParser(watchParser));
   const watchOptions = watchParser.__tsgoEmbedded0;
   const result = NewParsedCommandLine(compilerOptions, parser!.fileNames, {
     UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
@@ -250,9 +252,9 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
     return false;
   });
   const buildParser: buildOptionsParser = { __tsgoEmbedded0: {} as BuildOptions };
-  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, buildParser as unknown as optionParser);
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, buildOptionsParser_as_optionParser(buildParser));
   const watchParser: watchOptionsParser = { __tsgoEmbedded0: {} as WatchOptions };
-  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, watchParser as unknown as optionParser);
+  convertMapToOptions(parser!.options as GoPtr<OrderedMap>, watchOptionsParser_as_optionParser(watchParser));
   let result: ParsedBuildCommandLine = {
     BuildOptions: buildParser.__tsgoEmbedded0,
     CompilerOptions: compilerOptions,

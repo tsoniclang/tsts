@@ -1,13 +1,15 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { StdEncoding as base64StdEncoding } from "../../go/encoding/base64.js";
-import { BinarySearchFunc as slicesBinarySearchFunc } from "../../go/slices.js";
+import { BinarySearchFunc as slicesBinarySearchFunc, SortFunc as slicesSortFunc } from "../../go/slices.js";
 import { CutPrefix, EqualFold } from "../../go/strings.js";
-import { Some } from "../core/core.js";
+import { DeduplicateSorted, Map as coreMap, Some } from "../core/core.js";
+import { Assert as debugAssert } from "../debug/debug.js";
 import { Unmarshal as jsonUnmarshal } from "../json/json.js";
+import { ComputePositionOfLineAndUTF16Character } from "../scanner/scanner.js";
 import { IsASCIILetter, IsDigit } from "../stringutil/util.js";
 import { GetCanonicalFileName, GetDirectoryPath, GetNormalizedAbsolutePath } from "../tspath/path.js";
-import { MissingSource } from "./decoder.js";
+import { DecodeMappings, Mapping_IsSourceMapping, MappingsDecoder_Error, MappingsDecoder_Values, MissingSource } from "./decoder.js";
 import { TryGetSourceMappingURL } from "./util.js";
 import type { NameIndex, RawSourceMap, SourceIndex } from "./generator.js";
 import type { ECMALineInfo } from "./lineinfo.js";
@@ -124,7 +126,7 @@ export interface DocumentPositionMapper {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::createDocumentPositionMapper","kind":"func","status":"stub","sigHash":"aa0fb35a859f95528dd71a98b53fd0075b18a2c1d45fbd59ae694cc5cac7c5a4","bodyHash":"e18b22aea19764bcf0f82882ef406ca9925ce75515b83d1f47ec461cabf585d6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::createDocumentPositionMapper","kind":"func","status":"implemented","sigHash":"aa0fb35a859f95528dd71a98b53fd0075b18a2c1d45fbd59ae694cc5cac7c5a4","bodyHash":"e18b22aea19764bcf0f82882ef406ca9925ce75515b83d1f47ec461cabf585d6"}
  *
  * Go source:
  * func createDocumentPositionMapper(host Host, sourceMap *RawSourceMap, mapPath string) *DocumentPositionMapper {
@@ -240,7 +242,117 @@ export interface DocumentPositionMapper {
  * }
  */
 export function createDocumentPositionMapper(host: Host, sourceMap: GoPtr<RawSourceMap>, mapPath: string): GoPtr<DocumentPositionMapper> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/sourcemap/source_mapper.go::func::createDocumentPositionMapper");
+  const mapDirectory: string = GetDirectoryPath(mapPath);
+  let sourceRoot: string;
+  if (sourceMap!.SourceRoot !== "") {
+    sourceRoot = GetNormalizedAbsolutePath(sourceMap!.SourceRoot, mapDirectory);
+  } else {
+    sourceRoot = mapDirectory;
+  }
+  const generatedAbsoluteFilePath: string = GetNormalizedAbsolutePath(sourceMap!.File, mapDirectory);
+  const sourceFileAbsolutePaths: GoSlice<string> = coreMap(sourceMap!.Sources, (source: string): string => {
+    return GetNormalizedAbsolutePath(source, sourceRoot);
+  });
+  const useCaseSensitiveFileNames: bool = host.UseCaseSensitiveFileNames();
+  const sourceToSourceIndexMap: GoMap<string, SourceIndex> = new globalThis.Map<string, SourceIndex>();
+  for (let i = 0; i < sourceFileAbsolutePaths.length; i++) {
+    const source: string = sourceFileAbsolutePaths[i]!;
+    sourceToSourceIndexMap.set(GetCanonicalFileName(source, useCaseSensitiveFileNames), i);
+  }
+
+  let decodedMappings: GoSlice<GoPtr<MappedPosition>> = [];
+  let generatedMappings: GoSlice<GoPtr<MappedPosition>> = [];
+  const sourceMappings: GoMap<SourceIndex, GoSlice<GoPtr<SourceMappedPosition>>> = new globalThis.Map<SourceIndex, GoSlice<GoPtr<SourceMappedPosition>>>();
+
+  // getDecodedMappings()
+  const decoder = DecodeMappings(sourceMap!.Mappings);
+  MappingsDecoder_Values(decoder)((mapping): bool => {
+    // processMapping()
+    let generatedPosition: int = -1;
+    let lineInfo: GoPtr<ECMALineInfo> = host.GetECMALineInfo(generatedAbsoluteFilePath);
+    if (lineInfo !== undefined) {
+      generatedPosition = ComputePositionOfLineAndUTF16Character(
+        lineInfo.lineStarts,
+        mapping!.GeneratedLine,
+        mapping!.GeneratedCharacter,
+        lineInfo.text,
+        true /*allowEdits*/,
+      );
+    }
+
+    let sourcePosition: int = -1;
+    if (Mapping_IsSourceMapping(mapping)) {
+      lineInfo = host.GetECMALineInfo(sourceFileAbsolutePaths[mapping!.SourceIndex]!);
+      if (lineInfo !== undefined) {
+        const pos: int = ComputePositionOfLineAndUTF16Character(
+          lineInfo.lineStarts,
+          mapping!.SourceLine,
+          mapping!.SourceCharacter,
+          lineInfo.text,
+          true /*allowEdits*/,
+        );
+        sourcePosition = pos;
+      }
+    }
+
+    decodedMappings.push({
+      generatedPosition: generatedPosition,
+      sourceIndex: mapping!.SourceIndex,
+      sourcePosition: sourcePosition,
+      nameIndex: mapping!.NameIndex,
+    });
+    return true;
+  });
+  if (MappingsDecoder_Error(decoder) !== undefined) {
+    decodedMappings = [];
+  }
+
+  // getSourceMappings()
+  for (const mapping of decodedMappings) {
+    if (!MappedPosition_isSourceMappedPosition(mapping)) {
+      continue;
+    }
+    const sourceIndex: SourceIndex = mapping!.sourceIndex;
+    const list: GoSlice<GoPtr<SourceMappedPosition>> = sourceMappings.get(sourceIndex) ?? [];
+    list.push({
+      generatedPosition: mapping!.generatedPosition,
+      sourceIndex: sourceIndex,
+      sourcePosition: mapping!.sourcePosition,
+      nameIndex: mapping!.nameIndex,
+    });
+    sourceMappings.set(sourceIndex, list);
+  }
+  for (const [i, list] of sourceMappings) {
+    slicesSortFunc(list, (a: GoPtr<SourceMappedPosition>, b: GoPtr<SourceMappedPosition>): int => {
+      debugAssert(a!.sourceIndex === b!.sourceIndex, "All source mappings should have the same source index");
+      return a!.sourcePosition - b!.sourcePosition;
+    });
+    sourceMappings.set(i, DeduplicateSorted(list, (a: GoPtr<SourceMappedPosition>, b: GoPtr<SourceMappedPosition>): bool => {
+      return a!.generatedPosition === b!.generatedPosition &&
+        a!.sourceIndex === b!.sourceIndex &&
+        a!.sourcePosition === b!.sourcePosition;
+    }));
+  }
+
+  // getGeneratedMappings()
+  generatedMappings = decodedMappings;
+  slicesSortFunc(generatedMappings, (a: GoPtr<MappedPosition>, b: GoPtr<MappedPosition>): int => {
+    return a!.generatedPosition - b!.generatedPosition;
+  });
+  generatedMappings = DeduplicateSorted(generatedMappings, (a: GoPtr<MappedPosition>, b: GoPtr<MappedPosition>): bool => {
+    return a!.generatedPosition === b!.generatedPosition &&
+      a!.sourceIndex === b!.sourceIndex &&
+      a!.sourcePosition === b!.sourcePosition;
+  });
+
+  return {
+    useCaseSensitiveFileNames: useCaseSensitiveFileNames,
+    sourceFileAbsolutePaths: sourceFileAbsolutePaths,
+    sourceToSourceIndexMap: sourceToSourceIndexMap,
+    generatedAbsoluteFilePath: generatedAbsoluteFilePath,
+    generatedMappings: generatedMappings,
+    sourceMappings: sourceMappings,
+  };
 }
 
 /**

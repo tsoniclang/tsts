@@ -38,8 +38,24 @@ export interface FS {
  * Go source:
  * var _ vfs.FS = (*FS)(nil)
  */
-// compile-time interface assertion — no runtime value needed
-export let __2bea44dc_0: FS_296ac81f = undefined as never;
+export let __2bea44dc_0: FS_296ac81f = FS_as_vfs_FS(undefined);
+
+export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_296ac81f {
+  return {
+    UseCaseSensitiveFileNames: (): bool => FS_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => FS_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => FS_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => FS_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => FS_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => FS_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FS_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => FS_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => FS_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => FS_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FS_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => FS_Realpath(receiver, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::func::From","kind":"func","status":"implemented","sigHash":"abe992f0d6b4b9496524ff64cb3c8b9bbdffea5043020f715dac57fe89cfba95","bodyHash":"98bf79e8b8f29fe54e2bb36576e14d7edd93ba918777024d5a8e944ecbe65af5"}

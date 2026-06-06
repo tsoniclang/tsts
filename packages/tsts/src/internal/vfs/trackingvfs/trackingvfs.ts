@@ -6,7 +6,7 @@ import { SyncSet_Add } from "../../collections/syncset.js";
 import type { Entries, FileInfo, FS as FS_2329d319, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::type::FS","kind":"type","status":"stub","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"30053028ff3bfe5aabf6bdf1e75cb3da747df28dd72f5cc762348189001806e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"30053028ff3bfe5aabf6bdf1e75cb3da747df28dd72f5cc762348189001806e2"}
  *
  * Go source:
  * FS struct {
@@ -20,12 +20,29 @@ export interface FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"56c7355c9f6a8b3a02b0f81e66f6b3e4b9f10476c06641ddd7459f367652293d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"56c7355c9f6a8b3a02b0f81e66f6b3e4b9f10476c06641ddd7459f367652293d"}
  *
  * Go source:
  * var _ vfs.FS = (*FS)(nil)
  */
-export let __325b3fb8_0: FS_2329d319 = undefined as never;
+export let __325b3fb8_0: FS_2329d319 = FS_as_vfs_FS(undefined);
+
+export function FS_as_vfs_FS(receiver: GoPtr<FS>): FS_2329d319 {
+  return {
+    UseCaseSensitiveFileNames: (): bool => FS_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => FS_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => FS_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => FS_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => FS_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => FS_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FS_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => FS_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => FS_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => FS_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FS_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => FS_Realpath(receiver, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/trackingvfs/trackingvfs.go::method::FS.ReadFile","kind":"method","status":"implemented","sigHash":"0fc65c4feba146a08be237f67aa3407d02685a8b5ce626ef8567c64d2dd24daf","bodyHash":"701bb50657959b0bad726bcfe1411d9eadf9568f2d03e77b5dd125e59543eaaa"}

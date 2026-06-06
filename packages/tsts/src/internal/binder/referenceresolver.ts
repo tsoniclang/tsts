@@ -69,7 +69,7 @@ export interface ReferenceResolverHooks {
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
  */
-export const __e8d524b9_0: ReferenceResolver = undefined as never;
+export const __e8d524b9_0: ReferenceResolver = referenceResolver_as_ReferenceResolver(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2","bodyHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}
@@ -101,7 +101,7 @@ export interface referenceResolver {
 // referenceResolver_as_ReferenceResolver adapts a referenceResolver to the
 // ReferenceResolver interface by delegating each method to the corresponding
 // free function (Go interface satisfaction -> method-bearing adapter).
-function referenceResolver_as_ReferenceResolver(receiver: referenceResolver): ReferenceResolver {
+function referenceResolver_as_ReferenceResolver(receiver: GoPtr<referenceResolver>): ReferenceResolver {
   const r = receiver;
   return {
     GetReferencedExportContainer: (node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> =>
@@ -266,7 +266,7 @@ export function referenceResolver_getReferencedValueSymbol(receiver: GoPtr<refer
   if (receiver!.resolver === undefined) {
     receiver!.resolver = {
       CompilerOptions: receiver!.options,
-    } as unknown as NameResolver;
+    };
   }
 
   return NameResolver_Resolve(receiver!.resolver, location, Node_Text(reference), SymbolFlagsExportValue | SymbolFlagsValue | SymbolFlagsAlias, undefined, false, false);

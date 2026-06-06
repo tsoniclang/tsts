@@ -1,20 +1,41 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
+import { Node_Modifiers } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { AsSourceFile, NodeFactory_UpdateExportDeclaration, NodeFactory_UpdateImportClause, NodeFactory_UpdateImportDeclaration, NodeFactory_UpdateNamedExports, NodeFactory_UpdateNamedImports } from "../../ast/ast.js";
 import { IsExternalModule } from "../../ast/utilities.js";
 import { IsInJSFile } from "../../ast/utilities.js";
-import type { ImportEqualsDeclaration } from "../../ast/generated/data.js";
+import { IsExternalModuleImportEqualsDeclaration } from "../../ast/utilities.js";
+import type { ExportDeclaration, ImportClause, ImportDeclaration, ImportEqualsDeclaration, NamedExports, NamedImports } from "../../ast/generated/data.js";
+import { AsExportDeclaration, AsImportClause, AsImportDeclaration, AsImportEqualsDeclaration, AsNamedExports, AsNamedImports } from "../../ast/generated/casts.js";
+import {
+  KindExportAssignment,
+  KindExportDeclaration,
+  KindExportSpecifier,
+  KindImportClause,
+  KindImportDeclaration,
+  KindImportEqualsDeclaration,
+  KindImportSpecifier,
+  KindModuleBlock,
+  KindModuleDeclaration,
+  KindNamedExports,
+  KindNamedImports,
+  KindNamespaceImport,
+  KindSourceFile,
+} from "../../ast/generated/kinds.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
-import { Transformer_EmitContext, Transformer_NewTransformer } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"stub","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804","bodyHash":"8f403613429078b6e07765c1b176cbb4bdb3238c22b9f630d78f4eac74b994f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"implemented","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804","bodyHash":"8f403613429078b6e07765c1b176cbb4bdb3238c22b9f630d78f4eac74b994f5"}
  *
  * Go source:
  * ImportElisionTransformer struct {
@@ -61,7 +82,7 @@ export function NewImportElisionTransformer(opt: GoPtr<TransformOptions>): GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"stub","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1","bodyHash":"3192f19d9eca37402d140cfcbae3afcbf32cb595848840ad3d373973e4a64be8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit","kind":"method","status":"implemented","sigHash":"2dada36e00b7a14e377ca3c3ae81c581ce704062b91b828cb85584089cbb20a1","bodyHash":"3192f19d9eca37402d140cfcbae3afcbf32cb595848840ad3d373973e4a64be8"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) visit(node *ast.Node) *ast.Node {
@@ -163,7 +184,111 @@ export function NewImportElisionTransformer(opt: GoPtr<TransformOptions>): GoPtr
  * }
  */
 export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.visit");
+  const tx = receiver!;
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(tx.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  switch (node!.Kind) {
+    case KindImportEqualsDeclaration:
+      if (IsExternalModuleImportEqualsDeclaration(node)) {
+        if (!ImportElisionTransformer_shouldEmitAliasDeclaration(tx, node)) {
+          return undefined;
+        }
+      } else {
+        if (!ImportElisionTransformer_shouldEmitImportEqualsDeclaration(tx, AsImportEqualsDeclaration(node))) {
+          return undefined;
+        }
+      }
+      return NodeVisitor_VisitEachChild(visitor, node);
+    case KindImportDeclaration: {
+      const n: GoPtr<ImportDeclaration> = AsImportDeclaration(node);
+      // Do not elide a side-effect only import declaration.
+      //  import "foo";
+      if (n!.ImportClause !== undefined) {
+        const importClause = NodeVisitor_VisitNode(visitor, n!.ImportClause);
+        if (importClause === undefined) {
+          return undefined;
+        }
+        return NodeFactory_UpdateImportDeclaration(factory, n, Node_Modifiers(node), importClause, n!.ModuleSpecifier, NodeVisitor_VisitNode(visitor, n!.Attributes));
+      }
+      return NodeVisitor_VisitEachChild(visitor, node);
+    }
+    case KindImportClause: {
+      const n: GoPtr<ImportClause> = AsImportClause(node);
+      const name = ImportElisionTransformer_shouldEmitAliasDeclaration(tx, node) ? n!.name : undefined;
+      const namedBindings = NodeVisitor_VisitNode(visitor, n!.NamedBindings);
+      if (name === undefined && namedBindings === undefined) {
+        // all import bindings were elided
+        return undefined;
+      }
+      return NodeFactory_UpdateImportClause(factory, n, n!.PhaseModifier, name, namedBindings);
+    }
+    case KindNamespaceImport:
+      if (!ImportElisionTransformer_shouldEmitAliasDeclaration(tx, node)) {
+        // elide unused imports
+        return undefined;
+      }
+      return node;
+    case KindNamedImports: {
+      const n: GoPtr<NamedImports> = AsNamedImports(node);
+      const elements = NodeVisitor_VisitNodes(visitor, n!.Elements);
+      if (elements!.Nodes.length === 0) {
+        // all import specifiers were elided
+        return undefined;
+      }
+      return NodeFactory_UpdateNamedImports(factory, n, elements);
+    }
+    case KindImportSpecifier:
+      if (!ImportElisionTransformer_shouldEmitAliasDeclaration(tx, node)) {
+        // elide type-only or unused imports
+        return undefined;
+      }
+      return node;
+    case KindExportAssignment:
+      if (!Tristate_IsTrue(tx.compilerOptions!.VerbatimModuleSyntax) && !ImportElisionTransformer_isValueAliasDeclaration(tx, node)) {
+        // elide unused import
+        return undefined;
+      }
+      return NodeVisitor_VisitEachChild(visitor, node);
+    case KindExportDeclaration: {
+      const n: GoPtr<ExportDeclaration> = AsExportDeclaration(node);
+      let exportClause: GoPtr<Node>;
+      if (n!.ExportClause !== undefined) {
+        exportClause = NodeVisitor_VisitNode(visitor, n!.ExportClause);
+        if (exportClause === undefined) {
+          // all export bindings were elided
+          return undefined;
+        }
+      }
+      return NodeFactory_UpdateExportDeclaration(factory, n, undefined, false, exportClause, NodeVisitor_VisitNode(visitor, n!.ModuleSpecifier), NodeVisitor_VisitNode(visitor, n!.Attributes));
+    }
+    case KindNamedExports: {
+      const n: GoPtr<NamedExports> = AsNamedExports(node);
+      const elements = NodeVisitor_VisitNodes(visitor, n!.Elements);
+      if (elements!.Nodes.length === 0) {
+        // all export specifiers were elided
+        return undefined;
+      }
+      return NodeFactory_UpdateNamedExports(factory, n, elements);
+    }
+    case KindExportSpecifier:
+      if (!ImportElisionTransformer_isValueAliasDeclaration(tx, node)) {
+        // elide unused export
+        return undefined;
+      }
+      return node;
+    case KindSourceFile: {
+      const savedCurrentSourceFile = tx.currentSourceFile;
+      tx.currentSourceFile = AsSourceFile(node);
+      node = NodeVisitor_VisitEachChild(visitor, node);
+      tx.currentSourceFile = savedCurrentSourceFile;
+      return node;
+    }
+    case KindModuleDeclaration:
+    case KindModuleBlock:
+      return NodeVisitor_VisitEachChild(visitor, node);
+    default:
+      return node;
+  }
 }
 
 /**
