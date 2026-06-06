@@ -1,5 +1,7 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { AsJSDoc } from "../ast/generated/casts.js";
 import type { Node } from "../ast/spine.js";
+import { Node_JSDoc } from "../ast/ast.js";
 import type { Checker } from "./checker/state.js";
 
 /**
@@ -86,7 +88,7 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags","kind":"func","status":"stub","sigHash":"64e6a55ef6d0d498291e6a741c2d0231176ba9e6069c1771ce7875c29458684e","bodyHash":"6c4f301954df42c1d1b96a355714de5ea7365e1d08f895cc301eba8787579af9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags","kind":"func","status":"implemented","sigHash":"64e6a55ef6d0d498291e6a741c2d0231176ba9e6069c1771ce7875c29458684e","bodyHash":"6c4f301954df42c1d1b96a355714de5ea7365e1d08f895cc301eba8787579af9"}
  *
  * Go source:
  * func getAllJSDocTags(node *ast.Node) []*ast.Node {
@@ -105,5 +107,16 @@ export function Checker_checkUnmatchedJSDocParameters(receiver: GoPtr<Checker>, 
  * }
  */
 export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsdoc.go::func::getAllJSDocTags");
+  if (node === undefined) {
+    return [];
+  }
+  const jsdocs = Node_JSDoc(node, undefined);
+  if (jsdocs.length === 0) {
+    return [];
+  }
+  const lastJSDoc = AsJSDoc(jsdocs[jsdocs.length - 1]);
+  if (lastJSDoc!.Tags === undefined) {
+    return [];
+  }
+  return lastJSDoc!.Tags!.Nodes;
 }

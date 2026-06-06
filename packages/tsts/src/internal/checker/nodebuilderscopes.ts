@@ -2,6 +2,7 @@ import type { GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import type { Node } from "../ast/spine.js";
 import type { Symbol } from "../ast/symbol.js";
+import { GetSymbolId } from "../ast/utilities.js";
 import type { TypeMapper } from "./mapper.js";
 import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
 import type { Type } from "./types.js";
@@ -81,7 +82,7 @@ export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): () 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::type::localsRecord","kind":"type","status":"stub","sigHash":"1dbbda6a9119188d46c1f6697fcee4075ce71e96b4da79b09a5dcd1b9e271778","bodyHash":"36e145be0fdba1cdbe18b39648ccaa362220912d66ff290e903c6e1b706ac5df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::type::localsRecord","kind":"type","status":"implemented","sigHash":"1dbbda6a9119188d46c1f6697fcee4075ce71e96b4da79b09a5dcd1b9e271778","bodyHash":"36e145be0fdba1cdbe18b39648ccaa362220912d66ff290e903c6e1b706ac5df"}
  *
  * Go source:
  * localsRecord struct {
@@ -95,7 +96,7 @@ export interface localsRecord {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.addSymbolTypeToContext","kind":"method","status":"stub","sigHash":"d81fae3d81b46d304d217ab5d786f064938b5f9790df2004ea454767f402d314","bodyHash":"96f87004af2b2cc665b918dafa2610436d8ccdd90938213b4ac9177dc8475cde"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.addSymbolTypeToContext","kind":"method","status":"implemented","sigHash":"d81fae3d81b46d304d217ab5d786f064938b5f9790df2004ea454767f402d314","bodyHash":"96f87004af2b2cc665b918dafa2610436d8ccdd90938213b4ac9177dc8475cde"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) addSymbolTypeToContext(symbol *ast.Symbol, t *Type) func() {
@@ -112,7 +113,17 @@ export interface localsRecord {
  * }
  */
 export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, t: GoPtr<Type>): () => void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.addSymbolTypeToContext");
+  const id = GetSymbolId(symbol_);
+  const oldType = receiver!.ctx!.enclosingSymbolTypes.get(id);
+  const oldTypeExists = receiver!.ctx!.enclosingSymbolTypes.has(id);
+  receiver!.ctx!.enclosingSymbolTypes.set(id, t);
+  return () => {
+    if (oldTypeExists) {
+      receiver!.ctx!.enclosingSymbolTypes.set(id, oldType);
+    } else {
+      receiver!.ctx!.enclosingSymbolTypes.delete(id);
+    }
+  };
 }
 
 /**

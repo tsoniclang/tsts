@@ -1,8 +1,26 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
+import { BigEndian, LittleEndian, Read as binary_Read } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
+import { ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFile as fs_ReadFile, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
 import type { FS, WalkDirFunc } from "../../../go/io/fs.js";
+import { NewReader as strings_NewReader } from "../../../go/strings.js";
+import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
+
+// Local duck-type interfaces for calling methods on opaque facade types.
+interface FileInfoMethods {
+  IsDir(): bool;
+  Mode(): FileModeValue;
+}
+interface FileModeValue {
+  IsDir(): bool;
+  IsRegular(): bool;
+}
+interface DirEntryMethods {
+  Name(): string;
+  Type(): FileModeValue;
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::type::Common","kind":"type","status":"stub","sigHash":"cc65d17e65e9de241504cec36dc63839e4025fb80c1511fe3b145c1cdb1af9ba","bodyHash":"83ca938ae0a7f2ee0c5582ef0ae8cf46aec5dbe5c930ac981b04a7300526f448"}
@@ -19,7 +37,7 @@ export interface Common {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::RootLength","kind":"func","status":"stub","sigHash":"fc7b90436434eabc47c57f8ee3e62dc90978c1018b4bc4435774e46857e62f34","bodyHash":"d1f7eff9fe5241386fa42be443898631fc0c20b5283b24723a4fee54e9c70f26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::RootLength","kind":"func","status":"implemented","sigHash":"fc7b90436434eabc47c57f8ee3e62dc90978c1018b4bc4435774e46857e62f34","bodyHash":"d1f7eff9fe5241386fa42be443898631fc0c20b5283b24723a4fee54e9c70f26"}
  *
  * Go source:
  * func RootLength(p string) int {
@@ -33,11 +51,17 @@ export interface Common {
  * }
  */
 export function RootLength(p: string): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::RootLength");
+  const l = GetEncodedRootLength(p);
+  if (l === 0) {
+    throw new globalThis.Error(`vfs: path ${JSON.stringify(p)} is not absolute`);
+  } else if (l < 0) {
+    return (~l) as int;
+  }
+  return l;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::SplitPath","kind":"func","status":"stub","sigHash":"a5a17233797ab1b25132f7e015fe8ae6f704d9a4aff08bd374ee02e94cdfee07","bodyHash":"32e8bcd8145b9d78ad50a7f3a58da43dee9c8bbf1bcedb07988ffe15f2ed5c9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::SplitPath","kind":"func","status":"implemented","sigHash":"a5a17233797ab1b25132f7e015fe8ae6f704d9a4aff08bd374ee02e94cdfee07","bodyHash":"32e8bcd8145b9d78ad50a7f3a58da43dee9c8bbf1bcedb07988ffe15f2ed5c9f"}
  *
  * Go source:
  * func SplitPath(p string) (rootName, rest string) {
@@ -49,11 +73,16 @@ export function RootLength(p: string): int {
  * }
  */
 export function SplitPath(p: string): [string, string] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::SplitPath");
+  p = NormalizePath(p);
+  const l = RootLength(p);
+  let rootName = p.slice(0, l);
+  let rest = p.slice(l);
+  rest = RemoveTrailingDirectorySeparator(rest);
+  return [rootName, rest];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.RootAndPath","kind":"method","status":"stub","sigHash":"b3f8aae815d288096eb17f609907dacb1623b82e97e4682920e10be2d957f51a","bodyHash":"2a68d64cb141d674340c23aa703c0e623a11206c153ac7ab55787d0327c05209"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.RootAndPath","kind":"method","status":"implemented","sigHash":"b3f8aae815d288096eb17f609907dacb1623b82e97e4682920e10be2d957f51a","bodyHash":"2a68d64cb141d674340c23aa703c0e623a11206c153ac7ab55787d0327c05209"}
  *
  * Go source:
  * func (vfs *Common) RootAndPath(path string) (fsys fs.FS, rootName string, rest string) {
@@ -65,11 +94,15 @@ export function SplitPath(p: string): [string, string] {
  * }
  */
 export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [FS, string, string] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.RootAndPath");
+  let [rootName, rest] = SplitPath(path);
+  if (rest === "") {
+    rest = ".";
+  }
+  return [receiver!.RootFor(rootName), rootName, rest];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.Stat","kind":"method","status":"stub","sigHash":"951163363ad8a28632591eeefa8e79f0b36c7a9fc637f8be4ef01a2ed52c4b71","bodyHash":"bded9b36166fce959dc50e2c6380d0c410d5d96333d0c4c0fd337ac4cf2bd61c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.Stat","kind":"method","status":"implemented","sigHash":"951163363ad8a28632591eeefa8e79f0b36c7a9fc637f8be4ef01a2ed52c4b71","bodyHash":"bded9b36166fce959dc50e2c6380d0c410d5d96333d0c4c0fd337ac4cf2bd61c"}
  *
  * Go source:
  * func (vfs *Common) Stat(path string) vfs.FileInfo {
@@ -84,12 +117,20 @@ export function Common_RootAndPath(receiver: GoPtr<Common>, path: string): [FS, 
  * 	return stat
  * }
  */
-export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.Stat");
+export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo | undefined {
+  const [fsys, , rest] = Common_RootAndPath(receiver, path);
+  if (fsys === undefined) {
+    return undefined;
+  }
+  const [stat, err] = fs_Stat(fsys, rest) as [FileInfo, GoError];
+  if (err !== undefined) {
+    return undefined;
+  }
+  return stat;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.FileExists","kind":"method","status":"stub","sigHash":"6abe3180444423ce071a28896566dca2b6620e650de67c187eccc978d24b341f","bodyHash":"b129d244d59d1930959457b9bff41a725216ba426872039e312300601a4167f5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.FileExists","kind":"method","status":"implemented","sigHash":"6abe3180444423ce071a28896566dca2b6620e650de67c187eccc978d24b341f","bodyHash":"b129d244d59d1930959457b9bff41a725216ba426872039e312300601a4167f5"}
  *
  * Go source:
  * func (vfs *Common) FileExists(path string) bool {
@@ -98,11 +139,12 @@ export function Common_Stat(receiver: GoPtr<Common>, path: string): FileInfo {
  * }
  */
 export function Common_FileExists(receiver: GoPtr<Common>, path: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.FileExists");
+  const stat = Common_Stat(receiver, path);
+  return stat !== undefined && !(stat as unknown as FileInfoMethods).IsDir();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.DirectoryExists","kind":"method","status":"stub","sigHash":"1e1b84df8968e040f81b2c5073357a60dd8e80b5e83cc2e94492a4cafa41637e","bodyHash":"21bcbd2e829e97ba0821e3cd77c8b4cae3d73cdf953a71e6bd7a1bbbe7485e1e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.DirectoryExists","kind":"method","status":"implemented","sigHash":"1e1b84df8968e040f81b2c5073357a60dd8e80b5e83cc2e94492a4cafa41637e","bodyHash":"21bcbd2e829e97ba0821e3cd77c8b4cae3d73cdf953a71e6bd7a1bbbe7485e1e"}
  *
  * Go source:
  * func (vfs *Common) DirectoryExists(path string) bool {
@@ -111,11 +153,12 @@ export function Common_FileExists(receiver: GoPtr<Common>, path: string): bool {
  * }
  */
 export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.DirectoryExists");
+  const stat = Common_Stat(receiver, path);
+  return stat !== undefined && (stat as unknown as FileInfoMethods).IsDir();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.GetAccessibleEntries","kind":"method","status":"stub","sigHash":"4ce17bf0db936b6644e90a870c7903b113d2149b6311cf70d940cd57887404e9","bodyHash":"5aa78b714a83c93411cfb81ed9440e9a8c2051243cb2277e22ba177a12ba343b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"4ce17bf0db936b6644e90a870c7903b113d2149b6311cf70d940cd57887404e9","bodyHash":"5aa78b714a83c93411cfb81ed9440e9a8c2051243cb2277e22ba177a12ba343b"}
  *
  * Go source:
  * func (vfs *Common) GetAccessibleEntries(path string) (result vfs.Entries) {
@@ -124,22 +167,22 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * 			result.Directories = append(result.Directories, name)
  * 			return true
  * 		}
- * 
+ *
  * 		if mode.IsRegular() {
  * 			result.Files = append(result.Files, name)
  * 			return true
  * 		}
- * 
+ *
  * 		return false
  * 	}
- * 
+ *
  * 	for _, entry := range vfs.getEntries(path) {
  * 		entryType := entry.Type()
- * 
+ *
  * 		if addToResult(entry.Name(), entryType) {
  * 			continue
  * 		}
- * 
+ *
  * 		if entryType&fs.ModeSymlink != 0 {
  * 			// Easy case; UNIX-like system will clearly mark symlinks.
  * 			if stat := vfs.Stat(path + "/" + entry.Name()); stat != nil {
@@ -147,7 +190,7 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * 			}
  * 			continue
  * 		}
- * 
+ *
  * 		if entryType&fs.ModeIrregular != 0 && vfs.IsReparsePoint != nil {
  * 			// Could be a Windows junction or other reparse point.
  * 			// Check using the OS-specific helper.
@@ -160,16 +203,63 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * 			continue
  * 		}
  * 	}
- * 
+ *
  * 	return result
  * }
  */
 export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: string): Entries {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.GetAccessibleEntries");
+  const result: Entries = { Files: [], Directories: [] };
+
+  const addToResult = (name: string, mode: FileModeValue, _isLink: bool): bool => {
+    if (mode.IsDir()) {
+      result.Directories.push(name);
+      return true;
+    }
+
+    if (mode.IsRegular()) {
+      result.Files.push(name);
+      return true;
+    }
+
+    return false;
+  };
+
+  for (const entry of Common_getEntries(receiver, path)) {
+    const entryMethods = entry as unknown as DirEntryMethods;
+    const entryType = entryMethods.Type();
+
+    if (addToResult(entryMethods.Name(), entryType, false)) {
+      continue;
+    }
+
+    if (((entryType as unknown as number) & (ModeSymlink as unknown as number)) !== 0) {
+      // Easy case; UNIX-like system will clearly mark symlinks.
+      const stat = Common_Stat(receiver, path + "/" + entryMethods.Name());
+      if (stat !== undefined) {
+        addToResult(entryMethods.Name(), (stat as unknown as FileInfoMethods).Mode(), true);
+      }
+      continue;
+    }
+
+    if (((entryType as unknown as number) & (ModeIrregular as unknown as number)) !== 0 && receiver!.IsReparsePoint !== undefined) {
+      // Could be a Windows junction or other reparse point.
+      // Check using the OS-specific helper.
+      const fullPath = path + "/" + entryMethods.Name();
+      if (receiver!.IsReparsePoint(fullPath)) {
+        const stat = Common_Stat(receiver, fullPath);
+        if (stat !== undefined) {
+          addToResult(entryMethods.Name(), (stat as unknown as FileInfoMethods).Mode(), true);
+        }
+      }
+      continue;
+    }
+  }
+
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.getEntries","kind":"method","status":"stub","sigHash":"336e429681bc0336d7d9c6d7b6475cbfb287354614f3c8bf8485f0fdeb36275f","bodyHash":"7a9202bbaed3eac081705eb5ddc2a9ced9d7187f45e69903dc239c8fb53e1602"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.getEntries","kind":"method","status":"implemented","sigHash":"336e429681bc0336d7d9c6d7b6475cbfb287354614f3c8bf8485f0fdeb36275f","bodyHash":"7a9202bbaed3eac081705eb5ddc2a9ced9d7187f45e69903dc239c8fb53e1602"}
  *
  * Go source:
  * func (vfs *Common) getEntries(path string) []vfs.DirEntry {
@@ -177,21 +267,31 @@ export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: strin
  * 	if fsys == nil {
  * 		return nil
  * 	}
- * 
+ *
  * 	entries, err := fs.ReadDir(fsys, rest)
  * 	if err != nil {
  * 		return nil
  * 	}
- * 
+ *
  * 	return entries
  * }
  */
 export function Common_getEntries(receiver: GoPtr<Common>, path: string): GoSlice<DirEntry> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.getEntries");
+  const [fsys, , rest] = Common_RootAndPath(receiver, path);
+  if (fsys === undefined) {
+    return [];
+  }
+
+  const [entries, err] = fs_ReadDir(fsys, rest) as [GoSlice<DirEntry>, GoError];
+  if (err !== undefined) {
+    return [];
+  }
+
+  return entries;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.WalkDir","kind":"method","status":"stub","sigHash":"46ecf525c13012a883b2d6b823dcc844931e2ae7cebac10ea906b1c1e2858ea7","bodyHash":"93cd9bf43520e6842dfbd3a4200c35ee4d1c3306556ea7776d4fffd8076c16c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.WalkDir","kind":"method","status":"implemented","sigHash":"46ecf525c13012a883b2d6b823dcc844931e2ae7cebac10ea906b1c1e2858ea7","bodyHash":"93cd9bf43520e6842dfbd3a4200c35ee4d1c3306556ea7776d4fffd8076c16c0"}
  *
  * Go source:
  * func (vfs *Common) WalkDir(root string, walkFn fs.WalkDirFunc) error {
@@ -208,11 +308,20 @@ export function Common_getEntries(receiver: GoPtr<Common>, path: string): GoSlic
  * }
  */
 export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: WalkDirFunc): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.WalkDir");
+  const [fsys, rootName, rest] = Common_RootAndPath(receiver, root);
+  if (fsys === undefined) {
+    return undefined;
+  }
+  return fs_WalkDir(fsys, rest, ((path: string, d: unknown, err: unknown): GoError => {
+    if (path === ".") {
+      path = "";
+    }
+    return (walkFn as unknown as (path: string, d: unknown, err: unknown) => GoError)(rootName + path, d, err);
+  }) as unknown as WalkDirFunc) as GoError;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.ReadFile","kind":"method","status":"stub","sigHash":"26bd9d609af222a179a5f57a83bb78d5b9d133c2201ada15e860c682709e2b4f","bodyHash":"bc3d2c210d1a3e271e8d14cfe3951d780455458e12b24b3ad01b60459900db05"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.ReadFile","kind":"method","status":"implemented","sigHash":"26bd9d609af222a179a5f57a83bb78d5b9d133c2201ada15e860c682709e2b4f","bodyHash":"bc3d2c210d1a3e271e8d14cfe3951d780455458e12b24b3ad01b60459900db05"}
  *
  * Go source:
  * func (vfs *Common) ReadFile(path string) (contents string, ok bool) {
@@ -220,12 +329,12 @@ export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: Wa
  * 	if fsys == nil {
  * 		return "", false
  * 	}
- * 
+ *
  * 	b, err := fs.ReadFile(fsys, rest)
  * 	if err != nil {
  * 		return "", false
  * 	}
- * 
+ *
  * 	// An invariant of any underlying filesystem is that the bytes returned
  * 	// are immutable, otherwise anyone using the filesystem would end up
  * 	// with data races.
@@ -235,18 +344,36 @@ export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: Wa
  * 	if len(b) == 0 {
  * 		return "", true
  * 	}
- * 
+ *
  * 	s := unsafe.String(&b[0], len(b))
- * 
+ *
  * 	return decodeBytes(s)
  * }
  */
 export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.ReadFile");
+  const [fsys, , rest] = Common_RootAndPath(receiver, path);
+  if (fsys === undefined) {
+    return ["", false];
+  }
+
+  const [b, err] = fs_ReadFile(fsys, rest) as [string, GoError];
+  if (err !== undefined) {
+    return ["", false];
+  }
+
+  // In the Go source, len(b) == 0 check on the byte slice
+  if (b.length === 0) {
+    return ["", true];
+  }
+
+  // Go: s := unsafe.String(&b[0], len(b)) -- bytes-to-string conversion
+  const s = b;
+
+  return decodeBytes(s);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeBytes","kind":"func","status":"stub","sigHash":"9af05afe32155426111b5e882975ba3b71cad643d996fdd1a70e42a2c2c650e4","bodyHash":"8da55d6ba04e2489956add989d5912f09dd7a416d6ecd40259d9a0982b569827"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeBytes","kind":"func","status":"implemented","sigHash":"9af05afe32155426111b5e882975ba3b71cad643d996fdd1a70e42a2c2c650e4","bodyHash":"8da55d6ba04e2489956add989d5912f09dd7a416d6ecd40259d9a0982b569827"}
  *
  * Go source:
  * func decodeBytes(s string) (contents string, ok bool) {
@@ -263,16 +390,30 @@ export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string,
  * 	if len(s) >= 3 && s[0] == 0xEF && s[1] == 0xBB && s[2] == 0xBF {
  * 		s = s[3:]
  * 	}
- * 
+ *
  * 	return s, true
  * }
  */
 export function decodeBytes(s: string): [string, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeBytes");
+  if (s.length >= 2) {
+    const bom0 = s.charCodeAt(0);
+    const bom1 = s.charCodeAt(1);
+    if (bom0 === 0xFF && bom1 === 0xFE) {
+      return [decodeUtf16(s.slice(2), LittleEndian as unknown as ByteOrder), true];
+    }
+    if (bom0 === 0xFE && bom1 === 0xFF) {
+      return [decodeUtf16(s.slice(2), BigEndian as unknown as ByteOrder), true];
+    }
+  }
+  if (s.length >= 3 && s.charCodeAt(0) === 0xEF && s.charCodeAt(1) === 0xBB && s.charCodeAt(2) === 0xBF) {
+    s = s.slice(3);
+  }
+
+  return [s, true];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeUtf16","kind":"func","status":"stub","sigHash":"9a2464e1ae656956db538b4fe310ed91a6ef82b2f3ac7783eca09717f4a3ab84","bodyHash":"bef28f3056dc277d3a4a5ae1f0199ff9987f5779cb4aee263ffe30cb2ef1cc51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeUtf16","kind":"func","status":"implemented","sigHash":"9a2464e1ae656956db538b4fe310ed91a6ef82b2f3ac7783eca09717f4a3ab84","bodyHash":"bef28f3056dc277d3a4a5ae1f0199ff9987f5779cb4aee263ffe30cb2ef1cc51"}
  *
  * Go source:
  * func decodeUtf16(s string, order binary.ByteOrder) string {
@@ -284,5 +425,10 @@ export function decodeBytes(s: string): [string, bool] {
  * }
  */
 export function decodeUtf16(s: string, order: ByteOrder): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::func::decodeUtf16");
+  const ints: number[] = new globalThis.Array(Math.floor(s.length / 2));
+  const err = binary_Read(strings_NewReader(s), order, ints) as GoError;
+  if (err !== undefined) {
+    return "";
+  }
+  return globalThis.String.fromCharCode(...ints);
 }

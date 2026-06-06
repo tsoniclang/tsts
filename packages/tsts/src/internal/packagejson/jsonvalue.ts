@@ -1,7 +1,11 @@
-import type { bool, byte, sbyte } from "@tsonic/core/types.js";
+import type { bool, byte, int, sbyte } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
+
+const textDecoder = new globalThis.TextDecoder();
+type JSONValueElementFactory<T> = (value: JSONValue) => T;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::type::JSONValueType","kind":"type","status":"implemented","sigHash":"48653e3c18d9ae537114c84f85b8ef7b7ac29743e73e629426344b1a042b4309","bodyHash":"ed9c1aa8a995103f20039dc7ed6c47cdd05ec05009f5f7c1992464de231577f3"}
@@ -192,7 +196,7 @@ export function JSONValue_AsString(receiver: JSONValue): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"d74600c87224b4da6556fa3430fcbde298e7369f7760524bd9cdb130acd0ed8a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"d74600c87224b4da6556fa3430fcbde298e7369f7760524bd9cdb130acd0ed8a"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*JSONValue)(nil)
@@ -212,7 +216,7 @@ export function JSONValue_UnmarshalJSONFrom(receiver: GoPtr<JSONValue>, dec: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValue","kind":"func","status":"stub","sigHash":"e14ac71ae617061d90e60613b0171bad28ca5fc385c0eb9c85e7e805c398342c","bodyHash":"1a0095c62aaf75543dc4fd0e481a9f3921b01c64ebf97db5d07b1256a92cd5c7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValue","kind":"func","status":"implemented","sigHash":"e14ac71ae617061d90e60613b0171bad28ca5fc385c0eb9c85e7e805c398342c","bodyHash":"1a0095c62aaf75543dc4fd0e481a9f3921b01c64ebf97db5d07b1256a92cd5c7"}
  *
  * Go source:
  * func unmarshalJSONValue[T any](v *JSONValue, data []byte) error {
@@ -248,12 +252,17 @@ export function JSONValue_UnmarshalJSONFrom(receiver: GoPtr<JSONValue>, dec: GoP
  * 	return nil
  * }
  */
-export function unmarshalJSONValue<T>(v: GoPtr<JSONValue>, data: GoSlice<byte>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValue");
+export function unmarshalJSONValue<T>(v: GoPtr<JSONValue>, data: GoSlice<byte>, elementFactory: JSONValueElementFactory<T> = identityJSONValueElement): GoError {
+  try {
+    assignJSONValue(v, JSON.parse(textDecoder.decode(globalThis.Uint8Array.from(data as Array<number>))), elementFactory);
+    return undefined;
+  } catch (error) {
+    return toJSONError(error);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValueV2","kind":"func","status":"stub","sigHash":"5cd9da10854a2c2a8b607f1f3c44f2ecda6a0c361d9e711befbdb497f489a826","bodyHash":"82f81414a91c00076a1b1fcf80794e84b2f0c77babd5c96311d630c61c8d6859"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValueV2","kind":"func","status":"implemented","sigHash":"5cd9da10854a2c2a8b607f1f3c44f2ecda6a0c361d9e711befbdb497f489a826","bodyHash":"82f81414a91c00076a1b1fcf80794e84b2f0c77babd5c96311d630c61c8d6859"}
  *
  * Go source:
  * func unmarshalJSONValueV2[T any](v *JSONValue, dec *json.Decoder) error {
@@ -308,6 +317,58 @@ export function unmarshalJSONValue<T>(v: GoPtr<JSONValue>, data: GoSlice<byte>):
  * 	return nil
  * }
  */
-export function unmarshalJSONValueV2<T>(v: GoPtr<JSONValue>, dec: GoPtr<Decoder>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/packagejson/jsonvalue.go::func::unmarshalJSONValueV2");
+export function unmarshalJSONValueV2<T>(v: GoPtr<JSONValue>, dec: GoPtr<Decoder>, elementFactory: JSONValueElementFactory<T> = identityJSONValueElement): GoError {
+  if (dec === undefined) {
+    return new globalThis.Error("nil json decoder");
+  }
+  const [value, err] = dec.ReadValue();
+  if (err !== undefined) {
+    return err;
+  }
+  assignJSONValue(v, value, elementFactory);
+  return undefined;
+}
+
+function assignJSONValue<T>(target: GoPtr<JSONValue>, value: unknown, elementFactory: JSONValueElementFactory<T>): void {
+  const decoded = decodeJSONValue(value, elementFactory);
+  target!.Type = decoded.Type;
+  target!.Value = decoded.Value;
+}
+
+function decodeJSONValue<T>(value: unknown, elementFactory: JSONValueElementFactory<T>): JSONValue {
+  if (value === null) {
+    return { Type: JSONValueTypeNull, Value: undefined };
+  }
+  if (typeof value === "string") {
+    return { Type: JSONValueTypeString, Value: value };
+  }
+  if (typeof value === "number") {
+    return { Type: JSONValueTypeNumber, Value: value };
+  }
+  if (typeof value === "boolean") {
+    return { Type: JSONValueTypeBoolean, Value: value };
+  }
+  if (globalThis.Array.isArray(value)) {
+    return {
+      Type: JSONValueTypeArray,
+      Value: value.map(element => elementFactory(decodeJSONValue(element, elementFactory))) as GoSlice<T>,
+    };
+  }
+  if (typeof value === "object") {
+    const entries = globalThis.Object.entries(value as Record<string, unknown>);
+    const object = NewOrderedMapWithSizeHint<string, T>(entries.length as int)!;
+    for (const [key, element] of entries) {
+      OrderedMap_Set(object, key, elementFactory(decodeJSONValue(element, elementFactory)));
+    }
+    return { Type: JSONValueTypeObject, Value: object };
+  }
+  throw new globalThis.Error(`unsupported JSON value: ${String(value)}`);
+}
+
+function identityJSONValueElement<T>(value: JSONValue): T {
+  return value as T;
+}
+
+function toJSONError(error: unknown): globalThis.Error {
+  return error instanceof globalThis.Error ? error : new globalThis.Error(String(error));
 }

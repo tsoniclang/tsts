@@ -3,26 +3,84 @@ import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { IdentifierNode, TypeNode, TypePredicateNodeNode } from "../ast/generated/unions.js";
 import { type SymbolFlags, SymbolFlagsAll } from "../ast/generated/flags.js";
+import type { Kind } from "../ast/generated/kinds.js";
+import {
+  KindCallSignature,
+  KindConstructorType,
+  KindConstructSignature,
+  KindFunctionType,
+  KindSourceFile,
+} from "../ast/generated/kinds.js";
 import type { Symbol } from "../ast/symbol.js";
+import type { SourceFile } from "../ast/ast.js";
+import { GetSourceFileOfNode } from "../ast/utilities.js";
 import type { UTF16Offset } from "../core/core.js";
-import type { Flags, InternalFlags } from "../nodebuilder/types.js";
+import { TSTrue } from "../core/tristate.js";
+import {
+  type Flags,
+  FlagsIgnoreErrors,
+  FlagsNoTruncation,
+  FlagsUseAliasDefinedOutsideCurrentScope,
+  FlagsUseOnlyExternalAliasing,
+  FlagsWriteTypeParametersInQualifiedName,
+  type InternalFlags,
+  InternalFlagsDoNotIncludeSymbolChain,
+  InternalFlagsNone,
+  InternalFlagsWriteComputedProps,
+} from "../nodebuilder/types.js";
 import type { EmitContext } from "../printer/emitcontext.js";
 import type { EmitTextWriter } from "../printer/emittextwriter.js";
+import { NewPrinter } from "../printer/printer/expressions.js";
+import { Printer_Emit, Printer_Write } from "../printer/printer/emit-core.js";
 import type { Printer } from "../printer/printer/state.js";
+import { GetSingleLineStringWriter } from "../printer/singlelinestringwriter.js";
+import { NewTextWriter } from "../printer/textwriter.js";
 import type { Checker } from "./checker/state.js";
-import type { VerbosityContext } from "./nodebuilder.js";
+import { Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfLiteralType } from "./checker/types.js";
+import {
+  Checker_getNodeBuilder,
+  Checker_getNodeBuilderEx,
+  NodeBuilder_EmitContext,
+  NodeBuilder_ExpandSymbolForHover,
+  NodeBuilder_SignatureToSignatureDeclaration,
+  NodeBuilder_SymbolToEntityName,
+  NodeBuilder_SymbolToNode,
+  NodeBuilder_TypeParameterToDeclaration,
+  NodeBuilder_TypePredicateToTypePredicateNode,
+  NodeBuilder_TypeToTypeNode,
+  type VerbosityContext,
+} from "./nodebuilder.js";
+import { defaultMaximumTruncationLength, noTruncationMaximumTruncationLength } from "./nodebuilderimpl.js";
 import { ValueToString } from "./utilities.js";
 import {
   type Signature,
+  SignatureFlagsConstruct,
   SymbolFormatFlagsAllowAnyNodeKind,
   type SymbolFormatFlags,
+  SymbolFormatFlagsDoNotIncludeSymbolChain,
+  SymbolFormatFlagsUseAliasDefinedOutsideCurrentScope,
+  SymbolFormatFlagsUseOnlyExternalAliasing,
+  SymbolFormatFlagsWriteComputedProps,
+  SymbolFormatFlagsWriteTypeParametersOrArguments,
   type Type,
+  type TypeFlags,
+  TypeFlagsBooleanLiteral,
+  TypeFlagsEnumLike,
+  TypeFlagsNull,
+  TypeFlagsNullable,
+  TypeFlagsUndefined,
+  TypeFlagsUnion,
   TypeFormatFlagsAllowUniqueESSymbolType,
   type TypeFormatFlags,
+  TypeFormatFlagsMultilineObjectLiterals,
   TypeFormatFlagsNodeBuilderFlagsMask,
   TypeFormatFlagsNone,
+  TypeFormatFlagsNoTruncation,
   TypeFormatFlagsUseAliasDefinedOutsideCurrentScope,
+  TypeFormatFlagsWriteArrowStyleSignature,
+  TypeFormatFlagsWriteCallStyleSignature,
   type TypePredicate,
+  Type_Types,
 } from "./types.js";
 
 // semicolonRemoverWriter_as_EmitTextWriter adapts a *semicolonRemoverWriter to
@@ -67,7 +125,7 @@ function semicolonRemoverWriter_as_EmitTextWriter(
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"stub","sigHash":"b0e99e4aac87cd803240e4fb6052e4d56ca8741de90fa3c742234c097250ef54","bodyHash":"837650bfbd3edbafc6e2815cef6d1535cfaed34eb000fbf9ee066307db5352e8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults","kind":"func","status":"implemented","sigHash":"b0e99e4aac87cd803240e4fb6052e4d56ca8741de90fa3c742234c097250ef54","bodyHash":"837650bfbd3edbafc6e2815cef6d1535cfaed34eb000fbf9ee066307db5352e8"}
  *
  * Go source:
  * func createPrinterWithDefaults(emitContext *printer.EmitContext) *printer.Printer {
@@ -75,11 +133,11 @@ function semicolonRemoverWriter_as_EmitTextWriter(
  * }
  */
 export function createPrinterWithDefaults(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithDefaults");
+  return NewPrinter({}, {}, emitContext);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveComments","kind":"func","status":"stub","sigHash":"aedf07f8226ded30c11589f6db0cb0542fed24811ae7c22b119580aa11d4c4eb","bodyHash":"ef854b67d3947bf5dfc19f386e07138e67adc2cb0beb1109efd5c23c68bcf43e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveComments","kind":"func","status":"implemented","sigHash":"aedf07f8226ded30c11589f6db0cb0542fed24811ae7c22b119580aa11d4c4eb","bodyHash":"ef854b67d3947bf5dfc19f386e07138e67adc2cb0beb1109efd5c23c68bcf43e"}
  *
  * Go source:
  * func createPrinterWithRemoveComments(emitContext *printer.EmitContext) *printer.Printer {
@@ -87,11 +145,11 @@ export function createPrinterWithDefaults(emitContext: GoPtr<EmitContext>): GoPt
  * }
  */
 export function createPrinterWithRemoveComments(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveComments");
+  return NewPrinter({ RemoveComments: true }, {}, emitContext);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape","kind":"func","status":"stub","sigHash":"e9e0496f9d454042ff3b93d735e220dc4dfecf630f2bfa0160607bb5972cc642","bodyHash":"d7b7e1c77fa97cdebbf1898cf25e569137e35a80d676742dc9553d311dbba2ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"e9e0496f9d454042ff3b93d735e220dc4dfecf630f2bfa0160607bb5972cc642","bodyHash":"d7b7e1c77fa97cdebbf1898cf25e569137e35a80d676742dc9553d311dbba2ac"}
  *
  * Go source:
  * func createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape(emitContext *printer.EmitContext) *printer.Printer {
@@ -103,11 +161,12 @@ export function createPrinterWithRemoveComments(emitContext: GoPtr<EmitContext>)
  * }
  */
 export function createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape");
+  // TODO: OmitTrailingSemicolon support
+  return NewPrinter({ RemoveComments: true, NeverAsciiEscape: true }, {}, emitContext);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsNeverAsciiEscape","kind":"func","status":"stub","sigHash":"7641f0f3fb6a54f494d6f06c640696e7f1f9e6de3fad7bbf753120fd94c7972a","bodyHash":"a9c521877814141fb4aca3e59bd293ed047f7742debb81b0686042b8ca3824ab"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsNeverAsciiEscape","kind":"func","status":"implemented","sigHash":"7641f0f3fb6a54f494d6f06c640696e7f1f9e6de3fad7bbf753120fd94c7972a","bodyHash":"a9c521877814141fb4aca3e59bd293ed047f7742debb81b0686042b8ca3824ab"}
  *
  * Go source:
  * func createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext *printer.EmitContext) *printer.Printer {
@@ -118,7 +177,7 @@ export function createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEs
  * }
  */
 export function createPrinterWithRemoveCommentsNeverAsciiEscape(emitContext: GoPtr<EmitContext>): GoPtr<Printer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::func::createPrinterWithRemoveCommentsNeverAsciiEscape");
+  return NewPrinter({ RemoveComments: true, NeverAsciiEscape: true }, {}, emitContext);
 }
 
 /**
@@ -596,7 +655,7 @@ export function Checker_TypeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToStringEx","kind":"method","status":"stub","sigHash":"3e47a901a8692ae677c394ff74f227bfe286d7b0dcc6c17979e30a793458758d","bodyHash":"9daf9d40883840b046fe949ff2b317e9ae6a5837d429e42d54cfa9b70340ff00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToStringEx","kind":"method","status":"implemented","sigHash":"3e47a901a8692ae677c394ff74f227bfe286d7b0dcc6c17979e30a793458758d","bodyHash":"9daf9d40883840b046fe949ff2b317e9ae6a5837d429e42d54cfa9b70340ff00"}
  *
  * Go source:
  * func (c *Checker) typeToStringEx(t *Type, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -650,7 +709,50 @@ export function Checker_TypeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>,
  * }
  */
 export function Checker_typeToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: TypeFormatFlags, vc: GoPtr<VerbosityContext>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typeToStringEx");
+  const newLine = (flags & TypeFormatFlagsMultilineObjectLiterals) !== 0 ? "\n" : "";
+  const writer = NewTextWriter(newLine, 0);
+  const noTruncation =
+    ((vc === undefined || vc.MaxTruncationLength === 0) && receiver!.compilerOptions!.NoErrorTruncation === TSTrue) ||
+    (flags & TypeFormatFlagsNoTruncation) !== 0;
+  let combinedFlags = (toNodeBuilderFlags(flags) | FlagsIgnoreErrors) >>> 0;
+  if (noTruncation) {
+    combinedFlags = (combinedFlags | FlagsNoTruncation) >>> 0;
+  }
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  if (vc !== undefined) {
+    nodeBuilder!.verbosity = vc;
+  }
+  const typeNode = NodeBuilder_TypeToTypeNode(nodeBuilder, t, enclosingDeclaration, combinedFlags, InternalFlagsNone, undefined);
+  if (typeNode === undefined) {
+    throw new globalThis.Error("should always get typenode");
+  }
+  let p: GoPtr<Printer>;
+  if (t === receiver!.unresolvedType) {
+    p = createPrinterWithDefaults(NodeBuilder_EmitContext(nodeBuilder));
+  } else {
+    p = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));
+  }
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (enclosingDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(enclosingDeclaration);
+  }
+  Printer_Write(p, typeNode, sourceFile, writer, undefined);
+  const result = writer.String();
+
+  let maxLength = defaultMaximumTruncationLength * 2;
+  if (vc !== undefined && vc.MaxTruncationLength > 0) {
+    maxLength = vc.MaxTruncationLength * 10;
+  }
+  if (noTruncation) {
+    maxLength = noTruncationMaximumTruncationLength * 2;
+  }
+  if (maxLength > 0 && result !== "" && result.length >= maxLength) {
+    if (vc !== undefined) {
+      vc.Truncated = true;
+    }
+    return result.slice(0, maxLength - "...".length) + "...";
+  }
+  return result;
 }
 
 /**
@@ -696,7 +798,7 @@ export function Checker_SymbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToStringEx","kind":"method","status":"stub","sigHash":"160d46046728c584ad91eb84e05dbbad353c8b88b8430426e4850068a4c9cca2","bodyHash":"c4fdbdff3000131d0289e7e924d95efaf0a1e6b2d6af4df293485c64a2d2d7e7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToStringEx","kind":"method","status":"implemented","sigHash":"160d46046728c584ad91eb84e05dbbad353c8b88b8430426e4850068a4c9cca2","bodyHash":"c4fdbdff3000131d0289e7e924d95efaf0a1e6b2d6af4df293485c64a2d2d7e7"}
  *
  * Go source:
  * func (c *Checker) symbolToStringEx(symbol *ast.Symbol, enclosingDeclaration *ast.Node, meaning ast.SymbolFlags, flags SymbolFormatFlags) string {
@@ -746,7 +848,49 @@ export function Checker_SymbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPt
  * }
  */
 export function Checker_symbolToStringEx(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, flags: SymbolFormatFlags): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.symbolToStringEx");
+  const [writer, putWriter] = GetSingleLineStringWriter();
+
+  let nodeFlags = FlagsIgnoreErrors as Flags;
+  let internalNodeFlags = InternalFlagsNone;
+  if ((flags & SymbolFormatFlagsUseOnlyExternalAliasing) !== 0) {
+    nodeFlags = (nodeFlags | FlagsUseOnlyExternalAliasing) >>> 0;
+  }
+  if ((flags & SymbolFormatFlagsWriteTypeParametersOrArguments) !== 0) {
+    nodeFlags = (nodeFlags | FlagsWriteTypeParametersInQualifiedName) >>> 0;
+  }
+  if ((flags & SymbolFormatFlagsUseAliasDefinedOutsideCurrentScope) !== 0) {
+    nodeFlags = (nodeFlags | FlagsUseAliasDefinedOutsideCurrentScope) >>> 0;
+  }
+  if ((flags & SymbolFormatFlagsDoNotIncludeSymbolChain) !== 0) {
+    internalNodeFlags = (internalNodeFlags | InternalFlagsDoNotIncludeSymbolChain) >>> 0;
+  }
+  if ((flags & SymbolFormatFlagsWriteComputedProps) !== 0) {
+    internalNodeFlags = (internalNodeFlags | InternalFlagsWriteComputedProps) >>> 0;
+  }
+
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (enclosingDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(enclosingDeclaration);
+  }
+  let printer_: GoPtr<Printer>;
+  // add neverAsciiEscape for GH#39027
+  if (enclosingDeclaration !== undefined && enclosingDeclaration!.Kind === KindSourceFile) {
+    printer_ = createPrinterWithRemoveCommentsNeverAsciiEscape(NodeBuilder_EmitContext(nodeBuilder));
+  } else {
+    printer_ = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));
+  }
+
+  let entity: GoPtr<Node>;
+  if ((flags & SymbolFormatFlagsAllowAnyNodeKind) !== 0) {
+    entity = NodeBuilder_SymbolToNode(nodeBuilder, symbol_, meaning, enclosingDeclaration, nodeFlags, internalNodeFlags, undefined); // TODO: GH#18217
+  } else {
+    entity = NodeBuilder_SymbolToEntityName(nodeBuilder, symbol_, meaning, enclosingDeclaration, nodeFlags, internalNodeFlags, undefined); // TODO: GH#18217
+  }
+  Printer_Write(printer_, entity, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined); // TODO: GH#18217
+  const result = writer.String();
+  putWriter();
+  return result;
 }
 
 /**
@@ -774,7 +918,7 @@ export function Checker_SignatureToStringEx(receiver: GoPtr<Checker>, signature:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToStringEx","kind":"method","status":"stub","sigHash":"1847ac6f0789b15f1ae1847f8507a7c4a5e885c63ee2fb4979e18e6b1db33726","bodyHash":"59a8bac89850f6808fe9fb19fe110d431ab859e2340514db56ecb0336eee0beb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToStringEx","kind":"method","status":"implemented","sigHash":"1847ac6f0789b15f1ae1847f8507a7c4a5e885c63ee2fb4979e18e6b1db33726","bodyHash":"59a8bac89850f6808fe9fb19fe110d431ab859e2340514db56ecb0336eee0beb"}
  *
  * Go source:
  * func (c *Checker) signatureToStringEx(signature *Signature, enclosingDeclaration *ast.Node, flags TypeFormatFlags, vc *VerbosityContext) string {
@@ -817,7 +961,35 @@ export function Checker_SignatureToStringEx(receiver: GoPtr<Checker>, signature:
  * }
  */
 export function Checker_signatureToStringEx(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, enclosingDeclaration: GoPtr<Node>, flags: TypeFormatFlags, vc: GoPtr<VerbosityContext>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.signatureToStringEx");
+  const isConstructor = (signature!.flags & SignatureFlagsConstruct) !== 0 && (flags & TypeFormatFlagsWriteCallStyleSignature) === 0;
+  let sigOutput: Kind;
+  if ((flags & TypeFormatFlagsWriteArrowStyleSignature) !== 0) {
+    sigOutput = isConstructor ? KindConstructorType : KindFunctionType;
+  } else {
+    sigOutput = isConstructor ? KindConstructSignature : KindCallSignature;
+  }
+
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  if (vc !== undefined) {
+    nodeBuilder!.verbosity = vc;
+  }
+  const combinedFlags = (toNodeBuilderFlags(flags) | FlagsIgnoreErrors | FlagsWriteTypeParametersInQualifiedName) >>> 0;
+  const sig = NodeBuilder_SignatureToSignatureDeclaration(nodeBuilder, signature, sigOutput, enclosingDeclaration, combinedFlags, InternalFlagsNone, undefined);
+  const p = createPrinterWithRemoveCommentsOmitTrailingSemicolonNeverAsciiEscape(NodeBuilder_EmitContext(nodeBuilder));
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (enclosingDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(enclosingDeclaration);
+  }
+  if ((flags & TypeFormatFlagsMultilineObjectLiterals) !== 0) {
+    const writer = NewTextWriter("\n", 0);
+    Printer_Write(p, sig, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined);
+    return writer.String();
+  }
+  const [writer, putWriter] = GetSingleLineStringWriter();
+  Printer_Write(p, sig, sourceFile, getTrailingSemicolonDeferringWriter(writer), undefined);
+  const result = writer.String();
+  putWriter();
+  return result;
 }
 
 /**
@@ -838,7 +1010,7 @@ export function Checker_typePredicateToString(receiver: GoPtr<Checker>, typePred
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToStringEx","kind":"method","status":"stub","sigHash":"a105208e1418bf27198898f0e83ef9d845b7f085617bb553145450ca5b67d47a","bodyHash":"10382e649b6bfadfb55496bf7673ef3a8a6de0b049c85c25b11f1ea7dff0bd0f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToStringEx","kind":"method","status":"implemented","sigHash":"a105208e1418bf27198898f0e83ef9d845b7f085617bb553145450ca5b67d47a","bodyHash":"10382e649b6bfadfb55496bf7673ef3a8a6de0b049c85c25b11f1ea7dff0bd0f"}
  *
  * Go source:
  * func (c *Checker) typePredicateToStringEx(typePredicate *TypePredicate, enclosingDeclaration *ast.Node, flags TypeFormatFlags) string {
@@ -857,7 +1029,19 @@ export function Checker_typePredicateToString(receiver: GoPtr<Checker>, typePred
  * }
  */
 export function Checker_typePredicateToStringEx(receiver: GoPtr<Checker>, typePredicate: GoPtr<TypePredicate>, enclosingDeclaration: GoPtr<Node>, flags: TypeFormatFlags): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.typePredicateToStringEx");
+  const [writer, putWriter] = GetSingleLineStringWriter();
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  const combinedFlags = (toNodeBuilderFlags(flags) | FlagsIgnoreErrors | FlagsWriteTypeParametersInQualifiedName) >>> 0;
+  const predicate = NodeBuilder_TypePredicateToTypePredicateNode(nodeBuilder, typePredicate, enclosingDeclaration, combinedFlags, InternalFlagsNone, undefined); // TODO: GH#18217
+  const printer_ = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (enclosingDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(enclosingDeclaration);
+  }
+  Printer_Write(printer_, predicate, sourceFile, writer, undefined);
+  const result = writer.String();
+  putWriter();
+  return result;
 }
 
 /**
@@ -873,7 +1057,7 @@ export function Checker_valueToString(receiver: GoPtr<Checker>, value: unknown):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.formatUnionTypes","kind":"method","status":"stub","sigHash":"a35bf869964e0e1302471ca053a5bf815ee8dd5621aa234719e61947c1d12e62","bodyHash":"cb3f6e35893d08364caaa2994944b74c3b333459e6e4af3720fb39dc88a4d260"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.formatUnionTypes","kind":"method","status":"implemented","sigHash":"a35bf869964e0e1302471ca053a5bf815ee8dd5621aa234719e61947c1d12e62","bodyHash":"cb3f6e35893d08364caaa2994944b74c3b333459e6e4af3720fb39dc88a4d260"}
  *
  * Go source:
  * func (c *Checker) formatUnionTypes(types []*Type, expandingEnum bool) []*Type {
@@ -912,11 +1096,47 @@ export function Checker_valueToString(receiver: GoPtr<Checker>, value: unknown):
  * }
  */
 export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, expandingEnum: bool): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.formatUnionTypes");
+  const result: GoPtr<Type>[] = [];
+  let flags: TypeFlags = 0;
+  for (let i = 0; i < types.length; i++) {
+    const t = types[i];
+    flags = (flags | t!.flags) as TypeFlags;
+    if ((t!.flags & TypeFlagsNullable) === 0) {
+      if ((t!.flags & TypeFlagsBooleanLiteral) !== 0 || (!expandingEnum && (t!.flags & TypeFlagsEnumLike) !== 0)) {
+        let baseType: GoPtr<Type>;
+        if ((t!.flags & TypeFlagsBooleanLiteral) !== 0) {
+          baseType = receiver!.booleanType;
+        } else {
+          baseType = Checker_getBaseTypeOfEnumLikeType(receiver, t);
+        }
+        if ((baseType!.flags & TypeFlagsUnion) !== 0) {
+          const baseTypes = Type_Types(baseType)!;
+          const count = baseTypes.length;
+          if (
+            i + count <= types.length &&
+            Checker_getRegularTypeOfLiteralType(receiver, types[i + count - 1]) ===
+              Checker_getRegularTypeOfLiteralType(receiver, baseTypes[count - 1])
+          ) {
+            result.push(baseType);
+            i += count - 1;
+            continue;
+          }
+        }
+      }
+      result.push(t);
+    }
+  }
+  if ((flags & TypeFlagsNull) !== 0) {
+    result.push(receiver!.nullType);
+  }
+  if ((flags & TypeFlagsUndefined) !== 0) {
+    result.push(receiver!.undefinedType);
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNode","kind":"method","status":"stub","sigHash":"5578e0b4de78b8a94ab1e88dc6a2234f08f1f7898611a316a19bed63329da563","bodyHash":"9ab56ff1f7ecf7e1c4cb37158bd466d9fe2dcd5a41c4f5ef062b6b69c96feb43"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNode","kind":"method","status":"implemented","sigHash":"5578e0b4de78b8a94ab1e88dc6a2234f08f1f7898611a316a19bed63329da563","bodyHash":"9ab56ff1f7ecf7e1c4cb37158bd466d9fe2dcd5a41c4f5ef062b6b69c96feb43"}
  *
  * Go source:
  * func (c *Checker) TypeToTypeNode(t *Type, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypeNode {
@@ -925,11 +1145,12 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
  * }
  */
 export function Checker_TypeToTypeNode(receiver: GoPtr<Checker>, t: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNode");
+  const nodeBuilder = Checker_getNodeBuilderEx(receiver, idToSymbol);
+  return NodeBuilder_TypeToTypeNode(nodeBuilder, t, enclosingDeclaration, flags, InternalFlagsNone, undefined) as GoPtr<TypeNode>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"stub","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e","bodyHash":"26618e0966f5da204a4654dd9e26fbcd6a2c65c3f80136190e6661095a672893"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover","kind":"method","status":"implemented","sigHash":"75529e298e54666d4ca9b4b239701473f9850540d08e01fd74eada6bfae4667e","bodyHash":"26618e0966f5da204a4654dd9e26fbcd6a2c65c3f80136190e6661095a672893"}
  *
  * Go source:
  * func (c *Checker) ExpandSymbolForHover(symbol *ast.Symbol, meaning ast.SymbolFlags, vc *VerbosityContext) string {
@@ -955,11 +1176,29 @@ export function Checker_TypeToTypeNode(receiver: GoPtr<Checker>, t: GoPtr<Type>,
  * }
  */
 export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, vc: GoPtr<VerbosityContext>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.ExpandSymbolForHover");
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  nodeBuilder!.verbosity = vc;
+  const nodes = NodeBuilder_ExpandSymbolForHover(nodeBuilder, symbol_, meaning);
+  if (nodes.length === 0) {
+    return "";
+  }
+  const p = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (symbol_!.ValueDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(symbol_!.ValueDeclaration);
+  }
+  let b = "";
+  for (let i = 0; i < nodes.length; i++) {
+    if (i > 0) {
+      b += "\n";
+    }
+    b += Printer_Emit(p, nodes[i], sourceFile);
+  }
+  return b;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"stub","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7","bodyHash":"fa5a686c2dffaca91697022afee90614f209bc390a60f5b9cdad8d3782e4fb6c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx","kind":"method","status":"implemented","sigHash":"c8c226b537af1260d08bfd906d86ed141afe0aa1170be56b1d14df0824210ff7","bodyHash":"fa5a686c2dffaca91697022afee90614f209bc390a60f5b9cdad8d3782e4fb6c"}
  *
  * Go source:
  * func (c *Checker) TypeParameterToStringEx(t *Type, enclosingDeclaration *ast.Node, vc *VerbosityContext) string {
@@ -978,11 +1217,22 @@ export function Checker_ExpandSymbolForHover(receiver: GoPtr<Checker>, symbol_: 
  * }
  */
 export function Checker_TypeParameterToStringEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, vc: GoPtr<VerbosityContext>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeParameterToStringEx");
+  const nodeBuilder = Checker_getNodeBuilder(receiver);
+  nodeBuilder!.verbosity = vc;
+  const typeParamNode = NodeBuilder_TypeParameterToDeclaration(nodeBuilder, t, enclosingDeclaration, FlagsIgnoreErrors, InternalFlagsNone, undefined);
+  if (typeParamNode === undefined) {
+    return Checker_TypeToString(receiver, t);
+  }
+  const p = createPrinterWithRemoveComments(NodeBuilder_EmitContext(nodeBuilder));
+  let sourceFile: GoPtr<SourceFile> = undefined;
+  if (enclosingDeclaration !== undefined) {
+    sourceFile = GetSourceFileOfNode(enclosingDeclaration);
+  }
+  return Printer_Emit(p, typeParamNode, sourceFile);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNodeEx","kind":"method","status":"stub","sigHash":"6762c56c158f38000e5082405cdf1920d21200d4bca67c67ff16e07c4d7f1d5e","bodyHash":"4380f5a1c5b11612e59130e1a8ea12b0f20555c143f4960d859c1b0ef53453d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNodeEx","kind":"method","status":"implemented","sigHash":"6762c56c158f38000e5082405cdf1920d21200d4bca67c67ff16e07c4d7f1d5e","bodyHash":"4380f5a1c5b11612e59130e1a8ea12b0f20555c143f4960d859c1b0ef53453d3"}
  *
  * Go source:
  * func (c *Checker) TypeToTypeNodeEx(t *Type, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypeNode {
@@ -991,11 +1241,12 @@ export function Checker_TypeParameterToStringEx(receiver: GoPtr<Checker>, t: GoP
  * }
  */
 export function Checker_TypeToTypeNodeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypeToTypeNodeEx");
+  const nodeBuilder = Checker_getNodeBuilderEx(receiver, idToSymbol);
+  return NodeBuilder_TypeToTypeNode(nodeBuilder, t, enclosingDeclaration, flags, internalFlags, undefined) as GoPtr<TypeNode>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypePredicateToTypePredicateNode","kind":"method","status":"stub","sigHash":"854a133b25e03725f4ec44d1364fac5e53331efd51745285fe92bd2e9802dfa6","bodyHash":"8b9a23d7a8ed3b3ace2ca824a60cb50de30b5638ab74903b6d69d1afd400fd9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypePredicateToTypePredicateNode","kind":"method","status":"implemented","sigHash":"854a133b25e03725f4ec44d1364fac5e53331efd51745285fe92bd2e9802dfa6","bodyHash":"8b9a23d7a8ed3b3ace2ca824a60cb50de30b5638ab74903b6d69d1afd400fd9b"}
  *
  * Go source:
  * func (c *Checker) TypePredicateToTypePredicateNode(t *TypePredicate, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, idToSymbol map[*ast.IdentifierNode]*ast.Symbol) *ast.TypePredicateNodeNode {
@@ -1004,5 +1255,6 @@ export function Checker_TypeToTypeNodeEx(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_TypePredicateToTypePredicateNode(receiver: GoPtr<Checker>, t: GoPtr<TypePredicate>, enclosingDeclaration: GoPtr<Node>, flags: Flags, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<TypePredicateNodeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/printer.go::method::Checker.TypePredicateToTypePredicateNode");
+  const nodeBuilder = Checker_getNodeBuilderEx(receiver, idToSymbol);
+  return NodeBuilder_TypePredicateToTypePredicateNode(nodeBuilder, t, enclosingDeclaration, flags, InternalFlagsNone, undefined) as GoPtr<TypePredicateNodeNode>;
 }

@@ -1,5 +1,6 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
+import { Collect } from "../../go/slices.js";
 import { Join, ToLower } from "../../go/strings.js";
 import { Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
@@ -7,6 +8,8 @@ import { SourceFile_Text } from "../ast/ast.js";
 import type { SourceFile } from "../ast/ast.js";
 import { NewCompilerDiagnostic, NewDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
+import { OrderedMap_Keys } from "../collections/ordered_map.js";
+import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewTextRange, TextRange_Pos } from "../core/text.js";
 import { SkipTrivia } from "../scanner/scanner.js";
 import { NameMap_Get } from "./namemap.js";
@@ -14,6 +17,7 @@ import { Filter } from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import {
+  Argument_for_0_option_must_be_Colon_1,
   Compiler_option_0_may_only_be_used_with_build,
   Option_build_must_be_the_first_command_line_argument,
   Unknown_build_option_0,
@@ -25,6 +29,7 @@ import type { CommandLineOption } from "./commandlineoption.js";
 import {
   CommandLineOption_DeprecatedKeys,
   CommandLineOption_Elements,
+  CommandLineOption_EnumMap,
   CommandLineOptionTypeList,
   CommandLineOptionTypeListOrElement,
 } from "./commandlineoption.js";
@@ -33,7 +38,7 @@ import type { commandLineParser } from "./commandlineparser.js";
 import type { AlternateModeDiagnostics } from "./diagnostics.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createDiagnosticForInvalidEnumType","kind":"func","status":"stub","sigHash":"03fe639bfd85437ff755cd68f1279354ff634a63a2c793ac24273db2e134d40f","bodyHash":"7a2f9cc2015958551877c480ef9288cde97f01f315edce44827e6c6785745fa9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createDiagnosticForInvalidEnumType","kind":"func","status":"implemented","sigHash":"03fe639bfd85437ff755cd68f1279354ff634a63a2c793ac24273db2e134d40f","bodyHash":"7a2f9cc2015958551877c480ef9288cde97f01f315edce44827e6c6785745fa9"}
  *
  * Go source:
  * func createDiagnosticForInvalidEnumType(opt *CommandLineOption, sourceFile *ast.SourceFile, node *ast.Node) *ast.Diagnostic {
@@ -44,7 +49,10 @@ import type { AlternateModeDiagnostics } from "./diagnostics.js";
  * }
  */
 export function createDiagnosticForInvalidEnumType(opt: GoPtr<CommandLineOption>, sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/tsoptions/errors.go::func::createDiagnosticForInvalidEnumType");
+  const namesOfType = Collect(OrderedMap_Keys<string, unknown>(CommandLineOption_EnumMap(opt) as GoPtr<OrderedMap<string, unknown>>));
+  const stringNames = formatEnumTypeKeys(opt, namesOfType);
+  const optName = "--" + opt!.Name;
+  return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(sourceFile, node, Argument_for_0_option_must_be_Colon_1, optName, stringNames);
 }
 
 /**

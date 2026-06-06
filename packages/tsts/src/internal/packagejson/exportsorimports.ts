@@ -3,7 +3,7 @@ import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import { OrderedMap_Keys, OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
-import { unmarshalJSONValueV2, JSONValueTypeObject, JSONValueTypeArray } from "./jsonvalue.js";
+import { unmarshalJSONValueV2, JSONValueTypeObject, JSONValueTypeArray, JSONValueTypeNotPresent } from "./jsonvalue.js";
 import type { JSONValue } from "./jsonvalue.js";
 
 /**
@@ -42,12 +42,12 @@ export const objectKindInvalid: objectKind = 4 as objectKind;
  * }
  */
 export interface ExportsOrImports {
-  readonly __tsgoEmbedded0?: JSONValue;
+  __tsgoEmbedded0?: JSONValue;
   objectKind: objectKind;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"21c88ce41254efb67b7c345d1d4eca6a7cdb8ad5d146dc5f38d7ec60dbbafcf5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/exportsorimports.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"21c88ce41254efb67b7c345d1d4eca6a7cdb8ad5d146dc5f38d7ec60dbbafcf5"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*ExportsOrImports)(nil)
@@ -63,7 +63,15 @@ export const __fac7894a_0: UnmarshalerFrom = undefined as never;
  * }
  */
 export function ExportsOrImports_UnmarshalJSONFrom(receiver: GoPtr<ExportsOrImports>, dec: GoPtr<Decoder>): GoError {
-  return unmarshalJSONValueV2<ExportsOrImports>(receiver!.__tsgoEmbedded0 as GoPtr<JSONValue>, dec);
+  const e = receiver!;
+  if (e.__tsgoEmbedded0 === undefined) {
+    e.__tsgoEmbedded0 = { Type: JSONValueTypeNotPresent, Value: undefined };
+  }
+  return unmarshalJSONValueV2<ExportsOrImports>(
+    e.__tsgoEmbedded0,
+    dec,
+    value => ({ __tsgoEmbedded0: value, objectKind: objectKindUnknown }),
+  );
 }
 
 /**

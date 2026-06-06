@@ -128,8 +128,8 @@ export function FileInfo_ImpliedNodeFormat(receiver: GoPtr<FileInfo>): Resolutio
  * }
  */
 export function ComputeHash(text: string, hashWithText: bool): string {
-  const hashBytes = (xxh3.HashString128(text) as { Bytes(): unknown }).Bytes();
-  let hash = hex.EncodeToString(hashBytes) as string;
+  const hashBytes = xxh3.HashString128(text).Bytes();
+  let hash = hex.EncodeToString(hashBytes);
   if (hashWithText) {
     hash += "-" + text;
   }

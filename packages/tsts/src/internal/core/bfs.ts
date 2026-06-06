@@ -1,9 +1,13 @@
-import type { bool, long } from "@tsonic/core/types.js";
+import type { bool, int, long } from "@tsonic/core/types.js";
 import type { GoComparable, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { OrderedMap_Delete, OrderedMap_Has, OrderedMap_Values } from "../collections/ordered_map.js";
+import { OrderedMap_Delete, OrderedMap_EntryAt, OrderedMap_Has, OrderedMap_Set, OrderedMap_Size, OrderedMap_Values } from "../collections/ordered_map.js";
+import { NewOrderedMapFromList, NewOrderedMapWithSizeHint } from "../collections/ordered_map.js";
+import type { MapEntry } from "../collections/ordered_map.js";
+import { SyncSet_AddIfAbsent } from "../collections/syncset.js";
 import type { SyncSet } from "../collections/syncset.js";
+import { Map } from "./core.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::type::BreadthFirstSearchResult","kind":"type","status":"implemented","sigHash":"983db95743f083de914f46fe0f414fcaaeedb3c83b8b8885774e02abb1a1bf77","bodyHash":"309ebf85a8e1d1c8b853258caf629d5709d4c50933b4039bb5709ae637129405"}
@@ -109,7 +113,7 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"stub","sigHash":"5b479e33bd171b6ba49da3f144e952a82e69fe245d13aa2e9b148836b846669a","bodyHash":"4bc5bba5c12ff44aaa3e8697d6b3cf79194af914e1ff5a8a6cf79f37279c6cd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel","kind":"func","status":"implemented","sigHash":"5b479e33bd171b6ba49da3f144e952a82e69fe245d13aa2e9b148836b846669a","bodyHash":"4bc5bba5c12ff44aaa3e8697d6b3cf79194af914e1ff5a8a6cf79f37279c6cd7"}
  *
  * Go source:
  * func BreadthFirstSearchParallel[N comparable](
@@ -121,11 +125,11 @@ export interface BreadthFirstSearchOptions<K extends GoComparable = unknown, N =
  * }
  */
 export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, neighbors: (arg0: N) => GoSlice<N>, visit: (node: N) => [bool, bool]): BreadthFirstSearchResult<N> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallel");
+  return BreadthFirstSearchParallelEx<N, N>(start, neighbors, visit, {} as BreadthFirstSearchOptions<N, N>, (n: N): N => n);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"stub","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705","bodyHash":"2ce499b01553903ae4f70fea7c871e70ec82d58ff3d387a29b8127e2ef04802b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx","kind":"func","status":"implemented","sigHash":"89e6ce09eedbf0d5603510cbecb3482eb5e8b1ea6807e890e060d8d756668705","bodyHash":"2ce499b01553903ae4f70fea7c871e70ec82d58ff3d387a29b8127e2ef04802b"}
  *
  * Go source:
  * func BreadthFirstSearchParallelEx[K comparable, N any](
@@ -137,7 +141,112 @@ export function BreadthFirstSearchParallel<N extends GoComparable>(start: N, nei
  * ) BreadthFirstSearchResult[N] { ... }
  */
 export function BreadthFirstSearchParallelEx<K extends GoComparable, N>(start: N, neighbors: (arg0: N) => GoSlice<N>, visit: (node: N) => [bool, bool], options: BreadthFirstSearchOptions<K, N>, getKey: (arg0: N) => K): BreadthFirstSearchResult<N> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/bfs.go::func::BreadthFirstSearchParallelEx");
+  let visited = options.Visited;
+  if (visited === undefined) {
+    visited = { set: new globalThis.Set<unknown>() } as unknown as SyncSet;
+  }
+
+  interface result {
+    stop: bool;
+    job: GoPtr<breadthFirstSearchJob<N>>;
+    next: GoPtr<OrderedMap<K, GoPtr<breadthFirstSearchJob<N>>>>;
+  }
+
+  let fallback: GoPtr<breadthFirstSearchJob<N>> = undefined;
+
+  // processLevel processes each node at the current level sequentially.
+  const processLevel = (index: number, jobs: GoPtr<OrderedMap<K, GoPtr<breadthFirstSearchJob<N>>>>): result => {
+    let lowestFallback = Number.MAX_SAFE_INTEGER;
+    let lowestGoal = Number.MAX_SAFE_INTEGER;
+    let nextJobCount = 0;
+    if (options.PreprocessLevel !== undefined) {
+      options.PreprocessLevel({ jobs: jobs } as BreadthFirstSearchLevel<K, N>);
+    }
+    const next: GoSlice<GoSlice<GoPtr<breadthFirstSearchJob<N>>>> = new globalThis.Array(OrderedMap_Size(jobs)).fill([]);
+    let i = 0;
+    (OrderedMap_Values(jobs) as (yield_: (value: GoPtr<breadthFirstSearchJob<N>>) => bool) => void)((j: GoPtr<breadthFirstSearchJob<N>>): bool => {
+      const curI = i;
+      i++;
+      if (curI >= lowestGoal) {
+        return true; // continue iteration
+      }
+      // If we have already visited this node, skip it.
+      if (!SyncSet_AddIfAbsent(visited, getKey(j!.node))) {
+        return true;
+      }
+      const [isResult, stop] = visit(j!.node);
+      if (isResult) {
+        if (stop) {
+          if (curI < lowestGoal) {
+            lowestGoal = curI;
+          }
+          return true;
+        }
+        if (fallback === undefined) {
+          if (curI < lowestFallback) {
+            lowestFallback = curI;
+          }
+        }
+      }
+      if (curI >= lowestGoal) {
+        return true;
+      }
+      // Add the next level jobs
+      const neighborNodes = neighbors(j!.node);
+      if (neighborNodes.length > 0) {
+        nextJobCount += neighborNodes.length;
+        next[curI] = Map(neighborNodes, (child: N): GoPtr<breadthFirstSearchJob<N>> => {
+          return { node: child, parent: j };
+        });
+      }
+      return true;
+    });
+    if (lowestGoal !== Number.MAX_SAFE_INTEGER) {
+      const [, job] = OrderedMap_EntryAt(jobs, lowestGoal as int);
+      return { stop: true, job: job, next: undefined };
+    }
+    if (fallback === undefined) {
+      if (lowestFallback !== Number.MAX_SAFE_INTEGER) {
+        const [, fb] = OrderedMap_EntryAt(jobs, lowestFallback as int);
+        fallback = fb;
+      }
+    }
+    const nextJobs = NewOrderedMapWithSizeHint<K, GoPtr<breadthFirstSearchJob<N>>>(nextJobCount as int);
+    for (const jobList of next) {
+      for (const j of jobList) {
+        if (!OrderedMap_Has(nextJobs, getKey(j!.node))) {
+          OrderedMap_Set(nextJobs, getKey(j!.node), j);
+        }
+      }
+    }
+    return { stop: false, job: undefined, next: nextJobs };
+  };
+
+  const createPath = (job: GoPtr<breadthFirstSearchJob<N>>): GoSlice<N> => {
+    const path: GoSlice<N> = [];
+    let cur = job;
+    while (cur !== undefined) {
+      path.push(cur.node);
+      cur = cur.parent;
+    }
+    return path;
+  };
+
+  let levelIndex = 0;
+  let level = NewOrderedMapFromList<K, GoPtr<breadthFirstSearchJob<N>>>([
+    { Key: getKey(start), Value: { node: start, parent: undefined } } as MapEntry<K, GoPtr<breadthFirstSearchJob<N>>>,
+  ]);
+  while (OrderedMap_Size(level) > 0) {
+    const r = processLevel(levelIndex, level);
+    if (r.stop) {
+      return { Stopped: true, Path: createPath(r.job) };
+    } else if (r.job !== undefined && fallback === undefined) {
+      fallback = r.job;
+    }
+    level = r.next!;
+    levelIndex++;
+  }
+  return { Stopped: false, Path: createPath(fallback) };
 }
 
 /**

@@ -8,7 +8,7 @@ import type { SyncMap } from "../../collections/syncmap.js";
 import type { Entries, FileInfo, FS as FS_296ac81f, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"stub","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"3bdbd7415c67215a30a19c2aea69fc8f9ae4c754c629b781144ac763012aa85d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/cachedvfs/cachedvfs.go::type::FS","kind":"type","status":"implemented","sigHash":"4ab1e95f0000b741e0a1207c003511f4aa44319f6dc8e9c634f57d33c3b0afa4","bodyHash":"3bdbd7415c67215a30a19c2aea69fc8f9ae4c754c629b781144ac763012aa85d"}
  *
  * Go source:
  * FS struct {
@@ -305,16 +305,16 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  * 	return ret
  * }
  */
-export function FS_Stat(receiver: GoPtr<FS>, path: string): FileInfo {
+export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, FileInfo>(receiver!.statCache as unknown as SyncMap<string, FileInfo>, path);
+    const [ret, ok] = SyncMap_Load<string, GoPtr<FileInfo>>(receiver!.statCache as unknown as SyncMap<string, GoPtr<FileInfo>>, path);
     if (ok) {
       return ret;
     }
   }
   const ret = receiver!.fs.Stat(path);
   if (receiver!.enabled.Load()) {
-    SyncMap_Store<string, FileInfo>(receiver!.statCache as unknown as SyncMap<string, FileInfo>, path, ret);
+    SyncMap_Store<string, GoPtr<FileInfo>>(receiver!.statCache as unknown as SyncMap<string, GoPtr<FileInfo>>, path, ret);
   }
   return ret;
 }

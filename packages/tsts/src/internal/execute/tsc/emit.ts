@@ -1,5 +1,6 @@
 import type { GoPtr } from "../../../go/compat.js";
 import { Background } from "../../../go/context.js";
+import type { Context } from "../../../go/context.js";
 import { Fprint, Fprintln } from "../../../go/fmt.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
@@ -12,7 +13,8 @@ import {
   Program_Options,
   SortAndDeduplicateDiagnostics,
 } from "../../compiler/program.js";
-import type { EmitResult, Program, ProgramLike, WriteFile } from "../../compiler/program.js";
+import type { EmitOptions, EmitResult, Program, ProgramLike, WriteFile } from "../../compiler/program.js";
+import type { SourceFile } from "../../ast/ast.js";
 import { Message_Localize } from "../../diagnostics/diagnostics.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Locale } from "../../locale/locale.js";
@@ -56,7 +58,7 @@ export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: Co
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"stub","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642","bodyHash":"4f076a1f5307477c5cfd12bb558a34129ff8d11e1855b22c33d0486d04d4cbb8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::type::EmitInput","kind":"type","status":"implemented","sigHash":"f169a5a136b6fe87732fef4df6f4a39a9d86e89ac2e1bd7754542eddd1598642","bodyHash":"4f076a1f5307477c5cfd12bb558a34129ff8d11e1855b22c33d0486d04d4cbb8"}
  *
  * Go source:
  * EmitInput struct {
@@ -145,7 +147,7 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"stub","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559","bodyHash":"6d90ae6ffaff1722e0a0fb6244dfeeba85fd98688819688ff62470c0bc3c1490"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors","kind":"func","status":"implemented","sigHash":"12d76c9302d5e22db5dd76c803b8d9282528114327cfa745a89986a7067f9559","bodyHash":"6d90ae6ffaff1722e0a0fb6244dfeeba85fd98688819688ff62470c0bc3c1490"}
  *
  * Go source:
  * func EmitFilesAndReportErrors(input EmitInput) (result CompileAndEmitResult) {
@@ -210,7 +212,73 @@ export function EmitAndReportStatistics(input: EmitInput): [CompileAndEmitResult
  * }
  */
 export function EmitFilesAndReportErrors(input: EmitInput): CompileAndEmitResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc/emit.go::func::EmitFilesAndReportErrors");
+  type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
+  const result: CompileAndEmitResult = {
+    Diagnostics: [],
+    EmitResult: undefined,
+    Status: ExitStatusSuccess,
+    times: input.CompileTimes,
+  };
+  const ctx: Context = Background();
+
+  let allDiagnostics = GetDiagnosticsOfAnyProgram(
+    ctx,
+    input.ProgramLike,
+    undefined,
+    false,
+    (innerCtx: Context, file: GoPtr<SourceFile>) => {
+      // Options diagnostics include global diagnostics (even though we collect them separately),
+      // and global diagnostics create checkers, which then bind all of the files. Do this binding
+      // early so we can track the time.
+      let pop: (() => void) | undefined;
+      if (input.Tracing !== undefined) {
+        pop = Tracing_Push(input.Tracing, PhaseBind, "bindSourceFiles", undefined as unknown as Map<string, unknown>, true);
+      }
+      const bindStart = input.Sys.Now();
+      const diags = input.ProgramLike.GetBindDiagnostics(innerCtx, file);
+      result.times!.bindTime = (input.Sys.Now() as TimeWithSub).Sub(bindStart) as import("../../../go/time.js").Duration;
+      if (pop !== undefined) {
+        pop();
+      }
+      return diags;
+    },
+    (innerCtx: Context, file: GoPtr<SourceFile>) => {
+      let pop: (() => void) | undefined;
+      if (input.Tracing !== undefined) {
+        pop = Tracing_Push(input.Tracing, PhaseCheck, "checkSourceFiles", undefined as unknown as Map<string, unknown>, true);
+      }
+      const checkStart = input.Sys.Now();
+      const diags = input.ProgramLike.GetSemanticDiagnostics(innerCtx, file);
+      result.times!.checkTime = (input.Sys.Now() as TimeWithSub).Sub(checkStart) as import("../../../go/time.js").Duration;
+      if (pop !== undefined) {
+        pop();
+      }
+      return diags;
+    },
+  );
+
+  let emitResult: GoPtr<EmitResult> = { EmitSkipped: true, Diagnostics: [], EmittedFiles: [], SourceMaps: [] };
+  if (!Tristate_IsTrue(input.ProgramLike.Options()!.ListFilesOnly)) {
+    const emitStart = input.Sys.Now();
+    emitResult = input.ProgramLike.Emit(ctx, { TargetSourceFile: undefined, EmitOnly: 0 as import("../../compiler/emitter.js").EmitOnly, WriteFile: input.WriteFile });
+    result.times!.emitTime = (input.Sys.Now() as TimeWithSub).Sub(emitStart) as import("../../../go/time.js").Duration;
+  }
+  if (emitResult !== undefined) {
+    allDiagnostics = [...allDiagnostics, ...emitResult!.Diagnostics];
+  }
+  if (input.Testing !== undefined) {
+    input.Testing.OnEmittedFiles(emitResult, input.TestingMTimesCache);
+  }
+
+  allDiagnostics = SortAndDeduplicateDiagnostics(allDiagnostics);
+  for (const diagnostic of allDiagnostics) {
+    input.ReportDiagnostic(diagnostic);
+  }
+
+  listFiles(input, emitResult);
+
+  input.ReportErrorSummary(allDiagnostics);
+  return { ...result, Diagnostics: allDiagnostics, EmitResult: emitResult, Status: ExitStatusSuccess };
 }
 
 /**

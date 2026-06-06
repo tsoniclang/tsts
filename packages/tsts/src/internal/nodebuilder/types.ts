@@ -48,7 +48,7 @@ export interface SymbolTracker {
 export type Flags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::FlagsNone+FlagsNoTruncation+FlagsWriteArrayAsGenericType+FlagsGenerateNamesForShadowedTypeParams+FlagsUseStructuralFallback+FlagsForbidIndexedAccessSymbolReferences+FlagsWriteTypeArgumentsOfSignature+FlagsUseFullyQualifiedType+FlagsUseOnlyExternalAliasing+FlagsSuppressAnyReturnType+FlagsWriteTypeParametersInQualifiedName+FlagsMultilineObjectLiterals+FlagsWriteClassExpressionAsTypeLiteral+FlagsUseTypeOfFunction+FlagsOmitParameterModifiers+FlagsUseAliasDefinedOutsideCurrentScope+FlagsUseSingleQuotesForStringLiteralType+FlagsNoTypeReduction+FlagsUseInstantiationExpressions+FlagsOmitThisParameter+FlagsWriteCallStyleSignature+FlagsAllowThisInObjectLiteral+FlagsAllowQualifiedNameInPlaceOfIdentifier+FlagsAllowAnonymousIdentifier+FlagsAllowEmptyUnionOrIntersection+FlagsAllowEmptyTuple+FlagsAllowUniqueESSymbolType+FlagsAllowEmptyIndexInfoType+FlagsAllowNodeModulesRelativePaths+FlagsIgnoreErrors+FlagsInObjectTypeLiteral+FlagsInTypeAlias+FlagsInInitialEntityName","kind":"constGroup","status":"stub","sigHash":"6c6eab77a2768c9d09f2fbc10657c1f230c8f7acd402219f8feb2ddd81f59828","bodyHash":"cccd0ddbcef32023a14b92216596e6af65b23c8dddee08383c865a41025474d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::FlagsNone+FlagsNoTruncation+FlagsWriteArrayAsGenericType+FlagsGenerateNamesForShadowedTypeParams+FlagsUseStructuralFallback+FlagsForbidIndexedAccessSymbolReferences+FlagsWriteTypeArgumentsOfSignature+FlagsUseFullyQualifiedType+FlagsUseOnlyExternalAliasing+FlagsSuppressAnyReturnType+FlagsWriteTypeParametersInQualifiedName+FlagsMultilineObjectLiterals+FlagsWriteClassExpressionAsTypeLiteral+FlagsUseTypeOfFunction+FlagsOmitParameterModifiers+FlagsUseAliasDefinedOutsideCurrentScope+FlagsUseSingleQuotesForStringLiteralType+FlagsNoTypeReduction+FlagsUseInstantiationExpressions+FlagsOmitThisParameter+FlagsWriteCallStyleSignature+FlagsAllowThisInObjectLiteral+FlagsAllowQualifiedNameInPlaceOfIdentifier+FlagsAllowAnonymousIdentifier+FlagsAllowEmptyUnionOrIntersection+FlagsAllowEmptyTuple+FlagsAllowUniqueESSymbolType+FlagsAllowEmptyIndexInfoType+FlagsAllowNodeModulesRelativePaths+FlagsIgnoreErrors+FlagsInObjectTypeLiteral+FlagsInTypeAlias+FlagsInInitialEntityName","kind":"constGroup","status":"implemented","sigHash":"6c6eab77a2768c9d09f2fbc10657c1f230c8f7acd402219f8feb2ddd81f59828","bodyHash":"cccd0ddbcef32023a14b92216596e6af65b23c8dddee08383c865a41025474d4"}
  *
  * Go source:
  * const (
@@ -91,39 +91,39 @@ export type Flags = uint;
  * 	FlagsInInitialEntityName Flags = 1 << 24
  * )
  */
-export const FlagsNone: Flags = undefined as never;
-export const FlagsNoTruncation: Flags = undefined as never;
-export const FlagsWriteArrayAsGenericType: Flags = undefined as never;
-export const FlagsGenerateNamesForShadowedTypeParams: Flags = undefined as never;
-export const FlagsUseStructuralFallback: Flags = undefined as never;
-export const FlagsForbidIndexedAccessSymbolReferences: Flags = undefined as never;
-export const FlagsWriteTypeArgumentsOfSignature: Flags = undefined as never;
-export const FlagsUseFullyQualifiedType: Flags = undefined as never;
-export const FlagsUseOnlyExternalAliasing: Flags = undefined as never;
-export const FlagsSuppressAnyReturnType: Flags = undefined as never;
-export const FlagsWriteTypeParametersInQualifiedName: Flags = undefined as never;
-export const FlagsMultilineObjectLiterals: Flags = undefined as never;
-export const FlagsWriteClassExpressionAsTypeLiteral: Flags = undefined as never;
-export const FlagsUseTypeOfFunction: Flags = undefined as never;
-export const FlagsOmitParameterModifiers: Flags = undefined as never;
-export const FlagsUseAliasDefinedOutsideCurrentScope: Flags = undefined as never;
-export const FlagsUseSingleQuotesForStringLiteralType: Flags = undefined as never;
-export const FlagsNoTypeReduction: Flags = undefined as never;
-export const FlagsUseInstantiationExpressions: Flags = undefined as never;
-export const FlagsOmitThisParameter: Flags = undefined as never;
-export const FlagsWriteCallStyleSignature: Flags = undefined as never;
-export const FlagsAllowThisInObjectLiteral: Flags = undefined as never;
-export const FlagsAllowQualifiedNameInPlaceOfIdentifier: Flags = undefined as never;
-export const FlagsAllowAnonymousIdentifier: Flags = undefined as never;
-export const FlagsAllowEmptyUnionOrIntersection: Flags = undefined as never;
-export const FlagsAllowEmptyTuple: Flags = undefined as never;
-export const FlagsAllowUniqueESSymbolType: Flags = undefined as never;
-export const FlagsAllowEmptyIndexInfoType: Flags = undefined as never;
-export const FlagsAllowNodeModulesRelativePaths: Flags = undefined as never;
-export const FlagsIgnoreErrors: Flags = undefined as never;
-export const FlagsInObjectTypeLiteral: Flags = undefined as never;
-export const FlagsInTypeAlias: Flags = undefined as never;
-export const FlagsInInitialEntityName: Flags = undefined as never;
+export const FlagsNone: Flags = 0 as Flags;
+export const FlagsNoTruncation: Flags = 1 << 0 as Flags;
+export const FlagsWriteArrayAsGenericType: Flags = 1 << 1 as Flags;
+export const FlagsGenerateNamesForShadowedTypeParams: Flags = 1 << 2 as Flags;
+export const FlagsUseStructuralFallback: Flags = 1 << 3 as Flags;
+export const FlagsForbidIndexedAccessSymbolReferences: Flags = 1 << 4 as Flags;
+export const FlagsWriteTypeArgumentsOfSignature: Flags = 1 << 5 as Flags;
+export const FlagsUseFullyQualifiedType: Flags = 1 << 6 as Flags;
+export const FlagsUseOnlyExternalAliasing: Flags = 1 << 7 as Flags;
+export const FlagsSuppressAnyReturnType: Flags = 1 << 8 as Flags;
+export const FlagsWriteTypeParametersInQualifiedName: Flags = 1 << 9 as Flags;
+export const FlagsMultilineObjectLiterals: Flags = 1 << 10 as Flags;
+export const FlagsWriteClassExpressionAsTypeLiteral: Flags = 1 << 11 as Flags;
+export const FlagsUseTypeOfFunction: Flags = 1 << 12 as Flags;
+export const FlagsOmitParameterModifiers: Flags = 1 << 13 as Flags;
+export const FlagsUseAliasDefinedOutsideCurrentScope: Flags = 1 << 14 as Flags;
+export const FlagsUseSingleQuotesForStringLiteralType: Flags = 1 << 28 as Flags;
+export const FlagsNoTypeReduction: Flags = 1 << 29 as Flags;
+export const FlagsUseInstantiationExpressions: Flags = 1 << 30 as Flags;
+export const FlagsOmitThisParameter: Flags = 1 << 25 as Flags;
+export const FlagsWriteCallStyleSignature: Flags = 1 << 27 as Flags;
+export const FlagsAllowThisInObjectLiteral: Flags = 1 << 15 as Flags;
+export const FlagsAllowQualifiedNameInPlaceOfIdentifier: Flags = 1 << 16 as Flags;
+export const FlagsAllowAnonymousIdentifier: Flags = 1 << 17 as Flags;
+export const FlagsAllowEmptyUnionOrIntersection: Flags = 1 << 18 as Flags;
+export const FlagsAllowEmptyTuple: Flags = 1 << 19 as Flags;
+export const FlagsAllowUniqueESSymbolType: Flags = 1 << 20 as Flags;
+export const FlagsAllowEmptyIndexInfoType: Flags = 1 << 21 as Flags;
+export const FlagsAllowNodeModulesRelativePaths: Flags = 1 << 26 as Flags;
+export const FlagsIgnoreErrors: Flags = (FlagsAllowThisInObjectLiteral | FlagsAllowQualifiedNameInPlaceOfIdentifier | FlagsAllowAnonymousIdentifier | FlagsAllowEmptyUnionOrIntersection | FlagsAllowEmptyTuple | FlagsAllowEmptyIndexInfoType | FlagsAllowNodeModulesRelativePaths) as Flags;
+export const FlagsInObjectTypeLiteral: Flags = 1 << 22 as Flags;
+export const FlagsInTypeAlias: Flags = 1 << 23 as Flags;
+export const FlagsInInitialEntityName: Flags = 1 << 24 as Flags;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::type::InternalFlags","kind":"type","status":"stub","sigHash":"8b43ac46a51e12a9ff91c6cf16502b78b6eeff4b5f5f3c574ffa73379f437e26","bodyHash":"ea17b00948a4185cf12714173de63f900f5f4637f2d01943a86305bbd1b6c86e"}
@@ -134,7 +134,7 @@ export const FlagsInInitialEntityName: Flags = undefined as never;
 export type InternalFlags = int;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::InternalFlagsNone+InternalFlagsWriteComputedProps+InternalFlagsNoSyntacticPrinter+InternalFlagsDoNotIncludeSymbolChain+InternalFlagsAllowUnresolvedNames","kind":"constGroup","status":"stub","sigHash":"e338c3597dbc4f56f75a060492fea22a6194cc4f55d746a1850ab3de52719d98","bodyHash":"8982e89bc683b60bb18506efa7b2a2021f26e0f5385c071c6739f0bd5145308f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/nodebuilder/types.go::constGroup::InternalFlagsNone+InternalFlagsWriteComputedProps+InternalFlagsNoSyntacticPrinter+InternalFlagsDoNotIncludeSymbolChain+InternalFlagsAllowUnresolvedNames","kind":"constGroup","status":"implemented","sigHash":"e338c3597dbc4f56f75a060492fea22a6194cc4f55d746a1850ab3de52719d98","bodyHash":"8982e89bc683b60bb18506efa7b2a2021f26e0f5385c071c6739f0bd5145308f"}
  *
  * Go source:
  * const (
@@ -145,8 +145,8 @@ export type InternalFlags = int;
  * 	InternalFlagsAllowUnresolvedNames    InternalFlags = 1 << 3
  * )
  */
-export const InternalFlagsNone: InternalFlags = undefined as never;
-export const InternalFlagsWriteComputedProps: InternalFlags = undefined as never;
-export const InternalFlagsNoSyntacticPrinter: InternalFlags = undefined as never;
-export const InternalFlagsDoNotIncludeSymbolChain: InternalFlags = undefined as never;
-export const InternalFlagsAllowUnresolvedNames: InternalFlags = undefined as never;
+export const InternalFlagsNone: InternalFlags = 0 as InternalFlags;
+export const InternalFlagsWriteComputedProps: InternalFlags = 1 << 0 as InternalFlags;
+export const InternalFlagsNoSyntacticPrinter: InternalFlags = 1 << 1 as InternalFlags;
+export const InternalFlagsDoNotIncludeSymbolChain: InternalFlags = 1 << 2 as InternalFlags;
+export const InternalFlagsAllowUnresolvedNames: InternalFlags = 1 << 3 as InternalFlags;

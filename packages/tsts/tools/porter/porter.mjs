@@ -252,6 +252,8 @@ export function buildStatus(config, snapshot, tsUnits, generatedArtifacts = empt
 
     row.tsPath = tsUnit.path;
     row.tsStatus = tsUnit.status;
+    row.hasUnimplThrow = tsUnit.hasUnimplThrow ?? false;
+    row.kind = tsUnit.kind;
     const sigMatches = !tsUnit.sigHash || tsUnit.sigHash === unit.sigHash;
     const bodyMatches = !tsUnit.bodyHash || tsUnit.bodyHash === unit.bodyHash;
     if (!sigMatches || !bodyMatches) {
@@ -395,6 +397,29 @@ export function scanTsUnits(root) {
           path: path.relative(repoRoot, file).split(path.sep).join("/"),
           metadata,
         });
+        // Check if the first TS export after the JSDoc block throws TSGO_UNIMPLEMENTED.
+        // We skip the JSDoc body (Go source) and only inspect the first export declaration's body.
+        const afterPos = regex.lastIndex;
+        const bigSnippet = text.slice(afterPos, afterPos + 50000);
+        // Skip JSDoc: find */ then the next "export " keyword
+        const docEnd = bigSnippet.indexOf('*/');
+        const exportStart = docEnd >= 0 ? bigSnippet.indexOf('\nexport ', docEnd) : bigSnippet.indexOf('\nexport ');
+        let hasUnimplThrow = false;
+        if (exportStart >= 0) {
+          // Find the first { that opens the body of this export
+          const afterExport = bigSnippet.slice(exportStart, exportStart + 3000);
+          const braceIdx = afterExport.indexOf('{');
+          if (braceIdx >= 0) {
+            let depth = 0, bodyEnd = -1;
+            for (let j = braceIdx; j < Math.min(braceIdx + 2500, afterExport.length); j++) {
+              if (afterExport[j] === '{') depth++;
+              else if (afterExport[j] === '}') { depth--; if (depth === 0) { bodyEnd = j; break; } }
+            }
+            const body = bodyEnd >= 0 ? afterExport.slice(braceIdx, bodyEnd + 1) : afterExport.slice(braceIdx, braceIdx + 2500);
+            hasUnimplThrow = body.includes('TSGO_UNIMPLEMENTED');
+          }
+        }
+        units[units.length - 1].hasUnimplThrow = hasUnimplThrow;
       } catch (error) {
         fail(`invalid @tsgo-unit JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
       }
@@ -2296,6 +2321,19 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectAstArtifactFailures(status.astGeneratedArtifacts ?? emptyAstGeneratedArtifactStatus()));
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
+  if (strictPort) {
+    const rows = status.rows ?? [];
+    // Check implemented units don't throw TSGO_UNIMPLEMENTED
+    const implWithThrow = rows.filter(r => r.tsStatus === 'implemented' && r.hasUnimplThrow);
+    if (implWithThrow.length > 0) {
+      failures.push(`${implWithThrow.length} implemented units still throw TSGO_UNIMPLEMENTED: ${implWithThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
+    }
+    // Check func/method stubs throw TSGO_UNIMPLEMENTED
+    const stubsWithoutThrow = rows.filter(r => r.tsStatus === 'stub' && (r.kind === 'func' || r.kind === 'method') && r.hasUnimplThrow === false);
+    if (stubsWithoutThrow.length > 0) {
+      failures.push(`${stubsWithoutThrow.length} stub func/method units missing TSGO_UNIMPLEMENTED throw: ${stubsWithoutThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
+    }
+  }
   return failures;
 }
 

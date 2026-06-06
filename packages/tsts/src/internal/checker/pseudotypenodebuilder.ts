@@ -80,10 +80,10 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
       const errorNodes = PseudoType_AsPseudoTypeInferred(t)!.ErrorNodes;
       if (errorNodes.length > 0) {
         for (const n of errorNodes) {
-          b.ctx!.tracker.ReportInferenceFallback(n);
+          b.ctx!.tracker!.ReportInferenceFallback(n);
         }
       } else {
-        b.ctx!.tracker.ReportInferenceFallback(PseudoType_AsPseudoTypeInferred(t)!.Expression);
+        b.ctx!.tracker!.ReportInferenceFallback(PseudoType_AsPseudoTypeInferred(t)!.Expression);
       }
     }
     const oldSuppress = b.ctx!.suppressReportInferenceFallback;

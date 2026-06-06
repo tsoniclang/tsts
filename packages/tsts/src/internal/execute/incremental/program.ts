@@ -47,7 +47,7 @@ import { collectAllAffectedFiles } from "./affectedfileshandler.js";
 import { emitFiles } from "./emitfileshandler.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"stub","sigHash":"ac0c33eecbaacc82f41ffe55d9ba7c906febdd4d060a27483938f399b0f01aee","bodyHash":"b55af211c61625d503f2cc14340da8cff9e286acac2d696a37b7b1fe9aa065d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::SignatureUpdateKind","kind":"type","status":"implemented","sigHash":"ac0c33eecbaacc82f41ffe55d9ba7c906febdd4d060a27483938f399b0f01aee","bodyHash":"b55af211c61625d503f2cc14340da8cff9e286acac2d696a37b7b1fe9aa065d0"}
  *
  * Go source:
  * SignatureUpdateKind byte
@@ -69,7 +69,7 @@ export const SignatureUpdateKindStoredAtEmit: SignatureUpdateKind = 1 as Signatu
 export const SignatureUpdateKindUsedVersion: SignatureUpdateKind = 2 as SignatureUpdateKind;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::Program","kind":"type","status":"stub","sigHash":"c60019065d3ec9810ed2446897b82620c3db486992de68fd6eea46cab24d5e45","bodyHash":"62a9aaa5f0c06700779cde58aa4433d2f19ce9760f41bc92fb8270a6900d7b42"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::Program","kind":"type","status":"implemented","sigHash":"c60019065d3ec9810ed2446897b82620c3db486992de68fd6eea46cab24d5e45","bodyHash":"62a9aaa5f0c06700779cde58aa4433d2f19ce9760f41bc92fb8270a6900d7b42"}
  *
  * Go source:
  * Program struct {
@@ -89,7 +89,7 @@ export interface Program {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"20e7598ede71afb069e4d3fa46681aa99cecee0259464b32c8188888a6efab62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"20e7598ede71afb069e4d3fa46681aa99cecee0259464b32c8188888a6efab62"}
  *
  * Go source:
  * var _ compiler.ProgramLike = (*Program)(nil)
@@ -141,7 +141,7 @@ export function NewProgram(program: GoPtr<Program_22a0a6ce>, oldProgram: GoPtr<P
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::TestingData","kind":"type","status":"stub","sigHash":"65de9c1d9070a3a0735728468d50a52f21ad8d2a9e7c088657601b207d63cfbe","bodyHash":"d657b94940bebb7b252dc4a67071b405cc7581646bec731d08168394bc804bff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/program.go::type::TestingData","kind":"type","status":"implemented","sigHash":"65de9c1d9070a3a0735728468d50a52f21ad8d2a9e7c088657601b207d63cfbe","bodyHash":"d657b94940bebb7b252dc4a67071b405cc7581646bec731d08168394bc804bff"}
  *
  * Go source:
  * TestingData struct {

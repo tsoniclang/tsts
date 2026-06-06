@@ -4,9 +4,12 @@ import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_GetOrZero, OrderedMap_Set } from "../collections/ordered_map.js";
 import * as strings from "../../go/strings.js";
 import type { CommandLineOption } from "./commandlineoption.js";
+import { OptionsDeclarations } from "./declscompiler.js";
+import { BuildOpts } from "./declsbuild.js";
+import { OptionsForWatch } from "./declswatch.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::varGroup::CompilerNameMap+BuildNameMap+WatchNameMap","kind":"varGroup","status":"stub","sigHash":"d36f731b41d885eadcd726db4ea35887a601a6a57421910d7c4811456e2f0cbe","bodyHash":"382aad0d92db6ed0fce61aa68cb234eef72cfef3c64b20046ae47a146751e2a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::varGroup::CompilerNameMap+BuildNameMap+WatchNameMap","kind":"varGroup","status":"implemented","sigHash":"d36f731b41d885eadcd726db4ea35887a601a6a57421910d7c4811456e2f0cbe","bodyHash":"382aad0d92db6ed0fce61aa68cb234eef72cfef3c64b20046ae47a146751e2a8"}
  *
  * Go source:
  * var (
@@ -15,9 +18,12 @@ import type { CommandLineOption } from "./commandlineoption.js";
  * 	WatchNameMap    = GetNameMapFromList(OptionsForWatch)
  * )
  */
-export let CompilerNameMap: unknown = undefined as never;
-export let BuildNameMap: unknown = undefined as never;
-export let WatchNameMap: unknown = undefined as never;
+// Go initializes package-level vars by dependency order; these depend on
+// OptionsDeclarations, BuildOpts, and OptionsForWatch (defined in other files
+// with late assignments), so they are assigned after those declarations.
+export let CompilerNameMap: GoPtr<NameMap> = undefined as never;
+export let BuildNameMap: GoPtr<NameMap> = undefined as never;
+export let WatchNameMap: GoPtr<NameMap> = undefined as never;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::func::GetNameMapFromList","kind":"func","status":"implemented","sigHash":"06ddc8e3ab68388bc725a46d40a8fb6c4b86970f9736dd6d231c58ecfa81e1de","bodyHash":"a8eb468b647e920f49036ceffb2441326909814b7c7b62d8715adf78a31d67f1"}
@@ -135,3 +141,10 @@ export function NameMap_GetOptionDeclarationFromName(receiver: GoPtr<NameMap>, o
   })();
   return NameMap_Get(nm, resolved);
 }
+
+// Assigned here (after OptionsDeclarations, BuildOpts, and OptionsForWatch are
+// initialized in their respective modules) to match Go's dependency-ordered
+// package-level var initialization.
+CompilerNameMap = GetNameMapFromList(OptionsDeclarations);
+BuildNameMap = GetNameMapFromList(BuildOpts);
+WatchNameMap = GetNameMapFromList(OptionsForWatch);

@@ -20,7 +20,7 @@ import { ProgramOptions_canUseProjectReferenceSource } from "./program.js";
 import type { ProgramOptions } from "./program.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"stub","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6","bodyHash":"c70ffa65c0a7cbf4488dcb61bb0f1edc90d7ae2469629d6e4783f50b6301ad94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/projectreferencefilemapper.go::type::projectReferenceFileMapper","kind":"type","status":"implemented","sigHash":"bd29532226153c9421c0d64a9c1657c520691d16f8be0fccc4a85fabb8130ee6","bodyHash":"c70ffa65c0a7cbf4488dcb61bb0f1edc90d7ae2469629d6e4783f50b6301ad94"}
  *
  * Go source:
  * projectReferenceFileMapper struct {
@@ -39,7 +39,7 @@ import type { ProgramOptions } from "./program.js";
  */
 export interface projectReferenceFileMapper {
   opts: ProgramOptions;
-  host: ResolutionHost;
+  host: GoPtr<ResolutionHost>;
   loader: GoPtr<fileLoader>;
   configToProjectReference: GoMap<Path, GoPtr<ParsedCommandLine>>;
   referencesInConfigFile: GoMap<Path, GoSlice<Path>>;
@@ -403,7 +403,7 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
     if (!strings.Contains(fileName, "/node_modules/")) {
       SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
     } else {
-      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host.FS().Realpath(fileName));
+      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS().Realpath(fileName));
       if (realDeclarationPath === path) {
         SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
       } else {

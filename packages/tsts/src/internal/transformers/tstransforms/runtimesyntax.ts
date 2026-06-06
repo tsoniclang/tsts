@@ -1,8 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { IfElse } from "../../core/core.js";
-import type { Node, NodeFactoryCoercible } from "../../ast/spine.js";
-import { Node_Clone, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
+import { Coalesce, Find, IfElse } from "../../core/core.js";
+import type { ModifierList, Node, NodeFactoryCoercible } from "../../ast/spine.js";
+import { Node_Clone, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_AsNode, Node_Modifiers, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
 import {
   KindArrayBindingPattern,
   KindBlock,
@@ -28,6 +28,7 @@ import {
   KindProtectedKeyword,
   KindPublicKeyword,
   KindReadonlyKeyword,
+  KindEqualsToken,
   KindShorthandPropertyAssignment,
   KindSourceFile,
   KindStringLiteral,
@@ -38,18 +39,21 @@ import { NodeFlagsLet, NodeFlagsNone } from "../../ast/generated/flags.js";
 import {
   ModifierFlagsDecorator,
   ModifierFlagsExport,
+  ModifierFlagsExportDefault,
   ModifierFlagsTypeScriptModifier,
 } from "../../ast/modifierflags.js";
-import { IsEnumDeclaration, IsIdentifier, IsModuleDeclaration } from "../../ast/generated/predicates.js";
-import { IsBindingPattern, IsEnumConst, IsInstantiatedModule, IsParameterPropertyDeclaration } from "../../ast/utilities.js";
-import { Node_Elements, Node_ModifierFlags, Node_Parameters, Node_Text } from "../../ast/ast.js";
+import { IsConstructorDeclaration, IsEnumDeclaration, IsIdentifier, IsModuleDeclaration, IsTryStatement } from "../../ast/generated/predicates.js";
+import { ChildIsDecorated, IsBindingPattern, IsEnumConst, IsInstantiatedModule, IsParameterPropertyDeclaration } from "../../ast/utilities.js";
+import { Node_Elements, Node_ModifierFlags, Node_ParameterList, Node_Parameters, Node_Text, NodeFactory_UpdateBlock, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateShorthandPropertyAssignment, NodeFactory_UpdateTryStatement } from "../../ast/ast.js";
 import { SubtreeContainsIdentifier, SubtreeContainsTypeScript } from "../../ast/subtreefacts.js";
-import { AsClassDeclaration, AsComputedPropertyName, AsConstructorDeclaration, AsEnumDeclaration, AsFunctionDeclaration, AsImportEqualsDeclaration, AsModuleDeclaration, AsParameterDeclaration, AsShorthandPropertyAssignment, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
+import { AsBlock, AsClassDeclaration, AsComputedPropertyName, AsConstructorDeclaration, AsEnumDeclaration, AsEnumMember, AsFunctionDeclaration, AsImportEqualsDeclaration, AsModuleBlock, AsModuleDeclaration, AsParameterDeclaration, AsShorthandPropertyAssignment, AsTryStatement, AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
 import { TokenFlagsNone } from "../../ast/tokenflags.js";
-import { CompilerOptions_ShouldPreserveConstEnums } from "../../core/compileroptions.js";
+import { CompilerOptions_GetEmitModuleKind, CompilerOptions_ShouldPreserveConstEnums, ModuleKindSystem } from "../../core/compileroptions.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
-import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes, NodeVisitor_VisitSlice } from "../../ast/visitor.js";
 import { IsGeneratedIdentifier, IsIdentifierReference, IsLocalName } from "../utilities.js";
+import { ConvertVariableDeclarationToAssignmentExpression, FindSuperStatementIndexPath } from "../utilities.js";
+import { FlattenDestructuringAssignment, FlattenLevelAll } from "../destructuring.js";
 import { ExtractModifiers } from "../modifiervisitor.js";
 import type {
   Block,
@@ -60,9 +64,12 @@ import type {
   EnumMember,
   FunctionDeclaration,
   ImportEqualsDeclaration,
+  ModuleBlock,
   ModuleDeclaration,
   ParameterDeclaration,
   ShorthandPropertyAssignment,
+  TryStatement,
+  VariableDeclaration,
   VariableStatement,
 } from "../../ast/generated/data.js";
 import { EnumDeclaration_as_nodeData, ModuleDeclaration_as_nodeData } from "../../ast/generated/data.js";
@@ -76,11 +83,23 @@ import type {
   Statement,
 } from "../../ast/generated/unions.js";
 import {
+  NewBinaryExpression,
+  NewBlock,
+  NewCallExpression,
   NewElementAccessExpression,
   NewExpressionStatement,
+  NewFunctionExpression,
   NewIdentifier,
   NewNumericLiteral,
+  NewObjectLiteralExpression,
+  NewParameterDeclaration,
+  NewParenthesizedExpression,
+  NewPropertyAccessExpression,
+  NewPropertyAssignment,
+  NewPropertyDeclaration,
   NewStringLiteral,
+  NewSyntaxList,
+  NewToken,
   NewVariableDeclaration,
   NewVariableDeclarationList,
   NewVariableStatement,
@@ -92,34 +111,52 @@ import { TextRange_WithPos } from "../../core/text.js";
 import {
   EmitContext_AddEmitFlags,
   EmitContext_AssignCommentAndSourceMapRanges,
+  EmitContext_EndAndMergeVariableEnvironment,
   EmitContext_MostOriginal,
+  EmitContext_NewNotEmittedStatement,
   EmitContext_ParseNode,
   EmitContext_SetCommentRange,
   EmitContext_SetEmitFlags,
   EmitContext_SetOriginal,
   EmitContext_SetSourceMapRange,
+  EmitContext_StartVariableEnvironment,
+  EmitContext_VisitFunctionBody,
+  EmitContext_VisitParameters,
 } from "../../printer/emitcontext.js";
 import {
   EFNoComments,
+  EFNoLeadingComments,
   EFNoNestedComments,
   EFNoNestedSourceMaps,
   EFNoSourceMap,
+  EFNone,
   EFNoTrailingComments,
+  EFStartOnNewLine,
 } from "../../printer/emitflags.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import {
+  NodeFactory_CreateExpressionFromEntityName,
   NodeFactory_GetDeclarationNameEx,
   NodeFactory_GetExternalModuleOrNamespaceExportName,
   NodeFactory_GetLocalName,
   NodeFactory_GetLocalNameEx,
   NodeFactory_GetNamespaceMemberName,
+  NodeFactory_InlineExpressions,
   NodeFactory_NewAssignmentExpression,
   NodeFactory_NewGeneratedNameForNode,
+  NodeFactory_NewLogicalORExpression,
   NodeFactory_NewStringLiteralFromNode,
+  NodeFactory_NewThisExpression,
+  NodeFactory_NewVoidZeroExpression,
+  NodeFactory_SplitStandardPrologue,
 } from "../../printer/factory.js";
+import type { Number as JsNumber } from "../../jsnum/jsnum.js";
+import type { Result } from "../../evaluator/evaluator.js";
+import { constantExpression } from "./utilities.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::type::RuntimeSyntaxTransformer","kind":"type","status":"implemented","sigHash":"60ac09ddc0df66acaac125944f07657585e16fe81b3e057942787c81d8c958b6","bodyHash":"f6da722d67500e59af9792d655cb93c0162bf9294c6412407cbdc162733836ae"}
@@ -720,7 +757,7 @@ export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<Ru
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitEnumDeclaration","kind":"method","status":"stub","sigHash":"fd11e7f151ea4867cb66fae4d5210c2eaa84fbccc469bf2673d990ee4d083c57","bodyHash":"290f9137965949f757d506fdb5b9c46881c7ddd4b0c860cb5bc2d5c8ee1e5c6a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitEnumDeclaration","kind":"method","status":"implemented","sigHash":"fd11e7f151ea4867cb66fae4d5210c2eaa84fbccc469bf2673d990ee4d083c57","bodyHash":"290f9137965949f757d506fdb5b9c46881c7ddd4b0c860cb5bc2d5c8ee1e5c6a"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitEnumDeclaration(node *ast.EnumDeclaration) *ast.Node {
@@ -740,11 +777,55 @@ export function RuntimeSyntaxTransformer_addVarForDeclaration(receiver: GoPtr<Ru
  * }
  */
 export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<EnumDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitEnumDeclaration");
+  if (!RuntimeSyntaxTransformer_shouldEmitEnumDeclaration(receiver, node)) {
+    return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), EnumDeclaration_as_nodeData(node).AsNode());
+  }
+
+  let statements: GoSlice<GoPtr<Statement>> = [];
+  const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, EnumDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
+  statements = statementsAfterVar;
+
+  let emitFlags = EFNone;
+  if (varAdded && (CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) !== ModuleKindSystem || receiver!.currentScope !== receiver!.currentSourceFile)) {
+    emitFlags = emitFlags | EFNoLeadingComments;
+  }
+
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const nodeAsNode = EnumDeclaration_as_nodeData(node).AsNode();
+
+  const enumArg0 = NodeFactory_NewLogicalORExpression(
+    factory,
+    RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
+    NodeFactory_NewAssignmentExpression(
+      factory,
+      RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
+      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false),
+    ),
+  );
+
+  let enumArg = enumArg0;
+  if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, nodeAsNode)) {
+    const localName = NodeFactory_GetLocalNameEx(factory, nodeAsNode as unknown as GoPtr<Declaration>, { AllowComments: false, AllowSourceMaps: true, IgnoreAssignedName: false });
+    enumArg = NodeFactory_NewAssignmentExpression(factory, localName, enumArg);
+  }
+
+  const enumParamName = NodeFactory_NewGeneratedNameForNode(factory, nodeAsNode);
+  EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumParamName, Node_Name(nodeAsNode)!.Loc);
+
+  const enumParam = NewParameterDeclaration(astFactory, undefined, undefined, enumParamName, undefined, undefined, undefined);
+  const enumBody = RuntimeSyntaxTransformer_transformEnumBody(receiver, node);
+  const enumFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, [enumParam]), undefined, undefined, enumBody);
+  const enumCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, enumFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, [enumArg]), NodeFlagsNone);
+  const enumStatement = NewExpressionStatement(astFactory, enumCall);
+  EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
+  EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, nodeAsNode);
+  EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), enumStatement, emitFlags);
+  return NewSyntaxList(astFactory, [...statements, enumStatement]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumBody","kind":"method","status":"stub","sigHash":"9fef6ae9d34c97a4043a9ffd682b3f1a94b4af5227c0ae8d211228ad7644dfd0","bodyHash":"e5fe96ef2e1d4660802ae3666ce18a070cc3af4b68ee9eb78e8112a0e99cf52b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumBody","kind":"method","status":"implemented","sigHash":"9fef6ae9d34c97a4043a9ffd682b3f1a94b4af5227c0ae8d211228ad7644dfd0","bodyHash":"e5fe96ef2e1d4660802ae3666ce18a070cc3af4b68ee9eb78e8112a0e99cf52b"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformEnumBody(node *ast.EnumDeclaration) *ast.BlockNode {
@@ -756,11 +837,28 @@ export function RuntimeSyntaxTransformer_visitEnumDeclaration(receiver: GoPtr<Ru
  * }
  */
 export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<EnumDeclaration>): GoPtr<BlockNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumBody");
+  const savedCurrentEnum = receiver!.currentEnum;
+  receiver!.currentEnum = Node_AsNode(node) as unknown as GoPtr<EnumDeclarationNode>;
+
+  // visit the children of `node` in advance to capture any references to enum members
+  const visitedNode = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
+  const visitedEnum = AsEnumDeclaration(visitedNode);
+
+  let statements: GoSlice<GoPtr<Statement>> = [];
+  for (let i = 0; i < visitedEnum!.Members!.Nodes!.length; i++) {
+    statements = RuntimeSyntaxTransformer_transformEnumMember(receiver, statements, visitedEnum, i);
+  }
+
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const statementList = NodeFactory_NewNodeList(astFactory, statements);
+  statementList!.Loc = visitedEnum!.Members!.Loc;
+
+  receiver!.currentEnum = savedCurrentEnum;
+  return NewBlock(astFactory, statementList, true /*multiline*/);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember","kind":"method","status":"stub","sigHash":"4fd24669997aaec2c65b694a1c2450f4c2ef8a83b517ca7cef4bcdffae1186a0","bodyHash":"b83e04cc22e0772053ae1e55d8c88b2f578c02c27becaa4d0fb1150b588639d8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember","kind":"method","status":"implemented","sigHash":"4fd24669997aaec2c65b694a1c2450f4c2ef8a83b517ca7cef4bcdffae1186a0","bodyHash":"b83e04cc22e0772053ae1e55d8c88b2f578c02c27becaa4d0fb1150b588639d8"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformEnumMember(statements []*ast.Statement, enum *ast.EnumDeclaration, index int) []*ast.Statement {
@@ -768,11 +866,74 @@ export function RuntimeSyntaxTransformer_transformEnumBody(receiver: GoPtr<Runti
  * }
  */
 export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<RuntimeSyntaxTransformer>, statements: GoSlice<GoPtr<Statement>>, enum_: GoPtr<EnumDeclaration>, index: int): GoSlice<GoPtr<Statement>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformEnumMember");
+  const memberNode = enum_!.Members!.Nodes![index];
+  const member = AsEnumMember(memberNode);
+
+  const savedParent = receiver!.parentNode;
+  receiver!.parentNode = receiver!.currentNode;
+  receiver!.currentNode = memberNode;
+
+  // E[E["A"] = x] = "A";
+  //             ^
+  let expression: GoPtr<Node> = member!.Initializer; // NOTE: already visited
+
+  let useExplicitReverseMapping = false;
+
+  const parseNode = EmitContext_ParseNode(Transformer_EmitContext(receiver!.__tsgoEmbedded0), memberNode);
+  const result = receiver!.emitResolver.GetEnumMemberValue(parseNode);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  if (typeof result.Value === "number") {
+    const value = result.Value as JsNumber;
+    expression = Coalesce(constantExpression(value, factory), expression);
+    useExplicitReverseMapping = true;
+  } else if (typeof result.Value === "string") {
+    const value = result.Value as string;
+    expression = Coalesce(constantExpression(value, factory), expression);
+  } else {
+    if (expression === undefined) {
+      expression = NodeFactory_NewVoidZeroExpression(factory);
+    }
+    useExplicitReverseMapping = !result.IsSyntacticallyString;
+  }
+
+  // Define the enum member property:
+  //  E[E["A"] = 0] = "A";
+  //    ^^^^^^^^--_____
+  expression = NodeFactory_NewAssignmentExpression(
+    factory,
+    RuntimeSyntaxTransformer_getEnumQualifiedElement(receiver, enum_, member),
+    expression,
+  );
+
+  if (useExplicitReverseMapping) {
+    //  E[E["A"] = 0] = "A";
+    //  ^^--------------^^^^^
+    const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+    expression = NodeFactory_NewAssignmentExpression(
+      factory,
+      NewElementAccessExpression(
+        Transformer_EmitContext(receiver!.__tsgoEmbedded0)!.Factory!.__tsgoEmbedded0,
+        RuntimeSyntaxTransformer_getNamespaceContainerName(receiver, Node_AsNode(enum_)),
+        undefined /*questionDotToken*/,
+        expression,
+        NodeFlagsNone,
+      ),
+      RuntimeSyntaxTransformer_getExpressionForPropertyName(receiver, member),
+    );
+  }
+
+  const astFactory2 = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const memberStatement = NewExpressionStatement(astFactory2, expression);
+  EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), expression, memberNode);
+  EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), memberStatement, memberNode);
+
+  receiver!.currentNode = receiver!.parentNode;
+  receiver!.parentNode = savedParent;
+  return [...statements, memberStatement];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitModuleDeclaration","kind":"method","status":"stub","sigHash":"41dcfe9d138ac07c2622eebf7c4774501777738dfe9f45eabaf372de70e8228e","bodyHash":"e34226ccf3c5cc637b6f6b2c47d9c253a45efc8c06daef8668980fd35073d59d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitModuleDeclaration","kind":"method","status":"implemented","sigHash":"41dcfe9d138ac07c2622eebf7c4774501777738dfe9f45eabaf372de70e8228e","bodyHash":"e34226ccf3c5cc637b6f6b2c47d9c253a45efc8c06daef8668980fd35073d59d"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitModuleDeclaration(node *ast.ModuleDeclaration) *ast.Node {
@@ -780,11 +941,58 @@ export function RuntimeSyntaxTransformer_transformEnumMember(receiver: GoPtr<Run
  * }
  */
 export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ModuleDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitModuleDeclaration");
+  if (!RuntimeSyntaxTransformer_shouldEmitModuleDeclaration(receiver, node)) {
+    return EmitContext_NewNotEmittedStatement(Transformer_EmitContext(receiver!.__tsgoEmbedded0), ModuleDeclaration_as_nodeData(node).AsNode());
+  }
+
+  let statements: GoSlice<GoPtr<Statement>> = [];
+  const [statementsAfterVar, varAdded] = RuntimeSyntaxTransformer_addVarForDeclaration(receiver, statements, ModuleDeclaration_as_nodeData(node).AsNode() as unknown as GoPtr<Declaration>);
+  statements = statementsAfterVar;
+
+  let emitFlags = EFNone;
+  if (varAdded && (CompilerOptions_GetEmitModuleKind(receiver!.compilerOptions) !== ModuleKindSystem || receiver!.currentScope !== receiver!.currentSourceFile)) {
+    emitFlags = emitFlags | EFNoLeadingComments;
+  }
+
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const nodeAsNode = ModuleDeclaration_as_nodeData(node).AsNode();
+
+  //  x || (x = {})
+  //  exports.x || (exports.x = {})
+  const moduleArg0 = NodeFactory_NewLogicalORExpression(
+    factory,
+    RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
+    NodeFactory_NewAssignmentExpression(
+      factory,
+      RuntimeSyntaxTransformer_getExportQualifiedReferenceToDeclaration(receiver, nodeAsNode as unknown as GoPtr<Declaration>),
+      NewObjectLiteralExpression(astFactory, NodeFactory_NewNodeList(astFactory, []), false),
+    ),
+  );
+
+  let moduleArg = moduleArg0;
+  if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, nodeAsNode)) {
+    const localName = NodeFactory_GetLocalNameEx(factory, nodeAsNode as unknown as GoPtr<Declaration>, { AllowComments: false, AllowSourceMaps: true, IgnoreAssignedName: false });
+    moduleArg = NodeFactory_NewAssignmentExpression(factory, localName, moduleArg);
+  }
+
+  // (function (name) { ... })(name || (name = {}))
+  const moduleParamName = NodeFactory_NewGeneratedNameForNode(factory, nodeAsNode);
+  EmitContext_SetSourceMapRange(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleParamName, Node_Name(nodeAsNode)!.Loc);
+
+  const moduleParam = NewParameterDeclaration(astFactory, undefined, undefined, moduleParamName, undefined, undefined, undefined);
+  const moduleBody = RuntimeSyntaxTransformer_transformModuleBody(receiver, node, RuntimeSyntaxTransformer_getNamespaceContainerName(receiver, nodeAsNode));
+  const moduleFunc = NewFunctionExpression(astFactory, undefined, undefined, undefined, undefined, NodeFactory_NewNodeList(astFactory, [moduleParam]), undefined, undefined, moduleBody);
+  const moduleCall = NewCallExpression(astFactory, NewParenthesizedExpression(astFactory, moduleFunc), undefined, undefined, NodeFactory_NewNodeList(astFactory, [moduleArg]), NodeFlagsNone);
+  const moduleStatement = NewExpressionStatement(astFactory, moduleCall);
+  EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
+  EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, nodeAsNode);
+  EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleStatement, emitFlags);
+  return NewSyntaxList(astFactory, [...statements, moduleStatement]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformModuleBody","kind":"method","status":"stub","sigHash":"49dd4d5a8be1fd451738b376bbd3e3d0c5a4e02ea98c7c6c89aa6f32a377bf4c","bodyHash":"80ff4703f8d2ec7ca921c6be9dfc6a05614ab0204b03cf01f73047278eccaaec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformModuleBody","kind":"method","status":"implemented","sigHash":"49dd4d5a8be1fd451738b376bbd3e3d0c5a4e02ea98c7c6c89aa6f32a377bf4c","bodyHash":"80ff4703f8d2ec7ca921c6be9dfc6a05614ab0204b03cf01f73047278eccaaec"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformModuleBody(node *ast.ModuleDeclaration, namespaceLocalName *ast.IdentifierNode) *ast.BlockNode {
@@ -792,11 +1000,60 @@ export function RuntimeSyntaxTransformer_visitModuleDeclaration(receiver: GoPtr<
  * }
  */
 export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ModuleDeclaration>, namespaceLocalName: GoPtr<IdentifierNode>): GoPtr<BlockNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformModuleBody");
+  const savedCurrentNamespace = receiver!.currentNamespace;
+  const savedCurrentScope = receiver!.currentScope;
+  const savedCurrentScopeFirstDeclarationsOfName = receiver!.currentScopeFirstDeclarationsOfName;
+
+  receiver!.currentNamespace = Node_AsNode(node) as unknown as GoPtr<ModuleDeclarationNode>;
+  receiver!.currentScopeFirstDeclarationsOfName = undefined;
+
+  let statements: GoSlice<GoPtr<Statement>> = [];
+  EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));
+
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+
+  let statementsLocation: TextRange = { pos: 0, end: 0 };
+  let blockLocation: TextRange = { pos: 0, end: 0 };
+
+  if (node!.Body !== undefined) {
+    if (node!.Body!.Kind === KindModuleBlock) {
+      // visit the children of `node` in advance to capture any references to namespace members
+      const visitedNode = NodeVisitor_VisitEachChild(visitor, Node_AsNode(node));
+      const visitedModule = AsModuleDeclaration(visitedNode);
+      const body = AsModuleBlock(visitedModule!.Body);
+      statements = body!.Statements!.Nodes! as GoSlice<GoPtr<Statement>>;
+      statementsLocation = body!.Statements!.Loc;
+      blockLocation = body!.Loc;
+    } else { // node.Body.Kind == KindModuleDeclaration
+      const [visitedStatements] = NodeVisitor_VisitSlice(visitor, [node!.Body]);
+      statements = visitedStatements as GoSlice<GoPtr<Statement>>;
+      const innermostModule = getInnermostModuleDeclarationFromDottedModule(node);
+      const moduleBlock = AsModuleBlock(innermostModule!.Body);
+      statementsLocation = TextRange_WithPos(moduleBlock!.Statements!.Loc, -1);
+    }
+  }
+
+  receiver!.currentNamespace = savedCurrentNamespace;
+  receiver!.currentScope = savedCurrentScope;
+  receiver!.currentScopeFirstDeclarationsOfName = savedCurrentScopeFirstDeclarationsOfName;
+
+  statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
+  const statementList = NodeFactory_NewNodeList(astFactory, statements);
+  statementList!.Loc = statementsLocation;
+  const block = NewBlock(astFactory, statementList, true /*multiline*/);
+  block!.Loc = blockLocation;
+
+  //  namespace hello.hi.world { ... }
+  //  should not emit comment on outer namespaces
+  if (node!.Body === undefined || node!.Body!.Kind !== KindModuleBlock) {
+    EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), block, EFNoComments);
+  }
+  return block;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitImportEqualsDeclaration","kind":"method","status":"stub","sigHash":"e362299bbc7fabda2e4503f90ffd3eca5122c7509dd0d47829a0d0f0f175f814","bodyHash":"ee8292060e5ef2fae90c8c8c59c96f5594f4d90f304ac5b88b0f702767438813"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"e362299bbc7fabda2e4503f90ffd3eca5122c7509dd0d47829a0d0f0f175f814","bodyHash":"ee8292060e5ef2fae90c8c8c59c96f5594f4d90f304ac5b88b0f702767438813"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) *ast.Node {
@@ -804,11 +1061,37 @@ export function RuntimeSyntaxTransformer_transformModuleBody(receiver: GoPtr<Run
  * }
  */
 export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ImportEqualsDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitImportEqualsDeclaration");
+  if (node!.ModuleReference!.Kind === KindExternalModuleReference) {
+    return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
+  }
+
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+  const moduleReference = NodeFactory_CreateExpressionFromEntityName(factory, node!.ModuleReference);
+  EmitContext_SetEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), moduleReference, EFNoComments | EFNoNestedComments);
+  const nodeAsNode = Node_AsNode(node);
+
+  if (!RuntimeSyntaxTransformer_isExportOfNamespace(receiver, nodeAsNode)) {
+    //  export var ${name} = ${moduleReference};
+    //  var ${name} = ${moduleReference};
+    const varDecl = NewVariableDeclaration(astFactory, node!.name, undefined /*exclamationToken*/, undefined /*type*/, moduleReference);
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varDecl, nodeAsNode);
+    const varList = NewVariableDeclarationList(astFactory, NodeFactory_NewNodeList(astFactory, [varDecl]), NodeFlagsNone);
+    const varModifiers = ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(nodeAsNode), ModifierFlagsExport);
+    const varStatement = NewVariableStatement(astFactory, varModifiers, varList);
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, nodeAsNode);
+    EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), varStatement, nodeAsNode);
+    return varStatement;
+  } else {
+    // exports.${name} = ${moduleReference};
+    const statement = RuntimeSyntaxTransformer_createExportStatement(receiver, node!.name as unknown as GoPtr<IdentifierNode>, moduleReference, nodeAsNode!.Loc, nodeAsNode!.Loc, nodeAsNode);
+    statement!.Loc = nodeAsNode!.Loc;
+    return statement;
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitVariableStatement","kind":"method","status":"stub","sigHash":"f9ebe80593846a36ebf6eef57eda6731f1b4a59ed38ba2d27bcecffb256a6130","bodyHash":"afd578072c77f975963dc6f56639024a580ad498c2e773915df691fdcdfaa14b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitVariableStatement","kind":"method","status":"implemented","sigHash":"f9ebe80593846a36ebf6eef57eda6731f1b4a59ed38ba2d27bcecffb256a6130","bodyHash":"afd578072c77f975963dc6f56639024a580ad498c2e773915df691fdcdfaa14b"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitVariableStatement(node *ast.VariableStatement) *ast.Node {
@@ -816,7 +1099,51 @@ export function RuntimeSyntaxTransformer_visitImportEqualsDeclaration(receiver: 
  * }
  */
 export function RuntimeSyntaxTransformer_visitVariableStatement(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<VariableStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitVariableStatement");
+  if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, Node_AsNode(node))) {
+    let expressions: GoSlice<GoPtr<Expression>> = [];
+    const declList = AsVariableDeclarationList(node!.DeclarationList);
+    for (const declaration of declList!.Declarations!.Nodes!) {
+      const v = AsVariableDeclaration(declaration);
+      if (v!.Initializer === undefined) {
+        continue;
+      }
+      if (IsBindingPattern(Node_Name(Node_AsNode(v)))) {
+        const expression = FlattenDestructuringAssignment(
+          receiver!.__tsgoEmbedded0,
+          NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), declaration),
+          false, /*needsValue*/
+          FlattenLevelAll,
+          (exportName: GoPtr<IdentifierNode>, exportValue: GoPtr<Expression>, location: GoPtr<TextRange>) =>
+            RuntimeSyntaxTransformer_createNamespaceExportExpression(receiver, exportName, exportValue, location),
+        );
+        if (expression !== undefined) {
+          expressions = [...expressions, expression];
+        }
+      } else {
+        const expression = ConvertVariableDeclarationToAssignmentExpression(Transformer_EmitContext(receiver!.__tsgoEmbedded0), v);
+        if (expression !== undefined) {
+          expressions = [...expressions, expression];
+        }
+      }
+    }
+    if (expressions.length === 0) {
+      return undefined;
+    }
+    const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+    const expression = NodeFactory_InlineExpressions(factory, expressions);
+    const astFactory = factory.__tsgoEmbedded0!;
+    const statement = NewExpressionStatement(astFactory, expression);
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statement, Node_AsNode(node));
+    EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statement, Node_AsNode(node));
+
+    // re-visit as the new node
+    const savedCurrent = receiver!.currentNode;
+    receiver!.currentNode = statement;
+    const result = NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), statement);
+    receiver!.currentNode = savedCurrent;
+    return result;
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
 }
 
 /**
@@ -842,7 +1169,7 @@ export function RuntimeSyntaxTransformer_createNamespaceExportExpression(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitFunctionDeclaration","kind":"method","status":"stub","sigHash":"a61907da3eb16cd8b124d8d4d3f3344f75a85082e798eb8fe2458bb9a8357582","bodyHash":"a26cf92cd525abd41b406a0d088469a9e64243c7d24a94c19b4d3c6c7c0e41de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitFunctionDeclaration","kind":"method","status":"implemented","sigHash":"a61907da3eb16cd8b124d8d4d3f3344f75a85082e798eb8fe2458bb9a8357582","bodyHash":"a26cf92cd525abd41b406a0d088469a9e64243c7d24a94c19b4d3c6c7c0e41de"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitFunctionDeclaration(node *ast.FunctionDeclaration) *ast.Node {
@@ -850,7 +1177,28 @@ export function RuntimeSyntaxTransformer_createNamespaceExportExpression(receive
  * }
  */
 export function RuntimeSyntaxTransformer_visitFunctionDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<FunctionDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitFunctionDeclaration");
+  if (RuntimeSyntaxTransformer_isExportOfNamespace(receiver, Node_AsNode(node))) {
+    const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+    const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+    const updated = NodeFactory_UpdateFunctionDeclaration(
+      factory.__tsgoEmbedded0!,
+      node,
+      NodeVisitor_VisitModifiers(visitor, ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExport)),
+      node!.AsteriskToken,
+      NodeVisitor_VisitNode(visitor, node!.name) as unknown as GoPtr<IdentifierNode>,
+      undefined /*typeParameters*/,
+      NodeVisitor_VisitNodes(visitor, node!.Parameters),
+      undefined /*returnType*/,
+      undefined /*fullSignature*/,
+      NodeVisitor_VisitNode(visitor, node!.Body),
+    );
+    const export_ = RuntimeSyntaxTransformer_createExportStatementForDeclaration(receiver, Node_AsNode(node) as unknown as GoPtr<Declaration>);
+    if (export_ !== undefined) {
+      return NewSyntaxList(factory.__tsgoEmbedded0!, [updated, export_]);
+    }
+    return updated;
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), Node_AsNode(node));
 }
 
 /**
@@ -871,7 +1219,7 @@ export function RuntimeSyntaxTransformer_getParameterProperties(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassDeclaration","kind":"method","status":"stub","sigHash":"fa3cb6d45c2c5202e35670a1a37c567b575e6f4b27e87c1204d5b5bea2261779","bodyHash":"4b4292cefe8d581a5a88fc5d59041f30cecdcd6145fe7635d59de000d3bc0f71"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassDeclaration","kind":"method","status":"implemented","sigHash":"fa3cb6d45c2c5202e35670a1a37c567b575e6f4b27e87c1204d5b5bea2261779","bodyHash":"4b4292cefe8d581a5a88fc5d59041f30cecdcd6145fe7635d59de000d3bc0f71"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitClassDeclaration(node *ast.ClassDeclaration) *ast.Node {
@@ -879,11 +1227,61 @@ export function RuntimeSyntaxTransformer_getParameterProperties(receiver: GoPtr<
  * }
  */
 export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ClassDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassDeclaration");
+  const exported = RuntimeSyntaxTransformer_isExportOfNamespace(receiver, Node_AsNode(node));
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+
+  let modifiers: GoPtr<ModifierList>;
+  if (exported) {
+    modifiers = NodeVisitor_VisitModifiers(visitor, ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExportDefault));
+  } else {
+    modifiers = NodeVisitor_VisitModifiers(visitor, Node_Modifiers(Node_AsNode(node)));
+  }
+
+  let name = NodeVisitor_VisitNode(visitor, node!.name) as unknown as GoPtr<IdentifierNode>;
+  if (name === undefined && (exported || ChildIsDecorated(Tristate_IsTrue(receiver!.compilerOptions!.ExperimentalDecorators!), Node_AsNode(node), undefined))) {
+    name = NodeFactory_NewGeneratedNameForNode(factory, Node_AsNode(node));
+  }
+  const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
+  let members = NodeVisitor_VisitNodes(visitor, node!.Members);
+  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration));
+
+  if (parameterProperties.length > 0) {
+    let newMembers: GoSlice<GoPtr<Node>> = [];
+    for (const parameter of parameterProperties) {
+      if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
+        const parameterProperty = NewPropertyDeclaration(
+          astFactory,
+          undefined /*modifiers*/,
+          Node_Clone(Node_Name(Node_AsNode(parameter))!, { AsNodeFactory: () => astFactory }),
+          undefined /*questionOrExclamationToken*/,
+          undefined /*type*/,
+          undefined /*initializer*/,
+        );
+        EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
+        newMembers = [...newMembers, parameterProperty];
+      }
+    }
+    if (newMembers.length > 0) {
+      newMembers = [...newMembers, ...members!.Nodes!];
+      members = NodeFactory_NewNodeList(astFactory, newMembers);
+      members!.Loc = node!.Members!.Loc;
+    }
+  }
+
+  const updated = NodeFactory_UpdateClassDeclaration(factory.__tsgoEmbedded0!, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
+  if (exported) {
+    const export_ = RuntimeSyntaxTransformer_createExportStatementForDeclaration(receiver, Node_AsNode(node) as unknown as GoPtr<Declaration>);
+    if (export_ !== undefined) {
+      return NewSyntaxList(astFactory, [updated, export_]);
+    }
+  }
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassExpression","kind":"method","status":"stub","sigHash":"c908858ce6c414b479791ee872cae9d2a2c79b4a33581ac5e9a65dd44262c485","bodyHash":"10ce0015c7aba18818809da30c77441c78b61da8ae52636722a6e5b2cd6b7c3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassExpression","kind":"method","status":"implemented","sigHash":"c908858ce6c414b479791ee872cae9d2a2c79b4a33581ac5e9a65dd44262c485","bodyHash":"10ce0015c7aba18818809da30c77441c78b61da8ae52636722a6e5b2cd6b7c3c"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitClassExpression(node *ast.ClassExpression) *ast.Node {
@@ -891,11 +1289,44 @@ export function RuntimeSyntaxTransformer_visitClassDeclaration(receiver: GoPtr<R
  * }
  */
 export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ClassExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitClassExpression");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+
+  const modifiers = NodeVisitor_VisitModifiers(visitor, ExtractModifiers(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_Modifiers(Node_AsNode(node)), ~ModifierFlagsExportDefault));
+  const name = NodeVisitor_VisitNode(visitor, node!.name) as unknown as GoPtr<IdentifierNode>;
+  const heritageClauses = NodeVisitor_VisitNodes(visitor, node!.HeritageClauses);
+  let members = NodeVisitor_VisitNodes(visitor, node!.Members);
+  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, Find(node!.Members!.Nodes!, IsConstructorDeclaration));
+
+  if (parameterProperties.length > 0) {
+    let newMembers: GoSlice<GoPtr<Node>> = [];
+    for (const parameter of parameterProperties) {
+      if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
+        const parameterProperty = NewPropertyDeclaration(
+          astFactory,
+          undefined /*modifiers*/,
+          Node_Clone(Node_Name(Node_AsNode(parameter))!, { AsNodeFactory: () => astFactory }),
+          undefined /*questionOrExclamationToken*/,
+          undefined /*type*/,
+          undefined /*initializer*/,
+        );
+        EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
+        newMembers = [...newMembers, parameterProperty];
+      }
+    }
+    if (newMembers.length > 0) {
+      newMembers = [...newMembers, ...members!.Nodes!];
+      members = NodeFactory_NewNodeList(astFactory, newMembers);
+      members!.Loc = node!.Members!.Loc;
+    }
+  }
+
+  return NodeFactory_UpdateClassExpression(factory.__tsgoEmbedded0!, node, modifiers, name, undefined /*typeParameters*/, heritageClauses, members);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorDeclaration","kind":"method","status":"stub","sigHash":"11e29e5207a46b38904dde972d9814cf46f4fe9ecadcc92011735d0e3d84486f","bodyHash":"705c6ad3d56dcb6a00fc5ac834a169ba2dc4881acc102b4bcf802c32b3e7d7d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorDeclaration","kind":"method","status":"implemented","sigHash":"11e29e5207a46b38904dde972d9814cf46f4fe9ecadcc92011735d0e3d84486f","bodyHash":"705c6ad3d56dcb6a00fc5ac834a169ba2dc4881acc102b4bcf802c32b3e7d7d4"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitConstructorDeclaration(node *ast.ConstructorDeclaration) *ast.Node {
@@ -903,11 +1334,16 @@ export function RuntimeSyntaxTransformer_visitClassExpression(receiver: GoPtr<Ru
  * }
  */
 export function RuntimeSyntaxTransformer_visitConstructorDeclaration(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ConstructorDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorDeclaration");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const modifiers = NodeVisitor_VisitModifiers(visitor, Node_Modifiers(Node_AsNode(node)));
+  const parameters = EmitContext_VisitParameters(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_ParameterList(Node_AsNode(node)), visitor as unknown as GoPtr<ConcreteNodeVisitor>);
+  const body = RuntimeSyntaxTransformer_visitConstructorBody(receiver, AsBlock(node!.Body), Node_AsNode(node));
+  return NodeFactory_UpdateConstructorDeclaration(factory.__tsgoEmbedded0!, node, modifiers, undefined /*typeParameters*/, parameters, undefined /*returnType*/, undefined /*fullSignature*/, body);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorBody","kind":"method","status":"stub","sigHash":"f26e6927b04c1c762c07d2f92f7aff8a76cbe8fada048242bd6989dc0af8b873","bodyHash":"7ed7b666a1d1b7bccc6e54ee80938aedaedbc2a54457e5f00d553e1013c0abae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorBody","kind":"method","status":"implemented","sigHash":"f26e6927b04c1c762c07d2f92f7aff8a76cbe8fada048242bd6989dc0af8b873","bodyHash":"7ed7b666a1d1b7bccc6e54ee80938aedaedbc2a54457e5f00d553e1013c0abae"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitConstructorBody(body *ast.Block, constructor *ast.Node) *ast.Node {
@@ -915,11 +1351,79 @@ export function RuntimeSyntaxTransformer_visitConstructorDeclaration(receiver: G
  * }
  */
 export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<RuntimeSyntaxTransformer>, body: GoPtr<Block>, constructor_: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitConstructorBody");
+  const parameterProperties = RuntimeSyntaxTransformer_getParameterProperties(receiver, constructor_);
+  if (parameterProperties.length === 0) {
+    return EmitContext_VisitFunctionBody(Transformer_EmitContext(receiver!.__tsgoEmbedded0), Node_AsNode(body), (Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor) as unknown as GoPtr<ConcreteNodeVisitor>);
+  }
+
+  const grandparentOfBody = RuntimeSyntaxTransformer_pushNode(receiver, Node_AsNode(body));
+  const [savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName] = RuntimeSyntaxTransformer_pushScope(receiver, Node_AsNode(body));
+
+  EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0));
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+  const [prologue, rest] = NodeFactory_SplitStandardPrologue(factory, body!.Statements!.Nodes! as GoSlice<GoPtr<Statement>>);
+  let statements: GoSlice<GoPtr<Statement>> = [...prologue];
+
+  // Transform parameters into property assignments
+  let parameterPropertyAssignments: GoSlice<GoPtr<Statement>> = [];
+  for (const parameter of parameterProperties) {
+    if (IsIdentifier(Node_Name(Node_AsNode(parameter)))) {
+      const innerFactory = factory.__tsgoEmbedded0!;
+      const paramName = Node_Name(Node_AsNode(parameter));
+
+      const propertyName = Node_Clone(paramName!, { AsNodeFactory: () => innerFactory }) as unknown as GoPtr<IdentifierNode>;
+      propertyName!.Parent = paramName!.Parent;
+      EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), propertyName, EFNoComments | EFNoSourceMap);
+
+      const localName = Node_Clone(paramName!, { AsNodeFactory: () => innerFactory }) as unknown as GoPtr<IdentifierNode>;
+      localName!.Parent = paramName!.Parent;
+      EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), localName, EFNoComments);
+
+      const parameterProperty = NewExpressionStatement(
+        innerFactory,
+        NodeFactory_NewAssignmentExpression(
+          factory,
+          NewPropertyAccessExpression(
+            innerFactory,
+            NodeFactory_NewThisExpression(factory),
+            undefined /*questionDotToken*/,
+            propertyName,
+            NodeFlagsNone,
+          ),
+          localName,
+        ),
+      );
+      EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, Node_AsNode(parameter));
+      EmitContext_AddEmitFlags(Transformer_EmitContext(receiver!.__tsgoEmbedded0), parameterProperty, EFStartOnNewLine);
+      parameterPropertyAssignments = [...parameterPropertyAssignments, parameterProperty];
+    }
+  }
+
+  const superPath = FindSuperStatementIndexPath(rest, 0);
+
+  if (superPath.length > 0) {
+    statements = [...statements, ...RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver, rest, superPath, parameterPropertyAssignments)];
+  } else {
+    statements = [...statements, ...parameterPropertyAssignments];
+    const [visitedRest] = NodeVisitor_VisitSlice((Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor), rest);
+    statements = [...statements, ...visitedRest as GoSlice<GoPtr<Statement>>];
+  }
+
+  statements = EmitContext_EndAndMergeVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0), statements);
+  const statementList = NodeFactory_NewNodeList(astFactory, statements);
+  statementList!.Loc = body!.Statements!.Loc;
+
+  RuntimeSyntaxTransformer_popScope(receiver, savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName);
+  RuntimeSyntaxTransformer_popNode(receiver, grandparentOfBody);
+  const updated = NewBlock(astFactory, statementList, true /*multiline*/);
+  EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), updated, Node_AsNode(body));
+  updated!.Loc = body!.Loc;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformConstructorBodyWorker","kind":"method","status":"stub","sigHash":"2b9c44f7506c3f56880b07642955bb17621b70cf30342bf0308ecb7f05ea8535","bodyHash":"a9fa71fb4aaf48b9ff51c626cc24ce4be2a710dafa5f0580de118dd14916568f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformConstructorBodyWorker","kind":"method","status":"implemented","sigHash":"2b9c44f7506c3f56880b07642955bb17621b70cf30342bf0308ecb7f05ea8535","bodyHash":"a9fa71fb4aaf48b9ff51c626cc24ce4be2a710dafa5f0580de118dd14916568f"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) transformConstructorBodyWorker(statementsIn []*ast.Statement, superPath []int, initializerStatements []*ast.Statement) []*ast.Statement {
@@ -927,11 +1431,72 @@ export function RuntimeSyntaxTransformer_visitConstructorBody(receiver: GoPtr<Ru
  * }
  */
 export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver: GoPtr<RuntimeSyntaxTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, superPath: GoSlice<int>, initializerStatements: GoSlice<GoPtr<Statement>>): GoSlice<GoPtr<Statement>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.transformConstructorBodyWorker");
+  let statementsOut: GoSlice<GoPtr<Statement>> = [];
+  const superStatementIndex = superPath[0]!;
+  const superStatement = statementsIn[superStatementIndex];
+
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+
+  // visit up to the statement containing `super`
+  const [visitedBefore] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(0, superStatementIndex) as GoSlice<GoPtr<Node>>);
+  statementsOut = [...statementsOut, ...visitedBefore as GoSlice<GoPtr<Statement>>];
+
+  // if the statement containing `super` is a `try` statement, transform the body of the `try` block
+  if (IsTryStatement(superStatement as unknown as GoPtr<Node>)) {
+    const tryStatement = AsTryStatement(superStatement as unknown as GoPtr<Node>);
+    const tryBlock = AsBlock(tryStatement!.TryBlock);
+
+    // keep track of hierarchy as we descend
+    const grandparentOfTryStatement = RuntimeSyntaxTransformer_pushNode(receiver, Node_AsNode(tryStatement));
+    const grandparentOfTryBlock = RuntimeSyntaxTransformer_pushNode(receiver, Node_AsNode(tryBlock));
+    const [savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName] = RuntimeSyntaxTransformer_pushScope(receiver, Node_AsNode(tryBlock));
+
+    // visit the `try` block
+    const tryBlockStatements = RuntimeSyntaxTransformer_transformConstructorBodyWorker(
+      receiver,
+      tryBlock!.Statements!.Nodes! as GoSlice<GoPtr<Statement>>,
+      superPath.slice(1),
+      initializerStatements,
+    );
+
+    // restore hierarchy as we ascend to the `try` statement
+    RuntimeSyntaxTransformer_popScope(receiver, savedCurrentScope, savedCurrentScopeFirstDeclarationsOfName);
+    RuntimeSyntaxTransformer_popNode(receiver, grandparentOfTryBlock);
+
+    const tryBlockStatementList = NodeFactory_NewNodeList(astFactory, tryBlockStatements);
+    tryBlockStatementList!.Loc = tryBlock!.Statements!.Loc;
+    statementsOut = [
+      ...statementsOut,
+      NodeFactory_UpdateTryStatement(
+        factory.__tsgoEmbedded0!,
+        tryStatement,
+        NodeFactory_UpdateBlock(factory.__tsgoEmbedded0!, tryBlock, tryBlockStatementList, tryBlock!.MultiLine!),
+        NodeVisitor_VisitNode(visitor, tryStatement!.CatchClause),
+        NodeVisitor_VisitNode(visitor, tryStatement!.FinallyBlock),
+      ) as unknown as GoPtr<Statement>,
+    ];
+
+    // restore hierarchy as we ascend to the parent of the `try` statement
+    RuntimeSyntaxTransformer_popNode(receiver, grandparentOfTryStatement);
+  } else {
+    // visit the statement containing `super`
+    const [visitedSuper] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex, superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
+    statementsOut = [...statementsOut, ...visitedSuper as GoSlice<GoPtr<Statement>>];
+
+    // insert the initializer statements
+    statementsOut = [...statementsOut, ...initializerStatements];
+  }
+
+  // visit the statements after `super`
+  const [visitedAfter] = NodeVisitor_VisitSlice(visitor, statementsIn.slice(superStatementIndex + 1) as GoSlice<GoPtr<Node>>);
+  statementsOut = [...statementsOut, ...visitedAfter as GoSlice<GoPtr<Statement>>];
+  return statementsOut;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitShorthandPropertyAssignment","kind":"method","status":"stub","sigHash":"d347960d42f97b5b4174736b1ca70908851b64faab2702e0fa27d7f5381ef7a3","bodyHash":"4eae69d24d1bc8c996cd9fa0166c8304e0c71c75fbace7f8054382b5acc0fb2f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitShorthandPropertyAssignment","kind":"method","status":"implemented","sigHash":"d347960d42f97b5b4174736b1ca70908851b64faab2702e0fa27d7f5381ef7a3","bodyHash":"4eae69d24d1bc8c996cd9fa0166c8304e0c71c75fbace7f8054382b5acc0fb2f"}
  *
  * Go source:
  * func (tx *RuntimeSyntaxTransformer) visitShorthandPropertyAssignment(node *ast.ShorthandPropertyAssignment) *ast.Node {
@@ -939,7 +1504,44 @@ export function RuntimeSyntaxTransformer_transformConstructorBodyWorker(receiver
  * }
  */
 export function RuntimeSyntaxTransformer_visitShorthandPropertyAssignment(receiver: GoPtr<RuntimeSyntaxTransformer>, node: GoPtr<ShorthandPropertyAssignment>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/runtimesyntax.go::method::RuntimeSyntaxTransformer.visitShorthandPropertyAssignment");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0)!;
+  const astFactory = factory.__tsgoEmbedded0!;
+  const name = Node_Name(Node_AsNode(node)) as unknown as GoPtr<IdentifierNode>;
+  const exportedOrImportedName = RuntimeSyntaxTransformer_visitExpressionIdentifier(receiver, name);
+  if (exportedOrImportedName !== name) {
+    let expression = exportedOrImportedName;
+    if (node!.ObjectAssignmentInitializer !== undefined) {
+      let equalsToken = node!.EqualsToken;
+      if (equalsToken === undefined) {
+        equalsToken = NewToken(astFactory, KindEqualsToken);
+      }
+      expression = NewBinaryExpression(
+        astFactory,
+        undefined /*modifiers*/,
+        expression,
+        undefined /*typeNode*/,
+        equalsToken,
+        NodeVisitor_VisitNode(visitor, node!.ObjectAssignmentInitializer),
+      );
+    }
+
+    const updated = NewPropertyAssignment(astFactory, undefined /*modifiers*/, name, undefined /*postfixToken*/, undefined /*typeNode*/, expression);
+    updated!.Loc = node!.Loc;
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0), updated, Node_AsNode(node));
+    EmitContext_AssignCommentAndSourceMapRanges(Transformer_EmitContext(receiver!.__tsgoEmbedded0), updated, Node_AsNode(node));
+    return updated;
+  }
+  return NodeFactory_UpdateShorthandPropertyAssignment(
+    factory.__tsgoEmbedded0!,
+    node,
+    undefined /*modifiers*/,
+    exportedOrImportedName as unknown as GoPtr<IdentifierNode>,
+    undefined /*postfixToken*/,
+    undefined /*typeNode*/,
+    node!.EqualsToken,
+    NodeVisitor_VisitNode(visitor, node!.ObjectAssignmentInitializer),
+  );
 }
 
 /**

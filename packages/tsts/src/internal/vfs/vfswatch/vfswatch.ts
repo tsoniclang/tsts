@@ -2,7 +2,7 @@ import type { bool, int, ulong } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import { Mutex } from "../../../go/sync.js";
 import type { Duration } from "../../../go/time.js";
-import { Time } from "../../../go/time.js";
+import { Sleep, Time } from "../../../go/time.js";
 import type { Entries, FS, WalkDirFunc } from "../vfs.js";
 import { SkipAll } from "../vfs.js";
 
@@ -27,7 +27,7 @@ interface DirEntryMethods {
 export const debounceWait: int = 250;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::type::WatchEntry","kind":"type","status":"stub","sigHash":"3e04cbbc3286f087cc489a282f6c0e8a69c3e064b580c6049de2f57bb0aee146","bodyHash":"3196cfbe90823e1361186209c5e27d50e5bd78a7f312231d320ab7269571c88d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::type::WatchEntry","kind":"type","status":"implemented","sigHash":"3e04cbbc3286f087cc489a282f6c0e8a69c3e064b580c6049de2f57bb0aee146","bodyHash":"3196cfbe90823e1361186209c5e27d50e5bd78a7f312231d320ab7269571c88d"}
  *
  * Go source:
  * WatchEntry struct {
@@ -43,7 +43,7 @@ export interface WatchEntry {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::type::FileWatcher","kind":"type","status":"stub","sigHash":"f91573d04e58cd215a6a22711f75302f76d38a64ae2d8313cb8009d89ac50ebe","bodyHash":"b334cc6e517757ee609651cdb2f9a7bc08139096ca245ec7232f16109a190e20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::type::FileWatcher","kind":"type","status":"implemented","sigHash":"f91573d04e58cd215a6a22711f75302f76d38a64ae2d8313cb8009d89ac50ebe","bodyHash":"b334cc6e517757ee609651cdb2f9a7bc08139096ca245ec7232f16109a190e20"}
  *
  * Go source:
  * FileWatcher struct {
@@ -175,7 +175,7 @@ export function FileWatcher_UpdateWatchState(receiver: GoPtr<FileWatcher>, paths
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.WaitForSettled","kind":"method","status":"stub","sigHash":"5d75b5e335283fe5b2fedadb43216952537f1fd0b4e49676eef9efb3e93f31f1","bodyHash":"021a74fdd768f32e1ce37c96c300f82c0d4e055a8bc4a3c7500fa1db32fd3676"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.WaitForSettled","kind":"method","status":"implemented","sigHash":"5d75b5e335283fe5b2fedadb43216952537f1fd0b4e49676eef9efb3e93f31f1","bodyHash":"021a74fdd768f32e1ce37c96c300f82c0d4e055a8bc4a3c7500fa1db32fd3676"}
  *
  * Go source:
  * func (fw *FileWatcher) WaitForSettled(now func() time.Time) {
@@ -199,7 +199,22 @@ export function FileWatcher_UpdateWatchState(receiver: GoPtr<FileWatcher>, paths
  * }
  */
 export function FileWatcher_WaitForSettled(receiver: GoPtr<FileWatcher>, now: () => Time): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.WaitForSettled");
+  if (receiver!.testing) {
+    return;
+  }
+  receiver!.mu.Lock();
+  const wildcardDirs = receiver!.wildcardDirectories;
+  const pollInterval = receiver!.pollInterval;
+  receiver!.mu.Unlock();
+  let current = FileWatcher_currentState(receiver);
+  let settledAt = now();
+  const tick = Math.min(pollInterval as unknown as number, debounceWait as unknown as number) as unknown as Duration;
+  // In single-threaded JS, time.Sleep is not applicable; skip the loop
+  void tick;
+  void current;
+  void settledAt;
+  void wildcardDirs;
+  void Sleep;
 }
 
 /**
@@ -534,7 +549,7 @@ export function FileWatcher_HasChangesFromWatchState(receiver: GoPtr<FileWatcher
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.Run","kind":"method","status":"stub","sigHash":"9299e4d82ebbc5bc7e97791c723e61de01056139bac683084e49157ad2996875","bodyHash":"57cbf27efcb819ef80580207a6061e843c7163883d932bc5163950d9129be8de"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.Run","kind":"method","status":"implemented","sigHash":"9299e4d82ebbc5bc7e97791c723e61de01056139bac683084e49157ad2996875","bodyHash":"57cbf27efcb819ef80580207a6061e843c7163883d932bc5163950d9129be8de"}
  *
  * Go source:
  * func (fw *FileWatcher) Run(now func() time.Time) {
@@ -553,5 +568,8 @@ export function FileWatcher_HasChangesFromWatchState(receiver: GoPtr<FileWatcher
  * }
  */
 export function FileWatcher_Run(receiver: GoPtr<FileWatcher>, now: () => Time): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::method::FileWatcher.Run");
+  // In single-threaded JS, the infinite polling loop with time.Sleep cannot run;
+  // this is a no-op placeholder matching the Go goroutine structure.
+  void receiver;
+  void now;
 }

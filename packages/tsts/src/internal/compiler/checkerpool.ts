@@ -50,7 +50,7 @@ export interface checkerPool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"9e7f04f88e8b76eb738dbbc027136b53c2f0ac505b2ff525d29d3d5233e3713f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"9e7f04f88e8b76eb738dbbc027136b53c2f0ac505b2ff525d29d3d5233e3713f"}
  *
  * Go source:
  * var _ CheckerPool = (*checkerPool)(nil)

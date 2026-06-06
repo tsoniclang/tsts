@@ -1,5 +1,6 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
+import { Map as SyncGoMap } from "../../go/sync.js";
 import { ToLower } from "../../go/strings.js";
 import { Fprintf } from "../../go/fmt.js";
 import type { Message } from "../diagnostics/diagnostics.js";
@@ -12,17 +13,32 @@ import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
 import {
   ParsedCommandLine_Locale,
   ParsedCommandLine_CompilerOptions,
+  ParsedCommandLine_FileNames,
 } from "../tsoptions/parsedcommandline.js";
 import { SourceFile_FileName } from "../ast/ast.js";
-import type { ExtendedConfigCache } from "../tsoptions/tsconfigparsing.js";
+import { NewCompilerDiagnostic } from "../ast/diagnostic.js";
+import type { ExtendedConfigCache as ExtendedConfigCache_tsconfigparsing } from "../tsoptions/tsconfigparsing.js";
+import { GetParsedCommandLineOfConfigFile } from "../tsoptions/tsconfigparsing.js";
+import type { ExtendedConfigCache } from "./tsc/extendedconfigcache.js";
+import type { SyncMap } from "../collections/syncmap.js";
+import type { OrderedMap } from "../collections/ordered_map.js";
+import { OrderedMap_Set, NewOrderedMapWithSizeHint } from "../collections/ordered_map.js";
 import { ParseCommandLine, ParseBuildCommandLine } from "../tsoptions/commandlineparser.js";
 import { ConvertToTSConfig } from "../tsoptions/showconfig.js";
 import { MarshalIndentWrite } from "../json/json.js";
-import { CombinePaths, ForEachAncestorDirectory } from "../tspath/path.js";
+import { CombinePaths, ForEachAncestorDirectory, NormalizePath } from "../tspath/path.js";
 import { Tristate_IsTrue } from "../core/tristate.js";
+import { CompilerOptions_IsIncremental } from "../core/compileroptions.js";
 import { NewCachedFSCompilerHost } from "../compiler/host.js";
 import { NewProgram } from "../compiler/program.js";
-import type { ProgramOptions } from "../compiler/program.js";
+import type { ProgramLike, ProgramOptions } from "../compiler/program.js";
+import {
+  Options_0_and_1_cannot_be_combined,
+  Option_project_cannot_be_mixed_with_source_files_on_a_command_line,
+  Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0,
+  The_specified_path_does_not_exist_Colon_0,
+  X_tsconfig_json_is_present_but_will_not_be_loaded_if_files_are_specified_on_commandline_Use_ignoreConfig_to_skip_this_error,
+} from "../diagnostics/generated/messages.js";
 import {
   ReadBuildInfoProgram,
   NewBuildInfoReader,
@@ -173,7 +189,7 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"stub","sigHash":"f68645a75c9c070321c836ada363a304ee5283c27b43e1f2a137ddbfc7fa4394","bodyHash":"fff529fcf5bf7956e4f6cceb9c35ce769e63e2d00928fd6a8c5157cc8a7d393e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation","kind":"func","status":"implemented","sigHash":"f68645a75c9c070321c836ada363a304ee5283c27b43e1f2a137ddbfc7fa4394","bodyHash":"fff529fcf5bf7956e4f6cceb9c35ce769e63e2d00928fd6a8c5157cc8a7d393e"}
  *
  * Go source:
  * func tscBuildCompilation(sys tsc.System, buildCommand *tsoptions.ParsedBuildCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -208,11 +224,40 @@ export function fmtMain(sys: System, input: string, output: string): ExitStatus 
  * }
  */
 export function tscBuildCompilation(sys: System, buildCommand: GoPtr<ParsedBuildCommandLine>, testing: CommandLineTesting): CommandLineResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscBuildCompilation");
+  const locale = ParsedBuildCommandLine_Locale(buildCommand);
+  const reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, buildCommand!.CompilerOptions);
+
+  if (buildCommand!.Errors.length > 0) {
+    for (const err of buildCommand!.Errors) {
+      reportDiagnostic(err);
+    }
+    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+  }
+
+  const pprofDir = buildCommand!.CompilerOptions!.PprofDir;
+  let profileSession: GoPtr<import("../pprof/pprof.js").ProfileSession> = undefined;
+  if (pprofDir !== "") {
+    // !!! stderr?
+    profileSession = BeginProfiling(pprofDir, sys.Writer());
+  }
+  try {
+    if (Tristate_IsTrue(buildCommand!.CompilerOptions!.Help)) {
+      PrintVersion(sys, locale);
+      PrintBuildHelp(sys, locale, BuildOpts);
+      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+
+    const orchestrator = NewOrchestrator({ Sys: sys, Command: buildCommand, Testing: testing });
+    return Orchestrator_Start(orchestrator);
+  } finally {
+    if (profileSession !== undefined) {
+      ProfileSession_Stop(profileSession);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation","kind":"func","status":"stub","sigHash":"722977dd38b813663a6cec00a0d2cb0e0888e26f96b7161d3d2c955916140761","bodyHash":"68b95caca66db42d24329581b03f519352198d6963e10201299ae1937cc3546d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation","kind":"func","status":"implemented","sigHash":"722977dd38b813663a6cec00a0d2cb0e0888e26f96b7161d3d2c955916140761","bodyHash":"68b95caca66db42d24329581b03f519352198d6963e10201299ae1937cc3546d"}
  *
  * Go source:
  * func tscCompilation(sys tsc.System, commandLine *tsoptions.ParsedCommandLine, testing tsc.CommandLineTesting) tsc.CommandLineResult {
@@ -360,7 +405,158 @@ export function tscBuildCompilation(sys: System, buildCommand: GoPtr<ParsedBuild
  * }
  */
 export function tscCompilation(sys: System, commandLine: GoPtr<ParsedCommandLine>, testing: CommandLineTesting): CommandLineResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::tscCompilation");
+  let configFileName = "";
+  const locale = ParsedCommandLine_Locale(commandLine);
+  let reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
+
+  if (commandLine!.Errors.length > 0) {
+    for (const e of commandLine!.Errors) {
+      reportDiagnostic(e);
+    }
+    return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+  }
+
+  const pprofDir = ParsedCommandLine_CompilerOptions(commandLine)!.PprofDir;
+  let profileSession: GoPtr<import("../pprof/pprof.js").ProfileSession> = undefined;
+  if (pprofDir !== "") {
+    // !!! stderr?
+    profileSession = BeginProfiling(pprofDir, sys.Writer());
+  }
+  try {
+    if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Init)) {
+      WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap>);
+      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+
+    if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Version)) {
+      PrintVersion(sys, locale);
+      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+
+    if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Help) || Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.All)) {
+      PrintHelp(sys, locale, commandLine);
+      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+
+    if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Watch) && Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ListFilesOnly)) {
+      reportDiagnostic(NewCompilerDiagnostic(Options_0_and_1_cannot_be_combined, "watch", "listFilesOnly"));
+      return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+
+    if (ParsedCommandLine_CompilerOptions(commandLine)!.Project !== "") {
+      if (ParsedCommandLine_FileNames(commandLine).length !== 0) {
+        reportDiagnostic(NewCompilerDiagnostic(Option_project_cannot_be_mixed_with_source_files_on_a_command_line));
+        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      }
+
+      const fileOrDirectory = NormalizePath(ParsedCommandLine_CompilerOptions(commandLine)!.Project);
+      if (sys.FS().DirectoryExists(fileOrDirectory)) {
+        configFileName = CombinePaths(fileOrDirectory, "tsconfig.json");
+        if (!sys.FS().FileExists(configFileName)) {
+          reportDiagnostic(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, configFileName));
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        }
+      } else {
+        configFileName = fileOrDirectory;
+        if (!sys.FS().FileExists(configFileName)) {
+          reportDiagnostic(NewCompilerDiagnostic(The_specified_path_does_not_exist_Colon_0, fileOrDirectory));
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        }
+      }
+    } else if (!Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.IgnoreConfig) || ParsedCommandLine_FileNames(commandLine).length === 0) {
+      const searchPath = NormalizePath(sys.GetCurrentDirectory());
+      configFileName = findConfigFile(searchPath, (f) => sys.FS().FileExists(f), "tsconfig.json");
+      if (ParsedCommandLine_FileNames(commandLine).length !== 0) {
+        if (configFileName !== "") {
+          // Error to not specify config file
+          reportDiagnostic(NewCompilerDiagnostic(X_tsconfig_json_is_present_but_will_not_be_loaded_if_files_are_specified_on_commandline_Use_ignoreConfig_to_skip_this_error));
+          return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+        }
+      } else if (configFileName === "") {
+        if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.ShowConfig)) {
+          reportDiagnostic(NewCompilerDiagnostic(Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0, NormalizePath(sys.GetCurrentDirectory())));
+        } else {
+          PrintVersion(sys, locale);
+          PrintHelp(sys, locale, commandLine);
+        }
+        return { Status: ExitStatusDiagnosticsPresent_OutputsSkipped, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      }
+    }
+
+    // !!! convert to options with absolute paths is usually done here, but for ease of implementation, it's done in `tsoptions.ParseCommandLine()`
+    const compilerOptionsFromCommandLine = ParsedCommandLine_CompilerOptions(commandLine);
+    let configForCompilation = commandLine;
+    const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap } as unknown as ExtendedConfigCache;
+    const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
+    if (configFileName !== "") {
+      const configStart = sys.Now();
+      let commandLineRaw: GoPtr<OrderedMap> = undefined;
+      const raw = commandLine!.Raw;
+      if (raw !== undefined && raw !== null) {
+        const rawMap = raw as OrderedMap;
+        if (rawMap.keys !== undefined) {
+          // Wrap command line options in a "compilerOptions" key to match tsconfig.json structure
+          const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0);
+          OrderedMap_Set(wrapped, "compilerOptions", rawMap);
+          commandLineRaw = wrapped;
+        }
+      }
+      const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(configFileName, compilerOptionsFromCommandLine, commandLineRaw, sys as unknown as import("../tsoptions/tsconfigparsing.js").ParseConfigHost, extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing);
+      type TimeWithSub = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
+      compileTimes.ConfigTime = (sys.Now() as TimeWithSub).Sub(configStart) as import("../../go/time.js").Duration;
+      if (errors.length !== 0) {
+        // these are unrecoverable errors--exit to report them as diagnostics
+        for (const e of errors) {
+          reportDiagnostic(e);
+        }
+        return { Status: ExitStatusDiagnosticsPresent_OutputsGenerated, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+      }
+      configForCompilation = configParseResult;
+      // Updater to reflect pretty
+      reportDiagnostic = CreateDiagnosticReporter(sys, sys.Writer(), locale, ParsedCommandLine_CompilerOptions(commandLine));
+    }
+
+    const reportErrorSummary = CreateReportErrorSummary(sys, locale, ParsedCommandLine_CompilerOptions(configForCompilation));
+    if (Tristate_IsTrue(compilerOptionsFromCommandLine!.ShowConfig)) {
+      showConfig(sys, configForCompilation, configFileName);
+      return { Status: ExitStatusSuccess, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
+    }
+    if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(configForCompilation)!.Watch)) {
+      const watcher = createWatcher(
+        sys,
+        configForCompilation,
+        compilerOptionsFromCommandLine,
+        reportDiagnostic,
+        reportErrorSummary,
+        testing,
+      );
+      Watcher_start(watcher);
+      return { Status: ExitStatusSuccess, Watcher: watcher as unknown as import("./tsc/compile.js").Watcher };
+    } else if (CompilerOptions_IsIncremental(ParsedCommandLine_CompilerOptions(configForCompilation))) {
+      return performIncrementalCompilation(
+        sys,
+        configForCompilation,
+        reportDiagnostic,
+        reportErrorSummary,
+        extendedConfigCache,
+        compileTimes,
+        testing,
+      );
+    }
+    return performCompilation(
+      sys,
+      configForCompilation,
+      reportDiagnostic,
+      reportErrorSummary,
+      extendedConfigCache,
+      compileTimes,
+      testing,
+    );
+  } finally {
+    if (profileSession !== undefined) {
+      ProfileSession_Stop(profileSession);
+    }
+  }
 }
 
 /**
@@ -408,7 +604,7 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"stub","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation","kind":"func","status":"implemented","sigHash":"593fecfb418fefe8150bdab265f8e5c548179753da64fb8eddc983fe9cbc0a80","bodyHash":"b45eb41deaecd915d895adeaaebebae11391118737fd44522cd6e7a311582747"}
  *
  * Go source:
  * func performIncrementalCompilation(
@@ -461,11 +657,45 @@ export function getTraceFromSys(sys: System, locale: Locale, testing: CommandLin
  * }
  */
 export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting): CommandLineResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performIncrementalCompilation");
+  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+  const buildInfoReadStart = sys.Now();
+  const oldProgram = ReadBuildInfoProgram(config, NewBuildInfoReader(host), host);
+  type TimeWithSub2 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
+  compileTimes!.BuildInfoReadTime = (sys.Now() as TimeWithSub2).Sub(buildInfoReadStart) as import("../../go/time.js").Duration;
+
+  const tr = startTracingIfNeeded(sys, config, testing);
+
+  const parseStart = sys.Now();
+  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
+  compileTimes!.ParseTime = (sys.Now() as TimeWithSub2).Sub(parseStart) as import("../../go/time.js").Duration;
+  const changesComputeStart = sys.Now();
+  const incrementalProgram = IncrementalNewProgram(program, oldProgram, IncrementalCreateHost(host), testing !== undefined);
+  compileTimes!.ChangesComputeTime = (sys.Now() as TimeWithSub2).Sub(changesComputeStart) as import("../../go/time.js").Duration;
+  const [result] = EmitAndReportStatistics({
+    Sys: sys,
+    ProgramLike: incrementalProgram as unknown as ProgramLike,
+    Program: Program_GetProgram(incrementalProgram),
+    Config: config,
+    ReportDiagnostic: reportDiagnostic,
+    ReportErrorSummary: reportErrorSummary,
+    Writer: sys.Writer(),
+    WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
+    CompileTimes: compileTimes,
+    Testing: testing,
+    TestingMTimesCache: undefined,
+    Tracing: tr,
+  });
+
+  stopTracing(sys, tr);
+
+  if (testing !== undefined) {
+    testing.OnProgram(incrementalProgram);
+  }
+  return { Status: result.Status, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"stub","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation","kind":"func","status":"implemented","sigHash":"91ae4296a5aaa288af685711d362d69a8ec00b7260539386ac2d6200ad207606","bodyHash":"9cef4b345235762cc8a66e2ddfd26baf4de775fe6521044f12a6e812b88e95d4"}
  *
  * Go source:
  * func performCompilation(
@@ -509,7 +739,32 @@ export function performIncrementalCompilation(sys: System, config: GoPtr<ParsedC
  * }
  */
 export function performCompilation(sys: System, config: GoPtr<ParsedCommandLine>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, extendedConfigCache: ExtendedConfigCache, compileTimes: GoPtr<CompileTimes>, testing: CommandLineTesting): CommandLineResult {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::performCompilation");
+  const host = NewCachedFSCompilerHost(sys.GetCurrentDirectory(), sys.FS(), sys.DefaultLibraryPath(), extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing, getTraceFromSys(sys, ParsedCommandLine_Locale(config), testing));
+
+  const tr = startTracingIfNeeded(sys, config, testing);
+
+  const parseStart = sys.Now();
+  const program = NewProgram({ Config: config, Host: host, Tracing: tr } as ProgramOptions);
+  type TimeWithSub3 = import("../../go/time.js").Time & { Sub(t: import("../../go/time.js").Time): number };
+  compileTimes!.ParseTime = (sys.Now() as TimeWithSub3).Sub(parseStart) as import("../../go/time.js").Duration;
+  const [result] = EmitAndReportStatistics({
+    Sys: sys,
+    ProgramLike: program as unknown as ProgramLike,
+    Program: program,
+    Config: config,
+    ReportDiagnostic: reportDiagnostic,
+    ReportErrorSummary: reportErrorSummary,
+    Writer: sys.Writer(),
+    WriteFile: undefined as unknown as import("../compiler/program.js").WriteFile,
+    CompileTimes: compileTimes,
+    Testing: testing,
+    TestingMTimesCache: undefined,
+    Tracing: tr,
+  });
+
+  stopTracing(sys, tr);
+
+  return { Status: result.Status, Watcher: undefined as unknown as import("./tsc/compile.js").Watcher };
 }
 
 /**

@@ -18,7 +18,7 @@ import { NameResolver_Resolve } from "./nameresolver.js";
 import type { NameResolver } from "./nameresolver.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"stub","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d","bodyHash":"81e7b978492681bbce5136cdfb8af2572baeed4157aaae35d67082a8b009fa51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolver","kind":"type","status":"implemented","sigHash":"116c7dbca6419fe3a56769e505765cff79fed3244bc81b4465a5b4fa4058737d","bodyHash":"81e7b978492681bbce5136cdfb8af2572baeed4157aaae35d67082a8b009fa51"}
  *
  * Go source:
  * ReferenceResolver interface {
@@ -38,7 +38,7 @@ export interface ReferenceResolver {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"stub","sigHash":"afa0bd5df77f55a410bd96e8f9b76de4c6af96c22d1e8eed3c0fd3c674b48f9d","bodyHash":"efabe0e4f89da5388f36ad96fb3378825427007e2e956e76bd25f34ecfe0340f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::ReferenceResolverHooks","kind":"type","status":"implemented","sigHash":"afa0bd5df77f55a410bd96e8f9b76de4c6af96c22d1e8eed3c0fd3c674b48f9d","bodyHash":"efabe0e4f89da5388f36ad96fb3378825427007e2e956e76bd25f34ecfe0340f"}
  *
  * Go source:
  * ReferenceResolverHooks struct {
@@ -64,7 +64,7 @@ export interface ReferenceResolverHooks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"7eec38edc86a7918083e72681c153c62ad2df3d5c8dc7fc6cb04cab4db51e2fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"7eec38edc86a7918083e72681c153c62ad2df3d5c8dc7fc6cb04cab4db51e2fb"}
  *
  * Go source:
  * var _ ReferenceResolver = &referenceResolver{}
@@ -72,7 +72,7 @@ export interface ReferenceResolverHooks {
 export const __e8d524b9_0: ReferenceResolver = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"stub","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2","bodyHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/referenceresolver.go::type::referenceResolver","kind":"type","status":"implemented","sigHash":"d9982ff89ac466401b9be499c4e336677e27f5d99e85f70e986f3c1b31e445a2","bodyHash":"526b8552c7473fb06681cba007d61d87d8e29c929c14074b6f5dea4f927cbd2e"}
  *
  * Go source:
  * referenceResolver struct {

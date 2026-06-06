@@ -1,11 +1,18 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
+import { Node_TagName, Node_Children } from "../../ast/ast.js";
+import { AsJsxElement } from "../../ast/generated/casts.js";
 import {
+  NewBinaryExpression,
   NewJsxAttribute,
   NewJsxAttributes,
+  NewJsxClosingElement,
   NewJsxClosingFragment,
+  NewJsxElement,
   NewJsxExpression,
+  NewJsxFragment,
   NewJsxNamespacedName,
   NewJsxOpeningElement,
   NewJsxOpeningFragment,
@@ -26,10 +33,18 @@ import {
   type Kind,
   KindCloseBraceToken,
   KindColonToken,
+  KindCommaToken,
+  KindConflictMarkerTrivia,
   KindDotDotDotToken,
   KindDotToken,
+  KindEndOfFile,
   KindEqualsToken,
   KindGreaterThanToken,
+  KindJsxElement,
+  KindJsxOpeningElement,
+  KindJsxOpeningFragment,
+  KindJsxSelfClosingElement,
+  KindJsxText,
   KindJsxTextAllWhiteSpaces,
   KindLessThanSlashToken,
   KindLessThanToken,
@@ -38,14 +53,24 @@ import {
   KindStringLiteral,
   KindThisKeyword,
 } from "../../ast/generated/kinds.js";
-import { IsJsxNamespacedName } from "../../ast/generated/predicates.js";
+import { IsJsxNamespacedName, IsJsxOpeningElement, IsJsxOpeningFragment } from "../../ast/generated/predicates.js";
+import { TagNamesAreEquivalent } from "../../ast/utilities.js";
+import { LastOrNil } from "../../core/core.js";
 import type { Expression, TypeNode } from "../../ast/generated/unions.js";
 import {
   Expected_corresponding_closing_tag_for_JSX_fragment,
+  Expected_corresponding_JSX_closing_tag_for_0,
+  JSX_element_0_has_no_corresponding_closing_tag,
+  JSX_expressions_must_have_one_parent_element,
+  JSX_fragment_has_no_corresponding_closing_tag,
   X_0_expected,
   X_or_JSX_element_expected,
 } from "../../diagnostics/generated/messages.js";
 import {
+  GetTextOfNodeFromSourceText,
+} from "../../scanner/utilities.js";
+import {
+  Scanner_ReScanJsxToken,
   Scanner_ScanJSDocCommentTextToken,
   Scanner_ScanJSDocToken,
   Scanner_ScanJsxAttributeValue,
@@ -53,6 +78,7 @@ import {
   Scanner_ScanJsxToken,
   Scanner_SetSkipJSDocLeadingAsterisks,
   Scanner_TokenValue,
+  SkipTrivia,
   TokenToString,
 } from "../../scanner/scanner.js";
 import { isKeywordOrPunctuation } from "../utilities.js";
@@ -63,8 +89,14 @@ import {
   Parser_nodePos,
   Parser_parseOptional,
 } from "./support.js";
+import { Parser_newIdentifier } from "./tokens-speculation.js";
+import { Parser_newNodeList } from "./lists.js";
+import { Parser_finishNodeWithEnd } from "./statements-declarations.js";
+import { Parser_parseErrorAt, Parser_parseErrorAtRange } from "./errors-recovery.js";
+import { NewTextRange } from "../../core/text.js";
 import {
   PCJsxAttributes,
+  PCJsxChildren,
   type Parser,
 } from "./state.js";
 import {
@@ -314,7 +346,7 @@ export function Parser_parseJSDocType(receiver: GoPtr<Parser>): GoPtr<TypeNode> 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxElementOrSelfClosingElementOrFragment","kind":"method","status":"stub","sigHash":"abbf4435ab1117da4b194d4f1e3f682fe943410a957ba473b67165ea4709cf5a","bodyHash":"383f108006a50570638f31694537a1d166351413d0401a77cd6b91f0321749c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxElementOrSelfClosingElementOrFragment","kind":"method","status":"implemented","sigHash":"abbf4435ab1117da4b194d4f1e3f682fe943410a957ba473b67165ea4709cf5a","bodyHash":"383f108006a50570638f31694537a1d166351413d0401a77cd6b91f0321749c8"}
  *
  * Go source:
  * func (p *Parser) parseJsxElementOrSelfClosingElementOrFragment(inExpressionContext bool, topInvalidNodePosition int, openingTag *ast.Node, mustBeUnary bool) *ast.Expression {
@@ -398,11 +430,93 @@ export function Parser_parseJSDocType(receiver: GoPtr<Parser>): GoPtr<TypeNode> 
  * }
  */
 export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: GoPtr<Parser>, inExpressionContext: bool, topInvalidNodePosition: int, openingTag: GoPtr<Node>, mustBeUnary: bool): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxElementOrSelfClosingElementOrFragment");
+  const p: Parser = receiver!;
+  const pos: int = Parser_nodePos(receiver);
+  const opening: GoPtr<Expression> = Parser_parseJsxOpeningOrSelfClosingElementOrOpeningFragment(receiver, inExpressionContext);
+  let result: GoPtr<Expression>;
+  switch (opening!.Kind) {
+    case KindJsxOpeningElement: {
+      let children: GoPtr<NodeList> = Parser_parseJsxChildren(receiver, opening);
+      let closingElement: GoPtr<Node>;
+      const lastChild = LastOrNil(children!.Nodes);
+      if (lastChild !== undefined && lastChild.Kind === KindJsxElement &&
+        !TagNamesAreEquivalent(Node_TagName(AsJsxElement(lastChild)!.OpeningElement), Node_TagName(AsJsxElement(lastChild)!.ClosingElement)) &&
+        TagNamesAreEquivalent(Node_TagName(opening), Node_TagName(AsJsxElement(lastChild)!.ClosingElement))) {
+        // when an unclosed JsxOpeningElement incorrectly parses its parent's JsxClosingElement,
+        // restructure (<div>(...<span>...</div>)) --> (<div>(...<span>...</>)</div>)
+        // (no need to error; the parent will error)
+        const end: int = NodeList_End(Node_Children(lastChild));
+        const missingIdentifier = Parser_finishNodeWithEnd(receiver, Parser_newIdentifier(receiver, ""), end, end);
+        const newClosingElement = Parser_finishNodeWithEnd(receiver, NewJsxClosingElement(p.factory, missingIdentifier), end, end);
+        const newLast = Parser_finishNodeWithEnd(
+          receiver,
+          NewJsxElement(p.factory, AsJsxElement(lastChild)!.OpeningElement, Node_Children(lastChild), newClosingElement),
+          Node_Pos(AsJsxElement(lastChild)!.OpeningElement),
+          end,
+        );
+        // force reset parent pointers from discarded parse result
+        if (AsJsxElement(lastChild)!.OpeningElement !== undefined) {
+          AsJsxElement(lastChild)!.OpeningElement!.Parent = newLast;
+        }
+        if (Node_Children(lastChild) !== undefined) {
+          for (const c of Node_Children(lastChild)!.Nodes) {
+            c!.Parent = newLast;
+          }
+        }
+        newClosingElement!.Parent = newLast;
+        children = Parser_newNodeList(receiver, NewTextRange(NodeList_Pos(children), Node_End(newLast)), [...children!.Nodes.slice(0, children!.Nodes.length - 1), newLast]);
+        closingElement = AsJsxElement(lastChild)!.ClosingElement;
+      } else {
+        closingElement = Parser_parseJsxClosingElement(receiver, opening, inExpressionContext);
+        if (!TagNamesAreEquivalent(Node_TagName(opening), Node_TagName(closingElement))) {
+          if (openingTag !== undefined && IsJsxOpeningElement(openingTag) && TagNamesAreEquivalent(Node_TagName(closingElement), Node_TagName(openingTag))) {
+            // opening incorrectly matched with its parent's closing -- put error on opening
+            Parser_parseErrorAtRange(receiver, Node_TagName(opening)!.Loc, JSX_element_0_has_no_corresponding_closing_tag, GetTextOfNodeFromSourceText(p.sourceText, Node_TagName(opening), false /*includeTrivia*/));
+          } else {
+            // other opening/closing mismatches -- put error on closing
+            Parser_parseErrorAtRange(receiver, Node_TagName(closingElement)!.Loc, Expected_corresponding_JSX_closing_tag_for_0, GetTextOfNodeFromSourceText(p.sourceText, Node_TagName(opening), false /*includeTrivia*/));
+          }
+        }
+      }
+      result = Parser_finishNode(receiver, NewJsxElement(p.factory, opening, children, closingElement), pos);
+      closingElement!.Parent = result; // force reset parent pointers from possibly discarded parse result
+      break;
+    }
+    case KindJsxOpeningFragment:
+      result = Parser_finishNode(receiver, NewJsxFragment(p.factory, opening, Parser_parseJsxChildren(receiver, opening), Parser_parseJsxClosingFragment(receiver, inExpressionContext)), pos);
+      break;
+    case KindJsxSelfClosingElement:
+      // Nothing else to do for self-closing elements
+      result = opening;
+      break;
+    default:
+      throw new globalThis.Error("Unhandled case in parseJsxElementOrSelfClosingElementOrFragment");
+  }
+  // If the user writes the invalid code '<div></div><div></div>' in an expression context (i.e. not wrapped in
+  // an enclosing tag), we'll naively try to parse   ^ this as a 'less than' operator and the remainder of the tag
+  // as garbage, which will cause the formatter to badly mangle the JSX. Perform a speculative parse of a JSX
+  // element if we see a < token so that we can wrap it in a synthetic binary expression so the formatter
+  // does less damage and we can report a better error.
+  // Since JSX elements are invalid < operands anyway, this lookahead parse will only occur in error scenarios
+  // of one sort or another.
+  // If we are in a unary context, we can't do this recovery; the binary expression we return here is not
+  // a valid UnaryExpression and will cause problems later.
+  if (!mustBeUnary && inExpressionContext && p.token === KindLessThanToken) {
+    let topBadPos: int = topInvalidNodePosition;
+    if (topBadPos < 0) {
+      topBadPos = Node_Pos(result);
+    }
+    const invalidElement = Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver, /*inExpressionContext*/ true as bool, topBadPos, undefined, false as bool);
+    const operatorToken = NewToken(p.factory, KindCommaToken);
+    operatorToken!.Loc = NewTextRange(Node_Pos(invalidElement), Node_Pos(invalidElement));
+    Parser_parseErrorAt(receiver, SkipTrivia(p.sourceText, topBadPos), Node_End(invalidElement), JSX_expressions_must_have_one_parent_element);
+    result = Parser_finishNode(receiver, NewBinaryExpression(p.factory, undefined /*modifiers*/, result, undefined /*typeNode*/, operatorToken, invalidElement), pos);
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChildren","kind":"method","status":"stub","sigHash":"90bf0f624a07bfac1345bb43877b13a97a217017fecc09f07164692ee7b43105","bodyHash":"f494bf715725b1069c41abc04147d36948a42ae5672397d0c2537ca18e88ab90"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChildren","kind":"method","status":"implemented","sigHash":"90bf0f624a07bfac1345bb43877b13a97a217017fecc09f07164692ee7b43105","bodyHash":"f494bf715725b1069c41abc04147d36948a42ae5672397d0c2537ca18e88ab90"}
  *
  * Go source:
  * func (p *Parser) parseJsxChildren(openingTag *ast.Expression) *ast.NodeList {
@@ -429,11 +543,31 @@ export function Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver: G
  * }
  */
 export function Parser_parseJsxChildren(receiver: GoPtr<Parser>, openingTag: GoPtr<Expression>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChildren");
+  const p: Parser = receiver!;
+  const pos: int = Parser_nodePos(receiver);
+  const saveParsingContexts = p.parsingContexts;
+  p.parsingContexts |= 1 << PCJsxChildren;
+  let list: Array<GoPtr<Node>> = [];
+  for (;;) {
+    const currentToken = Scanner_ReScanJsxToken(p.scanner, true /*allowMultilineJsxText*/);
+    const child = Parser_parseJsxChild(receiver, openingTag, currentToken);
+    if (child === undefined) {
+      break;
+    }
+    list.push(child);
+    if (IsJsxOpeningElement(openingTag) && child.Kind === KindJsxElement &&
+      !TagNamesAreEquivalent(Node_TagName(AsJsxElement(child)!.OpeningElement), Node_TagName(AsJsxElement(child)!.ClosingElement)) &&
+      TagNamesAreEquivalent(Node_TagName(openingTag), Node_TagName(AsJsxElement(child)!.ClosingElement))) {
+      // stop after parsing a mismatched child like <div>...(<span></div>) in order to reattach the </div> higher
+      break;
+    }
+  }
+  p.parsingContexts = saveParsingContexts;
+  return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), list);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChild","kind":"method","status":"stub","sigHash":"0266eb4806f54066845d7c38fe307e0dea597eb73f98b135b4e295fb55b643fe","bodyHash":"0c2521a6dbcd26349066b2e9ca4e253cc3c66f4bc09368b72174ebdbef75be99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChild","kind":"method","status":"implemented","sigHash":"0266eb4806f54066845d7c38fe307e0dea597eb73f98b135b4e295fb55b643fe","bodyHash":"0c2521a6dbcd26349066b2e9ca4e253cc3c66f4bc09368b72174ebdbef75be99"}
  *
  * Go source:
  * func (p *Parser) parseJsxChild(openingTag *ast.Node, token ast.Kind) *ast.Expression {
@@ -465,7 +599,34 @@ export function Parser_parseJsxChildren(receiver: GoPtr<Parser>, openingTag: GoP
  * }
  */
 export function Parser_parseJsxChild(receiver: GoPtr<Parser>, openingTag: GoPtr<Node>, token: Kind): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxChild");
+  const p: Parser = receiver!;
+  switch (token) {
+    case KindEndOfFile:
+      // If we hit EOF, issue the error at the tag that lacks the closing element
+      // rather than at the end of the file (which is useless)
+      if (IsJsxOpeningFragment(openingTag)) {
+        Parser_parseErrorAtRange(receiver, openingTag!.Loc, JSX_fragment_has_no_corresponding_closing_tag);
+      } else {
+        // We want the error span to cover only 'Foo.Bar' in < Foo.Bar >
+        // or to cover only 'Foo' in < Foo >
+        const tag = Node_TagName(openingTag);
+        const start: int = Math.min(SkipTrivia(p.sourceText, Node_Pos(tag)), Node_End(tag));
+        Parser_parseErrorAt(receiver, start, Node_End(tag), JSX_element_0_has_no_corresponding_closing_tag,
+          GetTextOfNodeFromSourceText(p.sourceText, Node_TagName(openingTag), false /*includeTrivia*/));
+      }
+      return undefined;
+    case KindLessThanSlashToken:
+    case KindConflictMarkerTrivia:
+      return undefined;
+    case KindJsxText:
+    case KindJsxTextAllWhiteSpaces:
+      return Parser_parseJsxText(receiver);
+    case KindOpenBraceToken:
+      return Parser_parseJsxExpression(receiver, false /*inExpressionContext*/);
+    case KindLessThanToken:
+      return Parser_parseJsxElementOrSelfClosingElementOrFragment(receiver, false /*inExpressionContext*/, -1 /*topInvalidNodePosition*/, openingTag, false as bool);
+  }
+  throw new globalThis.Error("Unhandled case in parseJsxChild");
 }
 
 /**
@@ -587,7 +748,7 @@ export function Parser_scanJsxAttributeValue(receiver: GoPtr<Parser>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxClosingElement","kind":"method","status":"stub","sigHash":"04f9fa766133656c23b06f0ed927a6ab49d5861b498f7175559b36ec02c18d1c","bodyHash":"fbd2a15cad30edb55ed7d4c7d9d4a472bf09a00d07b196a73b423969a52eb690"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxClosingElement","kind":"method","status":"implemented","sigHash":"04f9fa766133656c23b06f0ed927a6ab49d5861b498f7175559b36ec02c18d1c","bodyHash":"fbd2a15cad30edb55ed7d4c7d9d4a472bf09a00d07b196a73b423969a52eb690"}
  *
  * Go source:
  * func (p *Parser) parseJsxClosingElement(open *ast.Node, inExpressionContext bool) *ast.Node {
@@ -606,7 +767,19 @@ export function Parser_scanJsxAttributeValue(receiver: GoPtr<Parser>): Kind {
  * }
  */
 export function Parser_parseJsxClosingElement(receiver: GoPtr<Parser>, open: GoPtr<Node>, inExpressionContext: bool): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseJsxClosingElement");
+  const p: Parser = receiver!;
+  const pos: int = Parser_nodePos(receiver);
+  Parser_parseExpected(receiver, KindLessThanSlashToken);
+  const tagName: GoPtr<Expression> = Parser_parseJsxElementName(receiver);
+  if (Parser_parseExpectedWithDiagnostic(receiver, KindGreaterThanToken, undefined /*diagnosticMessage*/, false /*shouldAdvance*/)) {
+    // manually advance the scanner in order to look for jsx text inside jsx
+    if (inExpressionContext || !TagNamesAreEquivalent(Node_TagName(open), tagName)) {
+      Parser_nextToken(receiver);
+    } else {
+      Parser_scanJsxText(receiver);
+    }
+  }
+  return Parser_finishNode(receiver, NewJsxClosingElement(p.factory, tagName), pos);
 }
 
 /**

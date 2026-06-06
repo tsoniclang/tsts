@@ -406,7 +406,7 @@ export let ____85348954_0: FileInfo_2d3efe16 = undefined as never;
 export let ____85348954_1: DirEntry = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.IsDir","kind":"method","status":"stub","sigHash":"46e731976895c34cc5422d5bd1aa06a85d77b6eaa86166775cb7680bb89c7ad5","bodyHash":"815c7b929b4ed799d69fb78ea6e8e3d65bdbf6bd06e3709d5320c485fb7e7c88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.IsDir","kind":"method","status":"implemented","sigHash":"46e731976895c34cc5422d5bd1aa06a85d77b6eaa86166775cb7680bb89c7ad5","bodyHash":"815c7b929b4ed799d69fb78ea6e8e3d65bdbf6bd06e3709d5320c485fb7e7c88"}
  *
  * Go source:
  * func (fi *fileInfo) IsDir() bool {
@@ -414,7 +414,7 @@ export let ____85348954_1: DirEntry = undefined as never;
  * }
  */
 export function fileInfo_IsDir(receiver: GoPtr<fileInfo>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.IsDir");
+  return (receiver!.mode as unknown as { IsDir(): bool }).IsDir();
 }
 
 /**
@@ -478,7 +478,7 @@ export function fileInfo_Sys(_receiver: GoPtr<fileInfo>): unknown {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Info","kind":"method","status":"stub","sigHash":"642d4aafd0cb54dd77f811579bd744d2c7408c130b7860ce29645e349a5abda7","bodyHash":"9e66324e2562a3109ceaee83ff357472caacbb2dba083bca517499522721c35b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Info","kind":"method","status":"implemented","sigHash":"642d4aafd0cb54dd77f811579bd744d2c7408c130b7860ce29645e349a5abda7","bodyHash":"9e66324e2562a3109ceaee83ff357472caacbb2dba083bca517499522721c35b"}
  *
  * Go source:
  * func (fi *fileInfo) Info() (fs.FileInfo, error) {
@@ -486,11 +486,11 @@ export function fileInfo_Sys(_receiver: GoPtr<fileInfo>): unknown {
  * }
  */
 export function fileInfo_Info(receiver: GoPtr<fileInfo>): [FileInfo_2d3efe16, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Info");
+  return [receiver as unknown as FileInfo_2d3efe16, undefined];
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Type","kind":"method","status":"stub","sigHash":"55f045ae359e7cf8151611d367765f52d6b3cd17ec1460b68beeeba06ce64696","bodyHash":"a89264aaeca1beb408e80e03ca64dca8d10ca89fb21ffc237d1bbadbb1698c5d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Type","kind":"method","status":"implemented","sigHash":"55f045ae359e7cf8151611d367765f52d6b3cd17ec1460b68beeeba06ce64696","bodyHash":"a89264aaeca1beb408e80e03ca64dca8d10ca89fb21ffc237d1bbadbb1698c5d"}
  *
  * Go source:
  * func (fi *fileInfo) Type() fs.FileMode {
@@ -498,5 +498,5 @@ export function fileInfo_Info(receiver: GoPtr<fileInfo>): [FileInfo_2d3efe16, Go
  * }
  */
 export function fileInfo_Type(receiver: GoPtr<fileInfo>): FileMode {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::fileInfo.Type");
+  return (receiver!.mode as unknown as { Type(): FileMode }).Type();
 }

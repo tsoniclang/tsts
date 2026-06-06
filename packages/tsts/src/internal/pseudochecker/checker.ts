@@ -2,7 +2,7 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/checker.go::type::PseudoChecker","kind":"type","status":"stub","sigHash":"f50524d10dc220ff3d196d78db53a518e5ed226dde376c688a4c72fc7d583dcc","bodyHash":"e3773d3b25f9379611016a09580a78b684002700ca373a2c37e8de65284b193f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pseudochecker/checker.go::type::PseudoChecker","kind":"type","status":"implemented","sigHash":"f50524d10dc220ff3d196d78db53a518e5ed226dde376c688a4c72fc7d583dcc","bodyHash":"e3773d3b25f9379611016a09580a78b684002700ca373a2c37e8de65284b193f"}
  *
  * Go source:
  * PseudoChecker struct {

@@ -1,23 +1,23 @@
 import type { bool, uint } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
-import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
-import { Node_Elements, Node_Text } from "../../ast/ast.js";
+import { NodeFactory_NewNodeList, NodeFactory_NewModifierList, Node_Name } from "../../ast/spine.js";
+import { Node_Elements, Node_Text, Node_Initializer, Node_StatementList, Node_Statements, NodeFactory_UpdateBlock, NodeFactory_UpdateForStatement, NodeFactory_UpdateForInOrOfStatement, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableStatement, NodeFactory_UpdateSourceFile, NodeFactory_NewModifier } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Block, ClassDeclaration, ExportAssignment, ForInOrOfStatement, ForStatement, VariableDeclaration, VariableDeclarationList, VariableStatement } from "../../ast/generated/data.js";
 import type { BindingPattern } from "../../ast/generated/data.js";
-import type { ExportSpecifierNode, Expression, ForInitializer, IdentifierNode, Statement, VariableDeclarationNode } from "../../ast/generated/unions.js";
-import { NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing } from "../../ast/generated/flags.js";
+import type { Declaration, ExportSpecifierNode, Expression, ForInitializer, IdentifierNode, Statement, VariableDeclarationNode } from "../../ast/generated/unions.js";
+import { NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsLet, NodeFlagsUsing } from "../../ast/generated/flags.js";
 import { IsVariableDeclarationList, IsVariableStatement, IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
-import { AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement, AsForStatement, AsForInOrOfStatement, AsBlock, AsSyntaxList } from "../../ast/generated/casts.js";
-import { KindSourceFile, KindBlock, KindForStatement, KindForOfStatement, KindSyntaxList } from "../../ast/generated/kinds.js";
-import { IsBindingPattern, HasSyntacticModifier } from "../../ast/utilities.js";
+import { AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement, AsForStatement, AsForInOrOfStatement, AsBlock, AsSyntaxList, AsClassDeclaration, AsExportAssignment } from "../../ast/generated/casts.js";
+import { KindSourceFile, KindBlock, KindForStatement, KindForOfStatement, KindSyntaxList, KindImportDeclaration, KindImportEqualsDeclaration, KindExportDeclaration, KindFunctionDeclaration, KindExportAssignment, KindClassDeclaration, KindVariableStatement, KindExportKeyword } from "../../ast/generated/kinds.js";
+import { IsBindingPattern, HasSyntacticModifier, SkipOuterExpressions, OEKAll } from "../../ast/utilities.js";
 import { ModifierFlagsExport } from "../../ast/modifierflags.js";
 import { Node_SubtreeFacts } from "../../ast/spine.js";
 import { SubtreeContainsUsing } from "../../ast/subtreefacts.js";
-import { NewArrayLiteralExpression, NewAwaitExpression, NewBlock, NewCatchClause, NewExpressionStatement, NewExportDeclaration, NewExportSpecifier, NewFunctionExpression, NewIdentifier, NewIfStatement, NewNamedExports, NewObjectLiteralExpression, NewPropertyAssignment, NewPropertyAccessExpression, NewTryStatement, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
+import { NewArrayLiteralExpression, NewAwaitExpression, NewBlock, NewCatchClause, NewExpressionStatement, NewExportAssignment, NewExportDeclaration, NewExportSpecifier, NewFunctionExpression, NewIdentifier, NewIfStatement, NewNamedExports, NewObjectLiteralExpression, NewPropertyAssignment, NewPropertyAccessExpression, NewToken, NewTryStatement, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
 import { NodeFlagsNone } from "../../ast/generated/flags.js";
-import { NodeFactory_NewAssignmentExpression, NodeFactory_NewDisposeResourcesHelper, NodeFactory_NewFalseExpression, NodeFactory_NewTrueExpression, NodeFactory_NewUniqueNameEx, NodeFactory_NewUniqueName, NodeFactory_NewVoidZeroExpression, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewTempVariable, NodeFactory_SplitStandardPrologue, NodeFactory_InlineExpressions, NodeFactory_GetLocalName } from "../../printer/factory.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewDisposeResourcesHelper, NodeFactory_NewFalseExpression, NodeFactory_NewTrueExpression, NodeFactory_NewUniqueNameEx, NodeFactory_NewUniqueName, NodeFactory_NewVoidZeroExpression, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewTempVariable, NodeFactory_SplitStandardPrologue, NodeFactory_InlineExpressions, NodeFactory_GetLocalName, NodeFactory_GetDeclarationName, NodeFactory_RestoreOuterExpressions, NodeFactory_NewAddDisposableResourceHelper } from "../../printer/factory.js";
 import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
 import { EmitContext_AddVariableDeclaration, EmitContext_EndVariableEnvironment, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetCommentRange, EmitContext_SetEmitFlags, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_AddEmitHelper, EmitContext_EmitFlags } from "../../printer/emitcontext.js";
 import { EFExportName, EFLocalName } from "../../printer/emitflags.js";
@@ -32,6 +32,10 @@ import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode, NodeVisitor_VisitSli
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { FirstOrNil } from "../../core/core.js";
 import { FirstResult } from "../../core/core.js";
+import { convertClassDeclarationToClassExpression } from "./utilities.js";
+import { isNamedEvaluation, transformNamedEvaluation } from "./namedevaluation.js";
+import type { OuterExpressionKinds } from "../../ast/utilities.js";
+import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingDeclarationTransformer","kind":"type","status":"implemented","sigHash":"c11288edbfe88aa16e8c945b427708e30a077c4eb0bdebe1f153d608e1a48b4a","bodyHash":"0addd17cbd05c759570d5e61185fa027e4ed776acbfe2fb0877d7cb0ee0f79e9"}
@@ -76,7 +80,7 @@ export function newUsingDeclarationTransformer(opts: GoPtr<TransformOptions>): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingKind","kind":"type","status":"stub","sigHash":"bc3c4141be5dc6263c88473c07bd84f86ce4de8a839a9c0b7869e79c0b00cf5a","bodyHash":"2ca9ed38fce3bbf8730146254bb9d05b482256b52d07afcc0a83c1256a95a1bd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::type::usingKind","kind":"type","status":"implemented","sigHash":"bc3c4141be5dc6263c88473c07bd84f86ce4de8a839a9c0b7869e79c0b00cf5a","bodyHash":"2ca9ed38fce3bbf8730146254bb9d05b482256b52d07afcc0a83c1256a95a1bd"}
  *
  * Go source:
  * usingKind uint
@@ -140,7 +144,7 @@ export function usingDeclarationTransformer_visit(receiver: GoPtr<usingDeclarati
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitSourceFile","kind":"method","status":"stub","sigHash":"0f892a8bcc3d43aa052b0fc7ecc716ec3396e38da72f6893ba94487faae0b315","bodyHash":"a0903ac1eeac4af01a9e8e2cbb3e321656dca561f96df905c8916c698042d32a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitSourceFile","kind":"method","status":"implemented","sigHash":"0f892a8bcc3d43aa052b0fc7ecc716ec3396e38da72f6893ba94487faae0b315","bodyHash":"a0903ac1eeac4af01a9e8e2cbb3e321656dca561f96df905c8916c698042d32a"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) visitSourceFile(node *ast.SourceFile) *ast.Node {
@@ -275,11 +279,78 @@ export function usingDeclarationTransformer_visit(receiver: GoPtr<usingDeclarati
  * }
  */
 export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<SourceFile>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitSourceFile");
+  if (node!.IsDeclarationFile) {
+    return node as GoPtr<Node>;
+  }
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  let visited: GoPtr<Node>;
+  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes!);
+  if (usingKind !== usingKindNone) {
+    EmitContext_StartVariableEnvironment(emitContext);
+    receiver!.exportBindings = new globalThis.Map<string, GoPtr<ExportSpecifierNode>>();
+    receiver!.exportVars = [];
+    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
+    let topLevelStatements: GoSlice<GoPtr<Statement>> = [];
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
+    topLevelStatements = [...topLevelStatements, ...prologueVisited as GoSlice<GoPtr<Statement>>];
+    let pos = 0;
+    while (pos < rest.length) {
+      const statement = rest[pos];
+      if (getUsingKind(statement as GoPtr<Node>) !== usingKindNone) {
+        if (pos > 0) {
+          const leadingVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), rest.slice(0, pos) as GoSlice<GoPtr<Node>>)[0];
+          topLevelStatements = [...topLevelStatements, ...leadingVisited as GoSlice<GoPtr<Statement>>];
+        }
+        break;
+      }
+      pos++;
+    }
+    if (pos >= rest.length) {
+      throw new globalThis.Error("Should have encountered at least one 'using' statement.");
+    }
+    const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
+    const topLevelStatementsRef = topLevelStatements;
+    const bodyStatements = usingDeclarationTransformer_transformUsingDeclarations(receiver, rest.slice(pos) as GoSlice<GoPtr<Statement>>, envBinding, topLevelStatementsRef);
+    topLevelStatements = topLevelStatementsRef;
+    if (receiver!.exportBindings!.size > 0) {
+      topLevelStatements = [...topLevelStatements, NewExportDeclaration(factory,
+        undefined, false,
+        NewNamedExports(factory, NodeFactory_NewNodeList(factory, Array.from(receiver!.exportBindings!.values()) as GoSlice<GoPtr<Node>>)),
+        undefined, undefined,
+      ) as GoPtr<Statement>];
+    }
+    const envVarDecls = EmitContext_EndVariableEnvironment(emitContext);
+    topLevelStatements = [...topLevelStatements, ...envVarDecls as GoSlice<GoPtr<Statement>>];
+    if (receiver!.exportVars!.length > 0) {
+      topLevelStatements = [...topLevelStatements, NewVariableStatement(factory,
+        NodeFactory_NewModifierList(factory, [NewToken(factory, KindExportKeyword)] as GoSlice<GoPtr<Node>>),
+        NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, receiver!.exportVars! as GoSlice<GoPtr<Node>>), NodeFlagsLet),
+      ) as GoPtr<Statement>];
+    }
+    const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(receiver, bodyStatements, envBinding, usingKind === usingKindAsync);
+    topLevelStatements = [...topLevelStatements, ...downlevel as GoSlice<GoPtr<Statement>>];
+    if (receiver!.exportEqualsBinding !== undefined) {
+      topLevelStatements = [...topLevelStatements, NewExportAssignment(factory,
+        undefined, true, undefined, receiver!.exportEqualsBinding,
+      ) as GoPtr<Statement>];
+    }
+    visited = NodeFactory_UpdateSourceFile(factory, node, NodeFactory_NewNodeList(factory, topLevelStatements as GoSlice<GoPtr<Node>>), node!.EndOfFileToken);
+  } else {
+    visited = NodeVisitor_VisitEachChild((visitor as ConcreteNodeVisitor), node as GoPtr<Node>);
+  }
+  EmitContext_AddEmitHelper(emitContext, visited, ...EmitContext_ReadEmitHelpers(emitContext)!);
+  receiver!.exportVars = [];
+  receiver!.exportBindings = new globalThis.Map();
+  receiver!.defaultExportBinding = undefined;
+  receiver!.exportEqualsBinding = undefined;
+  return visited;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitBlock","kind":"method","status":"stub","sigHash":"1dde7e27f3055bb2167947cfdf7d5cf54f92b2b370eace58ff7bf173b2e2d8bf","bodyHash":"e400c6ef8e6332161aaff7f075f4d9214f80d8af8c7260d10beb75f0a44f5b49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitBlock","kind":"method","status":"implemented","sigHash":"1dde7e27f3055bb2167947cfdf7d5cf54f92b2b370eace58ff7bf173b2e2d8bf","bodyHash":"e400c6ef8e6332161aaff7f075f4d9214f80d8af8c7260d10beb75f0a44f5b49"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) visitBlock(node *ast.Block) *ast.Node {
@@ -302,11 +373,32 @@ export function usingDeclarationTransformer_visitSourceFile(receiver: GoPtr<usin
  * }
  */
 export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<Block>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitBlock");
+  const usingKind = getUsingKindOfStatements(node!.Statements!.Nodes!);
+  if (usingKind !== usingKindNone) {
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+    const [prologue, rest] = NodeFactory_SplitStandardPrologue(printerFactory, node!.Statements!.Nodes!);
+    const envBinding = usingDeclarationTransformer_createEnvBinding(receiver);
+    let statements: GoSlice<GoPtr<Node>> = [];
+    const prologueVisited = NodeVisitor_VisitSlice((visitor as ConcreteNodeVisitor), prologue as GoSlice<GoPtr<Node>>)[0];
+    statements = [...statements, ...prologueVisited];
+    const downlevel = usingDeclarationTransformer_createDownlevelUsingStatements(
+      receiver,
+      usingDeclarationTransformer_transformUsingDeclarations(receiver, rest as GoSlice<GoPtr<Statement>>, envBinding, undefined),
+      envBinding,
+      usingKind === usingKindAsync,
+    );
+    statements = [...statements, ...downlevel];
+    const statementList = NodeFactory_NewNodeList(factory, statements);
+    statementList!.Loc = node!.Statements!.Loc;
+    return NodeFactory_UpdateBlock(factory, node, statementList, node!.MultiLine);
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForStatement","kind":"method","status":"stub","sigHash":"b03812826ee6392a57e3f903218bd4fdbf8682674be72f1f513291aed42acdcd","bodyHash":"7fef34f19ecabf35f7e947c01fc7f6edf8f14a2ad6352dc5979264bfa5477946"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForStatement","kind":"method","status":"implemented","sigHash":"b03812826ee6392a57e3f903218bd4fdbf8682674be72f1f513291aed42acdcd","bodyHash":"7fef34f19ecabf35f7e947c01fc7f6edf8f14a2ad6352dc5979264bfa5477946"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) visitForStatement(node *ast.ForStatement) *ast.Node {
@@ -340,11 +432,24 @@ export function usingDeclarationTransformer_visitBlock(receiver: GoPtr<usingDecl
  * }
  */
 export function usingDeclarationTransformer_visitForStatement(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<ForStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForStatement");
+  if (node!.Initializer !== undefined && isUsingVariableDeclarationList(node!.Initializer)) {
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+    const newBlock = NewBlock(factory,
+      NodeFactory_NewNodeList(factory, [
+        NewVariableStatement(factory, undefined, node!.Initializer) as GoPtr<Node>,
+        NodeFactory_UpdateForStatement(factory, node, undefined, node!.Condition, node!.Incrementor, node!.Statement) as GoPtr<Node>,
+      ] as GoSlice<GoPtr<Node>>),
+      false,
+    );
+    return NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), newBlock);
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForOfStatement","kind":"method","status":"stub","sigHash":"38c80559a1cd8ee4ef613b695e184d4202876e40536cd842e37737e2acaa621f","bodyHash":"0bc493ee867e8010de3cead2a42726708ee1cc8d0c6a5d24418d6a9f82389847"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForOfStatement","kind":"method","status":"implemented","sigHash":"38c80559a1cd8ee4ef613b695e184d4202876e40536cd842e37737e2acaa621f","bodyHash":"0bc493ee867e8010de3cead2a42726708ee1cc8d0c6a5d24418d6a9f82389847"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) visitForOfStatement(node *ast.ForInOrOfStatement) *ast.Node {
@@ -413,11 +518,48 @@ export function usingDeclarationTransformer_visitForStatement(receiver: GoPtr<us
  * }
  */
 export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<ForInOrOfStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.visitForOfStatement");
+  if (isUsingVariableDeclarationList(node!.Initializer)) {
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+    const forInitializer = AsVariableDeclarationList(node!.Initializer);
+    let forDecl = FirstOrNil(forInitializer!.Declarations!.Nodes) as GoPtr<Node>;
+    if (forDecl === undefined) {
+      forDecl = NewVariableDeclaration(factory, NodeFactory_NewTempVariable(printerFactory), undefined, undefined, undefined) as GoPtr<Node>;
+    }
+    const isAwaitUsing = getUsingKindOfVariableDeclarationList(forInitializer) === usingKindAsync;
+    const temp = NodeFactory_NewGeneratedNameForNode(printerFactory, Node_Name(forDecl));
+    const usingVar = NodeFactory_UpdateVariableDeclaration(factory, AsVariableDeclaration(forDecl), Node_Name(forDecl), undefined, undefined, temp) as GoPtr<VariableDeclaration>;
+    const usingVarList = NewVariableDeclarationList(factory,
+      NodeFactory_NewNodeList(factory, [usingVar] as GoSlice<GoPtr<Node>>),
+      isAwaitUsing ? NodeFlagsAwaitUsing : NodeFlagsUsing,
+    );
+    const usingVarStatement = NewVariableStatement(factory, undefined, usingVarList) as GoPtr<Node>;
+    let statement: GoPtr<Node>;
+    if (IsBlock(node!.Statement)) {
+      const stmts = Node_Statements(node!.Statement) ?? [];
+      const newStatements = [usingVarStatement, ...stmts] as GoSlice<GoPtr<Node>>;
+      statement = NodeFactory_UpdateBlock(factory, AsBlock(node!.Statement), NodeFactory_NewNodeList(factory, newStatements), AsBlock(node!.Statement)!.MultiLine);
+    } else {
+      statement = NewBlock(factory,
+        NodeFactory_NewNodeList(factory, [usingVarStatement, node!.Statement] as GoSlice<GoPtr<Node>>),
+        true,
+      );
+    }
+    return NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor),
+      NodeFactory_UpdateForInOrOfStatement(factory, node, node!.AwaitModifier, NewVariableDeclarationList(factory,
+        NodeFactory_NewNodeList(factory, [
+          NewVariableDeclaration(factory, temp, undefined, undefined, undefined) as GoPtr<Node>,
+        ] as GoSlice<GoPtr<Node>>),
+        NodeFlagsConst,
+      ) as GoPtr<ForInitializer>, node!.Expression, statement) as GoPtr<Node>,
+    );
+  }
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.transformUsingDeclarations","kind":"method","status":"stub","sigHash":"e137108edef541b74d5b6b8689eeedf0b64de92d3ae43996f75c79b6238fa0f2","bodyHash":"9b861724387da300d39313e4a0ad9652495b5c3cc0087862e91145dffcb98634"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.transformUsingDeclarations","kind":"method","status":"implemented","sigHash":"e137108edef541b74d5b6b8689eeedf0b64de92d3ae43996f75c79b6238fa0f2","bodyHash":"9b861724387da300d39313e4a0ad9652495b5c3cc0087862e91145dffcb98634"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) transformUsingDeclarations(statementsIn []*ast.Statement, envBinding *ast.IdentifierNode, topLevelStatements *[]*ast.Statement) []*ast.Node {
@@ -512,7 +654,91 @@ export function usingDeclarationTransformer_visitForOfStatement(receiver: GoPtr<
  * }
  */
 export function usingDeclarationTransformer_transformUsingDeclarations(receiver: GoPtr<usingDeclarationTransformer>, statementsIn: GoSlice<GoPtr<Statement>>, envBinding: GoPtr<IdentifierNode>, topLevelStatements: GoPtr<GoSlice<GoPtr<Statement>>>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.transformUsingDeclarations");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  let statements: GoSlice<GoPtr<Statement>> = [];
+
+  const hoist = (node: GoPtr<Statement>): GoPtr<Statement> => {
+    if (topLevelStatements === undefined) {
+      return node;
+    }
+    switch (node!.Kind) {
+      case KindImportDeclaration:
+      case KindImportEqualsDeclaration:
+      case KindExportDeclaration:
+      case KindFunctionDeclaration:
+        usingDeclarationTransformer_hoistImportOrExportOrHoistedDeclaration(receiver, node, topLevelStatements);
+        return undefined;
+      case KindExportAssignment:
+        return usingDeclarationTransformer_hoistExportAssignment(receiver, AsExportAssignment(node)) as GoPtr<Statement>;
+      case KindClassDeclaration:
+        return usingDeclarationTransformer_hoistClassDeclaration(receiver, AsClassDeclaration(node)) as GoPtr<Statement>;
+      case KindVariableStatement:
+        return usingDeclarationTransformer_hoistVariableStatement(receiver, AsVariableStatement(node)) as GoPtr<Statement>;
+    }
+    return node;
+  };
+
+  const hoistOrAppendNode = (node: GoPtr<Node>): void => {
+    const hoisted = hoist(node as GoPtr<Statement>);
+    if (hoisted !== undefined) {
+      statements = [...statements, hoisted as GoPtr<Statement>];
+    }
+  };
+
+  for (const statement of statementsIn) {
+    const usingKind = getUsingKind(statement as GoPtr<Node>);
+    if (usingKind !== usingKindNone) {
+      const varStatement = AsVariableStatement(statement as GoPtr<Node>);
+      const declarationList = varStatement!.DeclarationList;
+      let declarations: GoSlice<GoPtr<VariableDeclaration>> = [];
+      let invalid = false;
+      for (const declaration of AsVariableDeclarationList(declarationList)!.Declarations!.Nodes!) {
+        if (!IsIdentifier(Node_Name(declaration as GoPtr<Node>))) {
+          declarations = [];
+          invalid = true;
+          break;
+        }
+        let decl = declaration as GoPtr<Node>;
+        if (isNamedEvaluation(emitContext, decl)) {
+          decl = transformNamedEvaluation(emitContext, decl, false, "") as GoPtr<Node>;
+        }
+        let initializer = NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), Node_Initializer(decl) as GoPtr<Node>);
+        if (initializer === undefined) {
+          initializer = NodeFactory_NewVoidZeroExpression(printerFactory) as GoPtr<Node>;
+        }
+        declarations = [...declarations, NodeFactory_UpdateVariableDeclaration(factory,
+          AsVariableDeclaration(decl),
+          Node_Name(decl),
+          undefined,
+          undefined,
+          NodeFactory_NewAddDisposableResourceHelper(printerFactory, envBinding as GoPtr<Expression>, initializer as GoPtr<Expression>, usingKind === usingKindAsync),
+        ) as GoPtr<VariableDeclaration>];
+      }
+      if (!invalid && declarations.length > 0) {
+        const varList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, declarations as GoSlice<GoPtr<Node>>), NodeFlagsConst);
+        EmitContext_SetOriginal(emitContext, varList, declarationList);
+        varList!.Loc = declarationList!.Loc;
+        hoistOrAppendNode(NodeFactory_UpdateVariableStatement(factory, varStatement, undefined, varList) as GoPtr<Node>);
+        continue;
+      }
+    }
+
+    const result = usingDeclarationTransformer_visit(receiver, statement as GoPtr<Node>);
+    if (result !== undefined) {
+      if (result!.Kind === KindSyntaxList) {
+        for (const node of AsSyntaxList(result)!.Children!) {
+          hoistOrAppendNode(node);
+        }
+      } else {
+        hoistOrAppendNode(result);
+      }
+    }
+  }
+  return statements as GoSlice<GoPtr<Node>>;
 }
 
 /**
@@ -549,7 +775,7 @@ export function usingDeclarationTransformer_hoistExportAssignment(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistExportDefault","kind":"method","status":"stub","sigHash":"ee67a3ba2153b028ea365e1a91613e0f32095b378be08884d552974a9d685f9c","bodyHash":"8234427be4928079ef1ce06ddd57bcfe5b112d66bcf5b49e8d456456e71922c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistExportDefault","kind":"method","status":"implemented","sigHash":"ee67a3ba2153b028ea365e1a91613e0f32095b378be08884d552974a9d685f9c","bodyHash":"8234427be4928079ef1ce06ddd57bcfe5b112d66bcf5b49e8d456456e71922c8"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) hoistExportDefault(node *ast.ExportAssignment) *ast.Statement {
@@ -588,7 +814,22 @@ export function usingDeclarationTransformer_hoistExportAssignment(receiver: GoPt
  * }
  */
 export function usingDeclarationTransformer_hoistExportDefault(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<ExportAssignment>): GoPtr<Statement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistExportDefault");
+  if (receiver!.defaultExportBinding !== undefined) {
+    return node as GoPtr<Statement>;
+  }
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  receiver!.defaultExportBinding = NodeFactory_NewUniqueNameEx(printerFactory, "_default", { Flags: GeneratedIdentifierFlagsReservedInNestedScopes | GeneratedIdentifierFlagsFileLevel | GeneratedIdentifierFlagsOptimistic } as AutoGenerateOptions);
+  usingDeclarationTransformer_hoistBindingIdentifier(receiver, receiver!.defaultExportBinding, true, NewIdentifier(factory, "default"), node as GoPtr<Node>);
+  let expression = node!.Expression as GoPtr<Expression>;
+  const innerExpression = SkipOuterExpressions(expression, OEKAll as OuterExpressionKinds);
+  if (isNamedEvaluation(emitContext, innerExpression as GoPtr<Node>)) {
+    const transformedInner = transformNamedEvaluation(emitContext, innerExpression as GoPtr<Node>, false, "default") as GoPtr<Expression>;
+    expression = NodeFactory_RestoreOuterExpressions(printerFactory, expression, transformedInner, OEKAll as OuterExpressionKinds) as GoPtr<Expression>;
+  }
+  const assignment = NodeFactory_NewAssignmentExpression(printerFactory, receiver!.defaultExportBinding as GoPtr<Expression>, expression);
+  return NewExpressionStatement(factory, assignment as GoPtr<Expression>) as GoPtr<Statement>;
 }
 
 /**
@@ -641,7 +882,7 @@ export function usingDeclarationTransformer_hoistExportEquals(receiver: GoPtr<us
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistClassDeclaration","kind":"method","status":"stub","sigHash":"6385542115b382d175ac2fa6eb83c33a83583321ae920dea73c982ae2fa1f4e4","bodyHash":"e8db6edf436f51432c0cd5023d8b8fc9136c08db2260410f55d169c3467df1f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistClassDeclaration","kind":"method","status":"implemented","sigHash":"6385542115b382d175ac2fa6eb83c33a83583321ae920dea73c982ae2fa1f4e4","bodyHash":"e8db6edf436f51432c0cd5023d8b8fc9136c08db2260410f55d169c3467df1f3"}
  *
  * Go source:
  * func (tx *usingDeclarationTransformer) hoistClassDeclaration(node *ast.ClassDeclaration) *ast.Statement {
@@ -730,7 +971,35 @@ export function usingDeclarationTransformer_hoistExportEquals(receiver: GoPtr<us
  * }
  */
 export function usingDeclarationTransformer_hoistClassDeclaration(receiver: GoPtr<usingDeclarationTransformer>, node: GoPtr<ClassDeclaration>): GoPtr<Statement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/using.go::method::usingDeclarationTransformer.hoistClassDeclaration");
+  if (Node_Name(node as GoPtr<Node>) === undefined && receiver!.defaultExportBinding !== undefined) {
+    return node as GoPtr<Statement>;
+  }
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const isExported = HasSyntacticModifier(node as GoPtr<Node>, ModifierFlagsExport) as bool;
+  const isDefault = HasSyntacticModifier(node as GoPtr<Node>, ModifierFlagsDefault) as bool;
+  let expression: GoPtr<Expression> = convertClassDeclarationToClassExpression(emitContext, node) as GoPtr<Expression>;
+  if (Node_Name(node as GoPtr<Node>) !== undefined) {
+    usingDeclarationTransformer_hoistBindingIdentifier(receiver, NodeFactory_GetLocalName(printerFactory, node as GoPtr<Declaration>), isExported && !isDefault, undefined, node as GoPtr<Node>);
+    expression = NodeFactory_NewAssignmentExpression(printerFactory, NodeFactory_GetDeclarationName(printerFactory, node as GoPtr<Declaration>) as GoPtr<Expression>, expression) as GoPtr<Expression>;
+    EmitContext_SetOriginal(emitContext, expression as GoPtr<Node>, node as GoPtr<Node>);
+    EmitContext_SetSourceMapRange(emitContext, expression as GoPtr<Node>, node!.Loc);
+    EmitContext_SetCommentRange(emitContext, expression as GoPtr<Node>, node!.Loc);
+    if (isNamedEvaluation(emitContext, expression as GoPtr<Node>)) {
+      expression = transformNamedEvaluation(emitContext, expression as GoPtr<Node>, false, "") as GoPtr<Expression>;
+    }
+  }
+  if (isDefault && receiver!.defaultExportBinding === undefined) {
+    receiver!.defaultExportBinding = NodeFactory_NewUniqueNameEx(printerFactory, "_default", { Flags: GeneratedIdentifierFlagsReservedInNestedScopes | GeneratedIdentifierFlagsFileLevel | GeneratedIdentifierFlagsOptimistic } as AutoGenerateOptions);
+    usingDeclarationTransformer_hoistBindingIdentifier(receiver, receiver!.defaultExportBinding, true, NewIdentifier(factory, "default"), node as GoPtr<Node>);
+    expression = NodeFactory_NewAssignmentExpression(printerFactory, receiver!.defaultExportBinding as GoPtr<Expression>, expression) as GoPtr<Expression>;
+    EmitContext_SetOriginal(emitContext, expression as GoPtr<Node>, node as GoPtr<Node>);
+    if (isNamedEvaluation(emitContext, expression as GoPtr<Node>)) {
+      expression = transformNamedEvaluation(emitContext, expression as GoPtr<Node>, false, "default") as GoPtr<Expression>;
+    }
+  }
+  return NewExpressionStatement(factory, expression) as GoPtr<Statement>;
 }
 
 /**

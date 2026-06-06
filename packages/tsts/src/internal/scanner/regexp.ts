@@ -6,7 +6,7 @@ import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
 import * as utf8 from "../../go/unicode/utf8.js";
 import * as debug from "../debug/debug.js";
-import { GetSpellingSuggestionForStrings } from "../core/core.js";
+import { ConcatenateSeq, GetSpellingSuggestionForStrings } from "../core/core.js";
 import type { ScriptTarget } from "../core/compileroptions.js";
 import {
   ScriptTargetES2018,
@@ -19,10 +19,14 @@ import {
   A_character_class_must_not_contain_a_reserved_double_punctuator_Did_you_mean_to_escape_it_with_backslash,
   A_character_class_range_must_not_be_bounded_by_another_character_class,
   Anything_that_would_possibly_match_more_than_a_single_character_is_invalid_inside_a_negated_character_class,
+  Any_Unicode_property_that_would_possibly_match_more_than_a_single_character_is_only_available_when_the_Unicode_Sets_v_flag_is_set,
   Did_you_mean_0,
   Duplicate_regular_expression_flag,
   Expected_a_capturing_group_name,
   Expected_a_class_set_operand,
+  Expected_a_Unicode_property_name,
+  Expected_a_Unicode_property_name_or_value,
+  Expected_a_Unicode_property_value,
   Incomplete_quantifier_Digit_expected,
   Named_capturing_groups_are_only_available_when_targeting_ES2018_or_later,
   Named_capturing_groups_with_the_same_name_must_be_mutually_exclusive_to_each_other,
@@ -37,16 +41,27 @@ import {
   This_regular_expression_flag_cannot_be_toggled_within_a_subpattern,
   This_regular_expression_flag_is_only_available_when_targeting_0_or_later,
   Undetermined_character_escape,
+  Unicode_property_value_expressions_are_only_available_when_the_Unicode_u_flag_or_the_Unicode_Sets_v_flag_is_set,
   Unexpected_0_Did_you_mean_to_escape_it_with_backslash,
   Unknown_regular_expression_flag,
+  Unknown_Unicode_property_name,
+  Unknown_Unicode_property_name_or_value,
+  Unknown_Unicode_property_value,
   X_0_expected,
+  X_0_must_be_followed_by_a_Unicode_property_value_expression_enclosed_in_braces,
   X_c_must_be_followed_by_an_ASCII_letter,
   X_k_must_be_followed_by_a_capturing_group_name_enclosed_in_angle_brackets,
   X_q_is_only_available_inside_character_class,
   X_q_must_be_followed_by_string_alternatives_enclosed_in_braces,
 } from "../diagnostics/generated/messages.js";
 import * as stringutil from "../stringutil/util.js";
-import { nonBinaryUnicodeProperties } from "./unicodeproperties.js";
+import { Set_Has, Set_Keys } from "../collections/set.js";
+import {
+  binaryUnicodeProperties,
+  binaryUnicodePropertiesOfStrings,
+  nonBinaryUnicodeProperties,
+  valuesOfNonBinaryUnicodeProperties,
+} from "./unicodeproperties.js";
 import {
   EscapeSequenceScanningFlagsAnnexB,
   EscapeSequenceScanningFlagsAnyUnicodeMode,
@@ -2025,7 +2040,7 @@ export function regExpParser_scanClassAtom(receiver: GoPtr<regExpParser>): strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterClassEscape","kind":"method","status":"stub","sigHash":"30922b31e906b75a790d501771f479c1886823a4959594728b420fd44d1da14a","bodyHash":"ea473fa286bbe2389511aa2e9f5906389f6e2a42ace08e0205b8e08f9222093c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterClassEscape","kind":"method","status":"implemented","sigHash":"30922b31e906b75a790d501771f479c1886823a4959594728b420fd44d1da14a","bodyHash":"ea473fa286bbe2389511aa2e9f5906389f6e2a42ace08e0205b8e08f9222093c"}
  *
  * Go source:
  * func (p *regExpParser) scanCharacterClassEscape() bool {
@@ -2107,7 +2122,81 @@ export function regExpParser_scanClassAtom(receiver: GoPtr<regExpParser>): strin
  * }
  */
 export function regExpParser_scanCharacterClassEscape(receiver: GoPtr<regExpParser>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.scanCharacterClassEscape");
+  debug.Assert(regExpParser_pos(receiver) > 0 && byteAt(regExpParser_text(receiver), regExpParser_pos(receiver) - 1) === "\\".codePointAt(0)!);
+  let isCharacterComplement = false;
+  const start = regExpParser_pos(receiver) - 1;
+  const ch = regExpParser_char(receiver);
+  if (ch === "d".codePointAt(0)! || ch === "D".codePointAt(0)! || ch === "s".codePointAt(0)! || ch === "S".codePointAt(0)! || ch === "w".codePointAt(0)! || ch === "W".codePointAt(0)!) {
+    regExpParser_incPos(receiver, 1);
+    return true;
+  }
+  if (ch === "P".codePointAt(0)! || ch === "p".codePointAt(0)!) {
+    if (ch === "P".codePointAt(0)!) {
+      isCharacterComplement = true;
+    }
+    regExpParser_incPos(receiver, 1);
+    if (regExpParser_char(receiver) === "{".codePointAt(0)!) {
+      regExpParser_incPos(receiver, 1);
+      const propertyNameOrValueStart = regExpParser_pos(receiver);
+      const propertyNameOrValue = regExpParser_scanWordCharacters(receiver);
+      if (regExpParser_char(receiver) === "=".codePointAt(0)!) {
+        const propertyName = nonBinaryUnicodeProperties.get(propertyNameOrValue) ?? "";
+        if (regExpParser_pos(receiver) === propertyNameOrValueStart) {
+          regExpParser_error(receiver, Expected_a_Unicode_property_name, regExpParser_pos(receiver), 0);
+        } else if (propertyName === "") {
+          regExpParser_error(receiver, Unknown_Unicode_property_name, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart);
+          const suggestion = regExpParser_getSpellingSuggestionForUnicodePropertyName(receiver, propertyNameOrValue);
+          if (suggestion !== "") {
+            regExpParser_error(receiver, Did_you_mean_0, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart, suggestion);
+          }
+        }
+        regExpParser_incPos(receiver, 1);
+        const propertyValueStart = regExpParser_pos(receiver);
+        const propertyValue = regExpParser_scanWordCharacters(receiver);
+        if (regExpParser_pos(receiver) === propertyValueStart) {
+          regExpParser_error(receiver, Expected_a_Unicode_property_value, regExpParser_pos(receiver), 0);
+        } else if (propertyName !== "") {
+          const values = valuesOfNonBinaryUnicodeProperties.get(propertyName);
+          if (values !== undefined && !Set_Has(values, propertyValue)) {
+            regExpParser_error(receiver, Unknown_Unicode_property_value, propertyValueStart, regExpParser_pos(receiver) - propertyValueStart);
+            const suggestion = regExpParser_getSpellingSuggestionForUnicodePropertyValue(receiver, propertyName, propertyValue);
+            if (suggestion !== "") {
+              regExpParser_error(receiver, Did_you_mean_0, propertyValueStart, regExpParser_pos(receiver) - propertyValueStart, suggestion);
+            }
+          }
+        }
+      } else {
+        if (regExpParser_pos(receiver) === propertyNameOrValueStart) {
+          regExpParser_error(receiver, Expected_a_Unicode_property_name_or_value, regExpParser_pos(receiver), 0);
+        } else if (Set_Has(binaryUnicodePropertiesOfStrings, propertyNameOrValue)) {
+          if (!receiver!.unicodeSetsMode) {
+            regExpParser_error(receiver, Any_Unicode_property_that_would_possibly_match_more_than_a_single_character_is_only_available_when_the_Unicode_Sets_v_flag_is_set, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart);
+          } else if (isCharacterComplement) {
+            regExpParser_error(receiver, Anything_that_would_possibly_match_more_than_a_single_character_is_invalid_inside_a_negated_character_class, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart);
+          } else {
+            receiver!.mayContainStrings = true;
+          }
+        } else if (!Set_Has(valuesOfNonBinaryUnicodeProperties.get("General_Category"), propertyNameOrValue) && !Set_Has(binaryUnicodeProperties, propertyNameOrValue)) {
+          regExpParser_error(receiver, Unknown_Unicode_property_name_or_value, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart);
+          const suggestion = regExpParser_getSpellingSuggestionForUnicodePropertyNameOrValue(receiver, propertyNameOrValue);
+          if (suggestion !== "") {
+            regExpParser_error(receiver, Did_you_mean_0, propertyNameOrValueStart, regExpParser_pos(receiver) - propertyNameOrValueStart, suggestion);
+          }
+        }
+      }
+      regExpParser_scanExpectedChar(receiver, "}".codePointAt(0)!);
+      if (!receiver!.anyUnicodeMode) {
+        regExpParser_error(receiver, Unicode_property_value_expressions_are_only_available_when_the_Unicode_u_flag_or_the_Unicode_Sets_v_flag_is_set, start, regExpParser_pos(receiver) - start);
+      }
+    } else if (receiver!.anyUnicodeModeOrNonAnnexB) {
+      regExpParser_error(receiver, X_0_must_be_followed_by_a_Unicode_property_value_expression_enclosed_in_braces, regExpParser_pos(receiver) - 2, 2, globalThis.String.fromCodePoint(ch));
+    } else {
+      regExpParser_incPos(receiver, -1);
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -2123,7 +2212,7 @@ export function regExpParser_getSpellingSuggestionForUnicodePropertyName(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyValue","kind":"method","status":"stub","sigHash":"7e20e1f90a9f719614c0b30fc8bc132a606c4664a72876670d3d988f4942fc40","bodyHash":"1dddf9fef11a78ea59480baef3442b0bf3b3db6857c275ae5fd8efb0c6a986b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyValue","kind":"method","status":"implemented","sigHash":"7e20e1f90a9f719614c0b30fc8bc132a606c4664a72876670d3d988f4942fc40","bodyHash":"1dddf9fef11a78ea59480baef3442b0bf3b3db6857c275ae5fd8efb0c6a986b2"}
  *
  * Go source:
  * func (p *regExpParser) getSpellingSuggestionForUnicodePropertyValue(propertyName string, value string) string {
@@ -2135,11 +2224,15 @@ export function regExpParser_getSpellingSuggestionForUnicodePropertyName(receive
  * }
  */
 export function regExpParser_getSpellingSuggestionForUnicodePropertyValue(receiver: GoPtr<regExpParser>, propertyName: string, value: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyValue");
+  const values = valuesOfNonBinaryUnicodeProperties.get(propertyName);
+  if (values === undefined) {
+    return "";
+  }
+  return GetSpellingSuggestionForStrings(value, maps.Keys(Set_Keys(values)));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyNameOrValue","kind":"method","status":"stub","sigHash":"e9d8d44cdc6837e1739a3992bf4ef9c50c031c0e63e9a9d08f6092ff42bb696f","bodyHash":"a99dc13aa9a86753cb8c61ff75fe1a3c958493082802de1ae64f22b5f054fa3d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyNameOrValue","kind":"method","status":"implemented","sigHash":"e9d8d44cdc6837e1739a3992bf4ef9c50c031c0e63e9a9d08f6092ff42bb696f","bodyHash":"a99dc13aa9a86753cb8c61ff75fe1a3c958493082802de1ae64f22b5f054fa3d"}
  *
  * Go source:
  * func (p *regExpParser) getSpellingSuggestionForUnicodePropertyNameOrValue(name string) string {
@@ -2151,7 +2244,11 @@ export function regExpParser_getSpellingSuggestionForUnicodePropertyValue(receiv
  * }
  */
 export function regExpParser_getSpellingSuggestionForUnicodePropertyNameOrValue(receiver: GoPtr<regExpParser>, name: string): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/scanner/regexp.go::method::regExpParser.getSpellingSuggestionForUnicodePropertyNameOrValue");
+  return GetSpellingSuggestionForStrings(name, ConcatenateSeq(
+    maps.Keys(Set_Keys(valuesOfNonBinaryUnicodeProperties.get("General_Category"))),
+    maps.Keys(Set_Keys(binaryUnicodeProperties)),
+    maps.Keys(Set_Keys(binaryUnicodePropertiesOfStrings)),
+  ));
 }
 
 /**

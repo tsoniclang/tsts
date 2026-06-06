@@ -2,11 +2,11 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
-import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone } from "../ast/spine.js";
+import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
-import type { LabeledStatement } from "../ast/generated/data.js";
-import { GetNonAssignedNameOfDeclaration, GetNameOfDeclaration, HasSyntacticModifier, IsMemberName, IsNodeDescendantOf, IsPrologueDirective, NodeIsSynthesized, RangeIsSynthesized, GetNodeId, TryGetPropertyNameOfBindingOrAssignmentElement } from "../ast/utilities.js";
-import { Node_Expression, Node_Text } from "../ast/ast.js";
+import type { LabeledStatement, NonNullExpression, ParenthesizedExpression, PartiallyEmittedExpression, SatisfiesExpression, AsExpression, ExpressionWithTypeArguments, VariableDeclaration, VariableDeclarationList } from "../ast/generated/data.js";
+import { GetNonAssignedNameOfDeclaration, GetNameOfDeclaration, HasSyntacticModifier, IsMemberName, IsNodeDescendantOf, IsPrologueDirective, NodeIsSynthesized, RangeIsSynthesized, GetNodeId, TryGetPropertyNameOfBindingOrAssignmentElement, IsOuterExpression, OEKAll } from "../ast/utilities.js";
+import { Node_Expression, Node_Text, Node_Type, Node_TypeArgumentList, NodeFactory_UpdateAsExpression, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateLabeledStatement, NodeFactory_UpdateNonNullExpression, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdatePartiallyEmittedExpression, NodeFactory_UpdateSatisfiesExpression, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableDeclarationList } from "../ast/ast.js";
 import { ModifierFlagsExport } from "../ast/modifierflags.js";
 import { FormatGeneratedName } from "./utilities.js";
 import {
@@ -36,13 +36,16 @@ import {
   NewStringLiteral,
   NewToken,
   NewTypeOfExpression,
+  NewVariableDeclarationList,
+  NewVariableStatement,
   NewVoidExpression,
 } from "../ast/generated/factory.js";
-import type { BlockNode, Declaration, Expression, IdentifierNode, PrivateIdentifierNode, Statement, StringLiteralNode } from "../ast/generated/unions.js";
-import { AsBinaryExpression, AsQualifiedName } from "../ast/generated/casts.js";
-import { IsBinaryExpression, IsCallExpression, IsComputedPropertyName, IsIdentifier, IsParenthesizedExpression, IsPrivateIdentifier, IsQualifiedName } from "../ast/generated/predicates.js";
+import type { BlockNode, Declaration, Expression, IdentifierNode, PrivateIdentifierNode, Statement, StringLiteralNode, VariableDeclarationNodeList } from "../ast/generated/unions.js";
+import { AsBinaryExpression, AsAsExpression, AsExpressionWithTypeArguments, AsLabeledStatement, AsNonNullExpression, AsParenthesizedExpression, AsPartiallyEmittedExpression, AsQualifiedName, AsSatisfiesExpression, AsTypeAssertion, AsVariableDeclaration, AsVariableDeclarationList } from "../ast/generated/casts.js";
+import { IsBinaryExpression, IsCallExpression, IsComputedPropertyName, IsIdentifier, IsLabeledStatement, IsParenthesizedExpression, IsPrivateIdentifier, IsQualifiedName, IsVariableDeclarationList } from "../ast/generated/predicates.js";
+import type { NodeFlags } from "../ast/generated/flags.js";
 import { NodeFlagsNone, NodeFlagsOptionalChain } from "../ast/generated/flags.js";
-import { KindAmpersandAmpersandToken, KindAsteriskToken, KindBarBarToken, KindBigIntLiteral, KindColonToken, KindCommaToken, KindEqualsEqualsEqualsToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindFalseKeyword, KindIdentifier, KindInKeyword, KindJsxNamespacedName, KindNoSubstitutionTemplateLiteral, KindNullKeyword, KindNumericLiteral, KindPlusToken, KindPrivateIdentifier, KindQuestionToken, KindRegularExpressionLiteral, KindStringLiteral, KindTemplateTail, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword } from "../ast/generated/kinds.js";
+import { KindAmpersandAmpersandToken, KindAsExpression, KindAsteriskToken, KindBarBarToken, KindBigIntLiteral, KindColonToken, KindCommaToken, KindEqualsEqualsEqualsToken, KindEqualsGreaterThanToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExpressionWithTypeArguments, KindFalseKeyword, KindIdentifier, KindInKeyword, KindJsxNamespacedName, KindNoSubstitutionTemplateLiteral, KindNonNullExpression, KindNullKeyword, KindNumericLiteral, KindPartiallyEmittedExpression, KindParenthesizedExpression, KindPlusToken, KindPrivateIdentifier, KindQuestionToken, KindRegularExpressionLiteral, KindSatisfiesExpression, KindStringLiteral, KindTemplateTail, KindTemplateHead, KindTemplateMiddle, KindThisKeyword, KindTrueKeyword, KindTypeAssertionExpression } from "../ast/generated/kinds.js";
 import { TokenFlagsNone } from "../ast/tokenflags.js";
 import { IfElse } from "../core/core.js";
 import type { ScriptTarget } from "../core/compileroptions.js";
@@ -694,7 +697,7 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreEnclosingLabel","kind":"method","status":"stub","sigHash":"fff69a5f287d6c3b561a537d1218bfb18105629decea3120ddc567a37c74e817","bodyHash":"d427ab10f2e1d1bfa0dc9c33d9798911718e55b4f4eb28bce5eb98800e7b7da5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreEnclosingLabel","kind":"method","status":"implemented","sigHash":"fff69a5f287d6c3b561a537d1218bfb18105629decea3120ddc567a37c74e817","bodyHash":"d427ab10f2e1d1bfa0dc9c33d9798911718e55b4f4eb28bce5eb98800e7b7da5"}
  *
  * Go source:
  * func (f *NodeFactory) RestoreEnclosingLabel(node *ast.Node, outermostLabeledStatement *ast.LabeledStatement) *ast.Node {
@@ -713,11 +716,23 @@ export function NodeFactory_CreateExpressionFromEntityName(receiver: GoPtr<NodeF
  * }
  */
 export function NodeFactory_RestoreEnclosingLabel(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, outermostLabeledStatement: GoPtr<LabeledStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreEnclosingLabel");
+  if (outermostLabeledStatement === undefined) {
+    return node;
+  }
+  let innerLabel = node;
+  if (IsLabeledStatement(outermostLabeledStatement!.Statement)) {
+    innerLabel = NodeFactory_RestoreEnclosingLabel(receiver, node, AsLabeledStatement(outermostLabeledStatement!.Statement));
+  }
+  return NodeFactory_UpdateLabeledStatement(
+    receiver!.__tsgoEmbedded0!,
+    outermostLabeledStatement,
+    outermostLabeledStatement!.Label,
+    innerLabel,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateForOfBindingStatement","kind":"method","status":"stub","sigHash":"5ab3bdf513a608bbf44d098922348b8ab830abe60f6777f1e16816d6196847d4","bodyHash":"508ec0fea3942edfea7ac2b6dd42054050b1b388e6d75fad761774ef1e995678"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateForOfBindingStatement","kind":"method","status":"implemented","sigHash":"5ab3bdf513a608bbf44d098922348b8ab830abe60f6777f1e16816d6196847d4","bodyHash":"508ec0fea3942edfea7ac2b6dd42054050b1b388e6d75fad761774ef1e995678"}
  *
  * Go source:
  * func (f *NodeFactory) CreateForOfBindingStatement(node *ast.Node, boundValue *ast.Node) *ast.Node {
@@ -749,7 +764,32 @@ export function NodeFactory_RestoreEnclosingLabel(receiver: GoPtr<NodeFactory>, 
  * }
  */
 export function NodeFactory_CreateForOfBindingStatement(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, boundValue: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.CreateForOfBindingStatement");
+  const f = receiver!.__tsgoEmbedded0!;
+  if (IsVariableDeclarationList(node)) {
+    const firstDeclaration = AsVariableDeclarationList(node)!.Declarations!.Nodes[0];
+    const updatedDeclaration = NodeFactory_UpdateVariableDeclaration(
+      f,
+      AsVariableDeclaration(firstDeclaration),
+      Node_Name(firstDeclaration),
+      undefined, /*exclamationToken*/
+      undefined, /*type*/
+      boundValue,
+    );
+    const updatedList = NodeFactory_UpdateVariableDeclarationList(
+      f,
+      AsVariableDeclarationList(node),
+      NodeFactory_NewNodeList(f, [updatedDeclaration]) as unknown as GoPtr<VariableDeclarationNodeList>,
+      AsVariableDeclarationList(node)!.Flags as NodeFlags,
+    );
+    const statement = NewVariableStatement(f, undefined, updatedList);
+    statement!.Loc = node!.Loc;
+    return statement;
+  }
+  const updatedExpression = NodeFactory_NewAssignmentExpression(receiver, node, boundValue);
+  updatedExpression!.Loc = node!.Loc;
+  const statement = NewExpressionStatement(f, updatedExpression);
+  statement!.Loc = node!.Loc;
+  return statement;
 }
 
 /**
@@ -903,7 +943,7 @@ export function NodeFactory_isIgnorableParen(receiver: GoPtr<NodeFactory>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.updateOuterExpression","kind":"method","status":"stub","sigHash":"10888fc30677b7efe8b432e8d2b2e10afa17c9f1af2a181a0a101f666b69080d","bodyHash":"cf9fd459a9c6f62c171591c1c618d3934615e644f0741e2bb78ba588744690d7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.updateOuterExpression","kind":"method","status":"implemented","sigHash":"10888fc30677b7efe8b432e8d2b2e10afa17c9f1af2a181a0a101f666b69080d","bodyHash":"cf9fd459a9c6f62c171591c1c618d3934615e644f0741e2bb78ba588744690d7"}
  *
  * Go source:
  * func (f *NodeFactory) updateOuterExpression(outerExpression *ast.Expression /*OuterExpression* /, expression *ast.Expression) *ast.Expression {
@@ -928,11 +968,29 @@ export function NodeFactory_isIgnorableParen(receiver: GoPtr<NodeFactory>, node:
  * }
  */
 export function NodeFactory_updateOuterExpression(receiver: GoPtr<NodeFactory>, outerExpression: GoPtr<Expression>, expression: GoPtr<Expression>): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.updateOuterExpression");
+  const f = receiver!.__tsgoEmbedded0!;
+  switch (outerExpression!.Kind) {
+    case KindParenthesizedExpression:
+      return NodeFactory_UpdateParenthesizedExpression(f, AsParenthesizedExpression(outerExpression), expression);
+    case KindTypeAssertionExpression:
+      throw new globalThis.Error(`Unexpected outer expression kind: ${outerExpression!.Kind}`);
+    case KindAsExpression:
+      return NodeFactory_UpdateAsExpression(f, AsAsExpression(outerExpression), expression, Node_Type(outerExpression));
+    case KindSatisfiesExpression:
+      return NodeFactory_UpdateSatisfiesExpression(f, AsSatisfiesExpression(outerExpression), expression, Node_Type(outerExpression));
+    case KindNonNullExpression:
+      return NodeFactory_UpdateNonNullExpression(f, AsNonNullExpression(outerExpression), expression, outerExpression!.Flags as NodeFlags);
+    case KindExpressionWithTypeArguments:
+      return NodeFactory_UpdateExpressionWithTypeArguments(f, AsExpressionWithTypeArguments(outerExpression), expression, Node_TypeArgumentList(outerExpression) as unknown as GoPtr<NodeList>);
+    case KindPartiallyEmittedExpression:
+      return NodeFactory_UpdatePartiallyEmittedExpression(f, AsPartiallyEmittedExpression(outerExpression), expression);
+    default:
+      throw new globalThis.Error(`Unexpected outer expression kind: ${outerExpression!.Kind}`);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreOuterExpressions","kind":"method","status":"stub","sigHash":"576a40f626c8cdab8f513253cce9641b9f38598014338e247aa2ad9324473fa5","bodyHash":"1fab13ebb071e3b3407cdcc287a577a74962559eaa1f5cccb5ff229833947df0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreOuterExpressions","kind":"method","status":"implemented","sigHash":"576a40f626c8cdab8f513253cce9641b9f38598014338e247aa2ad9324473fa5","bodyHash":"1fab13ebb071e3b3407cdcc287a577a74962559eaa1f5cccb5ff229833947df0"}
  *
  * Go source:
  * func (f *NodeFactory) RestoreOuterExpressions(outerExpression *ast.Expression, innerExpression *ast.Expression, kinds ast.OuterExpressionKinds) *ast.Expression {
@@ -946,7 +1004,14 @@ export function NodeFactory_updateOuterExpression(receiver: GoPtr<NodeFactory>, 
  * }
  */
 export function NodeFactory_RestoreOuterExpressions(receiver: GoPtr<NodeFactory>, outerExpression: GoPtr<Expression>, innerExpression: GoPtr<Expression>, kinds: OuterExpressionKinds): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.RestoreOuterExpressions");
+  if (outerExpression !== undefined && IsOuterExpression(outerExpression, kinds as never) && !NodeFactory_isIgnorableParen(receiver, outerExpression)) {
+    return NodeFactory_updateOuterExpression(
+      receiver,
+      outerExpression,
+      NodeFactory_RestoreOuterExpressions(receiver, Node_Expression(outerExpression), innerExpression, OEKAll as OuterExpressionKinds),
+    );
+  }
+  return innerExpression;
 }
 
 /**

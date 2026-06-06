@@ -24,6 +24,7 @@ import {
 import type { ModifierList, Node, NodeList, Visitor } from "./spine.js";
 import {
   Node_End,
+  Node_LocalsContainerData,
   Node_Name,
   Node_Pos,
 } from "./spine.js";
@@ -597,7 +598,7 @@ export function GetSymbolTable(data: GoPtr<SymbolTable>): SymbolTable {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetMembers","kind":"func","status":"stub","sigHash":"8f3637cc4020e55a9148ce2b77216972793357bd7e9682b19909ea43a626b5c5","bodyHash":"ff8ea87d4f028f59e360a0652089f322c84842f9d1210fb7b50b4d4439fa133f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetMembers","kind":"func","status":"implemented","sigHash":"8f3637cc4020e55a9148ce2b77216972793357bd7e9682b19909ea43a626b5c5","bodyHash":"ff8ea87d4f028f59e360a0652089f322c84842f9d1210fb7b50b4d4439fa133f"}
  *
  * Go source:
  * func GetMembers(symbol *Symbol) SymbolTable {
@@ -605,11 +606,14 @@ export function GetSymbolTable(data: GoPtr<SymbolTable>): SymbolTable {
  * }
  */
 export function GetMembers(symbol_: GoPtr<Symbol>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetMembers");
+  if (symbol_!.Members === undefined) {
+    symbol_!.Members = new Map();
+  }
+  return symbol_!.Members;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetExports","kind":"func","status":"stub","sigHash":"e56df39356850158fd9544c92b42b96b609788dac8b97c097b56f674ae6db936","bodyHash":"0d8deea1f518604041b2051f3370c979b44b52df749f9e0fabc378ea52ad2d0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetExports","kind":"func","status":"implemented","sigHash":"e56df39356850158fd9544c92b42b96b609788dac8b97c097b56f674ae6db936","bodyHash":"0d8deea1f518604041b2051f3370c979b44b52df749f9e0fabc378ea52ad2d0d"}
  *
  * Go source:
  * func GetExports(symbol *Symbol) SymbolTable {
@@ -617,11 +621,14 @@ export function GetMembers(symbol_: GoPtr<Symbol>): SymbolTable {
  * }
  */
 export function GetExports(symbol_: GoPtr<Symbol>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetExports");
+  if (symbol_!.Exports === undefined) {
+    symbol_!.Exports = new Map();
+  }
+  return symbol_!.Exports;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetLocals","kind":"func","status":"stub","sigHash":"e6d3b1bdc67fae52e261db8f8fb6e87718e443f4cf9557108dd0616914cfd963","bodyHash":"e858c44b5f9bb737668aea577c45529cbd58427fcb6fec8c0d4e0803d245e15f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetLocals","kind":"func","status":"implemented","sigHash":"e6d3b1bdc67fae52e261db8f8fb6e87718e443f4cf9557108dd0616914cfd963","bodyHash":"e858c44b5f9bb737668aea577c45529cbd58427fcb6fec8c0d4e0803d245e15f"}
  *
  * Go source:
  * func GetLocals(container *Node) SymbolTable {
@@ -629,7 +636,12 @@ export function GetExports(symbol_: GoPtr<Symbol>): SymbolTable {
  * }
  */
 export function GetLocals(container: GoPtr<Node>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetLocals");
+  const data = Node_LocalsContainerData(container);
+  const holder = data as unknown as { Locals?: SymbolTable };
+  if (holder.Locals === undefined) {
+    holder.Locals = new Map();
+  }
+  return holder.Locals;
 }
 
 /**
@@ -4532,7 +4544,7 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements","kind":"func","status":"stub","sigHash":"67ba33008c49a5e27f901d3c71680837142ebbb329ca49778d9bed1daa744542","bodyHash":"f2021f5553e964f53dab867a2467f5897558610bc9482835dff13adf8d486945"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements","kind":"func","status":"implemented","sigHash":"67ba33008c49a5e27f901d3c71680837142ebbb329ca49778d9bed1daa744542","bodyHash":"f2021f5553e964f53dab867a2467f5897558610bc9482835dff13adf8d486945"}
  *
  * Go source:
  * func GetHeritageElements(node *Node, kind Kind) []*Node {
@@ -4544,7 +4556,11 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
  * }
  */
 export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetHeritageElements");
+  const clause = GetHeritageClause(node, kind);
+  if (clause !== undefined) {
+    return AsHeritageClause(clause)!.Types!.Nodes;
+  }
+  return undefined!;
 }
 
 /**
@@ -5966,7 +5982,7 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"stub","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc","bodyHash":"57b2cbd6668f51b9a3db0b138956609013228247447d13fdce9277f92013b0e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor","kind":"func","status":"implemented","sigHash":"f8b75eea74d3792f67bfe8e9b42399d5ff9535d0299cdd9d7e1e985412a587fc","bodyHash":"57b2cbd6668f51b9a3db0b138956609013228247447d13fdce9277f92013b0e1"}
  *
  * Go source:
  * func popAncestor(ancestors []*Node, node *Node) ([]*Node, *Node) {
@@ -5978,7 +5994,11 @@ export function pushAncestor(ancestors: GoSlice<GoPtr<Node>>, parent: GoPtr<Node
  * }
  */
 export function popAncestor(ancestors: GoSlice<GoPtr<Node>>, node: GoPtr<Node>): [GoSlice<GoPtr<Node>>, GoPtr<Node>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::popAncestor");
+  if ((ancestors ?? []).length === 0) {
+    return [undefined!, node!.Parent];
+  }
+  const n = ancestors!.length - 1;
+  return [ancestors!.slice(0, n), ancestors![n]];
 }
 
 /**
@@ -6006,7 +6026,7 @@ export const ModuleInstanceStateInstantiated: ModuleInstanceState = 2 as ModuleI
 export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as ModuleInstanceState;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState","kind":"func","status":"stub","sigHash":"e96171169aa8f239465d00cde9e5abec4d0bffa9d0b66cbb15f94ecdfa7d8d7b","bodyHash":"387d535020695b0c685561a549242b44ced588df639f247ad3461a1da9e6b5c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState","kind":"func","status":"implemented","sigHash":"e96171169aa8f239465d00cde9e5abec4d0bffa9d0b66cbb15f94ecdfa7d8d7b","bodyHash":"387d535020695b0c685561a549242b44ced588df639f247ad3461a1da9e6b5c3"}
  *
  * Go source:
  * func GetModuleInstanceState(node *Node) ModuleInstanceState {
@@ -6014,7 +6034,7 @@ export const ModuleInstanceStateConstEnumOnly: ModuleInstanceState = 3 as Module
  * }
  */
 export function GetModuleInstanceState(node: GoPtr<Node>): ModuleInstanceState {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetModuleInstanceState");
+  return getModuleInstanceState(node, undefined!, undefined!);
 }
 
 /**
@@ -8202,7 +8222,7 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags","kind":"func","status":"stub","sigHash":"3709d6957779875ac4b2a31b315f7e6fdf2316864f83b76ecacec10a91bf2693","bodyHash":"73a95b995b5159e159f75b703ec3eaa7f11a87ed4cb9177983f54652a98d4f68"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags","kind":"func","status":"implemented","sigHash":"3709d6957779875ac4b2a31b315f7e6fdf2316864f83b76ecacec10a91bf2693","bodyHash":"73a95b995b5159e159f75b703ec3eaa7f11a87ed4cb9177983f54652a98d4f68"}
  *
  * Go source:
  * func CreateModifiersFromModifierFlags(flags ModifierFlags, createModifier func(kind Kind) *Node) []*Node {
@@ -8256,7 +8276,53 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
  * }
  */
 export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: (kind: Kind) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::CreateModifiersFromModifierFlags");
+  let result: GoSlice<GoPtr<Node>> = undefined!;
+  if ((flags & ModifierFlagsExport) !== 0) {
+    result = [...(result ?? []), createModifier(KindExportKeyword)];
+  }
+  if ((flags & ModifierFlagsAmbient) !== 0) {
+    result = [...(result ?? []), createModifier(KindDeclareKeyword)];
+  }
+  if ((flags & ModifierFlagsDefault) !== 0) {
+    result = [...(result ?? []), createModifier(KindDefaultKeyword)];
+  }
+  if ((flags & ModifierFlagsConst) !== 0) {
+    result = [...(result ?? []), createModifier(KindConstKeyword)];
+  }
+  if ((flags & ModifierFlagsPublic) !== 0) {
+    result = [...(result ?? []), createModifier(KindPublicKeyword)];
+  }
+  if ((flags & ModifierFlagsPrivate) !== 0) {
+    result = [...(result ?? []), createModifier(KindPrivateKeyword)];
+  }
+  if ((flags & ModifierFlagsProtected) !== 0) {
+    result = [...(result ?? []), createModifier(KindProtectedKeyword)];
+  }
+  if ((flags & ModifierFlagsAbstract) !== 0) {
+    result = [...(result ?? []), createModifier(KindAbstractKeyword)];
+  }
+  if ((flags & ModifierFlagsStatic) !== 0) {
+    result = [...(result ?? []), createModifier(KindStaticKeyword)];
+  }
+  if ((flags & ModifierFlagsOverride) !== 0) {
+    result = [...(result ?? []), createModifier(KindOverrideKeyword)];
+  }
+  if ((flags & ModifierFlagsReadonly) !== 0) {
+    result = [...(result ?? []), createModifier(KindReadonlyKeyword)];
+  }
+  if ((flags & ModifierFlagsAccessor) !== 0) {
+    result = [...(result ?? []), createModifier(KindAccessorKeyword)];
+  }
+  if ((flags & ModifierFlagsAsync) !== 0) {
+    result = [...(result ?? []), createModifier(KindAsyncKeyword)];
+  }
+  if ((flags & ModifierFlagsIn) !== 0) {
+    result = [...(result ?? []), createModifier(KindInKeyword)];
+  }
+  if ((flags & ModifierFlagsOut) !== 0) {
+    result = [...(result ?? []), createModifier(KindOutKeyword)];
+  }
+  return result;
 }
 
 /**
@@ -9251,7 +9317,7 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern","kind":"func","status":"stub","sigHash":"adff8602a7cfe924132398c277c2683ba7feaf5ee75ca7865bbc28b91d25d772","bodyHash":"32aa813868ee0fab12cab76464b1d8c81e61b7914a24d634c63be3cd90dafa28"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern","kind":"func","status":"implemented","sigHash":"adff8602a7cfe924132398c277c2683ba7feaf5ee75ca7865bbc28b91d25d772","bodyHash":"32aa813868ee0fab12cab76464b1d8c81e61b7914a24d634c63be3cd90dafa28"}
  *
  * Go source:
  * func GetElementsOfBindingOrAssignmentPattern(name *Node) []*Node {
@@ -9268,7 +9334,18 @@ export function IsAssignmentPattern(node: GoPtr<Node>): bool {
  * }
  */
 export function GetElementsOfBindingOrAssignmentPattern(name: GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetElementsOfBindingOrAssignmentPattern");
+  switch (name!.Kind) {
+    case KindObjectBindingPattern:
+    case KindArrayBindingPattern:
+    case KindArrayLiteralExpression:
+      // `a` in `{a}`
+      // `a` in `[a]`
+      return Node_Elements(name)!;
+    case KindObjectLiteralExpression:
+      // `a` in `{a}`
+      return Node_Properties(name)!;
+  }
+  return undefined!;
 }
 
 /**

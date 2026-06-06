@@ -669,7 +669,7 @@ export function ActiveLabel_ContinueTarget(receiver: GoPtr<ActiveLabel>): GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::BindSourceFile","kind":"func","status":"stub","sigHash":"907a4145a2df4c5175858ef96668a1cbcaa8310cd9ad87a0e9fe88c8ee0c973b","bodyHash":"9218880dfca390a48433af6bd5543d0fa7c41143c39e6afa03395627035b92a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::BindSourceFile","kind":"func","status":"implemented","sigHash":"907a4145a2df4c5175858ef96668a1cbcaa8310cd9ad87a0e9fe88c8ee0c973b","bodyHash":"9218880dfca390a48433af6bd5543d0fa7c41143c39e6afa03395627035b92a0"}
  *
  * Go source:
  * func BindSourceFile(file *ast.SourceFile) {
@@ -687,7 +687,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::varGroup::binderPool","kind":"varGroup","status":"stub","sigHash":"df306d5a6fedccf9939ad726866d79807fbd22b996c9b1baa1f617cde53d2fd4","bodyHash":"35f9e43dd80865879d6ec5cc3853fa21171a2fd19c3717533bb57baeadaa82d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::varGroup::binderPool","kind":"varGroup","status":"implemented","sigHash":"df306d5a6fedccf9939ad726866d79807fbd22b996c9b1baa1f617cde53d2fd4","bodyHash":"35f9e43dd80865879d6ec5cc3853fa21171a2fd19c3717533bb57baeadaa82d9"}
  *
  * Go source:
  * var binderPool = sync.Pool{
@@ -701,7 +701,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
 export const binderPool = new Pool<Binder>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"stub","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2","bodyHash":"459fb11735c11ea9e06babc9f1dab3e1df80aca8b93fcd595671fbd375fceddb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"implemented","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2","bodyHash":"459fb11735c11ea9e06babc9f1dab3e1df80aca8b93fcd595671fbd375fceddb"}
  *
  * Go source:
  * func getBinder() *Binder {
@@ -720,7 +720,7 @@ export function getBinder(): GoPtr<Binder> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::putBinder","kind":"func","status":"stub","sigHash":"60a3dc04c7a69ad4839398fb374eca8406bba4b82fa72e85ff6bf0f2bc23c666","bodyHash":"d1f49b5245c5b536566d84b1c663e233b9d74a3b6992e65901e4d04d984a7dea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::putBinder","kind":"func","status":"implemented","sigHash":"60a3dc04c7a69ad4839398fb374eca8406bba4b82fa72e85ff6bf0f2bc23c666","bodyHash":"d1f49b5245c5b536566d84b1c663e233b9d74a3b6992e65901e4d04d984a7dea"}
  *
  * Go source:
  * func putBinder(b *Binder) {
@@ -741,7 +741,7 @@ export function putBinder(b: GoPtr<Binder>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::bindSourceFile","kind":"func","status":"stub","sigHash":"3bb9f0443f458e9d47307ddda50f20ed23377349dbf4f986d2522d6232efeed5","bodyHash":"152654cc39de357371ef910c53fcd59442f143330ff77b58401c94b1eab83a95"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::bindSourceFile","kind":"func","status":"implemented","sigHash":"3bb9f0443f458e9d47307ddda50f20ed23377349dbf4f986d2522d6232efeed5","bodyHash":"152654cc39de357371ef910c53fcd59442f143330ff77b58401c94b1eab83a95"}
  *
  * Go source:
  * func bindSourceFile(file *ast.SourceFile) {
@@ -773,7 +773,7 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSymbol","kind":"method","status":"stub","sigHash":"0281db9a030823c9f125a3afc0999c69be7179f3189c4c512b155b050159c2fe","bodyHash":"4ea9eadc89b71192b8c6ce279b7ecbee8f9b97fc57963f776f41dfff4c08c136"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSymbol","kind":"method","status":"implemented","sigHash":"0281db9a030823c9f125a3afc0999c69be7179f3189c4c512b155b050159c2fe","bodyHash":"4ea9eadc89b71192b8c6ce279b7ecbee8f9b97fc57963f776f41dfff4c08c136"}
  *
  * Go source:
  * func (b *Binder) newSymbol(flags ast.SymbolFlags, name string) *ast.Symbol {
@@ -793,7 +793,7 @@ export function Binder_newSymbol(receiver: GoPtr<Binder>, flags: SymbolFlags, na
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbol","kind":"method","status":"stub","sigHash":"3fb23c037e030fcdf5aeba9a2eeff5e47efd25e36b7f45f31257204e76d9d820","bodyHash":"98e489f2a5f5804db2321b55ab2ce6b4831a8ae709af1e2f2559bf0285a60f67"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbol","kind":"method","status":"implemented","sigHash":"3fb23c037e030fcdf5aeba9a2eeff5e47efd25e36b7f45f31257204e76d9d820","bodyHash":"98e489f2a5f5804db2321b55ab2ce6b4831a8ae709af1e2f2559bf0285a60f67"}
  *
  * Go source:
  * func (b *Binder) declareSymbol(symbolTable ast.SymbolTable, parent *ast.Symbol, node *ast.Node, includes ast.SymbolFlags, excludes ast.SymbolFlags) *ast.Symbol {
@@ -805,7 +805,7 @@ export function Binder_declareSymbol(receiver: GoPtr<Binder>, symbolTable: Symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolEx","kind":"method","status":"stub","sigHash":"cad4b17597bd67d8cf1e4bd2cc9b412af9577fc56e7f62ab4fb23d4a0840c64a","bodyHash":"18502e6b6039d64c1e5ae351e1ea76eb74b54cf45c84acfe78a2d5c6160fcc16"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolEx","kind":"method","status":"implemented","sigHash":"cad4b17597bd67d8cf1e4bd2cc9b412af9577fc56e7f62ab4fb23d4a0840c64a","bodyHash":"18502e6b6039d64c1e5ae351e1ea76eb74b54cf45c84acfe78a2d5c6160fcc16"}
  *
  * Go source:
  * func (b *Binder) declareSymbolEx(symbolTable ast.SymbolTable, parent *ast.Symbol, node *ast.Node, includes ast.SymbolFlags, excludes ast.SymbolFlags, isReplaceableByMethod bool, isComputedName bool) *ast.Symbol {
@@ -1067,7 +1067,7 @@ export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: Sym
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDeclarationName","kind":"method","status":"stub","sigHash":"a787964c77a9f26c16f13742c21a1877d6c68e8e8e5835f16b935089abcc3dd9","bodyHash":"620cd915d9c60e99415d26e5891ec289f564414acdac1c1a963ee6eca2164c25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDeclarationName","kind":"method","status":"implemented","sigHash":"a787964c77a9f26c16f13742c21a1877d6c68e8e8e5835f16b935089abcc3dd9","bodyHash":"620cd915d9c60e99415d26e5891ec289f564414acdac1c1a963ee6eca2164c25"}
  *
  * Go source:
  * func (b *Binder) getDeclarationName(node *ast.Node) string {
@@ -1183,7 +1183,7 @@ export function Binder_getDeclarationName(receiver: GoPtr<Binder>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDisplayName","kind":"method","status":"stub","sigHash":"7c6362ae47096bdf59f2cc1dce85e78ba2040ab3d6912342d279a5563f67150e","bodyHash":"b22e642fbae874293a529523b12dfee024e44940e6d61247c6571260da0c3ecd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getDisplayName","kind":"method","status":"implemented","sigHash":"7c6362ae47096bdf59f2cc1dce85e78ba2040ab3d6912342d279a5563f67150e","bodyHash":"b22e642fbae874293a529523b12dfee024e44940e6d61247c6571260da0c3ecd"}
  *
  * Go source:
  * func (b *Binder) getDisplayName(node *ast.Node) string {
@@ -1223,7 +1223,7 @@ export function GetSymbolNameForPrivateIdentifier(containingClassSymbol: GoPtr<S
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleMember","kind":"method","status":"stub","sigHash":"64029444bbb7b44c7e72e78af46404c6a3e5e6169f85bfd86c2102ce3fb24734","bodyHash":"0bd6eb9b6344083a1c8caa897a719fc27145890d323c8b43ccc9b64cd406c450"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleMember","kind":"method","status":"implemented","sigHash":"64029444bbb7b44c7e72e78af46404c6a3e5e6169f85bfd86c2102ce3fb24734","bodyHash":"0bd6eb9b6344083a1c8caa897a719fc27145890d323c8b43ccc9b64cd406c450"}
  *
  * Go source:
  * func (b *Binder) declareModuleMember(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) *ast.Symbol {
@@ -1290,7 +1290,7 @@ export function Binder_declareModuleMember(receiver: GoPtr<Binder>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareClassMember","kind":"method","status":"stub","sigHash":"fc75310c9e8cf4a45ab2f80365798d0b43a35834a91f63ee7029db2a222f97e5","bodyHash":"d7c7ff26d6c672f3cba6ca694fe7c65cbd3595398fe4e482833922f59e0d1fda"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareClassMember","kind":"method","status":"implemented","sigHash":"fc75310c9e8cf4a45ab2f80365798d0b43a35834a91f63ee7029db2a222f97e5","bodyHash":"d7c7ff26d6c672f3cba6ca694fe7c65cbd3595398fe4e482833922f59e0d1fda"}
  *
  * Go source:
  * func (b *Binder) declareClassMember(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) *ast.Symbol {
@@ -1308,7 +1308,7 @@ export function Binder_declareClassMember(receiver: GoPtr<Binder>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSourceFileMember","kind":"method","status":"stub","sigHash":"9c44c11bc7bd72752752763bb49d2fc6fda75370fc685651946c168ef3ead427","bodyHash":"fc65ca4b20a871a29f8203c513a607ece6bf1887775a3b3d8b758e66d91fc28a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSourceFileMember","kind":"method","status":"implemented","sigHash":"9c44c11bc7bd72752752763bb49d2fc6fda75370fc685651946c168ef3ead427","bodyHash":"fc65ca4b20a871a29f8203c513a607ece6bf1887775a3b3d8b758e66d91fc28a"}
  *
  * Go source:
  * func (b *Binder) declareSourceFileMember(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) *ast.Symbol {
@@ -1326,7 +1326,7 @@ export function Binder_declareSourceFileMember(receiver: GoPtr<Binder>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolAndAddToSymbolTable","kind":"method","status":"stub","sigHash":"40e9df330f45c7c0270fd8cf57db6860d2a1fe392b4f2847bac75d4efc906c67","bodyHash":"e27c9cc2e1437d70054d98c9e877b625a287841beb6dc4fb9612420724326270"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareSymbolAndAddToSymbolTable","kind":"method","status":"implemented","sigHash":"40e9df330f45c7c0270fd8cf57db6860d2a1fe392b4f2847bac75d4efc906c67","bodyHash":"e27c9cc2e1437d70054d98c9e877b625a287841beb6dc4fb9612420724326270"}
  *
  * Go source:
  * func (b *Binder) declareSymbolAndAddToSymbolTable(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) *ast.Symbol {
@@ -1389,7 +1389,7 @@ export function Binder_declareSymbolAndAddToSymbolTable(receiver: GoPtr<Binder>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNode","kind":"method","status":"stub","sigHash":"0f6c543a457136a1a4f8f9802ed5bda68c43c52e3a5726cf1e37d41d6b246096","bodyHash":"e208a08128dfbf15e44eb8d8ebf2b88a75bf2820f1f1eee2c55e5313a4ca2f77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNode","kind":"method","status":"implemented","sigHash":"0f6c543a457136a1a4f8f9802ed5bda68c43c52e3a5726cf1e37d41d6b246096","bodyHash":"e208a08128dfbf15e44eb8d8ebf2b88a75bf2820f1f1eee2c55e5313a4ca2f77"}
  *
  * Go source:
  * func (b *Binder) newFlowNode(flags ast.FlowFlags) *ast.FlowNode {
@@ -1405,7 +1405,7 @@ export function Binder_newFlowNode(receiver: GoPtr<Binder>, flags: FlowFlags): G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNodeEx","kind":"method","status":"stub","sigHash":"a308beccf20f6827712b0b1134833841e83c5488331643461bc2a3b23d4f47a9","bodyHash":"07015f2cac7523f9db9bd2d408b3662c83def8c5d83b9a60540cc9f7dfc71a53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowNodeEx","kind":"method","status":"implemented","sigHash":"a308beccf20f6827712b0b1134833841e83c5488331643461bc2a3b23d4f47a9","bodyHash":"07015f2cac7523f9db9bd2d408b3662c83def8c5d83b9a60540cc9f7dfc71a53"}
  *
  * Go source:
  * func (b *Binder) newFlowNodeEx(flags ast.FlowFlags, node *ast.Node, antecedent *ast.FlowNode) *ast.FlowNode {
@@ -1423,7 +1423,7 @@ export function Binder_newFlowNodeEx(receiver: GoPtr<Binder>, flags: FlowFlags, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createLoopLabel","kind":"method","status":"stub","sigHash":"500341735dc00fa8248fc0d4221e520fbfe0ea346db869a446587b31d55e618a","bodyHash":"ceabfaf333a2e15c41654d20424709b2f4b3366829c96447820749ed8401bf04"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createLoopLabel","kind":"method","status":"implemented","sigHash":"500341735dc00fa8248fc0d4221e520fbfe0ea346db869a446587b31d55e618a","bodyHash":"ceabfaf333a2e15c41654d20424709b2f4b3366829c96447820749ed8401bf04"}
  *
  * Go source:
  * func (b *Binder) createLoopLabel() *ast.FlowLabel {
@@ -1435,7 +1435,7 @@ export function Binder_createLoopLabel(receiver: GoPtr<Binder>): GoPtr<FlowLabel
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createBranchLabel","kind":"method","status":"stub","sigHash":"a7807f1f45d834a30f496c3da66133da824f9b0fd0a2c0754e760b38db4b9eac","bodyHash":"4972ccb38ad5d7658d4d6354f97d2225e8486c7ee92ddfefa332cc1c281294c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createBranchLabel","kind":"method","status":"implemented","sigHash":"a7807f1f45d834a30f496c3da66133da824f9b0fd0a2c0754e760b38db4b9eac","bodyHash":"4972ccb38ad5d7658d4d6354f97d2225e8486c7ee92ddfefa332cc1c281294c2"}
  *
  * Go source:
  * func (b *Binder) createBranchLabel() *ast.FlowLabel {
@@ -1447,7 +1447,7 @@ export function Binder_createBranchLabel(receiver: GoPtr<Binder>): GoPtr<FlowLab
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createReduceLabel","kind":"method","status":"stub","sigHash":"373d86fe8c15a2020a1bb2976a918bae45b4218aad53fc0462d6a631c668248d","bodyHash":"364446fd12f8071f5d58af1e6f66806890899dddf2dbcdbe66abc259fdaecb49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createReduceLabel","kind":"method","status":"implemented","sigHash":"373d86fe8c15a2020a1bb2976a918bae45b4218aad53fc0462d6a631c668248d","bodyHash":"364446fd12f8071f5d58af1e6f66806890899dddf2dbcdbe66abc259fdaecb49"}
  *
  * Go source:
  * func (b *Binder) createReduceLabel(target *ast.FlowLabel, antecedents *ast.FlowList, antecedent *ast.FlowNode) *ast.FlowNode {
@@ -1459,7 +1459,7 @@ export function Binder_createReduceLabel(receiver: GoPtr<Binder>, target: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCondition","kind":"method","status":"stub","sigHash":"df980a27fcd43ae88e57b2f68181bb2c2ae8d620b3341f28c2cd7673274c5c24","bodyHash":"a37bb07d0f8f407462b75017b5332a14159f03bbae2f3405d097a71be8d93112"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCondition","kind":"method","status":"implemented","sigHash":"df980a27fcd43ae88e57b2f68181bb2c2ae8d620b3341f28c2cd7673274c5c24","bodyHash":"a37bb07d0f8f407462b75017b5332a14159f03bbae2f3405d097a71be8d93112"}
  *
  * Go source:
  * func (b *Binder) createFlowCondition(flags ast.FlowFlags, antecedent *ast.FlowNode, expression *ast.Node) *ast.FlowNode {
@@ -1503,7 +1503,7 @@ export function Binder_createFlowCondition(receiver: GoPtr<Binder>, flags: FlowF
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowMutation","kind":"method","status":"stub","sigHash":"e198fcff0f0262aba84d3d5c6cd11f43dc508b1fb32e9aee82f542927891b733","bodyHash":"9fdacdd0cde3e6d11164f0f8ddebdbc769e3783cc190596d2c8e25a6b8456c69"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowMutation","kind":"method","status":"implemented","sigHash":"e198fcff0f0262aba84d3d5c6cd11f43dc508b1fb32e9aee82f542927891b733","bodyHash":"9fdacdd0cde3e6d11164f0f8ddebdbc769e3783cc190596d2c8e25a6b8456c69"}
  *
  * Go source:
  * func (b *Binder) createFlowMutation(flags ast.FlowFlags, antecedent *ast.FlowNode, node *ast.Node) *ast.FlowNode {
@@ -1527,7 +1527,7 @@ export function Binder_createFlowMutation(receiver: GoPtr<Binder>, flags: FlowFl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowSwitchClause","kind":"method","status":"stub","sigHash":"75cf485ccb5288141dff16493f0aee26ad8e454b3a2780040d03c70d7d38cd3f","bodyHash":"7eb2f325d9350e9d1e45cf817cc067525cc42c6812b25664fdec252e04deace7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowSwitchClause","kind":"method","status":"implemented","sigHash":"75cf485ccb5288141dff16493f0aee26ad8e454b3a2780040d03c70d7d38cd3f","bodyHash":"7eb2f325d9350e9d1e45cf817cc067525cc42c6812b25664fdec252e04deace7"}
  *
  * Go source:
  * func (b *Binder) createFlowSwitchClause(antecedent *ast.FlowNode, switchStatement *ast.Node, clauseStart int, clauseEnd int) *ast.FlowNode {
@@ -1541,7 +1541,7 @@ export function Binder_createFlowSwitchClause(receiver: GoPtr<Binder>, anteceden
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCall","kind":"method","status":"stub","sigHash":"81b0b382a7a71a80392ea423374bc1b32dfd727c28e936bd4d5ffab9028ef61a","bodyHash":"3a88daf94a98dcb23f4fb225465c0d8815d73f0669da7b87ce8816667a0805e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createFlowCall","kind":"method","status":"implemented","sigHash":"81b0b382a7a71a80392ea423374bc1b32dfd727c28e936bd4d5ffab9028ef61a","bodyHash":"3a88daf94a98dcb23f4fb225465c0d8815d73f0669da7b87ce8816667a0805e2"}
  *
  * Go source:
  * func (b *Binder) createFlowCall(antecedent *ast.FlowNode, node *ast.Node) *ast.FlowNode {
@@ -1557,7 +1557,7 @@ export function Binder_createFlowCall(receiver: GoPtr<Binder>, antecedent: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowList","kind":"method","status":"stub","sigHash":"dc489be3388fbcdcc88eaa93d4a098af3672675d2ff4366c5de1d29e035fc17e","bodyHash":"ab5a049e083593f945f8ce21c4cbe9116f4e5ec204abe839ce9ca587c19f2f73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newFlowList","kind":"method","status":"implemented","sigHash":"dc489be3388fbcdcc88eaa93d4a098af3672675d2ff4366c5de1d29e035fc17e","bodyHash":"ab5a049e083593f945f8ce21c4cbe9116f4e5ec204abe839ce9ca587c19f2f73"}
  *
  * Go source:
  * func (b *Binder) newFlowList(head *ast.FlowNode, tail *ast.FlowList) *ast.FlowList {
@@ -1575,7 +1575,7 @@ export function Binder_newFlowList(receiver: GoPtr<Binder>, head: GoPtr<FlowNode
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.combineFlowLists","kind":"method","status":"stub","sigHash":"4e81db48d4ea0ca9b5f4730d213a3ebe9928f75c301ee2b9bad1048470c021da","bodyHash":"22aee0ba7173121c7442a53f307be31aa5d09534df9290eaaa9f7d8b10f3d4eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.combineFlowLists","kind":"method","status":"implemented","sigHash":"4e81db48d4ea0ca9b5f4730d213a3ebe9928f75c301ee2b9bad1048470c021da","bodyHash":"22aee0ba7173121c7442a53f307be31aa5d09534df9290eaaa9f7d8b10f3d4eb"}
  *
  * Go source:
  * func (b *Binder) combineFlowLists(head *ast.FlowList, tail *ast.FlowList) *ast.FlowList {
@@ -1593,7 +1593,7 @@ export function Binder_combineFlowLists(receiver: GoPtr<Binder>, head: GoPtr<Flo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSingleDeclaration","kind":"method","status":"stub","sigHash":"bea51f80945da1e82ffe76025c07b9b452fb2b6b4b511f04a8709ac90e060862","bodyHash":"0c4fa5ac2d7014729f54177d403646bf0de3d0c432f738be3431596b1cef5d53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.newSingleDeclaration","kind":"method","status":"implemented","sigHash":"bea51f80945da1e82ffe76025c07b9b452fb2b6b4b511f04a8709ac90e060862","bodyHash":"0c4fa5ac2d7014729f54177d403646bf0de3d0c432f738be3431596b1cef5d53"}
  *
  * Go source:
  * func (b *Binder) newSingleDeclaration(declaration *ast.Node) []*ast.Node {
@@ -1627,7 +1627,7 @@ export function setFlowNodeReferenced(flow: GoPtr<FlowNode>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addAntecedent","kind":"method","status":"stub","sigHash":"8df5bc3cdf1e44bdefc9daf1523d56058858f5f8dd5340fa4cdc925037db64a1","bodyHash":"9806495d56b9146a717c741831eed4fedac4992c40a495d5a0058dc61c577123"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addAntecedent","kind":"method","status":"implemented","sigHash":"8df5bc3cdf1e44bdefc9daf1523d56058858f5f8dd5340fa4cdc925037db64a1","bodyHash":"9806495d56b9146a717c741831eed4fedac4992c40a495d5a0058dc61c577123"}
  *
  * Go source:
  * func (b *Binder) addAntecedent(label *ast.FlowLabel, antecedent *ast.FlowNode) {
@@ -1670,7 +1670,7 @@ export function Binder_addAntecedent(receiver: GoPtr<Binder>, label: GoPtr<FlowL
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.finishFlowLabel","kind":"method","status":"stub","sigHash":"7245d6ee9b6b60d4413443a59c1a9241c69fed83f7f7ffe197b03b925cf01abd","bodyHash":"46442432141eb2d7d4044d0816f6f83be02c0d9d5508e1c398074f648056338a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.finishFlowLabel","kind":"method","status":"implemented","sigHash":"7245d6ee9b6b60d4413443a59c1a9241c69fed83f7f7ffe197b03b925cf01abd","bodyHash":"46442432141eb2d7d4044d0816f6f83be02c0d9d5508e1c398074f648056338a"}
  *
  * Go source:
  * func (b *Binder) finishFlowLabel(label *ast.FlowLabel) *ast.FlowNode {
@@ -1694,7 +1694,7 @@ export function Binder_finishFlowLabel(receiver: GoPtr<Binder>, label: GoPtr<Flo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bind","kind":"method","status":"stub","sigHash":"b64e60c99a7b3c067cbe984f7ff1445561675da4cd98face0019e61b4769fbd5","bodyHash":"26da8d2a2b2cf6e2939ba4517e878237ba9e888a93f489af5002bcde68cb258a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bind","kind":"method","status":"implemented","sigHash":"b64e60c99a7b3c067cbe984f7ff1445561675da4cd98face0019e61b4769fbd5","bodyHash":"26da8d2a2b2cf6e2939ba4517e878237ba9e888a93f489af5002bcde68cb258a"}
  *
  * Go source:
  * func (b *Binder) bind(node *ast.Node) bool {
@@ -2090,7 +2090,7 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyWorker","kind":"method","status":"stub","sigHash":"15e442267c63f956c774bf718ef42bf6decb2c213775d7315e2309da5d7b0e57","bodyHash":"7d5b32b0ad501c1f49be6080b19a94a14e7f2fe3d77fd96cf50c6a8cdc9f2fe9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyWorker","kind":"method","status":"implemented","sigHash":"15e442267c63f956c774bf718ef42bf6decb2c213775d7315e2309da5d7b0e57","bodyHash":"7d5b32b0ad501c1f49be6080b19a94a14e7f2fe3d77fd96cf50c6a8cdc9f2fe9"}
  *
  * Go source:
  * func (b *Binder) bindPropertyWorker(node *ast.Node) {
@@ -2108,7 +2108,7 @@ export function Binder_bindPropertyWorker(receiver: GoPtr<Binder>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileIfExternalModule","kind":"method","status":"stub","sigHash":"e713bf77d2e57dd9eaa8242f4fd9260fe7717fd4fd56a1e2b5cde2180670d3f2","bodyHash":"f09582a0d245c933069634eb819aa75eed083af495aa6c8cb22a26d76f77303f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileIfExternalModule","kind":"method","status":"implemented","sigHash":"e713bf77d2e57dd9eaa8242f4fd9260fe7717fd4fd56a1e2b5cde2180670d3f2","bodyHash":"f09582a0d245c933069634eb819aa75eed083af495aa6c8cb22a26d76f77303f"}
  *
  * Go source:
  * func (b *Binder) bindSourceFileIfExternalModule() {
@@ -2140,7 +2140,7 @@ export function Binder_bindSourceFileIfExternalModule(receiver: GoPtr<Binder>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileAsExternalModule","kind":"method","status":"stub","sigHash":"66fd4414963c4bdc6c096e5119130903b26ac8acdb5dae9711dbd51881dc2a09","bodyHash":"ce99177ebe55630c1f8c3f4688a3b350f2a8aa8c38cc0e87114ce780f6284129"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindSourceFileAsExternalModule","kind":"method","status":"implemented","sigHash":"66fd4414963c4bdc6c096e5119130903b26ac8acdb5dae9711dbd51881dc2a09","bodyHash":"ce99177ebe55630c1f8c3f4688a3b350f2a8aa8c38cc0e87114ce780f6284129"}
  *
  * Go source:
  * func (b *Binder) bindSourceFileAsExternalModule() {
@@ -2152,7 +2152,7 @@ export function Binder_bindSourceFileAsExternalModule(receiver: GoPtr<Binder>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleDeclaration","kind":"method","status":"stub","sigHash":"bf94669960f7e06a7c139786f31f9ea69caada91b6e56d70e0b1eaca7859f117","bodyHash":"f964ca27cba1ad0b649ba2a130537ad5ad642b5c56e89a756d8229225254d290"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleDeclaration","kind":"method","status":"implemented","sigHash":"bf94669960f7e06a7c139786f31f9ea69caada91b6e56d70e0b1eaca7859f117","bodyHash":"f964ca27cba1ad0b649ba2a130537ad5ad642b5c56e89a756d8229225254d290"}
  *
  * Go source:
  * func (b *Binder) bindModuleDeclaration(node *ast.Node) {
@@ -2235,7 +2235,7 @@ export function Binder_bindModuleDeclaration(receiver: GoPtr<Binder>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleSymbol","kind":"method","status":"stub","sigHash":"a2e71204c0a6345e50e098ecde4b56638dfc2f98228b91a2eaea3991f735a3c6","bodyHash":"fcb7e9ac4f0adcdfe47fffbc5177ecb4d0581c94339843d6e9a1f8d5a21b506c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareModuleSymbol","kind":"method","status":"implemented","sigHash":"a2e71204c0a6345e50e098ecde4b56638dfc2f98228b91a2eaea3991f735a3c6","bodyHash":"fcb7e9ac4f0adcdfe47fffbc5177ecb4d0581c94339843d6e9a1f8d5a21b506c"}
  *
  * Go source:
  * func (b *Binder) declareModuleSymbol(node *ast.Node) ast.ModuleInstanceState {
@@ -2253,7 +2253,7 @@ export function Binder_declareModuleSymbol(receiver: GoPtr<Binder>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNamespaceExportDeclaration","kind":"method","status":"stub","sigHash":"e281938a32b41749207296f07b86303c463ad40692ab7c3059ffa9879f202570","bodyHash":"f30e300ae1b6a98c9609f5663ebe2cafde543bfda9acbef1b61f2c2cd05bce3a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNamespaceExportDeclaration","kind":"method","status":"implemented","sigHash":"e281938a32b41749207296f07b86303c463ad40692ab7c3059ffa9879f202570","bodyHash":"f30e300ae1b6a98c9609f5663ebe2cafde543bfda9acbef1b61f2c2cd05bce3a"}
  *
  * Go source:
  * func (b *Binder) bindNamespaceExportDeclaration(node *ast.Node) {
@@ -2288,7 +2288,7 @@ export function Binder_bindNamespaceExportDeclaration(receiver: GoPtr<Binder>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindImportClause","kind":"method","status":"stub","sigHash":"4e3611bb5de53e5ee0dd76b8ac66f239ca00c1f87370fe69b52a8c0c1edc9b41","bodyHash":"21d58935d82793b7d6b0a704e75602ead539f2636373b4dc6c2f72ee999938eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindImportClause","kind":"method","status":"implemented","sigHash":"4e3611bb5de53e5ee0dd76b8ac66f239ca00c1f87370fe69b52a8c0c1edc9b41","bodyHash":"21d58935d82793b7d6b0a704e75602ead539f2636373b4dc6c2f72ee999938eb"}
  *
  * Go source:
  * func (b *Binder) bindImportClause(node *ast.Node) {
@@ -2304,7 +2304,7 @@ export function Binder_bindImportClause(receiver: GoPtr<Binder>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportDeclaration","kind":"method","status":"stub","sigHash":"15c9e2eac90cd7a3ae2ae258b76e74ce70a4386860cc091b1d8a3c0710e2a0e2","bodyHash":"a07374a9d674d0356f6d4866a0e12d5a2b1ddcaccc537d02e4ef0b64ed924e70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportDeclaration","kind":"method","status":"implemented","sigHash":"15c9e2eac90cd7a3ae2ae258b76e74ce70a4386860cc091b1d8a3c0710e2a0e2","bodyHash":"a07374a9d674d0356f6d4866a0e12d5a2b1ddcaccc537d02e4ef0b64ed924e70"}
  *
  * Go source:
  * func (b *Binder) bindExportDeclaration(node *ast.Node) {
@@ -2332,7 +2332,7 @@ export function Binder_bindExportDeclaration(receiver: GoPtr<Binder>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportAssignment","kind":"method","status":"stub","sigHash":"98ecf925cbb6c65cfe61cac3cea6d0ff7a470d9df4947fd4c44a34e7d2babaf6","bodyHash":"f212dbd6771f11c8cbbd28ecb2fe3a8379d8a594e6dcb806582a0d6cd6704288"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportAssignment","kind":"method","status":"implemented","sigHash":"98ecf925cbb6c65cfe61cac3cea6d0ff7a470d9df4947fd4c44a34e7d2babaf6","bodyHash":"f212dbd6771f11c8cbbd28ecb2fe3a8379d8a594e6dcb806582a0d6cd6704288"}
  *
  * Go source:
  * func (b *Binder) bindExportAssignment(node *ast.Node) {
@@ -2366,7 +2366,7 @@ export function Binder_bindExportAssignment(receiver: GoPtr<Binder>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.trackNestedCJSExport","kind":"method","status":"stub","sigHash":"ae4373312218a61507c84c337144eb24728e58fa26d75a0848344beeafb05fdd","bodyHash":"05f0dbac7946e9030e10d6672a41b481d774f46496b9da993d273a7b5af92150"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.trackNestedCJSExport","kind":"method","status":"implemented","sigHash":"ae4373312218a61507c84c337144eb24728e58fa26d75a0848344beeafb05fdd","bodyHash":"05f0dbac7946e9030e10d6672a41b481d774f46496b9da993d273a7b5af92150"}
  *
  * Go source:
  * func (b *Binder) trackNestedCJSExport(node *ast.Node) {
@@ -2382,7 +2382,7 @@ export function Binder_trackNestedCJSExport(receiver: GoPtr<Binder>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttributes","kind":"method","status":"stub","sigHash":"f68ef8ecc366abf327dfe29cbd1431d16191d0637b1900d2e5b3402100091050","bodyHash":"2613718c163d9218a4e6c736470aa8ef43a9d7fad4d01ef5dfc73940052f56c2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttributes","kind":"method","status":"implemented","sigHash":"f68ef8ecc366abf327dfe29cbd1431d16191d0637b1900d2e5b3402100091050","bodyHash":"2613718c163d9218a4e6c736470aa8ef43a9d7fad4d01ef5dfc73940052f56c2"}
  *
  * Go source:
  * func (b *Binder) bindJsxAttributes(node *ast.Node) {
@@ -2394,7 +2394,7 @@ export function Binder_bindJsxAttributes(receiver: GoPtr<Binder>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttribute","kind":"method","status":"stub","sigHash":"282c78b67088ca29309f5a186a3ea0764be3d9d8769bf32a05899fecbdb6e605","bodyHash":"5068e151f9de2338af41aac8f6b2af6e143b5f6f714bd849058d7c4ce3341508"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindJsxAttribute","kind":"method","status":"implemented","sigHash":"282c78b67088ca29309f5a186a3ea0764be3d9d8769bf32a05899fecbdb6e605","bodyHash":"5068e151f9de2338af41aac8f6b2af6e143b5f6f714bd849058d7c4ce3341508"}
  *
  * Go source:
  * func (b *Binder) bindJsxAttribute(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) {
@@ -2406,7 +2406,7 @@ export function Binder_bindJsxAttribute(receiver: GoPtr<Binder>, node: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setExportContextFlag","kind":"method","status":"stub","sigHash":"0ab9449398a77f12709898102f9120dcfa0353b5e73fdc698d7da96ff12d97ed","bodyHash":"55979625fae6cce51cd9494856f63b914e24d8e9ee0984814b4b55dc69a9d824"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setExportContextFlag","kind":"method","status":"implemented","sigHash":"0ab9449398a77f12709898102f9120dcfa0353b5e73fdc698d7da96ff12d97ed","bodyHash":"55979625fae6cce51cd9494856f63b914e24d8e9ee0984814b4b55dc69a9d824"}
  *
  * Go source:
  * func (b *Binder) setExportContextFlag(node *ast.Node) {
@@ -2428,7 +2428,7 @@ export function Binder_setExportContextFlag(receiver: GoPtr<Binder>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.hasExportDeclarations","kind":"method","status":"stub","sigHash":"7c05b979970db7d0e2841ca7d50e470e266002439293803acef508f6d963ac66","bodyHash":"f02423d4d3dc0ec04b6fee5c39974e82bb0a7adc1ee50bf7acf777e0f8f258a1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.hasExportDeclarations","kind":"method","status":"implemented","sigHash":"7c05b979970db7d0e2841ca7d50e470e266002439293803acef508f6d963ac66","bodyHash":"f02423d4d3dc0ec04b6fee5c39974e82bb0a7adc1ee50bf7acf777e0f8f258a1"}
  *
  * Go source:
  * func (b *Binder) hasExportDeclarations(node *ast.Node) bool {
@@ -2465,7 +2465,7 @@ export function Binder_hasExportDeclarations(receiver: GoPtr<Binder>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionExpression","kind":"method","status":"stub","sigHash":"0cb84d232993283a56b12a23cbaf9cd82b40090ee254036bd43d14be4ebce811","bodyHash":"a537e03d974e7ef3de48baaf04ab86442cd3ada409aad5d16a92e32e7d9a7064"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionExpression","kind":"method","status":"implemented","sigHash":"0cb84d232993283a56b12a23cbaf9cd82b40090ee254036bd43d14be4ebce811","bodyHash":"a537e03d974e7ef3de48baaf04ab86442cd3ada409aad5d16a92e32e7d9a7064"}
  *
  * Go source:
  * func (b *Binder) bindFunctionExpression(node *ast.Node) {
@@ -2495,7 +2495,7 @@ export function Binder_bindFunctionExpression(receiver: GoPtr<Binder>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpression","kind":"method","status":"stub","sigHash":"3ab8266d060f38651ba64de10ac0504900cea445b57d2d5abb8792fd663bcf4d","bodyHash":"b1a78bf7ae1c4df8a2f2b440908c7f572600b4597a2993d7e51fed9963c86455"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCallExpression","kind":"method","status":"implemented","sigHash":"3ab8266d060f38651ba64de10ac0504900cea445b57d2d5abb8792fd663bcf4d","bodyHash":"b1a78bf7ae1c4df8a2f2b440908c7f572600b4597a2993d7e51fed9963c86455"}
  *
  * Go source:
  * func (b *Binder) bindCallExpression(node *ast.Node) {
@@ -2513,7 +2513,7 @@ export function Binder_bindCallExpression(receiver: GoPtr<Binder>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setCommonJSModuleIndicator","kind":"method","status":"stub","sigHash":"fbea186c6d4c87b7310040cdd41fac3ed9029551aa0fd37ce0730afdcf063247","bodyHash":"16114a4ded8cfebeefe568faa93c54011331b59380876c85aac7556656cd21ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setCommonJSModuleIndicator","kind":"method","status":"implemented","sigHash":"fbea186c6d4c87b7310040cdd41fac3ed9029551aa0fd37ce0730afdcf063247","bodyHash":"16114a4ded8cfebeefe568faa93c54011331b59380876c85aac7556656cd21ea"}
  *
  * Go source:
  * func (b *Binder) setCommonJSModuleIndicator(node *ast.Node) bool {
@@ -2544,7 +2544,7 @@ export function Binder_setCommonJSModuleIndicator(receiver: GoPtr<Binder>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindClassLikeDeclaration","kind":"method","status":"stub","sigHash":"279d7aea0cda1ecb5278155b6bf9c2b169783160595c760ba976635123aa6efe","bodyHash":"3e360ce073e564e07ae6d24de6473ee17c65e7c8762e42b76b509d36f9210e83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindClassLikeDeclaration","kind":"method","status":"implemented","sigHash":"279d7aea0cda1ecb5278155b6bf9c2b169783160595c760ba976635123aa6efe","bodyHash":"3e360ce073e564e07ae6d24de6473ee17c65e7c8762e42b76b509d36f9210e83"}
  *
  * Go source:
  * func (b *Binder) bindClassLikeDeclaration(node *ast.Node) {
@@ -2607,7 +2607,7 @@ export function Binder_bindClassLikeDeclaration(receiver: GoPtr<Binder>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyOrMethodOrAccessor","kind":"method","status":"stub","sigHash":"027bbc1f3ae7da40c05b395dbaead8dd4086e24f35c6b42afaea6eeb372bed4e","bodyHash":"58a68d357d6deca3cbb4ca781c0ba63b3e76596f9d1d6d23b00cf717afe14b00"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindPropertyOrMethodOrAccessor","kind":"method","status":"implemented","sigHash":"027bbc1f3ae7da40c05b395dbaead8dd4086e24f35c6b42afaea6eeb372bed4e","bodyHash":"58a68d357d6deca3cbb4ca781c0ba63b3e76596f9d1d6d23b00cf717afe14b00"}
  *
  * Go source:
  * func (b *Binder) bindPropertyOrMethodOrAccessor(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) {
@@ -2639,7 +2639,7 @@ export function Binder_bindPropertyOrMethodOrAccessor(receiver: GoPtr<Binder>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionOrConstructorType","kind":"method","status":"stub","sigHash":"cce02a906e5bd6afb804ec8fbad5adb9fbf00e2878d29d58d9a3a122d091cd1d","bodyHash":"862c230a5375a93b08a6e3b160d3d291af02b36fe13d04f8afa996e6453a20f2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionOrConstructorType","kind":"method","status":"implemented","sigHash":"cce02a906e5bd6afb804ec8fbad5adb9fbf00e2878d29d58d9a3a122d091cd1d","bodyHash":"862c230a5375a93b08a6e3b160d3d291af02b36fe13d04f8afa996e6453a20f2"}
  *
  * Go source:
  * func (b *Binder) bindFunctionOrConstructorType(node *ast.Node) {
@@ -2667,7 +2667,7 @@ export function Binder_bindFunctionOrConstructorType(receiver: GoPtr<Binder>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addLateBoundAssignmentDeclarationToSymbol","kind":"method","status":"stub","sigHash":"4c55bc3a7c70893f6e97394a4ce3afe69ac46a9c71904c875e5444897d484456","bodyHash":"7fd402150ed9433bfdc87bd37c34e633230d81723b5e54c31a683110ccf88ede"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addLateBoundAssignmentDeclarationToSymbol","kind":"method","status":"implemented","sigHash":"4c55bc3a7c70893f6e97394a4ce3afe69ac46a9c71904c875e5444897d484456","bodyHash":"7fd402150ed9433bfdc87bd37c34e633230d81723b5e54c31a683110ccf88ede"}
  *
  * Go source:
  * func (b *Binder) addLateBoundAssignmentDeclarationToSymbol(node *ast.Node, symbol *ast.Symbol) {
@@ -2691,7 +2691,7 @@ export function Binder_addLateBoundAssignmentDeclarationToSymbol(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleExportsAssignment","kind":"method","status":"stub","sigHash":"8a872c15798bb09bd3e05fe74dc2a55e50eeef571ec5ab1df5a09a81185b12b5","bodyHash":"e896d83dea0ceba0beac71ba760af1190dc14633470df6e770c438212d99bb62"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModuleExportsAssignment","kind":"method","status":"implemented","sigHash":"8a872c15798bb09bd3e05fe74dc2a55e50eeef571ec5ab1df5a09a81185b12b5","bodyHash":"e896d83dea0ceba0beac71ba760af1190dc14633470df6e770c438212d99bb62"}
  *
  * Go source:
  * func (b *Binder) bindModuleExportsAssignment(node *ast.Node) {
@@ -2715,7 +2715,7 @@ export function Binder_bindModuleExportsAssignment(receiver: GoPtr<Binder>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpandoPropertyAssignment","kind":"method","status":"stub","sigHash":"b0e71f8af4ca7525badb0f030a7e2a7b59c701e3121967eedcc6197f7f5847ae","bodyHash":"d0887cd92de37647f462394039192cb53b1272c0a1e606b4fe40c7142e9121ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExpandoPropertyAssignment","kind":"method","status":"implemented","sigHash":"b0e71f8af4ca7525badb0f030a7e2a7b59c701e3121967eedcc6197f7f5847ae","bodyHash":"d0887cd92de37647f462394039192cb53b1272c0a1e606b4fe40c7142e9121ca"}
  *
  * Go source:
  * func (b *Binder) bindExpandoPropertyAssignment(node *ast.Node) {
@@ -2735,7 +2735,7 @@ export function Binder_bindExpandoPropertyAssignment(receiver: GoPtr<Binder>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignments","kind":"method","status":"stub","sigHash":"6eb7fc6d246abdbf0d2fc43a49ec72bfe20fb661fd66e0255c903dd137e6b506","bodyHash":"e92e01fce3d513d5a84bdf29a2a358720c5c8d8598edfb78bfa06bfd34494041"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignments","kind":"method","status":"implemented","sigHash":"6eb7fc6d246abdbf0d2fc43a49ec72bfe20fb661fd66e0255c903dd137e6b506","bodyHash":"e92e01fce3d513d5a84bdf29a2a358720c5c8d8598edfb78bfa06bfd34494041"}
  *
  * Go source:
  * func (b *Binder) bindDeferredExpandoAssignments() {
@@ -2755,7 +2755,7 @@ export function Binder_bindDeferredExpandoAssignments(receiver: GoPtr<Binder>): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCommonJSTypeExports","kind":"method","status":"stub","sigHash":"0a3b7f6b7543dfc83f1aa38cf7274c000d170d31505a58593d3f423fa3e86114","bodyHash":"3e4fed891e0028513d40f64d8ec6d3732b537182c3df899ec69397486518d555"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCommonJSTypeExports","kind":"method","status":"implemented","sigHash":"0a3b7f6b7543dfc83f1aa38cf7274c000d170d31505a58593d3f423fa3e86114","bodyHash":"3e4fed891e0028513d40f64d8ec6d3732b537182c3df899ec69397486518d555"}
  *
  * Go source:
  * func (b *Binder) bindCommonJSTypeExports(moduleSymbol *ast.Symbol) {
@@ -2786,7 +2786,7 @@ export function Binder_bindCommonJSTypeExports(receiver: GoPtr<Binder>, moduleSy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignment","kind":"method","status":"stub","sigHash":"8f50a2fd9855cf064e63ca18985c9a6d34bf26a89da23f362fae606dccbce8bf","bodyHash":"1480d36e75fab363b58c0e7252ffb98b06c471fc20cdfa256f7c90d7796f1075"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindDeferredExpandoAssignment","kind":"method","status":"implemented","sigHash":"8f50a2fd9855cf064e63ca18985c9a6d34bf26a89da23f362fae606dccbce8bf","bodyHash":"1480d36e75fab363b58c0e7252ffb98b06c471fc20cdfa256f7c90d7796f1075"}
  *
  * Go source:
  * func (b *Binder) bindDeferredExpandoAssignment(node *ast.Node) {
@@ -2855,7 +2855,7 @@ export function getParentOfPropertyAssignment(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportsOrObjectDefineProperty","kind":"method","status":"stub","sigHash":"f57ada5e475e7405f5db2d7aa41556cd48662d933d2ae3b60e8232f90f7c5b6b","bodyHash":"297fab573833ba0977c287beca4abb9682c1414fa09e9ae0622c2c350ca120c6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindExportsOrObjectDefineProperty","kind":"method","status":"implemented","sigHash":"f57ada5e475e7405f5db2d7aa41556cd48662d933d2ae3b60e8232f90f7c5b6b","bodyHash":"297fab573833ba0977c287beca4abb9682c1414fa09e9ae0622c2c350ca120c6"}
  *
  * Go source:
  * func (b *Binder) bindExportsOrObjectDefineProperty(node *ast.Node) {
@@ -2877,7 +2877,7 @@ export function Binder_bindExportsOrObjectDefineProperty(receiver: GoPtr<Binder>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getInitializerSymbol","kind":"func","status":"stub","sigHash":"4880e6d88b929f21c1390dd12a331574e71d13edc74ed2f07b969dfb320fa918","bodyHash":"d47d4b01701011e1913a21e3c592ade0dad27d6b39f35ab46191577f471820bb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getInitializerSymbol","kind":"func","status":"implemented","sigHash":"4880e6d88b929f21c1390dd12a331574e71d13edc74ed2f07b969dfb320fa918","bodyHash":"d47d4b01701011e1913a21e3c592ade0dad27d6b39f35ab46191577f471820bb"}
  *
  * Go source:
  * func getInitializerSymbol(symbol *ast.Symbol) *ast.Symbol {
@@ -2931,7 +2931,7 @@ export function getInitializerSymbol(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThisPropertyAssignment","kind":"method","status":"stub","sigHash":"98764156db6616c7593f10a5f6850ab7cae53856ab8e3bc447871a3d9c0187de","bodyHash":"c7c716d33dd8807f39830cedd340b387e55e501950983bcf89dfd93b4d259fb5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindThisPropertyAssignment","kind":"method","status":"implemented","sigHash":"98764156db6616c7593f10a5f6850ab7cae53856ab8e3bc447871a3d9c0187de","bodyHash":"c7c716d33dd8807f39830cedd340b387e55e501950983bcf89dfd93b4d259fb5"}
  *
  * Go source:
  * func (b *Binder) bindThisPropertyAssignment(node *ast.Node) {
@@ -2976,7 +2976,7 @@ export function Binder_bindThisPropertyAssignment(receiver: GoPtr<Binder>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getThisClassAndSymbolTable","kind":"method","status":"stub","sigHash":"06497503f0304e19daa53c55a0375d2f901479e5d357f9ae78f00be1bb41a06e","bodyHash":"863dd5c5600228c7ec81533b03ed763bcef88c782285c05af38c191cfa084605"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getThisClassAndSymbolTable","kind":"method","status":"implemented","sigHash":"06497503f0304e19daa53c55a0375d2f901479e5d357f9ae78f00be1bb41a06e","bodyHash":"863dd5c5600228c7ec81533b03ed763bcef88c782285c05af38c191cfa084605"}
  *
  * Go source:
  * func (b *Binder) getThisClassAndSymbolTable() (classSymbol *ast.Symbol, symbolTable ast.SymbolTable) {
@@ -3022,7 +3022,7 @@ export function Binder_getThisClassAndSymbolTable(receiver: GoPtr<Binder>): [GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEnumDeclaration","kind":"method","status":"stub","sigHash":"f04f2fa1d16d0d0ef0cbd447fab206e0cc55e7a8b28c69b97fd667d6314bd025","bodyHash":"e5a5af44ed6d142d4a90eb612555f64124288495bd2505c65d1c967fa13f9f9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEnumDeclaration","kind":"method","status":"implemented","sigHash":"f04f2fa1d16d0d0ef0cbd447fab206e0cc55e7a8b28c69b97fd667d6314bd025","bodyHash":"e5a5af44ed6d142d4a90eb612555f64124288495bd2505c65d1c967fa13f9f9d"}
  *
  * Go source:
  * func (b *Binder) bindEnumDeclaration(node *ast.Node) {
@@ -3042,7 +3042,7 @@ export function Binder_bindEnumDeclaration(receiver: GoPtr<Binder>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationOrBindingElement","kind":"method","status":"stub","sigHash":"c887fcf5f289df3518589dcd35f88f3009d4f0b9ad0179c23939b554e8e95967","bodyHash":"17cecb55c562f657e4003445b5a42512e7a323f6c8f183e39c5c647db0efbe51"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindVariableDeclarationOrBindingElement","kind":"method","status":"implemented","sigHash":"c887fcf5f289df3518589dcd35f88f3009d4f0b9ad0179c23939b554e8e95967","bodyHash":"17cecb55c562f657e4003445b5a42512e7a323f6c8f183e39c5c647db0efbe51"}
  *
  * Go source:
  * func (b *Binder) bindVariableDeclarationOrBindingElement(node *ast.Node) {
@@ -3087,7 +3087,7 @@ export function Binder_bindVariableDeclarationOrBindingElement(receiver: GoPtr<B
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameter","kind":"method","status":"stub","sigHash":"0e17e2f18f5398078c99b788c06baaace5181311859fc693bffed2e0be879497","bodyHash":"213b3a8d9e0f1a25a360f6537009f3a7bd332c2fa38b969868d14702daa9e2af"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindParameter","kind":"method","status":"implemented","sigHash":"0e17e2f18f5398078c99b788c06baaace5181311859fc693bffed2e0be879497","bodyHash":"213b3a8d9e0f1a25a360f6537009f3a7bd332c2fa38b969868d14702daa9e2af"}
  *
  * Go source:
  * func (b *Binder) bindParameter(node *ast.Node) {
@@ -3132,7 +3132,7 @@ export function Binder_bindParameter(receiver: GoPtr<Binder>, node: GoPtr<Node>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionDeclaration","kind":"method","status":"stub","sigHash":"526ddce676c9190a9b99f689797e682d3fa4d878cc834efb8813d7ad1c62ddc1","bodyHash":"b754bfc1e3b64889b6b258568f10a1cb25a1794b78c50e6e0f9cec4e177600fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindFunctionDeclaration","kind":"method","status":"implemented","sigHash":"526ddce676c9190a9b99f689797e682d3fa4d878cc834efb8813d7ad1c62ddc1","bodyHash":"b754bfc1e3b64889b6b258568f10a1cb25a1794b78c50e6e0f9cec4e177600fe"}
  *
  * Go source:
  * func (b *Binder) bindFunctionDeclaration(node *ast.Node) {
@@ -3152,7 +3152,7 @@ export function Binder_bindFunctionDeclaration(receiver: GoPtr<Binder>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getInferTypeContainer","kind":"method","status":"stub","sigHash":"f2dd9b95ebc380bee7da2a9938249f55337382159811641f3cd6fc87d8e68fc2","bodyHash":"aef2d84df74ce6a5c033efd325e9da90b99bd573ff51c47d5a206165192547b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getInferTypeContainer","kind":"method","status":"implemented","sigHash":"f2dd9b95ebc380bee7da2a9938249f55337382159811641f3cd6fc87d8e68fc2","bodyHash":"aef2d84df74ce6a5c033efd325e9da90b99bd573ff51c47d5a206165192547b5"}
  *
  * Go source:
  * func (b *Binder) getInferTypeContainer(node *ast.Node) *ast.Node {
@@ -3178,7 +3178,7 @@ export function Binder_getInferTypeContainer(receiver: GoPtr<Binder>, node: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAnonymousDeclaration","kind":"method","status":"stub","sigHash":"fffecf61ddfdf3739cd7e0f7abd1267acea36f0825664c6febbd5cbc88ee2e36","bodyHash":"a6c9be7ee03fed99fa38ddf7651060e0cc1b879fdf45d2a466878f96ee897320"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAnonymousDeclaration","kind":"method","status":"implemented","sigHash":"fffecf61ddfdf3739cd7e0f7abd1267acea36f0825664c6febbd5cbc88ee2e36","bodyHash":"a6c9be7ee03fed99fa38ddf7651060e0cc1b879fdf45d2a466878f96ee897320"}
  *
  * Go source:
  * func (b *Binder) bindAnonymousDeclaration(node *ast.Node, symbolFlags ast.SymbolFlags, name string) {
@@ -3198,7 +3198,7 @@ export function Binder_bindAnonymousDeclaration(receiver: GoPtr<Binder>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBlockScopedDeclaration","kind":"method","status":"stub","sigHash":"ea308c9c4514011ef9490b38009609dd3e7588ca484ac4566fed4d3371b8fd72","bodyHash":"5fa6710d8dbacbe2b0183ac10846eaf68b8a3f8c34cffd1784bbb40aea61302a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindBlockScopedDeclaration","kind":"method","status":"implemented","sigHash":"ea308c9c4514011ef9490b38009609dd3e7588ca484ac4566fed4d3371b8fd72","bodyHash":"5fa6710d8dbacbe2b0183ac10846eaf68b8a3f8c34cffd1784bbb40aea61302a"}
  *
  * Go source:
  * func (b *Binder) bindBlockScopedDeclaration(node *ast.Node, symbolFlags ast.SymbolFlags, symbolExcludes ast.SymbolFlags) {
@@ -3233,7 +3233,7 @@ export function Binder_bindBlockScopedDeclaration(receiver: GoPtr<Binder>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTypeParameter","kind":"method","status":"stub","sigHash":"5175c58001bb23695b5097b38d8c8acd061f0de00638493b571c32c5be10749c","bodyHash":"e7cd741b5707dc7ba2939523c6d7296e66cd3aba61da971f47a4b0097aa1c72f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindTypeParameter","kind":"method","status":"implemented","sigHash":"5175c58001bb23695b5097b38d8c8acd061f0de00638493b571c32c5be10749c","bodyHash":"e7cd741b5707dc7ba2939523c6d7296e66cd3aba61da971f47a4b0097aa1c72f"}
  *
  * Go source:
  * func (b *Binder) bindTypeParameter(node *ast.Node) {
@@ -3263,7 +3263,7 @@ export function Binder_bindTypeParameter(receiver: GoPtr<Binder>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupEntity","kind":"method","status":"stub","sigHash":"abffa7cbec099b623f18e8bef1d258d50b05534c770f182b4c3b9682395d2ad4","bodyHash":"84a1dd640058e00a701be88581858f71cb62ae32e9d0112f5d09d8d31f53cae0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupEntity","kind":"method","status":"implemented","sigHash":"abffa7cbec099b623f18e8bef1d258d50b05534c770f182b4c3b9682395d2ad4","bodyHash":"84a1dd640058e00a701be88581858f71cb62ae32e9d0112f5d09d8d31f53cae0"}
  *
  * Go source:
  * func (b *Binder) lookupEntity(node *ast.Node, container *ast.Node) *ast.Symbol {
@@ -3311,7 +3311,7 @@ export function Binder_lookupEntity(receiver: GoPtr<Binder>, node: GoPtr<Node>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupName","kind":"method","status":"stub","sigHash":"87f5dcbbe2f2833fa5b45f2ba08f81a4bc82294922e758179863a72264165c2f","bodyHash":"61e89a61b8f86b1fc839b9b25611995505893f81fb21a08e19e6b347c62e758c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.lookupName","kind":"method","status":"implemented","sigHash":"87f5dcbbe2f2833fa5b45f2ba08f81a4bc82294922e758179863a72264165c2f","bodyHash":"61e89a61b8f86b1fc839b9b25611995505893f81fb21a08e19e6b347c62e758c"}
  *
  * Go source:
  * func (b *Binder) lookupName(name string, container *ast.Node) *ast.Symbol {
@@ -3344,7 +3344,7 @@ export function Binder_lookupName(receiver: GoPtr<Binder>, name: string, contain
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkContextualIdentifier","kind":"method","status":"stub","sigHash":"56e0696f6e0d27073221bd9a2912576ac11adb86bb6ef5d664be434794e67e50","bodyHash":"b8a338e41c6869c02e4033b05f4c32d6e67ce4fa9d71a0a38e6f0a28b837062d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkContextualIdentifier","kind":"method","status":"implemented","sigHash":"56e0696f6e0d27073221bd9a2912576ac11adb86bb6ef5d664be434794e67e50","bodyHash":"b8a338e41c6869c02e4033b05f4c32d6e67ce4fa9d71a0a38e6f0a28b837062d"}
  *
  * Go source:
  * func (b *Binder) checkContextualIdentifier(node *ast.Node) {
@@ -3390,7 +3390,7 @@ export function Binder_checkContextualIdentifier(receiver: GoPtr<Binder>, node: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkPrivateIdentifier","kind":"method","status":"stub","sigHash":"46d25d58911174d4684d158e2faff64af91a9ab514b6ce6b299cea065f7c22c5","bodyHash":"9fd4168bff90e75ac855376e159f65f6ac22381e7736ea9cae168d24e4031ae6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkPrivateIdentifier","kind":"method","status":"implemented","sigHash":"46d25d58911174d4684d158e2faff64af91a9ab514b6ce6b299cea065f7c22c5","bodyHash":"9fd4168bff90e75ac855376e159f65f6ac22381e7736ea9cae168d24e4031ae6"}
  *
  * Go source:
  * func (b *Binder) checkPrivateIdentifier(node *ast.Node) {
@@ -3411,7 +3411,7 @@ export function Binder_checkPrivateIdentifier(receiver: GoPtr<Binder>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeIdentifierMessage","kind":"method","status":"stub","sigHash":"85f84be3ac7537dd4805b2ba7196959bc0cbd3f7ac380956c53d25a48de9ea68","bodyHash":"9b3350ec2f09add5feddf8d67ccca5858a73a1db6c3bb5af3a2bbc94e2b29ca2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeIdentifierMessage","kind":"method","status":"implemented","sigHash":"85f84be3ac7537dd4805b2ba7196959bc0cbd3f7ac380956c53d25a48de9ea68","bodyHash":"9b3350ec2f09add5feddf8d67ccca5858a73a1db6c3bb5af3a2bbc94e2b29ca2"}
  *
  * Go source:
  * func (b *Binder) getStrictModeIdentifierMessage(node *ast.Node) *diagnostics.Message {
@@ -3437,7 +3437,7 @@ export function Binder_getStrictModeIdentifierMessage(receiver: GoPtr<Binder>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isUseStrictPrologueDirective","kind":"func","status":"stub","sigHash":"ca7688ddcfe203fb24b86e3b2b7389205ccd51ccfbd5d1f5c2d6ebeef616c086","bodyHash":"e6c35c6be26e98f87a416101652b96fd3b44bfc259409bc59a8c172a1e9cb2b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::isUseStrictPrologueDirective","kind":"func","status":"implemented","sigHash":"ca7688ddcfe203fb24b86e3b2b7389205ccd51ccfbd5d1f5c2d6ebeef616c086","bodyHash":"e6c35c6be26e98f87a416101652b96fd3b44bfc259409bc59a8c172a1e9cb2b1"}
  *
  * Go source:
  * func isUseStrictPrologueDirective(sourceFile *ast.SourceFile, node *ast.Node) bool {
@@ -3453,7 +3453,7 @@ export function isUseStrictPrologueDirective(sourceFile: GoPtr<SourceFile>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::FindUseStrictPrologue","kind":"func","status":"stub","sigHash":"0edce192f7e2d2be8a53be73f0bbf683d629899f4b67e58345587696f33af695","bodyHash":"2e1105b0cf824420a4ea4576c3bbb33ac2dcbf07cf1b784f4d3d2c6d0f51ceca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::FindUseStrictPrologue","kind":"func","status":"implemented","sigHash":"0edce192f7e2d2be8a53be73f0bbf683d629899f4b67e58345587696f33af695","bodyHash":"2e1105b0cf824420a4ea4576c3bbb33ac2dcbf07cf1b784f4d3d2c6d0f51ceca"}
  *
  * Go source:
  * func FindUseStrictPrologue(sourceFile *ast.SourceFile, statements []*ast.Node) *ast.Node {
@@ -3484,7 +3484,7 @@ export function FindUseStrictPrologue(sourceFile: GoPtr<SourceFile>, statements:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeFunctionName","kind":"method","status":"stub","sigHash":"c444e130710d36fcaedcb47f367870374641cce588d9204bd5d5603df8f3123d","bodyHash":"65745595c77638fe6f86f9e6c3fc5c4b0eafc9031c32443806196ca09da57471"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeFunctionName","kind":"method","status":"implemented","sigHash":"c444e130710d36fcaedcb47f367870374641cce588d9204bd5d5603df8f3123d","bodyHash":"65745595c77638fe6f86f9e6c3fc5c4b0eafc9031c32443806196ca09da57471"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeFunctionName(node *ast.Node) {
@@ -3501,7 +3501,7 @@ export function Binder_checkStrictModeFunctionName(receiver: GoPtr<Binder>, node
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeBlockScopeFunctionDeclarationMessage","kind":"method","status":"stub","sigHash":"96f96a374e55bf84c439ac07d3e1368bc22e2d7ec63177add0fd19144a7a5bdf","bodyHash":"a72acb1b7e2f5f31e024fcee211ebd6a727e9eb76a34b5a8abd06ae1a7050a2c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeBlockScopeFunctionDeclarationMessage","kind":"method","status":"implemented","sigHash":"96f96a374e55bf84c439ac07d3e1368bc22e2d7ec63177add0fd19144a7a5bdf","bodyHash":"a72acb1b7e2f5f31e024fcee211ebd6a727e9eb76a34b5a8abd06ae1a7050a2c"}
  *
  * Go source:
  * func (b *Binder) getStrictModeBlockScopeFunctionDeclarationMessage(node *ast.Node) *diagnostics.Message {
@@ -3526,7 +3526,7 @@ export function Binder_getStrictModeBlockScopeFunctionDeclarationMessage(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeBinaryExpression","kind":"method","status":"stub","sigHash":"874390315ff7cf6e21c0f247b7cb482c6d505c4b9fc35d56bc3e227f63c946d6","bodyHash":"637481111998e2965cc8733610763d7a781ff28aadd38fd5a6971d16c224aff7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeBinaryExpression","kind":"method","status":"implemented","sigHash":"874390315ff7cf6e21c0f247b7cb482c6d505c4b9fc35d56bc3e227f63c946d6","bodyHash":"637481111998e2965cc8733610763d7a781ff28aadd38fd5a6971d16c224aff7"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeBinaryExpression(node *ast.Node) {
@@ -3546,7 +3546,7 @@ export function Binder_checkStrictModeBinaryExpression(receiver: GoPtr<Binder>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeCatchClause","kind":"method","status":"stub","sigHash":"05f1d10d6d0459a818a7e4c6a5045f4ee74dbe45498b3d656225e0b198a3bf26","bodyHash":"fff20c78e9fa3a08ed9f4ad2744d03d4ed7c4ca7845c1cd62a6928b65b41468f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeCatchClause","kind":"method","status":"implemented","sigHash":"05f1d10d6d0459a818a7e4c6a5045f4ee74dbe45498b3d656225e0b198a3bf26","bodyHash":"fff20c78e9fa3a08ed9f4ad2744d03d4ed7c4ca7845c1cd62a6928b65b41468f"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeCatchClause(node *ast.Node) {
@@ -3567,7 +3567,7 @@ export function Binder_checkStrictModeCatchClause(receiver: GoPtr<Binder>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeDeleteExpression","kind":"method","status":"stub","sigHash":"ae110d30a9b393876f020739cf0f54b33a97b91868f7c31c7c73eae53b935ad1","bodyHash":"240ea5a5f5560b3583cc7564a2f52e8327cbc5db5db939635673af266a9f57d0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeDeleteExpression","kind":"method","status":"implemented","sigHash":"ae110d30a9b393876f020739cf0f54b33a97b91868f7c31c7c73eae53b935ad1","bodyHash":"240ea5a5f5560b3583cc7564a2f52e8327cbc5db5db939635673af266a9f57d0"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeDeleteExpression(node *ast.Node) {
@@ -3588,7 +3588,7 @@ export function Binder_checkStrictModeDeleteExpression(receiver: GoPtr<Binder>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePostfixUnaryExpression","kind":"method","status":"stub","sigHash":"6747d756923e78a95895579bb79b56028f65543c4a0b3d027e06b2b56667da9d","bodyHash":"1fd1d96d821f2dc9e36956b3aa0a0afa48fa101794f40c86b5bc0d748ccf1048"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"6747d756923e78a95895579bb79b56028f65543c4a0b3d027e06b2b56667da9d","bodyHash":"1fd1d96d821f2dc9e36956b3aa0a0afa48fa101794f40c86b5bc0d748ccf1048"}
  *
  * Go source:
  * func (b *Binder) checkStrictModePostfixUnaryExpression(node *ast.Node) {
@@ -3604,7 +3604,7 @@ export function Binder_checkStrictModePostfixUnaryExpression(receiver: GoPtr<Bin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePrefixUnaryExpression","kind":"method","status":"stub","sigHash":"3cbcb4c636499a03e76c9e76534695372320ebc56c4c5513adc046340323be84","bodyHash":"0879d885df4e293f1e181143622f4077f0979919e6f04771a2a370434c3f837a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModePrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"3cbcb4c636499a03e76c9e76534695372320ebc56c4c5513adc046340323be84","bodyHash":"0879d885df4e293f1e181143622f4077f0979919e6f04771a2a370434c3f837a"}
  *
  * Go source:
  * func (b *Binder) checkStrictModePrefixUnaryExpression(node *ast.Node) {
@@ -3623,7 +3623,7 @@ export function Binder_checkStrictModePrefixUnaryExpression(receiver: GoPtr<Bind
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeWithStatement","kind":"method","status":"stub","sigHash":"b517cdf9e721da6187198cf4c247bd50eea1b6b13063bd154a3e6b43b23eae70","bodyHash":"88fbde1a48689f73f7582d111b40a3d3cd8bbfab3663cf7cf13b556c7f8e1ff0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeWithStatement","kind":"method","status":"implemented","sigHash":"b517cdf9e721da6187198cf4c247bd50eea1b6b13063bd154a3e6b43b23eae70","bodyHash":"88fbde1a48689f73f7582d111b40a3d3cd8bbfab3663cf7cf13b556c7f8e1ff0"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeWithStatement(node *ast.Node) {
@@ -3636,7 +3636,7 @@ export function Binder_checkStrictModeWithStatement(receiver: GoPtr<Binder>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeLabeledStatement","kind":"method","status":"stub","sigHash":"da74fc2e2f7d67925624d2c424e793fdea9aa2806beec2b4d5647fe1025dbc0d","bodyHash":"ae294363af500e126a7c30b8645a22d3ffe8a41efa79e843f95a858d617d4813"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeLabeledStatement","kind":"method","status":"implemented","sigHash":"da74fc2e2f7d67925624d2c424e793fdea9aa2806beec2b4d5647fe1025dbc0d","bodyHash":"ae294363af500e126a7c30b8645a22d3ffe8a41efa79e843f95a858d617d4813"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeLabeledStatement(node *ast.Node) {
@@ -3675,7 +3675,7 @@ export function isEvalOrArgumentsIdentifier(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeEvalOrArguments","kind":"method","status":"stub","sigHash":"92f86f491754328c7facce392e0ba9dfcb84c3d01c131db6fe6bb13b0c4a86c7","bodyHash":"d20e9d42e956a4dbfab12380c8120d22209a91925dc8ce24578b6bf780e6325a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.checkStrictModeEvalOrArguments","kind":"method","status":"implemented","sigHash":"92f86f491754328c7facce392e0ba9dfcb84c3d01c131db6fe6bb13b0c4a86c7","bodyHash":"d20e9d42e956a4dbfab12380c8120d22209a91925dc8ce24578b6bf780e6325a"}
  *
  * Go source:
  * func (b *Binder) checkStrictModeEvalOrArguments(contextNode *ast.Node, name *ast.Node) {
@@ -3693,7 +3693,7 @@ export function Binder_checkStrictModeEvalOrArguments(receiver: GoPtr<Binder>, c
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeEvalOrArgumentsMessage","kind":"method","status":"stub","sigHash":"501a7b07ff1ab1e02d8a853424c2d95a846fe16aed4951f1c47c64c427cd1fce","bodyHash":"650347a1eba2dd5f41df722cd820085e7ff0bb9257bcd94d120e7702b97155d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.getStrictModeEvalOrArgumentsMessage","kind":"method","status":"implemented","sigHash":"501a7b07ff1ab1e02d8a853424c2d95a846fe16aed4951f1c47c64c427cd1fce","bodyHash":"650347a1eba2dd5f41df722cd820085e7ff0bb9257bcd94d120e7702b97155d4"}
  *
  * Go source:
  * func (b *Binder) getStrictModeEvalOrArgumentsMessage(node *ast.Node) *diagnostics.Message {
@@ -3718,7 +3718,7 @@ export function Binder_getStrictModeEvalOrArgumentsMessage(receiver: GoPtr<Binde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContainer","kind":"method","status":"stub","sigHash":"42ecaf2eb1d197162b822ee0ea4668ae73e31c55cc8ff99714fe8936b13b171e","bodyHash":"ca7313a63436bf4fbd489e2f0d8d81481435cf763e1080b289b966650ae82fcb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindContainer","kind":"method","status":"implemented","sigHash":"42ecaf2eb1d197162b822ee0ea4668ae73e31c55cc8ff99714fe8936b13b171e","bodyHash":"ca7313a63436bf4fbd489e2f0d8d81481435cf763e1080b289b966650ae82fcb"}
  *
  * Go source:
  * func (b *Binder) bindContainer(node *ast.Node, containerFlags ContainerFlags) {
@@ -3992,7 +3992,7 @@ export function Binder_bindContainer(receiver: GoPtr<Binder>, node: GoPtr<Node>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareCommonJSVariable","kind":"method","status":"stub","sigHash":"6a08bda19c57e9fb64ef6cd2c5bfd00e4ef40a7ac876bb6395a7191cd03d6236","bodyHash":"4a350d295c96ec844b7fe1eaa93082342e4d8f94830ae16e844501c9bf9e1403"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.declareCommonJSVariable","kind":"method","status":"implemented","sigHash":"6a08bda19c57e9fb64ef6cd2c5bfd00e4ef40a7ac876bb6395a7191cd03d6236","bodyHash":"4a350d295c96ec844b7fe1eaa93082342e4d8f94830ae16e844501c9bf9e1403"}
  *
  * Go source:
  * func (b *Binder) declareCommonJSVariable(name string) {
@@ -4033,7 +4033,7 @@ export function Binder_declareCommonJSVariable(receiver: GoPtr<Binder>, name: st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindChildren","kind":"method","status":"stub","sigHash":"fc387c97e3ac89c4e8c8c504252178cdced871f0f3cd497324abfcfa06670bee","bodyHash":"b0c6d7e50b2e65a823d6983a845738fca4fd4a19643cf774e8479fa87edb5a73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindChildren","kind":"method","status":"implemented","sigHash":"fc387c97e3ac89c4e8c8c504252178cdced871f0f3cd497324abfcfa06670bee","bodyHash":"b0c6d7e50b2e65a823d6983a845738fca4fd4a19643cf774e8479fa87edb5a73"}
  *
  * Go source:
  * func (b *Binder) bindChildren(node *ast.Node) {
@@ -4268,7 +4268,7 @@ export function Binder_bindChildren(receiver: GoPtr<Binder>, node: GoPtr<Node>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachChild","kind":"method","status":"stub","sigHash":"a123f56e66981e86ed553606cfb081b16facd13ce06ff10bb2f578f798cb91c9","bodyHash":"3569751eb819bbfdf0edc7ca9da2c0576423633471890dd7b9a7c076c22c9b74"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachChild","kind":"method","status":"implemented","sigHash":"a123f56e66981e86ed553606cfb081b16facd13ce06ff10bb2f578f798cb91c9","bodyHash":"3569751eb819bbfdf0edc7ca9da2c0576423633471890dd7b9a7c076c22c9b74"}
  *
  * Go source:
  * func (b *Binder) bindEachChild(node *ast.Node) {
@@ -4280,7 +4280,7 @@ export function Binder_bindEachChild(receiver: GoPtr<Binder>, node: GoPtr<Node>)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEach","kind":"method","status":"stub","sigHash":"0122ba175fe62045dcf33fadfcce9eac2bff0bbe52cf4be3a68a6db76475b2d5","bodyHash":"0a36aebec003fa04adc1efeea72299c46a80b9c6f45f66440b7185477525bf03"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEach","kind":"method","status":"implemented","sigHash":"0122ba175fe62045dcf33fadfcce9eac2bff0bbe52cf4be3a68a6db76475b2d5","bodyHash":"0a36aebec003fa04adc1efeea72299c46a80b9c6f45f66440b7185477525bf03"}
  *
  * Go source:
  * func (b *Binder) bindEach(nodes []*ast.Node) {
@@ -4296,7 +4296,7 @@ export function Binder_bindEach(receiver: GoPtr<Binder>, nodes: GoSlice<GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNodeList","kind":"method","status":"stub","sigHash":"466eec6f39c2219759e3d2eb80f769f8674d3cfa0643e7396fcfb51db5e3d679","bodyHash":"e1f1834b06759e01fc2cff20ff24d5247b87446b01d181f06bc491986cbdb99a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindNodeList","kind":"method","status":"implemented","sigHash":"466eec6f39c2219759e3d2eb80f769f8674d3cfa0643e7396fcfb51db5e3d679","bodyHash":"e1f1834b06759e01fc2cff20ff24d5247b87446b01d181f06bc491986cbdb99a"}
  *
  * Go source:
  * func (b *Binder) bindNodeList(nodeList *ast.NodeList) {
@@ -4312,7 +4312,7 @@ export function Binder_bindNodeList(receiver: GoPtr<Binder>, nodeList: GoPtr<Nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModifiers","kind":"method","status":"stub","sigHash":"9f2a9ed6f0c513568be882098e6af525514922e6eae5f2029ff219fdfcf866ec","bodyHash":"6b05f28a7df269f29b735ba6a4106cf090efcc144f92fc1b72244455fa4232f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindModifiers","kind":"method","status":"implemented","sigHash":"9f2a9ed6f0c513568be882098e6af525514922e6eae5f2029ff219fdfcf866ec","bodyHash":"6b05f28a7df269f29b735ba6a4106cf090efcc144f92fc1b72244455fa4232f8"}
  *
  * Go source:
  * func (b *Binder) bindModifiers(modifiers *ast.ModifierList) {
@@ -4328,7 +4328,7 @@ export function Binder_bindModifiers(receiver: GoPtr<Binder>, modifiers: GoPtr<M
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachStatementFunctionsFirst","kind":"method","status":"stub","sigHash":"6d702d8fbb5f942dcd709f099ec3314bb44d5a25cc4957e78ee489d7bed8a571","bodyHash":"d69ad7d6ac14145fc68138db6b9733220eeb81f405a3f868b69d7e1f45f141b2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindEachStatementFunctionsFirst","kind":"method","status":"implemented","sigHash":"6d702d8fbb5f942dcd709f099ec3314bb44d5a25cc4957e78ee489d7bed8a571","bodyHash":"d69ad7d6ac14145fc68138db6b9733220eeb81f405a3f868b69d7e1f45f141b2"}
  *
  * Go source:
  * func (b *Binder) bindEachStatementFunctionsFirst(statements *ast.NodeList) {
@@ -4358,7 +4358,7 @@ export function Binder_bindEachStatementFunctionsFirst(receiver: GoPtr<Binder>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setContinueTarget","kind":"method","status":"stub","sigHash":"624baf835ee8ffe048fc19a75634871e5964a7e6c5fc1fd62f28d7ebd4ba5715","bodyHash":"ff8570fc6edc4fae2e5dbeb5908ea2d7f33028310297f362192a63869e229a64"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.setContinueTarget","kind":"method","status":"implemented","sigHash":"624baf835ee8ffe048fc19a75634871e5964a7e6c5fc1fd62f28d7ebd4ba5715","bodyHash":"ff8570fc6edc4fae2e5dbeb5908ea2d7f33028310297f362192a63869e229a64"}
  *
  * Go source:
  * func (b *Binder) setContinueTarget(node *ast.Node, target *ast.FlowLabel) *ast.FlowLabel {
@@ -4383,7 +4383,7 @@ export function Binder_setContinueTarget(receiver: GoPtr<Binder>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.doWithConditionalBranches","kind":"method","status":"stub","sigHash":"31d911425ee9bfc4b29af60eb25b273bec1869bf912d5e7ea30c3aa7dd3a6ac8","bodyHash":"a6f55195da7d39d7626ffbd1e6691dbbb4d282dab84b1d0ba0ed14666643db8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.doWithConditionalBranches","kind":"method","status":"implemented","sigHash":"31d911425ee9bfc4b29af60eb25b273bec1869bf912d5e7ea30c3aa7dd3a6ac8","bodyHash":"a6f55195da7d39d7626ffbd1e6691dbbb4d282dab84b1d0ba0ed14666643db8e"}
  *
  * Go source:
  * func (b *Binder) doWithConditionalBranches(action func(b *Binder, value *ast.Node) bool, value *ast.Node, trueTarget *ast.FlowLabel, falseTarget *ast.FlowLabel) {
@@ -4407,7 +4407,7 @@ export function Binder_doWithConditionalBranches(receiver: GoPtr<Binder>, action
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCondition","kind":"method","status":"stub","sigHash":"3f6141e16a33ad543f7d1332ca8ec1803f0197768f3f91ede31af57bc01b72cd","bodyHash":"c201abbe5977bcc1ff22f645f6ab5fb7353f98217db36cda9bbf8836d87b6c9c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindCondition","kind":"method","status":"implemented","sigHash":"3f6141e16a33ad543f7d1332ca8ec1803f0197768f3f91ede31af57bc01b72cd","bodyHash":"c201abbe5977bcc1ff22f645f6ab5fb7353f98217db36cda9bbf8836d87b6c9c"}
  *
  * Go source:
  * func (b *Binder) bindCondition(node *ast.Node, trueTarget *ast.FlowLabel, falseTarget *ast.FlowLabel) {
@@ -4427,7 +4427,7 @@ export function Binder_bindCondition(receiver: GoPtr<Binder>, node: GoPtr<Node>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIterativeStatement","kind":"method","status":"stub","sigHash":"418cc2edce680f154b478d75d37211ea9a4a27d712e55f582d0b310ada02682f","bodyHash":"7324c1d5277b50f2254187474bf52b12f502109d18406e52a7772963a7bbf3a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindIterativeStatement","kind":"method","status":"implemented","sigHash":"418cc2edce680f154b478d75d37211ea9a4a27d712e55f582d0b310ada02682f","bodyHash":"7324c1d5277b50f2254187474bf52b12f502109d18406e52a7772963a7bbf3a0"}
  *
  * Go source:
  * func (b *Binder) bindIterativeStatement(node *ast.Node, breakTarget *ast.FlowLabel, continueTarget *ast.FlowLabel) {
@@ -4463,7 +4463,7 @@ export function isLogicalAssignmentExpression(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAssignmentTargetFlow","kind":"method","status":"stub","sigHash":"cd04e9339a297300b8e9bdf1b75edb64c6059f7d1282f6253889f2e1e3cae78a","bodyHash":"e31711c255ca0c26f6d4bd511c1883c0b9d5d5de87405bcf2c92f6dc6133ee6e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.bindAssignmentTargetFlow","kind":"method","status":"implemented","sigHash":"cd04e9339a297300b8e9bdf1b75edb64c6059f7d1282f6253889f2e1e3cae78a","bodyHash":"e31711c255ca0c26f6d4bd511c1883c0b9d5d5de87405bcf2c92f6dc6133ee6e"}
  *
  * Go source:
  * func (b *Binder) bindAssignmentTargetFlow(node *ast.Node) {
@@ -6435,7 +6435,7 @@ export function isNarrowingTypeOfOperands(expr1: GoPtr<Node>, expr2: GoPtr<Node>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnNode","kind":"method","status":"stub","sigHash":"b7b0ff8329316a87986f41f54ef58df8094faf41b8c8364b11e5431513fcd90c","bodyHash":"3b39f0f77cdea29c23f7344b309748184bbc50dcddd091d7dc3821f6f701c338"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnNode","kind":"method","status":"implemented","sigHash":"b7b0ff8329316a87986f41f54ef58df8094faf41b8c8364b11e5431513fcd90c","bodyHash":"3b39f0f77cdea29c23f7344b309748184bbc50dcddd091d7dc3821f6f701c338"}
  *
  * Go source:
  * func (b *Binder) errorOnNode(node *ast.Node, message *diagnostics.Message, args ...any) {
@@ -6447,7 +6447,7 @@ export function Binder_errorOnNode(receiver: GoPtr<Binder>, node: GoPtr<Node>, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnFirstToken","kind":"method","status":"stub","sigHash":"c5568a08be182adc380e729d7e1167a8c32a14e23776df1a26f667a9be2c8e89","bodyHash":"60a7a1e0f89f4364b9aad4b37fc1afd147557711726eb5d8a48c850ecb7663d5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOnFirstToken","kind":"method","status":"implemented","sigHash":"c5568a08be182adc380e729d7e1167a8c32a14e23776df1a26f667a9be2c8e89","bodyHash":"60a7a1e0f89f4364b9aad4b37fc1afd147557711726eb5d8a48c850ecb7663d5"}
  *
  * Go source:
  * func (b *Binder) errorOnFirstToken(node *ast.Node, message *diagnostics.Message, args ...any) {
@@ -6461,7 +6461,7 @@ export function Binder_errorOnFirstToken(receiver: GoPtr<Binder>, node: GoPtr<No
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnNode","kind":"method","status":"stub","sigHash":"a5f0a683c54d8b2a0885e9840b4f6f923a7b57339c3b37b7369120e2f97dca05","bodyHash":"090a7e9fc27bee2fcc74bc7f068de9a8195140f63c03413a0e1ff51c554f0ea1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnNode","kind":"method","status":"implemented","sigHash":"a5f0a683c54d8b2a0885e9840b4f6f923a7b57339c3b37b7369120e2f97dca05","bodyHash":"090a7e9fc27bee2fcc74bc7f068de9a8195140f63c03413a0e1ff51c554f0ea1"}
  *
  * Go source:
  * func (b *Binder) errorOrSuggestionOnNode(isError bool, node *ast.Node, message *diagnostics.Message) {
@@ -6473,7 +6473,7 @@ export function Binder_errorOrSuggestionOnNode(receiver: GoPtr<Binder>, isError:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnRange","kind":"method","status":"stub","sigHash":"5e7695553167b2073f0d7bd6050cab4c26fcb8f0d806d6f6419182cf379066ac","bodyHash":"0879c71dde54a0ebbf343212cd62c1918cff35733821395a0f5fcf823973d2c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.errorOrSuggestionOnRange","kind":"method","status":"implemented","sigHash":"5e7695553167b2073f0d7bd6050cab4c26fcb8f0d806d6f6419182cf379066ac","bodyHash":"0879c71dde54a0ebbf343212cd62c1918cff35733821395a0f5fcf823973d2c8"}
  *
  * Go source:
  * func (b *Binder) errorOrSuggestionOnRange(isError bool, startNode *ast.Node, endNode *ast.Node, message *diagnostics.Message) {
@@ -6499,7 +6499,7 @@ export function Binder_errorOrSuggestionOnRange(receiver: GoPtr<Binder>, isError
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createDiagnosticForNode","kind":"method","status":"stub","sigHash":"be85cc82e5b14722f1e83845bb8c24d6aa1e627d3c3e994e13a17a16d4ef389a","bodyHash":"7f73e4aa41dcfa2d6da06b1974ff94ccb88620e7f0b3004cbde6936e7dd03e3c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.createDiagnosticForNode","kind":"method","status":"implemented","sigHash":"be85cc82e5b14722f1e83845bb8c24d6aa1e627d3c3e994e13a17a16d4ef389a","bodyHash":"7f73e4aa41dcfa2d6da06b1974ff94ccb88620e7f0b3004cbde6936e7dd03e3c"}
  *
  * Go source:
  * func (b *Binder) createDiagnosticForNode(node *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -6511,7 +6511,7 @@ export function Binder_createDiagnosticForNode(receiver: GoPtr<Binder>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDiagnostic","kind":"method","status":"stub","sigHash":"7064aa562deac7284b3fdc4fd7b7639e62d84f20f61033e68cdebf513eb5ed10","bodyHash":"34b77a751428e3861100eb9ee585e4c3abfbf0ab71d08e47173fa47982eeef46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::method::Binder.addDiagnostic","kind":"method","status":"implemented","sigHash":"7064aa562deac7284b3fdc4fd7b7639e62d84f20f61033e68cdebf513eb5ed10","bodyHash":"34b77a751428e3861100eb9ee585e4c3abfbf0ab71d08e47173fa47982eeef46"}
  *
  * Go source:
  * func (b *Binder) addDiagnostic(diagnostic *ast.Diagnostic) {

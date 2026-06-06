@@ -1,11 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
-import { NodeFactory_NewNodeList, Node_Name } from "../../ast/spine.js";
-import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList } from "../../ast/ast.js";
+import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
+import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
 import { AsSourceFile } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
-import type { AwaitExpression, ForInOrOfStatement, LabeledStatement, ReturnStatement, YieldExpression } from "../../ast/generated/data.js";
+import type { AwaitExpression, ForInOrOfStatement, GetAccessorDeclaration, LabeledStatement, ReturnStatement, SetAccessorDeclaration, YieldExpression } from "../../ast/generated/data.js";
+import type { Expression as Expression_9ab73856 } from "../../ast/generated/unions.js";
 import { AsArrowFunction, AsAwaitExpression, AsConstructorDeclaration, AsForInOrOfStatement, AsFunctionDeclaration, AsFunctionExpression, AsGetAccessorDeclaration, AsLabeledStatement, AsMethodDeclaration, AsParameterDeclaration, AsReturnStatement, AsSetAccessorDeclaration, AsYieldExpression } from "../../ast/generated/casts.js";
 import { KindArrowFunction, KindAsyncKeyword, KindAsteriskToken, KindAwaitExpression, KindClassDeclaration, KindClassExpression, KindConstructor, KindDoStatement, KindExclamationToken, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindLabeledStatement, KindMethodDeclaration, KindReturnStatement, KindSetAccessor, KindSourceFile, KindTrueKeyword, KindWhileStatement, KindYieldExpression, KindAmpersandAmpersandToken } from "../../ast/generated/kinds.js";
 import { IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
@@ -536,7 +537,7 @@ export function forawaitTransformer_visitAwaitExpression(receiver: GoPtr<forawai
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitYieldExpression","kind":"method","status":"stub","sigHash":"516265a56fa8e691b50c9bad383dcde86324b3ec29aeb81ef21831c799828bbb","bodyHash":"4c751dfcf433ff126c1d19811ee8015b66ffc48543020a003b5395da3bbb4bf9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitYieldExpression","kind":"method","status":"implemented","sigHash":"516265a56fa8e691b50c9bad383dcde86324b3ec29aeb81ef21831c799828bbb","bodyHash":"4c751dfcf433ff126c1d19811ee8015b66ffc48543020a003b5395da3bbb4bf9"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitYieldExpression(node *ast.YieldExpression) *ast.Node {
@@ -587,11 +588,53 @@ export function forawaitTransformer_visitAwaitExpression(receiver: GoPtr<forawai
  * }
  */
 export function forawaitTransformer_visitYieldExpression(receiver: GoPtr<forawaitTransformer>, node: GoPtr<YieldExpression>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitYieldExpression");
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    if (node!.AsteriskToken !== undefined) {
+      const expression = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Expression as unknown as GoPtr<Node>);
+
+      const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+      const asyncValuesResult = NodeFactory_NewAsyncValuesHelper(printerFactory, expression);
+      asyncValuesResult!.Loc = expression!.Loc;
+
+      const asyncDelegatorResult = NodeFactory_NewAsyncDelegatorHelper(printerFactory, asyncValuesResult);
+      asyncDelegatorResult!.Loc = expression!.Loc;
+
+      const factory = printerFactory!.__tsgoEmbedded0!;
+      const innerYield = NodeFactory_UpdateYieldExpression(
+        factory,
+        node,
+        node!.AsteriskToken,
+        asyncDelegatorResult as unknown as GoPtr<Expression_9ab73856>,
+      );
+
+      const awaitedYield = NodeFactory_NewAwaitHelper(printerFactory, innerYield);
+
+      const result = NewYieldExpression(factory, undefined, awaitedYield);
+      result!.Loc = node!.Loc;
+      EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), result, node as unknown as GoPtr<Node>);
+      return result;
+    }
+
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    let innerExpression: GoPtr<Node>;
+    if (node!.Expression !== undefined) {
+      innerExpression = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Expression as unknown as GoPtr<Node>);
+    } else {
+      innerExpression = NodeFactory_NewVoidZeroExpression(printerFactory);
+    }
+
+    const result = NewYieldExpression(factory, undefined, forawaitTransformer_createDownlevelAwait(receiver, innerExpression));
+    result!.Loc = node!.Loc;
+    EmitContext_SetOriginal(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), result, node as unknown as GoPtr<Node>);
+    return result;
+  }
+
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitReturnStatement","kind":"method","status":"stub","sigHash":"90e54760810dbf219145c72cb8ca0d2bf3e49fd2c44043adbd66e31477413f74","bodyHash":"ad79c943c75924cf1f9f6d653caae653cca9ee10f9aafaefce50c3550d92c29a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitReturnStatement","kind":"method","status":"implemented","sigHash":"90e54760810dbf219145c72cb8ca0d2bf3e49fd2c44043adbd66e31477413f74","bodyHash":"ad79c943c75924cf1f9f6d653caae653cca9ee10f9aafaefce50c3550d92c29a"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitReturnStatement(node *ast.ReturnStatement) *ast.Node {
@@ -612,7 +655,23 @@ export function forawaitTransformer_visitYieldExpression(receiver: GoPtr<forawai
  * }
  */
 export function forawaitTransformer_visitReturnStatement(receiver: GoPtr<forawaitTransformer>, node: GoPtr<ReturnStatement>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitReturnStatement");
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+    const factory = printerFactory!.__tsgoEmbedded0!;
+    let expression: GoPtr<Node>;
+    if (node!.Expression !== undefined) {
+      expression = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node!.Expression as unknown as GoPtr<Node>);
+    } else {
+      expression = NodeFactory_NewVoidZeroExpression(printerFactory);
+    }
+    return NodeFactory_UpdateReturnStatement(
+      factory,
+      node,
+      forawaitTransformer_createDownlevelAwait(receiver, expression) as unknown as ReturnStatement["Expression"],
+    );
+  }
+
+  return NodeVisitor_VisitEachChild((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), node as unknown as GoPtr<Node>);
 }
 
 /**
@@ -1139,7 +1198,7 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitConstructorDeclaration","kind":"method","status":"stub","sigHash":"84d7a2aee78bd4ea221488935dcaa78d5cc7970c810bcfb178d847650ed00b9d","bodyHash":"3048a1b988050a93d2552d22e10c9487428e86698b09e9911fa0e73b3274bed1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitConstructorDeclaration","kind":"method","status":"implemented","sigHash":"84d7a2aee78bd4ea221488935dcaa78d5cc7970c810bcfb178d847650ed00b9d","bodyHash":"3048a1b988050a93d2552d22e10c9487428e86698b09e9911fa0e73b3274bed1"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitConstructorDeclaration(node *ast.Node) *ast.Node {
@@ -1160,11 +1219,28 @@ export function forawaitTransformer_transformForAwaitOfStatement(receiver: GoPtr
  * }
  */
 export function forawaitTransformer_visitConstructorDeclaration(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitConstructorDeclaration");
+  const decl = AsConstructorDeclaration(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  const updated = NodeFactory_UpdateConstructorDeclaration(
+    factory,
+    decl,
+    Node_Modifiers(node),
+    undefined,
+    EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor),
+    undefined,
+    undefined,
+    EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor) as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitGetAccessorDeclaration","kind":"method","status":"stub","sigHash":"cf6a9c4b181aedcab41fa33fe9814f9f12a7f6166734071ac2c35ea99578818c","bodyHash":"4b237588146f019a3f37ee70deafaf7a48359cc3947145f82cee3737d952135e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitGetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"cf6a9c4b181aedcab41fa33fe9814f9f12a7f6166734071ac2c35ea99578818c","bodyHash":"4b237588146f019a3f37ee70deafaf7a48359cc3947145f82cee3737d952135e"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitGetAccessorDeclaration(node *ast.Node) *ast.Node {
@@ -1186,11 +1262,29 @@ export function forawaitTransformer_visitConstructorDeclaration(receiver: GoPtr<
  * }
  */
 export function forawaitTransformer_visitGetAccessorDeclaration(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitGetAccessorDeclaration");
+  const decl = AsGetAccessorDeclaration(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  const updated = NodeFactory_UpdateGetAccessorDeclaration(
+    factory,
+    decl,
+    Node_Modifiers(node),
+    NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), Node_Name(node)) as unknown as GetAccessorDeclaration["name"],
+    undefined,
+    EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor),
+    undefined,
+    undefined,
+    EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor) as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSetAccessorDeclaration","kind":"method","status":"stub","sigHash":"c18fd4c9fbe40b669fdfe1dc9c2d3dd752a598168ef0672d4b6c31cb22648a65","bodyHash":"7b37cc89e83a27a30f91dbfae2e6fc53dc9354fc184c7dcf5e68d5b360e50335"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"c18fd4c9fbe40b669fdfe1dc9c2d3dd752a598168ef0672d4b6c31cb22648a65","bodyHash":"7b37cc89e83a27a30f91dbfae2e6fc53dc9354fc184c7dcf5e68d5b360e50335"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitSetAccessorDeclaration(node *ast.Node) *ast.Node {
@@ -1212,11 +1306,29 @@ export function forawaitTransformer_visitGetAccessorDeclaration(receiver: GoPtr<
  * }
  */
 export function forawaitTransformer_visitSetAccessorDeclaration(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitSetAccessorDeclaration");
+  const decl = AsSetAccessorDeclaration(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  const updated = NodeFactory_UpdateSetAccessorDeclaration(
+    factory,
+    decl,
+    Node_Modifiers(node),
+    NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), Node_Name(node)) as unknown as SetAccessorDeclaration["name"],
+    undefined,
+    EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor),
+    undefined,
+    undefined,
+    EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor) as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitMethodDeclaration","kind":"method","status":"stub","sigHash":"8b6d41736f3e85531abaf76efe180aba7580e73f3a8ff111ff6f136a5752749a","bodyHash":"dcb9baae6bea84f1f990f1b61d5950d6c5de1c55186c2258c77fbe6b0f78b2ac"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"8b6d41736f3e85531abaf76efe180aba7580e73f3a8ff111ff6f136a5752749a","bodyHash":"dcb9baae6bea84f1f990f1b61d5950d6c5de1c55186c2258c77fbe6b0f78b2ac"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitMethodDeclaration(node *ast.Node) *ast.Node {
@@ -1265,11 +1377,50 @@ export function forawaitTransformer_visitSetAccessorDeclaration(receiver: GoPtr<
  * }
  */
 export function forawaitTransformer_visitMethodDeclaration(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitMethodDeclaration");
+  const decl = AsMethodDeclaration(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  const modifiers = (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0
+    ? forawaitTransformer_visitModifiersNoAsync(receiver, Node_Modifiers(node))
+    : Node_Modifiers(node);
+
+  const asteriskToken = (receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0
+    ? undefined
+    : decl!.AsteriskToken;
+
+  let parameters: GoPtr<NodeList>;
+  let body: GoPtr<Node>;
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);
+    body = forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver, node);
+  } else {
+    parameters = EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor);
+    body = EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor);
+  }
+
+  const updated = NodeFactory_UpdateMethodDeclaration(
+    factory,
+    decl,
+    modifiers,
+    asteriskToken,
+    NodeVisitor_VisitNode((visitor as ConcreteNodeVisitor), Node_Name(node)) as never,
+    undefined,
+    undefined,
+    parameters as never,
+    undefined,
+    undefined,
+    body as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionDeclaration","kind":"method","status":"stub","sigHash":"a6f77f32f15059617c93d8e5b2316dbd006f748462d02000992727dd52354db3","bodyHash":"ce0effd342f2be75137dd91b06a15e03c1212fc57f5e8342f60372d86e5598e9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionDeclaration","kind":"method","status":"implemented","sigHash":"a6f77f32f15059617c93d8e5b2316dbd006f748462d02000992727dd52354db3","bodyHash":"ce0effd342f2be75137dd91b06a15e03c1212fc57f5e8342f60372d86e5598e9"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitFunctionDeclaration(node *ast.Node) *ast.Node {
@@ -1317,11 +1468,49 @@ export function forawaitTransformer_visitMethodDeclaration(receiver: GoPtr<foraw
  * }
  */
 export function forawaitTransformer_visitFunctionDeclaration(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionDeclaration");
+  const decl = AsFunctionDeclaration(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  const modifiers = (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0
+    ? forawaitTransformer_visitModifiersNoAsync(receiver, Node_Modifiers(node))
+    : Node_Modifiers(node);
+
+  const asteriskToken = (receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0
+    ? undefined
+    : decl!.AsteriskToken;
+
+  let parameters: GoPtr<NodeList>;
+  let body: GoPtr<Node>;
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);
+    body = forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver, node);
+  } else {
+    parameters = EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor);
+    body = EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor);
+  }
+
+  const updated = NodeFactory_UpdateFunctionDeclaration(
+    factory,
+    decl,
+    modifiers,
+    asteriskToken,
+    Node_Name(node),
+    undefined,
+    parameters as never,
+    undefined,
+    undefined,
+    body as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitArrowFunction","kind":"method","status":"stub","sigHash":"de192b55a77cb0b1a39913549467f1fcf02686a4f8644360d29ce1ea316304b7","bodyHash":"0b221d2fb125c9a400004b730ffd4a5a9edb23b9cf0bd1aa51c0eeb54fa0a421"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitArrowFunction","kind":"method","status":"implemented","sigHash":"de192b55a77cb0b1a39913549467f1fcf02686a4f8644360d29ce1ea316304b7","bodyHash":"0b221d2fb125c9a400004b730ffd4a5a9edb23b9cf0bd1aa51c0eeb54fa0a421"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitArrowFunction(node *ast.Node) *ast.Node {
@@ -1343,32 +1532,50 @@ export function forawaitTransformer_visitFunctionDeclaration(receiver: GoPtr<for
  * }
  */
 export function forawaitTransformer_visitArrowFunction(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitArrowFunction");
+  const decl = AsArrowFunction(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+  const updated = NodeFactory_UpdateArrowFunction(
+    factory,
+    decl,
+    Node_Modifiers(node),
+    undefined,
+    EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor),
+    undefined,
+    undefined,
+    decl!.EqualsGreaterThanToken,
+    EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor) as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionExpression","kind":"method","status":"stub","sigHash":"89a9d83a81306d912ca33736601d12811430c7c9cbefd8f07dbfc3fff65d12a4","bodyHash":"3c81ad12ea674cc2e7a0fc24eebc9059bfb18f573472877c6cf53c2b365125f1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionExpression","kind":"method","status":"implemented","sigHash":"89a9d83a81306d912ca33736601d12811430c7c9cbefd8f07dbfc3fff65d12a4","bodyHash":"3c81ad12ea674cc2e7a0fc24eebc9059bfb18f573472877c6cf53c2b365125f1"}
  *
  * Go source:
  * func (tx *forawaitTransformer) visitFunctionExpression(node *ast.Node) *ast.Node {
  * 	decl := node.AsFunctionExpression()
  * 	savedEnclosingFunctionFlags := tx.enclosingFunctionFlags
  * 	tx.enclosingFunctionFlags = ast.GetFunctionFlags(node)
- * 
+ *
  * 	var modifiers *ast.ModifierList
  * 	if tx.enclosingFunctionFlags&ast.FunctionFlagsGenerator != 0 {
  * 		modifiers = tx.visitModifiersNoAsync(decl.Modifiers())
  * 	} else {
  * 		modifiers = decl.Modifiers()
  * 	}
- * 
+ *
  * 	var asteriskToken *ast.TokenNode
  * 	if tx.enclosingFunctionFlags&ast.FunctionFlagsAsync != 0 {
  * 		asteriskToken = nil
  * 	} else {
  * 		asteriskToken = decl.AsteriskToken
  * 	}
- * 
+ *
  * 	var parameters *ast.NodeList
  * 	var body *ast.Node
  * 	if tx.enclosingFunctionFlags&ast.FunctionFlagsAsync != 0 && tx.enclosingFunctionFlags&ast.FunctionFlagsGenerator != 0 {
@@ -1378,7 +1585,7 @@ export function forawaitTransformer_visitArrowFunction(receiver: GoPtr<forawaitT
  * 		parameters = tx.EmitContext().VisitParameters(decl.Parameters, tx.Visitor())
  * 		body = tx.EmitContext().VisitFunctionBody(node.Body(), tx.Visitor())
  * 	}
- * 
+ *
  * 	updated := tx.Factory().UpdateFunctionExpression(
  * 		decl,
  * 		modifiers,
@@ -1395,7 +1602,45 @@ export function forawaitTransformer_visitArrowFunction(receiver: GoPtr<forawaitT
  * }
  */
 export function forawaitTransformer_visitFunctionExpression(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.visitFunctionExpression");
+  const decl = AsFunctionExpression(node);
+  const savedEnclosingFunctionFlags = receiver!.enclosingFunctionFlags;
+  receiver!.enclosingFunctionFlags = GetFunctionFlags(node);
+  const factory = Transformer_Factory(receiver!.__tsgoEmbedded0!)!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!);
+
+  const modifiers = (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0
+    ? forawaitTransformer_visitModifiersNoAsync(receiver, Node_Modifiers(node))
+    : Node_Modifiers(node);
+
+  const asteriskToken = (receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0
+    ? undefined
+    : decl!.AsteriskToken;
+
+  let parameters: GoPtr<NodeList>;
+  let body: GoPtr<Node>;
+  if ((receiver!.enclosingFunctionFlags & FunctionFlagsAsync) !== 0 && (receiver!.enclosingFunctionFlags & FunctionFlagsGenerator) !== 0) {
+    parameters = forawaitTransformer_transformAsyncGeneratorFunctionParameterList(receiver, node);
+    body = forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver, node);
+  } else {
+    parameters = EmitContext_VisitParameters(emitContext, decl!.Parameters, visitor);
+    body = EmitContext_VisitFunctionBody(emitContext, Node_Body(node), visitor);
+  }
+
+  const updated = NodeFactory_UpdateFunctionExpression(
+    factory,
+    decl,
+    modifiers,
+    asteriskToken,
+    decl!.name,
+    undefined,
+    parameters as never,
+    undefined,
+    undefined,
+    body as never,
+  );
+  receiver!.enclosingFunctionFlags = savedEnclosingFunctionFlags;
+  return updated;
 }
 
 /**

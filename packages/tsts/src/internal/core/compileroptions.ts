@@ -325,15 +325,15 @@ export function noCopy_Lock(receiver: GoPtr<noCopy>): void {}
 export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::EmptyCompilerOptions","kind":"varGroup","status":"stub","sigHash":"fe09827cedc84dc2dbf63c80902637dcd913c879e5104c0995c36820bf8e5f4c","bodyHash":"0ed6fae679550fe39304ddf4b314f7b89a196c8c8e79955b12eaabf390ab2533"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::EmptyCompilerOptions","kind":"varGroup","status":"implemented","sigHash":"fe09827cedc84dc2dbf63c80902637dcd913c879e5104c0995c36820bf8e5f4c","bodyHash":"0ed6fae679550fe39304ddf4b314f7b89a196c8c8e79955b12eaabf390ab2533"}
  *
  * Go source:
  * var EmptyCompilerOptions = &CompilerOptions{}
  */
-export const EmptyCompilerOptions: GoPtr<CompilerOptions> = undefined as never;
+export const EmptyCompilerOptions: GoPtr<CompilerOptions> = {} as CompilerOptions;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"stub","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4","bodyHash":"78d95458b8e87bacaea1c14432a123baf45f19a8dbce2eb144482044b8c81a54"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4","bodyHash":"78d95458b8e87bacaea1c14432a123baf45f19a8dbce2eb144482044b8c81a54"}
  *
  * Go source:
  * var optionsType = reflect.TypeFor[CompilerOptions]()

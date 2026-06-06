@@ -24,7 +24,7 @@ export interface compilerHost {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"6753ea52078cf2082833506648d3a866602a9da76070eca8a79cce5009abf01a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/compilerHost.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"6753ea52078cf2082833506648d3a866602a9da76070eca8a79cce5009abf01a"}
  *
  * Go source:
  * var _ compiler.CompilerHost = (*compilerHost)(nil)

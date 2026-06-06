@@ -10,7 +10,7 @@ import { SubtreeContainsDecorators, SubtreeContainsPrivateIdentifierInExpression
 import { NewBlock, NewClassExpression, NewClassStaticBlockDeclaration, NewExpressionStatement, NewIdentifier, NewKeywordExpression, NewPropertyAccessExpression, NewStringLiteral, NewSyntaxList, NewVariableDeclaration, NewVariableDeclarationList, NewVariableStatement } from "../../ast/generated/factory.js";
 import { AsComputedPropertyName, AsGetAccessorDeclaration, AsPropertyAccessExpression, AsSetAccessorDeclaration } from "../../ast/generated/casts.js";
 import { CanHaveDecorators, ChildIsDecorated, ClassOrConstructorParameterIsDecorated, GetAllAccessorDeclarations, GetFirstConstructorWithBody, HasAccessorModifier, HasDecorators, HasSyntacticModifier, HasStaticModifier, IsStatic, IsThisParameter, NodeOrChildIsDecorated, SkipPartiallyEmittedExpressions } from "../../ast/utilities.js";
-import { Node_Body, Node_Decorators, Node_Expression, Node_Members, Node_ParameterList, Node_Parameters, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdatePropertyDeclaration } from "../../ast/ast.js";
+import { Node_Body, Node_Decorators, Node_Expression, Node_Members, Node_ParameterList, Node_Parameters, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyAccessExpression, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateSetAccessorDeclaration } from "../../ast/ast.js";
 import { ModifierFlagsAbstract, ModifierFlagsAmbient, ModifierFlagsDefault, ModifierFlagsExport } from "../../ast/modifierflags.js";
 import { NodeFlagsAmbient, NodeFlagsLet, NodeFlagsNone } from "../../ast/generated/flags.js";
 import { TokenFlagsNone } from "../../ast/tokenflags.js";
@@ -21,7 +21,7 @@ import type { ScriptTarget } from "../../core/compileroptions.js";
 import { CompilerOptions_GetEmitScriptTarget } from "../../core/compileroptions.js";
 import { ScriptTargetES2022 } from "../../core/compileroptions.js";
 import { EmitContext_AddVariableDeclaration, EmitContext_IsCallToHelper, EmitContext_MostOriginal, EmitContext_SetCommentRange, EmitContext_SetEmitFlags, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_AddEmitHelper, EmitContext_ReadEmitHelpers } from "../../printer/emitcontext.js";
-import { EFNoComments } from "../../printer/emitflags.js";
+import { EFNoComments, EFNoTrailingSourceMap } from "../../printer/emitflags.js";
 import type { NodeFactory } from "../../printer/factory.js";
 import { NodeFactory_GetDeclarationName, NodeFactory_GetDeclarationNameEx, NodeFactory_GetLocalNameEx, NodeFactory_NewAssignmentExpression, NodeFactory_NewDecorateHelper, NodeFactory_NewExportDefault, NodeFactory_NewExternalModuleExport, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewParamHelper, NodeFactory_NewStringLiteralFromNode, NodeFactory_NewUniqueName, NodeFactory_NewVoidZeroExpression } from "../../printer/factory.js";
 import type { AssignedNameOptions, NameOptions } from "../../printer/factory.js";
@@ -305,7 +305,7 @@ export function LegacyDecoratorsTransformer_finishClassElement(receiver: GoPtr<L
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitParamerDeclaration","kind":"method","status":"stub","sigHash":"11d4d14e75a073c45cbcfa686166f77a908e2b65f0b074f7884333ed0e2237e4","bodyHash":"5128ea43bbbdbbf17483be1051dc91943759e6e95064606c68716a55b05af78c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitParamerDeclaration","kind":"method","status":"implemented","sigHash":"11d4d14e75a073c45cbcfa686166f77a908e2b65f0b074f7884333ed0e2237e4","bodyHash":"5128ea43bbbdbbf17483be1051dc91943759e6e95064606c68716a55b05af78c"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) visitParamerDeclaration(node *ast.ParameterDeclaration) *ast.Node {
@@ -331,7 +331,31 @@ export function LegacyDecoratorsTransformer_finishClassElement(receiver: GoPtr<L
  * }
  */
 export function LegacyDecoratorsTransformer_visitParamerDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<ParameterDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitParamerDeclaration");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const emitCtx = Transformer_EmitContext(receiver!.__tsgoEmbedded0);
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0);
+  const astFactory = printerFactory!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  const updated = NodeFactory_UpdateParameterDeclaration(
+    astFactory,
+    node,
+    elideModifiers(printerFactory, Node_Modifiers(nodeAsNode)),
+    node!.DotDotDotToken,
+    NodeVisitor_VisitNode(visitor, Node_Name(nodeAsNode)) as never,
+    undefined,
+    undefined,
+    NodeVisitor_VisitNode(visitor, node!.Initializer as never) as never,
+  );
+  if (updated !== nodeAsNode) {
+    // While we emit the source map for the node after skipping decorators and modifiers,
+    // we need to emit the comments for the original range.
+    EmitContext_SetCommentRange(emitCtx, updated, nodeAsNode!.Loc);
+    const newLoc = MoveRangePastModifiers(nodeAsNode);
+    updated!.Loc = newLoc;
+    EmitContext_SetSourceMapRange(emitCtx, updated, newLoc);
+    EmitContext_SetEmitFlags(emitCtx, Node_Name(updated), EFNoTrailingSourceMap as never);
+  }
+  return updated;
 }
 
 /**
@@ -426,7 +450,7 @@ export function LegacyDecoratorsTransformer_visitPropertyDeclaration(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitGetAccessorDeclaration","kind":"method","status":"stub","sigHash":"9aa5042ed4d0d22e48e2fa228e89ed01dea3010d5a669de2c0c71e3de35d9697","bodyHash":"26caaa8626ae7204bd5d9ebdf3cdb5f62487d520f6852437318859d80e0554c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitGetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"9aa5042ed4d0d22e48e2fa228e89ed01dea3010d5a669de2c0c71e3de35d9697","bodyHash":"26caaa8626ae7204bd5d9ebdf3cdb5f62487d520f6852437318859d80e0554c3"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) visitGetAccessorDeclaration(node *ast.GetAccessorDeclaration) *ast.Node {
@@ -446,11 +470,28 @@ export function LegacyDecoratorsTransformer_visitPropertyDeclaration(receiver: G
  * }
  */
 export function LegacyDecoratorsTransformer_visitGetAccessorDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<GetAccessorDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitGetAccessorDeclaration");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  return LegacyDecoratorsTransformer_finishClassElement(
+    receiver,
+    NodeFactory_UpdateGetAccessorDeclaration(
+      astFactory,
+      node,
+      NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)),
+      LegacyDecoratorsTransformer_visitPropertyNameOfClassElement(receiver, nodeAsNode) as never,
+      undefined,
+      NodeVisitor_VisitNodes(visitor, Node_ParameterList(nodeAsNode)) as never,
+      undefined,
+      undefined,
+      NodeVisitor_VisitNode(visitor, Node_Body(nodeAsNode)) as never,
+    ),
+    nodeAsNode,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitSetAccessorDeclaration","kind":"method","status":"stub","sigHash":"d2291fb4c9be2b6e45e63b4520abe3efe85b61282c6339ccaa877f5e0e400d92","bodyHash":"109116db00f0db05a50d64a824f04f615f1bda8a99632ec366927c4beeb91cca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitSetAccessorDeclaration","kind":"method","status":"implemented","sigHash":"d2291fb4c9be2b6e45e63b4520abe3efe85b61282c6339ccaa877f5e0e400d92","bodyHash":"109116db00f0db05a50d64a824f04f615f1bda8a99632ec366927c4beeb91cca"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) visitSetAccessorDeclaration(node *ast.SetAccessorDeclaration) *ast.Node {
@@ -470,11 +511,28 @@ export function LegacyDecoratorsTransformer_visitGetAccessorDeclaration(receiver
  * }
  */
 export function LegacyDecoratorsTransformer_visitSetAccessorDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<SetAccessorDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitSetAccessorDeclaration");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  return LegacyDecoratorsTransformer_finishClassElement(
+    receiver,
+    NodeFactory_UpdateSetAccessorDeclaration(
+      astFactory,
+      node,
+      NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)),
+      LegacyDecoratorsTransformer_visitPropertyNameOfClassElement(receiver, nodeAsNode) as never,
+      undefined,
+      NodeVisitor_VisitNodes(visitor, Node_ParameterList(nodeAsNode)) as never,
+      undefined,
+      undefined,
+      NodeVisitor_VisitNode(visitor, Node_Body(nodeAsNode)) as never,
+    ),
+    nodeAsNode,
+  );
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitMethodDeclaration","kind":"method","status":"stub","sigHash":"4fec2e0af1f22f34d1b000eff4a9750cf07c445739d350a02e42842abff2ec51","bodyHash":"5a04b5a711bf651037483f4c775d3b8323c4d12cab09781c70146f119da7ec40"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitMethodDeclaration","kind":"method","status":"implemented","sigHash":"4fec2e0af1f22f34d1b000eff4a9750cf07c445739d350a02e42842abff2ec51","bodyHash":"5a04b5a711bf651037483f4c775d3b8323c4d12cab09781c70146f119da7ec40"}
  *
  * Go source:
  * func (tx *LegacyDecoratorsTransformer) visitMethodDeclaration(node *ast.MethodDeclaration) *ast.Node {
@@ -496,7 +554,26 @@ export function LegacyDecoratorsTransformer_visitSetAccessorDeclaration(receiver
  * }
  */
 export function LegacyDecoratorsTransformer_visitMethodDeclaration(receiver: GoPtr<LegacyDecoratorsTransformer>, node: GoPtr<MethodDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/legacydecorators.go::method::LegacyDecoratorsTransformer.visitMethodDeclaration");
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
+  const astFactory = Transformer_Factory(receiver!.__tsgoEmbedded0)!.__tsgoEmbedded0!;
+  const nodeAsNode = node as unknown as GoPtr<Node>;
+  return LegacyDecoratorsTransformer_finishClassElement(
+    receiver,
+    NodeFactory_UpdateMethodDeclaration(
+      astFactory,
+      node,
+      NodeVisitor_VisitModifiers(visitor, Node_Modifiers(nodeAsNode)),
+      node!.AsteriskToken,
+      LegacyDecoratorsTransformer_visitPropertyNameOfClassElement(receiver, nodeAsNode) as never,
+      undefined,
+      undefined,
+      NodeVisitor_VisitNodes(visitor, Node_ParameterList(nodeAsNode)) as never,
+      undefined,
+      undefined,
+      NodeVisitor_VisitNode(visitor, Node_Body(nodeAsNode)) as never,
+    ),
+    nodeAsNode,
+  );
 }
 
 /**

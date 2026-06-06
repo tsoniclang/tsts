@@ -2,8 +2,10 @@ import type { GoPtr } from "../../go/compat.js";
 import type { ModifierList, Node } from "../ast/spine.js";
 import { ModifierFlagsNone, ModifierToFlag } from "../ast/modifierflags.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
+import { NodeVisitor_VisitModifiers } from "../ast/visitor.js";
 import type { EmitContext } from "../printer/emitcontext.js";
 import type { Transformer } from "./transformer.js";
+import { Transformer_NewTransformer } from "./transformer.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::type::modifierVisitor","kind":"type","status":"implemented","sigHash":"04d132d918160f7b08793e75f53c42347aae4a8358fe0344509a3c3bf6136ef1","bodyHash":"cdee65c2e92c5822528c8aba69758424ed1776ee3932033aab75078bced25447"}
@@ -40,7 +42,7 @@ export function modifierVisitor_visit(receiver: GoPtr<modifierVisitor>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::func::ExtractModifiers","kind":"func","status":"stub","sigHash":"fd15121c1ac8dc6af27c1e49c846a4cab79b95f5273335992aec0c4dd795ba76","bodyHash":"54545be35aad007d62aa6d48a472e63a4f6af68362df2614b6a91fb89502e735"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::func::ExtractModifiers","kind":"func","status":"implemented","sigHash":"fd15121c1ac8dc6af27c1e49c846a4cab79b95f5273335992aec0c4dd795ba76","bodyHash":"54545be35aad007d62aa6d48a472e63a4f6af68362df2614b6a91fb89502e735"}
  *
  * Go source:
  * func ExtractModifiers(emitContext *printer.EmitContext, modifiers *ast.ModifierList, allowed ast.ModifierFlags) *ast.ModifierList {
@@ -53,5 +55,13 @@ export function modifierVisitor_visit(receiver: GoPtr<modifierVisitor>, node: Go
  * }
  */
 export function ExtractModifiers(emitContext: GoPtr<EmitContext>, modifiers: GoPtr<ModifierList>, allowed: ModifierFlags): GoPtr<ModifierList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/modifiervisitor.go::func::ExtractModifiers");
+  if (modifiers === undefined) {
+    return undefined;
+  }
+  const tx: modifierVisitor = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    AllowedModifiers: allowed,
+  };
+  Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => modifierVisitor_visit(tx, node), emitContext);
+  return NodeVisitor_VisitModifiers(tx.__tsgoEmbedded0!.visitor, modifiers);
 }

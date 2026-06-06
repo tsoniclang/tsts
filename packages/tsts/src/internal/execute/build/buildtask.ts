@@ -475,7 +475,7 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"stub","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"f5584563c40eab2cd5db88a6edf3eee7dd63fbef2cfc3010a4f5ff7df5b2ec7d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit","kind":"method","status":"implemented","sigHash":"c5f4fb9cf3bff3a6a79b75b20f199fe8e45d7baa095e068e1025ff0cd4115d6f","bodyHash":"f5584563c40eab2cd5db88a6edf3eee7dd63fbef2cfc3010a4f5ff7df5b2ec7d"}
  *
  * Go source:
  * func (t *BuildTask) compileAndEmit(orchestrator *Orchestrator, path tspath.Path) {
@@ -544,7 +544,100 @@ export function BuildTask_updateDownstream(receiver: GoPtr<BuildTask>, orchestra
  * }
  */
 export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrator: GoPtr<Orchestrator>, path: Path): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/build/buildtask.go::method::BuildTask.compileAndEmit");
+  type DurationOps = number & { Sub(t: unknown): number };
+  type TimeWithSub = import("../../../go/time.js").Time & { Sub(t: import("../../../go/time.js").Time): number };
+
+  receiver!.errors = [];
+  if (Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Verbose)) {
+    receiver!.result!.reportStatus(NewCompilerDiagnostic(diagnostics.Building_project_0, Orchestrator_relativeFileName(orchestrator, receiver!.config)));
+  }
+
+  const compileTimes: import("../tsc/compile.js").CompileTimes = {
+    ConfigTime: 0 as import("../../../go/time.js").Duration,
+    ParseTime: 0 as import("../../../go/time.js").Duration,
+    bindTime: 0 as import("../../../go/time.js").Duration,
+    checkTime: 0 as import("../../../go/time.js").Duration,
+    totalTime: 0 as import("../../../go/time.js").Duration,
+    emitTime: 0 as import("../../../go/time.js").Duration,
+    BuildInfoReadTime: 0 as import("../../../go/time.js").Duration,
+    ChangesComputeTime: 0 as import("../../../go/time.js").Duration,
+  };
+
+  const [configTime] = SyncMap_Load(orchestrator!.host!.configTimes, path);
+  compileTimes.ConfigTime = configTime as import("../../../go/time.js").Duration;
+
+  const buildInfoReadStart = orchestrator!.opts.Sys.Now();
+  let oldProgram: GoPtr<Program> = undefined;
+  if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Force)) {
+    oldProgram = ReadBuildInfoProgram(
+      receiver!.resolved,
+      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[1],
+      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[2],
+    );
+  }
+  compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
+
+  const parseStart = orchestrator!.opts.Sys.Now();
+  const trace = GetTraceWithWriterFromSys(
+    receiver!.result!.builder as unknown as import("../../../go/io.js").Writer,
+    ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
+    orchestrator!.opts.Testing,
+  );
+  const buildCompilerHost: import("../../compiler/host.js").CompilerHost = {
+    FS: (): import("../../vfs/vfs.js").FS => compilerHost_FS({ host: orchestrator!.host, trace } as compilerHost),
+    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath({ host: orchestrator!.host, trace } as compilerHost),
+    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory({ host: orchestrator!.host, trace } as compilerHost),
+    Trace: (msg, ...args): void => compilerHost_Trace({ host: orchestrator!.host, trace } as compilerHost, msg, ...args),
+    GetSourceFile: (opts): GoPtr<import("../../ast/ast.js").SourceFile> => compilerHost_GetSourceFile({ host: orchestrator!.host, trace } as compilerHost, opts),
+    GetResolvedProjectReference: (fileName, p): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> => compilerHost_GetResolvedProjectReference({ host: orchestrator!.host, trace } as compilerHost, fileName, p),
+  };
+  const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
+  compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
+
+  const changesComputeStart = orchestrator!.opts.Sys.Now();
+  receiver!.result!.program = incremental_NewProgram(
+    program,
+    oldProgram,
+    orchestrator!.host as unknown as Parameters<typeof incremental_NewProgram>[2],
+    (orchestrator!.opts.Testing !== undefined && orchestrator!.opts.Testing !== null) as bool,
+  );
+  compileTimes.ChangesComputeTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(changesComputeStart) as import("../../../go/time.js").Duration;
+
+  const [result, statistics] = EmitAndReportStatistics({
+    Sys: orchestrator!.opts.Sys,
+    ProgramLike: receiver!.result!.program as unknown as import("../../compiler/program.js").ProgramLike,
+    Program: program,
+    Config: receiver!.resolved,
+    ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
+    ReportErrorSummary: QuietDiagnosticsReporter,
+    Writer: receiver!.result!.builder as unknown as import("../../../go/io.js").Writer,
+    WriteFile: (fileName, text, data) => BuildTask_writeFile(receiver, orchestrator, fileName, text, data),
+    CompileTimes: compileTimes,
+    Testing: orchestrator!.opts.Testing,
+    TestingMTimesCache: orchestrator!.host!.mTimes,
+    Tracing: undefined,
+  });
+  receiver!.result!.exitStatus = result.Status;
+  receiver!.result!.statistics = statistics;
+
+  const programOptions = (program as unknown as { Options(): { NoEmitOnError?: unknown; IsTrue?(): bool } }).Options();
+  const noEmitOnError = programOptions !== undefined && (programOptions.NoEmitOnError as unknown as { IsTrue(): bool } | undefined)?.IsTrue() === true;
+  if ((!noEmitOnError || result.Diagnostics.length === 0) &&
+    (result.EmitResult!.EmittedFiles.length > 0 || receiver!.status!.kind !== upToDateStatusTypeOutOfDateBuildInfoWithErrors)) {
+    BuildTask_updateTimeStamps(receiver, orchestrator, result.EmitResult!.EmittedFiles, diagnostics.Updating_unchanged_output_timestamps_of_project_0);
+  }
+  receiver!.result!.buildKind = buildKindProgram;
+  if (result.Status === ExitStatusDiagnosticsPresent_OutputsSkipped || result.Status === ExitStatusDiagnosticsPresent_OutputsGenerated) {
+    receiver!.status = { kind: upToDateStatusTypeBuildErrors, data: undefined };
+  } else {
+    let oldestOutputFileName: string;
+    if (result.EmitResult!.EmittedFiles.length > 0) {
+      oldestOutputFileName = result.EmitResult!.EmittedFiles[0]!;
+    } else {
+      oldestOutputFileName = FirstOrNilSeq(ParsedCommandLine_GetOutputFileNames(receiver!.resolved)) ?? "";
+    }
+    receiver!.status = { kind: upToDateStatusTypeUpToDate, data: oldestOutputFileName };
+  }
 }
 
 /**

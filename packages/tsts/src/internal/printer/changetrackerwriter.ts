@@ -2,9 +2,13 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr } from "../../go/compat.js";
 import { Builder } from "../../go/strings.js";
 import { goReceiverKey } from "../ast/spine.js";
-import type { GoInterfaceValue, Node, NodeList, NodeVisitor } from "../ast/spine.js";
-import { Node_End, Node_Pos, NodeList_End, NodeList_Pos } from "../ast/spine.js";
+import type { GoInterfaceValue, ModifierList, Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
+import { Node_Clone, Node_End, Node_ForEachChild, Node_Pos, Node_VisitEachChild, NodeFactory_NewModifierList, NodeFactory_NewNodeList, NodeList_Clone, NodeList_End, NodeList_Pos } from "../ast/spine.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
+import type { NodeVisitor } from "../ast/visitor.js";
+import { NewNodeVisitor, NodeVisitor_VisitNodes } from "../ast/visitor.js";
+import { NodeIsSynthesized } from "../ast/utilities.js";
+import { NewTextRange } from "../core/text.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { UTF16Offset } from "../core/core.js";
 import { SkipTrivia } from "../scanner/scanner.js";
@@ -309,7 +313,7 @@ export function ChangeTrackerWriter_setLastNonTriviaPosition(receiver: GoPtr<Cha
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.AssignPositionsToNode","kind":"method","status":"stub","sigHash":"df34348c3dd44caab84789b23b73690d07ccdde8841999b024a7189f23bf877b","bodyHash":"8c19cbcbc62c4402da514357707006cecd8863d80a404dfa347b2468aac57b0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.AssignPositionsToNode","kind":"method","status":"implemented","sigHash":"df34348c3dd44caab84789b23b73690d07ccdde8841999b024a7189f23bf877b","bodyHash":"8c19cbcbc62c4402da514357707006cecd8863d80a404dfa347b2468aac57b0c"}
  *
  * Go source:
  * func (ct *ChangeTrackerWriter) AssignPositionsToNode(node *ast.Node, factory *ast.NodeFactory) *ast.Node {
@@ -336,11 +340,37 @@ export function ChangeTrackerWriter_setLastNonTriviaPosition(receiver: GoPtr<Cha
  * }
  */
 export function ChangeTrackerWriter_AssignPositionsToNode(receiver: GoPtr<ChangeTrackerWriter>, node: GoPtr<Node>, factory: GoPtr<NodeFactory>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.AssignPositionsToNode");
+  // visitor is assigned first; the Visit closure captures the variable binding so
+  // the self-referential call to assignPositionsToNodeWorker sees the final value.
+  let visitor: GoPtr<NodeVisitor> = undefined;
+  visitor = NewNodeVisitor(
+    (n: GoPtr<Node>): GoPtr<Node> => ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, n, visitor),
+    factory,
+    {
+      VisitNode: (n: GoPtr<Node>, v: GoPtr<NodeVisitor>): GoPtr<Node> => ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, n, v),
+      VisitNodes: (nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>): GoPtr<NodeList> => ChangeTrackerWriter_assignPositionsToNodeArray(receiver, nodes, v),
+      VisitToken: (n: GoPtr<Node>, v: GoPtr<NodeVisitor>): GoPtr<Node> => ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, n, v),
+      VisitModifiers: (modifiers: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>): GoPtr<ModifierList> => {
+        if (modifiers !== undefined) {
+          const newNodeList = ChangeTrackerWriter_assignPositionsToNodeArray(receiver, modifiers as unknown as GoPtr<NodeList>, v);
+          // Return a new ModifierList so that VisitEachChild/Update detects the
+          // change and creates a new node with reassigned child positions.
+          return NodeFactory_NewModifierList(factory, newNodeList!.Nodes);
+        }
+        return modifiers;
+      },
+      VisitEmbeddedStatement: undefined as never,
+      VisitIterationBody: undefined as never,
+      VisitParameters: undefined as never,
+      VisitFunctionBody: undefined as never,
+      VisitTopLevelStatements: undefined as never,
+    },
+  );
+  return ChangeTrackerWriter_assignPositionsToNodeWorker(receiver, node, visitor);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeWorker","kind":"method","status":"stub","sigHash":"9cc5507d01f59b2b6e64c8a3925c7261c6c108047a0411390dbc7f631153f2ec","bodyHash":"789286ea093358936d511ab9919a9ee3b7c13de40fb7b8c84c961fa4e9856a45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeWorker","kind":"method","status":"implemented","sigHash":"9cc5507d01f59b2b6e64c8a3925c7261c6c108047a0411390dbc7f631153f2ec","bodyHash":"789286ea093358936d511ab9919a9ee3b7c13de40fb7b8c84c961fa4e9856a45"}
  *
  * Go source:
  * func (ct *ChangeTrackerWriter) assignPositionsToNodeWorker(
@@ -365,11 +395,25 @@ export function ChangeTrackerWriter_AssignPositionsToNode(receiver: GoPtr<Change
  * }
  */
 export function ChangeTrackerWriter_assignPositionsToNodeWorker(receiver: GoPtr<ChangeTrackerWriter>, node: GoPtr<Node>, v: GoPtr<NodeVisitor>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeWorker");
+  if (node === undefined) {
+    return node;
+  }
+  const visited = Node_VisitEachChild(node, v);
+  // create proxy node for non synthesized nodes
+  let newNode = visited;
+  if (!NodeIsSynthesized(visited)) {
+    newNode = Node_Clone(visited, v!.Factory as unknown as NodeFactoryCoercible);
+  }
+  Node_ForEachChild(newNode, (child: GoPtr<Node>): bool => {
+    child!.Parent = newNode;
+    return true as bool;
+  });
+  newNode!.Loc = NewTextRange(ChangeTrackerWriter_getPos(receiver, Node_as_triviaPositionKey(node)), ChangeTrackerWriter_getEnd(receiver, Node_as_triviaPositionKey(node)));
+  return newNode;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeArray","kind":"method","status":"stub","sigHash":"e141fab8e838cd07ea02c114a13763488cc71168b0a02955627e74f63795d7d7","bodyHash":"b9938904d74975a2f4f9d9a97dbe03f90796ca47b6ffdbdaa71d868007a3e795"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeArray","kind":"method","status":"implemented","sigHash":"e141fab8e838cd07ea02c114a13763488cc71168b0a02955627e74f63795d7d7","bodyHash":"b9938904d74975a2f4f9d9a97dbe03f90796ca47b6ffdbdaa71d868007a3e795"}
  *
  * Go source:
  * func (ct *ChangeTrackerWriter) assignPositionsToNodeArray(
@@ -395,7 +439,21 @@ export function ChangeTrackerWriter_assignPositionsToNodeWorker(receiver: GoPtr<
  * }
  */
 export function ChangeTrackerWriter_assignPositionsToNodeArray(receiver: GoPtr<ChangeTrackerWriter>, nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>): GoPtr<NodeList> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.assignPositionsToNodeArray");
+  const visited = NodeVisitor_VisitNodes(v, nodes);
+  if (visited === undefined) {
+    return visited;
+  }
+  if (nodes === undefined) {
+    // Debug.assert(nodes);
+    throw new globalThis.Error("if nodes is nil, visited should not be nil");
+  }
+  // clone nodearray if necessary
+  let nodeArray: GoPtr<NodeList> = visited;
+  if (visited === nodes) {
+    nodeArray = NodeList_Clone(visited, v!.Factory as unknown as NodeFactoryCoercible);
+  }
+  nodeArray!.Loc = NewTextRange(ChangeTrackerWriter_getPos(receiver, NodeList_as_triviaPositionKey(nodes)), ChangeTrackerWriter_getEnd(receiver, NodeList_as_triviaPositionKey(nodes)));
+  return nodeArray;
 }
 
 /**

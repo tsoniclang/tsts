@@ -1,6 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
+import { NewDiagnostic } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import {
@@ -44,8 +46,37 @@ import type { TextRange } from "../../core/text.js";
 import { NewTextRange, TextRange_End, TextRange_Pos } from "../../core/text.js";
 import * as debug from "../../debug/debug.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
-import { Unicode_escape_sequence_cannot_appear_here, X_0_expected } from "../../diagnostics/generated/messages.js";
-import { SkipTrivia, Scanner_HasExtendedUnicodeEscape, Scanner_HasPrecedingJSDocComment, Scanner_HasPrecedingJSDocWithDeprecatedTag, Scanner_HasPrecedingJSDocWithSeeOrLink, Scanner_HasUnicodeEscape, Scanner_ReScanGreaterThanToken, Scanner_ReScanLessThanToken, Scanner_ReScanSlashToken, Scanner_TokenRange, Scanner_TokenValue, TokenToString } from "../../scanner/scanner.js";
+import {
+  An_enum_member_name_must_be_followed_by_a_or,
+  Array_element_destructuring_pattern_expected,
+  Argument_expression_expected,
+  Declaration_or_statement_expected,
+  Enum_member_expected,
+  Expression_expected,
+  Expression_or_comma_expected,
+  Identifier_expected,
+  Identifier_or_string_literal_expected,
+  Keywords_cannot_contain_escape_characters,
+  Parameter_declaration_expected,
+  Property_assignment_expected,
+  Property_destructuring_pattern_expected,
+  Property_or_signature_expected,
+  Statement_expected,
+  The_parser_expected_to_find_a_1_to_match_the_0_token_here,
+  Type_argument_expected,
+  Type_expected,
+  Type_parameter_declaration_expected,
+  Unexpected_token_A_constructor_method_accessor_or_property_was_expected,
+  Unexpected_token_expected,
+  Unicode_escape_sequence_cannot_appear_here,
+  Variable_declaration_expected,
+  X_0_expected,
+  X_0_is_not_allowed_as_a_parameter_name,
+  X_0_is_not_allowed_as_a_variable_declaration_name,
+  X_case_or_default_expected,
+} from "../../diagnostics/generated/messages.js";
+import { SkipTrivia, Scanner_HasExtendedUnicodeEscape, Scanner_HasPrecedingJSDocComment, Scanner_HasPrecedingJSDocWithDeprecatedTag, Scanner_HasPrecedingJSDocWithSeeOrLink, Scanner_HasUnicodeEscape, Scanner_ReScanGreaterThanToken, Scanner_ReScanLessThanToken, Scanner_ReScanSlashToken, Scanner_Scan, Scanner_TokenRange, Scanner_TokenValue, TokenToString } from "../../scanner/scanner.js";
+import { IsKeyword } from "../../ast/utilities.js";
 import { Parser_parseErrorAtRange } from "./errors-recovery.js";
 import { tokenIsIdentifierOrKeyword, tokenIsIdentifierOrKeywordOrGreaterThan } from "../utilities.js";
 import { Parser_canFollowExportModifier, Parser_createIdentifierWithDiagnostic, Parser_hasPrecedingLineBreak, Parser_nextTokenCanFollowExportModifier, Parser_nextTokenIsClassKeywordOnSameLine, Parser_nextTokenIsFunctionKeywordOnSameLine, Parser_parseBindingIdentifierWithDiagnostic, Parser_parseExpectedWithDiagnostic, Parser_parseIdentifierNameWithDiagnostic, Parser_parseIdentifierOrPatternWithDiagnostic, Parser_parseIdentifierWithDiagnostic } from "./statements-declarations.js";
@@ -56,7 +87,33 @@ import {
   jsdocScannerInfoHasDeprecated,
   jsdocScannerInfoHasJSDoc,
   jsdocScannerInfoHasSeeOrLink,
+  PCArgumentExpressions,
+  PCArrayBindingElements,
+  PCArrayLiteralMembers,
+  PCBlockStatements,
+  PCClassMembers,
   PCCount,
+  PCEnumMembers,
+  PCHeritageClauseElement,
+  PCHeritageClauses,
+  PCImportAttributes,
+  PCImportOrExportSpecifiers,
+  PCJSDocComment,
+  PCJSDocParameters,
+  PCJsxAttributes,
+  PCJsxChildren,
+  PCObjectBindingElements,
+  PCObjectLiteralMembers,
+  PCParameters,
+  PCRestProperties,
+  PCSourceElements,
+  PCSwitchClauseStatements,
+  PCSwitchClauses,
+  PCTupleElementTypes,
+  PCTypeArguments,
+  PCTypeMembers,
+  PCTypeParameters,
+  PCVariableDeclarations,
   type jsdocScannerInfo as jsdocScannerInfo_b29c74de,
   type Parser,
   type ParsingContext,
@@ -75,7 +132,7 @@ export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.nextToken","kind":"method","status":"stub","sigHash":"9e2af53e708c081864e5829d09b2b1b6883882c906273996807250b604ac0b9c","bodyHash":"79d8e3e6b839bc6cbf1abd73b91ddca52144ca95d645d81fc6dfdbe733f445ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.nextToken","kind":"method","status":"implemented","sigHash":"9e2af53e708c081864e5829d09b2b1b6883882c906273996807250b604ac0b9c","bodyHash":"79d8e3e6b839bc6cbf1abd73b91ddca52144ca95d645d81fc6dfdbe733f445ae"}
  *
  * Go source:
  * func (p *Parser) nextToken() ast.Kind {
@@ -89,7 +146,13 @@ export function Parser_parseErrorAtCurrentToken(receiver: GoPtr<Parser>, message
  * }
  */
 export function Parser_nextToken(receiver: GoPtr<Parser>): Kind {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.nextToken");
+  // if the keyword had an escape
+  if (IsKeyword(receiver!.token) && (Scanner_HasUnicodeEscape(receiver!.scanner) || Scanner_HasExtendedUnicodeEscape(receiver!.scanner))) {
+    // issue a parse error for the escape
+    Parser_parseErrorAtCurrentToken(receiver, Keywords_cannot_contain_escape_characters);
+  }
+  receiver!.token = Scanner_Scan(receiver!.scanner);
+  return receiver!.token;
 }
 
 /**
@@ -153,7 +216,7 @@ export function Parser_isInSomeParsingContext(receiver: GoPtr<Parser>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parsingContextErrors","kind":"method","status":"stub","sigHash":"64c14fb89f6466ef6610038c9dd472361e7d23939c5331b4c52829623f3ee7f7","bodyHash":"1ecf55bb5758b6113ac1f8dacd2396292c39b4e77f89985bc2a16c83d588ed9d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parsingContextErrors","kind":"method","status":"implemented","sigHash":"64c14fb89f6466ef6610038c9dd472361e7d23939c5331b4c52829623f3ee7f7","bodyHash":"1ecf55bb5758b6113ac1f8dacd2396292c39b4e77f89985bc2a16c83d588ed9d"}
  *
  * Go source:
  * func (p *Parser) parsingContextErrors(context ParsingContext) {
@@ -226,11 +289,102 @@ export function Parser_isInSomeParsingContext(receiver: GoPtr<Parser>): bool {
  * }
  */
 export function Parser_parsingContextErrors(receiver: GoPtr<Parser>, context: ParsingContext): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parsingContextErrors");
+  switch (context) {
+    case PCSourceElements:
+      if (receiver!.token === KindDefaultKeyword) {
+        Parser_parseErrorAtCurrentToken(receiver, X_0_expected, "export");
+      } else {
+        Parser_parseErrorAtCurrentToken(receiver, Declaration_or_statement_expected);
+      }
+      return;
+    case PCBlockStatements:
+      Parser_parseErrorAtCurrentToken(receiver, Declaration_or_statement_expected);
+      return;
+    case PCSwitchClauses:
+      Parser_parseErrorAtCurrentToken(receiver, X_case_or_default_expected);
+      return;
+    case PCSwitchClauseStatements:
+      Parser_parseErrorAtCurrentToken(receiver, Statement_expected);
+      return;
+    case PCRestProperties:
+    case PCTypeMembers:
+      Parser_parseErrorAtCurrentToken(receiver, Property_or_signature_expected);
+      return;
+    case PCClassMembers:
+      Parser_parseErrorAtCurrentToken(receiver, Unexpected_token_A_constructor_method_accessor_or_property_was_expected);
+      return;
+    case PCEnumMembers:
+      Parser_parseErrorAtCurrentToken(receiver, Enum_member_expected);
+      return;
+    case PCHeritageClauseElement:
+      Parser_parseErrorAtCurrentToken(receiver, Expression_expected);
+      return;
+    case PCVariableDeclarations:
+      if (IsKeyword(receiver!.token)) {
+        Parser_parseErrorAtCurrentToken(receiver, X_0_is_not_allowed_as_a_variable_declaration_name, TokenToString(receiver!.token));
+      } else {
+        Parser_parseErrorAtCurrentToken(receiver, Variable_declaration_expected);
+      }
+      return;
+    case PCObjectBindingElements:
+      Parser_parseErrorAtCurrentToken(receiver, Property_destructuring_pattern_expected);
+      return;
+    case PCArrayBindingElements:
+      Parser_parseErrorAtCurrentToken(receiver, Array_element_destructuring_pattern_expected);
+      return;
+    case PCArgumentExpressions:
+      Parser_parseErrorAtCurrentToken(receiver, Argument_expression_expected);
+      return;
+    case PCObjectLiteralMembers:
+      Parser_parseErrorAtCurrentToken(receiver, Property_assignment_expected);
+      return;
+    case PCArrayLiteralMembers:
+      Parser_parseErrorAtCurrentToken(receiver, Expression_or_comma_expected);
+      return;
+    case PCJSDocParameters:
+      Parser_parseErrorAtCurrentToken(receiver, Parameter_declaration_expected);
+      return;
+    case PCParameters:
+      if (IsKeyword(receiver!.token)) {
+        Parser_parseErrorAtCurrentToken(receiver, X_0_is_not_allowed_as_a_parameter_name, TokenToString(receiver!.token));
+      } else {
+        Parser_parseErrorAtCurrentToken(receiver, Parameter_declaration_expected);
+      }
+      return;
+    case PCTypeParameters:
+      Parser_parseErrorAtCurrentToken(receiver, Type_parameter_declaration_expected);
+      return;
+    case PCTypeArguments:
+      Parser_parseErrorAtCurrentToken(receiver, Type_argument_expected);
+      return;
+    case PCTupleElementTypes:
+      Parser_parseErrorAtCurrentToken(receiver, Type_expected);
+      return;
+    case PCHeritageClauses:
+      Parser_parseErrorAtCurrentToken(receiver, Unexpected_token_expected);
+      return;
+    case PCImportOrExportSpecifiers:
+      if (receiver!.token === KindFromKeyword) {
+        Parser_parseErrorAtCurrentToken(receiver, X_0_expected, "}");
+      } else {
+        Parser_parseErrorAtCurrentToken(receiver, Identifier_expected);
+      }
+      return;
+    case PCJsxAttributes:
+    case PCJsxChildren:
+    case PCJSDocComment:
+      Parser_parseErrorAtCurrentToken(receiver, Identifier_expected);
+      return;
+    case PCImportAttributes:
+      Parser_parseErrorAtCurrentToken(receiver, Identifier_or_string_literal_expected);
+      return;
+    default:
+      throw new globalThis.Error("Unhandled case in parsingContextErrors");
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseExpectedMatchingBrackets","kind":"method","status":"stub","sigHash":"7339632e738cb9481fce26edc278572381116edb0a8b2107b7268e213f35e30c","bodyHash":"a67ebfc20e7a921d31542a3d3c04bd8a5335915e915d50a21f37587a160c4867"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseExpectedMatchingBrackets","kind":"method","status":"implemented","sigHash":"7339632e738cb9481fce26edc278572381116edb0a8b2107b7268e213f35e30c","bodyHash":"a67ebfc20e7a921d31542a3d3c04bd8a5335915e915d50a21f37587a160c4867"}
  *
  * Go source:
  * func (p *Parser) parseExpectedMatchingBrackets(openKind ast.Kind, closeKind ast.Kind, openParsed bool, openPosition int) {
@@ -249,7 +403,18 @@ export function Parser_parsingContextErrors(receiver: GoPtr<Parser>, context: Pa
  * }
  */
 export function Parser_parseExpectedMatchingBrackets(receiver: GoPtr<Parser>, openKind: Kind, closeKind: Kind, openParsed: bool, openPosition: int): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/parser/parser.go::method::Parser.parseExpectedMatchingBrackets");
+  if (receiver!.token === closeKind) {
+    Parser_nextToken(receiver);
+    return;
+  }
+  const lastError = Parser_parseErrorAtCurrentToken(receiver, X_0_expected, TokenToString(closeKind));
+  if (!openParsed) {
+    return;
+  }
+  if (lastError !== undefined) {
+    const related = NewDiagnostic(undefined, NewTextRange(openPosition, openPosition), The_parser_expected_to_find_a_1_to_match_the_0_token_here, TokenToString(openKind), TokenToString(closeKind));
+    Diagnostic_AddRelatedInfo(lastError, related);
+  }
 }
 
 /**

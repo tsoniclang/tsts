@@ -4,7 +4,7 @@ import type { Time } from "../../../go/time.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::Replacements","kind":"type","status":"stub","sigHash":"cefb899fcad2162eeb3a014e97c0b2fea8ff4e05a236a6d42cbe1e62aea57bf7","bodyHash":"38f6b3682164b5d419adb0f02146de4e16cc857e03bb44d66a66e059c0aa3cb9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::Replacements","kind":"type","status":"implemented","sigHash":"cefb899fcad2162eeb3a014e97c0b2fea8ff4e05a236a6d42cbe1e62aea57bf7","bodyHash":"38f6b3682164b5d419adb0f02146de4e16cc857e03bb44d66a66e059c0aa3cb9"}
  *
  * Go source:
  * Replacements struct {
@@ -32,7 +32,7 @@ export interface Replacements {
   Chtimes: (arg0: string, arg1: Time, arg2: Time) => GoError;
   DirectoryExists: (arg0: string) => bool;
   GetAccessibleEntries: (arg0: string) => Entries;
-  Stat: (arg0: string) => FileInfo;
+  Stat: (arg0: string) => GoPtr<FileInfo>;
   WalkDir: (arg0: string, arg1: WalkDirFunc) => GoError;
   Realpath: (arg0: string) => string;
 }
@@ -54,7 +54,7 @@ export function Wrap(fs: FS, replacements: Replacements): FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::wrappedFS","kind":"type","status":"stub","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0","bodyHash":"cc3c5df3b97c93352813c694b8314865647cc6350ea3a9adf832c7d033bc82c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0","bodyHash":"cc3c5df3b97c93352813c694b8314865647cc6350ea3a9adf832c7d033bc82c0"}
  *
  * Go source:
  * wrappedFS struct {
@@ -240,7 +240,7 @@ export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path:
  * 	return w.fs.Stat(path)
  * }
  */
-export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): FileInfo {
+export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoPtr<FileInfo> {
   if (receiver!.replacements.Stat !== undefined) {
     return receiver!.replacements.Stat(path);
   }
@@ -284,7 +284,7 @@ export function wrappedFS_Realpath(receiver: GoPtr<wrappedFS>, path: string): st
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"f1cb3516ddeee1dbf535730beeadf76270080ca3a749b3cac850570bfeeb5bcb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/wrapvfs/wrapvfs.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"f1cb3516ddeee1dbf535730beeadf76270080ca3a749b3cac850570bfeeb5bcb"}
  *
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)

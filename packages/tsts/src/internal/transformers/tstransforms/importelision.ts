@@ -2,13 +2,16 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
+import { IsExternalModule } from "../../ast/utilities.js";
+import { IsInJSFile } from "../../ast/utilities.js";
 import type { ImportEqualsDeclaration } from "../../ast/generated/data.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
+import { Tristate_IsTrue } from "../../core/tristate.js";
 import { EmitContext_ParseNode } from "../../printer/emitcontext.js";
 import type { EmitResolver } from "../../printer/emitresolver.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
-import { Transformer_EmitContext } from "../transformer.js";
+import { Transformer_EmitContext, Transformer_NewTransformer } from "../transformer.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::type::ImportElisionTransformer","kind":"type","status":"stub","sigHash":"14dbd314bb170c0be6d4a2cff3fc73755b8bdac3dc81bfb877a24bcec60ea804","bodyHash":"8f403613429078b6e07765c1b176cbb4bdb3238c22b9f630d78f4eac74b994f5"}
@@ -29,7 +32,7 @@ export interface ImportElisionTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::func::NewImportElisionTransformer","kind":"func","status":"stub","sigHash":"92c3f33218c099370dac2fc118f028d545e9e07523969a97b2ab2500fb873b83","bodyHash":"0588a42f168a20e0332480dac94c841ad1e42daa9066e9cf426afb55a368e41e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::func::NewImportElisionTransformer","kind":"func","status":"implemented","sigHash":"92c3f33218c099370dac2fc118f028d545e9e07523969a97b2ab2500fb873b83","bodyHash":"0588a42f168a20e0332480dac94c841ad1e42daa9066e9cf426afb55a368e41e"}
  *
  * Go source:
  * func NewImportElisionTransformer(opt *transformers.TransformOptions) *transformers.Transformer {
@@ -43,7 +46,18 @@ export interface ImportElisionTransformer {
  * }
  */
 export function NewImportElisionTransformer(opt: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::func::NewImportElisionTransformer");
+  const compilerOptions = opt!.CompilerOptions;
+  const emitContext = opt!.Context;
+  if (Tristate_IsTrue(compilerOptions!.VerbatimModuleSyntax)) {
+    throw new globalThis.Error("ImportElisionTransformer should not be used with VerbatimModuleSyntax");
+  }
+  const tx: ImportElisionTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+    compilerOptions: compilerOptions,
+    currentSourceFile: undefined,
+    emitResolver: opt!.EmitResolver!,
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => ImportElisionTransformer_visit(tx, node), emitContext);
 }
 
 /**
@@ -153,7 +167,7 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitAliasDeclaration","kind":"method","status":"stub","sigHash":"bd112039fa72cc3f82274f00ded7bcb39f9944946787bc9341e97c160bf4a951","bodyHash":"0e4a1a6a031d694f2edaabc074a73eb00bbbdd6c5fae016d15ecd04837ea3f60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitAliasDeclaration","kind":"method","status":"implemented","sigHash":"bd112039fa72cc3f82274f00ded7bcb39f9944946787bc9341e97c160bf4a951","bodyHash":"0e4a1a6a031d694f2edaabc074a73eb00bbbdd6c5fae016d15ecd04837ea3f60"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) shouldEmitAliasDeclaration(node *ast.Node) bool {
@@ -161,11 +175,11 @@ export function ImportElisionTransformer_visit(receiver: GoPtr<ImportElisionTran
  * }
  */
 export function ImportElisionTransformer_shouldEmitAliasDeclaration(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitAliasDeclaration");
+  return (IsInJSFile(node) || ImportElisionTransformer_isReferencedAliasDeclaration(receiver, node)) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitImportEqualsDeclaration","kind":"method","status":"stub","sigHash":"07f0dadb5746f49c795d0e5410e14ef3f8ebffaba6af8c82de5fc9504a8dfca7","bodyHash":"a59eeb24bf1d5301beecfd4bde085155bd81eaa1150ff3e879a8a84f6ee80989"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitImportEqualsDeclaration","kind":"method","status":"implemented","sigHash":"07f0dadb5746f49c795d0e5410e14ef3f8ebffaba6af8c82de5fc9504a8dfca7","bodyHash":"a59eeb24bf1d5301beecfd4bde085155bd81eaa1150ff3e879a8a84f6ee80989"}
  *
  * Go source:
  * func (tx *ImportElisionTransformer) shouldEmitImportEqualsDeclaration(node *ast.ImportEqualsDeclaration) bool {
@@ -176,7 +190,11 @@ export function ImportElisionTransformer_shouldEmitAliasDeclaration(receiver: Go
  * }
  */
 export function ImportElisionTransformer_shouldEmitImportEqualsDeclaration(receiver: GoPtr<ImportElisionTransformer>, node: GoPtr<ImportEqualsDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/tstransforms/importelision.go::method::ImportElisionTransformer.shouldEmitImportEqualsDeclaration");
+  // preserve old compiler's behavior: emit import declaration (even if we do not consider them referenced) when
+  // - current file is not external module
+  // - import declaration is top level and target is value imported by entity name
+  return (ImportElisionTransformer_shouldEmitAliasDeclaration(receiver, node as unknown as GoPtr<Node>) ||
+    (!IsExternalModule(receiver!.currentSourceFile) && ImportElisionTransformer_isTopLevelValueImportEqualsWithEntityName(receiver, node as unknown as GoPtr<Node>))) as bool;
 }
 
 /**
