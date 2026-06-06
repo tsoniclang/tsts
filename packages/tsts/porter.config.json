@@ -145,6 +145,16 @@
       "reason": "Generated diagnostic message catalog emitted by porter:diagnostics from the pinned diagnostics_generated.go; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
+      "match": "packages/tsts/src/internal/bundled/*_generated.ts",
+      "category": "bundled-generated",
+      "reason": "Generated bundled library indexes emitted by bundled:generate from TS-Go internal/bundled/libs; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/bundled/libs/**",
+      "category": "bundled-generated",
+      "reason": "Generated bundled TypeScript lib declarations copied from TS-Go internal/bundled/libs; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
       "match": "packages/tsts/src/internal/ast/*_generated.ts",
       "category": "ast-compat-reexport",
       "reason": "Thin re-export barrels (ast_generated.ts/kind_generated.ts) aliasing the canonical generated/* modules to the scaffolder's Go-file-derived import paths; pure re-exports, no @tsgo-unit."

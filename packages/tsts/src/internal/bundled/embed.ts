@@ -1,10 +1,13 @@
 import type { bool, int, long } from "@tsonic/core/types.js";
+import { Buffer } from "node:buffer";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry, FileInfo as FileInfo_2d3efe16, FileMode } from "../../go/io/fs.js";
-import { ModeDir, ModeIrregular, ModeSymlink } from "../../go/io/fs.js";
+import { ModeDir, ModeIrregular, ModeSymlink, SkipAll as fs_SkipAll, SkipDir as fs_SkipDir } from "../../go/io/fs.js";
 import { Time } from "../../go/time.js";
 import * as strings from "../../go/strings.js";
 import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs/vfs.js";
+import { embeddedContents } from "./embed_generated.js";
+import { LibNames } from "./libs_generated.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::constGroup::embedded","kind":"constGroup","status":"implemented","sigHash":"4c71f07d139be967c63073fca793530940c74775bb8902e2816a1d12ec2bd08f","bodyHash":"f575317f85db3dd4eeaa72c8c6480e2c2ffc1c7e96da5bb19215a3cd91d55649"}
@@ -61,7 +64,7 @@ export function IsBundled(path: string): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::wrappedFS","kind":"type","status":"stub","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0","bodyHash":"a856bba3c14d2993d64916f190fd31505679a5fe2a06fb22094a2262cabb19fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::wrappedFS","kind":"type","status":"implemented","sigHash":"c574ef0310576d4c8e7dbf20af7dc5332b6edbc4b02bcc0aedb58bf4f2aeefb0","bodyHash":"a856bba3c14d2993d64916f190fd31505679a5fe2a06fb22094a2262cabb19fe"}
  *
  * Go source:
  * wrappedFS struct {
@@ -73,7 +76,7 @@ export interface wrappedFS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"f1cb3516ddeee1dbf535730beeadf76270080ca3a749b3cac850570bfeeb5bcb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"f1cb3516ddeee1dbf535730beeadf76270080ca3a749b3cac850570bfeeb5bcb"}
  *
  * Go source:
  * var _ vfs.FS = (*wrappedFS)(nil)
@@ -122,7 +125,7 @@ export function wrappedFS_UseCaseSensitiveFileNames(receiver: GoPtr<wrappedFS>):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.FileExists","kind":"method","status":"stub","sigHash":"2a83bbbe163ad755cd2423de30ffe0725a22b62c6a3b27102930ab4bdfc2b71e","bodyHash":"49ee110cae83f6281ca077636ea2b5ae80582ecd7912475c7e401c5946bb3860"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.FileExists","kind":"method","status":"implemented","sigHash":"2a83bbbe163ad755cd2423de30ffe0725a22b62c6a3b27102930ab4bdfc2b71e","bodyHash":"49ee110cae83f6281ca077636ea2b5ae80582ecd7912475c7e401c5946bb3860"}
  *
  * Go source:
  * func (vfs *wrappedFS) FileExists(path string) bool {
@@ -134,11 +137,15 @@ export function wrappedFS_UseCaseSensitiveFileNames(receiver: GoPtr<wrappedFS>):
  * }
  */
 export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.FileExists");
+  const [rest, ok] = splitPath(path);
+  if (ok) {
+    return embeddedContents.has(rest) as bool;
+  }
+  return receiver!.fs.FileExists(path);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.ReadFile","kind":"method","status":"stub","sigHash":"1d775f9fdff56dd025c7493a1f5a9b240b49268c7068d2b9a258b74790c1e1bd","bodyHash":"bb0bc83495d0792adb9326b259b7d2abee71b292b7b78165c299a3d05ae80afe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.ReadFile","kind":"method","status":"implemented","sigHash":"1d775f9fdff56dd025c7493a1f5a9b240b49268c7068d2b9a258b74790c1e1bd","bodyHash":"bb0bc83495d0792adb9326b259b7d2abee71b292b7b78165c299a3d05ae80afe"}
  *
  * Go source:
  * func (vfs *wrappedFS) ReadFile(path string) (contents string, ok bool) {
@@ -150,7 +157,12 @@ export function wrappedFS_FileExists(receiver: GoPtr<wrappedFS>, path: string): 
  * }
  */
 export function wrappedFS_ReadFile(receiver: GoPtr<wrappedFS>, path: string): [string, bool] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.ReadFile");
+  const [rest, ok] = splitPath(path);
+  if (ok) {
+    const contents = embeddedContents.get(rest);
+    return [contents ?? "", (contents !== undefined) as bool];
+  }
+  return receiver!.fs.ReadFile(path);
 }
 
 /**
@@ -173,7 +185,7 @@ export function wrappedFS_DirectoryExists(receiver: GoPtr<wrappedFS>, path: stri
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.GetAccessibleEntries","kind":"method","status":"stub","sigHash":"e99f64b4766e3582fa3942ca76a41f41bc95920b9f6ddc644d419d6ef1365cfa","bodyHash":"19e4f4262a90cb2f9665d06166aed5fda4c646a25a0f8a3490f40ef1d5f8f240"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"e99f64b4766e3582fa3942ca76a41f41bc95920b9f6ddc644d419d6ef1365cfa","bodyHash":"19e4f4262a90cb2f9665d06166aed5fda4c646a25a0f8a3490f40ef1d5f8f240"}
  *
  * Go source:
  * func (vfs *wrappedFS) GetAccessibleEntries(path string) (result vfs.Entries) {
@@ -189,11 +201,21 @@ export function wrappedFS_DirectoryExists(receiver: GoPtr<wrappedFS>, path: stri
  * }
  */
 export function wrappedFS_GetAccessibleEntries(receiver: GoPtr<wrappedFS>, path: string): Entries {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.GetAccessibleEntries");
+  const [rest, ok] = splitPath(path);
+  if (ok) {
+    const result: Entries = { Files: [], Directories: [], Symlinks: undefined };
+    if (rest === "") {
+      result.Directories = ["libs"];
+    } else if (rest === "libs") {
+      result.Files = [...LibNames];
+    }
+    return result;
+  }
+  return receiver!.fs.GetAccessibleEntries(path);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::rootEntries","kind":"varGroup","status":"stub","sigHash":"91248ebfac2d91c9488a21e76f600fafcbf25a1045742439f0ae09fa44bc7c5a","bodyHash":"3a31a266dd5e8c633ec45d76a25047c191651032f7aa2c9723e5fd6c900bb8ed"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::rootEntries","kind":"varGroup","status":"implemented","sigHash":"91248ebfac2d91c9488a21e76f600fafcbf25a1045742439f0ae09fa44bc7c5a","bodyHash":"3a31a266dd5e8c633ec45d76a25047c191651032f7aa2c9723e5fd6c900bb8ed"}
  *
  * Go source:
  * var rootEntries = []fs.DirEntry{
@@ -204,8 +226,16 @@ export let rootEntries: GoSlice<DirEntry> = [
   fileInfo_as_io_fs_DirEntry({ name: "libs", mode: ModeDir, size: 0 as long }),
 ];
 
+export let libsEntries: GoSlice<DirEntry> = LibNames.map((name): DirEntry =>
+  fileInfo_as_io_fs_DirEntry({
+    name,
+    mode: 0 as FileMode,
+    size: Buffer.byteLength(embeddedContents.get(`libs/${name}`) ?? "", "utf8") as long,
+  })
+);
+
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.Stat","kind":"method","status":"stub","sigHash":"812fc06d7c7368a66cc078e05e801c33874b41a18a50a41a0436c8d2a6478b7c","bodyHash":"7eb7a34e0d03deb3152762e4fb37f11ef61849f8ca35f1e8d015f2e66a29743d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.Stat","kind":"method","status":"implemented","sigHash":"812fc06d7c7368a66cc078e05e801c33874b41a18a50a41a0436c8d2a6478b7c","bodyHash":"7eb7a34e0d03deb3152762e4fb37f11ef61849f8ca35f1e8d015f2e66a29743d"}
  *
  * Go source:
  * func (vfs *wrappedFS) Stat(path string) vfs.FileInfo {
@@ -222,12 +252,24 @@ export let rootEntries: GoSlice<DirEntry> = [
  * 	return vfs.fs.Stat(path)
  * }
  */
-export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): FileInfo {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.Stat");
+export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): GoPtr<FileInfo> {
+  const [rest, ok] = splitPath(path);
+  if (ok) {
+    if (rest === "" || rest === "libs") {
+      return fileInfo_as_io_fs_FileInfo({ name: rest, mode: ModeDir, size: 0 as long });
+    }
+    const lib = embeddedContents.get(rest);
+    if (lib !== undefined) {
+      const [libName] = strings.CutPrefix(rest, "libs/");
+      return fileInfo_as_io_fs_FileInfo({ name: libName, mode: 0 as FileMode, size: Buffer.byteLength(lib, "utf8") as long });
+    }
+    return undefined;
+  }
+  return receiver!.fs.Stat(path);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.WalkDir","kind":"method","status":"stub","sigHash":"c4becc19e9de52b3fac992f8d905437452088dbffb56c7d765be774af42e0071","bodyHash":"a5331ec088797be4c909de3d765c7656930583441e63ded8cdb923d26c52e1a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.WalkDir","kind":"method","status":"implemented","sigHash":"c4becc19e9de52b3fac992f8d905437452088dbffb56c7d765be774af42e0071","bodyHash":"a5331ec088797be4c909de3d765c7656930583441e63ded8cdb923d26c52e1a5"}
  *
  * Go source:
  * func (vfs *wrappedFS) WalkDir(root string, walkFn vfs.WalkDirFunc) error {
@@ -244,11 +286,22 @@ export function wrappedFS_Stat(receiver: GoPtr<wrappedFS>, path: string): FileIn
  * }
  */
 export function wrappedFS_WalkDir(receiver: GoPtr<wrappedFS>, root: string, walkFn: WalkDirFunc): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.WalkDir");
+  const [rest, ok] = splitPath(root);
+  if (ok) {
+    const err = wrappedFS_walkDir(receiver, rest, walkFn);
+    if (err !== undefined) {
+      if (err === fs_SkipAll) {
+        return undefined;
+      }
+      return err;
+    }
+    return undefined;
+  }
+  return receiver!.fs.WalkDir(root, walkFn);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.walkDir","kind":"method","status":"stub","sigHash":"aa8ab6f5cbf2b5cd56578cd2e6712e63034cb34aaddb23e553f99cd1b9f8da51","bodyHash":"f168130a4528be08845f43767875a6577a6d3afddf95e50901aeb97362a01fb3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.walkDir","kind":"method","status":"implemented","sigHash":"aa8ab6f5cbf2b5cd56578cd2e6712e63034cb34aaddb23e553f99cd1b9f8da51","bodyHash":"f168130a4528be08845f43767875a6577a6d3afddf95e50901aeb97362a01fb3"}
  *
  * Go source:
  * func (vfs *wrappedFS) walkDir(rest string, walkFn vfs.WalkDirFunc) error {
@@ -285,7 +338,39 @@ export function wrappedFS_WalkDir(receiver: GoPtr<wrappedFS>, root: string, walk
  * }
  */
 export function wrappedFS_walkDir(receiver: GoPtr<wrappedFS>, rest: string, walkFn: WalkDirFunc): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/embed.go::method::wrappedFS.walkDir");
+  let entries: GoSlice<DirEntry>;
+  switch (rest) {
+    case "":
+      entries = rootEntries;
+      break;
+    case "libs":
+      entries = libsEntries;
+      break;
+    default:
+      return undefined;
+  }
+
+  for (const entry of entries) {
+    const name = `${rest}/${entry.Name()}`;
+    const err = walkFn(`${scheme}${name}`, entry, undefined);
+    if (err !== undefined) {
+      if (err === fs_SkipAll) {
+        return fs_SkipAll;
+      }
+      if (err === fs_SkipDir) {
+        continue;
+      }
+      return err;
+    }
+    if (entry.IsDir()) {
+      const childErr = wrappedFS_walkDir(receiver, strings.TrimPrefix(name, "/"), walkFn);
+      if (childErr !== undefined) {
+        return childErr;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -384,7 +469,7 @@ export function wrappedFS_Chtimes(receiver: GoPtr<wrappedFS>, path: string, aTim
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::fileInfo","kind":"type","status":"stub","sigHash":"faa9b0357889cb408ff2e938cc4e7f875987a9454f9d36a1c5d4d1b821973e4c","bodyHash":"00e29ed3ce3b8a5cd7b8d64ba2c87468ab7bb911444ec32c649337fb8259fa70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::type::fileInfo","kind":"type","status":"implemented","sigHash":"faa9b0357889cb408ff2e938cc4e7f875987a9454f9d36a1c5d4d1b821973e4c","bodyHash":"00e29ed3ce3b8a5cd7b8d64ba2c87468ab7bb911444ec32c649337fb8259fa70"}
  *
  * Go source:
  * fileInfo struct {
@@ -400,7 +485,7 @@ export interface fileInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_+_","kind":"varGroup","status":"stub","sigHash":"606a448813ea549ca7a41fa67189d5c616eb07aa6693c9028679d4b9a5b43602","bodyHash":"911c2736c3ebb120b6cc6debded2c620e4aa45ceaf307f33e3827bf2bf4c202e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/embed.go::varGroup::_+_","kind":"varGroup","status":"implemented","sigHash":"606a448813ea549ca7a41fa67189d5c616eb07aa6693c9028679d4b9a5b43602","bodyHash":"911c2736c3ebb120b6cc6debded2c620e4aa45ceaf307f33e3827bf2bf4c202e"}
  *
  * Go source:
  * var (
