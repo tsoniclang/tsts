@@ -21,7 +21,7 @@ import { AsObjectLiteralExpression, AsArrayLiteralExpression } from "../ast/gene
 import { SubtreeContainsDecorators } from "../ast/subtreefacts.js";
 import { Node_ForEachChild, Node_SubtreeFacts, Node_AsNode, NamedMemberBase_Name } from "../ast/spine.js";
 import { SourceFile_BindDiagnostics, SourceFile_Diagnostics, SourceFile_JSDiagnostics, SourceFile_JSDocDiagnostics, SourceFile_ECMALineMap, SourceFile_Imports, SourceFile_Path, SourceFile_ParseOptions, SourceFile_ForEachChild, SourceFile_FileName, SourceFile_IsBound, SourceFile_Text, Node_Text, Node_ModifierNodes } from "../ast/ast.js";
-import type { Checker, Program as Program_e32ad451 } from "../checker/checker/state.js";
+import type { Checker, Host as CheckerHost, Program as Program_e32ad451 } from "../checker/checker/state.js";
 import { Checker_GetDiagnostics, Checker_GetSuggestionDiagnostics } from "../checker/checker/diagnostics.js";
 import type { Set } from "../collections/set.js";
 import { Set_Has, Set_Add, Set_AddIfAbsent, Set_Keys, NewSetFromItems } from "../collections/set.js";
@@ -44,6 +44,7 @@ import { ResolvedModule_IsResolved } from "../module/types.js";
 import { Resolver_GetPackageScopeForPath, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
 import type { Resolver } from "../module/resolver.js";
 import { GetTypesPackageName } from "../module/util.js";
+import type { ModuleSpecifierGenerationHost } from "../modulespecifiers/types.js";
 import { GetPackageNameFromDirectory } from "../modulespecifiers/util.js";
 import type { InfoCacheEntry } from "../packagejson/cache.js";
 import { InfoCacheEntry_Exists, InfoCacheEntry_GetContents } from "../packagejson/cache.js";
@@ -522,13 +523,90 @@ export function Program_as_outputpaths_OutputPathsHost(receiver: GoPtr<Program>)
   };
 }
 
+export function Program_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver: GoPtr<Program>): ModuleSpecifierGenerationHost {
+  return {
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => Program_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => Program_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => Program_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => Program_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => Program_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => Program_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => Program_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => Program_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => Program_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+  };
+}
+
+export function Program_as_checker_Host(receiver: GoPtr<Program>): CheckerHost {
+  return {
+    __tsgoEmbedded0: Program_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => Program_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => Program_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => Program_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => Program_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => Program_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => Program_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => Program_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => Program_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => Program_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+  };
+}
+
+export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e32ad451 {
+  return {
+    __tsgoEmbedded0: Program_as_checker_Host(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => Program_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => Program_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => Program_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => Program_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => Program_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (fileName: string): bool => Program_FileExists(receiver, fileName),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => Program_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => Program_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => Program_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => Program_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+    Options: (): GoPtr<CompilerOptions> => Program_Options(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => Program_SourceFiles(receiver),
+    BindSourceFiles: (): void => Program_BindSourceFiles(receiver),
+    GetSourceFile: (fileName: string): GoPtr<SourceFile> => Program_GetSourceFile(receiver, fileName),
+    GetSourceFileForResolvedModule: (fileName: string): GoPtr<SourceFile> => Program_GetSourceFileForResolvedModule(receiver, fileName),
+    GetEmitModuleFormatOfFile: (sourceFile: HasFileName): ModuleKind => Program_GetEmitModuleFormatOfFile(receiver, sourceFile),
+    GetEmitSyntaxForUsageLocation: (sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetEmitSyntaxForUsageLocation(receiver, sourceFile, usageLocation),
+    GetImpliedNodeFormatForEmit: (sourceFile: HasFileName): ModuleKind => Program_GetImpliedNodeFormatForEmit(receiver, sourceFile),
+    GetResolvedModule: (currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule> => Program_GetResolvedModule(receiver, currentSourceFile, moduleReference, mode),
+    GetResolvedModules: (): GoMap<Path, ModeAwareCache> => Program_GetResolvedModules(receiver),
+    GetPackagesMap: (): GoMap<string, bool> => Program_GetPackagesMap(receiver),
+    GetSourceFileMetaData: (path: Path): SourceFileMetaData => Program_GetSourceFileMetaData(receiver, path),
+    GetJSXRuntimeImportSpecifier: (path: Path): [string, GoPtr<Node>] => Program_GetJSXRuntimeImportSpecifier(receiver, path),
+    GetImportHelpersImportSpecifier: (path: Path): GoPtr<Node> => Program_GetImportHelpersImportSpecifier(receiver, path),
+    SourceFileMayBeEmitted: (sourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): bool => Program_SourceFileMayBeEmitted(receiver, sourceFile, forceDtsEmit),
+    IsSourceFileDefaultLibrary: (path: Path): bool => Program_IsSourceFileDefaultLibrary(receiver, path),
+    GetProjectReferenceFromOutputDts: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromOutputDts(receiver, path),
+    GetRedirectForResolution: (file: HasFileName): GoPtr<ParsedCommandLine> => Program_GetRedirectForResolution(receiver, file),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"9211ec5bcaa0345245688aba2615ed9d45b569522876a02a1f6040a4ace25b46"}
  *
  * Go source:
  * var _ checker.Program = (*Program)(nil)
  */
-export let __7d754c38_0: Program_e32ad451 = undefined as never;
+export let __7d754c38_0: Program_e32ad451 = Program_as_checker_Program(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"d17110acc4563d1cc15b71c7c34578869a09f5420d3f57151d53da44c275e35a","bodyHash":"6c4dd86bd3230b7969abeafc110c34cdf50f32d0687443b858250398bba7b25d"}

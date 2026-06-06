@@ -5,14 +5,14 @@ import { Mutex, Once, OnceFunc } from "../../go/sync.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { NewChecker } from "../checker/checker/state.js";
-import type { Checker, Program as CheckerProgram } from "../checker/checker/state.js";
+import type { Checker } from "../checker/checker/state.js";
 import { Checker_GetGlobalDiagnostics } from "../checker/checker/diagnostics.js";
 import { NewTracer } from "../checker/tracer.js";
 import { NewWorkGroup } from "../core/workgroup.js";
 import type { Tracing } from "../tracing/tracing.js";
 import { Concat, Index } from "../../go/slices.js";
 import type { Program } from "./program.js";
-import { Program_Options, Program_SingleThreaded, SortAndDeduplicateDiagnostics } from "./program.js";
+import { Program_as_checker_Program, Program_Options, Program_SingleThreaded, SortAndDeduplicateDiagnostics } from "./program.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/checkerpool.go::type::CheckerPool","kind":"type","status":"implemented","sigHash":"0ae9932ac5eea7302f43fdaded6b82addcb4d06b9f9209ed8ff2be51bb7f7d16","bodyHash":"c982af3c817df71dc9ae1af140208863183d3eaa1e11d94bfdcf98a350318845"}
@@ -240,7 +240,7 @@ export function checkerPool_createCheckers(receiver: GoPtr<checkerPool>): void {
         if (receiver!.tracing !== undefined) {
           tracer = NewTracer(receiver!.tracing, idx as int);
         }
-        const [c, lock] = NewChecker(receiver!.program! as unknown as CheckerProgram, tracer);
+        const [c, lock] = NewChecker(Program_as_checker_Program(receiver!.program), tracer);
         receiver!.checkers[idx] = c;
         receiver!.locks[idx] = lock;
       });
