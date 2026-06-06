@@ -68,7 +68,7 @@ export interface compilerHost {
   currentDirectory: string;
   fs: FS_4e804012;
   defaultLibraryPath: string;
-  extendedConfigCache: ExtendedConfigCache;
+  extendedConfigCache: GoPtr<ExtendedConfigCache>;
   trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void;
 }
 
@@ -86,7 +86,7 @@ export interface compilerHost {
  * 	return NewCompilerHost(currentDirectory, cachedvfs.From(fs), defaultLibraryPath, extendedConfigCache, trace)
  * }
  */
-export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: ExtendedConfigCache, trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void): CompilerHost {
+export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): CompilerHost {
   return NewCompilerHost(currentDirectory, cachedvfsAsVfsFS(cachedvfsFrom(fs)), defaultLibraryPath, extendedConfigCache, trace);
 }
 
@@ -113,7 +113,7 @@ export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e80401
  * 	}
  * }
  */
-export function NewCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: ExtendedConfigCache, trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void): CompilerHost {
+export function NewCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: GoPtr<ExtendedConfigCache>, trace: GoPtr<(msg: GoPtr<Message>, ...args: Array<unknown>) => void>): CompilerHost {
   if (trace === undefined) {
     trace = (_msg: GoPtr<Message>, ..._args: Array<unknown>): void => {};
   }
