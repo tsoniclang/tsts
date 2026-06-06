@@ -18,7 +18,7 @@ import type { ModifierFlags } from "../ast/modifierflags.js";
 import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsConstEnumOnlyModule, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import { NodeFlagsAmbient, NodeFlagsJSDoc } from "../ast/generated/flags.js";
-import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken } from "../ast/generated/kinds.js";
+import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindExportDeclaration, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken } from "../ast/generated/kinds.js";
 import { NewKeywordTypeNode, NewKeywordExpression, NewStringLiteral, NewNumericLiteral, NewBigIntLiteral, NewPrefixUnaryExpression } from "../ast/generated/factory.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
 import { TokenFlagsNone } from "../ast/tokenflags.js";
@@ -33,15 +33,16 @@ import { TSTrue, TSFalse, TSUnknown } from "../core/tristate.js";
 import type { Tristate } from "../core/tristate.js";
 import { NewResult } from "../evaluator/evaluator.js";
 import type { Result } from "../evaluator/evaluator.js";
-import { FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
+import { FlagsMultilineObjectLiterals, FlagsNone, InternalFlagsNone } from "../nodebuilder/types.js";
 import type { Flags, InternalFlags, SymbolTracker } from "../nodebuilder/types.js";
 import type { EmitContext } from "../printer/emitcontext.js";
 import { EmitContext_ParseNode } from "../printer/emitcontext.js";
 import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, SymbolAccessibilityNotResolved, TypeReferenceSerializationKindUnknown, TypeReferenceSerializationKindPromise, TypeReferenceSerializationKindTypeWithConstructSignatureAndValue, TypeReferenceSerializationKindTypeWithCallSignature, TypeReferenceSerializationKindObjectType, TypeReferenceSerializationKindVoidNullableOrNeverType, TypeReferenceSerializationKindBooleanType, TypeReferenceSerializationKindNumberLikeType, TypeReferenceSerializationKindBigIntLikeType, TypeReferenceSerializationKindStringLikeType, TypeReferenceSerializationKindArrayLikeType, TypeReferenceSerializationKindESSymbolType } from "../printer/emitresolver.js";
 import type { EmitResolver as EmitResolver_969b36a1, SymbolAccessibilityResult, TypeReferenceSerializationKind, SymbolAccessibility } from "../printer/emitresolver.js";
 import { Some, Every } from "../core/core.js";
-import { Node_ForEachChild, SourceFile_ForEachChild } from "../ast/spine.js";
+import { Node_ForEachChild } from "../ast/spine.js";
 import type { Visitor } from "../ast/spine.js";
+import { SourceFile_ForEachChild } from "../ast/ast.js";
 import { NewNodeBuilder } from "./nodebuilder.js";
 import type { NodeBuilder } from "./nodebuilder.js";
 import { NodeBuilder_SerializeReturnTypeForSignature, NodeBuilder_SerializeTypeParametersForSignature, NodeBuilder_SerializeTypeForDeclaration, NodeBuilder_SerializeTypeForExpression, NodeBuilder_SymbolToExpression, NodeBuilder_TypeToTypeNode, NodeBuilder_IndexInfoToIndexSignatureDeclaration, NodeBuilder_TryJSTypeNodeToTypeNode } from "./nodebuilder.js";
@@ -67,12 +68,13 @@ import { Checker_getResolvedSymbolOrNil } from "./checker/symbols.js";
 import { isFreshLiteralType, isConstEnumSymbol, isTupleType } from "./checker/state.js";
 import type { Checker, ReferenceHint } from "./checker/state.js";
 import { TypeFlagsAnyOrUnknown, TypeFlagsVoid, TypeFlagsNullable, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsBigIntLike, TypeFlagsStringLike, TypeFlagsEnumLike, TypeFlagsESSymbolLike, TypeFlagsLiteral, TypeFlagsNever } from "./types.js";
-import type { AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo, LiteralType } from "./types.js";
-import { Type_AsLiteralType } from "./types.js";
+import type { TypeFlags, AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo, LiteralType, Type } from "./types.js";
+import { Type_AsLiteralType, Type_Symbol } from "./types.js";
 import type { NodeId } from "../ast/ids.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
-import { Number_String, Number_Abs } from "../jsnum/jsnum.js";
+import { Number_Abs } from "../jsnum/jsnum.js";
+import { Number_String } from "../jsnum/string.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"e1a5f15cb940355789a75a1e6811da03657057f2f3447bd2d7e304ca1756361f"}
@@ -1936,7 +1938,7 @@ export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateReturnTypeOfSignatureDeclaration","kind":"method","status":"stub","sigHash":"1a2680bf5618571ce947ed90902047c5033baed332592cc9f346e864102acc80","bodyHash":"e255af27842ef1b34f4421e8e46bb20e15bc0d96ea9bea546b2664d04c68171b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateReturnTypeOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"1a2680bf5618571ce947ed90902047c5033baed332592cc9f346e864102acc80","bodyHash":"e255af27842ef1b34f4421e8e46bb20e15bc0d96ea9bea546b2664d04c68171b"}
  *
  * Go source:
  * func (r *EmitResolver) CreateReturnTypeOfSignatureDeclaration(emitContext *printer.EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -1952,11 +1954,19 @@ export function EmitResolver_GetElementAccessExpressionName(receiver: GoPtr<Emit
  * }
  */
 export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateReturnTypeOfSignatureDeclaration");
+  const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
+  if (original === undefined) {
+    return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
+  }
+  receiver!.checkerMu!.Lock();
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+  const result = NodeBuilder_SerializeReturnTypeForSignature(requestNodeBuilder, original, enclosingDeclaration, flags, internalFlags, tracker);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration","kind":"method","status":"stub","sigHash":"6466a396d096c01f245287f104f1633a0e572256787db5e30693470a34eea12b","bodyHash":"f88b18ad8f3f0d47e4dfe7373c3a983abc31cad91eb94da0505d65e2daa0f368"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration","kind":"method","status":"implemented","sigHash":"6466a396d096c01f245287f104f1633a0e572256787db5e30693470a34eea12b","bodyHash":"f88b18ad8f3f0d47e4dfe7373c3a983abc31cad91eb94da0505d65e2daa0f368"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeParametersOfSignatureDeclaration(emitContext *printer.EmitContext, signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -1972,11 +1982,19 @@ export function EmitResolver_CreateReturnTypeOfSignatureDeclaration(receiver: Go
  * }
  */
 export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeParametersOfSignatureDeclaration");
+  const original = EmitContext_ParseNode(emitContext, signatureDeclaration);
+  if (original === undefined) {
+    return [];
+  }
+  receiver!.checkerMu!.Lock();
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+  const result = NodeBuilder_SerializeTypeParametersForSignature(requestNodeBuilder, original, enclosingDeclaration, flags, internalFlags, tracker);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfDeclaration","kind":"method","status":"stub","sigHash":"002a759d421486c3c242547b4729cccdbad972368be538ab1db9d4cad356f4e4","bodyHash":"48f04ac22cbc427d5ef7e70b07e96f10552eed92eac74f519a8c3411b1a43c14"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfDeclaration","kind":"method","status":"implemented","sigHash":"002a759d421486c3c242547b4729cccdbad972368be538ab1db9d4cad356f4e4","bodyHash":"48f04ac22cbc427d5ef7e70b07e96f10552eed92eac74f519a8c3411b1a43c14"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeOfDeclaration(emitContext *printer.EmitContext, declaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -1994,11 +2012,20 @@ export function EmitResolver_CreateTypeParametersOfSignatureDeclaration(receiver
  * }
  */
 export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfDeclaration");
+  const original = EmitContext_ParseNode(emitContext, declaration);
+  if (original === undefined) {
+    return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
+  }
+  receiver!.checkerMu!.Lock();
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+  const symbol_ = Checker_getSymbolOfDeclaration(receiver!.checker, declaration);
+  const result = NodeBuilder_SerializeTypeForDeclaration(requestNodeBuilder, declaration, symbol_, enclosingDeclaration, (flags | FlagsMultilineObjectLiterals) as Flags, internalFlags, tracker);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLiteralConstValue","kind":"method","status":"stub","sigHash":"a794bda91b85e84d21a485fc3a7755da54ab0e72e126c175ece2179067231e63","bodyHash":"50c1afbb1b035e84955c3a7b889f5728feb2e08f5e2dc2600ad50437c48aa4ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLiteralConstValue","kind":"method","status":"implemented","sigHash":"a794bda91b85e84d21a485fc3a7755da54ab0e72e126c175ece2179067231e63","bodyHash":"50c1afbb1b035e84955c3a7b889f5728feb2e08f5e2dc2600ad50437c48aa4ad"}
  *
  * Go source:
  * func (r *EmitResolver) CreateLiteralConstValue(emitContext *printer.EmitContext, node *ast.Node, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2054,11 +2081,53 @@ export function EmitResolver_CreateTypeOfDeclaration(receiver: GoPtr<EmitResolve
  * }
  */
 export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, node: GoPtr<Node>, tracker: SymbolTracker): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLiteralConstValue");
+  node = EmitContext_ParseNode(emitContext, node);
+  receiver!.checkerMu!.Lock();
+  const t = Checker_getTypeOfSymbol(receiver!.checker, Checker_getSymbolOfDeclaration(receiver!.checker, node));
+  receiver!.checkerMu!.Unlock();
+  if (t === undefined) {
+    return undefined;
+  }
+
+  let enumResult: GoPtr<Node> = undefined;
+  if ((t!.flags & TypeFlagsEnumLike) !== 0) {
+    receiver!.checkerMu!.Lock();
+    const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+    enumResult = NodeBuilder_SymbolToExpression(requestNodeBuilder, Type_Symbol(t), SymbolFlagsValue, node, FlagsNone, InternalFlagsNone, tracker);
+    receiver!.checkerMu!.Unlock();
+  } else if (t === receiver!.checker!.trueType) {
+    enumResult = NewKeywordExpression(emitContext!.Factory!.__tsgoEmbedded0, KindTrueKeyword);
+  } else if (t === receiver!.checker!.falseType) {
+    enumResult = NewKeywordExpression(emitContext!.Factory!.__tsgoEmbedded0, KindFalseKeyword);
+  }
+  if (enumResult !== undefined) {
+    return enumResult;
+  }
+  if ((t!.flags & TypeFlagsLiteral) === 0) {
+    return undefined;
+  }
+  const value = Type_AsLiteralType(t)!.value;
+  const astFactory = emitContext!.Factory!.__tsgoEmbedded0;
+  if (typeof value === "string") {
+    return NewStringLiteral(astFactory, value, TokenFlagsNone);
+  }
+  if (typeof value === "number") {
+    const numVal = value as number;
+    if (Number_Abs(numVal) !== numVal) {
+      return NewPrefixUnaryExpression(astFactory, KindMinusToken, NewNumericLiteral(astFactory, Number_String(numVal).substring(1), TokenFlagsNone));
+    }
+    return NewNumericLiteral(astFactory, Number_String(numVal), TokenFlagsNone);
+  }
+  if (typeof value === "boolean") {
+    const kind = value ? KindTrueKeyword : KindFalseKeyword;
+    return NewKeywordExpression(astFactory, kind);
+  }
+  // PseudoBigInt object
+  return NewBigIntLiteral(astFactory, pseudoBigIntToString(value as PseudoBigInt) + "n", TokenFlagsNone);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfExpression","kind":"method","status":"stub","sigHash":"9ed2ff39a8869ad7e1dd39470c2ac06db3aabb6af0cde5e5440237c6be11d6d2","bodyHash":"a70e60ebe798a1b737f90024ba0c716c9a550772ec14cbf603d72ff338561d36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfExpression","kind":"method","status":"implemented","sigHash":"9ed2ff39a8869ad7e1dd39470c2ac06db3aabb6af0cde5e5440237c6be11d6d2","bodyHash":"a70e60ebe798a1b737f90024ba0c716c9a550772ec14cbf603d72ff338561d36"}
  *
  * Go source:
  * func (r *EmitResolver) CreateTypeOfExpression(emitContext *printer.EmitContext, expression *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2074,7 +2143,15 @@ export function EmitResolver_CreateLiteralConstValue(receiver: GoPtr<EmitResolve
  * }
  */
 export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, expression: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateTypeOfExpression");
+  expression = EmitContext_ParseNode(emitContext, expression);
+  if (expression === undefined) {
+    return NewKeywordTypeNode(emitContext!.Factory!.__tsgoEmbedded0, KindAnyKeyword);
+  }
+  receiver!.checkerMu!.Lock();
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+  const result = NodeBuilder_SerializeTypeForExpression(requestNodeBuilder, expression, enclosingDeclaration, (flags | FlagsMultilineObjectLiterals) as Flags, internalFlags, tracker);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
@@ -2176,7 +2253,7 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEffectiveDeclarationFlags","kind":"method","status":"stub","sigHash":"1e043b732317cd93874d4740b14f57712e4335a8afb6dca6cdddd39f38c48be4","bodyHash":"5e77199275d3e3525ed5bdf3485960b53755f4fa7a3b0aec677bd352131cfb94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEffectiveDeclarationFlags","kind":"method","status":"implemented","sigHash":"1e043b732317cd93874d4740b14f57712e4335a8afb6dca6cdddd39f38c48be4","bodyHash":"5e77199275d3e3525ed5bdf3485960b53755f4fa7a3b0aec677bd352131cfb94"}
  *
  * Go source:
  * func (r *EmitResolver) GetEffectiveDeclarationFlags(node *ast.Node, flags ast.ModifierFlags) ast.ModifierFlags {
@@ -2187,11 +2264,14 @@ export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<Emit
  * }
  */
 export function EmitResolver_GetEffectiveDeclarationFlags(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetEffectiveDeclarationFlags");
+  receiver!.checkerMu!.Lock();
+  const result = Checker_GetEffectiveDeclarationFlags(receiver!.checker, node, flags);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetResolutionModeOverride","kind":"method","status":"stub","sigHash":"14879ac14cac097914423faf8123a337a64b1dd0529f976802f7cf4de737bec7","bodyHash":"769115bc13bb8c1ea3c937f94c9c27157c3c68f0ffa69dfc92b327cf5b52681e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetResolutionModeOverride","kind":"method","status":"implemented","sigHash":"14879ac14cac097914423faf8123a337a64b1dd0529f976802f7cf4de737bec7","bodyHash":"769115bc13bb8c1ea3c937f94c9c27157c3c68f0ffa69dfc92b327cf5b52681e"}
  *
  * Go source:
  * func (r *EmitResolver) GetResolutionModeOverride(node *ast.Node) core.ResolutionMode {
@@ -2202,11 +2282,14 @@ export function EmitResolver_GetEffectiveDeclarationFlags(receiver: GoPtr<EmitRe
  * }
  */
 export function EmitResolver_GetResolutionModeOverride(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): ResolutionMode {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetResolutionModeOverride");
+  receiver!.checkerMu!.Lock();
+  const result = Checker_GetResolutionModeOverride(receiver!.checker, AsImportAttributes(node), false as bool);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetConstantValue","kind":"method","status":"stub","sigHash":"ff77f5b3959c6a3f74d72f5b42423dda582d2a92d36ef5994d8aa8101ca04cbc","bodyHash":"c7131a9edfa8c6f9c52a8e649d6211972bad1de2039d594cfe1d05efa65b2091"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetConstantValue","kind":"method","status":"implemented","sigHash":"ff77f5b3959c6a3f74d72f5b42423dda582d2a92d36ef5994d8aa8101ca04cbc","bodyHash":"c7131a9edfa8c6f9c52a8e649d6211972bad1de2039d594cfe1d05efa65b2091"}
  *
  * Go source:
  * func (r *EmitResolver) GetConstantValue(node *ast.Node) any {
@@ -2217,11 +2300,14 @@ export function EmitResolver_GetResolutionModeOverride(receiver: GoPtr<EmitResol
  * }
  */
 export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): unknown {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetConstantValue");
+  receiver!.checkerMu!.Lock();
+  const result = Checker_GetConstantValue(receiver!.checker, node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetTypeReferenceSerializationKind","kind":"method","status":"stub","sigHash":"f415b56fd496cfc8d7577a3f4313d293be0d5f6a89d528a076072e36acf50491","bodyHash":"a8a3f0547d9dfe3786a577524386d46827c4fb082146cb8bfc1ba0a52dc7af2e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetTypeReferenceSerializationKind","kind":"method","status":"implemented","sigHash":"f415b56fd496cfc8d7577a3f4313d293be0d5f6a89d528a076072e36acf50491","bodyHash":"a8a3f0547d9dfe3786a577524386d46827c4fb082146cb8bfc1ba0a52dc7af2e"}
  *
  * Go source:
  * func (r *EmitResolver) GetTypeReferenceSerializationKind(typeName *ast.Node, location *ast.Node) printer.TypeReferenceSerializationKind {
@@ -2317,11 +2403,102 @@ export function EmitResolver_GetConstantValue(receiver: GoPtr<EmitResolver>, nod
  * }
  */
 export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<EmitResolver>, typeName: GoPtr<Node>, location: GoPtr<Node>): TypeReferenceSerializationKind {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetTypeReferenceSerializationKind");
+  receiver!.checkerMu!.Lock();
+
+  if (typeName === undefined || location === undefined) {
+    receiver!.checkerMu!.Unlock();
+    return TypeReferenceSerializationKindUnknown;
+  }
+
+  let isTypeOnly = false as bool;
+  if (typeName!.Kind === KindQualifiedName) {
+    const rootValueSymbol = Checker_resolveEntityName(receiver!.checker, GetFirstIdentifier(typeName), SymbolFlagsValue, true as bool, true as bool, location);
+    if (rootValueSymbol !== undefined && rootValueSymbol!.Declarations !== undefined && rootValueSymbol!.Declarations.length > 0) {
+      isTypeOnly = Every(rootValueSymbol!.Declarations, IsTypeOnlyImportOrExportDeclaration) as bool;
+    }
+  }
+
+  const valueSymbol = Checker_resolveEntityName(receiver!.checker, typeName, SymbolFlagsValue, true as bool, true as bool, location);
+  let resolvedValueSymbol = valueSymbol;
+  if (valueSymbol !== undefined && (valueSymbol!.Flags & SymbolFlagsAlias) !== 0) {
+    resolvedValueSymbol = Checker_resolveAlias(receiver!.checker, valueSymbol);
+  }
+
+  isTypeOnly = (isTypeOnly || (valueSymbol !== undefined && Checker_getTypeOnlyAliasDeclarationEx(receiver!.checker, valueSymbol, SymbolFlagsValue) !== undefined)) as bool;
+
+  const typeSymbol = Checker_resolveEntityName(receiver!.checker, typeName, SymbolFlagsType, true as bool, true as bool, location);
+  let resolvedTypeSymbol = typeSymbol;
+  if (typeSymbol !== undefined && (typeSymbol!.Flags & SymbolFlagsAlias) !== 0) {
+    resolvedTypeSymbol = Checker_resolveAlias(receiver!.checker, typeSymbol);
+  }
+  isTypeOnly = (isTypeOnly || (typeSymbol !== undefined && Checker_getTypeOnlyAliasDeclarationEx(receiver!.checker, typeSymbol, SymbolFlagsType) !== undefined)) as bool;
+
+  if (resolvedValueSymbol !== undefined && resolvedValueSymbol === resolvedTypeSymbol) {
+    const globalPromiseSymbol = receiver!.checker!.getGlobalPromiseConstructorSymbol();
+    if (globalPromiseSymbol !== undefined && resolvedValueSymbol === globalPromiseSymbol) {
+      receiver!.checkerMu!.Unlock();
+      return TypeReferenceSerializationKindPromise;
+    }
+    const constructorType = Checker_getTypeOfSymbol(receiver!.checker, resolvedValueSymbol);
+    if (constructorType !== undefined && Checker_isConstructorType(receiver!.checker, constructorType)) {
+      if (isTypeOnly) {
+        receiver!.checkerMu!.Unlock();
+        return TypeReferenceSerializationKindTypeWithCallSignature;
+      }
+      receiver!.checkerMu!.Unlock();
+      return TypeReferenceSerializationKindTypeWithConstructSignatureAndValue;
+    }
+  }
+
+  if (resolvedTypeSymbol === undefined) {
+    if (isTypeOnly) {
+      receiver!.checkerMu!.Unlock();
+      return TypeReferenceSerializationKindObjectType;
+    }
+    receiver!.checkerMu!.Unlock();
+    return TypeReferenceSerializationKindUnknown;
+  }
+
+  const type_ = Checker_getDeclaredTypeOfSymbol(receiver!.checker, resolvedTypeSymbol);
+  if (Checker_isErrorType(receiver!.checker, type_)) {
+    if (isTypeOnly) {
+      receiver!.checkerMu!.Unlock();
+      return TypeReferenceSerializationKindObjectType;
+    }
+    receiver!.checkerMu!.Unlock();
+    return TypeReferenceSerializationKindUnknown;
+  }
+
+  let result: TypeReferenceSerializationKind;
+  if ((type_!.flags & TypeFlagsAnyOrUnknown) !== 0) {
+    result = TypeReferenceSerializationKindObjectType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, (TypeFlagsVoid | TypeFlagsNullable | TypeFlagsNever) as TypeFlags)) {
+    result = TypeReferenceSerializationKindVoidNullableOrNeverType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, TypeFlagsBooleanLike)) {
+    result = TypeReferenceSerializationKindBooleanType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, TypeFlagsNumberLike)) {
+    result = TypeReferenceSerializationKindNumberLikeType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, TypeFlagsBigIntLike)) {
+    result = TypeReferenceSerializationKindBigIntLikeType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, TypeFlagsStringLike)) {
+    result = TypeReferenceSerializationKindStringLikeType;
+  } else if (isTupleType(type_)) {
+    result = TypeReferenceSerializationKindArrayLikeType;
+  } else if (Checker_isTypeAssignableToKind(receiver!.checker, type_, TypeFlagsESSymbolLike)) {
+    result = TypeReferenceSerializationKindESSymbolType;
+  } else if (Checker_isFunctionType(receiver!.checker, type_)) {
+    result = TypeReferenceSerializationKindTypeWithCallSignature;
+  } else if (Checker_isArrayType(receiver!.checker, type_)) {
+    result = TypeReferenceSerializationKindArrayLikeType;
+  } else {
+    result = TypeReferenceSerializationKindObjectType;
+  }
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction","kind":"method","status":"stub","sigHash":"7e97da3a092cb9f8f383787ad8d6b688d469b559048c069fca1a57744db2d17d","bodyHash":"b8569f40bafa10f9d9fbeb46850ccf1a752c3005dcb8d1e95a6d71d701b45b83"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction","kind":"method","status":"implemented","sigHash":"7e97da3a092cb9f8f383787ad8d6b688d469b559048c069fca1a57744db2d17d","bodyHash":"b8569f40bafa10f9d9fbeb46850ccf1a752c3005dcb8d1e95a6d71d701b45b83"}
  *
  * Go source:
  * func (r *EmitResolver) GetPropertiesOfContainerFunction(node *ast.Node) []*ast.Symbol {
@@ -2340,11 +2517,14 @@ export function EmitResolver_GetTypeReferenceSerializationKind(receiver: GoPtr<E
  * }
  */
 export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetPropertiesOfContainerFunction");
+  if (node === undefined) { return []; }
+  const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
+  if (s === undefined) { return []; }
+  return Checker_getPropertiesOfType(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, s));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.TryJSTypeNodeToTypeNode","kind":"method","status":"stub","sigHash":"ee8dc85998dd6dcb905630a62ebbab7edd668cac04808df9ff9d96185cf5c554","bodyHash":"22aa569defec857bdda9a59e482498445ce97a4cfd9a9a955916009f5a7e67ec"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.TryJSTypeNodeToTypeNode","kind":"method","status":"implemented","sigHash":"ee8dc85998dd6dcb905630a62ebbab7edd668cac04808df9ff9d96185cf5c554","bodyHash":"22aa569defec857bdda9a59e482498445ce97a4cfd9a9a955916009f5a7e67ec"}
  *
  * Go source:
  * func (r *EmitResolver) TryJSTypeNodeToTypeNode(emitContext *printer.EmitContext, typeNode *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
@@ -2357,5 +2537,10 @@ export function EmitResolver_GetPropertiesOfContainerFunction(receiver: GoPtr<Em
  * }
  */
 export function EmitResolver_TryJSTypeNodeToTypeNode(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, typeNode: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.TryJSTypeNodeToTypeNode");
+  typeNode = EmitContext_ParseNode(emitContext, typeNode);
+  receiver!.checkerMu!.Lock();
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+  const result = NodeBuilder_TryJSTypeNodeToTypeNode(requestNodeBuilder, typeNode, enclosingDeclaration, flags, internalFlags, tracker);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }

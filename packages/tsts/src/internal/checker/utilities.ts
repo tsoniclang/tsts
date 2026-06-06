@@ -607,7 +607,7 @@ export function getAliasDeclarationFromName(node: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::entityNameToString","kind":"func","status":"stub","sigHash":"3b7c22c290a89868686ce908571a82799371dfda8fd91bff3e50807615faa077","bodyHash":"7cfbedd0bea4a4cf6835019fd9a8afe3361ca175e66a55ab5d0bb680da1887a7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::entityNameToString","kind":"func","status":"implemented","sigHash":"3b7c22c290a89868686ce908571a82799371dfda8fd91bff3e50807615faa077","bodyHash":"7cfbedd0bea4a4cf6835019fd9a8afe3361ca175e66a55ab5d0bb680da1887a7"}
  *
  * Go source:
  * func entityNameToString(name *ast.Node) string {
@@ -615,7 +615,7 @@ export function getAliasDeclarationFromName(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function entityNameToString(name: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/utilities.go::func::entityNameToString");
+  return EntityNameToString(name, GetTextOfNode);
 }
 
 /**
@@ -807,7 +807,7 @@ export function IsTypeAny(t: GoPtr<Type>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isJSDocOptionalParameter","kind":"func","status":"stub","sigHash":"5e1568f8b9d017bc506738a202999fb70c4bddcb6cd80db41362508e922b9da2","bodyHash":"4e9863386b2da0d5e47fc6053f9df263e93512ad94e57cd75ac4154605d8ac94"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isJSDocOptionalParameter","kind":"func","status":"implemented","sigHash":"5e1568f8b9d017bc506738a202999fb70c4bddcb6cd80db41362508e922b9da2","bodyHash":"4e9863386b2da0d5e47fc6053f9df263e93512ad94e57cd75ac4154605d8ac94"}
  *
  * Go source:
  * func isJSDocOptionalParameter(node *ast.ParameterDeclaration) bool {
@@ -815,7 +815,7 @@ export function IsTypeAny(t: GoPtr<Type>): bool {
  * }
  */
 export function isJSDocOptionalParameter(node: GoPtr<ParameterDeclaration>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isJSDocOptionalParameter");
+  return false as bool;
 }
 
 /**
@@ -890,7 +890,7 @@ export function isEmptyArrayLiteral(expression: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::declarationBelongsToPrivateAmbientMember","kind":"func","status":"stub","sigHash":"f976dfd806168bccabcfa02a573fbe46104f47f0c24096265ee49cd6d13ad0c1","bodyHash":"aeaf2eb61f3bb875ddce3a01ff57e3b6d250175aa65d7dbba42a75a570eb9f49"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::declarationBelongsToPrivateAmbientMember","kind":"func","status":"implemented","sigHash":"f976dfd806168bccabcfa02a573fbe46104f47f0c24096265ee49cd6d13ad0c1","bodyHash":"aeaf2eb61f3bb875ddce3a01ff57e3b6d250175aa65d7dbba42a75a570eb9f49"}
  *
  * Go source:
  * func declarationBelongsToPrivateAmbientMember(declaration *ast.Node) bool {
@@ -903,11 +903,13 @@ export function isEmptyArrayLiteral(expression: GoPtr<Node>): bool {
  * }
  */
 export function declarationBelongsToPrivateAmbientMember(declaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/utilities.go::func::declarationBelongsToPrivateAmbientMember");
+  const root = GetRootDeclaration(declaration);
+  const memberDeclaration = root!.Kind === KindParameter ? root!.Parent : root;
+  return isPrivateWithinAmbient(memberDeclaration);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isPrivateWithinAmbient","kind":"func","status":"stub","sigHash":"3934a1399a6d87d4c7f30c4c6de767ceee17c7cbefcd4232a6ae98be079794c0","bodyHash":"6bc8d97569ab806253073db80aed37e47e3f95b3433cca0ca13b20fdf23ded4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isPrivateWithinAmbient","kind":"func","status":"implemented","sigHash":"3934a1399a6d87d4c7f30c4c6de767ceee17c7cbefcd4232a6ae98be079794c0","bodyHash":"6bc8d97569ab806253073db80aed37e47e3f95b3433cca0ca13b20fdf23ded4e"}
  *
  * Go source:
  * func isPrivateWithinAmbient(node *ast.Node) bool {
@@ -915,7 +917,7 @@ export function declarationBelongsToPrivateAmbientMember(declaration: GoPtr<Node
  * }
  */
 export function isPrivateWithinAmbient(node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/utilities.go::func::isPrivateWithinAmbient");
+  return ((HasModifier(node, ModifierFlagsPrivate) || IsPrivateIdentifierClassElementDeclaration(node)) && (node!.Flags & NodeFlagsAmbient) !== 0) as bool;
 }
 
 /**
@@ -931,7 +933,7 @@ export function isTypeAssertion(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::createSymbolTable","kind":"func","status":"stub","sigHash":"c3241e8f79ea5297aa8c56f8b2c032214bc54e288731c22927d251ccb683f954","bodyHash":"38a004dc9b6d5d80e01a05918c9d463b44910b5a26807eb54e62f55313a7d233"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::createSymbolTable","kind":"func","status":"implemented","sigHash":"c3241e8f79ea5297aa8c56f8b2c032214bc54e288731c22927d251ccb683f954","bodyHash":"38a004dc9b6d5d80e01a05918c9d463b44910b5a26807eb54e62f55313a7d233"}
  *
  * Go source:
  * func createSymbolTable(symbols []*ast.Symbol) ast.SymbolTable {
@@ -946,7 +948,14 @@ export function isTypeAssertion(node: GoPtr<Node>): bool {
  * }
  */
 export function createSymbolTable(symbols: GoSlice<GoPtr<Symbol>>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/utilities.go::func::createSymbolTable");
+  if (symbols.length === 0) {
+    return undefined as unknown as SymbolTable;
+  }
+  const result: SymbolTable = new globalThis.Map<string, GoPtr<Symbol>>();
+  for (const symbol of symbols) {
+    result.set(symbol!.Name, symbol);
+  }
+  return result;
 }
 
 /**

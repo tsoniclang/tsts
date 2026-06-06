@@ -47,6 +47,7 @@ import {
   IsNamespaceImport,
   IsOmittedExpression,
   IsParameterDeclaration,
+  IsPrivateIdentifier,
   IsPropertyAccessExpression,
   IsPropertyAssignment,
   IsPropertyDeclaration,
@@ -60,13 +61,16 @@ import {
 } from "../../ast/utilities.js";
 import { AsExportAssignment, AsBinaryExpression, AsElementAccessExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import { NodeFlagsAmbient, NodeFlagsReparsed } from "../../ast/generated/flags.js";
-import { SymbolFlagsAlias, SymbolFlagsModuleExports, SymbolFlagsValue } from "../../ast/generated/flags.js";
-import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsInJSFile, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
+import { SymbolFlagsAlias, SymbolFlagsModuleExports, SymbolFlagsProperty, SymbolFlagsValue } from "../../ast/generated/flags.js";
+import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsCompoundAssignment, IsInJSFile, IsObjectLiteralMethod, GetElementOrPropertyAccessName, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
+import { IsDeclarationNode, Node_Arguments, Node_Symbol, Node_Text } from "../../ast/ast.js";
+import { IsAssignmentOperator } from "../../ast/generated/predicates.js";
+import { GetSymbolNameForPrivateIdentifier } from "../../../binder/binder.js";
 import { Node_Expression, Node_Type, Node_ElementList, Node_PropertyList, Node_Properties, Node_Elements, Node_Initializer } from "../../ast/ast.js";
 import { Node_Name } from "../../ast/spine.js";
 import { NewDiagnosticChain } from "../../ast/diagnostic.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
-import { getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
+import { AssignmentKindNone, getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
 import { ModifierFlagsAbstract, ModifierFlagsAsync, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsReadonly, ModifierFlagsStatic } from "../../ast/modifierflags.js";
 import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo, Checker_checkTypeAssignableToAndOptionallyElaborate } from "../relater.js";
 import { TernaryFalse } from "../types.js";
@@ -81,7 +85,7 @@ import { Checker_checkSourceElement, Checker_error, Checker_shouldCheckErasableS
 import { Checker_compareProperties } from "./support.js";
 import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionForMutableLocation, Checker_checkExpressionEx, Checker_checkBinaryExpression, Checker_checkBinaryLikeExpression, Checker_checkReferenceExpression, Checker_createSyntheticExpression } from "./syntax-checking.js";
 import { Checker_getFlowTypeOfDestructuring, Checker_getControlFlowContainer } from "./flow-narrowing.js";
-import { Checker_hasDefaultValue } from "./support-queries.js";
+import { Checker_hasDefaultValue, Checker_getThisContainer } from "./support-queries.js";
 import { Checker_reportImplicitAny } from "./types.js";
 import { Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx } from "./types.js";
 import { Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_getTargetOfAliasLikeExpression } from "./symbols.js";
@@ -96,9 +100,12 @@ import {
   IterationUseDestructuring,
   IterationUsePossiblyOutOfBounds,
   ReferenceHintExportAssignment,
+  TypeFactsIsUndefined,
+  TypeFactsNEUndefined,
   WideningKind,
   WideningKindNormal,
   everyType,
+  getBooleanLiteralValue,
   getVerbatimModuleSyntaxErrorMessage,
   isTupleType,
   thisAssignmentDeclarationConstructor,
@@ -107,12 +114,17 @@ import {
 } from "./state.js";
 import { Checker_sliceTupleType } from "../relater.js";
 import {
+  ObjectFlagsClass,
+  ObjectFlagsClassOrInterface,
+  ObjectFlagsIdenticalBaseTypeCalculated,
+  ObjectFlagsReference,
   Type_Types,
   TypeFlagsAnyOrUnknown,
   TypeFlagsBigInt,
   TypeFlagsBigIntLike,
   TypeFlagsBigIntLiteral,
   TypeFlagsBooleanLike,
+  TypeFlagsBooleanLiteral,
   TypeFlagsDefinitelyNonNullable,
   TypeFlagsESSymbol,
   TypeFlagsNever,
@@ -122,18 +134,22 @@ import {
   TypeFlagsNumber,
   TypeFlagsNumberLike,
   TypeFlagsNumberLiteral,
+  TypeFlagsObject,
   TypeFlagsString,
   TypeFlagsStringLike,
   TypeFlagsStringLiteral,
   TypeFlagsStringMapping,
   TypeFlagsTemplateLiteral,
+  TypeFlagsTypeParameter,
   TypeFlagsUndefined,
   TypeFlagsUnion,
   TypeFlagsUniqueESSymbol,
   TypeFlagsVoid,
 } from "../types.js";
 import type { Type, TypeAlias, TypeFlags } from "../types.js";
+import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
+import { TSTrue } from "../../core/tristate.js";
 import type { SymbolNodeLinks } from "../types.js";
 import type { AssignmentKind } from "../utilities.js";
 import type { Checker, CheckMode } from "./state.js";
@@ -388,7 +404,7 @@ export function Checker_checkSatisfiesExpression(receiver: GoPtr<Checker>, node:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDestructuringAssignment","kind":"method","status":"stub","sigHash":"a30f707976ce675b92289aa8eca01b4e4f67d0a98f385a56bb6079fcf3b7be11","bodyHash":"12ebaec0b0fc2c9359a041b8b9562ddd6b581463ef054da2b80641c406a77bd8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDestructuringAssignment","kind":"method","status":"implemented","sigHash":"a30f707976ce675b92289aa8eca01b4e4f67d0a98f385a56bb6079fcf3b7be11","bodyHash":"12ebaec0b0fc2c9359a041b8b9562ddd6b581463ef054da2b80641c406a77bd8"}
  *
  * Go source:
  * func (c *Checker) checkDestructuringAssignment(node *ast.Node, sourceType *Type, checkMode CheckMode, rightIsThis bool) *Type {
@@ -425,11 +441,37 @@ export function Checker_checkSatisfiesExpression(receiver: GoPtr<Checker>, node:
  * }
  */
 export function Checker_checkDestructuringAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, checkMode: CheckMode, rightIsThis: bool): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDestructuringAssignment");
+  let target: GoPtr<Node>;
+  if (IsShorthandPropertyAssignment(node)) {
+    const initializer = AsShorthandPropertyAssignment(node)!.ObjectAssignmentInitializer;
+    if (initializer !== undefined) {
+      if (receiver!.strictNullChecks && !(Checker_hasTypeFacts(receiver, Checker_checkExpression(receiver, initializer), TypeFactsIsUndefined))) {
+        sourceType = Checker_getTypeWithFacts(receiver, sourceType, TypeFactsNEUndefined);
+      }
+      Checker_checkBinaryLikeExpression(receiver, Node_Name(node), AsShorthandPropertyAssignment(node)!.EqualsToken, initializer, checkMode, undefined);
+    }
+    target = Node_Name(node);
+  } else {
+    target = node;
+  }
+  if (IsBinaryExpression(target) && AsBinaryExpression(target)!.OperatorToken!.Kind === KindEqualsToken) {
+    Checker_checkBinaryExpression(receiver, target, checkMode);
+    target = AsBinaryExpression(target)!.Left as unknown as GoPtr<Node>;
+    if (receiver!.strictNullChecks) {
+      sourceType = Checker_getTypeWithFacts(receiver, sourceType, TypeFactsNEUndefined);
+    }
+  }
+  if (IsObjectLiteralExpression(target)) {
+    return Checker_checkObjectLiteralAssignment(receiver, target, sourceType, rightIsThis);
+  }
+  if (IsArrayLiteralExpression(target)) {
+    return Checker_checkArrayLiteralAssignment(receiver, target, sourceType, checkMode);
+  }
+  return Checker_checkReferenceAssignment(receiver, target, sourceType, checkMode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralAssignment","kind":"method","status":"stub","sigHash":"1fe5ea098f1296a633b32a25e335bdfc02956e4295016c9a26f189dd00c7e475","bodyHash":"f8bb9efd5e40bb064b0b34a5712982c5d7d1e6219a20f5ed3fbfafb7f9232c0b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralAssignment","kind":"method","status":"implemented","sigHash":"1fe5ea098f1296a633b32a25e335bdfc02956e4295016c9a26f189dd00c7e475","bodyHash":"f8bb9efd5e40bb064b0b34a5712982c5d7d1e6219a20f5ed3fbfafb7f9232c0b"}
  *
  * Go source:
  * func (c *Checker) checkObjectLiteralAssignment(node *ast.Node, sourceType *Type, rightIsThis bool) *Type {
@@ -444,11 +486,18 @@ export function Checker_checkDestructuringAssignment(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_checkObjectLiteralAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, rightIsThis: bool): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralAssignment");
+  const properties = Node_PropertyList(node);
+  if (receiver!.strictNullChecks && properties!.Nodes.length === 0) {
+    return Checker_checkNonNullType(receiver, sourceType, node);
+  }
+  for (let i = 0; i < properties!.Nodes.length; i++) {
+    Checker_checkObjectLiteralDestructuringPropertyAssignment(receiver, node, sourceType, i, properties, rightIsThis);
+  }
+  return sourceType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralDestructuringPropertyAssignment","kind":"method","status":"stub","sigHash":"7df0dff78687ce98f147b42b65f0c1126808238afa4f83e990d8a77253957710","bodyHash":"ea1448fc1de4c762d06b2f5439fff48dcb585f5f7b3f5f61082324b07f5a68ca"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralDestructuringPropertyAssignment","kind":"method","status":"implemented","sigHash":"7df0dff78687ce98f147b42b65f0c1126808238afa4f83e990d8a77253957710","bodyHash":"ea1448fc1de4c762d06b2f5439fff48dcb585f5f7b3f5f61082324b07f5a68ca"}
  *
  * Go source:
  * func (c *Checker) checkObjectLiteralDestructuringPropertyAssignment(node *ast.Node, objectLiteralType *Type, propertyIndex int, allProperties *ast.NodeList, rightIsThis bool) *Type {
@@ -495,11 +544,51 @@ export function Checker_checkObjectLiteralAssignment(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, objectLiteralType: GoPtr<Type>, propertyIndex: int, allProperties: GoPtr<NodeList>, rightIsThis: bool): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkObjectLiteralDestructuringPropertyAssignment");
+  const properties = Node_Properties(node);
+  const property = properties![propertyIndex];
+  if (IsPropertyAssignment(property) || IsShorthandPropertyAssignment(property)) {
+    const name = Node_Name(property);
+    const exprType = Checker_getLiteralTypeFromPropertyName(receiver, name);
+    if (isTypeUsableAsPropertyName(exprType)) {
+      const text = getPropertyNameFromType(exprType);
+      const prop = Checker_getPropertyOfType(receiver, objectLiteralType, text);
+      if (prop !== undefined) {
+        Checker_markPropertyAsReferenced(receiver, prop, property, rightIsThis);
+        Checker_checkPropertyAccessibility(receiver, property, false as bool, true as bool, objectLiteralType, prop);
+      }
+    }
+    const elementType = Checker_getIndexedAccessTypeEx(receiver, objectLiteralType, exprType, (AccessFlagsExpressionPosition | (Checker_hasDefaultValue(receiver, property) ? AccessFlagsAllowMissing : 0)) as AccessFlags, name, undefined);
+    const t = Checker_getFlowTypeOfDestructuring(receiver, property, elementType);
+    let expr = property;
+    if (IsPropertyAssignment(property)) {
+      expr = Node_Initializer(property) as unknown as GoPtr<Node>;
+    }
+    return Checker_checkDestructuringAssignment(receiver, expr, t, CheckModeNormal, false as bool);
+  }
+  if (IsSpreadAssignment(property)) {
+    if (propertyIndex < properties!.length - 1) {
+      Checker_error(receiver, property, A_rest_element_must_be_last_in_a_destructuring_pattern, undefined);
+      return undefined;
+    }
+    let nonRestNames: GoSlice<GoPtr<Node>> = [];
+    if (allProperties !== undefined) {
+      for (let i = 0; i < allProperties.Nodes.length; i++) {
+        const otherProperty = allProperties.Nodes[i];
+        if (!IsSpreadAssignment(otherProperty)) {
+          nonRestNames = [...nonRestNames, Node_Name(otherProperty)];
+        }
+      }
+    }
+    const t = Checker_getRestType(receiver, objectLiteralType, nonRestNames, objectLiteralType!["symbol"]);
+    Checker_checkGrammarForDisallowedTrailingComma(receiver, allProperties, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
+    return Checker_checkDestructuringAssignment(receiver, Node_Expression(property), t, CheckModeNormal, false as bool);
+  }
+  Checker_error(receiver, property, Property_assignment_expected, undefined);
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralAssignment","kind":"method","status":"stub","sigHash":"fbe3216901dccd20ba73087f443cfce1f51e45827776aa98ecd9b0f8f5d8e0eb","bodyHash":"1cc3bb3c3fa701dd3aa450c911fb7f40dc4534fdedc16ed1b5129d7062508b93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralAssignment","kind":"method","status":"implemented","sigHash":"fbe3216901dccd20ba73087f443cfce1f51e45827776aa98ecd9b0f8f5d8e0eb","bodyHash":"1cc3bb3c3fa701dd3aa450c911fb7f40dc4534fdedc16ed1b5129d7062508b93"}
  *
  * Go source:
  * func (c *Checker) checkArrayLiteralAssignment(node *ast.Node, sourceType *Type, checkMode CheckMode) *Type {
@@ -523,11 +612,24 @@ export function Checker_checkObjectLiteralDestructuringPropertyAssignment(receiv
  * }
  */
 export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralAssignment");
+  const elements = Node_Elements(node);
+  const possiblyOutOfBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, (IterationUseDestructuring | IterationUsePossiblyOutOfBounds) as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+  let inBoundsType: GoPtr<Type> = IfElse(receiver!.compilerOptions!.NoUncheckedIndexedAccess === TSTrue, undefined, possiblyOutOfBoundsType);
+  for (let i = 0; i < elements!.length; i++) {
+    let t = possiblyOutOfBoundsType;
+    if (elements![i]!.Kind === KindSpreadElement) {
+      if (inBoundsType === undefined) {
+        inBoundsType = OrElse(Checker_checkIteratedTypeOrElementType(receiver, IterationUseDestructuring as unknown as int, sourceType, receiver!.undefinedType, node), receiver!.errorType);
+      }
+      t = inBoundsType;
+    }
+    Checker_checkArrayLiteralDestructuringElementAssignment(receiver, node, sourceType, i, t, checkMode);
+  }
+  return sourceType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralDestructuringElementAssignment","kind":"method","status":"stub","sigHash":"77f93fde9de19403ac29fc26e26141abc393cda41d51ba4a844b3b89437193a4","bodyHash":"7c4bb885391e7f0eb32f5cd1f4f204558eb808db8341a50d665facb37728a1f3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralDestructuringElementAssignment","kind":"method","status":"implemented","sigHash":"77f93fde9de19403ac29fc26e26141abc393cda41d51ba4a844b3b89437193a4","bodyHash":"7c4bb885391e7f0eb32f5cd1f4f204558eb808db8341a50d665facb37728a1f3"}
  *
  * Go source:
  * func (c *Checker) checkArrayLiteralDestructuringElementAssignment(node *ast.Node, sourceType *Type, elementIndex int, elementType *Type, checkMode CheckMode) *Type {
@@ -572,11 +674,46 @@ export function Checker_checkArrayLiteralAssignment(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, sourceType: GoPtr<Type>, elementIndex: int, elementType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkArrayLiteralDestructuringElementAssignment");
+  const elements = Node_ElementList(node);
+  const element = elements!.Nodes[elementIndex];
+  if (!IsOmittedExpression(element)) {
+    if (!IsSpreadElement(element)) {
+      const indexType = Checker_getNumberLiteralType(receiver, elementIndex);
+      if (Checker_isArrayLikeType(receiver, sourceType)) {
+        const accessFlags = (AccessFlagsExpressionPosition | (Checker_hasDefaultValue(receiver, element) ? AccessFlagsAllowMissing : 0)) as AccessFlags;
+        let localElementType: GoPtr<Type> = OrElse(Checker_getIndexedAccessTypeOrUndefined(receiver, sourceType, indexType, accessFlags, Checker_createSyntheticExpression(receiver, element, indexType, false as bool, undefined), undefined), receiver!.errorType);
+        let assignedType = localElementType;
+        if (Checker_hasDefaultValue(receiver, element)) {
+          assignedType = Checker_getTypeWithFacts(receiver, localElementType, TypeFactsNEUndefined);
+        }
+        const t = Checker_getFlowTypeOfDestructuring(receiver, element, assignedType);
+        return Checker_checkDestructuringAssignment(receiver, element, t, checkMode, false as bool);
+      }
+      return Checker_checkDestructuringAssignment(receiver, element, elementType, checkMode, false as bool);
+    }
+    if (elementIndex < elements!.Nodes.length - 1) {
+      Checker_error(receiver, element, A_rest_element_must_be_last_in_a_destructuring_pattern, undefined);
+    } else {
+      const restExpression = Node_Expression(element);
+      if (IsBinaryExpression(restExpression) && AsBinaryExpression(restExpression)!.OperatorToken!.Kind === KindEqualsToken) {
+        Checker_error(receiver, AsBinaryExpression(restExpression)!.OperatorToken as unknown as GoPtr<Node>, A_rest_element_cannot_have_an_initializer, undefined);
+      } else {
+        Checker_checkGrammarForDisallowedTrailingComma(receiver, elements, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
+        let t: GoPtr<Type>;
+        if (everyType(sourceType, isTupleType)) {
+          t = Checker_mapType(receiver, sourceType, (type: GoPtr<Type>): GoPtr<Type> => Checker_sliceTupleType(receiver, type, elementIndex, 0));
+        } else {
+          t = Checker_createArrayType(receiver, elementType);
+        }
+        return Checker_checkDestructuringAssignment(receiver, restExpression, t, checkMode, false as bool);
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReferenceAssignment","kind":"method","status":"stub","sigHash":"fd2843555d1a751af87be88f2c58602089fc0dc09412b2866a925a9de3a7fbe5","bodyHash":"db65f3b536959929ec614f0c14833b68f29a660f3910c1f2a0667c4c1df0d3e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReferenceAssignment","kind":"method","status":"implemented","sigHash":"fd2843555d1a751af87be88f2c58602089fc0dc09412b2866a925a9de3a7fbe5","bodyHash":"db65f3b536959929ec614f0c14833b68f29a660f3910c1f2a0667c4c1df0d3e4"}
  *
  * Go source:
  * func (c *Checker) checkReferenceAssignment(target *ast.Node, sourceType *Type, checkMode CheckMode) *Type {
@@ -594,11 +731,17 @@ export function Checker_checkArrayLiteralDestructuringElementAssignment(receiver
  * }
  */
 export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, target: GoPtr<Node>, sourceType: GoPtr<Type>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkReferenceAssignment");
+  const targetType = Checker_checkExpressionEx(receiver, target, checkMode);
+  const message = IfElse(IsSpreadAssignment(target!.Parent), The_target_of_an_object_rest_assignment_must_be_a_variable_or_a_property_access, The_left_hand_side_of_an_assignment_expression_must_be_a_variable_or_a_property_access);
+  const optionalMessage = IfElse(IsSpreadAssignment(target!.Parent), The_target_of_an_object_rest_assignment_may_not_be_an_optional_property_access, The_left_hand_side_of_an_assignment_expression_may_not_be_an_optional_property_access);
+  if (Checker_checkReferenceExpression(receiver, target, message, optionalMessage)) {
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, sourceType, targetType, target, target, undefined, undefined);
+  }
+  return sourceType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssignmentOperator","kind":"method","status":"stub","sigHash":"26ba0c10bf681786933298dcdc6d561aa80d70c00599622772fddc786d70e6e5","bodyHash":"488972863473c827589119f9876bfa97fe77766871a728858667f4ee3c669f15"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssignmentOperator","kind":"method","status":"implemented","sigHash":"26ba0c10bf681786933298dcdc6d561aa80d70c00599622772fddc786d70e6e5","bodyHash":"488972863473c827589119f9876bfa97fe77766871a728858667f4ee3c669f15"}
  *
  * Go source:
  * func (c *Checker) checkAssignmentOperator(left *ast.Node, operator ast.Kind, right *ast.Node, leftType *Type, rightType *Type) {
@@ -628,7 +771,28 @@ export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, targe
  * }
  */
 export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: GoPtr<Node>, operator: Kind, right: GoPtr<Node>, leftType: GoPtr<Type>, rightType: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssignmentOperator");
+  if (IsAssignmentOperator(operator)) {
+    if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
+      const symbol_ = (LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<Node, SymbolNodeLinks>, left) as SymbolNodeLinks).resolvedSymbol;
+      if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
+        return;
+      }
+    }
+    let localLeftType = leftType;
+    if (IsCompoundAssignment(operator) && IsPropertyAccessExpression(left)) {
+      localLeftType = Checker_checkPropertyAccessExpression(receiver, left, CheckModeNormal, true as bool);
+    }
+    if (Checker_checkReferenceExpression(receiver, left, The_left_hand_side_of_an_assignment_expression_must_be_a_variable_or_a_property_access, The_left_hand_side_of_an_assignment_expression_may_not_be_an_optional_property_access)) {
+      let headMessage: GoPtr<Message>;
+      if (receiver!.exactOptionalPropertyTypes && IsPropertyAccessExpression(left) && Checker_maybeTypeOfKind(receiver, rightType, TypeFlagsUndefined)) {
+        const target = Checker_getTypeOfPropertyOfType(receiver, Checker_getTypeOfExpression(receiver, Node_Expression(left)), Node_Text(Node_Name(left)!));
+        if (Checker_isExactOptionalPropertyMismatch(receiver, rightType, target)) {
+          headMessage = Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target;
+        }
+      }
+      Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, rightType, localLeftType, left, right, headMessage, undefined);
+    }
+  }
 }
 
 /**
@@ -644,7 +808,7 @@ export function Checker_isTypeEqualityComparableTo(receiver: GoPtr<Checker>, sou
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAssignment","kind":"method","status":"stub","sigHash":"a3504e96a98cf3397d1be4e128613d4e14706bc5154bd1f364219518c0fc4e8c","bodyHash":"4088ea691e500ff97b4199823bc7973c0871a2f802d81d24478afa18858eea93"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAssignment","kind":"method","status":"implemented","sigHash":"a3504e96a98cf3397d1be4e128613d4e14706bc5154bd1f364219518c0fc4e8c","bodyHash":"4088ea691e500ff97b4199823bc7973c0871a2f802d81d24478afa18858eea93"}
  *
  * Go source:
  * func (c *Checker) checkPropertyAssignment(node *ast.Node, checkMode CheckMode) *Type {
@@ -664,11 +828,21 @@ export function Checker_isTypeEqualityComparableTo(receiver: GoPtr<Checker>, sou
  * }
  */
 export function Checker_checkPropertyAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPropertyAssignment");
+  if (IsComputedPropertyName(Node_Name(node))) {
+    Checker_checkComputedPropertyName(receiver, Node_Name(node));
+  }
+  const initializerType = Checker_checkExpressionForMutableLocation(receiver, Node_Initializer(node) as unknown as GoPtr<Node>, checkMode);
+  const typeNode = Node_Type(node);
+  if (typeNode !== undefined) {
+    const t = Checker_getTypeFromTypeNode(receiver, typeNode);
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, initializerType, t, node, Node_Initializer(node) as unknown as GoPtr<Node>, undefined, undefined);
+    return t;
+  }
+  return initializerType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkShorthandPropertyAssignment","kind":"method","status":"stub","sigHash":"cad1c6e73fe800588d88654c134ca043180e1c8d8b2e3502391b3f4781afe228","bodyHash":"6da8272c3c645c2959a178b7fa35375e254c6d0befc69331962ffaf815e37c45"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkShorthandPropertyAssignment","kind":"method","status":"implemented","sigHash":"cad1c6e73fe800588d88654c134ca043180e1c8d8b2e3502391b3f4781afe228","bodyHash":"6da8272c3c645c2959a178b7fa35375e254c6d0befc69331962ffaf815e37c45"}
  *
  * Go source:
  * func (c *Checker) checkShorthandPropertyAssignment(node *ast.Node, inDestructuringPattern bool, checkMode CheckMode) *Type {
@@ -689,11 +863,25 @@ export function Checker_checkPropertyAssignment(receiver: GoPtr<Checker>, node: 
  * }
  */
 export function Checker_checkShorthandPropertyAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>, inDestructuringPattern: bool, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkShorthandPropertyAssignment");
+  let expr: GoPtr<Node>;
+  if (!inDestructuringPattern) {
+    expr = AsShorthandPropertyAssignment(node)!.ObjectAssignmentInitializer as unknown as GoPtr<Node>;
+  }
+  if (expr === undefined) {
+    expr = Node_Name(node);
+  }
+  const expressionType = Checker_checkExpressionForMutableLocation(receiver, expr, checkMode);
+  const typeNode = Node_Type(node);
+  if (typeNode !== undefined) {
+    const t = Checker_getTypeFromTypeNode(receiver, typeNode);
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, expressionType, t, node, expr, undefined, undefined);
+    return t;
+  }
+  return expressionType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isReadonlyAssignmentDeclaration","kind":"method","status":"stub","sigHash":"e010b3f6ddbfb8e2c3f71c44a436844d9b527b1bcd2f5bec847d871ef2a08a37","bodyHash":"16bdb22f1d411a83da715e581381b6c61443d3b56a3d5183b4c7f4e002c6bb71"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isReadonlyAssignmentDeclaration","kind":"method","status":"implemented","sigHash":"e010b3f6ddbfb8e2c3f71c44a436844d9b527b1bcd2f5bec847d871ef2a08a37","bodyHash":"16bdb22f1d411a83da715e581381b6c61443d3b56a3d5183b4c7f4e002c6bb71"}
  *
  * Go source:
  * func (c *Checker) isReadonlyAssignmentDeclaration(node *ast.Node) bool {
@@ -717,11 +905,30 @@ export function Checker_checkShorthandPropertyAssignment(receiver: GoPtr<Checker
  * }
  */
 export function Checker_isReadonlyAssignmentDeclaration(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isReadonlyAssignmentDeclaration");
+  if (!IsCallExpression(node)) {
+    return false;
+  }
+  const args = Node_Arguments(node);
+  const propertyDescriptorType = Checker_checkExpressionCached(receiver, args![2]);
+  const valueType = Checker_getTypeOfPropertyOfType(receiver, propertyDescriptorType, "value");
+  if (valueType !== undefined) {
+    const writableProp = Checker_getPropertyOfType(receiver, propertyDescriptorType, "writable");
+    if (writableProp !== undefined) {
+      let writableType: GoPtr<Type>;
+      if (writableProp!.ValueDeclaration !== undefined && IsPropertyAssignment(writableProp!.ValueDeclaration)) {
+        writableType = Checker_checkExpression(receiver, Node_Initializer(writableProp!.ValueDeclaration) as unknown as GoPtr<Node>);
+      } else {
+        writableType = Checker_getTypeOfSymbol(receiver, writableProp);
+      }
+      return ((writableType!.flags & TypeFlagsBooleanLiteral) !== 0 && getBooleanLiteralValue(writableType) === false) as bool;
+    }
+    return true;
+  }
+  return (Checker_getTypeOfPropertyOfType(receiver, propertyDescriptorType, "set") === undefined) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfExportAssignment","kind":"method","status":"stub","sigHash":"9467261be26c69803efeb5b0c8566331b6064f5c221dfef19d7b708d4ea83b58","bodyHash":"5c3536ee6b39bb342a8801b09630fcc5717a5603e71f2a87ca24c006d4ba9a98"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfExportAssignment","kind":"method","status":"implemented","sigHash":"9467261be26c69803efeb5b0c8566331b6064f5c221dfef19d7b708d4ea83b58","bodyHash":"5c3536ee6b39bb342a8801b09630fcc5717a5603e71f2a87ca24c006d4ba9a98"}
  *
  * Go source:
  * func (c *Checker) getTargetOfExportAssignment(node *ast.Node) *ast.Symbol {
@@ -731,11 +938,13 @@ export function Checker_isReadonlyAssignmentDeclaration(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getTargetOfExportAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfExportAssignment");
+  const resolved = Checker_getTargetOfAliasLikeExpression(receiver, Node_Expression(node));
+  Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, node, undefined);
+  return resolved;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedTypeForAssignmentDeclaration","kind":"method","status":"stub","sigHash":"8430950ecde9f423c4a046cb9aed4533173a6cbf97dc24e7df4e106d88109d30","bodyHash":"ab61a17ab370359918e158f3e9cf77a16e13096b1e2bd4455abf04634482184e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedTypeForAssignmentDeclaration","kind":"method","status":"implemented","sigHash":"8430950ecde9f423c4a046cb9aed4533173a6cbf97dc24e7df4e106d88109d30","bodyHash":"ab61a17ab370359918e158f3e9cf77a16e13096b1e2bd4455abf04634482184e"}
  *
  * Go source:
  * func (c *Checker) getWidenedTypeForAssignmentDeclaration(symbol *ast.Symbol) *Type {
@@ -787,11 +996,54 @@ export function Checker_getTargetOfExportAssignment(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getWidenedTypeForAssignmentDeclaration(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedTypeForAssignmentDeclaration");
+  let t: GoPtr<Type>;
+  const [kind, location] = Checker_isConstructorDeclaredThisProperty(receiver, symbol_);
+  if (kind === thisAssignmentDeclarationTyped) {
+    if (location === undefined) {
+      throw new globalThis.Error("location should not be nil when this assignment has a type.");
+    }
+    t = Checker_getTypeFromTypeNode(receiver, location);
+  } else if (kind === thisAssignmentDeclarationConstructor) {
+    if (location === undefined) {
+      throw new globalThis.Error("constructor should not be nil when this assignment is in a constructor.");
+    }
+    t = Checker_getFlowTypeInConstructor(receiver, symbol_, location);
+  } else if (kind === thisAssignmentDeclarationMethod) {
+    t = Checker_getTypeOfPropertyInBaseClass(receiver, symbol_);
+  }
+  if (t === undefined) {
+    let types: GoSlice<GoPtr<Type>> = [];
+    for (let i = 0; i < symbol_!.Declarations!.length; i++) {
+      const declaration = symbol_!.Declarations![i];
+      const typeNode = Node_Type(declaration);
+      if (IsBinaryExpression(declaration) && typeNode !== undefined) {
+        t = Checker_getTypeFromTypeNode(receiver, typeNode);
+        break;
+      }
+      const assignedType = Checker_getAssignmentDeclarationInitializerType(receiver, declaration);
+      if (GetAssignmentDeclarationKind(declaration) !== JSDeclarationKindExportsProperty || i !== 0 || symbol_!.Declarations!.length === 1 || (assignedType!.flags & TypeFlagsUndefined) === 0) {
+        types = AppendIfUnique(types, assignedType);
+      }
+    }
+    if (kind === thisAssignmentDeclarationMethod && types.length > 0) {
+      if (receiver!.strictNullChecks) {
+        types = AppendIfUnique(types, receiver!.undefinedOrMissingType);
+      }
+    }
+    if (t === undefined) {
+      t = Checker_getWidenedType(receiver, Checker_getUnionType(receiver, types));
+    }
+  }
+  if (symbol_!.ValueDeclaration !== undefined && IsInJSFile(symbol_!.ValueDeclaration) &&
+    Checker_filterType(receiver, t, (ct: GoPtr<Type>): bool => ((ct!.flags & ~TypeFlagsNullable) !== 0) as bool) === receiver!.neverType) {
+    Checker_reportImplicitAny(receiver, symbol_!.ValueDeclaration, receiver!.anyType, WideningKindNormal);
+    return receiver!.anyType;
+  }
+  return t;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getAssignmentDeclarationInitializerType","kind":"method","status":"stub","sigHash":"65081f71119059e69c5f6452344bfffe508e13984125f2e3f5f491b7b2b3287b","bodyHash":"80f09efbc17f927b1787788f776656d5ca3412106b0ecfae05baafe85fd5a3a8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getAssignmentDeclarationInitializerType","kind":"method","status":"implemented","sigHash":"65081f71119059e69c5f6452344bfffe508e13984125f2e3f5f491b7b2b3287b","bodyHash":"80f09efbc17f927b1787788f776656d5ca3412106b0ecfae05baafe85fd5a3a8"}
  *
  * Go source:
  * func (c *Checker) getAssignmentDeclarationInitializerType(node *ast.Node) *Type {
@@ -809,7 +1061,18 @@ export function Checker_getWidenedTypeForAssignmentDeclaration(receiver: GoPtr<C
  * }
  */
 export function Checker_getAssignmentDeclarationInitializerType(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getAssignmentDeclarationInitializerType");
+  if (IsBinaryExpression(node)) {
+    const kind = GetAssignmentDeclarationKind(node);
+    if (kind === JSDeclarationKindModuleExports || kind === JSDeclarationKindExportsProperty) {
+      return Checker_getRegularTypeOfLiteralType(receiver, Checker_checkExpressionCached(receiver, GetRightMostAssignedExpression(node)));
+    }
+    return Checker_checkExpressionForMutableLocation(receiver, AsBinaryExpression(node)!.Right as unknown as GoPtr<Node>, CheckModeNormal);
+  }
+  if (IsCallExpression(node)) {
+    const args = Node_Arguments(node);
+    return Checker_getTypeFromPropertyDescriptor(receiver, args![2]);
+  }
+  return receiver!.neverType;
 }
 
 /**
@@ -952,7 +1215,7 @@ export function Checker_removeRedundantSupertypes(receiver: GoPtr<Checker>, type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isAssignmentToReadonlyEntity","kind":"method","status":"stub","sigHash":"fd2664450704446541c8906636be17c0f40c5aad97d9567675c7ed12e8a50618","bodyHash":"5fd67879e7ef91df4ede82ce271af24627d2d37610e5a978fcbcba8d5dba829c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isAssignmentToReadonlyEntity","kind":"method","status":"implemented","sigHash":"fd2664450704446541c8906636be17c0f40c5aad97d9567675c7ed12e8a50618","bodyHash":"5fd67879e7ef91df4ede82ce271af24627d2d37610e5a978fcbcba8d5dba829c"}
  *
  * Go source:
  * func (c *Checker) isAssignmentToReadonlyEntity(expr *ast.Node, symbol *ast.Symbol, assignmentKind AssignmentKind) bool {
@@ -1005,7 +1268,47 @@ export function Checker_removeRedundantSupertypes(receiver: GoPtr<Checker>, type
  * }
  */
 export function Checker_isAssignmentToReadonlyEntity(receiver: GoPtr<Checker>, expr: GoPtr<Node>, symbol_: GoPtr<Symbol>, assignmentKind: AssignmentKind): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isAssignmentToReadonlyEntity");
+  if (assignmentKind === AssignmentKindNone) {
+    return false;
+  }
+  if (IsAccessExpression(expr)) {
+    const node = SkipParentheses(Node_Expression(expr));
+    if (IsIdentifier(node)) {
+      const expressionSymbol = Checker_getResolvedSymbol(receiver, node);
+      if ((expressionSymbol!.Flags & SymbolFlagsModuleExports) !== 0) {
+        return false;
+      }
+    }
+  }
+  if (Checker_isReadonlySymbol(receiver, symbol_)) {
+    if ((symbol_!.Flags & SymbolFlagsProperty) !== 0 && IsAccessExpression(expr) && Node_Expression(expr)!.Kind === KindThisKeyword) {
+      const ctor = Checker_getControlFlowContainer(receiver, expr);
+      if (ctor === undefined || !IsConstructorDeclaration(ctor)) {
+        return true;
+      }
+      if (symbol_!.ValueDeclaration !== undefined) {
+        const isAssignmentDeclaration = IsBinaryExpression(symbol_!.ValueDeclaration);
+        const isLocalPropertyDeclaration = ctor!.Parent === symbol_!.ValueDeclaration!.Parent;
+        const isLocalParameterProperty = ctor === symbol_!.ValueDeclaration!.Parent;
+        const isLocalThisPropertyAssignment = isAssignmentDeclaration && symbol_!.Parent!.ValueDeclaration === ctor!.Parent;
+        const isLocalThisPropertyAssignmentConstructorFunction = isAssignmentDeclaration && symbol_!.Parent!.ValueDeclaration === ctor;
+        const isWriteableSymbol = isLocalPropertyDeclaration || isLocalParameterProperty || isLocalThisPropertyAssignment || isLocalThisPropertyAssignmentConstructorFunction;
+        return (!isWriteableSymbol) as bool;
+      }
+    }
+    return true;
+  }
+  if (IsAccessExpression(expr)) {
+    const node = SkipParentheses(Node_Expression(expr));
+    if (IsIdentifier(node)) {
+      const expressionSymbol = Checker_getResolvedSymbol(receiver, node);
+      if ((expressionSymbol!.Flags & SymbolFlagsAlias) !== 0) {
+        const declaration = Checker_getDeclarationOfAliasSymbol(receiver, expressionSymbol);
+        return (declaration !== undefined && IsNamespaceImport(declaration)) as bool;
+      }
+    }
+  }
+  return false;
 }
 
 /**
