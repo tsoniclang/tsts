@@ -1,10 +1,10 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { Node_FlowNodeData, Node_Name } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { Diagnostic_AddRelatedInfo, Diagnostic_SetCategory } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_SetCategory, NewDiagnostic } from "../../ast/diagnostic.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import { KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindFalseKeyword, KindTrueKeyword } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
@@ -14,19 +14,23 @@ import { IsClassExpression, IsFunctionExpression, IsIdentifier } from "../../ast
 import { AsBindingElement } from "../../ast/generated/casts.js";
 import { ModifierFlagsNone, ModifierFlagsNonPublicAccessibilityModifier } from "../../ast/modifierflags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { Node_Elements, Node_Members, Node_Text } from "../../ast/ast.js";
+import { Node_Elements, Node_Members, Node_Text, Node_PropertyName, Node_Type } from "../../ast/ast.js";
 import type { FlowNode } from "../../ast/flow.js";
-import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, IsEntityNameExpression, IsInJSFile, SkipParentheses } from "../../ast/utilities.js";
+import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, GetSourceFileOfNode, IsEntityNameExpression, IsInJSFile, IsPartOfParameterDeclaration, SkipParentheses, WalkUpBindingElementsAndPatterns } from "../../ast/utilities.js";
 import { Every } from "../../core/core.js";
+import { NewTextRange } from "../../core/text.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
+import { Assert } from "../../debug/debug.js";
 import {
   All_destructured_elements_are_unused,
   Compiler_reserves_name_0_when_emitting_private_identifier_downlevel,
   Did_you_mean_0,
   Duplicate_identifier_0_Compiler_reserves_name_1_when_emitting_super_references_in_static_initializers,
   This_condition_will_always_return_0,
+  We_can_only_write_a_type_for_0_by_adding_a_type_for_the_entire_parameter_here,
+  X_0_is_an_unused_renaming_of_1_Did_you_intend_to_use_it_as_a_type_annotation,
 } from "../../diagnostics/generated/messages.js";
 import type { Result } from "../../evaluator/evaluator.js";
 import { Map } from "../../core/core.js";
@@ -46,11 +50,12 @@ import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
 import { entityNameToString, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
 import { TokenToString } from "../../scanner/scanner.js";
+import { DeclarationNameToString } from "../../scanner/utilities.js";
 import { TernaryFalse, TernaryTrue } from "../types.js";
 import { Checker_addErrorOrSuggestion, Checker_unusedIsError } from "./diagnostics.js";
 import { Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
 import { Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
-import { Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations } from "./symbols.js";
+import { Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_getSymbolOfDeclaration } from "./symbols.js";
 import { Checker_reportUnusedVariable } from "./syntax-checking.js";
 import { createDiagnosticForNode } from "./state.js";
 import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
@@ -541,7 +546,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedRenamedBindingElements","kind":"method","status":"stub","sigHash":"f889348068bd3340278d76c67ae38aa138de5cfe292db30af0747b6e41e48cf4","bodyHash":"5daebdc8cbf486a5a272ab9207c55ea59e84a404e14109bf7466e35300ececc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedRenamedBindingElements","kind":"method","status":"implemented","sigHash":"f889348068bd3340278d76c67ae38aa138de5cfe292db30af0747b6e41e48cf4","bodyHash":"5daebdc8cbf486a5a272ab9207c55ea59e84a404e14109bf7466e35300ececc5"}
  *
  * Go source:
  * func (c *Checker) checkUnusedRenamedBindingElements() {
@@ -560,7 +565,33 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedRenamedBindingElements");
+  for (const node of receiver!.renamedBindingElementsInTypes) {
+    const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node)) as GoPtr<SymbolReferenceLinks>;
+    if (links!.referenceKinds === 0) {
+      const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
+      Assert(IsPartOfParameterDeclaration(wrappingDeclaration), "Only parameter declaration should be checked here");
+      const name = Node_Name(node);
+      const propertyName = Node_PropertyName(node);
+      const diagnostic = NewDiagnosticForNode(
+        name,
+        X_0_is_an_unused_renaming_of_1_Did_you_intend_to_use_it_as_a_type_annotation,
+        DeclarationNameToString(name),
+        DeclarationNameToString(propertyName),
+      );
+      if (Node_Type(wrappingDeclaration) === undefined) {
+        Diagnostic_AddRelatedInfo(
+          diagnostic,
+          NewDiagnostic(
+            GetSourceFileOfNode(wrappingDeclaration),
+            NewTextRange(Node_End(wrappingDeclaration), Node_End(wrappingDeclaration)),
+            We_can_only_write_a_type_for_0_by_adding_a_type_for_the_entire_parameter_here,
+            DeclarationNameToString(propertyName),
+          ),
+        );
+      }
+      DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
+    }
+  }
 }
 
 /**
