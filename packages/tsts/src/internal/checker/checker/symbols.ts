@@ -29,7 +29,7 @@ import { NewResult } from "../../evaluator/evaluator.js";
 import type { Number } from "../../jsnum/jsnum.js";
 import { NaN as JsNumber_NaN, Number_IsInf, Number_IsNaN } from "../../jsnum/jsnum.js";
 import type { TypeMapper } from "../mapper.js";
-import type { AccessFlags, AliasSymbolLinks, ContextFlags, IndexedAccessType, IndexFlags, IndexInfo, IndexType, InterfaceType, LateBoundLinks, MembersOrExportsResolutionKind, ModuleSymbolLinks, NodeLinks, ObjectFlags, Signature, SourceFileLinks, StructuredType, SymbolFormatFlags, Type, TypeAlias, TypeAliasLinks, TypeData, TypeFlags, TypeReference, ValueSymbolLinks, SymbolNodeLinks } from "../types.js";
+import type { AccessFlags, AliasSymbolLinks, ContextFlags, DeclaredTypeLinks, IndexedAccessType, IndexFlags, IndexInfo, IndexType, InterfaceType, LateBoundLinks, MembersOrExportsResolutionKind, ModuleSymbolLinks, NodeLinks, ObjectFlags, Signature, SourceFileLinks, StructuredType, SymbolFormatFlags, Type, TypeAlias, TypeAliasLinks, TypeData, TypeFlags, TypeReference, ValueSymbolLinks, SymbolNodeLinks } from "../types.js";
 import type { Checker, CheckMode, DeclarationSpaces, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext } from "./state.js";
 import { SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsExportValue, SymbolFlagsLateBindingContainer, SymbolFlagsModule, SymbolFlagsModuleMember, SymbolFlagsReplaceableByMethod, SymbolFlagsType, SymbolFlagsValue, SymbolFlagsNamespace, SymbolFlagsTransient, SymbolFlagsBlockScopedVariable, SymbolFlagsClass, SymbolFlagsEnum, SymbolFlagsFunction, SymbolFlagsFunctionScopedVariable, SymbolFlagsAssignment, SymbolFlagsRegularEnum, SymbolFlagsConstEnum, SymbolFlagsVariable, SymbolFlagsInterface, SymbolFlagsTypeAlias, SymbolFlagsGlobalLookup, SymbolFlagsMethod, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsSetAccessor, SymbolFlagsGetAccessor, SymbolFlagsAccessor, SymbolFlagsEnumMember, NodeFlagsConstant, SymbolFlagsValueModule, SymbolFlagsNamespaceModule, SymbolFlagsConstEnumOnlyModule, SymbolFlagsObjectLiteral } from "../../ast/generated/flags.js";
 import { InternalSymbolNameComputed, InternalSymbolNameExportEquals, InternalSymbolNameImportAttributes, InternalSymbolNameExportStar, SymbolName } from "../../ast/symbol.js";
@@ -53,7 +53,7 @@ import { Checker_error, keyBuilder_writeByte, keyBuilder_writeInt } from "./supp
 import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, SourceFile_FileName, SourceFile_Path, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters, Node_ModifierFlags, Node_TypeArguments, Node_Expression, Node_PropertyName, Node_PropertyNameOrName, Node_ModuleSpecifier, Node_IsTypeOnly } from "../../ast/ast.js";
 import { Set_Has, Set_Len, Set_Add } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
-import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getTypeOfExpression, keyBuilder_writeTypes } from "./types.js";
+import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfEnum, keyBuilder_writeTypes } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
 import { Checker_isReadonlyAssignmentDeclaration } from "./relations.js";
 import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration, Checker_isErrorType } from "./diagnostics.js";
@@ -10859,7 +10859,7 @@ export function Checker_getEnumMemberValue(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaredTypeOfEnumMember","kind":"method","status":"stub","sigHash":"b5e56323a1755f2e657fdaf76002b7f012f611a33c4b2ba36f1029c324ab0439","bodyHash":"b0f7dba311187db2ce89734624b89af1487174428b40d553dadc0c7bc29d6b38"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaredTypeOfEnumMember","kind":"method","status":"implemented","sigHash":"b5e56323a1755f2e657fdaf76002b7f012f611a33c4b2ba36f1029c324ab0439","bodyHash":"b0f7dba311187db2ce89734624b89af1487174428b40d553dadc0c7bc29d6b38"}
  *
  * Go source:
  * func (c *Checker) getDeclaredTypeOfEnumMember(symbol *ast.Symbol) *Type {
@@ -10874,7 +10874,14 @@ export function Checker_getEnumMemberValue(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_getDeclaredTypeOfEnumMember(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDeclaredTypeOfEnumMember");
+  const links = LinkStore_Get(receiver!.declaredTypeLinks as unknown as GoPtr<LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>>, symbol_);
+  if (!(links!.declaredType !== undefined)) {
+    const enumType = Checker_getDeclaredTypeOfEnum(receiver, Checker_getParentOfSymbol(receiver, symbol_));
+    if (links!.declaredType === undefined) {
+      links!.declaredType = enumType;
+    }
+  }
+  return links!.declaredType;
 }
 
 /**
