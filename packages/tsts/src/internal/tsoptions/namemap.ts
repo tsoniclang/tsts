@@ -21,9 +21,9 @@ import { OptionsForWatch } from "./declswatch.js";
 // Go initializes package-level vars by dependency order; these depend on
 // OptionsDeclarations, BuildOpts, and OptionsForWatch (defined in other files
 // with late assignments), so they are assigned after those declarations.
-export let CompilerNameMap: GoPtr<NameMap> = undefined as never;
-export let BuildNameMap: GoPtr<NameMap> = undefined as never;
-export let WatchNameMap: GoPtr<NameMap> = undefined as never;
+export let CompilerNameMap: GoPtr<NameMap> = undefined;
+export let BuildNameMap: GoPtr<NameMap> = undefined;
+export let WatchNameMap: GoPtr<NameMap> = undefined;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/namemap.go::func::GetNameMapFromList","kind":"func","status":"implemented","sigHash":"06ddc8e3ab68388bc725a46d40a8fb6c4b86970f9736dd6d231c58ecfa81e1de","bodyHash":"a8eb468b647e920f49036ceffb2441326909814b7c7b62d8715adf78a31d67f1"}

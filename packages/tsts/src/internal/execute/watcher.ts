@@ -612,7 +612,7 @@ export function Watcher_recheckTsConfig(receiver: GoPtr<Watcher>): bool {
   const [configParseResult, errors] = GetParsedCommandLineOfConfigFile(
     receiver!.configFileName,
     receiver!.compilerOptionsFromCommandLine,
-    undefined as never,
+    undefined,
     receiver!.sys as unknown as Parameters<typeof GetParsedCommandLineOfConfigFile>[3],
     ExtendedConfigCache_as_tsoptions_ExtendedConfigCache(extendedConfigCache),
   );

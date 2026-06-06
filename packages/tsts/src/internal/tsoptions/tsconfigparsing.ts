@@ -1602,7 +1602,7 @@ export function resolverHost_Trace(receiver: GoPtr<resolverHost>, msg: string): 
  * 	return result
  * }
  */
-export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: ExtendedConfigCache): GoPtr<ParsedCommandLine> {
+export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
   // tracing?.push(tracing.Phase.Parse, "parseJsonSourceFileConfigFileContent", { path: sourceFile.fileName });
   const result = parseJsonConfigFileContentWorker(undefined /*json*/, sourceFile, host, basePath, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, unknown>>, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
   // tracing?.pop();
@@ -1866,7 +1866,7 @@ export function convertPropertyValueToJson(sourceFile: GoPtr<SourceFile>, valueE
  * 	return result
  * }
  */
-export function ParseJsonConfigFileContent(json: unknown, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: ExtendedConfigCache): GoPtr<ParsedCommandLine> {
+export function ParseJsonConfigFileContent(json: unknown, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
   const result = parseJsonConfigFileContentWorker(parseJsonToStringKey(json) as GoPtr<OrderedMap<string, unknown>>, undefined /*sourceFile*/, host, basePath, existingOptions, undefined /*existingOptionsRaw*/, configFileName, resolutionStack, extraFileExtensions, extendedConfigCache);
   return result;
 }
@@ -2129,7 +2129,7 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
  * 	return cacheEntry.extendedConfig, errors
  * }
  */
-export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: ParseConfigHost, resolutionStack: GoSlice<string>, extendedConfigCache: ExtendedConfigCache, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: ParseConfigHost, resolutionStack: GoSlice<string>, extendedConfigCache: GoPtr<ExtendedConfigCache>, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   const errors: GoPtr<Diagnostic>[] = [];
   const extendedConfigPath = ToPath(extendedConfigFileName, host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames());
 
@@ -2182,7 +2182,7 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
  * 	}
  * }
  */
-export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost, extendedConfigCache: ExtendedConfigCache): GoPtr<ExtendedConfigCacheEntry> {
+export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ExtendedConfigCacheEntry> {
   let extendedConfig: GoPtr<parsedTsconfig> = undefined;
   const entryErrors: GoPtr<Diagnostic>[] = [];
   const [extendedResult, err] = readJsonConfigFile(fileName, path, host.FS().ReadFile.bind(host.FS()));
@@ -2333,7 +2333,7 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 	return ownConfig, errors
  * }
  */
-export function parseConfig(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, configFileName: string, resolutionStack: GoSlice<string>, extendedConfigCache: ExtendedConfigCache): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function parseConfig(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, configFileName: string, resolutionStack: GoSlice<string>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   basePath = NormalizeSlashes(basePath);
   const resolvedPath = GetNormalizedAbsolutePath(configFileName, basePath);
   const errors: GoPtr<Diagnostic>[] = [];
@@ -2699,7 +2699,7 @@ export interface propOfRaw {
  * 	}
  * }
  */
-export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: ExtendedConfigCache): GoPtr<ParsedCommandLine> {
+export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, existingOptions: GoPtr<CompilerOptions>, existingOptionsRaw: GoPtr<OrderedMap>, configFileName: string, resolutionStack: GoSlice<Path>, extraFileExtensions: GoSlice<FileExtensionInfo>, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ParsedCommandLine> {
   const basePathForFileNames: string = configFileName !== ""
     ? NormalizePath(directoryOfCombinedPath(configFileName, basePath))
     : NormalizePath(basePath);
@@ -3738,7 +3738,7 @@ export function GetSupportedExtensionsWithJsonIfResolveJsonModule(compilerOption
  * 	return GetParsedCommandLineOfConfigFilePath(configFileName, tspath.ToPath(configFileName, sys.GetCurrentDirectory(), sys.FS().UseCaseSensitiveFileNames()), options, optionsRaw, sys, extendedConfigCache)
  * }
  */
-export function GetParsedCommandLineOfConfigFile(configFileName: string, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap>, sys: ParseConfigHost, extendedConfigCache: ExtendedConfigCache): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
+export function GetParsedCommandLineOfConfigFile(configFileName: string, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap>, sys: ParseConfigHost, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
   const normalizedFileName = GetNormalizedAbsolutePath(configFileName, sys.GetCurrentDirectory());
   return GetParsedCommandLineOfConfigFilePath(normalizedFileName, ToPath(normalizedFileName, sys.GetCurrentDirectory(), sys.FS().UseCaseSensitiveFileNames()), options, optionsRaw, sys, extendedConfigCache);
 }
@@ -3778,7 +3778,7 @@ export function GetParsedCommandLineOfConfigFile(configFileName: string, options
  * 	), nil
  * }
  */
-export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap>, sys: ParseConfigHost, extendedConfigCache: ExtendedConfigCache): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
+export function GetParsedCommandLineOfConfigFilePath(configFileName: string, path: Path, options: GoPtr<CompilerOptions>, optionsRaw: GoPtr<OrderedMap>, sys: ParseConfigHost, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<ParsedCommandLine>, GoSlice<GoPtr<Diagnostic>>] {
   const [configFileText, readErrors] = tryReadFile(configFileName, sys.FS().ReadFile.bind(sys.FS()), []);
   if ((readErrors ?? []).length > 0) {
     return [undefined, readErrors];
