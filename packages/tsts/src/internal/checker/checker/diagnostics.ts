@@ -25,6 +25,7 @@ import { AsPropertyDeclaration, AsHeritageClause, AsQualifiedName, AsTaggedTempl
 import { Set_Has, Set_Add } from "../../collections/set.js";
 import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
 import { IfElse, Every, Some, Filter, Find, OrElse, ElementOrNil } from "../../core/core.js";
+import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../../core/linkstore.js";
 import { NodeCoreModules } from "../../core/nodemodules.js";
 import { NewTextRange, TextRange_ContainsInclusive } from "../../core/text.js";
@@ -37,6 +38,7 @@ import { GetTokenPosOfNode, SkipTrivia, TokenToString } from "../../scanner/scan
 import { DeclarationNameToString, GetTextOfNode } from "../../scanner/utilities.js";
 import type { Signature, SignatureKind, Type } from "../types.js";
 import { SignatureFlagsIsSignatureCandidateForOverloadFailure, TypeFlagsAny, TypeFlagsNever, TypeFlagsNullable, TypeFlagsUnion, TypeFlagsUnknown, ObjectFlagsContainsWideningType } from "../types.js";
+import { SignatureKindCall } from "../types.js";
 import type { ExportTypeLinks } from "../types.js";
 import { Type_Types, Type_AsInterfaceType } from "../types.js";
 import { NewDiagnosticForNode, NewDiagnosticChainForNode, entityNameToString, isTypeReferenceIdentifier, tryGetPropertyAccessOrIdentifierToString, isObjectLiteralType } from "../utilities.js";
@@ -1472,7 +1474,7 @@ export function Checker_resolveErrorCall(receiver: GoPtr<Checker>, node: GoPtr<N
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorDetails","kind":"method","status":"stub","sigHash":"e14bdbd2367a35c1e0a6a8e0a77018ec595c0dc4182b927b4f94904e034e6d32","bodyHash":"fefc7dcc6be3ddfb689d0b6b5536543216623bcd6c3604d8454b38b67dbac654"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorDetails","kind":"method","status":"implemented","sigHash":"e14bdbd2367a35c1e0a6a8e0a77018ec595c0dc4182b927b4f94904e034e6d32","bodyHash":"fefc7dcc6be3ddfb689d0b6b5536543216623bcd6c3604d8454b38b67dbac654"}
  *
  * Go source:
  * func (c *Checker) invocationErrorDetails(errorTarget *ast.Node, apparentType *Type, kind SignatureKind) *ast.Diagnostic {
@@ -1532,11 +1534,85 @@ export function Checker_resolveErrorCall(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_invocationErrorDetails(receiver: GoPtr<Checker>, errorTarget: GoPtr<Node>, apparentType: GoPtr<Type>, kind: SignatureKind): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorDetails");
+  let diagnostic: GoPtr<Diagnostic> = undefined;
+  const isCall = kind === SignatureKindCall;
+  const awaitedType = Checker_getAwaitedType(receiver, apparentType);
+  const maybeMissingAwait = awaitedType !== undefined && Checker_getSignaturesOfType(receiver, awaitedType, kind).length > 0;
+  let target = errorTarget;
+  if (IsPropertyAccessExpression(errorTarget) && IsCallExpression(errorTarget!.Parent)) {
+    target = Node_Name(errorTarget);
+  }
+  if ((apparentType!.flags & TypeFlagsUnion) !== 0) {
+    const types = Type_Types(apparentType);
+    let hasSignatures = false as bool;
+    for (const constituent of types) {
+      const signatures = Checker_getSignaturesOfType(receiver, constituent, kind);
+      if (signatures.length !== 0) {
+        hasSignatures = true as bool;
+        if (diagnostic !== undefined) {
+          break;
+        }
+      } else {
+        if (diagnostic === undefined) {
+          diagnostic = NewDiagnosticForNode(
+            target,
+            IfElse(isCall, Type_0_has_no_call_signatures, Type_0_has_no_construct_signatures),
+            Checker_TypeToString(receiver, constituent),
+          );
+          diagnostic = NewDiagnosticChainForNode(
+            diagnostic,
+            target,
+            IfElse(isCall, Not_all_constituents_of_type_0_are_callable, Not_all_constituents_of_type_0_are_constructable),
+            Checker_TypeToString(receiver, apparentType),
+          );
+        }
+        if (hasSignatures) {
+          break;
+        }
+      }
+    }
+    if (!hasSignatures) {
+      diagnostic = NewDiagnosticForNode(
+        target,
+        IfElse(isCall, No_constituent_of_type_0_is_callable, No_constituent_of_type_0_is_constructable),
+        Checker_TypeToString(receiver, apparentType),
+      );
+    }
+    if (diagnostic === undefined) {
+      diagnostic = NewDiagnosticForNode(
+        target,
+        IfElse(
+          isCall,
+          Each_member_of_the_union_type_0_has_signatures_but_none_of_those_signatures_are_compatible_with_each_other,
+          Each_member_of_the_union_type_0_has_construct_signatures_but_none_of_those_signatures_are_compatible_with_each_other,
+        ),
+        Checker_TypeToString(receiver, apparentType),
+      );
+    }
+  } else {
+    diagnostic = NewDiagnosticChainForNode(
+      diagnostic,
+      target,
+      IfElse(isCall, Type_0_has_no_call_signatures, Type_0_has_no_construct_signatures),
+      Checker_TypeToString(receiver, apparentType),
+    );
+  }
+  let headMessage = IfElse(isCall, This_expression_is_not_callable, This_expression_is_not_constructable);
+  if (IsCallExpression(errorTarget!.Parent) && (Node_Arguments(errorTarget!.Parent)?.length ?? 0) === 0) {
+    const resolvedSymbol = Checker_getResolvedSymbolOrNil(receiver, errorTarget);
+    if (resolvedSymbol !== undefined && (resolvedSymbol!.Flags & SymbolFlagsGetAccessor) !== 0) {
+      headMessage = This_expression_is_not_callable_because_it_is_a_get_accessor_Did_you_mean_to_use_it_without;
+    }
+  }
+  diagnostic = NewDiagnosticChainForNode(diagnostic, target, headMessage);
+  if (maybeMissingAwait) {
+    Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(errorTarget, Did_you_forget_to_use_await));
+  }
+  return diagnostic;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationError","kind":"method","status":"stub","sigHash":"a45a023459755f491899dc36253bce0dc97596689e0f617740fcbd053cc81577","bodyHash":"25827b209cafdcb69144d30dc2edefa699a19edac28b235aa06c58ea160f5a4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationError","kind":"method","status":"implemented","sigHash":"a45a023459755f491899dc36253bce0dc97596689e0f617740fcbd053cc81577","bodyHash":"25827b209cafdcb69144d30dc2edefa699a19edac28b235aa06c58ea160f5a4b"}
  *
  * Go source:
  * func (c *Checker) invocationError(errorTarget *ast.Node, apparentType *Type, kind SignatureKind, relatedInformation *ast.Diagnostic) {
@@ -1549,11 +1625,16 @@ export function Checker_invocationErrorDetails(receiver: GoPtr<Checker>, errorTa
  * }
  */
 export function Checker_invocationError(receiver: GoPtr<Checker>, errorTarget: GoPtr<Node>, apparentType: GoPtr<Type>, kind: SignatureKind, relatedInformation: GoPtr<Diagnostic>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationError");
+  const diagnostic = Checker_invocationErrorDetails(receiver, errorTarget, apparentType, kind);
+  if (relatedInformation !== undefined) {
+    Diagnostic_AddRelatedInfo(diagnostic, relatedInformation);
+  }
+  DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
+  Checker_invocationErrorRecovery(receiver, apparentType, kind, diagnostic);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorRecovery","kind":"method","status":"stub","sigHash":"8b4159b53e315d99bd66e2967c6a36346d8a6de37e36fc6a3614f0aba6849d3c","bodyHash":"89c4bf6b0a2ae158c0f40ded94924ef45901d4222a7179b682e0d95dc052ddc3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorRecovery","kind":"method","status":"implemented","sigHash":"8b4159b53e315d99bd66e2967c6a36346d8a6de37e36fc6a3614f0aba6849d3c","bodyHash":"89c4bf6b0a2ae158c0f40ded94924ef45901d4222a7179b682e0d95dc052ddc3"}
  *
  * Go source:
  * func (c *Checker) invocationErrorRecovery(apparentType *Type, kind SignatureKind, diagnostic *ast.Diagnostic) {
@@ -1573,7 +1654,21 @@ export function Checker_invocationError(receiver: GoPtr<Checker>, errorTarget: G
  * }
  */
 export function Checker_invocationErrorRecovery(receiver: GoPtr<Checker>, apparentType: GoPtr<Type>, kind: SignatureKind, diagnostic: GoPtr<Diagnostic>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.invocationErrorRecovery");
+  if (apparentType!.symbol === undefined) {
+    return;
+  }
+  const links = LinkStore_Get(receiver!.exportTypeLinks as unknown as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, apparentType!.symbol);
+  const importNode = links!.originatingImport;
+  if (importNode !== undefined && !IsImportCall(importNode)) {
+    const sigs = Checker_getSignaturesOfType(receiver, Checker_getTypeOfSymbol(receiver, links!.target), kind);
+    if (sigs.length === 0) {
+      return;
+    }
+    Diagnostic_AddRelatedInfo(
+      diagnostic,
+      NewDiagnosticForNode(importNode, Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead),
+    );
+  }
 }
 
 /**
