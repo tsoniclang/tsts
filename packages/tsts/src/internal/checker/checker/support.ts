@@ -4,8 +4,9 @@ import { Node_FlowNodeData, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { Diagnostic_SetCategory } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_SetCategory } from "../../ast/diagnostic.js";
 import type { Kind } from "../../ast/generated/kinds.js";
+import { KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindFalseKeyword, KindTrueKeyword } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { NodeFlagsAmbient, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/generated/flags.js";
@@ -15,7 +16,7 @@ import { ModifierFlagsNone, ModifierFlagsNonPublicAccessibilityModifier } from "
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import { Node_Elements, Node_Members, Node_Text } from "../../ast/ast.js";
 import type { FlowNode } from "../../ast/flow.js";
-import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, IsInJSFile } from "../../ast/utilities.js";
+import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, IsEntityNameExpression, IsInJSFile, SkipParentheses } from "../../ast/utilities.js";
 import { Every } from "../../core/core.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
@@ -23,7 +24,9 @@ import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import {
   All_destructured_elements_are_unused,
   Compiler_reserves_name_0_when_emitting_private_identifier_downlevel,
+  Did_you_mean_0,
   Duplicate_identifier_0_Compiler_reserves_name_1_when_emitting_super_references_in_static_initializers,
+  This_condition_will_always_return_0,
 } from "../../diagnostics/generated/messages.js";
 import type { Result } from "../../evaluator/evaluator.js";
 import { Map } from "../../core/core.js";
@@ -41,13 +44,15 @@ import type { EmitResolver } from "../emitresolver.js";
 import type { SymbolReferenceLinks, Ternary, Type } from "../types.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
-import { getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
+import { entityNameToString, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
+import { TokenToString } from "../../scanner/scanner.js";
 import { TernaryFalse, TernaryTrue } from "../types.js";
 import { Checker_addErrorOrSuggestion, Checker_unusedIsError } from "./diagnostics.js";
 import { Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
 import { Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
-import { Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations } from "./symbols.js";
+import { Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations } from "./symbols.js";
 import { Checker_reportUnusedVariable } from "./syntax-checking.js";
+import { createDiagnosticForNode } from "./state.js";
 import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
 
 /**
@@ -724,7 +729,7 @@ export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNaNEquality","kind":"method","status":"stub","sigHash":"b00c0bfa7bb79f26330352cb2040868edefdf7e36c98263438fd24e07eae377b","bodyHash":"b53e4176e9e5ebaefa236d598f7b0e05827ab38068187b8d3bc53c7d2328e752"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNaNEquality","kind":"method","status":"implemented","sigHash":"b00c0bfa7bb79f26330352cb2040868edefdf7e36c98263438fd24e07eae377b","bodyHash":"b53e4176e9e5ebaefa236d598f7b0e05827ab38068187b8d3bc53c7d2328e752"}
  *
  * Go source:
  * func (c *Checker) checkNaNEquality(errorNode *ast.Node, operator ast.Kind, left *ast.Expression, right *ast.Expression) {
@@ -754,7 +759,34 @@ export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkNaNEquality(receiver: GoPtr<Checker>, errorNode: GoPtr<Node>, operator: Kind, left: GoPtr<Expression>, right: GoPtr<Expression>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNaNEquality");
+  const isLeftNaN = Checker_isGlobalNaN(receiver, SkipParentheses(left as GoPtr<Node>) as GoPtr<Expression>);
+  const isRightNaN = Checker_isGlobalNaN(receiver, SkipParentheses(right as GoPtr<Node>) as GoPtr<Expression>);
+  if (isLeftNaN || isRightNaN) {
+    const err = Checker_error(
+      receiver,
+      errorNode,
+      This_condition_will_always_return_0,
+      TokenToString(operator === KindEqualsEqualsEqualsToken || operator === KindEqualsEqualsToken ? KindFalseKeyword : KindTrueKeyword),
+    );
+    if (isLeftNaN && isRightNaN) {
+      return;
+    }
+    let operatorString = "";
+    if (operator === KindExclamationEqualsEqualsToken || operator === KindExclamationEqualsToken) {
+      operatorString = TokenToString(KindExclamationToken);
+    }
+    let location = left as GoPtr<Node>;
+    if (isLeftNaN) {
+      location = right as GoPtr<Node>;
+    }
+    const expression = SkipParentheses(location);
+    let entityName = "...";
+    if (IsEntityNameExpression(expression)) {
+      entityName = entityNameToString(expression);
+    }
+    const suggestion = operatorString + "Number.isNaN(" + entityName + ")";
+    Diagnostic_AddRelatedInfo(err, createDiagnosticForNode(location, Did_you_mean_0, suggestion));
+  }
 }
 
 /**
