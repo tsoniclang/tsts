@@ -2323,7 +2323,7 @@ export function Checker_reportCircularityError(receiver: GoPtr<Checker>, symbol_
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportErrorsFromWidening","kind":"method","status":"stub","sigHash":"8a87d93f4f2bb42d7f36d00047f8b32cc1cf8793e8b8ae1d9491671b4e6db19f","bodyHash":"1c98b4f1852a7cb7a3f7a63d069b12283b472b2d72d1f411965624a41f7ba7bf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportErrorsFromWidening","kind":"method","status":"implemented","sigHash":"8a87d93f4f2bb42d7f36d00047f8b32cc1cf8793e8b8ae1d9491671b4e6db19f","bodyHash":"1c98b4f1852a7cb7a3f7a63d069b12283b472b2d72d1f411965624a41f7ba7bf"}
  *
  * Go source:
  * func (c *Checker) reportErrorsFromWidening(declaration *ast.Node, t *Type, wideningKind WideningKind) {
@@ -2338,11 +2338,17 @@ export function Checker_reportCircularityError(receiver: GoPtr<Checker>, symbol_
  * }
  */
 export function Checker_reportErrorsFromWidening(receiver: GoPtr<Checker>, declaration: GoPtr<Node>, t: GoPtr<Type>, wideningKind: WideningKind): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportErrorsFromWidening");
+  if (receiver!.noImplicitAny && (t!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
+    if (wideningKind === WideningKindNormal || (IsFunctionLikeDeclaration(declaration) && Checker_shouldReportErrorsFromWideningWithContextualSignature(receiver, declaration, wideningKind))) {
+      if (!Checker_reportWideningErrorsInType(receiver, t)) {
+        Checker_reportImplicitAny(receiver, declaration, t, wideningKind);
+      }
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.shouldReportErrorsFromWideningWithContextualSignature","kind":"method","status":"stub","sigHash":"6d7968bcaba6519c9d3aacbe2c73a59b75970fdc00267eda66d3333f598673ae","bodyHash":"b9ced644ed9199470836a8c4461e65a8d900c4703151d630e3e59b3227401fc7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.shouldReportErrorsFromWideningWithContextualSignature","kind":"method","status":"implemented","sigHash":"6d7968bcaba6519c9d3aacbe2c73a59b75970fdc00267eda66d3333f598673ae","bodyHash":"b9ced644ed9199470836a8c4461e65a8d900c4703151d630e3e59b3227401fc7"}
  *
  * Go source:
  * func (c *Checker) shouldReportErrorsFromWideningWithContextualSignature(declaration *ast.Node, wideningKind WideningKind) bool {
@@ -2371,11 +2377,34 @@ export function Checker_reportErrorsFromWidening(receiver: GoPtr<Checker>, decla
  * }
  */
 export function Checker_shouldReportErrorsFromWideningWithContextualSignature(receiver: GoPtr<Checker>, declaration: GoPtr<Node>, wideningKind: WideningKind): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.shouldReportErrorsFromWideningWithContextualSignature");
+  const signature = Checker_getContextualSignatureForFunctionLikeDeclaration(receiver, declaration);
+  if (signature === undefined) {
+    return true;
+  }
+  let returnType = Checker_getReturnTypeOfSignature(receiver, signature);
+  const flags = GetFunctionFlags(declaration);
+  switch (wideningKind) {
+    case WideningKindFunctionReturn:
+      if ((flags & FunctionFlagsGenerator) !== 0) {
+        returnType = OrElse(Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, returnType, (flags & FunctionFlagsAsync) !== 0), returnType);
+      } else if ((flags & FunctionFlagsAsync) !== 0) {
+        returnType = OrElse(Checker_getAwaitedTypeNoAlias(receiver, returnType), returnType);
+      }
+      return Checker_isGenericType(receiver, returnType);
+    case WideningKindGeneratorYield: {
+      const yieldType = Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindYield, returnType, (flags & FunctionFlagsAsync) !== 0);
+      return yieldType !== undefined && Checker_isGenericType(receiver, yieldType);
+    }
+    case WideningKindGeneratorNext: {
+      const nextType = Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindNext, returnType, (flags & FunctionFlagsAsync) !== 0);
+      return nextType !== undefined && Checker_isGenericType(receiver, nextType);
+    }
+  }
+  return false;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportWideningErrorsInType","kind":"method","status":"stub","sigHash":"c793c199893476d8d8a34047f417c69b7276a2501f33377a22dbdd23ad3170dd","bodyHash":"c66486351ee83492ca79dd068b648bcdb9f7877417587cf3c516fc4482b772ae"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportWideningErrorsInType","kind":"method","status":"implemented","sigHash":"c793c199893476d8d8a34047f417c69b7276a2501f33377a22dbdd23ad3170dd","bodyHash":"c66486351ee83492ca79dd068b648bcdb9f7877417587cf3c516fc4482b772ae"}
  *
  * Go source:
  * func (c *Checker) reportWideningErrorsInType(t *Type) bool {
@@ -2417,7 +2446,40 @@ export function Checker_shouldReportErrorsFromWideningWithContextualSignature(re
  * }
  */
 export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportWideningErrorsInType");
+  let errorReported = false;
+  if ((t!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
+    if ((t!.flags & TypeFlagsUnion) !== 0) {
+      if (Some(Type_Types(t), (tt: GoPtr<Type>) => Checker_isEmptyObjectType(receiver, tt))) {
+        errorReported = true;
+      } else {
+        for (const s of Type_Types(t)) {
+          errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
+        }
+      }
+    } else if (Checker_isArrayOrTupleType(receiver, t)) {
+      for (const s of Checker_getTypeArguments(receiver, t)) {
+        errorReported = Checker_reportWideningErrorsInType(receiver, s) || errorReported;
+      }
+    } else if (isObjectLiteralType(t)) {
+      for (const p of Checker_getPropertiesOfObjectType(receiver, t)) {
+        const s = Checker_getTypeOfSymbol(receiver, p);
+        if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
+          errorReported = Checker_reportWideningErrorsInType(receiver, s);
+          if (!errorReported) {
+            const valueDeclaration = Find(p!.Declarations, (d: GoPtr<Node>) => {
+              const declarationValue = Node_Symbol(d)!.ValueDeclaration;
+              return declarationValue !== undefined && declarationValue!.Parent === t!.symbol!.ValueDeclaration;
+            });
+            if (valueDeclaration !== undefined) {
+              Checker_error(receiver, valueDeclaration, Object_literal_s_property_0_implicitly_has_an_1_type, Checker_symbolToString(receiver, p), Checker_TypeToString(receiver, Checker_getWidenedType(receiver, s)));
+              errorReported = true;
+            }
+          }
+        }
+      }
+    }
+  }
+  return errorReported;
 }
 
 /**
