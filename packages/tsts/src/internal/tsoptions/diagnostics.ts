@@ -79,7 +79,7 @@ export interface ParseCommandLineWorkerDiagnostics {
  */
 // Go initializes package-level vars by dependency order; assigned after
 // OptionsDeclarations is initialized in declscompiler.ts.
-export let CompilerOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
+export let CompilerOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::func::getParseCommandLineWorkerDiagnostics","kind":"func","status":"implemented","sigHash":"5e6ee1a7dbb0b0305303b2ca7598920e4df8215ea06c1b71675ce63417f4e960","bodyHash":"0c9c8651121ba0fec17135a2647d52459090124161cd391e3493c108bdada6c4"}
@@ -134,7 +134,7 @@ export function getParseCommandLineWorkerDiagnostics(decls: GoSlice<GoPtr<Comman
  */
 // Go initializes package-level vars by dependency order; assigned after
 // OptionsForWatch is initialized in declswatch.ts.
-export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
+export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/diagnostics.go::varGroup::buildOptionsDidYouMeanDiagnostics","kind":"varGroup","status":"implemented","sigHash":"82367338c4879fe397da04e723c5eb0818a1777fa154ea066902967579bff305","bodyHash":"346eda9bb19ecf3695410844f0b33357dfa620ac945c14a2f450d2d7e9df308f"}
@@ -155,7 +155,7 @@ export let watchOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagno
  */
 // Go initializes package-level vars by dependency order; assigned after
 // BuildOpts and CompilerNameMap are initialized.
-export let buildOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined as never;
+export let buildOptionsDidYouMeanDiagnostics: GoPtr<ParseCommandLineWorkerDiagnostics> = undefined;
 
 // Assigned here (after all dependent vars are initialized in their modules)
 // to match Go's dependency-ordered package-level var initialization.
