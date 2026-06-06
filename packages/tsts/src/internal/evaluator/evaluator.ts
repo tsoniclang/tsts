@@ -1,19 +1,51 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
+import { Node_Expression, Node_Text } from "../ast/ast.js";
+import { AsBinaryExpression, AsPrefixUnaryExpression, AsTemplateExpression, AsTemplateSpan } from "../ast/generated/casts.js";
+import {
+  KindAmpersandToken,
+  KindAsteriskAsteriskToken,
+  KindAsteriskToken,
+  KindBarToken,
+  KindBinaryExpression,
+  KindCaretToken,
+  KindElementAccessExpression,
+  KindGreaterThanGreaterThanGreaterThanToken,
+  KindGreaterThanGreaterThanToken,
+  KindIdentifier,
+  KindLessThanLessThanToken,
+  KindMinusToken,
+  KindNoSubstitutionTemplateLiteral,
+  KindNumericLiteral,
+  KindPercentToken,
+  KindPlusToken,
+  KindPrefixUnaryExpression,
+  KindPropertyAccessExpression,
+  KindSlashToken,
+  KindStringLiteral,
+  KindTemplateExpression,
+  KindTildeToken,
+} from "../ast/generated/kinds.js";
+import { IsEntityNameExpression, OEKParentheses, SkipOuterExpressions } from "../ast/utilities.js";
+import type { OuterExpressionKinds } from "../ast/utilities.js";
 import { IfElse } from "../core/core.js";
 import type { Number } from "../jsnum/jsnum.js";
-import { Number_IsNaN } from "../jsnum/jsnum.js";
+import {
+  Number_BitwiseAND,
+  Number_BitwiseNOT,
+  Number_BitwiseOR,
+  Number_BitwiseXOR,
+  Number_Exponentiate,
+  Number_IsNaN,
+  Number_LeftShift,
+  Number_Remainder,
+  Number_SignedRightShift,
+  Number_UnsignedRightShift,
+} from "../jsnum/jsnum.js";
 import type { PseudoBigInt } from "../jsnum/pseudobigint.js";
 import { PseudoBigInt_String } from "../jsnum/pseudobigint.js";
-import { Number_String } from "../jsnum/string.js";
-
-// `OuterExpressionKinds` is defined in `ast/utilities.go`, which has not yet
-// been ported. It is forward-declared here as the numeric flag type it will
-// be (Go `int16`) so the signature of the (still-stubbed) NewEvaluator
-// compiles. The only consumer in this file is a stub blocked on the unported
-// ast/utilities package.
-type OuterExpressionKinds = int;
+import { FromString, Number_String } from "../jsnum/string.js";
 
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const byteLen = (s: string): int => utf8Encoder.encode(s).length;
@@ -62,7 +94,7 @@ export function NewResult(value: unknown, isSyntacticallyString: bool, resolvedO
 export type Evaluator = (expr: GoPtr<Node>, location: GoPtr<Node>) => Result;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator","kind":"func","status":"stub","sigHash":"c788e7be8c5a4a7b604fc445b31bf83a466c0b2ab9747563519c09d25af6b42b","bodyHash":"b6e2b80e11d91c71127807eb17266c7286a377aadb316adc67362dd67ec2213d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator","kind":"func","status":"implemented","sigHash":"c788e7be8c5a4a7b604fc445b31bf83a466c0b2ab9747563519c09d25af6b42b","bodyHash":"b6e2b80e11d91c71127807eb17266c7286a377aadb316adc67362dd67ec2213d"}
  *
  * Go source:
  * func NewEvaluator(evaluateEntity Evaluator, outerExpressionsToSkip ast.OuterExpressionKinds) Evaluator {
@@ -166,11 +198,121 @@ export type Evaluator = (expr: GoPtr<Node>, location: GoPtr<Node>) => Result;
  * }
  */
 export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: OuterExpressionKinds): Evaluator {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::NewEvaluator");
+  let evaluate: Evaluator;
+  evaluate = (expr: GoPtr<Node>, location: GoPtr<Node>): Result => {
+    let isSyntacticallyString: bool = false;
+    let resolvedOtherFiles: bool = false;
+    let hasExternalReferences: bool = false;
+    // It's unclear when/whether we should consider skipping other kinds of outer expressions.
+    // Type assertions intentionally break evaluation when evaluating literal types, such as:
+    //     type T = `one ${"two" as any} three`; // string
+    // But it's less clear whether such an assertion should break enum member evaluation:
+    //     enum E {
+    //       A = "one" as any
+    //     }
+    // SatisfiesExpressions and non-null assertions seem to have even less reason to break
+    // emitting enum members as literals. However, these expressions also break Babel's
+    // evaluation (but not esbuild's), and the isolatedModules errors we give depend on
+    // our evaluation results, so we're currently being conservative so as to issue errors
+    // on code that might break Babel.
+    expr = SkipOuterExpressions(expr, (outerExpressionsToSkip | OEKParentheses) as OuterExpressionKinds);
+    switch (expr!.Kind) {
+      case KindPrefixUnaryExpression: {
+        const prefix = AsPrefixUnaryExpression(expr)!;
+        const result: Result = evaluate(prefix.Operand, location);
+        resolvedOtherFiles = result.ResolvedOtherFiles;
+        hasExternalReferences = result.HasExternalReferences;
+        if (typeof result.Value === "number") {
+          const value = result.Value as Number;
+          switch (prefix.Operator) {
+            case KindPlusToken:
+              return { Value: value, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindMinusToken:
+              return { Value: -value, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindTildeToken:
+              return { Value: Number_BitwiseNOT(value), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+          }
+        }
+        break;
+      }
+      case KindBinaryExpression: {
+        const binary = AsBinaryExpression(expr)!;
+        const left: Result = evaluate(binary.Left, location);
+        const right: Result = evaluate(binary.Right, location);
+        const operator = binary.OperatorToken!.Kind;
+        isSyntacticallyString = ((left.IsSyntacticallyString || right.IsSyntacticallyString) && binary.OperatorToken!.Kind === KindPlusToken) as bool;
+        resolvedOtherFiles = (left.ResolvedOtherFiles || right.ResolvedOtherFiles) as bool;
+        hasExternalReferences = (left.HasExternalReferences || right.HasExternalReferences) as bool;
+        const leftIsNum: bool = typeof left.Value === "number";
+        const rightIsNum: bool = typeof right.Value === "number";
+        const leftNum: Number = leftIsNum ? left.Value as Number : 0;
+        const rightNum: Number = rightIsNum ? right.Value as Number : 0;
+        if (leftIsNum && rightIsNum) {
+          switch (operator) {
+            case KindBarToken:
+              return { Value: Number_BitwiseOR(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindAmpersandToken:
+              return { Value: Number_BitwiseAND(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindGreaterThanGreaterThanToken:
+              return { Value: Number_SignedRightShift(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindGreaterThanGreaterThanGreaterThanToken:
+              return { Value: Number_UnsignedRightShift(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindLessThanLessThanToken:
+              return { Value: Number_LeftShift(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindCaretToken:
+              return { Value: Number_BitwiseXOR(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindAsteriskToken:
+              return { Value: leftNum * rightNum, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindSlashToken:
+              return { Value: leftNum / rightNum, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindPlusToken:
+              return { Value: leftNum + rightNum, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindMinusToken:
+              return { Value: leftNum - rightNum, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindPercentToken:
+              return { Value: Number_Remainder(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+            case KindAsteriskAsteriskToken:
+              return { Value: Number_Exponentiate(leftNum, rightNum), IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+          }
+        }
+        const leftIsStr: bool = typeof left.Value === "string";
+        const rightIsStr: bool = typeof right.Value === "string";
+        let leftStr: string = leftIsStr ? left.Value as string : "";
+        let rightStr: string = rightIsStr ? right.Value as string : "";
+        if ((leftIsStr || leftIsNum) && (rightIsStr || rightIsNum) && operator === KindPlusToken) {
+          if (leftIsNum) {
+            leftStr = Number_String(leftNum);
+          }
+          if (rightIsNum) {
+            rightStr = Number_String(rightNum);
+          }
+          return { Value: leftStr + rightStr, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+        }
+        break;
+      }
+      case KindStringLiteral:
+      case KindNoSubstitutionTemplateLiteral:
+        return { Value: Node_Text(expr), IsSyntacticallyString: true, ResolvedOtherFiles: false, HasExternalReferences: false };
+      case KindTemplateExpression:
+        return evaluateTemplateExpression(expr, location, evaluate);
+      case KindNumericLiteral:
+        return { Value: FromString(Node_Text(expr)), IsSyntacticallyString: false, ResolvedOtherFiles: false, HasExternalReferences: false };
+      case KindIdentifier:
+        return evaluateEntity(expr, location);
+      case KindElementAccessExpression:
+      case KindPropertyAccessExpression:
+        if (IsEntityNameExpression(Node_Expression(expr))) {
+          return evaluateEntity(expr, location);
+        }
+        break;
+    }
+    return { Value: undefined, IsSyntacticallyString: isSyntacticallyString, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
+  };
+  return evaluate;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::evaluateTemplateExpression","kind":"func","status":"stub","sigHash":"6c29c77ddc6dad3fe14851dfd638b973dfce35e64ae865b7b9eb2a4ed74873d1","bodyHash":"289189194c5aeaa963b81e7420205e134470572d1a9817d2f6d63f8e5f8379bc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::evaluateTemplateExpression","kind":"func","status":"implemented","sigHash":"6c29c77ddc6dad3fe14851dfd638b973dfce35e64ae865b7b9eb2a4ed74873d1","bodyHash":"289189194c5aeaa963b81e7420205e134470572d1a9817d2f6d63f8e5f8379bc"}
  *
  * Go source:
  * func evaluateTemplateExpression(expr *ast.Node, location *ast.Node, evaluate Evaluator) Result {
@@ -192,7 +334,23 @@ export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: 
  * }
  */
 export function evaluateTemplateExpression(expr: GoPtr<Node>, location: GoPtr<Node>, evaluate: Evaluator): Result {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/evaluator/evaluator.go::func::evaluateTemplateExpression");
+  let sb: string = "";
+  const templateExpression = AsTemplateExpression(expr)!;
+  sb += Node_Text(templateExpression.Head);
+  let resolvedOtherFiles: bool = false;
+  let hasExternalReferences: bool = false;
+  for (const span of templateExpression.TemplateSpans!.Nodes) {
+    const templateSpan = AsTemplateSpan(span)!;
+    const spanResult: Result = evaluate(templateSpan.Expression, location);
+    if (spanResult.Value === undefined) {
+      return { Value: undefined, IsSyntacticallyString: true, ResolvedOtherFiles: false, HasExternalReferences: false };
+    }
+    sb += AnyToString(spanResult.Value);
+    sb += Node_Text(templateSpan.Literal);
+    resolvedOtherFiles = (resolvedOtherFiles || spanResult.ResolvedOtherFiles) as bool;
+    hasExternalReferences = (hasExternalReferences || spanResult.HasExternalReferences) as bool;
+  }
+  return { Value: sb, IsSyntacticallyString: true, ResolvedOtherFiles: resolvedOtherFiles, HasExternalReferences: hasExternalReferences };
 }
 
 /**
