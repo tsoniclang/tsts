@@ -15,7 +15,7 @@ import { JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty } from
 import { CheckFlagsLate } from "../ast/checkflags.js";
 import { ModifierFlagsExport, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsParameterPropertyModifier } from "../ast/modifierflags.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
-import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsConstEnumOnlyModule, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
+import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import { NodeFlagsAmbient, NodeFlagsJSDoc } from "../ast/generated/flags.js";
 import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindExportDeclaration, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken, KindStaticKeyword, KindReadonlyKeyword } from "../ast/generated/kinds.js";
@@ -65,7 +65,8 @@ import { Checker_GetEffectiveDeclarationFlags, Checker_GetResolutionModeOverride
 import { Checker_GetConstantValue } from "./services.js";
 import { Checker_tryGetElementAccessExpressionName } from "./flow.js";
 import { Checker_getResolvedSymbolOrNil } from "./checker/symbols.js";
-import { isFreshLiteralType, isConstEnumSymbol, isTupleType } from "./checker/state.js";
+import { isFreshLiteralType, isTupleType } from "./checker/state.js";
+import { isConstEnumOrConstEnumOnlyModule } from "./const-enum.js";
 import type { Checker, ReferenceHint } from "./checker/state.js";
 import { TypeFlagsAnyOrUnknown, TypeFlagsVoid, TypeFlagsNullable, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsBigIntLike, TypeFlagsStringLike, TypeFlagsEnumLike, TypeFlagsESSymbolLike, TypeFlagsLiteral, TypeFlagsNever } from "./types.js";
 import type { TypeFlags, AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo, LiteralType, Type } from "./types.js";
@@ -1489,18 +1490,6 @@ export function EmitResolver_isSymbolAccessible(receiver: GoPtr<EmitResolver>, s
  */
 export function EmitResolver_IsSymbolAccessible(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult {
   return EmitResolver_isSymbolAccessible(receiver, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isConstEnumOrConstEnumOnlyModule","kind":"func","status":"implemented","sigHash":"55d841918a92ed5c2c67ea7b6d8fa0359e2ea281c23c8953dc793fda495b3dca","bodyHash":"a2d41aaabe390d42221701002e1516de3c195f0aca1f32893766700c71431d19"}
- *
- * Go source:
- * func isConstEnumOrConstEnumOnlyModule(s *ast.Symbol) bool {
- * 	return isConstEnumSymbol(s) || s.Flags&ast.SymbolFlagsConstEnumOnlyModule != 0
- * }
- */
-export function isConstEnumOrConstEnumOnlyModule(s: GoPtr<Symbol>): bool {
-  return (isConstEnumSymbol(s) || (s!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0) as bool;
 }
 
 /**
