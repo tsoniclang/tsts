@@ -1,8 +1,8 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
-import type { Mutex, Once, RWMutex } from "../../go/sync.js";
-import type { Bool } from "../../go/sync/atomic.js";
+import { Mutex, Once, RWMutex } from "../../go/sync.js";
+import { Bool } from "../../go/sync/atomic.js";
 import type { Set } from "../collections/set.js";
 import { ModuleKindCommonJS, ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
@@ -288,6 +288,8 @@ import type { SourceFileParseOptions } from "./parseoptions.js";
 import { ComputePositionMap } from "./positionmap.js";
 import type { PositionMap } from "./positionmap.js";
 import type { Symbol as Symbol_4919c5f0, SymbolTable } from "./symbol.js";
+import * as utilities from "./utilities.js";
+import { NodeVisitor_visitToken, NodeVisitor_visitTopLevelStatements } from "./visitor.js";
 import type { NodeVisitor } from "./visitor.js";
 
 export type { Node, NodeList, ModifierList, NodeFactoryCoercible, Visitor, nodeData, NodeBase } from "./spine.js";
@@ -3112,7 +3114,7 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc","kind":"method","status":"stub","sigHash":"1d3cb1d38faf7da5151a84121dbb168530bdb76d1d2635bff4233a5f578ff362","bodyHash":"ca10b85819bcd16331ec0db578a050d65273704844816a269c21500830ebea7c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc","kind":"method","status":"implemented","sigHash":"1d3cb1d38faf7da5151a84121dbb168530bdb76d1d2635bff4233a5f578ff362","bodyHash":"ca10b85819bcd16331ec0db578a050d65273704844816a269c21500830ebea7c"}
  *
  * Go source:
  * func (node *Node) JSDoc(file *SourceFile) []*Node {
@@ -3132,11 +3134,24 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
  * }
  */
 export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.JSDoc");
+  if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
+    return undefined as unknown as GoSlice<GoPtr<Node>>;
+  }
+  let resolvedFile = file;
+  if (resolvedFile === undefined) {
+    resolvedFile = utilities.GetSourceFileOfNode(receiver);
+    if (resolvedFile === undefined) {
+      return undefined as unknown as GoSlice<GoPtr<Node>>;
+    }
+  }
+  if (resolvedFile.hasLazyJSDoc) {
+    return SourceFile_resolveJSDoc(resolvedFile, receiver);
+  }
+  return resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc","kind":"method","status":"stub","sigHash":"e1b1dc027f606be82d9a51f3ca645f4d04947c0767ea65a7f6cbf47bf6a8b3a2","bodyHash":"76d96b9c8c86f92cf8d4793d5808deb5c9682c7601a303ad3ddb6ed382d4b813"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc","kind":"method","status":"implemented","sigHash":"e1b1dc027f606be82d9a51f3ca645f4d04947c0767ea65a7f6cbf47bf6a8b3a2","bodyHash":"76d96b9c8c86f92cf8d4793d5808deb5c9682c7601a303ad3ddb6ed382d4b813"}
  *
  * Go source:
  * func (node *Node) EagerJSDoc(file *SourceFile) []*Node {
@@ -3159,7 +3174,23 @@ export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSl
  * }
  */
 export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.EagerJSDoc");
+  if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
+    return undefined as unknown as GoSlice<GoPtr<Node>>;
+  }
+  let resolvedFile = file;
+  if (resolvedFile === undefined) {
+    resolvedFile = utilities.GetSourceFileOfNode(receiver);
+    if (resolvedFile === undefined) {
+      return undefined as unknown as GoSlice<GoPtr<Node>>;
+    }
+  }
+  if (resolvedFile.hasLazyJSDoc) {
+    resolvedFile.jsdocMu.RLock();
+    const jsdocs = resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
+    resolvedFile.jsdocMu.RUnlock();
+    return jsdocs;
+  }
+  return resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
 }
 
 /**
@@ -5044,6 +5075,19 @@ export interface TokenCacheKey {
   loc: TextRange;
 }
 
+const tokenCacheParentIds = new WeakMap<Node, int>();
+let nextTokenCacheParentId: int = 1 as int;
+
+function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): string {
+  let parentId = tokenCacheParentIds.get(parent!);
+  if (parentId === undefined) {
+    parentId = nextTokenCacheParentId;
+    nextTokenCacheParentId = (nextTokenCacheParentId + 1) as int;
+    tokenCacheParentIds.set(parent!, parentId);
+  }
+  return `${parentId}:${loc.pos}:${loc.end}`;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::type::SourceFile","kind":"type","status":"implemented","sigHash":"53bc3d216fc97196ba25b91ad0f1a75f9bad287f452bf3347a3eb4370d6154a9","bodyHash":"1544dafdd77c4d0f387a639475526fd1733904026a2433ebb63bc31804f02f87"}
  *
@@ -5174,7 +5218,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   ecmaLineMap: GoSlice<TextPos>;
   Hash: Uint128;
   tokenCacheMu: Mutex;
-  tokenCache: GoMap<TokenCacheKey, GoPtr<Node>>;
+  tokenCache: GoMap<string, GoPtr<Node>>;
   tokenFactory: GoPtr<NodeFactory>;
   declarationMapMu: Mutex;
   declarationMap: GoMap<string, GoSlice<GoPtr<Node>>>;
@@ -5254,6 +5298,14 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
+  data.jsdocMu = new RWMutex();
+  data.isBound = new Bool();
+  data.bindOnce = new Once();
+  data.ecmaLineMapMu = new RWMutex();
+  data.tokenCacheMu = new Mutex();
+  data.declarationMapMu = new Mutex();
+  data.nameTableOnce = new Once();
+  data.positionMapOnce = new Once();
   return NodeFactory_newNode(receiver, KindSourceFile, SourceFile_as_nodeData(data));
 }
 
@@ -5512,7 +5564,7 @@ export function SourceFile_ForEachChild(receiver: GoPtr<SourceFile>, v: Visitor)
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.VisitEachChild","kind":"method","status":"stub","sigHash":"7ccd1da3d76ce97dd985b9e88e52fff0146ab03b0436b893033cd0d724469460","bodyHash":"3ebefbcf580e504aad3b1d0e8421902546810cd14da612b0a8e5dc857869455a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.VisitEachChild","kind":"method","status":"implemented","sigHash":"7ccd1da3d76ce97dd985b9e88e52fff0146ab03b0436b893033cd0d724469460","bodyHash":"3ebefbcf580e504aad3b1d0e8421902546810cd14da612b0a8e5dc857869455a"}
  *
  * Go source:
  * func (node *SourceFile) VisitEachChild(v *NodeVisitor) *Node {
@@ -5520,11 +5572,11 @@ export function SourceFile_ForEachChild(receiver: GoPtr<SourceFile>, v: Visitor)
  * }
  */
 export function SourceFile_VisitEachChild(receiver: GoPtr<SourceFile>, v: GoPtr<NodeVisitor>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.VisitEachChild");
+  return NodeFactory_UpdateSourceFile(v!.Factory, receiver, NodeVisitor_visitTopLevelStatements(v, receiver!.Statements), NodeVisitor_visitToken(v, receiver!.EndOfFileToken) as GoPtr<TokenNode>);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsJS","kind":"method","status":"stub","sigHash":"8923da1293787c287f2d91e4167695611ab66db39e777bc21860a04dcfaf5921","bodyHash":"b7577558c73970c7bad964ad57d2ecd7c0d0450f7b8e59a95d25aecdae15d6c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsJS","kind":"method","status":"implemented","sigHash":"8923da1293787c287f2d91e4167695611ab66db39e777bc21860a04dcfaf5921","bodyHash":"b7577558c73970c7bad964ad57d2ecd7c0d0450f7b8e59a95d25aecdae15d6c4"}
  *
  * Go source:
  * func (node *SourceFile) IsJS() bool {
@@ -5532,7 +5584,7 @@ export function SourceFile_VisitEachChild(receiver: GoPtr<SourceFile>, v: GoPtr<
  * }
  */
 export function SourceFile_IsJS(receiver: GoPtr<SourceFile>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.IsJS");
+  return utilities.IsSourceFileJS(receiver);
 }
 
 /**
@@ -5673,7 +5725,7 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetNameTable","kind":"method","status":"stub","sigHash":"20bd78e754e0ad84523304e016214ac4a2fa92fbf3bfd6b21f4adac851102b0d","bodyHash":"ac2966a6a3e02c8f51e6d67b354cb6066ce61187f0229511a9f29491681cde36"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetNameTable","kind":"method","status":"implemented","sigHash":"20bd78e754e0ad84523304e016214ac4a2fa92fbf3bfd6b21f4adac851102b0d","bodyHash":"ac2966a6a3e02c8f51e6d67b354cb6066ce61187f0229511a9f29491681cde36"}
  *
  * Go source:
  * func (file *SourceFile) GetNameTable() map[string]int {
@@ -5708,7 +5760,33 @@ export function SourceFile_ECMALineMap(receiver: GoPtr<SourceFile>): GoSlice<Tex
  * }
  */
 export function SourceFile_GetNameTable(receiver: GoPtr<SourceFile>): GoMap<string, int> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetNameTable");
+  receiver!.nameTableOnce.Do((): void => {
+    const nameTable = new Map<string, int>();
+
+    const walk = (node: GoPtr<Node>): bool => {
+      if ((predicates.IsIdentifier(node) && !utilities.IsTagName(node) && Node_Text(node) !== "") ||
+        (utilities.IsStringOrNumericLiteralLike(node) && utilities.literalIsName(node)) ||
+        predicates.IsPrivateIdentifier(node)) {
+        const text = Node_Text(node);
+        if (nameTable.has(text)) {
+          nameTable.set(text, -1 as int);
+        } else {
+          nameTable.set(text, Node_Pos(node));
+        }
+      }
+
+      Node_ForEachChild(node, walk);
+      const jsdocNodes = Node_JSDoc(node, receiver);
+      for (const jsdoc of jsdocNodes ?? []) {
+        Node_ForEachChild(jsdoc, walk);
+      }
+      return false;
+    };
+    SourceFile_ForEachChild(receiver, walk);
+
+    receiver!.nameTable = nameTable;
+  });
+  return receiver!.nameTable;
 }
 
 /**
@@ -5807,7 +5885,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
   receiver!.tokenCacheMu.Lock();
   try {
     const loc = NewTextRange(pos, end);
-    const key: TokenCacheKey = { parent, loc };
+      const key = tokenCacheKey(parent, loc);
     if (receiver!.tokenCache !== undefined && receiver!.tokenCache.has(key)) {
       const token = receiver!.tokenCache.get(key)!;
       if (token!.Kind !== kind) {
@@ -5819,7 +5897,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
       throw new globalThis.Error(`Cannot create token from reparsed node of kind ${KindString(parent!.Kind)}`);
     }
     if (receiver!.tokenCache === undefined) {
-      receiver!.tokenCache = new Map<TokenCacheKey, GoPtr<Node>>();
+      receiver!.tokenCache = new Map<string, GoPtr<Node>>();
     }
     const token = createToken(kind, receiver, pos, end, flags);
     token!.Loc = loc;
@@ -5903,7 +5981,7 @@ export function createToken(kind: Kind, file: GoPtr<SourceFile>, pos: int, end: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetDeclarationMap","kind":"method","status":"stub","sigHash":"3a5aa189eddf2eb3c25facd5c54bd48b51709fef3d8343083a42ebadb72d012f","bodyHash":"edb9132ae5d8a291b15710bede0e2ef37392b22f4afa035bdcda37ab9abc4dd5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetDeclarationMap","kind":"method","status":"implemented","sigHash":"3a5aa189eddf2eb3c25facd5c54bd48b51709fef3d8343083a42ebadb72d012f","bodyHash":"edb9132ae5d8a291b15710bede0e2ef37392b22f4afa035bdcda37ab9abc4dd5"}
  *
  * Go source:
  * func (node *SourceFile) GetDeclarationMap() map[string][]*Node {
@@ -5916,11 +5994,19 @@ export function createToken(kind: Kind, file: GoPtr<SourceFile>, pos: int, end: 
  * }
  */
 export function SourceFile_GetDeclarationMap(receiver: GoPtr<SourceFile>): GoMap<string, GoSlice<GoPtr<Node>>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.GetDeclarationMap");
+  receiver!.declarationMapMu.Lock();
+  try {
+    if (receiver!.declarationMap === undefined) {
+      receiver!.declarationMap = SourceFile_computeDeclarationMap(receiver);
+    }
+    return receiver!.declarationMap;
+  } finally {
+    receiver!.declarationMapMu.Unlock();
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeDeclarationMap","kind":"method","status":"stub","sigHash":"d8c644a80f56e42c73fc71a7078b43b2909d7f1f086ad31f4f0f9c33566e9939","bodyHash":"90bb4c17553afb94f076dc6773ac89c58be7468efaa02197ebcda7d5c73a032e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeDeclarationMap","kind":"method","status":"implemented","sigHash":"d8c644a80f56e42c73fc71a7078b43b2909d7f1f086ad31f4f0f9c33566e9939","bodyHash":"90bb4c17553afb94f076dc6773ac89c58be7468efaa02197ebcda7d5c73a032e"}
  *
  * Go source:
  * func (node *SourceFile) computeDeclarationMap() map[string][]*Node {
@@ -6034,11 +6120,147 @@ export function SourceFile_GetDeclarationMap(receiver: GoPtr<SourceFile>): GoMap
  * }
  */
 export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): GoMap<string, GoSlice<GoPtr<Node>>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::method::SourceFile.computeDeclarationMap");
+  const result = new Map<string, GoSlice<GoPtr<Node>>>();
+
+  const addDeclaration = (declaration: GoPtr<Node>): void => {
+    const name = GetDeclarationName(declaration);
+    if (name !== "") {
+      let declarations = result.get(name);
+      if (declarations === undefined) {
+        declarations = [];
+        result.set(name, declarations);
+      }
+      declarations.push(declaration);
+    }
+  };
+
+  const visit = (node: GoPtr<Node>): bool => {
+    switch (node!.Kind) {
+      case KindFunctionDeclaration:
+      case KindFunctionExpression:
+      case KindMethodDeclaration:
+      case KindMethodSignature: {
+        const declarationName = GetDeclarationName(node);
+        if (declarationName !== "") {
+          let declarations = result.get(declarationName);
+          let lastDeclaration: GoPtr<Node>;
+          if (declarations !== undefined && declarations.length !== 0) {
+            lastDeclaration = declarations[declarations.length - 1];
+          }
+          if (lastDeclaration !== undefined && node!.Parent === lastDeclaration!.Parent && Node_Symbol(node) === Node_Symbol(lastDeclaration)) {
+            if (Node_Body(node) !== undefined && Node_Body(lastDeclaration) === undefined) {
+              declarations![declarations!.length - 1] = node;
+            }
+          } else {
+            if (declarations === undefined) {
+              declarations = [];
+              result.set(declarationName, declarations);
+            }
+            declarations.push(node);
+          }
+        }
+        Node_ForEachChild(node, visit);
+        break;
+      }
+      case KindClassDeclaration:
+      case KindClassExpression:
+      case KindInterfaceDeclaration:
+      case KindTypeAliasDeclaration:
+      case KindEnumDeclaration:
+      case KindModuleDeclaration:
+      case KindImportEqualsDeclaration:
+      case KindImportClause:
+      case KindNamespaceImport:
+      case KindGetAccessor:
+      case KindSetAccessor:
+      case KindTypeLiteral:
+        addDeclaration(node);
+        Node_ForEachChild(node, visit);
+        break;
+      case KindImportSpecifier:
+      case KindExportSpecifier:
+        if (Node_PropertyName(node) !== undefined) {
+          addDeclaration(node);
+        }
+        break;
+      case KindParameter:
+        if (!utilities.HasSyntacticModifier(node, ModifierFlagsParameterPropertyModifier)) {
+          break;
+        }
+      case KindVariableDeclaration:
+      case KindBindingElement: {
+        const name = Node_Name(node);
+        if (name !== undefined) {
+          if (utilities.IsBindingPattern(name)) {
+            Node_ForEachChild(Node_Name(node), visit);
+          } else {
+            if (Node_Initializer(node) !== undefined) {
+              visit(Node_Initializer(node));
+            }
+            addDeclaration(node);
+          }
+        }
+        break;
+      }
+      case KindEnumMember:
+      case KindPropertyDeclaration:
+      case KindPropertySignature:
+        addDeclaration(node);
+        break;
+      case KindExportDeclaration: {
+        const exportClause = casts.AsExportDeclaration(node)!.ExportClause;
+        if (exportClause !== undefined) {
+          if (predicates.IsNamedExports(exportClause)) {
+            for (const element of Node_Elements(exportClause) ?? []) {
+              visit(element);
+            }
+          } else {
+            visit(Node_Name(casts.AsNamespaceExport(exportClause)));
+          }
+        }
+        break;
+      }
+      case KindImportDeclaration: {
+        const importClause = casts.AsImportDeclaration(node)!.ImportClause;
+        if (importClause !== undefined) {
+          if (Node_Name(importClause) !== undefined) {
+            addDeclaration(Node_Name(importClause));
+          }
+          const namedBindings = casts.AsImportClause(importClause)!.NamedBindings;
+          if (namedBindings !== undefined) {
+            if (namedBindings.Kind === KindNamespaceImport) {
+              addDeclaration(namedBindings);
+            } else {
+              for (const element of Node_Elements(namedBindings) ?? []) {
+                visit(element);
+              }
+            }
+          }
+        }
+        break;
+      }
+      case KindBinaryExpression:
+        switch (utilities.GetAssignmentDeclarationKind(node)) {
+          case utilities.JSDeclarationKindExportsProperty:
+          case utilities.JSDeclarationKindThisProperty:
+          case utilities.JSDeclarationKindProperty:
+            addDeclaration(node);
+            break;
+        }
+        Node_ForEachChild(node, visit);
+        break;
+      default:
+        Node_ForEachChild(node, visit);
+        break;
+    }
+    return false;
+  };
+  SourceFile_ForEachChild(receiver, visit);
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationName","kind":"func","status":"stub","sigHash":"5a472dfd7101cb40f01ea5fceb094f15016e8984d829000672fe63d3b1999747","bodyHash":"9add130be4bd285f4f7cc4353865ba50ee6146726e4fc56316f81e9aee14726f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationName","kind":"func","status":"implemented","sigHash":"5a472dfd7101cb40f01ea5fceb094f15016e8984d829000672fe63d3b1999747","bodyHash":"9add130be4bd285f4f7cc4353865ba50ee6146726e4fc56316f81e9aee14726f"}
  *
  * Go source:
  * func GetDeclarationName(declaration *Node) string {
@@ -6059,7 +6281,21 @@ export function SourceFile_computeDeclarationMap(receiver: GoPtr<SourceFile>): G
  * }
  */
 export function GetDeclarationName(declaration: GoPtr<Node>): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/ast.go::func::GetDeclarationName");
+  const name = utilities.GetNonAssignedNameOfDeclaration(declaration);
+  if (name !== undefined) {
+    if (predicates.IsComputedPropertyName(name)) {
+      const expression = Node_Expression(name);
+      if (utilities.IsStringOrNumericLiteralLike(expression)) {
+        return Node_Text(expression);
+      }
+      if (predicates.IsPropertyAccessExpression(expression)) {
+        return Node_Text(Node_Name(expression));
+      }
+    } else if (utilities.IsPropertyName(name)) {
+      return Node_Text(name);
+    }
+  }
+  return "";
 }
 
 /**
