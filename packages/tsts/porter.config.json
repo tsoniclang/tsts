@@ -41,6 +41,9 @@
     "go/reflect.ts",
     "go/math.ts",
     "go/path/filepath.ts",
+    "go/io/fs.ts",
+    "go/os.ts",
+    "go/runtime.ts",
     "go/regexp.ts",
     "go/encoding/base64.ts",
     "go/context.ts"
