@@ -2139,7 +2139,7 @@ export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationError","kind":"method","status":"stub","sigHash":"5700ea255b3dd4bcf10f0c56d6ddcab07e6ecb4d377210e1266f8fc756e079ba","bodyHash":"924d63517b86d6db080f32da7c6a723483260bd1d5b0d386862112f785475e25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationError","kind":"method","status":"implemented","sigHash":"5700ea255b3dd4bcf10f0c56d6ddcab07e6ecb4d377210e1266f8fc756e079ba","bodyHash":"924d63517b86d6db080f32da7c6a723483260bd1d5b0d386862112f785475e25"}
  *
  * Go source:
  * func (c *Checker) addDuplicateDeclarationError(node *ast.Node, message *diagnostics.Message, symbolName string, relatedNodes []*ast.Node) {
@@ -2169,11 +2169,35 @@ export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<
  * }
  */
 export function Checker_addDuplicateDeclarationError(receiver: GoPtr<Checker>, node: GoPtr<Node>, message: GoPtr<Message>, symbolName: string, relatedNodes: GoSlice<GoPtr<Node>>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationError");
+  let errorNode = getAdjustedNodeForError(node);
+  if (errorNode === undefined) {
+    errorNode = node;
+  }
+  const err = Checker_lookupOrIssueError(receiver, errorNode, message, symbolName);
+  for (const relatedNode of relatedNodes) {
+    const adjustedNode = getAdjustedNodeForError(relatedNode);
+    if (adjustedNode === errorNode) {
+      continue;
+    }
+    const leadingMessage = createDiagnosticForNode(adjustedNode, X_0_was_also_declared_here, symbolName);
+    const followOnMessage = createDiagnosticForNode(adjustedNode, X_and_here);
+    if (
+      Diagnostic_RelatedInformation(err).length >= 5 ||
+      Some(Diagnostic_RelatedInformation(err), (d: GoPtr<Diagnostic>) =>
+        CompareDiagnostics(d, followOnMessage) === 0 || CompareDiagnostics(d, leadingMessage) === 0)
+    ) {
+      continue;
+    }
+    if (Diagnostic_RelatedInformation(err).length === 0) {
+      Diagnostic_AddRelatedInfo(err, leadingMessage);
+    } else {
+      Diagnostic_AddRelatedInfo(err, followOnMessage);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.lookupOrIssueError","kind":"method","status":"stub","sigHash":"d49682ace3c66fbf7e4e3c0f4001bc9c49f62a25415ccc1fd8c07ad907a52ced","bodyHash":"cb794ed77d1c65d96220f0d6fd8c15fa34da4f0719b8d02b9b4b8af3e284235f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.lookupOrIssueError","kind":"method","status":"implemented","sigHash":"d49682ace3c66fbf7e4e3c0f4001bc9c49f62a25415ccc1fd8c07ad907a52ced","bodyHash":"cb794ed77d1c65d96220f0d6fd8c15fa34da4f0719b8d02b9b4b8af3e284235f"}
  *
  * Go source:
  * func (c *Checker) lookupOrIssueError(location *ast.Node, message *diagnostics.Message, args ...any) *ast.Diagnostic {
@@ -2187,7 +2211,13 @@ export function Checker_addDuplicateDeclarationError(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_lookupOrIssueError(receiver: GoPtr<Checker>, location: GoPtr<Node>, message: GoPtr<Message>, ...args: Array<unknown>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.lookupOrIssueError");
+  const diagnostic = NewDiagnosticForNode(location, message, ...args);
+  const existing = DiagnosticsCollection_Lookup(receiver!.diagnostics, diagnostic);
+  if (existing !== undefined) {
+    return existing;
+  }
+  DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
+  return diagnostic;
 }
 
 /**
@@ -2246,7 +2276,7 @@ export function Checker_getCannotResolveModuleNameErrorForSpecificModule(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularityError","kind":"method","status":"stub","sigHash":"2a8895e219e931cf8c4f56cd27d26954e0e68740ed2826203dc4019c60ef4da4","bodyHash":"ed7162ed0066e406fe727612508ed8ceaae961ec1875bf6252e5d7eb718ba4be"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularityError","kind":"method","status":"implemented","sigHash":"2a8895e219e931cf8c4f56cd27d26954e0e68740ed2826203dc4019c60ef4da4","bodyHash":"ed7162ed0066e406fe727612508ed8ceaae961ec1875bf6252e5d7eb718ba4be"}
  *
  * Go source:
  * func (c *Checker) reportCircularityError(symbol *ast.Symbol) *Type {
@@ -2274,7 +2304,22 @@ export function Checker_getCannotResolveModuleNameErrorForSpecificModule(receive
  * }
  */
 export function Checker_reportCircularityError(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportCircularityError");
+  const declaration = symbol_!.ValueDeclaration;
+  if (declaration !== undefined) {
+    if (Node_Type(declaration) !== undefined) {
+      Checker_error(receiver, symbol_!.ValueDeclaration, X_0_is_referenced_directly_or_indirectly_in_its_own_type_annotation, Checker_symbolToString(receiver, symbol_));
+      return receiver!.errorType;
+    }
+    if (receiver!.noImplicitAny && (!IsParameterDeclaration(declaration) || Node_Initializer(declaration) !== undefined)) {
+      Checker_error(receiver, symbol_!.ValueDeclaration, X_0_implicitly_has_type_any_because_it_does_not_have_a_type_annotation_and_is_referenced_directly_or_indirectly_in_its_own_initializer, Checker_symbolToString(receiver, symbol_));
+    }
+  } else if ((symbol_!.Flags & SymbolFlagsAlias) !== 0) {
+    const node = Checker_getDeclarationOfAliasSymbol(receiver, symbol_);
+    if (node !== undefined) {
+      Checker_error(receiver, node, Circular_definition_of_import_alias_0, Checker_symbolToString(receiver, symbol_));
+    }
+  }
+  return receiver!.anyType;
 }
 
 /**
