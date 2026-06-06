@@ -523,6 +523,17 @@ export function Program_as_outputpaths_OutputPathsHost(receiver: GoPtr<Program>)
   };
 }
 
+export function Program_as_emitter_SourceFileMayBeEmittedHost(receiver: GoPtr<Program>): SourceFileMayBeEmittedHost {
+  return {
+    Options: (): GoPtr<CompilerOptions> => Program_Options(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromSource(receiver, path),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => Program_IsSourceFileFromExternalLibrary(receiver, file),
+    GetCurrentDirectory: (): string => Program_GetCurrentDirectory(receiver),
+    UseCaseSensitiveFileNames: (): bool => Program_UseCaseSensitiveFileNames(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => Program_SourceFiles(receiver),
+  };
+}
+
 export function Program_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver: GoPtr<Program>): ModuleSpecifierGenerationHost {
   return {
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
@@ -1709,11 +1720,11 @@ export function Program_canIncludeBindAndCheckDiagnostics(receiver: GoPtr<Progra
 export function Program_getSourceFilesToEmit(receiver: GoPtr<Program>, targetSourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): GoSlice<GoPtr<SourceFile>> {
   if (targetSourceFile === undefined && !forceDtsEmit) {
     receiver!.sourceFilesToEmitOnce.Do(() => {
-      receiver!.sourceFilesToEmit = getSourceFilesToEmit(receiver as unknown as SourceFileMayBeEmittedHost, undefined, false as bool);
+      receiver!.sourceFilesToEmit = getSourceFilesToEmit(Program_as_emitter_SourceFileMayBeEmittedHost(receiver), undefined, false as bool);
     });
     return receiver!.sourceFilesToEmit;
   }
-  return getSourceFilesToEmit(receiver as unknown as SourceFileMayBeEmittedHost, targetSourceFile, forceDtsEmit);
+  return getSourceFilesToEmit(Program_as_emitter_SourceFileMayBeEmittedHost(receiver), targetSourceFile, forceDtsEmit);
 }
 
 /**
@@ -2404,7 +2415,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     }
 
     for (const file of receiver!.__tsgoEmbedded0!.files) {
-      if (sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool) && !Set_Has(rootPaths, SourceFile_Path(file)!)) {
+      if (sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool) && !Set_Has(rootPaths, SourceFile_Path(file)!)) {
         includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {
           kind: processingDiagnosticKindExplainingFileInclude,
           data: {
@@ -2539,7 +2550,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
     const dir = Program_CommonSourceDirectory(receiver);
     const emittedFiles: string[] = [];
     for (const file of receiver!.__tsgoEmbedded0!.files) {
-      if (!file!.IsDeclarationFile && sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool)) {
+      if (!file!.IsDeclarationFile && sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool)) {
         emittedFiles.push(SourceFile_FileName(file));
       }
     }
@@ -3537,7 +3548,7 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
       () => {
         const files: string[] = [];
         for (const file of receiver!.__tsgoEmbedded0!.files) {
-          if (sourceFileMayBeEmitted(file, receiver as unknown as SourceFileMayBeEmittedHost, false as bool)) {
+          if (sourceFileMayBeEmitted(file, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), false as bool)) {
             files.push(SourceFile_FileName(file));
           }
         }
@@ -4312,7 +4323,7 @@ export function Program_GetImportHelpersImportSpecifier(receiver: GoPtr<Program>
  * }
  */
 export function Program_SourceFileMayBeEmitted(receiver: GoPtr<Program>, sourceFile: GoPtr<SourceFile>, forceDtsEmit: bool): bool {
-  return sourceFileMayBeEmitted(sourceFile, receiver as unknown as import("./emitter.js").SourceFileMayBeEmittedHost, forceDtsEmit);
+  return sourceFileMayBeEmitted(sourceFile, Program_as_emitter_SourceFileMayBeEmittedHost(receiver), forceDtsEmit);
 }
 
 /**

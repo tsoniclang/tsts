@@ -1014,6 +1014,17 @@ export interface SourceFileMayBeEmittedHost {
   SourceFiles(): GoSlice<GoPtr<SourceFile>>;
 }
 
+export function EmitHost_as_emitter_SourceFileMayBeEmittedHost(receiver: EmitHost): SourceFileMayBeEmittedHost {
+  return {
+    Options: (): GoPtr<CompilerOptions> => receiver.Options(),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => receiver.GetProjectReferenceFromSource(path),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => receiver.IsSourceFileFromExternalLibrary(file),
+    GetCurrentDirectory: (): string => receiver.GetCurrentDirectory(),
+    UseCaseSensitiveFileNames: (): bool => receiver.UseCaseSensitiveFileNames(),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => receiver.SourceFiles(),
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitter.go::func::sourceFileMayBeEmitted","kind":"func","status":"implemented","sigHash":"d118009010869662095554f8b30ef9c13c4fe5ffeacba94989f117f844d4f559","bodyHash":"411602782d47b26495a5fad024d820287c4c8c43e95bddbb17e1c1c0abc06a56"}
  *
@@ -1186,7 +1197,7 @@ export function isSourceFileNotJson(file: GoPtr<SourceFile>): bool {
  */
 export function getDeclarationDiagnostics(host: EmitHost, file: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   // TODO: use p.getSourceFilesToEmit cache
-  const fullFiles = Filter(getSourceFilesToEmit(host as unknown as SourceFileMayBeEmittedHost, file, false), isSourceFileNotJson);
+  const fullFiles = Filter(getSourceFilesToEmit(EmitHost_as_emitter_SourceFileMayBeEmittedHost(host), file, false), isSourceFileNotJson);
   if (!Some(fullFiles, (f) => f === file)) {
     return [];
   }
