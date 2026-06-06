@@ -42,6 +42,7 @@ import type { orderedSet } from "../utilities.js";
 import { CompareTypes, IsTypeAny, NewDiagnosticForNode, NewDiagnosticChainForNode, hasDotDotDotToken, isDeclarationReadonly, isOptionalDeclaration, orderedSet_contains, orderedSet_add, entityNameToString, isConstTypeReference, isObjectLiteralType } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, EnumLiteralKey, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionOfUnionKey, UnionReduction, WideningContext, WideningKind, CachedTypeKey, CacheHashKey } from "./state.js";
 import { CheckModeTypeOnly, CheckModeNormal, CheckModeContextual, CheckModeInferential, CheckModeRestBindingElement, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, isUnitType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, IntersectionFlagsNone, hashWrite32, isTypeReferenceWithGenericArguments, getStringLiteralValue, getTypeListKey, getModifiedReadonlyState, getMappedTypeModifiers, MappedTypeModifiersIncludeOptional, MappedTypeModifiersExcludeOptional, PredicateSemanticsSometimes, PredicateSemanticsAlways, PredicateSemanticsNever, CachedTypeKindArrayLiteralType, CachedTypeKindDefaultOnlyType, getTotalFixedElementCount, getTupleKey, isConflictingPrivateProperty, isFreshLiteralType, TypeFactsNone, TypeFactsAll, TypeFactsOrFactsMask, TypeFactsAndFactsMask, containsType, getMappedTypeOptionality, TypeFactsEQUndefined, TypeFactsEQNull, TypeFactsIsNull, TypeFactsNENull, TypeFactsEQUndefinedOrNull, TypeFactsTruthy, WideningKindNormal, getUnionKey, getAliasKey, insertType, CachedTypeKindRegularObjectLiteral } from "./state.js";
+import { TypeFactsStringStrictFacts, TypeFactsStringFacts, TypeFactsEmptyStringStrictFacts, TypeFactsEmptyStringFacts, TypeFactsNonEmptyStringStrictFacts, TypeFactsNonEmptyStringFacts, TypeFactsNumberStrictFacts, TypeFactsNumberFacts, TypeFactsZeroNumberStrictFacts, TypeFactsZeroNumberFacts, TypeFactsNonZeroNumberStrictFacts, TypeFactsNonZeroNumberFacts, TypeFactsBigIntStrictFacts, TypeFactsBigIntFacts, TypeFactsZeroBigIntStrictFacts, TypeFactsZeroBigIntFacts, TypeFactsNonZeroBigIntStrictFacts, TypeFactsNonZeroBigIntFacts, TypeFactsBooleanStrictFacts, TypeFactsBooleanFacts, TypeFactsFalseStrictFacts, TypeFactsFalseFacts, TypeFactsTrueStrictFacts, TypeFactsTrueFacts, TypeFactsEmptyObjectStrictFacts, TypeFactsEmptyObjectFacts, TypeFactsFunctionStrictFacts, TypeFactsFunctionFacts, TypeFactsObjectStrictFacts, TypeFactsObjectFacts, TypeFactsVoidFacts, TypeFactsUndefinedFacts, TypeFactsNullFacts, TypeFactsSymbolStrictFacts, TypeFactsSymbolFacts, TypeFactsUnknownFacts, getNumberLiteralValue, isZeroBigInt } from "./state.js";
 import { Checker_getTypeArguments, Checker_getTypeWithThisArgument, Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode, Checker_checkTypeForDuplicateIndexSignatures, Checker_newCallSignature, Checker_getOrCreateTypeFromSignature, Checker_newParameter, Checker_getTypeReferenceArity, Checker_getConstraintOfTypeParameter, Checker_getResolvedSignature, Checker_getDecoratorCallSignature, Checker_getContextualReturnType, Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_getTypeParameterFromMappedType, Checker_forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType, Checker_instantiateTypeWithSingleGenericCallSignature, Checker_checkExpressionWithTypeArguments, Checker_checkNoTypeArguments, Checker_getReturnTypeOfSingleNonGenericSignature, Checker_getReturnTypeOfSingleNonGenericSignatureOfCallChain, Checker_isSymbolOrSymbolForCall } from "./signatures.js";
 import { Checker_getSignaturesOfType, Checker_getReturnTypeOfSignature, Checker_getBuiltinIteratorReturnType, Checker_getRestTypeOfTupleType } from "./signatures.js";
 import { Checker_getBaseConstraintOfType, Checker_checkIndexConstraints, Checker_getTypeAliasInstantiation, Checker_isGenericTypeWithUndefinedConstraint, Checker_getConstraintTypeFromMappedType, Checker_isAwaitedTypeInstantiation, Checker_isTypeMatchedByTemplateLiteralOrStringMapping, Checker_getGlobalNonNullableTypeInstantiation, Checker_pushInferenceContext, Checker_popInferenceContext } from "./inference.js";
@@ -12281,7 +12282,7 @@ export function Checker_hasTypeFacts(receiver: GoPtr<Checker>, t: GoPtr<Type>, m
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFactsWorker","kind":"method","status":"stub","sigHash":"4472b7ed9be39c721cfe83d69b748e9bdf9cd8a0acfca6c10ba647bd71d9824f","bodyHash":"5b29daef243497bc1bd9f4a2cbe4d20aaec1e8f06557c7deb2b0ad88a13cc05c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFactsWorker","kind":"method","status":"implemented","sigHash":"4472b7ed9be39c721cfe83d69b748e9bdf9cd8a0acfca6c10ba647bd71d9824f","bodyHash":"5b29daef243497bc1bd9f4a2cbe4d20aaec1e8f06557c7deb2b0ad88a13cc05c"}
  *
  * Go source:
  * func (c *Checker) getTypeFactsWorker(t *Type, callerOnlyNeeds TypeFacts) TypeFacts {
@@ -12421,7 +12422,151 @@ export function Checker_hasTypeFacts(receiver: GoPtr<Checker>, t: GoPtr<Type>, m
  * }
  */
 export function Checker_getTypeFactsWorker(receiver: GoPtr<Checker>, t: GoPtr<Type>, callerOnlyNeeds: TypeFacts): TypeFacts {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFactsWorker");
+  if ((t!.flags & (TypeFlagsIntersection | TypeFlagsInstantiable)) !== 0) {
+    t = Checker_getBaseConstraintOfType(receiver, t);
+    if (t === undefined) {
+      t = receiver!.unknownType;
+    }
+  }
+  const flags = t!.flags;
+  if ((flags & (TypeFlagsString | TypeFlagsStringMapping)) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsStringStrictFacts;
+    }
+    return TypeFactsStringFacts;
+  }
+  if ((flags & (TypeFlagsStringLiteral | TypeFlagsTemplateLiteral)) !== 0) {
+    const isEmpty = (flags & TypeFlagsStringLiteral) !== 0 && getStringLiteralValue(t) === "";
+    if (receiver!.strictNullChecks) {
+      if (isEmpty) {
+        return TypeFactsEmptyStringStrictFacts;
+      }
+      return TypeFactsNonEmptyStringStrictFacts;
+    }
+    if (isEmpty) {
+      return TypeFactsEmptyStringFacts;
+    }
+    return TypeFactsNonEmptyStringFacts;
+  }
+  if ((flags & (TypeFlagsNumber | TypeFlagsEnum)) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsNumberStrictFacts;
+    }
+    return TypeFactsNumberFacts;
+  }
+  if ((flags & TypeFlagsNumberLiteral) !== 0) {
+    const isZero = getNumberLiteralValue(t) === 0;
+    if (receiver!.strictNullChecks) {
+      if (isZero) {
+        return TypeFactsZeroNumberStrictFacts;
+      }
+      return TypeFactsNonZeroNumberStrictFacts;
+    }
+    if (isZero) {
+      return TypeFactsZeroNumberFacts;
+    }
+    return TypeFactsNonZeroNumberFacts;
+  }
+  if ((flags & TypeFlagsBigInt) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsBigIntStrictFacts;
+    }
+    return TypeFactsBigIntFacts;
+  }
+  if ((flags & TypeFlagsBigIntLiteral) !== 0) {
+    const isZero = isZeroBigInt(t);
+    if (receiver!.strictNullChecks) {
+      if (isZero) {
+        return TypeFactsZeroBigIntStrictFacts;
+      }
+      return TypeFactsNonZeroBigIntStrictFacts;
+    }
+    if (isZero) {
+      return TypeFactsZeroBigIntFacts;
+    }
+    return TypeFactsNonZeroBigIntFacts;
+  }
+  if ((flags & TypeFlagsBoolean) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsBooleanStrictFacts;
+    }
+    return TypeFactsBooleanFacts;
+  }
+  if ((flags & TypeFlagsBooleanLike) !== 0) {
+    const isFalse = t === receiver!.falseType || t === receiver!.regularFalseType;
+    if (receiver!.strictNullChecks) {
+      if (isFalse) {
+        return TypeFactsFalseStrictFacts;
+      }
+      return TypeFactsTrueStrictFacts;
+    }
+    if (isFalse) {
+      return TypeFactsFalseFacts;
+    }
+    return TypeFactsTrueFacts;
+  }
+  if ((flags & TypeFlagsObject) !== 0) {
+    let possibleFacts: TypeFacts;
+    if (receiver!.strictNullChecks) {
+      possibleFacts = (TypeFactsEmptyObjectStrictFacts | TypeFactsFunctionStrictFacts | TypeFactsObjectStrictFacts) as TypeFacts;
+    } else {
+      possibleFacts = (TypeFactsEmptyObjectFacts | TypeFactsFunctionFacts | TypeFactsObjectFacts) as TypeFacts;
+    }
+    if ((callerOnlyNeeds & possibleFacts) === 0) {
+      return TypeFactsNone;
+    }
+    if ((t!.objectFlags & ObjectFlagsAnonymous) !== 0 && Checker_isEmptyObjectType(receiver, t)) {
+      if (receiver!.strictNullChecks) {
+        return TypeFactsEmptyObjectStrictFacts;
+      }
+      return TypeFactsEmptyObjectFacts;
+    }
+    if (Checker_isFunctionObjectType(receiver, t)) {
+      if (receiver!.strictNullChecks) {
+        return TypeFactsFunctionStrictFacts;
+      }
+      return TypeFactsFunctionFacts;
+    }
+    if (receiver!.strictNullChecks) {
+      return TypeFactsObjectStrictFacts;
+    }
+    return TypeFactsObjectFacts;
+  }
+  if ((flags & TypeFlagsVoid) !== 0) {
+    return TypeFactsVoidFacts;
+  }
+  if ((flags & TypeFlagsUndefined) !== 0) {
+    return TypeFactsUndefinedFacts;
+  }
+  if ((flags & TypeFlagsNull) !== 0) {
+    return TypeFactsNullFacts;
+  }
+  if ((flags & TypeFlagsESSymbolLike) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsSymbolStrictFacts;
+    }
+    return TypeFactsSymbolFacts;
+  }
+  if ((flags & TypeFlagsNonPrimitive) !== 0) {
+    if (receiver!.strictNullChecks) {
+      return TypeFactsObjectStrictFacts;
+    }
+    return TypeFactsObjectFacts;
+  }
+  if ((flags & TypeFlagsNever) !== 0) {
+    return TypeFactsNone;
+  }
+  if ((flags & TypeFlagsUnion) !== 0) {
+    let facts = TypeFactsNone;
+    for (const ty of Type_Types(t)) {
+      facts |= Checker_getTypeFactsWorker(receiver, ty, callerOnlyNeeds);
+    }
+    return facts;
+  }
+  if ((flags & TypeFlagsIntersection) !== 0) {
+    return Checker_getIntersectionTypeFacts(receiver, t, callerOnlyNeeds);
+  }
+  return TypeFactsUnknownFacts;
 }
 
 /**
