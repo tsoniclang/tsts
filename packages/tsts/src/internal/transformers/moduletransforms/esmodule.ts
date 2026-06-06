@@ -65,7 +65,7 @@ import { createExternalHelpersImportDeclarationIfNeeded } from "./externalmodule
 import { createEmptyImports, getExternalModuleNameLiteral, rewriteModuleSpecifier } from "./utilities.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"stub","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e","bodyHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::ESModuleTransformer","kind":"type","status":"implemented","sigHash":"6c77421ab1341d88600cefbfeedc8e8c71434d5c3b8b2e093627623459e1354e","bodyHash":"604c7a0ae11037259df4b4db8955cc610f2e95f77176d6bce970398cdc41f572"}
  *
  * Go source:
  * ESModuleTransformer struct {
@@ -89,7 +89,7 @@ export interface ESModuleTransformer {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"stub","sigHash":"41fb7a91a9ec1916a7753b16ebf45f9c52d827c42a9f8a24f64351b8a18ae871","bodyHash":"f6d97b8dfeb17579411e8e57f9f5471107fa16315d7b27fdf2b9e61292eb6a5e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::type::importRequireStatements","kind":"type","status":"implemented","sigHash":"41fb7a91a9ec1916a7753b16ebf45f9c52d827c42a9f8a24f64351b8a18ae871","bodyHash":"f6d97b8dfeb17579411e8e57f9f5471107fa16315d7b27fdf2b9e61292eb6a5e"}
  *
  * Go source:
  * importRequireStatements struct {

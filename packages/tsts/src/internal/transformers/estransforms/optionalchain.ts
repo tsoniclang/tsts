@@ -68,7 +68,7 @@ import {
 import { EFNoComments } from "../../printer/emitflags.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::optionalChainTransformer","kind":"type","status":"stub","sigHash":"d38d23852b1698ae2acf33196bbbfcae52ccc17ab55d3fedbb0a02da11237873","bodyHash":"10b20e1c69798f894fafbbc4c1e6f26faa1771126b608bea5b7823d5d73c2fd9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::optionalChainTransformer","kind":"type","status":"implemented","sigHash":"d38d23852b1698ae2acf33196bbbfcae52ccc17ab55d3fedbb0a02da11237873","bodyHash":"10b20e1c69798f894fafbbc4c1e6f26faa1771126b608bea5b7823d5d73c2fd9"}
  *
  * Go source:
  * optionalChainTransformer struct {
@@ -346,7 +346,7 @@ export function optionalChainTransformer_visitNonOptionalExpression(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::flattenResult","kind":"type","status":"stub","sigHash":"3e6c9bbcacabbb8224fae64714c1e84d2fb7c5a4451bb47747312943363477bf","bodyHash":"126af5dbbb83b6513dce8bd36b01f8f0bed6be9d583cc0bc757ff61e5e587790"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/optionalchain.go::type::flattenResult","kind":"type","status":"implemented","sigHash":"3e6c9bbcacabbb8224fae64714c1e84d2fb7c5a4451bb47747312943363477bf","bodyHash":"126af5dbbb83b6513dce8bd36b01f8f0bed6be9d583cc0bc757ff61e5e587790"}
  *
  * Go source:
  * flattenResult struct {
