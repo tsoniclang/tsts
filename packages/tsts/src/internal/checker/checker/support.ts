@@ -1,6 +1,6 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -70,6 +70,7 @@ import {
   KindThrowStatement,
   KindTryStatement,
   KindTupleType,
+  KindTypeAssertionExpression,
   KindTypeAliasDeclaration,
   KindTypeLiteral,
   KindTypeOperator,
@@ -85,13 +86,13 @@ import {
   KindExpressionStatement,
 } from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
-import { NodeFlagsAmbient, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
+import { NodeFlagsAmbient, NodeFlagsReparsed, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/generated/flags.js";
 import { IsClassExpression, IsFunctionExpression, IsIdentifier } from "../../ast/generated/predicates.js";
 import { AsBindingElement, AsJSDoc } from "../../ast/generated/casts.js";
 import { ModifierFlagsNone, ModifierFlagsNonPublicAccessibilityModifier } from "../../ast/modifierflags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { Node_EagerJSDoc, Node_Elements, Node_Members, Node_Text, Node_PropertyName, Node_Type } from "../../ast/ast.js";
+import { Node_EagerJSDoc, Node_Elements, Node_Expression, Node_Members, Node_Text, Node_PropertyName, Node_Type, SourceFile_Text } from "../../ast/ast.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, GetSourceFileOfNode, IsEntityNameExpression, IsInJSFile, IsPartOfParameterDeclaration, SkipParentheses, WalkUpBindingElementsAndPatterns } from "../../ast/utilities.js";
 import { Every } from "../../core/core.js";
@@ -102,10 +103,13 @@ import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import { Assert } from "../../debug/debug.js";
 import {
   All_destructured_elements_are_unused,
+  A_const_assertion_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals,
   Compiler_reserves_name_0_when_emitting_private_identifier_downlevel,
+  Conversion_of_type_0_to_type_1_may_be_a_mistake_because_neither_type_sufficiently_overlaps_with_the_other_If_this_was_intentional_convert_the_expression_to_unknown_first,
   Did_you_mean_0,
   Duplicate_identifier_0_Compiler_reserves_name_1_when_emitting_super_references_in_static_initializers,
   This_condition_will_always_return_0,
+  This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled,
   We_can_only_write_a_type_for_0_by_adding_a_type_for_the_entire_parameter_here,
   X_0_is_an_unused_renaming_of_1_Did_you_intend_to_use_it_as_a_type_annotation,
 } from "../../diagnostics/generated/messages.js";
@@ -113,7 +117,7 @@ import type { Result } from "../../evaluator/evaluator.js";
 import { Map } from "../../core/core.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { RelationComparisonResultReportsUnmeasurable, RelationComparisonResultReportsUnreliable } from "../relater.js";
-import { Checker_compareTypesAssignableWorker } from "../relater.js";
+import { Checker_checkTypeComparableTo, Checker_compareTypesAssignableWorker, Checker_isTypeComparableTo } from "../relater.js";
 import { Checker_isPostSuperFlowNode, Checker_markNodeAssignmentsWorker } from "../flow.js";
 import { Checker_isCanceled } from "../utilities.js";
 import { Checker_checkGrammarBindingElement, Checker_checkGrammarStatementInAmbientContext } from "../grammarchecks.js";
@@ -125,17 +129,18 @@ import type { EmitResolver } from "../emitresolver.js";
 import type { SymbolReferenceLinks, Ternary, Type } from "../types.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { Diagnostic_SetSkippedOnNoEmit } from "../../ast/diagnostic.js";
-import { entityNameToString, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode } from "../utilities.js";
-import { TokenToString } from "../../scanner/scanner.js";
+import { entityNameToString, getDeclarationModifierFlagsFromSymbol, isConstTypeReference, NewDiagnosticForNode } from "../utilities.js";
+import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { DeclarationNameToString } from "../../scanner/utilities.js";
 import { TernaryFalse, TernaryTrue } from "../types.js";
-import { Checker_addErrorOrSuggestion, Checker_checkSourceElementUnreachable, Checker_unusedIsError } from "./diagnostics.js";
-import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDocType, Checker_checkMappedType, Checker_checkTemplateLiteralType, Checker_checkTupleType, Checker_checkTypeLiteral, Checker_checkTypeOperator, Checker_checkTypeQuery, Checker_checkTypeReferenceNode, Checker_checkUnionOrIntersectionType, Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
-import { Checker_checkConstructorDeclaration, Checker_checkParameter, Checker_checkPropertySignature, Checker_checkSignatureDeclaration, Checker_checkThisType, Checker_checkTypeParameter, Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
+import { Checker_addErrorOrSuggestion, Checker_checkSourceElementUnreachable, Checker_isErrorType, Checker_unusedIsError } from "./diagnostics.js";
+import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDocType, Checker_checkMappedType, Checker_checkTemplateLiteralType, Checker_checkTupleType, Checker_checkTypeLiteral, Checker_checkTypeOperator, Checker_checkTypeQuery, Checker_checkTypeReferenceNode, Checker_checkUnionOrIntersectionType, Checker_couldContainTypeVariablesWorker, Checker_getBaseTypeOfLiteralType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getTypeFromTypeNode, Checker_getWidenedType, Checker_IsEmptyAnonymousObjectType } from "./types.js";
+import { Checker_checkConstructorDeclaration, Checker_checkParameter, Checker_checkPropertySignature, Checker_checkSignatureDeclaration, Checker_checkThisType, Checker_checkTypeParameter, Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker, Checker_isValidConstAssertionArgument } from "./signatures.js";
 import { Checker_checkAccessorDeclaration, Checker_checkClassDeclaration, Checker_checkClassStaticBlockDeclaration, Checker_checkEnumDeclaration, Checker_checkEnumMember, Checker_checkExportDeclaration, Checker_checkFunctionDeclaration, Checker_checkImportDeclaration, Checker_checkImportEqualsDeclaration, Checker_checkImportType, Checker_checkIndexedAccessType, Checker_checkInterfaceDeclaration, Checker_checkMethodDeclaration, Checker_checkMissingDeclaration, Checker_checkModuleDeclaration, Checker_checkNamedTupleMember, Checker_checkPropertyDeclaration, Checker_checkTypeAliasDeclaration, Checker_checkVariableDeclaration, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_getSymbolOfDeclaration } from "./symbols.js";
-import { Checker_checkBlock, Checker_checkBreakOrContinueStatement, Checker_checkDoStatement, Checker_checkExpressionStatement, Checker_checkForInStatement, Checker_checkForOfStatement, Checker_checkForStatement, Checker_checkIfStatement, Checker_checkLabeledStatement, Checker_checkReturnStatement, Checker_checkSwitchStatement, Checker_checkThrowStatement, Checker_checkTryStatement, Checker_checkVariableStatement, Checker_checkWhileStatement, Checker_checkWithStatement, Checker_reportUnusedVariable } from "./syntax-checking.js";
+import { Checker_checkBlock, Checker_checkBreakOrContinueStatement, Checker_checkDoStatement, Checker_checkExpressionEx, Checker_checkExpressionStatement, Checker_checkForInStatement, Checker_checkForOfStatement, Checker_checkForStatement, Checker_checkIfStatement, Checker_checkLabeledStatement, Checker_checkNodeDeferred, Checker_checkReturnStatement, Checker_checkSwitchStatement, Checker_checkThrowStatement, Checker_checkTryStatement, Checker_checkVariableStatement, Checker_checkWhileStatement, Checker_checkWithStatement, Checker_reportUnusedVariable } from "./syntax-checking.js";
 import { createDiagnosticForNode } from "./state.js";
 import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
+import type { AssertionLinks } from "../types.js";
 import { Checker_checkTypePredicate } from "./flow-narrowing.js";
 import { Checker_checkInferType } from "./inference.js";
 import { Checker_checkExportAssignment } from "./relations.js";
@@ -998,7 +1003,7 @@ export function Checker_checkThisBeforeSuper(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertion","kind":"method","status":"stub","sigHash":"8464743512d29959302858e3075f01cc43e601f1a4b21ef39b69bc0cb695c540","bodyHash":"0e4265dec98b4873e5dda43af1245699304bf0dc299be5ad20342e568c731852"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertion","kind":"method","status":"implemented","sigHash":"8464743512d29959302858e3075f01cc43e601f1a4b21ef39b69bc0cb695c540","bodyHash":"0e4265dec98b4873e5dda43af1245699304bf0dc299be5ad20342e568c731852"}
  *
  * Go source:
  * func (c *Checker) checkAssertion(node *ast.Node, checkMode CheckMode) *Type {
@@ -1023,11 +1028,33 @@ export function Checker_checkThisBeforeSuper(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertion");
+  if (node!.Kind === KindTypeAssertionExpression) {
+    if (Checker_shouldCheckErasableSyntax(receiver, node)) {
+      const sourceFile = GetSourceFileOfNode(node);
+      DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(
+        sourceFile,
+        NewTextRange(SkipTrivia(SourceFile_Text(sourceFile), Node_Pos(node)), Node_Pos(Node_Expression(node))),
+        This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled,
+      ));
+    }
+  }
+  const typeNode = Node_Type(node);
+  const exprType = Checker_checkExpressionEx(receiver, Node_Expression(node), checkMode);
+  if (isConstTypeReference(typeNode)) {
+    if (!Checker_isValidConstAssertionArgument(receiver, Node_Expression(node))) {
+      Checker_error(receiver, Node_Expression(node), A_const_assertion_can_only_be_applied_to_references_to_enum_members_or_string_number_boolean_array_or_object_literals);
+    }
+    return Checker_getRegularTypeOfLiteralType(receiver, exprType);
+  }
+  const links = LinkStore_Get(receiver!.assertionLinks, node) as GoPtr<AssertionLinks>;
+  links!.exprType = exprType;
+  Checker_checkSourceElement(receiver, typeNode);
+  Checker_checkNodeDeferred(receiver, node);
+  return Checker_getTypeFromTypeNode(receiver, typeNode);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertionDeferred","kind":"method","status":"stub","sigHash":"973986c5f4c38a69995010d50136da4ea65daa63e67317dca64da6668fe1478e","bodyHash":"c115a1f302f9fed0371ebbe0074d0264037323087907d6494f44ee0cbaa89d46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertionDeferred","kind":"method","status":"implemented","sigHash":"973986c5f4c38a69995010d50136da4ea65daa63e67317dca64da6668fe1478e","bodyHash":"c115a1f302f9fed0371ebbe0074d0264037323087907d6494f44ee0cbaa89d46"}
  *
  * Go source:
  * func (c *Checker) checkAssertionDeferred(node *ast.Node) {
@@ -1047,7 +1074,19 @@ export function Checker_checkAssertion(receiver: GoPtr<Checker>, node: GoPtr<Nod
  * }
  */
 export function Checker_checkAssertionDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAssertionDeferred");
+  const typeNode = Node_Type(node);
+  const exprType = Checker_getRegularTypeOfObjectLiteral(receiver, Checker_getBaseTypeOfLiteralType(receiver, (LinkStore_Get(receiver!.assertionLinks, node) as GoPtr<AssertionLinks>)!.exprType));
+  const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
+  if (!Checker_isErrorType(receiver, targetType)) {
+    const widenedType = Checker_getWidenedType(receiver, exprType);
+    if (!Checker_isTypeComparableTo(receiver, targetType, widenedType)) {
+      let errNode = node;
+      if ((typeNode!.Flags & NodeFlagsReparsed) !== 0) {
+        errNode = typeNode;
+      }
+      Checker_checkTypeComparableTo(receiver, exprType, targetType, errNode, Conversion_of_type_0_to_type_1_may_be_a_mistake_because_neither_type_sufficiently_overlaps_with_the_other_If_this_was_intentional_convert_the_expression_to_unknown_first);
+    }
+  }
 }
 
 /**
