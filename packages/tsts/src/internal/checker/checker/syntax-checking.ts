@@ -26,9 +26,9 @@ import type { Relation } from "../relater.js";
 import type { Signature, Type } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
-  CheckModeNormal, IterationTypeKindReturn, IterationTypeKindYield,
+  CheckModeInferential, CheckModeNormal, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
-  UnusedKindLocal, UnusedKindParameter,
+  TypeFactsIsUndefined, UnusedKindLocal, UnusedKindParameter,
 } from "./state.js";
 import type { Checker, CheckMode, keyBuilder, FlowLoopInfo } from "./state.js";
 import {
@@ -39,7 +39,7 @@ import {
   IsPropertyAccessExpression, IsPrivateIdentifier, IsConstructorDeclaration,
   IsSetAccessorDeclaration, IsBlock, IsParameterDeclaration,
   IsBindingElement, IsClassStaticBlockDeclaration, IsCaseClause, IsDefaultClause,
-  IsLabeledStatement, IsConditionalExpression,
+  IsLabeledStatement, IsConditionalExpression, IsBinaryExpression,
 } from "../../ast/generated/predicates.js";
 import {
   GetSourceFileOfNode, IsExternalOrCommonJSModule,
@@ -62,6 +62,7 @@ import {
   Checker_checkAccessorDeclaration, Checker_checkUnusedIdentifiers,
   Checker_reportUnusedVariableDeclarations, Checker_isUnreferencedVariableDeclaration,
   Checker_getIndexedAccessType, Checker_getTargetOfAliasLikeExpression, Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_needCollisionCheckForIdentifier,
+  Checker_getTypeOfSymbol,
 } from "./symbols.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType } from "./flow-narrowing.js";
 import { Checker_isCanceled, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression } from "../utilities.js";
@@ -76,7 +77,7 @@ import {
 import {
   Checker_produceDeferredDiagnostics, Checker_hasParseDiagnostics,
   Checker_addErrorOrSuggestion, Checker_addDeferredDiagnostic,
-  Checker_reportOperatorError, Checker_reportOperatorErrorUnless,
+  Checker_isErrorType, Checker_reportOperatorError, Checker_reportOperatorErrorUnless,
 } from "./diagnostics.js";
 import {
   Checker_checkTypeAssignableToAndOptionallyElaborate,
@@ -114,7 +115,7 @@ import {
   KindFunctionExpression, KindArrowFunction, KindMethodDeclaration, KindMethodSignature,
   KindGetAccessor, KindSetAccessor, KindClassExpression, KindTypeParameter,
   KindJsxSelfClosingElement, KindJsxElement, KindTypeAssertionExpression, KindAsExpression,
-  KindVoidExpression, KindBinaryExpression,
+  KindVoidExpression, KindBinaryExpression, KindEqualsToken,
 } from "../../ast/generated/kinds.js";
 import { SkipTrivia } from "../../scanner/scanner.js";
 import { Tristate_IsTrue, Tristate_IsFalse, TSTrue, TSFalse } from "../../core/tristate.js";
@@ -147,11 +148,15 @@ import {
   The_left_hand_side_of_a_for_of_statement_may_not_be_an_optional_property_access,
   X_for_await_loops_cannot_be_used_inside_a_class_static_block,
   The_return_type_of_an_async_function_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member,
+  The_operand_of_a_delete_operator_must_be_optional,
+  Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member,
+  X_await_has_no_effect_on_the_type_of_this_expression,
 } from "../../diagnostics/generated/messages.js";
 import { Checker_checkGrammarModifiers } from "../grammarchecks.js";
 import { TypeFlagsAnyOrUnknown, TypeFlagsNonPrimitive, TypeFlagsInstantiableNonPrimitive, TypeFlagsNever } from "../types.js";
-import { SymbolFlagsBlockScopedVariable } from "../../ast/generated/flags.js";
+import { SymbolFlagsBlockScopedVariable, SymbolFlagsOptional } from "../../ast/generated/flags.js";
 import type { SymbolTable } from "../../ast/symbol.js";
+import { Checker_getInferenceContext } from "./inference.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f","bodyHash":"65678dd5c6e1f4ffa700bb65eee57bc088bcc84456cf8a0948d39f486e967a22"}
@@ -1700,7 +1705,7 @@ export function Checker_isGenericFunctionReturningFunction(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.skippedGenericFunction","kind":"method","status":"stub","sigHash":"08ffca68b5910381e028d20a5541c284d5a49ba670f28a424a0341cf1c7e8fe0","bodyHash":"6804d6b3996488af843e4902a5a0de1df26d87530380fc2702ab165fb0f4dbfa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.skippedGenericFunction","kind":"method","status":"implemented","sigHash":"08ffca68b5910381e028d20a5541c284d5a49ba670f28a424a0341cf1c7e8fe0","bodyHash":"6804d6b3996488af843e4902a5a0de1df26d87530380fc2702ab165fb0f4dbfa"}
  *
  * Go source:
  * func (c *Checker) skippedGenericFunction(node *ast.Node, checkMode CheckMode) {
@@ -1713,7 +1718,10 @@ export function Checker_isGenericFunctionReturningFunction(receiver: GoPtr<Check
  * }
  */
 export function Checker_skippedGenericFunction(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.skippedGenericFunction");
+  if ((checkMode & CheckModeInferential) !== 0) {
+    const context = Checker_getInferenceContext(receiver, node);
+    context!.flags |= InferenceFlagsSkippedGenericFunction;
+  }
 }
 
 /**
@@ -1800,7 +1808,7 @@ export function Checker_checkDeleteExpression(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeleteExpressionMustBeOptional","kind":"method","status":"stub","sigHash":"cdda74b57ed3ceeee5d0dc10fbf04424f62f492c8596b6fd56757f86b3cf211d","bodyHash":"0433ccc486f2f43c25bc5a727a7799a4eed3a734fa28777325d094228d29753a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeleteExpressionMustBeOptional","kind":"method","status":"implemented","sigHash":"cdda74b57ed3ceeee5d0dc10fbf04424f62f492c8596b6fd56757f86b3cf211d","bodyHash":"0433ccc486f2f43c25bc5a727a7799a4eed3a734fa28777325d094228d29753a"}
  *
  * Go source:
  * func (c *Checker) checkDeleteExpressionMustBeOptional(expr *ast.Node, symbol *ast.Symbol) {
@@ -1819,11 +1827,22 @@ export function Checker_checkDeleteExpression(receiver: GoPtr<Checker>, node: Go
  * }
  */
 export function Checker_checkDeleteExpressionMustBeOptional(receiver: GoPtr<Checker>, expr: GoPtr<Node>, symbol_: GoPtr<Symbol>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeleteExpressionMustBeOptional");
+  const t = Checker_getTypeOfSymbol(receiver, symbol_);
+  if (receiver!.strictNullChecks && (t!.flags & (TypeFlagsAnyOrUnknown | TypeFlagsNever)) === 0) {
+    let isOptional: bool;
+    if (receiver!.exactOptionalPropertyTypes) {
+      isOptional = (symbol_!.Flags & SymbolFlagsOptional) !== 0;
+    } else {
+      isOptional = Checker_hasTypeFacts(receiver, t, TypeFactsIsUndefined);
+    }
+    if (!isOptional) {
+      Checker_error(receiver, expr, The_operand_of_a_delete_operator_must_be_optional);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitExpression","kind":"method","status":"stub","sigHash":"17c30161bbc79fc1ed85b35725b04d8b86a6498644a0387c2cf8fe827d0d0ed4","bodyHash":"243489682abfb5dc8b2a3c612e70e01b165a21685452573736e9b80c2a9d5c32"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitExpression","kind":"method","status":"implemented","sigHash":"17c30161bbc79fc1ed85b35725b04d8b86a6498644a0387c2cf8fe827d0d0ed4","bodyHash":"243489682abfb5dc8b2a3c612e70e01b165a21685452573736e9b80c2a9d5c32"}
  *
  * Go source:
  * func (c *Checker) checkAwaitExpression(node *ast.Node) *Type {
@@ -1837,7 +1856,13 @@ export function Checker_checkDeleteExpressionMustBeOptional(receiver: GoPtr<Chec
  * }
  */
 export function Checker_checkAwaitExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkAwaitExpression");
+  Checker_checkGrammarAwaitOrAwaitUsing(receiver, node);
+  const operandType = Checker_checkExpression(receiver, Node_Expression(node));
+  const awaitedType = Checker_checkAwaitedType(receiver, operandType, true, node, Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member);
+  if (awaitedType === operandType && !Checker_isErrorType(receiver, awaitedType) && (operandType!.flags & TypeFlagsAnyOrUnknown) === 0) {
+    Checker_addErrorOrSuggestion(receiver, false, createDiagnosticForNode(node, X_await_has_no_effect_on_the_type_of_this_expression));
+  }
+  return awaitedType;
 }
 
 /**
@@ -2526,7 +2551,7 @@ export function Checker_getTargetOfBinaryExpression(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfAccessExpression","kind":"method","status":"stub","sigHash":"8900c65ec3436098b8b7c265d8ad933bf9d4360ba6774ffa575f1662ee550131","bodyHash":"386266d2099e0b623af9d9b9b241d4eb63f9c3ef010cb904c74810833ab0bc25"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfAccessExpression","kind":"method","status":"implemented","sigHash":"8900c65ec3436098b8b7c265d8ad933bf9d4360ba6774ffa575f1662ee550131","bodyHash":"386266d2099e0b623af9d9b9b241d4eb63f9c3ef010cb904c74810833ab0bc25"}
  *
  * Go source:
  * func (c *Checker) getTargetOfAccessExpression(node *ast.Node) *ast.Symbol {
@@ -2540,7 +2565,13 @@ export function Checker_getTargetOfBinaryExpression(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getTargetOfAccessExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfAccessExpression");
+  if (IsBinaryExpression(node!.Parent)) {
+    const expr = AsBinaryExpression(node!.Parent);
+    if (expr!.Left === node && expr!.OperatorToken!.Kind === KindEqualsToken) {
+      return Checker_getTargetOfAliasLikeExpression(receiver, expr!.Right);
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2641,7 +2672,7 @@ export function Checker_createSyntheticExpression(receiver: GoPtr<Checker>, pare
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findContextualNode","kind":"method","status":"stub","sigHash":"d9adfd2b36982eef1d5ebde5bb713a30eba60be48369832c8c2d57b8c2d3665c","bodyHash":"85c92711e73de7520fff3b19ee28ce9c378c0e8a4e03ccf2ec59ce120516bdba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findContextualNode","kind":"method","status":"implemented","sigHash":"d9adfd2b36982eef1d5ebde5bb713a30eba60be48369832c8c2d57b8c2d3665c","bodyHash":"85c92711e73de7520fff3b19ee28ce9c378c0e8a4e03ccf2ec59ce120516bdba"}
  *
  * Go source:
  * func (c *Checker) findContextualNode(node *ast.Node, includeCaches bool) int {
@@ -2654,7 +2685,13 @@ export function Checker_createSyntheticExpression(receiver: GoPtr<Checker>, pare
  * }
  */
 export function Checker_findContextualNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, includeCaches: bool): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.findContextualNode");
+  for (let i = 0; i < receiver!.contextualInfos.length; i++) {
+    const info = receiver!.contextualInfos[i]!;
+    if (node === info.node && (includeCaches || !info.isCache)) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 /**
