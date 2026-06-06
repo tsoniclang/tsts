@@ -624,7 +624,7 @@ export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable","kind":"func","status":"stub","sigHash":"ecf0f51324cec402d67481361d90847014aa898b6ed40cbee4bf7b9f629c1b59","bodyHash":"3f5bb32631df999e48ff71408b4f65817b3cab476e254d6706372b38eb8c785e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable","kind":"func","status":"implemented","sigHash":"ecf0f51324cec402d67481361d90847014aa898b6ed40cbee4bf7b9f629c1b59","bodyHash":"3f5bb32631df999e48ff71408b4f65817b3cab476e254d6706372b38eb8c785e"}
  *
  * Go source:
  * func GetSymbolTable(data *SymbolTable) SymbolTable {
@@ -635,7 +635,10 @@ export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
  * }
  */
 export function GetSymbolTable(data: GoPtr<SymbolTable>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable");
+  if (data === undefined) {
+    return new Map();
+  }
+  return data;
 }
 
 /**
