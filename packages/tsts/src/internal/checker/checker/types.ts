@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
@@ -29,15 +29,15 @@ import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFl
 import type { orderedSet } from "../utilities.js";
 import { IsTypeAny, NewDiagnosticForNode, orderedSet_contains, orderedSet_add, entityNameToString } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionReduction, WideningContext, WideningKind, CachedTypeKey } from "./state.js";
-import { CheckModeTypeOnly, CheckModeNormal, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, hashWrite32 } from "./state.js";
-import { Checker_getTypeArguments, Checker_getTypeWithThisArgument, Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode, Checker_checkTypeForDuplicateIndexSignatures, Checker_newCallSignature, Checker_getOrCreateTypeFromSignature, Checker_newParameter, Checker_getTypeReferenceArity } from "./signatures.js";
+import { CheckModeTypeOnly, CheckModeNormal, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, hashWrite32, isTypeReferenceWithGenericArguments } from "./state.js";
+import { Checker_getTypeArguments, Checker_getTypeWithThisArgument, Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode, Checker_checkTypeForDuplicateIndexSignatures, Checker_newCallSignature, Checker_getOrCreateTypeFromSignature, Checker_newParameter, Checker_getTypeReferenceArity, Checker_getConstraintOfTypeParameter } from "./signatures.js";
 import { Checker_getSignaturesOfType, Checker_getReturnTypeOfSignature, Checker_getBuiltinIteratorReturnType } from "./signatures.js";
 import { Checker_getBaseConstraintOfType, Checker_checkIndexConstraints, Checker_getTypeAliasInstantiation, Checker_isGenericTypeWithUndefinedConstraint, Checker_getConstraintTypeFromMappedType } from "./inference.js";
 import { Checker_getTypeOfSymbol, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexTypeOfType, Checker_checkDeclarationInitializer, Checker_findResolutionCycleStartIndex, Checker_instantiateTypeWithAlias, Checker_isNeverReducedProperty, Checker_resolveStructuredTypeMembers, Checker_getIndexInfosOfType, Checker_getPropertyOfUnionOrIntersectionType, Checker_getIndexedAccessType, Checker_createTypeFromGenericGlobalType, Checker_getDeclaredTypeOfSymbol, Checker_checkObjectTypeForDuplicateDeclarations, Checker_markEntityNameOrEntityExpressionAsReference, Checker_getEntityNameForDecoratorMetadata, Checker_getSymbolOfNode, Checker_getAliasForTypeNode, Checker_getParentOfSymbol } from "./symbols.js";
 import { Checker_getMinArgumentCount, Checker_reportDiagnostic, Checker_checkTypeAssignableToEx, Checker_checkTypeAssignableTo, Checker_getTypeAtPosition, Checker_isTypeAssignableTo, Checker_getKeyPropertyName, Checker_getConstituentTypeForKeyType } from "../relater.js";
 import { Checker_reportTypeNotIterableError, Checker_addDeferredDiagnostic, Checker_getIterationDiagnosticDetails, Checker_checkNonNullTypeWithReporter, Checker_reportObjectPossiblyNullOrUndefinedError, Checker_reportCircularityError } from "./diagnostics.js";
 import { Checker_getPropertyNameForKnownSymbolName, Checker_includeUndefinedInIndexSignature } from "../flow.js";
-import { Checker_checkSourceElement, Checker_checkSourceElements, Checker_error, keyBuilder_writeInt } from "./support.js";
+import { Checker_checkSourceElement, Checker_checkSourceElements, Checker_error, keyBuilder_writeByte, keyBuilder_writeInt } from "./support.js";
 import { Checker_TypeToString } from "../printer.js";
 import { Checker_checkGrammarTypeOperatorNode, Checker_checkGrammarRegularExpressionLiteral, Checker_grammarErrorOnNode } from "../grammarchecks.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
@@ -3407,7 +3407,7 @@ export function keyBuilder_writeTypes(receiver: GoPtr<keyBuilder>, types: GoSlic
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeGenericTypeReferences","kind":"method","status":"stub","sigHash":"0f213166d07119139f43e72cc3d8d3a25df92f333ec7687b2b24f1f3926862ab","bodyHash":"939a96265ecdc4a8e87b05323d911d790dd31e7daf84d7478570d3d1b856d9d9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeGenericTypeReferences","kind":"method","status":"implemented","sigHash":"0f213166d07119139f43e72cc3d8d3a25df92f333ec7687b2b24f1f3926862ab","bodyHash":"939a96265ecdc4a8e87b05323d911d790dd31e7daf84d7478570d3d1b856d9d9"}
  *
  * Go source:
  * func (b *keyBuilder) writeGenericTypeReferences(source *Type, target *Type, ignoreConstraints bool) bool {
@@ -3446,7 +3446,37 @@ export function keyBuilder_writeTypes(receiver: GoPtr<keyBuilder>, types: GoSlic
  * }
  */
 export function keyBuilder_writeGenericTypeReferences(receiver: GoPtr<keyBuilder>, source: GoPtr<Type>, target: GoPtr<Type>, ignoreConstraints: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeGenericTypeReferences");
+  let constrained = false as bool;
+  const typeParameters: GoSlice<GoPtr<Type>> = [];
+  const writeTypeReference = (ref: GoPtr<Type>, depth: int): void => {
+    keyBuilder_writeType(receiver, Type_Target(ref));
+    for (const t of Type_AsTypeReference(ref)!.resolvedTypeArguments) {
+      if ((t!.flags & TypeFlagsTypeParameter) !== 0) {
+        if (ignoreConstraints || Checker_getConstraintOfTypeParameter(t!.checker, t) === undefined) {
+          let index = slices.Index(typeParameters, t);
+          if (index < 0) {
+            index = typeParameters.length as int;
+            typeParameters.push(t);
+          }
+          keyBuilder_writeByte(receiver, "=".charCodeAt(0) as byte);
+          keyBuilder_writeInt(receiver, index);
+          continue;
+        }
+        constrained = true as bool;
+      } else if (depth < 4 && isTypeReferenceWithGenericArguments(t)) {
+        keyBuilder_writeByte(receiver, "<".charCodeAt(0) as byte);
+        writeTypeReference(t, (depth + 1) as int);
+        keyBuilder_writeByte(receiver, ">".charCodeAt(0) as byte);
+        continue;
+      }
+      keyBuilder_writeByte(receiver, "-".charCodeAt(0) as byte);
+      keyBuilder_writeType(receiver, t);
+    }
+  };
+  writeTypeReference(source, 0 as int);
+  keyBuilder_writeByte(receiver, ",".charCodeAt(0) as byte);
+  writeTypeReference(target, 0 as int);
+  return constrained;
 }
 
 /**
