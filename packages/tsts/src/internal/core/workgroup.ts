@@ -37,16 +37,10 @@ export interface WorkGroup {
 export function NewWorkGroup(singleThreaded: bool): WorkGroup {
   if (singleThreaded) {
     const state: singleThreadedWorkGroup = { done: new Bool(), fnsMu: new Mutex(), fns: [] };
-    return {
-      Queue: (fn: () => void): void => singleThreadedWorkGroup_Queue(state, fn),
-      RunAndWait: (): void => singleThreadedWorkGroup_RunAndWait(state),
-    };
+    return singleThreadedWorkGroup_as_WorkGroup(state);
   }
   const state: parallelWorkGroup = { done: new Bool(), wg: new WaitGroup() };
-  return {
-    Queue: (fn: () => void): void => parallelWorkGroup_Queue(state, fn),
-    RunAndWait: (): void => parallelWorkGroup_RunAndWait(state),
-  };
+  return parallelWorkGroup_as_WorkGroup(state);
 }
 
 /**
@@ -69,7 +63,14 @@ export interface parallelWorkGroup {
  * Go source:
  * var _ WorkGroup = (*parallelWorkGroup)(nil)
  */
-export const __7c9694b3_0: WorkGroup = undefined as never;
+export const __7c9694b3_0: WorkGroup = parallelWorkGroup_as_WorkGroup(undefined);
+
+export function parallelWorkGroup_as_WorkGroup(receiver: GoPtr<parallelWorkGroup>): WorkGroup {
+  return {
+    Queue: (fn: () => void): void => parallelWorkGroup_Queue(receiver, fn),
+    RunAndWait: (): void => parallelWorkGroup_RunAndWait(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::parallelWorkGroup.Queue","kind":"method","status":"implemented","sigHash":"3a613e599ba2aa8046b19e5cea538987a132e970ec82b28e8d9dd4448e04b823","bodyHash":"ab0e077af06b04fdf79a20c4f839d7670dd8cd9d253fc427497de91affd5a466"}
@@ -128,7 +129,14 @@ export interface singleThreadedWorkGroup {
  * Go source:
  * var _ WorkGroup = (*singleThreadedWorkGroup)(nil)
  */
-export const __056fa025_0: WorkGroup = undefined as never;
+export const __056fa025_0: WorkGroup = singleThreadedWorkGroup_as_WorkGroup(undefined);
+
+export function singleThreadedWorkGroup_as_WorkGroup(receiver: GoPtr<singleThreadedWorkGroup>): WorkGroup {
+  return {
+    Queue: (fn: () => void): void => singleThreadedWorkGroup_Queue(receiver, fn),
+    RunAndWait: (): void => singleThreadedWorkGroup_RunAndWait(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/workgroup.go::method::singleThreadedWorkGroup.Queue","kind":"method","status":"implemented","sigHash":"01ad6bcfb7e5a22d16bf001ed92e5e227494b699f7b81f785d7a7de0efc800e9","bodyHash":"988fed99c77ff7fbd07fa317212524ffb19e5aad06caa4d766fcc3b50b488e06"}
