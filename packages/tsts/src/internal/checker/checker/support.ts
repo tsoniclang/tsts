@@ -798,7 +798,7 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero","kind":"method","status":"stub","sigHash":"ac1a5c1faca99b9a97e6772498eab9bc1349ba8c98bf3dacab2b2f77c66c86ea","bodyHash":"90031db923a48be39fb2e01727e39a91e077521e7bdb81cccad6846cbc82bb37"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero","kind":"method","status":"implemented","sigHash":"ac1a5c1faca99b9a97e6772498eab9bc1349ba8c98bf3dacab2b2f77c66c86ea","bodyHash":"90031db923a48be39fb2e01727e39a91e077521e7bdb81cccad6846cbc82bb37"}
  *
  * Go source:
  * func (k CacheHashKey) IsZero() bool {
@@ -806,11 +806,11 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
  * }
  */
 export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::CacheHashKey.IsZero");
+  return receiver === undefined || receiver.IsZero();
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeByte","kind":"method","status":"stub","sigHash":"fc12495863b0fd20991d4ebc290cc639d805be5af031695c424cf49059909a06","bodyHash":"ebf03d0a97ceb51b4985ad169f26de74ad220a93746b1584fde9148971658cf6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeByte","kind":"method","status":"implemented","sigHash":"fc12495863b0fd20991d4ebc290cc639d805be5af031695c424cf49059909a06","bodyHash":"ebf03d0a97ceb51b4985ad169f26de74ad220a93746b1584fde9148971658cf6"}
  *
  * Go source:
  * func (b *keyBuilder) writeByte(c byte) {
@@ -818,11 +818,11 @@ export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
  * }
  */
 export function keyBuilder_writeByte(receiver: GoPtr<keyBuilder>, c: byte): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeByte");
+  receiver!.h.Write([c]);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeString","kind":"method","status":"stub","sigHash":"95571fcfb2a8b2695b7b921db1bd622beda7b1524e7d968ef4cf63b0ad3ec5ed","bodyHash":"8f6c6e72fd1ec0edb3a6c2274538756757d912411c0b5f4611de32d82b534c1c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeString","kind":"method","status":"implemented","sigHash":"95571fcfb2a8b2695b7b921db1bd622beda7b1524e7d968ef4cf63b0ad3ec5ed","bodyHash":"8f6c6e72fd1ec0edb3a6c2274538756757d912411c0b5f4611de32d82b534c1c"}
  *
  * Go source:
  * func (b *keyBuilder) writeString(s string) {
@@ -830,11 +830,11 @@ export function keyBuilder_writeByte(receiver: GoPtr<keyBuilder>, c: byte): void
  * }
  */
 export function keyBuilder_writeString(receiver: GoPtr<keyBuilder>, s: string): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeString");
+  receiver!.h.WriteString(s);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeInt","kind":"method","status":"stub","sigHash":"6a27d4019053a9b9464c4ad39c418c4839cd67fe9c32baacce7edcdd9f464b4f","bodyHash":"08f3854fb5ab326842de4bedce29a4504dd8e57bf226152899fe5782217ea994"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeInt","kind":"method","status":"implemented","sigHash":"6a27d4019053a9b9464c4ad39c418c4839cd67fe9c32baacce7edcdd9f464b4f","bodyHash":"08f3854fb5ab326842de4bedce29a4504dd8e57bf226152899fe5782217ea994"}
  *
  * Go source:
  * func (b *keyBuilder) writeInt(value int) {
@@ -842,7 +842,13 @@ export function keyBuilder_writeString(receiver: GoPtr<keyBuilder>, s: string): 
  * }
  */
 export function keyBuilder_writeInt(receiver: GoPtr<keyBuilder>, value: int): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.writeInt");
+  let v = BigInt(globalThis.Math.trunc(value)) & ((1n << 64n) - 1n);
+  const bytes: GoSlice<byte> = [];
+  for (let index = 0; index < 8; index++) {
+    bytes.push(Number(v & 0xffn) as byte);
+    v >>= 8n;
+  }
+  receiver!.h.Write(bytes);
 }
 
 /**

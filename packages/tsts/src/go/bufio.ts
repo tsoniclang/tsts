@@ -1,6 +1,7 @@
 import type { byte, int } from "@tsonic/core/types.js";
 import type { GoError, GoSlice } from "./compat.js";
 import type { Reader as IoReader, Writer as IoWriter } from "./io.js";
+import { EOF } from "./io.js";
 
 export class Reader implements IoReader {
   private readonly buffer: GoSlice<byte> = [];
@@ -29,7 +30,7 @@ export class Reader implements IoReader {
     if (n > 0) {
       return [one[0]!, undefined];
     }
-    return [0 as byte, err ?? new globalThis.Error("EOF")];
+    return [0 as byte, err ?? EOF];
   }
 
   ReadBytes(delim: byte): [GoSlice<byte>, GoError] {

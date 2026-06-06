@@ -479,7 +479,7 @@ export function Checker_isCommonJSRequire(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.hash","kind":"method","status":"stub","sigHash":"2104c6c9cd93d3129bc35a7c933f72b8dcee8db01810f0e4b6ad7eb8af63e0e1","bodyHash":"4bf1c89469142c06f771ce0a7b30c2162807d095480f3504efe4dca66116e573"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.hash","kind":"method","status":"implemented","sigHash":"2104c6c9cd93d3129bc35a7c933f72b8dcee8db01810f0e4b6ad7eb8af63e0e1","bodyHash":"4bf1c89469142c06f771ce0a7b30c2162807d095480f3504efe4dca66116e573"}
  *
  * Go source:
  * func (b *keyBuilder) hash() CacheHashKey {
@@ -487,7 +487,7 @@ export function Checker_isCommonJSRequire(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function keyBuilder_hash(receiver: GoPtr<keyBuilder>): CacheHashKey {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::keyBuilder.hash");
+  return receiver!.h.Sum128();
 }
 
 /**

@@ -43,6 +43,10 @@
     "go/bytes.ts",
     "go/bufio.ts",
     "go/encoding/binary.ts",
+    "go/encoding/hex.ts",
+    "go/hash/fnv.ts",
+    "go/io.ts",
+    "go/log.ts",
     "go/path.ts",
     "go/path/filepath.ts",
     "go/time.ts",
@@ -55,6 +59,7 @@
     "go/flag.ts",
     "go/github.com/go-json-experiment/json.ts",
     "go/github.com/go-json-experiment/json/jsontext.ts",
+    "go/github.com/zeebo/xxh3.ts",
     "go/net/url.ts",
     "go/context.ts"
   ],
