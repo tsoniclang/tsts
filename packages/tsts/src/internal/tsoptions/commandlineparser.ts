@@ -266,7 +266,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
       UseCaseSensitiveFileNames: host.FS().UseCaseSensitiveFileNames(),
       CurrentDirectory: host.GetCurrentDirectory(),
     },
-    resolvedProjectPaths: undefined as never,
+    resolvedProjectPaths: [],
     resolvedProjectPathsOnce: new Once(),
     locale: undefined as never,
     localeOnce: new Once(),
