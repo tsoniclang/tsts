@@ -1623,7 +1623,7 @@ export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorErrorUnless","kind":"method","status":"stub","sigHash":"8c3c5e34688c02cfacd2f52a07518cfd4dbbdf3193f27ca0047204b5a61152b9","bodyHash":"8782b24ddbb3a6ce1a8625c43e9e8229716d8bcf9399b4c04f1ba2f9882fb9dd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorErrorUnless","kind":"method","status":"implemented","sigHash":"8c3c5e34688c02cfacd2f52a07518cfd4dbbdf3193f27ca0047204b5a61152b9","bodyHash":"8782b24ddbb3a6ce1a8625c43e9e8229716d8bcf9399b4c04f1ba2f9882fb9dd"}
  *
  * Go source:
  * func (c *Checker) reportOperatorErrorUnless(leftType *Type, operator ast.Kind, rightType *Type, errorNode *ast.Node, typesAreCompatible func(left *Type, right *Type) bool) {
@@ -1633,11 +1633,13 @@ export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: 
  * }
  */
 export function Checker_reportOperatorErrorUnless(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, typesAreCompatible: (left: GoPtr<Type>, right: GoPtr<Type>) => bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorErrorUnless");
+  if (!typesAreCompatible(leftType, rightType)) {
+    Checker_reportOperatorError(receiver, leftType, operator, rightType, errorNode, typesAreCompatible);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCannotFindNameDiagnosticForName","kind":"method","status":"stub","sigHash":"eae200ae7bc29b80af238f3d99c950b786747542f17abe9f4790b681b54567a3","bodyHash":"b418c0e3691f846812ff9795a38a7967539a8d00aea242ac5f1cb63cd8eae003"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCannotFindNameDiagnosticForName","kind":"method","status":"implemented","sigHash":"eae200ae7bc29b80af238f3d99c950b786747542f17abe9f4790b681b54567a3","bodyHash":"b418c0e3691f846812ff9795a38a7967539a8d00aea242ac5f1cb63cd8eae003"}
  *
  * Go source:
  * func (c *Checker) getCannotFindNameDiagnosticForName(node *ast.Node) *diagnostics.Message {
@@ -1677,7 +1679,72 @@ export function Checker_reportOperatorErrorUnless(receiver: GoPtr<Checker>, left
  * }
  */
 export function Checker_getCannotFindNameDiagnosticForName(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Message> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getCannotFindNameDiagnosticForName");
+  const c = receiver!;
+  switch (Node_Text(node)) {
+    case "document":
+    case "console":
+      return Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_include_dom;
+    case "$":
+      return IfElse(
+        CompilerOptions_UsesWildcardTypes(c.compilerOptions),
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery,
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_jQuery_Try_npm_i_save_dev_types_Slashjquery_and_then_add_jquery_to_the_types_field_in_your_tsconfig,
+      );
+    case "beforeEach":
+    case "describe":
+    case "suite":
+    case "it":
+    case "test":
+      return IfElse(
+        CompilerOptions_UsesWildcardTypes(c.compilerOptions),
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha,
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_a_test_runner_Try_npm_i_save_dev_types_Slashjest_or_npm_i_save_dev_types_Slashmocha_and_then_add_jest_or_mocha_to_the_types_field_in_your_tsconfig,
+      );
+    case "process":
+    case "require":
+    case "Buffer":
+    case "module":
+    case "NodeJS":
+      return IfElse(
+        CompilerOptions_UsesWildcardTypes(c.compilerOptions),
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode,
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_node_Try_npm_i_save_dev_types_Slashnode_and_then_add_node_to_the_types_field_in_your_tsconfig,
+      );
+    case "Bun":
+      return IfElse(
+        CompilerOptions_UsesWildcardTypes(c.compilerOptions),
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun,
+        Cannot_find_name_0_Do_you_need_to_install_type_definitions_for_Bun_Try_npm_i_save_dev_types_Slashbun_and_then_add_bun_to_the_types_field_in_your_tsconfig,
+      );
+    case "Map":
+    case "Set":
+    case "Promise":
+    case "ast.Symbol":
+    case "WeakMap":
+    case "WeakSet":
+    case "Iterator":
+    case "AsyncIterator":
+    case "SharedArrayBuffer":
+    case "Atomics":
+    case "AsyncIterable":
+    case "AsyncIterableIterator":
+    case "AsyncGenerator":
+    case "AsyncGeneratorFunction":
+    case "BigInt":
+    case "Reflect":
+    case "BigInt64Array":
+    case "BigUint64Array":
+      return Cannot_find_name_0_Do_you_need_to_change_your_target_library_Try_changing_the_lib_compiler_option_to_1_or_later;
+    case "await":
+      if (IsCallExpression(node!.Parent)) {
+        return Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function;
+      }
+      break;
+  }
+  if (node!.Parent !== undefined && node!.Parent.Kind === KindShorthandPropertyAssignment) {
+    return No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer;
+  }
+  return Cannot_find_name_0;
 }
 
 /**
