@@ -1,8 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoComparable, GoError, GoMap, GoPtr, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
-import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String } from "../../go/reflect.js";
+import { Int as reflect_Int, Int8 as reflect_Int8, Int16 as reflect_Int16, Int32 as reflect_Int32, Int64 as reflect_Int64, Uint as reflect_Uint, Uint8 as reflect_Uint8, Uint16 as reflect_Uint16, Uint32 as reflect_Uint32, Uint64 as reflect_Uint64, Uintptr as reflect_Uintptr, String as reflect_String, ValueOf as reflect_ValueOf } from "../../go/reflect.js";
 import type { Value } from "../../go/reflect.js";
-import type { Decoder, Encoder, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
+import { BeginObject as json_BeginObject, EndObject as json_EndObject, MarshalEncode as json_MarshalEncode } from "../json/json.js";
+import type { Decoder, Encoder, Kind, MarshalerTo, UnmarshalerFrom } from "../json/json.js";
 import * as slices from "../../go/slices.js";
 import * as maps from "../../go/maps.js";
 import * as strconv from "../../go/strconv.js";
@@ -472,7 +473,7 @@ export function OrderedMap_clone<K, V>(receiver: GoPtr<OrderedMap<K, V>>): Order
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"c0f643ddaecb4dc458e443ac6d66b4714210a786e2470ad3f7d098783ee1efc0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"c0f643ddaecb4dc458e443ac6d66b4714210a786e2470ad3f7d098783ee1efc0"}
  *
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
@@ -480,7 +481,7 @@ export function OrderedMap_clone<K, V>(receiver: GoPtr<OrderedMap<K, V>>): Order
 export const __83877ae8_0: MarshalerTo = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.MarshalJSONTo","kind":"method","status":"stub","sigHash":"c276ee5f48fdfa57fdc9849d191b2334e25048b2cb68a37a9096425c013cb0dc","bodyHash":"881d0dabd2a738ffc1b18de6fd9242eae15a836994d0c41dc08a800b2969580c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.MarshalJSONTo","kind":"method","status":"implemented","sigHash":"c276ee5f48fdfa57fdc9849d191b2334e25048b2cb68a37a9096425c013cb0dc","bodyHash":"881d0dabd2a738ffc1b18de6fd9242eae15a836994d0c41dc08a800b2969580c"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) MarshalJSONTo(enc *json.Encoder) error {
@@ -508,7 +509,29 @@ export const __83877ae8_0: MarshalerTo = undefined as never;
  * }
  */
 export function OrderedMap_MarshalJSONTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>, enc: GoPtr<Encoder>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.MarshalJSONTo");
+  if (enc === undefined) {
+    return new globalThis.Error("nil json encoder");
+  }
+  const m = receiver!;
+  let err = enc.WriteToken(json_BeginObject as Kind);
+  if (err !== undefined) {
+    return err;
+  }
+  for (const k of m.keys) {
+    const [keyString, keyErr] = resolveKeyName(reflect_ValueOf(k));
+    if (keyErr !== undefined) {
+      return keyErr;
+    }
+    err = json_MarshalEncode(enc, keyString);
+    if (err !== undefined) {
+      return err;
+    }
+    err = json_MarshalEncode(enc, m.mp.get(k));
+    if (err !== undefined) {
+      return err;
+    }
+  }
+  return enc.WriteToken(json_EndObject as Kind);
 }
 
 /**
@@ -551,7 +574,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_::#2","kind":"varGroup","status":"stub","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"969efb6f3c91cffb17e3f2b6e168ab2840a061972c506a109304275598f2fa10"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::varGroup::_::#2","kind":"varGroup","status":"implemented","sigHash":"49fbaf64ae10ed60e869e0234672578cdcd492d18042f56b9c710f8c12be2c3e","bodyHash":"969efb6f3c91cffb17e3f2b6e168ab2840a061972c506a109304275598f2fa10"}
  *
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
@@ -559,7 +582,7 @@ export function resolveKeyName(k: Value): [string, GoError] {
 export const __ffc9f882_0: UnmarshalerFrom = undefined as never;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom","kind":"method","status":"stub","sigHash":"a7144f1a9e8365998959b2007618110405c3631c153fe92dbfe6516a80ef469d","bodyHash":"2b0d1d85377e6789c937edb9e222ea9eca541fa5b08f7040fe6a8f4273bb4ff5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"a7144f1a9e8365998959b2007618110405c3631c153fe92dbfe6516a80ef469d","bodyHash":"2b0d1d85377e6789c937edb9e222ea9eca541fa5b08f7040fe6a8f4273bb4ff5"}
  *
  * Go source:
  * func (m *OrderedMap[K, V]) UnmarshalJSONFrom(dec *json.Decoder) error {
@@ -595,7 +618,29 @@ export const __ffc9f882_0: UnmarshalerFrom = undefined as never;
  * }
  */
 export function OrderedMap_UnmarshalJSONFrom<K, V>(receiver: GoPtr<OrderedMap<K, V>>, dec: GoPtr<Decoder>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom");
+  if (dec === undefined) {
+    return new globalThis.Error("nil json decoder");
+  }
+  const [value, err] = dec.ReadValue();
+  if (err !== undefined) {
+    return err;
+  }
+  if (value === null) {
+    return undefined;
+  }
+  if (value instanceof globalThis.Map) {
+    for (const [key, element] of value.entries()) {
+      OrderedMap_Set(receiver, key as K, element as V);
+    }
+    return undefined;
+  }
+  if (typeof value !== "object" || value === undefined || globalThis.Array.isArray(value)) {
+    return new globalThis.Error("cannot unmarshal non-object JSON value into Map");
+  }
+  for (const [key, element] of globalThis.Object.entries(value as Record<string, unknown>)) {
+    OrderedMap_Set(receiver, key as K, element as V);
+  }
+  return undefined;
 }
 
 /**

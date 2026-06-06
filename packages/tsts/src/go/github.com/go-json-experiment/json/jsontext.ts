@@ -85,21 +85,109 @@ class JsonDecoder implements Decoder {
 
 class JsonEncoder implements Encoder {
   readonly #chunks: Array<string> = [];
+  readonly #stack: Array<JsonContainerFrame> = [];
 
   WriteToken(kind: Kind): GoError {
-    this.#chunks.push(kind.Kind());
-    return undefined;
+    try {
+      const value = kind.Kind();
+      switch (value) {
+        case "{":
+          this.#writeValuePrefix();
+          this.#chunks.push("{");
+          this.#stack.push({ kind: "object", count: 0, expecting: "key" });
+          return undefined;
+        case "[":
+          this.#writeValuePrefix();
+          this.#chunks.push("[");
+          this.#stack.push({ kind: "array", count: 0 });
+          return undefined;
+        case "}":
+          return this.#closeContainer("object", "}");
+        case "]":
+          return this.#closeContainer("array", "]");
+        case "n":
+          this.#writeValuePrefix();
+          this.#chunks.push("null");
+          return undefined;
+        default:
+          return new Error(`unsupported json token ${value}`);
+      }
+    } catch (error) {
+      return toError(error);
+    }
   }
 
   WriteValue(value: unknown): GoError {
-    this.#chunks.push(JSON.stringify(value));
-    return undefined;
+    try {
+      const frame = this.#stack[this.#stack.length - 1];
+      if (frame?.kind === "object" && frame.expecting === "key") {
+        if (frame.count > 0) {
+          this.#chunks.push(",");
+        }
+        this.#chunks.push(JSON.stringify(String(value)));
+        this.#chunks.push(":");
+        frame.expecting = "value";
+        return undefined;
+      }
+      this.#writeValuePrefix();
+      this.#chunks.push(JSON.stringify(normalizeForJson(value)));
+      return undefined;
+    } catch (error) {
+      return toError(error);
+    }
   }
 
   Bytes(): GoSlice<byte> {
     return Array.from(textEncoder.encode(this.#chunks.join("")));
   }
+
+  #writeValuePrefix(): void {
+    const frame = this.#stack[this.#stack.length - 1];
+    if (frame === undefined) {
+      if (this.#chunks.length > 0) {
+        throw new Error("json encoder already has a top-level value");
+      }
+      return;
+    }
+    if (frame.kind === "array") {
+      if (frame.count > 0) {
+        this.#chunks.push(",");
+      }
+      frame.count = frame.count + 1;
+      return;
+    }
+    if (frame.expecting !== "value") {
+      throw new Error("json object value written before key");
+    }
+    frame.count = frame.count + 1;
+    frame.expecting = "key";
+  }
+
+  #closeContainer(expected: JsonContainerFrame["kind"], token: string): GoError {
+    const frame = this.#stack.pop();
+    if (frame === undefined || frame.kind !== expected) {
+      return new Error(`json encoder mismatched ${token} token`);
+    }
+    if (frame.kind === "object" && frame.expecting !== "key") {
+      return new Error("json object closed before value");
+    }
+    this.#chunks.push(token);
+    return undefined;
+  }
 }
+
+interface JsonObjectFrame {
+  kind: "object";
+  count: number;
+  expecting: "key" | "value";
+}
+
+interface JsonArrayFrame {
+  kind: "array";
+  count: number;
+}
+
+type JsonContainerFrame = JsonObjectFrame | JsonArrayFrame;
 
 export function NewDecoder(reader: Reader | GoSlice<byte> | string): Decoder {
   return new JsonDecoder(reader);
@@ -158,6 +246,20 @@ const kindOf = (value: unknown): string => {
     return value ? "t" : "f";
   }
   return "0";
+}
+
+const normalizeForJson = (value: unknown): unknown => {
+  if (value instanceof Map) {
+    return Object.fromEntries(value);
+  }
+  if (value instanceof Uint8Array) {
+    return Array.from(value);
+  }
+  return value;
+}
+
+const toError = (error: unknown): Error => {
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 export const writeTo = (writer: Writer, bytes: GoSlice<byte>): GoError => {

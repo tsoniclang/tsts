@@ -165,7 +165,7 @@ export function ID_MarshalJSON(receiver: GoPtr<ID>): [GoSlice<byte>, GoError] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::ID.UnmarshalJSON","kind":"method","status":"stub","sigHash":"a53e0eeb85ec7afe048658fe9d5a0a5d3dcef421949d19f2c94c72af4943ab9f","bodyHash":"505df2733dbb0ed9c7b75dfe81e0ea60866f1aebb9fa4adced14e8dff4b8986b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::ID.UnmarshalJSON","kind":"method","status":"implemented","sigHash":"a53e0eeb85ec7afe048658fe9d5a0a5d3dcef421949d19f2c94c72af4943ab9f","bodyHash":"505df2733dbb0ed9c7b75dfe81e0ea60866f1aebb9fa4adced14e8dff4b8986b"}
  *
  * Go source:
  * func (id *ID) UnmarshalJSON(data []byte) error {
@@ -177,7 +177,23 @@ export function ID_MarshalJSON(receiver: GoPtr<ID>): [GoSlice<byte>, GoError] {
  * }
  */
 export function ID_UnmarshalJSON(receiver: GoPtr<ID>, data: GoSlice<byte>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/jsonrpc/jsonrpc.go::method::ID.UnmarshalJSON");
+  const id = receiver!;
+  id.str = "";
+  id.int = 0;
+  try {
+    const value = globalThis.JSON.parse(bytesToString(data)) as unknown;
+    if (typeof value === "string") {
+      id.str = value;
+      return undefined;
+    }
+    if (typeof value === "number" && globalThis.Number.isInteger(value)) {
+      id.int = value as int;
+      return undefined;
+    }
+    return new globalThis.Error("jsonrpc ID must be a string or integer");
+  } catch (error) {
+    return error instanceof globalThis.Error ? error : new globalThis.Error(String(error));
+  }
 }
 
 /**

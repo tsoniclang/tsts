@@ -3,7 +3,7 @@ import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import { OrderedMap_Keys, OrderedMap_Size } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { Decoder, UnmarshalerFrom } from "../json/json.js";
-import { unmarshalJSONValueV2, JSONValueTypeObject, JSONValueTypeArray } from "./jsonvalue.js";
+import { unmarshalJSONValueV2, JSONValueTypeObject, JSONValueTypeArray, JSONValueTypeNotPresent } from "./jsonvalue.js";
 import type { JSONValue } from "./jsonvalue.js";
 
 /**
@@ -42,7 +42,7 @@ export const objectKindInvalid: objectKind = 4 as objectKind;
  * }
  */
 export interface ExportsOrImports {
-  readonly __tsgoEmbedded0?: JSONValue;
+  __tsgoEmbedded0?: JSONValue;
   objectKind: objectKind;
 }
 
@@ -63,7 +63,15 @@ export const __fac7894a_0: UnmarshalerFrom = undefined as never;
  * }
  */
 export function ExportsOrImports_UnmarshalJSONFrom(receiver: GoPtr<ExportsOrImports>, dec: GoPtr<Decoder>): GoError {
-  return unmarshalJSONValueV2<ExportsOrImports>(receiver!.__tsgoEmbedded0 as GoPtr<JSONValue>, dec);
+  const e = receiver!;
+  if (e.__tsgoEmbedded0 === undefined) {
+    e.__tsgoEmbedded0 = { Type: JSONValueTypeNotPresent, Value: undefined };
+  }
+  return unmarshalJSONValueV2<ExportsOrImports>(
+    e.__tsgoEmbedded0,
+    dec,
+    value => ({ __tsgoEmbedded0: value, objectKind: objectKindUnknown }),
+  );
 }
 
 /**
