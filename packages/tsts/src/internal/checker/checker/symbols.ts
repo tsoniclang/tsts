@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { Clone as MapClone, Values as MapValues } from "../../../go/maps.js";
-import { Collect, Compact, Concat, Values as SliceValues } from "../../../go/slices.js";
+import { Collect, Compact, Concat, Contains as SliceContains, Values as SliceValues } from "../../../go/slices.js";
 import type { Node } from "../../ast/spine.js";
 import type { Declaration, ExportSpecifierNode, Expression, IdentifierNode, PropertyName } from "../../ast/generated/unions.js";
 import type { CheckFlags } from "../../ast/checkflags.js";
@@ -17,6 +17,7 @@ import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
 import type { NameResolver } from "../../binder/nameresolver.js";
 import type { OrderedSet } from "../../collections/ordered_set.js";
+import { OrderedSet_Values } from "../../collections/ordered_set.js";
 import type { ResolutionMode } from "../../core/compileroptions.js";
 import { CompilerOptions_GetAllowImportingTsExtensions, CompilerOptions_GetIsolatedModules, CompilerOptions_GetUseDefineForClassFields, CompilerOptions_ShouldPreserveConstEnums, JsxEmitPreserve, ModuleKindCommonJS, ModuleKindES2015, ModuleKindES2020, ModuleKind_IsNonNodeESM, ModuleKind_SupportsImportAttributes, ResolutionModeNone, ScriptTargetES2017 } from "../../core/compileroptions.js";
 import { ModuleKindNode16, ModuleKindNode20, ModuleKindNodeNext, ModuleKindESNext, ModuleKindSystem } from "../../core/compileroptions.js";
@@ -66,7 +67,7 @@ import { InterfaceType_TypeParameters } from "../types.js";
 import { LanguageFeatureMinimumTarget, NodeCheckFlagsContainsClassWithPrivateIdentifiers, NodeCheckFlagsEnumValuesComputed, NodeCheckFlagsInitializerIsUndefinedComputed, NodeCheckFlagsTypeChecked } from "../types.js";
 import { Checker_error, Checker_reportUnused, keyBuilder_writeByte, keyBuilder_writeInt } from "./support.js";
 import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, SourceFile_FileName, SourceFile_Path, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters, Node_ModifierFlags, Node_TypeArguments, Node_Expression, Node_Elements, Node_PropertyName, Node_PropertyNameOrName, Node_ModuleSpecifier, Node_IsTypeOnly, Node_QuestionToken, Node_ModifierNodes, IsDeclarationNode } from "../../ast/ast.js";
-import { Set_Has, Set_Len, Set_Add } from "../../collections/set.js";
+import { NewSetWithSizeHint, Set_Has, Set_Len, Set_Add, Set_Delete, Set_Keys } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
@@ -10990,7 +10991,7 @@ export function Checker_getTargetSymbol(receiver: GoPtr<Checker>, s: GoPtr<Symbo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasCommonDeclaration","kind":"method","status":"stub","sigHash":"ca2baead8e0a6caaab07fa43289c537465e6c3b147c9fd384c640a0c19015710","bodyHash":"869c2ea05eb2c1d194e1ff25739ff8923dcf916e2c3d7dcb81f963d45e38178c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasCommonDeclaration","kind":"method","status":"implemented","sigHash":"ca2baead8e0a6caaab07fa43289c537465e6c3b147c9fd384c640a0c19015710","bodyHash":"869c2ea05eb2c1d194e1ff25739ff8923dcf916e2c3d7dcb81f963d45e38178c"}
  *
  * Go source:
  * func (c *Checker) hasCommonDeclaration(symbols *collections.OrderedSet[*ast.Symbol]) bool {
@@ -11017,8 +11018,32 @@ export function Checker_getTargetSymbol(receiver: GoPtr<Checker>, s: GoPtr<Symbo
  * 	return commonDeclarations.Len() != 0
  * }
  */
-export function Checker_hasCommonDeclaration(receiver: GoPtr<Checker>, symbols: GoPtr<OrderedSet>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasCommonDeclaration");
+export function Checker_hasCommonDeclaration(receiver: GoPtr<Checker>, symbols: GoPtr<OrderedSet<GoPtr<Symbol>>>): bool {
+  const commonDeclarations = NewSetWithSizeHint<GoPtr<Node>>(0);
+  let result = true;
+  OrderedSet_Values<GoPtr<Symbol>>(symbols)((symbol_) => {
+    if (symbol_!.Declarations.length === 0) {
+      result = false;
+      return false;
+    }
+    if (Set_Len(commonDeclarations) === 0) {
+      for (const declaration of symbol_!.Declarations) {
+        Set_Add(commonDeclarations, declaration);
+      }
+      return true;
+    }
+    for (const [declaration] of Set_Keys(commonDeclarations)) {
+      if (!SliceContains(symbol_!.Declarations, declaration)) {
+        Set_Delete(commonDeclarations, declaration);
+      }
+    }
+    if (Set_Len(commonDeclarations) === 0) {
+      result = false;
+      return false;
+    }
+    return true;
+  });
+  return result && Set_Len(commonDeclarations) !== 0;
 }
 
 /**
