@@ -57,6 +57,7 @@ import type { InfoCacheEntry } from "../packagejson/cache.js";
 import type { EmitContext } from "../printer/emitcontext.js";
 import type { EmitHost as EmitHost_cf9bdcc7 } from "../printer/emithost.js";
 import type { EmitResolver, SymbolAccessibilityResult, TypeReferenceSerializationKind } from "../printer/emitresolver.js";
+import type { ModuleSpecifierGenerationHost } from "../modulespecifiers/types.js";
 import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
 import type { DeclarationEmitHost, OutputPaths } from "../transformers/declarations/transform.js";
 import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
@@ -118,6 +119,25 @@ export interface EmitHost {
   GetCurrentDirectory(): string;
   CommonSourceDirectory(): string;
   IsEmitBlocked(file: string): bool;
+  GetSymlinkCache(): GoPtr<KnownSymlinks>;
+  GetGlobalTypingsCacheLocation(): string;
+  GetProjectReferenceFromSource(path: Path): GoPtr<SourceOutputAndProjectReference>;
+  GetRedirectTargets(path: Path): GoSlice<string>;
+  GetSourceOfProjectReferenceIfOutputIncluded(file: HasFileName): string;
+  FileExists(path: string): bool;
+  GetNearestAncestorDirectoryWithPackageJson(dirname: string): string;
+  GetPackageJsonInfo(pkgJsonPath: string): GoPtr<InfoCacheEntry>;
+  GetDefaultResolutionModeForFile(file: HasFileName): ResolutionMode;
+  GetResolvedModuleFromModuleSpecifier(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule>;
+  GetModeForUsageLocation(file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode;
+  GetSourceFileFromReference(origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile>;
+  GetOutputPathsFor(file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths;
+  GetResolutionModeOverride(node: GoPtr<Node>): ResolutionMode;
+  GetEffectiveDeclarationFlags(node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags;
+  GetEmitResolver(): EmitResolver;
+  WriteFile(fileName: string, text: string): GoError;
+  GetEmitModuleFormatOfFile(file: HasFileName): ModuleKind;
+  IsSourceFileFromExternalLibrary(file: GoPtr<SourceFile>): bool;
 }
 
 /**
@@ -126,7 +146,115 @@ export interface EmitHost {
  * Go source:
  * var _ EmitHost = (*emitHost)(nil)
  */
-export let __6e5ea12b_0: EmitHost = undefined as never;
+export let __6e5ea12b_0: EmitHost = emitHost_as_compiler_EmitHost(undefined);
+
+export function EmitHost_as_printer_EmitHost(receiver: EmitHost): EmitHost_cf9bdcc7 {
+  return receiver.__tsgoEmbedded0!;
+}
+
+export function EmitHost_as_declarations_DeclarationEmitHost(receiver: EmitHost): DeclarationEmitHost {
+  return receiver.__tsgoEmbedded1!;
+}
+
+export function emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver: GoPtr<emitHost>): ModuleSpecifierGenerationHost {
+  return {
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+  };
+}
+
+export function emitHost_as_printer_EmitHost(receiver: GoPtr<emitHost>): EmitHost_cf9bdcc7 {
+  return {
+    Options: (): GoPtr<CompilerOptions> => emitHost_Options(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => emitHost_SourceFiles(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
+    WriteFile: (fileName: string, text: string): GoError => emitHost_WriteFile(receiver, fileName, text),
+    GetEmitModuleFormatOfFile: (file: HasFileName): ModuleKind => emitHost_GetEmitModuleFormatOfFile(receiver, file),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => emitHost_IsSourceFileFromExternalLibrary(receiver, file),
+  };
+}
+
+export function emitHost_as_declarations_DeclarationEmitHost(receiver: GoPtr<emitHost>): DeclarationEmitHost {
+  return {
+    __tsgoEmbedded0: emitHost_as_modulespecifiers_ModuleSpecifierGenerationHost(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+    GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
+    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+  };
+}
+
+export function emitHost_as_outputpaths_OutputPathsHost(receiver: GoPtr<emitHost>): OutputPathsHost {
+  return {
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+  };
+}
+
+export function emitHost_as_compiler_EmitHost(receiver: GoPtr<emitHost>): EmitHost {
+  return {
+    __tsgoEmbedded0: emitHost_as_printer_EmitHost(receiver),
+    __tsgoEmbedded1: emitHost_as_declarations_DeclarationEmitHost(receiver),
+    GetSymlinkCache: (): GoPtr<KnownSymlinks> => emitHost_GetSymlinkCache(receiver),
+    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
+    GetGlobalTypingsCacheLocation: (): string => emitHost_GetGlobalTypingsCacheLocation(receiver),
+    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
+    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
+    GetProjectReferenceFromSource: (path: Path): GoPtr<SourceOutputAndProjectReference> => emitHost_GetProjectReferenceFromSource(receiver, path),
+    GetRedirectTargets: (path: Path): GoSlice<string> => emitHost_GetRedirectTargets(receiver, path),
+    GetSourceOfProjectReferenceIfOutputIncluded: (file: HasFileName): string => emitHost_GetSourceOfProjectReferenceIfOutputIncluded(receiver, file),
+    FileExists: (path: string): bool => emitHost_FileExists(receiver, path),
+    GetNearestAncestorDirectoryWithPackageJson: (dirname: string): string => emitHost_GetNearestAncestorDirectoryWithPackageJson(receiver, dirname),
+    GetPackageJsonInfo: (pkgJsonPath: string): GoPtr<InfoCacheEntry> => emitHost_GetPackageJsonInfo(receiver, pkgJsonPath),
+    GetDefaultResolutionModeForFile: (file: HasFileName): ResolutionMode => emitHost_GetDefaultResolutionModeForFile(receiver, file),
+    GetResolvedModuleFromModuleSpecifier: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): GoPtr<ResolvedModule> => emitHost_GetResolvedModuleFromModuleSpecifier(receiver, file, moduleSpecifier),
+    GetModeForUsageLocation: (file: HasFileName, moduleSpecifier: GoPtr<StringLiteralLike>): ResolutionMode => emitHost_GetModeForUsageLocation(receiver, file, moduleSpecifier),
+    GetSourceFileFromReference: (origin: GoPtr<SourceFile>, ref: GoPtr<FileReference>): GoPtr<SourceFile> => emitHost_GetSourceFileFromReference(receiver, origin, ref),
+    GetOutputPathsFor: (file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths => emitHost_GetOutputPathsFor(receiver, file, forceDtsPaths),
+    GetResolutionModeOverride: (node: GoPtr<Node>): ResolutionMode => emitHost_GetResolutionModeOverride(receiver, node),
+    GetEffectiveDeclarationFlags: (node: GoPtr<Node>, flags: ModifierFlags): ModifierFlags => emitHost_GetEffectiveDeclarationFlags(receiver, node, flags),
+    GetEmitResolver: (): EmitResolver => emitHost_GetEmitResolver(receiver),
+    Options: (): GoPtr<CompilerOptions> => emitHost_Options(receiver),
+    SourceFiles: (): GoSlice<GoPtr<SourceFile>> => emitHost_SourceFiles(receiver),
+    IsEmitBlocked: (file: string): bool => emitHost_IsEmitBlocked(receiver, file),
+    WriteFile: (fileName: string, text: string): GoError => emitHost_WriteFile(receiver, fileName, text),
+    GetEmitModuleFormatOfFile: (file: HasFileName): ModuleKind => emitHost_GetEmitModuleFormatOfFile(receiver, file),
+    IsSourceFileFromExternalLibrary: (file: GoPtr<SourceFile>): bool => emitHost_IsSourceFileFromExternalLibrary(receiver, file),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/emitHost.go::type::emitHost","kind":"type","status":"implemented","sigHash":"82a8160ff4f5bebeb3e890a32bc68c27a504ee28ed1414475783e6f93c9ed5fb","bodyHash":"ec0aedbd3cd85f7ed02a0f05dd030e3ab5e099c642013dc9e6950c43b9867c27"}
@@ -358,11 +486,7 @@ export function emitHost_GetEffectiveDeclarationFlags(receiver: GoPtr<emitHost>,
  * }
  */
 export function emitHost_GetOutputPathsFor(receiver: GoPtr<emitHost>, file: GoPtr<SourceFile>, forceDtsPaths: bool): OutputPaths {
-  const host: OutputPathsHost = {
-    CommonSourceDirectory: (): string => emitHost_CommonSourceDirectory(receiver),
-    GetCurrentDirectory: (): string => emitHost_GetCurrentDirectory(receiver),
-    UseCaseSensitiveFileNames: (): bool => emitHost_UseCaseSensitiveFileNames(receiver),
-  };
+  const host = emitHost_as_outputpaths_OutputPathsHost(receiver);
   const result = GetOutputPathsFor(file, emitHost_Options(receiver), host, forceDtsPaths);
   return {
     DeclarationFilePath: (): string => OutputPaths_DeclarationFilePath(result),

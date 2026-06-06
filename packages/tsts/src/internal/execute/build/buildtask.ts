@@ -37,9 +37,9 @@ import { NewProgram as incremental_NewProgram } from "../incremental/program.js"
 import { NewProgram as compiler_NewProgram } from "../../compiler/program.js";
 import { EmitAndReportStatistics, GetTraceWithWriterFromSys } from "../tsc/emit.js";
 import { QuietDiagnosticsReporter } from "../tsc/diagnostics.js";
-import { compilerHost_FS, compilerHost_DefaultLibraryPath, compilerHost_GetCurrentDirectory, compilerHost_Trace, compilerHost_GetSourceFile, compilerHost_GetResolvedProjectReference } from "./compilerHost.js";
+import { compilerHost_as_compiler_CompilerHost } from "./compilerHost.js";
 import type { compilerHost } from "./compilerHost.js";
-import { host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_loadOrStoreMTime, host_storeMTimeFromOldCache } from "./host.js";
+import { host_as_compiler_CompilerHost, host_as_incremental_BuildInfoReader, host_GetMTime, host_SetMTime, host_storeMTime, host_FS as host_FS_fn, host_loadOrStoreMTime, host_storeMTimeFromOldCache } from "./host.js";
 import type { BuildInfo } from "../incremental/buildInfo.js";
 import type { Program } from "../incremental/program.js";
 import { ExitStatusDiagnosticsPresent_OutputsSkipped, ExitStatusDiagnosticsPresent_OutputsGenerated } from "../tsc/compile.js";
@@ -571,8 +571,8 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
   if (!Tristate_IsTrue(orchestrator!.opts.Command!.BuildOptions!.Force)) {
     oldProgram = ReadBuildInfoProgram(
       receiver!.resolved,
-      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[1],
-      orchestrator!.host as unknown as Parameters<typeof ReadBuildInfoProgram>[2],
+      host_as_incremental_BuildInfoReader(orchestrator!.host),
+      host_as_compiler_CompilerHost(orchestrator!.host),
     );
   }
   compileTimes.BuildInfoReadTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(buildInfoReadStart) as import("../../../go/time.js").Duration;
@@ -583,14 +583,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
     orchestrator!.opts.Testing,
   );
-  const buildCompilerHost: import("../../compiler/host.js").CompilerHost = {
-    FS: (): import("../../vfs/vfs.js").FS => compilerHost_FS({ host: orchestrator!.host, trace } as compilerHost),
-    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath({ host: orchestrator!.host, trace } as compilerHost),
-    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory({ host: orchestrator!.host, trace } as compilerHost),
-    Trace: (msg, ...args): void => compilerHost_Trace({ host: orchestrator!.host, trace } as compilerHost, msg, ...args),
-    GetSourceFile: (opts): GoPtr<import("../../ast/ast.js").SourceFile> => compilerHost_GetSourceFile({ host: orchestrator!.host, trace } as compilerHost, opts),
-    GetResolvedProjectReference: (fileName, p): GoPtr<import("../../tsoptions/parsedcommandline.js").ParsedCommandLine> => compilerHost_GetResolvedProjectReference({ host: orchestrator!.host, trace } as compilerHost, fileName, p),
-  };
+  const buildCompilerHost = compilerHost_as_compiler_CompilerHost({ host: orchestrator!.host, trace } as compilerHost);
   const program = compiler_NewProgram({ Config: receiver!.resolved, Host: buildCompilerHost } as import("../../compiler/program.js").ProgramOptions);
   compileTimes.ParseTime = (orchestrator!.opts.Sys.Now() as TimeWithSub).Sub(parseStart) as import("../../../go/time.js").Duration;
 

@@ -26,7 +26,13 @@ export interface BuildInfoReader {
  * Go source:
  * var _ BuildInfoReader = (*buildInfoReader)(nil)
  */
-export let __1917d4a9_0: BuildInfoReader = undefined as never;
+export let __1917d4a9_0: BuildInfoReader = buildInfoReader_as_incremental_BuildInfoReader(undefined);
+
+export function buildInfoReader_as_incremental_BuildInfoReader(receiver: GoPtr<buildInfoReader>): BuildInfoReader {
+  return {
+    ReadBuildInfo: (config: GoPtr<ParsedCommandLine>): GoPtr<BuildInfo> => buildInfoReader_ReadBuildInfo(receiver, config),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/incremental.go::type::buildInfoReader","kind":"type","status":"implemented","sigHash":"dfcce53f3de3062ceba253db9672d0aa2dd5f2e4895a9996dcf6421e72c32a7d","bodyHash":"ba7d35becd314c10ca258da4954fdddc73591b483af58b1f17d596b5b4455553"}
@@ -94,9 +100,7 @@ export function buildInfoReader_ReadBuildInfo(receiver: GoPtr<buildInfoReader>, 
  */
 export function NewBuildInfoReader(host: CompilerHost): BuildInfoReader {
   const r: buildInfoReader = { host };
-  return {
-    ReadBuildInfo: (config: GoPtr<ParsedCommandLine>): GoPtr<BuildInfo> => buildInfoReader_ReadBuildInfo(r, config),
-  };
+  return buildInfoReader_as_incremental_BuildInfoReader(r);
 }
 
 /**

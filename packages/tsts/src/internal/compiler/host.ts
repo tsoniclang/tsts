@@ -39,7 +39,18 @@ export interface CompilerHost {
  * Go source:
  * var _ CompilerHost = (*compilerHost)(nil)
  */
-export let __9ad05d82_0: CompilerHost = undefined as never;
+export let __9ad05d82_0: CompilerHost = compilerHost_as_compiler_CompilerHost(undefined);
+
+export function compilerHost_as_compiler_CompilerHost(receiver: GoPtr<compilerHost>): CompilerHost {
+  return {
+    FS: (): FS_4e804012 => compilerHost_FS(receiver),
+    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath(receiver),
+    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory(receiver),
+    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => compilerHost_Trace(receiver, msg, ...args),
+    GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => compilerHost_GetSourceFile(receiver, opts),
+    GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => compilerHost_GetResolvedProjectReference(receiver, fileName, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/host.go::type::compilerHost","kind":"type","status":"implemented","sigHash":"982024fc2e1946fec6a927ad0cf4e28a846e3a63f8797cb85d3f4f9b52080235","bodyHash":"f7c43bc4eafc5ebbf42aef5f0ad6d223b712751461eedb723e678d8ba5cde7e2"}
@@ -113,14 +124,7 @@ export function NewCompilerHost(currentDirectory: string, fs: FS_4e804012, defau
     extendedConfigCache,
     trace,
   };
-  return {
-    FS: (): FS_4e804012 => compilerHost_FS(h),
-    DefaultLibraryPath: (): string => compilerHost_DefaultLibraryPath(h),
-    GetCurrentDirectory: (): string => compilerHost_GetCurrentDirectory(h),
-    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => compilerHost_Trace(h, msg, ...args),
-    GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => compilerHost_GetSourceFile(h, opts),
-    GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => compilerHost_GetResolvedProjectReference(h, fileName, path),
-  };
+  return compilerHost_as_compiler_CompilerHost(h);
 }
 
 /**
@@ -201,6 +205,6 @@ export function compilerHost_GetSourceFile(receiver: GoPtr<compilerHost>, opts: 
  * }
  */
 export function compilerHost_GetResolvedProjectReference(receiver: GoPtr<compilerHost>, fileName: string, path: Path): GoPtr<ParsedCommandLine> {
-  const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, path, undefined, undefined, receiver as unknown as CompilerHost, receiver!.extendedConfigCache);
+  const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, path, undefined, undefined, compilerHost_as_compiler_CompilerHost(receiver), receiver!.extendedConfigCache);
   return commandLine;
 }

@@ -67,9 +67,33 @@ export interface host {
  * 	_ incremental.Host            = (*host)(nil)
  * )
  */
-export let ______46749447_0: CompilerHost = undefined as never;
-export let ______46749447_1: BuildInfoReader = undefined as never;
-export let ______46749447_2: Host = undefined as never;
+export let ______46749447_0: CompilerHost = host_as_compiler_CompilerHost(undefined);
+export let ______46749447_1: BuildInfoReader = host_as_incremental_BuildInfoReader(undefined);
+export let ______46749447_2: Host = host_as_incremental_Host(undefined);
+
+export function host_as_compiler_CompilerHost(receiver: GoPtr<host>): CompilerHost {
+  return {
+    FS: (): FS_7f03dc1c => host_FS(receiver),
+    DefaultLibraryPath: (): string => host_DefaultLibraryPath(receiver),
+    GetCurrentDirectory: (): string => host_GetCurrentDirectory(receiver),
+    Trace: (msg: GoPtr<Message>, ...args: Array<unknown>): void => host_Trace(receiver, msg, ...args),
+    GetSourceFile: (opts: SourceFileParseOptions): GoPtr<SourceFile> => host_GetSourceFile(receiver, opts),
+    GetResolvedProjectReference: (fileName: string, path: Path): GoPtr<ParsedCommandLine> => host_GetResolvedProjectReference(receiver, fileName, path),
+  };
+}
+
+export function host_as_incremental_BuildInfoReader(receiver: GoPtr<host>): BuildInfoReader {
+  return {
+    ReadBuildInfo: (config: GoPtr<ParsedCommandLine>): GoPtr<BuildInfo> => host_ReadBuildInfo(receiver, config),
+  };
+}
+
+export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
+  return {
+    GetMTime: (fileName: string): Time => host_GetMTime(receiver, fileName),
+    SetMTime: (fileName: string, mTime: Time): GoError => host_SetMTime(receiver, fileName, mTime),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/host.go::method::host.FS","kind":"method","status":"implemented","sigHash":"d45876671f8945bccb97e542ce2ec67006013d8bab7e6cd3ee77196ea144fb66","bodyHash":"b36a5440d8ae5c318b21bc54eac0bd347d8af98e63f610cfa6e0381ec36d4afc"}
@@ -172,11 +196,7 @@ export function host_GetResolvedProjectReference(receiver: GoPtr<host>, fileName
         commandLineRaw = wrapped;
       }
     }
-    const parseConfigHostAdapter = {
-      FS: () => host_FS(receiver),
-      GetCurrentDirectory: () => host_GetCurrentDirectory(receiver),
-    };
-    const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, parseConfigHostAdapter, receiver!.extendedConfigCache as ExtendedConfigCache_tsconfigparsing);
+    const [commandLine] = GetParsedCommandLineOfConfigFilePath(fileName, p, receiver!.orchestrator!.opts.Command!.CompilerOptions, commandLineRaw, host_as_compiler_CompilerHost(receiver), receiver!.extendedConfigCache as ExtendedConfigCache_tsconfigparsing);
     const configTime = (receiver!.orchestrator!.opts.Sys.Now() as Time & { Sub(t: Time): Duration }).Sub(configStart);
     SyncMap_Store(receiver!.configTimes, p, configTime);
     return commandLine;

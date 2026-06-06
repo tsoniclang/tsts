@@ -98,7 +98,7 @@ export interface OutputPaths {
  * 	GetEmitResolver() printer.EmitResolver
  * }
  */
-export interface DeclarationEmitHost {
+export interface DeclarationEmitHost extends ModuleSpecifierGenerationHost {
   readonly __tsgoEmbedded0?: ModuleSpecifierGenerationHost;
   GetCurrentDirectory(): string;
   UseCaseSensitiveFileNames(): bool;

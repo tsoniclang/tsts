@@ -34,7 +34,14 @@ export interface host {
  * Go source:
  * var _ Host = (*host)(nil)
  */
-export let __bbc5d83a_0: Host = undefined as never;
+export let __bbc5d83a_0: Host = host_as_incremental_Host(undefined);
+
+export function host_as_incremental_Host(receiver: GoPtr<host>): Host {
+  return {
+    GetMTime: (fileName: string): Time => host_GetMTime(receiver, fileName),
+    SetMTime: (fileName: string, mTime: Time): GoError => host_SetMTime(receiver, fileName, mTime),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/host.go::method::host.GetMTime","kind":"method","status":"implemented","sigHash":"b440e4ec0f5cf0c0011a054bf20144b8f6cb39805f65ef7903d31c15133fd296","bodyHash":"08fa97fc74a7af6591584229bb467e61b4292a6341e69b46ae07affe8f353a03"}
@@ -70,10 +77,7 @@ export function host_SetMTime(receiver: GoPtr<host>, fileName: string, mTime: Ti
  */
 export function CreateHost(compilerHost: CompilerHost): Host {
   const h: host = { host: compilerHost };
-  return {
-    GetMTime: (fileName: string): Time => host_GetMTime(h, fileName),
-    SetMTime: (fileName: string, mTime: Time): GoError => host_SetMTime(h, fileName, mTime),
-  };
+  return host_as_incremental_Host(h);
 }
 
 /**

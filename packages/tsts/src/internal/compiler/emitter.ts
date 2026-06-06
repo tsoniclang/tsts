@@ -15,11 +15,11 @@ import type { Generator } from "../sourcemap/generator.js";
 import type { Tracing } from "../tracing/tracing.js";
 import type { TransformOptions } from "../transformers/chain.js";
 import type { DeclarationTransformer } from "../transformers/declarations/transform.js";
-import type { DeclarationEmitHost } from "../transformers/declarations/transform.js";
 import type { Transformer } from "../transformers/transformer.js";
 import type { SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
 import type { EmitHost } from "./emitHost.js";
+import { EmitHost_as_declarations_DeclarationEmitHost, EmitHost_as_printer_EmitHost } from "./emitHost.js";
 import type { EmitResult, SourceMapEmitResult, WriteFileData } from "./program.js";
 import { IsInJSFile, IsJsonSourceFile, IsSourceFileJS } from "../ast/utilities.js";
 import { SourceFile_FileName, SourceFile_Path } from "../ast/ast.js";
@@ -146,7 +146,7 @@ export function emitter_emit(receiver: GoPtr<emitter>): void {
  */
 export function emitter_getDeclarationTransformers(receiver: GoPtr<emitter>, emitContext: GoPtr<EmitContext>, declarationFilePath: string, declarationMapPath: string): GoSlice<GoPtr<DeclarationTransformer>> {
   const e = receiver!;
-  const transform = NewDeclarationTransformer(e.host as unknown as DeclarationEmitHost, emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(e.host), emitContext, e.host.Options(), declarationFilePath, declarationMapPath);
   return [transform];
 }
 
@@ -172,7 +172,7 @@ export function emitter_runScriptTransformers(receiver: GoPtr<emitter>, emitCont
     popTrace = pop;
   }
   let sf = sourceFile;
-  for (const transformer of getScriptTransformers(emitContext, e.host as unknown as EmitHost_b6591a53, sf)) {
+  for (const transformer of getScriptTransformers(emitContext, EmitHost_as_printer_EmitHost(e.host), sf)) {
     sf = Transformer_TransformSourceFile(transformer, sf);
   }
   if (popTrace !== undefined) {
@@ -793,7 +793,7 @@ export function emitter_writeText(receiver: GoPtr<emitter>, fileName: string, te
   if (e.writeFile !== undefined) {
     return e.writeFile(fileName, text, data);
   }
-  return (e.host as unknown as EmitHost_b6591a53).WriteFile(fileName, text);
+  return EmitHost_as_printer_EmitHost(e.host).WriteFile(fileName, text);
 }
 
 /**
@@ -1191,7 +1191,7 @@ export function getDeclarationDiagnostics(host: EmitHost, file: GoPtr<SourceFile
     return [];
   }
   const options = host.Options();
-  const transform = NewDeclarationTransformer(host as unknown as DeclarationEmitHost, undefined, options, "", "");
+  const transform = NewDeclarationTransformer(EmitHost_as_declarations_DeclarationEmitHost(host), undefined, options, "", "");
   Transformer_TransformSourceFile(transform as GoPtr<Transformer>, file);
   return DeclarationTransformer_GetDiagnostics(transform);
 }

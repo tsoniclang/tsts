@@ -67,14 +67,14 @@ import { ContainsPath, ToPath, GetDirectoryPath, GetCanonicalFileName, GetRelati
 import { IsDeclarationFileName, HasImplementationTSFileExtension, FileExtensionIsOneOf, ExtensionIsOneOf, SupportedTSExtensionsWithJsonFlat } from "../tspath/extension.js";
 import type { ComparePathsOptions, Path } from "../tspath/path.js";
 import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
-import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath } from "../outputpaths/outputpaths.js";
+import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath, type OutputPathsHost } from "../outputpaths/outputpaths.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
 import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo } from "./checkerpool.js";
 import type { checkerPool, CheckerPool } from "./checkerpool.js";
 import { newCheckerPoolWithTracing } from "./checkerpool.js";
 import { getSourceFilesToEmit, sourceFileMayBeEmitted, getDeclarationDiagnostics, emitter_emit } from "./emitter.js";
 import type { emitter as emitterType, EmitOnly, SourceFileMayBeEmittedHost } from "./emitter.js";
-import { newEmitHost, emitHost_Options } from "./emitHost.js";
+import { newEmitHost, emitHost_as_compiler_EmitHost, emitHost_as_outputpaths_OutputPathsHost, emitHost_Options } from "./emitHost.js";
 import type { FileIncludeReason } from "./fileInclude.js";
 import { FileIncludeReason_toDiagnostic } from "./fileInclude.js";
 import type { DuplicateSourceFile, LibFile, processedFiles, redirectsFile } from "./fileloader.js";
@@ -512,6 +512,14 @@ export function Program_UseCaseSensitiveFileNames(receiver: GoPtr<Program>): boo
  */
 export function Program_UsesUriStyleNodeCoreModules(receiver: GoPtr<Program>): Tristate {
   return receiver!.usesUriStyleNodeCoreModules;
+}
+
+export function Program_as_outputpaths_OutputPathsHost(receiver: GoPtr<Program>): OutputPathsHost {
+  return {
+    CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
+    GetCurrentDirectory: (): string => Program_GetCurrentDirectory(receiver),
+    UseCaseSensitiveFileNames: (): bool => Program_UseCaseSensitiveFileNames(receiver),
+  };
 }
 
 /**
@@ -2599,7 +2607,7 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
       }
     };
 
-    ForEachEmittedFile(receiver as unknown as import("../outputpaths/outputpaths.js").OutputPathsHost, options, (emitFileNames, _sourceFile) => {
+    ForEachEmittedFile(Program_as_outputpaths_OutputPathsHost(receiver), options, (emitFileNames, _sourceFile) => {
       verifyEmitFilePath(OutputPaths_JsFilePath(emitFileNames));
       verifyEmitFilePath(OutputPaths_SourceMapFilePath(emitFileNames));
       verifyEmitFilePath(OutputPaths_DeclarationFilePath(emitFileNames));
@@ -3017,7 +3025,7 @@ export function Program_getDeclarationDiagnosticsForFile(receiver: GoPtr<Program
     return cached as GoSlice<GoPtr<Diagnostic>>;
   }
   const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-  const diags = getDeclarationDiagnostics(host as unknown as import("./emitHost.js").EmitHost, sourceFile);
+  const diags = getDeclarationDiagnostics(emitHost_as_compiler_EmitHost(host), sourceFile);
   const [stored] = SyncMap_LoadOrStore(receiver!.declarationDiagnosticCache, sourceFile, diags);
   done();
   return stored !== undefined ? stored as GoSlice<GoPtr<Diagnostic>> : diags;
@@ -3640,8 +3648,8 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     };
     emitters.push(e);
     const [host, done] = newEmitHost(ctx, receiver, sourceFile);
-    e.host = host as unknown as import("./emitHost.js").EmitHost;
-    e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), host as unknown as import("../outputpaths/outputpaths.js").OutputPathsHost, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
+    e.host = emitHost_as_compiler_EmitHost(host);
+    e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
     emitter_emit(e);
     done();
   }
