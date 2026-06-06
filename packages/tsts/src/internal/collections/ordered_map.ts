@@ -478,7 +478,13 @@ export function OrderedMap_clone<K, V>(receiver: GoPtr<OrderedMap<K, V>>): Order
  * Go source:
  * var _ json.MarshalerTo = (*OrderedMap[string, string])(nil)
  */
-export const __83877ae8_0: MarshalerTo = undefined as never;
+export const __83877ae8_0: MarshalerTo = OrderedMap_as_json_MarshalerTo<string, string>(undefined);
+
+export function OrderedMap_as_json_MarshalerTo<K, V>(receiver: GoPtr<OrderedMap<K, V>>): MarshalerTo {
+  return {
+    MarshalJSONTo: (encoder: Encoder): GoError => OrderedMap_MarshalJSONTo(receiver, encoder),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.MarshalJSONTo","kind":"method","status":"implemented","sigHash":"c276ee5f48fdfa57fdc9849d191b2334e25048b2cb68a37a9096425c013cb0dc","bodyHash":"881d0dabd2a738ffc1b18de6fd9242eae15a836994d0c41dc08a800b2969580c"}
@@ -579,7 +585,13 @@ export function resolveKeyName(k: Value): [string, GoError] {
  * Go source:
  * var _ json.UnmarshalerFrom = (*OrderedMap[string, string])(nil)
  */
-export const __ffc9f882_0: UnmarshalerFrom = undefined as never;
+export const __ffc9f882_0: UnmarshalerFrom = OrderedMap_as_json_UnmarshalerFrom<string, string>(undefined);
+
+export function OrderedMap_as_json_UnmarshalerFrom<K, V>(receiver: GoPtr<OrderedMap<K, V>>): UnmarshalerFrom {
+  return {
+    UnmarshalJSONFrom: (decoder: Decoder): GoError => OrderedMap_UnmarshalJSONFrom(receiver, decoder),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/ordered_map.go::method::OrderedMap.UnmarshalJSONFrom","kind":"method","status":"implemented","sigHash":"a7144f1a9e8365998959b2007618110405c3631c153fe92dbfe6516a80ef469d","bodyHash":"2b0d1d85377e6789c937edb9e222ea9eca541fa5b08f7040fe6a8f4273bb4ff5"}
