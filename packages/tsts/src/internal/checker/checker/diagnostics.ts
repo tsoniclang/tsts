@@ -5,7 +5,7 @@ import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_
 import type { Node, SourceFile } from "../../ast/ast.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { FlowNode } from "../../ast/flow.js";
-import { Diagnostic_AddRelatedInfo, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_Clone, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import { CompareDiagnostics } from "../../ast/diagnostic.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
@@ -1681,7 +1681,7 @@ export function Checker_getCannotFindNameDiagnosticForName(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetDiagnostics","kind":"method","status":"stub","sigHash":"37ea2cbbb80f6f6a2c81bb58c519e4e4e0b2a524b9fe35b74c2701c487e39e4a","bodyHash":"e45dcd40edc09719c5c266641257041d5655c05a954f57edca1b80944f79fa26"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetDiagnostics","kind":"method","status":"implemented","sigHash":"37ea2cbbb80f6f6a2c81bb58c519e4e4e0b2a524b9fe35b74c2701c487e39e4a","bodyHash":"e45dcd40edc09719c5c266641257041d5655c05a954f57edca1b80944f79fa26"}
  *
  * Go source:
  * func (c *Checker) GetDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1689,11 +1689,11 @@ export function Checker_getCannotFindNameDiagnosticForName(receiver: GoPtr<Check
  * }
  */
 export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetDiagnostics");
+  return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.diagnostics);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetSuggestionDiagnostics","kind":"method","status":"stub","sigHash":"97f638b0d4b0b1f7f89bcea364a82839808d155d6d85fd0ee2496423c35cee4f","bodyHash":"00a4d733a5d3513b985d54487e069bac295ce7c42a82de83734dac2b816149d3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetSuggestionDiagnostics","kind":"method","status":"implemented","sigHash":"97f638b0d4b0b1f7f89bcea364a82839808d155d6d85fd0ee2496423c35cee4f","bodyHash":"00a4d733a5d3513b985d54487e069bac295ce7c42a82de83734dac2b816149d3"}
  *
  * Go source:
  * func (c *Checker) GetSuggestionDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1701,11 +1701,11 @@ export function Checker_GetDiagnostics(receiver: GoPtr<Checker>, ctx: Context, s
  * }
  */
 export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetSuggestionDiagnostics");
+  return Checker_getDiagnostics(receiver, ctx, sourceFile, receiver!.suggestionDiagnostics);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDiagnostics","kind":"method","status":"stub","sigHash":"76688290efe6d9786821b97ee32f83dba77236df3c60bbb957c567992ec4c858","bodyHash":"c8b7a97bf6634f32d1cb20fb1fd2a9f2208a4a80cc4116f7953c04fe152b8ae8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDiagnostics","kind":"method","status":"implemented","sigHash":"76688290efe6d9786821b97ee32f83dba77236df3c60bbb957c567992ec4c858","bodyHash":"c8b7a97bf6634f32d1cb20fb1fd2a9f2208a4a80cc4116f7953c04fe152b8ae8"}
  *
  * Go source:
  * func (c *Checker) getDiagnostics(ctx context.Context, sourceFile *ast.SourceFile, collection *ast.DiagnosticsCollection) []*ast.Diagnostic {
@@ -1719,11 +1719,20 @@ export function Checker_GetSuggestionDiagnostics(receiver: GoPtr<Checker>, ctx: 
  * }
  */
 export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, collection: GoPtr<DiagnosticsCollection>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDiagnostics");
+  const c = receiver!;
+  Checker_checkNotCanceled(receiver);
+  const checkUnused = (Tristate_IsTrue(c.compilerOptions!.NoUnusedLocals) ||
+    Tristate_IsTrue(c.compilerOptions!.NoUnusedParameters) ||
+    collection === c.suggestionDiagnostics) as bool;
+  Checker_checkSourceFile(receiver, ctx, sourceFile, checkUnused);
+  if (c.wasCanceled) {
+    return [];
+  }
+  return DiagnosticsCollection_GetDiagnosticsForFile(collection, SourceFile_FileName(sourceFile));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetGlobalDiagnostics","kind":"method","status":"stub","sigHash":"3bfb53202e3d8331de7127856cb81ee1a3787adf80b36d04da5f3636ebab8fc5","bodyHash":"26ab6d44813d73ff5fbe4dafe6f30680784ecd5f05c3740b56b35cbe0581da9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetGlobalDiagnostics","kind":"method","status":"implemented","sigHash":"3bfb53202e3d8331de7127856cb81ee1a3787adf80b36d04da5f3636ebab8fc5","bodyHash":"26ab6d44813d73ff5fbe4dafe6f30680784ecd5f05c3740b56b35cbe0581da9b"}
  *
  * Go source:
  * func (c *Checker) GetGlobalDiagnostics() []*ast.Diagnostic {
@@ -1732,11 +1741,12 @@ export function Checker_getDiagnostics(receiver: GoPtr<Checker>, ctx: Context, s
  * }
  */
 export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<GoPtr<Diagnostic>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetGlobalDiagnostics");
+  Checker_checkNotCanceled(receiver);
+  return DiagnosticsCollection_GetGlobalDiagnostics(receiver!.diagnostics);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeferredDiagnostic","kind":"method","status":"stub","sigHash":"b4099d211be44e64ca5eb78493e2a7ba0e7441480c93b091b8df3e9f57a983bb","bodyHash":"298fbf47d2bb88187c160a66bd77d3f860490659c0b21e5fc6f4461b50e846a6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeferredDiagnostic","kind":"method","status":"implemented","sigHash":"b4099d211be44e64ca5eb78493e2a7ba0e7441480c93b091b8df3e9f57a983bb","bodyHash":"298fbf47d2bb88187c160a66bd77d3f860490659c0b21e5fc6f4461b50e846a6"}
  *
  * Go source:
  * func (c *Checker) addDeferredDiagnostic(callback func()) {
@@ -1746,11 +1756,14 @@ export function Checker_GetGlobalDiagnostics(receiver: GoPtr<Checker>): GoSlice<
  * }
  */
 export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback: () => void): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeferredDiagnostic");
+  const c = receiver!;
+  if (c.saveDeferredDiagnostics) {
+    c.deferredDiagnosticCallbacks = [...(c.deferredDiagnosticCallbacks ?? []), callback];
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.produceDeferredDiagnostics","kind":"method","status":"stub","sigHash":"b76ee6d78e69a0a9d39e8fe04e888743204d757a190b7b4b314058bd00d62cd1","bodyHash":"01c4b38128e6d8067641a4f2837947048e03bbf50016aea85e66c6fc3a60cdf4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.produceDeferredDiagnostics","kind":"method","status":"implemented","sigHash":"b76ee6d78e69a0a9d39e8fe04e888743204d757a190b7b4b314058bd00d62cd1","bodyHash":"01c4b38128e6d8067641a4f2837947048e03bbf50016aea85e66c6fc3a60cdf4"}
  *
  * Go source:
  * func (c *Checker) produceDeferredDiagnostics() {
@@ -1761,11 +1774,15 @@ export function Checker_addDeferredDiagnostic(receiver: GoPtr<Checker>, callback
  * }
  */
 export function Checker_produceDeferredDiagnostics(receiver: GoPtr<Checker>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.produceDeferredDiagnostics");
+  const c = receiver!;
+  for (const cb of c.deferredDiagnosticCallbacks ?? []) {
+    cb();
+  }
+  c.deferredDiagnosticCallbacks = undefined;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addErrorOrSuggestion","kind":"method","status":"stub","sigHash":"3a4023d03174daef90494da78c235989d9c89eb87726ac6c3715a9f78a03fa5f","bodyHash":"e76b9743103e993d156b65e957eecfdfc6158b8fd6dcab88f1b4e9d9f1f55adb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addErrorOrSuggestion","kind":"method","status":"implemented","sigHash":"3a4023d03174daef90494da78c235989d9c89eb87726ac6c3715a9f78a03fa5f","bodyHash":"e76b9743103e993d156b65e957eecfdfc6158b8fd6dcab88f1b4e9d9f1f55adb"}
  *
  * Go source:
  * func (c *Checker) addErrorOrSuggestion(isError bool, diagnostic *ast.Diagnostic) {
@@ -1779,11 +1796,18 @@ export function Checker_produceDeferredDiagnostics(receiver: GoPtr<Checker>): vo
  * }
  */
 export function Checker_addErrorOrSuggestion(receiver: GoPtr<Checker>, isError: bool, diagnostic: GoPtr<Diagnostic>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addErrorOrSuggestion");
+  const c = receiver!;
+  if (isError) {
+    DiagnosticsCollection_Add(c.diagnostics, diagnostic);
+  } else {
+    const suggestion = Diagnostic_Clone(diagnostic);
+    Diagnostic_SetCategory(suggestion, CategorySuggestion);
+    DiagnosticsCollection_Add(c.suggestionDiagnostics, suggestion);
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.IsDeprecatedDeclaration","kind":"method","status":"stub","sigHash":"94562f9123e66d313b2ba9a744ea610a748e3134a7922768e3c19b59884b52b2","bodyHash":"8b50399655ffcbf8af2cb56769d1e4b0f6bd78f6201cd915dc26516045d81c4b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.IsDeprecatedDeclaration","kind":"method","status":"implemented","sigHash":"94562f9123e66d313b2ba9a744ea610a748e3134a7922768e3c19b59884b52b2","bodyHash":"8b50399655ffcbf8af2cb56769d1e4b0f6bd78f6201cd915dc26516045d81c4b"}
  *
  * Go source:
  * func (c *Checker) IsDeprecatedDeclaration(declaration *ast.Node) bool {
@@ -1791,11 +1815,11 @@ export function Checker_addErrorOrSuggestion(receiver: GoPtr<Checker>, isError: 
  * }
  */
 export function Checker_IsDeprecatedDeclaration(receiver: GoPtr<Checker>, declaration: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.IsDeprecatedDeclaration");
+  return IsDeprecatedDeclarationWithCachedFlags(declaration, Checker_getCombinedNodeFlagsCached(receiver, declaration));
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestion","kind":"method","status":"stub","sigHash":"05c75b0e89d569cac08e086724c71689c45c6a832d347186387cec7ff4323269","bodyHash":"539052c42379945d103cb7e1875c8e737fe0676e4330491ce0a5ddb2c1df24b3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestion","kind":"method","status":"implemented","sigHash":"05c75b0e89d569cac08e086724c71689c45c6a832d347186387cec7ff4323269","bodyHash":"539052c42379945d103cb7e1875c8e737fe0676e4330491ce0a5ddb2c1df24b3"}
  *
  * Go source:
  * func (c *Checker) addDeprecatedSuggestion(location *ast.Node, declarations []*ast.Node, deprecatedEntity string) *ast.Diagnostic {
@@ -1804,11 +1828,12 @@ export function Checker_IsDeprecatedDeclaration(receiver: GoPtr<Checker>, declar
  * }
  */
 export function Checker_addDeprecatedSuggestion(receiver: GoPtr<Checker>, location: GoPtr<Node>, declarations: GoSlice<GoPtr<Node>>, deprecatedEntity: string): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestion");
+  const diagnostic = NewDiagnosticForNode(location, X_0_is_deprecated, deprecatedEntity);
+  return Checker_addDeprecatedSuggestionWorker(receiver, declarations, diagnostic);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestionWorker","kind":"method","status":"stub","sigHash":"6090f33b1bcdcdbb8a241755e468f7f54e095948e7031b646b10d06c7f0496aa","bodyHash":"a332f3eccb347aac34818f29d4d38d9f230ad3b33bd64de4ffb08cc296df48a3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestionWorker","kind":"method","status":"implemented","sigHash":"6090f33b1bcdcdbb8a241755e468f7f54e095948e7031b646b10d06c7f0496aa","bodyHash":"a332f3eccb347aac34818f29d4d38d9f230ad3b33bd64de4ffb08cc296df48a3"}
  *
  * Go source:
  * func (c *Checker) addDeprecatedSuggestionWorker(declarations []*ast.Node, diagnostic *ast.Diagnostic) *ast.Diagnostic {
@@ -1824,11 +1849,19 @@ export function Checker_addDeprecatedSuggestion(receiver: GoPtr<Checker>, locati
  * }
  */
 export function Checker_addDeprecatedSuggestionWorker(receiver: GoPtr<Checker>, declarations: GoSlice<GoPtr<Node>>, diagnostic: GoPtr<Diagnostic>): GoPtr<Diagnostic> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDeprecatedSuggestionWorker");
+  for (const declaration of declarations) {
+    const deprecatedTag = GetJSDocDeprecatedTag(declaration);
+    if (deprecatedTag !== undefined) {
+      Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(deprecatedTag, The_declaration_was_marked_as_deprecated_here));
+      break;
+    }
+  }
+  DiagnosticsCollection_Add(receiver!.suggestionDiagnostics, diagnostic);
+  return diagnostic;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDeprecatedSymbol","kind":"method","status":"stub","sigHash":"76594b4d9eb7222a7d0cf4ae288dbd300ddd713b3f04e5b69769517d20366ed5","bodyHash":"54099fcaaaefb472f7d5e65b559391dc8156a1c2cd66186bb4d11f7700587eb7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDeprecatedSymbol","kind":"method","status":"implemented","sigHash":"76594b4d9eb7222a7d0cf4ae288dbd300ddd713b3f04e5b69769517d20366ed5","bodyHash":"54099fcaaaefb472f7d5e65b559391dc8156a1c2cd66186bb4d11f7700587eb7"}
  *
  * Go source:
  * func (c *Checker) isDeprecatedSymbol(symbol *ast.Symbol) bool {
@@ -1844,11 +1877,19 @@ export function Checker_addDeprecatedSuggestionWorker(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_isDeprecatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isDeprecatedSymbol");
+  const parentSymbol = Checker_getParentOfSymbol(receiver, symbol_);
+  if (parentSymbol !== undefined && symbol_!.Declarations.length > 1) {
+    if ((parentSymbol!.Flags & SymbolFlagsInterface) !== 0) {
+      return Some(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
+    }
+    return Every(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
+  }
+  return ((symbol_!.ValueDeclaration !== undefined && Checker_IsDeprecatedDeclaration(receiver, symbol_!.ValueDeclaration)) ||
+    (symbol_!.Declarations.length !== 0 && Every(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration)))) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasParseDiagnostics","kind":"method","status":"stub","sigHash":"e2c06d25aaa191c1fdf45c8a7be1adca08a49b57d81c851da196830a5791666d","bodyHash":"9ed775a1470c11c5d7e94ea29c39a13bcaf9a7809f1b8a52015546e4a2f88657"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasParseDiagnostics","kind":"method","status":"implemented","sigHash":"e2c06d25aaa191c1fdf45c8a7be1adca08a49b57d81c851da196830a5791666d","bodyHash":"9ed775a1470c11c5d7e94ea29c39a13bcaf9a7809f1b8a52015546e4a2f88657"}
  *
  * Go source:
  * func (c *Checker) hasParseDiagnostics(sourceFile *ast.SourceFile) bool {
@@ -1856,7 +1897,7 @@ export function Checker_isDeprecatedSymbol(receiver: GoPtr<Checker>, symbol_: Go
  * }
  */
 export function Checker_hasParseDiagnostics(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasParseDiagnostics");
+  return (SourceFile_Diagnostics(sourceFile).length > 0) as bool;
 }
 
 /**

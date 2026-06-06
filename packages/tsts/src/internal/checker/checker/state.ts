@@ -1929,7 +1929,7 @@ export interface Checker {
   withinUnreachableCode: bool;
   reportedUnreachableNodes: Set;
   nonExistentProperties: Set;
-  deferredDiagnosticCallbacks: GoSlice<() => void>;
+  deferredDiagnosticCallbacks: GoSlice<() => void> | undefined;
   mu: Mutex;
   tracer: GoPtr<Tracer>;
 }
