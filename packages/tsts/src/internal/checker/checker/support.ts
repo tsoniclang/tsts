@@ -1,25 +1,102 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { Node_End, Node_FlowNodeData, Node_Name } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_SetCategory, NewDiagnostic } from "../../ast/diagnostic.js";
 import type { Kind } from "../../ast/generated/kinds.js";
 import { KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindFalseKeyword, KindTrueKeyword } from "../../ast/generated/kinds.js";
+import {
+  KindArrayType,
+  KindBindingElement,
+  KindBlock,
+  KindBreakStatement,
+  KindCallSignature,
+  KindClassDeclaration,
+  KindClassStaticBlockDeclaration,
+  KindConditionalType,
+  KindConstructor,
+  KindConstructorType,
+  KindConstructSignature,
+  KindContinueStatement,
+  KindDebuggerStatement,
+  KindDoStatement,
+  KindEmptyStatement,
+  KindEnumDeclaration,
+  KindEnumMember,
+  KindExportAssignment,
+  KindExportDeclaration,
+  KindForInStatement,
+  KindForOfStatement,
+  KindForStatement,
+  KindFunctionDeclaration,
+  KindFunctionType,
+  KindGetAccessor,
+  KindIfStatement,
+  KindImportDeclaration,
+  KindImportEqualsDeclaration,
+  KindImportType,
+  KindIndexedAccessType,
+  KindIndexSignature,
+  KindInferType,
+  KindInterfaceDeclaration,
+  KindIntersectionType,
+  KindJSDocAllType,
+  KindJSDocNullableType,
+  KindJSDocNonNullableType,
+  KindJSDocTypeLiteral,
+  KindJSImportDeclaration,
+  KindJSTypeAliasDeclaration,
+  KindLabeledStatement,
+  KindMappedType,
+  KindMethodDeclaration,
+  KindMethodSignature,
+  KindMissingDeclaration,
+  KindModuleBlock,
+  KindModuleDeclaration,
+  KindNamedTupleMember,
+  KindOptionalType,
+  KindParameter,
+  KindParenthesizedType,
+  KindPropertyDeclaration,
+  KindPropertySignature,
+  KindRestType,
+  KindReturnStatement,
+  KindSetAccessor,
+  KindSwitchStatement,
+  KindTemplateLiteralType,
+  KindThisType,
+  KindThrowStatement,
+  KindTryStatement,
+  KindTupleType,
+  KindTypeAliasDeclaration,
+  KindTypeLiteral,
+  KindTypeOperator,
+  KindTypeParameter,
+  KindTypePredicate,
+  KindTypeQuery,
+  KindTypeReference,
+  KindUnionType,
+  KindVariableDeclaration,
+  KindVariableStatement,
+  KindWhileStatement,
+  KindWithStatement,
+  KindExpressionStatement,
+} from "../../ast/generated/kinds.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { NodeFlagsAmbient, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/generated/flags.js";
 import { IsClassExpression, IsFunctionExpression, IsIdentifier } from "../../ast/generated/predicates.js";
-import { AsBindingElement } from "../../ast/generated/casts.js";
+import { AsBindingElement, AsJSDoc } from "../../ast/generated/casts.js";
 import { ModifierFlagsNone, ModifierFlagsNonPublicAccessibilityModifier } from "../../ast/modifierflags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { Node_Elements, Node_Members, Node_Text, Node_PropertyName, Node_Type } from "../../ast/ast.js";
+import { Node_EagerJSDoc, Node_Elements, Node_Members, Node_Text, Node_PropertyName, Node_Type } from "../../ast/ast.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { GetEnclosingBlockScopeContainer, GetExtendsHeritageClauseElement, GetSourceFileOfNode, IsEntityNameExpression, IsInJSFile, IsPartOfParameterDeclaration, SkipParentheses, WalkUpBindingElementsAndPatterns } from "../../ast/utilities.js";
 import { Every } from "../../core/core.js";
 import { NewTextRange } from "../../core/text.js";
-import { Tristate_IsTrue } from "../../core/tristate.js";
+import { Tristate_IsTrue, TSTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { CategorySuggestion } from "../../diagnostics/diagnostics.js";
 import { Assert } from "../../debug/debug.js";
@@ -39,7 +116,7 @@ import { RelationComparisonResultReportsUnmeasurable, RelationComparisonResultRe
 import { Checker_compareTypesAssignableWorker } from "../relater.js";
 import { Checker_isPostSuperFlowNode, Checker_markNodeAssignmentsWorker } from "../flow.js";
 import { Checker_isCanceled } from "../utilities.js";
-import { Checker_checkGrammarBindingElement } from "../grammarchecks.js";
+import { Checker_checkGrammarBindingElement, Checker_checkGrammarStatementInAmbientContext } from "../grammarchecks.js";
 import { SignatureKindConstruct, Type_Types, TypeFlagsNonPrimitive, TypeFlagsPrimitive, TypeFlagsUnion } from "../types.js";
 import { NodeCheckFlagsContainsClassWithPrivateIdentifiers, NodeCheckFlagsContainsSuperPropertyInStaticInitializer } from "../types.js";
 import type { NodeLinks } from "../types.js";
@@ -52,13 +129,17 @@ import { entityNameToString, getDeclarationModifierFlagsFromSymbol, NewDiagnosti
 import { TokenToString } from "../../scanner/scanner.js";
 import { DeclarationNameToString } from "../../scanner/utilities.js";
 import { TernaryFalse, TernaryTrue } from "../types.js";
-import { Checker_addErrorOrSuggestion, Checker_unusedIsError } from "./diagnostics.js";
-import { Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
-import { Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
-import { Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_getSymbolOfDeclaration } from "./symbols.js";
-import { Checker_reportUnusedVariable } from "./syntax-checking.js";
+import { Checker_addErrorOrSuggestion, Checker_checkSourceElementUnreachable, Checker_unusedIsError } from "./diagnostics.js";
+import { Checker_checkArrayType, Checker_checkConditionalType, Checker_checkJSDocType, Checker_checkMappedType, Checker_checkTemplateLiteralType, Checker_checkTupleType, Checker_checkTypeLiteral, Checker_checkTypeOperator, Checker_checkTypeQuery, Checker_checkTypeReferenceNode, Checker_checkUnionOrIntersectionType, Checker_couldContainTypeVariablesWorker, Checker_IsEmptyAnonymousObjectType } from "./types.js";
+import { Checker_checkConstructorDeclaration, Checker_checkParameter, Checker_checkPropertySignature, Checker_checkSignatureDeclaration, Checker_checkThisType, Checker_checkTypeParameter, Checker_getSignaturesOfType, Checker_isMixinConstructorType, Checker_isStringIndexSignatureOnlyTypeWorker } from "./signatures.js";
+import { Checker_checkAccessorDeclaration, Checker_checkClassDeclaration, Checker_checkClassStaticBlockDeclaration, Checker_checkEnumDeclaration, Checker_checkEnumMember, Checker_checkExportDeclaration, Checker_checkFunctionDeclaration, Checker_checkImportDeclaration, Checker_checkImportEqualsDeclaration, Checker_checkImportType, Checker_checkIndexedAccessType, Checker_checkInterfaceDeclaration, Checker_checkMethodDeclaration, Checker_checkMissingDeclaration, Checker_checkModuleDeclaration, Checker_checkNamedTupleMember, Checker_checkPropertyDeclaration, Checker_checkTypeAliasDeclaration, Checker_checkVariableDeclaration, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_getNonMissingTypeOfSymbol, Checker_getSymbolFlagsEx, Checker_getTargetSymbol, Checker_isGlobalNaN, Checker_isReadonlySymbol, Checker_isUnreferencedVariableDeclaration, Checker_reportUnusedVariableDeclarations, Checker_getSymbolOfDeclaration } from "./symbols.js";
+import { Checker_checkBlock, Checker_checkBreakOrContinueStatement, Checker_checkDoStatement, Checker_checkExpressionStatement, Checker_checkForInStatement, Checker_checkForOfStatement, Checker_checkForStatement, Checker_checkIfStatement, Checker_checkLabeledStatement, Checker_checkReturnStatement, Checker_checkSwitchStatement, Checker_checkThrowStatement, Checker_checkTryStatement, Checker_checkVariableStatement, Checker_checkWhileStatement, Checker_checkWithStatement, Checker_reportUnusedVariable } from "./syntax-checking.js";
 import { createDiagnosticForNode } from "./state.js";
 import type { CacheHashKey, Checker, CheckMode, keyBuilder, UnusedKind } from "./state.js";
+import { Checker_checkTypePredicate } from "./flow-narrowing.js";
+import { Checker_checkInferType } from "./inference.js";
+import { Checker_checkExportAssignment } from "./relations.js";
+import { Checker_checkJSDocComments } from "./jsx-jsdoc-decorators.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportUnreliableWorker","kind":"method","status":"implemented","sigHash":"f90db0ec4a1e83322abe295dd0931dd486677de0bc0daa2547e75d4b77b49bea","bodyHash":"8d084b2ab50308dd75d05babeaa46f57acd50919a51e340f5ef60f79180a97f8"}
@@ -322,7 +403,7 @@ export function Checker_checkSourceElement(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementWorker","kind":"method","status":"stub","sigHash":"7a7a80c7c468f1b601b722525a3ea6553ca95bf0d5546e820a1a0d8ce614dd0f","bodyHash":"20e8f840bc1422138f2013bec3412fe97aba68534d4005747b7f4d72d11cb59a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementWorker","kind":"method","status":"implemented","sigHash":"7a7a80c7c468f1b601b722525a3ea6553ca95bf0d5546e820a1a0d8ce614dd0f","bodyHash":"20e8f840bc1422138f2013bec3412fe97aba68534d4005747b7f4d72d11cb59a"}
  *
  * Go source:
  * func (c *Checker) checkSourceElementWorker(node *ast.Node) {
@@ -464,7 +545,217 @@ export function Checker_checkSourceElement(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_checkSourceElementWorker(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceElementWorker");
+  for (const jsdoc of Node_EagerJSDoc(node, undefined)) {
+    Checker_checkJSDocComments(receiver, jsdoc);
+    const tags = AsJSDoc(jsdoc)!.Tags;
+    if (tags !== undefined) {
+      for (const tag of tags.Nodes) {
+        Checker_checkJSDocComments(receiver, tag);
+      }
+    }
+  }
+
+  if (!receiver!.withinUnreachableCode && receiver!.compilerOptions!.AllowUnreachableCode !== TSTrue) {
+    if (Checker_checkSourceElementUnreachable(receiver, node)) {
+      receiver!.withinUnreachableCode = true;
+    }
+  }
+
+  switch (node!.Kind) {
+    case KindTypeParameter:
+      Checker_checkTypeParameter(receiver, node);
+      break;
+    case KindParameter:
+      Checker_checkParameter(receiver, node);
+      break;
+    case KindPropertyDeclaration:
+      Checker_checkPropertyDeclaration(receiver, node);
+      break;
+    case KindPropertySignature:
+      Checker_checkPropertySignature(receiver, node);
+      break;
+    case KindConstructorType:
+    case KindFunctionType:
+    case KindCallSignature:
+    case KindConstructSignature:
+    case KindIndexSignature:
+      Checker_checkSignatureDeclaration(receiver, node);
+      break;
+    case KindMethodDeclaration:
+    case KindMethodSignature:
+      Checker_checkMethodDeclaration(receiver, node);
+      break;
+    case KindClassStaticBlockDeclaration:
+      Checker_checkClassStaticBlockDeclaration(receiver, node);
+      break;
+    case KindConstructor:
+      Checker_checkConstructorDeclaration(receiver, node);
+      break;
+    case KindGetAccessor:
+    case KindSetAccessor:
+      Checker_checkAccessorDeclaration(receiver, node);
+      break;
+    case KindTypeReference:
+      Checker_checkTypeReferenceNode(receiver, node);
+      break;
+    case KindTypePredicate:
+      Checker_checkTypePredicate(receiver, node);
+      break;
+    case KindTypeQuery:
+      Checker_checkTypeQuery(receiver, node);
+      break;
+    case KindTypeLiteral:
+      Checker_checkTypeLiteral(receiver, node);
+      break;
+    case KindArrayType:
+      Checker_checkArrayType(receiver, node);
+      break;
+    case KindTupleType:
+      Checker_checkTupleType(receiver, node);
+      break;
+    case KindUnionType:
+    case KindIntersectionType:
+      Checker_checkUnionOrIntersectionType(receiver, node);
+      break;
+    case KindParenthesizedType:
+    case KindOptionalType:
+    case KindRestType:
+      Node_ForEachChild(node, (child: GoPtr<Node>): bool => Checker_checkSourceElement(receiver, child));
+      break;
+    case KindThisType:
+      Checker_checkThisType(receiver, node);
+      break;
+    case KindTypeOperator:
+      Checker_checkTypeOperator(receiver, node);
+      break;
+    case KindConditionalType:
+      Checker_checkConditionalType(receiver, node);
+      break;
+    case KindInferType:
+      Checker_checkInferType(receiver, node);
+      break;
+    case KindTemplateLiteralType:
+      Checker_checkTemplateLiteralType(receiver, node);
+      break;
+    case KindImportType:
+      Checker_checkImportType(receiver, node);
+      break;
+    case KindNamedTupleMember:
+      Checker_checkNamedTupleMember(receiver, node);
+      break;
+    case KindIndexedAccessType:
+      Checker_checkIndexedAccessType(receiver, node);
+      break;
+    case KindMappedType:
+      Checker_checkMappedType(receiver, node);
+      break;
+    case KindFunctionDeclaration:
+      Checker_checkFunctionDeclaration(receiver, node);
+      break;
+    case KindBlock:
+    case KindModuleBlock:
+      Checker_checkBlock(receiver, node);
+      break;
+    case KindVariableStatement:
+      Checker_checkVariableStatement(receiver, node);
+      break;
+    case KindExpressionStatement:
+      Checker_checkExpressionStatement(receiver, node);
+      break;
+    case KindIfStatement:
+      Checker_checkIfStatement(receiver, node);
+      break;
+    case KindDoStatement:
+      Checker_checkDoStatement(receiver, node);
+      break;
+    case KindWhileStatement:
+      Checker_checkWhileStatement(receiver, node);
+      break;
+    case KindForStatement:
+      Checker_checkForStatement(receiver, node);
+      break;
+    case KindForInStatement:
+      Checker_checkForInStatement(receiver, node);
+      break;
+    case KindForOfStatement:
+      Checker_checkForOfStatement(receiver, node);
+      break;
+    case KindContinueStatement:
+    case KindBreakStatement:
+      Checker_checkBreakOrContinueStatement(receiver, node);
+      break;
+    case KindReturnStatement:
+      Checker_checkReturnStatement(receiver, node);
+      break;
+    case KindWithStatement:
+      Checker_checkWithStatement(receiver, node);
+      break;
+    case KindSwitchStatement:
+      Checker_checkSwitchStatement(receiver, node);
+      break;
+    case KindLabeledStatement:
+      Checker_checkLabeledStatement(receiver, node);
+      break;
+    case KindThrowStatement:
+      Checker_checkThrowStatement(receiver, node);
+      break;
+    case KindTryStatement:
+      Checker_checkTryStatement(receiver, node);
+      break;
+    case KindVariableDeclaration:
+      Checker_checkVariableDeclaration(receiver, node);
+      break;
+    case KindBindingElement:
+      Checker_checkBindingElement(receiver, node);
+      break;
+    case KindClassDeclaration:
+      Checker_checkClassDeclaration(receiver, node);
+      break;
+    case KindInterfaceDeclaration:
+      Checker_checkInterfaceDeclaration(receiver, node);
+      break;
+    case KindTypeAliasDeclaration:
+    case KindJSTypeAliasDeclaration:
+      Checker_checkTypeAliasDeclaration(receiver, node);
+      break;
+    case KindEnumDeclaration:
+      Checker_checkEnumDeclaration(receiver, node);
+      break;
+    case KindEnumMember:
+      Checker_checkEnumMember(receiver, node);
+      break;
+    case KindModuleDeclaration:
+      Checker_checkModuleDeclaration(receiver, node);
+      break;
+    case KindImportDeclaration:
+    case KindJSImportDeclaration:
+      Checker_checkImportDeclaration(receiver, node);
+      break;
+    case KindImportEqualsDeclaration:
+      Checker_checkImportEqualsDeclaration(receiver, node);
+      break;
+    case KindExportDeclaration:
+      Checker_checkExportDeclaration(receiver, node);
+      break;
+    case KindExportAssignment:
+      Checker_checkExportAssignment(receiver, node);
+      break;
+    case KindEmptyStatement:
+      Checker_checkGrammarStatementInAmbientContext(receiver, node);
+      break;
+    case KindDebuggerStatement:
+      Checker_checkGrammarStatementInAmbientContext(receiver, node);
+      break;
+    case KindMissingDeclaration:
+      Checker_checkMissingDeclaration(receiver, node);
+      break;
+    case KindJSDocNonNullableType:
+    case KindJSDocNullableType:
+    case KindJSDocAllType:
+    case KindJSDocTypeLiteral:
+      Checker_checkJSDocType(receiver, node);
+      break;
+  }
 }
 
 /**
