@@ -1,5 +1,6 @@
-import type { bool, int, ulong } from "@tsonic/core/types.js";
+import type { bool, byte, int, ulong } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import { Mutex } from "../../../go/sync.js";
 import type { Duration } from "../../../go/time.js";
 import { Sleep, Time } from "../../../go/time.js";
@@ -378,7 +379,7 @@ export function snapshotDirEntry(fs: FS, state: GoMap<string, WatchEntry>, dir: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::func::hashEntries","kind":"func","status":"stub","sigHash":"533aed2fae4564cee2f535f9f0ccad486c5a66b7fa7ede895bc2d05eed663d67","bodyHash":"4b0b1aaee56122519dd6c4f1d83867a7ce57f4b61ed5237f6be72481efa4f2e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::func::hashEntries","kind":"func","status":"implemented","sigHash":"533aed2fae4564cee2f535f9f0ccad486c5a66b7fa7ede895bc2d05eed663d67","bodyHash":"4b0b1aaee56122519dd6c4f1d83867a7ce57f4b61ed5237f6be72481efa4f2e0"}
  *
  * Go source:
  * func hashEntries(entries vfs.Entries) uint64 {
@@ -401,7 +402,35 @@ export function snapshotDirEntry(fs: FS, state: GoMap<string, WatchEntry>, dir: 
  * }
  */
 export function hashEntries(entries: Entries): ulong {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/vfs/vfswatch/vfswatch.go::func::hashEntries");
+  const dirs = [...entries.Directories].sort(compareGoStrings);
+  const files = [...entries.Files].sort(compareGoStrings);
+  const h = xxh3.New();
+  for (const name of dirs) {
+    h.WriteString("d:");
+    h.WriteString(name);
+    h.Write([0 as byte]);
+  }
+  for (const name of files) {
+    h.WriteString("f:");
+    h.WriteString(name);
+    h.Write([0 as byte]);
+  }
+  return h.Sum64() as unknown as ulong;
+}
+
+const utf8Encoder = new globalThis.TextEncoder();
+
+function compareGoStrings(left: string, right: string): number {
+  const leftBytes = utf8Encoder.encode(left);
+  const rightBytes = utf8Encoder.encode(right);
+  const minLength = globalThis.Math.min(leftBytes.length, rightBytes.length);
+  for (let index = 0; index < minLength; index++) {
+    const diff = leftBytes[index]! - rightBytes[index]!;
+    if (diff !== 0) {
+      return diff;
+    }
+  }
+  return leftBytes.length - rightBytes.length;
 }
 
 /**
