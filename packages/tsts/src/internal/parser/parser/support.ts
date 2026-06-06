@@ -265,7 +265,7 @@ export function putParser(p: GoPtr<Parser>): void {
   }
   p!.scanner = savedScanner;
   p!.setParentFromContext = savedSetParentFromContext;
-  parserPool.Put(p);
+  parserPool.Put(p!);
 }
 
 /**

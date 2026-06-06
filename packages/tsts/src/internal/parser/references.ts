@@ -1,6 +1,6 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
-import { AsSourceFile, Node_Body, Node_Text } from "../ast/ast.js";
+import { AsSourceFile, Node_Body, Node_Text, SourceFile_Imports } from "../ast/ast.js";
 import { AsModuleDeclaration } from "../ast/generated/casts.js";
 import { IsModuleDeclaration, IsStringLiteral } from "../ast/generated/predicates.js";
 import { ModifierFlagsAmbient } from "../ast/modifierflags.js";
@@ -13,7 +13,6 @@ import {
   IsExternalModule,
   IsInJSFile,
   SetImportsOfSourceFile,
-  SourceFile_Imports,
 } from "../ast/utilities.js";
 import type { SourceFileNode, Statement, Expression } from "../ast/generated/unions.js";
 import type { Node } from "../ast/spine.js";

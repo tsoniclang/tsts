@@ -15,9 +15,10 @@ import { IsJsxNamespacedName } from "../ast/generated/predicates.js";
 import { ContainerFlagsIsContainer, GetContainerFlags } from "../binder/binder.js";
 import { GetSymbolId } from "../ast/utilities.js";
 import { Compare as strings_Compare } from "../../go/strings.js";
-import { IsIntrinsicJsxName } from "../scanner/utilities.js";
+import { GetTextOfNode, IsIntrinsicJsxName } from "../scanner/utilities.js";
 import { InternalSymbolNameExportEquals, InternalSymbolNameIndex, InternalSymbolNamePrefix } from "../ast/symbol.js";
-import { ModifierFlagsAsync, ModifierFlagsDefault, ModifierFlagsOverride, ModifierFlagsReadonly } from "../ast/modifierflags.js";
+import { ModifierFlagsAsync, ModifierFlagsDefault, ModifierFlagsOverride, ModifierFlagsPrivate, ModifierFlagsReadonly } from "../ast/modifierflags.js";
+import { NodeFlagsAmbient } from "../ast/generated/flags.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import {

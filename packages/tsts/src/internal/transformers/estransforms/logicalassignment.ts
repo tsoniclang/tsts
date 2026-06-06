@@ -7,7 +7,8 @@ import { KindBinaryExpression, KindBarBarEqualsToken, KindAmpersandAmpersandEqua
 import { NewBinaryExpression, NewParenthesizedExpression, NewPropertyAccessExpression, NewElementAccessExpression, NewToken } from "../../ast/generated/factory.js";
 import { NodeFlagsNone } from "../../ast/generated/flags.js";
 import { SubtreeContainsLogicalAssignments } from "../../ast/subtreefacts.js";
-import { IsAccessExpression, IsPropertyAccessExpression, SkipParentheses } from "../../ast/utilities.js";
+import { IsAccessExpression, SkipParentheses } from "../../ast/utilities.js";
+import { IsPropertyAccessExpression } from "../../ast/generated/predicates.js";
 import { Node_Expression } from "../../ast/ast.js";
 import { NodeVisitor_VisitEachChild, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";

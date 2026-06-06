@@ -1,5 +1,5 @@
 import type { bool } from "@tsonic/core/types.js";
-import type { GoError, GoSlice } from "../../go/compat.js";
+import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry as DirEntry_697d4ab0, FileInfo as FileInfo_d0619f84, WalkDirFunc as WalkDirFunc_40040532 } from "../../go/io/fs.js";
 import type { Time } from "../../go/time.js";
 
@@ -57,7 +57,7 @@ export interface FS {
   Chtimes(path: string, aTime: Time, mTime: Time): GoError;
   DirectoryExists(path: string): bool;
   GetAccessibleEntries(path: string): Entries;
-  Stat(path: string): FileInfo;
+  Stat(path: string): GoPtr<FileInfo>;
   WalkDir(root: string, walkFn: WalkDirFunc): GoError;
   Realpath(path: string): string;
 }

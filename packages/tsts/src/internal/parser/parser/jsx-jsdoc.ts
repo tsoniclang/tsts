@@ -1,8 +1,8 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
-import { NodeList_End, NodeList_Pos } from "../../ast/spine.js";
+import { Node_End, NodeList_End, NodeList_Pos, Node_Pos } from "../../ast/spine.js";
 import type { Node, NodeList } from "../../ast/spine.js";
-import { Node_End, Node_Pos, Node_TagName, Node_Children } from "../../ast/ast.js";
+import { Node_TagName, Node_Children } from "../../ast/ast.js";
 import { AsJsxElement } from "../../ast/generated/casts.js";
 import {
   NewBinaryExpression,

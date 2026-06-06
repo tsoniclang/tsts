@@ -305,16 +305,16 @@ export function FS_Chtimes(receiver: GoPtr<FS>, path: string, aTime: Time, mTime
  * 	return ret
  * }
  */
-export function FS_Stat(receiver: GoPtr<FS>, path: string): FileInfo {
+export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
   if (receiver!.enabled.Load()) {
-    const [ret, ok] = SyncMap_Load<string, FileInfo>(receiver!.statCache as unknown as SyncMap<string, FileInfo>, path);
+    const [ret, ok] = SyncMap_Load<string, GoPtr<FileInfo>>(receiver!.statCache as unknown as SyncMap<string, GoPtr<FileInfo>>, path);
     if (ok) {
       return ret;
     }
   }
   const ret = receiver!.fs.Stat(path);
   if (receiver!.enabled.Load()) {
-    SyncMap_Store<string, FileInfo>(receiver!.statCache as unknown as SyncMap<string, FileInfo>, path, ret);
+    SyncMap_Store<string, GoPtr<FileInfo>>(receiver!.statCache as unknown as SyncMap<string, GoPtr<FileInfo>>, path, ret);
   }
   return ret;
 }

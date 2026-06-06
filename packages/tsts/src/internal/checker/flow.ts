@@ -2,7 +2,7 @@ import type { bool, byte, int } from "@tsonic/core/types.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End } from "../ast/spine.js";
+import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
 import type { BinaryExpression, ElementAccessExpression, LiteralExpression, TypeOfExpression } from "../ast/ast_generated.js";
 import { AsBinaryExpression, AsBindingElement, AsCaseBlock, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsExportDeclaration, AsExportSpecifier, AsForInOrOfStatement, AsMetaProperty, AsPrefixUnaryExpression, AsQualifiedName, AsShorthandPropertyAssignment, AsSwitchStatement, AsTypeOfExpression } from "../ast/generated/casts.js";
@@ -16,7 +16,7 @@ import type { Diagnostic } from "../ast/diagnostic.js";
 import type { FlowList, FlowNode, FlowReduceLabelData, FlowSwitchClauseData } from "../ast/flow.js";
 import { FlowFlagsAssignment, FlowFlagsArrayMutation, FlowFlagsBranchLabel, FlowFlagsCall, FlowFlagsCondition, FlowFlagsLoopLabel, FlowFlagsReduceLabel, FlowFlagsShared, FlowFlagsStart, FlowFlagsSwitchClause, FlowFlagsTrueCondition, FlowFlagsUnreachable, FlowSwitchClauseData_IsEmpty } from "../ast/flow.js";
 import type { Kind } from "../ast/kind_generated.js";
-import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindArrowFunction, KindArrayLiteralExpression, KindBarBarEqualsToken, KindBarBarToken, KindBinaryExpression, KindBindingElement, KindCallExpression, KindCaseClause, KindClassDeclaration, KindCommaToken, KindDefaultClause, KindDeleteExpression, KindDoStatement, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindExpressionStatement, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindIdentifier, KindIfStatement, KindInKeyword, KindInstanceOfKeyword, KindMethodDeclaration, KindObjectBindingPattern, KindArrayBindingPattern, KindParenthesizedExpression, KindNonNullExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindPropertyAssignment, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSatisfiesExpression, KindShorthandPropertyAssignment, KindSpreadElement, KindSuperKeyword, KindSwitchStatement, KindThisKeyword, KindTrueKeyword, KindTryStatement, KindTypeAliasDeclaration, KindTypeOfExpression, KindVariableDeclaration, KindVariableStatement, KindWhileStatement, KindWithStatement, KindEnumDeclaration, KindInterfaceDeclaration, KindJSTypeAliasDeclaration } from "../ast/generated/kinds.js";
+import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindArrowFunction, KindArrayLiteralExpression, KindBarBarEqualsToken, KindBarBarToken, KindBinaryExpression, KindBindingElement, KindCallExpression, KindCaseClause, KindClassDeclaration, KindCommaToken, KindDefaultClause, KindDeleteExpression, KindDoStatement, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindExclamationToken, KindExpressionStatement, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindIdentifier, KindIfStatement, KindInKeyword, KindInstanceOfKeyword, KindMetaProperty, KindMethodDeclaration, KindObjectBindingPattern, KindArrayBindingPattern, KindParenthesizedExpression, KindNonNullExpression, KindPrefixUnaryExpression, KindPrivateIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindPropertyAssignment, KindQualifiedName, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSatisfiesExpression, KindShorthandPropertyAssignment, KindSpreadElement, KindSuperKeyword, KindSwitchStatement, KindThisKeyword, KindTrueKeyword, KindTryStatement, KindTypeAliasDeclaration, KindTypeOfExpression, KindVariableDeclaration, KindVariableStatement, KindWhileStatement, KindWithStatement, KindEnumDeclaration, KindInterfaceDeclaration, KindJSTypeAliasDeclaration } from "../ast/generated/kinds.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import type { CheckFlags } from "../ast/checkflags.js";
 import { SymbolFlagsEnumMember, SymbolFlagsOptional, SymbolFlagsValue } from "../ast/symbolflags.js";
@@ -32,8 +32,8 @@ import type { CachedTypeKey, NarrowedTypeKey, AssignmentReducedKey } from "./che
 import { CachedTypeKindEvolvingArrayType, CheckModeNormal, TypeFactsAllTypeofNE, TypeFactsEQNull, TypeFactsEQUndefined, TypeFactsEQUndefinedOrNull, TypeFactsFalsy, TypeFactsNENull, TypeFactsNEUndefined, TypeFactsNEUndefinedOrNull, TypeFactsNone, TypeFactsTruthy, TypeFactsTypeofEQBigInt, TypeFactsTypeofEQBoolean, TypeFactsTypeofEQFunction, TypeFactsTypeofEQHostObject, TypeFactsTypeofEQNumber, TypeFactsTypeofEQObject, TypeFactsTypeofEQString, TypeFactsTypeofEQSymbol, TypeFactsTypeofNEBigInt, TypeFactsTypeofNEBoolean, TypeFactsTypeofNEFunction, TypeFactsTypeofNEHostObject, TypeFactsTypeofNENumber, TypeFactsTypeofNEObject, TypeFactsTypeofNEString, TypeFactsTypeofNESymbol } from "./checker/state.js";
 import type { FlowLoopInfo, FlowLoopKey } from "./checker/state.js";
 import { UnionReductionLiteral, UnionReductionSubtype } from "./checker/state.js";
-import { NodeCheckFlagsAssignmentsMarked, ExhaustiveStateComputing, ExhaustiveStateFalse, ExhaustiveStateTrue, ExhaustiveStateUnknown } from "./checker/types.js";
-import type { MarkedAssignmentSymbolLinks, NodeLinks, TypeNodeLinks } from "./types.js";
+import { NodeCheckFlagsAssignmentsMarked, ExhaustiveStateComputing, ExhaustiveStateFalse, ExhaustiveStateTrue, ExhaustiveStateUnknown } from "./types.js";
+import type { MappedSymbolLinks, MarkedAssignmentSymbolLinks, NodeLinks, SignatureLinks, SwitchStatementLinks, TypeNodeLinks } from "./types.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
 import { CacheHashKey_IsZero, keyBuilder_writeByte, keyBuilder_writeString } from "./checker/support.js";
@@ -47,7 +47,7 @@ import type { EvolvingArrayType, Signature, Type, TypePredicate } from "./types.
 import { ObjectFlagsClass, ObjectFlagsEvolvingArray, TypeFlagsAny, TypeFlagsAnyOrUnknown, TypeFlagsBigInt, TypeFlagsBigIntLiteral, TypeFlagsBoolean, TypeFlagsBooleanLiteral, TypeFlagsInstantiable, TypeFlagsNever, TypeFlagsNonPrimitive, TypeFlagsNull, TypeFlagsNullable, TypeFlagsNumber, TypeFlagsNumberLike, TypeFlagsNumberLiteral, TypeFlagsPrimitive, TypeFlagsObject, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsStringMapping, TypeFlagsStringOrNumberLiteral, TypeFlagsTemplateLiteral, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnknown, TypeFlagsUniqueESSymbol } from "./types.js";
 import type { ExhaustiveState, TypePredicateKind } from "./types.js";
 import { TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier, TypePredicateKindThis, SignatureKindCall, SignatureKindConstruct } from "./types.js";
-import { Type_AsEvolvingArrayType, Type_AsLiteralType, Type_AsUnionType, Type_AsUnionOrIntersectionType, Type_AsInterfaceType, Type_AsUniqueESSymbolType } from "./types.js";
+import { Type_AsEvolvingArrayType, Type_AsLiteralType, Type_AsUnionType, Type_AsUnionOrIntersectionType, Type_AsInterfaceType, Type_AsUniqueESSymbolType, Type_Types } from "./types.js";
 import { everyType, isFreshLiteralType, isLiteralType, isNeitherUnitTypeNorNever, isUnitType, someType, getStringLiteralValue } from "./checker/state.js";
 import { isTypeUsableAsPropertyName, getPropertyNameFromType } from "./utilities.js";
 import { Checker_newObjectType, Checker_convertAutoToAny, Checker_isUnitLikeType } from "./checker/types.js";
@@ -78,7 +78,8 @@ import { getAssignmentTargetKind, isEmptyArrayLiteral, isCallChain, isInCompound
 import { Checker_getTypeForBindingElement } from "./checker/types.js";
 import { GetSymbolNameForPrivateIdentifier } from "../binder/binder.js";
 import { IterationUseDestructuring, IterationUseForAwaitOf, IterationUseForOf } from "./checker/state.js";
-import { HashString128 } from "../../go/github.com/zeebo/xxh3.js";
+import type { Hasher } from "../../go/github.com/zeebo/xxh3.js";
+import { HashString128, New as NewXxh3 } from "../../go/github.com/zeebo/xxh3.js";
 import type { Tracer } from "./tracer.js";
 import { AnyToString } from "../evaluator/evaluator.js";
 import { IsFunctionExpression } from "../ast/generated/predicates.js";
@@ -450,9 +451,9 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
     const flags = currentFlow!.Flags;
     if ((flags & FlowFlagsShared) !== 0) {
       for (let i = f!.sharedFlowStart; i < receiver!.sharedFlows.length; i++) {
-        if (receiver!.sharedFlows[i].flow === currentFlow) {
+        if (receiver!.sharedFlows[i]!.flow === currentFlow) {
           f!.depth--;
-          return receiver!.sharedFlows[i].flowType;
+          return receiver!.sharedFlows[i]!.flowType;
         }
       }
       sharedFlow = currentFlow;
@@ -504,7 +505,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         container !== f!.flowContainer &&
         !IsPropertyAccessExpression(f!.reference) &&
         !IsElementAccessExpression(f!.reference) &&
-        !(f!.reference!.kind === KindThisKeyword && !IsArrowFunction(container))
+        !(f!.reference!.Kind === KindThisKeyword && !IsArrowFunction(container))
       ) {
         currentFlow = (Node_FlowNodeData(container) as unknown as { FlowNode?: GoPtr<FlowNode> })!.FlowNode;
         continue;
@@ -639,9 +640,9 @@ export function Checker_getTypeAtFlowAssignment(receiver: GoPtr<Checker>, f: GoP
   }
   if (
     IsVariableDeclaration(node) &&
-    IsForInStatement(node!.parent!.parent) &&
-    (Checker_isMatchingReference(receiver, f!.reference, Node_Expression(node!.parent!.parent)) ||
-      Checker_optionalChainContainsReference(receiver, Node_Expression(node!.parent!.parent), f!.reference))
+    IsForInStatement(node!.Parent!.Parent) &&
+    (Checker_isMatchingReference(receiver, f!.reference, Node_Expression(node!.Parent!.Parent)) ||
+      Checker_optionalChainContainsReference(receiver, Node_Expression(node!.Parent!.Parent), f!.reference))
   ) {
     return { t: Checker_getNonNullableTypeIfNeeded(receiver, Checker_finalizeEvolvingArrayType(receiver, Checker_getTypeAtFlowNode(receiver, f, flow!.Antecedent).t)), incomplete: false };
   }
@@ -678,7 +679,7 @@ export function Checker_getInitialOrAssignedType(receiver: GoPtr<Checker>, f: Go
 export function Checker_isEmptyArrayAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   return (
     (IsVariableDeclaration(node) && Node_Initializer(node) !== undefined && isEmptyArrayLiteral(Node_Initializer(node))) ||
-    (!IsBindingElement(node) && IsBinaryExpression(node!.parent) && isEmptyArrayLiteral(AsBinaryExpression(node!.parent)!.right))
+    (!IsBindingElement(node) && IsBinaryExpression(node!.Parent) && isEmptyArrayLiteral(AsBinaryExpression(node!.Parent)!.Right))
   );
 }
 
@@ -724,8 +725,8 @@ export function Checker_getTypeAtFlowCall(receiver: GoPtr<Checker>, f: GoPtr<Flo
       let narrowedType: GoPtr<Type>;
       if (predicate!.t !== undefined) {
         narrowedType = Checker_narrowTypeByTypePredicate(receiver, f, t, predicate, flow!.Node, true);
-      } else if (predicate!.kind === TypePredicateKindAssertsIdentifier && predicate!.parameterIndex >= 0 && predicate!.parameterIndex < Node_Arguments(flow!.Node).length) {
-        narrowedType = Checker_narrowTypeByAssertion(receiver, f, t, Node_Arguments(flow!.Node)[predicate!.parameterIndex]);
+      } else if (predicate!.kind === TypePredicateKindAssertsIdentifier && predicate!.parameterIndex >= 0 && predicate!.parameterIndex < Node_Arguments(flow!.Node)!.length) {
+        narrowedType = Checker_narrowTypeByAssertion(receiver, f, t, Node_Arguments(flow!.Node)![predicate!.parameterIndex]);
       } else {
         narrowedType = t;
       }
@@ -816,15 +817,15 @@ export function Checker_narrowTypeByTypePredicate(receiver: GoPtr<Checker>, f: G
  */
 export function Checker_narrowTypeByAssertion(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, t: GoPtr<Type>, expr: GoPtr<Node>): GoPtr<Type> {
   const node = SkipParentheses(expr);
-  if (node!.kind === KindFalseKeyword) {
+  if (node!.Kind === KindFalseKeyword) {
     return receiver!.unreachableNeverType;
   }
-  if (node!.kind === KindBinaryExpression) {
+  if (node!.Kind === KindBinaryExpression) {
     const bin = AsBinaryExpression(node);
-    if (bin!.OperatorToken!.kind === KindAmpersandAmpersandToken) {
+    if (bin!.OperatorToken!.Kind === KindAmpersandAmpersandToken) {
       return Checker_narrowTypeByAssertion(receiver, f, Checker_narrowTypeByAssertion(receiver, f, t, bin!.Left), bin!.Right);
     }
-    if (bin!.OperatorToken!.kind === KindBarBarToken) {
+    if (bin!.OperatorToken!.Kind === KindBarBarToken) {
       return Checker_getUnionType(receiver, [Checker_narrowTypeByAssertion(receiver, f, t, bin!.Left), Checker_narrowTypeByAssertion(receiver, f, t, bin!.Right)]);
     }
   }
@@ -915,19 +916,19 @@ export function Checker_getTypeAtFlowCondition(receiver: GoPtr<Checker>, f: GoPt
 export function Checker_narrowType(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, t: GoPtr<Type>, expr: GoPtr<Node>, assumeTrue: bool): GoPtr<Type> {
   if (
     IsExpressionOfOptionalChainRoot(expr) ||
-    (IsBinaryExpression(expr!.parent) &&
-      (AsBinaryExpression(expr!.parent)!.OperatorToken!.kind === KindQuestionQuestionToken ||
-        AsBinaryExpression(expr!.parent)!.OperatorToken!.kind === KindQuestionQuestionEqualsToken) &&
-      AsBinaryExpression(expr!.parent)!.Left === expr)
+    (IsBinaryExpression(expr!.Parent) &&
+      (AsBinaryExpression(expr!.Parent)!.OperatorToken!.Kind === KindQuestionQuestionToken ||
+        AsBinaryExpression(expr!.Parent)!.OperatorToken!.Kind === KindQuestionQuestionEqualsToken) &&
+      AsBinaryExpression(expr!.Parent)!.Left === expr)
   ) {
     return Checker_narrowTypeByOptionality(receiver, f, t, expr, assumeTrue);
   }
-  switch (expr!.kind) {
+  switch (expr!.Kind) {
     case KindIdentifier: {
       if (!Checker_isMatchingReference(receiver, f!.reference, expr) && receiver!.inlineLevel < 5) {
         const symbol = Checker_getResolvedSymbol(receiver, expr);
         if (Checker_isConstantVariable(receiver, symbol)) {
-          const declaration = symbol!.valueDeclaration;
+          const declaration = symbol!.ValueDeclaration;
           if (
             declaration !== undefined &&
             IsVariableDeclaration(declaration) &&
@@ -1084,9 +1085,9 @@ export function Checker_narrowTypeByCallExpression(receiver: GoPtr<Checker>, f: 
       Checker_isMatchingReference(receiver, Node_Expression(f!.reference), Checker_getReferenceCandidate(receiver, Node_Expression(callAccess))) &&
       IsIdentifier(Node_Name(callAccess)) &&
       Node_Text(Node_Name(callAccess)) === "hasOwnProperty" &&
-      Node_Arguments(callExpression).length === 1
+      Node_Arguments(callExpression)!.length === 1
     ) {
-      const argument = Node_Arguments(callExpression)[0];
+      const argument = Node_Arguments(callExpression)![0];
       const [accessedName, ok] = Checker_getAccessedPropertyName(receiver, f!.reference);
       if (ok && IsStringLiteralLike(argument) && accessedName === Node_Text(argument)) {
         return Checker_getTypeWithFacts(receiver, t, IfElse(assumeTrue, TypeFactsNEUndefined, TypeFactsEQUndefined));
@@ -1188,7 +1189,7 @@ export function Checker_narrowTypeByCallExpression(receiver: GoPtr<Checker>, f: 
  * }
  */
 export function Checker_narrowTypeByBinaryExpression(receiver: GoPtr<Checker>, f: GoPtr<FlowState>, t: GoPtr<Type>, expr: GoPtr<BinaryExpression>, assumeTrue: bool): GoPtr<Type> {
-  switch (expr!.OperatorToken!.kind) {
+  switch (expr!.OperatorToken!.Kind) {
     case KindEqualsToken:
     case KindBarBarEqualsToken:
     case KindAmpersandAmpersandEqualsToken:
@@ -1198,13 +1199,13 @@ export function Checker_narrowTypeByBinaryExpression(receiver: GoPtr<Checker>, f
     case KindExclamationEqualsToken:
     case KindEqualsEqualsEqualsToken:
     case KindExclamationEqualsEqualsToken: {
-      const operator = expr!.OperatorToken!.kind;
+      const operator = expr!.OperatorToken!.Kind;
       const left = Checker_getReferenceCandidate(receiver, expr!.Left);
       const right = Checker_getReferenceCandidate(receiver, expr!.Right);
-      if (left!.kind === KindTypeOfExpression && IsStringLiteralLike(right)) {
+      if (left!.Kind === KindTypeOfExpression && IsStringLiteralLike(right)) {
         return Checker_narrowTypeByTypeof(receiver, f, t, AsTypeOfExpression(left), operator, right, assumeTrue);
       }
-      if (right!.kind === KindTypeOfExpression && IsStringLiteralLike(left)) {
+      if (right!.Kind === KindTypeOfExpression && IsStringLiteralLike(left)) {
         return Checker_narrowTypeByTypeof(receiver, f, t, AsTypeOfExpression(right), operator, left, assumeTrue);
       }
       if (Checker_isMatchingReference(receiver, f!.reference, left)) {
@@ -2256,7 +2257,7 @@ export function Checker_narrowTypeByInKeyword(receiver: GoPtr<Checker>, f: GoPtr
 export function Checker_isTypePresencePossible(receiver: GoPtr<Checker>, t: GoPtr<Type>, propName: string, assumeTrue: bool): bool {
   const prop = Checker_getPropertyOfType(receiver, t, propName);
   if (prop !== undefined) {
-    return !!(prop!.flags & SymbolFlagsOptional) || !!(prop!.checkFlags & CheckFlagsPartial) || assumeTrue;
+    return !!(prop!.Flags & SymbolFlagsOptional) || !!(prop!.CheckFlags & CheckFlagsPartial) || assumeTrue;
   }
   return Checker_getApplicableIndexInfoForName(receiver, t, propName) !== undefined || !assumeTrue;
 }
@@ -3295,12 +3296,12 @@ export function Checker_isEvolvingArrayOperationTarget(receiver: GoPtr<Checker>,
   const root = Checker_getReferenceRoot(receiver, node);
   const parent = root!.Parent;
   const isLengthPushOrUnshift = IsPropertyAccessExpression(parent) &&
-    (Node_Name(parent)!.text === "length" ||
+    (Node_Text(Node_Name(parent)) === "length" ||
       IsCallExpression(parent!.Parent) && IsIdentifier(Node_Name(parent)) && IsPushOrUnshiftIdentifier(Node_Name(parent)));
   const isElementAssignment = IsElementAccessExpression(parent) && Node_Expression(parent) === root &&
-    IsBinaryExpression(parent!.Parent) && AsBinaryExpression(parent!.Parent)!.OperatorToken.Kind === KindEqualsToken &&
-    AsBinaryExpression(parent!.Parent)!.Left === parent && !IsAssignmentTarget(parent!.Parent) &&
-    Checker_isTypeAssignableToKind(receiver, Checker_getTypeOfExpression(receiver, AsElementAccessExpression(parent)!.ArgumentExpression), TypeFlagsNumberLike, false);
+    IsBinaryExpression(parent!.Parent) && AsBinaryExpression(parent!.Parent!)!.OperatorToken!.Kind === KindEqualsToken &&
+    AsBinaryExpression(parent!.Parent!)!.Left === parent && !IsAssignmentTarget(parent!.Parent) &&
+    Checker_isTypeAssignableToKind(receiver, Checker_getTypeOfExpression(receiver, AsElementAccessExpression(parent)!.ArgumentExpression), TypeFlagsNumberLike);
   return isLengthPushOrUnshift || isElementAssignment;
 }
 
@@ -3400,7 +3401,7 @@ export function Checker_createFinalArrayType(receiver: GoPtr<Checker>, elementTy
 export function Checker_reportFlowControlError(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const block = FindAncestor(node, IsFunctionOrModuleBlock);
   const sourceFile = GetSourceFileOfNode(node);
-  const span = GetRangeOfTokenAtPosition(sourceFile, Node_StatementList(block)!.pos);
+  const span = GetRangeOfTokenAtPosition(sourceFile, NodeList_Pos(Node_StatementList(block)));
   DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(sourceFile, span, The_containing_function_or_module_body_is_too_large_for_control_flow_analysis));
 }
 
@@ -3469,12 +3470,12 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
       return Checker_isMatchingReference(receiver, source, Node_Expression(target));
     case KindBinaryExpression:
       return IsAssignmentExpression(target, false) && Checker_isMatchingReference(receiver, source, AsBinaryExpression(target)!.Left) ||
-        IsBinaryExpression(target) && AsBinaryExpression(target)!.OperatorToken.Kind === KindCommaToken &&
+        IsBinaryExpression(target) && AsBinaryExpression(target)!.OperatorToken!.Kind === KindCommaToken &&
           Checker_isMatchingReference(receiver, source, AsBinaryExpression(target)!.Right);
   }
   switch (source!.Kind) {
     case KindMetaProperty:
-      return IsMetaProperty(target) && AsMetaProperty(source)!.KeywordToken === AsMetaProperty(target)!.KeywordToken && Node_Name(source)!.text === Node_Name(target)!.text;
+      return IsMetaProperty(target) && AsMetaProperty(source)!.KeywordToken === AsMetaProperty(target)!.KeywordToken && Node_Text(Node_Name(source)) === Node_Text(Node_Name(target));
     case KindIdentifier:
     case KindPrivateIdentifier:
       if (IsThisInTypeQuery(source)) {
@@ -3506,7 +3507,7 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
         const targetArg = AsElementAccessExpression(target)!.ArgumentExpression;
         if (IsIdentifier(sourceArg) && IsIdentifier(targetArg)) {
           const symbol = Checker_getResolvedSymbol(receiver, sourceArg);
-          if (symbol === Checker_getResolvedSymbol(receiver, targetArg) && (Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSomeSymbolAssigned(receiver, symbol))) {
+          if (symbol === Checker_getResolvedSymbol(receiver, targetArg) && (Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSymbolAssigned(receiver, symbol))) {
             return Checker_isMatchingReference(receiver, Node_Expression(source), Node_Expression(target));
           }
         }
@@ -3517,12 +3518,12 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
       if (IsAccessExpression(target)) {
         const [targetPropertyName, targetOk] = Checker_getAccessedPropertyName(receiver, target);
         if (targetOk) {
-          return AsQualifiedName(source)!.Right.text === targetPropertyName && Checker_isMatchingReference(receiver, AsQualifiedName(source)!.Left as unknown as GoPtr<Node>, Node_Expression(target));
+          return Node_Text(AsQualifiedName(source)!.Right) === targetPropertyName && Checker_isMatchingReference(receiver, AsQualifiedName(source)!.Left as GoPtr<Node>, Node_Expression(target));
         }
       }
       break;
     case KindBinaryExpression:
-      return IsBinaryExpression(source) && AsBinaryExpression(source)!.OperatorToken.Kind === KindCommaToken && Checker_isMatchingReference(receiver, AsBinaryExpression(source)!.Right, target);
+      return IsBinaryExpression(source) && AsBinaryExpression(source)!.OperatorToken!.Kind === KindCommaToken && Checker_isMatchingReference(receiver, AsBinaryExpression(source)!.Right, target);
   }
   return false;
 }
@@ -3533,7 +3534,7 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
  * Go source:
  * var nonDottedNameCacheKey = CacheHashKey(xxh3.HashString128("?"))
  */
-export const nonDottedNameCacheKey: CacheHashKey = HashString128("?");
+export const nonDottedNameCacheKey: CacheHashKey = HashString128("?") as CacheHashKey;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getFlowReferenceKey","kind":"method","status":"implemented","sigHash":"7f9c86a333fc3319345e1d2e40cd94e84184cc42804dbda3e0deebe4b4fa8c87","bodyHash":"8bcfb16a0b81f307700c2d8c04c39c9d3419508117866e6fecd4abfdf9d6257b"}
@@ -3548,7 +3549,7 @@ export const nonDottedNameCacheKey: CacheHashKey = HashString128("?");
  * }
  */
 export function Checker_getFlowReferenceKey(receiver: GoPtr<Checker>, f: GoPtr<FlowState>): CacheHashKey {
-  const b: keyBuilder = { data: [] };
+  const b: keyBuilder = { h: NewXxh3() as Hasher };
   if (Checker_writeFlowCacheKey(receiver, b, f!.reference, f!.declaredType, f!.initialType, f!.flowContainer)) {
     return keyBuilder_hash(b);
   }
@@ -3645,7 +3646,7 @@ export function Checker_writeFlowCacheKey(receiver: GoPtr<Checker>, b: GoPtr<key
         return false;
       }
       keyBuilder_writeByte(b, 46); // '.'
-      keyBuilder_writeString(b, AsQualifiedName(node)!.Right.text);
+      keyBuilder_writeString(b, Node_Text(AsQualifiedName(node)!.Right));
       return true;
     case KindPropertyAccessExpression:
     case KindElementAccessExpression: {
@@ -3660,7 +3661,7 @@ export function Checker_writeFlowCacheKey(receiver: GoPtr<Checker>, b: GoPtr<key
       }
       if (IsElementAccessExpression(node) && IsIdentifier(AsElementAccessExpression(node)!.ArgumentExpression)) {
         const symbol = Checker_getResolvedSymbol(receiver, AsElementAccessExpression(node)!.ArgumentExpression);
-        if (Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSomeSymbolAssigned(receiver, symbol)) {
+        if (Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSymbolAssigned(receiver, symbol)) {
           if (!Checker_writeFlowCacheKey(receiver, b, Node_Expression(node), declaredType, initialType, flowContainer)) {
             return false;
           }
@@ -3720,7 +3721,7 @@ export function Checker_writeFlowCacheKey(receiver: GoPtr<Checker>, b: GoPtr<key
  */
 export function Checker_getAccessedPropertyName(receiver: GoPtr<Checker>, access: GoPtr<Node>): [string, bool] {
   if (IsPropertyAccessExpression(access)) {
-    return [Node_Name(access)!.text, true];
+    return [Node_Text(Node_Name(access)), true];
   }
   if (IsElementAccessExpression(access)) {
     return Checker_tryGetElementAccessExpressionName(receiver, AsElementAccessExpression(access));
@@ -3799,7 +3800,7 @@ export function Checker_tryGetElementAccessExpressionName(receiver: GoPtr<Checke
  */
 export function Checker_tryGetNameFromEntityNameExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): [string, bool] {
   const symbol = Checker_resolveEntityName(receiver, node, SymbolFlagsValue, true, false, undefined);
-  if (symbol === undefined || !(Checker_isConstantVariable(receiver, symbol) || (symbol!.flags & SymbolFlagsEnumMember))) {
+  if (symbol === undefined || !(Checker_isConstantVariable(receiver, symbol) || (symbol!.Flags & SymbolFlagsEnumMember))) {
     return ["", false];
   }
   const declaration = symbol!.ValueDeclaration;
@@ -3883,7 +3884,7 @@ export function Checker_getDestructuringPropertyName(receiver: GoPtr<Checker>, n
     return Checker_getLiteralPropertyNameText(receiver, Node_Name(node));
   }
   if (IsArrayLiteralExpression(parent) || IsArrayBindingPattern(parent)) {
-    return [String(Node_Elements(parent).indexOf(node)), true];
+    return [String(Node_Elements(parent)!.indexOf(node)), true];
   }
   return ["", false];
 }
@@ -3946,7 +3947,7 @@ export function Checker_isConstantReference(receiver: GoPtr<Checker>, node: GoPt
     case KindIdentifier:
       if (!IsThisInTypeQuery(node)) {
         const symbol = Checker_getResolvedSymbol(receiver, node);
-        return Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSomeSymbolAssigned(receiver, symbol) || symbol!.ValueDeclaration !== undefined && IsFunctionExpression(symbol!.ValueDeclaration);
+        return Checker_isConstantVariable(receiver, symbol) || Checker_isParameterOrMutableLocalVariable(receiver, symbol) && !Checker_isSymbolAssigned(receiver, symbol) || symbol!.ValueDeclaration !== undefined && IsFunctionExpression(symbol!.ValueDeclaration);
       }
       break;
     case KindPropertyAccessExpression:
@@ -4044,7 +4045,7 @@ export function Checker_getReferenceCandidate(receiver: GoPtr<Checker>, node: Go
     case KindParenthesizedExpression:
       return Checker_getReferenceCandidate(receiver, Node_Expression(node));
     case KindBinaryExpression:
-      switch (AsBinaryExpression(node)!.OperatorToken.Kind) {
+      switch (AsBinaryExpression(node)!.OperatorToken!.Kind) {
         case KindEqualsToken:
         case KindBarBarEqualsToken:
         case KindAmpersandAmpersandEqualsToken:
@@ -4074,8 +4075,8 @@ export function Checker_getReferenceCandidate(receiver: GoPtr<Checker>, node: Go
 export function Checker_getReferenceRoot(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Node> {
   const parent = node!.Parent;
   if (IsParenthesizedExpression(parent) ||
-    IsBinaryExpression(parent) && AsBinaryExpression(parent)!.OperatorToken.Kind === KindEqualsToken && AsBinaryExpression(parent)!.Left === node ||
-    IsBinaryExpression(parent) && AsBinaryExpression(parent)!.OperatorToken.Kind === KindCommaToken && AsBinaryExpression(parent)!.Right === node) {
+    IsBinaryExpression(parent) && AsBinaryExpression(parent)!.OperatorToken!.Kind === KindEqualsToken && AsBinaryExpression(parent)!.Left === node ||
+    IsBinaryExpression(parent) && AsBinaryExpression(parent)!.OperatorToken!.Kind === KindCommaToken && AsBinaryExpression(parent)!.Right === node) {
     return Checker_getReferenceRoot(receiver, parent);
   }
   return node;
@@ -4098,7 +4099,7 @@ export function Checker_getReferenceRoot(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_hasMatchingArgument(receiver: GoPtr<Checker>, expression: GoPtr<Node>, reference: GoPtr<Node>): bool {
-  for (const argument of Node_Arguments(expression)) {
+  for (const argument of Node_Arguments(expression) ?? []) {
     if (Checker_isOrContainsMatchingReference(receiver, reference, argument) || Checker_optionalChainContainsReference(receiver, argument, reference)) {
       return true;
     }
@@ -4201,7 +4202,7 @@ export function isCoercibleUnderDoubleEquals(source: GoPtr<Type>, target: GoPtr<
  * }
  */
 export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
-  const links = LinkStore_Get(receiver!.switchStatementLinks, node);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
   if (links!.exhaustiveState === ExhaustiveStateUnknown) {
     links!.exhaustiveState = ExhaustiveStateComputing;
     const isExhaustive = Checker_computeExhaustiveSwitchStatement(receiver, node);
@@ -4286,7 +4287,7 @@ export function Checker_computeExhaustiveSwitchStatement(receiver: GoPtr<Checker
  */
 export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: GoPtr<Type>, types: GoSlice<GoPtr<Type>>): bool {
   if (source!.flags & TypeFlagsUnion) {
-    return !Some(Type_AsUnionType(source)!.types, (t) => !types.includes(t));
+    return !Some(Type_Types(source), (t: GoPtr<Type>) => !types.includes(t));
   }
   return types.includes(source);
 }
@@ -4322,7 +4323,7 @@ export function Checker_eachTypeContainedIn(receiver: GoPtr<Checker>, source: Go
  * }
  */
 export function Checker_getSwitchClauseTypeOfWitnesses(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<string> {
-  const links = LinkStore_Get(receiver!.switchStatementLinks, node);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
   if (!links!.witnessesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const witnesses: string[] = new Array(clauses.length).fill("");
@@ -4371,7 +4372,7 @@ export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker
   let facts: TypeFacts = TypeFactsNone;
   for (let i = 0; i < witnesses.length; i++) {
     const witness = witnesses[i];
-    if ((i < start || i >= end) && witness !== "") {
+      if ((i < start || i >= end) && witness !== undefined && witness !== "") {
       const f = typeofNEFacts.get(witness);
       facts |= (f !== undefined ? f : TypeFactsTypeofNEHostObject);
     }
@@ -4398,7 +4399,7 @@ export function Checker_getNotEqualFactsFromTypeofSwitch(receiver: GoPtr<Checker
  * }
  */
 export function Checker_getSwitchClauseTypes(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoSlice<GoPtr<Type>> {
-  const links = LinkStore_Get(receiver!.switchStatementLinks, node);
+  const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
   if (!links!.switchTypesComputed) {
     const clauses = AsCaseBlock(AsSwitchStatement(node)!.CaseBlock as unknown as GoPtr<Node>)!.Clauses!.Nodes;
     const types: GoPtr<Type>[] = new Array(clauses.length);
@@ -4477,7 +4478,7 @@ export function Checker_getTypeOfSwitchClause(receiver: GoPtr<Checker>, clause: 
  * }
  */
 export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Signature> {
-  const links = LinkStore_Get(receiver!.signatureLinks, node);
+  const links = LinkStore_Get<GoPtr<Node>, SignatureLinks>(receiver!.signatureLinks as LinkStore<GoPtr<Node>, SignatureLinks>, node);
   let signature = links!.effectsSignature;
   if (signature === undefined) {
     let funcType: GoPtr<Type>;
@@ -4488,7 +4489,7 @@ export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPt
       funcType = Checker_getTypeOfDottedName(receiver, Node_Expression(node), undefined);
     } else if (Node_Expression(node)!.Kind !== KindSuperKeyword) {
       if (IsOptionalChain(node)) {
-        funcType = Checker_checkNonNullType(receiver, Checker_getOptionalExpressionType(receiver, Checker_checkExpression(receiver, Node_Expression(node), undefined, undefined), Node_Expression(node)), Node_Expression(node));
+        funcType = Checker_checkNonNullType(receiver, Checker_getOptionalExpressionType(receiver, Checker_checkExpression(receiver, Node_Expression(node)), Node_Expression(node)), Node_Expression(node));
       } else {
         funcType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
       }
@@ -4534,7 +4535,7 @@ export function Checker_getEffectsSignature(receiver: GoPtr<Checker>, node: GoPt
  */
 export function Checker_getSymbolHasInstanceMethodOfObjectType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
   const hasInstancePropertyName = Checker_getPropertyNameForKnownSymbolName(receiver, "hasInstance");
-  if (Checker_allTypesAssignableToKind(receiver, t, TypeFlagsNonPrimitive, false)) {
+  if (Checker_allTypesAssignableToKind(receiver, t, TypeFlagsNonPrimitive)) {
     const hasInstanceProperty = Checker_getPropertyOfType(receiver, t, hasInstancePropertyName);
     if (hasInstanceProperty !== undefined) {
       const hasInstancePropertyType = Checker_getTypeOfSymbol(receiver, hasInstanceProperty);
@@ -4562,7 +4563,7 @@ export function Checker_getSymbolHasInstanceMethodOfObjectType(receiver: GoPtr<C
  * }
  */
 export function Checker_getPropertyNameForKnownSymbolName(receiver: GoPtr<Checker>, symbolName: string): string {
-  const ctorType = Checker_getGlobalESSymbolConstructorSymbolOrNil(receiver);
+  const ctorType = receiver!.getGlobalESSymbolConstructorSymbolOrNil();
   if (ctorType !== undefined) {
     const uniqueType = Checker_getTypeOfPropertyOfType(receiver, Checker_getTypeOfSymbol(receiver, ctorType), symbolName);
     if (uniqueType !== undefined && isTypeUsableAsPropertyName(uniqueType)) {
@@ -4610,7 +4611,7 @@ export function Checker_getPropertyNameForKnownSymbolName(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getTypeOfDottedName(receiver: GoPtr<Checker>, node: GoPtr<Node>, diagnostic: GoPtr<Diagnostic>): GoPtr<Type> {
-  if (!(node!.flags & NodeFlagsInWithStatement)) {
+  if (!(node!.Flags & NodeFlagsInWithStatement)) {
     switch (node!.Kind) {
       case KindIdentifier: {
         const symbol = Checker_getExportSymbolOfValueSymbolIfExported(receiver, Checker_getResolvedSymbol(receiver, node));
@@ -4627,10 +4628,10 @@ export function Checker_getTypeOfDottedName(receiver: GoPtr<Checker>, node: GoPt
           let prop: GoPtr<Symbol>;
           if (IsPrivateIdentifier(name)) {
             if (t!.symbol !== undefined) {
-              prop = Checker_getPropertyOfType(receiver, t, GetSymbolNameForPrivateIdentifier(t!.symbol, name!.text));
+              prop = Checker_getPropertyOfType(receiver, t, GetSymbolNameForPrivateIdentifier(t!.symbol, Node_Text(name)));
             }
           } else {
-            prop = Checker_getPropertyOfType(receiver, t, name!.text);
+            prop = Checker_getPropertyOfType(receiver, t, Node_Text(name));
           }
           if (prop !== undefined) {
             return Checker_getExplicitTypeOfSymbol(receiver, prop, diagnostic);
@@ -4689,12 +4690,12 @@ export function Checker_getTypeOfDottedName(receiver: GoPtr<Checker>, node: GoPt
  */
 export function Checker_getExplicitTypeOfSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, diagnostic: GoPtr<Diagnostic>): GoPtr<Type> {
   const symbol = Checker_resolveSymbol(receiver, symbol_);
-  if (symbol!.flags & (SymbolFlagsFunction | SymbolFlagsMethod | SymbolFlagsClass | SymbolFlagsValueModule)) {
+  if (symbol!.Flags & (SymbolFlagsFunction | SymbolFlagsMethod | SymbolFlagsClass | SymbolFlagsValueModule)) {
     return Checker_getTypeOfSymbol(receiver, symbol);
   }
-  if (symbol!.flags & (SymbolFlagsVariable | SymbolFlagsProperty)) {
-    if (symbol!.checkFlags & CheckFlagsMapped) {
-      const origin = LinkStore_Get(receiver!.mappedSymbolLinks, symbol).syntheticOrigin;
+  if (symbol!.Flags & (SymbolFlagsVariable | SymbolFlagsProperty)) {
+    if (symbol!.CheckFlags & CheckFlagsMapped) {
+      const origin = LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks as LinkStore<GoPtr<Symbol>, MappedSymbolLinks>, symbol)!.syntheticOrigin;
       if (origin !== undefined && Checker_getExplicitTypeOfSymbol(receiver, origin, diagnostic) !== undefined) {
         return Checker_getTypeOfSymbol(receiver, symbol);
       }

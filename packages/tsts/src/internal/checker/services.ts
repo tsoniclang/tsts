@@ -863,11 +863,11 @@ export function runWithoutResolvedSignatureCaching<T>(c: GoPtr<Checker>, node: G
     const cachedTypes: Map<ValueSymbolLinks, GoPtr<Type>> = new globalThis.Map();
     let current: GoPtr<Node> = ancestorNode;
     while (current !== undefined) {
-      const signatureLinks = LinkStore_Get<Node, SignatureLinks>(c!.signatureLinks as unknown as LinkStore<Node, SignatureLinks>, current)!;
+      const signatureLinks = LinkStore_Get<GoPtr<Node>, SignatureLinks>(c!.signatureLinks as unknown as LinkStore<GoPtr<Node>, SignatureLinks>, current)!;
       cachedResolvedSignatures.set(signatureLinks, signatureLinks.resolvedSignature);
       signatureLinks.resolvedSignature = undefined;
       if (IsFunctionExpressionOrArrowFunction(current)) {
-        const symbolLinks = LinkStore_Get<Symbol, ValueSymbolLinks>(c!.valueSymbolLinks as unknown as LinkStore<Symbol, ValueSymbolLinks>, Checker_getSymbolOfDeclaration(c, current))!;
+        const symbolLinks = LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(c!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, Checker_getSymbolOfDeclaration(c, current))!;
         const resolvedType = symbolLinks.resolvedType;
         cachedTypes.set(symbolLinks, resolvedType);
         symbolLinks.resolvedType = undefined;
@@ -944,7 +944,7 @@ export function Checker_GetRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<
  * }
  */
 export function Checker_GetMappedTypeSymbolOfProperty(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
-  const valueLinks = LinkStore_TryGet<Symbol, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<Symbol, ValueSymbolLinks>, symbol_);
+  const valueLinks = LinkStore_TryGet<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_);
   if (valueLinks !== undefined) {
     return Type_Symbol((valueLinks as ValueSymbolLinks).containingType);
   }
@@ -988,21 +988,21 @@ export function Checker_GetMappedTypeSymbolOfProperty(receiver: GoPtr<Checker>, 
 export function Checker_getImmediateRootSymbols(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Symbol>> {
   if ((symbol_!.CheckFlags & CheckFlagsSynthetic) !== 0) {
     return MapNonNil(
-      Type_Types((LinkStore_Get<Symbol, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<Symbol, ValueSymbolLinks>, symbol_) as ValueSymbolLinks).containingType),
+      Type_Types((LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, symbol_) as ValueSymbolLinks).containingType),
       (t: GoPtr<Type>) => {
         return Checker_getPropertyOfType(receiver, t, symbol_!.Name);
       });
   }
   if ((symbol_!.Flags & SymbolFlagsTransient) !== 0) {
     if (LinkStore_Has(receiver!.spreadLinks, symbol_)) {
-      const leftSpread = (LinkStore_Get<Symbol, SpreadLinks>(receiver!.spreadLinks as unknown as LinkStore<Symbol, SpreadLinks>, symbol_) as SpreadLinks).leftSpread;
-      const rightSpread = (LinkStore_Get<Symbol, SpreadLinks>(receiver!.spreadLinks as unknown as LinkStore<Symbol, SpreadLinks>, symbol_) as SpreadLinks).rightSpread;
+      const leftSpread = (LinkStore_Get<GoPtr<Symbol>, SpreadLinks>(receiver!.spreadLinks as unknown as LinkStore<GoPtr<Symbol>, SpreadLinks>, symbol_) as SpreadLinks).leftSpread;
+      const rightSpread = (LinkStore_Get<GoPtr<Symbol>, SpreadLinks>(receiver!.spreadLinks as unknown as LinkStore<GoPtr<Symbol>, SpreadLinks>, symbol_) as SpreadLinks).rightSpread;
       if (leftSpread !== undefined) {
         return [leftSpread, rightSpread];
       }
     }
     if (LinkStore_Has(receiver!.mappedSymbolLinks, symbol_)) {
-      const syntheticOrigin = (LinkStore_Get<Symbol, MappedSymbolLinks>(receiver!.mappedSymbolLinks as unknown as LinkStore<Symbol, MappedSymbolLinks>, symbol_) as MappedSymbolLinks).syntheticOrigin;
+      const syntheticOrigin = (LinkStore_Get<GoPtr<Symbol>, MappedSymbolLinks>(receiver!.mappedSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MappedSymbolLinks>, symbol_) as MappedSymbolLinks).syntheticOrigin;
       if (syntheticOrigin !== undefined) {
         return [syntheticOrigin];
       }
@@ -1043,9 +1043,9 @@ export function Checker_tryGetTarget(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
   let next: GoPtr<Symbol> = symbol_;
   for (;;) {
     if (LinkStore_Has(receiver!.valueSymbolLinks, next)) {
-      next = (LinkStore_Get<Symbol, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<Symbol, ValueSymbolLinks>, next) as ValueSymbolLinks).target;
+      next = (LinkStore_Get<GoPtr<Symbol>, ValueSymbolLinks>(receiver!.valueSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, ValueSymbolLinks>, next) as ValueSymbolLinks).target;
     } else if (LinkStore_Has(receiver!.exportTypeLinks, next)) {
-      next = (LinkStore_Get<Symbol, ExportTypeLinks>(receiver!.exportTypeLinks as unknown as LinkStore<Symbol, ExportTypeLinks>, next) as ExportTypeLinks).target;
+      next = (LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as unknown as LinkStore<GoPtr<Symbol>, ExportTypeLinks>, next) as ExportTypeLinks).target;
     } else {
       next = undefined;
     }
@@ -1866,10 +1866,10 @@ export function Checker_GetConstantValue(receiver: GoPtr<Checker>, node: GoPtr<N
     return Checker_getEnumMemberValue(receiver, node).Value;
   }
 
-  if ((LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<Node, SymbolNodeLinks>, node) as SymbolNodeLinks).resolvedSymbol === undefined) {
+  if ((LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, node) as SymbolNodeLinks).resolvedSymbol === undefined) {
     Checker_checkExpressionCached(receiver, node); // ensure cached resolved symbol is set
   }
-  let symbol_ = (LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<Node, SymbolNodeLinks>, node) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
+  let symbol_ = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, node) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
   if (symbol_ === undefined && IsEntityNameExpression(node)) {
     symbol_ = Checker_resolveEntityName(
       receiver,
@@ -2152,7 +2152,7 @@ export function Checker_GetFirstTypeArgumentFromKnownType(receiver: GoPtr<Checke
     }
   }
   const tAlias = t!.alias;
-  if (tAlias !== undefined && isKnownGenericTypeName(tAlias.symbol.Name)) {
+  if (tAlias !== undefined && tAlias.symbol !== undefined && isKnownGenericTypeName(tAlias.symbol.Name)) {
     const symbol_ = Checker_getGlobalSymbol(receiver, tAlias.symbol.Name, SymbolFlagsType, undefined);
     if (symbol_ !== undefined && symbol_ === tAlias.symbol) {
       return FirstOrNil(tAlias.typeArguments);

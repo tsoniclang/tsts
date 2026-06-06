@@ -80,7 +80,7 @@ import {
   TypeFormatFlagsWriteArrowStyleSignature,
   TypeFormatFlagsWriteCallStyleSignature,
   type TypePredicate,
-  Type_AsUnionType,
+  Type_Types,
 } from "./types.js";
 
 // semicolonRemoverWriter_as_EmitTextWriter adapts a *semicolonRemoverWriter to
@@ -1110,11 +1110,12 @@ export function Checker_formatUnionTypes(receiver: GoPtr<Checker>, types: GoSlic
           baseType = Checker_getBaseTypeOfEnumLikeType(receiver, t);
         }
         if ((baseType!.flags & TypeFlagsUnion) !== 0) {
-          const count = Type_AsUnionType(baseType)!.types.length;
+          const baseTypes = Type_Types(baseType)!;
+          const count = baseTypes.length;
           if (
             i + count <= types.length &&
             Checker_getRegularTypeOfLiteralType(receiver, types[i + count - 1]) ===
-              Checker_getRegularTypeOfLiteralType(receiver, Type_AsUnionType(baseType)!.types[count - 1])
+              Checker_getRegularTypeOfLiteralType(receiver, baseTypes[count - 1])
           ) {
             result.push(baseType);
             i += count - 1;

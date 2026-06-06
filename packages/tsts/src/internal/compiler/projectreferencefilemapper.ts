@@ -39,7 +39,7 @@ import type { ProgramOptions } from "./program.js";
  */
 export interface projectReferenceFileMapper {
   opts: ProgramOptions;
-  host: ResolutionHost;
+  host: GoPtr<ResolutionHost>;
   loader: GoPtr<fileLoader>;
   configToProjectReference: GoMap<Path, GoPtr<ParsedCommandLine>>;
   referencesInConfigFile: GoMap<Path, GoSlice<Path>>;
@@ -403,7 +403,7 @@ export function projectReferenceFileMapper_getSourceToDtsIfSymlink(receiver: GoP
     if (!strings.Contains(fileName, "/node_modules/")) {
       SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
     } else {
-      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host.FS().Realpath(fileName));
+      const realDeclarationPath = fileLoader_toPath(receiver!.loader, receiver!.host!.FS().Realpath(fileName));
       if (realDeclarationPath === path) {
         SyncMap_Store<Path, GoPtr<SourceOutputAndProjectReference>>(receiver!.realpathDtsToSource as SyncMap<Path, GoPtr<SourceOutputAndProjectReference>>, path, undefined);
       } else {

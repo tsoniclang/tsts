@@ -115,7 +115,7 @@ import { IsBlock, IsDecorator, IsKeywordKind, IsObjectLiteralExpression, IsPunct
 import { GetSourceFileOfNode, IsBindingPattern, IsExpression, IsJSDocKind, IsMemberName, IsModifier, IsStatement, IsTypeNode, NodeIsSynthesized, PositionIsSynthesized } from "../../ast/utilities.js";
 import { EmitContext_MostOriginal } from "../emitcontext.js";
 import { ScriptKindJSON } from "../../core/scriptkind.js";
-import { NewLineKind_GetNewLineCharacter } from "../../core/compileroptions.js";
+import { NewLineKind_GetNewLineCharacter, NewLineKindNone } from "../../core/compileroptions.js";
 import { GetSourceTextOfNodeFromSourceFile } from "../../scanner/utilities.js";
 import { TokenToString } from "../../scanner/scanner.js";
 import type { OperatorPrecedence } from "../../ast/precedence.js";
@@ -3059,7 +3059,7 @@ export function Printer_emitListItems(receiver: GoPtr<Printer>, emit: (p: GoPtr<
  */
 export function Printer_Emit(receiver: GoPtr<Printer>, node: GoPtr<Node>, sourceFile: GoPtr<SourceFile>): string {
   if (receiver!.ownWriter === undefined) {
-    receiver!.ownWriter = NewTextWriter(NewLineKind_GetNewLineCharacter(receiver!.Options.NewLine), 0);
+    receiver!.ownWriter = NewTextWriter(NewLineKind_GetNewLineCharacter(receiver!.Options.NewLine ?? NewLineKindNone), 0);
   }
   Printer_Write(receiver, node, sourceFile, receiver!.ownWriter, undefined);
   const text = receiver!.ownWriter.String();

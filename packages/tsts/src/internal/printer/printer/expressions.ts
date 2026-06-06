@@ -204,7 +204,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
     containerEnd: -1 as int,
     declarationListContainerEnd: -1 as int,
     detachedCommentsInfo: { data: [] },
-    commentsDisabled: options.RemoveComments,
+    commentsDisabled: options.RemoveComments ?? false,
     inExtends: false as bool,
     nameGenerator: {
       Context: undefined,
@@ -298,7 +298,7 @@ export function Printer_getLiteralTextOfNode(receiver: GoPtr<Printer>, node: GoP
   const flags1 = (EmitContext_EmitFlags(receiver!.emitContext, node) & EFNoAsciiEscaping) !== 0
     ? (flags | getLiteralTextFlagsNeverAsciiEscape) as getLiteralTextFlags
     : flags;
-  const flags2 = receiver!.Options.Target >= ScriptTargetES2021
+  const flags2 = (receiver!.Options.Target ?? 0) >= ScriptTargetES2021
     ? (flags1 | getLiteralTextFlagsAllowNumericSeparator) as getLiteralTextFlags
     : flags1;
   return getLiteralText(node, Coalesce(sourceFile, receiver!.currentSourceFile) as GoPtr<SourceFile>, flags2);

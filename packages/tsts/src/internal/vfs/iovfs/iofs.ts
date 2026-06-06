@@ -342,7 +342,7 @@ export function ioFS_GetAccessibleEntries(receiver: GoPtr<ioFS>, path: string): 
  * 	return vfs.common.Stat(path)
  * }
  */
-export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): FileInfo {
+export function ioFS_Stat(receiver: GoPtr<ioFS>, path: string): GoPtr<FileInfo> {
   void RootLength(path); // Assert path is rooted
   return Common_Stat(receiver!.common, path);
 }

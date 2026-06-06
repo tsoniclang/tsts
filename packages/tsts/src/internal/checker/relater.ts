@@ -26,8 +26,8 @@ import type { CacheHashKey, Checker, EnumRelationKey, IntersectionFlags } from "
 import { IntersectionFlagsNoConstraintReduction } from "./checker/state.js";
 import { getRelationKey, isFreshLiteralType, containsType } from "./checker/state.js";
 import type { TypeMapper } from "./mapper.js";
-import type { ConditionalRoot, ElementFlags, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags } from "./types.js";
-import { TernaryFalse, TernaryTrue, TernaryMaybe, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, AccessFlagsNone, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsIntrinsicType } from "./types.js";
+import type { ConditionalRoot, ElementFlags, ExportTypeLinks, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags, VarianceLinks } from "./types.js";
+import { TernaryFalse, TernaryTrue, TernaryMaybe, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, AccessFlagsNone, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsIntrinsicType, SignatureKindCall, SignatureKindConstruct, InterfaceType_TypeParameters } from "./types.js";
 import { UnionReductionNone } from "./checker/state.js";
 import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference, Checker_getApparentType, Checker_getIntersectionTypeEx, Checker_getNormalizedType, Checker_getTemplateLiteralType } from "./checker/types.js";
 import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
@@ -38,7 +38,7 @@ import { TypeFormatFlagsUseFullyQualifiedType } from "./types.js";
 import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule } from "../ast/symbolflags.js";
 import { CheckFlagsPartial, CheckFlagsSyntheticProperty, CheckFlagsIsDiscriminantComputed, CheckFlagsIsDiscriminant, CheckFlagsNonUniformAndLiteral } from "../ast/checkflags.js";
 import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, NewDiagnosticForNode } from "./utilities.js";
-import { IsExpression, GetDeclarationOfKind, GetSymbolId } from "../ast/utilities.js";
+import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall } from "../ast/utilities.js";
 import { Checker_isContextSensitive } from "./checker/support-queries.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
 import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType } from "./checker/symbols.js";
@@ -47,7 +47,8 @@ import { Checker_getApplicableIndexInfoForName, Checker_isTypeParameterPossiblyR
 import { AsConditionalTypeNode } from "../ast/generated/casts.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { newSimpleTypeMapper } from "./mapper.js";
-import { LinkStore_Get } from "../core/linkstore.js";
+import type { LinkStore } from "../core/linkstore.js";
+import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
 import { SymbolFlagsTypeAlias } from "../ast/symbolflags.js";
 import {
   Target_signature_provides_too_few_arguments_Expected_0_or_more_but_got_1,
@@ -64,6 +65,7 @@ import {
   Property_0_is_missing_in_type_1,
   Each_declaration_of_0_1_differs_in_its_value_where_2_was_expected_but_3_was_given,
   One_value_of_0_1_is_the_string_2_and_the_other_is_assumed_to_be_an_unknown_numeric_value,
+  Type_originates_at_this_import_A_namespace_style_import_cannot_be_called_or_constructed_and_will_cause_a_failure_at_runtime_Consider_using_a_default_import_or_import_require_here_instead,
 } from "../diagnostics/generated/messages.js";
 import { TypeFlagsAnyOrUnknown, ElementFlagsRequired, ElementFlagsOptional, ElementFlagsFixed, ElementFlagsVariadic, SignatureFlagsConstruct, SignatureFlagsIsUntypedSignatureInJSFile, TypePredicateKindThis, TypePredicateKindIdentifier, TypePredicateKindAssertsThis, TypePredicateKindAssertsIdentifier } from "./types.js";
 import { UnionReductionLiteral, TypeSystemPropertyNameResolvedReturnType, someType, TypeFactsIsUndefinedOrNull, getStringLiteralValue } from "./checker/state.js";
@@ -110,6 +112,9 @@ import { Checker_getTypePredicateFromBody } from "./checker/flow-narrowing.js";
 import { Checker_findResolutionCycleStartIndex } from "./checker/symbols.js";
 import { newTypeMapper } from "./mapper.js";
 import type { Result } from "../evaluator/evaluator.js";
+import { createDiagnosticForNode } from "./checker/state.js";
+import { Tracer_Instant } from "./tracer.js";
+import { PhaseCheckTypes } from "../tracing/tracing.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::type::SignatureCheckMode","kind":"type","status":"implemented","sigHash":"6b0118bf5541ca9032771b8ea433c037202512239fdbe62b39e231afb1506b47","bodyHash":"947fb20d37f95b65415be825a583827c09c6b3d891cdb2a5e8842545f55685bf"}
@@ -978,17 +983,17 @@ export function Checker_checkTypeRelatedToEx(receiver: GoPtr<Checker>, source: G
     const [id] = getRelationKey(source, target, IntersectionStateNone, relation === receiver!.identityRelation, false as bool);
     Relation_set(relation, id, (RelationComparisonResultFailed | (r!.relationCount <= 0 ? RelationComparisonResultComplexityOverflow : RelationComparisonResultStackDepthOverflow)) as RelationComparisonResult);
     if (receiver!.tracer !== undefined) {
-      Tracer_Instant(receiver!.tracer, PhaseCheckTypes, "checkTypeRelatedTo_DepthLimit", new Map([["sourceId", source!.id], ["targetId", target!.id], ["depth", r!.sourceStack.length], ["targetDepth", r!.targetStack.length]]));
+      Tracer_Instant(receiver!.tracer, PhaseCheckTypes, "checkTypeRelatedTo_DepthLimit", new globalThis.Map<string, unknown>([["sourceId", source!.id], ["targetId", target!.id], ["depth", r!.sourceStack.length], ["targetDepth", r!.targetStack.length]]));
     }
     const message = r!.relationCount <= 0 ? Excessive_complexity_comparing_types_0_and_1 : Excessive_stack_depth_comparing_types_0_and_1;
     let en = errorNode;
     if (en === undefined) {
       en = receiver!.currentNode;
     }
-    Checker_reportDiagnostic(receiver, NewDiagnosticForNode(en, message, Checker_TypeToString(receiver, source, undefined), Checker_TypeToString(receiver, target, undefined)), diagnosticOutput);
+    Checker_reportDiagnostic(receiver, NewDiagnosticForNode(en, message, Checker_TypeToString(receiver, source), Checker_TypeToString(receiver, target)), diagnosticOutput);
   } else if (r!.errorChain !== undefined) {
-    if (headMessage !== undefined && errorNode !== undefined && result === TernaryFalse && source!["symbol"] !== undefined && LinkStore_Has(receiver!.exportTypeLinks as unknown as LinkStore<Symbol, ExportTypeLinks>, source!["symbol"])) {
-      const links = LinkStore_Get<Symbol, ExportTypeLinks>(receiver!.exportTypeLinks as unknown as LinkStore<Symbol, ExportTypeLinks>, source!["symbol"]) as ExportTypeLinks;
+    if (headMessage !== undefined && errorNode !== undefined && result === TernaryFalse && source!.symbol !== undefined && LinkStore_Has(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, source!.symbol)) {
+      const links = LinkStore_Get<GoPtr<Symbol>, ExportTypeLinks>(receiver!.exportTypeLinks as GoPtr<LinkStore<GoPtr<Symbol>, ExportTypeLinks>>, source!.symbol)!;
       if (links.originatingImport !== undefined && !IsImportCall(links.originatingImport)) {
         const helpfulRetry = Checker_checkTypeRelatedTo(receiver, Checker_getTypeOfSymbol(receiver, links.target), target, relation, undefined);
         if (helpfulRetry) {
@@ -2128,7 +2133,12 @@ export function Checker_findMatchingDiscriminantType(receiver: GoPtr<Checker>, s
     }
     const discriminantProperties = Checker_findDiscriminantProperties(receiver, Checker_getPropertiesOfType(receiver, source), target);
     if (discriminantProperties.length !== 0) {
-      const discriminator: TypeDiscriminator = { c: receiver, props: discriminantProperties, isRelatedTo };
+      const discriminatorData: TypeDiscriminator = { c: receiver, props: discriminantProperties, isRelatedTo };
+      const discriminator: Discriminator = {
+        len: () => TypeDiscriminator_len(discriminatorData),
+        name: (index: int) => TypeDiscriminator_name(discriminatorData, index),
+        matches: (index: int, t: GoPtr<Type>) => TypeDiscriminator_matches(discriminatorData, index, t),
+      };
       const discriminated = Checker_discriminateTypeByDiscriminableItems(receiver, target, discriminator);
       if (discriminated !== target) {
         return discriminated;
@@ -2246,7 +2256,7 @@ export function Checker_getKeyPropertyName(receiver: GoPtr<Checker>, t: GoPtr<Ty
   if (u!.keyPropertyName === "") {
     const [name, map] = Checker_computeKeyPropertyNameAndMap(receiver, t);
     u!.keyPropertyName = name;
-    u!.constituentMap = map;
+    u!.constituentMap = map ?? new globalThis.Map();
   }
   if (u!.keyPropertyName === InternalSymbolNameMissing) {
     return "";
@@ -2294,7 +2304,7 @@ export function Checker_getConstituentTypeForKeyType(receiver: GoPtr<Checker>, t
  * 	return keyPropertyName, mapByKeyProperty
  * }
  */
-export function Checker_computeKeyPropertyNameAndMap(receiver: GoPtr<Checker>, t: GoPtr<Type>): [string, GoMap<GoPtr<Type>, GoPtr<Type>>] {
+export function Checker_computeKeyPropertyNameAndMap(receiver: GoPtr<Checker>, t: GoPtr<Type>): [string, GoPtr<GoMap<GoPtr<Type>, GoPtr<Type>>>] {
   const types = Type_Types(t)!;
   if (types.length < 10 || (t!.objectFlags & ObjectFlagsPrimitiveUnion) !== 0 || CountWhere(types, isObjectOrInstantiableNonPrimitive) < 10) {
     return [InternalSymbolNameMissing, undefined];
@@ -2386,8 +2396,8 @@ export function Checker_getKeyPropertyCandidateName(receiver: GoPtr<Checker>, ty
  * 	return nil
  * }
  */
-export function Checker_mapTypesByKeyProperty(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, keyPropertyName: string): GoMap<GoPtr<Type>, GoPtr<Type>> {
-  const typesByKey: Map<GoPtr<Type>, GoPtr<Type>> = new Map();
+export function Checker_mapTypesByKeyProperty(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, keyPropertyName: string): GoPtr<GoMap<GoPtr<Type>, GoPtr<Type>>> {
+  const typesByKey: GoMap<GoPtr<Type>, GoPtr<Type>> = new globalThis.Map();
   let count = 0;
   for (const t of types) {
     if ((t!.flags & (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsInstantiableNonPrimitive)) !== 0) {
@@ -2694,7 +2704,7 @@ export function Checker_getVariances(receiver: GoPtr<Checker>, t: GoPtr<Type>): 
   if (t === receiver!.globalArrayType || t === receiver!.globalReadonlyArrayType || (t!.objectFlags & ObjectFlagsTuple) !== 0) {
     return receiver!.arrayVariances;
   }
-  return Checker_getVariancesWorker(receiver, t!.symbol, Type_AsInterfaceType(t)!.TypeParameters());
+  return Checker_getVariancesWorker(receiver, t!.symbol, InterfaceType_TypeParameters(Type_AsInterfaceType(t)));
 }
 
 /**
@@ -2786,7 +2796,7 @@ export function Checker_getAliasVariances(receiver: GoPtr<Checker>, symbol_: GoP
  * }
  */
 export function Checker_getVariancesWorker(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, typeParameters: GoSlice<GoPtr<Type>>): GoSlice<VarianceFlags> {
-  const links = LinkStore_Get(receiver!.varianceLinks, symbol_);
+  const links = LinkStore_Get<GoPtr<Symbol>, VarianceLinks>(receiver!.varianceLinks as GoPtr<LinkStore<GoPtr<Symbol>, VarianceLinks>>, symbol_);
   if (links!.variances === undefined) {
     const oldVarianceComputation = receiver!.inVarianceComputation;
     const saveResolutionStart = receiver!.resolutionStart;
@@ -2867,7 +2877,7 @@ export function Checker_createMarkerType(receiver: GoPtr<Checker>, symbol_: GoPt
   if ((symbol_!.Flags & SymbolFlagsTypeAlias) !== 0) {
     result = Checker_getTypeAliasInstantiation(receiver, symbol_, Checker_instantiateTypes(receiver, LinkStore_Get(receiver!.typeAliasLinks, symbol_)!.typeParameters, mapper), undefined);
   } else {
-    result = Checker_createTypeReference(receiver, t, Checker_instantiateTypes(receiver, Type_AsInterfaceType(t)!.TypeParameters(), mapper));
+    result = Checker_createTypeReference(receiver, t, Checker_instantiateTypes(receiver, InterfaceType_TypeParameters(Type_AsInterfaceType(t)), mapper));
   }
   Set_Add(receiver!.markerTypes, result);
   return result;

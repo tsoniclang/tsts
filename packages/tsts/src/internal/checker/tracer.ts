@@ -25,6 +25,7 @@ import {
   Type_AsSubstitutionType,
   Type_AsTypeReference,
   Type_AsUnionOrIntersectionType,
+  Type_Target,
   TypeFlagsConditional,
   TypeFlagsIndex,
   TypeFlagsIndexedAccess,
@@ -521,7 +522,7 @@ export function tracedTypeAdapter_ReferenceTarget(receiver: GoPtr<tracedTypeAdap
   if ((receiver!.t!.flags & TypeFlagsObject) === 0 || (receiver!.t!.objectFlags & ObjectFlagsReference) === 0) {
     return undefined as unknown as TracedType;
   }
-  const t = Type_AsTypeReference(receiver!.t)!.target;
+  const t = Type_Target(receiver!.t);
   if (t === undefined) {
     return undefined as unknown as TracedType;
   }

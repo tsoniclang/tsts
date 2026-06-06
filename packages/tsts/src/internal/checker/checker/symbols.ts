@@ -19,7 +19,7 @@ import { CompilerOptions_GetIsolatedModules } from "../../core/compileroptions.j
 import type { Tristate } from "../../core/tristate.js";
 import { Tristate_IsTrue, TSTrue } from "../../core/tristate.js";
 import { NodeFlagsJSDoc, NodeFlagsAmbient, NodeFlagsHasImplicitReturn, NodeFlagsHasExplicitReturn } from "../../ast/nodeflags.js";
-import { Node_Pos, Node_Name, Node_FunctionLikeData } from "../../ast/spine.js";
+import { Node_Pos, Node_Name, Node_FunctionLikeData, Node_ForEachChild } from "../../ast/spine.js";
 import { DeclarationNameToString } from "../../scanner/utilities.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Result } from "../../evaluator/evaluator.js";
@@ -31,10 +31,10 @@ import { SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsEx
 import { InternalSymbolNameComputed, InternalSymbolNameExportEquals, SymbolName } from "../../ast/symbol.js";
 import { Memoize, IfElse, Find, Filter, Map, Some, Every, GetSpellingSuggestion, ConcatenateSeq, FindLast, OrElse } from "../../core/core.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
-import { IsNonLocalAlias, GetSourceFileOfNode, GetFirstIdentifier, NodeKindIs, FindAncestor, FindAncestorOrQuit, FindAncestorFalse, FindAncestorTrue, FindAncestorQuit, ToFindAncestorResult, GetNameOfDeclaration, GetContainingClass, IsAmbientModule, IsGlobalScopeAugmentation, IsStatic, IsClassLike, IsParameterPropertyDeclaration, IsFunctionLike, GetImmediatelyInvokedFunctionExpression, IsExternalOrCommonJSModule, IsBlockOrCatchScoped, HasStaticModifier, IsAliasSymbolDeclaration, HasAccessorModifier, IsQuestionToken, IsPrivateIdentifierClassElementDeclaration, IsFunctionLikeDeclaration, NodeIsMissing, GetRootDeclaration, IsValidTypeOnlyAliasUseSite, IsTypeOnlyImportDeclaration, GetEnclosingBlockScopeContainer, IsAccessor, FindAncestorKind, IsEntityName, GetHostSignatureFromJSDoc, HasSyntacticModifier, NodeIsPresent, GetDeclarationOfKind, IsBindingPattern } from "../../ast/utilities.js";
+import { IsNonLocalAlias, GetSourceFileOfNode, GetFirstIdentifier, NodeKindIs, FindAncestor, FindAncestorOrQuit, FindAncestorFalse, FindAncestorTrue, FindAncestorQuit, ToFindAncestorResult, GetNameOfDeclaration, GetContainingClass, IsAmbientModule, IsGlobalScopeAugmentation, IsStatic, IsClassLike, IsParameterPropertyDeclaration, IsFunctionLike, GetImmediatelyInvokedFunctionExpression, IsExternalOrCommonJSModule, IsBlockOrCatchScoped, HasStaticModifier, IsAliasSymbolDeclaration, HasAccessorModifier, IsQuestionToken, IsPrivateIdentifierClassElementDeclaration, IsFunctionLikeDeclaration, NodeIsMissing, GetRootDeclaration, IsValidTypeOnlyAliasUseSite, IsTypeOnlyImportDeclaration, GetEnclosingBlockScopeContainer, IsAccessor, FindAncestorKind, IsEntityName, GetHostSignatureFromJSDoc, HasSyntacticModifier, NodeIsPresent, GetDeclarationOfKind, IsBindingPattern, IsTypeDeclaration } from "../../ast/utilities.js";
 import { IsIdentifier, IsQualifiedName, IsPrivateIdentifier, IsComputedPropertyName, IsBindingElement, IsTypeAliasDeclaration, IsEnumDeclaration, IsExportAssignment, IsNamespaceExportDeclaration, IsExportSpecifier, IsMethodDeclaration, IsPropertyDeclaration, IsClassStaticBlockDeclaration, IsSourceFile, IsClassDeclaration, IsInterfaceDeclaration, IsDecorator, IsParameterDeclaration, IsConstructorDeclaration, IsGetAccessorDeclaration, IsPropertySignatureDeclaration } from "../../ast/generated/predicates.js";
 import { AsQualifiedName, AsExportAssignment, AsDecorator, AsImportTypeNode, AsImportAttributes, AsNamedTupleMember, AsMethodDeclaration, AsGetAccessorDeclaration } from "../../ast/generated/casts.js";
-import { Cannot_find_global_type_0, Cannot_find_global_value_0, Global_type_0_must_have_1_type_parameter_s, Global_type_0_must_be_a_class_or_interface_type, Circular_definition_of_import_alias_0, Cannot_find_namespace_0_Did_you_mean_1, Could_not_find_name_0_Did_you_mean_1, Cannot_find_name_0_Did_you_mean_1, X_0_is_declared_here, X_0_refers_to_a_UMD_global_but_the_current_file_is_a_module_Consider_adding_an_import_instead, X_0_cannot_be_used_as_a_value_because_it_was_exported_using_export_type, X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type, Parameter_0_cannot_reference_itself, Parameter_0_cannot_reference_identifier_1_declared_after_it, Import_0_conflicts_with_global_value_used_in_this_file_so_must_be_declared_with_a_type_only_import_when_isolatedModules_is_enabled, Block_scoped_variable_0_used_before_its_declaration, Class_0_used_before_its_declaration, Enum_0_used_before_its_declaration } from "../../diagnostics/generated/messages.js";
+import { Cannot_find_global_type_0, Cannot_find_global_value_0, Global_type_0_must_have_1_type_parameter_s, Global_type_0_must_be_a_class_or_interface_type, Circular_definition_of_import_alias_0, Cannot_find_namespace_0_Did_you_mean_1, Could_not_find_name_0_Did_you_mean_1, Cannot_find_name_0_Did_you_mean_1, X_0_is_declared_here, X_0_refers_to_a_UMD_global_but_the_current_file_is_a_module_Consider_adding_an_import_instead, X_0_cannot_be_used_as_a_value_because_it_was_exported_using_export_type, X_0_cannot_be_used_as_a_value_because_it_was_imported_using_import_type, Parameter_0_cannot_reference_itself, Parameter_0_cannot_reference_identifier_1_declared_after_it, Import_0_conflicts_with_global_value_used_in_this_file_so_must_be_declared_with_a_type_only_import_when_isolatedModules_is_enabled, Block_scoped_variable_0_used_before_its_declaration, Class_0_used_before_its_declaration, Enum_0_used_before_its_declaration, Duplicate_identifier_0 } from "../../diagnostics/generated/messages.js";
 import { getGlobalTypeDeclaration, getPrimitiveTypeAliasSuggestions, TypeSystemPropertyNameAliasTarget, TypeSystemPropertyNameType, TypeSystemPropertyNameDeclaredType, TypeSystemPropertyNameResolvedTypeArguments, TypeSystemPropertyNameResolvedBaseTypes, TypeSystemPropertyNameResolvedBaseConstructorType, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedBaseConstraint, TypeSystemPropertyNameInitializerIsUndefined, TypeSystemPropertyNameWriteType } from "./state.js";
 import { getFeatureMap, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode, Checker_isUncheckedJSSuggestion, isThisProperty, isExclamationToken, IsInTypeQuery } from "../utilities.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
@@ -44,13 +44,13 @@ import { TypeFlagsUndefined, TypeFlagsESSymbolLike, TypeFlagsIndexedAccess, Type
 import { InterfaceType_TypeParameters } from "../types.js";
 import { NodeCheckFlagsInitializerIsUndefinedComputed, NodeCheckFlagsTypeChecked } from "../types.js";
 import { Checker_error } from "./support.js";
-import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters } from "../../ast/ast.js";
+import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters, Node_ModifierFlags, Node_TypeArguments } from "../../ast/ast.js";
 import { Set_Has, Set_Len, Set_Add } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
-import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode } from "./types.js";
+import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
 import { Checker_isReadonlyAssignmentDeclaration } from "./relations.js";
-import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration } from "./diagnostics.js";
+import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration, Checker_isErrorType } from "./diagnostics.js";
 import { Checker_symbolReferenced, Checker_errorOrSuggestion } from "./support.js";
 import { getFirstDeclaration, getExcludedSymbolFlags, createDiagnosticForNode, isImmediatelyUsedInInitializerOfBlockScopedVariable, isPropertyImmediatelyReferencedWithinDeclaration } from "./state.js";
 import { SetValueDeclaration } from "../../binder/binder.js";
@@ -1351,15 +1351,15 @@ export function Checker_checkAccessorDeclaration(receiver: GoPtr<Checker>, node:
     const setter = GetDeclarationOfKind(symbol_, KindSetAccessor);
     if (getter !== undefined && setter !== undefined && ((LinkStore_Get(receiver!.nodeLinks, getter) as GoPtr<NodeLinks>)!.flags & NodeCheckFlagsTypeChecked) === 0) {
       (LinkStore_Get(receiver!.nodeLinks, getter) as GoPtr<NodeLinks>)!.flags |= NodeCheckFlagsTypeChecked;
-      const getterFlags = getter!.ModifierFlags();
-      const setterFlags = setter!.ModifierFlags();
+      const getterFlags = Node_ModifierFlags(getter);
+      const setterFlags = Node_ModifierFlags(setter);
       if ((getterFlags & ModifierFlagsAbstract) !== (setterFlags & ModifierFlagsAbstract)) {
-        Checker_error(receiver, getter!.Name(), Accessors_must_both_be_abstract_or_non_abstract);
-        Checker_error(receiver, setter!.Name(), Accessors_must_both_be_abstract_or_non_abstract);
+        Checker_error(receiver, Node_Name(getter), Accessors_must_both_be_abstract_or_non_abstract);
+        Checker_error(receiver, Node_Name(setter), Accessors_must_both_be_abstract_or_non_abstract);
       }
       if (((getterFlags & ModifierFlagsProtected) !== 0 && (setterFlags & (ModifierFlagsProtected | ModifierFlagsPrivate)) === 0) || ((getterFlags & ModifierFlagsPrivate) !== 0 && (setterFlags & ModifierFlagsPrivate) === 0)) {
-        Checker_error(receiver, getter!.Name(), A_get_accessor_must_be_at_least_as_accessible_as_the_setter);
-        Checker_error(receiver, setter!.Name(), A_get_accessor_must_be_at_least_as_accessible_as_the_setter);
+        Checker_error(receiver, Node_Name(getter), A_get_accessor_must_be_at_least_as_accessible_as_the_setter);
+        Checker_error(receiver, Node_Name(setter), A_get_accessor_must_be_at_least_as_accessible_as_the_setter);
       }
     }
   }
@@ -1396,7 +1396,7 @@ export function Checker_checkAccessorDeclaration(receiver: GoPtr<Checker>, node:
 export function Checker_checkTypeReferenceOrImport(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const t = Checker_getTypeFromTypeNode(receiver, node);
   if (!Checker_isErrorType(receiver, t)) {
-    if (node!.TypeArguments() !== undefined && node!.TypeArguments()!.length !== 0) {
+    if (Node_TypeArguments(node) !== undefined && Node_TypeArguments(node)!.length !== 0) {
       const typeParameters = Checker_getTypeParametersForTypeReferenceOrImport(receiver, node);
       if (typeParameters !== undefined && typeParameters!.length !== 0) {
         Checker_checkTypeArgumentConstraints(receiver, node, typeParameters);
@@ -1488,10 +1488,10 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
     if (symbol_!.Declarations !== undefined && symbol_!.Declarations!.length > 1) {
       let names: GoPtr<GoMap<string, int>>;
       if (isStatic as boolean) {
-        if (staticNames === undefined) { staticNames = new Map(); }
+        if (staticNames === undefined) { staticNames = new globalThis.Map<string, int>(); }
         names = staticNames;
       } else {
-        if (instanceNames === undefined) { instanceNames = new Map(); }
+        if (instanceNames === undefined) { instanceNames = new globalThis.Map<string, int>(); }
         names = instanceNames;
       }
       const state = names!.get(symbol_!.Name) ?? 0;
@@ -1503,7 +1503,7 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
       }
     }
   };
-  const members = node!.Members();
+  const members = Node_Members(node)!;
   for (const member of members) {
     if (IsConstructorDeclaration(member)) {
       for (const param of Node_Parameters(member)) {
@@ -1516,7 +1516,7 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
       const isStatic = HasStaticModifier(member) as bool;
       // In non-ambient contexts, check that static members are not named 'prototype'.
       if (!nodeInAmbientContext && (isStatic as boolean) && symbol_ !== undefined && symbol_!.Name === "prototype") {
-        Checker_error(receiver, member!.Name(), Static_property_0_conflicts_with_built_in_property_Function_0_of_constructor_function_1, symbol_!.Name, Checker_symbolToString(receiver, Checker_getSymbolOfDeclaration(receiver, node)));
+        Checker_error(receiver, Node_Name(member), Static_property_0_conflicts_with_built_in_property_Function_0_of_constructor_function_1, symbol_!.Name, Checker_symbolToString(receiver, Checker_getSymbolOfDeclaration(receiver, node)));
       }
       // When a property has multiple declarations, check that only one of those declarations is in this object
       // type declaration (multiple merged object types are permitted to each declare the same property).
@@ -1524,8 +1524,8 @@ export function Checker_checkObjectTypeForDuplicateDeclarations(receiver: GoPtr<
         checkProperty(symbol_, isStatic);
       }
       // Check that each private identifier is used only for instance members or only for static members.
-      if ((checkPrivateNames as boolean) && member!.Name() !== undefined && IsPrivateIdentifier(member!.Name())) {
-        if (privateNames === undefined) { privateNames = new Map(); }
+      if ((checkPrivateNames as boolean) && Node_Name(member) !== undefined && IsPrivateIdentifier(Node_Name(member))) {
+        if (privateNames === undefined) { privateNames = new globalThis.Map<string, int>(); }
         let flags = privateNames!.get(symbol_!.Name) ?? 0;
         if (flags !== 3) {
           flags |= IfElse(IsStatic(member) as boolean, 2, 1);
@@ -1604,7 +1604,7 @@ export function Checker_checkNamedTupleMember(receiver: GoPtr<Checker>, node: Go
  * }
  */
 export function Checker_checkIndexedAccessType(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  node!.ForEachChild(Checker_checkSourceElement.bind(undefined, receiver));
+  Node_ForEachChild(node, (n: GoPtr<Node>): bool => Checker_checkSourceElement(receiver, n));
   Checker_checkIndexedAccessIndexType(receiver, Checker_getTypeFromIndexedAccessTypeNode(receiver, node), node);
 }
 

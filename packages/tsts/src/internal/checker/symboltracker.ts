@@ -20,7 +20,7 @@ import type { NodeBuilderContext, TrackedSymbolArgs } from "./nodebuilderimpl.js
  */
 export interface SymbolTrackerImpl {
   context: GoPtr<NodeBuilderContext>;
-  inner: SymbolTracker;
+  inner: GoPtr<SymbolTracker>;
   DisableTrackSymbol: bool;
 }
 
@@ -42,7 +42,7 @@ export interface SymbolTrackerImpl {
  * 	return &SymbolTrackerImpl{context, tracker, false}
  * }
  */
-export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: SymbolTracker): GoPtr<SymbolTrackerImpl> {
+export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker: GoPtr<SymbolTracker>): GoPtr<SymbolTrackerImpl> {
   if (tracker !== undefined) {
     for (;;) {
       const t = tracker as unknown as GoPtr<SymbolTrackerImpl>;
@@ -53,6 +53,31 @@ export function NewSymbolTrackerImpl(context: GoPtr<NodeBuilderContext>, tracker
     }
   }
   return { context, inner: tracker, DisableTrackSymbol: false };
+}
+
+export function SymbolTrackerImpl_as_SymbolTracker(receiver: GoPtr<SymbolTrackerImpl>): GoPtr<SymbolTracker> {
+  if (receiver === undefined) {
+    return undefined;
+  }
+  return {
+    TrackSymbol: (symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool =>
+      SymbolTrackerImpl_TrackSymbol(receiver, symbol_, enclosingDeclaration, meaning),
+    ReportInaccessibleThisError: (): void => SymbolTrackerImpl_ReportInaccessibleThisError(receiver),
+    ReportPrivateInBaseOfClassExpression: (propertyName: string): void =>
+      SymbolTrackerImpl_ReportPrivateInBaseOfClassExpression(receiver, propertyName),
+    ReportInaccessibleUniqueSymbolError: (): void => SymbolTrackerImpl_ReportInaccessibleUniqueSymbolError(receiver),
+    ReportCyclicStructureError: (): void => SymbolTrackerImpl_ReportCyclicStructureError(receiver),
+    ReportLikelyUnsafeImportRequiredError: (specifier: string, symbolName: string): void =>
+      SymbolTrackerImpl_ReportLikelyUnsafeImportRequiredError(receiver, specifier, symbolName),
+    ReportTruncationError: (): void => SymbolTrackerImpl_ReportTruncationError(receiver),
+    ReportNonlocalAugmentation: (containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void =>
+      SymbolTrackerImpl_ReportNonlocalAugmentation(receiver, containingFile, parentSymbol, augmentingSymbol),
+    ReportNonSerializableProperty: (propertyName: string): void =>
+      SymbolTrackerImpl_ReportNonSerializableProperty(receiver, propertyName),
+    ReportInferenceFallback: (node: GoPtr<Node>): void => SymbolTrackerImpl_ReportInferenceFallback(receiver, node),
+    PushErrorFallbackNode: (node: GoPtr<Node>): void => SymbolTrackerImpl_PushErrorFallbackNode(receiver, node),
+    PopErrorFallbackNode: (): void => SymbolTrackerImpl_PopErrorFallbackNode(receiver),
+  };
 }
 
 /**

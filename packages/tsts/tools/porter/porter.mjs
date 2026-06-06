@@ -2322,13 +2322,14 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort) {
+    const rows = status.rows ?? [];
     // Check implemented units don't throw TSGO_UNIMPLEMENTED
-    const implWithThrow = status.rows.filter(r => r.tsStatus === 'implemented' && r.hasUnimplThrow);
+    const implWithThrow = rows.filter(r => r.tsStatus === 'implemented' && r.hasUnimplThrow);
     if (implWithThrow.length > 0) {
       failures.push(`${implWithThrow.length} implemented units still throw TSGO_UNIMPLEMENTED: ${implWithThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
     }
     // Check func/method stubs throw TSGO_UNIMPLEMENTED
-    const stubsWithoutThrow = status.rows.filter(r => r.tsStatus === 'stub' && (r.kind === 'func' || r.kind === 'method') && r.hasUnimplThrow === false);
+    const stubsWithoutThrow = rows.filter(r => r.tsStatus === 'stub' && (r.kind === 'func' || r.kind === 'method') && r.hasUnimplThrow === false);
     if (stubsWithoutThrow.length > 0) {
       failures.push(`${stubsWithoutThrow.length} stub func/method units missing TSGO_UNIMPLEMENTED throw: ${stubsWithoutThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
     }

@@ -19,7 +19,7 @@ import type { EmitContext as EmitContext_3f6f588c } from "../printer/emitcontext
 import type { Checker, Host } from "./checker/state.js";
 import { Checker_getSignatureFromDeclaration } from "./checker/signatures.js";
 import { Checker_getDeclaredTypeOfSymbol, Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
-import { NewSymbolTrackerImpl } from "./symboltracker.js";
+import { NewSymbolTrackerImpl, SymbolTrackerImpl_as_SymbolTracker } from "./symboltracker.js";
 import { newNodeBuilderImpl } from "./nodebuilderimpl.js";
 import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
 import {
@@ -135,7 +135,7 @@ export function NodeBuilder_EmitContext(receiver: GoPtr<NodeBuilder>): GoPtr<Emi
  * 	b.impl.ctx.tracker = tracker
  * }
  */
-export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): void {
+export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): void {
   const b = receiver!;
   let verbosityLevel = -1;
   let maxTruncationLength = 0;
@@ -178,7 +178,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     typeParameterSymbolList: new globalThis.Map(),
   };
   const newTracker = NewSymbolTrackerImpl(b.impl!.ctx, tracker);
-  b.impl!.ctx.tracker = newTracker as unknown as SymbolTracker;
+  b.impl!.ctx.tracker = SymbolTrackerImpl_as_SymbolTracker(newTracker);
 }
 
 /**
@@ -304,7 +304,7 @@ export function NodeBuilder_exitContextSlice(receiver: GoPtr<NodeBuilder>, resul
 export function NodeBuilder_exitContextCheck(receiver: GoPtr<NodeBuilder>): void {
   const b = receiver!;
   if (b.impl!.ctx!.truncating && (b.impl!.ctx!.flags & FlagsNoTruncation) !== 0) {
-    b.impl!.ctx!.tracker.ReportTruncationError();
+    b.impl!.ctx!.tracker!.ReportTruncationError();
   }
 }
 
@@ -317,7 +317,7 @@ export function NodeBuilder_exitContextCheck(receiver: GoPtr<NodeBuilder>): void
  * 	return b.exitContext(b.impl.indexInfoToIndexSignatureDeclarationHelper(info, nil))
  * }
  */
-export function NodeBuilder_IndexInfoToIndexSignatureDeclaration(receiver: GoPtr<NodeBuilder>, info: GoPtr<IndexInfo>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_IndexInfoToIndexSignatureDeclaration(receiver: GoPtr<NodeBuilder>, info: GoPtr<IndexInfo>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(b.impl, info, undefined));
@@ -333,7 +333,7 @@ export function NodeBuilder_IndexInfoToIndexSignatureDeclaration(receiver: GoPtr
  * 	return b.exitContext(b.impl.serializeReturnTypeForSignature(signature, true))
  * }
  */
-export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   const signature = Checker_getSignatureFromDeclaration(b.impl!.ch, signatureDeclaration);
@@ -351,7 +351,7 @@ export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<Node
  * 	return b.exitContextSlice(typeParams)
  * }
  */
-export function NodeBuilder_SerializeTypeParametersForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_SerializeTypeParametersForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoSlice<GoPtr<Node>> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   const symbol_ = Checker_getSymbolOfDeclaration(b.impl!.ch, signatureDeclaration);
@@ -368,7 +368,7 @@ export function NodeBuilder_SerializeTypeParametersForSignature(receiver: GoPtr<
  * 	return b.exitContext(b.impl.serializeTypeForDeclaration(declaration, nil, symbol, true))
  * }
  */
-export function NodeBuilder_SerializeTypeForDeclaration(receiver: GoPtr<NodeBuilder>, declaration: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SerializeTypeForDeclaration(receiver: GoPtr<NodeBuilder>, declaration: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_serializeTypeForDeclaration(b.impl, declaration, undefined, symbol_, true as bool));
@@ -383,7 +383,7 @@ export function NodeBuilder_SerializeTypeForDeclaration(receiver: GoPtr<NodeBuil
  * 	return b.exitContext(b.impl.serializeTypeForExpression(expr))
  * }
  */
-export function NodeBuilder_SerializeTypeForExpression(receiver: GoPtr<NodeBuilder>, expr: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SerializeTypeForExpression(receiver: GoPtr<NodeBuilder>, expr: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_serializeTypeForExpression(b.impl, expr));
@@ -398,7 +398,7 @@ export function NodeBuilder_SerializeTypeForExpression(receiver: GoPtr<NodeBuild
  * 	return b.exitContext(b.impl.signatureToSignatureDeclarationHelper(signature, kind, nil))
  * }
  */
-export function NodeBuilder_SignatureToSignatureDeclaration(receiver: GoPtr<NodeBuilder>, signature: GoPtr<Signature>, kind: Kind, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SignatureToSignatureDeclaration(receiver: GoPtr<NodeBuilder>, signature: GoPtr<Signature>, kind: Kind, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_signatureToSignatureDeclarationHelper(b.impl, signature, kind, undefined));
@@ -565,7 +565,7 @@ export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, i
  * 	return b.exitContext(b.impl.symbolToName(symbol, meaning, false))
  * }
  */
-export function NodeBuilder_SymbolToEntityName(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SymbolToEntityName(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_symbolToName(b.impl, symbol_, meaning, false as bool));
@@ -580,7 +580,7 @@ export function NodeBuilder_SymbolToEntityName(receiver: GoPtr<NodeBuilder>, sym
  * 	return b.exitContext(b.impl.symbolToExpression(symbol, meaning))
  * }
  */
-export function NodeBuilder_SymbolToExpression(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SymbolToExpression(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_symbolToExpression(b.impl, symbol_, meaning));
@@ -595,7 +595,7 @@ export function NodeBuilder_SymbolToExpression(receiver: GoPtr<NodeBuilder>, sym
  * 	return b.exitContext(b.impl.symbolToNode(symbol, meaning))
  * }
  */
-export function NodeBuilder_SymbolToNode(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SymbolToNode(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_symbolToNode(b.impl, symbol_, meaning));
@@ -610,7 +610,7 @@ export function NodeBuilder_SymbolToNode(receiver: GoPtr<NodeBuilder>, symbol_: 
  * 	return b.exitContext(b.impl.symbolToParameterDeclaration(symbol, false))
  * }
  */
-export function NodeBuilder_SymbolToParameterDeclaration(receiver: NodeBuilder, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_SymbolToParameterDeclaration(receiver: NodeBuilder, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_symbolToParameterDeclaration(b.impl, symbol_, false as bool));
@@ -625,7 +625,7 @@ export function NodeBuilder_SymbolToParameterDeclaration(receiver: NodeBuilder, 
  * 	return b.exitContextSlice(b.impl.symbolToTypeParameterDeclarations(symbol))
  * }
  */
-export function NodeBuilder_SymbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
+export function NodeBuilder_SymbolToTypeParameterDeclarations(receiver: GoPtr<NodeBuilder>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoSlice<GoPtr<Node>> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContextSlice(b, NodeBuilderImpl_symbolToTypeParameterDeclarations(b.impl, symbol_));
@@ -640,7 +640,7 @@ export function NodeBuilder_SymbolToTypeParameterDeclarations(receiver: GoPtr<No
  * 	return b.exitContext(b.impl.typeParameterToDeclaration(parameter))
  * }
  */
-export function NodeBuilder_TypeParameterToDeclaration(receiver: GoPtr<NodeBuilder>, parameter: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_TypeParameterToDeclaration(receiver: GoPtr<NodeBuilder>, parameter: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_typeParameterToDeclaration(b.impl, parameter));
@@ -655,7 +655,7 @@ export function NodeBuilder_TypeParameterToDeclaration(receiver: GoPtr<NodeBuild
  * 	return b.exitContext(b.impl.typePredicateToTypePredicateNode(predicate))
  * }
  */
-export function NodeBuilder_TypePredicateToTypePredicateNode(receiver: GoPtr<NodeBuilder>, predicate: GoPtr<TypePredicate>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_TypePredicateToTypePredicateNode(receiver: GoPtr<NodeBuilder>, predicate: GoPtr<TypePredicate>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_typePredicateToTypePredicateNode(b.impl, predicate));
@@ -670,7 +670,7 @@ export function NodeBuilder_TypePredicateToTypePredicateNode(receiver: GoPtr<Nod
  * 	return b.exitContext(b.impl.typeToTypeNode(typ))
  * }
  */
-export function NodeBuilder_TypeToTypeNode(receiver: GoPtr<NodeBuilder>, typ: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_TypeToTypeNode(receiver: GoPtr<NodeBuilder>, typ: GoPtr<Type>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_typeToTypeNode(b.impl, typ));
@@ -685,7 +685,7 @@ export function NodeBuilder_TypeToTypeNode(receiver: GoPtr<NodeBuilder>, typ: Go
  * 	return b.exitContext(b.impl.tryJSTypeNodeToTypeNode(node))
  * }
  */
-export function NodeBuilder_TryJSTypeNodeToTypeNode(receiver: GoPtr<NodeBuilder>, node: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> {
+export function NodeBuilder_TryJSTypeNodeToTypeNode(receiver: GoPtr<NodeBuilder>, node: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   return NodeBuilder_exitContext(b, NodeBuilderImpl_tryJSTypeNodeToTypeNode(b.impl, node));

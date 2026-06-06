@@ -482,7 +482,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
     supportedExtensionsWithJsonIfResolveJsonModule: supportedExtensionsWithJsonIfResolveJsonModule,
   };
   fileLoader_addProjectReferenceTasks(loader, singleThreaded);
-  loader.resolver = NewResolver(loader.projectReferenceFileMapper!.host, compilerOptions, opts.TypingsLocation, opts.ProjectName);
+  loader.resolver = NewResolver(loader.projectReferenceFileMapper!.host!, compilerOptions, opts.TypingsLocation, opts.ProjectName);
   let traceDone: (() => void) | undefined;
   if (opts.Tracing !== undefined) {
     traceDone = Tracing_Push(opts.Tracing, PhaseProgram, "processRootFiles", new globalThis.Map([["count", rootFiles.length]]), false);
@@ -539,7 +539,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
 
     // Clear out loader and host to ensure its not used post program creation
     loader.projectReferenceFileMapper!.loader = undefined;
-    loader.projectReferenceFileMapper!.host = undefined as unknown as (typeof loader.projectReferenceFileMapper)["host"];
+    loader.projectReferenceFileMapper!.host = undefined;
 
     return filesParser_getProcessedFiles(loader.filesParser, loader);
   } finally {
@@ -692,7 +692,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
       const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, name, containingFileName, resolutionMode, undefined as unknown as ResolvedProjectReference);
       let traceDone: (() => void) | undefined;
       if (receiver!.opts.Tracing !== undefined) {
-        traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]) as GoMap<string, unknown>, false);
+        traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]), false);
       }
       typeResolutionsInFile.set({ Name: name, Mode: resolutionMode }, resolved);
       typeResolutionsTrace = [...typeResolutionsTrace, ...trace];
@@ -1185,7 +1185,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
       const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, ref.FileName, fileName, resolutionMode, redirect as unknown as ResolvedProjectReference);
       let innerTraceDone: (() => void) | undefined;
       if (receiver!.opts.Tracing !== undefined) {
-        innerTraceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map([["directive", ref.FileName], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindTypeReferenceDirective], ["refPath", t!.path as string]]) as GoMap<string, unknown>, false);
+        innerTraceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", ref.FileName], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindTypeReferenceDirective], ["refPath", t!.path as string]]), false);
       }
       typeResolutionsInFile.set({ Name: ref.FileName, Mode: resolutionMode }, resolved);
       const includeReason: FileIncludeReason = {

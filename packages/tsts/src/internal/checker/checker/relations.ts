@@ -26,7 +26,7 @@ import {
   Type_0_does_not_satisfy_the_expected_type_1,
   Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target,
 } from "../../diagnostics/generated/messages.js";
-import type { Message } from "../../diagnostics/generated/messages.js";
+import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import type { BinaryExpression, ShorthandPropertyAssignment } from "../../ast/generated/data.js";
 import type { Declaration } from "../../ast/generated/unions.js";
@@ -36,15 +36,18 @@ import type { Symbol } from "../../ast/symbol.js";
 import {
   IsAccessExpression,
   IsAmbientModule,
+  SkipParentheses,
+} from "../../ast/utilities.js";
+import {
+  IsArrayLiteralExpression,
   IsBinaryExpression,
   IsCallExpression,
   IsComputedPropertyName,
   IsConstructorDeclaration,
   IsIdentifier,
   IsModuleDeclaration,
-  IsObjectLiteralExpression,
-  IsArrayLiteralExpression,
   IsNamespaceImport,
+  IsObjectLiteralExpression,
   IsOmittedExpression,
   IsParameterDeclaration,
   IsPrivateIdentifier,
@@ -57,15 +60,14 @@ import {
   IsSpreadAssignment,
   IsSpreadElement,
   IsVariableDeclaration,
-  SkipParentheses,
-} from "../../ast/utilities.js";
+} from "../../ast/generated/predicates.js";
 import { AsExportAssignment, AsBinaryExpression, AsElementAccessExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import { NodeFlagsAmbient, NodeFlagsReparsed } from "../../ast/generated/flags.js";
 import { SymbolFlagsAlias, SymbolFlagsModuleExports, SymbolFlagsProperty, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsCompoundAssignment, IsInJSFile, IsObjectLiteralMethod, GetElementOrPropertyAccessName, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
 import { IsDeclarationNode, Node_Arguments, Node_Symbol, Node_Text } from "../../ast/ast.js";
 import { IsAssignmentOperator } from "../../ast/generated/predicates.js";
-import { GetSymbolNameForPrivateIdentifier } from "../../../binder/binder.js";
+import { GetSymbolNameForPrivateIdentifier } from "../../binder/binder.js";
 import { Node_Expression, Node_Type, Node_ElementList, Node_PropertyList, Node_Properties, Node_Elements, Node_Initializer } from "../../ast/ast.js";
 import { Node_Name } from "../../ast/spine.js";
 import { NewDiagnosticChain } from "../../ast/diagnostic.js";
@@ -75,34 +77,33 @@ import { ModifierFlagsAbstract, ModifierFlagsAsync, ModifierFlagsPrivate, Modifi
 import { Checker_compareTypesIdentical, Checker_isTypeAssignableTo, Checker_isTypeComparableTo, Checker_checkTypeAssignableToAndOptionallyElaborate } from "../relater.js";
 import { TernaryFalse } from "../types.js";
 import { AccessFlagsAllowMissing, AccessFlagsExpressionPosition } from "../types.js";
-import type { AccessFlags, TypeFacts } from "../types.js";
-import { Checker_IsEmptyAnonymousObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_filterType, Checker_isErrorType, Checker_getNumberLiteralType, Checker_createArrayType, Checker_mapType, Checker_getTypeWithFacts, Checker_getRegularTypeOfLiteralType, Checker_checkNonNullType, Checker_hasTypeFacts, Checker_getTypeFromTypeNode, Checker_getTypeOfPropertyOfType, Checker_maybeTypeOfKind, Checker_checkIteratedTypeOrElementType, Checker_isArrayLikeType } from "./types.js";
-import { Checker_getPropertiesOfType, Checker_getBaseTypes, Checker_resolveDeclaredMembers, Checker_isNamedMember, Checker_getLiteralTypeFromPropertyName, Checker_getPropertyOfType, Checker_markPropertyAsReferenced, Checker_checkPropertyAccessibility, Checker_getIndexedAccessTypeEx, Checker_getIndexedAccessTypeOrUndefined, Checker_getTypeOfPropertyInBaseClass, Checker_getExportSymbolOfValueSymbolIfExported, Checker_resolveEntityName, Checker_getTypeOnlyAliasDeclarationEx, Checker_getSymbolFlagsEx, Checker_getSymbolFlags, Checker_getDeclarationOfAliasSymbol, Checker_markAliasReferenced, Checker_checkPropertyAccessExpression, Checker_getTypeFromPropertyDescriptor, Checker_markLinkedReferences, Checker_checkExternalModuleExports, Checker_isReadonlySymbol, Checker_getResolvedSymbol, Checker_checkComputedPropertyName } from "./symbols.js";
+import type { AccessFlags } from "../types.js";
+import { Checker_IsEmptyAnonymousObjectType, Checker_getWidenedType, Checker_getUnionType, Checker_filterType, Checker_getNumberLiteralType, Checker_createArrayType, Checker_mapType, Checker_getTypeWithFacts, Checker_getRegularTypeOfLiteralType, Checker_checkNonNullType, Checker_hasTypeFacts, Checker_getTypeFromTypeNode, Checker_maybeTypeOfKind, Checker_checkIteratedTypeOrElementType, Checker_isArrayLikeType, Checker_getPropertiesOfType, Checker_getBaseTypes, Checker_getTypeOfExpression } from "./types.js";
+import { Checker_getTypeOfPropertyOfType, Checker_resolveDeclaredMembers, Checker_isNamedMember, Checker_getLiteralTypeFromPropertyName, Checker_getPropertyOfType, Checker_markPropertyAsReferenced, Checker_checkPropertyAccessibility, Checker_getIndexedAccessTypeEx, Checker_getIndexedAccessTypeOrUndefined, Checker_getTypeOfPropertyInBaseClass, Checker_getExportSymbolOfValueSymbolIfExported, Checker_resolveEntityName, Checker_getTypeOnlyAliasDeclarationEx, Checker_getSymbolFlagsEx, Checker_getSymbolFlags, Checker_getDeclarationOfAliasSymbol, Checker_markAliasReferenced, Checker_checkPropertyAccessExpression, Checker_getTypeFromPropertyDescriptor, Checker_checkExternalModuleExports, Checker_isReadonlySymbol, Checker_getResolvedSymbol, Checker_checkComputedPropertyName, Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx } from "./symbols.js";
 import { Checker_getTypeWithThisArgument, Checker_isConstructorDeclaredThisProperty, Checker_getRestType } from "./signatures.js";
 import { Checker_getTypeOfSymbol } from "./symbols.js";
-import { Checker_getTypeOfExpression, Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
+import { Checker_isExactOptionalPropertyMismatch } from "./symbols.js";
 import { Checker_checkSourceElement, Checker_error, Checker_shouldCheckErasableSyntax } from "./support.js";
 import { Checker_compareProperties } from "./support.js";
 import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionForMutableLocation, Checker_checkExpressionEx, Checker_checkBinaryExpression, Checker_checkBinaryLikeExpression, Checker_checkReferenceExpression, Checker_createSyntheticExpression } from "./syntax-checking.js";
 import { Checker_getFlowTypeOfDestructuring, Checker_getControlFlowContainer } from "./flow-narrowing.js";
 import { Checker_hasDefaultValue, Checker_getThisContainer } from "./support-queries.js";
 import { Checker_reportImplicitAny } from "./types.js";
-import { Checker_getTypeOfPropertyOfContextualType, Checker_getTypeOfPropertyOfContextualTypeEx } from "./types.js";
 import { Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_getTargetOfAliasLikeExpression } from "./symbols.js";
 import { Checker_grammarErrorOnNode, Checker_grammarErrorOnFirstToken, Checker_checkGrammarModifiers, Checker_checkGrammarModuleElementContext, Checker_checkGrammarForDisallowedTrailingComma } from "../grammarchecks.js";
 import { Checker_addTypeOnlyDeclarationRelatedInfo, Checker_isErrorType as _Checker_isErrorType } from "./diagnostics.js";
 import { Checker_getIsolatedModulesLikeFlagName } from "./symbols.js";
+import { Checker_markLinkedReferences } from "./support-queries.js";
+import { Checker_isErrorType } from "./diagnostics.js";
 import { Checker_getFlowTypeInConstructor } from "../flow.js";
 import { Checker_TypeToString, Checker_symbolToString } from "../printer.js";
 import {
   CheckModeNormal,
-  InheritanceInfo,
   IterationUseDestructuring,
   IterationUsePossiblyOutOfBounds,
   ReferenceHintExportAssignment,
   TypeFactsIsUndefined,
   TypeFactsNEUndefined,
-  WideningKind,
   WideningKindNormal,
   everyType,
   getBooleanLiteralValue,
@@ -112,12 +113,14 @@ import {
   thisAssignmentDeclarationMethod,
   thisAssignmentDeclarationTyped,
 } from "./state.js";
+import type { InheritanceInfo, TypeFacts, WideningKind } from "./state.js";
 import { Checker_sliceTupleType } from "../relater.js";
 import {
   ObjectFlagsClass,
   ObjectFlagsClassOrInterface,
   ObjectFlagsIdenticalBaseTypeCalculated,
   ObjectFlagsReference,
+  Type_AsInterfaceType,
   Type_Types,
   TypeFlagsAnyOrUnknown,
   TypeFlagsBigInt,
@@ -204,7 +207,7 @@ export function Checker_checkInheritedPropertiesAreIdentical(receiver: GoPtr<Che
   }
   let identical = true;
   for (const base of baseTypes) {
-    const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, t!.AsInterfaceType!.thisType, false));
+    const properties = Checker_getPropertiesOfType(receiver, Checker_getTypeWithThisArgument(receiver, base, Type_AsInterfaceType(t)!.thisType, false));
     for (const prop of properties) {
       const existing = seen.get(prop!.Name);
       if (existing === undefined) {
@@ -773,7 +776,7 @@ export function Checker_checkReferenceAssignment(receiver: GoPtr<Checker>, targe
 export function Checker_checkAssignmentOperator(receiver: GoPtr<Checker>, left: GoPtr<Node>, operator: Kind, right: GoPtr<Node>, leftType: GoPtr<Type>, rightType: GoPtr<Type>): void {
   if (IsAssignmentOperator(operator)) {
     if (IsDeclarationNode(left!.Parent) && GetAssignmentDeclarationKind(left!.Parent) === JSDeclarationKindExportsProperty) {
-      const symbol_ = (LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<Node, SymbolNodeLinks>, left) as SymbolNodeLinks).resolvedSymbol;
+      const symbol_ = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, left) as SymbolNodeLinks).resolvedSymbol;
       if (symbol_ !== undefined && symbol_!.Declarations !== undefined && symbol_!.Declarations.length > 1 && (rightType!.flags & TypeFlagsUndefined) !== 0) {
         return;
       }

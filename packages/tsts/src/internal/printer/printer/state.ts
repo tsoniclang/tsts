@@ -39,18 +39,18 @@ import type { lineCharacterCache } from "../utilities.js";
  * }
  */
 export interface PrinterOptions {
-  RemoveComments: bool;
-  NewLine: NewLineKind;
-  NoEmitHelpers: bool;
-  Target: ScriptTarget;
-  SourceMap: bool;
-  InlineSourceMap: bool;
-  InlineSources: bool;
-  OmitBraceSourceMapPositions: bool;
-  OnlyPrintJSDocStyle: bool;
-  NeverAsciiEscape: bool;
-  PreserveSourceNewlines: bool;
-  TerminateUnterminatedLiterals: bool;
+  RemoveComments?: bool;
+  NewLine?: NewLineKind;
+  NoEmitHelpers?: bool;
+  Target?: ScriptTarget;
+  SourceMap?: bool;
+  InlineSourceMap?: bool;
+  InlineSources?: bool;
+  OmitBraceSourceMapPositions?: bool;
+  OnlyPrintJSDocStyle?: bool;
+  NeverAsciiEscape?: bool;
+  PreserveSourceNewlines?: bool;
+  TerminateUnterminatedLiterals?: bool;
 }
 
 /**
@@ -117,13 +117,13 @@ export interface PrinterOptions {
  * }
  */
 export interface PrintHandlers {
-  HasGlobalName: (name: string) => bool;
-  OnBeforeEmitNode: (nodeOpt: GoPtr<Node>) => void;
-  OnAfterEmitNode: (nodeOpt: GoPtr<Node>) => void;
-  OnBeforeEmitNodeList: (nodesOpt: GoPtr<NodeList>) => void;
-  OnAfterEmitNodeList: (nodesOpt: GoPtr<NodeList>) => void;
-  OnBeforeEmitToken: (nodeOpt: GoPtr<TokenNode>) => void;
-  OnAfterEmitToken: (nodeOpt: GoPtr<TokenNode>) => void;
+  HasGlobalName?: (name: string) => bool;
+  OnBeforeEmitNode?: (nodeOpt: GoPtr<Node>) => void;
+  OnAfterEmitNode?: (nodeOpt: GoPtr<Node>) => void;
+  OnBeforeEmitNodeList?: (nodesOpt: GoPtr<NodeList>) => void;
+  OnAfterEmitNodeList?: (nodesOpt: GoPtr<NodeList>) => void;
+  OnBeforeEmitToken?: (nodeOpt: GoPtr<TokenNode>) => void;
+  OnAfterEmitToken?: (nodeOpt: GoPtr<TokenNode>) => void;
 }
 
 /**

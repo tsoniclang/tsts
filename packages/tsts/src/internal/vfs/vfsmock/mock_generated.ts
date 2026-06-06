@@ -146,7 +146,7 @@ export interface FSMock {
   ReadFileFunc: (path: string) => [string, bool];
   RealpathFunc: (path: string) => string;
   RemoveFunc: (path: string) => GoError;
-  StatFunc: (path: string) => FileInfo;
+  StatFunc: (path: string) => GoPtr<FileInfo>;
   UseCaseSensitiveFileNamesFunc: () => bool;
   WalkDirFunc: (root: string, walkFn: WalkDirFunc) => GoError;
   WriteFileFunc: (path: string, data: string) => GoError;
@@ -620,7 +620,7 @@ export function FSMock_RemoveCalls(receiver: GoPtr<FSMock>): GoSlice<{ Path: str
  * 	return mock.StatFunc(path)
  * }
  */
-export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): FileInfo {
+export function FSMock_Stat(receiver: GoPtr<FSMock>, path: string): GoPtr<FileInfo> {
   if (receiver!.StatFunc === undefined) {
     throw new globalThis.Error("FSMock.StatFunc: method is nil but FS.Stat was just called");
   }

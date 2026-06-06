@@ -52,7 +52,6 @@ import {
 import {
   Parser_canParseSemicolon,
   Parser_checkJSSyntax,
-  Parser_hasPrecedingLineBreak,
   Parser_isStartOfParameter,
   Parser_lookAhead,
   Parser_nodePos,
@@ -61,6 +60,7 @@ import {
   isAsyncModifier,
 } from "./support.js";
 import {
+  Parser_hasPrecedingLineBreak,
   Parser_isImportAttributeName,
   Parser_isStartOfStatement,
 } from "./statements-declarations.js";

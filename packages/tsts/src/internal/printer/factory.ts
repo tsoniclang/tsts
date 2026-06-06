@@ -2,11 +2,11 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import { Itoa } from "../../go/strconv.js";
 import type { Node, NodeList, NodeFactoryCoercible } from "../ast/spine.js";
-import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone } from "../ast/spine.js";
+import { NewNodeFactory as NewAstNodeFactory, NodeFactory_AsNodeFactory, NodeFactory_NewNodeList, Node_Clone, Node_Name } from "../ast/spine.js";
 import type { NodeFactory as NodeFactory_88523d1c } from "../ast/generated/factory.js";
 import type { LabeledStatement, NonNullExpression, ParenthesizedExpression, PartiallyEmittedExpression, SatisfiesExpression, AsExpression, ExpressionWithTypeArguments, VariableDeclaration, VariableDeclarationList } from "../ast/generated/data.js";
 import { GetNonAssignedNameOfDeclaration, GetNameOfDeclaration, HasSyntacticModifier, IsMemberName, IsNodeDescendantOf, IsPrologueDirective, NodeIsSynthesized, RangeIsSynthesized, GetNodeId, TryGetPropertyNameOfBindingOrAssignmentElement, IsOuterExpression, OEKAll } from "../ast/utilities.js";
-import { Node_Expression, Node_Name, Node_Text, Node_Type, Node_TypeArgumentList, NodeFactory_UpdateAsExpression, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateLabeledStatement, NodeFactory_UpdateNonNullExpression, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdatePartiallyEmittedExpression, NodeFactory_UpdateSatisfiesExpression, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableDeclarationList } from "../ast/ast.js";
+import { Node_Expression, Node_Text, Node_Type, Node_TypeArgumentList, NodeFactory_UpdateAsExpression, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateLabeledStatement, NodeFactory_UpdateNonNullExpression, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdatePartiallyEmittedExpression, NodeFactory_UpdateSatisfiesExpression, NodeFactory_UpdateVariableDeclaration, NodeFactory_UpdateVariableDeclarationList } from "../ast/ast.js";
 import { ModifierFlagsExport } from "../ast/modifierflags.js";
 import { FormatGeneratedName } from "./utilities.js";
 import {

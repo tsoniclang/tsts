@@ -22,8 +22,7 @@ import { canHaveLocals } from "./utilities.js";
 import { getDeclarationsOfKind } from "./utilities.js";
 import { Some, FirstNonNil, IfElse } from "../core/core.js";
 import type { Checker } from "./checker/state.js";
-import { Checker_getMergedSymbol, Checker_getSymbolOfDeclaration, Checker_getExportsOfSymbol, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getParentOfSymbol, Checker_getSymbolIfSameReference } from "./checker/symbols.js";
-import { Checker_getDeclaredTypeOfSymbol, Checker_getTypeOfSymbol } from "./checker/types.js";
+import { Checker_getMergedSymbol, Checker_getSymbolOfDeclaration, Checker_getExportsOfSymbol, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getParentOfSymbol, Checker_getSymbolIfSameReference, Checker_getDeclaredTypeOfSymbol, Checker_getTypeOfSymbol } from "./checker/symbols.js";
 import { Checker_checkExpressionCached } from "./checker/syntax-checking.js";
 import { Checker_sortSymbols, Checker_compareSymbolsWorker } from "./utilities.js";
 import { Checker_GetEmitResolver } from "./checker/support.js";
@@ -193,7 +192,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
           continue;
         }
         // Any meaning of a module symbol is always accessible via an `import` type
-        return { Accessibility: SymbolAccessibilityAccessible, ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+        return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
       }
     }
 
@@ -211,7 +210,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
   }
 
   if (earlyModuleBail) {
-    return { Accessibility: SymbolAccessibilityAccessible, ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
+    return { Accessibility: SymbolAccessibilityAccessible, AliasesToMakeVisible: [], ErrorSymbolName: "", ErrorNode: undefined, ErrorModuleName: "" };
   }
 
   if (hadAccessibleChain !== undefined) {
@@ -221,6 +220,7 @@ export function Checker_IsAnySymbolAccessible(receiver: GoPtr<Checker>, symbols:
     }
     return {
       Accessibility: SymbolAccessibilityNotAccessible,
+      AliasesToMakeVisible: [],
       ErrorSymbolName: Checker_symbolToStringEx(receiver, initialSymbol, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
       ErrorModuleName: moduleName,
       ErrorNode: undefined,
@@ -432,7 +432,7 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   }
   const containingFile = GetSourceFileOfNode(enclosingDeclaration);
   const id = GetNodeId(containingFile as unknown as GoPtr<Node>);
-  const links = LinkStore_Get<Symbol, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<Symbol, ContainingSymbolLinks>, symbol_) as ContainingSymbolLinks;
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, symbol_) as ContainingSymbolLinks;
   if (links.extendedContainersByFile === undefined) {
     links.extendedContainersByFile = new globalThis.Map<NodeId, GoSlice<GoPtr<Symbol>>>();
   }
@@ -471,10 +471,10 @@ export function Checker_getAlternativeContainingModules(receiver: GoPtr<Checker>
   // No results from files already being imported by this file - expand search (expensive, but not location-specific, so cached)
   const otherFiles = receiver!.files;
   for (const file of otherFiles) {
-    if (!IsExternalModule(file as unknown as GoPtr<Node>)) {
+    if (!IsExternalModule(file)) {
       continue;
     }
-    const sym = Checker_getSymbolOfDeclaration(receiver, file as unknown as GoPtr<Node>);
+      const sym = Checker_getSymbolOfDeclaration(receiver, file as unknown as GoPtr<Node>);
     const ref = Checker_getAliasForSymbolInContainer(receiver, sym, symbol_);
     if (ref === undefined) {
       continue;
@@ -702,7 +702,7 @@ export function Checker_getContainersOfSymbol(receiver: GoPtr<Checker>, symbol_:
         continue;
       }
       Checker_checkExpressionCached(receiver, Node_Expression(AsBinaryExpression(d!.Parent)!.Left));
-      const sym = (LinkStore_Get<Node, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<Node, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left)) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
+      const sym = (LinkStore_Get<GoPtr<Node>, SymbolNodeLinks>(receiver!.symbolNodeLinks as unknown as LinkStore<GoPtr<Node>, SymbolNodeLinks>, Node_Expression(AsBinaryExpression(d!.Parent)!.Left)) as SymbolNodeLinks).resolvedSymbol as GoPtr<Symbol>;
       if (sym !== undefined && !candidates.includes(sym)) {
         candidates = [...candidates, sym];
       }
@@ -975,8 +975,8 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
     firstRelevantLocation = node;
     return true;
   });
-  const links = LinkStore_Get<Symbol, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<Symbol, ContainingSymbolLinks>, ctx.symbol) as ContainingSymbolLinks;
-  const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, firstRelevantLocation, meaning: ctx.meaning };
+  const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol) as ContainingSymbolLinks;
+  const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
     links.accessibleChainCache = new globalThis.Map<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>();
   }
@@ -984,7 +984,7 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
   // Go uses struct equality for map keys, but TS can't do that natively.
   // We use an array-based find as approximation.
   const cacheEntries = [...links.accessibleChainCache.entries()];
-  const existingEntry = cacheEntries.find(([k]) => k.useOnlyExternalAliasing === linkKey.useOnlyExternalAliasing && k.firstRelevantLocation === linkKey.firstRelevantLocation && k.meaning === linkKey.meaning);
+  const existingEntry = cacheEntries.find(([k]) => k.useOnlyExternalAliasing === linkKey.useOnlyExternalAliasing && k.location === linkKey.location && k.meaning === linkKey.meaning);
   if (existingEntry !== undefined) {
     return existingEntry[1];
   }
@@ -1118,7 +1118,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
     if ((symbolFromSymbolTable!.Flags & SymbolFlagsAlias) !== 0 &&
       symbolFromSymbolTable!.Name !== InternalSymbolNameExportEquals &&
       symbolFromSymbolTable!.Name !== InternalSymbolNameDefault &&
-      !(isUMDExportSymbol(symbolFromSymbolTable) && ctx.enclosingDeclaration !== undefined && IsExternalModule(GetSourceFileOfNode(ctx.enclosingDeclaration) as unknown as GoPtr<Node>)) &&
+      !(isUMDExportSymbol(symbolFromSymbolTable) && ctx.enclosingDeclaration !== undefined && IsExternalModule(GetSourceFileOfNode(ctx.enclosingDeclaration))) &&
       // If `!useOnlyExternalAliasing`, we can use any type of alias to get the name
       (!ctx.useOnlyExternalAliasing || Some(symbolFromSymbolTable!.Declarations, IsExternalModuleImportEqualsDeclaration)) &&
       // If we're looking up a local name to reference directly, omit namespace reexports
@@ -1141,7 +1141,7 @@ export function Checker_trySymbolTable(receiver: GoPtr<Checker>, ctx: accessible
   if (candidateChains.length > 0) {
     // pick first, shortest
     candidateChains.sort((a, b) => Checker_compareSymbolChainsWorker(receiver, a, b));
-    return candidateChains[0];
+    return candidateChains[0]!;
   }
 
   // If there's no result and we're looking at the global symbol table, treat `globalThis` like an alias
@@ -1637,6 +1637,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
         // name from different external module that is not visible
         return {
           Accessibility: SymbolAccessibilityCannotBeNamed,
+          AliasesToMakeVisible: [],
           ErrorSymbolName: Checker_symbolToStringEx(receiver, symbol_, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
           ErrorModuleName: Checker_symbolToString(receiver, symbolExternalModule),
           ErrorNode: IfElse(IsInJSFile(enclosingDeclaration), enclosingDeclaration, undefined),
@@ -1647,6 +1648,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
     // Just a local name that is not accessible
     return {
       Accessibility: SymbolAccessibilityNotAccessible,
+      AliasesToMakeVisible: [],
       ErrorSymbolName: Checker_symbolToStringEx(receiver, symbol_, enclosingDeclaration, meaning, SymbolFormatFlagsAllowAnyNodeKind),
       ErrorNode: undefined,
       ErrorModuleName: "",
@@ -1655,6 +1657,7 @@ export function Checker_isSymbolAccessibleWorker(receiver: GoPtr<Checker>, symbo
 
   return {
     Accessibility: SymbolAccessibilityAccessible,
+    AliasesToMakeVisible: [],
     ErrorSymbolName: "",
     ErrorNode: undefined,
     ErrorModuleName: "",

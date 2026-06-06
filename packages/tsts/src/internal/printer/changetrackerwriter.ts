@@ -448,7 +448,7 @@ export function ChangeTrackerWriter_assignPositionsToNodeArray(receiver: GoPtr<C
     throw new globalThis.Error("if nodes is nil, visited should not be nil");
   }
   // clone nodearray if necessary
-  let nodeArray = visited;
+  let nodeArray: GoPtr<NodeList> = visited;
   if (visited === nodes) {
     nodeArray = NodeList_Clone(visited, v!.Factory as unknown as NodeFactoryCoercible);
   }

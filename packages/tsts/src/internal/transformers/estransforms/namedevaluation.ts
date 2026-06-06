@@ -24,7 +24,8 @@ import {
 } from "../../ast/generated/kinds.js";
 import { IsClassStaticBlockDeclaration, IsClassDeclaration, IsClassExpression, IsComputedPropertyName, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsPrivateIdentifier, IsStringLiteral } from "../../ast/generated/predicates.js";
 import { HasSyntacticModifier, IsPropertyNameLiteral, SkipOuterExpressions, OEKAll } from "../../ast/utilities.js";
-import { Node_Expression, Node_Initializer, Node_MemberList, Node_Members, Node_Modifiers, Node_Statements, Node_Text, Node_TypeParameterList, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateBindingElement, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExportAssignment, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateShorthandPropertyAssignment, NodeFactory_UpdateVariableDeclaration } from "../../ast/ast.js";
+import { Node_Expression, Node_Initializer, Node_MemberList, Node_Members, Node_Statements, Node_Text, Node_TypeParameterList, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateBindingElement, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExportAssignment, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateShorthandPropertyAssignment, NodeFactory_UpdateVariableDeclaration } from "../../ast/ast.js";
+import { Node_Modifiers } from "../../ast/spine.js";
 import { ModifierFlagsDefault } from "../../ast/modifierflags.js";
 import { NewBlock, NewClassStaticBlockDeclaration, NewExpressionStatement, NewStringLiteral } from "../../ast/generated/factory.js";
 import { TokenFlagsNone } from "../../ast/tokenflags.js";

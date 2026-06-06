@@ -114,7 +114,7 @@ export function Chain(...transforms: Array<TransformerFactory>): TransformerFact
     if (transforms.length === 0) {
       throw new globalThis.Error("Expected some number of transforms to chain, but got none");
     }
-    return transforms[0];
+    return transforms[0]!;
   }
   return (opt: GoPtr<TransformOptions>): GoPtr<Transformer> => {
     const constructed: GoSlice<GoPtr<Transformer>> = [];

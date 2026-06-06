@@ -36,7 +36,7 @@ import { Checker_IsSymbolAccessible } from "./symbolaccessibility.js";
 import type { Checker } from "./checker/state.js";
 import { Checker_checkNotCanceled, IsExternalModuleSymbol } from "./utilities.js";
 import { Checker_getResolutionModeOverride } from "./checker/classes.js";
-import { NewSymbolTrackerImpl } from "./symboltracker.js";
+import { NewSymbolTrackerImpl, SymbolTrackerImpl_as_SymbolTracker } from "./symboltracker.js";
 import { NodeBuilderImpl_lookupSymbolChain, NodeBuilderImpl_getSpecifierForModuleSymbol } from "./nodebuilderimpl.js";
 import { Checker_getExternalModuleFileFromDeclaration } from "./checker/symbols.js";
 import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, TrackedSymbolArgs } from "./nodebuilderimpl.js";
@@ -135,7 +135,7 @@ export function NodeBuilderImpl_reuseTypeNode(receiver: GoPtr<NodeBuilderImpl>, 
     }
     return r;
   }
-  receiver!.ctx!.tracker.ReportInferenceFallback(node);
+  receiver!.ctx!.tracker!.ReportInferenceFallback(node);
   const t = NodeBuilderImpl_getTypeFromTypeNode(receiver, node, false);
   return NodeBuilderImpl_typeToTypeNode(receiver, t);
 }
@@ -202,7 +202,7 @@ export interface recoveryBoundary {
   ctx: GoPtr<NodeBuilderContext>;
   hadError: bool;
   deferredReports: GoSlice<() => void>;
-  oldTracker: SymbolTracker;
+  oldTracker: GoPtr<SymbolTracker>;
   oldTrackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   oldEncounteredError: bool;
@@ -284,7 +284,7 @@ export function recoveryBoundary_endRecoveryScope(receiver: GoPtr<recoveryBounda
  * }
  */
 export interface wrappingTracker {
-  wrapped: SymbolTracker;
+  wrapped: GoPtr<SymbolTracker>;
   bound: GoPtr<recoveryBoundary>;
 }
 
@@ -297,7 +297,7 @@ export interface wrappingTracker {
  * }
  */
 export function wrappingTracker_PopErrorFallbackNode(receiver: GoPtr<wrappingTracker>): void {
-  receiver!.wrapped.PopErrorFallbackNode();
+  receiver!.wrapped!.PopErrorFallbackNode();
 }
 
 /**
@@ -309,7 +309,7 @@ export function wrappingTracker_PopErrorFallbackNode(receiver: GoPtr<wrappingTra
  * }
  */
 export function wrappingTracker_PushErrorFallbackNode(receiver: GoPtr<wrappingTracker>, node: GoPtr<Node>): void {
-  receiver!.wrapped.PushErrorFallbackNode(node);
+  receiver!.wrapped!.PushErrorFallbackNode(node);
 }
 
 /**
@@ -322,7 +322,7 @@ export function wrappingTracker_PushErrorFallbackNode(receiver: GoPtr<wrappingTr
  */
 export function wrappingTracker_ReportCyclicStructureError(receiver: GoPtr<wrappingTracker>): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportCyclicStructureError();
+    receiver!.wrapped!.ReportCyclicStructureError();
   });
 }
 
@@ -336,7 +336,7 @@ export function wrappingTracker_ReportCyclicStructureError(receiver: GoPtr<wrapp
  */
 export function wrappingTracker_ReportInaccessibleThisError(receiver: GoPtr<wrappingTracker>): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportInaccessibleThisError();
+    receiver!.wrapped!.ReportInaccessibleThisError();
   });
 }
 
@@ -350,7 +350,7 @@ export function wrappingTracker_ReportInaccessibleThisError(receiver: GoPtr<wrap
  */
 export function wrappingTracker_ReportInaccessibleUniqueSymbolError(receiver: GoPtr<wrappingTracker>): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportInaccessibleUniqueSymbolError();
+    receiver!.wrapped!.ReportInaccessibleUniqueSymbolError();
   });
 }
 
@@ -363,7 +363,7 @@ export function wrappingTracker_ReportInaccessibleUniqueSymbolError(receiver: Go
  * }
  */
 export function wrappingTracker_ReportInferenceFallback(receiver: GoPtr<wrappingTracker>, node: GoPtr<Node>): void {
-  receiver!.wrapped.ReportInferenceFallback(node); // Should this also be deferred?
+  receiver!.wrapped!.ReportInferenceFallback(node); // Should this also be deferred?
 }
 
 /**
@@ -376,7 +376,7 @@ export function wrappingTracker_ReportInferenceFallback(receiver: GoPtr<wrapping
  */
 export function wrappingTracker_ReportLikelyUnsafeImportRequiredError(receiver: GoPtr<wrappingTracker>, specifier: string, symbolName: string): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportLikelyUnsafeImportRequiredError(specifier, symbolName);
+    receiver!.wrapped!.ReportLikelyUnsafeImportRequiredError(specifier, symbolName);
   });
 }
 
@@ -390,7 +390,7 @@ export function wrappingTracker_ReportLikelyUnsafeImportRequiredError(receiver: 
  */
 export function wrappingTracker_ReportNonSerializableProperty(receiver: GoPtr<wrappingTracker>, propertyName: string): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportNonSerializableProperty(propertyName);
+    receiver!.wrapped!.ReportNonSerializableProperty(propertyName);
   });
 }
 
@@ -403,7 +403,7 @@ export function wrappingTracker_ReportNonSerializableProperty(receiver: GoPtr<wr
  * }
  */
 export function wrappingTracker_ReportNonlocalAugmentation(receiver: GoPtr<wrappingTracker>, containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void {
-  receiver!.wrapped.ReportNonlocalAugmentation(containingFile, parentSymbol, augmentingSymbol); // Should this also be deferred?
+  receiver!.wrapped!.ReportNonlocalAugmentation(containingFile, parentSymbol, augmentingSymbol); // Should this also be deferred?
 }
 
 /**
@@ -416,7 +416,7 @@ export function wrappingTracker_ReportNonlocalAugmentation(receiver: GoPtr<wrapp
  */
 export function wrappingTracker_ReportPrivateInBaseOfClassExpression(receiver: GoPtr<wrappingTracker>, propertyName: string): void {
   recoveryBoundary_markError(receiver!.bound, () => {
-    receiver!.wrapped.ReportPrivateInBaseOfClassExpression(propertyName);
+    receiver!.wrapped!.ReportPrivateInBaseOfClassExpression(propertyName);
   });
 }
 
@@ -429,7 +429,7 @@ export function wrappingTracker_ReportPrivateInBaseOfClassExpression(receiver: G
  * }
  */
 export function wrappingTracker_ReportTruncationError(receiver: GoPtr<wrappingTracker>): void {
-  receiver!.wrapped.ReportTruncationError(); // Should this also be deferred?
+  receiver!.wrapped!.ReportTruncationError(); // Should this also be deferred?
 }
 
 /**
@@ -458,10 +458,35 @@ export function wrappingTracker_TrackSymbol(receiver: GoPtr<wrappingTracker>, sy
  * 	}
  * }
  */
-export function newWrappingTracker(inner: SymbolTracker, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
+export function newWrappingTracker(inner: GoPtr<SymbolTracker>, bound: GoPtr<recoveryBoundary>): GoPtr<wrappingTracker> {
   return {
     wrapped: inner,
     bound: bound,
+  };
+}
+
+export function wrappingTracker_as_SymbolTracker(receiver: GoPtr<wrappingTracker>): GoPtr<SymbolTracker> {
+  if (receiver === undefined) {
+    return undefined;
+  }
+  return {
+    TrackSymbol: (symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags): bool =>
+      wrappingTracker_TrackSymbol(receiver, symbol_, enclosingDeclaration, meaning),
+    ReportInaccessibleThisError: (): void => wrappingTracker_ReportInaccessibleThisError(receiver),
+    ReportPrivateInBaseOfClassExpression: (propertyName: string): void =>
+      wrappingTracker_ReportPrivateInBaseOfClassExpression(receiver, propertyName),
+    ReportInaccessibleUniqueSymbolError: (): void => wrappingTracker_ReportInaccessibleUniqueSymbolError(receiver),
+    ReportCyclicStructureError: (): void => wrappingTracker_ReportCyclicStructureError(receiver),
+    ReportLikelyUnsafeImportRequiredError: (specifier: string, symbolName: string): void =>
+      wrappingTracker_ReportLikelyUnsafeImportRequiredError(receiver, specifier, symbolName),
+    ReportTruncationError: (): void => wrappingTracker_ReportTruncationError(receiver),
+    ReportNonlocalAugmentation: (containingFile: GoPtr<SourceFile>, parentSymbol: GoPtr<Symbol>, augmentingSymbol: GoPtr<Symbol>): void =>
+      wrappingTracker_ReportNonlocalAugmentation(receiver, containingFile, parentSymbol, augmentingSymbol),
+    ReportNonSerializableProperty: (propertyName: string): void =>
+      wrappingTracker_ReportNonSerializableProperty(receiver, propertyName),
+    ReportInferenceFallback: (node: GoPtr<Node>): void => wrappingTracker_ReportInferenceFallback(receiver, node),
+    PushErrorFallbackNode: (node: GoPtr<Node>): void => wrappingTracker_PushErrorFallbackNode(receiver, node),
+    PopErrorFallbackNode: (): void => wrappingTracker_PopErrorFallbackNode(receiver),
   };
 }
 
@@ -489,8 +514,8 @@ export function NodeBuilderImpl_createRecoveryBoundary(receiver: GoPtr<NodeBuild
     deferredReports: [],
     trackedSymbols: [],
   };
-  const newTracker = NewSymbolTrackerImpl(receiver!.ctx, newWrappingTracker(receiver!.ctx!.tracker, bound) as unknown as SymbolTracker);
-  receiver!.ctx!.tracker = newTracker as unknown as SymbolTracker;
+  const newTracker = NewSymbolTrackerImpl(receiver!.ctx, wrappingTracker_as_SymbolTracker(newWrappingTracker(receiver!.ctx!.tracker, bound)));
+  receiver!.ctx!.tracker = SymbolTrackerImpl_as_SymbolTracker(newTracker);
   receiver!.ctx!.trackedSymbols = [];
   return bound;
 }
@@ -528,7 +553,7 @@ export function NodeBuilderImpl_finalizeBoundary(receiver: GoPtr<NodeBuilderImpl
     return false;
   }
   for (const a of bound!.trackedSymbols) {
-    receiver!.ctx!.tracker.TrackSymbol(a!["symbol"], a!.enclosingDeclaration, a!.meaning);
+    receiver!.ctx!.tracker!.TrackSymbol(a!["symbol"], a!.enclosingDeclaration, a!.meaning);
   }
   return true;
 }
@@ -621,7 +646,7 @@ export function NodeBuilderImpl_getModuleSpecifierOverride(receiver: GoPtr<NodeB
     }
     if (name.length > 0 && name.includes("/node_modules/")) {
       receiver!.ctx!.encounteredError = true;
-      receiver!.ctx!.tracker.ReportLikelyUnsafeImportRequiredError(name, "");
+      receiver!.ctx!.tracker!.ReportLikelyUnsafeImportRequiredError(name, "");
     }
     if (name !== originalName) {
       return name;

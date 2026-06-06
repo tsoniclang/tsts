@@ -102,6 +102,10 @@ export interface importRequireStatements {
   requireHelperName: GoPtr<IdentifierNode>;
 }
 
+function ESModuleTransformer_importRequireStatements(receiver: GoPtr<ESModuleTransformer>): GoPtr<importRequireStatements> {
+  return receiver!.importRequireStatements;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/moduletransforms/esmodule.go::func::NewESModuleTransformer","kind":"func","status":"implemented","sigHash":"07a6fdf6da302091c6c0a082a9144139b59c7e4accd721eff596e57b9afb12bc","bodyHash":"642a888570c3c2275caa85b219b5b8923f43f9fd7b1f7ef80765ea509109380c"}
  *
@@ -259,7 +263,7 @@ export function ESModuleTransformer_visitSourceFile(receiver: GoPtr<ESModuleTran
     if (externalHelpersImportDeclaration !== undefined) {
       statements = [...statements, NodeVisitor_VisitNode(visitor, externalHelpersImportDeclaration)];
     }
-    const importRequireStmts = receiver!.importRequireStatements;
+    const importRequireStmts = ESModuleTransformer_importRequireStatements(receiver);
     if (importRequireStmts !== undefined) {
       statements = [...statements, ...importRequireStmts.statements];
     }

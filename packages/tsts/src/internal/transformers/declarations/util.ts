@@ -4,7 +4,8 @@ import { Every, Some } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name, Node_SubtreeFacts, NodeDefault_AsNode } from "../../ast/spine.js";
 import { AsFunctionDeclaration } from "../../ast/generated/casts.js";
-import { Node_Elements, Node_Symbol, Node_Expression, GetClassExtendsHeritageElement } from "../../ast/ast.js";
+import { Node_Elements, Node_Symbol, Node_Expression } from "../../ast/ast.js";
+import { GetClassExtendsHeritageElement } from "../../ast/utilities.js";
 import type { FunctionDeclaration, TypeParameterDeclaration } from "../../ast/generated/data.js";
 import type { StatementList } from "../../ast/generated/unions.js";
 import {

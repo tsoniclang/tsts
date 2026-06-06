@@ -4167,7 +4167,7 @@ export function Checker_getPropertiesOfObjectType(receiver: GoPtr<Checker>, t: G
   if ((t!.flags & TypeFlagsObject) !== 0) {
     return StructuredType_Properties(Checker_resolveStructuredTypeMembers(receiver, t));
   }
-  return undefined;
+  return [];
 }
 
 /**
@@ -4203,7 +4203,7 @@ export function Checker_getPropertiesOfObjectType(receiver: GoPtr<Checker>, t: G
 export function Checker_getPropertiesOfUnionOrIntersectionType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoSlice<GoPtr<Symbol>> {
   const d = Type_AsUnionOrIntersectionType(t);
   if (d!.resolvedProperties === undefined) {
-    const checked: { valuesByKey: Map<string, { readonly __tsgoEmpty?: never }> | undefined; values: string[] | undefined } = { valuesByKey: undefined, values: undefined };
+    const checked: orderedSet<string> = { valuesByKey: new globalThis.Map(), values: [] };
     let props: GoSlice<GoPtr<Symbol>> = [];
     for (const current of d!.types) {
       for (const prop of Checker_getPropertiesOfType(receiver, current)) {

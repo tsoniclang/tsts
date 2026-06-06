@@ -148,7 +148,7 @@ export function FS_GetAccessibleEntries(receiver: GoPtr<FS>, path: string): Entr
  * 	return fs.Inner.Stat(path)
  * }
  */
-export function FS_Stat(receiver: GoPtr<FS>, path: string): FileInfo {
+export function FS_Stat(receiver: GoPtr<FS>, path: string): GoPtr<FileInfo> {
   SyncSet_Add(receiver!.SeenFiles, path);
   return receiver!.Inner.Stat(path);
 }

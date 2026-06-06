@@ -1,6 +1,7 @@
 import type { GoPtr } from "../../go/compat.js";
 import type { SourceFile } from "../ast/ast.js";
-import type { Node, NodeVisitor } from "../ast/spine.js";
+import type { Node } from "../ast/spine.js";
+import type { NodeVisitor } from "../ast/visitor.js";
 import { NodeVisitor_VisitSourceFile } from "../ast/visitor.js";
 import type { EmitContext as EmitContext_680f09ca } from "../printer/emitcontext.js";
 import { EmitContext_NewNodeVisitor, NewEmitContext } from "../printer/emitcontext.js";

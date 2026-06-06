@@ -1738,7 +1738,7 @@ export function Type_AsUnionOrIntersectionType(receiver: GoPtr<Type>): GoPtr<Uni
  */
 export function Type_Distributed(receiver: GoPtr<Type>): GoSlice<GoPtr<Type>> {
   if ((receiver!.flags & TypeFlagsUnion) !== 0) {
-    return Type_AsUnionType(receiver)!.types;
+    return Type_Types(receiver);
   }
   if ((receiver!.flags & TypeFlagsNever) !== 0) {
     return [] as GoSlice<GoPtr<Type>>;
@@ -1780,7 +1780,7 @@ export function Type_Target(receiver: GoPtr<Type>): GoPtr<Type> {
     return Type_AsStringMappingType(receiver)!.target;
   }
   if ((receiver!.flags & TypeFlagsObject) !== 0 && (receiver!.objectFlags & ObjectFlagsMapped) !== 0) {
-    return Type_AsMappedType(receiver)!.target;
+    return Type_AsMappedType(receiver)!.__tsgoEmbedded0!.target;
   }
   throw new globalThis.Error("Unhandled case in Type.Target");
 }
@@ -1847,7 +1847,7 @@ export function Type_Types(receiver: GoPtr<Type>): GoSlice<GoPtr<Type>> {
  * }
  */
 export function Type_TargetInterfaceType(receiver: GoPtr<Type>): GoPtr<InterfaceType> {
-  return Type_AsInterfaceType(Type_AsTypeReference(receiver)!.target);
+  return Type_AsInterfaceType(Type_Target(receiver));
 }
 
 /**
@@ -1859,7 +1859,7 @@ export function Type_TargetInterfaceType(receiver: GoPtr<Type>): GoPtr<Interface
  * }
  */
 export function Type_TargetTupleType(receiver: GoPtr<Type>): GoPtr<TupleType> {
-  return Type_AsTupleType(Type_AsTypeReference(receiver)!.target);
+  return Type_AsTupleType(Type_Target(receiver));
 }
 
 /**

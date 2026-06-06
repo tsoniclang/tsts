@@ -1,8 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
-import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_Name, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
-import type { Node, SourceFile, Expression } from "../../ast/ast.js";
+import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
+import type { Node, SourceFile } from "../../ast/ast.js";
+import type { Expression } from "../../ast/generated/unions.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_RelatedInformation, Diagnostic_SetCategory, DiagnosticsCollection_Add, DiagnosticsCollection_GetDiagnosticsForFile, DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_Lookup, NewDiagnostic, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
@@ -11,7 +12,7 @@ import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "..
 import { KindCallExpression, KindClassDeclaration, KindClassExpression, KindDecorator, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindJsxOpeningElement, KindJsxSelfClosingElement, KindMethodDeclaration, KindModuleDeclaration, KindNewExpression, KindNullKeyword, KindParameter, KindPropertyAccessExpression, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment, KindTaggedTemplateExpression, KindTypeReference } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/kind_generated.js";
 import { NodeFlagsUnreachable } from "../../ast/nodeflags.js";
-import { IsBindingPattern, IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
+import { IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
 import { InternalSymbolNameComputed } from "../../ast/symbol.js";
 import { SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsGetAccessor, SymbolFlagsInterface, SymbolFlagsModule, SymbolFlagsNamespace, SymbolFlagsNamespaceModule, SymbolFlagsOptional, SymbolFlagsType, SymbolFlagsValue } from "../../ast/generated/flags.js";
@@ -19,7 +20,7 @@ import type { SymbolFlags } from "../../ast/symbolflags.js";
 import { IsBindingPattern, IsClassLike, IsDeprecatedDeclarationWithCachedFlags, IsFunctionExpressionOrArrowFunction, IsFunctionLikeDeclaration, GetInvokedExpression, GetJSDocDeprecatedTag, GetSourceFileOfNode, IsEnumConst, IsEntityNameExpression, IsInstantiatedModule, IsParameterPropertyDeclaration, IsPotentiallyExecutableNode, IsPlainJSFile, IsStatic, IsTypeDeclaration, SkipParentheses, IsImportCall, IsInJSFile, NodeKindIs } from "../../ast/utilities.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import { SourceFile_FileName } from "../../ast/ast.js";
-import { Node_End, Node_FlowNodeData, Node_Pos } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_Name, Node_Pos } from "../../ast/spine.js";
 import { AsPropertyDeclaration, AsHeritageClause, AsQualifiedName, AsTaggedTemplateExpression, AsElementAccessExpression, AsTypeReferenceNode, AsImportEqualsDeclaration } from "../../ast/generated/casts.js";
 import { Set_Has, Set_Add } from "../../collections/set.js";
 import { CompilerOptions_GetEmitStandardClassFields, CompilerOptions_ShouldPreserveConstEnums, CompilerOptions_UsesWildcardTypes } from "../../core/compileroptions.js";
@@ -650,7 +651,7 @@ export function Checker_getDeprecatedSuggestionNode(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: string, checkStatic: bool, isStatic: bool, message: GoPtr<Message>): void {
-  for (const member of Node_Members(node)) {
+  for (const member of Node_Members(node)!) {
     if (IsConstructorDeclaration(member)) {
       for (const param of Node_Parameters(member)) {
         if (IsParameterPropertyDeclaration(param, member) && !IsBindingPattern(Node_Name(param))) {
@@ -702,7 +703,7 @@ export function Checker_reportDuplicateMemberErrors(receiver: GoPtr<Checker>, no
 export function Checker_issueMemberSpecificError(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeWithThis: GoPtr<Type>, baseWithThis: GoPtr<Type>, broadDiag: GoPtr<Message>): void {
   const c = receiver!;
   let issuedMemberError = false;
-  for (const member of Node_Members(node)) {
+  for (const member of Node_Members(node)!) {
     if (IsStatic(member)) {
       continue;
     }
@@ -1342,14 +1343,16 @@ export function Checker_isPromiseResolveArityError(receiver: GoPtr<Checker>, nod
     return false;
   }
   const decl = symbol!.ValueDeclaration;
-  if (decl === undefined || !IsParameterDeclaration(decl) || !IsFunctionExpressionOrArrowFunction(decl.Parent) || !IsNewExpression(decl.Parent.Parent) || !IsIdentifier(Node_Expression(decl.Parent.Parent))) {
+  const parent = decl?.Parent;
+  const grandParent = parent?.Parent;
+  if (decl === undefined || !IsParameterDeclaration(decl) || !IsFunctionExpressionOrArrowFunction(parent) || !IsNewExpression(grandParent) || !IsIdentifier(Node_Expression(grandParent))) {
     return false;
   }
   const globalPromiseSymbol = c.getGlobalPromiseConstructorSymbolOrNil();
   if (globalPromiseSymbol === undefined) {
     return false;
   }
-  const constructorSymbol = Checker_getResolvedSymbol(receiver, Node_Expression(decl.Parent.Parent));
+  const constructorSymbol = Checker_getResolvedSymbol(receiver, Node_Expression(grandParent));
   return constructorSymbol === globalPromiseSymbol;
 }
 
@@ -1401,7 +1404,7 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
   if (signatures.length === 1) {
     // No overloads exist
     const sig = signatures[0];
-    const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters as unknown as GoSlice<GoPtr<Node>>);
+    const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters ?? []);
     const maxCount = sig!.typeParameters === undefined ? 0 : sig!.typeParameters.length;
     let expected = String(minCount);
     if (minCount < maxCount) {
@@ -1413,7 +1416,7 @@ export function Checker_getTypeArgumentArityError(receiver: GoPtr<Checker>, node
     let belowArgCount = Number.MIN_SAFE_INTEGER;
     let aboveArgCount = Number.MAX_SAFE_INTEGER;
     for (const sig of signatures) {
-      const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters as unknown as GoSlice<GoPtr<Node>>);
+      const minCount = Checker_getMinTypeArgumentCount(receiver, sig!.typeParameters ?? []);
       const maxCount = sig!.typeParameters === undefined ? 0 : sig!.typeParameters.length;
       if (minCount > argCount) {
         aboveArgCount = Math.min(aboveArgCount, minCount);

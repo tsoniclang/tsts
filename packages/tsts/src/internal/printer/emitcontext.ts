@@ -264,7 +264,7 @@ export function EmitContext_onClone(receiver: GoPtr<EmitContext>, updated: GoPtr
  * 	})
  * }
  */
-export function EmitContext_NewNodeVisitor(receiver: GoPtr<EmitContext>, visit: (node: GoPtr<Node>) => GoPtr<Node>): GoPtr<NodeVisitor> {
+export function EmitContext_NewNodeVisitor(receiver: GoPtr<EmitContext>, visit: (node: GoPtr<Node>) => GoPtr<Node>): GoPtr<ConcreteNodeVisitor> {
   const hooks: NodeVisitorHooks = {
     VisitParameters: (nodes, visitor) => EmitContext_VisitParameters(receiver, nodes, visitor as GoPtr<NodeVisitor>),
     VisitFunctionBody: (node, visitor) => EmitContext_VisitFunctionBody(receiver, node, visitor as GoPtr<NodeVisitor>),

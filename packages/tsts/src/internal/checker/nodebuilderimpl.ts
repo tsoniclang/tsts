@@ -335,7 +335,7 @@ export interface NodeBuilderSymbolLinks {
  */
 export interface NodeBuilderContext {
   host: Host;
-  tracker: SymbolTracker;
+  tracker: GoPtr<SymbolTracker>;
   approximateLength: int;
   maxTruncationLength: int;
   encounteredError: bool;
@@ -432,7 +432,7 @@ export const noTruncationMaximumTruncationLength: int = 1_000_000;
 export function newNodeBuilderImpl(ch: GoPtr<Checker>, e: GoPtr<EmitContext>, idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>): GoPtr<NodeBuilderImpl> {
   const resolvedIdToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>> = idToSymbol !== undefined ? idToSymbol : new globalThis.Map();
   const b: NodeBuilderImpl = {
-    f: NodeFactory_AsNodeFactory(e!.Factory),
+    f: e!.Factory!.__tsgoEmbedded0!,
     ch,
     e,
     pc: NewPseudoChecker(ch!.strictNullChecks, ch!.exactOptionalPropertyTypes),
@@ -2098,7 +2098,7 @@ export function NodeBuilderImpl_lookupTypeParameterNodes(receiver: GoPtr<NodeBui
  * }
  */
 export function NodeBuilderImpl_lookupSymbolChain(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, yieldModuleSymbol: bool): GoSlice<GoPtr<Symbol>> {
-  receiver!.ctx!.tracker.TrackSymbol(symbol_, receiver!.ctx!.enclosingDeclaration, meaning);
+  receiver!.ctx!.tracker!.TrackSymbol(symbol_, receiver!.ctx!.enclosingDeclaration, meaning);
   return NodeBuilderImpl_lookupSymbolChainWorker(receiver, symbol_, meaning, yieldModuleSymbol);
 }
 
@@ -2220,7 +2220,7 @@ export interface sortedSymbolNamePair {
  * }
  */
 export function NodeBuilderImpl_getSymbolChain(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, meaning: SymbolFlags, endOfChain: bool, yieldModuleSymbol: bool): GoSlice<GoPtr<Symbol>> {
-  let accessibleSymbolChain = Checker_getAccessibleSymbolChain(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration, meaning, (receiver!.ctx!.flags & FlagsUseOnlyExternalAliasing) !== 0 as bool);
+  let accessibleSymbolChain = Checker_getAccessibleSymbolChain(receiver!.ch, symbol_, receiver!.ctx!.enclosingDeclaration, meaning, ((receiver!.ctx!.flags & FlagsUseOnlyExternalAliasing) !== 0) as bool);
   let qualifierMeaning = meaning;
   if (accessibleSymbolChain !== undefined && accessibleSymbolChain.length > 1) {
     qualifierMeaning = getQualifiedLeftMeaning(meaning);
@@ -3845,11 +3845,11 @@ export function NodeBuilderImpl_trackComputedName(receiver: GoPtr<NodeBuilderImp
   const firstIdentifier = GetFirstIdentifier(accessExpression);
   const name = receiver!.ch!.resolveName(enclosingDeclaration, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
   if (name !== undefined) {
-    receiver!.ctx!.tracker.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
+    receiver!.ctx!.tracker!.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
   } else {
     const fallback = receiver!.ch!.resolveName(firstIdentifier, AsIdentifier(firstIdentifier)!.Text, (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true as bool, false as bool);
     if (fallback !== undefined) {
-      receiver!.ctx!.tracker.TrackSymbol(fallback, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
+      receiver!.ctx!.tracker!.TrackSymbol(fallback, enclosingDeclaration, SymbolFlagsValue as SymbolFlags);
     }
   }
 }
