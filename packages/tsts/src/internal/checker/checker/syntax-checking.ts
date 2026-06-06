@@ -28,7 +28,7 @@ import { Checker_isIteratorResult } from "./support-queries.js";
 import {
   CheckModeInferential, CheckModeNormal, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
-  TypeFactsIsUndefined, UnusedKindLocal, UnusedKindParameter,
+  TypeFactsIsUndefined, TypeFactsTruthy, TypeFactsFalsy, UnusedKindLocal, UnusedKindParameter,
 } from "./state.js";
 import type { Checker, CheckMode, keyBuilder, FlowLoopInfo } from "./state.js";
 import {
@@ -96,6 +96,7 @@ import {
   Checker_hasTypeFacts, Checker_getTypeFacts, Checker_checkAwaitedType, Checker_isFunctionType, Checker_isEmptyObjectType, Checker_hasEmptyObjectIntersection,
   Checker_getAwaitedTypeOfPromise, Checker_getRegularTypeOfLiteralType, Checker_getWidenedLiteralLikeTypeForContextualType,
   Checker_instantiateContextualType, Checker_getContextualType, Checker_checkConstEnumAccess,
+  Checker_getFreshTypeOfLiteralType, Checker_getNumberLiteralType, Checker_getBigIntLiteralType, Checker_getBaseTypeOfLiteralType,
 } from "./types.js";
 import { Checker_isReachableFlowNode, Checker_hasMatchingArgument } from "../flow.js";
 import type { FlowNode } from "../../ast/flow.js";
@@ -120,8 +121,10 @@ import {
   KindGetAccessor, KindSetAccessor, KindClassExpression, KindTypeParameter,
   KindJsxSelfClosingElement, KindJsxElement, KindTypeAssertionExpression, KindAsExpression,
   KindVoidExpression, KindBinaryExpression, KindEqualsToken,
+  KindNumericLiteral, KindBigIntLiteral, KindMinusToken, KindPlusToken,
+  KindTildeToken, KindExclamationToken, KindPlusPlusToken, KindMinusMinusToken,
 } from "../../ast/generated/kinds.js";
-import { SkipTrivia } from "../../scanner/scanner.js";
+import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { Tristate_IsTrue, Tristate_IsFalse, TSTrue, TSFalse } from "../../core/tristate.js";
 import type { SourceFileLinks, SymbolNodeLinks, TypeNodeLinks } from "../types.js";
 import {
@@ -164,12 +167,21 @@ import {
   The_left_hand_side_of_an_instanceof_expression_must_be_of_type_any_an_object_type_or_a_type_parameter,
   An_object_s_Symbol_hasInstance_method_must_return_a_boolean_value_for_it_to_be_used_on_the_right_hand_side_of_an_instanceof_expression,
   Type_0_may_represent_a_primitive_value_which_is_not_permitted_as_the_right_operand_of_the_in_operator,
+  The_0_operator_cannot_be_applied_to_type_symbol,
+  Operator_0_cannot_be_applied_to_type_1,
 } from "../../diagnostics/generated/messages.js";
 import { Checker_checkGrammarModifiers } from "../grammarchecks.js";
-import { ContextFlagsNone, TypeFlagsAnyOrUnknown, TypeFlagsNonPrimitive, TypeFlagsInstantiableNonPrimitive, TypeFlagsNever, TypeFlagsPrimitive } from "../types.js";
+import {
+  ContextFlagsNone, TypeFlagsAnyOrUnknown, TypeFlagsNonPrimitive,
+  TypeFlagsInstantiableNonPrimitive, TypeFlagsNever, TypeFlagsPrimitive,
+  TypeFlagsESSymbolLike, TypeFlagsBigIntLike,
+} from "../types.js";
 import { SymbolFlagsBlockScopedVariable, SymbolFlagsOptional, SymbolFlagsFunction, SymbolFlagsMethod } from "../../ast/generated/flags.js";
 import type { SymbolTable } from "../../ast/symbol.js";
-import { Checker_getInferenceContext } from "./inference.js";
+import { Checker_getInferenceContext, Checker_maybeTypeOfKindConsideringBaseConstraint } from "./inference.js";
+import { FromString } from "../../jsnum/string.js";
+import type { Number } from "../../jsnum/jsnum.js";
+import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f","bodyHash":"65678dd5c6e1f4ffa700bb65eee57bc088bcc84456cf8a0948d39f486e967a22"}
@@ -1913,7 +1925,7 @@ export function Checker_checkAwaitExpression(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPrefixUnaryExpression","kind":"method","status":"stub","sigHash":"c610d53b7cece49af9ecbed7367a4ec98979f304bdc5698b85a78a39c58ffbc8","bodyHash":"3d8c2bbc4244b7670327f86361bb2d4913b1fde76eeee15d327eaad7d468dca7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"c610d53b7cece49af9ecbed7367a4ec98979f304bdc5698b85a78a39c58ffbc8","bodyHash":"3d8c2bbc4244b7670327f86361bb2d4913b1fde76eeee15d327eaad7d468dca7"}
  *
  * Go source:
  * func (c *Checker) checkPrefixUnaryExpression(node *ast.Node) *Type {
@@ -1971,7 +1983,74 @@ export function Checker_checkAwaitExpression(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPrefixUnaryExpression");
+  const expr = AsPrefixUnaryExpression(node)!;
+  const operandType = Checker_checkExpression(receiver, expr.Operand);
+  if (operandType === receiver!.silentNeverType) {
+    return receiver!.silentNeverType;
+  }
+  switch (expr.Operand!.Kind) {
+    case KindNumericLiteral:
+      switch (expr.Operator) {
+        case KindMinusToken:
+          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, -FromString(Node_Text(expr.Operand)) as Number));
+        case KindPlusToken:
+          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, +FromString(Node_Text(expr.Operand)) as Number));
+      }
+      break;
+    case KindBigIntLiteral:
+      if (expr.Operator === KindMinusToken) {
+        return Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(expr.Operand)), true)));
+      }
+      break;
+  }
+  switch (expr.Operator) {
+    case KindPlusToken:
+    case KindMinusToken:
+    case KindTildeToken:
+      Checker_checkNonNullType(receiver, operandType, expr.Operand);
+      if (Checker_maybeTypeOfKindConsideringBaseConstraint(receiver, operandType, TypeFlagsESSymbolLike)) {
+        Checker_error(receiver, expr.Operand, The_0_operator_cannot_be_applied_to_type_symbol, TokenToString(expr.Operator));
+      }
+      if (expr.Operator === KindPlusToken) {
+        if (Checker_maybeTypeOfKindConsideringBaseConstraint(receiver, operandType, TypeFlagsBigIntLike)) {
+          Checker_error(receiver, expr.Operand, Operator_0_cannot_be_applied_to_type_1, TokenToString(expr.Operator), Checker_TypeToString(receiver, Checker_getBaseTypeOfLiteralType(receiver, operandType)));
+        }
+        return receiver!.numberType;
+      }
+      return Checker_getUnaryResultType(receiver, operandType);
+    case KindExclamationToken: {
+      Checker_checkTruthinessOfType(receiver, operandType, expr.Operand);
+      const facts = Checker_getTypeFacts(receiver, operandType, TypeFactsTruthy | TypeFactsFalsy);
+      switch (facts) {
+        case TypeFactsTruthy:
+          return receiver!.falseType;
+        case TypeFactsFalsy:
+          return receiver!.trueType;
+        default:
+          return receiver!.booleanType;
+      }
+    }
+    case KindPlusPlusToken:
+    case KindMinusMinusToken: {
+      const ok = Checker_checkArithmeticOperandType(
+        receiver,
+        expr.Operand,
+        Checker_checkNonNullType(receiver, operandType, expr.Operand),
+        An_arithmetic_operand_must_be_of_type_any_number_bigint_or_an_enum_type,
+        false,
+      );
+      if (ok) {
+        Checker_checkReferenceExpression(
+          receiver,
+          expr.Operand,
+          The_operand_of_an_increment_or_decrement_operator_must_be_a_variable_or_a_property_access,
+          The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
+        );
+      }
+      return Checker_getUnaryResultType(receiver, operandType);
+    }
+  }
+  return receiver!.errorType;
 }
 
 /**

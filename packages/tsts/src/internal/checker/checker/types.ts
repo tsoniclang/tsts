@@ -7,9 +7,19 @@ import type { Node } from "../../ast/spine.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos, NodeList_Pos, goReceiverKey } from "../../ast/spine.js";
 import { Node_Type, Node_Expression, Node_Initializer, Node_Symbol, Node_Elements, Node_QuestionToken, Node_Members, Node_Properties, Node_Text, Node_TypeArgumentList, Node_TypeArguments, Node_TagName, SourceFile_Text } from "../../ast/ast.js";
 import type { TypeNode } from "../../ast/generated/unions.js";
-import { IsParenthesizedExpression, IsElementAccessExpression, IsParameterDeclaration, IsInterfaceDeclaration, IsTypeAliasDeclaration, IsJSTypeAliasDeclaration, IsTypeLiteralNode, IsTupleTypeNode, IsOptionalTypeNode, IsRestTypeNode, IsNamedTupleMember, IsTypeOperatorNode, IsComputedPropertyName, IsPropertySignatureDeclaration, IsPropertyAssignment, IsJsxAttribute, IsJSDocNonNullableType, IsJSDocNullableType, IsIdentifier, IsObjectBindingPattern, IsPropertyAccessExpression, IsJsxOpeningElement, IsJsxSelfClosingElement, IsTypeReferenceNode } from "../../ast/generated/predicates.js";
-import { KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindSourceFile, KindModuleDeclaration, KindParenthesizedType, KindTupleType, KindRestType, KindNamedTupleMember, KindArrayType, KindOptionalType, KindReadonlyKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindDotToken, KindTypeReference, KindKeyOfKeyword, KindUniqueKeyword, KindSymbolKeyword } from "../../ast/generated/kinds.js";
-import { AsElementAccessExpression, AsArrayTypeNode, AsTaggedTemplateExpression, AsTypeOperatorNode, AsConditionalExpression, AsYieldExpression, AsRegularExpressionLiteral, AsNamedTupleMember, AsConditionalTypeNode, AsTemplateLiteralTypeNode, AsUnionTypeNode, AsIntersectionTypeNode, AsTemplateLiteralTypeSpan, AsMappedTypeNode, AsLiteralTypeNode, AsTypeReferenceNode, AsTypeParameterDeclaration } from "../../ast/generated/casts.js";
+import { IsParenthesizedExpression, IsElementAccessExpression, IsParameterDeclaration, IsInterfaceDeclaration, IsTypeAliasDeclaration, IsJSTypeAliasDeclaration, IsTypeLiteralNode, IsTupleTypeNode, IsOptionalTypeNode, IsRestTypeNode, IsNamedTupleMember, IsTypeOperatorNode, IsComputedPropertyName, IsPropertySignatureDeclaration, IsPropertyAssignment, IsJsxAttribute, IsJSDocNonNullableType, IsJSDocNullableType, IsIdentifier, IsObjectBindingPattern, IsPropertyAccessExpression, IsJsxOpeningElement, IsJsxSelfClosingElement, IsTypeReferenceNode, IsBinaryExpression } from "../../ast/generated/predicates.js";
+import {
+  KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindSourceFile, KindModuleDeclaration,
+  KindParenthesizedType, KindTupleType, KindRestType, KindNamedTupleMember, KindArrayType,
+  KindOptionalType, KindReadonlyKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration,
+  KindDotToken, KindTypeReference, KindKeyOfKeyword, KindUniqueKeyword, KindSymbolKeyword,
+  KindAwaitExpression, KindCallExpression, KindTaggedTemplateExpression, KindElementAccessExpression,
+  KindMetaProperty, KindNewExpression, KindPropertyAccessExpression, KindYieldExpression,
+  KindBinaryExpression, KindBarBarToken, KindBarBarEqualsToken, KindAmpersandAmpersandToken,
+  KindAmpersandAmpersandEqualsToken, KindCommaToken, KindEqualsToken, KindQuestionQuestionToken,
+  KindQuestionQuestionEqualsToken, KindConditionalExpression,
+} from "../../ast/generated/kinds.js";
+import { AsElementAccessExpression, AsArrayTypeNode, AsTaggedTemplateExpression, AsTypeOperatorNode, AsConditionalExpression, AsYieldExpression, AsRegularExpressionLiteral, AsNamedTupleMember, AsConditionalTypeNode, AsTemplateLiteralTypeNode, AsUnionTypeNode, AsIntersectionTypeNode, AsTemplateLiteralTypeSpan, AsMappedTypeNode, AsLiteralTypeNode, AsTypeReferenceNode, AsTypeParameterDeclaration, AsBinaryExpression } from "../../ast/generated/casts.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import { DiagnosticsCollection_Add, Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
@@ -31,7 +41,7 @@ import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFl
 import type { orderedSet } from "../utilities.js";
 import { CompareTypes, IsTypeAny, NewDiagnosticForNode, NewDiagnosticChainForNode, hasDotDotDotToken, isDeclarationReadonly, isOptionalDeclaration, orderedSet_contains, orderedSet_add, entityNameToString, isConstTypeReference, isObjectLiteralType } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionReduction, WideningContext, WideningKind, CachedTypeKey, CacheHashKey } from "./state.js";
-import { CheckModeTypeOnly, CheckModeNormal, CheckModeRestBindingElement, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, isUnitType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, IntersectionFlagsNone, hashWrite32, isTypeReferenceWithGenericArguments, getStringLiteralValue, getTypeListKey, getModifiedReadonlyState, getMappedTypeModifiers, MappedTypeModifiersIncludeOptional, MappedTypeModifiersExcludeOptional, PredicateSemanticsSometimes, PredicateSemanticsAlways, CachedTypeKindArrayLiteralType, CachedTypeKindDefaultOnlyType, getTotalFixedElementCount, getTupleKey, isConflictingPrivateProperty, isFreshLiteralType, TypeFactsNone, TypeFactsAll, TypeFactsOrFactsMask, TypeFactsAndFactsMask, containsType, getMappedTypeOptionality, TypeFactsEQUndefined, TypeFactsEQNull, TypeFactsIsNull, TypeFactsNENull, TypeFactsEQUndefinedOrNull, TypeFactsTruthy, WideningKindNormal, getUnionKey, CachedTypeKindRegularObjectLiteral } from "./state.js";
+import { CheckModeTypeOnly, CheckModeNormal, CheckModeRestBindingElement, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, isUnitType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, IntersectionFlagsNone, hashWrite32, isTypeReferenceWithGenericArguments, getStringLiteralValue, getTypeListKey, getModifiedReadonlyState, getMappedTypeModifiers, MappedTypeModifiersIncludeOptional, MappedTypeModifiersExcludeOptional, PredicateSemanticsSometimes, PredicateSemanticsAlways, PredicateSemanticsNever, CachedTypeKindArrayLiteralType, CachedTypeKindDefaultOnlyType, getTotalFixedElementCount, getTupleKey, isConflictingPrivateProperty, isFreshLiteralType, TypeFactsNone, TypeFactsAll, TypeFactsOrFactsMask, TypeFactsAndFactsMask, containsType, getMappedTypeOptionality, TypeFactsEQUndefined, TypeFactsEQNull, TypeFactsIsNull, TypeFactsNENull, TypeFactsEQUndefinedOrNull, TypeFactsTruthy, WideningKindNormal, getUnionKey, CachedTypeKindRegularObjectLiteral } from "./state.js";
 import { Checker_getTypeArguments, Checker_getTypeWithThisArgument, Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode, Checker_checkTypeForDuplicateIndexSignatures, Checker_newCallSignature, Checker_getOrCreateTypeFromSignature, Checker_newParameter, Checker_getTypeReferenceArity, Checker_getConstraintOfTypeParameter, Checker_getResolvedSignature, Checker_getDecoratorCallSignature, Checker_getContextualReturnType, Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_getTypeParameterFromMappedType, Checker_forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType, Checker_instantiateTypeWithSingleGenericCallSignature, Checker_checkExpressionWithTypeArguments, Checker_checkNoTypeArguments } from "./signatures.js";
 import { Checker_getSignaturesOfType, Checker_getReturnTypeOfSignature, Checker_getBuiltinIteratorReturnType, Checker_getRestTypeOfTupleType } from "./signatures.js";
 import { Checker_getBaseConstraintOfType, Checker_checkIndexConstraints, Checker_getTypeAliasInstantiation, Checker_isGenericTypeWithUndefinedConstraint, Checker_getConstraintTypeFromMappedType, Checker_isAwaitedTypeInstantiation, Checker_isTypeMatchedByTemplateLiteralOrStringMapping, Checker_getGlobalNonNullableTypeInstantiation } from "./inference.js";
@@ -50,7 +60,7 @@ import { Checker_isTypeAssignableToKind, Checker_allTypesAssignableToKind } from
 import { Checker_getBaseConstraintOrType } from "./inference.js";
 import { instantiateList } from "./state.js";
 import { SkipParentheses, IsRightSideOfQualifiedNameOrPropertyAccess, FindAncestor, IsExpressionOfOptionalChainRoot, IsOptionalChain, IsOutermostOptionalChain, IsEntityName, IsStatic, IsInJSFile, IsEntityNameExpression, GetFirstIdentifier, GetReparsedNodeForNode, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, SkipOuterExpressions, OEKAll, HasModifier, GetClassLikeDeclarationOfSymbol, GetDeclarationOfKind, FindAncestorOrQuit, FindAncestorTrue, FindAncestorFalse, FindAncestorQuit, IsAssertionExpression, GetSourceFileOfNode, WalkUpParenthesizedTypes } from "../../ast/utilities.js";
-import { ScanTokenAtPosition, SkipTrivia } from "../../scanner/scanner.js";
+import { ScanTokenAtPosition, SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { GetFunctionFlags, FunctionFlagsAsync } from "../../ast/functionflags.js";
 import { KindNullKeyword, KindIdentifier, KindThisKeyword } from "../../ast/generated/kinds.js";
 import { SymbolFlagsModule, SymbolFlagsValueModule, SymbolFlagsClass } from "../../ast/generated/flags.js";
@@ -2636,7 +2646,7 @@ export function Checker_checkArithmeticOperandType(receiver: GoPtr<Checker>, ope
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNullishCoalesceOperands","kind":"method","status":"stub","sigHash":"dada74171036a1cb0a398691ae976255190d2c50469a2de7e19f615c1ed390ff","bodyHash":"3674c889fedfffd582ebef90f161271377ee5eacd1ae1b351da7c60df4ee4740"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNullishCoalesceOperands","kind":"method","status":"implemented","sigHash":"dada74171036a1cb0a398691ae976255190d2c50469a2de7e19f615c1ed390ff","bodyHash":"3674c889fedfffd582ebef90f161271377ee5eacd1ae1b351da7c60df4ee4740"}
  *
  * Go source:
  * func (c *Checker) checkNullishCoalesceOperands(left *ast.Node, right *ast.Node) {
@@ -2661,7 +2671,24 @@ export function Checker_checkArithmeticOperandType(receiver: GoPtr<Checker>, ope
  * }
  */
 export function Checker_checkNullishCoalesceOperands(receiver: GoPtr<Checker>, left: GoPtr<Node>, right: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkNullishCoalesceOperands");
+  if (IsBinaryExpression(left!.Parent!.Parent)) {
+    const grandparentLeft = AsBinaryExpression(left!.Parent!.Parent)!.Left;
+    const grandparentOperatorToken = AsBinaryExpression(left!.Parent!.Parent)!.OperatorToken;
+    if (IsBinaryExpression(grandparentLeft) && grandparentOperatorToken!.Kind === KindBarBarToken) {
+      Checker_grammarErrorOnNode(receiver, grandparentLeft, diagnosticsMessages.X_0_and_1_operations_cannot_be_mixed_without_parentheses, TokenToString(KindQuestionQuestionToken), TokenToString(grandparentOperatorToken!.Kind));
+    }
+  } else if (IsBinaryExpression(left)) {
+    const operatorToken = AsBinaryExpression(left)!.OperatorToken;
+    if (operatorToken!.Kind === KindBarBarToken || operatorToken!.Kind === KindAmpersandAmpersandToken) {
+      Checker_grammarErrorOnNode(receiver, left, diagnosticsMessages.X_0_and_1_operations_cannot_be_mixed_without_parentheses, TokenToString(operatorToken!.Kind), TokenToString(KindQuestionQuestionToken));
+    }
+  } else if (IsBinaryExpression(right)) {
+    const operatorToken = AsBinaryExpression(right)!.OperatorToken;
+    if (operatorToken!.Kind === KindAmpersandAmpersandToken) {
+      Checker_grammarErrorOnNode(receiver, right, diagnosticsMessages.X_0_and_1_operations_cannot_be_mixed_without_parentheses, TokenToString(KindQuestionQuestionToken), TokenToString(operatorToken!.Kind));
+    }
+  }
+  Checker_checkNullishCoalesceOperandLeft(receiver, left);
 }
 
 /**
@@ -2693,7 +2720,7 @@ export function Checker_checkNullishCoalesceOperandLeft(receiver: GoPtr<Checker>
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticNullishnessSemantics","kind":"method","status":"stub","sigHash":"e0cf58eabf6eb341cd27e08c3a008692614423d40e375819f9761ab4f74b31a0","bodyHash":"f92985063edd7862e1b8b9f68afc466f16a07479a1063e57af0fc4c8aceb4d73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticNullishnessSemantics","kind":"method","status":"implemented","sigHash":"e0cf58eabf6eb341cd27e08c3a008692614423d40e375819f9761ab4f74b31a0","bodyHash":"f92985063edd7862e1b8b9f68afc466f16a07479a1063e57af0fc4c8aceb4d73"}
  *
  * Go source:
  * func (c *Checker) getSyntacticNullishnessSemantics(node *ast.Node) PredicateSemantics {
@@ -2740,7 +2767,44 @@ export function Checker_checkNullishCoalesceOperandLeft(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getSyntacticNullishnessSemantics(receiver: GoPtr<Checker>, node: GoPtr<Node>): PredicateSemantics {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSyntacticNullishnessSemantics");
+  node = SkipOuterExpressions(node, OEKAll);
+  switch (node!.Kind) {
+    case KindAwaitExpression:
+    case KindCallExpression:
+    case KindTaggedTemplateExpression:
+    case KindElementAccessExpression:
+    case KindMetaProperty:
+    case KindNewExpression:
+    case KindPropertyAccessExpression:
+    case KindYieldExpression:
+    case KindThisKeyword:
+      return PredicateSemanticsSometimes;
+    case KindBinaryExpression:
+      switch (AsBinaryExpression(node)!.OperatorToken!.Kind) {
+        case KindBarBarToken:
+        case KindBarBarEqualsToken:
+        case KindAmpersandAmpersandToken:
+        case KindAmpersandAmpersandEqualsToken:
+          return PredicateSemanticsSometimes;
+        case KindCommaToken:
+        case KindEqualsToken:
+        case KindQuestionQuestionToken:
+        case KindQuestionQuestionEqualsToken:
+          return Checker_getSyntacticNullishnessSemantics(receiver, AsBinaryExpression(node)!.Right);
+      }
+      return PredicateSemanticsNever;
+    case KindConditionalExpression:
+      return Checker_getSyntacticNullishnessSemantics(receiver, AsConditionalExpression(node)!.WhenTrue) |
+        Checker_getSyntacticNullishnessSemantics(receiver, AsConditionalExpression(node)!.WhenFalse);
+    case KindNullKeyword:
+      return PredicateSemanticsAlways;
+    case KindIdentifier:
+      if (Checker_getResolvedSymbol(receiver, node) === receiver!.undefinedSymbol) {
+        return PredicateSemanticsAlways;
+      }
+      return PredicateSemanticsSometimes;
+  }
+  return PredicateSemanticsNever;
 }
 
 /**
