@@ -16,7 +16,7 @@ import { Checker_TypeToString } from "../printer.js";
 import { Type_parameter_0_has_a_circular_constraint, Circularity_originates_in_type_at_this_location } from "../../diagnostics/generated/messages.js";
 import { Checker_combineTypeMappers, prependTypeMapping, newTypeMapper, TypeMapper_Map } from "../mapper.js";
 import type { TypeMapper } from "../mapper.js";
-import { getRecursionIdentity } from "../relater.js";
+import { Checker_isMemberOfStringMapping, Checker_isTypeMatchedByTemplateLiteralType, getRecursionIdentity } from "../relater.js";
 import type { RecursionId } from "../relater.js";
 import {
   TypeFlagsTypeParameter,
@@ -1340,7 +1340,7 @@ export function Checker_newSubstitutionType(receiver: GoPtr<Checker>, baseType: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isTypeMatchedByTemplateLiteralOrStringMapping","kind":"method","status":"stub","sigHash":"b32a1831fa6ffa7d2debc1cdc204281754fb9a9590e3aacd554b9f29935ee561","bodyHash":"8cb7bce2613bab2fb72b6a17c62efb807840939a6e6af46363727a3e14a7190d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isTypeMatchedByTemplateLiteralOrStringMapping","kind":"method","status":"implemented","sigHash":"b32a1831fa6ffa7d2debc1cdc204281754fb9a9590e3aacd554b9f29935ee561","bodyHash":"8cb7bce2613bab2fb72b6a17c62efb807840939a6e6af46363727a3e14a7190d"}
  *
  * Go source:
  * func (c *Checker) isTypeMatchedByTemplateLiteralOrStringMapping(t *Type, template *Type) bool {
@@ -1351,7 +1351,10 @@ export function Checker_newSubstitutionType(receiver: GoPtr<Checker>, baseType: 
  * }
  */
 export function Checker_isTypeMatchedByTemplateLiteralOrStringMapping(receiver: GoPtr<Checker>, t: GoPtr<Type>, template: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isTypeMatchedByTemplateLiteralOrStringMapping");
+  if ((template!.flags & TypeFlagsTemplateLiteral) !== 0) {
+    return Checker_isTypeMatchedByTemplateLiteralType(receiver, t, Type_AsTemplateLiteralType(template), receiver!.compareTypesAssignable);
+  }
+  return Checker_isMemberOfStringMapping(receiver, t, template);
 }
 
 /**

@@ -9,14 +9,14 @@ import type { FunctionFlags } from "../../ast/functionflags.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
 import { InternalSymbolNameIndex } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
-import { A_this_type_is_available_only_in_a_non_static_member_of_a_class_or_interface, Duplicate_identifier_0, Duplicate_index_signature_for_type_0, Function_implicitly_has_return_type_any_because_it_does_not_have_a_return_type_annotation_and_is_referenced_directly_or_indirectly_in_one_of_its_return_expressions, Private_identifiers_are_not_allowed_outside_class_bodies, Required_type_parameters_may_not_follow_optional_type_parameters, Return_type_annotation_circularly_references_itself, Tuple_type_arguments_circularly_reference_themselves, Type_0_does_not_satisfy_the_constraint_1, Type_0_is_not_generic, Type_arguments_for_0_circularly_reference_themselves, Type_parameter_defaults_can_only_reference_previously_declared_type_parameters, X_0_implicitly_has_return_type_any_because_it_does_not_have_a_return_type_annotation_and_is_referenced_directly_or_indirectly_in_one_of_its_return_expressions } from "../../diagnostics/generated/messages.js";
+import { A_this_type_is_available_only_in_a_non_static_member_of_a_class_or_interface, Duplicate_identifier_0, Duplicate_index_signature_for_type_0, Function_implicitly_has_return_type_any_because_it_does_not_have_a_return_type_annotation_and_is_referenced_directly_or_indirectly_in_one_of_its_return_expressions, Private_identifiers_are_not_allowed_outside_class_bodies, Required_type_parameters_may_not_follow_optional_type_parameters, Return_type_annotation_circularly_references_itself, Tuple_type_arguments_circularly_reference_themselves, Type_0_does_not_satisfy_the_constraint_1, Type_0_is_not_generic, Type_arguments_for_0_circularly_reference_themselves, Type_parameter_defaults_can_only_reference_previously_declared_type_parameters, X_0_is_declared_but_never_used, X_0_implicitly_has_return_type_any_because_it_does_not_have_a_return_type_annotation_and_is_referenced_directly_or_indirectly_in_one_of_its_return_expressions } from "../../diagnostics/generated/messages.js";
 import { Checker_combineTypeMappers, newTypeMapper, newSimpleTypeMapper, newArrayToSingleTypeMapper } from "../mapper.js";
 import type { TypeMapper } from "../mapper.js";
 import type { Relation } from "../relater.js";
-import { IsTypeAny, isLateBoundName, isTypeAlias, hasDotDotDotToken, isNumericLiteralName, isNodeDescendantOf, getContainingObjectLiteral, nodeStartsNewLexicalEnvironment, isSuperCall, isThisProperty, Checker_callLikeExpressionMayHaveTypeArguments } from "../utilities.js";
+import { IsTypeAny, isLateBoundName, isTypeAlias, hasDotDotDotToken, isNumericLiteralName, isNodeDescendantOf, getContainingObjectLiteral, nodeStartsNewLexicalEnvironment, isSuperCall, isThisProperty, Checker_callLikeExpressionMayHaveTypeArguments, NewDiagnosticForNode } from "../utilities.js";
 import { AccessFlagsContextual, ContextFlagsNone, ContextFlagsSignature, ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_LocalTypeParameters, InterfaceType_OuterTypeParameters, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsMembersResolved, ObjectFlagsNone, ObjectFlagsReference, ObjectFlagsSingleSignatureType, SignatureFlagsNone, SignatureFlagsPropagatingFlags, SignatureFlagsCallChainFlags, SignatureFlagsIsInnerCallChain, SignatureFlagsIsOuterCallChain, SignatureKindCall, SignatureKindConstruct, StructuredType_CallSignatures, StructuredType_ConstructSignatures, TernaryFalse, TypeFlagsAny, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNullable, TypeFlagsObject, TypeFlagsStringLiteral, TypeFlagsStructuredType, TypeFlagsTypeParameter, TypeFlagsTypeVariable, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnionOrIntersection, TypeFlagsVoid, Type_AsInterfaceType, Type_AsIntersectionType, Type_AsMappedType, Type_AsObjectType, Type_AsTypeParameter, Type_AsTypeReference, Type_Distributed, Type_Mapper, Type_Target, Type_TargetInterfaceType, Type_TargetTupleType, Type_Types } from "../types.js";
 import type { ConstrainedType, ContextFlags, DeclaredTypeLinks, IndexInfo, Signature, SignatureFlags, SignatureKind, SignatureLinks, SymbolReferenceLinks, Type, TypeAliasLinks, TypeComparer, TypeData, TypeFlags, TypeParameter, TypePredicate, TypeReference, ValueSymbolLinks } from "../types.js";
-import { CheckModeInferential, CheckModeNormal, CheckModeSkipGenericFunctions, isSpreadArgument, isTupleType, signatureHasRestParameter, thisAssignmentDeclarationNone, thisAssignmentDeclarationTyped, thisAssignmentDeclarationConstructor, thisAssignmentDeclarationMethod, isIdentifierThatStartsWithUnderscore, getStringLiteralValue, isUnitType, hasTypeParameterByName, getUniqueTypeParameterName, SignatureKeyErased, SignatureKeyCanonical, SignatureKeyBase, SignatureKeyInner, SignatureKeyOuter, getTypeListKey, isLateBindableAST, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedTypeArguments, UnionReductionSubtype, IterationTypeKindYield, IterationTypeKindNext, IterationUseGeneratorReturnType, IterationUseAsyncGeneratorReturnType } from "./state.js";
+import { CheckModeInferential, CheckModeNormal, CheckModeSkipContextSensitive, CheckModeSkipGenericFunctions, InferenceFlagsAnyDefault, InferenceFlagsNone, isSpreadArgument, isTupleType, signatureHasRestParameter, thisAssignmentDeclarationNone, thisAssignmentDeclarationTyped, thisAssignmentDeclarationConstructor, thisAssignmentDeclarationMethod, isIdentifierThatStartsWithUnderscore, getStringLiteralValue, isUnitType, hasTypeParameterByName, getUniqueTypeParameterName, SignatureKeyErased, SignatureKeyCanonical, SignatureKeyBase, SignatureKeyInner, SignatureKeyOuter, getTypeListKey, isLateBindableAST, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedTypeArguments, UnionReductionSubtype, IterationTypeKindYield, IterationTypeKindNext, IterationUseGeneratorReturnType, IterationUseAsyncGeneratorReturnType, UnusedKindParameter } from "./state.js";
 import type { CachedSignatureKey, CallState, Checker, CheckMode, InferenceContext, InferencePriority, IterationTypeKind, IterationTypes, IterationUse, thisAssignmentDeclarationKind } from "./state.js";
 import { GetThisParameter, GetNameOfDeclaration, IsFunctionExpressionOrArrowFunction, IsFunctionLikeDeclaration, IsObjectLiteralMethod, IsInJSFile, NodeKindIs, IsAccessExpression, IsFunctionLike, IsOptionalChain, IsOptionalChainRoot, FindAncestorOrQuit, FindAncestorTrue, FindAncestorQuit, FindAncestorFalse, IsCallOrNewExpression, GetThisContainer, GetContainingClass, IsThisParameter, HasAccessorModifier, SkipOuterExpressions, OEKAll, GetAssignmentDeclarationKind, JSDeclarationKindThisProperty, IsStringOrNumericLiteralLike, IsMethodOrAccessor, GetDeclarationOfKind, IsClassLike, IsStatic, GetRestParameterElementType, HasStaticModifier, IsPartOfTypeNode, WalkUpBindingElementsAndPatterns, SkipParentheses, IsEntityNameExpression, GetImmediatelyInvokedFunctionExpression, IsImportCall, IsJsxOpeningLikeElement, NodeIsMissing, GetReparsedNodeForNode } from "../../ast/utilities.js";
 import type { FindAncestorResult } from "../../ast/utilities.js";
@@ -25,7 +25,7 @@ import { SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, NodeFlagsJSDoc, NodeFla
 import { KindUnknown, KindInterfaceDeclaration, KindClassDeclaration, KindClassExpression, KindPropertyDeclaration, KindMethodDeclaration, KindGetAccessor, KindSetAccessor, KindParameter, KindElementAccessExpression, KindCallSignature, KindConstructSignature, KindMethodSignature, KindFunctionType, KindConstructorType, KindFunctionDeclaration, KindFunctionExpression, KindArrowFunction, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindMappedType, KindConditionalType, KindAnyKeyword, KindPropertyAssignment, KindThisKeyword, KindIdentifier, KindPropertyAccessExpression, KindPrefixUnaryExpression, KindMinusToken, KindBigIntLiteral, KindTrueKeyword, KindFalseKeyword, KindArrayLiteralExpression, KindObjectLiteralExpression, KindTemplateExpression, KindPlusToken, KindNoSubstitutionTemplateLiteral, KindStringLiteral, KindNumericLiteral, KindParenthesizedExpression, KindTypeReference, KindArrayType, KindTupleType, KindCallExpression, KindNewExpression, KindTaggedTemplateExpression, KindDecorator, KindJsxOpeningFragment, KindJsxOpeningElement, KindJsxSelfClosingElement, KindBinaryExpression, KindConstructor } from "../../ast/generated/kinds.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
 import { IsNumericLiteral } from "../../ast/generated/predicates.js";
-import { AsArrayTypeNode, AsBinaryExpression, AsElementAccessExpression, AsMappedTypeNode, AsParameterDeclaration, AsPrefixUnaryExpression, AsTaggedTemplateExpression, AsTemplateExpression, AsTypeParameterDeclaration, AsTypeReferenceNode } from "../../ast/generated/casts.js";
+import { AsArrayTypeNode, AsBinaryExpression, AsElementAccessExpression, AsInferTypeNode, AsMappedTypeNode, AsParameterDeclaration, AsPrefixUnaryExpression, AsTaggedTemplateExpression, AsTemplateExpression, AsTypeParameterDeclaration, AsTypeReferenceNode } from "../../ast/generated/casts.js";
 import { Node_End, Node_ForEachChild, Node_FunctionLikeData, Node_Name, Node_Pos } from "../../ast/spine.js";
 import { NewFunctionTypeNode, NewKeywordTypeNode } from "../../ast/generated/factory.js";
 import { Node_Arguments, Node_Attributes, Node_Body, Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Locals, Node_Parameters, Node_Properties, Node_QuestionToken, Node_Symbol, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameters } from "../../ast/ast.js";
@@ -41,7 +41,8 @@ import { Checker_checkExpression, Checker_checkExpressionCached, Checker_createS
 import { Checker_addOptionalityEx, Checker_isContextSensitive } from "./support-queries.js";
 import { Checker_checkTypeAssignableTo, Checker_compareSignaturesIdentical, Checker_compareTypesIdentical, Checker_getParameterCount, Checker_getRestTypeAtPosition, Checker_getTypeAtPosition, Checker_hasEffectiveRestParameter, Checker_isResolvingReturnTypeOfSignature, Checker_isSignatureAssignableTo, Checker_isTypeAssignableTo, Checker_isTypeIdenticalTo, Checker_isTypeRelatedTo, Checker_tryGetTypeAtPosition } from "../relater.js";
 import { Checker_getBaseConstraintOfType, Checker_hasNonCircularBaseConstraint } from "./inference.js";
-import { Checker_checkSourceElements, Checker_error } from "./support.js";
+import { Checker_newInferenceContext } from "../inference.js";
+import { Checker_checkSourceElements, Checker_error, Checker_reportUnused } from "./support.js";
 import { Checker_isErrorType } from "./diagnostics.js";
 import { instantiateList, IterationTypeKindReturn } from "./state.js";
 import { isOptionalDeclaration } from "../utilities.js";
@@ -1230,7 +1231,7 @@ export function Checker_reportUnusedParameters(receiver: GoPtr<Checker>, node: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedInferTypeParameter","kind":"method","status":"stub","sigHash":"4f74196346a558843da08ba5df4dd82c71c6d08326a973d58fcbf614167d562b","bodyHash":"4dce00e451d7575a66ca310244df6b3e1952e6e0435cebc3065e7542712f0849"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedInferTypeParameter","kind":"method","status":"implemented","sigHash":"4f74196346a558843da08ba5df4dd82c71c6d08326a973d58fcbf614167d562b","bodyHash":"4dce00e451d7575a66ca310244df6b3e1952e6e0435cebc3065e7542712f0849"}
  *
  * Go source:
  * func (c *Checker) checkUnusedInferTypeParameter(node *ast.Node) {
@@ -1241,7 +1242,10 @@ export function Checker_reportUnusedParameters(receiver: GoPtr<Checker>, node: G
  * }
  */
 export function Checker_checkUnusedInferTypeParameter(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkUnusedInferTypeParameter");
+  const typeParameter = AsInferTypeNode(node)!.TypeParameter;
+  if (Checker_isUnreferencedTypeParameter(receiver, typeParameter)) {
+    Checker_reportUnused(receiver, node, UnusedKindParameter, NewDiagnosticForNode(Node_Name(typeParameter), X_0_is_declared_but_never_used, Node_Text(Node_Name(typeParameter))));
+  }
 }
 
 /**
@@ -2855,7 +2859,7 @@ export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, type
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.inferSignatureInstantiationForOverloadFailure","kind":"method","status":"stub","sigHash":"e55d2ffad4c11aab49154f5c16b5187a4fc508c3bfe4e17ba9939e883ea5d3ae","bodyHash":"9b5e151ea3969d20225bfa32cee596de6a504f58d0cab65f9992e15fe4d21711"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.inferSignatureInstantiationForOverloadFailure","kind":"method","status":"implemented","sigHash":"e55d2ffad4c11aab49154f5c16b5187a4fc508c3bfe4e17ba9939e883ea5d3ae","bodyHash":"9b5e151ea3969d20225bfa32cee596de6a504f58d0cab65f9992e15fe4d21711"}
  *
  * Go source:
  * func (c *Checker) inferSignatureInstantiationForOverloadFailure(node *ast.Node, typeParameters []*Type, candidate *Signature, args []*ast.Node, checkMode CheckMode) *Signature {
@@ -2865,7 +2869,9 @@ export function Checker_getTypeArgumentsFromNodes(receiver: GoPtr<Checker>, type
  * }
  */
 export function Checker_inferSignatureInstantiationForOverloadFailure(receiver: GoPtr<Checker>, node: GoPtr<Node>, typeParameters: GoSlice<GoPtr<Type>>, candidate: GoPtr<Signature>, args: GoSlice<GoPtr<Node>>, checkMode: CheckMode): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.inferSignatureInstantiationForOverloadFailure");
+  const inferenceContext = Checker_newInferenceContext(receiver, typeParameters, candidate, core.IfElse(IsInJSFile(node), InferenceFlagsAnyDefault, InferenceFlagsNone), receiver!.compareTypesAssignable);
+  const typeArgumentTypes = Checker_inferTypeArguments(receiver, node, candidate, args, checkMode | CheckModeSkipContextSensitive | CheckModeSkipGenericFunctions, inferenceContext);
+  return Checker_createSignatureInstantiation(receiver, candidate, typeArgumentTypes);
 }
 
 /**

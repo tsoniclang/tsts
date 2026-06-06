@@ -2123,7 +2123,7 @@ export function Checker_reportMergeSymbolError(receiver: GoPtr<Checker>, target:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationErrorsForSymbols","kind":"method","status":"stub","sigHash":"f12c76e0036acbe20e1e1540c488e1a181c145b25caa8fa7cc9b18ef51c6e3ad","bodyHash":"27d829d016d418ad1a1c852cadc7eaaf2503b7df3bc4fe30d25a6e5117c949fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationErrorsForSymbols","kind":"method","status":"implemented","sigHash":"f12c76e0036acbe20e1e1540c488e1a181c145b25caa8fa7cc9b18ef51c6e3ad","bodyHash":"27d829d016d418ad1a1c852cadc7eaaf2503b7df3bc4fe30d25a6e5117c949fc"}
  *
  * Go source:
  * func (c *Checker) addDuplicateDeclarationErrorsForSymbols(target *ast.Symbol, message *diagnostics.Message, symbolName string, source *ast.Symbol) {
@@ -2133,7 +2133,9 @@ export function Checker_reportMergeSymbolError(receiver: GoPtr<Checker>, target:
  * }
  */
 export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<Checker>, target: GoPtr<Symbol>, message: GoPtr<Message>, symbolName: string, source: GoPtr<Symbol>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addDuplicateDeclarationErrorsForSymbols");
+  for (const node of target!.Declarations) {
+    Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations);
+  }
 }
 
 /**

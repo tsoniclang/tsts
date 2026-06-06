@@ -9081,7 +9081,7 @@ export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypesToIntersection","kind":"method","status":"stub","sigHash":"1b4c129e7348a15819440c4a584a6fc0548aca1afa182cdaa59bc3b9b06d713e","bodyHash":"f41f28cb614683aa627c2a3517b5058eef12aff695410b50d431663f2c11e2a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypesToIntersection","kind":"method","status":"implemented","sigHash":"1b4c129e7348a15819440c4a584a6fc0548aca1afa182cdaa59bc3b9b06d713e","bodyHash":"f41f28cb614683aa627c2a3517b5058eef12aff695410b50d431663f2c11e2a0"}
  *
  * Go source:
  * func (c *Checker) addTypesToIntersection(typeSet *orderedSet[*Type], includes TypeFlags, types []*Type) TypeFlags {
@@ -9092,7 +9092,10 @@ export function Checker_getIntersectionTypeEx(receiver: GoPtr<Checker>, types: G
  * }
  */
 export function Checker_addTypesToIntersection(receiver: GoPtr<Checker>, typeSet: GoPtr<orderedSet<GoPtr<Type>>>, includes: TypeFlags, types: GoSlice<GoPtr<Type>>): TypeFlags {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.addTypesToIntersection");
+  for (const t of types) {
+    includes = Checker_addTypeToIntersection(receiver, typeSet, includes, Checker_getRegularTypeOfLiteralType(receiver, t));
+  }
+  return includes;
 }
 
 /**
@@ -10920,7 +10923,7 @@ export function Checker_newClassAccessorDecoratorResultType(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorInitializerMutatorType","kind":"method","status":"stub","sigHash":"71a967b58cecd22dcafefde8fa9d1ba1c5cc278a7ddd09b59a7b9c24fe3dd5d3","bodyHash":"a1a9029ab3a888c4c8059dfea37d03c748a52a85f899290d8b7b936f5f6fa8fb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorInitializerMutatorType","kind":"method","status":"implemented","sigHash":"71a967b58cecd22dcafefde8fa9d1ba1c5cc278a7ddd09b59a7b9c24fe3dd5d3","bodyHash":"a1a9029ab3a888c4c8059dfea37d03c748a52a85f899290d8b7b936f5f6fa8fb"}
  *
  * Go source:
  * func (c *Checker) newClassFieldDecoratorInitializerMutatorType(thisType *Type, valueType *Type) *Type {
@@ -10930,7 +10933,9 @@ export function Checker_newClassAccessorDecoratorResultType(receiver: GoPtr<Chec
  * }
  */
 export function Checker_newClassFieldDecoratorInitializerMutatorType(receiver: GoPtr<Checker>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassFieldDecoratorInitializerMutatorType");
+  const thisParam = Checker_newParameter(receiver, "this", thisType);
+  const valueParam = Checker_newParameter(receiver, "value", valueType);
+  return Checker_newFunctionType(receiver, [], thisParam, [valueParam], valueType);
 }
 
 /**

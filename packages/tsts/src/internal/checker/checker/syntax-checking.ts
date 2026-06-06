@@ -11,6 +11,7 @@ import {
   AsVariableDeclarationList, AsPrefixUnaryExpression, AsPostfixUnaryExpression,
   AsYieldExpression, AsConditionalExpression,
 } from "../../ast/generated/casts.js";
+import { NewSyntheticExpression } from "../../ast/generated/factory.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import { NodeFlagsAwaitContext, NodeFlagsOptionalChain, NodeFlagsUnreachable } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
@@ -60,7 +61,7 @@ import {
   Checker_checkForDisallowedESSymbolOperand, Checker_getIndexTypeOrString,
   Checker_checkAccessorDeclaration, Checker_checkUnusedIdentifiers,
   Checker_reportUnusedVariableDeclarations, Checker_isUnreferencedVariableDeclaration,
-  Checker_getIndexedAccessType, Checker_needCollisionCheckForIdentifier,
+  Checker_getIndexedAccessType, Checker_getTargetOfAliasLikeExpression, Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_needCollisionCheckForIdentifier,
 } from "./symbols.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType } from "./flow-narrowing.js";
 import { Checker_isCanceled, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression } from "../utilities.js";
@@ -2509,7 +2510,7 @@ export function Checker_errorAndMaybeSuggestAwait(receiver: GoPtr<Checker>, loca
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfBinaryExpression","kind":"method","status":"stub","sigHash":"0cb217e14c391a4307d10d566e761c78e1d3f97196406d399da90553db35a05d","bodyHash":"36bfce0e0e69d970feda69bbb9d94ae460eb311553a405e9d8a7388982c88cd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfBinaryExpression","kind":"method","status":"implemented","sigHash":"0cb217e14c391a4307d10d566e761c78e1d3f97196406d399da90553db35a05d","bodyHash":"36bfce0e0e69d970feda69bbb9d94ae460eb311553a405e9d8a7388982c88cd7"}
  *
  * Go source:
  * func (c *Checker) getTargetOfBinaryExpression(node *ast.Node) *ast.Symbol {
@@ -2519,7 +2520,9 @@ export function Checker_errorAndMaybeSuggestAwait(receiver: GoPtr<Checker>, loca
  * }
  */
 export function Checker_getTargetOfBinaryExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfBinaryExpression");
+  const resolved = Checker_getTargetOfAliasLikeExpression(receiver, AsBinaryExpression(node)!.Right);
+  Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, node, undefined);
+  return resolved;
 }
 
 /**
@@ -2620,7 +2623,7 @@ export function Checker_functionHasImplicitReturn(receiver: GoPtr<Checker>, fn: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createSyntheticExpression","kind":"method","status":"stub","sigHash":"498d8adf5c09fc185a554b330e587522c3396f24a5253ee0014fdb01d568c88e","bodyHash":"6d298c87aee2ce6a79cfd63613d951be14408a0db356f8f9286bac2021173b0a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createSyntheticExpression","kind":"method","status":"implemented","sigHash":"498d8adf5c09fc185a554b330e587522c3396f24a5253ee0014fdb01d568c88e","bodyHash":"6d298c87aee2ce6a79cfd63613d951be14408a0db356f8f9286bac2021173b0a"}
  *
  * Go source:
  * func (c *Checker) createSyntheticExpression(parent *ast.Node, t *Type, isSpread bool, tupleNameSource *ast.Node) *ast.Node {
@@ -2631,7 +2634,10 @@ export function Checker_functionHasImplicitReturn(receiver: GoPtr<Checker>, fn: 
  * }
  */
 export function Checker_createSyntheticExpression(receiver: GoPtr<Checker>, parent: GoPtr<Node>, t: GoPtr<Type>, isSpread: bool, tupleNameSource: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.createSyntheticExpression");
+  const result = NewSyntheticExpression(receiver!.factory, t, isSpread, tupleNameSource);
+  result!.Loc = parent!.Loc;
+  result!.Parent = parent;
+  return result;
 }
 
 /**
