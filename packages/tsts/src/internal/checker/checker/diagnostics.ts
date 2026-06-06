@@ -9,7 +9,7 @@ import { Diagnostic_AddRelatedInfo, Diagnostic_Clone, Diagnostic_RelatedInformat
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import { CompareDiagnostics } from "../../ast/diagnostic.js";
 import { GetFunctionFlags, FunctionFlagsGenerator, FunctionFlagsAsync } from "../../ast/functionflags.js";
-import { KindCallExpression, KindClassDeclaration, KindClassExpression, KindDecorator, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindJsxOpeningElement, KindJsxSelfClosingElement, KindMethodDeclaration, KindModuleDeclaration, KindNewExpression, KindNullKeyword, KindParameter, KindPropertyAccessExpression, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment, KindTaggedTemplateExpression, KindTypeReference } from "../../ast/generated/kinds.js";
+import { KindCallExpression, KindClassDeclaration, KindClassExpression, KindDecorator, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExportSpecifier, KindExtendsKeyword, KindGetAccessor, KindImplementsKeyword, KindInterfaceDeclaration, KindJsxOpeningElement, KindJsxSelfClosingElement, KindMethodDeclaration, KindModuleDeclaration, KindNewExpression, KindNullKeyword, KindParameter, KindPropertyAccessExpression, KindPropertyDeclaration, KindSetAccessor, KindShorthandPropertyAssignment, KindTaggedTemplateExpression, KindTypeReference, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/kind_generated.js";
 import { NodeFlagsUnreachable } from "../../ast/nodeflags.js";
 import { IsCallExpression, IsConstructorDeclaration, IsDecorator, IsExportDeclaration, IsExportSpecifier, IsForOfStatement, IsHeritageClause, IsIdentifier, IsJsxOpeningFragment, IsNamespaceExport, IsNewExpression, IsParameterDeclaration, IsPropertyAccessExpression, IsQualifiedName, IsStringLiteral } from "../../ast/generated/predicates.js";
@@ -1694,7 +1694,7 @@ export function Checker_checkAndReportErrorForExtendingInterface(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorError","kind":"method","status":"stub","sigHash":"a7c7c1b0211997659807933f04fa406aa32278ecf2cb096bbbf9497de5683c6b","bodyHash":"024af0855171af1ceae383f977b1e4a9bb989d55792d01913c7dc81353077d13"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorError","kind":"method","status":"implemented","sigHash":"a7c7c1b0211997659807933f04fa406aa32278ecf2cb096bbbf9497de5683c6b","bodyHash":"024af0855171af1ceae383f977b1e4a9bb989d55792d01913c7dc81353077d13"}
  *
  * Go source:
  * func (c *Checker) reportOperatorError(leftType *Type, operator ast.Kind, rightType *Type, errorNode *ast.Node, isRelated func(left *Type, right *Type) bool) {
@@ -1718,8 +1718,30 @@ export function Checker_checkAndReportErrorForExtendingInterface(receiver: GoPtr
  * 	}
  * }
  */
-export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, isRelated: (left: GoPtr<Type>, right: GoPtr<Type>) => bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.reportOperatorError");
+export function Checker_reportOperatorError(receiver: GoPtr<Checker>, leftType: GoPtr<Type>, operator: Kind, rightType: GoPtr<Type>, errorNode: GoPtr<Node>, isRelated: ((left: GoPtr<Type>, right: GoPtr<Type>) => bool) | undefined): void {
+  let wouldWorkWithAwait = false;
+  if (isRelated !== undefined) {
+    const awaitedLeftType = Checker_getAwaitedTypeNoAlias(receiver, leftType);
+    const awaitedRightType = Checker_getAwaitedTypeNoAlias(receiver, rightType);
+    wouldWorkWithAwait = !((awaitedLeftType === leftType) && (awaitedRightType === rightType)) && awaitedLeftType !== undefined && awaitedRightType !== undefined && isRelated(awaitedLeftType, awaitedRightType);
+  }
+  let effectiveLeft = leftType;
+  let effectiveRight = rightType;
+  if (!wouldWorkWithAwait && isRelated !== undefined) {
+    [effectiveLeft, effectiveRight] = Checker_getBaseTypesIfUnrelated(receiver, leftType, rightType, isRelated);
+  }
+  const [leftStr, rightStr] = Checker_getTypeNamesForErrorDisplay(receiver, effectiveLeft, effectiveRight);
+  switch (operator) {
+    case KindEqualsEqualsEqualsToken:
+    case KindEqualsEqualsToken:
+    case KindExclamationEqualsEqualsToken:
+    case KindExclamationEqualsToken:
+      Checker_errorAndMaybeSuggestAwait(receiver, errorNode, wouldWorkWithAwait, This_comparison_appears_to_be_unintentional_because_the_types_0_and_1_have_no_overlap, leftStr, rightStr);
+      break;
+    default:
+      Checker_errorAndMaybeSuggestAwait(receiver, errorNode, wouldWorkWithAwait, Operator_0_cannot_be_applied_to_types_1_and_2, TokenToString(operator), leftStr, rightStr);
+      break;
+  }
 }
 
 /**
