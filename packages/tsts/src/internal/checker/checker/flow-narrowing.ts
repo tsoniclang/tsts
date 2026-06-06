@@ -2,7 +2,7 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Name } from "../../ast/spine.js";
-import { Node_Body, Node_Elements, Node_Expression, Node_ModifierFlags, Node_Text, Node_Type } from "../../ast/ast.js";
+import { Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_ModifierFlags, Node_Parameters, Node_Text, Node_Type } from "../../ast/ast.js";
 import type { SignatureDeclaration } from "../../ast/generated/unions.js";
 import {
   KindArrowFunction,
@@ -44,11 +44,12 @@ import {
 import { CheckFlagsHasNeverType, CheckFlagsNonUniformAndLiteral } from "../../ast/checkflags.js";
 import { GetFunctionFlags, FunctionFlagsNormal } from "../../ast/functionflags.js";
 import { ModifierFlagsAmbient } from "../../ast/modifierflags.js";
-import { IsArrayBindingPattern, IsBinaryExpression, IsBlock, IsConditionalTypeNode, IsConstructorDeclaration, IsIdentifier, IsMappedTypeNode, IsModuleBlock, IsObjectBindingPattern, IsParameterDeclaration, IsPropertyAccessExpression, IsPropertyDeclaration, IsSourceFile, IsTypeAssertion } from "../../ast/generated/predicates.js";
+import { IsArrayBindingPattern, IsBinaryExpression, IsBindingElement, IsBlock, IsConditionalTypeNode, IsConstructorDeclaration, IsIdentifier, IsMappedTypeNode, IsModuleBlock, IsObjectBindingPattern, IsParameterDeclaration, IsPropertyAccessExpression, IsPropertyDeclaration, IsSourceFile, IsTypeAssertion, IsVariableDeclaration } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
-import { NodeFlagsAmbient, SymbolFlagsAccessor, SymbolFlagsEnum, SymbolFlagsMethod, SymbolFlagsOptional, SymbolFlagsProperty, SymbolFlagsVariable } from "../../ast/generated/flags.js";
-import { AsBinaryExpression, AsConditionalExpression, AsConditionalTypeNode, AsMappedTypeNode } from "../../ast/generated/casts.js";
-import { FindAncestor, ForEachReturnStatement, GetImmediatelyInvokedFunctionExpression, IsAccessExpression, IsFunctionLike, IsLogicalOrCoalescingBinaryExpression, IsModuleExportsAccessExpression, IsStatement, IsStatic, OEKAll, SkipOuterExpressions, SkipParentheses } from "../../ast/utilities.js";
+import type { Diagnostic } from "../../ast/diagnostic.js";
+import { NodeFlagsAmbient, NodeFlagsConstant, SymbolFlagsAccessor, SymbolFlagsEnum, SymbolFlagsMethod, SymbolFlagsOptional, SymbolFlagsProperty, SymbolFlagsVariable } from "../../ast/generated/flags.js";
+import { AsBinaryExpression, AsConditionalExpression, AsConditionalTypeNode, AsMappedTypeNode, AsTypePredicateNode } from "../../ast/generated/casts.js";
+import { FindAncestor, ForEachReturnStatement, GetImmediatelyInvokedFunctionExpression, GetRootDeclaration, GetThisParameter, IsAccessExpression, IsFunctionLike, IsLogicalOrCoalescingBinaryExpression, IsModuleExportsAccessExpression, IsStatement, IsStatic, OEKAll, SkipOuterExpressions, SkipParentheses } from "../../ast/utilities.js";
 import {
   TypeFlagsAnyOrUnknown,
   TypeFlagsBigInt,
@@ -67,13 +68,19 @@ import {
   TypeFlagsVoid,
   Type_AsLiteralType,
   Type_AsSubstitutionType,
+  TypePredicateKindAssertsThis,
+  TypePredicateKindThis,
   SignatureKindCall,
+  NodeCheckFlagsInCheckIdentifier,
+  type NodeLinks,
 } from "../types.js";
 import type { Type, TypePredicate } from "../types.js";
-import { Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx } from "../flow.js";
-import { AssignmentKindDefinite, AssignmentKindNone, getAssignmentTargetKind } from "../utilities.js";
+import { Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx, getFlowNodeOfNode } from "../flow.js";
+import { AssignmentKindDefinite, AssignmentKindNone, getAssignmentTargetKind, hasDotDotDotToken } from "../utilities.js";
+import { LinkStore_Get, type LinkStore } from "../../core/linkstore.js";
 import {
   Checker_getBaseConstraintOrType,
+  Checker_getInferenceContext,
   Checker_getImpliedConstraint,
   Checker_getSubstitutionType,
   Checker_isConstraintPosition,
@@ -81,29 +88,36 @@ import {
   Checker_isNoInferType,
 } from "./inference.js";
 import { IsTruthy } from "../../evaluator/evaluator.js";
-import { Checker_getTypeNameForErrorDisplay } from "../relater.js";
-import { Checker_checkIfExpressionRefinesAnyParameter, Checker_getConstraintOfTypeParameter, Checker_getSignaturesOfType, Checker_getTypeParameterFromMappedType } from "./signatures.js";
-import { Checker_getSyntheticElementAccess, Checker_getResolvedSymbolOrNil, Checker_getSymbolAtLocation, Checker_getTypeOfPropertyInBaseClass, Checker_getTypeOfSymbol, Checker_isAutoTypedProperty, Checker_isPropertyWithoutInitializer, Checker_isSymbolUsedInBinaryExpressionChain, Checker_isSymbolUsedInConditionBody } from "./symbols.js";
+import { Checker_checkTypeAssignableToEx, Checker_getTypeNameForErrorDisplay, Checker_getTypePredicateOfSignature } from "../relater.js";
+import { Checker_checkIfExpressionRefinesAnyParameter, Checker_getConstraintOfTypeParameter, Checker_getContextualSignature, Checker_getSignatureFromDeclaration, Checker_getSignaturesOfType, Checker_getTypeParameterFromMappedType } from "./signatures.js";
+import { Checker_getSyntheticElementAccess, Checker_getIndexedAccessType, Checker_getResolvedSymbolOrNil, Checker_getSymbolAtLocation, Checker_getTypeOfPropertyInBaseClass, Checker_getTypeOfSymbol, Checker_isAutoTypedProperty, Checker_isPropertyWithoutInitializer, Checker_isSomeSymbolAssigned, Checker_isSymbolUsedInBinaryExpressionChain, Checker_isSymbolUsedInConditionBody } from "./symbols.js";
 import { Checker_checkExpression, Checker_checkExpressionEx, Checker_errorAndMaybeSuggestAwait, Checker_functionHasImplicitReturn } from "./syntax-checking.js";
 import {
   Checker_filterType,
   Checker_getActualTypeVariable,
   Checker_getAwaitedTypeOfPromise,
   Checker_getBaseTypeOfLiteralType,
+  Checker_getBindingElementTypeFromParentType,
   Checker_getHomomorphicTypeVariable,
   Checker_getIntersectionType,
+  Checker_getNumberLiteralType,
   Checker_getOptionalType,
+  Checker_getReducedApparentType,
+  Checker_getTypeForBindingElementParent,
   Checker_getTypeFromTypeNode,
   Checker_getUnionType,
   Checker_hasContextualTypeWithNoGenericTypes,
   Checker_hasTypeFacts,
   Checker_containsUndefinedType,
   Checker_isArrayOrTupleType,
+  Checker_isContextSensitiveFunctionOrObjectLiteralMethod,
+  Checker_instantiateType,
   Checker_mapType,
   Checker_removeMissingType,
 } from "./types.js";
 import {
   CheckModeInferential,
+  CheckModeNormal,
   PredicateSemanticsAlways,
   PredicateSemanticsNever,
   PredicateSemanticsSometimes,
@@ -112,15 +126,22 @@ import {
   getNumberLiteralValue,
   getStringLiteralValue,
   isZeroBigInt,
+  isTupleType,
+  signatureHasRestParameter,
   someType,
 } from "./state.js";
 import type { Checker, CheckMode, PredicateSemantics } from "./state.js";
 import { Checker_getResolvedSymbol } from "./symbols.js";
-import { Checker_error } from "./support.js";
+import { Checker_checkSourceElement, Checker_error } from "./support.js";
 import { Checker_symbolToString } from "../printer.js";
+import { DiagnosticsCollection_Add, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import {
   A_type_predicate_cannot_reference_element_0_in_a_binding_pattern,
+  A_type_predicate_cannot_reference_a_rest_parameter,
+  A_type_predicate_is_only_allowed_in_return_type_position_for_functions_and_methods,
+  A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type,
   An_expression_of_type_void_cannot_be_tested_for_truthiness,
+  Cannot_find_parameter_0,
   This_condition_will_always_return_0,
   This_condition_will_always_return_true_since_this_0_is_always_defined,
   This_condition_will_always_return_true_since_this_function_is_always_defined_Did_you_mean_to_call_it_instead,
@@ -130,7 +151,7 @@ import {
 } from "../../diagnostics/generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"stub","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d","bodyHash":"66802dea0e176c6062ef7e0b44d9d10f2f2a8c9b1bae7d16b006c6d05b9c3044"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate","kind":"method","status":"implemented","sigHash":"6da97a8a624e73d4a6eb203ec1af1e20c6662fbe42888fcc923e66c300d1fe8d","bodyHash":"66802dea0e176c6062ef7e0b44d9d10f2f2a8c9b1bae7d16b006c6d05b9c3044"}
  *
  * Go source:
  * func (c *Checker) checkTypePredicate(node *ast.Node) {
@@ -176,7 +197,43 @@ import {
  * }
  */
 export function Checker_checkTypePredicate(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypePredicate");
+  const parent = Checker_getTypePredicateParent(receiver, node);
+  if (parent === undefined) {
+    Checker_error(receiver, node, A_type_predicate_is_only_allowed_in_return_type_position_for_functions_and_methods);
+    return;
+  }
+  const signature = Checker_getSignatureFromDeclaration(receiver, parent);
+  const typePredicate = Checker_getTypePredicateOfSignature(receiver, signature);
+  if (typePredicate === undefined) {
+    return;
+  }
+  Checker_checkSourceElement(receiver, Node_Type(node));
+  const parameterName = AsTypePredicateNode(node)!.ParameterName;
+  if (typePredicate!.kind !== TypePredicateKindThis && typePredicate!.kind !== TypePredicateKindAssertsThis) {
+    if (typePredicate!.parameterIndex >= 0) {
+      if (signatureHasRestParameter(signature) && typePredicate!.parameterIndex === signature!.parameters.length - 1) {
+        Checker_error(receiver, parameterName, A_type_predicate_cannot_reference_a_rest_parameter);
+      } else if (typePredicate!.t !== undefined) {
+        const diags: GoSlice<GoPtr<Diagnostic>> = [];
+        if (!Checker_checkTypeAssignableToEx(receiver, typePredicate!.t, Checker_getTypeOfSymbol(receiver, signature!.parameters[typePredicate!.parameterIndex]), Node_Type(node), undefined, diags)) {
+          DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnosticChain(diags[0], A_type_predicate_s_type_must_be_assignable_to_its_parameter_s_type));
+        }
+      }
+    } else if (parameterName !== undefined) {
+      let hasReportedError = false;
+      for (const param of Node_Parameters(parent)) {
+        const name = Node_Name(param);
+        if (name !== undefined && (IsArrayBindingPattern(name) || IsObjectBindingPattern(name)) &&
+          Checker_checkIfTypePredicateVariableIsDeclaredInBindingPattern(receiver, name, parameterName, typePredicate!.parameterName)) {
+          hasReportedError = true;
+          break;
+        }
+      }
+      if (!hasReportedError) {
+        Checker_error(receiver, parameterName, Cannot_find_parameter_0, typePredicate!.parameterName);
+      }
+    }
+  }
 }
 
 /**
@@ -671,7 +728,7 @@ export function Checker_getSyntacticTruthySemantics(receiver: GoPtr<Checker>, no
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowedTypeOfSymbol","kind":"method","status":"stub","sigHash":"f4c9e392b97bbeb538d53422c8b7eead4cda331c7d3d8f5ae3c1539625803c95","bodyHash":"3b57dff7398bcc232b7702297e377daa7516e57b558d6c29e6612e738772c5df"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowedTypeOfSymbol","kind":"method","status":"implemented","sigHash":"f4c9e392b97bbeb538d53422c8b7eead4cda331c7d3d8f5ae3c1539625803c95","bodyHash":"3b57dff7398bcc232b7702297e377daa7516e57b558d6c29e6612e738772c5df"}
  *
  * Go source:
  * func (c *Checker) getNarrowedTypeOfSymbol(symbol *ast.Symbol, location *ast.Node) *Type {
@@ -773,7 +830,78 @@ export function Checker_getSyntacticTruthySemantics(receiver: GoPtr<Checker>, no
  * }
  */
 export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, location: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getNarrowedTypeOfSymbol");
+  let t = Checker_getTypeOfSymbol(receiver, symbol_);
+  const declaration = symbol_!.ValueDeclaration;
+  if (declaration !== undefined) {
+    if (
+      IsBindingElement(declaration) &&
+      Node_Initializer(declaration) === undefined &&
+      !hasDotDotDotToken(declaration) &&
+      (Node_Elements(declaration!.Parent) ?? []).length >= 2
+    ) {
+      const parent = declaration!.Parent!.Parent;
+      const rootDeclaration = GetRootDeclaration(parent);
+      if (
+        (IsVariableDeclaration(rootDeclaration) && (rootDeclaration!.Flags & NodeFlagsConstant) !== 0) ||
+        IsParameterDeclaration(rootDeclaration)
+      ) {
+        const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
+        if ((links.flags & NodeCheckFlagsInCheckIdentifier) === 0) {
+          links.flags |= NodeCheckFlagsInCheckIdentifier;
+          const parentType = Checker_getTypeForBindingElementParent(receiver, parent, CheckModeNormal);
+          let parentTypeConstraint: GoPtr<Type>;
+          if (parentType !== undefined) {
+            parentTypeConstraint = Checker_mapType(receiver, parentType, (tt) => Checker_getBaseConstraintOrType(receiver, tt));
+          }
+          if (
+            parentTypeConstraint !== undefined &&
+            (parentTypeConstraint!.flags & TypeFlagsUnion) !== 0 &&
+            !(IsParameterDeclaration(rootDeclaration) && Checker_isSomeSymbolAssigned(receiver, rootDeclaration))
+          ) {
+            const pattern = declaration!.Parent;
+            const narrowedType = Checker_getFlowTypeOfReferenceEx(receiver, pattern, parentTypeConstraint, parentTypeConstraint, undefined, getFlowNodeOfNode(location));
+            if ((narrowedType!.flags & TypeFlagsNever) !== 0) {
+              t = receiver!.neverType;
+            } else {
+              t = Checker_getBindingElementTypeFromParentType(receiver, declaration, narrowedType, true);
+            }
+          }
+          links.flags &= ~NodeCheckFlagsInCheckIdentifier;
+        }
+      }
+    } else if (
+      IsParameterDeclaration(declaration) &&
+      Node_Type(declaration) === undefined &&
+      Node_Initializer(declaration) === undefined &&
+      !hasDotDotDotToken(declaration)
+    ) {
+      const fn = declaration!.Parent;
+      if (
+        (Node_Parameters(fn) ?? []).length >= 2 &&
+        Checker_isContextSensitiveFunctionOrObjectLiteralMethod(receiver, fn)
+      ) {
+        const contextualSignature = Checker_getContextualSignature(receiver, fn);
+        if (contextualSignature !== undefined && contextualSignature!.parameters.length === 1 && signatureHasRestParameter(contextualSignature)) {
+          let mapper = undefined;
+          const context = Checker_getInferenceContext(receiver, fn);
+          if (context !== undefined) {
+            mapper = context!.nonFixingMapper;
+          }
+          const restType = Checker_getReducedApparentType(receiver, Checker_instantiateType(receiver, Checker_getTypeOfSymbol(receiver, contextualSignature!.parameters[0]), mapper));
+          if (
+            (restType!.flags & TypeFlagsUnion) !== 0 &&
+            everyType(restType, isTupleType) &&
+            !(Node_Parameters(fn) ?? []).some((param) => Checker_isSomeSymbolAssigned(receiver, param))
+          ) {
+            const narrowedType = Checker_getFlowTypeOfReferenceEx(receiver, fn, restType, restType, undefined, getFlowNodeOfNode(location));
+            const index = (Node_Parameters(fn) ?? []).indexOf(declaration) - (GetThisParameter(fn) !== undefined ? 1 : 0);
+            t = Checker_getIndexedAccessType(receiver, narrowedType, Checker_getNumberLiteralType(receiver, index));
+          }
+        }
+      }
+    }
+  }
+  return t;
 }
 
 /**
