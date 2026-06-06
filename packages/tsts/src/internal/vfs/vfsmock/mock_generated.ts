@@ -10,7 +10,24 @@ import type { Entries, FileInfo, FS, WalkDirFunc } from "../vfs.js";
  * Go source:
  * var _ vfs.FS = &FSMock{}
  */
-export let __611a48db_0: FS = undefined as never;
+export let __611a48db_0: FS = FSMock_as_vfs_FS(undefined);
+
+export function FSMock_as_vfs_FS(receiver: GoPtr<FSMock>): FS {
+  return {
+    UseCaseSensitiveFileNames: (): bool => FSMock_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => FSMock_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => FSMock_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => FSMock_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => FSMock_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => FSMock_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => FSMock_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => FSMock_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => FSMock_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => FSMock_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => FSMock_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => FSMock_Realpath(receiver, path),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfsmock/mock_generated.go::type::FSMock","kind":"type","status":"implemented","sigHash":"63137d3b9716b0d6541d9642ae022defa81415558200782dbaf65612ae45fa6b","bodyHash":"237f4b01b75bf87a26cb7cd26c4f96e0d6a5e3cb5190d95e3b50d7452063626d"}

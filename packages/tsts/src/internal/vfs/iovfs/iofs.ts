@@ -53,8 +53,7 @@ export interface WritableFS {
  * 	FSys() fs.FS
  * }
  */
-export interface FsWithSys {
-  readonly __tsgoEmbedded0?: FS_f717df58;
+export interface FsWithSys extends FS_f717df58 {
   FSys(): FS;
 }
 
@@ -226,13 +225,13 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
     common: {
       RootFor: (root: string): FS => {
         if (root === "/") {
-          return fsys as unknown as FS;
+          return fsys;
         }
         // Remove trailing directory separator from root
         const p = root.replace(/[/\\]$/, "");
         void p;
         // In TS port we cannot call fs.Sub; return the fsys itself (URLs return undefined)
-        return fsys as unknown as FS;
+        return fsys;
       },
       IsReparsePoint: undefined as unknown as (path: string) => bool,
     },
@@ -243,9 +242,9 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
     mkdirAll,
     remove,
     chtimes,
-    fsys: fsys as unknown as FS,
+    fsys,
   };
-  return result as unknown as FsWithSys;
+  return ioFS_as_FsWithSys(result);
 }
 
 /**
@@ -283,7 +282,31 @@ export interface ioFS {
  * Go source:
  * var _ FsWithSys = (*ioFS)(nil)
  */
-export const __90decee0_0: FsWithSys = undefined as never; // compile-time interface check; no-op in TS
+export const __90decee0_0: FsWithSys = ioFS_as_FsWithSys(undefined);
+
+export function ioFS_as_vfs_FS(receiver: GoPtr<ioFS>): FS_f717df58 {
+  return {
+    UseCaseSensitiveFileNames: (): bool => ioFS_UseCaseSensitiveFileNames(receiver),
+    FileExists: (path: string): bool => ioFS_FileExists(receiver, path),
+    ReadFile: (path: string): [string, bool] => ioFS_ReadFile(receiver, path),
+    WriteFile: (path: string, data: string): GoError => ioFS_WriteFile(receiver, path, data),
+    AppendFile: (path: string, data: string): GoError => ioFS_AppendFile(receiver, path, data),
+    Remove: (path: string): GoError => ioFS_Remove(receiver, path),
+    Chtimes: (path: string, aTime: Time, mTime: Time): GoError => ioFS_Chtimes(receiver, path, aTime, mTime),
+    DirectoryExists: (path: string): bool => ioFS_DirectoryExists(receiver, path),
+    GetAccessibleEntries: (path: string): Entries => ioFS_GetAccessibleEntries(receiver, path),
+    Stat: (path: string): GoPtr<FileInfo> => ioFS_Stat(receiver, path),
+    WalkDir: (root: string, walkFn: WalkDirFunc): GoError => ioFS_WalkDir(receiver, root, walkFn),
+    Realpath: (path: string): string => ioFS_Realpath(receiver, path),
+  };
+}
+
+export function ioFS_as_FsWithSys(receiver: GoPtr<ioFS>): FsWithSys {
+  return {
+    ...ioFS_as_vfs_FS(receiver),
+    FSys: (): FS => ioFS_FSys(receiver),
+  };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/iovfs/iofs.go::method::ioFS.UseCaseSensitiveFileNames","kind":"method","status":"implemented","sigHash":"81df6f6759fef0aa41afeeb986d4e25141847b8799dd8ed704195a2bb8c42839","bodyHash":"536622fb3cbb19cad130e8b6234afc2739624b6069af48f202c0e5f9fc334446"}

@@ -25,9 +25,10 @@ import {
   ParsedCommandLine_ReloadFileNamesOfParsedCommandLine,
 } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
-import { From as cachedvfsFrom, FS_DisableAndClearCache } from "../vfs/cachedvfs/cachedvfs.js";
+import { From as cachedvfsFrom, FS_as_vfs_FS as cachedvfsAsVfsFS, FS_DisableAndClearCache } from "../vfs/cachedvfs/cachedvfs.js";
 import type { FS as VfsFS } from "../vfs/vfs.js";
 import type { FS as TrackingFS } from "../vfs/trackingvfs/trackingvfs.js";
+import { FS_as_vfs_FS as trackingFSAsVfsFS } from "../vfs/trackingvfs/trackingvfs.js";
 import type { FileWatcher, WatchEntry } from "../vfs/vfswatch/vfswatch.js";
 import {
   NewFileWatcher,
@@ -422,12 +423,12 @@ export function Watcher_doBuild(receiver: GoPtr<Watcher>): void {
   const cached = cachedvfsFrom(receiver!.sys.FS());
   const tfsSeenFiles: SyncSet<string> = newSyncSet<string>();
   const tfs: TrackingFS = {
-    Inner: cached as never,
+    Inner: cachedvfsAsVfsFS(cached),
     SeenFiles: tfsSeenFiles,
   };
   const innerHost = NewCompilerHost(
     receiver!.sys.GetCurrentDirectory(),
-    tfs as unknown as VfsFS,
+    trackingFSAsVfsFS(tfs),
     receiver!.sys.DefaultLibraryPath(),
     receiver!.extendedConfigCache as unknown as ExtendedConfigCache_tsconfigparsing,
     GetTraceWithWriterFromSys(receiver!.sys.Writer(), ParsedCommandLine_Locale(receiver!.config), receiver!.testing),

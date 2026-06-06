@@ -8,7 +8,7 @@ import type { ParsedCommandLine } from "../tsoptions/parsedcommandline.js";
 import type { ExtendedConfigCache } from "../tsoptions/tsconfigparsing.js";
 import type { Path } from "../tspath/path.js";
 import type { FS as FS_4e804012 } from "../vfs/vfs.js";
-import { From as cachedvfsFrom } from "../vfs/cachedvfs/cachedvfs.js";
+import { From as cachedvfsFrom, FS_as_vfs_FS as cachedvfsAsVfsFS } from "../vfs/cachedvfs/cachedvfs.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 
 /**
@@ -76,7 +76,7 @@ export interface compilerHost {
  * }
  */
 export function NewCachedFSCompilerHost(currentDirectory: string, fs: FS_4e804012, defaultLibraryPath: string, extendedConfigCache: ExtendedConfigCache, trace: (msg: GoPtr<Message>, ...args: Array<unknown>) => void): CompilerHost {
-  return NewCompilerHost(currentDirectory, cachedvfsFrom(fs) as unknown as FS_4e804012, defaultLibraryPath, extendedConfigCache, trace);
+  return NewCompilerHost(currentDirectory, cachedvfsAsVfsFS(cachedvfsFrom(fs)), defaultLibraryPath, extendedConfigCache, trace);
 }
 
 /**
