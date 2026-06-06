@@ -13,7 +13,7 @@ import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js"
 import { DiagnosticsCollection_Add, Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
 import type { SymbolFlags, NodeFlags } from "../../ast/generated/flags.js";
-import { SymbolFlagsOptional, NodeFlagsOptionalChain, NodeFlagsAmbient, SymbolFlagsEnumMember, SymbolFlagsTypeLiteral } from "../../ast/generated/flags.js";
+import { SymbolFlagsOptional, NodeFlagsOptionalChain, NodeFlagsAmbient, NodeFlagsConstant, SymbolFlagsEnumMember, SymbolFlagsTypeLiteral } from "../../ast/generated/flags.js";
 import type { ResolutionMode } from "../../core/compileroptions.js";
 import { TSTrue } from "../../core/tristate.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
@@ -25,15 +25,15 @@ import type { ResolvedModule } from "../../module/types.js";
 import type { TypeMapper } from "../mapper.js";
 import { TypeMapper_Map } from "../mapper.js";
 import type { ConditionalRoot, ContextFlags, ElementFlags, IndexInfo, NodeLinks, ObjectFlags, Signature, StructuredType, TupleElementInfo, Type, TypeAlias, TypeData, TypeFlags, TypeNodeLinks, ConstrainedType, ObjectType, TypeReference, InterfaceType, UnionOrIntersectionType, IntrinsicType, LiteralType, UnionType, IntersectionType, TemplateLiteralType, MappedType, ReverseMappedType, EvolvingArrayType, InstantiationExpressionType, TupleType, ConditionalType } from "../types.js";
-import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ObjectFlagsReference, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, Type_Mapper, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, Type_AsUnionType, StructuredType_Properties, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, ObjectFlagsNone, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType } from "../types.js";
+import { ElementFlagsVariadic, ElementFlagsRest, ElementFlagsRequired, ElementFlagsOptional as ElementFlagsOptionalFlag, ObjectFlagsReference, Type_Target, Type_TargetTupleType, TypeFlagsAny, TypeFlagsVoid, TypeFlagsNull, TypeFlagsUndefined, TypeFlagsNever, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsObject, TypeFlagsTypeParameter, TypeFlagsStringLiteral, TypeFlagsTemplateLiteral, TypeFlagsInstantiableNonPrimitive, TypeFlagsStringLike, TypeFlagsNonPrimitive, TypeFlagsIndex, TypeFlagsBooleanLike, TypeFlagsEnumLike, TypeFlagsUnionOrIntersection, Type_Types, SignatureKindCall, Type_AsInterfaceType, InterfaceType_TypeParameters, Type_Mapper, TypeFlagsBigIntLike, TypeFlagsAnyOrUnknown, TypeFlagsNumberLike, NodeCheckFlagsTypeChecked, NodeCheckFlagsInitializerIsUndefined, NodeCheckFlagsInitializerIsUndefinedComputed, TypeFlagsTypeVariable, TypeFlagsInstantiable, TypeFlagsStructuredOrInstantiable, TypeFlagsESSymbolLike, TypeFlagsEnumLiteral, ObjectFlagsClassOrInterface, ObjectFlagsTuple, ObjectFlagsMembersResolved, ObjectFlagsCouldContainTypeVariablesComputed, ObjectFlagsCouldContainTypeVariables, ObjectFlagsInstantiationExpressionType, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsReverseMapped, ObjectFlagsContainsIntersections, ObjectFlagsIsNeverIntersectionComputed, ObjectFlagsIsNeverIntersection, ObjectFlagsIsGenericObjectType, Type_AsUnionType, StructuredType_Properties, Type_AsUnionOrIntersectionType, ObjectFlagsMapped, TypeFlagsUnknown, Type_AsMappedType, Type_AsIntersectionType, Type_AsTypeReference, TypeFlagsSubstitution, TypeFlagsIndexedAccess, Type_AsSubstitutionType, Type_AsIndexedAccessType, IndexedAccessType_ObjectType, IndexedAccessType_IndexType, SubstitutionType_BaseType, TypeFlagsNullable, TypeFlagsConditional, TypeFlagsNumberLiteral, Type_AsConditionalType, TypeFlagsStringOrNumberLiteral, ObjectFlagsNone, ObjectFlagsPrimitiveUnion, Type_Distributed, ContextFlagsNone, ObjectFlagsPropagatingFlags, TypeFlagsNone, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsStringMapping, TypeFlagsLiteral, Type_AsTemplateLiteralType, TypeFlagsBooleanLiteral, TypeFlagsBigIntLiteral, TypeFlagsEnum, Type_AsLiteralType, TypeFlagsFreshable, ObjectFlagsEvolvingArray, ObjectFlagsContainsWideningType, Type_AsIntrinsicType, Type_AsStructuredType, Type_AsObjectType } from "../types.js";
 import type { orderedSet } from "../utilities.js";
-import { IsTypeAny, NewDiagnosticForNode, orderedSet_contains, orderedSet_add, entityNameToString } from "../utilities.js";
+import { CompareTypes, IsTypeAny, NewDiagnosticForNode, isDeclarationReadonly, orderedSet_contains, orderedSet_add, entityNameToString } from "../utilities.js";
 import type { Checker, CheckMode, ContextualInfo, InferenceContext, IntersectionFlags, IterationTypeKind, IterationTypes, IterationTypesKey, IterationTypesResolver, IterationUse, keyBuilder, ObjectLiteralDiscriminator, PredicateSemantics, TupleNormalizer, TypeFacts, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, UnionReduction, WideningContext, WideningKind, CachedTypeKey, CacheHashKey } from "./state.js";
-import { CheckModeTypeOnly, CheckModeNormal, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, IntersectionFlagsNone, hashWrite32, isTypeReferenceWithGenericArguments, getTypeListKey } from "./state.js";
+import { CheckModeTypeOnly, CheckModeNormal, CheckModeSkipContextSensitive, IterationTypeKindNext, IterationTypeKindReturn, IterationTypeKindYield, isTupleType, IterationUseAllowsAsyncIterablesFlag, IterationUseAllowsSyncIterablesFlag, IterationUseForOfFlag, IterationUseSpreadFlag, IterationUseDestructuringFlag, IterationUseYieldStarFlag, IterationUsePossiblyOutOfBounds, IterationUseAllowsStringInputFlag, IterationUseCacheFlags, TypeFactsNEUndefinedOrNull, UnionReductionSubtype, UnionReductionNone, UnionReductionLiteral, IterationUseYieldStar, IterationUseAsyncYieldStar, TypeFactsNEUndefined, TypeFactsIsUndefined, TypeFactsIsUndefinedOrNull, TypeSystemPropertyNameInitializerIsUndefined, someType, everyType, getEffectiveSetAccessorTypeAnnotationNode, getTargetType, CachedTypeKindApparentType, CachedTypeKindLiteralUnionBaseType, getEntityNameFromTypeNode, IntersectionFlagsNoSupertypeReduction, IntersectionFlagsNone, hashWrite32, isTypeReferenceWithGenericArguments, getStringLiteralValue, getTypeListKey } from "./state.js";
 import { Checker_getTypeArguments, Checker_getTypeWithThisArgument, Checker_getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode, Checker_checkTypeForDuplicateIndexSignatures, Checker_newCallSignature, Checker_getOrCreateTypeFromSignature, Checker_newParameter, Checker_getTypeReferenceArity, Checker_getConstraintOfTypeParameter } from "./signatures.js";
 import { Checker_getSignaturesOfType, Checker_getReturnTypeOfSignature, Checker_getBuiltinIteratorReturnType } from "./signatures.js";
 import { Checker_getBaseConstraintOfType, Checker_checkIndexConstraints, Checker_getTypeAliasInstantiation, Checker_isGenericTypeWithUndefinedConstraint, Checker_getConstraintTypeFromMappedType } from "./inference.js";
-import { Checker_getTypeOfSymbol, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexTypeOfType, Checker_checkDeclarationInitializer, Checker_findResolutionCycleStartIndex, Checker_instantiateTypeWithAlias, Checker_isNeverReducedProperty, Checker_resolveStructuredTypeMembers, Checker_getIndexInfosOfType, Checker_getPropertyOfUnionOrIntersectionType, Checker_getIndexedAccessType, Checker_createTypeFromGenericGlobalType, Checker_getDeclaredTypeOfSymbol, Checker_checkObjectTypeForDuplicateDeclarations, Checker_markEntityNameOrEntityExpressionAsReference, Checker_getEntityNameForDecoratorMetadata, Checker_getSymbolOfNode, Checker_getAliasForTypeNode, Checker_getParentOfSymbol, Checker_setStructuredTypeMembers, Checker_getMembersOfSymbol } from "./symbols.js";
+import { Checker_getTypeOfSymbol, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexTypeOfType, Checker_checkDeclarationInitializer, Checker_findResolutionCycleStartIndex, Checker_instantiateTypeWithAlias, Checker_isNeverReducedProperty, Checker_resolveStructuredTypeMembers, Checker_getIndexInfosOfType, Checker_getPropertyOfUnionOrIntersectionType, Checker_getIndexedAccessType, Checker_createTypeFromGenericGlobalType, Checker_getDeclaredTypeOfSymbol, Checker_checkObjectTypeForDuplicateDeclarations, Checker_markEntityNameOrEntityExpressionAsReference, Checker_getEntityNameForDecoratorMetadata, Checker_getSymbolOfNode, Checker_getAliasForTypeNode, Checker_getParentOfSymbol, Checker_setStructuredTypeMembers, Checker_getMembersOfSymbol, Checker_getWidenedUniqueESSymbolType, Checker_isContextSensitiveFunctionLikeDeclaration } from "./symbols.js";
 import { Checker_getMinArgumentCount, Checker_reportDiagnostic, Checker_checkTypeAssignableToEx, Checker_checkTypeAssignableTo, Checker_getTypeAtPosition, Checker_isTypeAssignableTo, Checker_getKeyPropertyName, Checker_getConstituentTypeForKeyType } from "../relater.js";
 import { Checker_reportTypeNotIterableError, Checker_addDeferredDiagnostic, Checker_getIterationDiagnosticDetails, Checker_checkNonNullTypeWithReporter, Checker_reportObjectPossiblyNullOrUndefinedError, Checker_reportCircularityError } from "./diagnostics.js";
 import { Checker_getPropertyNameForKnownSymbolName, Checker_includeUndefinedInIndexSignature } from "../flow.js";
@@ -41,12 +41,12 @@ import { Checker_checkSourceElement, Checker_checkSourceElements, Checker_error,
 import { Checker_TypeToString } from "../printer.js";
 import { Checker_checkGrammarTypeOperatorNode, Checker_checkGrammarRegularExpressionLiteral, Checker_grammarErrorOnNode } from "../grammarchecks.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
-import { Checker_isYieldIteratorResult, Checker_isReturnIteratorResult, Checker_errorAndMaybeSuggestAwait, Checker_checkExpressionEx, Checker_checkExpression, Checker_checkNodeDeferred } from "./syntax-checking.js";
+import { Checker_isYieldIteratorResult, Checker_isReturnIteratorResult, Checker_errorAndMaybeSuggestAwait, Checker_checkExpressionEx, Checker_checkExpression, Checker_checkNodeDeferred, Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_removeDefinitelyFalsyTypes, Checker_getConditionalFlowTypeOfType, Checker_isPossiblyDiscriminantValue } from "./flow-narrowing.js";
 import { Checker_isTypeAssignableToKind, Checker_allTypesAssignableToKind } from "./relations.js";
 import { Checker_getBaseConstraintOrType } from "./inference.js";
 import { instantiateList } from "./state.js";
-import { SkipParentheses, IsRightSideOfQualifiedNameOrPropertyAccess, FindAncestor, IsExpressionOfOptionalChainRoot, IsOptionalChain, IsOutermostOptionalChain, IsEntityName, IsStatic, IsInJSFile, IsEntityNameExpression, GetFirstIdentifier } from "../../ast/utilities.js";
+import { SkipParentheses, IsRightSideOfQualifiedNameOrPropertyAccess, FindAncestor, IsExpressionOfOptionalChainRoot, IsOptionalChain, IsOutermostOptionalChain, IsEntityName, IsStatic, IsInJSFile, IsEntityNameExpression, GetFirstIdentifier, GetReparsedNodeForNode, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod } from "../../ast/utilities.js";
 import { KindNullKeyword, KindIdentifier, KindThisKeyword } from "../../ast/generated/kinds.js";
 import { SymbolFlagsModule, SymbolFlagsValueModule, SymbolFlagsClass } from "../../ast/generated/flags.js";
 import type { ValueSymbolLinks } from "../types.js";
@@ -2658,7 +2658,7 @@ export function Checker_getSyntacticNullishnessSemantics(receiver: GoPtr<Checker
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasEmptyObjectIntersection","kind":"method","status":"stub","sigHash":"a7879f552f93281fb368f37fd345a3061d9554a37383f3ffdee27094526da2f5","bodyHash":"a8473133796872ac8670b34adb3a3bc7fc21716d9840e356b1d0835d8ae7e841"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasEmptyObjectIntersection","kind":"method","status":"implemented","sigHash":"a7879f552f93281fb368f37fd345a3061d9554a37383f3ffdee27094526da2f5","bodyHash":"a8473133796872ac8670b34adb3a3bc7fc21716d9840e356b1d0835d8ae7e841"}
  *
  * Go source:
  * func (c *Checker) hasEmptyObjectIntersection(t *Type) bool {
@@ -2668,7 +2668,9 @@ export function Checker_getSyntacticNullishnessSemantics(receiver: GoPtr<Checker
  * }
  */
 export function Checker_hasEmptyObjectIntersection(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.hasEmptyObjectIntersection");
+  return someType(t, (tt) =>
+    tt === receiver!.unknownEmptyObjectType ||
+    ((tt!.flags & TypeFlagsIntersection) !== 0 && Checker_IsEmptyAnonymousObjectType(receiver, Checker_getBaseConstraintOrType(receiver, tt)))) as bool;
 }
 
 /**
@@ -3321,7 +3323,7 @@ export function Checker_padTupleType(receiver: GoPtr<Checker>, t: GoPtr<Type>, p
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralTypeForInitializer","kind":"method","status":"stub","sigHash":"ac5bcf37a273e990c663e854a2cb2e0e3759668016af738dcf16e3ec920d4a55","bodyHash":"f0074740663b21ec349ecf9a0be07d37f88824047b99d5eef04885c3a71258c4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralTypeForInitializer","kind":"method","status":"implemented","sigHash":"ac5bcf37a273e990c663e854a2cb2e0e3759668016af738dcf16e3ec920d4a55","bodyHash":"f0074740663b21ec349ecf9a0be07d37f88824047b99d5eef04885c3a71258c4"}
  *
  * Go source:
  * func (c *Checker) getWidenedLiteralTypeForInitializer(declaration *ast.Node, t *Type) *Type {
@@ -3332,7 +3334,10 @@ export function Checker_padTupleType(receiver: GoPtr<Checker>, t: GoPtr<Type>, p
  * }
  */
 export function Checker_getWidenedLiteralTypeForInitializer(receiver: GoPtr<Checker>, declaration: GoPtr<Node>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralTypeForInitializer");
+  if ((Checker_getCombinedNodeFlagsCached(receiver, declaration) & NodeFlagsConstant) !== 0 || isDeclarationReadonly(declaration)) {
+    return t;
+  }
+  return Checker_getWidenedLiteralType(receiver, t);
 }
 
 /**
@@ -7396,7 +7401,7 @@ export function Checker_getTupleElementTypeOutOfStartCount(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericType","kind":"method","status":"stub","sigHash":"c5e6cbfd541c3fe913e1603dd95cc04ddc0f5cd56f4d562def6ac91e5b4076f6","bodyHash":"f486fd6749baa6584344445a34356b0e574d4e6049917fb50861a6f74c563f60"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericType","kind":"method","status":"implemented","sigHash":"c5e6cbfd541c3fe913e1603dd95cc04ddc0f5cd56f4d562def6ac91e5b4076f6","bodyHash":"f486fd6749baa6584344445a34356b0e574d4e6049917fb50861a6f74c563f60"}
  *
  * Go source:
  * func (c *Checker) isGenericType(t *Type) bool {
@@ -7404,11 +7409,11 @@ export function Checker_getTupleElementTypeOutOfStartCount(receiver: GoPtr<Check
  * }
  */
 export function Checker_isGenericType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericType");
+  return (Checker_getGenericObjectFlags(receiver, t) !== 0) as bool;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericObjectType","kind":"method","status":"stub","sigHash":"f4516026eff201468ede1b68680794ca7365907beb3676121f5bf8550606e231","bodyHash":"596db84b3ab5302a268e791c99c745dcc9ee79b2a7e3beef44eb7dcbcfdf3812"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericObjectType","kind":"method","status":"implemented","sigHash":"f4516026eff201468ede1b68680794ca7365907beb3676121f5bf8550606e231","bodyHash":"596db84b3ab5302a268e791c99c745dcc9ee79b2a7e3beef44eb7dcbcfdf3812"}
  *
  * Go source:
  * func (c *Checker) isGenericObjectType(t *Type) bool {
@@ -7416,7 +7421,7 @@ export function Checker_isGenericType(receiver: GoPtr<Checker>, t: GoPtr<Type>):
  * }
  */
 export function Checker_isGenericObjectType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isGenericObjectType");
+  return ((Checker_getGenericObjectFlags(receiver, t) & ObjectFlagsIsGenericObjectType) !== 0) as bool;
 }
 
 /**
@@ -8336,7 +8341,7 @@ export function Checker_getWidenedLiteralType(receiver: GoPtr<Checker>, t: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralLikeTypeForContextualType","kind":"method","status":"stub","sigHash":"98553d9be35b23bb4aa9f8a9db4e9f1f16fce2a680a554f7939ae14ab562ee33","bodyHash":"4f77491ef6751e4c38532af937024b9d698a8e828599c64d877b104e792bc578"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralLikeTypeForContextualType","kind":"method","status":"implemented","sigHash":"98553d9be35b23bb4aa9f8a9db4e9f1f16fce2a680a554f7939ae14ab562ee33","bodyHash":"4f77491ef6751e4c38532af937024b9d698a8e828599c64d877b104e792bc578"}
  *
  * Go source:
  * func (c *Checker) getWidenedLiteralLikeTypeForContextualType(t *Type, contextualType *Type) *Type {
@@ -8347,7 +8352,10 @@ export function Checker_getWidenedLiteralType(receiver: GoPtr<Checker>, t: GoPtr
  * }
  */
 export function Checker_getWidenedLiteralLikeTypeForContextualType(receiver: GoPtr<Checker>, t: GoPtr<Type>, contextualType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getWidenedLiteralLikeTypeForContextualType");
+  if (!Checker_isLiteralOfContextualType(receiver, t, contextualType)) {
+    t = Checker_getWidenedUniqueESSymbolType(receiver, Checker_getWidenedLiteralType(receiver, t));
+  }
+  return Checker_getRegularTypeOfLiteralType(receiver, t);
 }
 
 /**
@@ -8481,7 +8489,7 @@ export function Checker_mapTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: (
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionOrIntersectionType","kind":"method","status":"stub","sigHash":"9e0660d87d433db25d1ba91d5cbc8a2e0a52ba0a8697a010747190034bb8d97d","bodyHash":"46ca5696f093a3341636eadb81b8f6493c8da429f6c6fb662db47a7c807d0ee6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionOrIntersectionType","kind":"method","status":"implemented","sigHash":"9e0660d87d433db25d1ba91d5cbc8a2e0a52ba0a8697a010747190034bb8d97d","bodyHash":"46ca5696f093a3341636eadb81b8f6493c8da429f6c6fb662db47a7c807d0ee6"}
  *
  * Go source:
  * func (c *Checker) getUnionOrIntersectionType(types []*Type, isUnion bool, unionReduction UnionReduction) *Type {
@@ -8492,7 +8500,10 @@ export function Checker_mapTypeEx(receiver: GoPtr<Checker>, t: GoPtr<Type>, f: (
  * }
  */
 export function Checker_getUnionOrIntersectionType(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, isUnion: bool, unionReduction: UnionReduction): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionOrIntersectionType");
+  if (isUnion) {
+    return Checker_getUnionTypeEx(receiver, types, unionReduction, undefined, undefined);
+  }
+  return Checker_getIntersectionType(receiver, types);
 }
 
 /**
@@ -9622,7 +9633,7 @@ export function Checker_isKeyTypeIncluded(receiver: GoPtr<Checker>, keyType: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedTypeForNonexistentStringLiteralType","kind":"method","status":"stub","sigHash":"65a74a26bce94466c7a498f25a330678232f902bf23f4ff307ffb0229d0f8b75","bodyHash":"d890117743d0bbd55742449e822eb1c02515909ee2ef24e776757d02f5bc4c9b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedTypeForNonexistentStringLiteralType","kind":"method","status":"implemented","sigHash":"65a74a26bce94466c7a498f25a330678232f902bf23f4ff307ffb0229d0f8b75","bodyHash":"d890117743d0bbd55742449e822eb1c02515909ee2ef24e776757d02f5bc4c9b"}
  *
  * Go source:
  * func (c *Checker) getSuggestedTypeForNonexistentStringLiteralType(source *Type, target *Type) *Type {
@@ -9631,7 +9642,8 @@ export function Checker_isKeyTypeIncluded(receiver: GoPtr<Checker>, keyType: GoP
  * }
  */
 export function Checker_getSuggestedTypeForNonexistentStringLiteralType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSuggestedTypeForNonexistentStringLiteralType");
+  const candidates = core.FilterSeq(Type_Types(target), (candidate) => (candidate!.flags & TypeFlagsStringLiteral) !== 0);
+  return core.GetSpellingSuggestion(getStringLiteralValue(source), candidates, getStringLiteralValue, CompareTypes);
 }
 
 /**
@@ -9812,7 +9824,7 @@ export function Checker_getSimplifiedConditionalType(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIntersectionEmpty","kind":"method","status":"stub","sigHash":"584287b5b707750bae0c27a272af7ab9f6f1b9bc159a226e3a94a7b25fe03200","bodyHash":"1ccabca8a6732fe67caa06bd40601da836df0f000ec24cab5a2a0b540b313061"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIntersectionEmpty","kind":"method","status":"implemented","sigHash":"584287b5b707750bae0c27a272af7ab9f6f1b9bc159a226e3a94a7b25fe03200","bodyHash":"1ccabca8a6732fe67caa06bd40601da836df0f000ec24cab5a2a0b540b313061"}
  *
  * Go source:
  * func (c *Checker) isIntersectionEmpty(type1 *Type, type2 *Type) bool {
@@ -9820,7 +9832,7 @@ export function Checker_getSimplifiedConditionalType(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_isIntersectionEmpty(receiver: GoPtr<Checker>, type1: GoPtr<Type>, type2: GoPtr<Type>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isIntersectionEmpty");
+  return ((Checker_getUnionType(receiver, [Checker_intersectTypes(receiver, type1, type2), receiver!.neverType])!.flags & TypeFlagsNever) !== 0) as bool;
 }
 
 /**
@@ -10422,7 +10434,7 @@ export function Checker_getContextualTypeForInitializerExpression(receiver: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitiveFunctionOrObjectLiteralMethod","kind":"method","status":"stub","sigHash":"1409551109a3af96a4de17d12c973323d37f25ec2acf1e58ed20c5c34da5af94","bodyHash":"59e5f480cdafb0864785755423d6af9d83ece3bb6af3fd44ded5800a786f3c75"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitiveFunctionOrObjectLiteralMethod","kind":"method","status":"implemented","sigHash":"1409551109a3af96a4de17d12c973323d37f25ec2acf1e58ed20c5c34da5af94","bodyHash":"59e5f480cdafb0864785755423d6af9d83ece3bb6af3fd44ded5800a786f3c75"}
  *
  * Go source:
  * func (c *Checker) isContextSensitiveFunctionOrObjectLiteralMethod(fn *ast.Node) bool {
@@ -10430,7 +10442,7 @@ export function Checker_getContextualTypeForInitializerExpression(receiver: GoPt
  * }
  */
 export function Checker_isContextSensitiveFunctionOrObjectLiteralMethod(receiver: GoPtr<Checker>, fn: GoPtr<Node>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.isContextSensitiveFunctionOrObjectLiteralMethod");
+  return ((IsFunctionExpressionOrArrowFunction(fn) || IsObjectLiteralMethod(fn)) && Checker_isContextSensitiveFunctionLikeDeclaration(receiver, fn)) as bool;
 }
 
 /**
@@ -11518,7 +11530,7 @@ export function Checker_removeNullableByIntersection(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recombineUnknownType","kind":"method","status":"stub","sigHash":"1be14212a5e4895958b0a479aa15dd90b1fdacbdbf0e520587bde44e37d7f29f","bodyHash":"610c67962517787e915bf25ef42c96d0887eddcde1409f6e72707d1d7dfa32ce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recombineUnknownType","kind":"method","status":"implemented","sigHash":"1be14212a5e4895958b0a479aa15dd90b1fdacbdbf0e520587bde44e37d7f29f","bodyHash":"610c67962517787e915bf25ef42c96d0887eddcde1409f6e72707d1d7dfa32ce"}
  *
  * Go source:
  * func (c *Checker) recombineUnknownType(t *Type) *Type {
@@ -11529,7 +11541,10 @@ export function Checker_removeNullableByIntersection(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_recombineUnknownType(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recombineUnknownType");
+  if (t === receiver!.unknownUnionType) {
+    return receiver!.unknownType;
+  }
+  return t;
 }
 
 /**
@@ -11964,7 +11979,7 @@ export function Checker_getRegularTypeOfExpression(receiver: GoPtr<Checker>, exp
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetTypeAtLocation","kind":"method","status":"stub","sigHash":"38fca0a1a67489e6c35a781abcdc99798032d5ca4c27545aca9e8314d0835adb","bodyHash":"437c37069dc944567f5ffe45b4ae3d2025fc745987d7353546f232698433befd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetTypeAtLocation","kind":"method","status":"implemented","sigHash":"38fca0a1a67489e6c35a781abcdc99798032d5ca4c27545aca9e8314d0835adb","bodyHash":"437c37069dc944567f5ffe45b4ae3d2025fc745987d7353546f232698433befd"}
  *
  * Go source:
  * func (c *Checker) GetTypeAtLocation(node *ast.Node) *Type {
@@ -11972,5 +11987,5 @@ export function Checker_getRegularTypeOfExpression(receiver: GoPtr<Checker>, exp
  * }
  */
 export function Checker_GetTypeAtLocation(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.GetTypeAtLocation");
+  return Checker_getTypeOfNode(receiver, GetReparsedNodeForNode(node));
 }
