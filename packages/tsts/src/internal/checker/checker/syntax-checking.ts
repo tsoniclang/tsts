@@ -49,7 +49,9 @@ import {
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
+import { ScriptTargetES2021 } from "../../core/compileroptions.js";
 import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt } from "./support.js";
+import { Checker_checkReflectCollision, Checker_checkWeakMapSetCollision } from "./support.js";
 import { Checker_isSideEffectFree } from "./support-queries.js";
 import {
   Checker_registerForUnusedIdentifiersCheck, Checker_checkVariableDeclarationList,
@@ -57,7 +59,7 @@ import {
   Checker_checkForDisallowedESSymbolOperand, Checker_getIndexTypeOrString,
   Checker_checkAccessorDeclaration, Checker_checkUnusedIdentifiers,
   Checker_reportUnusedVariableDeclarations, Checker_isUnreferencedVariableDeclaration,
-  Checker_getIndexedAccessType,
+  Checker_getIndexedAccessType, Checker_needCollisionCheckForIdentifier,
 } from "./symbols.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType } from "./flow-narrowing.js";
 import { Checker_isCanceled, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode } from "../utilities.js";
@@ -1725,7 +1727,7 @@ export function Checker_checkParenthesizedExpression(receiver: GoPtr<Checker>, n
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithWeakMapSetInGeneratedCode","kind":"method","status":"stub","sigHash":"1154d0bf7d51adb62a370a8dd265fdcc7a9e5e5c11efad20cec05c7e37b61d75","bodyHash":"7cd041912e0368eb6936231abe554c95242a2c6178acb9cdee2fc6af9e8d2b73"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithWeakMapSetInGeneratedCode","kind":"method","status":"implemented","sigHash":"1154d0bf7d51adb62a370a8dd265fdcc7a9e5e5c11efad20cec05c7e37b61d75","bodyHash":"7cd041912e0368eb6936231abe554c95242a2c6178acb9cdee2fc6af9e8d2b73"}
  *
  * Go source:
  * func (c *Checker) recordPotentialCollisionWithWeakMapSetInGeneratedCode(node *ast.Node, name *ast.Node) {
@@ -1738,11 +1740,16 @@ export function Checker_checkParenthesizedExpression(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_recordPotentialCollisionWithWeakMapSetInGeneratedCode(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithWeakMapSetInGeneratedCode");
+  if (receiver!.languageVersion <= ScriptTargetES2021 &&
+    (Checker_needCollisionCheckForIdentifier(receiver, node, name, "WeakMap") || Checker_needCollisionCheckForIdentifier(receiver, node, name, "WeakSet"))) {
+    Checker_addDeferredDiagnostic(receiver, () => {
+      Checker_checkWeakMapSetCollision(receiver, node);
+    });
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithReflectInGeneratedCode","kind":"method","status":"stub","sigHash":"f41693570e4825824017166532bd8285e5326824dd1bbadd7cb3927b4a7bf018","bodyHash":"69d65883e689bae4725b279aef16c9c0b76dbae328dabfe4604357922968b6e2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithReflectInGeneratedCode","kind":"method","status":"implemented","sigHash":"f41693570e4825824017166532bd8285e5326824dd1bbadd7cb3927b4a7bf018","bodyHash":"69d65883e689bae4725b279aef16c9c0b76dbae328dabfe4604357922968b6e2"}
  *
  * Go source:
  * func (c *Checker) recordPotentialCollisionWithReflectInGeneratedCode(node *ast.Node, name *ast.Node) {
@@ -1754,7 +1761,11 @@ export function Checker_recordPotentialCollisionWithWeakMapSetInGeneratedCode(re
  * }
  */
 export function Checker_recordPotentialCollisionWithReflectInGeneratedCode(receiver: GoPtr<Checker>, node: GoPtr<Node>, name: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.recordPotentialCollisionWithReflectInGeneratedCode");
+  if (name !== undefined && receiver!.languageVersion <= ScriptTargetES2021 && Checker_needCollisionCheckForIdentifier(receiver, node, name, "Reflect")) {
+    Checker_addDeferredDiagnostic(receiver, () => {
+      Checker_checkReflectCollision(receiver, node);
+    });
+  }
 }
 
 /**
