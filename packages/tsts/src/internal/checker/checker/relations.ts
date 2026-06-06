@@ -8,9 +8,13 @@ import {
   A_rest_element_cannot_have_an_initializer,
   A_rest_element_must_be_last_in_a_destructuring_pattern,
   A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma,
+  An_export_declaration_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
+  An_export_declaration_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
   An_export_assignment_cannot_be_used_in_a_namespace,
   An_export_assignment_cannot_have_modifiers,
   An_export_assignment_must_be_at_the_top_level_of_a_file_or_module_declaration,
+  An_export_default_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
+  An_export_default_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
   Export_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_export_default_or_another_module_format_instead,
   Export_assignment_is_not_supported_when_module_flag_is_system,
   Expression_produces_a_union_type_that_is_too_complex_to_represent,
@@ -25,6 +29,10 @@ import {
   This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled,
   Type_0_does_not_satisfy_the_expected_type_1,
   Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target,
+  X_0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
+  X_0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported,
+  X_0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
+  X_0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported,
 } from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Node, NodeList } from "../../ast/spine.js";
@@ -36,6 +44,9 @@ import type { Symbol } from "../../ast/symbol.js";
 import {
   IsAccessExpression,
   IsAmbientModule,
+  GetSourceFileOfNode,
+  IsEntityNameExpression,
+  NewHasFileName,
   SkipParentheses,
 } from "../../ast/utilities.js";
 import {
@@ -45,6 +56,7 @@ import {
   IsComputedPropertyName,
   IsConstructorDeclaration,
   IsElementAccessExpression,
+  IsExportAssignment,
   IsIdentifier,
   IsModuleDeclaration,
   IsNamespaceImport,
@@ -64,13 +76,13 @@ import {
 } from "../../ast/generated/predicates.js";
 import { AsExportAssignment, AsBinaryExpression, AsElementAccessExpression, AsShorthandPropertyAssignment } from "../../ast/generated/casts.js";
 import { NodeFlagsAmbient, NodeFlagsReparsed } from "../../ast/generated/flags.js";
-import { SymbolFlagsAlias, SymbolFlagsAll, SymbolFlagsModuleExports, SymbolFlagsProperty, SymbolFlagsValue } from "../../ast/generated/flags.js";
+import { SymbolFlagsAlias, SymbolFlagsAll, SymbolFlagsModuleExports, SymbolFlagsProperty, SymbolFlagsType, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import { GetAssignmentDeclarationKind, GetRightMostAssignedExpression, IsCompoundAssignment, IsInJSFile, IsObjectLiteralMethod, GetElementOrPropertyAccessName, JSDeclarationKindExportsProperty, JSDeclarationKindModuleExports } from "../../ast/utilities.js";
-import { IsDeclarationNode, Node_Arguments, Node_Symbol, Node_Text } from "../../ast/ast.js";
+import { IsDeclarationNode, Node_Arguments, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
 import { IsAssignmentOperator } from "../../ast/generated/predicates.js";
 import { GetSymbolNameForPrivateIdentifier } from "../../binder/binder.js";
 import { Node_Expression, Node_Type, Node_ElementList, Node_PropertyList, Node_Properties, Node_Elements, Node_Initializer } from "../../ast/ast.js";
-import { Node_Name } from "../../ast/spine.js";
+import { Node_Modifiers, Node_Name } from "../../ast/spine.js";
 import { NewDiagnosticChain } from "../../ast/diagnostic.js";
 import { DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import { AssignmentKindNone, getSelectedModifierFlags, isOptionalDeclaration, isTypeUsableAsPropertyName, getPropertyNameFromType, NewDiagnosticForNode } from "../utilities.js";
@@ -158,6 +170,7 @@ import type { Type, TypeAlias, TypeFlags } from "../types.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { TSTrue } from "../../core/tristate.js";
+import { CompilerOptions_GetIsolatedModules, ModuleKindCommonJS, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindSystem } from "../../core/compileroptions.js";
 import type { SymbolNodeLinks } from "../types.js";
 import type { AssignmentKind } from "../utilities.js";
 import type { Checker, CheckMode } from "./state.js";
@@ -246,7 +259,7 @@ export function Checker_isPropertyIdenticalTo(receiver: GoPtr<Checker>, sourcePr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExportAssignment","kind":"method","status":"stub","sigHash":"8647fcd90827c72b016ee65ada58aaafe1d46e8fd192af5b230196c7b153d0cd","bodyHash":"d10973e150e0cd073a9a726b3105993702e07d479cd80546521445b2db081868"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExportAssignment","kind":"method","status":"implemented","sigHash":"8647fcd90827c72b016ee65ada58aaafe1d46e8fd192af5b230196c7b153d0cd","bodyHash":"d10973e150e0cd073a9a726b3105993702e07d479cd80546521445b2db081868"}
  *
  * Go source:
  * func (c *Checker) checkExportAssignment(node *ast.Node) {
@@ -352,7 +365,106 @@ export function Checker_isPropertyIdenticalTo(receiver: GoPtr<Checker>, sourcePr
  * }
  */
 export function Checker_checkExportAssignment(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExportAssignment");
+  const isExportEquals = AsExportAssignment(node)!.IsExportEquals;
+  const illegalContextMessage = IfElse(
+    isExportEquals,
+    An_export_assignment_must_be_at_the_top_level_of_a_file_or_module_declaration,
+    A_default_export_must_be_at_the_top_level_of_a_file_or_module_declaration,
+  );
+  if (Checker_checkGrammarModuleElementContext(receiver, node, illegalContextMessage)) {
+    return;
+  }
+  if (Checker_shouldCheckErasableSyntax(receiver, node) && AsExportAssignment(node)!.IsExportEquals && (node!.Flags & NodeFlagsAmbient) === 0) {
+    Checker_error(receiver, node, This_syntax_is_not_allowed_when_erasableSyntaxOnly_is_enabled);
+  }
+  let container = node!.Parent;
+  if (!IsSourceFile(container)) {
+    container = container!.Parent;
+  }
+  if (IsModuleDeclaration(container) && !IsAmbientModule(container)) {
+    if (isExportEquals) {
+      Checker_error(receiver, node, An_export_assignment_cannot_be_used_in_a_namespace);
+    } else {
+      Checker_error(receiver, node, A_default_export_can_only_be_used_in_an_ECMAScript_style_module);
+    }
+    return;
+  }
+  if (!Checker_checkGrammarModifiers(receiver, node) && IsExportAssignment(node) && Node_Modifiers(node) !== undefined) {
+    Checker_grammarErrorOnFirstToken(receiver, node, An_export_assignment_cannot_have_modifiers);
+  }
+  const sourceFile = GetSourceFileOfNode(node);
+  const sourceFileName = NewHasFileName(SourceFile_FileName(sourceFile), SourceFile_Path(sourceFile));
+  const compilerOptions = receiver!.compilerOptions!;
+  const isIllegalExportDefaultInCJS = (!isExportEquals && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && receiver!.program.GetEmitModuleFormatOfFile(sourceFileName) === ModuleKindCommonJS) as bool;
+  if (IsIdentifier(Node_Expression(node))) {
+    const id = Node_Expression(node);
+    const sym = Checker_getExportSymbolOfValueSymbolIfExported(receiver, Checker_resolveEntityName(receiver, id, SymbolFlagsAll, true, true, node));
+    if (sym !== undefined) {
+      Checker_markLinkedReferences(receiver, node, ReferenceHintExportAssignment, undefined, undefined);
+      const typeOnlyDeclaration = Checker_getTypeOnlyAliasDeclarationEx(receiver, sym, SymbolFlagsValue);
+      if ((Checker_getSymbolFlags(receiver, sym) & SymbolFlagsValue) !== 0) {
+        Checker_checkExpressionCached(receiver, id);
+        if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue && typeOnlyDeclaration !== undefined) {
+          const message = IfElse(
+            isExportEquals,
+            An_export_declaration_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
+            An_export_default_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
+          );
+          Checker_error(receiver, id, message, Node_Text(id));
+        }
+      } else if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && compilerOptions.VerbatimModuleSyntax === TSTrue) {
+        const message = IfElse(
+          isExportEquals,
+          An_export_declaration_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
+          An_export_default_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
+        );
+        Checker_error(receiver, id, message, Node_Text(id));
+      }
+      if (!isIllegalExportDefaultInCJS && (node!.Flags & NodeFlagsAmbient) === 0 && CompilerOptions_GetIsolatedModules(compilerOptions) && (sym!.Flags & SymbolFlagsValue) === 0) {
+        const nonLocalMeanings = Checker_getSymbolFlagsEx(receiver, sym, false, true);
+        if ((sym!.Flags & SymbolFlagsAlias) !== 0 && (nonLocalMeanings & SymbolFlagsType) !== 0 && (nonLocalMeanings & SymbolFlagsValue) === 0 && (typeOnlyDeclaration === undefined || GetSourceFileOfNode(typeOnlyDeclaration) !== sourceFile)) {
+          const message = IfElse(
+            isExportEquals,
+            X_0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported,
+            X_0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
+          );
+          Checker_error(receiver, id, message, Node_Text(id), Checker_getIsolatedModulesLikeFlagName(receiver));
+        } else if (typeOnlyDeclaration !== undefined && GetSourceFileOfNode(typeOnlyDeclaration) !== sourceFile) {
+          const message = IfElse(
+            isExportEquals,
+            X_0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported,
+            X_0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
+          );
+          Checker_addTypeOnlyDeclarationRelatedInfo(receiver, Checker_error(receiver, id, message, Node_Text(id), Checker_getIsolatedModulesLikeFlagName(receiver)), typeOnlyDeclaration, Node_Text(id));
+        }
+      }
+    } else {
+      Checker_checkExpressionCached(receiver, id);
+    }
+  } else {
+    Checker_checkExpressionCached(receiver, Node_Expression(node));
+  }
+  if (isIllegalExportDefaultInCJS) {
+    Checker_error(receiver, node, getVerbatimModuleSyntaxErrorMessage(node));
+  }
+  Checker_checkExternalModuleExports(receiver, container);
+  const typeNode = Node_Type(node);
+  if (typeNode !== undefined && IsExportAssignment(node)) {
+    const targetType = Checker_getTypeFromTypeNode(receiver, typeNode);
+    const initializerType = Checker_checkExpressionCached(receiver, Node_Expression(node));
+    Checker_checkTypeAssignableToAndOptionallyElaborate(receiver, initializerType, targetType, Node_Expression(node), Node_Expression(node), undefined, undefined);
+  }
+  if ((node!.Flags & NodeFlagsAmbient) !== 0 && !IsEntityNameExpression(Node_Expression(node))) {
+    Checker_grammarErrorOnNode(receiver, Node_Expression(node), The_expression_of_an_export_assignment_must_be_an_identifier_or_qualified_name_in_an_ambient_context);
+  }
+  if (isExportEquals) {
+    const impliedNodeFormat = receiver!.program.GetImpliedNodeFormatForEmit(sourceFileName);
+    if (receiver!.moduleKind >= ModuleKindES2015 && receiver!.moduleKind !== ModuleKindPreserve && (((node!.Flags & NodeFlagsAmbient) !== 0 && impliedNodeFormat === ModuleKindESNext) || ((node!.Flags & NodeFlagsAmbient) === 0 && impliedNodeFormat !== ModuleKindCommonJS))) {
+      Checker_grammarErrorOnNode(receiver, node, Export_assignment_cannot_be_used_when_targeting_ECMAScript_modules_Consider_using_export_default_or_another_module_format_instead);
+    } else if (receiver!.moduleKind === ModuleKindSystem && (node!.Flags & NodeFlagsAmbient) === 0) {
+      Checker_grammarErrorOnNode(receiver, node, Export_assignment_is_not_supported_when_module_flag_is_system);
+    }
+  }
 }
 
 /**
