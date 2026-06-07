@@ -59,7 +59,7 @@ import { InternalSymbolNameComputed, InternalSymbolNameAssignmentDeclaration, In
 import { Memoize, IfElse, Find, Filter, Map, Some, Every, GetSpellingSuggestion, ConcatenateSeq, FindLast, LastOrNil, OrElse, CountWhere, AppendIfUnique, FirstOrNil } from "../../core/core.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
-import { IsNonLocalAlias, GetSourceFileOfNode, GetFirstIdentifier, NodeKindIs, FindAncestor, FindAncestorOrQuit, FindAncestorFalse, FindAncestorTrue, FindAncestorQuit, ToFindAncestorResult, GetNameOfDeclaration, GetContainingClass, GetContainingFunction, IsAmbientModule, IsGlobalScopeAugmentation, IsExternalModuleAugmentation, IsStatic, IsClassLike, IsClassOrInterfaceLike, IsParameterPropertyDeclaration, IsFunctionLike, GetImmediatelyInvokedFunctionExpression, IsExternalOrCommonJSModule, IsBlockOrCatchScoped, HasStaticModifier, IsAliasSymbolDeclaration, HasAccessorModifier, IsQuestionToken, IsPrivateIdentifierClassElementDeclaration, IsFunctionLikeDeclaration, NodeIsMissing, NodeIsSynthesized, GetRootDeclaration, IsValidTypeOnlyAliasUseSite, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, GetEnclosingBlockScopeContainer, IsAccessor, FindAncestorKind, IsEntityName, IsEntityNameExpression, GetHostSignatureFromJSDoc, HasSyntacticModifier, HasModifier, NodeIsPresent, GetDeclarationOfKind, IsBindingPattern, IsVariableDeclarationInitializedToRequire, IsVariableLike, IsTypeDeclaration, GetExternalModuleName, GetImportAttributes, IsExclusivelyTypeOnlyImportOrExport, IsGlobalSourceFile, GetDeclarationContainer, GetAssignmentDeclarationKind, JSDeclarationKindExportsProperty, FindConstructorDeclaration, GetFirstConstructorWithBody, HasAbstractModifier, IsThisInTypeQuery, SkipParentheses, GetSymbolId, GetModuleInstanceState, ModuleInstanceStateNonInstantiated, ModuleInstanceStateInstantiated, NewHasFileName, IsEnumConst, IsComputedNonLiteralName, GetTextOfPropertyName, IsInfinityOrNaNString, HasDynamicName, HasContextSensitiveParameters, IsAssignmentTarget, IsStringLiteralLike, GetReparsedNodeForNode, GetPropertyNameForPropertyNameNode, IsThisIdentifier, IsPartOfTypeQuery, IsPartOfTypeNode, IsPropertyName, CanHaveSymbol, IsExpression, IsExpressionNode, IsAssertionExpression, IsThisParameter, IsInJSFile, IsOptionalChain, IsNodeDescendantOf, GetSourceFileOfModule, IsJsonSourceFile, ModuleExportNameIsDefault, IsRightSideOfQualifiedNameOrPropertyAccess, GetExternalModuleImportEqualsDeclarationExpression, IsExternalModuleImportEqualsDeclaration, IsDeclarationNameOrImportPropertyName, IsLiteralComputedPropertyDeclarationName, IsLiteralImportTypeNode, IsBindableObjectDefinePropertyCall, IsJsxTagName, IsInExpressionContext, IsExpressionWithTypeArgumentsInClassExtendsClause, IsJSDocNameReferenceContext, GetNodeAtPosition, IsForInOrOfStatement, IsLeftHandSideExpression, IsTypeReferenceType, IsDeclarationName, IsAccessExpression, HasAmbientModifier, IsClassElement, IsCatchClauseVariableDeclarationOrBindingElement, IsObjectLiteralOrClassExpressionMethodOrAccessor, IsPlainJSFile, IsImportOrImportEqualsDeclaration, IsInternalModuleImportEqualsDeclaration, IsJsxOpeningLikeElement } from "../../ast/utilities.js";
+import { IsNonLocalAlias, GetSourceFileOfNode, GetFirstIdentifier, NodeKindIs, FindAncestor, FindAncestorOrQuit, FindAncestorFalse, FindAncestorTrue, FindAncestorQuit, ToFindAncestorResult, GetNameOfDeclaration, GetContainingClass, GetContainingFunction, IsAmbientModule, IsGlobalScopeAugmentation, IsExternalModuleAugmentation, IsStatic, IsClassLike, IsClassOrInterfaceLike, IsParameterPropertyDeclaration, IsFunctionLike, GetImmediatelyInvokedFunctionExpression, IsExternalOrCommonJSModule, IsBlockOrCatchScoped, HasStaticModifier, IsAliasSymbolDeclaration, HasAccessorModifier, IsQuestionToken, IsPrivateIdentifierClassElementDeclaration, IsFunctionLikeDeclaration, NodeIsMissing, NodeIsSynthesized, GetRootDeclaration, IsValidTypeOnlyAliasUseSite, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration, GetEnclosingBlockScopeContainer, IsAccessor, FindAncestorKind, IsEntityName, IsEntityNameExpression, GetHostSignatureFromJSDoc, HasSyntacticModifier, HasModifier, NodeIsPresent, GetDeclarationOfKind, IsBindingPattern, IsVariableDeclarationInitializedToRequire, IsVariableLike, IsTypeDeclaration, GetExternalModuleName, GetImportAttributes, IsExclusivelyTypeOnlyImportOrExport, IsGlobalSourceFile, GetDeclarationContainer, GetAssignmentDeclarationKind, JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty, FindConstructorDeclaration, GetFirstConstructorWithBody, HasAbstractModifier, IsThisInTypeQuery, SkipParentheses, GetSymbolId, GetModuleInstanceState, ModuleInstanceStateNonInstantiated, ModuleInstanceStateInstantiated, NewHasFileName, IsEnumConst, IsComputedNonLiteralName, GetTextOfPropertyName, IsInfinityOrNaNString, HasDynamicName, HasContextSensitiveParameters, IsAssignmentTarget, IsStringLiteralLike, GetReparsedNodeForNode, GetPropertyNameForPropertyNameNode, IsThisIdentifier, IsPartOfTypeQuery, IsPartOfTypeNode, IsPropertyName, CanHaveSymbol, IsExpression, IsExpressionNode, IsAssertionExpression, IsThisParameter, IsInJSFile, IsOptionalChain, IsNodeDescendantOf, GetSourceFileOfModule, IsJsonSourceFile, ModuleExportNameIsDefault, IsRightSideOfQualifiedNameOrPropertyAccess, GetExternalModuleImportEqualsDeclarationExpression, IsExternalModuleImportEqualsDeclaration, IsDeclarationNameOrImportPropertyName, IsLiteralComputedPropertyDeclarationName, IsLiteralImportTypeNode, IsBindableObjectDefinePropertyCall, IsJsxTagName, IsInExpressionContext, IsExpressionWithTypeArgumentsInClassExtendsClause, IsJSDocNameReferenceContext, GetNodeAtPosition, IsForInOrOfStatement, IsLeftHandSideExpression, IsTypeReferenceType, IsDeclarationName, IsAccessExpression, HasAmbientModifier, IsClassElement, IsCatchClauseVariableDeclarationOrBindingElement, IsObjectLiteralOrClassExpressionMethodOrAccessor, IsPlainJSFile, IsImportOrImportEqualsDeclaration, IsInternalModuleImportEqualsDeclaration, IsJsxOpeningLikeElement } from "../../ast/utilities.js";
 import { GetNewTargetContainer } from "../../ast/utilities.js";
 import { GetExtendsHeritageClauseElement, GetExtendsHeritageClauseElements, GetImplementsHeritageClauseElements, IsPartOfParameterDeclaration } from "../../ast/utilities.js";
 import { GetClassLikeDeclarationOfSymbol } from "../../ast/utilities.js";
@@ -77,6 +77,7 @@ import { Abstract_method_0_in_class_1_cannot_be_accessed_via_super_expression, A
 import { X_arguments_cannot_be_referenced_in_property_initializers_or_class_static_initialization_blocks, Cannot_assign_to_0_because_it_is_an_enum, Cannot_assign_to_0_because_it_is_a_class, Cannot_assign_to_0_because_it_is_a_namespace, Cannot_assign_to_0_because_it_is_a_function, Cannot_assign_to_0_because_it_is_an_import, Cannot_assign_to_0_because_it_is_not_a_variable, Cannot_assign_to_0_because_it_is_a_constant, Variable_0_implicitly_has_type_1_in_some_locations_where_its_type_cannot_be_determined, Variable_0_implicitly_has_an_1_type, Variable_0_is_used_before_being_assigned } from "../../diagnostics/generated/messages.js";
 import { Meta_property_0_is_only_allowed_in_the_body_of_a_function_declaration_function_expression_or_constructor } from "../../diagnostics/generated/messages.js";
 import { A_parameter_initializer_is_only_allowed_in_a_function_or_constructor_implementation, A_bigint_literal_cannot_be_used_as_a_property_name, All_declarations_of_0_must_have_identical_modifiers, The_initializer_of_an_await_using_declaration_must_be_either_an_object_with_a_Symbol_asyncDispose_or_Symbol_dispose_method_or_be_null_or_undefined, The_initializer_of_a_using_declaration_must_be_either_an_object_with_a_Symbol_dispose_method_or_be_null_or_undefined } from "../../diagnostics/generated/messages.js";
+import { Module_0_does_not_refer_to_a_type_but_is_used_as_a_type_here_Did_you_mean_typeof_import_0, Module_0_does_not_refer_to_a_value_but_is_used_as_a_value_here } from "../../diagnostics/generated/messages.js";
 import { The_import_meta_meta_property_is_not_allowed_in_files_which_will_build_into_CommonJS_output, The_import_meta_meta_property_is_only_allowed_when_the_module_option_is_es2020_es2022_esnext_system_node16_node18_node20_or_nodenext } from "../../diagnostics/generated/messages.js";
 import { Subsequent_property_declarations_must_have_the_same_type_Property_0_must_be_of_type_1_but_here_has_type_2, Subsequent_variable_declarations_must_have_the_same_type_Variable_0_must_be_of_type_1_but_here_has_type_2, X_0_was_also_declared_here, The_0_operator_cannot_be_applied_to_type_symbol } from "../../diagnostics/generated/messages.js";
 import { Class_decorators_can_t_be_used_with_static_private_identifier_Consider_removing_the_experimental_decorator, A_class_declaration_without_the_default_modifier_must_have_a_name, All_imports_in_import_declaration_are_unused } from "../../diagnostics/generated/messages.js";
@@ -15354,7 +15355,7 @@ export function Checker_getTypeFromNamedTupleTypeNode(receiver: GoPtr<Checker>, 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFromImportTypeNode","kind":"method","status":"stub","sigHash":"2e9e0dce333c856f8ee3ee17dbb51d6eb70cecc5a7fac353761b6fe8b2855b94","bodyHash":"782043fdbb5ca29a95bb89853576db753ce4d46537008e601230bd9494200fad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFromImportTypeNode","kind":"method","status":"implemented","sigHash":"2e9e0dce333c856f8ee3ee17dbb51d6eb70cecc5a7fac353761b6fe8b2855b94","bodyHash":"782043fdbb5ca29a95bb89853576db753ce4d46537008e601230bd9494200fad"}
  *
  * Go source:
  * func (c *Checker) getTypeFromImportTypeNode(node *ast.Node) *Type {
@@ -15433,7 +15434,74 @@ export function Checker_getTypeFromNamedTupleTypeNode(receiver: GoPtr<Checker>, 
  * }
  */
 export function Checker_getTypeFromImportTypeNode(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeFromImportTypeNode");
+  const links = LinkStore_Get(receiver!.typeNodeLinks, node) as GoPtr<TypeNodeLinks>;
+  if (links!.resolvedType === undefined) {
+    const importTypeNode = AsImportTypeNode(node);
+    if (!IsLiteralImportTypeNode(node)) {
+      Checker_error(receiver, importTypeNode!.Argument as GoPtr<Node>, String_literal_expected);
+      (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol = receiver!.unknownSymbol;
+      links!.resolvedType = receiver!.errorType;
+      return links!.resolvedType;
+    }
+    const targetMeaning = IfElse(importTypeNode!.IsTypeOf, SymbolFlagsValue, SymbolFlagsType);
+    const argumentLiteral = AsLiteralTypeNode(importTypeNode!.Argument as GoPtr<Node>)!.Literal;
+    const innerModuleSymbol = Checker_resolveExternalModuleName(receiver, node, argumentLiteral, false);
+    if (innerModuleSymbol === undefined) {
+      (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol = receiver!.unknownSymbol;
+      links!.resolvedType = receiver!.errorType;
+      return links!.resolvedType;
+    }
+    const moduleSymbol = Checker_resolveExternalModuleSymbol(receiver, innerModuleSymbol, false);
+    if (!NodeIsMissing(importTypeNode!.Qualifier as GoPtr<Node>)) {
+      const nameChain = Checker_getIdentifierChain(receiver, importTypeNode!.Qualifier as GoPtr<Node>);
+      let currentNamespace = moduleSymbol;
+      for (let index = 0; index < nameChain.length; index++) {
+        const current = nameChain[index]!;
+        let meaning = SymbolFlagsNamespace;
+        if (index === nameChain.length - 1) {
+          meaning = targetMeaning;
+        }
+        const mergedResolvedSymbol = Checker_getMergedSymbol(receiver, Checker_resolveSymbol(receiver, currentNamespace));
+        let symbolFromVariable: GoPtr<Symbol>;
+        let symbolFromModule: GoPtr<Symbol>;
+        if (importTypeNode!.IsTypeOf) {
+          symbolFromVariable = Checker_getPropertyOfTypeEx(receiver, Checker_getTypeOfSymbol(receiver, mergedResolvedSymbol), Node_Text(current), false, true);
+        } else {
+          symbolFromModule = Checker_getSymbol(receiver, Checker_getExportsOfSymbol(receiver, mergedResolvedSymbol), Node_Text(current), meaning);
+          if (symbolFromModule === undefined) {
+            const immediateModuleSymbol = Checker_resolveExternalModuleSymbol(receiver, innerModuleSymbol, true);
+            if (immediateModuleSymbol !== undefined && Some(immediateModuleSymbol!.Declarations, (declaration) => GetAssignmentDeclarationKind(declaration) === JSDeclarationKindModuleExports)) {
+              symbolFromModule = Checker_getSymbol(receiver, Checker_getExportsOfSymbol(receiver, immediateModuleSymbol!.Parent), Node_Text(current), meaning);
+            }
+          }
+        }
+        const next = OrElse(symbolFromModule, symbolFromVariable);
+        if (next === undefined) {
+          Checker_error(receiver, current, Namespace_0_has_no_exported_member_1, Checker_getFullyQualifiedName(receiver, currentNamespace, undefined), DeclarationNameToString(current));
+          links!.resolvedType = receiver!.errorType;
+          return links!.resolvedType;
+        }
+        (LinkStore_Get(receiver!.symbolNodeLinks, current) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol = next;
+        (LinkStore_Get(receiver!.symbolNodeLinks, current!.Parent) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol = next;
+        currentNamespace = next;
+      }
+      links!.resolvedType = Checker_resolveImportSymbolType(receiver, node, currentNamespace, targetMeaning);
+    } else {
+      if ((Checker_getSymbolFlags(receiver, moduleSymbol) & targetMeaning) !== 0) {
+        links!.resolvedType = Checker_resolveImportSymbolType(receiver, node, moduleSymbol, targetMeaning);
+      } else {
+        const message = IfElse(
+          targetMeaning === SymbolFlagsValue,
+          Module_0_does_not_refer_to_a_value_but_is_used_as_a_value_here,
+          Module_0_does_not_refer_to_a_type_but_is_used_as_a_type_here_Did_you_mean_typeof_import_0,
+        );
+        Checker_error(receiver, node, message, Node_Text(argumentLiteral));
+        (LinkStore_Get(receiver!.symbolNodeLinks, node) as GoPtr<SymbolNodeLinks>)!.resolvedSymbol = receiver!.unknownSymbol;
+        links!.resolvedType = receiver!.errorType;
+      }
+    }
+  }
+  return links!.resolvedType;
 }
 
 /**
