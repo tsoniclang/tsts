@@ -5,7 +5,7 @@ import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js
 import type { SourceFile } from "../ast/ast.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { BindingName, Declaration, EntityName, Expression, IdentifierNode, PropertyName, TypeElement, TypeNode, TypeParameterDeclarationNode, TypeParameterList } from "../ast/generated/unions.js";
-import { AsBindingElement, AsConditionalTypeNode, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsQualifiedName, AsStringLiteral, AsTypeQueryNode, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
+import { AsBindingElement, AsConditionalTypeNode, AsElementAccessExpression, AsExpressionWithTypeArguments, AsIdentifier, AsImportEqualsDeclaration, AsImportTypeNode, AsIndexedAccessTypeNode, AsLiteralTypeNode, AsMappedTypeNode, AsQualifiedName, AsStringLiteral, AsTypeParameterDeclaration, AsTypeQueryNode, AsTypeReferenceNode, AsVariableDeclaration } from "../ast/generated/casts.js";
 import { IsBindingElement, IsBinaryExpression, IsClassDeclaration, IsComputedPropertyName, IsElementAccessExpression, IsExpressionWithTypeArguments, IsIdentifier, IsImportTypeNode, IsIndexedAccessTypeNode, IsParameterDeclaration, IsPrivateIdentifier, IsPropertyAccessExpression, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsQualifiedName, IsStringLiteral, IsTypeAliasDeclaration, IsTypeParameterDeclaration, IsTypeQueryNode, IsTypeReferenceNode } from "../ast/generated/predicates.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import type { Kind } from "../ast/generated/kinds.js";
@@ -155,6 +155,7 @@ import {
   NewElementAccessExpression,
   NewIntersectionTypeNode,
   NewLiteralTypeNode,
+  NewMappedTypeNode,
   NewMethodDeclaration,
   NewMethodSignatureDeclaration,
   NewNotEmittedTypeElement,
@@ -252,7 +253,7 @@ import { SymbolAccessibilityAccessible } from "../printer/emitresolver.js";
 import { NewPseudoChecker } from "../pseudochecker/checker.js";
 import type { PseudoChecker } from "../pseudochecker/checker.js";
 import type { Checker, Host } from "./checker/state.js";
-import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, isTupleType, signatureHasRestParameter, someType, TypeFactsNEUndefined } from "./checker/state.js";
+import { getBigIntLiteralValue, getNameFromIndexInfo, getMappedTypeModifiers, isRestParameter, isTupleType, signatureHasRestParameter, someType, TypeFactsNEUndefined, MappedTypeModifiersIncludeOptional } from "./checker/state.js";
 import {
   Checker_getDefaultFromTypeParameter,
   Checker_getConstraintOfTypeParameter,
@@ -265,6 +266,7 @@ import {
   Checker_getSignaturesOfType,
   Checker_getReturnTypeOfSignature,
   Checker_getTypeArguments,
+  Checker_getTypeParameterFromMappedType,
   Checker_getTypeParametersFromDeclaration,
   Checker_getTypeReferenceArity,
   Checker_instantiateSignature,
@@ -287,6 +289,8 @@ import {
   Checker_getWidenedType,
   Checker_getWidenedLiteralType,
   Checker_getIntersectionType,
+  Checker_getTemplateTypeFromMappedType,
+  Checker_getModifiersTypeFromMappedType,
   Checker_filterType,
   Checker_getPropertiesOfObjectType,
   Checker_instantiateType,
@@ -296,7 +300,7 @@ import {
   Checker_removeMissingType,
   Checker_newAnonymousType,
 } from "./checker/types.js";
-import { Checker_getConstraintDeclaration, Checker_isNoInferType } from "./checker/inference.js";
+import { Checker_getConstraintDeclaration, Checker_isNoInferType, Checker_getConstraintTypeFromMappedType, Checker_isMappedTypeWithKeyofConstraintDeclaration } from "./checker/inference.js";
 import { Checker_IsLibSymbolForHoverVerbosity, Checker_IsLibTypeForHoverVerbosity } from "./services.js";
 import {
   Checker_getAliasForSymbolInContainer,
@@ -315,6 +319,7 @@ import {
   Checker_getMembersOfSymbol,
   Checker_getDeclaredTypeOfSymbol,
   Checker_getGlobalTypeAliasSymbol,
+  Checker_getNameTypeFromMappedType,
   Checker_getNonMissingTypeOfSymbol,
   Checker_getParentOfSymbol,
   Checker_getSymbolIfSameReference,
@@ -3342,7 +3347,7 @@ export function NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstant
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createMappedTypeNodeFromType","kind":"method","status":"stub","sigHash":"7af9fdfa3d6b367d25985fc9a9b49dcee31a958e0760514cdef766b04c151be9","bodyHash":"0c4f71a7552532b157b2ff0497e6a736325108b8e6cb6da5a5b3e79528fde2e0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createMappedTypeNodeFromType","kind":"method","status":"implemented","sigHash":"7af9fdfa3d6b367d25985fc9a9b49dcee31a958e0760514cdef766b04c151be9","bodyHash":"0c4f71a7552532b157b2ff0497e6a736325108b8e6cb6da5a5b3e79528fde2e0"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) createMappedTypeNodeFromType(t *Type) *ast.TypeNode {
@@ -3462,7 +3467,123 @@ export function NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstant
  * }
  */
 export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<Type>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderimpl.go::method::NodeBuilderImpl.createMappedTypeNodeFromType");
+  if ((t!.flags & TypeFlagsObject) === 0) {
+    throw new globalThis.Error("Debug failure.");
+  }
+  const b = receiver!;
+  const mapped = Type_AsMappedType(t)!;
+  const declaration = AsMappedTypeNode(mapped.declaration)!;
+  const readonlyToken = declaration.ReadonlyToken !== undefined ? NewToken(b.f, declaration.ReadonlyToken.Kind) : undefined;
+  const questionToken = declaration.QuestionToken !== undefined ? NewToken(b.f, declaration.QuestionToken.Kind) : undefined;
+  let appropriateConstraintTypeNode: GoPtr<TypeNode> = undefined;
+  let newTypeVariable: GoPtr<Node> = undefined;
+  let templateType = Checker_getTemplateTypeFromMappedType(b.ch, t);
+  const typeParameter = Checker_getTypeParameterFromMappedType(b.ch, t);
+  const constraintType = Checker_getConstraintTypeFromMappedType(b.ch, t);
+  const modifiersType = Checker_getModifiersTypeFromMappedType(b.ch, t);
+
+  const constraintOfConstraint = (constraintType!.flags & TypeFlagsTypeParameter) !== 0
+    ? Checker_getConstraintOfTypeParameter(b.ch, constraintType)
+    : undefined;
+  const needsModifierPreservingWrapper =
+    !Checker_isMappedTypeWithKeyofConstraintDeclaration(b.ch, t) &&
+    (modifiersType!.flags & TypeFlagsUnknown) === 0 &&
+    (b.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 &&
+    !((constraintType!.flags & TypeFlagsTypeParameter) !== 0 && constraintOfConstraint !== undefined && (constraintOfConstraint.flags & TypeFlagsIndex) !== 0);
+
+  if (Checker_isMappedTypeWithKeyofConstraintDeclaration(b.ch, t)) {
+    if ((b.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstantiation(receiver, mapped)) {
+      const newConstraintParam = Checker_newTypeParameter(b.ch, Checker_newSymbol(b.ch, SymbolFlagsTypeParameter, "T"));
+      const name = NodeBuilderImpl_typeParameterToName(receiver, newConstraintParam);
+      const target = Type_Target(t);
+      newTypeVariable = NewTypeReferenceNode(b.f, name as never, undefined);
+      templateType = Checker_instantiateType(
+        b.ch,
+        Checker_getTemplateTypeFromMappedType(b.ch, target),
+        newTypeMapper(
+          [Checker_getTypeParameterFromMappedType(b.ch, target), Checker_getModifiersTypeFromMappedType(b.ch, target)],
+          [typeParameter, newConstraintParam],
+        ),
+      );
+    }
+    const indexTarget = newTypeVariable !== undefined
+      ? newTypeVariable as GoPtr<TypeNode>
+      : NodeBuilderImpl_typeToTypeNode(receiver, modifiersType);
+    appropriateConstraintTypeNode = NewTypeOperatorNode(b.f, KindKeyOfKeyword, indexTarget) as GoPtr<TypeNode>;
+  } else if (needsModifierPreservingWrapper) {
+    const newParam = Checker_newTypeParameter(b.ch, Checker_newSymbol(b.ch, SymbolFlagsTypeParameter, "T"));
+    const name = NodeBuilderImpl_typeParameterToName(receiver, newParam);
+    newTypeVariable = NewTypeReferenceNode(b.f, name as never, undefined);
+    appropriateConstraintTypeNode = newTypeVariable as GoPtr<TypeNode>;
+  } else {
+    appropriateConstraintTypeNode = NodeBuilderImpl_typeToTypeNode(receiver, constraintType);
+  }
+
+  const cleanup = NodeBuilderImpl_enterNewScope(receiver, mapped.declaration, [], [typeParameter], [], undefined);
+  const typeParameterDeclarationNode = NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver, typeParameter, appropriateConstraintTypeNode);
+  const nameTypeNode = declaration.NameType !== undefined
+    ? NodeBuilderImpl_typeToTypeNode(receiver, Checker_getNameTypeFromMappedType(b.ch, t))
+    : undefined;
+  const templateTypeNode = NodeBuilderImpl_typeToTypeNode(
+    receiver,
+    Checker_removeMissingType(b.ch, templateType, (getMappedTypeModifiers(t) & MappedTypeModifiersIncludeOptional) !== 0),
+  );
+  cleanup();
+
+  const result = NewMappedTypeNode(
+    b.f,
+    readonlyToken,
+    typeParameterDeclarationNode,
+    nameTypeNode,
+    questionToken,
+    templateTypeNode,
+    undefined,
+  );
+  b.ctx!.approximateLength += 10;
+  EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
+
+  if ((b.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstantiation(receiver, mapped)) {
+    let rawConstraintTypeFromDeclaration = NodeBuilderImpl_getTypeFromTypeNode(receiver, AsTypeParameterDeclaration(declaration.TypeParameter)!.Constraint, false);
+    if (rawConstraintTypeFromDeclaration !== undefined) {
+      rawConstraintTypeFromDeclaration = Checker_getConstraintOfTypeParameter(b.ch, rawConstraintTypeFromDeclaration);
+    }
+    if (rawConstraintTypeFromDeclaration === undefined) {
+      rawConstraintTypeFromDeclaration = b.ch!.unknownType;
+    }
+    const originalConstraint = Checker_instantiateType(b.ch, rawConstraintTypeFromDeclaration, mapped.__tsgoEmbedded0!.mapper);
+    const originalConstraintNode = (originalConstraint!.flags & TypeFlagsUnknown) === 0
+      ? NodeBuilderImpl_typeToTypeNode(receiver, originalConstraint)
+      : undefined;
+    const newTypeVariableName = AsTypeReferenceNode(newTypeVariable)!.TypeName;
+    return NewConditionalTypeNode(
+      b.f,
+      NodeBuilderImpl_typeToTypeNode(receiver, modifiersType),
+      NewInferTypeNode(b.f, NewTypeParameterDeclaration(b.f, undefined, NodeFactory_DeepCloneNode(b.f, newTypeVariableName) as never, originalConstraintNode, undefined, undefined) as GoPtr<TypeParameterDeclarationNode>) as GoPtr<TypeNode>,
+      result as GoPtr<TypeNode>,
+      NewKeywordTypeNode(b.f, KindNeverKeyword),
+    ) as GoPtr<TypeNode>;
+  } else if (needsModifierPreservingWrapper) {
+    const newTypeVariableName = AsTypeReferenceNode(newTypeVariable)!.TypeName;
+    return NewConditionalTypeNode(
+      b.f,
+      NodeBuilderImpl_typeToTypeNode(receiver, constraintType),
+      NewInferTypeNode(
+        b.f,
+        NewTypeParameterDeclaration(
+          b.f,
+          undefined,
+          NodeFactory_DeepCloneNode(b.f, newTypeVariableName) as never,
+          NewTypeOperatorNode(b.f, KindKeyOfKeyword, NodeBuilderImpl_typeToTypeNode(receiver, modifiersType)) as GoPtr<TypeNode>,
+          undefined,
+          undefined,
+        ) as GoPtr<TypeParameterDeclarationNode>,
+      ) as GoPtr<TypeNode>,
+      result as GoPtr<TypeNode>,
+      NewKeywordTypeNode(b.f, KindNeverKeyword),
+    ) as GoPtr<TypeNode>;
+  }
+
+  return result as GoPtr<TypeNode>;
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/enablevtprocessing_windows.go::func::init","kind":"func","status":"stub","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db","bodyHash":"b5eab2e107ed4348c3996f517d2014aa4a2f19948a46ccf9c0b7e86623587411"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/enablevtprocessing_windows.go::func::init","kind":"func","status":"implemented","sigHash":"deadcfe2223147229491ed97a5eb1b413a0acb92061a6dd7ca510eb6614543db","bodyHash":"b5eab2e107ed4348c3996f517d2014aa4a2f19948a46ccf9c0b7e86623587411"}
  *
  * Go source:
  * func init() {
@@ -20,5 +20,5 @@
  * }
  */
 export function init(): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::cmd/tsgo/enablevtprocessing_windows.go::func::init");
+  return;
 }

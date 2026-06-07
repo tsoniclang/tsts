@@ -68,6 +68,8 @@ import {
   Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_types_of_the_target_s_properties,
   Type_0_is_missing_the_following_properties_from_type_1_Colon_2,
   Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more,
+  Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2,
+  X_0_is_declared_here,
   X_0_is_assignable_to_the_constraint_of_type_1_but_1_could_be_instantiated_with_a_different_subtype_of_constraint_2,
   X_0_could_be_instantiated_with_an_arbitrary_type_which_could_be_unrelated_to_1,
 } from "../diagnostics/generated/messages.js";
@@ -100,6 +102,8 @@ import { Checker_getDeclaringClass, Checker_isValidOverrideOf } from "./checker/
 import { Checker_getPropertiesOfType } from "./checker/types.js";
 import { Checker_getApplicableIndexInfoForName, Checker_isTypeParameterPossiblyReferenced, Checker_getSignaturesOfType, Checker_getSignaturesOfStructuredType, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_typeHasCallOrConstructSignatures, Checker_getApplicableIndexInfo, Checker_isApplicableIndexType, Checker_getTypeParameterFromMappedType, Checker_getErasedSignature } from "./checker/signatures.js";
 import { AsConditionalTypeNode, AsMappedTypeNode } from "../ast/generated/casts.js";
+import { IsPrivateIdentifier } from "../ast/generated/predicates.js";
+import { GetSymbolNameForPrivateIdentifier } from "../binder/binder.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { newSimpleTypeMapper } from "./mapper.js";
 import type { LinkStore } from "../core/linkstore.js";
@@ -9077,7 +9081,7 @@ export function Relater_isPropertySymbolTypeRelated(receiver: GoPtr<Relater>, so
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportUnmatchedProperty","kind":"method","status":"stub","sigHash":"6ef12d9574708d45956f1534bdfe400304de54e3b4d53b82a5e63c4a5210b285","bodyHash":"67036847466969e61a6faf62ec3ea57f45297e813e8512f4115f256d40ebc901"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportUnmatchedProperty","kind":"method","status":"implemented","sigHash":"6ef12d9574708d45956f1534bdfe400304de54e3b4d53b82a5e63c4a5210b285","bodyHash":"67036847466969e61a6faf62ec3ea57f45297e813e8512f4115f256d40ebc901"}
  *
  * Go source:
  * func (r *Relater) reportUnmatchedProperty(source *Type, target *Type, unmatchedProperty *ast.Symbol, requireOptionalProperties bool) {
@@ -9115,7 +9119,44 @@ export function Relater_isPropertySymbolTypeRelated(receiver: GoPtr<Relater>, so
  * }
  */
 export function Relater_reportUnmatchedProperty(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, unmatchedProperty: GoPtr<Symbol>, requireOptionalProperties: bool): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportUnmatchedProperty");
+  if (
+    unmatchedProperty!.ValueDeclaration !== undefined &&
+    Node_Name(unmatchedProperty!.ValueDeclaration) !== undefined &&
+    IsPrivateIdentifier(Node_Name(unmatchedProperty!.ValueDeclaration)) &&
+    source!.symbol !== undefined &&
+    (source!.symbol!.Flags & SymbolFlagsClass) !== 0
+  ) {
+    const privateIdentifierDescription = Node_Text(Node_Name(unmatchedProperty!.ValueDeclaration)!);
+    const symbolTableKey = GetSymbolNameForPrivateIdentifier(source!.symbol, privateIdentifierDescription);
+    if (Checker_getPropertyOfType(receiver!.c, source, symbolTableKey) !== undefined) {
+      Relater_reportError(
+        receiver,
+        Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2,
+        privateIdentifierDescription,
+        Checker_symbolToString(receiver!.c, source!.symbol),
+        Checker_symbolToString(receiver!.c, target!.symbol),
+      );
+      return;
+    }
+  }
+  const props = Checker_getUnmatchedProperties(receiver!.c, source, target, requireOptionalProperties, false);
+  if (props.length === 1) {
+    const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
+    const propName = Checker_symbolToString(receiver!.c, unmatchedProperty);
+    Relater_reportError(receiver, Property_0_is_missing_in_type_1_but_required_in_type_2, propName, sourceType, targetType);
+    if (unmatchedProperty!.Declarations.length !== 0) {
+      receiver!.relatedInfo.push(createDiagnosticForNode(unmatchedProperty!.Declarations[0], X_0_is_declared_here, propName));
+    }
+  } else if (Relater_tryElaborateArrayLikeErrors(receiver, source, target, false)) {
+    const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
+    if (props.length > 5) {
+      const propNames = props.slice(0, 4).map((prop: GoPtr<Symbol>) => Checker_symbolToString(receiver!.c, prop)).join(", ");
+      Relater_reportError(receiver, Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more, sourceType, targetType, propNames, props.length - 4);
+    } else {
+      const propNames = props.map((prop: GoPtr<Symbol>) => Checker_symbolToString(receiver!.c, prop)).join(", ");
+      Relater_reportError(receiver, Type_0_is_missing_the_following_properties_from_type_1_Colon_2, sourceType, targetType, propNames);
+    }
+  }
 }
 
 /**
