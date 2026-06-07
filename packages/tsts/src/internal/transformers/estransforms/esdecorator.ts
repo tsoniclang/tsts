@@ -1,12 +1,12 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq2, GoSlice } from "../../../go/compat.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateForStatement, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
+import { Node_Members, Node_Initializer, Node_Expression, Node_Text, Node_Body, Node_ParameterList, Node_MemberList, Node_Decorators, NodeFactory_UpdateBinaryExpression, NodeFactory_UpdateSpreadElement, NodeFactory_UpdateSpreadAssignment, NodeFactory_UpdateParenthesizedExpression, NodeFactory_UpdateArrayLiteralExpression, NodeFactory_UpdateObjectLiteralExpression, NodeFactory_UpdatePropertyAssignment, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateExpressionWithTypeArguments, NodeFactory_UpdateForStatement, NodeFactory_UpdateHeritageClause, NodeFactory_UpdateTaggedTemplateExpression, NodeFactory_UpdateTryStatement, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePartiallyEmittedExpression } from "../../ast/ast.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { Node_Modifiers, Node_Name, Node_SubtreeFacts } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, NodeFactory_NewModifierList } from "../../ast/spine.js";
 import type { Block, ClassDeclaration, ClassExpression, ConstructorDeclaration, ForStatement, ParameterDeclaration, PropertyDeclaration, TryStatement, BinaryExpression, SpreadElement, SpreadAssignment, PropertyAssignment, ShorthandPropertyAssignment, ArrayLiteralExpression, ObjectLiteralExpression, ParenthesizedExpression, ComputedPropertyName, TaggedTemplateExpression } from "../../ast/generated/data.js";
-import { AsBlock, AsCallExpression, AsClassDeclaration, AsClassExpression, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsForStatement, AsParameterDeclaration, AsPostfixUnaryExpression, AsPrefixUnaryExpression, AsPropertyAccessExpression, AsPropertyDeclaration, AsBinaryExpression, AsSpreadElement, AsSpreadAssignment, AsShorthandPropertyAssignment, AsPropertyAssignment, AsArrayLiteralExpression, AsObjectLiteralExpression, AsParenthesizedExpression, AsDecorator, AsMethodDeclaration, AsComputedPropertyName, AsTaggedTemplateExpression, AsTryStatement, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsPartiallyEmittedExpression } from "../../ast/generated/casts.js";
+import { AsBlock, AsCallExpression, AsClassDeclaration, AsClassExpression, AsClassStaticBlockDeclaration, AsConstructorDeclaration, AsElementAccessExpression, AsExpressionWithTypeArguments, AsForStatement, AsHeritageClause, AsParameterDeclaration, AsPostfixUnaryExpression, AsPrefixUnaryExpression, AsPropertyAccessExpression, AsPropertyDeclaration, AsBinaryExpression, AsSpreadElement, AsSpreadAssignment, AsShorthandPropertyAssignment, AsPropertyAssignment, AsArrayLiteralExpression, AsObjectLiteralExpression, AsParenthesizedExpression, AsDecorator, AsMethodDeclaration, AsComputedPropertyName, AsTaggedTemplateExpression, AsTryStatement, AsGetAccessorDeclaration, AsSetAccessorDeclaration, AsPartiallyEmittedExpression } from "../../ast/generated/casts.js";
 import { AsSourceFile } from "../../ast/ast.js";
 import type { Expression, IdentifierNode, MemberName, Statement, TokenNode } from "../../ast/generated/unions.js";
 import type { ClassLikeDeclaration } from "../../ast/generated/unions.js";
@@ -67,6 +67,7 @@ import {
   IsPrivateIdentifier,
   IsPropertyDeclaration,
   IsSetAccessorDeclaration,
+  IsArrowFunction,
   IsSpreadElement,
   IsSpreadAssignment,
   IsPropertyAssignment,
@@ -78,6 +79,7 @@ import {
   IsPostfixUnaryExpression,
   IsPrefixUnaryExpression,
   IsClassExpression,
+  IsFunctionExpression,
   IsElementAccessExpression,
   IsPropertyAccessExpression,
   IsObjectLiteralExpression,
@@ -1476,7 +1478,7 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformClassLike","kind":"method","status":"stub","sigHash":"9d0b0bdcbb628f7415cd7913cb3016846984c225e1e42279f9fbf579a863ca3d","bodyHash":"9c1b46d090b20724db38a729c8d7f48c9468a501c4888d8672a88ceba4c897a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformClassLike","kind":"method","status":"implemented","sigHash":"9d0b0bdcbb628f7415cd7913cb3016846984c225e1e42279f9fbf579a863ca3d","bodyHash":"9c1b46d090b20724db38a729c8d7f48c9468a501c4888d8672a88ceba4c897a5"}
  *
  * Go source:
  * func (tx *esDecoratorTransformer) transformClassLike(node *ast.Node) *ast.Expression {
@@ -1891,7 +1893,324 @@ export function esDecoratorTransformer_createClassInfo(receiver: GoPtr<esDecorat
  * }
  */
 export function esDecoratorTransformer_transformClassLike(receiver: GoPtr<esDecoratorTransformer>, node: GoPtr<Node>): GoPtr<Expression> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/esdecorator.go::method::esDecoratorTransformer.transformClassLike");
+  const tx = receiver!;
+  const f = Transformer_Factory(tx.__tsgoEmbedded0!);
+  const factory = f!.__tsgoEmbedded0!;
+  const ec = Transformer_EmitContext(tx.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(tx.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+
+  EmitContext_StartVariableEnvironment(ec);
+
+  if (!classHasDeclaredOrExplicitlyAssignedName(ec, node) && ClassOrConstructorParameterIsDecorated(false, node)) {
+    node = injectClassNamedEvaluationHelperBlockIfMissing(ec, node, NewStringLiteral(factory, "", 0) as GoPtr<Expression>, undefined);
+  }
+
+  const classReference = NodeFactory_GetLocalNameEx(f, node as GoPtr<never>, {} as AssignedNameOptions);
+  const ci = esDecoratorTransformer_createClassInfo(tx, node)!;
+  const classDefinitionStatements: GoPtr<Statement>[] = [];
+  let leadingBlockStatements: GoPtr<Statement>[] = [];
+  let trailingBlockStatements: GoPtr<Statement>[] = [];
+  let syntheticConstructor: GoPtr<Node> = undefined;
+  let heritageClauses: GoPtr<NodeList> = undefined;
+  let shouldTransformPrivateStaticElementsInClass = false;
+
+  const classDecorators = esDecoratorTransformer_transformAllDecoratorsOfDeclaration(tx, Node_Decorators(node) ?? []);
+  if (classDecorators.length > 0) {
+    ci.classDecoratorsName = NodeFactory_NewUniqueNameEx(f, "_classDecorators", {
+      Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
+    } as AutoGenerateOptions);
+    ci.classDescriptorName = NodeFactory_NewUniqueNameEx(f, "_classDescriptor", {
+      Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
+    } as AutoGenerateOptions);
+    ci.classExtraInitializersName = NodeFactory_NewUniqueNameEx(f, "_classExtraInitializers", {
+      Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
+    } as AutoGenerateOptions);
+
+    const decoratorsArray = NewArrayLiteralExpression(
+      factory,
+      NodeFactory_NewNodeList(factory, classDecorators as GoPtr<Node>[]) as unknown as GoPtr<never>,
+      false,
+    ) as GoPtr<Expression>;
+    classDefinitionStatements.push(
+      esDecoratorTransformer_createLet(tx, ci.classDecoratorsName, decoratorsArray),
+      esDecoratorTransformer_createLet(tx, ci.classDescriptorName, undefined),
+      esDecoratorTransformer_createLet(
+        tx,
+        ci.classExtraInitializersName,
+        NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
+      ),
+      esDecoratorTransformer_createLet(tx, ci.classThis, undefined),
+    );
+
+    if (ci.hasStaticPrivateClassElements) {
+      shouldTransformPrivateStaticElementsInClass = true;
+      tx.shouldTransformPrivateStaticElementsInFile = true;
+    }
+  }
+
+  const extendsClause = GetHeritageClause(node, KindExtendsKeyword);
+  let extendsElement: GoPtr<Node> = undefined;
+  if (extendsClause !== undefined) {
+    const hc = AsHeritageClause(extendsClause)!;
+    if (hc.Types !== undefined && hc.Types.Nodes.length > 0) {
+      extendsElement = hc.Types.Nodes[0];
+    }
+  }
+  let extendsExpression: GoPtr<Expression> = undefined;
+  if (extendsElement !== undefined) {
+    extendsExpression = NodeVisitor_VisitNode(visitor, AsExpressionWithTypeArguments(extendsElement)!.Expression as GoPtr<Node>) as GoPtr<Expression>;
+  }
+
+  if (extendsExpression !== undefined) {
+    ci.classSuper = NodeFactory_NewUniqueNameEx(f, "_classSuper", {
+      Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel,
+    } as AutoGenerateOptions);
+
+    const unwrapped = SkipOuterExpressions(extendsExpression as GoPtr<Node>, OEKAll);
+    let safeExtendsExpression: GoPtr<Expression> = extendsExpression;
+    if ((IsClassExpression(unwrapped) && Node_Name(unwrapped) === undefined) ||
+      (IsFunctionExpression(unwrapped) && Node_Name(unwrapped) === undefined) ||
+      IsArrowFunction(unwrapped)) {
+      safeExtendsExpression = NodeFactory_NewCommaExpression(
+        f,
+        NewNumericLiteral(factory, "0", 0) as GoPtr<Expression>,
+        extendsExpression,
+      );
+    }
+    classDefinitionStatements.push(esDecoratorTransformer_createLet(tx, ci.classSuper, safeExtendsExpression));
+
+    const updatedExtendsElement = NodeFactory_UpdateExpressionWithTypeArguments(
+      factory,
+      AsExpressionWithTypeArguments(extendsElement)!,
+      ci.classSuper as GoPtr<never>,
+      undefined,
+    );
+    const hc = AsHeritageClause(extendsClause)!;
+    const updatedExtendsClause = NodeFactory_UpdateHeritageClause(
+      factory,
+      hc,
+      hc.Token,
+      NodeFactory_NewNodeList(factory, [updatedExtendsElement]) as unknown as GoPtr<never>,
+    );
+    heritageClauses = NodeFactory_NewNodeList(factory, [updatedExtendsClause]) as GoPtr<NodeList>;
+  }
+
+  const renamedClassThis: GoPtr<Expression> = ci.classThis !== undefined
+    ? ci.classThis as GoPtr<Expression>
+    : NodeFactory_NewThisExpression(f);
+
+  esDecoratorTransformer_enterClass(tx, ci);
+  leadingBlockStatements.push(esDecoratorTransformer_createMetadata(tx, ci.metadataReference, ci.classSuper));
+  let members = NodeVisitor_VisitNodes(tx.nonConstructorClassElementVisitor as ConcreteNodeVisitor, Node_MemberList(node) as GoPtr<NodeList>);
+  members = NodeVisitor_VisitNodes(tx.constructorClassElementVisitor as ConcreteNodeVisitor, members);
+
+  if (tx.pendingExpressions.length > 0) {
+    tx.outerThis = undefined;
+    for (let expr of tx.pendingExpressions) {
+      if ((Node_SubtreeFacts(expr as GoPtr<Node>) & SubtreeContainsLexicalThis) !== 0) {
+        expr = NodeVisitor_VisitNode(tx.outerThisVisitor as ConcreteNodeVisitor, expr as GoPtr<Node>) as GoPtr<Expression>;
+      }
+      leadingBlockStatements.push(NewExpressionStatement(factory, expr as unknown as GoPtr<never>) as GoPtr<Statement>);
+    }
+    if (tx.outerThis !== undefined) {
+      classDefinitionStatements.unshift(esDecoratorTransformer_createLet(tx, tx.outerThis, NodeFactory_NewThisExpression(f)));
+    }
+    tx.pendingExpressions = [];
+  }
+  esDecoratorTransformer_exitClass(tx);
+
+  if (ci.pendingInstanceInitializers.length > 0 && GetFirstConstructorWithBody(node) === undefined) {
+    const initializerStatements = esDecoratorTransformer_prepareConstructor(tx, ci);
+    if (initializerStatements.length > 0) {
+      const isDerivedClass = extendsElement !== undefined &&
+        SkipOuterExpressions(AsExpressionWithTypeArguments(extendsElement)!.Expression as GoPtr<Node>, OEKAll)!.Kind !== KindNullKeyword;
+      const constructorStatements: GoPtr<Statement>[] = [];
+      if (isDerivedClass) {
+        const spreadArguments = NewSpreadElement(factory, NewAstIdentifier(factory, "arguments") as unknown as GoPtr<never>);
+        const superCall = NewCallExpression(
+          factory,
+          NewKeywordExpression(factory, KindSuperKeyword) as unknown as GoPtr<never>,
+          undefined,
+          undefined,
+          NodeFactory_NewNodeList(factory, [spreadArguments]) as unknown as GoPtr<never>,
+          NodeFlagsNone,
+        );
+        constructorStatements.push(NewExpressionStatement(factory, superCall as unknown as GoPtr<never>) as GoPtr<Statement>);
+      }
+      constructorStatements.push(...initializerStatements);
+      const constructorBody = NewBlock(factory, NodeFactory_NewNodeList(factory, constructorStatements) as unknown as GoPtr<never>, true);
+      syntheticConstructor = NewConstructorDeclaration(factory, undefined, undefined, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, undefined, undefined, constructorBody as unknown as GoPtr<never>);
+    }
+  }
+
+  if (ci.staticMethodExtraInitializersName !== undefined) {
+    classDefinitionStatements.push(esDecoratorTransformer_createLet(
+      tx,
+      ci.staticMethodExtraInitializersName,
+      NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
+    ));
+  }
+
+  if (ci.instanceMethodExtraInitializersName !== undefined) {
+    classDefinitionStatements.push(esDecoratorTransformer_createLet(
+      tx,
+      ci.instanceMethodExtraInitializersName,
+      NewArrayLiteralExpression(factory, NodeFactory_NewNodeList(factory, []) as unknown as GoPtr<never>, false) as GoPtr<Expression>,
+    ));
+  }
+
+  if (OrderedMap_Size(ci.memberInfos) > 0) {
+    classDefinitionStatements.push(...esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, true));
+    classDefinitionStatements.push(...esDecoratorTransformer_emitMemberInfoDeclarations(tx, ci, false));
+  }
+
+  leadingBlockStatements.push(...ci.staticNonFieldDecorationStatements);
+  leadingBlockStatements.push(...ci.nonStaticNonFieldDecorationStatements);
+  leadingBlockStatements.push(...ci.staticFieldDecorationStatements);
+  leadingBlockStatements.push(...ci.nonStaticFieldDecorationStatements);
+
+  if (ci.classDescriptorName !== undefined && ci.classDecoratorsName !== undefined && ci.classExtraInitializersName !== undefined && ci.classThis !== undefined) {
+    const valueProperty = NewPropertyAssignment(factory, undefined, NewAstIdentifier(factory, "value"), undefined, undefined, renamedClassThis);
+    const classDescriptor = NewObjectLiteralExpression(factory, NodeFactory_NewNodeList(factory, [valueProperty]) as unknown as GoPtr<never>, false) as GoPtr<Expression>;
+    const classDescriptorAssignment = NodeFactory_NewAssignmentExpression(f, ci.classDescriptorName as GoPtr<Expression>, classDescriptor);
+    const classNameReference = NewPropertyAccessExpression(factory, renamedClassThis, undefined, NewAstIdentifier(factory, "name"), NodeFlagsNone) as GoPtr<Expression>;
+
+    const contextObj = NodeFactory_NewESDecorateClassContextObject(f, classNameReference, ci.metadataReference);
+    const esDecorateHelper = NodeFactory_NewESDecorateHelper(
+      f,
+      NewToken(factory, KindNullKeyword) as GoPtr<Expression>,
+      classDescriptorAssignment,
+      ci.classDecoratorsName as GoPtr<Expression>,
+      contextObj,
+      NewToken(factory, KindNullKeyword) as GoPtr<Expression>,
+      ci.classExtraInitializersName as GoPtr<Expression>,
+    );
+    const esDecorateStatement = NewExpressionStatement(factory, esDecorateHelper as unknown as GoPtr<never>) as GoPtr<Statement>;
+    EmitContext_SetSourceMapRange(ec, esDecorateStatement, MoveRangePastDecorators(node));
+    leadingBlockStatements.push(esDecorateStatement);
+
+    const classDescriptorValueRef = NewPropertyAccessExpression(factory, ci.classDescriptorName as GoPtr<Expression>, undefined, NewAstIdentifier(factory, "value"), NodeFlagsNone) as GoPtr<Expression>;
+    const classThisAssignment = NodeFactory_NewAssignmentExpression(f, ci.classThis as GoPtr<Expression>, classDescriptorValueRef);
+    const classReferenceAssignment = NodeFactory_NewAssignmentExpression(f, classReference as GoPtr<Expression>, classThisAssignment);
+    leadingBlockStatements.push(NewExpressionStatement(factory, classReferenceAssignment as unknown as GoPtr<never>) as GoPtr<Statement>);
+  }
+
+  leadingBlockStatements.push(esDecoratorTransformer_createSymbolMetadata(tx, renamedClassThis, ci.metadataReference));
+
+  if (ci.pendingStaticInitializers.length > 0) {
+    for (const initializer of ci.pendingStaticInitializers) {
+      const initializerStatement = NewExpressionStatement(factory, initializer as unknown as GoPtr<never>) as GoPtr<Statement>;
+      EmitContext_SetSourceMapRange(ec, initializerStatement, EmitContext_SourceMapRange(ec, initializer as GoPtr<Node>));
+      trailingBlockStatements.push(initializerStatement);
+    }
+    ci.pendingStaticInitializers = [];
+  }
+
+  if (ci.classExtraInitializersName !== undefined) {
+    const runClassInitializersHelper = NodeFactory_NewRunInitializersHelper(f, renamedClassThis, ci.classExtraInitializersName as GoPtr<Expression>, undefined);
+    const runClassInitializersStatement = NewExpressionStatement(factory, runClassInitializersHelper as unknown as GoPtr<never>) as GoPtr<Statement>;
+    if (Node_Name(node) !== undefined) {
+      EmitContext_SetSourceMapRange(ec, runClassInitializersStatement, Node_Name(node)!.Loc);
+    } else {
+      EmitContext_SetSourceMapRange(ec, runClassInitializersStatement, MoveRangePastDecorators(node));
+    }
+    trailingBlockStatements.push(runClassInitializersStatement);
+  }
+
+  if (leadingBlockStatements.length > 0 && trailingBlockStatements.length > 0 && !ci.hasStaticInitializers) {
+    leadingBlockStatements = [...leadingBlockStatements, ...trailingBlockStatements];
+    trailingBlockStatements = [];
+  }
+
+  let leadingStaticBlock: GoPtr<Node> = undefined;
+  if (leadingBlockStatements.length > 0) {
+    leadingStaticBlock = NewClassStaticBlockDeclaration(
+      factory,
+      undefined,
+      NewBlock(factory, NodeFactory_NewNodeList(factory, leadingBlockStatements) as unknown as GoPtr<never>, true) as unknown as GoPtr<never>,
+    );
+  }
+
+  if (leadingStaticBlock !== undefined && shouldTransformPrivateStaticElementsInClass) {
+    EmitContext_SetEmitFlags(ec, leadingStaticBlock, EFTransformPrivateStaticElements);
+  }
+
+  let trailingStaticBlock: GoPtr<Node> = undefined;
+  if (trailingBlockStatements.length > 0) {
+    trailingStaticBlock = NewClassStaticBlockDeclaration(
+      factory,
+      undefined,
+      NewBlock(factory, NodeFactory_NewNodeList(factory, trailingBlockStatements) as unknown as GoPtr<never>, true) as unknown as GoPtr<never>,
+    );
+  }
+
+  if (leadingStaticBlock !== undefined || syntheticConstructor !== undefined || trailingStaticBlock !== undefined) {
+    const newMembers: GoPtr<Node>[] = [];
+    let existingNamedEvaluationHelperBlockIndex = -1;
+    for (let i = 0; i < members!.Nodes.length; i++) {
+      const member = members!.Nodes[i];
+      if (isClassNamedEvaluationHelperBlock(ec, member)) {
+        existingNamedEvaluationHelperBlockIndex = i;
+        break;
+      }
+    }
+
+    if (leadingStaticBlock !== undefined) {
+      newMembers.push(...members!.Nodes.slice(0, existingNamedEvaluationHelperBlockIndex + 1));
+      newMembers.push(leadingStaticBlock);
+      newMembers.push(...members!.Nodes.slice(existingNamedEvaluationHelperBlockIndex + 1));
+    } else {
+      newMembers.push(...members!.Nodes);
+    }
+
+    if (syntheticConstructor !== undefined) {
+      newMembers.push(syntheticConstructor);
+    }
+
+    if (trailingStaticBlock !== undefined) {
+      newMembers.push(trailingStaticBlock);
+    }
+
+    const membersList = NodeFactory_NewNodeList(factory, newMembers);
+    membersList!.Loc = members!.Loc;
+    members = membersList;
+  }
+
+  const lexicalEnvironment = EmitContext_EndVariableEnvironment(ec);
+  let classExpression: GoPtr<Node>;
+  if (classDecorators.length > 0) {
+    classExpression = NewClassExpression(factory, undefined, undefined, undefined, heritageClauses as GoPtr<never>, members as GoPtr<never>);
+    EmitContext_SetOriginal(ec, classExpression, node);
+    if (ci.classThis !== undefined) {
+      classExpression = injectClassThisAssignmentIfMissing(ec, f, classExpression, ci.classThis);
+    }
+
+    const classReferenceDeclaration = NewVariableDeclaration(factory, classReference as GoPtr<never>, undefined, undefined, classExpression as GoPtr<never>);
+    const classReferenceVarDeclList = NewVariableDeclarationList(factory, NodeFactory_NewNodeList(factory, [classReferenceDeclaration]) as unknown as GoPtr<never>, NodeFlagsNone);
+    const returnExpr = ci.classThis !== undefined
+      ? NodeFactory_NewAssignmentExpression(f, classReference as GoPtr<Expression>, ci.classThis as GoPtr<Expression>)
+      : classReference as GoPtr<Expression>;
+    classDefinitionStatements.push(
+      NewVariableStatement(factory, undefined, classReferenceVarDeclList as unknown as GoPtr<never>) as GoPtr<Statement>,
+      NewReturnStatement(factory, returnExpr as unknown as GoPtr<never>) as GoPtr<Statement>,
+    );
+  } else {
+    classExpression = NewClassExpression(factory, undefined, Node_Name(node) as GoPtr<never>, undefined, heritageClauses as GoPtr<never>, members as GoPtr<never>);
+    EmitContext_SetOriginal(ec, classExpression, node);
+    classDefinitionStatements.push(NewReturnStatement(factory, classExpression as unknown as GoPtr<never>) as GoPtr<Statement>);
+  }
+
+  if (shouldTransformPrivateStaticElementsInClass) {
+    EmitContext_AddEmitFlags(ec, classExpression, EFTransformPrivateStaticElements);
+    for (const member of Node_Members(classExpression) ?? []) {
+      if ((IsPrivateIdentifierClassElementDeclaration(member) || IsAutoAccessorPropertyDeclaration(member)) && HasStaticModifier(member)) {
+        EmitContext_AddEmitFlags(ec, member, EFTransformPrivateStaticElements);
+      }
+    }
+  }
+
+  const mergedStatements = EmitContext_MergeEnvironment(ec, classDefinitionStatements, lexicalEnvironment);
+  return NodeFactory_NewImmediatelyInvokedArrowFunction(f, mergedStatements);
 }
 
 /**

@@ -8,13 +8,12 @@ import { KindSyntaxList, KindParameter, KindGlobalKeyword, KindNamespaceKeyword,
 import { IsBinaryExpression, IsIdentifier, IsPrivateIdentifier, IsSourceFile, IsOmittedExpression, IsImportEqualsDeclaration, IsPropertyAccessExpression, IsElementAccessExpression, IsVariableDeclaration, IsStringLiteral, IsComputedPropertyName, IsObjectLiteralExpression, IsTypeLiteralNode, IsParameterDeclaration, IsSetAccessorDeclaration, IsClassDeclaration, IsInterfaceDeclaration, IsFunctionDeclaration, IsExportAssignment, IsBindingElement, IsArrowFunction, IsFunctionExpression, IsJSTypeAliasDeclaration, IsModuleDeclaration } from "../../ast/generated/predicates.js";
 import { ModifierFlagsAll, ModifierFlagsPrivate, ModifierFlagsExport, ModifierFlagsDefault, ModifierFlagsAmbient, ModifierFlagsNone, ModifierFlagsParameterPropertyModifier } from "../../ast/modifierflags.js";
 import { NodeFlagsConst, NodeFlagsNone, NodeFlagsAmbient, NodeFlagsReparsed, SymbolFlagsAssignment } from "../../ast/generated/flags.js";
-import { GetNodeId, IsParseTreeNode, IsExternalOrCommonJSModule, IsInJSFile, IsExpandoPropertyDeclaration, IsDeclaration, HasDynamicName, IsEntityNameExpression, IsEntityName, IsFunctionLike, NodeIsPresent, GetCombinedModifierFlags, CreateModifiersFromModifierFlags, ReplaceModifiers, GetThisParameter, GetAssignmentDeclarationKind, GetElementOrPropertyAccessName, GetLeftmostAccessExpression, GetExternalModuleImportEqualsDeclarationExpression, IsLateVisibilityPaintedStatement, IsExternalModuleIndicator, IsGlobalScopeAugmentation, IsVarUsing, IsVarAwaitUsing, HasSyntacticModifier, HasInferredType, IsFunctionExpressionOrArrowFunction, IsPrimitiveLiteralValue, IsNonContextualKeyword, IsLiteralImportTypeNode, IsImplicitlyExportedJSTypeAlias, CanHaveModifiers, GetFirstConstructorWithBody, JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty, JSDeclarationKindProperty, JSDeclarationKindObjectDefinePropertyExports, IsModifier, IsVariableDeclarationInitializedToRequire, IsBindingPattern } from "../../ast/utilities.js";
+import { GetNodeId, IsParseTreeNode, IsExternalOrCommonJSModule, IsInJSFile, IsExpandoPropertyDeclaration, IsDeclaration, HasDynamicName, IsEntityNameExpression, IsEntityName, IsFunctionLike, NodeIsPresent, GetCombinedModifierFlags, CreateModifiersFromModifierFlags, ReplaceModifiers, GetThisParameter, GetAssignmentDeclarationKind, GetElementOrPropertyAccessName, GetLeftmostAccessExpression, GetExternalModuleImportEqualsDeclarationExpression, IsLateVisibilityPaintedStatement, IsExternalModuleIndicator, IsGlobalScopeAugmentation, IsVarUsing, IsVarAwaitUsing, HasSyntacticModifier, HasInferredType, IsFunctionExpressionOrArrowFunction, IsPrimitiveLiteralValue, IsNonContextualKeyword, IsLiteralImportTypeNode, IsImplicitlyExportedJSTypeAlias, CanHaveModifiers, GetFirstConstructorWithBody, JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty, JSDeclarationKindProperty, JSDeclarationKindObjectDefinePropertyExports, IsModifier, IsBindingPattern } from "../../ast/utilities.js";
 import { InternalSymbolNameExportEquals } from "../../ast/symbol.js";
 import type { Symbol as AstSymbol } from "../../ast/symbol.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import type { NodeVisitor } from "../../ast/spine.js";
 import { Node_Name, Node_Modifiers, NodeFactory_NewNodeList, NodeFactory_AsNodeFactory, Node_FunctionLikeData, updateNode, NodeFactory_NewModifierList, cloneNode, Node_DeclarationData, Node_LocalsContainerData, Node_Pos, Node_End } from "../../ast/spine.js";
 import type { Set } from "../../collections/set.js";
 import { Set_Has, Set_Add } from "../../collections/set.js";
@@ -156,17 +155,6 @@ export interface DeclarationTransformer {
   rawReferencedFiles: GoSlice<ReferencedFilePair>;
   rawTypeReferenceDirectives: GoSlice<GoPtr<FileReference>>;
   rawLibReferenceDirectives: GoSlice<GoPtr<FileReference>>;
-  bindingNameVisitor: GoPtr<NodeVisitor>;
-}
-
-// unexported Go method — not tracked by porter
-export function DeclarationTransformer_visitBindingName(receiver: GoPtr<DeclarationTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.visitBindingName");
-}
-
-// unexported Go method — not tracked by porter
-export function DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/declarations/transform.go::method::DeclarationTransformer.transformCjsRequireVariableDeclaration");
 }
 
 /**
@@ -237,7 +225,6 @@ export function NewDeclarationTransformer(host: DeclarationEmitHost, context: Go
     rawReferencedFiles: [],
     rawTypeReferenceDirectives: [],
     rawLibReferenceDirectives: [],
-    bindingNameVisitor: undefined,
   };
   state.reportExpandoFunctionErrors = (node: GoPtr<Node>): void => {
     const props = resolver.GetPropertiesOfContainerFunction(node);
@@ -252,7 +239,6 @@ export function NewDeclarationTransformer(host: DeclarationEmitHost, context: Go
     }
   };
   Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => DeclarationTransformer_visit(tx, node), context);
-  tx.bindingNameVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0), (node) => DeclarationTransformer_visitBindingName(tx, node));
   return tx;
 }
 
@@ -1679,9 +1665,6 @@ export function DeclarationTransformer_transformTypeParameterDeclaration(receive
  * }
  */
 export function DeclarationTransformer_transformVariableDeclaration(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<VariableDeclaration>): GoPtr<Node> {
-  if (receiver!.state!.currentSourceFile!.CommonJSModuleIndicator !== undefined && IsVariableDeclarationInitializedToRequire(input)) {
-    return DeclarationTransformer_transformCjsRequireVariableDeclaration(receiver, input);
-  }
   if (IsBindingPattern(Node_Name(input))) {
     return DeclarationTransformer_recreateBindingPattern(receiver, AsBindingPattern(Node_Name(input)));
   }
