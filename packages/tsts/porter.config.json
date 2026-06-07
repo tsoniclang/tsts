@@ -53,6 +53,7 @@
     "go/io/fs.ts",
     "go/os.ts",
     "go/runtime.ts",
+    "go/runtime/pprof.ts",
     "go/regexp.ts",
     "go/encoding/base64.ts",
     "go/encoding/json.ts",
