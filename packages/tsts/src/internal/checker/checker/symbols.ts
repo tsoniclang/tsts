@@ -6,7 +6,7 @@ import { isShorthandAmbientModuleSymbol } from "../utilities.js";
 import { Checker_hasSignatures } from "./signatures.js";
 import { Checker_canHaveSyntheticDefault } from "./support.js";
 import { isESMFormatImportImportingCommonjsFormatFile } from "./state.js";
-import { Checker_cloneTypeAsModuleType, Checker_getTypeWithSyntheticDefaultOnly, Checker_mapTypeEx } from "./types.js";
+import { Checker_cloneTypeAsModuleType, Checker_getSpreadType, Checker_getTypeWithSyntheticDefaultOnly, Checker_isValidSpreadType, Checker_mapTypeEx } from "./types.js";
 import type { Hasher } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import { Clone as MapClone, Values as MapValues } from "../../../go/maps.js";
@@ -55,7 +55,7 @@ import type { AccessFlags, AliasSymbolLinks, ContextFlags, DeclaredTypeLinks, De
 import type { Checker, CheckMode, DeclarationSpaces, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext, CachedTypeKey } from "./state.js";
 import { SymbolFlagsNone, SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsExportValue, SymbolFlagsLateBindingContainer, SymbolFlagsModule, SymbolFlagsModuleMember, SymbolFlagsReplaceableByMethod, SymbolFlagsType, SymbolFlagsValue, SymbolFlagsNamespace, SymbolFlagsTransient, SymbolFlagsBlockScopedVariable, SymbolFlagsClass, SymbolFlagsEnum, SymbolFlagsFunction, SymbolFlagsFunctionScopedVariable, SymbolFlagsAssignment, SymbolFlagsRegularEnum, SymbolFlagsConstEnum, SymbolFlagsVariable, SymbolFlagsInterface, SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, SymbolFlagsGlobalLookup, SymbolFlagsMethod, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsSetAccessor, SymbolFlagsGetAccessor, SymbolFlagsAccessor, SymbolFlagsEnumMember, NodeFlagsAwaitUsing, NodeFlagsConstant, NodeFlagsNone, NodeFlagsOptionalChain, SymbolFlagsValueModule, SymbolFlagsNamespaceModule, SymbolFlagsConstEnumOnlyModule, SymbolFlagsObjectLiteral, SymbolFlagsBlockScoped, SymbolFlagsModuleExports, SymbolFlagsTypeLiteral, SymbolFlagsPrototype, SymbolFlagsPropertyOrAccessor } from "../../ast/generated/flags.js";
 import { NodeFlagsPossiblyContainsImportMeta, NodeFlagsBlockScoped } from "../../ast/generated/flags.js";
-import { InternalSymbolNameComputed, InternalSymbolNameAssignmentDeclaration, InternalSymbolNameExportEquals, InternalSymbolNameImportAttributes, InternalSymbolNameExportStar, InternalSymbolNameIndex, InternalSymbolNameMissing, InternalSymbolNameDefault, InternalSymbolNameCall, InternalSymbolNameNew, InternalSymbolNameModuleExports, InternalSymbolNamePrefix, InternalSymbolNameThis, InternalSymbolNameConstructor, SymbolName } from "../../ast/symbol.js";
+import { InternalSymbolNameComputed, InternalSymbolNameAssignmentDeclaration, InternalSymbolNameExportEquals, InternalSymbolNameImportAttributes, InternalSymbolNameExportStar, InternalSymbolNameIndex, InternalSymbolNameMissing, InternalSymbolNameDefault, InternalSymbolNameType, InternalSymbolNameCall, InternalSymbolNameNew, InternalSymbolNameModuleExports, InternalSymbolNamePrefix, InternalSymbolNameThis, InternalSymbolNameConstructor, SymbolName } from "../../ast/symbol.js";
 import { Memoize, IfElse, Find, Filter, Map, Some, Every, GetSpellingSuggestion, ConcatenateSeq, FindLast, LastOrNil, OrElse, CountWhere, AppendIfUnique, FirstOrNil } from "../../core/core.js";
 import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
@@ -89,6 +89,7 @@ import { A_const_enum_member_can_only_be_accessed_using_a_string_literal, A_tupl
 import { This_member_cannot_have_an_override_modifier_because_its_containing_class_0_does_not_extend_another_class, This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_its_containing_class_0_does_not_extend_another_class, This_member_cannot_have_an_override_modifier_because_its_name_is_dynamic, This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_its_name_is_dynamic, This_member_cannot_have_an_override_modifier_because_it_is_not_declared_in_the_base_class_0_Did_you_mean_1, This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base_class_0_Did_you_mean_1, This_member_cannot_have_an_override_modifier_because_it_is_not_declared_in_the_base_class_0, This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base_class_0, This_parameter_property_must_have_an_override_modifier_because_it_overrides_a_member_in_base_class_0, This_parameter_property_must_have_a_JSDoc_comment_with_an_override_tag_because_it_overrides_a_member_in_the_base_class_0, This_member_must_have_an_override_modifier_because_it_overrides_a_member_in_the_base_class_0, This_member_must_have_a_JSDoc_comment_with_an_override_tag_because_it_overrides_a_member_in_the_base_class_0, This_member_must_have_an_override_modifier_because_it_overrides_an_abstract_method_that_is_declared_in_the_base_class_0 } from "../../diagnostics/generated/messages.js";
 import { getGlobalTypeDeclaration, getPrimitiveTypeAliasSuggestions, TypeSystemPropertyNameAliasTarget, TypeSystemPropertyNameType, TypeSystemPropertyNameDeclaredType, TypeSystemPropertyNameResolvedTypeArguments, TypeSystemPropertyNameResolvedBaseTypes, TypeSystemPropertyNameResolvedBaseConstructorType, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedBaseConstraint, TypeSystemPropertyNameInitializerIsUndefined, TypeSystemPropertyNameWriteType, MappedTypeNameTypeKindNone, MappedTypeNameTypeKindFiltering, MappedTypeNameTypeKindRemapping, getMappedTypeModifiers, MappedTypeModifiersIncludeOptional, MappedTypeModifiersExcludeOptional, MappedTypeModifiersIncludeReadonly, MappedTypeModifiersExcludeReadonly, indexTypeLessThan, getTotalFixedElementCount, isTupleType, CachedTypeKindStringIndexType, CachedTypeKindIndexType, CachedTypeKindDecoratorContext, CachedTypeKindDecoratorContextStatic, CachedTypeKindDecoratorContextPrivate, CachedTypeKindDecoratorContextPrivateStatic, isIdentifierThatStartsWithUnderscore, CachedTypeKindIndexedAccessForReading, CachedTypeKindIndexedAccessForWriting, getMappedTypeOptionality, everyType, getIndexedAccessKey, IntersectionFlagsNone, getIndexNodeForAccessExpression, isConstEnumObjectType } from "./state.js";
 import { getStringLiteralValue, getNumberLiteralValue, Checker_getSourceFileLinks } from "./state.js";
+import { CachedTypeKindSyntheticType } from "./state.js";
 import { getFeatureMap, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode, NewDiagnosticChainForNode, Checker_isUncheckedJSSuggestion, isThisProperty, isExclamationToken, IsInTypeQuery, getEnclosingContainer, isTopLevelInExternalModuleAugmentation, hasDotDotDotToken, hasExportAssignmentSymbol, isNumericLiteralName, isReservedMemberName, isTypeUsableAsPropertyName, getPropertyNameFromType, IsKnownSymbol, isDeleteTarget, isTypeAlias, isConstTypeReference, isStaticPrivateIdentifierProperty, createSymbolTable, getContainingClassExcludingClassDecorators, IsTypeAny, getBindingElementPropertyName, isValidESSymbolDeclaration, getExternalModuleRequireArgument, Checker_sortSymbols, AssignmentKindCompound, AssignmentKindNone, AssignmentKindDefinite, getAssignmentTargetKind, isThisTypeParameter, isObjectLiteralType, Checker_isJSLiteralType, isRightSideOfAccessExpression, findInMap, hasOverrideModifier, isEmptyArrayLiteral, isOptionalDeclaration, isInCompoundLikeAssignment, Checker_isConstantVariable, Checker_isParameterOrMutableLocalVariable, Checker_isMutableLocalVariableDeclaration, isLateBoundName } from "../utilities.js";
 import { Diagnostic_AddRelatedInfo, DiagnosticsCollection_Add } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
@@ -9353,7 +9354,7 @@ export function Checker_resolveESModuleSymbol(receiver: GoPtr<Checker>, moduleSy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeWithSyntheticDefaultImportType","kind":"method","status":"stub","sigHash":"3ccd16750ce3c055a159b187e35186cb2ccb591922beb5fb302e01bdefbc436e","bodyHash":"f949cf1f813b45df71dc989a4c1ca15923948f4a865e48d8f557fdf195fc58b5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeWithSyntheticDefaultImportType","kind":"method","status":"implemented","sigHash":"3ccd16750ce3c055a159b187e35186cb2ccb591922beb5fb302e01bdefbc436e","bodyHash":"f949cf1f813b45df71dc989a4c1ca15923948f4a865e48d8f557fdf195fc58b5"}
  *
  * Go source:
  * func (c *Checker) getTypeWithSyntheticDefaultImportType(t *Type, symbol *ast.Symbol, originalSymbol *ast.Symbol, moduleSpecifier *ast.Node) *Type {
@@ -9384,7 +9385,31 @@ export function Checker_resolveESModuleSymbol(receiver: GoPtr<Checker>, moduleSy
  * }
  */
 export function Checker_getTypeWithSyntheticDefaultImportType(receiver: GoPtr<Checker>, t: GoPtr<Type>, symbol_: GoPtr<Symbol>, originalSymbol: GoPtr<Symbol>, moduleSpecifier: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTypeWithSyntheticDefaultImportType");
+  if (t !== undefined && !Checker_isErrorType(receiver, t)) {
+    const key: CachedTypeKey = { kind: CachedTypeKindSyntheticType, typeId: t!.id };
+    const cached = receiver!.cachedTypes.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const file = Find(originalSymbol!.Declarations, IsSourceFile);
+    const hasSyntheticDefault = Checker_canHaveSyntheticDefault(receiver, file, originalSymbol, false, moduleSpecifier);
+    let syntheticType: GoPtr<Type>;
+    if (hasSyntheticDefault) {
+      const anonymousSymbol = Checker_newSymbol(receiver, SymbolFlagsTypeLiteral, InternalSymbolNameType);
+      const defaultContainingObject = Checker_createDefaultPropertyWrapperForModule(receiver, symbol_, originalSymbol, anonymousSymbol);
+      (LinkStore_Get(receiver!.valueSymbolLinks, anonymousSymbol) as GoPtr<ValueSymbolLinks>)!.resolvedType = defaultContainingObject;
+      if (Checker_isValidSpreadType(receiver, t)) {
+        syntheticType = Checker_getSpreadType(receiver, t, defaultContainingObject, anonymousSymbol, ObjectFlagsNone, false);
+      } else {
+        syntheticType = defaultContainingObject;
+      }
+    } else {
+      syntheticType = t;
+    }
+    receiver!.cachedTypes.set(key, syntheticType);
+    return syntheticType;
+  }
+  return t;
 }
 
 /**
