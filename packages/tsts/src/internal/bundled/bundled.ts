@@ -57,7 +57,7 @@ export const bundledSourceDir = (() => {
 })();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"stub","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe","bodyHash":"5d62285376c54a8572ae6d31b9f99a3aee5ecd1901c8df08f73e7f49ff21f53b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe","bodyHash":"5d62285376c54a8572ae6d31b9f99a3aee5ecd1901c8df08f73e7f49ff21f53b"}
  *
  * Go source:
  * var testingLibPath = sync.OnceValue(func() string {
@@ -67,10 +67,16 @@ export const bundledSourceDir = (() => {
  * 	return tspath.NormalizeSlashes(filepath.Join(bundledSourceDir(), "libs"))
  * })
  */
-export let testingLibPath: unknown = undefined as never;
+export const testingLibPath = (() => {
+  let value: string | undefined;
+  return (): string => {
+    value ??= path.join(bundledSourceDir(), "libs").replaceAll(path.sep, "/");
+    return value;
+  };
+})();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"stub","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4","bodyHash":"7e27d547d53c817b225620915e89b5f7fe053a36aa36b6249c34652f03147aaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4","bodyHash":"7e27d547d53c817b225620915e89b5f7fe053a36aa36b6249c34652f03147aaa"}
  *
  * Go source:
  * func TestingLibPath() string {
@@ -78,5 +84,5 @@ export let testingLibPath: unknown = undefined as never;
  * }
  */
 export function TestingLibPath(): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath");
+  return testingLibPath();
 }
