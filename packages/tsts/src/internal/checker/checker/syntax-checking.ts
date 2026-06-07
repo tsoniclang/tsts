@@ -24,6 +24,7 @@ import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Relation } from "../relater.js";
 import type { Signature, Type } from "../types.js";
+import { SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
   CheckModeInferential, CheckModeNormal, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
@@ -81,12 +82,14 @@ import {
   Checker_produceDeferredDiagnostics, Checker_hasParseDiagnostics,
   Checker_addErrorOrSuggestion, Checker_addDeferredDiagnostic,
   Checker_isErrorType, Checker_reportOperatorError, Checker_reportOperatorErrorUnless, Checker_IsDeprecatedDeclaration,
+  Checker_resolveErrorCall,
 } from "./diagnostics.js";
 import {
   Checker_checkTypeAssignableToAndOptionallyElaborate,
   Checker_checkTypeAssignableTo,
   Checker_checkTypeComparableTo,
   Checker_isTypeAssignableTo,
+  Checker_isTypeSubtypeOf,
   Checker_isTypeRelatedTo,
 } from "../relater.js";
 import { Checker_allTypesAssignableToKind, Checker_checkDestructuringAssignment, Checker_checkAssignmentOperator, Checker_isTypeEqualityComparableTo, Checker_isTypeAssignableToKind } from "./relations.js";
@@ -100,9 +103,9 @@ import {
   Checker_instantiateContextualType, Checker_getContextualType, Checker_checkConstEnumAccess,
   Checker_getFreshTypeOfLiteralType, Checker_getNumberLiteralType, Checker_getBigIntLiteralType, Checker_getBaseTypeOfLiteralType,
   Checker_filterType, Checker_getContextualIterationType, Checker_getYieldedTypeOfYieldExpression,
-  Checker_getIterationTypeOfIterable,
+  Checker_getIterationTypeOfIterable, Checker_getApparentType,
 } from "./types.js";
-import { Checker_isReachableFlowNode, Checker_hasMatchingArgument } from "../flow.js";
+import { Checker_isReachableFlowNode, Checker_hasMatchingArgument, Checker_getSymbolHasInstanceMethodOfObjectType } from "../flow.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { Checker_TypeToString } from "../printer.js";
 import { Checker_checkClassExpressionDeferred, Checker_checkThisInStaticClassFieldInitializerInDecoratedClass } from "./classes.js";
@@ -113,6 +116,7 @@ import {
   Checker_isUnwrappedReturnTypeUndefinedVoidOrAny, Checker_isIndirectCall, Checker_instantiateTypeWithSingleGenericCallSignature,
   Checker_checkGeneratorInstantiationAssignabilityToReturnType, Checker_getIterationTypesOfGeneratorFunctionReturnType,
   Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_tryGetThisTypeAt, Checker_tryGetThisTypeAtEx,
+  Checker_getSignaturesOfType, Checker_isUntypedFunctionCall, Checker_resolveCall, Checker_typeHasCallOrConstructSignatures,
 } from "./signatures.js";
 import { Checker_checkJsxSelfClosingElementDeferred, Checker_checkJsxElementDeferred } from "../jsx.js";
 import { createDiagnosticForNode, everyContainedType, hasCommonDomTypeName, isConstEnumObjectType } from "./state.js";
@@ -168,6 +172,7 @@ import {
   An_arithmetic_operand_must_be_of_type_any_number_bigint_or_an_enum_type,
   The_operand_of_an_increment_or_decrement_operator_must_be_a_variable_or_a_property_access,
   The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
+  The_right_hand_side_of_an_instanceof_expression_must_be_either_of_type_any_a_class_function_or_other_type_assignable_to_the_Function_interface_type_or_an_object_type_with_a_Symbol_hasInstance_method,
   X_yield_expression_implicitly_results_in_an_any_type_because_its_containing_generator_lacks_a_return_type_annotation,
   X_super_must_be_called_before_accessing_this_in_the_constructor_of_a_derived_class,
   X_this_cannot_be_referenced_in_a_computed_property_name,
@@ -1661,7 +1666,7 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveInstanceofExpression","kind":"method","status":"stub","sigHash":"2d8f498ac5bffc3bf268aafddf73dca51418ef3592e08a635521fde73a6011a6","bodyHash":"b9fc552852c48b36d318f94bc4427992fe15a5a0abdfe2c866ee0a2fc7201f99"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveInstanceofExpression","kind":"method","status":"implemented","sigHash":"2d8f498ac5bffc3bf268aafddf73dca51418ef3592e08a635521fde73a6011a6","bodyHash":"b9fc552852c48b36d318f94bc4427992fe15a5a0abdfe2c866ee0a2fc7201f99"}
  *
  * Go source:
  * func (c *Checker) resolveInstanceofExpression(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -1695,7 +1700,33 @@ export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_resolveInstanceofExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveInstanceofExpression");
+  const right = AsBinaryExpression(node)!.Right;
+  const rightType = Checker_checkExpression(receiver, right);
+  if (!IsTypeAny(rightType)) {
+    const hasInstanceMethodType = Checker_getSymbolHasInstanceMethodOfObjectType(receiver, rightType);
+    if (hasInstanceMethodType !== undefined) {
+      const apparentType = Checker_getApparentType(receiver, hasInstanceMethodType);
+      if (Checker_isErrorType(receiver, apparentType)) {
+        return Checker_resolveErrorCall(receiver, node);
+      }
+      const callSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindCall);
+      const constructSignatures = Checker_getSignaturesOfType(receiver, apparentType, SignatureKindConstruct);
+      if (Checker_isUntypedFunctionCall(receiver, hasInstanceMethodType, apparentType, callSignatures.length, constructSignatures.length)) {
+        return Checker_resolveUntypedCall(receiver, node);
+      }
+      if (callSignatures.length !== 0) {
+        return Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+      }
+    } else if (!(Checker_typeHasCallOrConstructSignatures(receiver, rightType) || Checker_isTypeSubtypeOf(receiver, rightType, receiver!.globalFunctionType))) {
+      Checker_error(
+        receiver,
+        right,
+        The_right_hand_side_of_an_instanceof_expression_must_be_either_of_type_any_a_class_function_or_other_type_assignable_to_the_Function_interface_type_or_an_object_type_with_a_Symbol_hasInstance_method,
+      );
+      return Checker_resolveErrorCall(receiver, node);
+    }
+  }
+  return receiver!.anySignature;
 }
 
 /**
