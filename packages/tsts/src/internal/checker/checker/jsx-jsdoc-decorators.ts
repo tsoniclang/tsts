@@ -1,14 +1,23 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { Every } from "../../core/core.js";
+import { Every, Find } from "../../core/core.js";
 import type { Node } from "../../ast/spine.js";
-import { Node_Comments } from "../../ast/ast.js";
-import { KindJSDocLink, KindJSDocLinkCode, KindJSDocLinkPlain } from "../../ast/generated/kinds.js";
+import { Node_Comments, Node_Expression, Node_ModifierNodes } from "../../ast/ast.js";
+import { AsDecorator } from "../../ast/generated/casts.js";
+import { KindClassDeclaration, KindClassExpression, KindGetAccessor, KindJSDocLink, KindJSDocLinkCode, KindJSDocLinkPlain, KindMethodDeclaration, KindParameter, KindPropertyDeclaration, KindSetAccessor } from "../../ast/generated/kinds.js";
+import { IsDecorator } from "../../ast/generated/predicates.js";
+import { CanHaveDecorators, HasDecorators, NodeCanBeDecorated } from "../../ast/utilities.js";
 import { Node_Name } from "../../ast/spine.js";
+import { Decorator_function_return_type_0_is_not_assignable_to_type_1, Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any } from "../../diagnostics/generated/messages.js";
 import type { Signature } from "../types.js";
-import { Checker_getDecoratorArgumentCount } from "./signatures.js";
+import { TypeFlagsAny } from "../types.js";
+import { Checker_checkDeprecatedSignature } from "./diagnostics.js";
+import { Checker_checkGrammarDecorator } from "../grammarchecks.js";
+import { Checker_checkTypeAssignableTo } from "../relater.js";
+import { Checker_markLinkedReferences } from "./support-queries.js";
+import { Checker_getDecoratorArgumentCount, Checker_getDecoratorCallSignature, Checker_getResolvedSignature, Checker_getReturnTypeOfSignature } from "./signatures.js";
 import { Checker_resolveJSDocMemberName } from "./symbols.js";
-import { signatureHasRestParameter } from "./state.js";
+import { CheckModeNormal, ReferenceHintDecorator, signatureHasRestParameter } from "./state.js";
 import type { Checker, CheckMode } from "./state.js";
 
 /**
@@ -53,7 +62,7 @@ export function Checker_checkJSDocComment(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorators","kind":"method","status":"stub","sigHash":"3e5c8e2fbe4a0b76148106f3264893023071e6c50f819f85ca519741821767df","bodyHash":"f9ffaa06654b4d29673d5809f8faf3238f8da43a0d06256f8e8ace19a23b36c0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorators","kind":"method","status":"implemented","sigHash":"3e5c8e2fbe4a0b76148106f3264893023071e6c50f819f85ca519741821767df","bodyHash":"f9ffaa06654b4d29673d5809f8faf3238f8da43a0d06256f8e8ace19a23b36c0"}
  *
  * Go source:
  * func (c *Checker) checkDecorators(node *ast.Node) {
@@ -75,11 +84,25 @@ export function Checker_checkJSDocComment(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorators");
+  // skip this check for nodes that cannot have decorators. These should have already had an error reported by
+  // checkGrammarModifiers.
+  if (!CanHaveDecorators(node) || !HasDecorators(node) || !NodeCanBeDecorated(receiver!.legacyDecorators, node, node!.Parent, node!.Parent!.Parent)) {
+    return;
+  }
+  const firstDecorator = Find(Node_ModifierNodes(node) ?? [], IsDecorator);
+  if (firstDecorator === undefined) {
+    return;
+  }
+  Checker_markLinkedReferences(receiver, node, ReferenceHintDecorator, undefined, undefined);
+  for (const modifier of Node_ModifierNodes(node) ?? []) {
+    if (IsDecorator(modifier)) {
+      Checker_checkDecorator(receiver, modifier);
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorator","kind":"method","status":"stub","sigHash":"2700367e9fee793983d75fc39ab767246cefcc49ebce9856d8f5b8421ae0fe95","bodyHash":"bdc20d00c27a6a387bbf8a741db818c0a6667440d33c4f6c2317fb7ade34f020"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorator","kind":"method","status":"implemented","sigHash":"2700367e9fee793983d75fc39ab767246cefcc49ebce9856d8f5b8421ae0fe95","bodyHash":"bdc20d00c27a6a387bbf8a741db818c0a6667440d33c4f6c2317fb7ade34f020"}
  *
  * Go source:
  * func (c *Checker) checkDecorator(node *ast.Node) {
@@ -117,7 +140,44 @@ export function Checker_checkDecorators(receiver: GoPtr<Checker>, node: GoPtr<No
  * }
  */
 export function Checker_checkDecorator(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDecorator");
+  Checker_checkGrammarDecorator(receiver, AsDecorator(node));
+  const signature = Checker_getResolvedSignature(receiver, node, undefined, CheckModeNormal);
+  Checker_checkDeprecatedSignature(receiver, signature, node);
+  const returnType = Checker_getReturnTypeOfSignature(receiver, signature);
+  if ((returnType!.flags & TypeFlagsAny) !== 0) {
+    return;
+  }
+  // if we fail to get a signature and return type here, we will have already reported a grammar error in `checkDecorators`.
+  const decoratorSignature = Checker_getDecoratorCallSignature(receiver, node);
+  if (decoratorSignature === undefined || decoratorSignature.resolvedReturnType === undefined) {
+    return;
+  }
+  let headMessage;
+  const expectedReturnType = decoratorSignature.resolvedReturnType;
+  switch (node!.Parent!.Kind) {
+    case KindClassDeclaration:
+    case KindClassExpression:
+      headMessage = Decorator_function_return_type_0_is_not_assignable_to_type_1;
+      break;
+    case KindPropertyDeclaration:
+      if (!receiver!.legacyDecorators) {
+        headMessage = Decorator_function_return_type_0_is_not_assignable_to_type_1;
+        break;
+      }
+      headMessage = Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any;
+      break;
+    case KindParameter:
+      headMessage = Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any;
+      break;
+    case KindMethodDeclaration:
+    case KindGetAccessor:
+    case KindSetAccessor:
+      headMessage = Decorator_function_return_type_0_is_not_assignable_to_type_1;
+      break;
+    default:
+      throw new globalThis.Error("Unhandled case in checkDecorator");
+  }
+  Checker_checkTypeAssignableTo(receiver, returnType, expectedReturnType, Node_Expression(node), headMessage);
 }
 
 /**
