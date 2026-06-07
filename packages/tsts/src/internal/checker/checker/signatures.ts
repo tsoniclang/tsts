@@ -41,7 +41,7 @@ import { Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_a
 import { Checker_IsArgumentsSymbol } from "../services.js";
 import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_createSyntheticExpression, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_reportUnusedVariables } from "./syntax-checking.js";
 import { Checker_addOptionalityEx, Checker_isConstContext, Checker_isContextSensitive } from "./support-queries.js";
-import { Checker_checkTypeAssignableTo, Checker_compareSignaturesIdentical, Checker_compareTypeParametersIdentical, Checker_compareTypesIdentical, Checker_createMarkerType, Checker_getMinArgumentCount, Checker_getParameterCount, Checker_getRestTypeAtPosition, Checker_getTypeAtPosition, Checker_getTypeParameterModifiers, Checker_hasEffectiveRestParameter, Checker_isResolvingReturnTypeOfSignature, Checker_isSignatureAssignableTo, Checker_isTypeAssignableTo, Checker_isTypeIdenticalTo, Checker_isTypeRelatedTo, Checker_newTypePredicate, Checker_tryGetTypeAtPosition, Checker_getThisTypeOfSignature } from "../relater.js";
+import { Checker_checkTypeAssignableTo, Checker_compareSignaturesIdentical, Checker_compareTypeParametersIdentical, Checker_compareTypesIdentical, Checker_createMarkerType, Checker_findMatchingSignature, Checker_findMatchingSignatures, Checker_getMinArgumentCount, Checker_getParameterCount, Checker_getRestTypeAtPosition, Checker_getTypeAtPosition, Checker_getTypeParameterModifiers, Checker_hasEffectiveRestParameter, Checker_isResolvingReturnTypeOfSignature, Checker_isSignatureAssignableTo, Checker_isTypeAssignableTo, Checker_isTypeIdenticalTo, Checker_isTypeRelatedTo, Checker_newTypePredicate, Checker_tryGetTypeAtPosition, Checker_getThisTypeOfSignature } from "../relater.js";
 import { Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx, Checker_isSymbolAssigned, getFlowNodeOfNode } from "../flow.js";
 import { FlowFlagsFalseCondition, FlowFlagsStart, FlowFlagsTrueCondition } from "../../ast/flow.js";
 import type { FlowNode } from "../../ast/flow.js";
@@ -6988,7 +6988,7 @@ export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionSignatures","kind":"method","status":"stub","sigHash":"535ccb736d68f4f2c7ebea4cbd7b5cd855001679f3c1f2aaa471b5c7bc246ebb","bodyHash":"815961442bc12f5b8f1d1461295a11d7bdd34eca7712ebfc031eb9acf4e8549a"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionSignatures","kind":"method","status":"implemented","sigHash":"535ccb736d68f4f2c7ebea4cbd7b5cd855001679f3c1f2aaa471b5c7bc246ebb","bodyHash":"815961442bc12f5b8f1d1461295a11d7bdd34eca7712ebfc031eb9acf4e8549a"}
  *
  * Go source:
  * func (c *Checker) getUnionSignatures(signatureLists [][]*Signature) []*Signature {
@@ -7063,7 +7063,76 @@ export function Checker_getArrayMemberCallSignatures(receiver: GoPtr<Checker>, t
  * }
  */
 export function Checker_getUnionSignatures(receiver: GoPtr<Checker>, signatureLists: GoSlice<GoSlice<GoPtr<Signature>>>): GoSlice<GoPtr<Signature>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getUnionSignatures");
+  let result: GoSlice<GoPtr<Signature>> = [];
+  let indexWithLengthOverOne = 0 as int;
+  let countLengthOverOne = 0 as int;
+  for (let i = 0; i < signatureLists.length; i++) {
+    if (signatureLists[i]!.length === 0) {
+      return [];
+    }
+    if (signatureLists[i]!.length > 1) {
+      indexWithLengthOverOne = i as int;
+      countLengthOverOne++;
+    }
+    for (const signature of signatureLists[i]!) {
+      // Only process signatures with parameter lists that aren't already in the result list
+      if (result.length === 0 || Checker_findMatchingSignature(receiver, result, signature, false, false, true) === undefined) {
+        const unionSignatures = Checker_findMatchingSignatures(receiver, signatureLists, signature, i as int);
+        if (unionSignatures !== undefined && unionSignatures.length !== 0) {
+          let s = signature;
+          // Union the result types when more than one signature matches
+          if (unionSignatures.length > 1) {
+            let thisParameter = signature!.thisParameter;
+            const firstThisParameterOfUnionSignatures = core.FirstNonNil(unionSignatures, (sig: GoPtr<Signature>): GoPtr<Symbol> => {
+              return sig!.thisParameter;
+            });
+            if (firstThisParameterOfUnionSignatures !== undefined) {
+              const thisType = Checker_getIntersectionType(receiver, core.MapNonNil(unionSignatures, (sig: GoPtr<Signature>): GoPtr<Type> => {
+                if (sig!.thisParameter !== undefined) {
+                  return Checker_getTypeOfSymbol(receiver, sig!.thisParameter);
+                }
+                return undefined;
+              }));
+              thisParameter = Checker_createSymbolWithType(receiver, firstThisParameterOfUnionSignatures, thisType);
+            }
+            s = Checker_createUnionSignature(receiver, signature, unionSignatures);
+            s!.thisParameter = thisParameter;
+          }
+          result = [...result, s];
+        }
+      }
+    }
+  }
+  if (result.length === 0 && countLengthOverOne <= 1) {
+    // No sufficiently similar signature existed to subsume all the other signatures in the union - time to see if we can make a single
+    // signature that handles all of them. We only do this when there are overloads in only one constituent. (Overloads are conditional in
+    // nature and having overloads in multiple constituents would necessitate making a power set of signatures from the type, whose
+    // ordering would be non-obvious)
+    const masterList = signatureLists[indexWithLengthOverOne]!;
+    let results: GoSlice<GoPtr<Signature>> = slices.Clone(masterList) ?? [];
+    for (const signatures of signatureLists) {
+      if (!core.Same(signatures, masterList)) {
+        const signature = signatures[0];
+        if (signature === undefined) {
+          throw new globalThis.Error("getUnionSignatures bails early on empty signature lists and should not have empty lists on second pass");
+        }
+        if (signature.typeParameters.length !== 0 && core.Some(results, (s: GoPtr<Signature>): bool => {
+          return s!.typeParameters.length !== 0 && !Checker_compareTypeParametersIdentical(receiver, signature.typeParameters, s!.typeParameters);
+        })) {
+          results = [];
+        } else {
+          results = core.Map(results, (sig: GoPtr<Signature>): GoPtr<Signature> => {
+            return Checker_combineUnionOrIntersectionMemberSignatures(receiver, sig, signature, true);
+          });
+        }
+        if (results.length === 0) {
+          break;
+        }
+      }
+    }
+    result = results;
+  }
+  return result;
 }
 
 /**
