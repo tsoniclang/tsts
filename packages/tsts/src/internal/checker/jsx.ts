@@ -3,7 +3,7 @@ import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
-import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression } from "../ast/ast.js";
+import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression, Node_Initializer } from "../ast/ast.js";
 import type { EntityName, JsxChild } from "../ast/generated/unions.js";
 import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName } from "../ast/generated/predicates.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
@@ -28,15 +28,16 @@ import { newTypeMapper } from "./mapper.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { Checker_checkGrammarJsxExpression } from "./grammarchecks.js";
 import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType } from "./checker/symbols.js";
-import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType } from "./checker/types.js";
+import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType, Checker_checkExpressionWithContextualType } from "./checker/types.js";
 import type { Checker, CheckMode, InferenceContext } from "./checker/state.js";
-import { getStringLiteralValue, CheckModeNormal } from "./checker/state.js";
+import { getStringLiteralValue, CheckModeNormal, InferencePriorityNone } from "./checker/state.js";
 import { Checker_error } from "./checker/support.js";
 import { Checker_getSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getExportsOfSymbol, Checker_resolveSymbol, Checker_getMergedSymbol, Checker_getGlobalSymbol, Checker_getTypeOfSymbol, Checker_resolveAlias, Checker_getSpellingSuggestionForName, Checker_getTypeOfPropertyOfContextualType, Checker_getIndexedAccessType, Checker_newSymbol } from "./checker/symbols.js";
 import { Checker_resolveExternalModule } from "./checker/modules.js";
-import { Checker_findContextualNode, Checker_checkExpression, Checker_checkExpressionCached, Checker_checkNodeDeferred, Checker_checkExpressionEx } from "./checker/syntax-checking.js";
+import { Checker_findContextualNode, Checker_checkExpression, Checker_checkExpressionCached, Checker_checkNodeDeferred, Checker_checkExpressionEx, Checker_checkExpressionForMutableLocation } from "./checker/syntax-checking.js";
 import { Checker_fillMissingTypeArguments, Checker_getReturnTypeOfSignature, Checker_getMinTypeArgumentCount, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getTypeOfFirstParameterOfSignatureWithFallback, Checker_getContextualTypeForArgumentAtIndex, Checker_getSignaturesOfType, Checker_newSignature, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_getOrCreateTypeFromSignature } from "./checker/signatures.js";
 import { Checker_getTypeAliasInstantiation } from "./checker/inference.js";
+import { Checker_inferTypes, Checker_getInferredTypes } from "./inference.js";
 import type { SourceFileLinks, TypeAliasLinks, InterfaceType, ValueSymbolLinks, SymbolNodeLinks } from "./types.js";
 import { Type_AsInterfaceType, InterfaceType_TypeParameters, SignatureFlagsNone } from "./types.js";
 import type { Relation } from "./relater.js";
@@ -404,7 +405,7 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"stub","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102","bodyHash":"20174532fdbd2a02cf9e4286d4f514f1d9ae294d7d10c761caf1be42cce6c20d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"implemented","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102","bodyHash":"20174532fdbd2a02cf9e4286d4f514f1d9ae294d7d10c761caf1be42cce6c20d"}
  *
  * Go source:
  * func (c *Checker) inferJsxTypeArguments(node *ast.Node, signature *Signature, checkMode CheckMode, context *InferenceContext) []*Type {
@@ -415,7 +416,10 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
  * }
  */
 export function Checker_inferJsxTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, checkMode: CheckMode, context: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments");
+  const paramType = Checker_getEffectiveFirstArgumentForJsxSignature(receiver, signature, node);
+  const checkAttrType = Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), paramType, context, checkMode);
+  Checker_inferTypes(receiver, context!.inferences, checkAttrType, paramType, InferencePriorityNone, false);
+  return Checker_getInferredTypes(receiver, context);
 }
 
 /**
@@ -694,7 +698,7 @@ export interface JsxElaborationElement {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"stub","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c","bodyHash":"77c725595328ecf8a43861623fca68bfaaf1132889a73bfd45d52a7b63a59f20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"implemented","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c","bodyHash":"77c725595328ecf8a43861623fca68bfaaf1132889a73bfd45d52a7b63a59f20"}
  *
  * Go source:
  * func (c *Checker) generateJsxChildren(node *ast.Node, getInvalidTextDiagnostic func() (*diagnostics.Message, []any)) iter.Seq[JsxElaborationElement] {
@@ -715,7 +719,22 @@ export interface JsxElaborationElement {
  * }
  */
 export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): GoSeq<JsxElaborationElement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren");
+  return (yieldValue) => {
+    let memberOffset = 0;
+    const children = Node_Children(node)!.Nodes;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]!;
+      const nameType = Checker_getNumberLiteralType(receiver, i - memberOffset);
+      const element = Checker_getElaborationElementForJsxChild(receiver, child, nameType, getInvalidTextDiagnostic);
+      if (element.errorNode !== undefined) {
+        if (!yieldValue(element)) {
+          return;
+        }
+      } else {
+        memberOffset++;
+      }
+    }
+  };
 }
 
 /**
@@ -1294,7 +1313,7 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"stub","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3","bodyHash":"4503d6dd87c16cd6bd3f163626097723e1411dd9723368e38cba4c344c3bc4fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"implemented","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3","bodyHash":"4503d6dd87c16cd6bd3f163626097723e1411dd9723368e38cba4c344c3bc4fd"}
  *
  * Go source:
  * func (c *Checker) checkJsxAttribute(node *ast.Node, checkMode CheckMode) *Type {
@@ -1306,7 +1325,11 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
  * }
  */
 export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute");
+  if (Node_Initializer(node) !== undefined) {
+    return Checker_checkExpressionForMutableLocation(receiver, Node_Initializer(node), checkMode);
+  }
+  // <Elem attr /> is sugar for <Elem attr={true} />
+  return receiver!.trueType;
 }
 
 /**
@@ -1374,7 +1397,7 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"stub","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426","bodyHash":"295bdf9e42d624bbe827a9708278fa8e19cec6602d5fe47263c378b61a5f0734"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"implemented","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426","bodyHash":"295bdf9e42d624bbe827a9708278fa8e19cec6602d5fe47263c378b61a5f0734"}
  *
  * Go source:
  * func (c *Checker) getEffectiveFirstArgumentForJsxSignature(signature *Signature, node *ast.Node) *Type {
@@ -1385,7 +1408,10 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
  * }
  */
 export function Checker_getEffectiveFirstArgumentForJsxSignature(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature");
+  if (IsJsxOpeningFragment(node) || Checker_getJsxReferenceKind(receiver, node) !== JsxReferenceKindComponent) {
+    return Checker_getJsxPropsTypeFromCallSignature(receiver, signature, node);
+  }
+  return Checker_getJsxPropsTypeFromClassType(receiver, signature, node);
 }
 
 /**
