@@ -56,7 +56,7 @@ import { Checker_isNodeWithinClass } from "./classes.js";
 import { Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_addOptionalTypeMarker, Checker_assignBindingElementTypes, Checker_checkAndAggregateReturnExpressionTypes, Checker_checkAndAggregateYieldOperandTypes, Checker_checkAwaitedType, Checker_checkExpressionWithContextualType, Checker_checkObjectLiteralMethod, Checker_combineUnionOrIntersectionThisParam, Checker_containsUndefinedType, Checker_createArrayType, Checker_createArrayTypeEx, Checker_createGeneratorType, Checker_createPromiseType, Checker_createTypeReference, Checker_filterType, Checker_getAnnotatedAccessorType, Checker_getApparentType, Checker_getApparentTypeOfContextualType, Checker_getArrayElementTypeNode, Checker_getAwaitedTypeOfPromise, Checker_getBaseTypes, Checker_getContextualIterationType, Checker_getContextualType, Checker_getDeclaredTypeOfClassOrInterface, Checker_getElementTypeOfArrayType, Checker_getElementTypeOfSliceOfTupleType, Checker_getElementTypes, Checker_getIntersectionType, Checker_getIterationTypesOfIterable, Checker_getIterationTypesOfIterator, Checker_getNumberLiteralType, Checker_getOptionalExpressionType, Checker_getOptionalType, Checker_getPropertiesOfType, Checker_getReducedApparentType, Checker_getReducedType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getStringLiteralType, Checker_getTypeFromBindingPattern, Checker_getTypeFromTypeNode, Checker_getTypeFromTypeReference, Checker_getTypeOfExpression, Checker_getUnionOrIntersectionType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_getWidenedLiteralLikeTypeForContextualIterationTypeIfNeeded, Checker_getWidenedLiteralLikeTypeForContextualType, Checker_getWidenedLiteralType, Checker_instantiateContextualType, Checker_instantiateType, Checker_instantiateTypes, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isReferenceToType, Checker_mapType, Checker_maybeTypeOfKind, Checker_newAnonymousType, Checker_newObjectType, Checker_newType, Checker_popTypeResolution, Checker_propagateOptionalTypeMarker, Checker_pushTypeResolution, Checker_removeOptionalTypeMarker, Checker_resolveTaggedTemplateExpression, Checker_typeHasProtectedAccessibleBase, Checker_unwrapAwaitedType, Checker_isContextSensitiveFunctionOrObjectLiteralMethod, Checker_getWidenedType, IterationTypes_getType, IterationTypes_hasTypes } from "./types.js";
 import { Checker_resolveExternalModuleTypeByLiteral } from "./types.js";
 import { Checker_IsArgumentsSymbol } from "../services.js";
-import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_createSyntheticExpression, Checker_getEffectiveCheckNode, Checker_maybeAddMissingAwaitInfo, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_reportUnusedVariables, Checker_checkThisExpression, Checker_skippedGenericFunction } from "./syntax-checking.js";
+import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_checkSuperExpression, Checker_createSyntheticExpression, Checker_getEffectiveCheckNode, Checker_maybeAddMissingAwaitInfo, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_reportUnusedVariables, Checker_checkThisExpression, Checker_skippedGenericFunction } from "./syntax-checking.js";
 import { Checker_isGenericFunctionReturningFunction } from "./syntax-checking.js";
 import { Checker_addOptionalityEx, Checker_isCommonJSRequire, Checker_isConstContext, Checker_isContextSensitive } from "./support-queries.js";
 import { Checker_checkTypeAssignableTo, Checker_checkTypeRelatedToAndOptionallyElaborate, Checker_checkTypeRelatedToEx, Checker_compareSignaturesIdentical, Checker_compareTypeParametersIdentical, Checker_compareTypesIdentical, Checker_createMarkerType, Checker_findMatchingSignature, Checker_findMatchingSignatures, Checker_getEffectiveRestType, Checker_getMinArgumentCount, Checker_getNonArrayRestType, Checker_getParameterCount, Checker_getParameterNameAtPosition, Checker_getRestTypeAtPosition, Checker_getTypeAtPosition, Checker_getTypeParameterModifiers, Checker_hasEffectiveRestParameter, Checker_isResolvingReturnTypeOfSignature, Checker_isSignatureAssignableTo, Checker_isTypeAssignableTo, Checker_isTypeIdenticalTo, Checker_isTypeRelatedTo, Checker_newTypePredicate, Checker_tryGetTypeAtPosition, Checker_getThisTypeOfSignature } from "../relater.js";
@@ -2556,6 +2556,24 @@ export function Checker_resolveSignature(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_resolveCallExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
+  if (Node_Expression(node)!.Kind === KindSuperKeyword) {
+    const superType = Checker_checkSuperExpression(receiver, Node_Expression(node));
+    if (IsTypeAny(superType)) {
+      for (const arg of Node_Arguments(node) ?? []) {
+        Checker_checkExpression(receiver, arg);
+      }
+      return receiver!.anySignature;
+    }
+    if (!Checker_isErrorType(receiver, superType)) {
+      const containingClass = GetContainingClass(node);
+      const baseTypeNode = containingClass !== undefined ? GetExtendsHeritageClauseElement(containingClass) : undefined;
+      if (baseTypeNode !== undefined) {
+        const baseConstructors = Checker_getInstantiatedConstructorsForTypeArguments(receiver, superType, Node_TypeArguments(baseTypeNode) ?? [], baseTypeNode);
+        return Checker_resolveCall(receiver, node, baseConstructors, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+      }
+    }
+    return Checker_resolveUntypedCall(receiver, node);
+  }
   let callChainFlags: SignatureFlags;
   let funcType = Checker_checkExpression(receiver, Node_Expression(node));
   if (IsOptionalChain(node)) {
