@@ -5,37 +5,41 @@ import type { Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
 import { Diagnostic_SetRepopulateInfo, DiagnosticsCollection_Add, RepopulateModuleNotFound } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
-import { IsImportDeclarationOrJSImportDeclaration, Node_Arguments, Node_Elements, Node_Expression, Node_ImportClause, Node_IsTypeOnly, Node_ModuleSpecifier, Node_Symbol, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
-import { KindBindingElement, KindExportAssignment, KindExportDeclaration, KindExternalModuleReference, KindImportDeclaration, KindImportEqualsDeclaration, KindImportType, KindJSImportDeclaration, KindModuleDeclaration, KindVariableDeclaration, KindVariableStatement } from "../../ast/generated/kinds.js";
+import { IsImportDeclarationOrJSImportDeclaration, Node_Arguments, Node_Elements, Node_Expression, Node_ImportClause, Node_IsTypeOnly, Node_ModuleSpecifier, Node_PropertyNameOrName, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
+import { KindBindingElement, KindExportAssignment, KindExportDeclaration, KindExternalModuleReference, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindImportType, KindJSImportDeclaration, KindModuleDeclaration, KindVariableDeclaration, KindVariableStatement } from "../../ast/generated/kinds.js";
 import { AsImportEqualsDeclaration, AsImportTypeNode, AsLiteralTypeNode, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
-import { NodeFlagsAmbient, SymbolFlagsValueModule } from "../../ast/generated/flags.js";
-import { FindAncestor, FindAncestorKind, GetModuleSpecifierOfBareOrAccessedRequire, GetSourceFileOfNode, HasResolutionModeOverride, IsBindingPattern, IsEmittableImport, IsImportCall, IsInternalModuleImportEqualsDeclaration, IsLiteralImportTypeNode, IsPartOfTypeOnlyImportOrExportDeclaration, IsResolutionModeOverrideHost, IsStringLiteralLike, IsVariableDeclarationInitializedToBareOrAccessedRequire, NewHasFileName } from "../../ast/utilities.js";
+import { NodeFlagsAmbient, SymbolFlagsNamespace, SymbolFlagsValueModule } from "../../ast/generated/flags.js";
+import { IsSourceFile } from "../../ast/generated/predicates.js";
+import { FindAncestor, FindAncestorKind, GetModuleSpecifierOfBareOrAccessedRequire, GetSourceFileOfNode, HasResolutionModeOverride, IsBindingPattern, IsEmittableImport, IsGlobalScopeAugmentation, IsImportCall, IsImportOrExportSpecifier, IsInternalModuleImportEqualsDeclaration, IsLiteralImportTypeNode, IsPartOfTypeOnlyImportOrExportDeclaration, IsResolutionModeOverrideHost, IsStringLiteralLike, IsVariableDeclarationInitializedToBareOrAccessedRequire, NewHasFileName } from "../../ast/utilities.js";
+import { InternalSymbolNameDefault, InternalSymbolNameExportStar, InternalSymbolNameModuleExports } from "../../ast/symbol.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { SymbolTable } from "../../ast/symbol.js";
 import type { ResolutionMode } from "../../core/compileroptions.js";
-import { CompilerOptions_AllowImportingTsExtensionsFrom, CompilerOptions_GetResolveJsonModule, ModuleKindCommonJS, ModuleKindESNext, ModuleKindNode16, ModuleKindNode18, ModuleKindNone, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ResolutionModeESM } from "../../core/compileroptions.js";
-import { ShouldRewriteModuleSpecifier } from "../../core/core.js";
+import { CompilerOptions_AllowImportingTsExtensionsFrom, CompilerOptions_GetResolveJsonModule, ModuleKindCommonJS, ModuleKindESNext, ModuleKindNode16, ModuleKindNode18, ModuleKindNode20, ModuleKindNodeNext, ModuleKindNone, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ResolutionModeESM } from "../../core/compileroptions.js";
+import { Find, Some, ShouldRewriteModuleSpecifier } from "../../core/core.js";
 import { FindBestPatternMatch } from "../../core/pattern.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import { FileExtensionIs, GetAnyExtensionFromPath, GetDirectoryPath, GetNormalizedAbsolutePath, GetRelativePathFromDirectory, GetRelativePathFromFile, HasExtension, IsExternalModuleNameRelative, PathIsRelative, ToPath } from "../../tspath/path.js";
 import { ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionTs, ExtensionTsx, IsDeclarationFileName, SupportedTSExtensionsFlat, TryExtractTSExtension, TryGetExtensionFromPath } from "../../tspath/extension.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import { A_declaration_file_cannot_be_imported_without_import_type_Did_you_mean_to_import_an_implementation_file_0_instead, An_import_path_can_only_end_with_a_0_extension_when_allowImportingTsExtensions_is_enabled, Cannot_find_module_0_Consider_using_resolveJsonModule_to_import_module_with_json_extension, Cannot_import_type_declaration_files_Consider_importing_0_instead_of_1, Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type, Exports_and_export_assignments_are_not_permitted_in_module_augmentations, File_0_is_not_a_module, Imports_are_not_permitted_in_module_augmentations_Consider_moving_them_to_the_enclosing_external_module, Invalid_module_name_in_augmentation_Module_0_resolves_to_an_untyped_module_at_1_which_cannot_be_augmented, Module_0_cannot_be_imported_using_this_construct_The_specifier_only_resolves_to_an_ES_module_which_cannot_be_imported_with_require_Use_an_ECMAScript_import_instead, Module_0_was_resolved_to_1_but_jsx_is_not_set, Output_file_0_has_not_been_built_from_source_file_1, Relative_import_paths_need_explicit_file_extensions_in_ECMAScript_imports_when_moduleResolution_is_node16_or_nodenext_Consider_adding_an_extension_to_the_import_path, Relative_import_paths_need_explicit_file_extensions_in_ECMAScript_imports_when_moduleResolution_is_node16_or_nodenext_Did_you_mean_0, The_current_file_is_a_CommonJS_module_whose_imports_will_produce_require_calls_however_the_referenced_file_is_an_ECMAScript_module_and_cannot_be_imported_with_require_Consider_writing_a_dynamic_import_0_call_instead, This_import_path_is_unsafe_to_rewrite_because_it_resolves_to_another_project_and_the_relative_path_between_the_projects_output_files_is_not_the_same_as_the_relative_path_between_its_input_files, This_import_uses_a_0_extension_to_resolve_to_an_input_TypeScript_file_but_will_not_be_rewritten_during_emit_because_it_is_not_a_relative_path, This_relative_import_path_is_unsafe_to_rewrite_because_it_looks_like_a_file_name_but_actually_resolves_to_0, Type_import_of_an_ECMAScript_module_from_a_CommonJS_module_must_have_a_resolution_mode_attribute, Type_only_import_of_an_ECMAScript_module_from_a_CommonJS_module_must_have_a_resolution_mode_attribute } from "../../diagnostics/generated/messages.js";
+import { Cannot_augment_module_0_because_it_resolves_to_a_non_module_entity, Invalid_module_name_in_augmentation_module_0_cannot_be_found } from "../../diagnostics/generated/messages.js";
 import type { ResolvedModule } from "../../module/types.js";
 import { GetResolutionDiagnostic } from "../../module/util.js";
 import { ResolvedModule_IsResolved } from "../../module/types.js";
 import { ParsedCommandLine_CommonSourceDirectory, ParsedCommandLine_CompilerOptions } from "../../tsoptions/parsedcommandline.js";
-import { CreateModuleNotFoundChain, isSideEffectImport, NewDiagnosticChainForNode, NewDiagnosticForNode } from "../utilities.js";
+import { CreateModuleNotFoundChain, isShorthandAmbientModuleSymbol, isSideEffectImport, NewDiagnosticChainForNode, NewDiagnosticForNode } from "../utilities.js";
 import { Checker_grammarErrorOnFirstToken } from "../grammarchecks.js";
-import { Checker_error } from "./support.js";
+import { MembersOrExportsResolutionKindResolvedExports } from "../types.js";
+import { Checker_canHaveSyntheticDefault, Checker_error } from "./support.js";
 import { Checker_createModeMismatchDetails } from "./support-queries.js";
 import { Checker_errorOnImplicitAnyModule } from "./types.js";
-import { Checker_getMergedSymbol, Checker_getSuggestedImportExtension, Checker_getSuggestedImportSource, Checker_getSymbol } from "./symbols.js";
+import { Checker_errorNoModuleMemberSymbol, Checker_getMergedSymbol, Checker_getModuleSpecifierForImportOrExport, Checker_getResolvedMembersOrExportsOfSymbol, Checker_getSuggestedImportExtension, Checker_getSuggestedImportSource, Checker_getSymbol, Checker_isOnlyImportableAsDefault, Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_mergeSymbol, Checker_mergeSymbolTable, Checker_reportNonDefaultExport, Checker_resolveExportByName, Checker_resolveExternalModuleNameWorker, Checker_resolveExternalModuleSymbol, Checker_resolveSymbolEx } from "./symbols.js";
 import type { Checker } from "./state.js";
 import { resolutionExtensionIsTSOrJson } from "./state.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation","kind":"method","status":"stub","sigHash":"2180b8be90753b343b6f30f261b683d348387d3a1b55268c2d0ae7421d6dbeae","bodyHash":"a6bc03af285f7b6510ad1b0f4c130967a7b3531d8d19adfcfacf8d96144f8681"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation","kind":"method","status":"implemented","sigHash":"2180b8be90753b343b6f30f261b683d348387d3a1b55268c2d0ae7421d6dbeae","bodyHash":"a6bc03af285f7b6510ad1b0f4c130967a7b3531d8d19adfcfacf8d96144f8681"}
  *
  * Go source:
  * func (c *Checker) mergeModuleAugmentation(moduleName *ast.Node) {
@@ -94,7 +98,46 @@ import { resolutionExtensionIsTSOrJson } from "./state.js";
  * }
  */
 export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, moduleName: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeModuleAugmentation");
+  const moduleNode = moduleName!.Parent;
+  const moduleAugmentationSymbol = Node_Symbol(moduleNode);
+  if (moduleAugmentationSymbol!.Declarations[0] !== moduleNode) {
+    return;
+  }
+  if (IsGlobalScopeAugmentation(moduleNode)) {
+    Checker_mergeSymbolTable(receiver, receiver!.globals, moduleAugmentationSymbol!.Exports, false, undefined);
+    return;
+  }
+
+  let moduleNotFoundError: GoPtr<Message>;
+  if ((moduleName!.Parent!.Parent!.Flags & NodeFlagsAmbient) === 0) {
+    moduleNotFoundError = Invalid_module_name_in_augmentation_module_0_cannot_be_found;
+  }
+  let mainModule = Checker_resolveExternalModuleNameWorker(receiver, moduleName, moduleName, moduleNotFoundError, false, true);
+  if (mainModule === undefined) {
+    return;
+  }
+  mainModule = Checker_resolveExternalModuleSymbol(receiver, mainModule, false);
+  if ((mainModule!.Flags & SymbolFlagsNamespace) === 0) {
+    Checker_error(receiver, moduleName, Cannot_augment_module_0_because_it_resolves_to_a_non_module_entity, Node_Text(moduleName));
+    return;
+  }
+
+  if (Some(receiver!.patternAmbientModules, (module) => mainModule === module!.Symbol)) {
+    const merged = Checker_mergeSymbol(receiver, moduleAugmentationSymbol, mainModule, true);
+    receiver!.patternAmbientModuleAugmentations.set(Node_Text(moduleName), merged);
+    return;
+  }
+
+  if (mainModule!.Exports?.get(InternalSymbolNameExportStar) !== undefined && (moduleAugmentationSymbol!.Exports?.size ?? 0) !== 0) {
+    const resolvedExports = Checker_getResolvedMembersOrExportsOfSymbol(receiver, mainModule, MembersOrExportsResolutionKindResolvedExports);
+    for (const [key, value] of moduleAugmentationSymbol!.Exports) {
+      const resolvedExport = resolvedExports.get(key);
+      if (resolvedExport !== undefined && mainModule!.Exports.get(key) === undefined) {
+        Checker_mergeSymbol(receiver, resolvedExport, value, false);
+      }
+    }
+  }
+  Checker_mergeSymbol(receiver, mainModule, moduleAugmentationSymbol, false);
 }
 
 /**
@@ -164,7 +207,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfModuleDefault","kind":"method","status":"stub","sigHash":"29eddee9b813cc6f9c64dc6afbb020ccdb69232f96bd08a027600a07103693cd","bodyHash":"cc83e4fc25b7a702810d969bdf3021460cea04d2c27334f865b35a3973e30867"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfModuleDefault","kind":"method","status":"implemented","sigHash":"29eddee9b813cc6f9c64dc6afbb020ccdb69232f96bd08a027600a07103693cd","bodyHash":"cc83e4fc25b7a702810d969bdf3021460cea04d2c27334f865b35a3973e30867"}
  *
  * Go source:
  * func (c *Checker) getTargetOfModuleDefault(moduleSymbol *ast.Symbol, node *ast.Node, dontResolveAlias bool) *ast.Symbol {
@@ -223,7 +266,48 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>, node: GoPtr<Node>, dontResolveAlias: bool): GoPtr<Symbol> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getTargetOfModuleDefault");
+  const file = Find(moduleSymbol!.Declarations, IsSourceFile);
+  const specifier = Checker_getModuleSpecifierForImportOrExport(receiver, node);
+  let exportDefaultSymbol: GoPtr<Symbol>;
+  let exportModuleDotExportsSymbol: GoPtr<Symbol>;
+  if (isShorthandAmbientModuleSymbol(moduleSymbol)) {
+  } else if (file !== undefined &&
+      specifier !== undefined &&
+      ModuleKindNode20 <= receiver!.moduleKind &&
+      receiver!.moduleKind <= ModuleKindNodeNext &&
+      Checker_getEmitSyntaxForModuleSpecifierExpression(receiver, specifier) === ModuleKindCommonJS &&
+      receiver!.program.GetImpliedNodeFormatForEmit(NewHasFileName(SourceFile_FileName(file as GoPtr<SourceFile>), SourceFile_Path(file as GoPtr<SourceFile>))) === ModuleKindESNext) {
+    exportModuleDotExportsSymbol = Checker_resolveExportByName(receiver, moduleSymbol, InternalSymbolNameModuleExports, node, dontResolveAlias);
+  }
+  if (exportModuleDotExportsSymbol !== undefined) {
+    Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, node, undefined);
+    return exportModuleDotExportsSymbol;
+  }
+
+  exportDefaultSymbol = Checker_resolveExportByName(receiver, moduleSymbol, InternalSymbolNameDefault, node, dontResolveAlias);
+  if (specifier === undefined) {
+    return exportDefaultSymbol;
+  }
+
+  const hasDefaultOnly = Checker_isOnlyImportableAsDefault(receiver, specifier, moduleSymbol);
+  const hasSyntheticDefault = Checker_canHaveSyntheticDefault(receiver, file, moduleSymbol, dontResolveAlias, specifier);
+  if (exportDefaultSymbol === undefined && !hasSyntheticDefault && !hasDefaultOnly) {
+    if (node!.Kind === KindImportClause) {
+      Checker_reportNonDefaultExport(receiver, moduleSymbol, node);
+    } else {
+      const name = IsImportOrExportSpecifier(node) ? Node_PropertyNameOrName(node) : Node_Name(node);
+      Checker_errorNoModuleMemberSymbol(receiver, moduleSymbol, moduleSymbol, node, name);
+    }
+  } else if (hasSyntheticDefault || hasDefaultOnly) {
+    let resolved = Checker_resolveExternalModuleSymbol(receiver, moduleSymbol, dontResolveAlias);
+    if (resolved === undefined) {
+      resolved = Checker_resolveSymbolEx(receiver, moduleSymbol, dontResolveAlias);
+    }
+    Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, node, undefined);
+    return resolved;
+  }
+  Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, node, undefined);
+  return exportDefaultSymbol;
 }
 
 /**
