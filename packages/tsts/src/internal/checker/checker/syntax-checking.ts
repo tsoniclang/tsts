@@ -18,7 +18,7 @@ import type { NodeFlags } from "../../ast/generated/flags.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_Code, Diagnostic_Loc } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
-import { Node_Locals, SourceFile_Text, SourceFile_Diagnostics, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters, Node_TypeArguments } from "../../ast/ast.js";
+import { Node_Locals, SourceFile_Text, SourceFile_Diagnostics, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters, Node_TypeArguments, AsSourceFile } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
@@ -51,8 +51,9 @@ import {
   OEKParentheses, OEKSatisfies, OEKExcludeJSDocTypeAssertion,
   OEKAssertions, GetCombinedNodeFlags, IsFunctionLike,
   GetNodeId, ForEachReturnStatement, GetClassLikeDeclarationOfSymbol, HasModifier,
-  FindAncestor, GetContainingClass, IsCallLikeExpression, IsCallOrNewExpression,
+  FindAncestor, FindAncestorOrQuit, FindAncestorFalse, FindAncestorTrue, FindAncestorQuit, GetContainingClass, IsCallLikeExpression, IsCallOrNewExpression,
   GetContainingFunction, IsImportCall, IsLogicalBinaryOperator, IsLogicalOrCoalescingBinaryExpression, IsLogicalOrCoalescingBinaryOperator, WalkUpParenthesizedExpressions,
+  GetExtendsHeritageClauseElement, GetEnclosingBlockScopeContainer, NodeKindIs, IsStatic,
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
@@ -70,10 +71,10 @@ import {
   Checker_getIndexedAccessType, Checker_getTargetOfAliasLikeExpression, Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_needCollisionCheckForIdentifier,
   Checker_getTypeOfSymbol, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getResolvedSymbolOrNil, Checker_isReadonlySymbol, Checker_reportNonexistentProperty,
   Checker_checkIdentifier, Checker_checkPrivateIdentifierExpression, Checker_checkPropertyAccessExpression, Checker_checkQualifiedName, Checker_checkIndexedAccess,
-  Checker_checkMetaProperty,
+  Checker_checkMetaProperty, Checker_getDeclaredTypeOfSymbol, Checker_getSymbolOfDeclaration, Checker_classDeclarationExtendsNull,
 } from "./symbols.js";
 import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType, Checker_extractDefinitelyFalsyTypes, Checker_removeDefinitelyFalsyTypes } from "./flow-narrowing.js";
-import { Checker_isCanceled, Checker_isUncheckedJSSuggestion, IsTypeAny, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression, isTypeAssertion, expressionResultIsUnused, isLiteralExpressionOfObject } from "../utilities.js";
+import { Checker_isCanceled, Checker_isUncheckedJSSuggestion, IsTypeAny, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression, isTypeAssertion, expressionResultIsUnused, isLiteralExpressionOfObject, getSuperContainer } from "../utilities.js";
 import {
   Checker_checkGrammarStatementInAmbientContext, Checker_grammarErrorOnFirstToken,
   Checker_grammarErrorOnNode, Checker_checkGrammarVariableDeclarationList,
@@ -112,6 +113,7 @@ import {
   Checker_getStringLiteralType, Checker_checkTemplateExpression, Checker_checkRegularExpressionLiteral, Checker_checkArrayLiteral,
   Checker_checkObjectLiteral, Checker_checkTaggedTemplateExpression, Checker_checkFunctionExpressionOrObjectLiteralMethod,
   Checker_checkTypeOfExpression, Checker_checkNonNullAssertion, Checker_checkVoidExpression, Checker_checkConditionalExpression, Checker_GetNonNullableType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_maybeTypeOfKind,
+  Checker_getBaseTypes,
 } from "./types.js";
 import { Checker_isReachableFlowNode, Checker_hasMatchingArgument, Checker_getSymbolHasInstanceMethodOfObjectType } from "../flow.js";
 import type { FlowNode } from "../../ast/flow.js";
@@ -126,6 +128,7 @@ import {
   Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_tryGetThisTypeAt, Checker_tryGetThisTypeAtEx,
   Checker_getSignaturesOfType, Checker_isUntypedFunctionCall, Checker_isConstructorAccessible, Checker_resolveCall, Checker_typeHasCallOrConstructSignatures,
   Checker_checkImportCallExpression, Checker_checkCallExpression, Checker_checkExpressionWithTypeArguments,
+  Checker_isInConstructorArgumentInitializer, Checker_getBaseConstructorTypeOfClass, Checker_getTypeWithThisArgument,
 } from "./signatures.js";
 import {
   Checker_checkJsxSelfClosingElementDeferred, Checker_checkJsxElementDeferred,
@@ -133,7 +136,7 @@ import {
   Checker_checkJsxFragment, Checker_checkJsxAttributes,
 } from "../jsx.js";
 import { CheckModeTypeOnly, TypeFactsEQUndefinedOrNull, UnionReductionSubtype, createDiagnosticForNode, everyContainedType, hasCommonDomTypeName, isConstEnumObjectType } from "./state.js";
-import { Every, IfElse, OrElse } from "../../core/core.js";
+import { Every, FirstOrNil, IfElse, OrElse } from "../../core/core.js";
 import { TextRange_Contains } from "../../core/text.js";
 import { OrderedSet_Add, OrderedSet_Values, OrderedSet_Clear } from "../../collections/ordered_set.js";
 import { Set_Clear } from "../../collections/set.js";
@@ -142,7 +145,7 @@ import {
   KindBlock, KindVariableDeclarationList, KindReturnStatement,
   KindCallExpression, KindNewExpression, KindTaggedTemplateExpression, KindDecorator, KindJsxOpeningElement,
   KindFunctionExpression, KindArrowFunction, KindMethodDeclaration, KindMethodSignature,
-  KindGetAccessor, KindSetAccessor, KindClassExpression, KindTypeParameter,
+  KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindPropertySignature, KindConstructor, KindClassStaticBlockDeclaration, KindClassExpression, KindTypeParameter,
   KindJsxSelfClosingElement, KindJsxElement, KindTypeAssertionExpression, KindAsExpression,
   KindVoidExpression, KindBinaryExpression, KindEqualsToken,
   KindNumericLiteral, KindBigIntLiteral, KindMinusToken, KindPlusToken,
@@ -161,7 +164,8 @@ import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindAmp
 import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
 import { GetTextOfNode } from "../../scanner/utilities.js";
 import { Tristate_IsTrue, Tristate_IsFalse, TSTrue, TSFalse } from "../../core/tristate.js";
-import type { SourceFileLinks, SymbolNodeLinks, TypeNodeLinks } from "../types.js";
+import type { NodeLinks, SourceFileLinks, SymbolNodeLinks, TypeNodeLinks } from "../types.js";
+import { NodeCheckFlagsContainsSuperPropertyInStaticInitializer, Type_AsInterfaceType } from "../types.js";
 import {
   The_body_of_an_if_statement_cannot_be_the_empty_statement,
   X_with_statements_are_not_allowed_in_an_async_function_block,
@@ -199,6 +203,13 @@ import {
   The_right_hand_side_of_an_instanceof_expression_must_be_either_of_type_any_a_class_function_or_other_type_assignable_to_the_Function_interface_type_or_an_object_type_with_a_Symbol_hasInstance_method,
   X_yield_expression_implicitly_results_in_an_any_type_because_its_containing_generator_lacks_a_return_type_annotation,
   X_super_must_be_called_before_accessing_this_in_the_constructor_of_a_derived_class,
+  X_super_cannot_be_referenced_in_a_computed_property_name,
+  Super_calls_are_not_permitted_outside_constructors_or_in_nested_functions_inside_constructors,
+  X_super_can_only_be_referenced_in_members_of_derived_classes_or_object_literal_expressions,
+  X_super_property_access_is_permitted_only_in_a_constructor_member_function_or_member_accessor_of_a_derived_class,
+  X_super_must_be_called_before_accessing_a_property_of_super_in_the_constructor_of_a_derived_class,
+  X_super_can_only_be_referenced_in_a_derived_class,
+  X_super_cannot_be_referenced_in_constructor_arguments,
   X_this_cannot_be_referenced_in_a_computed_property_name,
   X_this_cannot_be_referenced_in_a_module_or_namespace_body,
   X_this_cannot_be_referenced_in_current_location,
@@ -1604,7 +1615,7 @@ export function Checker_checkExpressionWorker(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSuperExpression","kind":"method","status":"stub","sigHash":"65bd320b6b8676297abcbb01cf03081d0f8d20232e3918f43c2072b71f78e5b1","bodyHash":"ff50f6c944e24f91f30f50f36a09de18bbf865b56291f95b6cd207dde6dab859"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSuperExpression","kind":"method","status":"implemented","sigHash":"65bd320b6b8676297abcbb01cf03081d0f8d20232e3918f43c2072b71f78e5b1","bodyHash":"ff50f6c944e24f91f30f50f36a09de18bbf865b56291f95b6cd207dde6dab859"}
  *
  * Go source:
  * func (c *Checker) checkSuperExpression(node *ast.Node) *Type {
@@ -1718,7 +1729,94 @@ export function Checker_checkExpressionWorker(receiver: GoPtr<Checker>, node: Go
  * }
  */
 export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSuperExpression");
+  const isCallExpression = node!.Parent !== undefined && node!.Parent!.Kind === KindCallExpression && Node_Expression(node!.Parent) === node;
+  const immediateContainer = getSuperContainer(node, true);
+  let container = immediateContainer;
+
+  if (!isCallExpression) {
+    while (container !== undefined && IsArrowFunction(container)) {
+      container = getSuperContainer(container, true);
+    }
+  }
+
+  const isLegalUsageOfSuperExpression = (): bool => {
+    if (isCallExpression) {
+      return IsConstructorDeclaration(container);
+    }
+    if (container !== undefined && container!.Parent !== undefined && (IsClassLike(container!.Parent) || IsObjectLiteralExpression(container!.Parent))) {
+      if (IsStatic(container)) {
+        return NodeKindIs(container, KindMethodDeclaration, KindMethodSignature, KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindClassStaticBlockDeclaration);
+      }
+      return NodeKindIs(container, KindMethodDeclaration, KindMethodSignature, KindGetAccessor, KindSetAccessor, KindPropertyDeclaration, KindPropertySignature, KindConstructor);
+    }
+    return false;
+  };
+
+  if (container === undefined || !isLegalUsageOfSuperExpression()) {
+    const current = FindAncestorOrQuit(node, (n: GoPtr<Node>) => {
+      if (n === container) {
+        return FindAncestorQuit;
+      }
+      if (IsComputedPropertyName(n)) {
+        return FindAncestorTrue;
+      }
+      return FindAncestorFalse;
+    });
+    if (current !== undefined && IsComputedPropertyName(current)) {
+      Checker_error(receiver, node, X_super_cannot_be_referenced_in_a_computed_property_name);
+    } else if (isCallExpression) {
+      Checker_error(receiver, node, Super_calls_are_not_permitted_outside_constructors_or_in_nested_functions_inside_constructors);
+    } else if (container === undefined || container!.Parent === undefined || !(IsClassLike(container!.Parent) || IsObjectLiteralExpression(container!.Parent))) {
+      Checker_error(receiver, node, X_super_can_only_be_referenced_in_members_of_derived_classes_or_object_literal_expressions);
+    } else {
+      Checker_error(receiver, node, X_super_property_access_is_permitted_only_in_a_constructor_member_function_or_member_accessor_of_a_derived_class);
+    }
+    return receiver!.errorType;
+  }
+  if (!isCallExpression && IsConstructorDeclaration(immediateContainer)) {
+    Checker_checkThisBeforeSuper(receiver, node, container, X_super_must_be_called_before_accessing_a_property_of_super_in_the_constructor_of_a_derived_class);
+  }
+  if (container!.Parent!.Kind === KindObjectLiteralExpression) {
+    return receiver!.anyType;
+  }
+  const classLikeDeclaration = container!.Parent;
+  if (GetExtendsHeritageClauseElement(classLikeDeclaration) === undefined) {
+    Checker_error(receiver, node, X_super_can_only_be_referenced_in_a_derived_class);
+    return receiver!.errorType;
+  }
+  if (Checker_classDeclarationExtendsNull(receiver, classLikeDeclaration)) {
+    if (isCallExpression) {
+      return receiver!.errorType;
+    }
+    return receiver!.nullWideningType;
+  }
+  const classType = Checker_getDeclaredTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, classLikeDeclaration));
+  let baseClassType: GoPtr<Type>;
+  if (classType !== undefined) {
+    baseClassType = FirstOrNil(Checker_getBaseTypes(receiver, classType));
+  }
+  if (baseClassType === undefined) {
+    return receiver!.errorType;
+  }
+  if (IsConstructorDeclaration(container) && Checker_isInConstructorArgumentInitializer(receiver, node, container)) {
+    Checker_error(receiver, node, X_super_cannot_be_referenced_in_constructor_arguments);
+    return receiver!.errorType;
+  }
+  if (IsStatic(container) || isCallExpression) {
+    if (
+      !isCallExpression &&
+      receiver!.languageVersion <= ScriptTargetES2021 &&
+      (NodeKindIs(container, KindPropertyDeclaration) || IsClassStaticBlockDeclaration(container))
+    ) {
+      for (let current = GetEnclosingBlockScopeContainer(node!.Parent); current !== undefined; current = GetEnclosingBlockScopeContainer(current)) {
+        if (!IsSourceFile(current) || IsExternalOrCommonJSModule(AsSourceFile(current))) {
+          (LinkStore_Get(receiver!.nodeLinks, current) as GoPtr<NodeLinks>)!.flags |= NodeCheckFlagsContainsSuperPropertyInStaticInitializer;
+        }
+      }
+    }
+    return Checker_getBaseConstructorTypeOfClass(receiver, classType);
+  }
+  return Checker_getTypeWithThisArgument(receiver, baseClassType, Type_AsInterfaceType(classType)!.thisType, false);
 }
 
 /**
