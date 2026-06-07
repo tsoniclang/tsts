@@ -74,10 +74,11 @@ export interface taggedTemplateTransformer {
  */
 export function newTaggedTemplateLiftRestrictionTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
   const tx: taggedTemplateTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
     currentSourceFile: undefined,
     taggedTemplateStringDeclarations: [],
   };
-  return Transformer_NewTransformer(tx as unknown as Transformer, (node) => taggedTemplateTransformer_visit(tx, node), opts!.Context);
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => taggedTemplateTransformer_visit(tx, node), opts!.Context);
 }
 
 /**

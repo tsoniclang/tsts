@@ -18,6 +18,16 @@ export interface SyncMap<K extends GoComparable = unknown, V = unknown> {
   m: Map;
 }
 
+function syncMapBacking<K extends GoComparable, V>(receiver: GoPtr<SyncMap<K, V>>): Map {
+  if (receiver === undefined) {
+    return new Map();
+  }
+  if (receiver.m === undefined) {
+    receiver.m = new Map();
+  }
+  return receiver.m;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/syncmap.go::method::SyncMap.Load","kind":"method","status":"implemented","sigHash":"8742a04ce4355c00eb82c36f8edccdfd8129995ae390641be36caee7a3d59b03","bodyHash":"60b37e9f1fe348dc4008aa59a072a10b28114bfe9fd826a355dda6df6934953a"}
  *
@@ -32,7 +42,7 @@ export interface SyncMap<K extends GoComparable = unknown, V = unknown> {
  */
 export function SyncMap_Load<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): [V, bool] {
   const value = undefined as V;
-  const [val, ok] = receiver!.m.Load(key);
+  const [val, ok] = syncMapBacking(receiver).Load(key);
   if (!ok || val === undefined) {
     return [value, ok];
   }
@@ -48,7 +58,7 @@ export function SyncMap_Load<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): [V, 
  * }
  */
 export function SyncMap_Store<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, value: V): void {
-  receiver!.m.Store(key, value);
+  syncMapBacking(receiver).Store(key, value);
 }
 
 /**
@@ -66,7 +76,7 @@ export function SyncMap_Store<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, valu
  */
 export function SyncMap_LoadOrStore<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K, value: V): [V, bool] {
   const actual = undefined as V;
-  const [actualAny, loaded] = receiver!.m.LoadOrStore(key, value);
+  const [actualAny, loaded] = syncMapBacking(receiver).LoadOrStore(key, value);
   if (actualAny === undefined) {
     return [actual, loaded];
   }
@@ -83,7 +93,7 @@ export function SyncMap_LoadOrStore<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K
  * }
  */
 export function SyncMap_Delete<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): void {
-  receiver!.m.Delete(key);
+  syncMapBacking(receiver).Delete(key);
 }
 
 /**
@@ -95,7 +105,7 @@ export function SyncMap_Delete<K, V>(receiver: GoPtr<SyncMap<K, V>>, key: K): vo
  * }
  */
 export function SyncMap_Clear<K, V>(receiver: GoPtr<SyncMap<K, V>>): void {
-  receiver!.m.Clear();
+  syncMapBacking(receiver).Clear();
 }
 
 /**
@@ -119,7 +129,7 @@ export function SyncMap_Clear<K, V>(receiver: GoPtr<SyncMap<K, V>>): void {
  * }
  */
 export function SyncMap_Range<K, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, value: V) => bool): void {
-  receiver!.m.Range((key: unknown, value: unknown): bool => {
+  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
     const k = (key !== undefined ? key as K : undefined as K);
     const v = (value !== undefined ? value as V : undefined as V);
     return f(k, v);
@@ -141,7 +151,7 @@ export function SyncMap_Range<K, V>(receiver: GoPtr<SyncMap<K, V>>, f: (key: K, 
  */
 export function SyncMap_Size<K, V>(receiver: GoPtr<SyncMap<K, V>>): int {
   const entries: unknown[] = [];
-  receiver!.m.Range((key: unknown, _value: unknown): bool => {
+  syncMapBacking(receiver).Range((key: unknown, _value: unknown): bool => {
     entries.push(key);
     return true;
   });
@@ -163,7 +173,7 @@ export function SyncMap_Size<K, V>(receiver: GoPtr<SyncMap<K, V>>): int {
  */
 export function SyncMap_ToMap<K, V>(receiver: GoPtr<SyncMap<K, V>>): GoMap<K, V> {
   const m = new globalThis.Map<K, V>();
-  receiver!.m.Range((key: unknown, value: unknown): bool => {
+  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
     m.set(key as K, value as V);
     return true;
   });
@@ -187,7 +197,7 @@ export function SyncMap_ToMap<K, V>(receiver: GoPtr<SyncMap<K, V>>): GoMap<K, V>
  */
 export function SyncMap_Keys<K, V>(receiver: GoPtr<SyncMap<K, V>>): GoSeq<K> {
   return (yield_: (value: K) => bool): void => {
-    receiver!.m.Range((key: unknown, _value: unknown): bool => {
+    syncMapBacking(receiver).Range((key: unknown, _value: unknown): bool => {
       if (!yield_(key as K)) {
         return false;
       }
@@ -215,7 +225,7 @@ export function SyncMap_Clone<K, V>(receiver: GoPtr<SyncMap<K, V>>): GoPtr<SyncM
     __tsgoBlank1: [],
     m: new Map(),
   };
-  receiver!.m.Range((key: unknown, value: unknown): bool => {
+  syncMapBacking(receiver).Range((key: unknown, value: unknown): bool => {
     clone.m.Store(key, value);
     return true;
   });

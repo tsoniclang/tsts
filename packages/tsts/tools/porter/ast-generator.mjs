@@ -410,10 +410,112 @@ const BASE_METHOD_PROVIDERS = {
   // generated per-node Concrete_computeSubtreeFacts wins. Handled specially.
 };
 
+const AST_MANUAL_COMPUTE_SUBTREE_FACTS = new Set([
+  "AccessorDeclarationBase",
+  "ArrowFunction",
+  "AsExpression",
+  "AwaitExpression",
+  "BigIntLiteral",
+  "BinaryExpression",
+  "BindingElement",
+  "BindingPattern",
+  "CallExpression",
+  "CatchClause",
+  "ClassStaticBlockDeclaration",
+  "ConstructorDeclaration",
+  "Decorator",
+  "EnumDeclaration",
+  "EnumMember",
+  "ExportAssignment",
+  "ExportDeclaration",
+  "ExportSpecifier",
+  "ExpressionWithTypeArguments",
+  "ForInOrOfStatement",
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "HeritageClause",
+  "Identifier",
+  "ImportClause",
+  "ImportEqualsDeclaration",
+  "ImportSpecifier",
+  "JsxAttribute",
+  "JsxAttributes",
+  "JsxClosingElement",
+  "JsxClosingFragment",
+  "JsxElement",
+  "JsxExpression",
+  "JsxFragment",
+  "JsxNamespacedName",
+  "JsxOpeningElement",
+  "JsxOpeningFragment",
+  "JsxSelfClosingElement",
+  "JsxSpreadAttribute",
+  "JsxText",
+  "KeywordExpression",
+  "MetaProperty",
+  "MethodDeclaration",
+  "ModuleDeclaration",
+  "NewExpression",
+  "NoSubstitutionTemplateLiteral",
+  "NonNullExpression",
+  "ParameterDeclaration",
+  "PrivateIdentifier",
+  "PropertyAccessExpression",
+  "PropertyAssignment",
+  "PropertyDeclaration",
+  "ReturnStatement",
+  "SatisfiesExpression",
+  "ShorthandPropertyAssignment",
+  "SourceFile",
+  "SpreadAssignment",
+  "SpreadElement",
+  "TaggedTemplateExpression",
+  "TemplateHead",
+  "TemplateMiddle",
+  "TemplateTail",
+  "Token",
+  "TypeAssertion",
+  "TypeSyntaxBase",
+  "VariableDeclaration",
+  "VariableDeclarationList",
+  "VariableStatement",
+  "YieldExpression",
+]);
+
+const AST_MANUAL_PROPAGATE_SUBTREE_FACTS = new Set([
+  "AccessorDeclarationBase",
+  "ArrayLiteralExpression",
+  "ArrowFunction",
+  "AsExpression",
+  "BindingPattern",
+  "CallExpression",
+  "CatchClause",
+  "ClassDeclaration",
+  "ClassExpression",
+  "ConstructorDeclaration",
+  "ElementAccessExpression",
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "MethodDeclaration",
+  "ModuleDeclaration",
+  "NewExpression",
+  "ObjectLiteralExpression",
+  "ParameterDeclaration",
+  "PropertyAccessExpression",
+  "PropertyDeclaration",
+  "SatisfiesExpression",
+  "TypeAssertion",
+  "TypeSyntaxBase",
+  "VariableDeclarationList",
+]);
+
 // Methods that have a GENERATED per-concrete override in this wave.
 function generatedOverrideMethodsFor(schema, nodeName) {
   const out = new Set();
   out.add("Clone"); // every concrete gets a Clone in ast_generated.go
+  if (schema.schemaMembers(nodeName).some((m) => m.name === "name")) {
+    out.add("Name");
+  }
   const childMembers = schema.schemaMembers(nodeName).filter((m) => m.isChild());
   if (childMembers.length > 0) {
     out.add("ForEachChild");
@@ -436,14 +538,32 @@ function resolveAdapterTarget(schema, nodeName, method) {
     if (generated.has("computeSubtreeFacts")) {
       return { fn: `${nodeName}_computeSubtreeFacts`, takesSelf: false };
     }
+    if (AST_MANUAL_COMPUTE_SUBTREE_FACTS.has(nodeName)) {
+      return { fn: `AstManual.${nodeName}_computeSubtreeFacts`, takesSelf: false };
+    }
     if (chain.includes("ClassLikeBase")) {
       return { fn: "ClassLikeBase_computeSubtreeFacts", takesSelf: false };
+    }
+    if (chain.includes("TypeSyntaxBase")) {
+      return { fn: "AstManual.TypeSyntaxBase_computeSubtreeFacts", takesSelf: false };
     }
     return { fn: "NodeDefault_computeSubtreeFacts", takesSelf: false };
   }
 
+  if (method === "propagateSubtreeFacts") {
+    if (AST_MANUAL_PROPAGATE_SUBTREE_FACTS.has(nodeName)) {
+      return { fn: `AstManual.${nodeName}_propagateSubtreeFacts`, takesSelf: false };
+    }
+    if (chain.includes("TypeSyntaxBase")) {
+      return { fn: "AstManual.TypeSyntaxBase_propagateSubtreeFacts", takesSelf: false };
+    }
+  }
+
   if (method === "Clone") {
     return { fn: `${nodeName}_Clone`, takesSelf: false, takesFactory: true };
+  }
+  if (method === "Name" && generated.has("Name")) {
+    return { fn: `${nodeName}_Name`, takesSelf: false };
   }
   if (method === "ForEachChild") {
     if (generated.has("ForEachChild")) return { fn: `${nodeName}_ForEachChild`, takesVisitor: true };
@@ -623,6 +743,7 @@ function emitData(schema) {
   lines.push(`} from "../subtreefacts.js";`);
   lines.push(`import type * as Kinds from "./kinds.js";`);
   lines.push(`import * as Factory from "./factory.js";`);
+  lines.push(`import * as AstManual from "../ast.js";`);
   // base interfaces and node-unions referenced by concrete fields / extends
   const baseImports = new Set();
   for (const baseName of schema.baseNames()) {
@@ -698,6 +819,8 @@ function emitOverrideFreeFns(schema, node, lines) {
   const generated = generatedOverrideMethodsFor(schema, node);
   // Clone (always)
   emitCloneFreeFn(schema, node, lines);
+  // Name (named declarations/expressions)
+  if (generated.has("Name")) emitNameFreeFn(node, lines);
   // ForEachChild (child-bearing)
   if (generated.has("ForEachChild")) emitForEachChildFreeFn(schema, node, lines);
   // computeSubtreeFacts (generateSubtreeFacts)
@@ -723,6 +846,13 @@ function emitCloneFreeFn(schema, node, lines) {
   const args = cloneArgList(schema, node).join(", ");
   lines.push(`export function ${node}_Clone(receiver: GoPtr<${node}>, f: NodeFactoryCoercible): GoPtr<Node> {`);
   lines.push(`  return cloneNode(Factory.New${node}(f.AsNodeFactory()!, ${args}), receiver, f.AsNodeFactory()!.hooks);`);
+  lines.push(`}`);
+  lines.push("");
+}
+
+function emitNameFreeFn(node, lines) {
+  lines.push(`export function ${node}_Name(receiver: GoPtr<${node}>): GoPtr<Node> {`);
+  lines.push(`  return receiver!.name;`);
   lines.push(`}`);
   lines.push("");
 }

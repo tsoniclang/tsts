@@ -173,7 +173,7 @@ export interface Watcher {
   reportDiagnostic: DiagnosticReporter;
   reportErrorSummary: DiagnosticsReporter;
   reportWatchStatus: DiagnosticReporter;
-  testing: CommandLineTesting;
+  testing: CommandLineTesting | undefined;
   program: GoPtr<Program>;
   extendedConfigCache: GoPtr<ExtendedConfigCache>;
   configModified: bool;
@@ -239,7 +239,7 @@ function newSyncSet<T>(): SyncSet<T> {
  * 	return w
  * }
  */
-export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting): GoPtr<Watcher> {
+export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
   const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   const w: Watcher = {
     mu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["mu"],

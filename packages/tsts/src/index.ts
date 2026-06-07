@@ -1,0 +1,9 @@
+export { CommandLine } from "./internal/execute/tsc.js";
+export type { CommandLineResult, CommandLineTesting, ExitStatus, System } from "./internal/execute/tsc/compile.js";
+export { NewCachedFSCompilerHost, NewCompilerHost } from "./internal/compiler/host.js";
+export type { CompilerHost } from "./internal/compiler/host.js";
+export { NewProgram } from "./internal/compiler/program.js";
+export type { Program, ProgramLike, ProgramOptions } from "./internal/compiler/program.js";
+export { ParseBuildCommandLine, ParseCommandLine } from "./internal/tsoptions/commandlineparser.js";
+export type { ParsedBuildCommandLine } from "./internal/tsoptions/parsedbuildcommandline.js";
+export type { ParsedCommandLine } from "./internal/tsoptions/parsedcommandline.js";

@@ -1253,6 +1253,13 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /\[goReceiverKey\]: receiver,/);
 });
 
+test("ast-generator: named concrete nodes expose their generated Name override", () => {
+  const files = buildAstGeneratedFiles(baseConfig, "rev-ast-name");
+  const data = files.get("internal/ast/generated/data.ts");
+  assert.match(data, /export function ParameterDeclaration_Name\(receiver: GoPtr<ParameterDeclaration>\): GoPtr<Node> \{\s*return receiver!\.name;\s*\}/);
+  assert.match(data, /Name: \(\) => ParameterDeclaration_Name\(receiver\),/);
+});
+
 test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/cast", () => {
   const files = buildAstGeneratedFiles(baseConfig, "rev-ast-2");
   const factory = files.get("internal/ast/generated/factory.ts");

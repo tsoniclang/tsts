@@ -9,21 +9,21 @@ import {
   AsForInOrOfStatement, AsSwitchStatement, AsTryStatement, AsCatchClause,
   AsLabeledStatement, AsCaseOrDefaultClause, AsCaseBlock, AsVariableStatement,
   AsVariableDeclarationList, AsPrefixUnaryExpression, AsPostfixUnaryExpression,
-  AsYieldExpression, AsConditionalExpression,
+  AsYieldExpression, AsConditionalExpression, AsNumericLiteral, AsBigIntLiteral,
 } from "../../ast/generated/casts.js";
 import { NewSyntheticExpression } from "../../ast/generated/factory.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import { NodeFlagsAwaitContext, NodeFlagsOptionalChain, NodeFlagsUnreachable } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
-import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, Diagnostic_Code, Diagnostic_Loc } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
-import { Node_Locals, SourceFile_Text, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters } from "../../ast/ast.js";
+import { Node_Locals, SourceFile_Text, SourceFile_Diagnostics, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Relation } from "../relater.js";
-import type { Signature, Type } from "../types.js";
+import type { Signature, Type, TypeFlags } from "../types.js";
 import { SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
@@ -31,6 +31,7 @@ import {
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
   IterationUseYieldStar, IterationUseAsyncYieldStar,
   TypeFactsIsUndefined, TypeFactsTruthy, TypeFactsFalsy, UnusedKindLocal, UnusedKindParameter,
+  Checker_getSourceFileLinks,
 } from "./state.js";
 import type { Checker, CheckMode, keyBuilder, FlowLoopInfo, IterationTypes } from "./state.js";
 import {
@@ -40,7 +41,7 @@ import {
   IsIdentifier, IsArrayLiteralExpression, IsObjectLiteralExpression,
   IsPropertyAccessExpression, IsPrivateIdentifier, IsConstructorDeclaration,
   IsSetAccessorDeclaration, IsBlock, IsParameterDeclaration,
-  IsBindingElement, IsClassStaticBlockDeclaration, IsCaseClause, IsDefaultClause,
+  IsBindingElement, IsClassStaticBlockDeclaration, IsCaseClause, IsDefaultClause, IsParenthesizedExpression,
   IsLabeledStatement, IsConditionalExpression, IsBinaryExpression, IsSourceFile,
 } from "../../ast/generated/predicates.js";
 import {
@@ -51,14 +52,14 @@ import {
   OEKAssertions, GetCombinedNodeFlags, IsFunctionLike,
   GetNodeId, ForEachReturnStatement,
   FindAncestor, GetContainingClass, IsCallLikeExpression, IsCallOrNewExpression,
-  GetContainingFunction,
+  GetContainingFunction, IsImportCall, IsLogicalBinaryOperator, IsLogicalOrCoalescingBinaryExpression, IsLogicalOrCoalescingBinaryOperator, WalkUpParenthesizedExpressions,
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
-import { ScriptTargetES2021 } from "../../core/compileroptions.js";
-import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt, Checker_checkThisBeforeSuper } from "./support.js";
+import { ScriptTargetES2016, ScriptTargetES2021 } from "../../core/compileroptions.js";
+import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt, Checker_checkThisBeforeSuper, Checker_checkAssertion } from "./support.js";
 import { Checker_checkReflectCollision, Checker_checkWeakMapSetCollision } from "./support.js";
-import { Checker_isSideEffectFree, Checker_isContextSensitive, Checker_isConstContext, Checker_getThisContainer } from "./support-queries.js";
+import { Checker_getSuggestedBooleanOperator, Checker_isSideEffectFree, Checker_isContextSensitive, Checker_isConstContext, Checker_getThisContainer } from "./support-queries.js";
 import {
   Checker_registerForUnusedIdentifiersCheck, Checker_checkVariableDeclarationList,
   Checker_checkVariableLikeDeclaration, Checker_checkExternalModuleExports,
@@ -67,9 +68,11 @@ import {
   Checker_reportUnusedVariableDeclarations, Checker_isUnreferencedVariableDeclaration,
   Checker_getIndexedAccessType, Checker_getTargetOfAliasLikeExpression, Checker_markSymbolOfAliasDeclarationIfTypeOnly, Checker_needCollisionCheckForIdentifier,
   Checker_getTypeOfSymbol, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getResolvedSymbolOrNil, Checker_isReadonlySymbol, Checker_reportNonexistentProperty,
+  Checker_checkIdentifier, Checker_checkPrivateIdentifierExpression, Checker_checkPropertyAccessExpression, Checker_checkQualifiedName, Checker_checkIndexedAccess,
+  Checker_checkMetaProperty,
 } from "./symbols.js";
-import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType } from "./flow-narrowing.js";
-import { Checker_isCanceled, Checker_isUncheckedJSSuggestion, IsTypeAny, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression, isTypeAssertion, expressionResultIsUnused } from "../utilities.js";
+import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType, Checker_checkTruthinessOfType, Checker_extractDefinitelyFalsyTypes, Checker_removeDefinitelyFalsyTypes } from "./flow-narrowing.js";
+import { Checker_isCanceled, Checker_isUncheckedJSSuggestion, IsTypeAny, getContainingFunctionOrClassStaticBlock, NewDiagnosticForNode, forEachYieldExpression, isTypeAssertion, expressionResultIsUnused, isLiteralExpressionOfObject } from "../utilities.js";
 import {
   Checker_checkGrammarStatementInAmbientContext, Checker_grammarErrorOnFirstToken,
   Checker_grammarErrorOnNode, Checker_checkGrammarVariableDeclarationList,
@@ -77,6 +80,7 @@ import {
   Checker_checkGrammarYieldExpression, Checker_checkGrammarAwaitOrAwaitUsing,
   Checker_checkGrammarForDisallowedBlockScopedVariableStatement,
   Checker_grammarErrorAtPos, Checker_checkGrammarSourceFile,
+  Checker_checkGrammarNumericLiteral, Checker_checkGrammarBigIntLiteral,
 } from "../grammarchecks.js";
 import {
   Checker_produceDeferredDiagnostics, Checker_hasParseDiagnostics,
@@ -90,9 +94,9 @@ import {
   Checker_checkTypeComparableTo,
   Checker_isTypeAssignableTo,
   Checker_isTypeSubtypeOf,
-  Checker_isTypeRelatedTo,
+  Checker_isTypeRelatedTo, Checker_areTypesComparable,
 } from "../relater.js";
-import { Checker_allTypesAssignableToKind, Checker_checkDestructuringAssignment, Checker_checkAssignmentOperator, Checker_isTypeEqualityComparableTo, Checker_isTypeAssignableToKind } from "./relations.js";
+import { Checker_allTypesAssignableToKind, Checker_checkDestructuringAssignment, Checker_checkAssignmentOperator, Checker_isTypeEqualityComparableTo, Checker_isTypeAssignableToKind, Checker_isTypeAssignableToKindEx, Checker_checkSatisfiesExpression } from "./relations.js";
 import {
   Checker_checkIteratedTypeOrElementType, Checker_getNonNullableTypeIfNeeded,
   Checker_checkNonNullType, Checker_checkNonNullExpression, Checker_getTypeFromTypeNode,
@@ -101,14 +105,17 @@ import {
   Checker_hasTypeFacts, Checker_getTypeFacts, Checker_checkAwaitedType, Checker_isFunctionType, Checker_isEmptyObjectType, Checker_hasEmptyObjectIntersection,
   Checker_getAwaitedTypeOfPromise, Checker_getRegularTypeOfLiteralType, Checker_getWidenedLiteralLikeTypeForContextualType,
   Checker_instantiateContextualType, Checker_getContextualType, Checker_checkConstEnumAccess,
-  Checker_getFreshTypeOfLiteralType, Checker_getNumberLiteralType, Checker_getBigIntLiteralType, Checker_getBaseTypeOfLiteralType,
+  Checker_getFreshTypeOfLiteralType, Checker_getNumberLiteralType, Checker_getBigIntLiteralType, Checker_getBaseTypeOfLiteralType, Checker_getBaseTypeOfLiteralTypeForComparison,
   Checker_filterType, Checker_getContextualIterationType, Checker_getYieldedTypeOfYieldExpression,
   Checker_getIterationTypeOfIterable, Checker_getApparentType,
+  Checker_getStringLiteralType, Checker_checkTemplateExpression, Checker_checkRegularExpressionLiteral, Checker_checkArrayLiteral,
+  Checker_checkObjectLiteral, Checker_checkTaggedTemplateExpression, Checker_checkFunctionExpressionOrObjectLiteralMethod,
+  Checker_checkTypeOfExpression, Checker_checkNonNullAssertion, Checker_checkVoidExpression, Checker_checkConditionalExpression, Checker_GetNonNullableType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_maybeTypeOfKind,
 } from "./types.js";
 import { Checker_isReachableFlowNode, Checker_hasMatchingArgument, Checker_getSymbolHasInstanceMethodOfObjectType } from "../flow.js";
 import type { FlowNode } from "../../ast/flow.js";
 import { Checker_TypeToString } from "../printer.js";
-import { Checker_checkClassExpressionDeferred, Checker_checkThisInStaticClassFieldInitializerInDecoratedClass } from "./classes.js";
+import { Checker_checkClassExpression, Checker_checkClassExpressionDeferred, Checker_checkThisInStaticClassFieldInitializerInDecoratedClass } from "./classes.js";
 import {
   Checker_checkTypeParameterDeferred, Checker_resolveUntypedCall,
   Checker_getResolvedSignature, Checker_getSignatureFromDeclaration, Checker_getReturnTypeOfSignature,
@@ -117,10 +124,16 @@ import {
   Checker_checkGeneratorInstantiationAssignabilityToReturnType, Checker_getIterationTypesOfGeneratorFunctionReturnType,
   Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_tryGetThisTypeAt, Checker_tryGetThisTypeAtEx,
   Checker_getSignaturesOfType, Checker_isUntypedFunctionCall, Checker_resolveCall, Checker_typeHasCallOrConstructSignatures,
+  Checker_checkImportCallExpression, Checker_checkCallExpression, Checker_checkExpressionWithTypeArguments,
 } from "./signatures.js";
-import { Checker_checkJsxSelfClosingElementDeferred, Checker_checkJsxElementDeferred } from "../jsx.js";
-import { createDiagnosticForNode, everyContainedType, hasCommonDomTypeName, isConstEnumObjectType } from "./state.js";
+import {
+  Checker_checkJsxSelfClosingElementDeferred, Checker_checkJsxElementDeferred,
+  Checker_checkJsxExpression, Checker_checkJsxElement, Checker_checkJsxSelfClosingElement,
+  Checker_checkJsxFragment, Checker_checkJsxAttributes,
+} from "../jsx.js";
+import { CheckModeTypeOnly, TypeFactsEQUndefinedOrNull, UnionReductionSubtype, createDiagnosticForNode, everyContainedType, hasCommonDomTypeName, isConstEnumObjectType } from "./state.js";
 import { Every, IfElse, OrElse } from "../../core/core.js";
+import { TextRange_Contains } from "../../core/text.js";
 import { OrderedSet_Add, OrderedSet_Values, OrderedSet_Clear } from "../../collections/ordered_set.js";
 import { Set_Clear } from "../../collections/set.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
@@ -134,8 +147,18 @@ import {
   KindNumericLiteral, KindBigIntLiteral, KindMinusToken, KindPlusToken,
   KindTildeToken, KindExclamationToken, KindPlusPlusToken, KindMinusMinusToken,
   KindModuleDeclaration, KindEnumDeclaration,
+  KindIdentifier, KindPrivateIdentifier, KindThisKeyword, KindSuperKeyword, KindNullKeyword,
+  KindStringLiteral, KindNoSubstitutionTemplateLiteral, KindTrueKeyword, KindFalseKeyword,
+  KindTemplateExpression, KindRegularExpressionLiteral, KindArrayLiteralExpression, KindObjectLiteralExpression,
+  KindPropertyAccessExpression, KindQualifiedName, KindElementAccessExpression, KindParenthesizedExpression,
+  KindTypeOfExpression, KindNonNullExpression, KindExpressionWithTypeArguments, KindSatisfiesExpression,
+  KindMetaProperty, KindDeleteExpression, KindAwaitExpression, KindPrefixUnaryExpression,
+  KindPostfixUnaryExpression, KindConditionalExpression, KindSpreadElement, KindOmittedExpression,
+  KindYieldExpression, KindSyntheticExpression, KindJsxExpression, KindJsxFragment, KindJsxAttributes,
 } from "../../ast/generated/kinds.js";
+import { KindAmpersandAmpersandEqualsToken, KindAmpersandAmpersandToken, KindAmpersandEqualsToken, KindAmpersandToken, KindAsteriskAsteriskEqualsToken, KindAsteriskAsteriskToken, KindAsteriskEqualsToken, KindAsteriskToken, KindBarBarEqualsToken, KindBarBarToken, KindBarEqualsToken, KindBarToken, KindCaretEqualsToken, KindCaretToken, KindCommaToken, KindEqualsEqualsEqualsToken, KindEqualsEqualsToken, KindExclamationEqualsEqualsToken, KindExclamationEqualsToken, KindGreaterThanEqualsToken, KindGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanEqualsToken, KindGreaterThanGreaterThanGreaterThanToken, KindGreaterThanGreaterThanToken, KindGreaterThanToken, KindInKeyword, KindInstanceOfKeyword, KindLessThanEqualsToken, KindLessThanLessThanEqualsToken, KindLessThanLessThanToken, KindLessThanToken, KindMinusEqualsToken, KindPercentEqualsToken, KindPercentToken, KindPlusEqualsToken, KindQuestionQuestionEqualsToken, KindQuestionQuestionToken, KindSlashEqualsToken, KindSlashToken, KindUnknown } from "../../ast/generated/kinds.js";
 import { SkipTrivia, TokenToString } from "../../scanner/scanner.js";
+import { GetTextOfNode } from "../../scanner/utilities.js";
 import { Tristate_IsTrue, Tristate_IsFalse, TSTrue, TSFalse } from "../../core/tristate.js";
 import type { SourceFileLinks, SymbolNodeLinks, TypeNodeLinks } from "../types.js";
 import {
@@ -190,18 +213,22 @@ import {
   The_0_operator_cannot_be_applied_to_type_symbol,
   Operator_0_cannot_be_applied_to_type_1,
 } from "../../diagnostics/generated/messages.js";
+import { Exponentiation_cannot_be_performed_on_bigint_values_unless_the_target_option_is_set_to_es2016_or_later, JSX_expressions_must_have_one_parent_element, Left_side_of_comma_operator_is_unused_and_has_no_side_effects, The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, The_left_hand_side_of_an_arithmetic_operation_must_be_of_type_any_number_bigint_or_an_enum_type, The_right_hand_side_of_an_arithmetic_operation_must_be_of_type_any_number_bigint_or_an_enum_type, This_condition_will_always_return_0_since_JavaScript_compares_objects_by_reference_not_value, This_operation_can_be_simplified_This_shift_is_identical_to_0_1_2 } from "../../diagnostics/generated/messages.js";
 import { Checker_checkGrammarModifiers } from "../grammarchecks.js";
 import {
   ContextFlagsNone, TypeFlagsAnyOrUnknown, TypeFlagsNonPrimitive,
   TypeFlagsInstantiableNonPrimitive, TypeFlagsNever, TypeFlagsPrimitive,
-  TypeFlagsESSymbolLike, TypeFlagsBigIntLike, TypeFlagsUnion,
+  TypeFlagsESSymbolLike, TypeFlagsBigIntLike, TypeFlagsUnion, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsStringLike,
 } from "../types.js";
 import { SymbolFlagsBlockScopedVariable, SymbolFlagsOptional, SymbolFlagsFunction, SymbolFlagsMethod } from "../../ast/generated/flags.js";
+import { IsEnumMember, IsIfStatement } from "../../ast/generated/predicates.js";
 import type { SymbolTable } from "../../ast/symbol.js";
 import { Checker_getInferenceContext, Checker_maybeTypeOfKindConsideringBaseConstraint } from "./inference.js";
 import { FromString } from "../../jsnum/string.js";
 import type { Number } from "../../jsnum/jsnum.js";
+import { Number_Abs, Number_Remainder } from "../../jsnum/jsnum.js";
 import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js";
+import { Checker_isSkipDirectInferenceNode } from "../inference.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkSourceFile","kind":"method","status":"implemented","sigHash":"73742795303ebe59bb331756ff6743713f7b9c4fbd309e3a8507a615e2dbf18f","bodyHash":"65678dd5c6e1f4ffa700bb65eee57bc088bcc84456cf8a0948d39f486e967a22"}
@@ -247,7 +274,7 @@ import { NewPseudoBigInt, ParsePseudoBigInt } from "../../jsnum/pseudobigint.js"
  */
 export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, sourceFile: GoPtr<SourceFile>, checkUnused: bool): void {
   receiver!.ctx = ctx;
-  const links = LinkStore_Get(receiver!.sourceFileLinks, sourceFile) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, sourceFile);
   if (!links!.typeChecked) {
     receiver!.saveDeferredDiagnostics = true as bool;
     Checker_checkGrammarSourceFile(receiver, sourceFile);
@@ -292,7 +319,7 @@ export function Checker_checkSourceFile(receiver: GoPtr<Checker>, ctx: Context, 
  */
 export function Checker_checkNodeDeferred(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const enclosingFile = GetSourceFileOfNode(node);
-  const links = LinkStore_Get(receiver!.sourceFileLinks, enclosingFile) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, enclosingFile);
   if (!links!.typeChecked) {
     OrderedSet_Add(links!.deferredNodes, node);
   }
@@ -314,7 +341,7 @@ export function Checker_checkNodeDeferred(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkDeferredNodes(receiver: GoPtr<Checker>, context: GoPtr<SourceFile>): void {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, context) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, context);
   OrderedSet_Values(links!.deferredNodes)((node) => {
     if (Checker_isCanceled(receiver)) {
       return false as bool;
@@ -447,7 +474,7 @@ export function Checker_checkBlock(receiver: GoPtr<Checker>, node: GoPtr<Node>):
   } else {
     Checker_checkSourceElements(receiver, Node_Statements(node) || []);
   }
-  if (Node_Locals(node).size !== 0) {
+  if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
   }
 }
@@ -564,7 +591,7 @@ export function Checker_checkForStatement(receiver: GoPtr<Checker>, node: GoPtr<
     Checker_checkExpression(receiver, data!.Incrementor);
   }
   Checker_checkSourceElement(receiver, data!.Statement);
-  if (Node_Locals(node).size !== 0) {
+  if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
   }
 }
@@ -640,7 +667,7 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
     Checker_error(receiver, data!.Expression, The_right_hand_side_of_a_for_in_statement_must_be_of_type_any_an_object_type_or_a_type_parameter_but_here_has_type_0, Checker_TypeToString(receiver, rightType));
   }
   Checker_checkSourceElement(receiver, data!.Statement);
-  if (Node_Locals(node).size !== 0) {
+  if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
   }
 }
@@ -716,7 +743,7 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
     }
   }
   Checker_checkSourceElement(receiver, data!.Statement);
-  if (Node_Locals(node).size !== 0) {
+  if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
   }
 }
@@ -977,7 +1004,7 @@ export function Checker_checkSwitchStatement(receiver: GoPtr<Checker>, node: GoP
       }
     }
   }
-  if (Node_Locals(caseBlock).size !== 0) {
+  if ((Node_Locals(caseBlock)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, caseBlock);
   }
 }
@@ -1120,8 +1147,8 @@ export function Checker_checkCatchClause(receiver: GoPtr<Checker>, node: GoPtr<N
       Checker_grammarErrorOnFirstToken(receiver, Node_Initializer(declaration), Catch_clause_variable_cannot_have_an_initializer);
     } else {
       const blockLocals = Node_Locals(AsCatchClause(node)!.Block);
-      if (blockLocals.size !== 0) {
-        for (const [caughtName] of Node_Locals(node)) {
+      if ((blockLocals?.size ?? 0) !== 0) {
+        for (const [caughtName] of Node_Locals(node) ?? []) {
           const blockLocal = blockLocals.get(caughtName);
           if (blockLocal !== undefined && blockLocal!.ValueDeclaration !== undefined && (blockLocal!.Flags & SymbolFlagsBlockScopedVariable) !== 0) {
             Checker_grammarErrorOnNode(receiver, blockLocal!.ValueDeclaration, Cannot_redeclare_identifier_0_in_catch_clause, caughtName);
@@ -1298,7 +1325,7 @@ export function Checker_checkExpressionCachedEx(receiver: GoPtr<Checker>, node: 
   if (links!.resolvedType === undefined) {
     const saveFlowLoopStack = receiver!.flowLoopStack;
     const saveFlowTypeCache = receiver!.flowTypeCache;
-    receiver!.flowLoopStack = undefined as unknown as GoSlice<FlowLoopInfo>;
+    receiver!.flowLoopStack = [];
     receiver!.flowTypeCache = undefined as unknown as GoMap<GoPtr<Node>, GoPtr<Type>>;
     links!.resolvedType = Checker_checkExpressionEx(receiver, node, checkMode);
     receiver!.flowTypeCache = saveFlowTypeCache;
@@ -1353,7 +1380,7 @@ export function Checker_checkExpressionEx(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExpressionWorker","kind":"method","status":"stub","sigHash":"105e7d5c8b4b0e027ee058f1999a2a659be48c67035fc2a5a6cc8e13226f5d89","bodyHash":"0280ce1cabe9f198511c120f1c05b45fde64c7983c5ffb54e82de7958bbbf710"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExpressionWorker","kind":"method","status":"implemented","sigHash":"105e7d5c8b4b0e027ee058f1999a2a659be48c67035fc2a5a6cc8e13226f5d89","bodyHash":"0280ce1cabe9f198511c120f1c05b45fde64c7983c5ffb54e82de7958bbbf710"}
  *
  * Go source:
  * func (c *Checker) checkExpressionWorker(node *ast.Node, checkMode CheckMode) *Type {
@@ -1463,7 +1490,112 @@ export function Checker_checkExpressionEx(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkExpressionWorker(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkExpressionWorker");
+  switch (node!.Kind) {
+    case KindIdentifier:
+      return Checker_checkIdentifier(receiver, node, checkMode);
+    case KindPrivateIdentifier:
+      return Checker_checkPrivateIdentifierExpression(receiver, node);
+    case KindThisKeyword:
+      return Checker_checkThisExpression(receiver, node);
+    case KindSuperKeyword:
+      return Checker_checkSuperExpression(receiver, node);
+    case KindNullKeyword:
+      return receiver!.nullWideningType;
+    case KindStringLiteral:
+    case KindNoSubstitutionTemplateLiteral:
+      if (Checker_isSkipDirectInferenceNode(receiver, node)) {
+        return receiver!.blockedStringType;
+      }
+      return Checker_getFreshTypeOfLiteralType(receiver, Checker_getStringLiteralType(receiver, Node_Text(node)));
+    case KindNumericLiteral:
+      Checker_checkGrammarNumericLiteral(receiver, AsNumericLiteral(node));
+      return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, FromString(Node_Text(node))));
+    case KindBigIntLiteral:
+      Checker_checkGrammarBigIntLiteral(receiver, AsBigIntLiteral(node));
+      return Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(node)), false)));
+    case KindTrueKeyword:
+      return receiver!.trueType;
+    case KindFalseKeyword:
+      return receiver!.falseType;
+    case KindTemplateExpression:
+      return Checker_checkTemplateExpression(receiver, node);
+    case KindRegularExpressionLiteral:
+      return Checker_checkRegularExpressionLiteral(receiver, node);
+    case KindArrayLiteralExpression:
+      return Checker_checkArrayLiteral(receiver, node, checkMode);
+    case KindObjectLiteralExpression:
+      return Checker_checkObjectLiteral(receiver, node, checkMode);
+    case KindPropertyAccessExpression:
+      return Checker_checkPropertyAccessExpression(receiver, node, checkMode, false);
+    case KindQualifiedName:
+      return Checker_checkQualifiedName(receiver, node, checkMode);
+    case KindElementAccessExpression:
+      return Checker_checkIndexedAccess(receiver, node, checkMode);
+    case KindCallExpression:
+      if (IsImportCall(node)) {
+        return Checker_checkImportCallExpression(receiver, node);
+      }
+      return Checker_checkCallExpression(receiver, node, checkMode);
+    case KindNewExpression:
+      return Checker_checkCallExpression(receiver, node, checkMode);
+    case KindTaggedTemplateExpression:
+      return Checker_checkTaggedTemplateExpression(receiver, node);
+    case KindParenthesizedExpression:
+      return Checker_checkParenthesizedExpression(receiver, node, checkMode);
+    case KindClassExpression:
+      return Checker_checkClassExpression(receiver, node);
+    case KindFunctionExpression:
+    case KindArrowFunction:
+      return Checker_checkFunctionExpressionOrObjectLiteralMethod(receiver, node, checkMode);
+    case KindTypeAssertionExpression:
+    case KindAsExpression:
+      return Checker_checkAssertion(receiver, node, checkMode);
+    case KindTypeOfExpression:
+      return Checker_checkTypeOfExpression(receiver, node);
+    case KindNonNullExpression:
+      return Checker_checkNonNullAssertion(receiver, node);
+    case KindExpressionWithTypeArguments:
+      return Checker_checkExpressionWithTypeArguments(receiver, node);
+    case KindSatisfiesExpression:
+      return Checker_checkSatisfiesExpression(receiver, node);
+    case KindMetaProperty:
+      return Checker_checkMetaProperty(receiver, node);
+    case KindDeleteExpression:
+      return Checker_checkDeleteExpression(receiver, node);
+    case KindVoidExpression:
+      return Checker_checkVoidExpression(receiver, node);
+    case KindAwaitExpression:
+      return Checker_checkAwaitExpression(receiver, node);
+    case KindPrefixUnaryExpression:
+      return Checker_checkPrefixUnaryExpression(receiver, node);
+    case KindPostfixUnaryExpression:
+      return Checker_checkPostfixUnaryExpression(receiver, node);
+    case KindBinaryExpression:
+      return Checker_checkBinaryExpression(receiver, node, checkMode);
+    case KindConditionalExpression:
+      return Checker_checkConditionalExpression(receiver, node, checkMode);
+    case KindSpreadElement:
+      return Checker_checkSpreadExpression(receiver, node, checkMode);
+    case KindOmittedExpression:
+      return receiver!.undefinedWideningType;
+    case KindYieldExpression:
+      return Checker_checkYieldExpression(receiver, node);
+    case KindSyntheticExpression:
+      return Checker_checkSyntheticExpression(receiver, node);
+    case KindJsxExpression:
+      return Checker_checkJsxExpression(receiver, node, checkMode);
+    case KindJsxElement:
+      return Checker_checkJsxElement(receiver, node, checkMode);
+    case KindJsxSelfClosingElement:
+      return Checker_checkJsxSelfClosingElement(receiver, node, checkMode);
+    case KindJsxFragment:
+      return Checker_checkJsxFragment(receiver, node);
+    case KindJsxAttributes:
+      return Checker_checkJsxAttributes(receiver, node, checkMode);
+    case KindJsxOpeningElement:
+      throw new globalThis.Error("Should never directly check a JsxOpeningElement");
+  }
+  return receiver!.errorType;
 }
 
 /**
@@ -2464,7 +2596,7 @@ export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryLikeExpression","kind":"method","status":"stub","sigHash":"058951d0c451f4334faaa90f108eb88c838ea7af7a55bddace4da2ff77570115","bodyHash":"35a4d3d98cecf55f83774842062fdfe4dbc8bb5d764df060a73c2c94e942e66b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryLikeExpression","kind":"method","status":"implemented","sigHash":"058951d0c451f4334faaa90f108eb88c838ea7af7a55bddace4da2ff77570115","bodyHash":"35a4d3d98cecf55f83774842062fdfe4dbc8bb5d764df060a73c2c94e942e66b"}
  *
  * Go source:
  * func (c *Checker) checkBinaryLikeExpression(left *ast.Node, operatorToken *ast.Node, right *ast.Node, checkMode CheckMode, errorNode *ast.Node) *Type {
@@ -2684,7 +2816,259 @@ export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: Go
  * }
  */
 export function Checker_checkBinaryLikeExpression(receiver: GoPtr<Checker>, left: GoPtr<Node>, operatorToken: GoPtr<Node>, right: GoPtr<Node>, checkMode: CheckMode, errorNode: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryLikeExpression");
+  const operator = operatorToken!.Kind;
+  if (operator === KindEqualsToken && (left!.Kind === KindObjectLiteralExpression || left!.Kind === KindArrayLiteralExpression)) {
+    return Checker_checkDestructuringAssignment(receiver, left, Checker_checkExpressionEx(receiver, right, checkMode), checkMode, right!.Kind === KindThisKeyword);
+  }
+  let leftType = Checker_checkExpressionEx(receiver, left, checkMode);
+  let rightType = Checker_checkExpressionEx(receiver, right, checkMode);
+  if (IsLogicalOrCoalescingBinaryOperator(operator)) {
+    let parent = left!.Parent!.Parent;
+    while (IsParenthesizedExpression(parent) || IsLogicalOrCoalescingBinaryExpression(parent)) {
+      parent = parent!.Parent;
+    }
+    if (operator === KindAmpersandAmpersandToken || IsIfStatement(parent)) {
+      let body: GoPtr<Node>;
+      if (IsIfStatement(parent)) {
+        body = AsIfStatement(parent)!.ThenStatement;
+      }
+      Checker_checkTestingKnownTruthyCallableOrAwaitableOrEnumMemberType(receiver, left, leftType, body);
+    }
+    if (IsLogicalBinaryOperator(operator)) {
+      Checker_checkTruthinessOfType(receiver, leftType, left);
+    }
+  }
+  switch (operator) {
+    case KindAsteriskToken:
+    case KindAsteriskAsteriskToken:
+    case KindAsteriskEqualsToken:
+    case KindAsteriskAsteriskEqualsToken:
+    case KindSlashToken:
+    case KindSlashEqualsToken:
+    case KindPercentToken:
+    case KindPercentEqualsToken:
+    case KindMinusToken:
+    case KindMinusEqualsToken:
+    case KindLessThanLessThanToken:
+    case KindLessThanLessThanEqualsToken:
+    case KindGreaterThanGreaterThanToken:
+    case KindGreaterThanGreaterThanEqualsToken:
+    case KindGreaterThanGreaterThanGreaterThanToken:
+    case KindGreaterThanGreaterThanGreaterThanEqualsToken:
+    case KindBarToken:
+    case KindBarEqualsToken:
+    case KindCaretToken:
+    case KindCaretEqualsToken:
+    case KindAmpersandToken:
+    case KindAmpersandEqualsToken: {
+      if (leftType === receiver!.silentNeverType || rightType === receiver!.silentNeverType) {
+        return receiver!.silentNeverType;
+      }
+      leftType = Checker_checkNonNullType(receiver, leftType, left);
+      rightType = Checker_checkNonNullType(receiver, rightType, right);
+      if ((leftType!.flags & TypeFlagsBooleanLike) !== 0 && (rightType!.flags & TypeFlagsBooleanLike) !== 0) {
+        const suggestedOperator = Checker_getSuggestedBooleanOperator(receiver, operator);
+        if (suggestedOperator !== KindUnknown) {
+          Checker_error(receiver, operatorToken, The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, TokenToString(operatorToken!.Kind), TokenToString(suggestedOperator));
+          return receiver!.numberType;
+        }
+      }
+      const leftOk = Checker_checkArithmeticOperandType(receiver, left, leftType, The_left_hand_side_of_an_arithmetic_operation_must_be_of_type_any_number_bigint_or_an_enum_type, true as bool);
+      const rightOk = Checker_checkArithmeticOperandType(receiver, right, rightType, The_right_hand_side_of_an_arithmetic_operation_must_be_of_type_any_number_bigint_or_an_enum_type, true as bool);
+      let resultType: GoPtr<Type>;
+      if (
+        (Checker_isTypeAssignableToKind(receiver, leftType, TypeFlagsAnyOrUnknown) && Checker_isTypeAssignableToKind(receiver, rightType, TypeFlagsAnyOrUnknown)) ||
+        (!Checker_maybeTypeOfKind(receiver, leftType, TypeFlagsBigIntLike) && !Checker_maybeTypeOfKind(receiver, rightType, TypeFlagsBigIntLike))
+      ) {
+        resultType = receiver!.numberType;
+      } else if (Checker_bothAreBigIntLike(receiver, leftType, rightType)) {
+        switch (operator) {
+          case KindGreaterThanGreaterThanGreaterThanToken:
+          case KindGreaterThanGreaterThanGreaterThanEqualsToken:
+            Checker_reportOperatorError(receiver, leftType, operator, rightType, errorNode, undefined);
+            break;
+          case KindAsteriskAsteriskToken:
+          case KindAsteriskAsteriskEqualsToken:
+            if (receiver!.languageVersion < ScriptTargetES2016) {
+              Checker_error(receiver, errorNode, Exponentiation_cannot_be_performed_on_bigint_values_unless_the_target_option_is_set_to_es2016_or_later);
+            }
+            break;
+        }
+        resultType = receiver!.bigintType;
+      } else {
+        Checker_reportOperatorError(receiver, leftType, operator, rightType, errorNode, (leftOperand, rightOperand) => Checker_bothAreBigIntLike(receiver, leftOperand, rightOperand));
+        resultType = receiver!.errorType;
+      }
+      if (leftOk && rightOk) {
+        Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, resultType);
+        switch (operator) {
+          case KindLessThanLessThanToken:
+          case KindLessThanLessThanEqualsToken:
+          case KindGreaterThanGreaterThanToken:
+          case KindGreaterThanGreaterThanEqualsToken:
+          case KindGreaterThanGreaterThanGreaterThanToken:
+          case KindGreaterThanGreaterThanGreaterThanEqualsToken: {
+            const rhsEval = receiver!.evaluate(right, right);
+            if (typeof rhsEval.Value === "number") {
+              const numValue = rhsEval.Value as Number;
+              if (Number_Abs(numValue) >= (32 as Number)) {
+                Checker_errorOrSuggestion(
+                  receiver,
+                  IsEnumMember(WalkUpParenthesizedExpressions(right!.Parent!.Parent as GoPtr<Expression>)),
+                  errorNode,
+                  This_operation_can_be_simplified_This_shift_is_identical_to_0_1_2,
+                  GetTextOfNode(left),
+                  TokenToString(operator),
+                  Number_Remainder(numValue, 32 as Number),
+                );
+              }
+            }
+            break;
+          }
+        }
+      }
+      return resultType;
+    }
+    case KindPlusToken:
+    case KindPlusEqualsToken: {
+      if (leftType === receiver!.silentNeverType || rightType === receiver!.silentNeverType) {
+        return receiver!.silentNeverType;
+      }
+      if (!Checker_isTypeAssignableToKind(receiver, leftType, TypeFlagsStringLike) && !Checker_isTypeAssignableToKind(receiver, rightType, TypeFlagsStringLike)) {
+        leftType = Checker_checkNonNullType(receiver, leftType, left);
+        rightType = Checker_checkNonNullType(receiver, rightType, right);
+      }
+      let resultType: GoPtr<Type>;
+      if (Checker_isTypeAssignableToKindEx(receiver, leftType, TypeFlagsNumberLike, true as bool) && Checker_isTypeAssignableToKindEx(receiver, rightType, TypeFlagsNumberLike, true as bool)) {
+        resultType = receiver!.numberType;
+      } else if (Checker_isTypeAssignableToKindEx(receiver, leftType, TypeFlagsBigIntLike, true as bool) && Checker_isTypeAssignableToKindEx(receiver, rightType, TypeFlagsBigIntLike, true as bool)) {
+        resultType = receiver!.bigintType;
+      } else if (Checker_isTypeAssignableToKindEx(receiver, leftType, TypeFlagsStringLike, true as bool) || Checker_isTypeAssignableToKindEx(receiver, rightType, TypeFlagsStringLike, true as bool)) {
+        resultType = receiver!.stringType;
+      } else if (IsTypeAny(leftType) || IsTypeAny(rightType)) {
+        if (Checker_isErrorType(receiver, leftType) || Checker_isErrorType(receiver, rightType)) {
+          resultType = receiver!.errorType;
+        } else {
+          resultType = receiver!.anyType;
+        }
+      }
+      if (resultType !== undefined && !Checker_checkForDisallowedESSymbolOperand(receiver, left, right, leftType, rightType, operator)) {
+        return resultType;
+      }
+      if (resultType === undefined) {
+        const closeEnoughKind = (TypeFlagsNumberLike | TypeFlagsBigIntLike | TypeFlagsStringLike | TypeFlagsAnyOrUnknown) as TypeFlags;
+        Checker_reportOperatorError(
+          receiver,
+          leftType,
+          operator,
+          rightType,
+          errorNode,
+          (leftOperand, rightOperand) => Checker_isTypeAssignableToKind(receiver, leftOperand, closeEnoughKind) && Checker_isTypeAssignableToKind(receiver, rightOperand, closeEnoughKind),
+        );
+        return receiver!.anyType;
+      }
+      if (operator === KindPlusEqualsToken) {
+        Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, resultType);
+      }
+      return resultType;
+    }
+    case KindLessThanToken:
+    case KindGreaterThanToken:
+    case KindLessThanEqualsToken:
+    case KindGreaterThanEqualsToken:
+      if (Checker_checkForDisallowedESSymbolOperand(receiver, left, right, leftType, rightType, operator)) {
+        leftType = Checker_getBaseTypeOfLiteralTypeForComparison(receiver, Checker_checkNonNullType(receiver, leftType, left));
+        rightType = Checker_getBaseTypeOfLiteralTypeForComparison(receiver, Checker_checkNonNullType(receiver, rightType, right));
+        Checker_reportOperatorErrorUnless(receiver, leftType, operator, rightType, errorNode, (leftOperand, rightOperand) => {
+          if (IsTypeAny(leftOperand) || IsTypeAny(rightOperand)) {
+            return true;
+          }
+          const leftAssignableToNumber = Checker_isTypeAssignableTo(receiver, leftOperand, receiver!.numberOrBigIntType);
+          const rightAssignableToNumber = Checker_isTypeAssignableTo(receiver, rightOperand, receiver!.numberOrBigIntType);
+          return (leftAssignableToNumber && rightAssignableToNumber) || (!leftAssignableToNumber && !rightAssignableToNumber && Checker_areTypesComparable(receiver, leftOperand, rightOperand));
+        });
+      }
+      return receiver!.booleanType;
+    case KindEqualsEqualsToken:
+    case KindExclamationEqualsToken:
+    case KindEqualsEqualsEqualsToken:
+    case KindExclamationEqualsEqualsToken:
+      if ((checkMode & CheckModeTypeOnly) === 0) {
+        if (
+          (isLiteralExpressionOfObject(left) || isLiteralExpressionOfObject(right)) &&
+          (!IsInJSFile(left) || (operator === KindEqualsEqualsEqualsToken || operator === KindExclamationEqualsEqualsToken))
+        ) {
+          const eqType = operator === KindEqualsEqualsToken || operator === KindEqualsEqualsEqualsToken;
+          Checker_error(receiver, errorNode, This_condition_will_always_return_0_since_JavaScript_compares_objects_by_reference_not_value, IfElse(eqType, "false", "true"));
+        }
+        Checker_checkNaNEquality(receiver, errorNode, operator, left as GoPtr<Expression>, right as GoPtr<Expression>);
+        Checker_reportOperatorErrorUnless(receiver, leftType, operator, rightType, errorNode, (leftOperand, rightOperand) => Checker_isTypeEqualityComparableTo(receiver, leftOperand, rightOperand) || Checker_isTypeEqualityComparableTo(receiver, rightOperand, leftOperand));
+      }
+      return receiver!.booleanType;
+    case KindInstanceOfKeyword:
+      return Checker_checkInstanceOfExpression(receiver, left as GoPtr<Expression>, right as GoPtr<Expression>, leftType, rightType, checkMode);
+    case KindInKeyword:
+      return Checker_checkInExpression(receiver, left as GoPtr<Expression>, right as GoPtr<Expression>, leftType, rightType);
+    case KindAmpersandAmpersandToken:
+    case KindAmpersandAmpersandEqualsToken: {
+      let resultType = leftType;
+      if (Checker_hasTypeFacts(receiver, leftType, TypeFactsTruthy)) {
+        let t = leftType;
+        if (!receiver!.strictNullChecks) {
+          t = Checker_getBaseTypeOfLiteralType(receiver, rightType);
+        }
+        resultType = Checker_getUnionType(receiver, [Checker_extractDefinitelyFalsyTypes(receiver, t), rightType]);
+      }
+      if (operator === KindAmpersandAmpersandEqualsToken) {
+        Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
+      }
+      return resultType;
+    }
+    case KindBarBarToken:
+    case KindBarBarEqualsToken: {
+      let resultType = leftType;
+      if (Checker_hasTypeFacts(receiver, leftType, TypeFactsFalsy)) {
+        resultType = Checker_getUnionTypeEx(receiver, [Checker_GetNonNullableType(receiver, Checker_removeDefinitelyFalsyTypes(receiver, leftType)), rightType], UnionReductionSubtype, undefined, undefined);
+      }
+      if (operator === KindBarBarEqualsToken) {
+        Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
+      }
+      return resultType;
+    }
+    case KindQuestionQuestionToken:
+    case KindQuestionQuestionEqualsToken: {
+      if (operator === KindQuestionQuestionToken) {
+        Checker_checkNullishCoalesceOperands(receiver, left, right);
+      }
+      let resultType = leftType;
+      if (Checker_hasTypeFacts(receiver, leftType, TypeFactsEQUndefinedOrNull)) {
+        resultType = Checker_getUnionTypeEx(receiver, [Checker_GetNonNullableType(receiver, leftType), rightType], UnionReductionSubtype, undefined, undefined);
+      }
+      if (operator === KindQuestionQuestionEqualsToken) {
+        Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
+      }
+      return resultType;
+    }
+    case KindEqualsToken:
+      Checker_checkAssignmentOperator(receiver, left, operator, right, leftType, rightType);
+      return rightType;
+    case KindCommaToken:
+      if (!Tristate_IsTrue(receiver!.compilerOptions!.AllowUnreachableCode!) && Checker_isSideEffectFree(receiver, left) && !Checker_isIndirectCall(receiver, left!.Parent)) {
+        const sf = GetSourceFileOfNode(left);
+        const start = SkipTrivia(SourceFile_Text(sf), Node_Pos(left));
+        const isInDiag2657 = SourceFile_Diagnostics(sf).some((d) => {
+          if (Diagnostic_Code(d) !== JSX_expressions_must_have_one_parent_element.code) {
+            return false;
+          }
+          return TextRange_Contains(Diagnostic_Loc(d), start);
+        });
+        if (!isInDiag2657) {
+          Checker_error(receiver, left, Left_side_of_comma_operator_is_unused_and_has_no_side_effects);
+        }
+      }
+      return rightType;
+  }
+  throw new globalThis.Error("Unhandled case in checkBinaryLikeExpression");
 }
 
 /**

@@ -590,6 +590,7 @@ export const nextSymbolId: Uint64 = new Uint64();
  * }
  */
 export function GetNodeId(node: GoPtr<Node>): NodeId {
+  node!.id ??= new Uint64();
   const id0: ulong = node!.id.Load();
   if (id0 !== (0 as ulong)) return id0 as NodeId;
   // Worst case, we burn a few ids if we have to CAS.
@@ -615,6 +616,7 @@ export function GetNodeId(node: GoPtr<Node>): NodeId {
  * }
  */
 export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
+  symbol_!.id ??= new Uint64();
   const id0: ulong = symbol_!.id.Load();
   if (id0 !== (0 as ulong)) return id0 as SymbolId;
   // Worst case, we burn a few ids if we have to CAS.
@@ -4602,9 +4604,9 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
 export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
   const clause = GetHeritageClause(node, kind);
   if (clause !== undefined) {
-    return AsHeritageClause(clause)!.Types!.Nodes;
+    return AsHeritageClause(clause)!.Types!.Nodes ?? [];
   }
-  return undefined!;
+  return [];
 }
 
 /**

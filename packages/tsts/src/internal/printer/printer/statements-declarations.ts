@@ -156,7 +156,7 @@ import { IsBlock, IsClassExpression, IsFunctionExpression, IsModuleDeclaration }
 import { IsMemberName, IsBindingPattern, NodeIsSynthesized, IsVarAwaitUsing, IsVarConst, IsVarLet, IsVarUsing } from "../../ast/utilities.js";
 import { GetLeftmostExpression, OperatorPrecedenceLowest, OperatorPrecedenceAssignment, OperatorPrecedenceParentheses, OperatorPrecedenceDisallowComma } from "../../ast/precedence.js";
 import { GetShebang } from "../../scanner/scanner.js";
-import { Node_Text } from "../../ast/ast.js";
+import { Node_Text, SourceFile_Text } from "../../ast/ast.js";
 import type { Block, BreakStatement, CaseBlock, CaseOrDefaultClause, CatchClause, ClassDeclaration, ClassStaticBlockDeclaration, ContinueStatement, DebuggerStatement, DoStatement, EmptyStatement, EnumDeclaration, ExportAssignment, ExportDeclaration, ExportSpecifier, ExternalModuleReference, ForInOrOfStatement, ForStatement, FunctionDeclaration, IfStatement, ImportAttribute, ImportAttributes, ImportClause, ImportDeclaration, ImportEqualsDeclaration, ImportSpecifier, InterfaceDeclaration, JsxNamespacedName, LabeledStatement, ModuleBlock, ModuleDeclaration, NamedExports, NamedImports, NamespaceExport, NamespaceExportDeclaration, NamespaceImport, NotEmittedStatement, ReturnStatement, SemicolonClassElement, SwitchStatement, ThrowStatement, TryStatement, VariableDeclaration, VariableDeclarationList, VariableStatement, WhileStatement, WithStatement } from "../../ast/generated/data.js";
 import type { BlockNode, ClassElement, DeclarationName, ExportSpecifierNode, Expression, ForInitializer, ImportAttributeName, ImportAttributeNode, ImportSpecifierNode, ModuleExportName, ModuleName, ModuleReference, NamedExportBindings, NamedImportBindings, ParameterList, Statement, StatementList, VariableDeclarationNode } from "../../ast/generated/unions.js";
 import { Coalesce, IfElse } from "../../core/core.js";
@@ -2621,7 +2621,7 @@ export function Printer_emitShebangIfNeeded(receiver: GoPtr<Printer>, node: GoPt
   if (NodeIsSynthesized(Node_AsNode(node))) {
     return;
   }
-  const shebang = GetShebang(Node_Text(node));
+  const shebang = GetShebang(SourceFile_Text(node));
   if (shebang !== "") {
     Printer_writeComment(receiver, shebang);
     Printer_writeLine(receiver);

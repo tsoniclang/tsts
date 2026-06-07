@@ -3182,19 +3182,19 @@ export function IsLocalsContainer(node: GoPtr<Node>): bool {
  */
 export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return undefined as unknown as GoSlice<GoPtr<Node>>;
+    return [];
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return undefined as unknown as GoSlice<GoPtr<Node>>;
+      return [];
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     return SourceFile_resolveJSDoc(resolvedFile, receiver);
   }
-  return resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
+  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
 }
 
 /**
@@ -3222,22 +3222,22 @@ export function Node_JSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSl
  */
 export function Node_EagerJSDoc(receiver: GoPtr<Node>, file: GoPtr<SourceFile>): GoSlice<GoPtr<Node>> {
   if ((receiver!.Flags & NodeFlagsHasJSDoc) === 0) {
-    return undefined as unknown as GoSlice<GoPtr<Node>>;
+    return [];
   }
   let resolvedFile = file;
   if (resolvedFile === undefined) {
     resolvedFile = utilities.GetSourceFileOfNode(receiver);
     if (resolvedFile === undefined) {
-      return undefined as unknown as GoSlice<GoPtr<Node>>;
+      return [];
     }
   }
   if (resolvedFile.hasLazyJSDoc) {
     resolvedFile.jsdocMu.RLock();
     const jsdocs = resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
     resolvedFile.jsdocMu.RUnlock();
-    return jsdocs;
+    return jsdocs ?? [];
   }
-  return resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>;
+  return (resolvedFile.jsdocCache?.get(receiver) as GoSlice<GoPtr<Node>>) ?? [];
 }
 
 /**
@@ -5265,6 +5265,10 @@ function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): string {
  * }
  */
 export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBase, CompositeBase {
+  FileName(): string;
+  Path(): Path_79c49227;
+  Text(): string;
+  ECMALineMap(): GoSlice<TextPos>;
   fileName: string;
   parseOptions: SourceFileParseOptions;
   text: string;
@@ -5388,6 +5392,10 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   const data: SourceFile = {} as SourceFile;
   data.fileName = opts.FileName;
   data.parseOptions = opts;
+  data.FileName = (): string => SourceFile_FileName(data);
+  data.Path = (): Path_79c49227 => SourceFile_Path(data);
+  data.Text = (): string => SourceFile_Text(data);
+  data.ECMALineMap = (): GoSlice<TextPos> => SourceFile_ECMALineMap(data);
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
@@ -5616,7 +5624,7 @@ export function SourceFile_resolveJSDoc(receiver: GoPtr<SourceFile>, n: GoPtr<No
     if (receiver!.jsdocCache !== undefined && receiver!.jsdocCache.has(n)) {
       return receiver!.jsdocCache.get(n)!;
     }
-    const jsdocs = parseJSDocForNode(receiver, n);
+    const jsdocs = parseJSDocForNode(receiver, n) ?? [];
     if (receiver!.jsdocCache === undefined) {
       receiver!.jsdocCache = new Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
     }

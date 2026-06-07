@@ -360,7 +360,7 @@ export function CreateReportErrorSummary(sys: System, locale: Locale, options: G
  * 	}
  * }
  */
-export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting): DiagnosticReporter {
+export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
   if (Tristate_IsTrue(options!.Quiet)) {
     return QuietDiagnosticReporter;
   }
@@ -402,7 +402,7 @@ export function CreateBuilderStatusReporter(sys: System, w: Writer, locale: Loca
  * 	}
  * }
  */
-export function CreateWatchStatusReporter(sys: System, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting): DiagnosticReporter {
+export function CreateWatchStatusReporter(sys: System, locale: Locale, options: GoPtr<CompilerOptions>, testing: CommandLineTesting | undefined): DiagnosticReporter {
   const formatOpts = getFormatOptsOfSys(sys, locale);
   const writeStatus = shouldBePretty(sys, options) ? FormatDiagnosticsStatusWithColorAndTime : FormatDiagnosticsStatusAndTime;
   return (diagnostic: GoPtr<Diagnostic>): void => {

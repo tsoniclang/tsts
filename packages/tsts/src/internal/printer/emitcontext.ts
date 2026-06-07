@@ -2194,7 +2194,7 @@ export function EmitContext_SetSyntheticLeadingComments(receiver: GoPtr<EmitCont
 export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node)!;
-  emitNode.leadingComments = [...emitNode.leadingComments, { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
+  emitNode.leadingComments = [...(emitNode.leadingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
   return node;
 }
 
@@ -2212,7 +2212,7 @@ export function EmitContext_AddSyntheticLeadingComment(receiver: GoPtr<EmitConte
 export function EmitContext_GetSyntheticLeadingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node)!.leadingComments;
+    return LinkStore_Get(c.emitNodes, node)!.leadingComments ?? [];
   }
   return [];
 }
@@ -2244,7 +2244,7 @@ export function EmitContext_SetSyntheticTrailingComments(receiver: GoPtr<EmitCon
 export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, kind: Kind, text: string, hasTrailingNewLine: bool): GoPtr<Node> {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node)!;
-  emitNode.trailingComments = [...emitNode.trailingComments, { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
+  emitNode.trailingComments = [...(emitNode.trailingComments ?? []), { Kind: kind, Loc: NewTextRange(-1 as int, -1 as int), HasLeadingNewLine: false, HasTrailingNewLine: hasTrailingNewLine, Text: text }];
   return node;
 }
 
@@ -2262,7 +2262,7 @@ export function EmitContext_AddSyntheticTrailingComment(receiver: GoPtr<EmitCont
 export function EmitContext_GetSyntheticTrailingComments(receiver: GoPtr<EmitContext>, node: GoPtr<Node>): GoSlice<SynthesizedComment> {
   const c = receiver!;
   if (LinkStore_Has(c.emitNodes, node)) {
-    return LinkStore_Get(c.emitNodes, node)!.trailingComments;
+    return LinkStore_Get(c.emitNodes, node)!.trailingComments ?? [];
   }
   return [];
 }

@@ -14,6 +14,7 @@ import { ParseInt } from "../../go/strconv.js";
 import { ToValidUTF8 } from "../../go/strings.js";
 import { Map } from "../../go/sync.js";
 import type { Tag } from "../../go/golang.org/x/text/language.js";
+import { Und } from "../../go/golang.org/x/text/language.js";
 import { SameMap } from "../core/core.js";
 import type { Locale } from "../locale/locale.js";
 import { keyToMessage } from "./generated/messages.js";
@@ -237,7 +238,7 @@ export function Localize(locale: Locale, message: GoPtr<Message>, key: Key, ...a
 export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = new Map<Tag, GoMap<Key, string> | undefined>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"stub","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236","bodyHash":"79c121d4902ea2df4ae30c8163ca050fd98619c9fb79b1a85d5287003efc1cdb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236","bodyHash":"79c121d4902ea2df4ae30c8163ca050fd98619c9fb79b1a85d5287003efc1cdb"}
  *
  * BLOCKED: getLocalizedMessages depends on the `matcher` and `localeFuncs`
  * tables emitted by internal/diagnostics/loc_generated.go (a `generated`-category
@@ -278,7 +279,15 @@ export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = 
  * }
  */
 export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages");
+  if (loc === Und) {
+    return undefined;
+  }
+  const cached = localizedMessagesCache.Load(loc);
+  if (cached[1]) {
+    return cached[0];
+  }
+  localizedMessagesCache.Store(loc, undefined);
+  return undefined;
 }
 
 /**

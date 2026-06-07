@@ -59,6 +59,7 @@
     "go/flag.ts",
     "go/github.com/go-json-experiment/json.ts",
     "go/github.com/go-json-experiment/json/jsontext.ts",
+    "go/golang.org/x/text/language.ts",
     "go/github.com/zeebo/xxh3.ts",
     "go/net/url.ts",
     "go/context.ts"
@@ -133,6 +134,16 @@
       "match": "packages/tsts/src/cmd/tsgo/lsp.ts",
       "category": "forbidden-source",
       "reason": "The LSP command entrypoint must not exist in the active standalone compiler source tree."
+    },
+    {
+      "match": "packages/tsts/src/cli/**",
+      "category": "public-entrypoint",
+      "reason": "Node executable adapter for the standalone compiler; it delegates to the TS-Go cmd/tsgo main port and has no upstream Go unit."
+    },
+    {
+      "match": "packages/tsts/src/index.ts",
+      "category": "public-entrypoint",
+      "reason": "Package public API barrel for embedding the standalone compiler; it re-exports ported compiler surfaces and has no upstream Go unit."
     },
     {
       "match": "packages/tsts/src/internal/ast/generated/**",

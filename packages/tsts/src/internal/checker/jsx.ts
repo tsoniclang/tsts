@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
+import { Values as SliceValues } from "../../go/slices.js";
 import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -34,7 +35,7 @@ import { Checker_checkGrammarJsxExpression } from "./grammarchecks.js";
 import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType } from "./checker/symbols.js";
 import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType, Checker_checkExpressionWithContextualType } from "./checker/types.js";
 import type { Checker, CheckMode, InferenceContext } from "./checker/state.js";
-import { getStringLiteralValue, CheckModeNormal, InferencePriorityNone } from "./checker/state.js";
+import { getStringLiteralValue, CheckModeNormal, InferencePriorityNone, Checker_getSourceFileLinks } from "./checker/state.js";
 import { Checker_error } from "./checker/support.js";
 import { Checker_getSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getExportsOfSymbol, Checker_resolveSymbol, Checker_getMergedSymbol, Checker_getGlobalSymbol, Checker_getTypeOfSymbol, Checker_resolveAlias, Checker_getSpellingSuggestionForName, Checker_getTypeOfPropertyOfContextualType, Checker_getIndexedAccessType, Checker_newSymbol } from "./checker/symbols.js";
 import { Checker_resolveExternalModule } from "./checker/modules.js";
@@ -938,7 +939,7 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
   if (jsxSpecific !== undefined) {
     return jsxSpecific;
   }
-  return Checker_getSpellingSuggestionForName(receiver, name, properties.values() as unknown as GoSeq<GoPtr<Symbol>>, SymbolFlagsValue);
+  return Checker_getSpellingSuggestionForName(receiver, name, SliceValues(properties), SymbolFlagsValue);
 }
 
 /**
@@ -991,7 +992,7 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
  * }
  */
 export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, GetSourceFileOfNode(node)) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, GetSourceFileOfNode(node));
   if (links!.jsxFragmentType !== undefined) {
     return links!.jsxFragmentType;
   }
@@ -2425,7 +2426,7 @@ export function Checker_getJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
   if (location !== undefined) {
     const file = GetSourceFileOfNode(location);
     if (file !== undefined) {
-      const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+      const links = Checker_getSourceFileLinks(receiver, file);
       if (IsJsxOpeningFragment(location)) {
         if (links!.localJsxFragmentNamespace !== "") {
           return links!.localJsxFragmentNamespace;
@@ -2491,7 +2492,7 @@ export function Checker_getJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
  * }
  */
 export function Checker_getLocalJsxNamespace(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): string {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, file);
   if (links!.localJsxNamespace !== "") {
     return links!.localJsxNamespace;
   }
@@ -2523,7 +2524,7 @@ export function Checker_getLocalJsxNamespace(receiver: GoPtr<Checker>, file: GoP
 export function Checker_getJsxFactoryEntity(receiver: GoPtr<Checker>, location: GoPtr<Node>): GoPtr<Node> {
   if (location !== undefined) {
     Checker_getJsxNamespace(receiver, location);
-    const localJsxFactory = (LinkStore_Get(receiver!.sourceFileLinks, GetSourceFileOfNode(location)) as GoPtr<SourceFileLinks>)!.localJsxFactory;
+    const localJsxFactory = Checker_getSourceFileLinks(receiver, GetSourceFileOfNode(location))!.localJsxFactory;
     if (localJsxFactory !== undefined) {
       return localJsxFactory;
     }
@@ -2560,7 +2561,7 @@ export function Checker_getJsxFragmentFactoryEntity(receiver: GoPtr<Checker>, lo
   if (location !== undefined) {
     const file = GetSourceFileOfNode(location);
     if (file !== undefined) {
-      const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+      const links = Checker_getSourceFileLinks(receiver, file);
       if (links!.localJsxFragmentFactory !== undefined) {
         return links!.localJsxFragmentFactory;
       }

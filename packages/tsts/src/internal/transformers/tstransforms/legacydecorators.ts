@@ -70,12 +70,13 @@ export interface LegacyDecoratorsTransformer {
  */
 export function NewLegacyDecoratorsTransformer(opt: GoPtr<TransformOptions>): GoPtr<Transformer> {
   const tx: LegacyDecoratorsTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
     languageVersion: CompilerOptions_GetEmitScriptTarget(opt!.CompilerOptions),
     referenceResolver: opt!.Resolver!,
     classAliases: new Map(),
     enclosingClasses: [],
   };
-  return Transformer_NewTransformer(tx as unknown as Transformer, (node) => LegacyDecoratorsTransformer_visit(tx, node), opt!.Context);
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => LegacyDecoratorsTransformer_visit(tx, node), opt!.Context);
 }
 
 /**

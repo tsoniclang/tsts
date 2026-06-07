@@ -249,7 +249,7 @@ export function ParseBuildCommandLine(commandLine: GoSlice<string>, host: ParseC
     if (buildOption === TscBuildOption || buildOption === NameMap_Get(CompilerNameMap, key)) {
       ParseCompilerOptions(key, value, compilerOptions);
     }
-    return false;
+    return true;
   });
   const buildParser: buildOptionsParser = { __tsgoEmbedded0: {} as BuildOptions };
   convertMapToOptions(parser!.options as GoPtr<OrderedMap>, buildOptionsParser_as_optionParser(buildParser));

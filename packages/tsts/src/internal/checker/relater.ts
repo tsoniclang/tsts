@@ -9,7 +9,7 @@ import type { ModifierFlags } from "../ast/modifierflags.js";
 import type { Symbol } from "../ast/symbol.js";
 import { InternalSymbolNameMissing } from "../ast/symbol.js";
 import type { Set } from "../collections/set.js";
-import { Set_Has, Set_Clear, Set_Add, Set_Delete, Set_Len } from "../collections/set.js";
+import { Set_Has, Set_Clear, Set_Add, Set_Delete, Set_Len, NewSetWithSizeHint } from "../collections/set.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import { Message_ElidedInCompatibilityPyramid } from "../diagnostics/diagnostics.js";
 import {
@@ -39,31 +39,64 @@ import {
   X_0_and_1_index_signatures_are_incompatible,
   X_0_index_signatures_are_incompatible,
   X_0_is_a_primitive_but_1_is_a_wrapper_object_Prefer_using_0_when_possible,
+  Source_has_0_element_s_but_target_requires_1,
+  Source_has_0_element_s_but_target_allows_only_1,
+  Target_requires_0_element_s_but_source_may_have_fewer,
+  Target_allows_only_0_element_s_but_source_may_have_more,
+  Source_provides_no_match_for_required_element_at_position_0_in_target,
+  Source_provides_no_match_for_variadic_element_at_position_0_in_target,
+  Variadic_element_at_position_0_in_source_does_not_match_element_at_position_1_in_target,
+  Type_at_position_0_in_source_is_not_compatible_with_type_at_position_1_in_target,
+  Type_at_positions_0_through_1_in_source_is_not_compatible_with_type_at_position_2_in_target,
+  Property_0_does_not_exist_on_type_1,
+  Property_0_is_private_in_type_1_but_not_in_type_2,
+  Property_0_is_missing_in_type_1_but_required_in_type_2,
+  Property_0_is_optional_in_type_1_but_required_in_type_2,
+  Types_have_separate_declarations_of_a_private_property_0,
+  Property_0_is_protected_but_type_1_is_not_a_class_derived_from_2,
+  Property_0_is_protected_in_type_1_but_public_in_type_2,
+  The_Object_type_is_assignable_to_very_few_other_types_Did_you_mean_to_use_the_any_type_instead,
+  The_intersection_0_was_reduced_to_never_because_property_1_has_conflicting_types_in_some_constituents,
+  The_intersection_0_was_reduced_to_never_because_property_1_exists_in_multiple_constituents_and_is_private_in_some,
+  This_type_parameter_might_need_an_extends_0_constraint,
+  Type_0_is_not_comparable_to_type_1,
+  Type_0_is_not_assignable_to_type_1,
+  Type_0_is_not_assignable_to_type_1_Did_you_mean_2,
+  Type_0_is_not_assignable_to_type_1_Two_different_types_with_this_name_exist_but_they_are_unrelated,
+  Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_types_of_the_target_s_properties,
+  Type_0_is_missing_the_following_properties_from_type_1_Colon_2,
+  Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more,
+  X_0_is_assignable_to_the_constraint_of_type_1_but_1_could_be_instantiated_with_a_different_subtype_of_constraint_2,
+  X_0_could_be_instantiated_with_an_arbitrary_type_which_could_be_unrelated_to_1,
 } from "../diagnostics/generated/messages.js";
 import type { CacheHashKey, Checker, EnumRelationKey, IntersectionFlags } from "./checker/state.js";
-import { IntersectionFlagsNoConstraintReduction, CheckModeContextual } from "./checker/state.js";
-import { getRelationKey, isFreshLiteralType, containsType, everyType, getMappedTypeModifiers } from "./checker/state.js";
+import { IntersectionFlagsNoConstraintReduction, CheckModeContextual, MappedTypeModifiersIncludeOptional, MappedTypeModifiersExcludeOptional, InferenceFlagsNone, InferencePriorityNoConstraints, InferencePriorityAlwaysStrict } from "./checker/state.js";
+import { getRelationKey, isFreshLiteralType, containsType, everyType, getMappedTypeModifiers, isSingleElementGenericTupleType, isMutableTupleType, isPartialMappedType, getStartElementCount, getEndElementCount, isConflictingPrivateProperty, countTypes } from "./checker/state.js";
 import type { TypeMapper } from "./mapper.js";
-import type { ConditionalRoot, ElementFlags, ExportTypeLinks, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags, VarianceLinks } from "./types.js";
-import { TernaryFalse, TernaryTrue, TernaryMaybe, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsStructuredType, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, AccessFlagsNone, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsIntrinsicType, SignatureKindCall, SignatureKindConstruct, InterfaceType_TypeParameters, SignatureFlagsAbstract } from "./types.js";
+import type { AccessFlags, ConditionalRoot, ElementFlags, ExportTypeLinks, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags, VarianceLinks } from "./types.js";
+import { TernaryFalse, TernaryTrue, TernaryMaybe, TernaryUnknown, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTypeVariable, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsStructuredType, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsMapped, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, VarianceFlagsAllowsStructuralFallback, AccessFlagsNone, AccessFlagsWriting, AccessFlagsNoIndexSignatures, IndexFlagsNoIndexSignatures, IndexFlagsNoReducibleCheck, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexType, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ElementFlagsRest, ElementFlagsNone, ElementFlagsNonRest, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsMappedType, Type_AsIntrinsicType, Type_AsTypeParameter, SignatureKindCall, SignatureKindConstruct, InterfaceType_TypeParameters, SignatureFlagsAbstract, ObjectFlagsIsNeverIntersection, TypeFormatFlagsNoTypeReduction } from "./types.js";
 import { UnionReductionNone } from "./checker/state.js";
-import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_getPropertiesOfUnionOrIntersectionType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference, Checker_getApparentType, Checker_getIntersectionTypeEx, Checker_getNormalizedType, Checker_getTemplateLiteralType, Checker_isArrayLikeType, Checker_isArrayOrTupleType, Checker_isMutableArrayOrTuple, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isNonGenericObjectType, Checker_getCombinedMappedTypeOptionality, Checker_getTemplateTypeFromMappedType, Checker_getTypeWithFacts, Checker_pushContextualType, Checker_popContextualType } from "./checker/types.js";
+import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_getPropertiesOfUnionOrIntersectionType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference, Checker_getApparentType, Checker_getIntersectionTypeEx, Checker_getNormalizedType, Checker_getTemplateLiteralType, Checker_isArrayLikeType, Checker_isArrayOrTupleType, Checker_isMutableArrayOrTuple, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isNonGenericObjectType, Checker_isGenericTupleType, Checker_getCombinedMappedTypeOptionality, Checker_getTemplateTypeFromMappedType, Checker_getTypeWithFacts, Checker_pushContextualType, Checker_popContextualType, Checker_intersectTypes, Checker_getApparentMappedTypeKeys, Checker_isEmptyArrayLiteralType, Checker_isEmptyObjectType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_removeMissingType, Checker_getBaseTypeOfLiteralType, Checker_getSuggestedTypeForNonexistentStringLiteralType } from "./checker/types.js";
 import { Checker_checkExpressionForMutableLocation } from "./checker/syntax-checking.js";
-import { Checker_getTypeOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getLiteralTypeFromProperty, Checker_getNameTypeFromMappedType, Checker_getNonMissingTypeOfSymbol } from "./checker/symbols.js";
-import { Checker_getBaseConstraintOfType, Checker_getTypeAliasInstantiation, Checker_getConstraintOfType, Checker_getStringMappingType, Checker_getBaseConstraintOrType, Checker_getConstraintTypeFromMappedType } from "./checker/inference.js";
-import { SameMap, Same, CountWhere, Every } from "../core/core.js";
-import { Checker_TypeToString, Checker_typeToStringEx, Checker_typeToString, Checker_signatureToString, Checker_typePredicateToString, Checker_symbolToString, Checker_valueToString } from "./printer.js";
+import { Checker_getTypeOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getLiteralTypeFromProperty, Checker_getNameTypeFromMappedType, Checker_getNonMissingTypeOfSymbol, Checker_getIndexTypeEx, Checker_isGenericIndexType, Checker_shouldDeferIndexType, Checker_getIndexTypeOfTypeEx, Checker_isMappedTypeGenericIndexedAccess } from "./checker/symbols.js";
+import { Checker_getBaseConstraintOfType, Checker_getTypeAliasInstantiation, Checker_getConstraintOfType, Checker_getStringMappingType, Checker_getBaseConstraintOrType, Checker_getConstraintTypeFromMappedType, Checker_getSimplifiedTypeOrConstraint, Checker_getPermissiveInstantiation, Checker_getRestrictiveInstantiation, Checker_isMappedTypeWithKeyofConstraintDeclaration, Checker_hasNonCircularBaseConstraint, Checker_getDefaultConstraintOfConditionalType, Checker_getConstraintOfDistributiveConditionalType } from "./checker/inference.js";
+import { Checker_newInferenceContext, Checker_inferTypes } from "./inference.js";
+import { SameMap, Same, CountWhere, Every, Some, OrElse, Find } from "../core/core.js";
+import { Checker_TypeToString, Checker_TypeToStringEx, Checker_typeToStringEx, Checker_typeToString, Checker_signatureToString, Checker_typePredicateToString, Checker_symbolToString, Checker_valueToString } from "./printer.js";
 import { TypeFormatFlagsUseFullyQualifiedType } from "./types.js";
-import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule } from "../ast/symbolflags.js";
+import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule, SymbolFlagsPrototype, SymbolFlagsClassMember } from "../ast/symbolflags.js";
 import { CheckFlagsPartial, CheckFlagsSyntheticProperty, CheckFlagsIsDiscriminantComputed, CheckFlagsIsDiscriminant, CheckFlagsNonUniformAndLiteral } from "../ast/checkflags.js";
-import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, NewDiagnosticForNode } from "./utilities.js";
-import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall } from "../ast/utilities.js";
-import { Checker_addOptionalityEx, Checker_isContextSensitive } from "./checker/support-queries.js";
+import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, isNumericLiteralName, NewDiagnosticForNode, getDeclarationModifierFlagsFromSymbol } from "./utilities.js";
+import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall, IsInJSFile } from "../ast/utilities.js";
+import { Checker_addOptionalityEx, Checker_isContextSensitive, Checker_getExactOptionalUnassignableProperties } from "./checker/support-queries.js";
+import { Checker_getSingleBaseForNonAugmentingSubtype } from "./checker/relations.js";
+import { Checker_getJsxType, JsxNames } from "./jsx.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
-import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType } from "./checker/symbols.js";
+import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType, Checker_isReadonlySymbol } from "./checker/symbols.js";
+import { Checker_getDeclaringClass, Checker_isValidOverrideOf } from "./checker/classes.js";
 import { Checker_getPropertiesOfType } from "./checker/types.js";
 import { Checker_getApplicableIndexInfoForName, Checker_isTypeParameterPossiblyReferenced, Checker_getSignaturesOfType, Checker_getSignaturesOfStructuredType, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_typeHasCallOrConstructSignatures, Checker_getApplicableIndexInfo, Checker_isApplicableIndexType, Checker_getTypeParameterFromMappedType, Checker_getErasedSignature } from "./checker/signatures.js";
-import { AsConditionalTypeNode } from "../ast/generated/casts.js";
+import { AsConditionalTypeNode, AsMappedTypeNode } from "../ast/generated/casts.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { newSimpleTypeMapper } from "./mapper.js";
 import type { LinkStore } from "../core/linkstore.js";
@@ -102,6 +135,8 @@ import {
   Checker_getReturnTypeOfSignature,
   Checker_getNonCircularReturnTypeOfSignature,
   Checker_getTypeArguments,
+  Checker_getMinTypeArgumentCount,
+  Checker_fillMissingTypeArguments,
   Checker_getTypeReferenceArity,
   Checker_getRestTypeOfTupleType,
   Checker_getSingleCallSignature,
@@ -111,6 +146,8 @@ import {
   Checker_getConstraintOrUnknownFromTypeParameter,
   Checker_getDefaultOrUnknownFromTypeParameter,
   Checker_getConstraintFromTypeParameter,
+  Checker_getTypeWithThisArgument,
+  Checker_cloneTypeParameter,
 } from "./checker/signatures.js";
 import { Checker_getIndexedAccessType } from "./checker/symbols.js";
 import {
@@ -129,6 +166,7 @@ import {
 } from "./checker/types.js";
 import { Checker_getIndexType } from "./checker/symbols.js";
 import { Checker_getTypePredicateFromBody } from "./checker/flow-narrowing.js";
+import { Checker_isDiscriminantWithNeverType } from "./checker/flow-narrowing.js";
 import { Checker_findResolutionCycleStartIndex } from "./checker/symbols.js";
 import { newTypeMapper } from "./mapper.js";
 import type { Result } from "../evaluator/evaluator.js";
@@ -1477,7 +1515,10 @@ export function Checker_elaborateArrowFunction(receiver: GoPtr<Checker>, node: G
 export function Checker_isWeakType(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
   if ((t!.flags & TypeFlagsObject) !== 0) {
     const resolved = Checker_resolveStructuredTypeMembers(receiver, t);
-    return resolved!.signatures.length === 0 && resolved!.indexInfos.length === 0 && resolved!.properties.length > 0 && resolved!.properties.every((p: GoPtr<Symbol>) => (p!.Flags & SymbolFlagsOptional) !== 0);
+    const signatures = resolved!.signatures ?? [];
+    const indexInfos = resolved!.indexInfos ?? [];
+    const properties = resolved!.properties ?? [];
+    return signatures.length === 0 && indexInfos.length === 0 && properties.length > 0 && properties.every((p: GoPtr<Symbol>) => (p!.Flags & SymbolFlagsOptional) !== 0);
   }
   if ((t!.flags & TypeFlagsSubstitution) !== 0) {
     return Checker_isWeakType(receiver, Type_AsSubstitutionType(t)!.baseType);
@@ -2077,7 +2118,7 @@ export function Checker_getUnmatchedProperties(receiver: GoPtr<Checker>, source:
  * }
  */
 export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, requireOptionalProperties: bool, matchDiscriminantProperties: bool, propsOut: GoPtr<GoSlice<GoPtr<Symbol>>>): GoPtr<Symbol> {
-  const properties = Checker_getPropertiesOfType(receiver, target);
+  const properties = Checker_getPropertiesOfType(receiver, target) ?? [];
   for (const targetProp of properties) {
     if (isStaticPrivateIdentifierProperty(targetProp)) {
       continue;
@@ -2132,21 +2173,22 @@ export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, s
  * 	return properties
  * }
  */
-export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedProperties: Set): GoSlice<GoPtr<Symbol>> {
-  if (Set_Len(excludedProperties) === 0 || properties.length === 0) {
-    return properties;
+export function excludeProperties(properties: GoPtr<GoSlice<GoPtr<Symbol>>>, excludedProperties: Set): GoSlice<GoPtr<Symbol>> {
+  const sourceProperties = properties ?? [];
+  if (Set_Len(excludedProperties) === 0 || sourceProperties.length === 0) {
+    return sourceProperties;
   }
   let excluded = false;
   const reduced: GoPtr<Symbol>[] = [];
-  for (let i = 0; i < properties.length; i++) {
-    const prop = properties[i]!;
+  for (let i = 0; i < sourceProperties.length; i++) {
+    const prop = sourceProperties[i]!;
     if (!Set_Has(excludedProperties, prop!.Name)) {
       if (excluded) {
         reduced.push(prop);
       }
     } else if (!excluded) {
       for (let j = 0; j < i; j++) {
-        reduced.push(properties[j]!);
+        reduced.push(sourceProperties[j]!);
       }
       excluded = true;
     }
@@ -2154,7 +2196,7 @@ export function excludeProperties(properties: GoSlice<GoPtr<Symbol>>, excludedPr
   if (excluded) {
     return reduced;
   }
-  return properties;
+  return sourceProperties;
 }
 
 /**
@@ -5342,7 +5384,24 @@ export interface Relater {
 export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
   let r = receiver!.freeRelater;
   if (r === undefined) {
-    r = { c: receiver } as Relater;
+    r = {
+      c: receiver,
+      relation: undefined,
+      errorNode: undefined,
+      errorChain: undefined,
+      relatedInfo: [],
+      maybeKeys: [],
+      maybeKeysSet: NewSetWithSizeHint<CacheHashKey>(0 as int)!,
+      sourceStack: [],
+      targetStack: [],
+      maybeCount: 0 as int,
+      sourceDepth: 0 as int,
+      targetDepth: 0 as int,
+      expandingFlags: ExpandingFlagsNone,
+      overflow: false,
+      relationCount: 0 as int,
+      next: undefined,
+    } as Relater;
   }
   receiver!.freeRelater = r!.next;
   return r;
@@ -6662,7 +6721,7 @@ export function Relater_isSourceIntersectionNeedingExtraCheck(receiver: GoPtr<Re
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.structuredTypeRelatedToWorker","kind":"method","status":"stub","sigHash":"94c4638157c60e2e5f9611b831d75f6e5687f16814d8f142dafb264208625bcd","bodyHash":"9c4509856a03a7f263297770ec18f1e13f5935c104122a2e4656cfdcc925cf8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.structuredTypeRelatedToWorker","kind":"method","status":"implemented","sigHash":"94c4638157c60e2e5f9611b831d75f6e5687f16814d8f142dafb264208625bcd","bodyHash":"9c4509856a03a7f263297770ec18f1e13f5935c104122a2e4656cfdcc925cf8e"}
  *
  * Go source:
  * func (r *Relater) structuredTypeRelatedToWorker(source *Type, target *Type, reportErrors bool, intersectionState IntersectionState) Ternary {
@@ -7308,7 +7367,557 @@ export function Relater_isSourceIntersectionNeedingExtraCheck(receiver: GoPtr<Re
  * }
  */
 export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool, intersectionState: IntersectionState): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.structuredTypeRelatedToWorker");
+  let result: Ternary = TernaryFalse;
+  let varianceCheckFailed = false;
+  let originalErrorChain: GoPtr<ErrorChain>;
+  const saveErrorState = Relater_getErrorState(receiver);
+  const c = receiver!.c;
+  const relateVariances = (
+    sourceTypeArguments: GoSlice<GoPtr<Type>>,
+    targetTypeArguments: GoSlice<GoPtr<Type>>,
+    variances: GoSlice<VarianceFlags>,
+    varianceIntersectionState: IntersectionState,
+  ): [Ternary, bool] => {
+    result = Relater_typeArgumentsRelatedTo(receiver, sourceTypeArguments, targetTypeArguments, variances, reportErrors, varianceIntersectionState);
+    if (result !== TernaryFalse) {
+      return [result, true];
+    }
+    if (Some(variances, (v: VarianceFlags): bool => (v & VarianceFlagsAllowsStructuralFallback) !== 0)) {
+      originalErrorChain = undefined;
+      Relater_restoreErrorState(receiver, saveErrorState);
+      return [TernaryFalse, false];
+    }
+    const allowStructuralFallback = Checker_hasCovariantVoidArgument(c, targetTypeArguments, variances);
+    varianceCheckFailed = !allowStructuralFallback;
+    if (variances.length !== 0 && !allowStructuralFallback) {
+      if (varianceCheckFailed && !(reportErrors && Some(variances, (v: VarianceFlags): bool => (v & VarianceFlagsVarianceMask) === VarianceFlagsInvariant))) {
+        return [TernaryFalse, true];
+      }
+      originalErrorChain = receiver!.errorChain;
+      Relater_restoreErrorState(receiver, saveErrorState);
+    }
+    return [TernaryFalse, false];
+  };
+
+  if (receiver!.relation === c!.identityRelation) {
+    if ((source!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+      result = Relater_eachTypeRelatedToSomeType(receiver, source, target);
+      if (result !== TernaryFalse) {
+        result = (result & Relater_eachTypeRelatedToSomeType(receiver, target, source)) as Ternary;
+      }
+      return result;
+    }
+    if ((source!.flags & TypeFlagsIndex) !== 0) {
+      return Relater_isRelatedTo(receiver, Type_Target(source), Type_Target(target), RecursionFlagsBoth, false);
+    }
+    if ((source!.flags & TypeFlagsIndexedAccess) !== 0) {
+      result = Relater_isRelatedTo(receiver, Type_AsIndexedAccessType(source)!.objectType, Type_AsIndexedAccessType(target)!.objectType, RecursionFlagsBoth, false);
+      if (result !== TernaryFalse) {
+        result = (result & Relater_isRelatedTo(receiver, Type_AsIndexedAccessType(source)!.indexType, Type_AsIndexedAccessType(target)!.indexType, RecursionFlagsBoth, false)) as Ternary;
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    } else if ((source!.flags & TypeFlagsConditional) !== 0) {
+      const sourceConditional = Type_AsConditionalType(source)!;
+      const targetConditional = Type_AsConditionalType(target)!;
+      if (sourceConditional.root!.isDistributive === targetConditional.root!.isDistributive) {
+        result = Relater_isRelatedTo(receiver, sourceConditional.checkType, targetConditional.checkType, RecursionFlagsBoth, false);
+        if (result !== TernaryFalse) {
+          result = (result & Relater_isRelatedTo(receiver, sourceConditional.extendsType, targetConditional.extendsType, RecursionFlagsBoth, false)) as Ternary;
+          if (result !== TernaryFalse) {
+            result = (result & Relater_isRelatedTo(receiver, Checker_getTrueTypeFromConditionalType(c, source), Checker_getTrueTypeFromConditionalType(c, target), RecursionFlagsBoth, false)) as Ternary;
+            if (result !== TernaryFalse) {
+              result = (result & Relater_isRelatedTo(receiver, Checker_getFalseTypeFromConditionalType(c, source), Checker_getFalseTypeFromConditionalType(c, target), RecursionFlagsBoth, false)) as Ternary;
+              if (result !== TernaryFalse) {
+                return result;
+              }
+            }
+          }
+        }
+      }
+    } else if ((source!.flags & TypeFlagsSubstitution) !== 0) {
+      result = Relater_isRelatedTo(receiver, Type_AsSubstitutionType(source)!.baseType, Type_AsSubstitutionType(target)!.baseType, RecursionFlagsBoth, false);
+      if (result !== TernaryFalse) {
+        result = (result & Relater_isRelatedTo(receiver, Type_AsSubstitutionType(source)!.constraint, Type_AsSubstitutionType(target)!.constraint, RecursionFlagsBoth, false)) as Ternary;
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    } else if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
+      const sourceTemplate = Type_AsTemplateLiteralType(source)!;
+      const targetTemplate = Type_AsTemplateLiteralType(target)!;
+      if (Same(sourceTemplate.texts, targetTemplate.texts)) {
+        result = TernaryTrue;
+        for (let index = 0; index < sourceTemplate.types.length; index++) {
+          result = (result & Relater_isRelatedTo(receiver, sourceTemplate.types[index], targetTemplate.types[index], RecursionFlagsBoth, false)) as Ternary;
+          if (result === TernaryFalse) {
+            return result;
+          }
+        }
+        return result;
+      }
+    } else if ((source!.flags & TypeFlagsStringMapping) !== 0) {
+      if (source!.symbol === target!.symbol) {
+        return Relater_isRelatedTo(receiver, Type_AsStringMappingType(source)!.target, Type_AsStringMappingType(target)!.target, RecursionFlagsBoth, false);
+      }
+    }
+    if ((source!.flags & TypeFlagsObject) === 0) {
+      return TernaryFalse;
+    }
+  } else if ((source!.flags & TypeFlagsUnionOrIntersection) !== 0 || (target!.flags & TypeFlagsUnionOrIntersection) !== 0) {
+    result = Relater_unionOrIntersectionRelatedTo(receiver, source, target, reportErrors, intersectionState);
+    if (result !== TernaryFalse) {
+      return result;
+    }
+    if (!(
+      (source!.flags & TypeFlagsInstantiable) !== 0 ||
+      ((source!.flags & TypeFlagsObject) !== 0 && (target!.flags & TypeFlagsUnion) !== 0) ||
+      ((source!.flags & TypeFlagsIntersection) !== 0 && (target!.flags & (TypeFlagsObject | TypeFlagsUnion | TypeFlagsInstantiable)) !== 0)
+    )) {
+      return TernaryFalse;
+    }
+  }
+
+  if (
+    (source!.flags & (TypeFlagsObject | TypeFlagsConditional)) !== 0 &&
+    source!.alias !== undefined &&
+    source!.alias.typeArguments.length !== 0 &&
+    target!.alias !== undefined &&
+    source!.alias.symbol === target!.alias.symbol &&
+    !(Checker_isMarkerType(c, source) || Checker_isMarkerType(c, target))
+  ) {
+    const variances = Checker_getAliasVariances(c, source!.alias.symbol);
+    if (variances.length === 0) {
+      return TernaryUnknown;
+    }
+    const params = LinkStore_Get(c!.typeAliasLinks, source!.alias.symbol)!.typeParameters;
+    const minParams = Checker_getMinTypeArgumentCount(c, params);
+    const nodeIsInJsFile = IsInJSFile(source!.alias.symbol!.ValueDeclaration);
+    const sourceTypes = Checker_fillMissingTypeArguments(c, source!.alias.typeArguments, params, minParams, nodeIsInJsFile);
+    const targetTypes = Checker_fillMissingTypeArguments(c, target!.alias.typeArguments, params, minParams, nodeIsInJsFile);
+    const [varianceResult, ok] = relateVariances(sourceTypes, targetTypes, variances, intersectionState);
+    if (ok) {
+      return varianceResult;
+    }
+  }
+
+  if (isSingleElementGenericTupleType(source) && !Type_TargetTupleType(source)!.readonly) {
+    result = Relater_isRelatedTo(receiver, Checker_getTypeArguments(c, source)[0], target, RecursionFlagsSource, false);
+    if (result !== TernaryFalse) {
+      return result;
+    }
+  }
+  if (isSingleElementGenericTupleType(target) && (Type_TargetTupleType(target)!.readonly || Checker_isMutableArrayOrTuple(c, Checker_getBaseConstraintOrType(c, source)))) {
+    result = Relater_isRelatedTo(receiver, source, Checker_getTypeArguments(c, target)[0], RecursionFlagsTarget, false);
+    if (result !== TernaryFalse) {
+      return result;
+    }
+  }
+
+  if ((target!.flags & TypeFlagsTypeParameter) !== 0) {
+    if (
+      (source!.objectFlags & ObjectFlagsMapped) !== 0 &&
+      AsMappedTypeNode(Type_AsMappedType(source)!.declaration)!.NameType === undefined &&
+      Relater_isRelatedTo(receiver, Checker_getIndexType(c, target), Checker_getConstraintTypeFromMappedType(c, source), RecursionFlagsBoth, false) !== TernaryFalse
+    ) {
+      if ((getMappedTypeModifiers(source) & MappedTypeModifiersIncludeOptional) === 0) {
+        const templateType = Checker_getTemplateTypeFromMappedType(c, source);
+        const indexedAccessType = Checker_getIndexedAccessType(c, target, Checker_getTypeParameterFromMappedType(c, source));
+        result = Relater_isRelatedTo(receiver, templateType, indexedAccessType, RecursionFlagsBoth, reportErrors);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+    if (receiver!.relation === c!.comparableRelation && (source!.flags & TypeFlagsTypeParameter) !== 0) {
+      const constraint = Checker_getConstraintFromTypeParameter(c, source);
+      if (constraint !== undefined && someType(constraint, (constraintType: GoPtr<Type>): bool => (constraintType!.flags & TypeFlagsTypeParameter) !== 0)) {
+        return Relater_isRelatedTo(receiver, constraint, target, RecursionFlagsSource, false);
+      }
+      return TernaryFalse;
+    }
+  } else if ((target!.flags & TypeFlagsIndexedAccess) !== 0) {
+    if ((source!.flags & TypeFlagsIndexedAccess) !== 0) {
+      result = Relater_isRelatedTo(receiver, Type_AsIndexedAccessType(source)!.objectType, Type_AsIndexedAccessType(target)!.objectType, RecursionFlagsBoth, reportErrors);
+      if (result !== TernaryFalse) {
+        result = (result & Relater_isRelatedTo(receiver, Type_AsIndexedAccessType(source)!.indexType, Type_AsIndexedAccessType(target)!.indexType, RecursionFlagsBoth, reportErrors)) as Ternary;
+      }
+      if (result !== TernaryFalse) {
+        return result;
+      }
+      if (reportErrors) {
+        originalErrorChain = receiver!.errorChain;
+      }
+    }
+    if (receiver!.relation === c!.assignableRelation || receiver!.relation === c!.comparableRelation) {
+      const objectType = Type_AsIndexedAccessType(target)!.objectType;
+      const indexType = Type_AsIndexedAccessType(target)!.indexType;
+      const baseObjectType = Checker_getBaseConstraintOrType(c, objectType);
+      const baseIndexType = Checker_getBaseConstraintOrType(c, indexType);
+      if (!Checker_isGenericObjectType(c, baseObjectType) && !Checker_isGenericIndexType(c, baseIndexType)) {
+        const accessFlags = (AccessFlagsWriting | (baseObjectType !== objectType ? AccessFlagsNoIndexSignatures : 0)) as AccessFlags;
+        const constraint = Checker_getIndexedAccessTypeOrUndefined(c, baseObjectType, baseIndexType, accessFlags, undefined, undefined);
+        if (constraint !== undefined) {
+          if (reportErrors && originalErrorChain !== undefined) {
+            Relater_restoreErrorState(receiver, saveErrorState);
+          }
+          result = Relater_isRelatedToEx(receiver, source, constraint, RecursionFlagsTarget, reportErrors, undefined, intersectionState);
+          if (result !== TernaryFalse) {
+            return result;
+          }
+          if (reportErrors && originalErrorChain !== undefined && receiver!.errorChain !== undefined && chainDepth(originalErrorChain) <= chainDepth(receiver!.errorChain)) {
+            receiver!.errorChain = originalErrorChain;
+          }
+        }
+      }
+    }
+    if (reportErrors) {
+      originalErrorChain = undefined;
+    }
+  } else if ((target!.flags & TypeFlagsIndex) !== 0) {
+    const targetIndex = Type_AsIndexType(target)!;
+    const targetType = targetIndex.target;
+    if ((source!.flags & TypeFlagsIndex) !== 0) {
+      result = Relater_isRelatedTo(receiver, targetType, Type_AsIndexType(source)!.target, RecursionFlagsBoth, false);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+    }
+    if (isTupleType(targetType)) {
+      result = Relater_isRelatedTo(receiver, source, Checker_getKnownKeysOfTupleType(c, targetType), RecursionFlagsTarget, reportErrors);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+    } else {
+      const constraint = Checker_getSimplifiedTypeOrConstraint(c, targetType);
+      if (constraint !== undefined) {
+        if (Relater_isRelatedTo(receiver, source, Checker_getIndexTypeEx(c, constraint, (targetIndex.indexFlags | IndexFlagsNoReducibleCheck) as never), RecursionFlagsTarget, reportErrors) === TernaryTrue) {
+          return TernaryTrue;
+        }
+      } else if (Checker_isGenericMappedType(c, targetType)) {
+        const nameType = Checker_getNameTypeFromMappedType(c, targetType);
+        const constraintType = Checker_getConstraintTypeFromMappedType(c, targetType);
+        let targetKeys: GoPtr<Type>;
+        if (nameType !== undefined && Checker_isMappedTypeWithKeyofConstraintDeclaration(c, targetType)) {
+          const mappedKeys = Checker_getApparentMappedTypeKeys(c, nameType, targetType);
+          targetKeys = Checker_getUnionType(c, [mappedKeys, nameType]);
+        } else if (nameType !== undefined) {
+          targetKeys = nameType;
+        } else {
+          targetKeys = constraintType;
+        }
+        if (Relater_isRelatedTo(receiver, source, targetKeys, RecursionFlagsTarget, reportErrors) === TernaryTrue) {
+          return TernaryTrue;
+        }
+      }
+    }
+  } else if ((target!.flags & TypeFlagsConditional) !== 0) {
+    if (Checker_isDeeplyNestedType(c, target, receiver!.targetStack, 10)) {
+      return TernaryMaybe;
+    }
+    const targetConditional = Type_AsConditionalType(target)!;
+    if (
+      (targetConditional.root!.inferTypeParameters ?? []).length === 0 &&
+      !Checker_isDistributionDependent(c, targetConditional.root) &&
+      !((source!.flags & TypeFlagsConditional) !== 0 && Type_AsConditionalType(source)!.root === targetConditional.root)
+    ) {
+      const skipTrue = !Checker_isTypeAssignableTo(c, Checker_getPermissiveInstantiation(c, targetConditional.checkType), Checker_getPermissiveInstantiation(c, targetConditional.extendsType));
+      const skipFalse = !skipTrue && Checker_isTypeAssignableTo(c, Checker_getRestrictiveInstantiation(c, targetConditional.checkType), Checker_getRestrictiveInstantiation(c, targetConditional.extendsType));
+      if (skipTrue) {
+        result = TernaryTrue;
+      } else {
+        result = Relater_isRelatedToEx(receiver, source, Checker_getTrueTypeFromConditionalType(c, target), RecursionFlagsTarget, false, undefined, intersectionState);
+      }
+      if (result !== TernaryFalse) {
+        if (skipFalse) {
+          result = (result & TernaryTrue) as Ternary;
+        } else {
+          result = (result & Relater_isRelatedToEx(receiver, source, Checker_getFalseTypeFromConditionalType(c, target), RecursionFlagsTarget, false, undefined, intersectionState)) as Ternary;
+        }
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+  } else if ((target!.flags & TypeFlagsTemplateLiteral) !== 0) {
+    if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
+      if (receiver!.relation === c!.comparableRelation) {
+        if (Checker_templateLiteralTypesDefinitelyUnrelated(c, Type_AsTemplateLiteralType(source)!, Type_AsTemplateLiteralType(target)!)) {
+          return TernaryFalse;
+        }
+        return TernaryTrue;
+      }
+      Checker_instantiateType(c, source, c!.reportUnreliableMapper);
+    }
+    if (Checker_isTypeMatchedByTemplateLiteralType(c, source, Type_AsTemplateLiteralType(target)!, (s: GoPtr<Type>, t: GoPtr<Type>, errors: bool) => Relater_isRelatedToWorker(receiver, s, t, errors))) {
+      return TernaryTrue;
+    }
+  } else if ((target!.flags & TypeFlagsStringMapping) !== 0) {
+    if ((source!.flags & TypeFlagsStringMapping) === 0 && Checker_isMemberOfStringMapping(c, source, target)) {
+      return TernaryTrue;
+    }
+  } else if (Checker_isGenericMappedType(c, target) && receiver!.relation !== c!.identityRelation) {
+    const keysRemapped = AsMappedTypeNode(Type_AsMappedType(target)!.declaration)!.NameType !== undefined;
+    const templateType = Checker_getTemplateTypeFromMappedType(c, target);
+    const modifiers = getMappedTypeModifiers(target);
+    if ((modifiers & MappedTypeModifiersExcludeOptional) === 0) {
+      if (!keysRemapped && (templateType!.flags & TypeFlagsIndexedAccess) !== 0 && Type_AsIndexedAccessType(templateType)!.objectType === source && Type_AsIndexedAccessType(templateType)!.indexType === Checker_getTypeParameterFromMappedType(c, target)) {
+        return TernaryTrue;
+      }
+      if (!Checker_isGenericMappedType(c, source)) {
+        const targetKeys = keysRemapped ? Checker_getNameTypeFromMappedType(c, target) : Checker_getConstraintTypeFromMappedType(c, target);
+        const sourceKeys = Checker_getIndexTypeEx(c, source, IndexFlagsNoIndexSignatures);
+        const includeOptional = (modifiers & MappedTypeModifiersIncludeOptional) !== 0;
+        let filteredByApplicability: GoPtr<Type>;
+        if (includeOptional) {
+          filteredByApplicability = Checker_intersectTypes(c, targetKeys, sourceKeys);
+        }
+        if ((includeOptional && filteredByApplicability !== undefined && (filteredByApplicability.flags & TypeFlagsNever) === 0) || (!includeOptional && Relater_isRelatedTo(receiver, targetKeys, sourceKeys, RecursionFlagsBoth, false) !== TernaryFalse)) {
+          const targetTemplateType = Checker_getTemplateTypeFromMappedType(c, target);
+          const typeParameter = Checker_getTypeParameterFromMappedType(c, target);
+          const nonNullComponent = Checker_extractTypesOfKind(c, targetTemplateType, ~TypeFlagsNullable as never);
+          if (!keysRemapped && (nonNullComponent!.flags & TypeFlagsIndexedAccess) !== 0 && Type_AsIndexedAccessType(nonNullComponent)!.indexType === typeParameter) {
+            result = Relater_isRelatedTo(receiver, source, Type_AsIndexedAccessType(nonNullComponent)!.objectType, RecursionFlagsTarget, reportErrors);
+            if (result !== TernaryFalse) {
+              return result;
+            }
+          } else {
+            let indexingType = typeParameter;
+            if (keysRemapped) {
+              indexingType = OrElse(filteredByApplicability, targetKeys);
+            } else if (filteredByApplicability !== undefined) {
+              indexingType = Checker_getIntersectionType(c, [filteredByApplicability, typeParameter]);
+            }
+            const indexedAccessType = Checker_getIndexedAccessType(c, source, indexingType);
+            result = Relater_isRelatedTo(receiver, indexedAccessType, targetTemplateType, RecursionFlagsBoth, reportErrors);
+            if (result !== TernaryFalse) {
+              return result;
+            }
+          }
+        }
+        originalErrorChain = receiver!.errorChain;
+        Relater_restoreErrorState(receiver, saveErrorState);
+      }
+    }
+  }
+
+  if ((source!.flags & TypeFlagsTypeVariable) !== 0) {
+    if ((source!.flags & TypeFlagsIndexedAccess) === 0 || (target!.flags & TypeFlagsIndexedAccess) === 0) {
+      let constraint = Checker_getConstraintOfType(c, source);
+      if (constraint === undefined) {
+        constraint = c!.unknownType;
+      }
+      result = Relater_isRelatedToEx(receiver, constraint, target, RecursionFlagsSource, false, undefined, intersectionState);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+      const constraintWithThis = Checker_getTypeWithThisArgument(c, constraint, source, false);
+      result = Relater_isRelatedToEx(receiver, constraintWithThis, target, RecursionFlagsSource, reportErrors && constraint !== c!.unknownType && (target!.flags & source!.flags & TypeFlagsTypeParameter) === 0, undefined, intersectionState);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+      if (Checker_isMappedTypeGenericIndexedAccess(c, source)) {
+        const indexConstraint = Checker_getConstraintOfType(c, Type_AsIndexedAccessType(source)!.indexType);
+        if (indexConstraint !== undefined) {
+          result = Relater_isRelatedTo(receiver, Checker_getIndexedAccessType(c, Type_AsIndexedAccessType(source)!.objectType, indexConstraint), target, RecursionFlagsSource, reportErrors);
+          if (result !== TernaryFalse) {
+            return result;
+          }
+        }
+      }
+    }
+  } else if ((source!.flags & TypeFlagsIndex) !== 0) {
+    const sourceIndex = Type_AsIndexType(source)!;
+    const isDeferredMappedIndex = Checker_shouldDeferIndexType(c, sourceIndex.target, sourceIndex.indexFlags) && (sourceIndex.target!.objectFlags & ObjectFlagsMapped) !== 0;
+    result = Relater_isRelatedTo(receiver, c!.stringNumberSymbolType, target, RecursionFlagsSource, reportErrors && !isDeferredMappedIndex);
+    if (result !== TernaryFalse) {
+      return result;
+    }
+    if (isDeferredMappedIndex) {
+      const mappedType = sourceIndex.target;
+      const nameType = Checker_getNameTypeFromMappedType(c, mappedType);
+      let sourceMappedKeys: GoPtr<Type>;
+      if (nameType !== undefined && Checker_isMappedTypeWithKeyofConstraintDeclaration(c, mappedType)) {
+        sourceMappedKeys = Checker_getApparentMappedTypeKeys(c, nameType, mappedType);
+      } else if (nameType !== undefined) {
+        sourceMappedKeys = nameType;
+      } else {
+        sourceMappedKeys = Checker_getConstraintTypeFromMappedType(c, mappedType);
+      }
+      result = Relater_isRelatedTo(receiver, sourceMappedKeys, target, RecursionFlagsSource, reportErrors);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+    }
+  } else if ((source!.flags & TypeFlagsConditional) !== 0) {
+    if (Checker_isDeeplyNestedType(c, source, receiver!.sourceStack, 10)) {
+      return TernaryMaybe;
+    }
+    if ((target!.flags & TypeFlagsConditional) !== 0) {
+      const sourceConditional = Type_AsConditionalType(source)!;
+      const targetConditional = Type_AsConditionalType(target)!;
+      const sourceParams = sourceConditional.root!.inferTypeParameters ?? [];
+      let sourceExtends = sourceConditional.extendsType;
+      let mapper: GoPtr<TypeMapper>;
+      if (sourceParams.length !== 0) {
+        const context = Checker_newInferenceContext(c, sourceParams, undefined, InferenceFlagsNone, (s: GoPtr<Type>, t: GoPtr<Type>, errors: bool) => Relater_isRelatedToWorker(receiver, s, t, errors));
+        Checker_inferTypes(c, context!.inferences, targetConditional.extendsType, sourceExtends, InferencePriorityNoConstraints | InferencePriorityAlwaysStrict, false);
+        sourceExtends = Checker_instantiateType(c, sourceExtends, context!.mapper);
+        mapper = context!.mapper;
+      }
+      if (
+        Checker_isTypeIdenticalTo(c, sourceExtends, targetConditional.extendsType) &&
+        (Relater_isRelatedTo(receiver, sourceConditional.checkType, targetConditional.checkType, RecursionFlagsBoth, false) !== 0 ||
+          Relater_isRelatedTo(receiver, targetConditional.checkType, sourceConditional.checkType, RecursionFlagsBoth, false) !== 0)
+      ) {
+        result = Relater_isRelatedTo(receiver, Checker_instantiateType(c, Checker_getTrueTypeFromConditionalType(c, source), mapper), Checker_getTrueTypeFromConditionalType(c, target), RecursionFlagsBoth, reportErrors);
+        if (result !== TernaryFalse) {
+          result = (result & Relater_isRelatedTo(receiver, Checker_getFalseTypeFromConditionalType(c, source), Checker_getFalseTypeFromConditionalType(c, target), RecursionFlagsBoth, reportErrors)) as Ternary;
+        }
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+    const defaultConstraint = Checker_getDefaultConstraintOfConditionalType(c, source);
+    if (defaultConstraint !== undefined) {
+      result = Relater_isRelatedTo(receiver, defaultConstraint, target, RecursionFlagsSource, reportErrors);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+    }
+    if ((target!.flags & TypeFlagsConditional) === 0 && Checker_hasNonCircularBaseConstraint(c, source)) {
+      const distributiveConstraint = Checker_getConstraintOfDistributiveConditionalType(c, source);
+      if (distributiveConstraint !== undefined) {
+        Relater_restoreErrorState(receiver, saveErrorState);
+        result = Relater_isRelatedTo(receiver, distributiveConstraint, target, RecursionFlagsSource, reportErrors);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+  } else if ((source!.flags & TypeFlagsTemplateLiteral) !== 0 && (target!.flags & TypeFlagsObject) === 0) {
+    if ((target!.flags & TypeFlagsTemplateLiteral) === 0) {
+      const constraint = Checker_getBaseConstraintOfType(c, source);
+      if (constraint !== undefined && constraint !== source) {
+        result = Relater_isRelatedTo(receiver, constraint, target, RecursionFlagsSource, reportErrors);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+  } else if ((source!.flags & TypeFlagsStringMapping) !== 0) {
+    if ((target!.flags & TypeFlagsStringMapping) !== 0) {
+      if (source!.symbol !== target!.symbol) {
+        return TernaryFalse;
+      }
+      result = Relater_isRelatedTo(receiver, Type_AsStringMappingType(source)!.target, Type_AsStringMappingType(target)!.target, RecursionFlagsBoth, reportErrors);
+      if (result !== TernaryFalse) {
+        return result;
+      }
+    } else {
+      const constraint = Checker_getBaseConstraintOfType(c, source);
+      if (constraint !== undefined) {
+        result = Relater_isRelatedTo(receiver, constraint, target, RecursionFlagsSource, reportErrors);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+  } else {
+    if (receiver!.relation !== c!.subtypeRelation && receiver!.relation !== c!.strictSubtypeRelation && isPartialMappedType(target) && Checker_isEmptyObjectType(c, source)) {
+      return TernaryTrue;
+    }
+    if (Checker_isGenericMappedType(c, target)) {
+      if (Checker_isGenericMappedType(c, source)) {
+        result = Relater_mappedTypeRelatedTo(receiver, source, target, reportErrors);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+      return TernaryFalse;
+    }
+    const sourceIsPrimitive = (source!.flags & TypeFlagsPrimitive) !== 0;
+    if (receiver!.relation !== c!.identityRelation) {
+      source = Checker_getApparentType(c, source);
+    } else if (Checker_isGenericMappedType(c, source)) {
+      return TernaryFalse;
+    }
+    if (
+      (source!.objectFlags & ObjectFlagsReference) !== 0 &&
+      (target!.objectFlags & ObjectFlagsReference) !== 0 &&
+      Type_Target(source) === Type_Target(target) &&
+      !isTupleType(source) &&
+      !Checker_isMarkerType(c, source) &&
+      !Checker_isMarkerType(c, target)
+    ) {
+      if (Checker_isEmptyArrayLiteralType(c, source)) {
+        return TernaryTrue;
+      }
+      const variances = Checker_getVariances(c, Type_Target(source));
+      if (variances.length === 0) {
+        return TernaryUnknown;
+      }
+      const [varianceResult, ok] = relateVariances(Checker_getTypeArguments(c, source), Checker_getTypeArguments(c, target), variances, intersectionState);
+      if (ok) {
+        return varianceResult;
+      }
+    } else if (
+      Checker_isArrayType(c, target) &&
+      ((Checker_isReadonlyArrayType(c, target) && everyType(source, (type_: GoPtr<Type>): bool => Checker_isArrayOrTupleType(c, type_))) || everyType(source, isMutableTupleType))
+    ) {
+      if (receiver!.relation !== c!.identityRelation) {
+        return Relater_isRelatedTo(receiver, Checker_getIndexTypeOfTypeEx(c, source, c!.numberType, c!.anyType), Checker_getIndexTypeOfTypeEx(c, target, c!.numberType, c!.anyType), RecursionFlagsBoth, reportErrors);
+      }
+      return TernaryFalse;
+    } else if (Checker_isGenericTupleType(c, source) && isTupleType(target) && !Checker_isGenericTupleType(c, target)) {
+      const constraint = Checker_getBaseConstraintOrType(c, source);
+      if (constraint !== source) {
+        return Relater_isRelatedTo(receiver, constraint, target, RecursionFlagsSource, reportErrors);
+      }
+    } else if (
+      (receiver!.relation === c!.subtypeRelation || receiver!.relation === c!.strictSubtypeRelation) &&
+      Checker_isEmptyObjectType(c, target) &&
+      (target!.objectFlags & ObjectFlagsFreshLiteral) !== 0 &&
+      !Checker_isEmptyObjectType(c, source)
+    ) {
+      return TernaryFalse;
+    }
+    if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection)) !== 0 && (target!.flags & TypeFlagsObject) !== 0) {
+      const reportStructuralErrors = reportErrors && receiver!.errorChain === saveErrorState.errorChain && !sourceIsPrimitive;
+      result = Relater_propertiesRelatedTo(receiver, source, target, reportStructuralErrors, NewSetWithSizeHint<string>(0 as int)!, false, intersectionState);
+      if (result !== TernaryFalse) {
+        result = (result & Relater_signaturesRelatedTo(receiver, source, target, SignatureKindCall, reportStructuralErrors, intersectionState)) as Ternary;
+        if (result !== TernaryFalse) {
+          result = (result & Relater_signaturesRelatedTo(receiver, source, target, SignatureKindConstruct, reportStructuralErrors, intersectionState)) as Ternary;
+          if (result !== TernaryFalse) {
+            result = (result & Relater_indexSignaturesRelatedTo(receiver, source, target, sourceIsPrimitive, reportStructuralErrors, intersectionState)) as Ternary;
+          }
+        }
+      }
+      if (result !== TernaryFalse) {
+        if (!varianceCheckFailed) {
+          return result;
+        }
+        if (originalErrorChain !== undefined) {
+          receiver!.errorChain = originalErrorChain;
+        } else if (receiver!.errorChain === undefined) {
+          receiver!.errorChain = saveErrorState.errorChain;
+        }
+      }
+    }
+    if ((source!.flags & (TypeFlagsObject | TypeFlagsIntersection)) !== 0 && (target!.flags & TypeFlagsUnion) !== 0) {
+      const objectOnlyTarget = Checker_extractTypesOfKind(c, target, (TypeFlagsObject | TypeFlagsIntersection | TypeFlagsSubstitution) as never);
+      if ((objectOnlyTarget!.flags & TypeFlagsUnion) !== 0) {
+        result = Relater_typeRelatedToDiscriminatedType(receiver, source, objectOnlyTarget);
+        if (result !== TernaryFalse) {
+          return result;
+        }
+      }
+    }
+  }
+  return TernaryFalse;
 }
 
 /**
@@ -7477,7 +8086,7 @@ export function Relater_mappedTypeRelatedTo(receiver: GoPtr<Relater>, source: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.typeRelatedToDiscriminatedType","kind":"method","status":"stub","sigHash":"7e88d2781c6b475a0bd0bf7d723f06da1b196832366f7dc895cab0f91f1acbee","bodyHash":"420a65dae01b8a4862b5c3ac09854cb2062f3e0c2eeb1c7f49a7943251104fc5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.typeRelatedToDiscriminatedType","kind":"method","status":"implemented","sigHash":"7e88d2781c6b475a0bd0bf7d723f06da1b196832366f7dc895cab0f91f1acbee","bodyHash":"420a65dae01b8a4862b5c3ac09854cb2062f3e0c2eeb1c7f49a7943251104fc5"}
  *
  * Go source:
  * func (r *Relater) typeRelatedToDiscriminatedType(source *Type, target *Type) Ternary {
@@ -7592,11 +8201,109 @@ export function Relater_mappedTypeRelatedTo(receiver: GoPtr<Relater>, source: Go
  * }
  */
 export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.typeRelatedToDiscriminatedType");
+  const sourceProperties = Checker_getPropertiesOfType(receiver!.c, source);
+  const sourcePropertiesFiltered = Checker_findDiscriminantProperties(receiver!.c, sourceProperties, target);
+  if (sourcePropertiesFiltered.length === 0) {
+    return TernaryFalse;
+  }
+  let numCombinations: int = 1 as int;
+  for (const sourceProperty of sourcePropertiesFiltered) {
+    numCombinations = (numCombinations * countTypes(Checker_getNonMissingTypeOfSymbol(receiver!.c, sourceProperty))) as int;
+    if (numCombinations > 25) {
+      if (receiver!.c!.tracer !== undefined) {
+        Tracer_Instant(
+          receiver!.c!.tracer,
+          PhaseCheckTypes,
+          "typeRelatedToDiscriminatedType_DepthLimit",
+          new globalThis.Map<string, unknown>([
+            ["sourceId", source!.id],
+            ["targetId", target!.id],
+            ["numCombinations", numCombinations],
+          ]),
+        );
+      }
+      return TernaryFalse;
+    }
+    if (numCombinations === 0) {
+      return TernaryFalse;
+    }
+  }
+  const sourceDiscriminantTypes: GoPtr<Type>[][] = new globalThis.Array(sourcePropertiesFiltered.length);
+  const excludedProperties = NewSetWithSizeHint<string>(0 as int)!;
+  for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
+    const sourceProperty = sourcePropertiesFiltered[i]!;
+    const sourcePropertyType = Checker_getNonMissingTypeOfSymbol(receiver!.c, sourceProperty);
+    sourceDiscriminantTypes[i] = Type_Distributed(sourcePropertyType);
+    Set_Add(excludedProperties, sourceProperty.Name);
+  }
+  const discriminantCombinations: GoPtr<Type>[][] = new globalThis.Array(numCombinations);
+  for (let i = 0; i < numCombinations; i++) {
+    const combination: GoPtr<Type>[] = new globalThis.Array(sourceDiscriminantTypes.length);
+    let n = i;
+    for (let j = sourceDiscriminantTypes.length - 1; j >= 0; j--) {
+      const sourceTypes = sourceDiscriminantTypes[j]!;
+      const length = sourceTypes.length;
+      combination[j] = sourceTypes[n % length]!;
+      n = Math.trunc(n / length);
+    }
+    discriminantCombinations[i] = combination;
+  }
+  let matchingTypes: GoPtr<Type>[] = [];
+  for (const combination of discriminantCombinations) {
+    let hasMatch = false;
+    targetLoop: for (const t of Type_Types(target)) {
+      for (let i = 0; i < sourcePropertiesFiltered.length; i++) {
+        const sourceProperty = sourcePropertiesFiltered[i]!;
+        const targetProperty = Checker_getPropertyOfType(receiver!.c, t, sourceProperty.Name);
+        if (targetProperty === undefined) {
+          continue targetLoop;
+        }
+        if (sourceProperty === targetProperty) {
+          continue;
+        }
+        const related = Relater_propertyRelatedTo(
+          receiver,
+          source,
+          target,
+          sourceProperty,
+          targetProperty,
+          (): GoPtr<Type> => combination[i],
+          false,
+          IntersectionStateNone,
+          receiver!.c!.strictNullChecks || receiver!.relation === receiver!.c!.comparableRelation,
+        );
+        if (related === TernaryFalse) {
+          continue targetLoop;
+        }
+      }
+      matchingTypes = AppendIfUnique(matchingTypes, t);
+      hasMatch = true;
+    }
+    if (!hasMatch) {
+      return TernaryFalse;
+    }
+  }
+  let result: Ternary = TernaryTrue;
+  for (const t of matchingTypes) {
+    result = (result & Relater_propertiesRelatedTo(receiver, source, t, false, excludedProperties, false, IntersectionStateNone)) as Ternary;
+    if (result !== TernaryFalse) {
+      result = (result & Relater_signaturesRelatedTo(receiver, source, t, SignatureKindCall, false, IntersectionStateNone)) as Ternary;
+      if (result !== TernaryFalse) {
+        result = (result & Relater_signaturesRelatedTo(receiver, source, t, SignatureKindConstruct, false, IntersectionStateNone)) as Ternary;
+        if (result !== TernaryFalse && !(isTupleType(source) && isTupleType(t))) {
+          result = (result & Relater_indexSignaturesRelatedTo(receiver, source, t, false, false, IntersectionStateNone)) as Ternary;
+        }
+      }
+    }
+    if (result === TernaryFalse) {
+      return result;
+    }
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertiesRelatedTo","kind":"method","status":"stub","sigHash":"99701f20d9f8ef10c34c9f2e9dabe76b778d2b7739f2b59fa05832e5c42b151c","bodyHash":"d99c20b3d4628f63fd68824b6b24a2d9d8ffe78c2c5ab57cea094d85aaee2d77"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertiesRelatedTo","kind":"method","status":"implemented","sigHash":"99701f20d9f8ef10c34c9f2e9dabe76b778d2b7739f2b59fa05832e5c42b151c","bodyHash":"d99c20b3d4628f63fd68824b6b24a2d9d8ffe78c2c5ab57cea094d85aaee2d77"}
  *
  * Go source:
  * func (r *Relater) propertiesRelatedTo(source *Type, target *Type, reportErrors bool, excludedProperties collections.Set[string], optionalsOnly bool, intersectionState IntersectionState) Ternary {
@@ -7763,11 +8470,182 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
  * }
  */
 export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool, excludedProperties: Set, optionalsOnly: bool, intersectionState: IntersectionState): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertiesRelatedTo");
+  if (receiver!.relation === receiver!.c!.identityRelation) {
+    return Relater_propertiesIdenticalTo(receiver, source, target, excludedProperties);
+  }
+  let result: Ternary = TernaryTrue;
+  if (isTupleType(target)) {
+    const targetTupleType = Type_TargetTupleType(target)!;
+    if (Checker_isArrayOrTupleType(receiver!.c, source)) {
+      if (!targetTupleType.readonly && (Checker_isReadonlyArrayType(receiver!.c, source) || (isTupleType(source) && Type_TargetTupleType(source)!.readonly))) {
+        return TernaryFalse;
+      }
+      const sourceArity = Checker_getTypeReferenceArity(receiver!.c, source);
+      const targetArity = Checker_getTypeReferenceArity(receiver!.c, target);
+      let sourceRest: bool;
+      if (isTupleType(source)) {
+        sourceRest = (Type_TargetTupleType(source)!.combinedFlags & ElementFlagsRest) !== 0;
+      } else {
+        sourceRest = true;
+      }
+      const targetHasRestElement = (targetTupleType.combinedFlags & ElementFlagsVariable) !== 0;
+      let sourceMinLength: int;
+      if (isTupleType(source)) {
+        sourceMinLength = Type_TargetTupleType(source)!.minLength;
+      } else {
+        sourceMinLength = 0 as int;
+      }
+      const targetMinLength = targetTupleType.minLength;
+      if (!sourceRest && sourceArity < targetMinLength) {
+        if (reportErrors) {
+          Relater_reportError(receiver, Source_has_0_element_s_but_target_requires_1, sourceArity, targetMinLength);
+        }
+        return TernaryFalse;
+      }
+      if (!targetHasRestElement && targetArity < sourceMinLength) {
+        if (reportErrors) {
+          Relater_reportError(receiver, Source_has_0_element_s_but_target_allows_only_1, sourceMinLength, targetArity);
+        }
+        return TernaryFalse;
+      }
+      if (!targetHasRestElement && (sourceRest || targetArity < sourceArity)) {
+        if (reportErrors) {
+          if (sourceMinLength < targetMinLength) {
+            Relater_reportError(receiver, Target_requires_0_element_s_but_source_may_have_fewer, targetMinLength);
+          } else {
+            Relater_reportError(receiver, Target_allows_only_0_element_s_but_source_may_have_more, targetArity);
+          }
+        }
+        return TernaryFalse;
+      }
+      const sourceTypeArguments = Checker_getTypeArguments(receiver!.c, source);
+      const targetTypeArguments = Checker_getTypeArguments(receiver!.c, target);
+      const targetStartCount = getStartElementCount(targetTupleType, ElementFlagsNonRest as ElementFlags);
+      const targetEndCount = getEndElementCount(targetTupleType, ElementFlagsNonRest as ElementFlags);
+      let canExcludeDiscriminants = Set_Len(excludedProperties) !== 0;
+      for (let sourcePosition = 0; sourcePosition < sourceArity; sourcePosition++) {
+        let sourceFlags: ElementFlags;
+        if (isTupleType(source)) {
+          sourceFlags = Type_TargetTupleType(source)!.elementInfos[sourcePosition]!.flags;
+        } else {
+          sourceFlags = ElementFlagsRest;
+        }
+        const sourcePositionFromEnd = sourceArity - 1 - sourcePosition;
+        let targetPosition: int;
+        if (targetHasRestElement && sourcePosition >= targetStartCount) {
+          targetPosition = (targetArity - 1 - Math.min(sourcePositionFromEnd, targetEndCount)) as int;
+        } else {
+          targetPosition = sourcePosition as int;
+        }
+        let targetFlags: ElementFlags = ElementFlagsNone;
+        if (targetPosition >= 0) {
+          targetFlags = targetTupleType.elementInfos[targetPosition]!.flags;
+        }
+        if ((targetFlags & ElementFlagsVariadic) !== 0 && (sourceFlags & ElementFlagsVariadic) === 0) {
+          if (reportErrors) {
+            Relater_reportError(receiver, Source_provides_no_match_for_variadic_element_at_position_0_in_target, targetPosition);
+          }
+          return TernaryFalse;
+        }
+        if ((sourceFlags & ElementFlagsVariadic) !== 0 && (targetFlags & ElementFlagsVariable) === 0) {
+          if (reportErrors) {
+            Relater_reportError(receiver, Variadic_element_at_position_0_in_source_does_not_match_element_at_position_1_in_target, sourcePosition, targetPosition);
+          }
+          return TernaryFalse;
+        }
+        if ((targetFlags & ElementFlagsRequired) !== 0 && (sourceFlags & ElementFlagsRequired) === 0) {
+          if (reportErrors) {
+            Relater_reportError(receiver, Source_provides_no_match_for_required_element_at_position_0_in_target, targetPosition);
+          }
+          return TernaryFalse;
+        }
+        if (canExcludeDiscriminants) {
+          if ((sourceFlags & ElementFlagsVariable) !== 0 || (targetFlags & ElementFlagsVariable) !== 0) {
+            canExcludeDiscriminants = false;
+          }
+          if (canExcludeDiscriminants && Set_Has(excludedProperties, `${sourcePosition}`)) {
+            continue;
+          }
+        }
+        const sourceType = Checker_removeMissingType(receiver!.c, sourceTypeArguments[sourcePosition], (sourceFlags & targetFlags & ElementFlagsOptional) !== 0);
+        const targetType = targetTypeArguments[targetPosition];
+        let targetCheckType: GoPtr<Type>;
+        if ((sourceFlags & ElementFlagsVariadic) !== 0 && (targetFlags & ElementFlagsRest) !== 0) {
+          targetCheckType = Checker_createArrayType(receiver!.c, targetType);
+        } else {
+          targetCheckType = Checker_removeMissingType(receiver!.c, targetType, (targetFlags & ElementFlagsOptional) !== 0);
+        }
+        const related = Relater_isRelatedToEx(receiver, sourceType, targetCheckType, RecursionFlagsBoth, reportErrors, undefined, intersectionState);
+        if (related === TernaryFalse) {
+          if (reportErrors && (targetArity > 1 || sourceArity > 1)) {
+            if (targetHasRestElement && sourcePosition >= targetStartCount && sourcePositionFromEnd >= targetEndCount && targetStartCount !== sourceArity - targetEndCount - 1) {
+              Relater_reportError(receiver, Type_at_positions_0_through_1_in_source_is_not_compatible_with_type_at_position_2_in_target, targetStartCount, sourceArity - targetEndCount - 1, targetPosition);
+            } else {
+              Relater_reportError(receiver, Type_at_position_0_in_source_is_not_compatible_with_type_at_position_1_in_target, sourcePosition, targetPosition);
+            }
+          }
+          return TernaryFalse;
+        }
+        result = (result & related) as Ternary;
+      }
+      return result;
+    }
+    if ((targetTupleType.combinedFlags & ElementFlagsVariable) !== 0) {
+      return TernaryFalse;
+    }
+  }
+  const requireOptionalProperties =
+    (receiver!.relation === receiver!.c!.subtypeRelation || receiver!.relation === receiver!.c!.strictSubtypeRelation) &&
+    !isObjectLiteralType(source) &&
+    !Checker_isEmptyArrayLiteralType(receiver!.c, source) &&
+    !isTupleType(source);
+  const unmatchedProperty = Checker_getUnmatchedProperty(receiver!.c, source, target, requireOptionalProperties, false);
+  if (unmatchedProperty !== undefined) {
+    if (reportErrors && Checker_shouldReportUnmatchedPropertyError(receiver!.c, source, target)) {
+      Relater_reportUnmatchedProperty(receiver, source, target, unmatchedProperty, requireOptionalProperties);
+    }
+    return TernaryFalse;
+  }
+  if (isObjectLiteralType(target)) {
+    for (const sourceProp of excludeProperties(Checker_getPropertiesOfType(receiver!.c, source), excludedProperties)) {
+      if (Checker_getPropertyOfObjectType(receiver!.c, target, sourceProp!.Name) === undefined) {
+        if (reportErrors) {
+          Relater_reportError(receiver, Property_0_does_not_exist_on_type_1, Checker_symbolToString(receiver!.c, sourceProp), Checker_TypeToString(receiver!.c, target));
+        }
+        return TernaryFalse;
+      }
+    }
+  }
+  const properties = Checker_getPropertiesOfType(receiver!.c, target);
+  const numericNamesOnly = isTupleType(source) && isTupleType(target);
+  for (const targetProp of excludeProperties(properties, excludedProperties)) {
+    const name = targetProp!.Name;
+    if ((targetProp!.Flags & SymbolFlagsPrototype) === 0 && (!numericNamesOnly || isNumericLiteralName(name) || name === "length") && (!optionalsOnly || (targetProp!.Flags & SymbolFlagsOptional) !== 0)) {
+      const sourceProp = Checker_getPropertyOfType(receiver!.c, source, name);
+      if (sourceProp !== undefined && sourceProp !== targetProp) {
+        const related = Relater_propertyRelatedTo(
+          receiver,
+          source,
+          target,
+          sourceProp,
+          targetProp,
+          (sym) => Checker_getNonMissingTypeOfSymbol(receiver!.c, sym),
+          reportErrors,
+          intersectionState,
+          receiver!.relation === receiver!.c!.comparableRelation,
+        );
+        if (related === TernaryFalse) {
+          return TernaryFalse;
+        }
+        result = (result & related) as Ternary;
+      }
+    }
+  }
+  return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertyRelatedTo","kind":"method","status":"stub","sigHash":"d36649bac3404adb68eb73bc209cb5f12984e0278ae4c5b88220a24cb062e2bb","bodyHash":"030e73e1710d380ca066390756c9eee8569c049c083f417d97a7765ee0b32e9f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertyRelatedTo","kind":"method","status":"implemented","sigHash":"d36649bac3404adb68eb73bc209cb5f12984e0278ae4c5b88220a24cb062e2bb","bodyHash":"030e73e1710d380ca066390756c9eee8569c049c083f417d97a7765ee0b32e9f"}
  *
  * Go source:
  * func (r *Relater) propertyRelatedTo(source *Type, target *Type, sourceProp *ast.Symbol, targetProp *ast.Symbol, getTypeOfSourceProperty func(sym *ast.Symbol) *Type, reportErrors bool, intersectionState IntersectionState, skipOptional bool) Ternary {
@@ -7835,7 +8713,75 @@ export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: Go
  * }
  */
 export function Relater_propertyRelatedTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, getTypeOfSourceProperty: (sym: GoPtr<Symbol>) => GoPtr<Type>, reportErrors: bool, intersectionState: IntersectionState, skipOptional: bool): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.propertyRelatedTo");
+  const sourcePropFlags = getDeclarationModifierFlagsFromSymbol(sourceProp);
+  const targetPropFlags = getDeclarationModifierFlagsFromSymbol(targetProp);
+  if ((sourcePropFlags & ModifierFlagsPrivate) !== 0 || (targetPropFlags & ModifierFlagsPrivate) !== 0) {
+    if (sourceProp!.ValueDeclaration !== targetProp!.ValueDeclaration) {
+      if (reportErrors) {
+        if ((sourcePropFlags & ModifierFlagsPrivate) !== 0 && (targetPropFlags & ModifierFlagsPrivate) !== 0) {
+          Relater_reportError(receiver, Types_have_separate_declarations_of_a_private_property_0, Checker_symbolToString(receiver!.c, targetProp));
+        } else {
+          Relater_reportError(
+            receiver,
+            Property_0_is_private_in_type_1_but_not_in_type_2,
+            Checker_symbolToString(receiver!.c, targetProp),
+            Checker_TypeToString(receiver!.c, (sourcePropFlags & ModifierFlagsPrivate) !== 0 ? source : target),
+            Checker_TypeToString(receiver!.c, (sourcePropFlags & ModifierFlagsPrivate) !== 0 ? target : source),
+          );
+        }
+      }
+      return TernaryFalse;
+    }
+  } else if ((targetPropFlags & ModifierFlagsProtected) !== 0) {
+    if (!Checker_isValidOverrideOf(receiver!.c, sourceProp, targetProp)) {
+      if (reportErrors) {
+        const sourceType = OrElse(Checker_getDeclaringClass(receiver!.c, sourceProp), source);
+        const targetType = OrElse(Checker_getDeclaringClass(receiver!.c, targetProp), target);
+        Relater_reportError(
+          receiver,
+          Property_0_is_protected_but_type_1_is_not_a_class_derived_from_2,
+          Checker_symbolToString(receiver!.c, targetProp),
+          Checker_TypeToString(receiver!.c, sourceType),
+          Checker_TypeToString(receiver!.c, targetType),
+        );
+      }
+      return TernaryFalse;
+    }
+  } else if ((sourcePropFlags & ModifierFlagsProtected) !== 0) {
+    if (reportErrors) {
+      Relater_reportError(
+        receiver,
+        Property_0_is_protected_in_type_1_but_public_in_type_2,
+        Checker_symbolToString(receiver!.c, targetProp),
+        Checker_TypeToString(receiver!.c, source),
+        Checker_TypeToString(receiver!.c, target),
+      );
+    }
+    return TernaryFalse;
+  }
+  if (receiver!.relation === receiver!.c!.strictSubtypeRelation && Checker_isReadonlySymbol(receiver!.c, sourceProp) && !Checker_isReadonlySymbol(receiver!.c, targetProp)) {
+    return TernaryFalse;
+  }
+  const related = Relater_isPropertySymbolTypeRelated(receiver, sourceProp, targetProp, getTypeOfSourceProperty, reportErrors, intersectionState);
+  if (related === TernaryFalse) {
+    if (reportErrors) {
+      Relater_reportError(receiver, Types_of_property_0_are_incompatible, Checker_symbolToString(receiver!.c, targetProp));
+    }
+    return TernaryFalse;
+  }
+  if (!skipOptional && (sourceProp!.Flags & SymbolFlagsOptional) !== 0 && (targetProp!.Flags & SymbolFlagsClassMember) !== 0 && (targetProp!.Flags & SymbolFlagsOptional) === 0) {
+    if (reportErrors) {
+      Relater_reportError(
+        receiver,
+        Property_0_is_optional_in_type_1_but_required_in_type_2,
+        Checker_symbolToString(receiver!.c, targetProp),
+        Checker_TypeToString(receiver!.c, source),
+        Checker_TypeToString(receiver!.c, target),
+      );
+    }
+    return TernaryFalse;
+  }
+  return related;
 }
 
 /**
@@ -7855,7 +8801,8 @@ export function Relater_propertyRelatedTo(receiver: GoPtr<Relater>, source: GoPt
  */
 export function Relater_isPropertySymbolTypeRelated(receiver: GoPtr<Relater>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, getTypeOfSourceProperty: (sym: GoPtr<Symbol>) => GoPtr<Type>, reportErrors: bool, intersectionState: IntersectionState): Ternary {
   const targetIsOptional = receiver!.c!.strictNullChecks && (targetProp!.CheckFlags & CheckFlagsPartial) !== 0;
-  const effectiveTarget = Checker_addOptionalityEx(receiver!.c, Checker_getNonMissingTypeOfSymbol(receiver!.c, targetProp), false, targetIsOptional);
+  const rawTarget = Checker_getNonMissingTypeOfSymbol(receiver!.c, targetProp);
+  const effectiveTarget = Checker_addOptionalityEx(receiver!.c, rawTarget, false, targetIsOptional);
   // source could resolve to `any` and that's not related to `unknown` target under strict subtype relation
   if ((effectiveTarget!.flags & (receiver!.relation === receiver!.c!.strictSubtypeRelation ? TypeFlagsAny : TypeFlagsAnyOrUnknown)) !== 0) {
     return TernaryTrue;
@@ -8581,7 +9528,7 @@ export function Relater_indexSignaturesIdenticalTo(receiver: GoPtr<Relater>, sou
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportErrorResults","kind":"method","status":"stub","sigHash":"96c448c56291e9b936d3268046b1f10522924ef817ff1326c3b214c3d3d9615f","bodyHash":"9977b7c2b2b2c81c88dac911c2330ae4722f64eeb2c35cd1fbfc966e72734a70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportErrorResults","kind":"method","status":"implemented","sigHash":"96c448c56291e9b936d3268046b1f10522924ef817ff1326c3b214c3d3d9615f","bodyHash":"9977b7c2b2b2c81c88dac911c2330ae4722f64eeb2c35cd1fbfc966e72734a70"}
  *
  * Go source:
  * func (r *Relater) reportErrorResults(originalSource *Type, originalTarget *Type, source *Type, target *Type, headMessage *diagnostics.Message) {
@@ -8631,11 +9578,56 @@ export function Relater_indexSignaturesIdenticalTo(receiver: GoPtr<Relater>, sou
  * }
  */
 export function Relater_reportErrorResults(receiver: GoPtr<Relater>, originalSource: GoPtr<Type>, originalTarget: GoPtr<Type>, source: GoPtr<Type>, target: GoPtr<Type>, headMessage: GoPtr<Message>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportErrorResults");
+  const sourceHasBase = Checker_getSingleBaseForNonAugmentingSubtype(receiver!.c, originalSource) !== undefined;
+  const targetHasBase = Checker_getSingleBaseForNonAugmentingSubtype(receiver!.c, originalTarget) !== undefined;
+  if (originalSource!.alias !== undefined || sourceHasBase) {
+    source = originalSource;
+  }
+  if (originalTarget!.alias !== undefined || targetHasBase) {
+    target = originalTarget;
+  }
+  if ((source!.flags & TypeFlagsObject) !== 0 && (target!.flags & TypeFlagsObject) !== 0) {
+    Relater_tryElaborateArrayLikeErrors(receiver, source, target, true);
+  }
+  if ((source!.flags & TypeFlagsObject) !== 0 && (target!.flags & TypeFlagsPrimitive) !== 0) {
+    Relater_tryElaborateErrorsForPrimitivesAndObjects(receiver, source, target);
+  } else if (source!.symbol !== undefined && (source!.flags & TypeFlagsObject) !== 0 && receiver!.c!.globalObjectType === source) {
+    Relater_reportError(receiver, The_Object_type_is_assignable_to_very_few_other_types_Did_you_mean_to_use_the_any_type_instead);
+  } else if ((source!.objectFlags & ObjectFlagsJsxAttributes) !== 0 && (target!.flags & TypeFlagsIntersection) !== 0) {
+    const targetTypes = Type_Types(target);
+    const intrinsicAttributes = Checker_getJsxType(receiver!.c, JsxNames.IntrinsicAttributes, receiver!.errorNode);
+    const intrinsicClassAttributes = Checker_getJsxType(receiver!.c, JsxNames.IntrinsicClassAttributes, receiver!.errorNode);
+    if (
+      !Checker_isErrorType(receiver!.c, intrinsicAttributes) &&
+      !Checker_isErrorType(receiver!.c, intrinsicClassAttributes) &&
+      (targetTypes.includes(intrinsicAttributes) || targetTypes.includes(intrinsicClassAttributes))
+    ) {
+      return;
+    }
+  } else if ((originalTarget!.flags & TypeFlagsIntersection) !== 0 && (originalTarget!.objectFlags & ObjectFlagsIsNeverIntersection) !== 0) {
+    let message = The_intersection_0_was_reduced_to_never_because_property_1_has_conflicting_types_in_some_constituents;
+    let prop = Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver!.c, originalTarget), (candidate: GoPtr<Symbol>): bool => Checker_isDiscriminantWithNeverType(receiver!.c, candidate));
+    if (prop === undefined) {
+      message = The_intersection_0_was_reduced_to_never_because_property_1_exists_in_multiple_constituents_and_is_private_in_some;
+      prop = Find(Checker_getPropertiesOfUnionOrIntersectionType(receiver!.c, originalTarget), isConflictingPrivateProperty);
+    }
+    if (prop !== undefined) {
+      Relater_reportError(receiver, message, Checker_TypeToStringEx(receiver!.c, originalTarget, undefined, TypeFormatFlagsNoTypeReduction, undefined), Checker_symbolToString(receiver!.c, prop));
+    }
+  }
+  Relater_reportRelationError(receiver, headMessage, source, target);
+  if ((source!.flags & TypeFlagsTypeParameter) !== 0 && source!.symbol !== undefined && (source!.symbol!.Declarations?.length ?? 0) !== 0 && Checker_getConstraintOfType(receiver!.c, source) === undefined) {
+    const syntheticParam = Checker_cloneTypeParameter(receiver!.c, source);
+    Type_AsTypeParameter(syntheticParam)!.constraint = Checker_instantiateType(receiver!.c, target, newSimpleTypeMapper(source, syntheticParam));
+    if (Checker_hasNonCircularBaseConstraint(receiver!.c, syntheticParam)) {
+      const targetConstraintString = Checker_TypeToString(receiver!.c, target);
+      receiver!.relatedInfo.push(NewDiagnosticForNode(source!.symbol!.Declarations[0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString));
+    }
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportRelationError","kind":"method","status":"stub","sigHash":"32f54f9ca6d15c9c41139e46f96167a019379e68af7a2e7b65319a9e16fc1af7","bodyHash":"6c9b1991f75625427843be8459876b601f7a0cd66c0fe2f1d855eae31ca60767"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportRelationError","kind":"method","status":"implemented","sigHash":"32f54f9ca6d15c9c41139e46f96167a019379e68af7a2e7b65319a9e16fc1af7","bodyHash":"6c9b1991f75625427843be8459876b601f7a0cd66c0fe2f1d855eae31ca60767"}
  *
  * Go source:
  * func (r *Relater) reportRelationError(message *diagnostics.Message, source *Type, target *Type) {
@@ -8718,7 +9710,72 @@ export function Relater_reportErrorResults(receiver: GoPtr<Relater>, originalSou
  * }
  */
 export function Relater_reportRelationError(receiver: GoPtr<Relater>, message: GoPtr<Message>, source: GoPtr<Type>, target: GoPtr<Type>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.reportRelationError");
+  const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
+  let generalizedSource = source;
+  let generalizedSourceType = sourceType;
+  if ((target!.flags & TypeFlagsNever) === 0 && isLiteralType(source) && !Checker_typeCouldHaveTopLevelSingletonTypes(receiver!.c, target)) {
+    generalizedSource = Checker_getBaseTypeOfLiteralType(receiver!.c, source);
+    generalizedSourceType = Checker_getTypeNameForErrorDisplay(receiver!.c, generalizedSource);
+  }
+  let targetFlags: TypeFlags;
+  if ((target!.flags & TypeFlagsIndexedAccess) !== 0 && (source!.flags & TypeFlagsIndexedAccess) === 0) {
+    targetFlags = Type_AsIndexedAccessType(target)!.objectType!.flags;
+  } else {
+    targetFlags = target!.flags;
+  }
+  if ((targetFlags & TypeFlagsTypeParameter) !== 0 && target !== receiver!.c!.markerSuperTypeForCheck && target !== receiver!.c!.markerSubTypeForCheck) {
+    const constraint = Checker_getBaseConstraintOfType(receiver!.c, target);
+    if (constraint !== undefined && Checker_isTypeAssignableTo(receiver!.c, generalizedSource, constraint)) {
+      Relater_reportError(receiver, X_0_is_assignable_to_the_constraint_of_type_1_but_1_could_be_instantiated_with_a_different_subtype_of_constraint_2, generalizedSourceType, targetType, Checker_TypeToString(receiver!.c, constraint));
+    } else if (constraint !== undefined && Checker_isTypeAssignableTo(receiver!.c, source, constraint)) {
+      Relater_reportError(receiver, X_0_is_assignable_to_the_constraint_of_type_1_but_1_could_be_instantiated_with_a_different_subtype_of_constraint_2, sourceType, targetType, Checker_TypeToString(receiver!.c, constraint));
+    } else {
+      receiver!.errorChain = undefined;
+      Relater_reportError(receiver, X_0_could_be_instantiated_with_an_arbitrary_type_which_could_be_unrelated_to_1, targetType, generalizedSourceType);
+    }
+  }
+  if (message === undefined) {
+    if (receiver!.relation === receiver!.c!.comparableRelation) {
+      message = Type_0_is_not_comparable_to_type_1;
+    } else if (sourceType === targetType) {
+      message = Type_0_is_not_assignable_to_type_1_Two_different_types_with_this_name_exist_but_they_are_unrelated;
+    } else if (receiver!.c!.exactOptionalPropertyTypes && Checker_getExactOptionalUnassignableProperties(receiver!.c, source, target).length !== 0) {
+      message = Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_types_of_the_target_s_properties;
+    } else {
+      if ((source!.flags & TypeFlagsStringLiteral) !== 0 && (target!.flags & TypeFlagsUnion) !== 0) {
+        const suggestedType = Checker_getSuggestedTypeForNonexistentStringLiteralType(receiver!.c, source, target);
+        if (suggestedType !== undefined) {
+          Relater_reportError(receiver, Type_0_is_not_assignable_to_type_1_Did_you_mean_2, generalizedSourceType, targetType, Checker_TypeToString(receiver!.c, suggestedType));
+          return;
+        }
+      }
+      message = Type_0_is_not_assignable_to_type_1;
+    }
+  }
+  switch (Relater_getChainMessage(receiver, 0)) {
+    case Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1:
+    case Object_literal_may_only_specify_known_properties_but_0_does_not_exist_in_type_1_Did_you_mean_to_write_2:
+      return;
+    case Excessive_complexity_comparing_types_0_and_1:
+    case Excessive_stack_depth_comparing_types_0_and_1:
+    case The_type_0_is_readonly_and_cannot_be_assigned_to_the_mutable_type_1:
+      if (Relater_chainArgsMatch(receiver, generalizedSourceType, targetType)) {
+        return;
+      }
+      break;
+    case Property_0_is_missing_in_type_1_but_required_in_type_2:
+      if (!isConversionOrInterfaceImplementationMessage(message) && Relater_chainArgsMatch(receiver, undefined, generalizedSourceType, targetType)) {
+        return;
+      }
+      break;
+    case Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more:
+    case Type_0_is_missing_the_following_properties_from_type_1_Colon_2:
+      if (!isConversionOrInterfaceImplementationMessage(message) && Relater_chainArgsMatch(receiver, generalizedSourceType, targetType)) {
+        return;
+      }
+      break;
+  }
+  Relater_reportError(receiver, message, generalizedSourceType, targetType);
 }
 
 /**

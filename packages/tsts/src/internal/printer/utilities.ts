@@ -102,7 +102,7 @@ import {
 } from "../ast/utilities.js";
 import { IsTypeOrJSTypeAliasDeclaration } from "../ast/ast.js";
 import { Node_Expression, Node_ArgumentList, Node_TypeParameterList, Node_MemberList, Node_StatementList, Node_TypeArgumentList, Node_ElementList, Node_PropertyList, Node_Children, Node_Text, Node_RawText } from "../ast/ast.js";
-import { Node_Pos, Node_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
+import { Node_Pos, Node_End, NodeList_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
 import type { Expression, LiteralLikeNode, SourceFileNode } from "../ast/generated/unions.js";
 import { UTF16Len, IfElse } from "../core/core.js";
 import type { UTF16Offset } from "../core/core.js";
@@ -1415,11 +1415,26 @@ export function originalNodesHaveSameParent(nodeA: GoPtr<Node>, nodeB: GoPtr<Nod
  * 	return 0, false
  * }
  */
-export function tryGetEnd(node: { End: () => int } | undefined): [int, bool] {
+type EndCarrier = GoPtr<Node> | GoPtr<NodeList> | TextRange | { End: () => int };
+
+export function tryGetEnd(node: EndCarrier | undefined): [int, bool] {
   if (node === undefined) {
     return [0 as int, false];
   }
-  return [node.End(), true];
+  const value = node as unknown as Record<string, unknown>;
+  if (typeof value["End"] === "function") {
+    return [(node as { End: () => int }).End(), true];
+  }
+  if (value["Kind"] !== undefined) {
+    return [Node_End(node as GoPtr<Node>), true];
+  }
+  if (value["Nodes"] !== undefined) {
+    return [NodeList_End(node as GoPtr<NodeList>), true];
+  }
+  if (value["end"] !== undefined) {
+    return [TextRange_End(node as TextRange), true];
+  }
+  throw new globalThis.Error(`unhandled type in tryGetEnd`);
 }
 
 /**
@@ -1436,7 +1451,7 @@ export function tryGetEnd(node: { End: () => int } | undefined): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<{ End: () => int } | undefined>): int {
+export function greatestEnd(end: int, ...nodes: Array<EndCarrier | undefined>): int {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i];
     const [nodeEnd, ok] = tryGetEnd(node);

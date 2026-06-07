@@ -85,6 +85,38 @@ const decodeRuneBytes = (bytes: Uint8Array, i: int): [GoRune, int] => {
   return [RuneError, 1];
 };
 
+export function DecodeRuneInBytesAt(bytes: Uint8Array, i: int): [GoRune, int] {
+  return decodeRuneBytes(bytes, i);
+}
+
+export function DecodeLastRuneInBytesBefore(bytes: Uint8Array, end: int): [GoRune, int] {
+  if (end <= 0) {
+    return [RuneError, 0];
+  }
+  let start = end - 1;
+  const b0 = bytes[start]!;
+  if (b0 < RuneSelf) {
+    return [b0, 1];
+  }
+  let lim = end - UTFMax;
+  if (lim < 0) {
+    lim = 0;
+  }
+  for (start = end - 1; start >= lim; start--) {
+    if ((bytes[start]! & 0xc0) !== 0x80) {
+      break;
+    }
+  }
+  if (start < lim) {
+    start = lim;
+  }
+  const [r, size] = decodeRuneBytes(bytes, start);
+  if (start + size !== end) {
+    return [RuneError, 1];
+  }
+  return [r, size];
+}
+
 // DecodeRuneInString unpacks the first UTF-8 encoding in s and returns the rune
 // and its width in bytes. For an empty string returns [RuneError, 0]; for an
 // invalid encoding returns [RuneError, 1].
@@ -100,35 +132,7 @@ export function DecodeRuneInString(s: string): [GoRune, int] {
 // rune and its width in bytes.
 export function DecodeLastRuneInString(s: string): [GoRune, int] {
   const bytes = encode(s);
-  const end = bytes.length;
-  if (end === 0) {
-    return [RuneError, 0];
-  }
-  // Guess the start of the last rune by scanning back over continuation bytes.
-  let start = end - 1;
-  const b0 = bytes[start]!;
-  if (b0 < RuneSelf) {
-    return [b0, 1];
-  }
-  // RuneError requires at most UTFMax bytes of look-back.
-  let lim = end - UTFMax;
-  if (lim < 0) {
-    lim = 0;
-  }
-  for (start = end - 1; start >= lim; start--) {
-    if ((bytes[start]! & 0xc0) !== 0x80) {
-      break;
-    }
-  }
-  if (start < lim) {
-    start = lim;
-  }
-  const [r, size] = decodeRuneBytes(bytes, start);
-  if (start + size !== end) {
-    // The trailing bytes were not a single valid rune.
-    return [RuneError, 1];
-  }
-  return [r, size];
+  return DecodeLastRuneInBytesBefore(bytes, bytes.length);
 }
 
 // RuneCountInString returns the number of runes in s. Erroneous and short

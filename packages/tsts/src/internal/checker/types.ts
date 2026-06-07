@@ -2284,7 +2284,7 @@ export function StructuredType_AsStructuredType(receiver: GoPtr<StructuredType>)
  * }
  */
 export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return receiver!.signatures.slice(0, receiver!.callSignatureCount);
+  return (receiver!.signatures ?? []).slice(0, receiver!.callSignatureCount ?? 0);
 }
 
 /**
@@ -2296,7 +2296,7 @@ export function StructuredType_CallSignatures(receiver: GoPtr<StructuredType>): 
  * }
  */
 export function StructuredType_ConstructSignatures(receiver: GoPtr<StructuredType>): GoSlice<GoPtr<Signature>> {
-  return receiver!.signatures.slice(receiver!.callSignatureCount);
+  return (receiver!.signatures ?? []).slice(receiver!.callSignatureCount ?? 0);
 }
 
 /**

@@ -1122,14 +1122,16 @@ export function Checker_compareSymbolsWorker(receiver: GoPtr<Checker>, s1: GoPtr
   if (s2 === undefined) {
     return -1;
   }
-  if (s1!.Declarations.length !== 0 && s2!.Declarations.length !== 0) {
-    const r = Checker_compareNodes(receiver, s1!.Declarations[0], s2!.Declarations[0]);
+  const declarations1 = s1!.Declarations ?? [];
+  const declarations2 = s2!.Declarations ?? [];
+  if (declarations1.length !== 0 && declarations2.length !== 0) {
+    const r = Checker_compareNodes(receiver, declarations1[0], declarations2[0]);
     if (r !== 0) {
       return r;
     }
-  } else if (s1!.Declarations.length !== 0) {
+  } else if (declarations1.length !== 0) {
     return -1;
-  } else if (s2!.Declarations.length !== 0) {
+  } else if (declarations2.length !== 0) {
     return 1;
   }
   const r = strings_Compare(s1!.Name, s2!.Name);

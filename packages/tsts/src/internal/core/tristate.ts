@@ -32,7 +32,7 @@ export const TSTrue: Tristate = 2;
  * }
  */
 export function Tristate_IsTrue(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSTrue;
 }
 
@@ -45,7 +45,7 @@ export function Tristate_IsTrue(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsTrueOrUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSTrue || t === TSUnknown;
 }
 
@@ -58,7 +58,7 @@ export function Tristate_IsTrueOrUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsFalse(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSFalse;
 }
 
@@ -71,7 +71,7 @@ export function Tristate_IsFalse(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsFalseOrUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSFalse || t === TSUnknown;
 }
 
@@ -84,7 +84,7 @@ export function Tristate_IsFalseOrUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSUnknown;
 }
 
@@ -100,7 +100,7 @@ export function Tristate_IsUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_DefaultIfUnknown(receiver: Tristate, value: Tristate): Tristate {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   if (t === TSUnknown) {
     return value;
   }

@@ -29,7 +29,7 @@ import { SyncMap_Load, SyncMap_LoadOrStore } from "../collections/syncmap.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { Concatenate, Filter, FindIndex, Map as core_Map, Some, Memoize, IfElse, Find } from "../core/core.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, JsxEmit } from "../core/compileroptions.js";
-import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String } from "../core/compileroptions.js";
+import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String, NewLineKind_GetNewLineCharacter } from "../core/compileroptions.js";
 import { ModuleKind_String } from "../core/modulekind_stringer_generated.js";
 import { ScriptKindTS, ScriptKindTSX, ScriptKindJS, ScriptKindJSX, ScriptKindExternal, ScriptKindDeferred } from "../core/scriptkind.js";
 import { Tristate_DefaultIfUnknown, Tristate_IsTrue, Tristate_IsFalse, Tristate_IsFalseOrUnknown, TSUnknown } from "../core/tristate.js";
@@ -53,6 +53,7 @@ import { DependencyFields_GetRuntimeDependencyNames } from "../packagejson/packa
 import type { Expected } from "../packagejson/expected.js";
 import { Expected_GetValue } from "../packagejson/expected.js";
 import type { RawSourceMap } from "../sourcemap/generator.js";
+import { NewTextWriter } from "../printer/textwriter.js";
 import { GetECMALineStarts, GetECMALineOfPosition, ComputeLineOfPosition } from "../scanner/scanner.js";
 import { IsIdentifierText } from "../scanner/utilities.js";
 import type { KnownSymlinks } from "../symlinks/knownsymlinks.js";
@@ -1309,8 +1310,8 @@ export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path
 export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, bool> {
   receiver!.packagesMapOnce.Do(() => {
     receiver!.packagesMap = new globalThis.Map<string, bool>();
-    for (const [, resolvedModulesInFile] of receiver!.__tsgoEmbedded0!.resolvedModules) {
-      for (const [, mod] of resolvedModulesInFile) {
+    for (const [, resolvedModulesInFile] of receiver!.__tsgoEmbedded0!.resolvedModules ?? []) {
+      for (const [, mod] of resolvedModulesInFile ?? []) {
         const m = mod as GoPtr<ResolvedModule>;
         if (m !== undefined && m!.PackageId !== undefined && m!.PackageId.Name !== "") {
           receiver!.packagesMap.set(
@@ -1345,7 +1346,7 @@ export function Program_collectDiagnostics(receiver: GoPtr<Program>, ctx: Contex
     result = collect(ctx, sourceFile);
   } else {
     const diagnostics = Program_collectDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, concurrent, collect);
-    result = ([] as GoPtr<Diagnostic>[]).concat(...diagnostics);
+    result = slices.Concat(...diagnostics);
   }
   return SortAndDeduplicateDiagnostics(result);
 }
@@ -1402,7 +1403,7 @@ export function Program_collectCheckerDiagnostics(receiver: GoPtr<Program>, ctx:
     return SortAndDeduplicateDiagnostics(result);
   }
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, receiver!.__tsgoEmbedded0!.files, collect);
-  return SortAndDeduplicateDiagnostics(([] as GoPtr<Diagnostic>[]).concat(...allDiags));
+  return SortAndDeduplicateDiagnostics(slices.Concat(...allDiags));
 }
 
 /**
@@ -3393,10 +3394,18 @@ export function Program_GetSourceFileMetaData(receiver: GoPtr<Program>, path: Pa
  * 	return ast.GetEmitModuleFormatOfFileWorker(sourceFile.FileName(), p.projectReferenceFileMapper.getCompilerOptionsForFile(sourceFile), p.GetSourceFileMetaData(sourceFile.Path()))
  * }
  */
+function Program_getCompilerOptionsForFile(receiver: GoPtr<Program>, sourceFile: HasFileName): GoPtr<CompilerOptions> {
+  const mapper = receiver!.__tsgoEmbedded0!.projectReferenceFileMapper;
+  if (mapper === undefined) {
+    return Program_Options(receiver);
+  }
+  return projectReferenceFileMapper_getCompilerOptionsForFile(mapper, sourceFile);
+}
+
 export function Program_GetEmitModuleFormatOfFile(receiver: GoPtr<Program>, sourceFile: HasFileName): ModuleKind {
   return GetEmitModuleFormatOfFileWorker(
     sourceFile.FileName(),
-    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile),
     Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
   );
 }
@@ -3414,7 +3423,7 @@ export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, 
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
     location,
-    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile),
   );
 }
 
@@ -3429,7 +3438,7 @@ export function Program_GetEmitSyntaxForUsageLocation(receiver: GoPtr<Program>, 
 export function Program_GetImpliedNodeFormatForEmit(receiver: GoPtr<Program>, sourceFile: HasFileName): ResolutionMode {
   return GetImpliedNodeFormatForEmitWorker(
     sourceFile.FileName(),
-    CompilerOptions_GetEmitModuleKind(projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile)),
+    CompilerOptions_GetEmitModuleKind(Program_getCompilerOptionsForFile(receiver, sourceFile)),
     Program_GetSourceFileMetaData(receiver, sourceFile.Path()),
   );
 }
@@ -3447,7 +3456,7 @@ export function Program_GetModeForUsageLocation(receiver: GoPtr<Program>, source
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
     location,
-    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile),
   );
 }
 
@@ -3463,7 +3472,7 @@ export function Program_GetDefaultResolutionModeForFile(receiver: GoPtr<Program>
   return getDefaultResolutionModeForFile(
     sourceFile.FileName(),
     receiver!.__tsgoEmbedded0!.sourceFileMetaDatas.get(sourceFile.Path())!,
-    projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, sourceFile),
+    Program_getCompilerOptionsForFile(receiver, sourceFile),
   );
 }
 
@@ -3713,6 +3722,7 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     }
   }
 
+  const newLine = NewLineKind_GetNewLineCharacter(Program_Options(receiver)!.NewLine);
   const sourceFiles = Program_getSourceFilesToEmit(receiver, options.TargetSourceFile, options.EmitOnly === 3 /* EmitOnlyForcedDts */);
   const emitters: GoPtr<emitterType>[] = [];
 
@@ -3738,8 +3748,12 @@ export function Program_Emit(receiver: GoPtr<Program>, ctx: Context, options: Em
     emitters.push(e);
     const [host, done] = newEmitHost(ctx, receiver, sourceFile);
     e.host = emitHost_as_compiler_EmitHost(host);
+    const writer = NewTextWriter(newLine, 0);
+    writer.Clear();
+    e.writer = writer;
     e.paths = GetOutputPathsFor(sourceFile, emitHost_Options(host), emitHost_as_outputpaths_OutputPathsHost(host), options.EmitOnly === 3 /* EmitOnlyForcedDts */);
     emitter_emit(e);
+    e.writer = undefined!;
     done();
   }
 

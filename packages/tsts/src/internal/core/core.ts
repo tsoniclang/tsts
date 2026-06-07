@@ -428,7 +428,10 @@ export function Same<T>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
  * 	return false
  * }
  */
-export function Some<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
+export function Some<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+  if (slice === undefined) {
+    return false;
+  }
   for (const value of slice) {
     //nolint:modernize
     if (f(value)) {
@@ -451,7 +454,10 @@ export function Some<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
  * 	return true
  * }
  */
-export function Every<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
+export function Every<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+  if (slice === undefined) {
+    return true;
+  }
   for (const value of slice) {
     if (!f(value)) {
       return false;
@@ -719,14 +725,16 @@ export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
  * 	return slices.Concat(s1, s2)
  * }
  */
-export function Concatenate<T>(s1: GoSlice<T>, s2: GoSlice<T>): GoSlice<T> {
-  if (s2.length === 0) {
-    return s1;
+export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): GoSlice<T> {
+  const left = s1 ?? [];
+  const right = s2 ?? [];
+  if (right.length === 0) {
+    return left;
   }
-  if (s1.length === 0) {
-    return s2;
+  if (left.length === 0) {
+    return right;
   }
-  return slices.Concat(s1, s2);
+  return slices.Concat(left, right);
 }
 
 /**

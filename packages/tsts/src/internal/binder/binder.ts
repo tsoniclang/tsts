@@ -1,6 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import * as strconv from "../../go/strconv.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import {
   Node_Arguments,
@@ -715,7 +715,10 @@ export function getBinder(): GoPtr<Binder> {
       return b;
     };
   }
-  return binderPool.Get() as Binder;
+  const binder = binderPool.Get() as Binder;
+  binder.classifiableNames = { M: undefined as unknown as GoMap<string, { readonly __tsgoEmpty?: never }> };
+  binder.notConstEnumOnlyModules = { M: undefined as unknown as GoMap<GoPtr<Symbol>, { readonly __tsgoEmpty?: never }> };
+  return binder;
 }
 
 /**

@@ -3,6 +3,7 @@ import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Clone, Contains, Concat } from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import type { Node } from "../ast/spine.js";
+import { Node_Name } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import { Node_Text, Node_Expression, Node_Elements, SourceFile_FileName, SourceFile_Diagnostics, SourceFile_SetDiagnostics, NodeFactory_NewSourceFile, AsSourceFile } from "../ast/ast.js";
 import { AsObjectLiteralExpression, AsPropertyAssignment, AsPrefixUnaryExpression, AsStringLiteral } from "../ast/generated/casts.js";
@@ -1368,7 +1369,7 @@ export function convertMapToOptions<O extends optionParser>(compilerOptions: GoP
   // this assumes any `key`, `value` pair in `options` will have `value` already be the correct type. this function should no error handling
   OrderedMap_Entries(compilerOptions as GoPtr<OrderedMap<string, unknown>>)((key: string, value: unknown): bool => {
     result.ParseOption(key, value);
-    return false;
+    return true;
   });
   return result;
 }
@@ -1426,7 +1427,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
     if (opt === undefined) {
       // !!! TODO?: support suggestion
       errors.push(createUnknownOptionError(key, result.UnknownOptionDiagnostic(), "", undefined, undefined, undefined));
-      return false;
+      return true;
     }
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
@@ -1441,7 +1442,7 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
       const compilerOptionsErr = result.ParseOption(key, convertJson);
       errors.push(...(compilerOptionsErr ?? []));
     }
-    return false;
+    return true;
   });
   return [result, errors];
 }
@@ -1678,12 +1679,14 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     if (element!.Kind !== KindPropertyAssignment && !isDoubleQuotedString(element)) {
       // !!! note: in Go, the question token check is commented out
     }
-    if (IsPropertyAssignment(element) && !isDoubleQuotedString(AsPropertyAssignment(element) as unknown as Node)) {
+    const propAssign = AsPropertyAssignment(element);
+    const elementName = Node_Name(element);
+    if (elementName !== undefined && !isDoubleQuotedString(elementName)) {
       errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.String_literal_with_double_quotes_expected));
     }
     let textOfKey = "";
-    if (!IsComputedNonLiteralName(element)) {
-      const [txt] = TryGetTextOfPropertyName(element);
+    if (elementName !== undefined && !IsComputedNonLiteralName(elementName)) {
+      const [txt] = TryGetTextOfPropertyName(elementName);
       textOfKey = txt;
     }
     const keyText = textOfKey;
@@ -1691,7 +1694,6 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     if (keyText !== "" && objectOption !== undefined && objectOption!.ElementOptions !== undefined) {
       option = CommandLineOptionNameMap_Get(objectOption!.ElementOptions, keyText);
     }
-    const propAssign = AsPropertyAssignment(element);
     const [value, err] = convertPropertyValueToJson(sourceFile, propAssign!.Initializer, option, returnValue, jsonConversionNotifier);
     errors.push(...err);
     if (keyText !== "") {
@@ -3245,10 +3247,10 @@ export function getSubstitutedPathWithConfigDirTemplate(value: string, basePath:
  * 	return nil
  * }
  */
-export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoSlice<string>, basePath: string): GoSlice<string> {
+export function getSubstitutedStringArrayWithConfigDirTemplate(list: GoPtr<GoSlice<string>>, basePath: string): GoPtr<GoSlice<string>> {
   let result: string[] | undefined = undefined;
-  for (let i = 0; i < list.length; i++) {
-    const element = list[i];
+  for (let i = 0; i < (list?.length ?? 0); i++) {
+    const element = list![i];
     if (startsWithConfigDirTemplate(element)) {
       if (result === undefined) {
         result = Clone(list) as string[];

@@ -332,6 +332,148 @@ export function noCopy_Unlock(receiver: GoPtr<noCopy>): void {}
  */
 export const EmptyCompilerOptions: GoPtr<CompilerOptions> = {} as CompilerOptions;
 
+const compilerOptionStringFields = [
+  "DeclarationDir",
+  "IgnoreDeprecations",
+  "JsxFactory",
+  "JsxFragmentFactory",
+  "JsxImportSource",
+  "Locale",
+  "MapRoot",
+  "OutDir",
+  "Project",
+  "ReactNamespace",
+  "RootDir",
+  "SourceRoot",
+  "TsBuildInfoFile",
+  "BaseUrl",
+  "OutFile",
+  "ConfigFilePath",
+  "PathsBasePath",
+  "GenerateCpuProfile",
+  "GenerateTrace",
+  "PprofDir",
+] as const;
+
+const compilerOptionTristateFields = [
+  "AllowJs",
+  "AllowArbitraryExtensions",
+  "AllowImportingTsExtensions",
+  "AllowNonTsExtensions",
+  "AllowUmdGlobalAccess",
+  "AllowUnreachableCode",
+  "AllowUnusedLabels",
+  "AssumeChangesOnlyAffectDirectDependencies",
+  "CheckJs",
+  "Composite",
+  "EmitDeclarationOnly",
+  "EmitBOM",
+  "EmitDecoratorMetadata",
+  "Declaration",
+  "DeclarationMap",
+  "DeduplicatePackages",
+  "DisableSizeLimit",
+  "DisableSourceOfProjectReferenceRedirect",
+  "DisableSolutionSearching",
+  "DisableReferencedProjectLoad",
+  "ErasableSyntaxOnly",
+  "ExactOptionalPropertyTypes",
+  "ExperimentalDecorators",
+  "ForceConsistentCasingInFileNames",
+  "IsolatedModules",
+  "IsolatedDeclarations",
+  "IgnoreConfig",
+  "ImportHelpers",
+  "InlineSourceMap",
+  "InlineSources",
+  "Init",
+  "Incremental",
+  "LibReplacement",
+  "NoEmit",
+  "NoCheck",
+  "NoErrorTruncation",
+  "NoFallthroughCasesInSwitch",
+  "NoImplicitAny",
+  "NoImplicitThis",
+  "NoImplicitReturns",
+  "NoEmitHelpers",
+  "NoLib",
+  "NoPropertyAccessFromIndexSignature",
+  "NoUncheckedIndexedAccess",
+  "NoEmitOnError",
+  "NoUnusedLocals",
+  "NoUnusedParameters",
+  "NoResolve",
+  "NoImplicitOverride",
+  "NoUncheckedSideEffectImports",
+  "PreserveConstEnums",
+  "PreserveSymlinks",
+  "ResolveJsonModule",
+  "ResolvePackageJsonExports",
+  "ResolvePackageJsonImports",
+  "RemoveComments",
+  "RewriteRelativeImportExtensions",
+  "SkipLibCheck",
+  "StableTypeOrdering",
+  "Strict",
+  "StrictBindCallApply",
+  "StrictBuiltinIteratorReturn",
+  "StrictFunctionTypes",
+  "StrictNullChecks",
+  "StrictPropertyInitialization",
+  "StripInternal",
+  "SkipDefaultLibCheck",
+  "SourceMap",
+  "SuppressOutputPathCheck",
+  "TraceResolution",
+  "UseDefineForClassFields",
+  "UseUnknownInCatchVariables",
+  "VerbatimModuleSyntax",
+  "AllowSyntheticDefaultImports",
+  "AlwaysStrict",
+  "DownlevelIteration",
+  "ESModuleInterop",
+  "NoDtsResolution",
+  "Diagnostics",
+  "ExtendedDiagnostics",
+  "ListEmittedFiles",
+  "ListFiles",
+  "ExplainFiles",
+  "ListFilesOnly",
+  "NoEmitForJsFiles",
+  "PreserveWatchOutput",
+  "Pretty",
+  "Version",
+  "Watch",
+  "ShowConfig",
+  "Build",
+  "Help",
+  "All",
+  "SingleThreaded",
+  "Quiet",
+] as const;
+
+export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr<CompilerOptions> {
+  if (options === undefined) {
+    return undefined;
+  }
+  const target = options as CompilerOptions & Record<string, unknown>;
+  target.__tsgoBlank0 ??= {};
+  for (const key of compilerOptionStringFields) {
+    target[key] ??= "";
+  }
+  for (const key of compilerOptionTristateFields) {
+    target[key] ??= TSUnknown;
+  }
+  target.Jsx ??= 0 as JsxEmit;
+  target.Module ??= 0 as ModuleKind;
+  target.ModuleResolution ??= 0 as ModuleResolutionKind;
+  target.ModuleDetection ??= 0 as ModuleDetectionKind;
+  target.NewLine ??= 0 as NewLineKind;
+  target.Target ??= 0 as ScriptTarget;
+  return options;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/compileroptions.go::varGroup::optionsType","kind":"varGroup","status":"implemented","sigHash":"026b7ac8d648bc03100fb2042dd8782d6a90a7449125c3faa845d5339a4847a4","bodyHash":"78d95458b8e87bacaea1c14432a123baf45f19a8dbce2eb144482044b8c81a54"}
  *
@@ -452,7 +594,8 @@ export function CompilerOptions_GetEmitModuleKind(receiver: GoPtr<CompilerOption
  */
 export function CompilerOptions_GetModuleResolutionKind(receiver: GoPtr<CompilerOptions>): ModuleResolutionKind {
   const options: GoPtr<CompilerOptions> = receiver;
-  switch (options!.ModuleResolution) {
+  const moduleResolution = options!.ModuleResolution ?? ModuleResolutionKindUnknown;
+  switch (moduleResolution) {
     case ModuleResolutionKindUnknown:
     case ModuleResolutionKindClassic:
     case ModuleResolutionKindNode10:
@@ -467,7 +610,7 @@ export function CompilerOptions_GetModuleResolutionKind(receiver: GoPtr<Compiler
           return ModuleResolutionKindBundler;
       }
     default:
-      return options!.ModuleResolution;
+      return moduleResolution;
   }
 }
 

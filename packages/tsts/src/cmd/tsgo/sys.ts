@@ -8,6 +8,7 @@ import type { Duration, Time } from "../../go/time.js";
 import { GetSize, IsTerminal } from "../../go/golang.org/x/term.js";
 import { WrapFS, LibPath } from "../../internal/bundled/bundled.js";
 import { ExitStatusInvalidProject_OutputsSkipped } from "../../internal/execute/tsc/compile.js";
+import type { System } from "../../internal/execute/tsc/compile.js";
 import { NormalizePath } from "../../internal/tspath/path.js";
 import { FS as osvfsFS } from "../../internal/vfs/osvfs/os.js";
 import type { FS as FS_12f44eda } from "../../internal/vfs/vfs.js";
@@ -30,6 +31,20 @@ export interface osSys {
   defaultLibraryPath: string;
   cwd: string;
   start: Time;
+}
+
+export function osSys_as_tsc_System(receiver: GoPtr<osSys>): System {
+  return {
+    Writer: (): Writer_155142d5 => osSys_Writer(receiver),
+    FS: (): FS_12f44eda => osSys_FS(receiver),
+    DefaultLibraryPath: (): string => osSys_DefaultLibraryPath(receiver),
+    GetCurrentDirectory: (): string => osSys_GetCurrentDirectory(receiver),
+    WriteOutputIsTTY: (): bool => osSys_WriteOutputIsTTY(receiver),
+    GetWidthOfTerminal: (): int => osSys_GetWidthOfTerminal(receiver),
+    GetEnvironmentVariable: (name: string): string => osSys_GetEnvironmentVariable(receiver, name),
+    Now: (): Time => osSys_Now(receiver),
+    SinceStart: (): Duration => osSys_SinceStart(receiver),
+  };
 }
 
 /**

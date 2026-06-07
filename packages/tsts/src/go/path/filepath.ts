@@ -15,6 +15,8 @@
 
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoSlice } from "../compat.js";
+import * as nodeFs from "node:fs";
+import * as nodePath from "node:path";
 import * as strings from "../strings.js";
 
 // Separator is the OS path separator. typescript-go targets forward-slash
@@ -347,13 +349,21 @@ export function Rel(basePath: string, targPath: string): [string, GoError] {
 export const SkipAll: GoError = new globalThis.Error("HOST-NATIVE go/path/filepath.SkipAll");
 
 // Abs is host-native: it requires the process working directory (os.Getwd).
-export function Abs(_path: string): [string, GoError] {
-  throw new globalThis.Error("HOST-NATIVE go/path/filepath.Abs");
+export function Abs(path: string): [string, GoError] {
+  try {
+    return [ToSlash(nodePath.resolve(path)), undefined];
+  } catch (error) {
+    return ["", error instanceof Error ? error : new globalThis.Error(String(error))];
+  }
 }
 
 // EvalSymlinks is host-native: it requires filesystem access (readlink/lstat).
-export function EvalSymlinks(_path: string): [string, GoError] {
-  throw new globalThis.Error("HOST-NATIVE go/path/filepath.EvalSymlinks");
+export function EvalSymlinks(path: string): [string, GoError] {
+  try {
+    return [ToSlash(nodeFs.realpathSync.native(path)), undefined];
+  } catch (error) {
+    return ["", error instanceof Error ? error : new globalThis.Error(String(error))];
+  }
 }
 
 // Glob is host-native: it enumerates the filesystem.

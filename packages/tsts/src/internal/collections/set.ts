@@ -46,7 +46,7 @@ export function Set_Has<T>(receiver: GoPtr<Set<T>>, key: T): bool {
   if (receiver === undefined) {
     return false;
   }
-  const ok = receiver.M.has(key);
+  const ok = receiver.M?.has(key) ?? false;
   return ok;
 }
 
@@ -62,6 +62,9 @@ export function Set_Has<T>(receiver: GoPtr<Set<T>>, key: T): bool {
  * }
  */
 export function Set_Add<T>(receiver: GoPtr<Set<T>>, key: T): void {
+  if (receiver!.M === undefined) {
+    receiver!.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+  }
   receiver!.M.set(key, {});
 }
 
@@ -74,7 +77,7 @@ export function Set_Add<T>(receiver: GoPtr<Set<T>>, key: T): void {
  * }
  */
 export function Set_Delete<T>(receiver: GoPtr<Set<T>>, key: T): void {
-  receiver!.M.delete(key);
+  receiver!.M?.delete(key);
 }
 
 /**
@@ -92,7 +95,7 @@ export function Set_Len<T>(receiver: GoPtr<Set<T>>): int {
   if (receiver === undefined) {
     return 0;
   }
-  return receiver.M.size;
+  return receiver.M?.size ?? 0;
 }
 
 /**
@@ -107,7 +110,7 @@ export function Set_Len<T>(receiver: GoPtr<Set<T>>): int {
  * }
  */
 export function Set_Keys<T>(receiver: GoPtr<Set<T>>): GoMap<T, { readonly __tsgoEmpty?: never }> {
-  if (receiver === undefined) {
+  if (receiver === undefined || receiver.M === undefined) {
     return new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
   }
   return receiver.M;
@@ -128,7 +131,7 @@ export function Set_Clear<T>(receiver: GoPtr<Set<T>>): void {
   if (receiver === undefined) {
     return;
   }
-  receiver.M.clear();
+  receiver.M?.clear();
 }
 
 /**
@@ -167,7 +170,7 @@ export function Set_Clone<T>(receiver: GoPtr<Set<T>>): GoPtr<Set<T>> {
   if (receiver === undefined) {
     return undefined;
   }
-  const clone: Set<T> = { M: maps.Clone(receiver.M) ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
+  const clone: Set<T> = { M: maps.Clone(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())! };
   return clone;
 }
 
@@ -196,7 +199,11 @@ export function Set_Union<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>): voi
   if (receiver === undefined) {
     throw new globalThis.Error("cannot modify nil Set");
   }
-  maps.Copy(receiver.M, other!.M);
+  if (receiver.M === undefined) {
+    receiver.M = maps.Clone(other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>())!;
+    return;
+  }
+  maps.Copy(receiver.M, other?.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
 }
 
 /**
@@ -231,7 +238,10 @@ export function Set_UnionedWith<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>
   const result = cloned !== undefined
     ? cloned
     : { M: new globalThis.Map<T, { readonly __tsgoEmpty?: never }>() };
-  maps.Copy(result.M, other.M);
+  if (result.M === undefined) {
+    result.M = new globalThis.Map<T, { readonly __tsgoEmpty?: never }>();
+  }
+  maps.Copy(result.M, other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
   return result;
 }
 
@@ -256,7 +266,7 @@ export function Set_Equals<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>): bo
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  return maps.Equal(receiver.M, other.M);
+  return maps.Equal(receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>(), other.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>());
 }
 
 /**
@@ -279,7 +289,7 @@ export function Set_IsSubsetOf<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>)
   if (receiver === undefined) {
     return true;
   }
-  for (const key of receiver.M.keys()) {
+  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
     if (!Set_Has(other, key)) {
       return false;
     }
@@ -307,7 +317,7 @@ export function Set_Intersects<T>(receiver: GoPtr<Set<T>>, other: GoPtr<Set<T>>)
   if (receiver === undefined || other === undefined) {
     return false;
   }
-  for (const key of receiver.M.keys()) {
+  for (const key of (receiver.M ?? new globalThis.Map<T, { readonly __tsgoEmpty?: never }>()).keys()) {
     if (Set_Has(other, key)) {
       return true;
     }

@@ -345,6 +345,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
   }
 
   const tx: classFieldsTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
     compilerOptions: opts!.CompilerOptions,
     resolver: opts!.Resolver,
     legacyDecorators: Tristate_IsTrue(opts!.CompilerOptions!.ExperimentalDecorators),
@@ -387,7 +388,7 @@ export function newClassFieldsTransformer(opts: GoPtr<TransformOptions>): GoPtr<
   tx.shouldTransformThisInStaticInitializers = languageVersion < ScriptTargetES2022;
   tx.shouldTransformSuperInStaticInitializers = tx.shouldTransformThisInStaticInitializers;
 
-  const result = Transformer_NewTransformer(tx as unknown as GoPtr<Transformer>, (node) => classFieldsTransformer_visit(tx, node), opts!.Context);
+  const result = Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => classFieldsTransformer_visit(tx, node), opts!.Context);
   tx.modifierVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitModifier(tx, node));
   tx.discardedValueVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitDiscardedValue(tx, node));
   tx.heritageClauseVisitor = EmitContext_NewNodeVisitor(Transformer_EmitContext(tx.__tsgoEmbedded0!), (node) => classFieldsTransformer_visitHeritageClause(tx, node));

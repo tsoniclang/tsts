@@ -1434,16 +1434,51 @@ export function Checker_narrowTypeByTypeof(receiver: GoPtr<Checker>, f: GoPtr<Fl
  * 	"function":  TypeFactsTypeofNEFunction,
  * }
  */
-export const typeofNEFacts: GoMap<string, TypeFacts> = new Map<string, TypeFacts>([
-  ["string", TypeFactsTypeofNEString],
-  ["number", TypeFactsTypeofNENumber],
-  ["bigint", TypeFactsTypeofNEBigInt],
-  ["boolean", TypeFactsTypeofNEBoolean],
-  ["symbol", TypeFactsTypeofNESymbol],
-  ["undefined", TypeFactsNEUndefined],
-  ["object", TypeFactsTypeofNEObject],
-  ["function", TypeFactsTypeofNEFunction],
-]);
+class LazyTypeofNEFacts extends Map<string, TypeFacts> {
+  private initialized = false;
+
+  private ensureInitialized(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+    this.set("string", TypeFactsTypeofNEString);
+    this.set("number", TypeFactsTypeofNENumber);
+    this.set("bigint", TypeFactsTypeofNEBigInt);
+    this.set("boolean", TypeFactsTypeofNEBoolean);
+    this.set("symbol", TypeFactsTypeofNESymbol);
+    this.set("undefined", TypeFactsNEUndefined);
+    this.set("object", TypeFactsTypeofNEObject);
+    this.set("function", TypeFactsTypeofNEFunction);
+  }
+
+  override get(key: string): TypeFacts | undefined {
+    this.ensureInitialized();
+    return super.get(key);
+  }
+
+  override has(key: string): boolean {
+    this.ensureInitialized();
+    return super.has(key);
+  }
+
+  override keys(): MapIterator<string> {
+    this.ensureInitialized();
+    return super.keys();
+  }
+
+  override entries(): MapIterator<[string, TypeFacts]> {
+    this.ensureInitialized();
+    return super.entries();
+  }
+
+  override [Symbol.iterator](): MapIterator<[string, TypeFacts]> {
+    this.ensureInitialized();
+    return super[Symbol.iterator]();
+  }
+}
+
+export const typeofNEFacts: GoMap<string, TypeFacts> = new LazyTypeofNEFacts();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.narrowTypeByLiteralExpression","kind":"method","status":"implemented","sigHash":"21f112067eb9ee2d1c20d821f0c06352592156aef66b408a5ee1d5afe6cf4ce3","bodyHash":"2af8f66909bca82bc04efb990224cf0b49b9bbb9aceb5c13febd5ee0024e9f5c"}

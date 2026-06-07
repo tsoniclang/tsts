@@ -131,7 +131,10 @@ export function Chain(...transforms: Array<TransformerFactory>): TransformerFact
       case 1:
         return constructed[0];
     }
-    const ch: chainedTransformer = { components: constructed };
-    return Transformer_NewTransformer(ch as unknown as Transformer, (node) => chainedTransformer_visit(ch, node), opt!.Context);
+    const ch: chainedTransformer = {
+      __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+      components: constructed,
+    };
+    return Transformer_NewTransformer(ch.__tsgoEmbedded0, (node) => chainedTransformer_visit(ch, node), opt!.Context);
   };
 }

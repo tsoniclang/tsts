@@ -201,10 +201,10 @@ export function getAllJSDocTags(node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
     return [];
   }
   const jsdocs = Node_JSDoc(node, undefined);
-  if (jsdocs.length === 0) {
+  if ((jsdocs?.length ?? 0) === 0) {
     return [];
   }
-  const lastJSDoc = AsJSDoc(jsdocs[jsdocs.length - 1]);
+  const lastJSDoc = AsJSDoc(jsdocs![jsdocs!.length - 1]);
   if (lastJSDoc!.Tags === undefined) {
     return [];
   }

@@ -13,6 +13,12 @@ export interface Arena<T = unknown> {
   data: GoSlice<T>;
 }
 
+function ensureArena<T>(receiver: GoPtr<Arena<T>>): Arena<T> {
+  const arena = receiver ?? ({ data: [] } as Arena<T>);
+  arena.data ??= [];
+  return arena;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/arena.go::method::Arena.New","kind":"method","status":"implemented","sigHash":"7f61e2bb57de57610e5585534f7544ee42ef4fef68509f3a42c767cf9152e756","bodyHash":"b9bd82671cbff82c70555631173bc5f846f2b81fd84ef711e37082b735d1f20f"}
  *
@@ -31,8 +37,9 @@ export interface Arena<T = unknown> {
 export function Arena_New<T>(receiver: GoPtr<Arena<T>>): GoPtr<T> {
   // In TS there is no arena allocation: just push a new zero-value slot and
   // return a reference to the wrapper object so callers can read/write it.
+  const arena = ensureArena(receiver);
   const slot = {} as T;
-  receiver!.data.push(slot);
+  arena.data.push(slot);
   return slot;
 }
 
@@ -62,9 +69,10 @@ export function Arena_NewSlice<T>(receiver: GoPtr<Arena<T>>, size: int): GoSlice
   if (size === 0) {
     return [];
   }
+  const arena = ensureArena(receiver);
   return globalThis.Array.from({ length: size as number }, () => {
     const slot = {} as T;
-    receiver!.data.push(slot);
+    arena.data.push(slot);
     return slot;
   });
 }
@@ -102,8 +110,9 @@ export function Arena_Clone<T>(receiver: GoPtr<Arena<T>>, t: GoSlice<T>): GoSlic
   if (t.length === 0) {
     return [];
   }
+  const arena = ensureArena(receiver);
   return globalThis.Array.from(t, (item) => {
-    receiver!.data.push(item);
+    arena.data.push(item);
     return item;
   });
 }

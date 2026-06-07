@@ -121,11 +121,11 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
       nonFileDiagnosticsSorted: false as bool,
     };
     receiver!.computedDiagnostics = coll;
-    for (const d of receiver!.processingDiagnostics) {
+    for (const d of receiver!.processingDiagnostics ?? []) {
       DiagnosticsCollection_Add(receiver!.computedDiagnostics, processingDiagnostic_toDiagnostic(d, p));
     }
     for (const [, resolutions] of p!.__tsgoEmbedded0!.resolvedModules) {
-      for (const [, resolvedModule] of resolutions) {
+      for (const [, resolvedModule] of resolutions ?? []) {
         const rm = resolvedModule as { ResolutionDiagnostics: GoSlice<GoPtr<Diagnostic>> } | undefined;
         if (rm !== undefined) {
           for (const diag of rm.ResolutionDiagnostics) {
@@ -135,7 +135,7 @@ export function includeProcessor_getDiagnostics(receiver: GoPtr<includeProcessor
       }
     }
     for (const [, typeResolutions] of p!.__tsgoEmbedded0!.typeResolutionsInFile) {
-      for (const [, resolvedTypeRef] of typeResolutions) {
+      for (const [, resolvedTypeRef] of typeResolutions ?? []) {
         const rt = resolvedTypeRef as { ResolutionDiagnostics: GoSlice<GoPtr<Diagnostic>> } | undefined;
         if (rt !== undefined) {
           for (const diag of rt.ResolutionDiagnostics) {

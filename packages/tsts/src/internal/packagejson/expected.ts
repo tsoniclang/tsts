@@ -79,7 +79,7 @@ export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: Go
  * }
  */
 export function Expected_IsPresent<T>(receiver: GoPtr<Expected<T>>): bool {
-  return receiver!.actualJSONType !== "";
+  return ((receiver?.actualJSONType ?? "") !== "") as bool;
 }
 
 /**
@@ -91,7 +91,7 @@ export function Expected_IsPresent<T>(receiver: GoPtr<Expected<T>>): bool {
  * }
  */
 export function Expected_GetValue<T>(receiver: GoPtr<Expected<T>>): [T, bool] {
-  return [receiver!.Value, receiver!.Valid];
+  return [receiver?.Value as T, receiver?.Valid ?? false as bool];
 }
 
 /**
@@ -103,7 +103,7 @@ export function Expected_GetValue<T>(receiver: GoPtr<Expected<T>>): [T, bool] {
  * }
  */
 export function Expected_IsValid<T>(receiver: GoPtr<Expected<T>>): bool {
-  return receiver!.Valid;
+  return receiver?.Valid ?? false as bool;
 }
 
 /**
@@ -147,7 +147,7 @@ export function Expected_ExpectedJSONType<T>(receiver: GoPtr<Expected<T>>): stri
  * }
  */
 export function Expected_ActualJSONType<T>(receiver: GoPtr<Expected<T>>): string {
-  return receiver!.actualJSONType;
+  return receiver?.actualJSONType ?? "";
 }
 
 /**

@@ -485,9 +485,9 @@ export function newESDecoratorTransformer(opts: GoPtr<TransformOptions>): GoPtr<
     (CompilerOptions_GetEmitScriptTarget(opts!.CompilerOptions) >= ScriptTargetESNext && CompilerOptions_GetUseDefineForClassFields(opts!.CompilerOptions))) {
     return undefined;
   }
-  const tx: esDecoratorTransformer = { compilerOptions: opts!.CompilerOptions, top: undefined, classInfoStack: undefined, classThis: undefined, classSuper: undefined, pendingExpressions: [], outerThis: undefined, shouldTransformPrivateStaticElementsInFile: false, outerThisVisitor: undefined, discardedVisitor: undefined, modifierVisitor: undefined, exportStrippingModifierVisitor: undefined, classElementVisitor: undefined, nonConstructorClassElementVisitor: undefined, constructorClassElementVisitor: undefined, arrayAssignmentVisitor: undefined, objectAssignmentVisitor: undefined, staticOnlyModifierVisitor: undefined, asyncOnlyModifierVisitor: undefined, accessorStrippingModifierVisitor: undefined };
-  const result = Transformer_NewTransformer(tx as unknown as GoPtr<Transformer>, (node) => esDecoratorTransformer_visit(tx, node), opts!.Context);
-  const ec = Transformer_EmitContext(tx as unknown as GoPtr<Transformer>);
+  const tx: esDecoratorTransformer = { __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined }, compilerOptions: opts!.CompilerOptions, top: undefined, classInfoStack: undefined, classThis: undefined, classSuper: undefined, pendingExpressions: [], outerThis: undefined, shouldTransformPrivateStaticElementsInFile: false, outerThisVisitor: undefined, discardedVisitor: undefined, modifierVisitor: undefined, exportStrippingModifierVisitor: undefined, classElementVisitor: undefined, nonConstructorClassElementVisitor: undefined, constructorClassElementVisitor: undefined, arrayAssignmentVisitor: undefined, objectAssignmentVisitor: undefined, staticOnlyModifierVisitor: undefined, asyncOnlyModifierVisitor: undefined, accessorStrippingModifierVisitor: undefined };
+  const result = Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => esDecoratorTransformer_visit(tx, node), opts!.Context);
+  const ec = Transformer_EmitContext(tx.__tsgoEmbedded0);
   tx.outerThisVisitor = EmitContext_NewNodeVisitor(ec, (n) => esDecoratorTransformer_outerThisVisit(tx, n));
   tx.discardedVisitor = EmitContext_NewNodeVisitor(ec, (n) => esDecoratorTransformer_discardedValueVisit(tx, n));
   tx.modifierVisitor = EmitContext_NewNodeVisitor(ec, (n) => esDecoratorTransformer_modifierVisitorVisit(tx, n));

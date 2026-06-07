@@ -1449,10 +1449,13 @@ export function Printer_emitParameterName(receiver: GoPtr<Printer>, node: GoPtr<
  * }
  */
 export function Printer_emitParameter(receiver: GoPtr<Printer>, node: GoPtr<ParameterDeclaration>): void {
-  const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), true as bool);
+  const parameterNode = NodeDefault_AsNode(node);
+  const parameterName = Node_Name(parameterNode);
+  const parameterModifiers = Node_Modifiers(parameterNode);
+  const state = Printer_enterNode(receiver, parameterNode);
+  Printer_emitModifierList(receiver, parameterNode, parameterModifiers, true as bool);
   Printer_emitTokenNode(receiver, node!.DotDotDotToken);
-  Printer_emitParameterName(receiver, NodeDefault_Name(node) as unknown as GoPtr<BindingName>);
+  Printer_emitParameterName(receiver, parameterName as unknown as GoPtr<BindingName>);
   Printer_emitTokenNode(receiver, node!.QuestionToken);
   Printer_emitTypeAnnotation(receiver, node!.Type);
   // The comment position has to fallback to any present node within the parameter declaration because as it turns
@@ -1461,15 +1464,15 @@ export function Printer_emitParameter(receiver: GoPtr<Printer>, node: GoPtr<Para
     receiver,
     node!.Initializer,
     greatestEnd(
-      Node_Pos(NodeDefault_AsNode(node)),
+      Node_Pos(parameterNode),
       node!.Type as unknown as { End: () => int },
       node!.QuestionToken as unknown as { End: () => int },
-      NodeDefault_Name(node) as unknown as { End: () => int },
-      NodeDefault_Modifiers(node) as unknown as { End: () => int },
+      parameterName as unknown as { End: () => int },
+      parameterModifiers as unknown as { End: () => int },
     ),
-    NodeDefault_AsNode(node),
+    parameterNode,
   );
-  Printer_exitNode(receiver, NodeDefault_AsNode(node), state);
+  Printer_exitNode(receiver, parameterNode, state);
 }
 
 /**
@@ -1614,8 +1617,8 @@ export function Printer_emitSignature(receiver: GoPtr<Printer>, node: GoPtr<Node
  */
 export function Printer_emitPropertySignature(receiver: GoPtr<Printer>, node: GoPtr<PropertySignatureDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), false as bool);
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), false as bool);
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   Printer_emitTokenNode(receiver, node!.PostfixToken);
   Printer_emitTypeAnnotation(receiver, node!.Type);
   Printer_writeTrailingSemicolon(receiver);
@@ -1639,15 +1642,15 @@ export function Printer_emitPropertySignature(receiver: GoPtr<Printer>, node: Go
  */
 export function Printer_emitPropertyDeclaration(receiver: GoPtr<Printer>, node: GoPtr<PropertyDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), true as bool);
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), true as bool);
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   Printer_emitTokenNode(receiver, node!.PostfixToken);
   Printer_emitTypeAnnotation(receiver, node!.Type);
   Printer_emitInitializer(
     receiver,
     node!.Initializer,
     greatestEnd(
-      Node_End(NodeDefault_Name(node) as unknown as GoPtr<Node>),
+      Node_End(Node_Name(NodeDefault_AsNode(node)) as unknown as GoPtr<Node>),
       node!.Type as unknown as { End: () => int },
       node!.PostfixToken as unknown as { End: () => int },
     ),
@@ -1678,8 +1681,8 @@ export function Printer_emitPropertyDeclaration(receiver: GoPtr<Printer>, node: 
  */
 export function Printer_emitMethodSignature(receiver: GoPtr<Printer>, node: GoPtr<MethodSignatureDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), false as bool);
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), false as bool);
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   Printer_emitTokenNode(receiver, node!.PostfixToken);
   const indented = Printer_shouldEmitIndented(receiver, NodeDefault_AsNode(node));
   Printer_increaseIndentIf(receiver, indented);
@@ -1713,9 +1716,9 @@ export function Printer_emitMethodSignature(receiver: GoPtr<Printer>, node: GoPt
  */
 export function Printer_emitMethodDeclaration(receiver: GoPtr<Printer>, node: GoPtr<MethodDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), true as bool);
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), true as bool);
   Printer_emitTokenNode(receiver, node!.AsteriskToken);
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   Printer_emitTokenNode(receiver, node!.PostfixToken);
   const indented = Printer_shouldEmitIndented(receiver, NodeDefault_AsNode(node));
   Printer_increaseIndentIf(receiver, indented);
@@ -1747,7 +1750,7 @@ export function Printer_emitMethodDeclaration(receiver: GoPtr<Printer>, node: Go
  */
 export function Printer_emitConstructor(receiver: GoPtr<Printer>, node: GoPtr<ConstructorDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), false as bool);
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), false as bool);
   Printer_writeKeyword(receiver, "constructor");
   const indented = Printer_shouldEmitIndented(receiver, NodeDefault_AsNode(node));
   Printer_increaseIndentIf(receiver, indented);
@@ -1781,10 +1784,10 @@ export function Printer_emitConstructor(receiver: GoPtr<Printer>, node: GoPtr<Co
  */
 export function Printer_emitAccessorDeclaration(receiver: GoPtr<Printer>, token: Kind, node: GoPtr<AccessorDeclarationBase>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  const pos = Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), true as bool);
+  const pos = Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), true as bool);
   Printer_emitToken(receiver, token, pos, WriteKindKeyword, NodeDefault_AsNode(node));
   Printer_writeSpace(receiver);
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   const indented = Printer_shouldEmitIndented(receiver, NodeDefault_AsNode(node));
   Printer_increaseIndentIf(receiver, indented);
   Printer_pushNameGenerationScope(receiver, NodeDefault_AsNode(node));
@@ -1871,7 +1874,7 @@ export function Printer_emitConstructSignature(receiver: GoPtr<Printer>, node: G
  */
 export function Printer_emitIndexSignature(receiver: GoPtr<Printer>, node: GoPtr<IndexSignatureDeclaration>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), NodeDefault_Modifiers(node), false as bool);
+  Printer_emitModifierList(receiver, NodeDefault_AsNode(node), Node_Modifiers(NodeDefault_AsNode(node)), false as bool);
   const indented = Printer_shouldEmitIndented(receiver, NodeDefault_AsNode(node));
   Printer_increaseIndentIf(receiver, indented);
   Printer_pushNameGenerationScope(receiver, NodeDefault_AsNode(node));
@@ -1912,7 +1915,7 @@ export function Printer_emitBindingElement(receiver: GoPtr<Printer>, node: GoPtr
     Printer_writeSpace(receiver);
   }
   // Old parser used `OmittedExpression` as a substitute for `Elision`. New parser uses a `BindingElement` with nil members
-  const name = NodeDefault_Name(node);
+  const name = Node_Name(NodeDefault_AsNode(node));
   if (name !== undefined) {
     Printer_emitBindingName(receiver, name as unknown as GoPtr<BindingName>);
     Printer_emitInitializer(receiver, node!.Initializer, Node_End(name as unknown as GoPtr<Node>), NodeDefault_AsNode(node));
@@ -1999,7 +2002,7 @@ export function Printer_emitMetaProperty(receiver: GoPtr<Printer>, node: GoPtr<M
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
   Printer_emitToken(receiver, node!.KeywordToken, Node_Pos(NodeDefault_AsNode(node)), WriteKindPunctuation, NodeDefault_AsNode(node));
   Printer_writePunctuation(receiver, ".");
-  Printer_emitIdentifierName(receiver, AsIdentifier(NodeDefault_Name(node)));
+  Printer_emitIdentifierName(receiver, AsIdentifier(Node_Name(NodeDefault_AsNode(node))));
   Printer_exitNode(receiver, NodeDefault_AsNode(node), state);
 }
 
@@ -2212,7 +2215,7 @@ export function Printer_emitJsxAttributes(receiver: GoPtr<Printer>, node: GoPtr<
  */
 export function Printer_emitJsxAttribute(receiver: GoPtr<Printer>, node: GoPtr<JsxAttribute>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitJsxAttributeName(receiver, NodeDefault_Name(node) as unknown as GoPtr<JsxAttributeName>);
+  Printer_emitJsxAttributeName(receiver, Node_Name(NodeDefault_AsNode(node)) as unknown as GoPtr<JsxAttributeName>);
   if (node!.Initializer !== undefined) {
     Printer_writePunctuation(receiver, "=");
     Printer_emitJsxAttributeValue(receiver, node!.Initializer);
@@ -2495,7 +2498,7 @@ export function Printer_emitCaseOrDefaultClauseNode(receiver: GoPtr<Printer>, no
  */
 export function Printer_emitPropertyAssignment(receiver: GoPtr<Printer>, node: GoPtr<PropertyAssignment>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   Printer_writePunctuation(receiver, ":");
   Printer_writeSpace(receiver);
   const initializer = node!.Initializer;
@@ -2525,7 +2528,7 @@ export function Printer_emitPropertyAssignment(receiver: GoPtr<Printer>, node: G
  */
 export function Printer_emitShorthandPropertyAssignment(receiver: GoPtr<Printer>, node: GoPtr<ShorthandPropertyAssignment>): void {
   const state = Printer_enterNode(receiver, NodeDefault_AsNode(node));
-  Printer_emitPropertyName(receiver, NodeDefault_Name(node));
+  Printer_emitPropertyName(receiver, Node_Name(NodeDefault_AsNode(node)));
   if (node!.ObjectAssignmentInitializer !== undefined) {
     Printer_writeSpace(receiver);
     Printer_writePunctuation(receiver, "=");
