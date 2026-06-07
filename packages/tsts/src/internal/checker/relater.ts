@@ -58,7 +58,7 @@ import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFla
 import { CheckFlagsPartial, CheckFlagsSyntheticProperty, CheckFlagsIsDiscriminantComputed, CheckFlagsIsDiscriminant, CheckFlagsNonUniformAndLiteral } from "../ast/checkflags.js";
 import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, NewDiagnosticForNode } from "./utilities.js";
 import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall } from "../ast/utilities.js";
-import { Checker_isContextSensitive } from "./checker/support-queries.js";
+import { Checker_addOptionalityEx, Checker_isContextSensitive } from "./checker/support-queries.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
 import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType } from "./checker/symbols.js";
 import { Checker_getPropertiesOfType } from "./checker/types.js";
@@ -7839,7 +7839,7 @@ export function Relater_propertyRelatedTo(receiver: GoPtr<Relater>, source: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.isPropertySymbolTypeRelated","kind":"method","status":"stub","sigHash":"81112259febc815ef8cee2832e2a6f10051a945fc5a8714ec83fe4d76c26a8b1","bodyHash":"dfdea5ffbd33b9b07190128698be600741eeb4ec0727b03fab3c37a23f5244b8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.isPropertySymbolTypeRelated","kind":"method","status":"implemented","sigHash":"81112259febc815ef8cee2832e2a6f10051a945fc5a8714ec83fe4d76c26a8b1","bodyHash":"dfdea5ffbd33b9b07190128698be600741eeb4ec0727b03fab3c37a23f5244b8"}
  *
  * Go source:
  * func (r *Relater) isPropertySymbolTypeRelated(sourceProp *ast.Symbol, targetProp *ast.Symbol, getTypeOfSourceProperty func(sym *ast.Symbol) *Type, reportErrors bool, intersectionState IntersectionState) Ternary {
@@ -7854,7 +7854,14 @@ export function Relater_propertyRelatedTo(receiver: GoPtr<Relater>, source: GoPt
  * }
  */
 export function Relater_isPropertySymbolTypeRelated(receiver: GoPtr<Relater>, sourceProp: GoPtr<Symbol>, targetProp: GoPtr<Symbol>, getTypeOfSourceProperty: (sym: GoPtr<Symbol>) => GoPtr<Type>, reportErrors: bool, intersectionState: IntersectionState): Ternary {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.isPropertySymbolTypeRelated");
+  const targetIsOptional = receiver!.c!.strictNullChecks && (targetProp!.CheckFlags & CheckFlagsPartial) !== 0;
+  const effectiveTarget = Checker_addOptionalityEx(receiver!.c, Checker_getNonMissingTypeOfSymbol(receiver!.c, targetProp), false, targetIsOptional);
+  // source could resolve to `any` and that's not related to `unknown` target under strict subtype relation
+  if ((effectiveTarget!.flags & (receiver!.relation === receiver!.c!.strictSubtypeRelation ? TypeFlagsAny : TypeFlagsAnyOrUnknown)) !== 0) {
+    return TernaryTrue;
+  }
+  const effectiveSource = getTypeOfSourceProperty(sourceProp);
+  return Relater_isRelatedToEx(receiver, effectiveSource, effectiveTarget, RecursionFlagsBoth, reportErrors, undefined, intersectionState);
 }
 
 /**

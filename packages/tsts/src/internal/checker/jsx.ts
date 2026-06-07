@@ -5,7 +5,7 @@ import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression, Node_Initializer } from "../ast/ast.js";
 import type { EntityName, JsxChild } from "../ast/generated/unions.js";
-import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName } from "../ast/generated/predicates.js";
+import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName, IsJsxText, IsJsxExpression } from "../ast/generated/predicates.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { Symbol } from "../ast/symbol.js";
 import { SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsValue, SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsTypeAlias, SymbolFlagsFunctionScopedVariable } from "../ast/symbolflags.js";
@@ -21,7 +21,7 @@ import { InternalSymbolNameMissing, SymbolName } from "../ast/symbol.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
 import { OrElse, IfElse, Find } from "../core/core.js";
 import { NewIdentifier, NewQualifiedName } from "../ast/generated/factory.js";
-import { AsJsxElement, AsJsxExpression, AsJsxFragment } from "../ast/generated/casts.js";
+import { AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxText } from "../ast/generated/casts.js";
 import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments } from "../diagnostics/generated/messages.js";
 import { IsTypeAny, isJsxIntrinsicTagName } from "./utilities.js";
 import { newTypeMapper } from "./mapper.js";
@@ -1333,7 +1333,7 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"stub","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9","bodyHash":"fd91d770e52747679b729e2e11ca54f8bcf6c2c4628bfbc20a50158acec92430"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"implemented","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9","bodyHash":"fd91d770e52747679b729e2e11ca54f8bcf6c2c4628bfbc20a50158acec92430"}
  *
  * Go source:
  * func (c *Checker) checkJsxChildren(node *ast.Node, checkMode CheckMode) []*Type {
@@ -1356,7 +1356,22 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren");
+  const childTypes: GoSlice<GoPtr<Type>> = [];
+  for (const child of Node_Children(node)!.Nodes) {
+    // In React, JSX text that contains only whitespaces will be ignored so we don't want to type-check that
+    // because then type of children property will have constituent of string type.
+    if (IsJsxText(child)) {
+      if (!AsJsxText(child)!.ContainsOnlyTriviaWhiteSpaces) {
+        childTypes.push(receiver!.stringType);
+      }
+    } else if (IsJsxExpression(child) && Node_Expression(child) === undefined) {
+      // empty jsx expressions don't *really* count as present children
+      continue;
+    } else {
+      childTypes.push(Checker_checkExpressionForMutableLocation(receiver, child, checkMode));
+    }
+  }
+  return childTypes;
 }
 
 /**

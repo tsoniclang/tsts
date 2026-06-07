@@ -115,7 +115,7 @@ import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_resolveExter
 import { isConstEnumOrConstEnumOnlyModule } from "../const-enum.js";
 import { Checker_getFlowTypeOfAccessExpression, Checker_isDiscriminantWithNeverType } from "./flow-narrowing.js";
 import { Checker_getDestructuringPropertyName, Checker_getFlowTypeOfReference, Checker_getFlowTypeOfReferenceEx, Checker_isSymbolAssigned, getFlowNodeOfNode } from "../flow.js";
-import { Checker_getBaseConstraintOfType, Checker_getInstantiationExpressionType, Checker_getWriteTypeOfInstantiatedSymbol, Checker_maybeTypeOfKindConsideringBaseConstraint, Checker_getTypeAliasInstantiation, Checker_getTypeOfInstantiatedSymbol } from "./inference.js";
+import { Checker_getBaseConstraintOfType, Checker_getInstantiationExpressionType, Checker_getWriteTypeOfInstantiatedSymbol, Checker_maybeTypeOfKindConsideringBaseConstraint, Checker_getTypeAliasInstantiation, Checker_getTypeOfInstantiatedSymbol, Checker_getConstraintTypeFromMappedType, Checker_getBaseConstraintOrType } from "./inference.js";
 import { Checker_getTypeOfReverseMappedSymbol } from "../inference.js";
 import { Checker_checkIndexConstraints } from "./inference.js";
 import { TextRange_ContainedBy } from "../../core/text.js";
@@ -15385,7 +15385,7 @@ export function Checker_getTypeOfPropertyOfContextualTypeEx(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexedMappedTypeSubstitutedTypeOfContextualType","kind":"method","status":"stub","sigHash":"99a9acdc97acdd106147aad85191fe2aa7684dbea7772393bd41e5528b496e99","bodyHash":"7dd8f8c343f3a3cedf3b272bf5ad8e6a998c0d0e330aa77d3fc6ccfba6545e2b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexedMappedTypeSubstitutedTypeOfContextualType","kind":"method","status":"implemented","sigHash":"99a9acdc97acdd106147aad85191fe2aa7684dbea7772393bd41e5528b496e99","bodyHash":"7dd8f8c343f3a3cedf3b272bf5ad8e6a998c0d0e330aa77d3fc6ccfba6545e2b"}
  *
  * Go source:
  * func (c *Checker) getIndexedMappedTypeSubstitutedTypeOfContextualType(t *Type, name string, nameType *Type) *Type {
@@ -15406,7 +15406,20 @@ export function Checker_getTypeOfPropertyOfContextualTypeEx(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getIndexedMappedTypeSubstitutedTypeOfContextualType(receiver: GoPtr<Checker>, t: GoPtr<Type>, name: string, nameType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getIndexedMappedTypeSubstitutedTypeOfContextualType");
+  let propertyNameType = nameType;
+  if (propertyNameType === undefined) {
+    propertyNameType = Checker_getStringLiteralType(receiver, name);
+  }
+  const constraint = Checker_getConstraintTypeFromMappedType(receiver, t);
+  // special case for conditional types pretending to be negated types
+  if ((Type_AsMappedType(t)!.nameType !== undefined && Checker_isExcludedMappedPropertyName(receiver, Type_AsMappedType(t)!.nameType, propertyNameType)) || Checker_isExcludedMappedPropertyName(receiver, constraint, propertyNameType)) {
+    return undefined;
+  }
+  const constraintOfConstraint = Checker_getBaseConstraintOrType(receiver, constraint);
+  if (!Checker_isTypeAssignableTo(receiver, propertyNameType, constraintOfConstraint)) {
+    return undefined;
+  }
+  return Checker_substituteIndexedMappedType(receiver, t, propertyNameType);
 }
 
 /**
