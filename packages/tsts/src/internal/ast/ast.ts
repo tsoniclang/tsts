@@ -5399,9 +5399,28 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
+  data.diagnostics = [];
+  data.jsDiagnostics = [];
+  data.jsdocDiagnostics = [];
+  data.Identifiers = new globalThis.Map<string, string>();
+  data.imports = [];
+  data.ModuleAugmentations = [];
+  data.AmbientModuleNames = [];
+  data.CommentDirectives = [];
+  data.ReparsedClones = [];
+  data.Pragmas = [];
+  data.ReferencedFiles = [];
+  data.TypeReferenceDirectives = [];
+  data.LibReferenceDirectives = [];
   data.jsdocMu = new RWMutex();
   data.isBound = new Bool();
   data.bindOnce = new Once();
+  data.bindDiagnostics = [];
+  data.BindSuggestionDiagnostics = [];
+  data.ClassifiableNames = { M: new globalThis.Map() };
+  data.PatternAmbientModules = [];
+  data.NestedCJSExports = [];
+  data.GlobalExports = new globalThis.Map();
   data.ecmaLineMapMu = new RWMutex();
   data.tokenCacheMu = new Mutex();
   data.declarationMapMu = new Mutex();
@@ -5474,7 +5493,7 @@ export function SourceFile_as_ast_HasFileName(receiver: GoPtr<SourceFile>): HasF
  * }
  */
 export function SourceFile_Imports(receiver: GoPtr<SourceFile>): GoSlice<GoPtr<LiteralLikeNode>> {
-  return receiver!.imports;
+  return receiver!.imports ?? [];
 }
 
 /**

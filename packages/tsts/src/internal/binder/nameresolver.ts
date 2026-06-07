@@ -466,6 +466,9 @@ export function NameResolver_Resolve(receiver: GoPtr<NameResolver>, location: Go
           break;
         }
         const moduleExports = moduleSymbol!.Exports;
+        if (moduleExports === undefined) {
+          break;
+        }
         if (IsSourceFile(location) || (IsModuleDeclaration(location) && (location!.Flags & NodeFlagsAmbient) !== 0 && !IsGlobalScopeAugmentation(location))) {
           // It's an external module. First see if the module has an export default and if the local
           // name of that export default matches.

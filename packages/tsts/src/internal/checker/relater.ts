@@ -1,6 +1,7 @@
 import type { bool, byte, int, uint } from "@tsonic/core/types.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
+import { Node_Name } from "../ast/spine.js";
 import { Node_ModifierFlags } from "../ast/ast.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import { DiagnosticsCollection_Add, NewDiagnosticChain, Diagnostic_SetRelatedInfo, Diagnostic_AddRelatedInfo } from "../ast/diagnostic.js";
@@ -28,6 +29,7 @@ import {
   Its_return_type_0_is_not_a_valid_JSX_element,
   Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1,
   Object_literal_may_only_specify_known_properties_but_0_does_not_exist_in_type_1_Did_you_mean_to_write_2,
+  Property_0_does_not_exist_on_type_1_Did_you_mean_2,
   Property_0_is_incompatible_with_index_signature,
   The_type_0_is_readonly_and_cannot_be_assigned_to_the_mutable_type_1,
   The_types_of_0_are_incompatible_between_these_types,
@@ -78,19 +80,19 @@ import { TernaryFalse, TernaryTrue, TernaryMaybe, TernaryUnknown, TypeFlagsNever
 import { UnionReductionNone } from "./checker/state.js";
 import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_getPropertiesOfUnionOrIntersectionType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createTypeReference, Checker_getApparentType, Checker_getIntersectionTypeEx, Checker_getNormalizedType, Checker_getTemplateLiteralType, Checker_isArrayLikeType, Checker_isArrayOrTupleType, Checker_isMutableArrayOrTuple, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isNonGenericObjectType, Checker_isGenericTupleType, Checker_getCombinedMappedTypeOptionality, Checker_getTemplateTypeFromMappedType, Checker_getTypeWithFacts, Checker_pushContextualType, Checker_popContextualType, Checker_intersectTypes, Checker_getApparentMappedTypeKeys, Checker_isEmptyArrayLiteralType, Checker_isEmptyObjectType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_removeMissingType, Checker_getBaseTypeOfLiteralType, Checker_getSuggestedTypeForNonexistentStringLiteralType } from "./checker/types.js";
 import { Checker_checkExpressionForMutableLocation } from "./checker/syntax-checking.js";
-import { Checker_getTypeOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getLiteralTypeFromProperty, Checker_getNameTypeFromMappedType, Checker_getNonMissingTypeOfSymbol, Checker_getIndexTypeEx, Checker_isGenericIndexType, Checker_shouldDeferIndexType, Checker_getIndexTypeOfTypeEx, Checker_isMappedTypeGenericIndexedAccess } from "./checker/symbols.js";
+import { Checker_getTypeOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getLiteralTypeFromProperty, Checker_getNameTypeFromMappedType, Checker_getNonMissingTypeOfSymbol, Checker_getIndexTypeEx, Checker_isGenericIndexType, Checker_shouldDeferIndexType, Checker_getIndexTypeOfTypeEx, Checker_isMappedTypeGenericIndexedAccess, Checker_getSuggestionForNonexistentProperty } from "./checker/symbols.js";
 import { Checker_getBaseConstraintOfType, Checker_getTypeAliasInstantiation, Checker_getConstraintOfType, Checker_getStringMappingType, Checker_getBaseConstraintOrType, Checker_getConstraintTypeFromMappedType, Checker_getSimplifiedTypeOrConstraint, Checker_getPermissiveInstantiation, Checker_getRestrictiveInstantiation, Checker_isMappedTypeWithKeyofConstraintDeclaration, Checker_hasNonCircularBaseConstraint, Checker_getDefaultConstraintOfConditionalType, Checker_getConstraintOfDistributiveConditionalType } from "./checker/inference.js";
 import { Checker_newInferenceContext, Checker_inferTypes } from "./inference.js";
-import { SameMap, Same, CountWhere, Every, Some, OrElse, Find } from "../core/core.js";
+import { SameMap, Same, CountWhere, Every, Some, OrElse, Find, FirstOrNil } from "../core/core.js";
 import { Checker_TypeToString, Checker_TypeToStringEx, Checker_typeToStringEx, Checker_typeToString, Checker_signatureToString, Checker_typePredicateToString, Checker_symbolToString, Checker_valueToString } from "./printer.js";
 import { TypeFormatFlagsUseFullyQualifiedType } from "./types.js";
 import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule, SymbolFlagsPrototype, SymbolFlagsClassMember } from "../ast/symbolflags.js";
 import { CheckFlagsPartial, CheckFlagsSyntheticProperty, CheckFlagsIsDiscriminantComputed, CheckFlagsIsDiscriminant, CheckFlagsNonUniformAndLiteral } from "../ast/checkflags.js";
 import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, isNumericLiteralName, NewDiagnosticForNode, getDeclarationModifierFlagsFromSymbol } from "./utilities.js";
-import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall, IsInJSFile } from "../ast/utilities.js";
+import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall, IsInJSFile, FindAncestor, GetSourceFileOfNode, IsJsxOpeningLikeElement, IsObjectLiteralElement } from "../ast/utilities.js";
 import { Checker_addOptionalityEx, Checker_isContextSensitive, Checker_getExactOptionalUnassignableProperties } from "./checker/support-queries.js";
 import { Checker_getSingleBaseForNonAugmentingSubtype } from "./checker/relations.js";
-import { Checker_getJsxType, JsxNames } from "./jsx.js";
+import { Checker_getJsxType, JsxNames, Checker_getSuggestedSymbolForNonexistentJSXAttribute } from "./jsx.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
 import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType, Checker_isReadonlySymbol } from "./checker/symbols.js";
 import { Checker_getDeclaringClass, Checker_isValidOverrideOf } from "./checker/classes.js";
@@ -123,7 +125,7 @@ import { TypeFlagsAnyOrUnknown, ElementFlagsRequired, ElementFlagsOptional, Elem
 import { UnionReductionLiteral, TypeSystemPropertyNameResolvedReturnType, someType, TypeFactsIsUndefinedOrNull, TypeFactsNEUndefined, getStringLiteralValue } from "./checker/state.js";
 import { Checker_compareProperties } from "./checker/support.js";
 import { IsTypeAny, hasDotDotDotToken, isObjectLiteralType } from "./utilities.js";
-import { IsNamedTupleMember, IsParameterDeclaration, IsIdentifier, IsBindingElement, IsTypePredicateNode, IsThisTypeNode } from "../ast/generated/predicates.js";
+import { IsNamedTupleMember, IsParameterDeclaration, IsIdentifier, IsBindingElement, IsTypePredicateNode, IsThisTypeNode, IsJsxAttributes, IsJsxAttribute } from "../ast/generated/predicates.js";
 import { IsFunctionLikeDeclaration } from "../ast/utilities.js";
 import { Node_Text } from "../ast/ast.js";
 import { Node_Elements, Node_Type } from "../ast/ast.js";
@@ -5716,7 +5718,7 @@ export function Relater_isRelatedToEx(receiver: GoPtr<Relater>, originalSource: 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.hasExcessProperties","kind":"method","status":"stub","sigHash":"113f37217c6b4dcc1dc5f5ec12ebbec5fc1944a86e1d12d5ed608331ba1f16cd","bodyHash":"e32a3efa3343354648a743d4775b27f82d6c37b48bbbd57312f9387f822d4e4e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.hasExcessProperties","kind":"method","status":"implemented","sigHash":"113f37217c6b4dcc1dc5f5ec12ebbec5fc1944a86e1d12d5ed608331ba1f16cd","bodyHash":"e32a3efa3343354648a743d4775b27f82d6c37b48bbbd57312f9387f822d4e4e"}
  *
  * Go source:
  * func (r *Relater) hasExcessProperties(source *Type, target *Type, reportErrors bool) bool {
@@ -5802,7 +5804,89 @@ export function Relater_isRelatedToEx(receiver: GoPtr<Relater>, originalSource: 
  * }
  */
 export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Relater.hasExcessProperties");
+  if (!isExcessPropertyCheckTarget(target) || (!receiver!.c!.noImplicitAny && (target!.objectFlags & ObjectFlagsJSLiteral) !== 0)) {
+    return false;
+  }
+  const isComparingJsxAttributes = (source!.objectFlags & ObjectFlagsJsxAttributes) !== 0;
+  if (
+    (receiver!.relation === receiver!.c!.assignableRelation || receiver!.relation === receiver!.c!.comparableRelation) &&
+    (Checker_isTypeSubsetOf(receiver!.c, receiver!.c!.globalObjectType, target) || (!isComparingJsxAttributes && Checker_isEmptyObjectType(receiver!.c, target)))
+  ) {
+    return false;
+  }
+  let reducedTarget = target;
+  let checkTypes: GoSlice<GoPtr<Type>> | undefined = undefined;
+  if ((target!.flags & TypeFlagsUnion) !== 0) {
+    reducedTarget = Checker_findMatchingDiscriminantType(receiver!.c, source, target, (sourceType, targetType) => Relater_isRelatedToSimple(receiver, sourceType, targetType));
+    if (reducedTarget === undefined) {
+      reducedTarget = Checker_filterPrimitivesIfContainsNonPrimitive(receiver!.c, target);
+    }
+    checkTypes = Type_Distributed(reducedTarget);
+  }
+  for (const prop of Checker_getPropertiesOfType(receiver!.c, source)) {
+    if (shouldCheckAsExcessProperty(prop, source!.symbol) && !isIgnoredJsxProperty(source, prop)) {
+      if (!Checker_isKnownProperty(receiver!.c, reducedTarget, prop!.Name, isComparingJsxAttributes)) {
+        if (reportErrors) {
+          const errorTarget = Checker_filterType(receiver!.c, reducedTarget, isExcessPropertyCheckTarget);
+          if (receiver!.errorNode === undefined) {
+            throw new globalThis.Error("No errorNode in hasExcessProperties");
+          }
+          const errorNodeParent = receiver!.errorNode!.Parent;
+          if (IsJsxAttributes(receiver!.errorNode) || IsJsxOpeningLikeElement(receiver!.errorNode) || (errorNodeParent !== undefined && IsJsxOpeningLikeElement(errorNodeParent))) {
+            if (
+              prop!.ValueDeclaration !== undefined &&
+              IsJsxAttribute(prop!.ValueDeclaration) &&
+              GetSourceFileOfNode(receiver!.errorNode) === GetSourceFileOfNode(Node_Name(prop!.ValueDeclaration))
+            ) {
+              receiver!.errorNode = Node_Name(prop!.ValueDeclaration);
+            }
+            const propName = Checker_symbolToString(receiver!.c, prop);
+            const suggestionSymbol = Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver!.c, propName, errorTarget);
+            if (suggestionSymbol !== undefined) {
+              Relater_reportError(receiver, Property_0_does_not_exist_on_type_1_Did_you_mean_2, propName, Checker_TypeToString(receiver!.c, errorTarget), Checker_symbolToString(receiver!.c, suggestionSymbol));
+            } else {
+              Relater_reportError(receiver, Property_0_does_not_exist_on_type_1, propName, Checker_TypeToString(receiver!.c, errorTarget));
+            }
+          } else {
+            let objectLiteralDeclaration: GoPtr<Node> = undefined;
+            if (source!.symbol !== undefined) {
+              objectLiteralDeclaration = FirstOrNil(source!.symbol!.Declarations);
+            }
+            let suggestion = "";
+            if (
+              prop!.ValueDeclaration !== undefined &&
+              IsObjectLiteralElement(prop!.ValueDeclaration) &&
+              objectLiteralDeclaration !== undefined &&
+              FindAncestor(prop!.ValueDeclaration, (declaration) => declaration === objectLiteralDeclaration) !== undefined &&
+              GetSourceFileOfNode(objectLiteralDeclaration) === GetSourceFileOfNode(receiver!.errorNode)
+            ) {
+              const name = Node_Name(prop!.ValueDeclaration);
+              receiver!.errorNode = name;
+              if (IsIdentifier(name)) {
+                suggestion = Checker_getSuggestionForNonexistentProperty(receiver!.c, Node_Text(name), errorTarget);
+              }
+            }
+            if (suggestion !== "") {
+              Relater_reportError(receiver, Object_literal_may_only_specify_known_properties_but_0_does_not_exist_in_type_1_Did_you_mean_to_write_2, Checker_symbolToString(receiver!.c, prop), Checker_TypeToString(receiver!.c, errorTarget), suggestion);
+            } else {
+              Relater_reportError(receiver, Object_literal_may_only_specify_known_properties_and_0_does_not_exist_in_type_1, Checker_symbolToString(receiver!.c, prop), Checker_TypeToString(receiver!.c, errorTarget));
+            }
+          }
+        }
+        return true;
+      }
+      if (
+        checkTypes !== undefined &&
+        Relater_isRelatedTo(receiver, Checker_getTypeOfSymbol(receiver!.c, prop), Checker_getTypeOfPropertyInTypes(receiver!.c, checkTypes, prop!.Name), RecursionFlagsBoth, reportErrors) === TernaryFalse
+      ) {
+        if (reportErrors) {
+          Relater_reportError(receiver, Types_of_property_0_are_incompatible, Checker_symbolToString(receiver!.c, prop));
+        }
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**

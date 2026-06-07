@@ -18,20 +18,20 @@ import type { NodeFlags } from "../../ast/generated/flags.js";
 import { Diagnostic_AddRelatedInfo, Diagnostic_Code, Diagnostic_Loc } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import type { NodeId } from "../../ast/ids.js";
-import { Node_Locals, SourceFile_Text, SourceFile_Diagnostics, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters } from "../../ast/ast.js";
+import { Node_Locals, SourceFile_Text, SourceFile_Diagnostics, Node_Expression, Node_Statements, Node_Statement, Node_Initializer, Node_Type, Node_Text, Node_Label, Node_Body, Node_TypeParameters, Node_TypeArguments } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
 import type { Relation } from "../relater.js";
 import type { Signature, Type, TypeFlags } from "../types.js";
-import { SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
+import { SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../types.js";
 import { Checker_isIteratorResult } from "./support-queries.js";
 import {
   CheckModeInferential, CheckModeNormal, InferenceFlagsSkippedGenericFunction, IterationTypeKindReturn, IterationTypeKindYield,
   IterationTypeKindNext, IterationUseForOf, IterationUseForAwaitOf, IterationUseSpread,
   IterationUseYieldStar, IterationUseAsyncYieldStar,
   TypeFactsIsUndefined, TypeFactsTruthy, TypeFactsFalsy, UnusedKindLocal, UnusedKindParameter,
-  Checker_getSourceFileLinks,
+  Checker_getSourceFileLinks, someSignature,
 } from "./state.js";
 import type { Checker, CheckMode, keyBuilder, FlowLoopInfo, IterationTypes } from "./state.js";
 import {
@@ -50,12 +50,13 @@ import {
   IsBindingPattern, SkipParentheses, SkipOuterExpressions, IsInJSFile,
   OEKParentheses, OEKSatisfies, OEKExcludeJSDocTypeAssertion,
   OEKAssertions, GetCombinedNodeFlags, IsFunctionLike,
-  GetNodeId, ForEachReturnStatement,
+  GetNodeId, ForEachReturnStatement, GetClassLikeDeclarationOfSymbol, HasModifier,
   FindAncestor, GetContainingClass, IsCallLikeExpression, IsCallOrNewExpression,
   GetContainingFunction, IsImportCall, IsLogicalBinaryOperator, IsLogicalOrCoalescingBinaryExpression, IsLogicalOrCoalescingBinaryOperator, WalkUpParenthesizedExpressions,
 } from "../../ast/utilities.js";
 import type { OuterExpressionKinds } from "../../ast/utilities.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
+import { ModifierFlagsAbstract } from "../../ast/modifierflags.js";
 import { ScriptTargetES2016, ScriptTargetES2021 } from "../../core/compileroptions.js";
 import { Checker_checkSourceElements, Checker_checkSourceElement, Checker_checkUnusedRenamedBindingElements, Checker_error, Checker_errorOrSuggestion, Checker_reportUnused, Checker_checkNaNEquality, Checker_checkAssertionDeferred, keyBuilder_writeInt, Checker_checkThisBeforeSuper, Checker_checkAssertion } from "./support.js";
 import { Checker_checkReflectCollision, Checker_checkWeakMapSetCollision } from "./support.js";
@@ -86,7 +87,7 @@ import {
   Checker_produceDeferredDiagnostics, Checker_hasParseDiagnostics,
   Checker_addErrorOrSuggestion, Checker_addDeferredDiagnostic,
   Checker_isErrorType, Checker_reportOperatorError, Checker_reportOperatorErrorUnless, Checker_IsDeprecatedDeclaration,
-  Checker_resolveErrorCall,
+  Checker_invocationError, Checker_resolveErrorCall,
 } from "./diagnostics.js";
 import {
   Checker_checkTypeAssignableToAndOptionallyElaborate,
@@ -94,7 +95,7 @@ import {
   Checker_checkTypeComparableTo,
   Checker_isTypeAssignableTo,
   Checker_isTypeSubtypeOf,
-  Checker_isTypeRelatedTo, Checker_areTypesComparable,
+  Checker_isTypeRelatedTo, Checker_areTypesComparable, Checker_getThisTypeOfSignature,
 } from "../relater.js";
 import { Checker_allTypesAssignableToKind, Checker_checkDestructuringAssignment, Checker_checkAssignmentOperator, Checker_isTypeEqualityComparableTo, Checker_isTypeAssignableToKind, Checker_isTypeAssignableToKindEx, Checker_checkSatisfiesExpression } from "./relations.js";
 import {
@@ -123,7 +124,7 @@ import {
   Checker_isUnwrappedReturnTypeUndefinedVoidOrAny, Checker_isIndirectCall, Checker_instantiateTypeWithSingleGenericCallSignature,
   Checker_checkGeneratorInstantiationAssignabilityToReturnType, Checker_getIterationTypesOfGeneratorFunctionReturnType,
   Checker_getIterationTypeOfGeneratorFunctionReturnType, Checker_tryGetThisTypeAt, Checker_tryGetThisTypeAtEx,
-  Checker_getSignaturesOfType, Checker_isUntypedFunctionCall, Checker_resolveCall, Checker_typeHasCallOrConstructSignatures,
+  Checker_getSignaturesOfType, Checker_isUntypedFunctionCall, Checker_isConstructorAccessible, Checker_resolveCall, Checker_typeHasCallOrConstructSignatures,
   Checker_checkImportCallExpression, Checker_checkCallExpression, Checker_checkExpressionWithTypeArguments,
 } from "./signatures.js";
 import {
@@ -210,6 +211,10 @@ import {
   The_left_hand_side_of_an_instanceof_expression_must_be_of_type_any_an_object_type_or_a_type_parameter,
   An_object_s_Symbol_hasInstance_method_must_return_a_boolean_value_for_it_to_be_used_on_the_right_hand_side_of_an_instanceof_expression,
   Type_0_may_represent_a_primitive_value_which_is_not_permitted_as_the_right_operand_of_the_in_operator,
+  Untyped_function_calls_may_not_accept_type_arguments,
+  Cannot_create_an_instance_of_an_abstract_class,
+  Only_a_void_function_can_be_called_with_the_new_keyword,
+  A_function_that_is_called_with_the_new_keyword_cannot_have_a_this_type_that_is_void,
   The_0_operator_cannot_be_applied_to_type_symbol,
   Operator_0_cannot_be_applied_to_type_1,
 } from "../../diagnostics/generated/messages.js";
@@ -1717,7 +1722,7 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveNewExpression","kind":"method","status":"stub","sigHash":"8a47b2162d02435b75fbb4d861b25b846ff133aa869ee2a9e738af5f20205d9a","bodyHash":"0e05b7e72d36969eda35ffbf98747ffe602a0b10f76086fffb618f8aa47850e4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveNewExpression","kind":"method","status":"implemented","sigHash":"8a47b2162d02435b75fbb4d861b25b846ff133aa869ee2a9e738af5f20205d9a","bodyHash":"0e05b7e72d36969eda35ffbf98747ffe602a0b10f76086fffb618f8aa47850e4"}
  *
  * Go source:
  * func (c *Checker) resolveNewExpression(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -1794,7 +1799,53 @@ export function Checker_checkSuperExpression(receiver: GoPtr<Checker>, node: GoP
  * }
  */
 export function Checker_resolveNewExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.resolveNewExpression");
+  let expressionType = Checker_checkNonNullExpression(receiver, Node_Expression(node));
+  if (expressionType === receiver!.silentNeverType) {
+    return receiver!.silentNeverSignature;
+  }
+  expressionType = Checker_getApparentType(receiver, expressionType);
+  if (Checker_isErrorType(receiver, expressionType)) {
+    return Checker_resolveErrorCall(receiver, node);
+  }
+  if (IsTypeAny(expressionType)) {
+    if ((Node_TypeArguments(node) ?? []).length !== 0) {
+      Checker_error(receiver, node, Untyped_function_calls_may_not_accept_type_arguments);
+    }
+    return Checker_resolveUntypedCall(receiver, node);
+  }
+  const constructSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindConstruct);
+  if (constructSignatures.length !== 0) {
+    if (!Checker_isConstructorAccessible(receiver, node, constructSignatures[0])) {
+      return Checker_resolveErrorCall(receiver, node);
+    }
+    if (someSignature(constructSignatures, (signature) => (signature!.flags & SignatureFlagsAbstract) !== 0)) {
+      Checker_error(receiver, node, Cannot_create_an_instance_of_an_abstract_class);
+      return Checker_resolveErrorCall(receiver, node);
+    }
+    if (expressionType!["symbol"] !== undefined) {
+      const valueDeclaration = GetClassLikeDeclarationOfSymbol(expressionType!["symbol"]);
+      if (valueDeclaration !== undefined && HasModifier(valueDeclaration, ModifierFlagsAbstract)) {
+        Checker_error(receiver, node, Cannot_create_an_instance_of_an_abstract_class);
+        return Checker_resolveErrorCall(receiver, node);
+      }
+    }
+    return Checker_resolveCall(receiver, node, constructSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+  }
+  const callSignatures = Checker_getSignaturesOfType(receiver, expressionType, SignatureKindCall);
+  if (callSignatures.length !== 0) {
+    const signature = Checker_resolveCall(receiver, node, callSignatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
+    if (!receiver!.noImplicitAny) {
+      if (signature!.declaration !== undefined && Checker_getReturnTypeOfSignature(receiver, signature) !== receiver!.voidType) {
+        Checker_error(receiver, node, Only_a_void_function_can_be_called_with_the_new_keyword);
+      }
+      if (Checker_getThisTypeOfSignature(receiver, signature) === receiver!.voidType) {
+        Checker_error(receiver, node, A_function_that_is_called_with_the_new_keyword_cannot_have_a_this_type_that_is_void);
+      }
+    }
+    return signature;
+  }
+  Checker_invocationError(receiver, Node_Expression(node), expressionType, SignatureKindConstruct, undefined);
+  return Checker_resolveErrorCall(receiver, node);
 }
 
 /**
