@@ -2208,6 +2208,10 @@ export type GoComplex64 = { readonly real: number; readonly imag: number };
 export type GoComplex128 = { readonly real: number; readonly imag: number };
 export type GoUnsafePointer = GoPtr<unknown>;
 export type GoRune = int;
+
+export function GoAppend<T>(slice: GoPtr<GoSlice<T>>, ...items: GoSlice<T>): GoSlice<T> {
+  return [...(slice ?? []), ...items];
+}
 `;
 }
 

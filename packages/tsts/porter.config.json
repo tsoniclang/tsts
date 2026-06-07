@@ -74,6 +74,7 @@
     "go/flag.ts",
     "go/github.com/go-json-experiment/json.ts",
     "go/github.com/go-json-experiment/json/jsontext.ts",
+    "go/golang.org/x/term.ts",
     "go/golang.org/x/text/language.ts",
     "go/github.com/zeebo/xxh3.ts",
     "go/net/url.ts",
