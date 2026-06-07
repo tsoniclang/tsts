@@ -35,6 +35,7 @@ import type { Number } from "../../jsnum/jsnum.js";
 import { NaN as JsNumber_NaN, Number_IsInf, Number_IsNaN } from "../../jsnum/jsnum.js";
 import { FromString, Number_String } from "../../jsnum/string.js";
 import type { TypeMapper } from "../mapper.js";
+import { Checker_combineTypeMappers, newSimpleTypeMapper } from "../mapper.js";
 import type { AccessFlags, AliasSymbolLinks, ContextFlags, DeclaredTypeLinks, DeferredSymbolLinks, IndexedAccessType, IndexFlags, IndexInfo, IndexType, InterfaceType, LateBoundLinks, MembersOrExportsResolutionKind, ModuleSymbolLinks, NodeLinks, ObjectFlags, Signature, SourceFileLinks, StructuredType, SymbolFormatFlags, SymbolReferenceLinks, Type, TypeAlias, TypeAliasLinks, TypeData, TypeFlags, TypeReference, UniqueESSymbolType, ValueSymbolLinks, SymbolNodeLinks, TypeNodeLinks, MappedSymbolLinks } from "../types.js";
 import type { Checker, CheckMode, DeclarationSpaces, ExportCollisionTable, keyBuilder, MappedTypeNameTypeKind, TypeResolution, TypeSystemEntity, TypeSystemPropertyName, WideningContext, CachedTypeKey } from "./state.js";
 import { SymbolFlagsNone, SymbolFlagsAll, SymbolFlagsAlias, SymbolFlagsClassMember, SymbolFlagsExportValue, SymbolFlagsLateBindingContainer, SymbolFlagsModule, SymbolFlagsModuleMember, SymbolFlagsReplaceableByMethod, SymbolFlagsType, SymbolFlagsValue, SymbolFlagsNamespace, SymbolFlagsTransient, SymbolFlagsBlockScopedVariable, SymbolFlagsClass, SymbolFlagsEnum, SymbolFlagsFunction, SymbolFlagsFunctionScopedVariable, SymbolFlagsAssignment, SymbolFlagsRegularEnum, SymbolFlagsConstEnum, SymbolFlagsVariable, SymbolFlagsInterface, SymbolFlagsTypeParameter, SymbolFlagsTypeAlias, SymbolFlagsGlobalLookup, SymbolFlagsMethod, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsSetAccessor, SymbolFlagsGetAccessor, SymbolFlagsAccessor, SymbolFlagsEnumMember, NodeFlagsConstant, NodeFlagsNone, NodeFlagsOptionalChain, SymbolFlagsValueModule, SymbolFlagsNamespaceModule, SymbolFlagsConstEnumOnlyModule, SymbolFlagsObjectLiteral } from "../../ast/generated/flags.js";
@@ -54,7 +55,7 @@ import { The_import_meta_meta_property_is_not_allowed_in_files_which_will_build_
 import { Subsequent_property_declarations_must_have_the_same_type_Property_0_must_be_of_type_1_but_here_has_type_2, Subsequent_variable_declarations_must_have_the_same_type_Variable_0_must_be_of_type_1_but_here_has_type_2, X_0_was_also_declared_here, The_0_operator_cannot_be_applied_to_type_symbol } from "../../diagnostics/generated/messages.js";
 import { Class_decorators_can_t_be_used_with_static_private_identifier_Consider_removing_the_experimental_decorator, A_class_declaration_without_the_default_modifier_must_have_a_name, All_imports_in_import_declaration_are_unused } from "../../diagnostics/generated/messages.js";
 import { Class_name_cannot_be_0, Class_name_cannot_be_Object_when_targeting_ES5_and_above_with_module_0, Duplicate_identifier_0_Compiler_reserves_name_1_in_top_level_scope_of_a_module, Duplicate_identifier_0_Compiler_reserves_name_1_in_top_level_scope_of_a_module_containing_async_functions, Enum_name_cannot_be_0, Identifier_expected, String_literal_import_and_export_names_are_not_supported_when_the_module_flag_is_set_to_es2015_or_es2020, String_literal_expected, Export_declarations_are_not_permitted_in_a_namespace, Import_declarations_in_a_namespace_cannot_reference_a_module, Import_or_export_declaration_in_an_ambient_module_declaration_cannot_reference_module_through_relative_module_name, Import_attribute_values_must_be_string_literal_expressions, Import_attributes_are_only_supported_when_the_module_option_is_set_to_esnext_node18_node20_nodenext_or_preserve, Import_attributes_are_not_allowed_on_statements_that_compile_to_CommonJS_require_calls, Import_attributes_cannot_be_used_with_type_only_imports_or_exports, X_resolution_mode_can_only_be_set_for_type_only_imports, Property_0_has_no_initializer_and_is_not_definitely_assigned_in_the_constructor, Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, An_export_assignment_cannot_be_used_in_a_module_with_other_exported_elements, Cannot_redeclare_exported_variable_0, An_enum_member_cannot_be_named_with_a_private_identifier, Computed_property_names_are_not_allowed_in_enums, An_enum_member_cannot_have_a_numeric_name, Enum_member_must_have_initializer, Enum_member_following_a_non_literal_numeric_member_must_have_an_initializer_when_isolatedModules_is_enabled, X_const_enum_member_initializer_was_evaluated_to_disallowed_value_NaN, X_const_enum_member_initializer_was_evaluated_to_a_non_finite_value, X_0_has_a_string_type_but_must_have_syntactically_recognizable_string_syntax_when_isolatedModules_is_enabled, X_const_enum_member_initializers_must_be_constant_expressions, In_ambient_enum_declarations_member_initializer_must_be_constant_expression, Type_0_is_not_assignable_to_type_1_as_required_for_computed_enum_member_values, Property_0_is_used_before_being_assigned, A_member_initializer_in_a_enum_declaration_cannot_reference_members_declared_after_it_including_members_defined_in_other_enums } from "../../diagnostics/generated/messages.js";
-import { getGlobalTypeDeclaration, getPrimitiveTypeAliasSuggestions, TypeSystemPropertyNameAliasTarget, TypeSystemPropertyNameType, TypeSystemPropertyNameDeclaredType, TypeSystemPropertyNameResolvedTypeArguments, TypeSystemPropertyNameResolvedBaseTypes, TypeSystemPropertyNameResolvedBaseConstructorType, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedBaseConstraint, TypeSystemPropertyNameInitializerIsUndefined, TypeSystemPropertyNameWriteType, MappedTypeNameTypeKindNone, MappedTypeNameTypeKindFiltering, MappedTypeNameTypeKindRemapping, getMappedTypeModifiers, MappedTypeModifiersExcludeOptional, indexTypeLessThan, getTotalFixedElementCount, isTupleType, CachedTypeKindStringIndexType, CachedTypeKindIndexType, CachedTypeKindDecoratorContext, CachedTypeKindDecoratorContextStatic, CachedTypeKindDecoratorContextPrivate, CachedTypeKindDecoratorContextPrivateStatic, isIdentifierThatStartsWithUnderscore } from "./state.js";
+import { getGlobalTypeDeclaration, getPrimitiveTypeAliasSuggestions, TypeSystemPropertyNameAliasTarget, TypeSystemPropertyNameType, TypeSystemPropertyNameDeclaredType, TypeSystemPropertyNameResolvedTypeArguments, TypeSystemPropertyNameResolvedBaseTypes, TypeSystemPropertyNameResolvedBaseConstructorType, TypeSystemPropertyNameResolvedReturnType, TypeSystemPropertyNameResolvedBaseConstraint, TypeSystemPropertyNameInitializerIsUndefined, TypeSystemPropertyNameWriteType, MappedTypeNameTypeKindNone, MappedTypeNameTypeKindFiltering, MappedTypeNameTypeKindRemapping, getMappedTypeModifiers, MappedTypeModifiersExcludeOptional, indexTypeLessThan, getTotalFixedElementCount, isTupleType, CachedTypeKindStringIndexType, CachedTypeKindIndexType, CachedTypeKindDecoratorContext, CachedTypeKindDecoratorContextStatic, CachedTypeKindDecoratorContextPrivate, CachedTypeKindDecoratorContextPrivateStatic, isIdentifierThatStartsWithUnderscore, CachedTypeKindIndexedAccessForReading, CachedTypeKindIndexedAccessForWriting, getMappedTypeOptionality } from "./state.js";
 import { getStringLiteralValue, getNumberLiteralValue } from "./state.js";
 import { getFeatureMap, getDeclarationModifierFlagsFromSymbol, NewDiagnosticForNode, Checker_isUncheckedJSSuggestion, isThisProperty, isExclamationToken, IsInTypeQuery, getEnclosingContainer, isTopLevelInExternalModuleAugmentation, hasDotDotDotToken, hasExportAssignmentSymbol, isNumericLiteralName, isReservedMemberName, isTypeUsableAsPropertyName, getPropertyNameFromType, IsKnownSymbol, isDeleteTarget, isTypeAlias, isConstTypeReference, isStaticPrivateIdentifierProperty, createSymbolTable, getContainingClassExcludingClassDecorators, IsTypeAny, getBindingElementPropertyName, isValidESSymbolDeclaration, getExternalModuleRequireArgument, Checker_sortSymbols } from "../utilities.js";
 import { Diagnostic_AddRelatedInfo } from "../../ast/diagnostic.js";
@@ -69,7 +70,7 @@ import { Checker_error, Checker_reportUnused, keyBuilder_writeByte, keyBuilder_w
 import { Node_Symbol, Node_PostfixToken, Node_Text, Node_Type, IsWriteOnlyAccess, Node_Initializer, Node_Locals, AsSourceFile, SourceFile_FileName, SourceFile_Path, Node_Members, Node_LocalSymbol, Node_Body, Node_Parameters, Node_ModifierFlags, Node_TypeArguments, Node_Expression, Node_Elements, Node_PropertyName, Node_PropertyNameOrName, Node_ModuleSpecifier, Node_IsTypeOnly, Node_QuestionToken, Node_ModifierNodes, IsDeclarationNode } from "../../ast/ast.js";
 import { NewSetWithSizeHint, Set_Has, Set_Len, Set_Add, Set_Delete, Set_Keys } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
-import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType } from "./types.js";
+import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType, Checker_getTemplateTypeFromMappedType, Checker_getCombinedMappedTypeOptionality, Checker_getModifiersTypeFromMappedType } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
 import { Checker_isReadonlyAssignmentDeclaration, Checker_isTypeAssignableToKind } from "./relations.js";
 import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration, Checker_isErrorType, Checker_getCannotResolveModuleNameErrorForSpecificModule, Checker_checkAndReportErrorForResolvingImportAliasToTypeOnlySymbol } from "./diagnostics.js";
@@ -13550,7 +13551,7 @@ export function Checker_getUniqAssociatedNamesFromTupleType(receiver: GoPtr<Chec
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSimplifiedIndexedAccessType","kind":"method","status":"stub","sigHash":"5e317fd73c98cf376215f0ff734671778bcc0203b57cc5c7d3ca30284eddecea","bodyHash":"79be9874e846c98ac6afc995873ea0009e14a1fd8fa95a8fb7b57b2db796f68b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSimplifiedIndexedAccessType","kind":"method","status":"implemented","sigHash":"5e317fd73c98cf376215f0ff734671778bcc0203b57cc5c7d3ca30284eddecea","bodyHash":"79be9874e846c98ac6afc995873ea0009e14a1fd8fa95a8fb7b57b2db796f68b"}
  *
  * Go source:
  * func (c *Checker) getSimplifiedIndexedAccessType(t *Type, writing bool) *Type {
@@ -13609,7 +13610,41 @@ export function Checker_getUniqAssociatedNamesFromTupleType(receiver: GoPtr<Chec
  * }
  */
 export function Checker_getSimplifiedIndexedAccessType(receiver: GoPtr<Checker>, t: GoPtr<Type>, writing: bool): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getSimplifiedIndexedAccessType");
+  const key: CachedTypeKey = { kind: writing ? CachedTypeKindIndexedAccessForWriting : CachedTypeKindIndexedAccessForReading, typeId: t!.id };
+  const cached = receiver!.cachedTypes.get(key);
+  if (cached !== undefined) {
+    return cached === receiver!.circularConstraintType ? t : cached;
+  }
+  receiver!.cachedTypes.set(key, t);
+  const objectType = Checker_getSimplifiedType(receiver, Type_AsIndexedAccessType(t)!.objectType, writing);
+  const indexType = Checker_getSimplifiedType(receiver, Type_AsIndexedAccessType(t)!.indexType, writing);
+  const distributedOverIndex = Checker_distributeObjectOverIndexType(receiver, objectType, indexType, writing);
+  if (distributedOverIndex !== undefined) {
+    receiver!.cachedTypes.set(key, distributedOverIndex);
+    return distributedOverIndex;
+  }
+  if ((indexType!.flags & TypeFlagsInstantiable) === 0) {
+    const distributedOverObject = Checker_distributeIndexOverObjectType(receiver, objectType, indexType, writing);
+    if (distributedOverObject !== undefined) {
+      receiver!.cachedTypes.set(key, distributedOverObject);
+      return distributedOverObject;
+    }
+  }
+  if (Checker_isGenericTupleType(receiver, objectType) && (indexType!.flags & TypeFlagsNumberLike) !== 0) {
+    const elementType = Checker_getElementTypeOfSliceOfTupleType(receiver, objectType, (indexType!.flags & TypeFlagsNumber) !== 0 ? 0 : Type_TargetTupleType(objectType)!.fixedLength, 0, writing, false);
+    if (elementType !== undefined) {
+      receiver!.cachedTypes.set(key, elementType);
+      return elementType;
+    }
+  }
+  if (Checker_isGenericMappedType(receiver, objectType)) {
+    if (Checker_getMappedTypeNameTypeKind(receiver, objectType) !== MappedTypeNameTypeKindRemapping) {
+      const result = Checker_mapType(receiver, Checker_substituteIndexedMappedType(receiver, objectType, Type_AsIndexedAccessType(t)!.indexType), (ty: GoPtr<Type>): GoPtr<Type> => Checker_getSimplifiedType(receiver, ty, writing));
+      receiver!.cachedTypes.set(key, result);
+      return result;
+    }
+  }
+  return t;
 }
 
 /**
@@ -14197,7 +14232,7 @@ export function Checker_markEntityNameOrEntityExpressionAsReference(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.substituteIndexedMappedType","kind":"method","status":"stub","sigHash":"15e98ce62f75ee583a55f90ed02a623dcd76f01f8f34a8b64317713d817603e0","bodyHash":"2bd3f2dd721791e8b5fb6ea7d23a380c5a0f65d5f6cdad418ec2db9c5c3cbb70"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.substituteIndexedMappedType","kind":"method","status":"implemented","sigHash":"15e98ce62f75ee583a55f90ed02a623dcd76f01f8f34a8b64317713d817603e0","bodyHash":"2bd3f2dd721791e8b5fb6ea7d23a380c5a0f65d5f6cdad418ec2db9c5c3cbb70"}
  *
  * Go source:
  * func (c *Checker) substituteIndexedMappedType(objectType *Type, index *Type) *Type {
@@ -14216,7 +14251,18 @@ export function Checker_markEntityNameOrEntityExpressionAsReference(receiver: Go
  * }
  */
 export function Checker_substituteIndexedMappedType(receiver: GoPtr<Checker>, objectType: GoPtr<Type>, index: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.substituteIndexedMappedType");
+  const mapper = newSimpleTypeMapper(Checker_getTypeParameterFromMappedType(receiver, objectType), index);
+  const templateMapper = Checker_combineTypeMappers(receiver, Type_Mapper(objectType), mapper);
+  const instantiatedTemplateType = Checker_instantiateType(receiver, Checker_getTemplateTypeFromMappedType(receiver, OrElse(Type_Target(objectType), objectType)), templateMapper);
+  let isOptional = getMappedTypeOptionality(objectType) > 0;
+  if (!isOptional) {
+    if (Checker_isGenericType(receiver, objectType)) {
+      isOptional = Checker_getCombinedMappedTypeOptionality(receiver, Checker_getModifiersTypeFromMappedType(receiver, objectType)) > 0;
+    } else {
+      isOptional = Checker_couldAccessOptionalProperty(receiver, objectType, index);
+    }
+  }
+  return Checker_addOptionalityEx(receiver, instantiatedTemplateType, true, isOptional);
 }
 
 /**
