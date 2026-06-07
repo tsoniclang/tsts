@@ -1295,8 +1295,11 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   assert.match(data, /FlowNodeData: \(\) => FlowNodeBase_FlowNodeData\(receiver\),/);
   // No override -> NodeDefault for DeclarationData (Identifier has no DeclarationBase).
   assert.match(data, /DeclarationData: \(\) => NodeDefault_DeclarationData\(receiver\),/);
-  // VisitEachChild is deferred to the NodeVisitor co-wave -> NodeDefault.
-  assert.match(data, /VisitEachChild: \(v\) => NodeDefault_VisitEachChild\(receiver, v\),/);
+  // Leaf nodes still use NodeDefault for VisitEachChild.
+  assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{[\s\S]*?VisitEachChild: \(v\) => NodeDefault_VisitEachChild\(receiver, v\),/);
+  // Child-bearing nodes get generated VisitEachChild rewrites.
+  assert.match(data, /export function ExpressionStatement_VisitEachChild\(receiver: GoPtr<ExpressionStatement>, v: GoPtr<NodeVisitor>\): GoPtr<Node> \{\s*return Factory\.NodeFactory_UpdateExpressionStatement\(generatedVisitorFactory\(v\), receiver, generatedVisitNode\(v, receiver!\.Expression\) as GoPtr<Expression>\);\s*\}/);
+  assert.match(data, /VisitEachChild: \(v\) => ExpressionStatement_VisitEachChild\(receiver, v\),/);
   // The brand carries the concrete receiver.
   assert.match(data, /\[goReceiverKey\]: receiver,/);
 });
@@ -1340,13 +1343,11 @@ test("ast-generator: multi-kind and type-parameter Is functions follow ast_gener
   assert.match(predicates, /export function IsToken\(node: GoPtr<Node>\): bool \{\s*switch \(node!\.Kind\)/);
 });
 
-test("ast-generator: generatedAstSkips records handWritten + visitEachChild deferral", () => {
+test("ast-generator: generatedAstSkips records handWritten without visitEachChild deferral", () => {
   const skips = buildGeneratedAstSkips(baseConfig);
   assert.deepEqual(skips.handWritten, ["SourceFile"]);
   assert.deepEqual(skips.handWrittenVisitor, ["JSDocParameterOrPropertyTag"]);
-  // Many child-bearing kinds defer VisitEachChild this wave.
-  assert.ok(skips.visitEachChildDeferred.includes("IfStatement"));
-  assert.ok(skips.visitEachChildDeferred.length > 100);
+  assert.deepEqual(skips.visitEachChildDeferred, []);
 });
 
 const SAMPLE_CATALOG = [

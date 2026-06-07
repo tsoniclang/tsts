@@ -392,7 +392,12 @@ export class AstMember {
   get goOnly() { return this.member.goOnly === true; }
   get noGo() { return this.member.noGo === true; }
   get bitmask() { return this.member.bitmask; }
-  get visit() { return this.member.visit; }
+  get visit() {
+    if (this.member.visit !== undefined) return this.member.visit;
+    const bf = this._baseField;
+    if (bf) return bf.visit;
+    return undefined;
+  }
   // goOnly implies noTS; explicit noTS honored.
   get noTS() { return this.goOnly || this.member.noTS === true; }
   // goOnly implies noFactory; explicit noFactory honored.
