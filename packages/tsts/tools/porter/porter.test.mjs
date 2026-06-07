@@ -376,6 +376,54 @@ test("buildStatus excludes inactive LS/LSP/fourslash policies from active porter
   assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
 });
 
+test("buildStatus excludes exact inactive unit policies without counting their TS stubs", () => {
+  const id = "m::internal/execute/tsc.go::func::fmtMain";
+  const config = {
+    ...baseConfig,
+    unitPolicies: [
+      {
+        id,
+        category: "out-of-scope",
+        active: false,
+        reason: "formatter command path excluded",
+      },
+    ],
+  };
+  const status = buildStatus(config, snapshotWith([
+    fileRecord({
+      path: "internal/execute/tsc.go",
+      units: [unitRecord({
+        id,
+        kind: "func",
+        qualifiedName: "fmtMain",
+        goPath: "internal/execute/tsc.go",
+        sigHash: "sig-1",
+        bodyHash: "body-1",
+      })],
+    }),
+  ]), {
+    fileCount: 1,
+    files: [{ path: "packages/tsts/src/internal/execute/tsc.ts", metadataCount: 1 }],
+    units: [{
+      id,
+      kind: "func",
+      path: "packages/tsts/src/internal/execute/tsc.ts",
+      status: "stub",
+      sigHash: "sig-1",
+      bodyHash: "body-1",
+      hasUnimplThrow: true,
+    }],
+  });
+
+  assert.equal(status.counts.portable, 0);
+  assert.equal(status.counts.excluded, 1);
+  assert.equal(status.counts.stubbed, 0);
+  assert.equal(status.counts.missing, 0);
+  assert.equal(status.rows[0].status, "excluded");
+  assert.equal(status.rows[0].reason, "formatter command path excluded");
+  assert.deepEqual(collectVerifyFailures(status, { "strict-port": true }), []);
+});
+
 test("buildStatus excludes generated and Go test units from production scaffold coverage", () => {
   const status = buildStatus(baseConfig, snapshotWith([
     fileRecord({

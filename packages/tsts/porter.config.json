@@ -24,6 +24,20 @@
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
+  "unitPolicies": [
+    {
+      "id": "github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The JSON-RPC/session API entrypoint depends on internal/api, which is outside the standalone compiler runtime port."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "fmtMain is the commented formatter command path and depends on internal/format / language-service formatter settings, which are outside the standalone compiler runtime port."
+    }
+  ],
   "authoredFacadeModules": [
     "go/fmt.ts",
     "go/errors.ts",

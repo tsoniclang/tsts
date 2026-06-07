@@ -190,7 +190,7 @@ export function buildStatus(
   for (const file of snapshot.files) {
     const filePolicy = policyFor(config, file.path, file.generated);
     for (const unit of file.units ?? []) {
-      const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+      const policy = policyForUnit(config, unit, file);
       const record = {
         ...unit,
         file: {
@@ -646,7 +646,7 @@ function largeLiteralUnitsForFile(config, file, threshold) {
   const primaryKinds = new Set(config.primaryUnitKinds);
   return (file.units ?? []).filter((unit) => {
     if (!primaryKinds.has(unit.kind)) return false;
-    const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+    const policy = policyForUnit(config, unit, file);
     return policy.category === "literal-port" && isActivePortPolicy(policy);
   });
 }
@@ -1656,7 +1656,7 @@ function buildSymbolIndex(config, snapshot, largeFileSplits = undefined) {
   for (const file of snapshot.files ?? []) {
     for (const unit of file.units ?? []) {
       if (unit.kind !== "type") continue;
-      const policy = policyFor(config, unit.metadata.goPath, unit.generated || file.generated);
+      const policy = policyForUnit(config, unit, file);
       index.set(`${file.importPath}::${unit.name}`, {
         exportName: safeIdentifier(unit.name),
         targetPath: expectedTsPath(config, unit, largeFileSplits),
@@ -2304,6 +2304,22 @@ export function policyFor(config, rel, generated) {
     return { category: policy.category, reason: policy.reason };
   }
   return { category: "literal-port", reason: "Default production compiler unit: mechanically port from TS-Go." };
+}
+
+export function policyForUnit(config, unit, file = undefined) {
+  const unitPolicy = (config.unitPolicies ?? []).find((candidate) => {
+    if (candidate.id && candidate.id === unit.id) return true;
+    if (candidate.match && matchGlob(candidate.match, unit.id)) return true;
+    return false;
+  });
+  if (unitPolicy) {
+    return {
+      category: unitPolicy.category,
+      active: unitPolicy.active,
+      reason: unitPolicy.reason,
+    };
+  }
+  return policyFor(config, unit.metadata.goPath, unit.generated || file?.generated);
 }
 
 export function isActivePortPolicy(policy) {
