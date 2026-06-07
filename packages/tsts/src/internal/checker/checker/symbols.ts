@@ -13,6 +13,7 @@ import type { Kind } from "../../ast/generated/kinds.js";
 import { KindPropertyDeclaration, KindPropertySignature, KindMethodDeclaration, KindMethodSignature, KindPropertyAssignment, KindClassStaticBlockDeclaration, KindTypeQuery, KindJsxClosingElement, KindArrowFunction, KindBlock, KindParenthesizedType, KindNamedTupleMember, KindTypeReference, KindUnionType, KindIntersectionType, KindIndexedAccessType, KindConditionalType, KindTypeOperator, KindArrayType, KindTupleType, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindJSDocLink, KindExportSpecifier, KindExportDeclaration, KindExportAssignment, KindNamespaceExport, KindImportSpecifier, KindImportClause, KindNamespaceImport, KindImportEqualsDeclaration, KindBindingElement, KindVariableDeclaration, KindStringLiteral, KindNumericLiteral, KindComputedPropertyName, KindAmpersandAmpersandToken, KindThisKeyword, KindExternalModuleReference, KindIdentifier, KindPropertyAccessExpression, KindElementAccessExpression, KindExpressionWithTypeArguments, KindQualifiedName, KindImportType, KindModuleDeclaration, KindSourceFile, KindJSDocTypedefTag, KindJSDocCallbackTag, KindClassDeclaration, KindInterfaceDeclaration, KindEnumDeclaration, KindEnumMember, KindClassExpression, KindCaseBlock, KindForStatement, KindForInStatement, KindForOfStatement, KindConstructor, KindFunctionExpression, KindFunctionDeclaration, KindCallSignature, KindConstructSignature, KindFunctionType, KindConstructorType, KindInferType, KindIndexSignature, KindSemicolonClassElement, KindParameter } from "../../ast/generated/kinds.js";
 import { KindNewKeyword, KindImportKeyword, KindArrayLiteralExpression, KindBinaryExpression, KindBigIntLiteral, KindUniqueKeyword, KindInKeyword, KindNeverKeyword, KindLiteralType, KindNullKeyword, KindUndefinedKeyword } from "../../ast/generated/kinds.js";
 import { KindIntrinsicKeyword, KindVariableDeclarationList } from "../../ast/generated/kinds.js";
+import { KindArrayBindingPattern, KindObjectBindingPattern } from "../../ast/generated/kinds.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import { ModifierFlagsReadonly, ModifierFlagsAbstract, ModifierFlagsProtected, ModifierFlagsPrivate, ModifierFlagsAmbient, ModifierFlagsExport, ModifierFlagsDefault, ModifierFlagsNonPublicAccessibilityModifier, ModifierFlagsStatic } from "../../ast/modifierflags.js";
 import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
@@ -84,6 +85,7 @@ import { NewSetWithSizeHint, Set_Has, Set_Len, Set_Add, Set_Delete, Set_Keys } f
 import type { Set } from "../../collections/set.js";
 import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_getIntersectionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedType, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType, Checker_getTemplateTypeFromMappedType, Checker_getCombinedMappedTypeOptionality, Checker_getModifiersTypeFromMappedType, Checker_getTupleElementTypeOutOfStartCount, Checker_isSelfTypeAccess, Checker_newIntrinsicType, Checker_getTypeOfFuncClassEnumModule, Checker_removeOptionalTypeMarker, Checker_getAnnotatedAccessorTypeNode, Checker_getWriteTypeOfAccessors, Checker_getOptionalType, Checker_getContextualTypeForBindingElement } from "./types.js";
 import { Checker_checkTypeReferenceNode } from "./types.js";
+import { Checker_checkExpressionWithContextualType, Checker_getQuickTypeOfExpression, Checker_padObjectLiteralType, Checker_padTupleType } from "./types.js";
 import { Checker_getDeclaringClass } from "./classes.js";
 import { Checker_isAssignmentToReadonlyEntity, Checker_isReadonlyAssignmentDeclaration, Checker_isTypeAssignableToKind, Checker_checkInheritedPropertiesAreIdentical } from "./relations.js";
 import { Checker_getCannotFindNameDiagnosticForName, Checker_reportMergeSymbolError, Checker_isDeprecatedSymbol, Checker_addDeprecatedSuggestion, Checker_checkAndReportErrorForInvalidInitializer, Checker_checkAndReportErrorForMissingPrefix, Checker_checkAndReportErrorForExtendingInterface, Checker_checkAndReportErrorForUsingTypeAsNamespace, Checker_checkAndReportErrorForExportingPrimitiveType, Checker_checkAndReportErrorForUsingNamespaceAsTypeOrValue, Checker_checkAndReportErrorForUsingTypeAsValue, Checker_checkAndReportErrorForUsingValueAsType, Checker_addErrorOrSuggestion, Checker_addTypeOnlyDeclarationRelatedInfo, Checker_getDeprecatedSuggestionNode, Checker_reportDuplicateMemberErrors, Checker_IsDeprecatedDeclaration, Checker_isErrorType, Checker_getCannotResolveModuleNameErrorForSpecificModule, Checker_checkAndReportErrorForResolvingImportAliasToTypeOnlySymbol } from "./diagnostics.js";
@@ -111,7 +113,7 @@ import { IsExternalModuleNameRelative } from "../../tspath/path.js";
 import { ExtensionCts, ExtensionDcts, ExtensionDmts, ExtensionMts, GetDeclarationFileExtension, IsDeclarationFileName, RemoveExtension } from "../../tspath/extension.js";
 import { Checker_getCombinedModifierFlagsCached, Checker_markLinkedReferences, Checker_addOptionalityEx, Checker_isReferenced } from "./support-queries.js";
 import { Checker_checkTypeAssignableTo, Checker_isTypeAssignableTo, Checker_getTupleElementLabel } from "../relater.js";
-import { Checker_checkExpression, Checker_checkExpressionCached, Checker_getCombinedNodeFlagsCached, Checker_hasContextSensitiveReturnExpression, Checker_hasContextSensitiveYieldExpression, Checker_recordPotentialCollisionWithReflectInGeneratedCode, Checker_recordPotentialCollisionWithWeakMapSetInGeneratedCode, Checker_checkThisExpression, Checker_reportUnusedVariable, Checker_isUncalledFunctionReference } from "./syntax-checking.js";
+import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_getCombinedNodeFlagsCached, Checker_hasContextSensitiveReturnExpression, Checker_hasContextSensitiveYieldExpression, Checker_recordPotentialCollisionWithReflectInGeneratedCode, Checker_recordPotentialCollisionWithWeakMapSetInGeneratedCode, Checker_checkThisExpression, Checker_reportUnusedVariable, Checker_isUncalledFunctionReference } from "./syntax-checking.js";
 import { Checker_getEmitSyntaxForModuleSpecifierExpression, Checker_resolveExternalModule, Checker_getTargetOfModuleDefault } from "./modules.js";
 import { isConstEnumOrConstEnumOnlyModule } from "../const-enum.js";
 import { Checker_getFlowTypeOfAccessExpression, Checker_isDiscriminantWithNeverType } from "./flow-narrowing.js";
@@ -9556,7 +9558,7 @@ export function Checker_getTypeForVariableLikeDeclaration(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeclarationInitializer","kind":"method","status":"stub","sigHash":"3f6a0999b2e86ff3ca12883bfe4665ebbbe639a27152f8031905820c755a3397","bodyHash":"6ae7ff6d5e77ba301c6a798d9627b64894c45c408ac8a6c7064c675caf5a7026"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeclarationInitializer","kind":"method","status":"implemented","sigHash":"3f6a0999b2e86ff3ca12883bfe4665ebbbe639a27152f8031905820c755a3397","bodyHash":"6ae7ff6d5e77ba301c6a798d9627b64894c45c408ac8a6c7064c675caf5a7026"}
  *
  * Go source:
  * func (c *Checker) checkDeclarationInitializer(declaration *ast.Node, checkMode CheckMode, contextualType *Type) *Type {
@@ -9586,7 +9588,31 @@ export function Checker_getTypeForVariableLikeDeclaration(receiver: GoPtr<Checke
  * }
  */
 export function Checker_checkDeclarationInitializer(receiver: GoPtr<Checker>, declaration: GoPtr<Node>, checkMode: CheckMode, contextualType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkDeclarationInitializer");
+  const initializer = Node_Initializer(declaration);
+  let t = Checker_getQuickTypeOfExpression(receiver, initializer);
+  if (t === undefined) {
+    if (contextualType !== undefined) {
+      t = Checker_checkExpressionWithContextualType(receiver, initializer, contextualType, undefined, checkMode);
+    } else {
+      t = Checker_checkExpressionCachedEx(receiver, initializer, checkMode);
+    }
+  }
+  if (IsParameterDeclaration(GetRootDeclaration(declaration))) {
+    const name = Node_Name(declaration);
+    switch (name!.Kind) {
+      case KindObjectBindingPattern:
+        if (isObjectLiteralType(t)) {
+          return Checker_padObjectLiteralType(receiver, t, name);
+        }
+        break;
+      case KindArrayBindingPattern:
+        if (isTupleType(t)) {
+          return Checker_padTupleType(receiver, t, name);
+        }
+        break;
+    }
+  }
+  return t;
 }
 
 /**
