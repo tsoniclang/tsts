@@ -1,15 +1,15 @@
 import type { bool, int, uint } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Values as SliceValues } from "../../go/slices.js";
-import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
+import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
-import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression, Node_Initializer, Node_Symbol } from "../ast/ast.js";
+import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression, Node_Initializer, Node_Symbol, Node_TypeArguments, Node_TypeArgumentList } from "../ast/ast.js";
 import type { EntityName, JsxChild } from "../ast/generated/unions.js";
 import { KindJsxElement, KindJsxExpression, KindJsxFragment, KindJsxSelfClosingElement, KindJsxText } from "../ast/generated/kinds.js";
-import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName, IsJsxText, IsJsxExpression, IsJsxSpreadAttribute } from "../ast/generated/predicates.js";
+import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName, IsJsxText, IsJsxExpression, IsJsxSpreadAttribute, IsJsxSelfClosingElement, IsJsxFragment } from "../ast/generated/predicates.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
-import { DiagnosticsCollection_Add, NewDiagnosticChain } from "../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, DiagnosticsCollection_Add, NewDiagnostic, NewDiagnosticChain } from "../ast/diagnostic.js";
 import type { Symbol } from "../ast/symbol.js";
 import { SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsValue, SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsTypeAlias, SymbolFlagsFunctionScopedVariable, SymbolFlagsOptional, SymbolFlagsProperty } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
@@ -23,34 +23,37 @@ import { GetSourceFileOfNode, GetFirstIdentifier, GetPragmaFromSourceFile, GetPr
 import { InternalSymbolNameMissing, SymbolName } from "../ast/symbol.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
 import { OrElse, IfElse, Find, Map } from "../core/core.js";
-import { NewIdentifier, NewQualifiedName } from "../ast/generated/factory.js";
+import { NewIdentifier, NewPropertySignatureDeclaration, NewQualifiedName } from "../ast/generated/factory.js";
 import { AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxText } from "../ast/generated/casts.js";
-import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments, This_JSX_tag_s_0_prop_expects_a_single_child_of_type_1_but_multiple_children_were_provided, This_JSX_tag_s_0_prop_expects_type_1_which_requires_multiple_children_but_only_a_single_child_was_provided, X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Its_type_0_is_not_a_valid_JSX_element_type } from "../diagnostics/generated/messages.js";
+import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments, This_JSX_tag_s_0_prop_expects_a_single_child_of_type_1_but_multiple_children_were_provided, This_JSX_tag_s_0_prop_expects_type_1_which_requires_multiple_children_but_only_a_single_child_was_provided, X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Its_type_0_is_not_a_valid_JSX_element_type, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, Tag_0_expects_at_least_1_arguments_but_the_JSX_factory_2_provides_at_most_3, X_0_is_declared_here, Expected_0_type_arguments_but_got_1, Spread_types_may_only_be_created_from_object_types, X_0_are_specified_twice_The_attribute_named_0_will_be_overwritten } from "../diagnostics/generated/messages.js";
 import { Its_element_type_0_is_not_a_valid_JSX_element, Its_instance_type_0_is_not_a_valid_JSX_element, Its_return_type_0_is_not_a_valid_JSX_element, X_0_cannot_be_used_as_a_JSX_component } from "../diagnostics/generated/messages.js";
 import { GetTextOfNode } from "../scanner/utilities.js";
-import { IsTypeAny, isJsxIntrinsicTagName, NewDiagnosticForNode } from "./utilities.js";
+import { IsTypeAny, isJsxIntrinsicTagName, NewDiagnosticForNode, entityNameToString } from "./utilities.js";
 import { newTypeMapper } from "./mapper.js";
-import { Checker_isErrorType, Checker_checkDeprecatedSignature } from "./checker/diagnostics.js";
+import { Checker_isErrorType, Checker_checkDeprecatedSignature, Checker_resolveErrorCall, Checker_addDeprecatedSuggestion, Checker_isDeprecatedSymbol } from "./checker/diagnostics.js";
 import { Checker_checkGrammarJsxExpression, Checker_checkGrammarJsxElement } from "./grammarchecks.js";
-import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getPropertyNameFromIndex, Checker_markJsxAliasReferenced, Checker_isExactOptionalPropertyMismatch } from "./checker/symbols.js";
-import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType, Checker_checkExpressionWithContextualType, ObjectLiteralDiscriminator_len, ObjectLiteralDiscriminator_name, ObjectLiteralDiscriminator_matches, Checker_filterType, Checker_createIterableType, Checker_isArrayOrTupleLikeType, Checker_createTupleType, Checker_removeMissingType, Checker_getIterationTypeOfIterable } from "./checker/types.js";
+import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getPropertyNameFromIndex, Checker_markJsxAliasReferenced, Checker_isExactOptionalPropertyMismatch, Checker_resolveEntityName, Checker_getSymbolAtLocation } from "./checker/symbols.js";
+import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType, Checker_checkExpressionWithContextualType, ObjectLiteralDiscriminator_len, ObjectLiteralDiscriminator_name, ObjectLiteralDiscriminator_matches, Checker_filterType, Checker_createIterableType, Checker_isArrayOrTupleLikeType, Checker_createTupleType, Checker_removeMissingType, Checker_getIterationTypeOfIterable, Checker_getRegularTypeOfObjectLiteral, Checker_getSpreadType, Checker_getReducedType, Checker_isValidSpreadType, Checker_newAnonymousType, Checker_getPropagatingFlagsOfTypes, Checker_createArrayType, Checker_isTupleLikeType } from "./checker/types.js";
 import type { Checker, CheckMode, InferenceContext, DiscriminatedContextualTypeKey, ObjectLiteralDiscriminator } from "./checker/state.js";
-import { getStringLiteralValue, CheckModeNormal, InferencePriorityNone, Checker_getSourceFileLinks, IterationUseForOf, IterationTypeKindYield, createDiagnosticForNode } from "./checker/state.js";
+import { getStringLiteralValue, CheckModeInferential, CheckModeNormal, CheckModeSkipContextSensitive, InferencePriorityNone, Checker_getSourceFileLinks, IterationUseForOf, IterationTypeKindYield, createDiagnosticForNode, someType } from "./checker/state.js";
 import { Checker_error } from "./checker/support.js";
+import { Checker_checkSourceElements } from "./checker/support.js";
 import { Checker_getSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getExportsOfSymbol, Checker_resolveSymbol, Checker_getMergedSymbol, Checker_getGlobalSymbol, Checker_getTypeOfSymbol, Checker_resolveAlias, Checker_getSpellingSuggestionForName, Checker_getTypeOfPropertyOfContextualType, Checker_getIndexedAccessType, Checker_newSymbol } from "./checker/symbols.js";
 import { Checker_resolveExternalModule } from "./checker/modules.js";
 import { Checker_findContextualNode, Checker_checkExpression, Checker_checkExpressionCached, Checker_checkNodeDeferred, Checker_checkExpressionEx, Checker_checkExpressionForMutableLocation } from "./checker/syntax-checking.js";
-import { Checker_fillMissingTypeArguments, Checker_getReturnTypeOfSignature, Checker_getMinTypeArgumentCount, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getTypeOfFirstParameterOfSignatureWithFallback, Checker_getContextualTypeForArgumentAtIndex, Checker_getSignaturesOfType, Checker_newSignature, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_getOrCreateTypeFromSignature, Checker_getUnionSignatures, Checker_getResolvedSignature } from "./checker/signatures.js";
-import { Checker_getTypeAliasInstantiation } from "./checker/inference.js";
-import { Checker_inferTypes, Checker_getInferredTypes } from "./inference.js";
+import { Checker_fillMissingTypeArguments, Checker_getReturnTypeOfSignature, Checker_getMinTypeArgumentCount, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getTypeOfFirstParameterOfSignatureWithFallback, Checker_getContextualTypeForArgumentAtIndex, Checker_getSignaturesOfType, Checker_newSignature, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_getOrCreateTypeFromSignature, Checker_getUnionSignatures, Checker_getResolvedSignature, Checker_resolveCall, Checker_resolveUntypedCall, Checker_isUntypedFunctionCall } from "./checker/signatures.js";
+import { Checker_getInferenceContext, Checker_getTypeAliasInstantiation } from "./checker/inference.js";
+import { Checker_addIntraExpressionInferenceSite, Checker_inferTypes, Checker_getInferredTypes } from "./inference.js";
+import { Checker_isContextSensitive } from "./checker/support-queries.js";
+import { Checker_checkSpreadPropOverrides } from "./checker/classes.js";
 import { Checker_isPossiblyDiscriminantValue } from "./checker/flow-narrowing.js";
 import { Checker_TypeToString } from "./printer.js";
 import type { SourceFileLinks, TypeAliasLinks, InterfaceType, ValueSymbolLinks, SymbolNodeLinks } from "./types.js";
 import { Type_AsInterfaceType, InterfaceType_TypeParameters, SignatureFlagsNone } from "./types.js";
 import type { Relation } from "./relater.js";
-import { Checker_checkTypeRelatedToEx, Checker_isTypeAssignableTo, Checker_checkTypeRelatedTo, Checker_reportDiagnostic, Checker_elaborateError, Checker_getBestMatchIndexedAccessTypeOrUndefined, Checker_checkExpressionForMutableLocationWithContextualType, Checker_elaborateElement, Checker_isDiscriminantProperty, Checker_discriminateTypeByDiscriminableItems, isHyphenatedJsxName } from "./relater.js";
-import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone } from "./types.js";
-import type { ContextFlags, Signature, Type } from "./types.js";
+import { Checker_checkTypeRelatedToEx, Checker_isTypeAssignableTo, Checker_checkTypeRelatedTo, Checker_reportDiagnostic, Checker_elaborateError, Checker_getBestMatchIndexedAccessTypeOrUndefined, Checker_checkExpressionForMutableLocationWithContextualType, Checker_elaborateElement, Checker_isDiscriminantProperty, Checker_discriminateTypeByDiscriminableItems, isHyphenatedJsxName, Checker_checkTypeAssignableToAndOptionallyElaborate, Checker_checkTypeRelatedToAndOptionallyElaborate, Checker_getTypeAtPosition, Checker_hasEffectiveRestParameter, Checker_getParameterCount, Checker_getMinArgumentCount } from "./relater.js";
+import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone, ObjectFlagsJsxAttributes, ObjectFlagsFreshLiteral, ObjectFlagsObjectLiteral, ObjectFlagsContainsObjectOrArrayLiteral, ObjectFlagsPropagatingFlags, TypeFlagsNone } from "./types.js";
+import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxFlags","kind":"type","status":"implemented","sigHash":"bf33d850d9ce92d74d7ae47047276dff2682895a11571cf45456cd974c50ef00","bodyHash":"6beb053f234184782603299db6a5ebc5ec000ad404b32524fb1c92e5141e8b33"}
@@ -1217,7 +1220,7 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"stub","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9","bodyHash":"2b097e2d078317909f5d558b6a1fb7b1bb263834e9ed10e99808d22280fb2814"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9","bodyHash":"2b097e2d078317909f5d558b6a1fb7b1bb263834e9ed10e99808d22280fb2814"}
  *
  * Go source:
  * func (c *Checker) resolveJsxOpeningLikeElement(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -1260,11 +1263,53 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement");
+  const isJsxOpenFragment = IsJsxOpeningFragment(node);
+  let exprTypes: GoPtr<Type>;
+  if (!isJsxOpenFragment) {
+    if (isJsxIntrinsicTagName(Node_TagName(node))) {
+      const result = Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(receiver, node);
+      const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, node, result);
+      Checker_checkTypeAssignableToAndOptionallyElaborate(
+        receiver,
+        Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), Checker_getEffectiveFirstArgumentForJsxSignature(receiver, fakeSignature, node), undefined, CheckModeNormal),
+        result,
+        Node_TagName(node),
+        Node_Attributes(node),
+        undefined,
+        undefined,
+      );
+      const typeArguments = Node_TypeArguments(node) ?? [];
+      if (typeArguments.length !== 0) {
+        Checker_checkSourceElements(receiver, typeArguments);
+        DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(GetSourceFileOfNode(node), Node_TypeArgumentList(node)!.Loc, Expected_0_type_arguments_but_got_1, 0, typeArguments.length));
+      }
+      return fakeSignature;
+    }
+    exprTypes = Checker_checkExpression(receiver, Node_TagName(node));
+  } else {
+    exprTypes = Checker_getJSXFragmentType(receiver, node);
+  }
+  const apparentType = Checker_getApparentType(receiver, exprTypes);
+  if (Checker_isErrorType(receiver, apparentType)) {
+    return Checker_resolveErrorCall(receiver, node);
+  }
+  const signatures = Checker_getUninstantiatedJsxSignaturesOfType(receiver, exprTypes, node);
+  if (Checker_isUntypedFunctionCall(receiver, exprTypes, apparentType, signatures.length, 0)) {
+    return Checker_resolveUntypedCall(receiver, node);
+  }
+  if (signatures.length === 0) {
+    if (isJsxOpenFragment) {
+      Checker_error(receiver, node, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, GetTextOfNode(node));
+    } else {
+      Checker_error(receiver, Node_TagName(node), JSX_element_type_0_does_not_have_any_construct_or_call_signatures, GetTextOfNode(Node_TagName(node)));
+    }
+    return Checker_resolveErrorCall(receiver, node);
+  }
+  return Checker_resolveCall(receiver, node, signatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"stub","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0","bodyHash":"0f1c831ad8b7bbb5626c05e117b889664970b3b598bc63bf8ec933fb542aa9d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"implemented","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0","bodyHash":"0f1c831ad8b7bbb5626c05e117b889664970b3b598bc63bf8ec933fb542aa9d2"}
  *
  * Go source:
  * func (c *Checker) checkApplicableSignatureForJsxCallLikeElement(node *ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -1380,11 +1425,110 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement");
+  const paramType = Checker_getEffectiveFirstArgumentForJsxSignature(receiver, signature, node);
+  let attributesType: GoPtr<Type>;
+  if (IsJsxOpeningFragment(node)) {
+    attributesType = Checker_createJsxAttributesTypeFromAttributesProperty(receiver, node, CheckModeNormal);
+  } else {
+    attributesType = Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), paramType, undefined, checkMode);
+  }
+  let checkAttributesType: GoPtr<Type>;
+  const checkTagNameDoesNotExpectTooManyArguments = (): bool => {
+    if (Checker_getJsxNamespaceContainerForImplicitImport(receiver, node) !== undefined) {
+      return true;
+    }
+    let tagType: GoPtr<Type>;
+    if ((IsJsxOpeningElement(node) || IsJsxSelfClosingElement(node)) && !(isJsxIntrinsicTagName(Node_TagName(node)) || IsJsxNamespacedName(Node_TagName(node)))) {
+      tagType = Checker_checkExpression(receiver, Node_TagName(node));
+    }
+    if (tagType === undefined) {
+      return true;
+    }
+    const tagCallSignatures = Checker_getSignaturesOfType(receiver, tagType, SignatureKindCall);
+    if (tagCallSignatures.length === 0) {
+      return true;
+    }
+    const factory = Checker_getJsxFactoryEntity(receiver, node);
+    if (factory === undefined) {
+      return true;
+    }
+    const factorySymbol = Checker_resolveEntityName(receiver, factory, SymbolFlagsValue, true, false, node);
+    if (factorySymbol === undefined) {
+      return true;
+    }
+    const factoryType = Checker_getTypeOfSymbol(receiver, factorySymbol);
+    const callSignatures = Checker_getSignaturesOfType(receiver, factoryType, SignatureKindCall);
+    if (callSignatures.length === 0) {
+      return true;
+    }
+    let hasFirstParamSignatures = false;
+    let maxParamCount = 0;
+    for (const sig of callSignatures) {
+      const firstParam = Checker_getTypeAtPosition(receiver, sig, 0);
+      const signaturesOfParam = Checker_getSignaturesOfType(receiver, firstParam, SignatureKindCall);
+      if (signaturesOfParam.length === 0) {
+        continue;
+      }
+      for (const paramSig of signaturesOfParam) {
+        hasFirstParamSignatures = true;
+        if (Checker_hasEffectiveRestParameter(receiver, paramSig)) {
+          return true;
+        }
+        const paramCount = Checker_getParameterCount(receiver, paramSig);
+        if (paramCount > maxParamCount) {
+          maxParamCount = paramCount;
+        }
+      }
+    }
+    if (!hasFirstParamSignatures) {
+      return true;
+    }
+    let absoluteMinArgCount = Number.MAX_SAFE_INTEGER as int;
+    for (const tagSig of tagCallSignatures) {
+      const tagRequiredArgCount = Checker_getMinArgumentCount(receiver, tagSig);
+      if (tagRequiredArgCount < absoluteMinArgCount) {
+        absoluteMinArgCount = tagRequiredArgCount;
+      }
+    }
+    if (absoluteMinArgCount <= maxParamCount) {
+      return true;
+    }
+    if (reportErrors) {
+      const tagName = Node_TagName(node);
+      const diagnostic = NewDiagnosticForNode(tagName, Tag_0_expects_at_least_1_arguments_but_the_JSX_factory_2_provides_at_most_3, entityNameToString(tagName), absoluteMinArgCount, entityNameToString(factory), maxParamCount);
+      const tagNameSymbol = Checker_getSymbolAtLocation(receiver, tagName, false);
+      if (tagNameSymbol !== undefined && tagNameSymbol!.ValueDeclaration !== undefined) {
+        Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(tagNameSymbol!.ValueDeclaration, X_0_is_declared_here, entityNameToString(tagName)));
+      }
+      Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
+    }
+    return false;
+  };
+  if ((checkMode & CheckModeSkipContextSensitive) !== 0) {
+    checkAttributesType = Checker_getRegularTypeOfObjectLiteral(receiver, attributesType);
+  } else {
+    checkAttributesType = attributesType;
+  }
+  if (!checkTagNameDoesNotExpectTooManyArguments()) {
+    return false;
+  }
+  let errorNode: GoPtr<Node>;
+  if (reportErrors) {
+    if (IsJsxOpeningFragment(node)) {
+      errorNode = node;
+    } else {
+      errorNode = Node_TagName(node);
+    }
+  }
+  let attributes: GoPtr<Node>;
+  if (!IsJsxOpeningFragment(node)) {
+    attributes = Node_Attributes(node);
+  }
+  return Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, checkAttributesType, paramType, relation, errorNode, attributes, undefined, diagnosticOutput);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"stub","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94","bodyHash":"36cc949a1bd0733901e68380c392d08b1634c465ea17f1b09f192e6ebef40c6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"implemented","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94","bodyHash":"36cc949a1bd0733901e68380c392d08b1634c465ea17f1b09f192e6ebef40c6d"}
  *
  * Go source:
  * func (c *Checker) createJsxAttributesTypeFromAttributesProperty(openingLikeElement *ast.Node, checkMode CheckMode) *Type {
@@ -1553,7 +1697,158 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
  * }
  */
 export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: GoPtr<Checker>, openingLikeElement: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty");
+  let allAttributesTable: GoPtr<SymbolTable>;
+  if (receiver!.strictNullChecks) {
+    allAttributesTable = new globalThis.Map();
+  }
+  let attributesTable: SymbolTable = new globalThis.Map();
+  let attributesSymbol: GoPtr<Symbol>;
+  let attributeParent = openingLikeElement;
+  let spread = receiver!.emptyJsxObjectType;
+  let hasSpreadAnyType = false;
+  let typeToIntersect: GoPtr<Type>;
+  let explicitlySpecifyChildrenAttribute = false;
+  let objectFlags: ObjectFlags = ObjectFlagsJsxAttributes;
+  const createJsxAttributesType = (): GoPtr<Type> => {
+    objectFlags = (objectFlags | ObjectFlagsFreshLiteral) as ObjectFlags;
+    const result = Checker_newAnonymousType(receiver, attributesSymbol, attributesTable, [], [], []);
+    result!.objectFlags = (result!.objectFlags | objectFlags | ObjectFlagsObjectLiteral | ObjectFlagsContainsObjectOrArrayLiteral) as ObjectFlags;
+    return result;
+  };
+  const jsxChildrenPropertyName = Checker_getJsxElementChildrenPropertyName(receiver, Checker_getJsxNamespaceAt(receiver, openingLikeElement));
+  const isJsxOpenFragment = IsJsxOpeningFragment(openingLikeElement);
+  if (!isJsxOpenFragment) {
+    const attributes = Node_Attributes(openingLikeElement);
+    attributesSymbol = Node_Symbol(attributes);
+    attributeParent = attributes;
+    const contextualType = Checker_getContextualType(receiver, attributes, ContextFlagsNone);
+    for (const attributeDecl of Node_Properties(attributes) ?? []) {
+      const member = Node_Symbol(attributeDecl);
+      if (IsJsxAttribute(attributeDecl)) {
+        const exprType = Checker_checkJsxAttribute(receiver, attributeDecl, checkMode);
+        objectFlags = (objectFlags | (exprType!.objectFlags & ObjectFlagsPropagatingFlags)) as ObjectFlags;
+        const attributeSymbol = Checker_newSymbol(receiver, (SymbolFlagsProperty | member!.Flags) as SymbolFlags, member!.Name);
+        attributeSymbol!.Declarations = member!.Declarations;
+        attributeSymbol!.Parent = member!.Parent;
+        if (member!.ValueDeclaration !== undefined) {
+          attributeSymbol!.ValueDeclaration = member!.ValueDeclaration;
+        }
+        const links = LinkStore_Get(receiver!.valueSymbolLinks, attributeSymbol) as GoPtr<ValueSymbolLinks>;
+        links!.resolvedType = exprType;
+        links!.target = member;
+        attributesTable.set(attributeSymbol!.Name, attributeSymbol);
+        if (allAttributesTable !== undefined) {
+          allAttributesTable.set(attributeSymbol!.Name, attributeSymbol);
+        }
+        if (Node_Text(Node_Name(attributeDecl)) === jsxChildrenPropertyName) {
+          explicitlySpecifyChildrenAttribute = true;
+        }
+        if (contextualType !== undefined) {
+          const prop = Checker_getPropertyOfType(receiver, contextualType, member!.Name);
+          if (prop !== undefined && prop!.Declarations !== undefined && Checker_isDeprecatedSymbol(receiver, prop) && IsIdentifier(Node_Name(attributeDecl))) {
+            Checker_addDeprecatedSuggestion(receiver, Node_Name(attributeDecl), prop!.Declarations, Node_Text(Node_Name(attributeDecl)));
+          }
+        }
+        if (contextualType !== undefined && (checkMode & CheckModeInferential) !== 0 && (checkMode & CheckModeSkipContextSensitive) === 0 && Checker_isContextSensitive(receiver, attributeDecl)) {
+          const inferenceContext = Checker_getInferenceContext(receiver, attributes);
+          const inferenceNode = Node_Expression(Node_Initializer(attributeDecl));
+          Checker_addIntraExpressionInferenceSite(receiver, inferenceContext, inferenceNode, exprType);
+        }
+      } else {
+        if (attributesTable.size !== 0) {
+          spread = Checker_getSpreadType(receiver, spread, createJsxAttributesType(), attributesSymbol, objectFlags, false);
+          attributesTable = new globalThis.Map();
+        }
+        const exprType = Checker_getReducedType(receiver, Checker_checkExpressionEx(receiver, Node_Expression(attributeDecl), (checkMode & CheckModeInferential) as CheckMode));
+        if (IsTypeAny(exprType)) {
+          hasSpreadAnyType = true;
+        }
+        if (Checker_isValidSpreadType(receiver, exprType)) {
+          spread = Checker_getSpreadType(receiver, spread, exprType, attributesSymbol, objectFlags, false);
+          if (allAttributesTable !== undefined) {
+            Checker_checkSpreadPropOverrides(receiver, exprType, allAttributesTable, attributeDecl);
+          }
+        } else {
+          Checker_error(receiver, Node_Expression(attributeDecl), Spread_types_may_only_be_created_from_object_types);
+          if (typeToIntersect !== undefined) {
+            typeToIntersect = Checker_getIntersectionType(receiver, [typeToIntersect, exprType]);
+          } else {
+            typeToIntersect = exprType;
+          }
+        }
+      }
+    }
+    if (!hasSpreadAnyType && attributesTable.size !== 0) {
+      spread = Checker_getSpreadType(receiver, spread, createJsxAttributesType(), attributesSymbol, objectFlags, false);
+    }
+  }
+  const parentHasSemanticJsxChildren = (element: GoPtr<Node>): bool => {
+    const parent = element!.Parent;
+    if (parent === undefined) {
+      return false;
+    }
+    let children: GoSlice<GoPtr<Node>> = [];
+    if (IsJsxElement(parent)) {
+      if (AsJsxElement(parent)!.OpeningElement === element) {
+        children = Node_Children(parent)!.Nodes;
+      }
+    } else if (IsJsxFragment(parent)) {
+      if (AsJsxFragment(parent)!.OpeningFragment === element) {
+        children = Node_Children(parent)!.Nodes;
+      }
+    }
+    return GetSemanticJsxChildren(children).length !== 0;
+  };
+  if (parentHasSemanticJsxChildren(openingLikeElement)) {
+    const childTypes = Checker_checkJsxChildren(receiver, openingLikeElement!.Parent, checkMode);
+    if (!hasSpreadAnyType && jsxChildrenPropertyName !== InternalSymbolNameMissing && jsxChildrenPropertyName !== "") {
+      if (explicitlySpecifyChildrenAttribute) {
+        Checker_error(receiver, attributeParent, X_0_are_specified_twice_The_attribute_named_0_will_be_overwritten, jsxChildrenPropertyName);
+      }
+      let childrenContextualType: GoPtr<Type>;
+      if (IsJsxOpeningElement(openingLikeElement)) {
+        const contextualType = Checker_getApparentTypeOfContextualType(receiver, Node_Attributes(openingLikeElement), ContextFlagsNone);
+        if (contextualType !== undefined) {
+          childrenContextualType = Checker_getTypeOfPropertyOfContextualType(receiver, contextualType, jsxChildrenPropertyName);
+        }
+      }
+      const childrenPropSymbol = Checker_newSymbol(receiver, SymbolFlagsProperty, jsxChildrenPropertyName);
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, childrenPropSymbol) as GoPtr<ValueSymbolLinks>;
+      if (childTypes.length === 1) {
+        links!.resolvedType = childTypes[0];
+      } else if (childrenContextualType !== undefined && someType(childrenContextualType, (candidate) => Checker_isTupleLikeType(receiver, candidate))) {
+        links!.resolvedType = Checker_createTupleType(receiver, childTypes);
+      } else {
+        links!.resolvedType = Checker_createArrayType(receiver, Checker_getUnionType(receiver, childTypes));
+      }
+      childrenPropSymbol!.ValueDeclaration = NewPropertySignatureDeclaration(receiver!.factory, undefined, NewIdentifier(receiver!.factory, jsxChildrenPropertyName), undefined, undefined, undefined);
+      childrenPropSymbol!.ValueDeclaration!.Parent = attributeParent;
+      (Node_DeclarationData(childrenPropSymbol!.ValueDeclaration) as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = childrenPropSymbol;
+      const childPropMap: SymbolTable = new globalThis.Map();
+      childPropMap.set(jsxChildrenPropertyName, childrenPropSymbol);
+      spread = Checker_getSpreadType(
+        receiver,
+        spread,
+        Checker_newAnonymousType(receiver, attributesSymbol, childPropMap, [], [], []),
+        attributesSymbol,
+        (objectFlags | Checker_getPropagatingFlagsOfTypes(receiver, childTypes, TypeFlagsNone)) as ObjectFlags,
+        false,
+      );
+    }
+  }
+  if (hasSpreadAnyType) {
+    return receiver!.anyType;
+  }
+  if (typeToIntersect !== undefined) {
+    if (spread !== receiver!.emptyJsxObjectType) {
+      return Checker_getIntersectionType(receiver, [typeToIntersect, spread]);
+    }
+    return typeToIntersect;
+  }
+  if (spread === receiver!.emptyJsxObjectType) {
+    return createJsxAttributesType();
+  }
+  return spread;
 }
 
 /**
