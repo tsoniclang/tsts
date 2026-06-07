@@ -2,6 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
+import type { Number } from "../../jsnum/jsnum.js";
 import type { Node, SourceFile } from "../../ast/ast.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { ParameterDeclarationNode } from "../../ast/ast_generated.js";
@@ -50,10 +51,10 @@ import type { LinkStore } from "../../core/linkstore.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
 import { Arena_New } from "../../core/arena.js";
-import { Checker_checkComputedPropertyName, Checker_checkDeclarationInitializer, Checker_checkPropertyDeclaration, Checker_checkTypeNameIsReserved, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_cloneSymbol, Checker_createSymbolWithType, Checker_getAliasForTypeNode, Checker_getAwaitedTypeNoAlias, Checker_getClassOrInterfaceDeclarationsOfSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getEffectiveDeclarationFlags, Checker_getIndexInfoOfType, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexTypeOfType, Checker_getLiteralTypeFromProperty, Checker_getLiteralTypeFromPropertyName, Checker_getMembersOfSymbol, Checker_getMergedSymbol, Checker_getParentOfSymbol, Checker_getPropertyOfObjectType, Checker_getPropertyOfType, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getSymbolFromTypeReference, Checker_getSymbolOfDeclaration, Checker_getSymbolOfNode, Checker_getTypeOfPrototypeProperty, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_getTypeOfEnumMember, Checker_getTypeWithSyntheticDefaultImportType, Checker_getUniqAssociatedNamesFromTupleType, Checker_getWidenedTypeForVariableLikeDeclaration, Checker_widenTypeForVariableLikeDeclaration, Checker_hasBindableName, Checker_instantiateSymbol, Checker_instantiateSymbols, Checker_isArrayOrTupleSymbol, Checker_isAutoTypedProperty, Checker_isGenericIndexType, Checker_isReadonlyArraySymbol, Checker_isSpreadableProperty, Checker_getSpreadSymbol, Checker_newIndexInfo, Checker_newSymbol, Checker_newSymbolEx, Checker_registerForUnusedIdentifiersCheck, Checker_reportUnusedImports, Checker_reportUnusedLocal, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveStructuredTypeMembers, Checker_getIndexedAccessTypeEx, Checker_setStructuredTypeMembers } from "./symbols.js";
+import { Checker_checkComputedPropertyName, Checker_checkDeclarationInitializer, Checker_checkPropertyDeclaration, Checker_checkTypeNameIsReserved, Checker_checkVariableLikeDeclaration, Checker_classDeclarationExtendsNull, Checker_cloneSymbol, Checker_createSymbolWithType, Checker_getAliasForTypeNode, Checker_getAwaitedTypeNoAlias, Checker_getClassElementPropertyKeyType, Checker_getClassOrInterfaceDeclarationsOfSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getEffectiveDeclarationFlags, Checker_getIndexInfoOfType, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexTypeOfType, Checker_getLiteralTypeFromProperty, Checker_getLiteralTypeFromPropertyName, Checker_getMembersOfSymbol, Checker_getMergedSymbol, Checker_getParentOfSymbol, Checker_getPropertyOfObjectType, Checker_getPropertyOfType, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getSymbolFromTypeReference, Checker_getSymbolOfDeclaration, Checker_getSymbolOfNode, Checker_getTypeOfPrototypeProperty, Checker_getTypeOfPropertyOfType, Checker_getTypeOfSymbol, Checker_getTypeOfEnumMember, Checker_getTypeWithSyntheticDefaultImportType, Checker_getUniqAssociatedNamesFromTupleType, Checker_getWidenedTypeForVariableLikeDeclaration, Checker_widenTypeForVariableLikeDeclaration, Checker_hasBindableName, Checker_instantiateSymbol, Checker_instantiateSymbols, Checker_isArrayOrTupleSymbol, Checker_isAutoTypedProperty, Checker_isGenericIndexType, Checker_isReadonlyArraySymbol, Checker_isSpreadableProperty, Checker_getSpreadSymbol, Checker_newIndexInfo, Checker_newSymbol, Checker_newSymbolEx, Checker_newClassMemberDecoratorContextTypeForNode, Checker_newTypedPropertyDescriptorType, Checker_registerForUnusedIdentifiersCheck, Checker_reportUnusedImports, Checker_reportUnusedLocal, Checker_reportUnusedVariableDeclarations, Checker_resolveEntityName, Checker_resolveExternalModuleName, Checker_resolveExternalModuleSymbol, Checker_resolveStructuredTypeMembers, Checker_getIndexedAccessTypeEx, Checker_setStructuredTypeMembers } from "./symbols.js";
 import { Checker_getESSymbolLikeTypeForNode } from "./symbols.js";
 import { Checker_isNodeWithinClass } from "./classes.js";
-import { Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_addOptionalTypeMarker, Checker_assignBindingElementTypes, Checker_checkAndAggregateReturnExpressionTypes, Checker_checkAndAggregateYieldOperandTypes, Checker_checkAwaitedType, Checker_checkExpressionWithContextualType, Checker_checkIteratedTypeOrElementType, Checker_checkObjectLiteralMethod, Checker_combineUnionOrIntersectionThisParam, Checker_containsUndefinedType, Checker_createArrayType, Checker_createArrayTypeEx, Checker_createGeneratorType, Checker_createPromiseType, Checker_createTupleTypeEx, Checker_createTypeReference, Checker_filterType, Checker_getAnnotatedAccessorType, Checker_getApparentType, Checker_getApparentTypeOfContextualType, Checker_getArrayElementTypeNode, Checker_getAwaitedTypeOfPromise, Checker_getBaseTypes, Checker_getContextualIterationType, Checker_getContextualType, Checker_getContextualTypeForElementExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getElementTypeOfArrayType, Checker_getElementTypeOfSliceOfTupleType, Checker_getElementTypes, Checker_getIntersectionType, Checker_getIterationTypesOfIterable, Checker_getIterationTypesOfIterator, Checker_getMutableArrayOrTupleType, Checker_getNullableType, Checker_getNumberLiteralType, Checker_getOptionalExpressionType, Checker_getOptionalType, Checker_getPropertiesOfType, Checker_getReducedApparentType, Checker_getReducedType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getStringLiteralType, Checker_getTypeFromBindingPattern, Checker_getTypeFromTypeNode, Checker_getTypeFromTypeReference, Checker_getTypeOfExpression, Checker_getTypeWithSyntheticDefaultOnly, Checker_getUnionOrIntersectionType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_getWidenedLiteralLikeTypeForContextualIterationTypeIfNeeded, Checker_getWidenedLiteralLikeTypeForContextualType, Checker_getWidenedLiteralType, Checker_instantiateContextualType, Checker_instantiateType, Checker_instantiateTypes, Checker_isArrayLikeType, Checker_isConstTypeVariable, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isMutableArrayLikeType, Checker_isReferenceToType, Checker_mapType, Checker_maybeTypeOfKind, Checker_newAnonymousType, Checker_newObjectType, Checker_newType, Checker_popTypeResolution, Checker_propagateOptionalTypeMarker, Checker_pushTypeResolution, Checker_removeOptionalTypeMarker, Checker_resolveTaggedTemplateExpression, Checker_typeHasProtectedAccessibleBase, Checker_unwrapAwaitedType, Checker_isContextSensitiveFunctionOrObjectLiteralMethod, Checker_getWidenedType, IterationTypes_getType, IterationTypes_hasTypes } from "./types.js";
+import { Checker_GetNonNullableType, Checker_GetPromisedTypeOfPromise, Checker_addOptionalTypeMarker, Checker_assignBindingElementTypes, Checker_checkAndAggregateReturnExpressionTypes, Checker_checkAndAggregateYieldOperandTypes, Checker_checkAwaitedType, Checker_checkExpressionWithContextualType, Checker_checkIteratedTypeOrElementType, Checker_checkObjectLiteralMethod, Checker_combineUnionOrIntersectionThisParam, Checker_containsUndefinedType, Checker_createArrayType, Checker_createArrayTypeEx, Checker_createGeneratorType, Checker_createPromiseType, Checker_createTupleTypeEx, Checker_createTypeReference, Checker_filterType, Checker_getAnnotatedAccessorType, Checker_getApparentType, Checker_getApparentTypeOfContextualType, Checker_getArrayElementTypeNode, Checker_getAwaitedTypeOfPromise, Checker_getBaseTypes, Checker_getContextualIterationType, Checker_getContextualType, Checker_getContextualTypeForElementExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getElementTypeOfArrayType, Checker_getElementTypeOfSliceOfTupleType, Checker_getElementTypes, Checker_getIntersectionType, Checker_getIterationTypesOfIterable, Checker_getIterationTypesOfIterator, Checker_getMutableArrayOrTupleType, Checker_getNullableType, Checker_getNumberLiteralType, Checker_getOptionalExpressionType, Checker_getOptionalType, Checker_getParentTypeOfClassElement, Checker_getPropertiesOfType, Checker_getReducedApparentType, Checker_getReducedType, Checker_getRegularTypeOfLiteralType, Checker_getRegularTypeOfObjectLiteral, Checker_getStringLiteralType, Checker_getTypeFromBindingPattern, Checker_getTypeFromTypeNode, Checker_getTypeFromTypeReference, Checker_getTypeOfExpression, Checker_getTypeOfNode, Checker_getTypeWithSyntheticDefaultOnly, Checker_getUnionOrIntersectionType, Checker_getUnionType, Checker_getUnionTypeEx, Checker_getWidenedLiteralLikeTypeForContextualIterationTypeIfNeeded, Checker_getWidenedLiteralLikeTypeForContextualType, Checker_getWidenedLiteralType, Checker_instantiateContextualType, Checker_instantiateType, Checker_instantiateTypes, Checker_isArrayLikeType, Checker_isConstTypeVariable, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isMutableArrayLikeType, Checker_isReferenceToType, Checker_mapType, Checker_maybeTypeOfKind, Checker_newAnonymousType, Checker_newClassAccessorDecoratorResultType, Checker_newClassAccessorDecoratorTargetType, Checker_newClassDecoratorContextType, Checker_newClassFieldDecoratorInitializerMutatorType, Checker_newGetterFunctionType, Checker_newObjectType, Checker_newSetterFunctionType, Checker_newType, Checker_popTypeResolution, Checker_propagateOptionalTypeMarker, Checker_pushTypeResolution, Checker_removeOptionalTypeMarker, Checker_resolveTaggedTemplateExpression, Checker_typeHasProtectedAccessibleBase, Checker_unwrapAwaitedType, Checker_isContextSensitiveFunctionOrObjectLiteralMethod, Checker_getWidenedType, IterationTypes_getType, IterationTypes_hasTypes } from "./types.js";
 import { Checker_resolveExternalModuleTypeByLiteral } from "./types.js";
 import { Checker_IsArgumentsSymbol } from "../services.js";
 import { Checker_checkExpression, Checker_checkExpressionCached, Checker_checkExpressionCachedEx, Checker_checkNodeDeferred, Checker_checkSuperExpression, Checker_createSyntheticExpression, Checker_getEffectiveCheckNode, Checker_maybeAddMissingAwaitInfo, Checker_resolveInstanceofExpression, Checker_resolveNewExpression, Checker_reportUnusedVariables, Checker_checkThisExpression, Checker_skippedGenericFunction } from "./syntax-checking.js";
@@ -10396,7 +10397,7 @@ export function Checker_getDecoratorCallSignature(receiver: GoPtr<Checker>, deco
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getLegacyDecoratorCallSignature","kind":"method","status":"stub","sigHash":"d28506e9845bb9ae20c9db2d69b076f76641e24b1769f9e8107c5e122df0b7e7","bodyHash":"539ce9b578f646c154c86c4ca63de17015f8f6e9fd65e55f47647d6ae5410096"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getLegacyDecoratorCallSignature","kind":"method","status":"implemented","sigHash":"d28506e9845bb9ae20c9db2d69b076f76641e24b1769f9e8107c5e122df0b7e7","bodyHash":"539ce9b578f646c154c86c4ca63de17015f8f6e9fd65e55f47647d6ae5410096"}
  *
  * Go source:
  * func (c *Checker) getLegacyDecoratorCallSignature(decorator *ast.Node) *Signature {
@@ -10467,11 +10468,82 @@ export function Checker_getDecoratorCallSignature(receiver: GoPtr<Checker>, deco
  * }
  */
 export function Checker_getLegacyDecoratorCallSignature(receiver: GoPtr<Checker>, decorator: GoPtr<Node>): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getLegacyDecoratorCallSignature");
+  const node = decorator!.Parent;
+  const links = LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>;
+  if (links!.decoratorSignature === undefined) {
+    links!.decoratorSignature = receiver!.anySignature;
+    switch (node!.Kind) {
+      case KindClassDeclaration:
+      case KindClassExpression: {
+        const targetType = Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node));
+        const targetParam = Checker_newParameter(receiver, "target", targetType);
+        links!.decoratorSignature = Checker_newCallSignature(receiver, [], undefined, [targetParam] as GoSlice<GoPtr<Symbol>>, Checker_getUnionType(receiver, [targetType, receiver!.voidType] as GoSlice<GoPtr<Type>>));
+        break;
+      }
+      case KindParameter: {
+        if (!IsConstructorDeclaration(node!.Parent) && !(IsMethodDeclaration(node!.Parent) || (IsSetAccessorDeclaration(node!.Parent) && IsClassLike(node!.Parent!.Parent)))) {
+          break;
+        }
+        if (GetThisParameter(node!.Parent) === node) {
+          break;
+        }
+        const parameters = Node_Parameters(node!.Parent) ?? [];
+        const thisParameterOffset = GetThisParameter(node!.Parent) !== undefined ? 1 : 0;
+        const index = parameters.indexOf(node) - thisParameterOffset;
+        if (index < 0) {
+          throw new globalThis.Error("Invalid decorator parameter index");
+        }
+        let targetType: GoPtr<Type>;
+        let keyType: GoPtr<Type>;
+        if (IsConstructorDeclaration(node!.Parent)) {
+          targetType = Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node!.Parent!.Parent));
+          keyType = receiver!.undefinedType;
+        } else {
+          targetType = Checker_getParentTypeOfClassElement(receiver, node!.Parent);
+          keyType = Checker_getClassElementPropertyKeyType(receiver, node!.Parent);
+        }
+        const indexType = Checker_getNumberLiteralType(receiver, index as Number);
+        const targetParam = Checker_newParameter(receiver, "target", targetType);
+        const keyParam = Checker_newParameter(receiver, "propertyKey", keyType);
+        const indexParam = Checker_newParameter(receiver, "parameterIndex", indexType);
+        links!.decoratorSignature = Checker_newCallSignature(receiver, [], undefined, [targetParam, keyParam, indexParam] as GoSlice<GoPtr<Symbol>>, receiver!.voidType);
+        break;
+      }
+      case KindMethodDeclaration:
+      case KindGetAccessor:
+      case KindSetAccessor:
+      case KindPropertyDeclaration: {
+        if (!IsClassLike(node!.Parent)) {
+          break;
+        }
+        const targetType = Checker_getParentTypeOfClassElement(receiver, node);
+        const targetParam = Checker_newParameter(receiver, "target", targetType);
+        const keyType = Checker_getClassElementPropertyKeyType(receiver, node);
+        const keyParam = Checker_newParameter(receiver, "propertyKey", keyType);
+        let returnType = receiver!.voidType;
+        if (!IsPropertyDeclaration(node)) {
+          returnType = Checker_newTypedPropertyDescriptorType(receiver, Checker_getTypeOfNode(receiver, node));
+        }
+        const hasPropDesc = !IsPropertyDeclaration(node) || HasAccessorModifier(node);
+        if (hasPropDesc) {
+          const descriptorType = Checker_newTypedPropertyDescriptorType(receiver, Checker_getTypeOfNode(receiver, node));
+          const descriptorParam = Checker_newParameter(receiver, "descriptor", descriptorType);
+          links!.decoratorSignature = Checker_newCallSignature(receiver, [], undefined, [targetParam, keyParam, descriptorParam] as GoSlice<GoPtr<Symbol>>, Checker_getUnionType(receiver, [returnType, receiver!.voidType] as GoSlice<GoPtr<Type>>));
+        } else {
+          links!.decoratorSignature = Checker_newCallSignature(receiver, [], undefined, [targetParam, keyParam] as GoSlice<GoPtr<Symbol>>, Checker_getUnionType(receiver, [returnType, receiver!.voidType] as GoSlice<GoPtr<Type>>));
+        }
+        break;
+      }
+    }
+  }
+  if (links!.decoratorSignature === receiver!.anySignature) {
+    return undefined;
+  }
+  return links!.decoratorSignature;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getESDecoratorCallSignature","kind":"method","status":"stub","sigHash":"f0210643764b83d1958ec858b35ad1d648744c98abad136f4a48f514e1c45ae0","bodyHash":"3a09622b31212b9337eeff716664b8de74efc7790c05d99592fb57d1f9c6fa53"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getESDecoratorCallSignature","kind":"method","status":"implemented","sigHash":"f0210643764b83d1958ec858b35ad1d648744c98abad136f4a48f514e1c45ae0","bodyHash":"3a09622b31212b9337eeff716664b8de74efc7790c05d99592fb57d1f9c6fa53"}
  *
  * Go source:
  * func (c *Checker) getESDecoratorCallSignature(decorator *ast.Node) *Signature {
@@ -10653,7 +10725,66 @@ export function Checker_getLegacyDecoratorCallSignature(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getESDecoratorCallSignature(receiver: GoPtr<Checker>, decorator: GoPtr<Node>): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getESDecoratorCallSignature");
+  const node = decorator!.Parent;
+  const links = LinkStore_Get(receiver!.signatureLinks, node) as GoPtr<SignatureLinks>;
+  if (links!.decoratorSignature === undefined) {
+    links!.decoratorSignature = receiver!.anySignature;
+    switch (node!.Kind) {
+      case KindClassDeclaration:
+      case KindClassExpression: {
+        const targetType = Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node));
+        const contextType = Checker_newClassDecoratorContextType(receiver, targetType);
+        links!.decoratorSignature = Checker_newESDecoratorCallSignature(receiver, targetType, contextType, targetType);
+        break;
+      }
+      case KindMethodDeclaration:
+      case KindGetAccessor:
+      case KindSetAccessor: {
+        if (!IsClassLike(node!.Parent)) {
+          break;
+        }
+        const valueType = IsMethodDeclaration(node)
+          ? Checker_getOrCreateTypeFromSignature(receiver, Checker_getSignatureFromDeclaration(receiver, node))
+          : Checker_getTypeOfNode(receiver, node);
+        const thisType = HasStaticModifier(node)
+          ? Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node!.Parent))
+          : Checker_getDeclaredTypeOfClassOrInterface(receiver, Checker_getSymbolOfDeclaration(receiver, node!.Parent));
+        let targetType: GoPtr<Type>;
+        if (IsGetAccessorDeclaration(node)) {
+          targetType = Checker_newGetterFunctionType(receiver, valueType);
+        } else if (IsSetAccessorDeclaration(node)) {
+          targetType = Checker_newSetterFunctionType(receiver, valueType);
+        } else {
+          targetType = valueType;
+        }
+        const contextType = Checker_newClassMemberDecoratorContextTypeForNode(receiver, node, thisType, valueType);
+        links!.decoratorSignature = Checker_newESDecoratorCallSignature(receiver, targetType, contextType, targetType);
+        break;
+      }
+      case KindPropertyDeclaration: {
+        if (!IsClassLike(node!.Parent)) {
+          break;
+        }
+        const valueType = Checker_getTypeOfNode(receiver, node);
+        const thisType = HasStaticModifier(node)
+          ? Checker_getTypeOfSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node!.Parent))
+          : Checker_getDeclaredTypeOfClassOrInterface(receiver, Checker_getSymbolOfDeclaration(receiver, node!.Parent));
+        const targetType = HasAccessorModifier(node)
+          ? Checker_newClassAccessorDecoratorTargetType(receiver, thisType, valueType)
+          : receiver!.undefinedType;
+        const returnType = HasAccessorModifier(node)
+          ? Checker_newClassAccessorDecoratorResultType(receiver, thisType, valueType)
+          : Checker_newClassFieldDecoratorInitializerMutatorType(receiver, thisType, valueType);
+        const contextType = Checker_newClassMemberDecoratorContextTypeForNode(receiver, node, thisType, valueType);
+        links!.decoratorSignature = Checker_newESDecoratorCallSignature(receiver, targetType, contextType, returnType);
+        break;
+      }
+    }
+  }
+  if (links!.decoratorSignature === receiver!.anySignature) {
+    return undefined;
+  }
+  return links!.decoratorSignature;
 }
 
 /**

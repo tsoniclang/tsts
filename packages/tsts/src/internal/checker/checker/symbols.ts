@@ -63,6 +63,7 @@ import { IsNonLocalAlias, GetSourceFileOfNode, GetFirstIdentifier, NodeKindIs, F
 import { GetNewTargetContainer } from "../../ast/utilities.js";
 import { GetExtendsHeritageClauseElement, GetExtendsHeritageClauseElements, GetImplementsHeritageClauseElements, IsPartOfParameterDeclaration } from "../../ast/utilities.js";
 import { GetClassLikeDeclarationOfSymbol } from "../../ast/utilities.js";
+import { IsAutoAccessorPropertyDeclaration } from "../../ast/utilities.js";
 import { getAliasDeclarationFromName, getContainingQualifiedNameNode, entityNameToString, getMembersOfDeclaration } from "../utilities.js";
 import { getDeclarationModifierFlagsFromSymbolEx, hasReadonlyModifier, isClassInstanceProperty, isThisInitializedDeclaration, isThisInitializedObjectBindingExpression } from "../utilities.js";
 import { IsIdentifier, IsQualifiedName, IsPrivateIdentifier, IsComputedPropertyName, IsBindingElement, IsTypeAliasDeclaration, IsEnumDeclaration, IsExportAssignment, IsNamespaceExportDeclaration, IsNamespaceExport, IsExportSpecifier, IsMethodDeclaration, IsPropertyDeclaration, IsClassStaticBlockDeclaration, IsSourceFile, IsClassDeclaration, IsInterfaceDeclaration, IsDecorator, IsParameterDeclaration, IsConstructorDeclaration, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsPropertySignatureDeclaration, IsClassExpression, IsBinaryExpression, IsStringLiteral, IsModuleBlock, IsExportDeclaration, IsImportEqualsDeclaration, IsImportClause, IsModuleDeclaration, IsPropertyAccessExpression, IsCallExpression, IsImportSpecifier, IsForInStatement, IsVariableDeclarationList, IsBigIntLiteral, IsParenthesizedTypeNode, IsTypeOperatorNode, IsIndexedAccessTypeNode, IsNamespaceImport, IsNumericLiteral, IsExternalModuleReference, IsVariableDeclaration, IsArrayBindingPattern, IsObjectBindingPattern, IsVariableStatement, IsBlock, IsTypeLiteralNode, IsTypeReferenceNode, IsJsxAttribute, IsTypeOfExpression, IsSpreadAssignment, IsArrowFunction } from "../../ast/generated/predicates.js";
@@ -105,6 +106,7 @@ import { Node_TypeParameters } from "../../ast/ast.js";
 import { NewSetWithSizeHint, Set_Has, Set_Len, Set_Add, Set_Delete, Set_Keys } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
 import { Checker_pushTypeResolution, Checker_popTypeResolution, Checker_getBaseTypes, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_removeMissingType, Checker_newType, Checker_getGenericObjectFlags, Checker_getPropertiesOfType, Checker_isInAmbientOrTypeNode, Checker_getTypeFromTypeNode, Checker_getExtractStringType, Checker_containsUndefinedType, Checker_getNullableType, Checker_newAnonymousType, Checker_getRegularTypeOfLiteralType, Checker_getApparentType, Checker_getReducedApparentType, Checker_getTypeOfExpression, Checker_getDeclaredTypeOfClassOrInterface, Checker_getDeclaredTypeOfEnum, Checker_createTypeReference, Checker_getUnionTypeEx, Checker_getIntersectionTypeEx, Checker_mapType, Checker_instantiateTypes, Checker_instantiateType, Checker_isPatternLiteralType, Checker_isGenericType, Checker_isGenericTupleType, Checker_isGenericMappedType, Checker_isGenericReducibleType, Checker_IsEmptyAnonymousObjectType, Checker_checkNonNullExpression, Checker_checkNonNullType, Checker_getOptionalExpressionType, Checker_propagateOptionalTypeMarker, keyBuilder_writeTypes, keyBuilder_writeType, Checker_getTypeReferenceType, Checker_getContextualType, Checker_isGenericObjectType, Checker_getStringLiteralType, Checker_getUnionType, Checker_getIntersectionType, Checker_getPropertiesOfObjectType, Checker_getReducedType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_getActualTypeVariable, Checker_getWidenedType, Checker_getWidenedTypeWithContext, WideningContext_getChildContext, Checker_getSimplifiedType, Checker_getElementTypeOfSliceOfTupleType, Checker_getTemplateTypeFromMappedType, Checker_getCombinedMappedTypeOptionality, Checker_getModifiersTypeFromMappedType, Checker_getTupleElementTypeOutOfStartCount, Checker_isSelfTypeAccess, Checker_newIntrinsicType, Checker_getTypeOfFuncClassEnumModule, Checker_removeOptionalTypeMarker, Checker_getAnnotatedAccessorTypeNode, Checker_getWriteTypeOfAccessors, Checker_getOptionalType, Checker_getContextualTypeForBindingElement, Checker_getTypeForBindingElement, Checker_getTypeFromBindingPattern, Checker_getNonNullableTypeIfNeeded, Checker_isNullOrUndefined, Checker_tryGetTypeFromTypeNode, Checker_GetNonNullableType, Checker_getBaseTypeOfLiteralType, Checker_removeOptionalityFromDeclaredType, Checker_getLiteralTypeFromProperties, Checker_instantiateTypeWorker, Checker_checkBaseTypeAccessibility, Checker_isValidBaseType, Checker_includeMixinType, Checker_getLowerBoundOfKeyType, Checker_removeMissingOrUndefinedType, Checker_filterType } from "./types.js";
+import { Checker_newClassAccessorDecoratorContextType, Checker_newClassFieldDecoratorContextType, Checker_newClassGetterDecoratorContextType, Checker_newClassMethodDecoratorContextType, Checker_newClassSetterDecoratorContextType } from "./types.js";
 import { Checker_checkTypeReferenceNode } from "./types.js";
 import { Checker_checkExpressionWithContextualType, Checker_getQuickTypeOfExpression, Checker_padObjectLiteralType, Checker_padTupleType } from "./types.js";
 import { Checker_getDeclaringClass, Checker_isClassDerivedFromDeclaringClasses, Checker_isNodeUsedDuringClassInitialization, Checker_isNodeWithinClass } from "./classes.js";
@@ -17945,7 +17947,7 @@ export function Checker_getClassMemberDecoratorContextOverrideType(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMemberDecoratorContextTypeForNode","kind":"method","status":"stub","sigHash":"58aaa49dd032f9fec0c06c4efe0b88412bb850365d9757b7951c9c46989d5151","bodyHash":"809d89f5bf8138e30b277a30c641a993a62ab2299b21da8cfed11edaab77d383"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMemberDecoratorContextTypeForNode","kind":"method","status":"implemented","sigHash":"58aaa49dd032f9fec0c06c4efe0b88412bb850365d9757b7951c9c46989d5151","bodyHash":"809d89f5bf8138e30b277a30c641a993a62ab2299b21da8cfed11edaab77d383"}
  *
  * Go source:
  * func (c *Checker) newClassMemberDecoratorContextTypeForNode(node *ast.Node, thisType *Type, valueType *Type) *Type {
@@ -17977,7 +17979,27 @@ export function Checker_getClassMemberDecoratorContextOverrideType(receiver: GoP
  * }
  */
 export function Checker_newClassMemberDecoratorContextTypeForNode(receiver: GoPtr<Checker>, node: GoPtr<Node>, thisType: GoPtr<Type>, valueType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.newClassMemberDecoratorContextTypeForNode");
+  const isStatic = HasStaticModifier(node);
+  const isPrivate = IsPrivateIdentifier(Node_Name(node));
+  const nameType = isPrivate
+    ? Checker_getStringLiteralType(receiver, Node_Text(Node_Name(node)))
+    : Checker_getLiteralTypeFromPropertyName(receiver, Node_Name(node));
+  let contextType: GoPtr<Type>;
+  if (IsMethodDeclaration(node)) {
+    contextType = Checker_newClassMethodDecoratorContextType(receiver, thisType, valueType);
+  } else if (IsGetAccessorDeclaration(node)) {
+    contextType = Checker_newClassGetterDecoratorContextType(receiver, thisType, valueType);
+  } else if (IsSetAccessorDeclaration(node)) {
+    contextType = Checker_newClassSetterDecoratorContextType(receiver, thisType, valueType);
+  } else if (IsAutoAccessorPropertyDeclaration(node)) {
+    contextType = Checker_newClassAccessorDecoratorContextType(receiver, thisType, valueType);
+  } else if (IsPropertyDeclaration(node)) {
+    contextType = Checker_newClassFieldDecoratorContextType(receiver, thisType, valueType);
+  } else {
+    throw new globalThis.Error("Unhandled case in createClassMemberDecoratorContextTypeForNode");
+  }
+  const overrideType = Checker_getClassMemberDecoratorContextOverrideType(receiver, nameType, isPrivate, isStatic);
+  return Checker_getIntersectionType(receiver, [contextType, overrideType] as GoSlice<GoPtr<Type>>);
 }
 
 /**
