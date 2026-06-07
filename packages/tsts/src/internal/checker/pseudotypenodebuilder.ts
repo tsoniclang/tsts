@@ -1,19 +1,35 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { Node_Symbol, Node_Text } from "../ast/ast.js";
+import { Node_Body, NodeFactory_NewModifier, Node_Symbol, Node_Text } from "../ast/ast.js";
 import { AsTypePredicateNode } from "../ast/generated/casts.js";
-import { NewParameterDeclaration, NewToken } from "../ast/generated/factory.js";
-import { KindDotDotDotToken, KindQuestionToken } from "../ast/generated/kinds.js";
-import { IsThisTypeNode, IsTypePredicateNode } from "../ast/generated/predicates.js";
+import { NewFunctionTypeNode, NewGetAccessorDeclaration, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewMethodSignatureDeclaration, NewParameterDeclaration, NewPropertySignatureDeclaration, NewSetAccessorDeclaration, NewToken, NewTupleTypeNode, NewTypeLiteralNode, NewTypeOperatorNode, NewUnionTypeNode } from "../ast/generated/factory.js";
+import { KindAnyKeyword, KindBigIntKeyword, KindBooleanKeyword, KindDotDotDotToken, KindFalseKeyword, KindNeverKeyword, KindNullKeyword, KindNumberKeyword, KindQuestionToken, KindReadonlyKeyword, KindStringKeyword, KindTrueKeyword, KindUndefinedKeyword } from "../ast/generated/kinds.js";
+import { IsArrowFunction, IsReturnStatement, IsThisTypeNode, IsTypePredicateNode } from "../ast/generated/predicates.js";
+import { SymbolFlagsOptional } from "../ast/symbolflags.js";
+import { GetContainingFunction, GetSourceFileOfNode, IsAccessor, IsDeclaration, IsEntityNameExpression, IsFunctionLike } from "../ast/utilities.js";
 import type { Node, NodeList } from "../ast/spine.js";
-import { NodeFactory_NewNodeList } from "../ast/spine.js";
+import { Node_Name, NodeFactory_NewModifierList, NodeFactory_NewNodeList } from "../ast/spine.js";
 import { Assert, Fail } from "../debug/debug.js";
-import type { PseudoParameter, PseudoType } from "../pseudochecker/type.js";
+import { IsInConstContext } from "../pseudochecker/lookup.js";
+import type { PseudoParameter, PseudoObjectElement, PseudoType } from "../pseudochecker/type.js";
 import {
+  PseudoObjectElement_AsPseudoGetAccessor,
+  PseudoObjectElement_AsPseudoObjectMethod,
+  PseudoObjectElement_AsPseudoPropertyAssignment,
+  PseudoObjectElement_AsPseudoSetAccessor,
+  PseudoObjectElement_Signature,
+  PseudoObjectElementKindGetAccessor,
+  PseudoObjectElementKindMethod,
+  PseudoObjectElementKindPropertyAssignment,
+  PseudoObjectElementKindSetAccessor,
   PseudoType_AsPseudoTypeDirect,
   PseudoType_AsPseudoTypeInferred,
   PseudoType_AsPseudoTypeLiteral,
   PseudoType_AsPseudoTypeMaybeConstLocation,
+  PseudoType_AsPseudoTypeNoResult,
+  PseudoType_AsPseudoTypeObjectLiteral,
+  PseudoType_AsPseudoTypeSingleCallSignature,
+  PseudoType_AsPseudoTypeTuple,
   PseudoType_AsPseudoTypeUnion,
   PseudoTypeKindAny,
   PseudoTypeKindBigInt,
@@ -36,18 +52,46 @@ import {
   PseudoTypeKindUndefined,
   PseudoTypeKindUnion,
 } from "../pseudochecker/type.js";
+import { EFSingleLine } from "../printer/emitflags.js";
+import { EmitContext_AddEmitFlags, EmitContext_SetCommentRange } from "../printer/emitcontext.js";
 import { Checker_isConstContext } from "./checker/support-queries.js";
+import { Checker_isErrorType } from "./checker/diagnostics.js";
+import { isTupleType, TypeFactsNEUndefined } from "./checker/state.js";
 import {
+  Checker_getSignatureFromDeclaration,
+  Checker_getSingleCallSignature,
+  Checker_getTypeArguments,
+  Checker_getTypeOfParameter,
+  Checker_getReturnTypeOfSignature,
+} from "./checker/signatures.js";
+import {
+  Checker_getPropertyOfType,
+  Checker_getTypeOfSymbol,
+  Checker_getWriteTypeOfSymbol,
+} from "./checker/symbols.js";
+import {
+  Checker_getContextualType,
+  Checker_getPropertiesOfType,
   Checker_getRegularTypeOfExpression,
+  Checker_getRegularTypeOfLiteralType,
+  Checker_getTypeOfExpression,
   Checker_getTypeFromTypeNode,
+  Checker_getTypeWithFacts,
   Checker_getUnionType,
   Checker_getWidenedType,
+  Checker_instantiateContextualType,
+  Checker_isLiteralOfContextualType,
+  Checker_removeMissingType,
 } from "./checker/types.js";
+import { Checker_isOptionalParameter } from "./utilities.js";
 import type { NodeBuilderImpl } from "./nodebuilderimpl.js";
-import { NodeBuilderImpl_parameterToParameterDeclarationName, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
-import { Checker_compareTypesIdentical } from "./relater.js";
+import { Checker_getExpandedParameters, NodeBuilderImpl_parameterToParameterDeclarationName, NodeBuilderImpl_serializeReturnTypeForSignature, NodeBuilderImpl_serializeTypeForDeclaration, NodeBuilderImpl_typeToTypeNode } from "./nodebuilderimpl.js";
+import { NodeBuilderImpl_enterNewScope } from "./nodebuilderscopes.js";
+import { NodeBuilderImpl_reuseName, NodeBuilderImpl_reuseNode, NodeBuilderImpl_reuseTypeNode } from "./nodecopy.js";
+import { Checker_compareTypesIdentical, Checker_getTypePredicateOfSignature } from "./relater.js";
 import type { Type, TypePredicate } from "./types.js";
-import { TernaryTrue, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindThis } from "./types.js";
+import { ContextFlagsNone, ElementFlagsNonRequired, TernaryTrue, Type_TargetTupleType, TypeFlagsUnion, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindThis } from "./types.js";
+import { FlagsMultilineObjectLiterals } from "../nodebuilder/types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNodeWithCheckerFallback","kind":"method","status":"implemented","sigHash":"8a9f5649c6a56ec2a9c83e4eed9cf68fb5429cd91fb54fe021f46b65d52b76c0","bodyHash":"6dff4f2e4e1b894de517b2454b45c1d78af7720118a4a283fdceeccb1f59c224"}
@@ -96,7 +140,7 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"stub","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d","bodyHash":"a25fab037b086d1eac87177cfd9978a03df709742fe8e57c370f34e3e067bdc2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode","kind":"method","status":"implemented","sigHash":"37cf2f717de621c103c51df5aa4f15fc6c5bc7082cda2dd6e6ebec393ef5217d","bodyHash":"a25fab037b086d1eac87177cfd9978a03df709742fe8e57c370f34e3e067bdc2"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeToNode(t *pseudochecker.PseudoType) *ast.Node {
@@ -349,7 +393,272 @@ export function NodeBuilderImpl_pseudoTypeToNodeWithCheckerFallback(receiver: Go
  * }
  */
 export function NodeBuilderImpl_pseudoTypeToNode(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<PseudoType>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeToNode");
+  const b = receiver!;
+  Assert(t !== undefined, "Attempted to serialize nil pseudotype");
+  const cleanups: Array<() => void> = [];
+  try {
+    switch (t!.Kind) {
+      case PseudoTypeKindDirect:
+        return NodeBuilderImpl_reuseTypeNode(b, PseudoType_AsPseudoTypeDirect(t)!.TypeNode);
+      case PseudoTypeKindInferred: {
+        const inferred = PseudoType_AsPseudoTypeInferred(t)!;
+        const node = inferred.Expression;
+        const errorNodes = inferred.ErrorNodes ?? [];
+        if (errorNodes.length > 0) {
+          for (const n of errorNodes) {
+            b.ctx!.tracker!.ReportInferenceFallback(n);
+          }
+        } else if (IsEntityNameExpression(node) && IsDeclaration(node!.Parent)) {
+          b.ctx!.tracker!.ReportInferenceFallback(node!.Parent);
+        } else {
+          b.ctx!.tracker!.ReportInferenceFallback(node);
+        }
+        if (IsReturnStatement(node!.Parent)) {
+          const enclosing = GetContainingFunction(node);
+          if (IsAccessor(enclosing)) {
+            return NodeBuilderImpl_serializeTypeForDeclaration(b, enclosing as GoPtr<never>, undefined, undefined, false);
+          }
+          return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, enclosing), false);
+        }
+        if (IsArrowFunction(node!.Parent) && Node_Body(node!.Parent) === node) {
+          return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, node!.Parent), false);
+        }
+        if (IsDeclaration(node!.Parent)) {
+          return NodeBuilderImpl_serializeTypeForDeclaration(b, node!.Parent as GoPtr<never>, undefined, undefined, false);
+        }
+        const ty = Checker_getTypeOfExpression(b.ch, node);
+        return NodeBuilderImpl_typeToTypeNode(b, ty);
+      }
+      case PseudoTypeKindNoResult: {
+        const node = PseudoType_AsPseudoTypeNoResult(t)!.Declaration;
+        b.ctx!.tracker!.ReportInferenceFallback(node);
+        if (IsFunctionLike(node) && !IsAccessor(node)) {
+          return NodeBuilderImpl_serializeReturnTypeForSignature(b, Checker_getSignatureFromDeclaration(b.ch, node), false);
+        }
+        return NodeBuilderImpl_serializeTypeForDeclaration(b, node as GoPtr<never>, undefined, undefined, false);
+      }
+      case PseudoTypeKindMaybeConstLocation: {
+        const d = PseudoType_AsPseudoTypeMaybeConstLocation(t)!;
+        let isInConstContext = Checker_isConstContext(b.ch, d.Node);
+        if (!isInConstContext && IsInConstContext(d.Node)) {
+          const contextualType = Checker_getContextualType(b.ch, d.Node, ContextFlagsNone);
+          const typeFromPseudo = NodeBuilderImpl_pseudoTypeToType(b, d.ConstType);
+          if (typeFromPseudo !== undefined &&
+            Checker_isLiteralOfContextualType(
+              b.ch,
+              typeFromPseudo,
+              Checker_instantiateContextualType(b.ch, contextualType, d.Node, ContextFlagsNone),
+            )) {
+            isInConstContext = true;
+          }
+        }
+        return isInConstContext
+          ? NodeBuilderImpl_pseudoTypeToNode(b, d.ConstType)
+          : NodeBuilderImpl_pseudoTypeToNode(b, d.RegularType);
+      }
+      case PseudoTypeKindUnion: {
+        const res: GoPtr<Node>[] = [];
+        let hasElidedType = false;
+        const members = PseudoType_AsPseudoTypeUnion(t)!.Types;
+        for (const member of members) {
+          if (!b.ch!.strictNullChecks) {
+            if (member!.Kind === PseudoTypeKindUndefined || member!.Kind === PseudoTypeKindNull) {
+              hasElidedType = true;
+              continue;
+            }
+          }
+          res.push(NodeBuilderImpl_pseudoTypeToNode(b, member));
+        }
+        if (res.length === 1) {
+          return res[0];
+        }
+        if (res.length === 0) {
+          if (hasElidedType) {
+            return NewKeywordTypeNode(b.f, KindAnyKeyword);
+          }
+          return NewKeywordTypeNode(b.f, KindNeverKeyword);
+        }
+        return NewUnionTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
+      }
+      case PseudoTypeKindUndefined:
+        if (!b.ch!.strictNullChecks) {
+          return NewKeywordTypeNode(b.f, KindAnyKeyword);
+        }
+        return NewKeywordTypeNode(b.f, KindUndefinedKeyword);
+      case PseudoTypeKindNull:
+        if (!b.ch!.strictNullChecks) {
+          return NewKeywordTypeNode(b.f, KindAnyKeyword);
+        }
+        return NewLiteralTypeNode(b.f, NewKeywordExpression(b.f, KindNullKeyword));
+      case PseudoTypeKindAny:
+        return NewKeywordTypeNode(b.f, KindAnyKeyword);
+      case PseudoTypeKindString:
+        return NewKeywordTypeNode(b.f, KindStringKeyword);
+      case PseudoTypeKindNumber:
+        return NewKeywordTypeNode(b.f, KindNumberKeyword);
+      case PseudoTypeKindBigInt:
+        return NewKeywordTypeNode(b.f, KindBigIntKeyword);
+      case PseudoTypeKindBoolean:
+        return NewKeywordTypeNode(b.f, KindBooleanKeyword);
+      case PseudoTypeKindFalse:
+        return NewLiteralTypeNode(b.f, NewKeywordExpression(b.f, KindFalseKeyword));
+      case PseudoTypeKindTrue:
+        return NewLiteralTypeNode(b.f, NewKeywordExpression(b.f, KindTrueKeyword));
+      case PseudoTypeKindSingleCallSignature: {
+        const d = PseudoType_AsPseudoTypeSingleCallSignature(t)!;
+        const signature = Checker_getSignatureFromDeclaration(b.ch, d.Signature);
+        const expandedParams = Checker_getExpandedParameters(b.ch, signature, true)[0];
+        cleanups.push(NodeBuilderImpl_enterNewScope(b, d.Signature, expandedParams ?? [], signature!.typeParameters ?? [], signature!.parameters ?? [], signature!.mapper));
+        let typeParams: GoPtr<NodeList> = undefined;
+        if (d.TypeParameters.length > 0) {
+          const res: GoPtr<Node>[] = [];
+          for (const tp of d.TypeParameters) {
+            res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+          }
+          typeParams = NodeFactory_NewNodeList(b.f, res);
+        }
+        const params = NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters);
+        const returnType = NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType);
+        return NewFunctionTypeNode(b.f, typeParams as GoPtr<never>, params as GoPtr<never>, returnType as GoPtr<never>);
+      }
+      case PseudoTypeKindTuple: {
+        const res: GoPtr<Node>[] = [];
+        const elements = PseudoType_AsPseudoTypeTuple(t)!.Elements;
+        for (const element of elements) {
+          res.push(NodeBuilderImpl_pseudoTypeToNode(b, element));
+        }
+        const result = NewTupleTypeNode(b.f, NodeFactory_NewNodeList(b.f, res) as GoPtr<never>);
+        EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
+        return NewTypeOperatorNode(b.f, KindReadonlyKeyword, result as GoPtr<never>);
+      }
+      case PseudoTypeKindObjectLiteral: {
+        const elements = PseudoType_AsPseudoTypeObjectLiteral(t)!.Elements;
+        if (elements.length === 0) {
+          const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, []) as GoPtr<never>);
+          EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
+          return result;
+        }
+        const isConst = Checker_isConstContext(b.ch, elements[0]!.Name);
+        const newElements: GoPtr<Node>[] = [];
+
+        for (const element of elements) {
+          const elementNode = element!;
+          let modifiers: GoPtr<NodeList> = undefined;
+          if (isConst || (elementNode.Kind === PseudoObjectElementKindPropertyAssignment && PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!.Readonly)) {
+            modifiers = NodeFactory_NewModifierList(b.f, [NodeFactory_NewModifier(b.f, KindReadonlyKeyword)]) as GoPtr<NodeList>;
+          }
+          if (elementNode.Kind !== PseudoObjectElementKindPropertyAssignment) {
+            const signatureNode = PseudoObjectElement_Signature(elementNode);
+            const signature = Checker_getSignatureFromDeclaration(b.ch, signatureNode);
+            const expandedParams = Checker_getExpandedParameters(b.ch, signature, true)[0];
+            cleanups.push(NodeBuilderImpl_enterNewScope(b, signatureNode, expandedParams ?? [], signature!.typeParameters ?? [], signature!.parameters ?? [], signature!.mapper));
+          }
+          let newProp: GoPtr<Node> = undefined;
+          switch (elementNode.Kind) {
+            case PseudoObjectElementKindMethod: {
+              const d = PseudoObjectElement_AsPseudoObjectMethod(elementNode)!;
+              let typeParams: GoPtr<NodeList> = undefined;
+              if (d.TypeParameters.length > 0) {
+                const res: GoPtr<Node>[] = [];
+                for (const tp of d.TypeParameters) {
+                  res.push(NodeBuilderImpl_reuseNode(b, tp as unknown as GoPtr<Node>));
+                }
+                typeParams = NodeFactory_NewNodeList(b.f, res);
+              }
+              if (isConst) {
+                newProp = NewPropertySignatureDeclaration(
+                  b.f,
+                  modifiers as GoPtr<never>,
+                  NodeBuilderImpl_reuseName(b, elementNode.Name) as GoPtr<never>,
+                  undefined,
+                  NewFunctionTypeNode(
+                    b.f,
+                    typeParams as GoPtr<never>,
+                    NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters) as GoPtr<never>,
+                    NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType) as GoPtr<never>,
+                  ) as GoPtr<never>,
+                  undefined,
+                );
+                break;
+              }
+              newProp = NewMethodSignatureDeclaration(
+                b.f,
+                modifiers as GoPtr<never>,
+                NodeBuilderImpl_reuseName(b, elementNode.Name) as GoPtr<never>,
+                undefined,
+                typeParams as GoPtr<never>,
+                NodeBuilderImpl_pseudoParametersToNodeList(b, d.Parameters) as GoPtr<never>,
+                NodeBuilderImpl_pseudoTypeToNode(b, d.ReturnType) as GoPtr<never>,
+              );
+              break;
+            }
+            case PseudoObjectElementKindPropertyAssignment: {
+              const d = PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!;
+              newProp = NewPropertySignatureDeclaration(
+                b.f,
+                modifiers as GoPtr<never>,
+                NodeBuilderImpl_reuseName(b, elementNode.Name) as GoPtr<never>,
+                undefined,
+                NodeBuilderImpl_pseudoTypeToNode(b, d.Type) as GoPtr<never>,
+                undefined,
+              );
+              break;
+            }
+            case PseudoObjectElementKindSetAccessor: {
+              const d = PseudoObjectElement_AsPseudoSetAccessor(elementNode)!;
+              newProp = NewSetAccessorDeclaration(
+                b.f,
+                undefined,
+                NodeBuilderImpl_reuseName(b, elementNode.Name) as GoPtr<never>,
+                undefined,
+                NodeFactory_NewNodeList(b.f, [NodeBuilderImpl_pseudoParameterToNode(b, d.Parameter)]) as GoPtr<never>,
+                undefined,
+                undefined,
+                undefined,
+              );
+              break;
+            }
+            case PseudoObjectElementKindGetAccessor: {
+              const d = PseudoObjectElement_AsPseudoGetAccessor(elementNode)!;
+              newProp = NewGetAccessorDeclaration(
+                b.f,
+                undefined,
+                NodeBuilderImpl_reuseName(b, elementNode.Name) as GoPtr<never>,
+                undefined,
+                undefined,
+                NodeBuilderImpl_pseudoTypeToNode(b, d.Type) as GoPtr<never>,
+                undefined,
+                undefined,
+              );
+              break;
+            }
+          }
+          if (b.ctx!.enclosingFile === GetSourceFileOfNode(elementNode.Name)) {
+            EmitContext_SetCommentRange(b.e, newProp, elementNode.Name!.Parent!.Loc);
+          }
+          newElements.push(newProp);
+        }
+        const result = NewTypeLiteralNode(b.f, NodeFactory_NewNodeList(b.f, newElements) as GoPtr<never>);
+        if ((b.ctx!.flags & FlagsMultilineObjectLiterals) === 0) {
+          EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
+        }
+        return result;
+      }
+      case PseudoTypeKindStringLiteral:
+      case PseudoTypeKindNumericLiteral:
+      case PseudoTypeKindBigIntLiteral: {
+        const source = PseudoType_AsPseudoTypeLiteral(t)!.Node;
+        return NewLiteralTypeNode(b.f, NodeBuilderImpl_reuseNode(b, source));
+      }
+      default:
+        Fail("Unhandled pseudotype kind in pseudotype node construction");
+        return undefined;
+    }
+  } finally {
+    for (let index = cleanups.length - 1; index >= 0; index--) {
+      cleanups[index]!();
+    }
+  }
 }
 
 /**
@@ -420,7 +729,7 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"stub","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73","bodyHash":"ceb060c025ee016c2987f24ec4626622fcc659e5257749d04fe29074514fa9fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType","kind":"method","status":"implemented","sigHash":"2d24409a328982569558d779ab6b959fb123c96438ac4c5338c8b16e3ff89d73","bodyHash":"ceb060c025ee016c2987f24ec4626622fcc659e5257749d04fe29074514fa9fe"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) pseudoTypeEquivalentToType(t *pseudochecker.PseudoType, type_ *Type, isOptionalAnnotated bool, reportErrors bool) bool {
@@ -674,7 +983,256 @@ export function NodeBuilderImpl_pseudoParameterToNode(receiver: GoPtr<NodeBuilde
  * }
  */
 export function NodeBuilderImpl_pseudoTypeEquivalentToType(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<PseudoType>, type_: GoPtr<Type>, isOptionalAnnotated: bool, reportErrors: bool): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/pseudotypenodebuilder.go::method::NodeBuilderImpl.pseudoTypeEquivalentToType");
+  const b = receiver!;
+  if (type_ !== undefined && Checker_isErrorType(b.ch, type_)) {
+    return true;
+  }
+  const typeFromPseudo = NodeBuilderImpl_pseudoTypeToType(b, t);
+  if (typeFromPseudo === type_) {
+    return true;
+  }
+  if (typeFromPseudo !== undefined && type_ !== undefined) {
+    if (isOptionalAnnotated) {
+      const undefinedStripped = Checker_getTypeWithFacts(b.ch, type_, TypeFactsNEUndefined);
+      if (undefinedStripped === typeFromPseudo) {
+        return true;
+      }
+      if ((typeFromPseudo.flags & TypeFlagsUnion) !== 0 && (undefinedStripped!.flags & TypeFlagsUnion) !== 0) {
+        if (Checker_compareTypesIdentical(b.ch, typeFromPseudo, undefinedStripped) === TernaryTrue) {
+          return true;
+        }
+      }
+    }
+    if (Checker_getRegularTypeOfLiteralType(b.ch, typeFromPseudo) === Checker_getRegularTypeOfLiteralType(b.ch, type_)) {
+      return true;
+    }
+    if ((typeFromPseudo.flags & TypeFlagsUnion) !== 0 && (type_.flags & TypeFlagsUnion) !== 0) {
+      if (Checker_compareTypesIdentical(b.ch, typeFromPseudo, type_) === TernaryTrue) {
+        return true;
+      }
+    }
+  }
+
+  switch (t!.Kind) {
+    case PseudoTypeKindInferred: {
+      const inferred = PseudoType_AsPseudoTypeInferred(t)!;
+      const errorNodes = inferred.ErrorNodes ?? [];
+      if (errorNodes.length > 0) {
+        if (reportErrors) {
+          for (const n of errorNodes) {
+            b.ctx!.tracker!.ReportInferenceFallback(n);
+          }
+        }
+        return false;
+      }
+      if (reportErrors) {
+        b.ctx!.tracker!.ReportInferenceFallback(inferred.Expression);
+      }
+      return false;
+    }
+    case PseudoTypeKindObjectLiteral: {
+      const pt = PseudoType_AsPseudoTypeObjectLiteral(t)!;
+      if (type_ === undefined) {
+        return false;
+      }
+      const targetProps = Checker_getPropertiesOfType(b.ch, type_) ?? [];
+      let targetDeclCount = 0;
+      for (const prop of targetProps) {
+        targetDeclCount += (prop!.Declarations ?? []).length;
+      }
+      if (pt.Elements.length !== targetDeclCount) {
+        return false;
+      }
+      for (const element of pt.Elements) {
+        const elementNode = element!;
+        let targetProp = undefined;
+        const elemSymbol = Node_Symbol(elementNode.Name!.Parent);
+        if (elemSymbol !== undefined) {
+          targetProp = Checker_getPropertyOfType(b.ch, type_, elemSymbol.Name);
+        }
+        if (targetProp === undefined) {
+          for (const prop of targetProps) {
+            if (prop!.ValueDeclaration !== undefined && Node_Name(prop!.ValueDeclaration) === elementNode.Name) {
+              targetProp = prop;
+              break;
+            }
+          }
+          if (targetProp === undefined) {
+            if (reportErrors) {
+              b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+            }
+            return false;
+          }
+        }
+        const targetIsOptional = (targetProp!.Flags & SymbolFlagsOptional) !== 0;
+        if (elementNode.Optional !== targetIsOptional) {
+          if (reportErrors) {
+            b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+          }
+          return false;
+        }
+        let propType = Checker_getTypeOfSymbol(b.ch, targetProp);
+        propType = Checker_removeMissingType(b.ch, propType, targetIsOptional);
+        switch (elementNode.Kind) {
+          case PseudoObjectElementKindPropertyAssignment: {
+            const d = PseudoObjectElement_AsPseudoPropertyAssignment(elementNode)!;
+            if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.Type, propType, elementNode.Optional, false)) {
+              if (reportErrors) {
+                if (d.Type!.Kind === PseudoTypeKindInferred && (PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes ?? []).length > 0) {
+                  for (const n of PseudoType_AsPseudoTypeInferred(d.Type)!.ErrorNodes) {
+                    b.ctx!.tracker!.ReportInferenceFallback(n);
+                  }
+                } else if (!isStructuralPseudoType(d.Type)) {
+                  b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+                }
+              }
+              return false;
+            }
+            break;
+          }
+          case PseudoObjectElementKindMethod: {
+            const d = PseudoObjectElement_AsPseudoObjectMethod(elementNode)!;
+            const targetSig = Checker_getSingleCallSignature(b.ch, propType);
+            if (targetSig === undefined) {
+              continue;
+            }
+            const targetParams = targetSig.parameters ?? [];
+            if (targetParams.length !== d.Parameters.length) {
+              if (reportErrors) {
+                b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+              }
+              return false;
+            }
+            for (let index = 0; index < d.Parameters.length; index++) {
+              const parameter = d.Parameters[index]!;
+              const targetParam = targetParams[index]!;
+              const paramType = Checker_getTypeOfParameter(b.ch, targetParam);
+              if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, parameter.Type, paramType, parameter.Optional, false)) {
+                if (reportErrors) {
+                  b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+                }
+                return false;
+              }
+            }
+            const targetPredicate = Checker_getTypePredicateOfSignature(b.ch, targetSig);
+            if (targetPredicate !== undefined) {
+              if (!NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(b, d.ReturnType, targetPredicate)) {
+                if (reportErrors) {
+                  b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+                }
+                return false;
+              }
+            } else if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.ReturnType, Checker_getReturnTypeOfSignature(b.ch, targetSig), false, false)) {
+              if (reportErrors) {
+                b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+              }
+              return false;
+            }
+            break;
+          }
+          case PseudoObjectElementKindGetAccessor: {
+            const d = PseudoObjectElement_AsPseudoGetAccessor(elementNode)!;
+            if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.Type, propType, false, false)) {
+              if (reportErrors) {
+                b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+              }
+              return false;
+            }
+            break;
+          }
+          case PseudoObjectElementKindSetAccessor: {
+            const d = PseudoObjectElement_AsPseudoSetAccessor(elementNode)!;
+            const writeType = Checker_getWriteTypeOfSymbol(b.ch, targetProp);
+            if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, d.Parameter!.Type, writeType, false, false)) {
+              if (reportErrors) {
+                b.ctx!.tracker!.ReportInferenceFallback(elementNode.Name!.Parent);
+              }
+              return false;
+            }
+            break;
+          }
+        }
+      }
+      return true;
+    }
+    case PseudoTypeKindTuple: {
+      const pt = PseudoType_AsPseudoTypeTuple(t)!;
+      if (type_ === undefined || !isTupleType(type_)) {
+        return false;
+      }
+      const tupleTarget = Type_TargetTupleType(type_);
+      if ((tupleTarget!.combinedFlags & ElementFlagsNonRequired) !== 0) {
+        return false;
+      }
+      const elementTypes = Checker_getTypeArguments(b.ch, type_);
+      if (pt.Elements.length !== elementTypes.length) {
+        return false;
+      }
+      for (let index = 0; index < pt.Elements.length; index++) {
+        if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, pt.Elements[index], elementTypes[index], false, reportErrors)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    case PseudoTypeKindSingleCallSignature: {
+      const targetSig = Checker_getSingleCallSignature(b.ch, type_);
+      if (targetSig === undefined) {
+        return false;
+      }
+      const pt = PseudoType_AsPseudoTypeSingleCallSignature(t)!;
+      const targetTypeParameters = targetSig.typeParameters ?? [];
+      const targetParameters = targetSig.parameters ?? [];
+      if (targetTypeParameters.length !== pt.TypeParameters.length) {
+        if (reportErrors) {
+          b.ctx!.tracker!.ReportInferenceFallback(pt.Signature);
+        }
+        return false;
+      }
+      if (targetParameters.length !== pt.Parameters.length) {
+        if (reportErrors) {
+          b.ctx!.tracker!.ReportInferenceFallback(pt.Signature);
+        }
+        return false;
+      }
+      for (let index = 0; index < pt.Parameters.length; index++) {
+        const parameter = pt.Parameters[index]!;
+        const targetParam = targetParameters[index]!;
+        if (parameter.Optional !== Checker_isOptionalParameter(b.ch, targetParam.ValueDeclaration)) {
+          if (reportErrors) {
+            b.ctx!.tracker!.ReportInferenceFallback(parameter.Name!.Parent);
+          }
+          return false;
+        }
+        const paramType = Checker_getTypeOfParameter(b.ch, targetParam);
+        if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, parameter.Type, paramType, parameter.Optional, false)) {
+          if (reportErrors) {
+            b.ctx!.tracker!.ReportInferenceFallback(parameter.Name!.Parent);
+          }
+          return false;
+        }
+      }
+      const targetPredicate = Checker_getTypePredicateOfSignature(b.ch, targetSig);
+      if (targetPredicate !== undefined) {
+        if (!NodeBuilderImpl_pseudoReturnTypeMatchesPredicate(b, pt.ReturnType, targetPredicate)) {
+          if (reportErrors) {
+            b.ctx!.tracker!.ReportInferenceFallback(pt.Signature);
+          }
+          return false;
+        }
+      } else if (!NodeBuilderImpl_pseudoTypeEquivalentToType(b, pt.ReturnType, Checker_getReturnTypeOfSignature(b.ch, targetSig), false, reportErrors)) {
+        return false;
+      }
+      return true;
+    }
+    case PseudoTypeKindNoResult:
+      if (reportErrors) {
+        b.ctx!.tracker!.ReportInferenceFallback(PseudoType_AsPseudoTypeNoResult(t)!.Declaration);
+      }
+      return false;
+    default:
+      return false;
+  }
 }
 
 /**
