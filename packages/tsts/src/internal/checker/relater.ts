@@ -89,10 +89,10 @@ import { TypeFormatFlagsUseFullyQualifiedType } from "./types.js";
 import { SymbolFlagsClass, SymbolFlagsOptional, SymbolFlagsEnumMember, SymbolFlagsRegularEnum, SymbolFlagsObjectLiteral, SymbolFlagsTypeLiteral, SymbolFlagsEnum, SymbolFlagsValueModule, SymbolFlagsPrototype, SymbolFlagsClassMember } from "../ast/symbolflags.js";
 import { CheckFlagsPartial, CheckFlagsSyntheticProperty, CheckFlagsIsDiscriminantComputed, CheckFlagsIsDiscriminant, CheckFlagsNonUniformAndLiteral } from "../ast/checkflags.js";
 import { isObjectOrArrayLiteralType, isLateBoundName, isStaticPrivateIdentifierProperty, isValidNumberString, isValidBigIntString, isNumericLiteralName, NewDiagnosticForNode, getDeclarationModifierFlagsFromSymbol } from "./utilities.js";
-import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall, IsInJSFile, FindAncestor, GetSourceFileOfNode, IsJsxOpeningLikeElement, IsObjectLiteralElement } from "../ast/utilities.js";
+import { IsExpression, GetDeclarationOfKind, GetSymbolId, IsImportCall, IsInJSFile, FindAncestor, GetSourceFileOfNode, IsJsxOpeningLikeElement, IsObjectLiteralElement, IsConstAssertion } from "../ast/utilities.js";
 import { Checker_addOptionalityEx, Checker_isContextSensitive, Checker_getExactOptionalUnassignableProperties } from "./checker/support-queries.js";
 import { Checker_getSingleBaseForNonAugmentingSubtype } from "./checker/relations.js";
-import { Checker_getJsxType, JsxNames, Checker_getSuggestedSymbolForNonexistentJSXAttribute } from "./jsx.js";
+import { Checker_getJsxType, JsxNames, Checker_getSuggestedSymbolForNonexistentJSXAttribute, Checker_elaborateJsxComponents } from "./jsx.js";
 import { isTupleType, isUnitType, signatureHasRestParameter, isLiteralType } from "./checker/state.js";
 import { Checker_resolveStructuredTypeMembers, Checker_getPropertyOfObjectType, Checker_getIndexInfoOfType, Checker_getPropertyOfType, Checker_getTypeOfPropertyOfType, Checker_getUnionOrIntersectionProperty, Checker_getDeclaredTypeOfSymbol, Checker_getParentOfSymbol, Checker_getEnumMemberValue, Checker_getPropertyOfUnionOrIntersectionType, Checker_isReadonlySymbol } from "./checker/symbols.js";
 import { Checker_getDeclaringClass, Checker_isValidOverrideOf } from "./checker/classes.js";
@@ -127,11 +127,11 @@ import { Checker_compareProperties } from "./checker/support.js";
 import { IsTypeAny, hasDotDotDotToken, isObjectLiteralType } from "./utilities.js";
 import { IsNamedTupleMember, IsParameterDeclaration, IsIdentifier, IsBindingElement, IsTypePredicateNode, IsThisTypeNode, IsJsxAttributes, IsJsxAttribute } from "../ast/generated/predicates.js";
 import { IsFunctionLikeDeclaration } from "../ast/utilities.js";
-import { Node_Text } from "../ast/ast.js";
+import { Node_Expression, Node_Text } from "../ast/ast.js";
 import { Node_Elements, Node_Type } from "../ast/ast.js";
 import { FindIndex, AppendIfUnique, LastOrNil, MapIndex } from "../core/core.js";
-import { KindUnknown, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindIdentifier, KindArrayBindingPattern, KindEnumMember } from "../ast/generated/kinds.js";
-import { AsTypePredicateNode } from "../ast/generated/casts.js";
+import { KindUnknown, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindIdentifier, KindArrayBindingPattern, KindEnumMember, KindAsExpression, KindJsxExpression, KindParenthesizedExpression, KindBinaryExpression, KindEqualsToken, KindCommaToken, KindObjectLiteralExpression, KindArrayLiteralExpression, KindArrowFunction, KindJsxAttributes } from "../ast/generated/kinds.js";
+import { AsBinaryExpression, AsTypePredicateNode } from "../ast/generated/casts.js";
 import {
   Checker_getTypeOfParameter,
   Checker_getReturnTypeOfSignature,
@@ -1160,7 +1160,7 @@ export function Checker_checkTypeRelatedToAndOptionallyElaborate(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateError","kind":"method","status":"stub","sigHash":"6c2b47e9295305411cca29b88706566c444b2efc2a1459d7fd556e4c1c2b0477","bodyHash":"b678a775715a2fe3f474dccbcb52de8ee94ee5c6429419e845e81944608ee96c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateError","kind":"method","status":"implemented","sigHash":"6c2b47e9295305411cca29b88706566c444b2efc2a1459d7fd556e4c1c2b0477","bodyHash":"b678a775715a2fe3f474dccbcb52de8ee94ee5c6429419e845e81944608ee96c"}
  *
  * Go source:
  * func (c *Checker) elaborateError(node *ast.Node, source *Type, target *Type, relation *Relation, headMessage *diagnostics.Message, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -1197,7 +1197,43 @@ export function Checker_checkTypeRelatedToAndOptionallyElaborate(receiver: GoPtr
  * }
  */
 export function Checker_elaborateError(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, headMessage: GoPtr<Message>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.elaborateError");
+  if (node === undefined || Checker_isOrHasGenericConditional(receiver, target)) {
+    return false;
+  }
+  if (
+    Checker_elaborateDidYouMeanToCallOrConstruct(receiver, node, source, target, relation, SignatureKindConstruct, headMessage, diagnosticOutput) ||
+    Checker_elaborateDidYouMeanToCallOrConstruct(receiver, node, source, target, relation, SignatureKindCall, headMessage, diagnosticOutput)
+  ) {
+    return true;
+  }
+  switch (node!.Kind) {
+    case KindAsExpression:
+      if (!IsConstAssertion(node)) {
+        break;
+      }
+      return Checker_elaborateError(receiver, Node_Expression(node), source, target, relation, headMessage, diagnosticOutput);
+    case KindJsxExpression:
+    case KindParenthesizedExpression:
+      return Checker_elaborateError(receiver, Node_Expression(node), source, target, relation, headMessage, diagnosticOutput);
+    case KindBinaryExpression: {
+      const opKind = AsBinaryExpression(node)!.OperatorToken!.Kind;
+      switch (opKind) {
+        case KindEqualsToken:
+        case KindCommaToken:
+          return Checker_elaborateError(receiver, AsBinaryExpression(node)!.Right, source, target, relation, headMessage, diagnosticOutput);
+      }
+      break;
+    }
+    case KindObjectLiteralExpression:
+      return Checker_elaborateObjectLiteral(receiver, node, source, target, relation, diagnosticOutput);
+    case KindArrayLiteralExpression:
+      return Checker_elaborateArrayLiteral(receiver, node, source, target, relation, diagnosticOutput);
+    case KindArrowFunction:
+      return Checker_elaborateArrowFunction(receiver, node, source, target, relation, diagnosticOutput);
+    case KindJsxAttributes:
+      return Checker_elaborateJsxComponents(receiver, node, source, target, relation, diagnosticOutput);
+  }
+  return false;
 }
 
 /**

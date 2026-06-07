@@ -7811,7 +7811,7 @@ export function Checker_instantiateSignatureEx(receiver: GoPtr<Checker>, sig: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDefaultConstructSignatures","kind":"method","status":"stub","sigHash":"cc919b19751b29ec5b20ad9cf22bd40304a02ebc1680bfddbe916b7ad2c3f650","bodyHash":"10d97ce77b97834398232d4a20c56d8e0c9c61a75763b555c21911c15ccc4ca5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDefaultConstructSignatures","kind":"method","status":"implemented","sigHash":"cc919b19751b29ec5b20ad9cf22bd40304a02ebc1680bfddbe916b7ad2c3f650","bodyHash":"10d97ce77b97834398232d4a20c56d8e0c9c61a75763b555c21911c15ccc4ca5"}
  *
  * Go source:
  * func (c *Checker) getDefaultConstructSignatures(classType *Type) []*Signature {
@@ -7852,7 +7852,40 @@ export function Checker_instantiateSignatureEx(receiver: GoPtr<Checker>, sig: Go
  * }
  */
 export function Checker_getDefaultConstructSignatures(receiver: GoPtr<Checker>, classType: GoPtr<Type>): GoSlice<GoPtr<Signature>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getDefaultConstructSignatures");
+  const baseConstructorType = Checker_getBaseConstructorTypeOfClass(receiver, classType);
+  const baseSignatures = Checker_getSignaturesOfType(receiver, baseConstructorType, SignatureKindConstruct);
+  const declaration = GetClassLikeDeclarationOfSymbol(classType!.symbol);
+  const isAbstract = declaration !== undefined && HasSyntacticModifier(declaration, ModifierFlagsAbstract);
+  if (baseSignatures.length === 0) {
+    const flags = core.IfElse(isAbstract, SignatureFlagsConstruct | SignatureFlagsAbstract, SignatureFlagsConstruct);
+    return [Checker_newSignature(receiver, flags as SignatureFlags, undefined, InterfaceType_LocalTypeParameters(Type_AsInterfaceType(classType)), undefined, [], classType, undefined, 0)];
+  }
+  const baseTypeNode = getBaseTypeNodeOfClass(classType);
+  const isJavaScript = declaration !== undefined && IsInJSFile(declaration);
+  const typeArguments = Checker_getTypeArgumentsFromNode(receiver, baseTypeNode);
+  const typeArgCount = typeArguments.length;
+  const result: GoSlice<GoPtr<Signature>> = [];
+  for (const baseSig of baseSignatures) {
+    const minTypeArgumentCount = Checker_getMinTypeArgumentCount(receiver, baseSig!.typeParameters);
+    const typeParamCount = baseSig!.typeParameters.length;
+    if (isJavaScript || (typeArgCount >= minTypeArgumentCount && typeArgCount <= typeParamCount)) {
+      let sig: GoPtr<Signature>;
+      if (typeParamCount !== 0) {
+        sig = Checker_createSignatureInstantiation(receiver, baseSig, Checker_fillMissingTypeArguments(receiver, typeArguments, baseSig!.typeParameters, minTypeArgumentCount, isJavaScript));
+      } else {
+        sig = Checker_cloneSignature(receiver, baseSig);
+      }
+      sig!.typeParameters = InterfaceType_LocalTypeParameters(Type_AsInterfaceType(classType));
+      sig!.resolvedReturnType = classType;
+      if (isAbstract) {
+        sig!.flags = (sig!.flags | SignatureFlagsAbstract) as SignatureFlags;
+      } else {
+        sig!.flags = (sig!.flags & ~SignatureFlagsAbstract) as SignatureFlags;
+      }
+      result.push(sig);
+    }
+  }
+  return result;
 }
 
 /**
