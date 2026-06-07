@@ -63,9 +63,9 @@ import { Checker_checkTruthinessExpression, Checker_checkTestingKnownTruthyCalla
 import { Checker_isTypeAssignableToKind, Checker_allTypesAssignableToKind, Checker_removeSubtypes, Checker_removeRedundantSupertypes, Checker_getSingleBaseForNonAugmentingSubtype } from "./relations.js";
 import { Checker_getBaseConstraintOrType } from "./inference.js";
 import { instantiateList } from "./state.js";
-import { SkipParentheses, IsRightSideOfQualifiedNameOrPropertyAccess, FindAncestor, IsExpressionOfOptionalChainRoot, IsOptionalChain, IsOutermostOptionalChain, IsEntityName, IsStatic, IsInJSFile, IsEntityNameExpression, GetFirstIdentifier, GetReparsedNodeForNode, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, SkipOuterExpressions, OEKAll, HasModifier, HasSyntacticModifier, GetClassLikeDeclarationOfSymbol, GetDeclarationOfKind, FindAncestorOrQuit, FindAncestorTrue, FindAncestorFalse, FindAncestorQuit, IsAssertionExpression, GetSourceFileOfNode, WalkUpParenthesizedTypes, IsRequireCall, IsImportCall, IsLiteralExpression, IsBooleanLiteral, IsConstTypeReference, IsValidTypeOnlyAliasUseSite, NodeIsMissing, IsBindingPattern, IsPartOfParameterDeclaration, WalkUpBindingElementsAndPatterns, IsAutoAccessorPropertyDeclaration, IsComputedNonLiteralName } from "../../ast/utilities.js";
+import { SkipParentheses, IsRightSideOfQualifiedNameOrPropertyAccess, FindAncestor, IsExpressionOfOptionalChainRoot, IsOptionalChain, IsOutermostOptionalChain, IsEntityName, IsStatic, IsInJSFile, IsEntityNameExpression, GetFirstIdentifier, GetReparsedNodeForNode, IsFunctionExpressionOrArrowFunction, IsObjectLiteralMethod, SkipOuterExpressions, OEKAll, HasModifier, HasSyntacticModifier, GetClassLikeDeclarationOfSymbol, GetDeclarationOfKind, GetContainingFunction, FindAncestorOrQuit, FindAncestorTrue, FindAncestorFalse, FindAncestorQuit, IsAssertionExpression, GetSourceFileOfNode, WalkUpParenthesizedTypes, IsRequireCall, IsImportCall, IsLiteralExpression, IsBooleanLiteral, IsConstTypeReference, IsValidTypeOnlyAliasUseSite, NodeIsMissing, IsBindingPattern, IsPartOfParameterDeclaration, WalkUpBindingElementsAndPatterns, IsAutoAccessorPropertyDeclaration, IsComputedNonLiteralName } from "../../ast/utilities.js";
 import { ScanTokenAtPosition, SkipTrivia, TokenToString } from "../../scanner/scanner.js";
-import { GetFunctionFlags, FunctionFlagsAsync } from "../../ast/functionflags.js";
+import { GetFunctionFlags, FunctionFlagsAsync, FunctionFlagsGenerator } from "../../ast/functionflags.js";
 import { KindNullKeyword, KindIdentifier, KindThisKeyword } from "../../ast/generated/kinds.js";
 import { SymbolFlagsModule, SymbolFlagsValueModule, SymbolFlagsClass } from "../../ast/generated/flags.js";
 import type { ValueSymbolLinks } from "../types.js";
@@ -12479,7 +12479,7 @@ export function Checker_getContextualTypeForBindingElement(receiver: GoPtr<Check
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getContextualTypeForReturnExpression","kind":"method","status":"stub","sigHash":"eb13ac8eba4684b15ff153c085dc5d83241d38ed49605ccf23ea010da1628ea8","bodyHash":"cc6d354b3517da8212f35f3e9a00e59ab428467e07078c122264a7a4a8d081ad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getContextualTypeForReturnExpression","kind":"method","status":"implemented","sigHash":"eb13ac8eba4684b15ff153c085dc5d83241d38ed49605ccf23ea010da1628ea8","bodyHash":"cc6d354b3517da8212f35f3e9a00e59ab428467e07078c122264a7a4a8d081ad"}
  *
  * Go source:
  * func (c *Checker) getContextualTypeForReturnExpression(node *ast.Node, contextFlags ContextFlags) *Type {
@@ -12515,7 +12515,31 @@ export function Checker_getContextualTypeForBindingElement(receiver: GoPtr<Check
  * }
  */
 export function Checker_getContextualTypeForReturnExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, contextFlags: ContextFlags): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.getContextualTypeForReturnExpression");
+  const fn = GetContainingFunction(node);
+  if (fn !== undefined) {
+    let contextualReturnType = Checker_getContextualReturnType(receiver, fn, contextFlags);
+    if (contextualReturnType !== undefined) {
+      const functionFlags = GetFunctionFlags(fn);
+      if ((functionFlags & FunctionFlagsGenerator) !== 0) {
+        const isAsyncGenerator = ((functionFlags & FunctionFlagsAsync) !== 0) as bool;
+        if ((contextualReturnType!.flags & TypeFlagsUnion) !== 0) {
+          contextualReturnType = Checker_filterType(receiver, contextualReturnType, (type_: GoPtr<Type>): bool =>
+            (Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, type_, isAsyncGenerator) !== undefined) as bool);
+        }
+        const iterationReturnType = Checker_getIterationTypeOfGeneratorFunctionReturnType(receiver, IterationTypeKindReturn, contextualReturnType, ((functionFlags & FunctionFlagsAsync) !== 0) as bool);
+        if (iterationReturnType === undefined) {
+          return undefined;
+        }
+        contextualReturnType = iterationReturnType;
+      }
+      if ((functionFlags & FunctionFlagsAsync) !== 0) {
+        const contextualAwaitedType = Checker_mapType(receiver, contextualReturnType, (type_: GoPtr<Type>): GoPtr<Type> => Checker_getAwaitedTypeNoAlias(receiver, type_));
+        return Checker_getUnionType(receiver, [contextualAwaitedType, Checker_createPromiseLikeType(receiver, contextualAwaitedType)]);
+      }
+      return contextualReturnType;
+    }
+  }
+  return undefined;
 }
 
 /**
