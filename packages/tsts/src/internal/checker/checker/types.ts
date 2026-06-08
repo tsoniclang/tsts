@@ -14067,7 +14067,7 @@ export function Checker_getContextualTypeForInitializerExpression(receiver: GoPt
       return result;
     }
     const name = Node_Name(declaration);
-    if ((contextFlags & ContextFlagsSkipBindingPatterns) === 0 && IsObjectBindingPattern(name) && (Node_Elements(name)?.length ?? 0) > 0) {
+    if ((contextFlags & ContextFlagsSkipBindingPatterns) === 0 && IsBindingPattern(name) && (Node_Elements(name)?.length ?? 0) > 0) {
       return Checker_getTypeFromBindingPattern(receiver, name, true, false);
     }
   }

@@ -42,7 +42,7 @@ import { KindSuperKeyword } from "../../ast/generated/kinds.js";
 import { GetFunctionFlags, FunctionFlagsAsync, FunctionFlagsAsyncGenerator, FunctionFlagsGenerator, FunctionFlagsInvalid } from "../../ast/functionflags.js";
 import { IsNumericLiteral } from "../../ast/generated/predicates.js";
 import { AsArrayTypeNode, AsBinaryExpression, AsConditionalTypeNode, AsConstructorDeclaration, AsElementAccessExpression, AsIndexSignatureDeclaration, AsInferTypeNode, AsMappedTypeNode, AsNamedTupleMember, AsNewExpression, AsParameterDeclaration, AsPrefixUnaryExpression, AsSyntheticExpression, AsTaggedTemplateExpression, AsTemplateExpression, AsTemplateSpan, AsTypeParameterDeclaration, AsTypeQueryNode, AsTypeReferenceNode, AsExpressionWithTypeArguments } from "../../ast/generated/casts.js";
-import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_FunctionLikeData, Node_Name, Node_Pos, NodeList_End } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_FunctionLikeData, Node_Name, Node_Pos, NodeList_End, NodeList_HasTrailingComma } from "../../ast/spine.js";
 import { NewElementAccessExpression, NewFunctionTypeNode, NewKeywordExpression, NewKeywordTypeNode, NewPropertyAccessExpression } from "../../ast/generated/factory.js";
 import { AsSourceFile, IsTypeOrJSTypeAliasDeclaration, Node_ArgumentList, Node_Arguments, Node_Attributes, Node_Body, Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Locals, Node_Members, Node_Parameters, Node_Properties, Node_QuestionToken, Node_Statements, Node_Symbol, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameterList, Node_TypeParameters } from "../../ast/ast.js";
 import { Node_QuestionDotToken, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -2889,11 +2889,8 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     args,
     isSingleNonGenericCandidate,
     argCheckMode,
-    signatureHelpTrailingComma: false as bool,
+    signatureHelpTrailingComma: ((checkMode & CheckModeIsForSignatureHelp) !== 0 && IsCallExpression(node) && NodeList_HasTrailingComma(Node_ArgumentList(node))) as bool,
   } as CallState;
-  if (IsCallExpression(node) && (checkMode & CheckModeIsForSignatureHelp) !== 0) {
-    callState.signatureHelpTrailingComma = false as bool;
-  }
   let result: GoPtr<Signature>;
   if (candidates.length > 1) {
     result = Checker_chooseOverload(receiver, callState, receiver!.subtypeRelation);
@@ -3466,7 +3463,7 @@ export function Checker_hasCorrectTypeArgumentArity(receiver: GoPtr<Checker>, si
  * 	return typeArgumentTypes
  * }
  */
-export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, typeArgumentNodes: GoSlice<GoPtr<Node>>, reportErrors: bool, headMessage: GoPtr<Message>): GoSlice<GoPtr<Type>> {
+export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, typeArgumentNodes: GoSlice<GoPtr<Node>>, reportErrors: bool, headMessage: GoPtr<Message>): GoPtr<GoSlice<GoPtr<Type>>> {
   const isJavaScript = IsInJSFile(signature!.declaration);
   const typeParameters = signature!.typeParameters;
   const typeArgumentTypes = Checker_fillMissingTypeArguments(
@@ -3502,7 +3499,7 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
           }
           DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
         }
-        return [];
+        return undefined;
       }
     }
   }

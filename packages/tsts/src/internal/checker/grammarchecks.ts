@@ -14,7 +14,7 @@ import {
   KindNumericLiteral, KindBigIntLiteral, KindSymbolKeyword, KindArrayType, KindTupleType, KindNewKeyword, KindImportKeyword, KindInKeyword, KindOutKeyword, KindConstKeyword,
   KindReadonlyKeyword, KindStaticKeyword, KindAccessorKeyword, KindAsyncKeyword, KindAbstractKeyword, KindDeclareKeyword, KindDefaultKeyword, KindExportKeyword,
   KindPublicKeyword, KindProtectedKeyword, KindPrivateKeyword, KindOverrideKeyword, KindCommaToken, KindExclamationToken, KindQuestionToken, KindComputedPropertyName,
-  KindSwitchStatement, KindLabeledStatement, KindBreakStatement, KindContinueStatement, KindVariableDeclaration as KindVariableDeclarationNode, KindRegularExpressionLiteral,
+  KindSwitchStatement, KindLabeledStatement, KindBreakStatement, KindContinueStatement, KindVariableDeclaration as KindVariableDeclarationNode, KindVariableDeclarationList, KindRegularExpressionLiteral,
   KindJSTypeAliasDeclaration, KindJSImportDeclaration, KindNamespaceImport, KindNamedImports, KindNamedExports, KindImportSpecifier, KindExportSpecifier, KindJsxSpreadAttribute,
   KindJSDocAugmentsTag, KindMetaProperty, KindTypeLiteral, KindIdentifier, KindExpressionWithTypeArguments, KindPrivateIdentifier, KindConstructorType, KindAwaitKeyword,
   KindExtendsKeyword, KindImplementsKeyword, KindObjectLiteralExpression, KindPrefixUnaryExpression,
@@ -297,6 +297,10 @@ import {
   Duplicate_identifier_0,
   Initializers_are_not_allowed_in_ambient_contexts,
 } from "../diagnostics/generated/messages.js";
+
+function hasSyntacticQuestionToken(token: GoPtr<Node>): bool {
+  return (token !== undefined && (token!.Flags & NodeFlagsReparsed) === 0) as bool;
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.grammarErrorOnFirstToken","kind":"method","status":"implemented","sigHash":"9fab30665e440946aaaa3690f3b401ad23c823e57bb21da03bf92c49f43e9680","bodyHash":"cba3dfc9412a3a0b96a7238d68566af2aadcfd2045009567a4afc062d63201d9"}
@@ -1733,7 +1737,7 @@ export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, para
       if ((parameter!.Flags & NodeFlagsAmbient) === 0) {
         Checker_checkGrammarForDisallowedTrailingComma(receiver, parameters, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
       }
-      if (parameter!.QuestionToken !== undefined) {
+      if (hasSyntacticQuestionToken(parameter!.QuestionToken)) {
         return Checker_grammarErrorOnNode(receiver, parameter!.QuestionToken, A_rest_parameter_cannot_be_optional);
       }
       if (parameter!.Initializer !== undefined) {
@@ -1743,7 +1747,7 @@ export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, para
       // !!!
       // used to be hasEffectiveQuestionToken for JSDoc
       seenOptionalParameter = true;
-      if (parameter!.QuestionToken !== undefined && parameter!.Initializer !== undefined) {
+      if (hasSyntacticQuestionToken(parameter!.QuestionToken) && parameter!.Initializer !== undefined) {
         return Checker_grammarErrorOnNode(receiver, Node_Name(parameter as unknown as GoPtr<Node>), Parameter_cannot_have_question_mark_and_initializer);
       }
     } else if (seenOptionalParameter && parameter!.Initializer === undefined) {
@@ -2904,7 +2908,7 @@ export function Checker_checkGrammarForInOrForOfStatement(receiver: GoPtr<Checke
     Checker_grammarErrorOnNode(receiver, forInOrOfStatement!.Initializer as unknown as GoPtr<Node>, The_left_hand_side_of_a_for_of_statement_may_not_be_async);
     return false;
   }
-  if ((forInOrOfStatement!.Initializer as unknown as GoPtr<Node>)!.Kind === KindVariableDeclarationNode) {
+  if ((forInOrOfStatement!.Initializer as unknown as GoPtr<Node>)!.Kind === KindVariableDeclarationList) {
     const variableList = AsVariableDeclarationList(forInOrOfStatement!.Initializer as unknown as GoPtr<Node>);
     if (!Checker_checkGrammarVariableDeclarationList(receiver, variableList)) {
       const declarations = variableList!.Declarations;
@@ -3027,7 +3031,7 @@ export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor:
     if (parameter!.DotDotDotToken !== undefined) {
       return Checker_grammarErrorOnNode(receiver, parameter!.DotDotDotToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_rest_parameter);
     }
-    if (parameter!.QuestionToken !== undefined) {
+    if (hasSyntacticQuestionToken(parameter!.QuestionToken as unknown as GoPtr<Node>)) {
       return Checker_grammarErrorOnNode(receiver, parameter!.QuestionToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_an_optional_parameter);
     }
     if (parameter!.Initializer !== undefined) {

@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
-import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
+import { Node_Text, Node_Members, Node_Statements, Node_CanHaveStatements, Node_Expression, Node_Arguments, Node_TypeArgumentList, Node_TypeArguments, Node_Parameters, Node_TagName, Node_Symbol, Node_Type, Node_Initializer, SourceFile_Diagnostics, SourceFile_Text } from "../../ast/ast.js";
 import type { Node, SourceFile } from "../../ast/ast.js";
 import type { Expression } from "../../ast/generated/unions.js";
 import type { FlowNode } from "../../ast/flow.js";
@@ -1071,7 +1071,7 @@ export function Checker_reportCallResolutionErrors(receiver: GoPtr<Checker>, nod
   } else if (s!.candidateForArgumentArityError !== undefined) {
     DiagnosticsCollection_Add(c.diagnostics, Checker_getArgumentArityError(receiver, s!.node, [s!.candidateForArgumentArityError], s!.args, headMessage));
   } else if (s!.candidateForTypeArgumentError !== undefined) {
-    Checker_checkTypeArguments(receiver, s!.candidateForTypeArgumentError, Node_TypeArgumentList(s!.node) as unknown as GoSlice<GoPtr<Node>>, true as bool, headMessage);
+    Checker_checkTypeArguments(receiver, s!.candidateForTypeArgumentError, Node_TypeArguments(s!.node) ?? [], true as bool, headMessage);
   } else if (!IsJsxOpeningFragment(node)) {
     const signaturesWithCorrectTypeArgumentArity = Filter(signatures, (sig: GoPtr<Signature>) =>
       Checker_hasCorrectTypeArgumentArity(receiver, sig, s!.typeArguments));
