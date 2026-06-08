@@ -44,6 +44,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     ["lib", "es2020,dom"],
     ["declaration", "true;"],
     ["importhelpers", "true"],
+    ["isolatedmodules", "true"],
     ["maxnodemodulejsdepth", "1"],
     ["noresolve", "true"],
     ["nolib", "true"],
@@ -75,6 +76,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     lib: ["es2020", "dom"],
     declaration: true,
     importHelpers: true,
+    isolatedModules: true,
     maxNodeModuleJsDepth: 1,
     noResolve: true,
     noLib: true,
@@ -114,7 +116,7 @@ test("compilerOptionsFromSettings maps JSX factory directives", () => {
     jsx: "react-jsx",
     jsxFactory: "createElement",
     jsxFragmentFactory: "Fragment",
-    jsxImportSource: "/jsx",
+    jsxImportSource: "./jsx",
     reactNamespace: "Element",
   });
 });
@@ -129,6 +131,36 @@ export async function foo() {
 export const value = 1;`, "fallback.ts");
   const writtenFiles = ["notmodule.cts", "module.mts", "package.json"];
   assert.deepEqual(selectInputFiles(parsed, writtenFiles, new Map()), ["notmodule.cts", "module.mts"]);
+});
+
+test("selectInputFiles includes authored unsupported root files", () => {
+  const parsed = parseFileBasedTest(`// @allowJs: true
+// @filename: a.ts
+class c {
+}
+
+// @filename: b.js.map
+function foo() {
+}
+
+// @filename: b.js
+function bar() {
+}`, "fallback.ts");
+  const writtenFiles = ["a.ts", "b.js.map", "b.js", "package.json", "tsconfig.json"];
+  assert.deepEqual(selectInputFiles(parsed, writtenFiles, new Map()), ["a.ts", "b.js", "b.js.map"]);
+});
+
+test("selectInputFiles does not promote authored project metadata to root files", () => {
+  const parsed = parseFileBasedTest(`// @filename: package.json
+{"name":"pkg"}
+
+// @filename: tsconfig.json
+{"compilerOptions":{}}
+
+// @filename: index.ts
+export const value = 1;`, "fallback.ts");
+  const writtenFiles = ["package.json", "tsconfig.json", "index.ts"];
+  assert.deepEqual(selectInputFiles(parsed, writtenFiles, new Map()), ["index.ts"]);
 });
 
 test("compilerOptionsFromSettings maps virtual path options into the materialized case", () => {
@@ -516,6 +548,26 @@ test("baselineHasErrors requires exact matches for configured TS-Go variations",
   assert.equal(baselineHasErrors({ ...base, configurationName: "target=esnext,usedefineforclassfields=true" }), false);
 });
 
+test("baselineHasErrors does not borrow unrelated configured baselines for unconfigured runs", () => {
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/emitHelpersWithLocalCollisions.ts",
+    caseName: "emitHelpersWithLocalCollisions",
+    configurationName: "",
+  }), false);
+});
+
+test("baselineHasErrors detects ANSI-colored pretty baselines", () => {
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/prettyContextNotDebugAssertion.ts",
+    caseName: "prettyContextNotDebugAssertion",
+    configurationName: "",
+  }), true);
+});
+
 test("baselineHasErrors falls back to TypeScript submodule baselines for submodule corpus", () => {
   assert.equal(baselineHasErrors({
     corpus: "typescript",
@@ -530,6 +582,11 @@ test("getSkipReason mirrors TS-Go unsupported compiler-option skips", () => {
   const base = { sourceBaseName: "case.ts", configuration: new Map() };
   assert.match(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), /unsupported target/);
   assert.match(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), /alwaysStrict=false/);
+});
+
+test("compilerOptionsFromSettings preserves unsupported target values for skip policy", () => {
+  const options = compilerOptionsFromSettings(new Map([["target", "ES5"]]));
+  assert.equal(options.target, "ES5");
 });
 
 test("buildTestUniverseInventory tracks full compiler scope and excludes language service scope", async () => {

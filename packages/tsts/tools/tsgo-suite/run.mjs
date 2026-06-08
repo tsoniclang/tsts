@@ -99,6 +99,7 @@ const compilerVaryByOptions = new Set([
   "experimentaldecorators",
   "incremental",
   "importhelpers",
+  "isolatedmodules",
   "isolateddeclarations",
   "jsx",
   "module",
@@ -143,6 +144,7 @@ const booleanOptions = new Set([
   "incremental",
   "inlinesourcemap",
   "importhelpers",
+  "isolatedmodules",
   "isolateddeclarations",
   "noemit",
   "noemithelpers",
@@ -237,6 +239,7 @@ const booleanOptionNames = new Map([
   ["incremental", "incremental"],
   ["inlinesourcemap", "inlineSourceMap"],
   ["importhelpers", "importHelpers"],
+  ["isolatedmodules", "isolatedModules"],
   ["isolateddeclarations", "isolatedDeclarations"],
   ["noemit", "noEmit"],
   ["noemithelpers", "noEmitHelpers"],
@@ -606,11 +609,11 @@ function explicitCompilerOptionsFromSettings(settings) {
     }
     const stringName = stringOptions.get(rawName);
     if (stringName !== undefined) {
-      compilerOptions[stringName] = rawName === "target" && value.toLowerCase() === "es5"
-        ? "ES2016"
+      compilerOptions[stringName] = rawName === "jsximportsource"
+        ? normalizeHarnessModuleSpecifier(value)
         : pathStringOptions.has(rawName)
-          ? normalizeHarnessOptionPath(value)
-          : value;
+        ? normalizeHarnessOptionPath(value)
+        : value;
       continue;
     }
   }
@@ -768,23 +771,11 @@ function baselineDirectoryHasErrors(baselineDir, testCase) {
   if (!existsSync(baselineDir)) {
     return undefined;
   }
-  if (testCase.configurationName !== "") {
-    return undefined;
-  }
-  const prefix = `${testCase.caseName}(`;
-  const matchingErrorBaseline = readdirSync(baselineDir).find((name) => name.startsWith(prefix) && name.endsWith(".errors.txt"));
-  if (matchingErrorBaseline !== undefined) {
-    return true;
-  }
-  const matchingErrorDiff = readdirSync(baselineDir).find((name) => name.startsWith(prefix) && name.endsWith(".errors.txt.diff"));
-  if (matchingErrorDiff !== undefined) {
-    return errorDiffNewSideHasErrors(join(baselineDir, matchingErrorDiff));
-  }
   return undefined;
 }
 
 export function errorDiffNewSideHasErrors(diffPath) {
-  const text = readFileSync(diffPath, "utf8");
+  const text = stripAnsiEscapes(readFileSync(diffPath, "utf8"));
   for (const line of text.split(/\r?\n/)) {
     if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("@@")) {
       const compactHunk = /^@@= skipped -\d+, \+(\d+) lines =@@/.exec(line);
@@ -801,6 +792,10 @@ export function errorDiffNewSideHasErrors(diffPath) {
     }
   }
   return false;
+}
+
+function stripAnsiEscapes(text) {
+  return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
 function baselineDirectories(testCase) {
@@ -861,6 +856,9 @@ async function materializeCase(testCase, runRoot) {
     compilerOptions: compilerOptionsForMaterializedCase(testCase.configuration, parsed, inputFiles),
     files: inputFiles,
   };
+  if (needsLibFolder) {
+    tsconfig.compilerOptions.skipLibCheck = true;
+  }
   if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && tsconfig.compilerOptions.allowJs === undefined) {
     tsconfig.compilerOptions.allowJs = true;
   }
@@ -893,6 +891,7 @@ export function hasRootPackageJson(writtenFiles) {
 
 export function selectInputFiles(parsed, writtenFiles, configuration) {
   const sourceFiles = writtenFiles.filter((file) => harnessSourceFilePattern.test(file));
+  const explicitRootFiles = writtenFiles.filter((file) => isExplicitRootFile(file));
   const lastSourceFile = [...sourceFiles].at(-1);
   const lastUnit = parsed.units.filter((unit) => harnessSourceFilePattern.test(unit.fileName)).at(-1);
   const noImplicitReferences = configuration.get("noimplicitreferences") !== undefined;
@@ -900,7 +899,20 @@ export function selectInputFiles(parsed, writtenFiles, configuration) {
   if (lastSourceFile !== undefined && (noImplicitReferences || hasRequireOrReference)) {
     return [lastSourceFile];
   }
-  return sourceFiles;
+  return [...new Set([...sourceFiles, ...explicitRootFiles])];
+}
+
+function isExplicitRootFile(file) {
+  if (harnessSourceFilePattern.test(file)) {
+    return false;
+  }
+  if (/(^|\/)(?:package|tsconfig)\.json$/i.test(file)) {
+    return false;
+  }
+  if (/(^|\/)\.lib\//i.test(file)) {
+    return false;
+  }
+  return true;
 }
 
 function rewriteHarnessFileContent(content, filePath) {
@@ -1045,6 +1057,14 @@ export function normalizeHarnessOptionPath(fileName) {
   normalized = normalized.replace(/^[a-zA-Z]:(?=\/|$)/, "");
   normalized = normalized.replace(/^\/+/, "");
   return normalized === "" ? "." : normalized;
+}
+
+function normalizeHarnessModuleSpecifier(specifier) {
+  if (!isHarnessAbsolutePath(specifier)) {
+    return specifier;
+  }
+  const normalized = normalizeHarnessOptionPath(specifier);
+  return normalized === "." ? "." : `./${normalized}`;
 }
 
 function applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed, inputFiles) {

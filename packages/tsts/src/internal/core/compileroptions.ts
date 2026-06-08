@@ -711,8 +711,9 @@ export function CompilerOptions_AllowImportingTsExtensionsFrom(receiver: GoPtr<C
  */
 export function CompilerOptions_GetResolveJsonModule(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  if (options!.ResolveJsonModule !== TSUnknown) {
-    return options!.ResolveJsonModule === TSTrue;
+  const resolveJsonModule = options!.ResolveJsonModule ?? TSUnknown;
+  if (resolveJsonModule !== TSUnknown) {
+    return resolveJsonModule === TSTrue;
   }
   switch (CompilerOptions_GetEmitModuleKind(options)) {
     // TODO in 6.0: add Node16/Node18
@@ -733,7 +734,7 @@ export function CompilerOptions_GetResolveJsonModule(receiver: GoPtr<CompilerOpt
  */
 export function CompilerOptions_ShouldPreserveConstEnums(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  return options!.PreserveConstEnums === TSTrue || CompilerOptions_GetIsolatedModules(options);
+  return (options!.PreserveConstEnums ?? TSUnknown) === TSTrue || CompilerOptions_GetIsolatedModules(options);
 }
 
 /**
@@ -749,10 +750,11 @@ export function CompilerOptions_ShouldPreserveConstEnums(receiver: GoPtr<Compile
  */
 export function CompilerOptions_GetAllowJS(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  if (options!.AllowJs !== TSUnknown) {
-    return options!.AllowJs === TSTrue;
+  const allowJs = options!.AllowJs ?? TSUnknown;
+  if (allowJs !== TSUnknown) {
+    return allowJs === TSTrue;
   }
-  return options!.CheckJs === TSTrue;
+  return (options!.CheckJs ?? TSUnknown) === TSTrue;
 }
 
 /**
@@ -783,10 +785,11 @@ export function CompilerOptions_GetJSXTransformEnabled(receiver: GoPtr<CompilerO
  */
 export function CompilerOptions_GetStrictOptionValue(receiver: GoPtr<CompilerOptions>, value: Tristate): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  if (value !== TSUnknown) {
-    return value === TSTrue;
+  const effectiveValue = value ?? TSUnknown;
+  if (effectiveValue !== TSUnknown) {
+    return effectiveValue === TSTrue;
   }
-  return options!.Strict !== TSFalse;
+  return (options!.Strict ?? TSUnknown) !== TSFalse;
 }
 
 /**
@@ -823,8 +826,9 @@ export function CompilerOptions_GetEffectiveTypeRoots(receiver: GoPtr<CompilerOp
     return [options!.TypeRoots, true];
   }
   let baseDir: string;
-  if (options!.ConfigFilePath !== "") {
-    baseDir = GetDirectoryPath(options!.ConfigFilePath);
+  const configFilePath = options!.ConfigFilePath ?? "";
+  if (configFilePath !== "") {
+    baseDir = GetDirectoryPath(configFilePath);
   } else {
     baseDir = currentDirectory;
     if (baseDir === "") {
@@ -866,7 +870,7 @@ export function CompilerOptions_UsesWildcardTypes(receiver: GoPtr<CompilerOption
  */
 export function CompilerOptions_GetIsolatedModules(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  return options!.IsolatedModules === TSTrue || options!.VerbatimModuleSyntax === TSTrue;
+  return (options!.IsolatedModules ?? TSUnknown) === TSTrue || (options!.VerbatimModuleSyntax ?? TSUnknown) === TSTrue;
 }
 
 /**
@@ -892,7 +896,7 @@ export function CompilerOptions_IsIncremental(receiver: GoPtr<CompilerOptions>):
  */
 export function CompilerOptions_GetEmitStandardClassFields(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  return options!.UseDefineForClassFields !== TSFalse && CompilerOptions_GetEmitScriptTarget(options) >= ScriptTargetES2022;
+  return (options!.UseDefineForClassFields ?? TSUnknown) !== TSFalse && CompilerOptions_GetEmitScriptTarget(options) >= ScriptTargetES2022;
 }
 
 /**
@@ -908,10 +912,11 @@ export function CompilerOptions_GetEmitStandardClassFields(receiver: GoPtr<Compi
  */
 export function CompilerOptions_GetUseDefineForClassFields(receiver: GoPtr<CompilerOptions>): bool {
   const options: GoPtr<CompilerOptions> = receiver;
-  if (options!.UseDefineForClassFields === TSUnknown) {
+  const useDefineForClassFields = options!.UseDefineForClassFields ?? TSUnknown;
+  if (useDefineForClassFields === TSUnknown) {
     return CompilerOptions_GetEmitScriptTarget(options) >= ScriptTargetES2022;
   }
-  return options!.UseDefineForClassFields === TSTrue;
+  return useDefineForClassFields === TSTrue;
 }
 
 /**
