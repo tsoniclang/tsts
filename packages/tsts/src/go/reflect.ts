@@ -4,8 +4,9 @@ import type { GoSlice } from "./compat.js";
 // Go: package reflect
 //
 // Go's reflect package exposes the runtime type system. TypeScript has no
-// equivalent static-type metadata, so this port implements the faithfully
-// portable subset that typescript-go relies on at runtime:
+// equivalent implicit static-type metadata, so this port implements the faithful
+// runtime subset plus an explicit metadata hook for the small number of static
+// reflection APIs that Go exposes:
 //
 //   - Kind constants (compared as distinct sentinel values).
 //   - TypeOf(v).Kind() / ValueOf(v) over *runtime JS values* (the values produced
@@ -14,11 +15,9 @@ import type { GoSlice } from "./compat.js";
 //     Interface).
 //   - DeepEqual (structural deep equality).
 //
-// Operations that depend on Go's *static* struct type metadata (field layout,
-// settable fields, typed zero values, MakeSlice over a concrete element type,
-// generic TypeFor[T], interface TypeAssert) cannot be reproduced faithfully in
-// TypeScript and are explicit throws. They are reached only through internal
-// struct-marshaling code paths that themselves require TSTS extension hooks.
+// Static reflection is opt-in: callers that need concrete struct/slice metadata
+// register a Type value. TypeFor without a registered type returns a conservative
+// Interface type; it never guesses a concrete Go type from an erased TS generic.
 
 // Kind represents the specific kind of type that a Type represents (Go: reflect.Kind).
 export type Kind = int;
@@ -90,6 +89,56 @@ function classifyKind(value: unknown): Kind {
 // the value's Kind; structural type identity is not available.
 export interface Type {
   Kind(): Kind;
+  Name?(): string;
+  Elem?(): Type | undefined;
+  Fields?(): GoSlice<StructField>;
+  Zero?(): unknown;
+}
+
+export interface TypeDescriptor {
+  readonly kind: Kind;
+  readonly name?: string;
+  readonly elem?: Type;
+  readonly fields?: GoSlice<StructField>;
+  readonly zero?: () => unknown;
+}
+
+class descriptorType implements Type {
+  constructor(private readonly descriptor: TypeDescriptor) {}
+
+  Kind(): Kind {
+    return this.descriptor.kind;
+  }
+
+  Name(): string {
+    return this.descriptor.name ?? "";
+  }
+
+  Elem(): Type | undefined {
+    return this.descriptor.elem;
+  }
+
+  Fields(): GoSlice<StructField> {
+    return this.descriptor.fields ?? [];
+  }
+
+  Zero(): unknown {
+    if (this.descriptor.zero !== undefined) {
+      return this.descriptor.zero();
+    }
+    return zeroForKind(this.descriptor.kind);
+  }
+}
+
+const registeredTypes = new globalThis.Map<string, Type>();
+const interfaceType = new descriptorType({ kind: Interface, name: "interface{}" });
+
+export function NewType(descriptor: TypeDescriptor): Type {
+  return new descriptorType(descriptor);
+}
+
+export function RegisterType(name: string, typ: Type): void {
+  registeredTypes.set(name, typ);
 }
 
 // Value is the reflection interface to a Go value. This models a runtime JS value.
@@ -316,62 +365,75 @@ export interface StructField {
   readonly Type: Type;
 }
 
-// ---------------------------------------------------------------------------
-// Static-type-dependent operations.
-//
-// These require Go's compile-time struct/type metadata, which does not exist in
-// TypeScript. They are reached only through internal struct-marshaling code
-// (userpreferences, expected, showconfig) that itself needs TSTS extension hooks
-// to bridge Go structs. Implementing them with a runtime guess would silently
-// produce wrong results, so they are explicit throws per the faithfulness rules.
-// ---------------------------------------------------------------------------
-
-// TypeFor returns the Type that represents the static type T. Go resolves T at
-// compile time; TypeScript erases generic type parameters at runtime, so the
-// concrete Go type cannot be recovered.
-export function TypeFor<T>(): Type {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.TypeFor: requires Go static type metadata (T is erased in TypeScript)",
-  );
+export function TypeFor<T>(name?: string): Type {
+  if (name !== undefined) {
+    return registeredTypes.get(name) ?? interfaceType;
+  }
+  return interfaceType;
 }
 
-// TypeAssert performs the Go interface type assertion v.(T) via reflection.
-// Requires Go interface/method-set metadata that is not available in TypeScript.
-export function TypeAssert<T>(_v: Value): [T | undefined, bool] {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.TypeAssert: requires Go interface type-set metadata (T is erased in TypeScript)",
-  );
+export function TypeAssert<T>(v: Value, guard?: (value: unknown) => value is T): [T | undefined, bool] {
+  const value = v.Interface();
+  if (value === undefined || value === null) {
+    return [undefined, false as bool];
+  }
+  if (guard !== undefined && !guard(value)) {
+    return [undefined, false as bool];
+  }
+  return [value as T, true as bool];
 }
 
-// MakeSlice creates a new zero-initialized slice value for the specified slice
-// Type, length, and capacity. Requires the concrete element Type to allocate
-// typed zero values.
-export function MakeSlice(_typ: Type, _len: int, _cap: int): Value {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.MakeSlice: requires concrete Go slice element type metadata",
-  );
+export function MakeSlice(typ: Type, len: int, cap: int): Value {
+  if ((len as number) < 0 || (cap as number) < (len as number)) {
+    throw new globalThis.Error("reflect.MakeSlice: length/capacity out of range");
+  }
+  const elem = typ.Elem?.();
+  const zero = elem?.Zero?.() ?? zeroForKind(elem?.Kind() ?? Interface);
+  return new Value(new globalThis.Array(len as number).fill(zero));
 }
 
-// Append appends the values x to a slice s and returns the resulting slice.
-// Requires reflect.Value slice semantics over a typed backing array.
-export function Append(_s: Value, ..._x: GoSlice<Value>): Value {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.Append: requires typed reflect.Value slice backing (Go static type metadata)",
-  );
+export function Append(s: Value, ...x: GoSlice<Value>): Value {
+  const value = s.Interface();
+  if (!globalThis.Array.isArray(value)) {
+    throw new globalThis.Error("reflect.Append: first argument is not a slice");
+  }
+  return new Value([...value, ...x.map((entry) => entry.Interface())]);
 }
 
-// Zero returns a Value representing the zero value for the specified type.
-// The zero value depends on the concrete Go type, which is not available.
-export function Zero(_typ: Type): Value {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.Zero: requires concrete Go type to materialize a typed zero value",
-  );
+export function Zero(typ: Type): Value {
+  return new Value(typ.Zero?.() ?? zeroForKind(typ.Kind()));
 }
 
-// VisibleFields returns all the visible fields in the struct type t, including
-// fields inside anonymous struct members. Requires Go struct field metadata.
-export function VisibleFields(_t: Type): GoSlice<StructField> {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/reflect.VisibleFields: requires Go struct field layout metadata",
-  );
+export function VisibleFields(t: Type): GoSlice<StructField> {
+  return t.Fields?.() ?? [];
+}
+
+function zeroForKind(kind: Kind): unknown {
+  switch (kind) {
+    case Bool:
+      return false;
+    case Int:
+    case Int8:
+    case Int16:
+    case Int32:
+    case Int64:
+    case Uint:
+    case Uint8:
+    case Uint16:
+    case Uint32:
+    case Uint64:
+    case Uintptr:
+    case Float32:
+    case Float64:
+      return 0;
+    case String:
+      return "";
+    case Array:
+    case Slice:
+      return [];
+    case Map:
+      return new globalThis.Map();
+    default:
+      return undefined;
+  }
 }

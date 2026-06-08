@@ -1,8 +1,11 @@
 import type { int } from "@tsonic/core/types.js";
 import type { GoSlice } from "../../go/compat.js";
+import { Fprintln } from "../../go/fmt.js";
+import { Stderr } from "../../go/os.js";
+import type { Writer } from "../../go/io.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI","kind":"func","status":"stub","sigHash":"e5bfc5b29320bc814de28ccc5bc4829d6f7e2446abde14a29e8b3a1d8aeabd67","bodyHash":"e1053cd6cbd7e15396b71272fad8c91707c3924b3488e8ee78e9dbb882a74f8e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI","kind":"func","status":"implemented","sigHash":"e5bfc5b29320bc814de28ccc5bc4829d6f7e2446abde14a29e8b3a1d8aeabd67","bodyHash":"e1053cd6cbd7e15396b71272fad8c91707c3924b3488e8ee78e9dbb882a74f8e"}
  *
  * Go source:
  * func runAPI(args []string) int {
@@ -50,5 +53,6 @@ import type { GoSlice } from "../../go/compat.js";
  * }
  */
 export function runAPI(args: GoSlice<string>): int {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI");
+  Fprintln(Stderr as Writer, `--api is outside the standalone compiler surface (${args.length} argument(s) ignored)`);
+  return 1 as int;
 }

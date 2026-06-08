@@ -1,7 +1,7 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
-import type { Group } from "../../go/golang.org/x/sync/errgroup.js";
+import { type Group, WithContext } from "../../go/golang.org/x/sync/errgroup.js";
 import { Mutex, WaitGroup } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 
@@ -243,9 +243,10 @@ export interface ThrottleGroup {
  * }
  */
 export function NewThrottleGroup(ctx: Context, semaphore: GoChan<{ readonly __tsgoEmpty?: never }, "bidirectional">): GoPtr<ThrottleGroup> {
+  const [group] = WithContext(ctx);
   return {
     semaphore,
-    group: { __goFacadeName: "golang.org/x/sync/errgroup.Group" } as GoPtr<Group>,
+    group,
   };
 }
 
