@@ -7,10 +7,14 @@ import {
   Bool,
   Float64,
   Int64,
+  Interface,
+  Struct,
   String as StringKind,
   Slice,
   Map as MapKind,
   Invalid,
+  Int,
+  NewType,
   TypeFor,
   TypeAssert,
   MakeSlice,
@@ -93,11 +97,19 @@ test("reflect.DeepEqual arrays/objects/maps", () => {
   assert.equal(DeepEqual([1], { 0: 1 }), false);
 });
 
-test("reflect static-type operations are explicit throws", () => {
-  assert.throws(() => TypeFor<string>(), /UNIMPLEMENTED go\/reflect\.TypeFor/);
-  assert.throws(() => TypeAssert<string>(ValueOf("x")), /UNIMPLEMENTED go\/reflect\.TypeAssert/);
-  assert.throws(() => MakeSlice(TypeOf([])!, 0, 0), /UNIMPLEMENTED go\/reflect\.MakeSlice/);
-  assert.throws(() => Append(ValueOf([])), /UNIMPLEMENTED go\/reflect\.Append/);
-  assert.throws(() => Zero(TypeOf(0)!), /UNIMPLEMENTED go\/reflect\.Zero/);
-  assert.throws(() => VisibleFields(TypeOf({})!), /UNIMPLEMENTED go\/reflect\.VisibleFields/);
+test("reflect static-type helpers use explicit metadata without runtime guessing", () => {
+  const intType = NewType({ kind: Int, name: "int" });
+  const sliceType = NewType({ kind: Slice, name: "[]int", elem: intType });
+  const structType = NewType({
+    kind: Struct,
+    name: "Example",
+    fields: [{ Name: "Count", Type: intType }],
+  });
+
+  assert.equal(TypeFor<string>().Kind(), Interface);
+  assert.deepEqual(TypeAssert<string>(ValueOf("x")), ["x", true]);
+  assert.deepEqual(MakeSlice(sliceType, 2, 4).Interface(), [0, 0]);
+  assert.deepEqual(Append(ValueOf([1]), ValueOf(2), ValueOf(3)).Interface(), [1, 2, 3]);
+  assert.equal(Zero(intType).Interface(), 0);
+  assert.deepEqual(VisibleFields(structType).map((field) => field.Name), ["Count"]);
 });

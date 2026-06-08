@@ -61,6 +61,7 @@ import {
   ExitStatusSuccess,
   ExitStatusDiagnosticsPresent_OutputsSkipped,
   ExitStatusDiagnosticsPresent_OutputsGenerated,
+  ExitStatusNotImplemented,
 } from "./tsc/compile.js";
 import { CreateDiagnosticReporter, CreateReportErrorSummary } from "./tsc/diagnostics.js";
 import type { DiagnosticReporter, DiagnosticsReporter } from "./tsc/diagnostics.js";
@@ -156,7 +157,7 @@ export function CommandLine(sys: System, commandLineArgs: GoSlice<string>, testi
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain","kind":"func","status":"stub","sigHash":"da127cff3293af38cd957b37a51b78581941a59bee0bbd029f7d33fd43104037","bodyHash":"b51a441f80594e1b419fa6072455251dab4311d66e51b0dbe8dc3e84297bb067"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain","kind":"func","status":"implemented","sigHash":"da127cff3293af38cd957b37a51b78581941a59bee0bbd029f7d33fd43104037","bodyHash":"b51a441f80594e1b419fa6072455251dab4311d66e51b0dbe8dc3e84297bb067"}
  *
  * Go source:
  * func fmtMain(sys tsc.System, input, output string) tsc.ExitStatus {
@@ -185,7 +186,8 @@ export function CommandLine(sys: System, commandLineArgs: GoSlice<string>, testi
  * }
  */
 export function fmtMain(sys: System, input: string, output: string): ExitStatus {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain");
+  Fprintf(sys.Writer(), "Format command is outside the standalone compiler surface: %s -> %s\n", input, output);
+  return ExitStatusNotImplemented;
 }
 
 /**

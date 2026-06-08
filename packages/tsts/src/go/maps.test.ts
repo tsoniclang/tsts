@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Clone, Copy, Equal, EqualFunc, Keys, Values, Set, GetOrZero, Delete } from "./maps.js";
+import * as maps from "./maps.js";
+import { Clone, Copy, DeleteFunc, Equal, EqualFunc, Keys, Values } from "./maps.js";
 
 test("maps.Clone returns a shallow copy", () => {
   const m = new globalThis.Map<string, number>([
@@ -102,8 +103,18 @@ test("maps.Values yields all values", () => {
   assert.deepEqual(collected.sort(), [1, 2]);
 });
 
-test("maps porter false-positives throw explicitly (Set/GetOrZero/Delete)", () => {
-  assert.throws(() => Set(), /UNIMPLEMENTED go\/maps\.Set/);
-  assert.throws(() => GetOrZero(), /UNIMPLEMENTED go\/maps\.GetOrZero/);
-  assert.throws(() => Delete(), /UNIMPLEMENTED go\/maps\.Delete/);
+test("maps.DeleteFunc deletes matching entries", () => {
+  const m = new globalThis.Map<string, number>([
+    ["a", 1],
+    ["b", 2],
+    ["c", 3],
+  ]);
+  DeleteFunc(m, (_key, value) => value % 2 === 1);
+  assert.deepEqual([...m.entries()], [["b", 2]]);
+});
+
+test("maps package exposes only real stdlib helpers", () => {
+  assert.equal("Set" in maps, false);
+  assert.equal("GetOrZero" in maps, false);
+  assert.equal("Delete" in maps, false);
 });

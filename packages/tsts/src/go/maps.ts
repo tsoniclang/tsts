@@ -91,40 +91,11 @@ export function Values<K, V>(m: GoMap<K, V> | undefined): GoSeq<V> {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Porter false positives.
-//
-// The following symbols were attributed to the stdlib `maps` package by the
-// porter, but at every call site in typescript-go they are method calls on a
-// local variable named `maps` that is a *collections.OrderedMap (see
-// internal/testutil/harnessutil/harnessutil.go: `maps.Set(...)`,
-// `maps.GetOrZero(...)`, `maps.Delete(single-arg)`). The Go standard `maps`
-// package has no Set/GetOrZero functions and no single-argument Delete. These
-// belong to collections.OrderedMap and must not be implemented here, or callers
-// would silently get wrong behavior. They are intentionally explicit throws.
-// ---------------------------------------------------------------------------
-
-// Set is NOT a stdlib maps function (it is collections.OrderedMap.Set).
-export function Set(..._args: unknown[]): never {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/maps.Set: not a Go stdlib `maps` function; porter mis-attributed a collections.OrderedMap.Set method call (harnessutil.go) to the stdlib maps package",
-  );
-}
-
-// GetOrZero is NOT a stdlib maps function (it is collections.OrderedMap.GetOrZero).
-export function GetOrZero(..._args: unknown[]): never {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/maps.GetOrZero: not a Go stdlib `maps` function; porter mis-attributed a collections.OrderedMap.GetOrZero method call (harnessutil.go) to the stdlib maps package",
-  );
-}
-
-// Delete here is NOT the stdlib maps function. The only call site
-// (`maps.Delete(outputs.JS.UnitName)`) is a single-argument
-// collections.OrderedMap.Delete(key) method call, whereas Go stdlib `maps` has
-// no plain Delete (only DeleteFunc). Implementing a one-arg Delete on a free
-// map would be meaningless. Left as an explicit throw.
-export function Delete(..._args: unknown[]): never {
-  throw new globalThis.Error(
-    "UNIMPLEMENTED go/maps.Delete: not a Go stdlib `maps` function; the single-arg call site is collections.OrderedMap.Delete(key) (harnessutil.go), not stdlib maps",
-  );
+// DeleteFunc deletes any key/value pairs from m for which del returns true.
+export function DeleteFunc<K, V>(m: GoMap<K, V>, del: (key: K, value: V) => bool): void {
+  for (const [key, value] of [...m]) {
+    if (del(key, value)) {
+      m.delete(key);
+    }
+  }
 }
