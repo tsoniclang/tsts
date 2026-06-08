@@ -1949,10 +1949,10 @@ export function getDeclarationModifierFlagsFromSymbolEx(s: GoPtr<Symbol>, isWrit
   if (s!.ValueDeclaration !== undefined) {
     let declaration: GoPtr<Node> = undefined;
     if (isWrite) {
-      declaration = Find(s!.Declarations, IsSetAccessorDeclaration);
+      declaration = Find(s!.Declarations ?? [], IsSetAccessorDeclaration);
     }
     if (declaration === undefined && (s!.Flags & SymbolFlagsGetAccessor) !== 0) {
-      declaration = Find(s!.Declarations, IsGetAccessorDeclaration);
+      declaration = Find(s!.Declarations ?? [], IsGetAccessorDeclaration);
     }
     if (declaration === undefined) {
       declaration = s!.ValueDeclaration;
@@ -3223,7 +3223,7 @@ export function getEnclosingContainer(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function getDeclarationsOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoSlice<GoPtr<Node>> {
-  return Filter(symbol_!.Declarations, (d: GoPtr<Node>): bool => (d!.Kind === kind) as bool);
+  return Filter(symbol_!.Declarations ?? [], (d: GoPtr<Node>): bool => (d!.Kind === kind) as bool);
 }
 
 /**
@@ -3856,10 +3856,10 @@ export function tryGetPropertyAccessOrIdentifierToString(expr: GoPtr<Node>): str
  * }
  */
 export function allDeclarationsInSameSourceFile(symbol_: GoPtr<Symbol>): bool {
-  if (symbol_!.Declarations.length > 1) {
+  if ((symbol_!.Declarations?.length ?? 0) > 1) {
     let sourceFile: GoPtr<SourceFile> = undefined;
-    for (let i = 0; i < symbol_!.Declarations.length; i++) {
-      const d = symbol_!.Declarations[i]!;
+    for (let i = 0; i < symbol_!.Declarations!.length; i++) {
+      const d = symbol_!.Declarations![i]!;
       if (i === 0) {
         sourceFile = GetSourceFileOfNode(d);
       } else if (GetSourceFileOfNode(d) !== sourceFile) {
@@ -4210,7 +4210,7 @@ export function Checker_isUncheckedJSSuggestion(receiver: GoPtr<Checker>, node: 
     if (Tristate_IsUnknown(receiver!.compilerOptions!.CheckJs) && file!.CheckJsDirective === undefined && (file!.ScriptKind === ScriptKindJS || file!.ScriptKind === ScriptKindJSX)) {
       let declarationFile: GoPtr<SourceFile> = undefined;
       if (suggestion !== undefined) {
-        const firstDeclaration = FirstOrNil(suggestion!.Declarations);
+        const firstDeclaration = FirstOrNil(suggestion!.Declarations ?? []);
         if (firstDeclaration !== undefined) {
           declarationFile = GetSourceFileOfNode(firstDeclaration);
         }

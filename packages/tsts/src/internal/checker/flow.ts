@@ -120,6 +120,19 @@ export function FlowType_isNil(receiver: GoPtr<FlowType>): bool {
   return receiver?.t === undefined;
 }
 
+const flowLoopNodeKeys = new WeakMap<FlowNode, int>();
+let nextFlowLoopNodeKey = 1 as int;
+
+function getFlowLoopKey(flow: GoPtr<FlowNode>, refKey: CacheHashKey): FlowLoopKey {
+  let flowKey = flowLoopNodeKeys.get(flow!);
+  if (flowKey === undefined) {
+    flowKey = nextFlowLoopNodeKey;
+    nextFlowLoopNodeKey = (nextFlowLoopNodeKey + 1) as int;
+    flowLoopNodeKeys.set(flow!, flowKey);
+  }
+  return `${flowKey}:${refKey.String()}` as unknown as FlowLoopKey;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.newFlowType","kind":"method","status":"implemented","sigHash":"83cfb5b6741c497ac5c9162a9bd2812937af41ff5d7c80fa36e2dd9c785974d1","bodyHash":"88de6537352db89ace11ef3a3204b8c72d272c03765bc6602a80b3f598f1fc72"}
  *
@@ -495,7 +508,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         continue;
       }
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
-      f!.reduceLabels = [...f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node)];
+      f!.reduceLabels = [...(f!.reduceLabels ?? []), Node_AsFlowReduceLabelData(currentFlow!.Node)];
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
       f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
@@ -538,11 +551,11 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
  * 	return flow.Antecedents
  * }
  */
-export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoSlice<GoPtr<FlowReduceLabelData>>): GoPtr<FlowList> {
-  let i = reduceLabels.length;
+export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoPtr<GoSlice<GoPtr<FlowReduceLabelData>>>): GoPtr<FlowList> {
+  let i = reduceLabels?.length ?? 0;
   while (i !== 0) {
     i--;
-    const data = reduceLabels[i];
+    const data = reduceLabels![i];
     if (data!.Target === flow) {
       return data!.Antecedents;
     }
@@ -2961,7 +2974,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     // No cache key is generated when binding patterns are in unnarrowable situations
     return { t: f!.declaredType, incomplete: false };
   }
-  const key: FlowLoopKey = { flowNode: flow, refKey: f!.refKey };
+  const key = getFlowLoopKey(flow, f!.refKey);
   // If we have previously computed the control flow type for the reference at
   // this flow loop junction, return the cached type.
   const cached = receiver!.flowLoopCache.get(key);
@@ -2976,7 +2989,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     }
   }
   // Add the flow loop junction and reference to the in-process stack and analyze each antecedent code path.
-  const antecedentTypes: GoSlice<GoPtr<Type>> = [];
+  let antecedentTypes: GoSlice<GoPtr<Type>> = [];
   let subtypeReduction = false;
   let firstAntecedentType: FlowType = { t: undefined, incomplete: false };
   let firstAntecedentSeen = false;
@@ -3005,7 +3018,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
         return { t: cachedAfter, incomplete: false };
       }
     }
-    AppendIfUnique(antecedentTypes, flowType.t);
+    antecedentTypes = AppendIfUnique(antecedentTypes, flowType.t);
     // If an antecedent type is not a subset of the declared type, we need to perform subtype reduction.
     if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
       subtypeReduction = true;
@@ -5573,6 +5586,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       flow = flow!.Antecedent!;
     } else if (flags & FlowFlagsReduceLabel) {
       receiver!.lastFlowNode = undefined;
+      f!.reduceLabels ??= [];
       f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();
@@ -5701,6 +5715,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsLoopLabel) {
       flow = flow!.Antecedents!.Flow!;
     } else if (flags & FlowFlagsReduceLabel) {
+      f!.reduceLabels ??= [];
       f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();

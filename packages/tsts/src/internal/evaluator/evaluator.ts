@@ -198,7 +198,7 @@ export type Evaluator = (expr: GoPtr<Node>, location: GoPtr<Node>) => Result;
  * }
  */
 export function NewEvaluator(evaluateEntity: Evaluator, outerExpressionsToSkip: OuterExpressionKinds): Evaluator {
-  let evaluate: Evaluator;
+  let evaluate!: Evaluator;
   evaluate = (expr: GoPtr<Node>, location: GoPtr<Node>): Result => {
     let isSyntacticallyString: bool = false;
     let resolvedOtherFiles: bool = false;

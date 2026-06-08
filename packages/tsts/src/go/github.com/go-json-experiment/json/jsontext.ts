@@ -120,13 +120,19 @@ class JsonEncoder implements Encoder {
   WriteValue(value: unknown): GoError {
     try {
       const frame = this.#stack[this.#stack.length - 1];
-      if (frame?.kind === "object" && frame.expecting === "key") {
-        if (frame.count > 0) {
+      const objectFrame = asJsonObjectFrame(frame);
+      if (objectFrame !== undefined) {
+        if (objectFrame.expecting !== "key") {
+          this.#writeValuePrefix();
+          this.#chunks.push(JSON.stringify(normalizeForJson(value)));
+          return undefined;
+        }
+        if (objectFrame.count > 0) {
           this.#chunks.push(",");
         }
         this.#chunks.push(JSON.stringify(String(value)));
         this.#chunks.push(":");
-        frame.expecting = "value";
+        objectFrame.expecting = "value";
         return undefined;
       }
       this.#writeValuePrefix();
@@ -156,11 +162,15 @@ class JsonEncoder implements Encoder {
       frame.count = frame.count + 1;
       return;
     }
-    if (frame.expecting !== "value") {
+    const objectFrame = asJsonObjectFrame(frame);
+    if (objectFrame === undefined) {
+      throw new Error("json array value prefix reached object-only branch");
+    }
+    if (objectFrame.expecting !== "value") {
       throw new Error("json object value written before key");
     }
-    frame.count = frame.count + 1;
-    frame.expecting = "key";
+    objectFrame.count = objectFrame.count + 1;
+    objectFrame.expecting = "key";
   }
 
   #closeContainer(expected: JsonContainerFrame["kind"], token: string): GoError {
@@ -168,8 +178,11 @@ class JsonEncoder implements Encoder {
     if (frame === undefined || frame.kind !== expected) {
       return new Error(`json encoder mismatched ${token} token`);
     }
-    if (frame.kind === "object" && frame.expecting !== "key") {
-      return new Error("json object closed before value");
+    const objectFrame = asJsonObjectFrame(frame);
+    if (objectFrame !== undefined) {
+      if (objectFrame.expecting !== "key") {
+        return new Error("json object closed before value");
+      }
     }
     this.#chunks.push(token);
     return undefined;
@@ -188,6 +201,10 @@ interface JsonArrayFrame {
 }
 
 type JsonContainerFrame = JsonObjectFrame | JsonArrayFrame;
+
+function asJsonObjectFrame(frame: JsonContainerFrame | undefined): JsonObjectFrame | undefined {
+  return frame !== undefined && frame.kind === "object" ? frame as JsonObjectFrame : undefined;
+}
 
 export function NewDecoder(reader: Reader | GoSlice<byte> | string): Decoder {
   return new JsonDecoder(reader);

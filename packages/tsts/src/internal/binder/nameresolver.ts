@@ -976,10 +976,11 @@ export function NameResolver_argumentsSymbol(receiver: GoPtr<NameResolver>): GoP
  * }
  */
 export function GetLocalSymbolForExportDefault(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
-  if (!isExportDefaultSymbol(symbol_) || symbol_!.Declarations.length === 0) {
+  const declarations = symbol_!.Declarations ?? [];
+  if (!isExportDefaultSymbol(symbol_) || declarations.length === 0) {
     return undefined;
   }
-  for (const decl of symbol_!.Declarations) {
+  for (const decl of declarations) {
     const localSymbol = Node_LocalSymbol(decl);
     if (localSymbol !== undefined) {
       return localSymbol;
@@ -997,7 +998,8 @@ export function GetLocalSymbolForExportDefault(symbol_: GoPtr<Symbol>): GoPtr<Sy
  * }
  */
 export function isExportDefaultSymbol(symbol_: GoPtr<Symbol>): bool {
-  return (symbol_ !== undefined && symbol_!.Declarations.length > 0 && HasSyntacticModifier(symbol_!.Declarations[0], ModifierFlagsDefault)) as bool;
+  const declarations = symbol_?.Declarations ?? [];
+  return (declarations.length > 0 && HasSyntacticModifier(declarations[0], ModifierFlagsDefault)) as bool;
 }
 
 /**
@@ -1057,7 +1059,7 @@ export function getIsDeferredContext(location: GoPtr<Node>, lastLocation: GoPtr<
  * }
  */
 export function isTypeParameterSymbolDeclaredInContainer(symbol_: GoPtr<Symbol>, container: GoPtr<Node>): bool {
-  for (const decl of symbol_!.Declarations) {
+  for (const decl of symbol_!.Declarations ?? []) {
     if (decl!.Kind === KindTypeParameter) {
       const parent = decl!.Parent;
       if (parent === container) {

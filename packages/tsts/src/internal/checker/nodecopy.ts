@@ -854,7 +854,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     return [introducesError, NodeBuilderImpl_setTextRange(b, Node_Clone(node, b!.f!), node), undefined];
   };
 
-  let tryVisitSimpleTypeNode: (node: GoPtr<Node>) => GoPtr<Node>;
+  let tryVisitSimpleTypeNode!: (node: GoPtr<Node>) => GoPtr<Node>;
   const tryVisitIndexedAccess = (node: GoPtr<Node>): GoPtr<Node> => {
     const indexed = AsIndexedAccessTypeNode(node)!;
     const resultObjectType = tryVisitSimpleTypeNode(indexed.ObjectType);

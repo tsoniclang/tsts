@@ -164,7 +164,7 @@ export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Sy
  */
 export function Checker_addImplementationSuccessElaboration(receiver: GoPtr<Checker>, s: GoPtr<CallState>, failed: GoPtr<Signature>, diagnostic: GoPtr<Diagnostic>): void {
   if (failed!.declaration !== undefined && Node_Symbol(failed!.declaration) !== undefined) {
-    const declarations = Node_Symbol(failed!.declaration)!.Declarations;
+    const declarations = Node_Symbol(failed!.declaration)!.Declarations ?? [];
     if (declarations.length > 1) {
       const implementation = declarations.find((declaration) =>
         IsFunctionLikeDeclaration(declaration) && NodeIsPresent(Node_Body(declaration))

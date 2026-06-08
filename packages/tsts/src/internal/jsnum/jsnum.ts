@@ -84,7 +84,7 @@ export function isNonFinite(x: double): bool {
   // The 64-bit AND against the exponent mask is performed via BigInt because the
   // mask (0x7FF0000000000000) and the uint64 bit pattern exceed JS's 32-bit
   // bitwise-operator range.
-  const mask = 0x7ff0000000000000n;
+  const mask: bigint = 0x7ff0000000000000n;
   return (globalThis.BigInt(math.Float64bits(x)) & mask) === mask;
 }
 

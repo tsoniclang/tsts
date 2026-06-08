@@ -181,7 +181,7 @@ export function Checker_checkInferType(receiver: GoPtr<Checker>, node: GoPtr<Nod
   const typeParameterDeclarationNode = AsInferTypeNode(node)!.TypeParameter;
   Checker_checkSourceElement(receiver, typeParameterDeclarationNode);
   const symbol_ = Checker_getSymbolOfDeclaration(receiver, typeParameterDeclarationNode);
-  if (symbol_!.Declarations.length > 1) {
+  if ((symbol_!.Declarations?.length ?? 0) > 1) {
     const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
     if (!links!.typeParametersChecked) {
       links!.typeParametersChecked = true as bool;
@@ -2073,7 +2073,7 @@ export function Checker_getSimplifiedTypeOrConstraint(receiver: GoPtr<Checker>, 
  */
 export function Checker_getConstraintDeclaration(receiver: GoPtr<Checker>, t: GoPtr<Type>): GoPtr<Node> {
   if (t!.symbol !== undefined) {
-    for (const d of t!.symbol!.Declarations) {
+    for (const d of t!.symbol!.Declarations ?? []) {
       if (IsTypeParameterDeclaration(d)) {
         const constraint = AsTypeParameterDeclaration(d)!.Constraint;
         if (constraint !== undefined) {

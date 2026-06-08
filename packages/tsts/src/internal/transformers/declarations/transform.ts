@@ -2116,7 +2116,7 @@ export function DeclarationTransformer_transformConstructSignatureDeclaration(re
  */
 export function DeclarationTransformer_omitPrivateMethodType(receiver: GoPtr<DeclarationTransformer>, input: GoPtr<Node>): GoPtr<Node> {
   const sym = Node_Symbol(input);
-  if (sym !== undefined && sym.Declarations.length > 0 && sym.Declarations[0] !== input) {
+  if (sym !== undefined && (sym.Declarations?.length ?? 0) > 0 && sym.Declarations![0] !== input) {
     return undefined;
   }
   const factory = Transformer_Factory(receiver!.__tsgoEmbedded0);
@@ -2549,7 +2549,7 @@ export function DeclarationTransformer_transformCommonJSExport(receiver: GoPtr<D
 export function isCommonJSAliasExport(node: GoPtr<Node>): bool {
   if (IsBinaryExpression(node) && IsIdentifier(AsBinaryExpression(node)!.Right)) {
     const sym = Node_Symbol(node);
-    if (sym !== undefined && sym.Declarations.length === 1) {
+    if (sym !== undefined && (sym.Declarations?.length ?? 0) === 1) {
       return true;
     }
   }

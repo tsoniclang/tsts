@@ -3700,7 +3700,7 @@ export function hasInferenceCandidatesOrDefault(info: GoPtr<InferenceInfo>): boo
  */
 export function hasTypeParameterDefault(tp: GoPtr<Type>): bool {
   if (tp!.symbol !== undefined) {
-    for (const d of tp!.symbol!.Declarations) {
+    for (const d of tp!.symbol!.Declarations ?? []) {
       if (IsTypeParameterDeclaration(d) && AsTypeParameterDeclaration(d)!.DefaultType !== undefined) {
         return true;
       }

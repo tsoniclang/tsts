@@ -84,7 +84,7 @@ export function NewTicker(duration: Duration): Ticker {
 
 export function NewTimer(duration: Duration): Timer {
   let active = true;
-  let handle: ReturnType<typeof setTimeout>;
+  let handle!: ReturnType<typeof setTimeout>;
   const promise = new Promise<Time>((resolve) => {
     handle = setTimeout(() => {
       active = false;

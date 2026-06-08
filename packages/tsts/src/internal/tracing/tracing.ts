@@ -1305,8 +1305,8 @@ export function typeTracer_buildTypeDescriptor(receiver: GoPtr<typeTracer>, typ:
   if (firstDeclSymbol === undefined) {
     firstDeclSymbol = symbol;
   }
-  if (firstDeclSymbol !== undefined && firstDeclSymbol!.Declarations.length > 0) {
-    desc.FirstDeclaration = getLocation(firstDeclSymbol!.Declarations[0]);
+  if (firstDeclSymbol !== undefined && (firstDeclSymbol!.Declarations?.length ?? 0) > 0) {
+    desc.FirstDeclaration = getLocation(firstDeclSymbol!.Declarations![0]);
   }
 
   // Display text

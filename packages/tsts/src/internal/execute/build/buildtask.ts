@@ -1,5 +1,6 @@
 import type { bool, int, uint } from "@tsonic/core/types.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";
 import type { Mutex } from "../../../go/sync.js";
 import type { Bool } from "../../../go/sync/atomic.js";
@@ -579,7 +580,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
 
   const parseStart = orchestrator!.opts.Sys.Now();
   const trace = GetTraceWithWriterFromSys(
-    receiver!.result!.builder as unknown as import("../../../go/io.js").Writer,
+    receiver!.result!.builder as unknown as Writer,
     ParsedBuildCommandLine_Locale_fn(orchestrator!.opts.Command),
     orchestrator!.opts.Testing,
   );
@@ -603,7 +604,7 @@ export function BuildTask_compileAndEmit(receiver: GoPtr<BuildTask>, orchestrato
     Config: receiver!.resolved,
     ReportDiagnostic: (err) => BuildTask_reportDiagnostic(receiver, err),
     ReportErrorSummary: QuietDiagnosticsReporter,
-    Writer: receiver!.result!.builder as unknown as import("../../../go/io.js").Writer,
+    Writer: receiver!.result!.builder as unknown as Writer,
     WriteFile: (fileName, text, data) => BuildTask_writeFile(receiver, orchestrator, fileName, text, data),
     CompileTimes: compileTimes,
     Testing: orchestrator!.opts.Testing,

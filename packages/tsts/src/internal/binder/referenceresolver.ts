@@ -343,7 +343,7 @@ export function referenceResolver_isTypeOnlyAliasDeclaration(receiver: GoPtr<ref
  * }
  */
 export function referenceResolver_getDeclarationOfAliasSymbol(receiver: GoPtr<referenceResolver>, symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  return FindLast(symbol_!.Declarations, IsAliasSymbolDeclaration);
+  return FindLast(symbol_!.Declarations ?? [], IsAliasSymbolDeclaration);
 }
 
 /**
@@ -537,7 +537,7 @@ export function referenceResolver_GetReferencedValueDeclarations(receiver: GoPtr
   let symbol_ = referenceResolver_getReferencedValueSymbol(receiver, node, false);
   if (symbol_ !== undefined) {
     symbol_ = referenceResolver_getExportSymbolOfValueSymbolIfExported(receiver, symbol_);
-    for (const declaration of symbol_!.Declarations) {
+    for (const declaration of symbol_!.Declarations ?? []) {
       switch (declaration!.Kind) {
         case KindVariableDeclaration:
         case KindParameter:

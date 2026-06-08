@@ -935,7 +935,7 @@ export function Checker_checkFunctionOrConstructorSymbolWorker(receiver: GoPtr<C
   let bodyDeclaration: GoPtr<Node> = undefined;
   let lastSeenNonAmbientDeclaration: GoPtr<Node> = undefined;
   let previousDeclaration: GoPtr<Node> = undefined;
-  const declarations = symbol_!.Declarations;
+  const declarations = symbol_!.Declarations ?? [];
   const isConstructor = ((symbol_!.Flags & SymbolFlagsConstructor) !== 0) as bool;
   let duplicateFunctionDeclaration = false as bool;
   let multipleConstructorImplementation = false as bool;
@@ -1227,7 +1227,7 @@ export function Checker_isUnwrappedReturnTypeUndefinedVoidOrAny(receiver: GoPtr<
  * }
  */
 export function Checker_checkTypeParameterListsIdentical(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): void {
-  if (symbol_!.Declarations.length === 1) {
+  if ((symbol_!.Declarations?.length ?? 0) === 1) {
     return;
   }
   const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
@@ -1492,11 +1492,12 @@ export function Checker_checkClassOrInterfaceForDuplicateIndexSignatures(receive
  */
 export function Checker_checkTypeForDuplicateIndexSignatures(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const indexSymbol = Checker_getIndexSymbol(receiver, Checker_getSymbolOfDeclaration(receiver, node));
-  if (indexSymbol === undefined || indexSymbol.Declarations.length <= 1) {
+  const indexDeclarations = indexSymbol?.Declarations ?? [];
+  if (indexSymbol === undefined || indexDeclarations.length <= 1) {
     return;
   }
   const indexSignatureMap = new Map<GoPtr<Type>, GoSlice<GoPtr<Node>>>();
-  for (const declaration of indexSymbol.Declarations) {
+  for (const declaration of indexDeclarations) {
     if (IsIndexSignatureDeclaration(declaration)) {
       const parameters = Node_Parameters(declaration);
       if (parameters.length === 1 && Node_Type(parameters[0]) !== undefined) {
@@ -1745,7 +1746,7 @@ export function Checker_checkUnusedLocalsAndParameters(receiver: GoPtr<Checker>,
       ((local!.Flags & SymbolFlagsTypeParameter) === 0 && (referenceKinds !== 0 || local!.ExportSymbol !== undefined || (local!.Flags & SymbolFlagsModuleExports) !== 0))) {
       continue;
     }
-    for (const declaration of local!.Declarations) {
+    for (const declaration of local!.Declarations ?? []) {
       if (IsVariableDeclaration(declaration) || IsParameterDeclaration(declaration) || IsBindingElement(declaration)) {
         variableParents.add(GetRootDeclaration(declaration)!.Parent);
       } else if (IsImportClause(declaration) || IsImportSpecifier(declaration) || IsNamespaceImport(declaration)) {
@@ -5227,8 +5228,8 @@ export function Checker_lateBindIndexSignature(receiver: GoPtr<Checker>, parent:
     }
     lateSymbols.set(InternalSymbolNameIndex, indexSymbol);
   }
-  if (indexSymbol!.Declarations.length === 0 || (Node_Symbol(decl)!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
-    indexSymbol!.Declarations = [...indexSymbol!.Declarations, decl];
+  if ((indexSymbol!.Declarations?.length ?? 0) === 0 || (Node_Symbol(decl)!.Flags & SymbolFlagsReplaceableByMethod) === 0) {
+    indexSymbol!.Declarations = [...(indexSymbol!.Declarations ?? []), decl];
   }
 }
 
@@ -6113,7 +6114,7 @@ export function Checker_isConstructorDeclaredThisProperty(receiver: GoPtr<Checke
   }
   let allThis = true;
   let typeAnnotation: GoPtr<Node> = undefined;
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if (!IsBinaryExpression(declaration)) {
       allThis = false;
       break;
@@ -6918,13 +6919,14 @@ export function Checker_getSignaturesOfSymbol(receiver: GoPtr<Checker>, symbol_:
     return [];
   }
   const result: GoPtr<Signature>[] = [];
-  for (let i = 0; i < symbol_!.Declarations.length; i++) {
-    const decl = symbol_!.Declarations[i];
+  const declarations = symbol_!.Declarations ?? [];
+  for (let i = 0; i < declarations.length; i++) {
+    const decl = declarations[i];
     if (!IsFunctionLike(decl)) {
       continue;
     }
     if (i > 0 && Node_Body(decl) !== undefined) {
-      const previous = symbol_!.Declarations[i - 1];
+      const previous = declarations[i - 1];
       if (decl!.Parent === previous!.Parent && decl!.Kind === previous!.Kind &&
         (Node_Pos(decl) === Node_End(previous) || (previous!.Flags & NodeFlagsReparsed) !== 0)) {
         continue;
@@ -8615,7 +8617,7 @@ export function Checker_getMinTypeArgumentCount(receiver: GoPtr<Checker>, typePa
  * }
  */
 export function Checker_hasTypeParameterDefault(receiver: GoPtr<Checker>, t: GoPtr<Type>): bool {
-  return t!.symbol !== undefined && core.Some(t!.symbol!.Declarations, (d: GoPtr<Node>) =>
+  return t!.symbol !== undefined && core.Some(t!.symbol!.Declarations ?? [], (d: GoPtr<Node>) =>
     IsTypeParameterDeclaration(d) && AsTypeParameterDeclaration(d)!.DefaultType !== undefined
   );
 }
@@ -8788,7 +8790,7 @@ export function Checker_getResolvedTypeParameterDefault(receiver: GoPtr<Checker>
       d!.resolvedDefaultType = receiver!.resolvingDefaultType;
       let defaultType = receiver!.noConstraintType;
       if (t!.symbol !== undefined) {
-        const defaultDeclaration = core.FirstNonNil(t!.symbol!.Declarations, (decl: GoPtr<Node>) => {
+        const defaultDeclaration = core.FirstNonNil(t!.symbol!.Declarations ?? [], (decl: GoPtr<Node>) => {
           if (IsTypeParameterDeclaration(decl)) {
             return AsTypeParameterDeclaration(decl)!.DefaultType;
           }
@@ -8902,7 +8904,7 @@ export function Checker_isTypeParameterPossiblyReferenced(receiver: GoPtr<Checke
         const firstIdentifier = GetFirstIdentifier(entityName);
         if (!IsThisIdentifier(firstIdentifier)) {
           const firstIdentifierSymbol = Checker_getResolvedSymbol(receiver, firstIdentifier);
-          const typeParameterDeclaration = tp!.symbol!.Declarations[0]!;
+          const typeParameterDeclaration = tp!.symbol!.Declarations![0]!;
           let typeParameterScope: GoPtr<Node> = undefined;
           if (IsTypeParameterDeclaration(typeParameterDeclaration)) {
             typeParameterScope = typeParameterDeclaration.Parent;
@@ -8911,7 +8913,7 @@ export function Checker_isTypeParameterPossiblyReferenced(receiver: GoPtr<Checke
           }
           if (typeParameterScope !== undefined) {
             return (
-              core.Some(firstIdentifierSymbol!.Declarations, (declaration: GoPtr<Node>): bool =>
+              core.Some(firstIdentifierSymbol!.Declarations ?? [], (declaration: GoPtr<Node>): bool =>
                 isNodeDescendantOf(declaration, typeParameterScope),
               ) || core.Some(Node_TypeArguments(current) as GoSlice<GoPtr<Node>>, containsReference)
             );
@@ -8932,8 +8934,8 @@ export function Checker_isTypeParameterPossiblyReferenced(receiver: GoPtr<Checke
     }
     return Node_ForEachChild(current, containsReference);
   };
-  if (tp!.symbol !== undefined && tp!.symbol.Declarations.length === 1) {
-    const container = tp!.symbol.Declarations[0]!.Parent;
+  if (tp!.symbol !== undefined && (tp!.symbol.Declarations?.length ?? 0) === 1) {
+    const container = tp!.symbol.Declarations![0]!.Parent;
     for (let current = node; current !== container; current = current!.Parent) {
       if (
         current === undefined ||
@@ -9213,7 +9215,7 @@ export function Checker_getTypeArgumentsForAliasSymbol(receiver: GoPtr<Checker>,
 export function Checker_getOuterTypeParametersOfClassOrInterface(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
   let declaration = symbol_!.ValueDeclaration;
   if ((symbol_!.Flags & (SymbolFlagsClass | SymbolFlagsFunction)) === 0) {
-    declaration = core.Find(symbol_!.Declarations, (d: GoPtr<Node>) => {
+    declaration = core.Find(symbol_!.Declarations ?? [], (d: GoPtr<Node>) => {
       if (IsInterfaceDeclaration(d)) {
         return true;
       }
@@ -9376,7 +9378,7 @@ export function Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(rece
  */
 export function Checker_appendLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver: GoPtr<Checker>, types: GoSlice<GoPtr<Type>>, symbol_: GoPtr<Symbol>): GoSlice<GoPtr<Type>> {
   let result = types;
-  for (const node of symbol_!.Declarations) {
+  for (const node of symbol_!.Declarations ?? []) {
     if (NodeKindIs(node, KindInterfaceDeclaration, KindClassDeclaration, KindClassExpression) || isTypeAlias(node)) {
       result = Checker_appendTypeParameters(receiver, result, Node_TypeParameters(node) ?? []);
     }
@@ -9650,7 +9652,7 @@ export function Checker_isThisPropertyAccessInConstructor(receiver: GoPtr<Checke
  * }
  */
 export function Checker_getDeclaringConstructor(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     const container = GetThisContainer(declaration, false, false);
     if (container !== undefined && IsConstructorDeclaration(container)) {
       return container;

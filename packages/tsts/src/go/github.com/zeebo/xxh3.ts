@@ -17,10 +17,10 @@ export interface Uint128 {
   String(): string;
 }
 
-const offset64 = 14695981039346656037n;
-const prime64 = 1099511628211n;
-const mask64 = (1n << 64n) - 1n;
-const secondSeed = 0x9e3779b97f4a7c15n;
+const offset64: bigint = 14695981039346656037n;
+const prime64: bigint = 1099511628211n;
+const mask64: bigint = (1n << 64n) - 1n;
+const secondSeed: bigint = 0x9e3779b97f4a7c15n;
 const encoder = new TextEncoder();
 
 class uint128 implements Uint128 {

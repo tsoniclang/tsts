@@ -1346,7 +1346,7 @@ export function addParentDeclarationRelatedInfo(node: GoPtr<Node>, diag: GoPtr<D
  * }
  */
 export function createAccessorTypeError(node: GoPtr<Node>): GoPtr<Diagnostic> {
-  const allDeclarations = GetAllAccessorDeclarationsForDeclaration(node as unknown as AccessorDeclaration, Node_Symbol(node)!.Declarations);
+  const allDeclarations = GetAllAccessorDeclarationsForDeclaration(node as unknown as AccessorDeclaration, Node_Symbol(node)!.Declarations ?? []);
   const getAccessor = allDeclarations.GetAccessor;
   const setAccessor = allDeclarations.SetAccessor;
   let targetNode = node;

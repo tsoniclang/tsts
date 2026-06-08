@@ -715,7 +715,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
     visited.set(symId, undefined);
 
     let nextSymbol: GoPtr<Symbol> = undefined;
-    for (const declaration of exportSymbol!.Declarations) {
+    for (const declaration of exportSymbol!.Declarations ?? []) {
       (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration) as DeclarationLinks).isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
@@ -981,7 +981,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     addVisibleAlias = noopAddVisibleAlias;
   }
 
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if (IsIdentifier(declaration)) { continue; }
 
     if (!EmitResolver_isDeclarationVisible(receiver, declaration)) {
@@ -1149,8 +1149,8 @@ export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<Emit
   for (const [, s] of exports) {
     const merged = Checker_getMergedSymbol(receiver!.checker, s);
     if (merged !== s) {
-      if (merged !== undefined && merged!.Declarations.length > 0) {
-        for (const d of merged!.Declarations) {
+      if (merged !== undefined && (merged!.Declarations?.length ?? 0) > 0) {
+        for (const d of merged!.Declarations ?? []) {
           const declFile = GetSourceFileOfNode(d);
           if (declFile === importTarget) {
             receiver!.checkerMu!.Unlock();

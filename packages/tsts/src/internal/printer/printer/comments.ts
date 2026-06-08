@@ -30,7 +30,7 @@ import type { SynthesizedComment } from "../emitcontext.js";
 import { EFNoLeadingComments, EFNoNestedComments, EFNoTrailingComments } from "../emitflags.js";
 import type { EmitFlags } from "../emitflags.js";
 import { GetDefaultIndentSize, getIndentString } from "../textwriter.js";
-import { calculateIndent, IsRecognizedTripleSlashComment, IsPinnedComment, isJSDocLikeText, PositionsAreOnSameLine } from "../utilities.js";
+import { byteLen, byteSlice, calculateIndent, IsRecognizedTripleSlashComment, IsPinnedComment, isJSDocLikeText, PositionsAreOnSameLine } from "../utilities.js";
 import { Printer_writeLine } from "./source-maps.js";
 import { Printer_emitPos } from "./emit-core.js";
 import { commentSeparatorAfter, commentSeparatorBefore, commentSeparatorNone, tefIndentLeadingComments, tefNoComments } from "./state.js";
@@ -168,7 +168,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
     let currentLine = firstLine;
     for (; pos < TextRange_End(loc); currentLine++) {
       const nextLineStart =
-        currentLine + 1 === lineCount ? text.length + 1 : lineMap[currentLine + 1]!;
+        currentLine + 1 === lineCount ? byteLen(text) + 1 : lineMap[currentLine + 1]!;
 
       if (pos !== TextRange_Pos(loc)) {
         // If we are not emitting first line, we need to write the spaces to adjust the alignment
@@ -214,7 +214,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
 
       // Write the comment line text
       const end = globalThis.Math.min(TextRange_End(loc), nextLineStart - 1);
-      const currentLineText = TrimSpace(text.slice(pos, end));
+      const currentLineText = TrimSpace(byteSlice(text, pos, end));
       if (currentLineText.length > 0) {
         Printer_writeComment(receiver, currentLineText);
         if (end !== TextRange_End(loc)) {
@@ -229,7 +229,7 @@ export function Printer_writeCommentRangeWorker(receiver: GoPtr<Printer>, text: 
     }
   } else {
     // Single line comment of style //....
-    Printer_writeComment(receiver, text.slice(TextRange_Pos(loc), TextRange_End(loc)));
+    Printer_writeComment(receiver, byteSlice(text, TextRange_Pos(loc), TextRange_End(loc)));
   }
 }
 
@@ -990,7 +990,7 @@ export function formatSynthesizedComment(comment: SynthesizedComment): string {
 export function Printer_writeSynthesizedComment(receiver: GoPtr<Printer>, comment: SynthesizedComment): void {
   const text = formatSynthesizedComment(comment);
   const lineMap: GoSlice<TextPos> = comment.Kind === KindMultiLineCommentTrivia ? ComputeECMALineStarts(text) : [];
-  Printer_writeCommentRangeWorker(receiver, text, lineMap, comment.Kind, NewTextRange(0, text.length));
+  Printer_writeCommentRangeWorker(receiver, text, lineMap, comment.Kind, NewTextRange(0, byteLen(text)));
 }
 
 /**

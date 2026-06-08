@@ -479,7 +479,7 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
   }
   const init = declaration!.Initializer;
   const sym = Node_Symbol(Node_AsNode(declaration));
-  if (init !== undefined && (sym!.Declarations.length === 1 || CountWhere(sym!.Declarations, IsVariableDeclaration) === 1)) {
+  if (init !== undefined && ((sym!.Declarations?.length ?? 0) === 1 || CountWhere(sym!.Declarations ?? [], IsVariableDeclaration) === 1)) {
     if (!isContextuallyTyped(Node_AsNode(declaration))) {
       if (IsVarConst(Node_AsNode(declaration)) && IsTemplateExpression(init)) {
         return NewPseudoTypeNoResult(Node_AsNode(declaration));
@@ -510,7 +510,7 @@ export function PseudoChecker_typeFromVariable(receiver: GoPtr<PseudoChecker>, d
  * }
  */
 export function PseudoChecker_typeFromAccessor(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>): GoPtr<PseudoType> {
-  const accessorDeclarations = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations);
+  const accessorDeclarations = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations ?? []);
   const accessorType = PseudoChecker_getTypeAnnotationFromAllAccessorDeclarations(receiver, accessor, accessorDeclarations);
   if (accessorType !== undefined && !IsTypePredicateNode(accessorType)) {
     return NewPseudoTypeDirect(accessorType);
@@ -1003,7 +1003,7 @@ export function PseudoChecker_typeFromObjectLiteral(receiver: GoPtr<PseudoChecke
  * }
  */
 export function PseudoChecker_getAccessorMember(receiver: GoPtr<PseudoChecker>, accessor: GoPtr<Node>, name: GoPtr<Node>): GoPtr<PseudoObjectElement> {
-  const allAccessors = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations);
+  const allAccessors = GetAllAccessorDeclarationsForDeclaration(accessor as GoPtr<AccessorDeclaration>, Node_Symbol(accessor)!.Declarations ?? []);
 
   if (allAccessors.GetAccessor !== undefined && allAccessors.GetAccessor.Type !== undefined &&
     allAccessors.SetAccessor !== undefined && allAccessors.SetAccessor.Parameters !== undefined && allAccessors.SetAccessor.Parameters.Nodes.length > 0 && AsParameterDeclaration(allAccessors.SetAccessor.Parameters.Nodes[0])!.Type !== undefined) {

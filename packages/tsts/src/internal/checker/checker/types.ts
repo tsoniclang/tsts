@@ -6154,7 +6154,7 @@ export function Checker_resolveBaseTypesOfClass(receiver: GoPtr<Checker>, t: GoP
  */
 export function Checker_resolveBaseTypesOfInterface(receiver: GoPtr<Checker>, t: GoPtr<Type>): void {
   const data = Type_AsInterfaceType(t)!;
-  for (const declaration of t!.symbol!.Declarations) {
+  for (const declaration of t!.symbol!.Declarations ?? []) {
     if (IsInterfaceDeclaration(declaration)) {
       for (const node of GetExtendsHeritageClauseElements(declaration)) {
         const baseType = Checker_getReducedType(receiver, Checker_getTypeFromTypeNode(receiver, node));
@@ -8891,7 +8891,7 @@ export function Checker_getDeclaredTypeOfEnum(receiver: GoPtr<Checker>, symbol_:
   const links = LinkStore_Get(receiver!.declaredTypeLinks, symbol_) as GoPtr<DeclaredTypeLinks>;
   if (links!.declaredType === undefined) {
     const memberTypeList: GoSlice<GoPtr<Type>> = [];
-    for (const declaration of symbol_!.Declarations) {
+    for (const declaration of symbol_!.Declarations ?? []) {
       if (declaration!.Kind === KindEnumDeclaration) {
         for (const member of Node_Members(declaration) ?? []) {
           if (Checker_hasBindableName(receiver, member)) {

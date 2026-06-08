@@ -348,7 +348,7 @@ export interface AliasSymbolLinks {
  */
 export interface ModuleSymbolLinks {
   resolvedExports: SymbolTable;
-  typeOnlyExportStarMap: GoMap<string, GoPtr<Node>>;
+  typeOnlyExportStarMap: GoPtr<GoMap<string, GoPtr<Node>>>;
   exportsChecked: bool;
 }
 

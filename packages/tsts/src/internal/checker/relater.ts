@@ -1530,12 +1530,12 @@ export function Checker_elaborateElement(receiver: GoPtr<Checker>, source: GoPtr
       Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(indexInfo.declaration, The_expected_type_comes_from_this_index_signature));
     }
   }
-  if (!issuedElaboration && ((targetProp !== undefined && targetProp!.Declarations.length !== 0) || (target!.symbol !== undefined && target!.symbol!.Declarations.length !== 0))) {
+  if (!issuedElaboration && ((targetProp !== undefined && (targetProp!.Declarations?.length ?? 0) !== 0) || (target!.symbol !== undefined && (target!.symbol!.Declarations?.length ?? 0) !== 0))) {
     let targetNode: GoPtr<Node>;
-    if (targetProp !== undefined && targetProp!.Declarations.length !== 0) {
-      targetNode = targetProp!.Declarations[0];
+    if (targetProp !== undefined && (targetProp!.Declarations?.length ?? 0) !== 0) {
+      targetNode = targetProp!.Declarations![0];
     } else {
-      targetNode = target!.symbol!.Declarations[0];
+      targetNode = target!.symbol!.Declarations![0];
     }
     if (propertyName === "" || (nameType!.flags & TypeFlagsUniqueESSymbol) !== 0) {
       propertyName = Checker_TypeToString(receiver, nameType);
@@ -1666,8 +1666,8 @@ export function Checker_elaborateArrowFunction(receiver: GoPtr<Checker>, node: G
   Checker_checkTypeRelatedToEx(receiver, sourceReturn, targetReturn, relation, returnExpression, undefined, diags);
   if (diags.length !== 0) {
     const diagnostic = diags[0]!;
-    if (target!.symbol !== undefined && target!.symbol!.Declarations.length !== 0) {
-      Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(target!.symbol!.Declarations[0], The_expected_type_comes_from_the_return_type_of_this_signature));
+    if (target!.symbol !== undefined && (target!.symbol!.Declarations?.length ?? 0) !== 0) {
+      Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(target!.symbol!.Declarations![0], The_expected_type_comes_from_the_return_type_of_this_signature));
     }
     if ((GetFunctionFlags(node) & FunctionFlagsAsync) === 0 && Checker_getTypeOfPropertyOfType(receiver, sourceReturn, "then") === undefined &&
       Checker_checkTypeRelatedTo(receiver, Checker_createPromiseType(receiver, sourceReturn), targetReturn, relation, undefined)) {
@@ -3256,7 +3256,7 @@ export function Checker_isMarkerType(receiver: GoPtr<Checker>, t: GoPtr<Type>): 
 export function Checker_getTypeParameterModifiers(receiver: GoPtr<Checker>, tp: GoPtr<Type>): ModifierFlags {
   let flags: ModifierFlags = 0;
   if (tp!.symbol !== undefined) {
-    for (const d of tp!.symbol!.Declarations) {
+    for (const d of tp!.symbol!.Declarations ?? []) {
       flags = (flags | Node_ModifierFlags(d)) as ModifierFlags;
     }
   }
@@ -6035,7 +6035,7 @@ export function Relater_hasExcessProperties(receiver: GoPtr<Relater>, source: Go
           } else {
             let objectLiteralDeclaration: GoPtr<Node> = undefined;
             if (source!.symbol !== undefined) {
-              objectLiteralDeclaration = FirstOrNil(source!.symbol!.Declarations);
+      objectLiteralDeclaration = FirstOrNil(source!.symbol!.Declarations ?? []);
             }
             let suggestion = "";
             if (
@@ -9144,8 +9144,8 @@ export function Relater_reportUnmatchedProperty(receiver: GoPtr<Relater>, source
     const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
     const propName = Checker_symbolToString(receiver!.c, unmatchedProperty);
     Relater_reportError(receiver, Property_0_is_missing_in_type_1_but_required_in_type_2, propName, sourceType, targetType);
-    if (unmatchedProperty!.Declarations.length !== 0) {
-      receiver!.relatedInfo.push(createDiagnosticForNode(unmatchedProperty!.Declarations[0], X_0_is_declared_here, propName));
+    if ((unmatchedProperty!.Declarations?.length ?? 0) !== 0) {
+      receiver!.relatedInfo.push(createDiagnosticForNode(unmatchedProperty!.Declarations![0], X_0_is_declared_here, propName));
     }
   } else if (Relater_tryElaborateArrayLikeErrors(receiver, source, target, false)) {
     const [sourceType, targetType] = Checker_getTypeNamesForErrorDisplay(receiver!.c, source, target);
@@ -9927,7 +9927,7 @@ export function Relater_reportErrorResults(receiver: GoPtr<Relater>, originalSou
     Type_AsTypeParameter(syntheticParam)!.constraint = Checker_instantiateType(receiver!.c, target, newSimpleTypeMapper(source, syntheticParam));
     if (Checker_hasNonCircularBaseConstraint(receiver!.c, syntheticParam)) {
       const targetConstraintString = Checker_TypeToString(receiver!.c, target);
-      receiver!.relatedInfo.push(NewDiagnosticForNode(source!.symbol!.Declarations[0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString));
+      receiver!.relatedInfo.push(NewDiagnosticForNode(source!.symbol!.Declarations![0], This_type_parameter_might_need_an_extends_0_constraint, targetConstraintString));
     }
   }
 }

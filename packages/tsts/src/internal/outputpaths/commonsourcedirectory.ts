@@ -78,10 +78,11 @@ const computeNextComponents = (
     return sourcePathComponents;
   }
 
-  const n = Math.min(commonPathComponents.length, sourcePathComponents.length);
+  const currentCommonPathComponents = commonPathComponents;
+  const n = Math.min(currentCommonPathComponents.length, sourcePathComponents.length);
   const foundIdx = globalThis.Array.from({ length: n }, (_, i) => i).findIndex(
     (i) =>
-      GetCanonicalFileName(commonPathComponents[i]!, useCaseSensitiveFileNames) !==
+      GetCanonicalFileName(currentCommonPathComponents[i]!, useCaseSensitiveFileNames) !==
       GetCanonicalFileName(sourcePathComponents[i]!, useCaseSensitiveFileNames)
   );
   const divergeAt = foundIdx === -1 ? n : foundIdx;
@@ -91,7 +92,7 @@ const computeNextComponents = (
       // Failed to find any common path component
       return null;
     }
-    return commonPathComponents.slice(0, divergeAt);
+    return currentCommonPathComponents.slice(0, divergeAt);
   }
 
   // No divergence within n; truncate to shorter if sourcePathComponents is shorter

@@ -71,6 +71,7 @@ export const __f8aeeddb_0: EmitTextWriter = textWriter_as_EmitTextWriter({
   lineStart: false,
   lineCount: 0,
   linePos: 0,
+  column: 0,
   hasTrailingCommentState: false,
 });
 
@@ -87,6 +88,7 @@ export const __f8aeeddb_0: EmitTextWriter = textWriter_as_EmitTextWriter({
  * 	lineStart               bool
  * 	lineCount               int
  * 	linePos                 int
+ * 	column                  core.UTF16Offset
  * 	hasTrailingCommentState bool
  * }
  */
@@ -99,6 +101,7 @@ export interface textWriter {
   lineStart: bool;
   lineCount: int;
   linePos: int;
+  column: UTF16Offset;
   hasTrailingCommentState: bool;
 }
 
@@ -120,6 +123,7 @@ export function textWriter_Clear(receiver: GoPtr<textWriter>): void {
   w.lineStart = true;
   w.lineCount = 0;
   w.linePos = 0;
+  w.column = 0;
   w.hasTrailingCommentState = false;
 }
 
@@ -167,10 +171,7 @@ export function textWriter_GetColumn(receiver: GoPtr<textWriter>): UTF16Offset {
   if (w.lineStart) {
     return w.indent * w.indentSize;
   }
-  // Count UTF-16 code units from the last line start.
-  // For ASCII-only output (the common case), this equals the byte count.
-  // linePos is a byte offset, so slice the string by bytes.
-  return UTF16Len(byteSliceFrom(w.builder.String(), w.linePos));
+  return w.column;
 }
 
 /**
@@ -353,9 +354,11 @@ export function textWriter_updateLineCountAndPosFor(receiver: GoPtr<textWriter>,
     const curLen = w.builder.Len();
     w.linePos = curLen - byteLen(s) + lastLineStart;
     w.lineStart = w.linePos - curLen === 0;
+    w.column = UTF16Len(byteSliceFrom(s, lastLineStart));
     return;
   }
   w.lineStart = false;
+  w.column += UTF16Len(s);
 }
 
 /**
@@ -418,7 +421,9 @@ export function textWriter_writeText(receiver: GoPtr<textWriter>, s: string): vo
   const w = receiver as textWriter;
   if (s !== "") {
     if (w.lineStart) {
-      w.builder.WriteString(getIndentString(w.indent, w.indentSize));
+      const indentText = getIndentString(w.indent, w.indentSize);
+      w.builder.WriteString(indentText);
+      w.column = w.indent * w.indentSize;
       w.lineStart = false;
     }
     w.builder.WriteString(s);
@@ -498,6 +503,7 @@ export function textWriter_writeLineRaw(receiver: GoPtr<textWriter>): void {
   w.lineCount++;
   w.linePos = w.builder.Len();
   w.lineStart = true;
+  w.column = 0;
   w.hasTrailingCommentState = false;
 }
 
@@ -681,6 +687,7 @@ export function NewTextWriter(newLine: string, indentSize: int): EmitTextWriter 
     lineStart: false,
     lineCount: 0,
     linePos: 0,
+    column: 0,
     hasTrailingCommentState: false,
   };
   w.newLine = newLine;

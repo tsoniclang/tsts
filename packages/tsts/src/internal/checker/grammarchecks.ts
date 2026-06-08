@@ -1082,7 +1082,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
           return Checker_grammarErrorOnFirstToken(receiver, node, Decorators_are_not_valid_here);
         }
       } else if (receiver!.legacyDecorators && (node!.Kind === KindGetAccessor || node!.Kind === KindSetAccessor)) {
-        const accessors = GetAllAccessorDeclarationsForDeclaration(node, Checker_getSymbolOfDeclaration(receiver, node)!.Declarations);
+        const accessors = GetAllAccessorDeclarationsForDeclaration(node, Checker_getSymbolOfDeclaration(receiver, node)!.Declarations ?? []);
         if (HasDecorators(accessors.FirstAccessor) && node === accessors.SecondAccessor) {
           return Checker_grammarErrorOnFirstToken(receiver, node, Decorators_cannot_be_applied_to_multiple_get_Slashset_accessors_of_the_same_name);
         }

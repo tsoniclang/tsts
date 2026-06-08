@@ -7,7 +7,7 @@ import { Uint32, Uint64 } from "../../../go/sync/atomic.js";
 import * as strconv from "../../../go/strconv.js";
 import * as gostrings from "../../../go/strings.js";
 import * as utf8 from "../../../go/unicode/utf8.js";
-import { Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
+import { NewNodeFactory, Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { IsAnyExportAssignment, Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_IsTypeOnly, Node_Locals, Node_ModuleSpecifier, Node_Parameters, Node_PropertyName, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameters, SourceFile_FileName } from "../../ast/ast.js";
 import type { HasFileName, PatternAmbientModule, SourceFile, SourceFileMetaData, StringLiteralLike } from "../../ast/ast.js";
@@ -547,8 +547,7 @@ export interface NonExistentPropertyKey {
  * }
  */
 export interface FlowLoopKey {
-  flowNode: GoPtr<FlowNode>;
-  refKey: CacheHashKey;
+  readonly __flowLoopKey: unique symbol;
 }
 
 /**
@@ -2291,6 +2290,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.diagnostics = newDiagnosticsCollection();
   checker.suggestionDiagnostics = newDiagnosticsCollection();
   checker.mergedSymbols = new globalThis.Map();
+  checker.factory = NewNodeFactory({})!;
   checker.nodeLinks = newLinkStore<Node, NodeLinks>();
   checker.signatureLinks = newLinkStore<Node, SignatureLinks>();
   checker.symbolNodeLinks = newLinkStore<Node, SymbolNodeLinks>();
@@ -2549,7 +2549,7 @@ export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
  * }
  */
 export function getGlobalTypeDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     switch (declaration!.Kind) {
       case KindClassDeclaration:
       case KindInterfaceDeclaration:
@@ -2885,7 +2885,7 @@ export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool
  * }
  */
 export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if ((IsClassDeclaration(declaration) || (IsFunctionDeclaration(declaration) && NodeIsPresent(Node_Body(declaration)))) && (declaration!.Flags & NodeFlagsAmbient) === 0) {
       return declaration;
     }
@@ -4501,7 +4501,7 @@ export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
-  const declaration = Find(symbol_!.Declarations, isTypeAlias);
+  const declaration = Find(symbol_!.Declarations ?? [], isTypeAlias);
   return declaration !== undefined && GetContainingFunction(declaration) !== undefined;
 }
 

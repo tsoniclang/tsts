@@ -2994,9 +2994,9 @@ export function tryGetModuleSpecifierFromDeclarationWorker(node: GoPtr<Node>): G
 export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>, overrideImportMode: ResolutionMode): string {
   let file = GetDeclarationOfKind(symbol_, KindSourceFile);
   if (file === undefined) {
-    const equivalentSymbol = FirstNonNil(symbol_!.Declarations, (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_));
+    const equivalentSymbol = FirstNonNil(symbol_!.Declarations ?? [], (d) => Checker_getFileSymbolIfFileSymbolExportEqualsContainer(receiver!.ch, d, symbol_));
     if (equivalentSymbol !== undefined) {
-      file = GetDeclarationOfKind(equivalentSymbol, KindSourceFile);
+      file = GetDeclarationOfKind(equivalentSymbol as GoPtr<Symbol>, KindSourceFile);
     }
   }
   if (file === undefined && isAmbientModuleSymbolName(symbol_!.Name)) {
@@ -4711,7 +4711,7 @@ export function NodeBuilderImpl_serializeTypeForDeclaration(receiver: GoPtr<Node
   if (declaration === undefined && symbol_ !== undefined) {
     declaration = symbol_!.ValueDeclaration as GoPtr<Declaration>;
     if (declaration === undefined) {
-      declaration = FirstOrNil(symbol_!.Declarations) as GoPtr<Declaration>;
+      declaration = FirstOrNil(symbol_!.Declarations ?? []) as GoPtr<Declaration>;
     }
   }
   if (symbol_ === undefined && declaration !== undefined) {
@@ -5309,8 +5309,8 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
   const saveEnclosingDeclaration = receiver!.ctx!.enclosingDeclaration;
   receiver!.ctx!.enclosingDeclaration = undefined;
   if (isLateBoundName(propertySymbol!.Name)) {
-    if (propertySymbol!.Declarations.length > 0) {
-      const declaration = propertySymbol!.Declarations[0];
+    if ((propertySymbol!.Declarations?.length ?? 0) > 0) {
+      const declaration = propertySymbol!.Declarations![0];
       if (Checker_hasLateBindableName(receiver!.ch, declaration)) {
         if (IsBinaryExpression(declaration)) {
           const name = GetNameOfDeclaration(declaration);
@@ -5332,8 +5332,8 @@ export function NodeBuilderImpl_addPropertyToElementList(receiver: GoPtr<NodeBui
   }
   if (propertySymbol!.ValueDeclaration !== undefined) {
     receiver!.ctx!.enclosingDeclaration = propertySymbol!.ValueDeclaration;
-  } else if (propertySymbol!.Declarations.length > 0 && propertySymbol!.Declarations[0] !== undefined) {
-    receiver!.ctx!.enclosingDeclaration = propertySymbol!.Declarations[0];
+  } else if ((propertySymbol!.Declarations?.length ?? 0) > 0 && propertySymbol!.Declarations![0] !== undefined) {
+    receiver!.ctx!.enclosingDeclaration = propertySymbol!.Declarations![0];
   } else {
     receiver!.ctx!.enclosingDeclaration = saveEnclosingDeclaration;
   }

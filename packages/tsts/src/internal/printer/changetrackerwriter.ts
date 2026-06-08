@@ -139,6 +139,7 @@ export function NewChangeTrackerWriter(newline: string, indentSize: int): GoPtr<
     lineStart: false as bool,
     lineCount: 0 as int,
     linePos: 0 as int,
+    column: 0 as int,
     hasTrailingCommentState: false as bool,
   };
   const ctw: ChangeTrackerWriter = {

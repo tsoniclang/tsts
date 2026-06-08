@@ -3318,20 +3318,21 @@ export function handleOptionConfigDirTemplateSubstitution(compilerOptions: GoPtr
   if (compilerOptions === undefined) {
     return;
   }
+  const options = compilerOptions;
 
   // !!! don't hardcode this; use options declarations?
 
-  OrderedMap_Entries(compilerOptions.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((k: string, v: GoSlice<string>): bool => {
+  OrderedMap_Entries(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((k: string, v: GoSlice<string>): bool => {
     const substitution = getSubstitutedStringArrayWithConfigDirTemplate(v, basePath);
     if (substitution !== undefined) {
-      OrderedMap_Set(compilerOptions.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution);
+      OrderedMap_Set(options.Paths as GoPtr<OrderedMap<string, GoSlice<string>>>, k, substitution);
     }
     return true;
   });
 
-  const rootDirs = getSubstitutedStringArrayWithConfigDirTemplate(compilerOptions.RootDirs, basePath);
+  const rootDirs = getSubstitutedStringArrayWithConfigDirTemplate(options.RootDirs, basePath);
   if (rootDirs !== undefined) {
-    compilerOptions.RootDirs = rootDirs;
+    options.RootDirs = rootDirs;
   }
   const typeRoots = getSubstitutedStringArrayWithConfigDirTemplate(compilerOptions.TypeRoots, basePath);
   if (typeRoots !== undefined) {

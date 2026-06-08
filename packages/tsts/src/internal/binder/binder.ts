@@ -962,7 +962,7 @@ export function Binder_declareSymbol(receiver: GoPtr<Binder>, symbolTable: Symbo
  */
 export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: SymbolTable, parent: GoPtr<Symbol>, node: GoPtr<Node>, includes: SymbolFlags, excludes: SymbolFlags, isReplaceableByMethod: bool, isComputedName: bool): GoPtr<Symbol> {
   // debug.Assert(isComputedName || !ast.HasDynamicName(node))
-  const isDefaultExport = HasSyntacticModifier(node, ModifierFlagsDefault) || IsExportSpecifier(node) && ModuleExportNameIsDefault(Node_Name(AsExportSpecifier(node)!.name as unknown as Node)!);
+  const isDefaultExport = HasSyntacticModifier(node, ModifierFlagsDefault) || IsExportSpecifier(node) && ModuleExportNameIsDefault(Node_Name(node)!);
   let name: string;
   if (isComputedName) {
     name = InternalSymbolNameComputed;

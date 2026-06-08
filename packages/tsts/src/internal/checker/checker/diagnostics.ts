@@ -80,7 +80,7 @@ export function Checker_addUndefinedToGlobalsOrErrorOnRedeclaration(receiver: Go
   const name = c.undefinedSymbol!.Name;
   const targetSymbol = c.globals.get(name);
   if (targetSymbol !== undefined) {
-    for (const declaration of targetSymbol!.Declarations) {
+    for (const declaration of targetSymbol!.Declarations ?? []) {
       if (!IsTypeDeclaration(declaration)) {
         DiagnosticsCollection_Add(c.diagnostics, createDiagnosticForNode(declaration, Declaration_name_conflicts_with_built_in_global_identifier_0, name));
       }
@@ -2067,14 +2067,15 @@ export function Checker_addDeprecatedSuggestionWorker(receiver: GoPtr<Checker>, 
  */
 export function Checker_isDeprecatedSymbol(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   const parentSymbol = Checker_getParentOfSymbol(receiver, symbol_);
-  if (parentSymbol !== undefined && symbol_!.Declarations.length > 1) {
+  const declarations = symbol_!.Declarations ?? [];
+  if (parentSymbol !== undefined && declarations.length > 1) {
     if ((parentSymbol!.Flags & SymbolFlagsInterface) !== 0) {
-      return Some(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
+      return Some(declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
     }
-    return Every(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
+    return Every(declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration));
   }
   return ((symbol_!.ValueDeclaration !== undefined && Checker_IsDeprecatedDeclaration(receiver, symbol_!.ValueDeclaration)) ||
-    (symbol_!.Declarations.length !== 0 && Every(symbol_!.Declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration)))) as bool;
+    (declarations.length !== 0 && Every(declarations, (declaration) => Checker_IsDeprecatedDeclaration(receiver, declaration)))) as bool;
 }
 
 /**
@@ -2154,8 +2155,8 @@ export function Checker_reportMergeSymbolError(receiver: GoPtr<Checker>, target:
  * }
  */
 export function Checker_addDuplicateDeclarationErrorsForSymbols(receiver: GoPtr<Checker>, target: GoPtr<Symbol>, message: GoPtr<Message>, symbolName: string, source: GoPtr<Symbol>): void {
-  for (const node of target!.Declarations) {
-    Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations);
+  for (const node of target!.Declarations ?? []) {
+    Checker_addDuplicateDeclarationError(receiver, node, message, symbolName, source!.Declarations ?? []);
   }
 }
 
@@ -2521,7 +2522,7 @@ export function Checker_reportWideningErrorsInType(receiver: GoPtr<Checker>, t: 
         if ((s!.objectFlags & ObjectFlagsContainsWideningType) !== 0) {
           errorReported = Checker_reportWideningErrorsInType(receiver, s);
           if (!errorReported) {
-            const valueDeclaration = Find(p!.Declarations, (d: GoPtr<Node>) => {
+            const valueDeclaration = Find(p!.Declarations ?? [], (d: GoPtr<Node>) => {
               const declarationValue = Node_Symbol(d)!.ValueDeclaration;
               return declarationValue !== undefined && declarationValue!.Parent === t!.symbol!.ValueDeclaration;
             });

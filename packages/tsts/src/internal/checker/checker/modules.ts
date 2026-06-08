@@ -100,7 +100,7 @@ import { resolutionExtensionIsTSOrJson } from "./state.js";
 export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, moduleName: GoPtr<Node>): void {
   const moduleNode = moduleName!.Parent;
   const moduleAugmentationSymbol = Node_Symbol(moduleNode);
-  if (moduleAugmentationSymbol!.Declarations[0] !== moduleNode) {
+  if (moduleAugmentationSymbol!.Declarations?.[0] !== moduleNode) {
     return;
   }
   if (IsGlobalScopeAugmentation(moduleNode)) {
@@ -266,7 +266,7 @@ export function Checker_checkModuleAugmentationElement(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_getTargetOfModuleDefault(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>, node: GoPtr<Node>, dontResolveAlias: bool): GoPtr<Symbol> {
-  const file = Find(moduleSymbol!.Declarations, IsSourceFile);
+  const file = Find(moduleSymbol!.Declarations ?? [], IsSourceFile);
   const specifier = Checker_getModuleSpecifierForImportOrExport(receiver, node);
   let exportDefaultSymbol: GoPtr<Symbol>;
   let exportModuleDotExportsSymbol: GoPtr<Symbol>;
