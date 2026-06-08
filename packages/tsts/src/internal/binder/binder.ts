@@ -769,7 +769,7 @@ export function bindSourceFile(file: GoPtr<SourceFile>): void {
     Binder_bindDeferredExpandoAssignments(b);
     file!.SymbolCount = b.symbolCount;
     file!.ClassifiableNames = b.classifiableNames;
-    file!.NestedCJSExports = b.nestedCJSExports;
+    file!.NestedCJSExports = b.nestedCJSExports ?? [];
     putBinder(b);
   });
 }

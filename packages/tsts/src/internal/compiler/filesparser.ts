@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice, GoUnresolved } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import { Pool, Mutex, Once } from "../../go/sync.js";
 import { Join as strings_Join } from "../../go/strings.js";
 import type { SourceFile, SourceFileMetaData } from "../ast/ast.js";
@@ -13,6 +14,7 @@ import type { WorkGroup } from "../core/workgroup.js";
 import { File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1, File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option } from "../diagnostics/generated/messages.js";
 import type { ModeAwareCache } from "../module/cache.js";
 import type { DiagAndArgs } from "../module/resolver.js";
+import { PackageId_String } from "../module/types.js";
 import type { PackageId, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { GetNormalizedAbsolutePathWithoutRoot, NormalizePath, ToFileNameLowerCase } from "../tspath/path.js";
 import type { Path as Path_65a900c3 } from "../tspath/path.js";
@@ -1030,10 +1032,10 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
 
   let redirectTargetsMap: GoMap<Path_65a900c3, GoSlice<string>> | undefined = undefined;
   let redirectFilesByPath: GoMap<Path_65a900c3, GoPtr<redirectsFile>> | undefined = undefined;
-  let packageIdToSourceFile: GoMap<PackageId, GoPtr<SourceFile>> | undefined = undefined;
+  let packageIdToSourceFile: GoMap<string, GoPtr<SourceFile>> | undefined = undefined;
   if (!Tristate_IsFalse(ParsedCommandLine_CompilerOptions(loader!.opts.Config)!.DeduplicatePackages)) {
     redirectTargetsMap = new globalThis.Map<Path_65a900c3, GoSlice<string>>();
-    packageIdToSourceFile = new globalThis.Map<PackageId, GoPtr<SourceFile>>();
+    packageIdToSourceFile = new globalThis.Map<string, GoPtr<SourceFile>>();
   }
 
   const collectFiles = (tasks: GoSlice<GoPtr<parseTask>>, seen: GoMap<GoPtr<parseTaskData>, string>): void => {
@@ -1095,7 +1097,8 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       let file = task!.file;
       const dataPackageId = data!.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
       if (packageIdToSourceFile !== undefined && dataPackageId.Name !== "") {
-        const packageIdFile = packageIdToSourceFile.get(dataPackageId);
+        const dataPackageIdKey = PackageId_String(dataPackageId);
+        const packageIdFile = packageIdToSourceFile.get(dataPackageIdKey);
         if (packageIdFile !== undefined) {
           if (file !== undefined) {
             duplicateSourceFiles = [...duplicateSourceFiles, {
@@ -1121,7 +1124,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
           }
           continue;
         } else if (file !== undefined) {
-          packageIdToSourceFile.set(dataPackageId, file);
+          packageIdToSourceFile.set(dataPackageIdKey, file);
         }
       }
 
@@ -1204,7 +1207,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       loader!.pathForLibFileResolutions as unknown as import("../collections/syncmap.js").SyncMap<Path_65a900c3, GoPtr<libResolution>>,
       key,
     );
-    const modeAwareCache = new globalThis.Map<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
+    const modeAwareCache = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
     modeAwareCache.set({ Name: value!.libraryName, Mode: ModuleKindCommonJS }, value!.resolution);
     resolvedModules.set(key, modeAwareCache as ModeAwareCache);
     for (const trace of value!.trace) {

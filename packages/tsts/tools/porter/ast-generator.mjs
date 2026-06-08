@@ -1384,8 +1384,16 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   for (const m of members) {
     if (m.isKindParam()) continue;
     if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") continue;
-    const value = m.bitmask ? `(${m.goParamName()} & ${m.bitmask}) >>> 0` : m.goParamName();
+    const rawValue = m.goParamName();
+    const value = m.bitmask
+      ? `(${rawValue} & ${m.bitmask}) >>> 0`
+      : !Array.isArray(m.rawType) && m.rawType === "string"
+        ? `${rawValue} ?? ""`
+        : rawValue;
     lines.push(`  data.${m.name} = ${value};`);
+  }
+  if (schema.baseChainOf(node).includes("TemplateLiteralLikeNodeBase") && !members.some((m) => m.name === "RawText")) {
+    lines.push(`  data.RawText = "";`);
   }
   if (hasTextContent(schema, node)) {
     lines.push(`  receiver!.textCount = (receiver!.textCount + 1) as int;`);

@@ -5169,7 +5169,7 @@ export function Checker_isUnreferencedVariableDeclaration(receiver: GoPtr<Checke
   if (IsBindingPattern(name)) {
     return Every(Node_Elements(name) ?? [], (element: GoPtr<Node>) => Checker_isUnreferencedVariableDeclaration(receiver, element));
   }
-  if (((LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node)) as GoPtr<SymbolReferenceLinks>)!.referenceKinds & SymbolFlagsVariable) !== 0) {
+  if ((((LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node)) as GoPtr<SymbolReferenceLinks>)!.referenceKinds ?? SymbolFlagsNone) & SymbolFlagsVariable) !== 0) {
     return false as bool;
   }
   if (IsBindingElement(node) && IsObjectBindingPattern(node!.Parent)) {
@@ -8355,7 +8355,7 @@ export function Checker_reportNonDefaultExport(receiver: GoPtr<Checker>, moduleS
           return false as bool;
         }
         const resolvedExternalModuleName = Checker_resolveExternalModuleName(receiver, decl, Node_ModuleSpecifier(decl), false as bool);
-        return (resolvedExternalModuleName !== undefined && resolvedExternalModuleName!.Exports.get(InternalSymbolNameDefault) !== undefined) as bool;
+        return (resolvedExternalModuleName !== undefined && resolvedExternalModuleName!.Exports?.get(InternalSymbolNameDefault) !== undefined) as bool;
       });
       if (defaultExport !== undefined) {
         Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(defaultExport, X_export_Asterisk_does_not_re_export_a_default));
@@ -8382,12 +8382,12 @@ export function Checker_reportNonDefaultExport(receiver: GoPtr<Checker>, moduleS
  * }
  */
 export function Checker_resolveExportByName(receiver: GoPtr<Checker>, moduleSymbol: GoPtr<Symbol>, name: string, sourceNode: GoPtr<Node>, dontResolveAlias: bool): GoPtr<Symbol> {
-  const exportValue = moduleSymbol!.Exports.get(InternalSymbolNameExportEquals);
+  const exportValue = moduleSymbol!.Exports?.get(InternalSymbolNameExportEquals);
   let exportSymbol: GoPtr<Symbol>;
   if (exportValue !== undefined) {
     exportSymbol = Checker_getPropertyOfTypeEx(receiver, Checker_getTypeOfSymbol(receiver, exportValue), name, true, false);
   } else {
-    exportSymbol = moduleSymbol!.Exports.get(name);
+    exportSymbol = moduleSymbol!.Exports?.get(name);
   }
   const resolved = Checker_resolveSymbolEx(receiver, exportSymbol, dontResolveAlias);
   Checker_markSymbolOfAliasDeclarationIfTypeOnly(receiver, sourceNode, undefined);
@@ -8804,7 +8804,7 @@ export function Checker_errorNoModuleMemberSymbol(receiver: GoPtr<Checker>, modu
       Diagnostic_AddRelatedInfo(diagnostic, createDiagnosticForNode(suggestion!.ValueDeclaration, X_0_is_declared_here, suggestionName));
     }
   } else {
-    if (moduleSymbol!.Exports.get(InternalSymbolNameDefault) !== undefined) {
+    if (moduleSymbol!.Exports?.get(InternalSymbolNameDefault) !== undefined) {
       Checker_error(receiver, name, Module_0_has_no_exported_member_1_Did_you_mean_to_use_import_1_from_0_instead, moduleName, declarationName);
     } else {
       Checker_reportNonExportedMember(receiver, name, declarationName, moduleSymbol, moduleName);
@@ -10308,7 +10308,7 @@ export function Checker_getExportsOfModuleWorker(receiver: GoPtr<Checker>, modul
     }
     visitedSymbols.push(symbol_);
     const symbols = (MapClone(symbol_!.Exports) ?? new globalThis.Map<string, GoPtr<Symbol>>()) as SymbolTable;
-    const exportStars = symbol_!.Exports.get(InternalSymbolNameExportStar);
+    const exportStars = symbol_!.Exports?.get(InternalSymbolNameExportStar);
     if (exportStars !== undefined) {
       const nestedSymbols: SymbolTable = new globalThis.Map();
       const lookupTable: ExportCollisionTable = new globalThis.Map();

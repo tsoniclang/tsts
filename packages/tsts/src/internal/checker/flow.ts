@@ -4251,13 +4251,14 @@ export function isCoercibleUnderDoubleEquals(source: GoPtr<Type>, target: GoPtr<
  */
 export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
-  if (links!.exhaustiveState === ExhaustiveStateUnknown) {
+  const exhaustiveState = links!.exhaustiveState ?? ExhaustiveStateUnknown;
+  if (exhaustiveState === ExhaustiveStateUnknown) {
     links!.exhaustiveState = ExhaustiveStateComputing;
     const isExhaustive = Checker_computeExhaustiveSwitchStatement(receiver, node);
     if (links!.exhaustiveState === ExhaustiveStateComputing) {
       links!.exhaustiveState = IfElse(isExhaustive, ExhaustiveStateTrue, ExhaustiveStateFalse);
     }
-  } else if (links!.exhaustiveState === ExhaustiveStateComputing) {
+  } else if (exhaustiveState === ExhaustiveStateComputing) {
     links!.exhaustiveState = ExhaustiveStateFalse;
   }
   return links!.exhaustiveState === ExhaustiveStateTrue;

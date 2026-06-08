@@ -40,7 +40,7 @@ import type { Message } from "../../diagnostics/diagnostics.js";
 import * as diagnosticsMessages from "../../diagnostics/generated/messages.js";
 import type { Number } from "../../jsnum/jsnum.js";
 import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
-import { ParseValidBigInt } from "../../jsnum/pseudobigint.js";
+import { ParseValidBigInt, PseudoBigInt_String } from "../../jsnum/pseudobigint.js";
 import { AnyToString } from "../../evaluator/evaluator.js";
 import type { ResolvedModule } from "../../module/types.js";
 import { IsExternalModuleNameRelative } from "../../tspath/path.js";
@@ -183,7 +183,7 @@ function emptyUnionOrIntersectionData(types: GoSlice<GoPtr<Type>>): UnionOrInter
   data.types = types;
   data.propertyCache = goNilMap<string, GoPtr<Symbol>>();
   data.propertyCacheWithoutFunctionPropertyAugment = goNilMap<string, GoPtr<Symbol>>();
-  data.resolvedProperties = [];
+  data.resolvedProperties = undefined as unknown as GoSlice<GoPtr<Symbol>>;
   return data;
 }
 
@@ -10610,8 +10610,8 @@ export function Checker_newIntersectionType(receiver: GoPtr<Checker>, objectFlag
 export function Checker_newTemplateLiteralType(receiver: GoPtr<Checker>, texts: GoSlice<string>, types: GoSlice<GoPtr<Type>>): GoPtr<Type> {
   const data = {
     resolvedBaseConstraint: undefined,
-    texts,
-    types,
+    texts: texts ?? [],
+    types: types ?? [],
   } as unknown as TemplateLiteralType & ConstrainedType;
   return Checker_newType(receiver, TypeFlagsTemplateLiteral, ObjectFlagsNone, data as unknown as TypeData);
 }
@@ -10769,10 +10769,11 @@ export function Checker_getNumberLiteralType(receiver: GoPtr<Checker>, value: Nu
  * }
  */
 export function Checker_getBigIntLiteralType(receiver: GoPtr<Checker>, value: PseudoBigInt): GoPtr<Type> {
-  let t = receiver!.bigintLiteralTypes.get(value);
+  const key = PseudoBigInt_String(value);
+  let t = receiver!.bigintLiteralTypes.get(key);
   if (t === undefined) {
     t = Checker_newLiteralType(receiver, TypeFlagsBigIntLiteral, value, undefined);
-    receiver!.bigintLiteralTypes.set(value, t);
+    receiver!.bigintLiteralTypes.set(key, t);
   }
   return t;
 }

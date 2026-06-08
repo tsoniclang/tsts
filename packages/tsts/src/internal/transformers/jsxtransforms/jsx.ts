@@ -344,7 +344,7 @@ export function JSXTransformer_visit(receiver: GoPtr<JSXTransformer>, node: GoPt
       return JSXTransformer_visitJsxExpression(receiver, AsJsxExpression(node));
   }
   JSXTransformer_setInChild(receiver, false);
-  return (Transformer_Visitor(receiver!.__tsgoEmbedded0) as unknown as GoPtr<ConcreteNodeVisitor>)!.Visit(node); // by default, do nothing
+  return NodeVisitor_VisitEachChild(Transformer_Visitor(receiver!.__tsgoEmbedded0), node); // by default, do nothing
 }
 
 /**

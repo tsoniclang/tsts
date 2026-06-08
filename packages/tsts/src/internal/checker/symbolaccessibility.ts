@@ -1,5 +1,6 @@
 import type { bool, int, ulong } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { NodeId, SymbolId } from "../ast/ids.js";
 import { GetNodeId, GetSymbolId } from "../ast/utilities.js";
@@ -978,15 +979,11 @@ export function Checker_getAccessibleSymbolChainEx(receiver: GoPtr<Checker>, ctx
   const links = LinkStore_Get<GoPtr<Symbol>, ContainingSymbolLinks>(receiver!.symbolContainerLinks as unknown as LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>, ctx.symbol) as ContainingSymbolLinks;
   const linkKey: accessibleChainCacheKey = { useOnlyExternalAliasing: ctx.useOnlyExternalAliasing, location: firstRelevantLocation, meaning: ctx.meaning };
   if (links.accessibleChainCache === undefined) {
-    links.accessibleChainCache = new globalThis.Map<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>();
+    links.accessibleChainCache = NewGoStructMap<accessibleChainCacheKey, GoSlice<GoPtr<Symbol>>>();
   }
-  // Note: can't use Map.get for object keys - need identity-based lookup;
-  // Go uses struct equality for map keys, but TS can't do that natively.
-  // We use an array-based find as approximation.
-  const cacheEntries = [...links.accessibleChainCache.entries()];
-  const existingEntry = cacheEntries.find(([k]) => k.useOnlyExternalAliasing === linkKey.useOnlyExternalAliasing && k.location === linkKey.location && k.meaning === linkKey.meaning);
-  if (existingEntry !== undefined) {
-    return existingEntry[1];
+  const existing = links.accessibleChainCache.get(linkKey);
+  if (existing !== undefined) {
+    return existing;
   }
 
   let result: GoSlice<GoPtr<Symbol>> = [];

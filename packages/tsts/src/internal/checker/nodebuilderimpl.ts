@@ -190,7 +190,7 @@ import {
 } from "../ast/generated/factory.js";
 import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
-import { Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
+import { Node_Clone, Node_Name, NodeDefault_AsNode, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
 import type { Set } from "../collections/set.js";
 import type { MultiMap } from "../collections/multimap.js";
@@ -3096,7 +3096,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
 export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>, constraintNode: GoPtr<TypeNode>): GoPtr<TypeParameterDeclarationNode> {
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags &= ~FlagsWriteTypeParametersInQualifiedName;
-  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind));
+  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind)) ?? [];
   const modifiersList = modifiers.length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
   const name = NodeBuilderImpl_typeParameterToName(receiver, typeParameter);
   const defaultParameter = Checker_getDefaultFromTypeParameter(receiver!.ch, typeParameter);
@@ -3105,7 +3105,7 @@ export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receive
   return NewTypeParameterDeclaration(
     receiver!.f,
     modifiersList,
-    name as GoPtr<IdentifierNode>,
+    NodeDefault_AsNode(name) as GoPtr<IdentifierNode>,
     constraintNode,
     undefined,
     defaultParameterDeclarationNode,
@@ -5146,8 +5146,7 @@ export function NodeBuilderImpl_getPropertyNameNodeForSymbolFromNameType(receive
     return NodeBuilderImpl_createPropertyNameNodeForIdentifierOrLiteral(receiver, name, singleQuote, stringNamed, isMethod, symbol_);
   }
   if ((nameType!.flags & TypeFlagsUniqueESSymbol) !== 0) {
-    const uniqueType = Type_AsUniqueESSymbolType(nameType);
-    const uniqueSymbol = uniqueType!.__tsgoEmbedded0!.__tsgoEmbedded0!["symbol"];
+    const uniqueSymbol = nameType!.symbol;
     return NewComputedPropertyName(receiver!.f, NodeBuilderImpl_symbolToExpression(receiver, uniqueSymbol, SymbolFlagsValue as SymbolFlags));
   }
   return undefined;

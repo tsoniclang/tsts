@@ -1741,7 +1741,7 @@ export function Checker_checkUnusedLocalsAndParameters(receiver: GoPtr<Checker>,
   const variableParents = new globalThis.Set<GoPtr<Node>>();
   const importClauses = new globalThis.Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
   for (const local of Node_Locals(node)?.values() ?? []) {
-    const referenceKinds = (LinkStore_Get(receiver!.symbolReferenceLinks, local) as GoPtr<SymbolReferenceLinks>)!.referenceKinds;
+    const referenceKinds = (LinkStore_Get(receiver!.symbolReferenceLinks, local) as GoPtr<SymbolReferenceLinks>)!.referenceKinds ?? SymbolFlagsNone;
     if (((local!.Flags & SymbolFlagsTypeParameter) !== 0 && ((local!.Flags & SymbolFlagsVariable) === 0 || (referenceKinds & SymbolFlagsVariable) !== 0)) ||
       ((local!.Flags & SymbolFlagsTypeParameter) === 0 && (referenceKinds !== 0 || local!.ExportSymbol !== undefined || (local!.Flags & SymbolFlagsModuleExports) !== 0))) {
       continue;
@@ -1861,7 +1861,7 @@ export function Checker_checkUnusedTypeParameters(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_isUnreferencedTypeParameter(receiver: GoPtr<Checker>, typeParameter: GoPtr<Node>): bool {
-  return (LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)))!.referenceKinds & SymbolFlagsTypeParameter) === 0 &&
+  return ((LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)))!.referenceKinds ?? SymbolFlagsNone) & SymbolFlagsTypeParameter) === 0 &&
     !isIdentifierThatStartsWithUnderscore(Node_Name(typeParameter));
 }
 
@@ -3285,12 +3285,13 @@ export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<No
   if (IsJsxOpeningFragment(node)) {
     return true as bool;
   }
+  const callArgs = args ?? [];
   let argCount = 0;
   let callIsIncomplete = false;
   let effectiveParameterCount = Checker_getParameterCount(receiver, signature);
   let effectiveMinimumArguments = Checker_getMinArgumentCount(receiver, signature);
   if (IsTaggedTemplateExpression(node)) {
-    argCount = args.length;
+    argCount = callArgs.length;
     const template = AsTaggedTemplateExpression(node)!.Template;
     if (IsTemplateExpression(template)) {
       const lastSpan = core.LastOrNil(AsTemplateExpression(template)!.TemplateSpans!.Nodes);
@@ -3308,20 +3309,20 @@ export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<No
     if (callIsIncomplete) {
       return true as bool;
     }
-    argCount = core.IfElse(effectiveMinimumArguments === 0, args.length, 1);
-    effectiveParameterCount = core.IfElse(args.length === 0, effectiveParameterCount, 1);
+    argCount = core.IfElse(effectiveMinimumArguments === 0, callArgs.length, 1);
+    effectiveParameterCount = core.IfElse(callArgs.length === 0, effectiveParameterCount, 1);
     effectiveMinimumArguments = globalThis.Math.min(effectiveMinimumArguments, 1);
   } else if (IsNewExpression(node) && AsNewExpression(node)!.Arguments === undefined) {
     return Checker_getMinArgumentCount(receiver, signature) === 0;
   } else {
     if (signatureHelpTrailingComma) {
-      argCount = args.length + 1;
+      argCount = callArgs.length + 1;
     } else {
-      argCount = args.length;
+      argCount = callArgs.length;
     }
     const argumentList = Node_ArgumentList(node);
     callIsIncomplete = argumentList !== undefined && NodeList_End(argumentList) === Node_End(node);
-    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, args);
+    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, callArgs);
     if (spreadArgIndex >= 0) {
       return spreadArgIndex >= Checker_getMinArgumentCount(receiver, signature) && (Checker_hasEffectiveRestParameter(receiver, signature) || spreadArgIndex < Checker_getParameterCount(receiver, signature));
     }

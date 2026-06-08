@@ -326,13 +326,7 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       if (typeExpression === undefined) {
         break;
       }
-      const fullName = Node_Name(tag);
-      const isNamespace = fullName !== undefined && IsModuleDeclaration(fullName);
-      let modifiers: GoPtr<ModifierList> = undefined;
-      if (isNamespace) {
-        modifiers = Parser_createExportModifier(receiver, tag);
-      }
-      const typeAlias = NewJSTypeAliasDeclaration(receiver!.factory, modifiers, Parser_addDeepCloneReparse(receiver, Parser_getInnermostNameOfJSDocNamespace(receiver, fullName)), undefined, undefined);
+      const typeAlias = NewJSTypeAliasDeclaration(receiver!.factory, undefined, Parser_addDeepCloneReparse(receiver, Node_Name(tag)), undefined, undefined);
       AsTypeAliasDeclaration(typeAlias)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, tag);
       let t: GoPtr<Node>;
       switch (typeExpression!.Kind) {
@@ -349,8 +343,7 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       Parser_finishReparsedNode(receiver, typeAlias, tag);
       receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] }];
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
-      const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false);
-      receiver!.reparseList = [...receiver!.reparseList, result];
+      receiver!.reparseList = [...receiver!.reparseList, typeAlias];
       break;
     }
     case KindJSDocCallbackTag: {
@@ -359,20 +352,13 @@ export function Parser_reparseUnhosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>
       if (typeExpression === undefined) {
         break;
       }
-      const fullName = Node_Name(tag);
-      const isNamespace = fullName !== undefined && IsModuleDeclaration(fullName);
-      let modifiers: GoPtr<ModifierList> = undefined;
-      if (isNamespace) {
-        modifiers = Parser_createExportModifier(receiver, tag);
-      }
       const functionType = Parser_reparseJSDocSignature(receiver, typeExpression, tag, jsDoc, tag, undefined);
-      const typeAlias = NewJSTypeAliasDeclaration(receiver!.factory, modifiers, Parser_addDeepCloneReparse(receiver, Parser_getInnermostNameOfJSDocNamespace(receiver, fullName)), undefined, functionType);
+      const typeAlias = NewJSTypeAliasDeclaration(receiver!.factory, undefined, Parser_addDeepCloneReparse(receiver, callbackTag!.FullName), undefined, functionType);
       AsTypeAliasDeclaration(typeAlias)!.TypeParameters = Parser_gatherTypeParameters(receiver, jsDoc, tag);
       Parser_finishReparsedNode(receiver, typeAlias, tag);
       receiver!.jsdocInfos = [...receiver!.jsdocInfos, { parent: typeAlias, jsDocs: [jsDoc] }];
       typeAlias!.Flags |= NodeFlagsHasJSDoc;
-      const result = Parser_wrapInJSDocNamespace(receiver, fullName, typeAlias, false);
-      receiver!.reparseList = [...receiver!.reparseList, result];
+      receiver!.reparseList = [...receiver!.reparseList, typeAlias];
       break;
     }
     case KindJSDocImportTag: {

@@ -3632,15 +3632,15 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   const files: string[] = [];
   OrderedMap_Values(literalFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   OrderedMap_Values(wildcardFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   OrderedMap_Values(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   return [files, OrderedMap_Size(literalFileMap as GoPtr<OrderedMap<string, string>>)];
 }

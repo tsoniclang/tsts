@@ -1605,7 +1605,7 @@ export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFileNode>, name: s
   if (hasGlobalName !== undefined && hasGlobalName(name)) {
     return false;
   }
-  return !AsSourceFile(sourceFile)!.Identifiers.has(name);
+  return !(AsSourceFile(sourceFile)!.Identifiers?.has(name) ?? false);
 }
 
 /**

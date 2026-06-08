@@ -382,14 +382,14 @@ export function EmitResolver_isDeclarationVisible(receiver: GoPtr<EmitResolver>,
   if (!IsParseTreeNode(node)) { return false as bool; }
   if (node === undefined) { return false as bool; }
   const links = LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, node);
-  if (links!.isVisible === TSUnknown) {
+  if ((links!.isVisible ?? TSUnknown) === TSUnknown) {
     if (EmitResolver_determineIfDeclarationIsVisible(receiver, node)) {
       links!.isVisible = TSTrue;
     } else {
       links!.isVisible = TSFalse;
     }
   }
-  return (links!.isVisible === TSTrue) as bool;
+  return ((links!.isVisible ?? TSUnknown) === TSTrue) as bool;
 }
 
 /**

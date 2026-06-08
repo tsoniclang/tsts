@@ -5166,7 +5166,7 @@ export function Checker_isTypeMatchedByTemplateLiteralType(receiver: GoPtr<Check
  */
 export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> {
   if ((source!.flags & TypeFlagsStringLiteral) !== 0) {
-    return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, [getStringLiteralValue(source)], undefined!, target);
+    return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, [getStringLiteralValue(source)], [], target);
   }
   if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
     const srcTexts = Type_AsTemplateLiteralType(source)!.texts;
@@ -5184,7 +5184,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
     }
     return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, srcTexts, srcTypes, target);
   }
-  return undefined!;
+  return [];
 }
 
 /**
@@ -5268,7 +5268,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
   const targetStartText = targetTexts[0]!;
   const targetEndText = targetTexts[lastTargetIndex]!;
   if (lastSourceIndex === 0 && sourceStartText.length < targetStartText.length + targetEndText.length || !sourceStartText.startsWith(targetStartText) || !sourceEndText.endsWith(targetEndText)) {
-    return undefined!;
+    return [];
   }
   const remainingEndText = sourceEndText.slice(0, sourceEndText.length - targetEndText.length);
   let seg = 0;
@@ -5310,7 +5310,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
         }
         s++;
         if (s === sourceTexts.length) {
-          return undefined!;
+          return [];
         }
         p = 0;
       }
@@ -5325,7 +5325,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
       } else if (seg < lastSourceIndex) {
         addMatch(seg + 1, 0);
       } else {
-        return undefined!;
+        return [];
       }
     }
   }

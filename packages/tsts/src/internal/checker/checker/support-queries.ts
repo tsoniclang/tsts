@@ -79,7 +79,7 @@ import {
   KindYieldExpression,
 } from "../../ast/generated/kinds.js";
 import type { Kind } from "../../ast/generated/kinds.js";
-import { NodeFlagsAmbient, NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing, SymbolFlagsAlias, SymbolFlagsFunction, SymbolFlagsValue, SymbolFlagsVariable } from "../../ast/generated/flags.js";
+import { NodeFlagsAmbient, NodeFlagsAwaitUsing, NodeFlagsBlockScoped, NodeFlagsConst, NodeFlagsUsing, SymbolFlagsAlias, SymbolFlagsFunction, SymbolFlagsNone, SymbolFlagsValue, SymbolFlagsVariable } from "../../ast/generated/flags.js";
 import type { NodeFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
 import { IsArrayLiteralExpression, IsAssignmentOperator, IsBindingElement, IsBinaryExpression, IsExportAssignment, IsExportSpecifier, IsIdentifier, IsImportEqualsDeclaration, IsJsxOpeningElement, IsJsxOpeningFragment, IsParenthesizedExpression, IsPropertyAccessExpression, IsPropertyAssignment, IsPropertyDeclaration, IsPropertySignatureDeclaration, IsShorthandPropertyAssignment, IsSpreadElement, IsTemplateSpan } from "../../ast/generated/predicates.js";
@@ -135,7 +135,7 @@ export function Checker_isIteratorResult(receiver: GoPtr<Checker>, t: GoPtr<Type
  * }
  */
 export function Checker_isReferenced(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
-  return (LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds !== 0;
+  return ((LinkStore_Get(receiver!.symbolReferenceLinks, symbol_) as GoPtr<SymbolReferenceLinks>)!.referenceKinds ?? SymbolFlagsNone) !== 0;
 }
 
 /**
