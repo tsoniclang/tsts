@@ -779,12 +779,12 @@ export function Checker_getAliasForSymbolInContainer(receiver: GoPtr<Checker>, c
     }
   }
   const exports_ = Checker_getExportsOfSymbol(receiver, container);
-  const quick = exports_.get(symbol_!.Name);
+  const quick = exports_?.get(symbol_!.Name);
   if (quick !== undefined && Checker_getSymbolIfSameReference(receiver, quick, symbol_) !== undefined) {
     return quick;
   }
   let candidates: GoSlice<GoPtr<Symbol>> = [];
-  for (const [, exported] of exports_) {
+  for (const [, exported] of exports_ ?? []) {
     if (Checker_getSymbolIfSameReference(receiver, exported, symbol_) !== undefined) {
       candidates = [...candidates, exported];
     }

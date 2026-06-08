@@ -41,7 +41,6 @@ import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, Symbol
 import type { EmitResolver as EmitResolver_969b36a1, SymbolAccessibilityResult, TypeReferenceSerializationKind, SymbolAccessibility } from "../printer/emitresolver.js";
 import { Some, Every } from "../core/core.js";
 import { Node_ForEachChild, NodeFactory_NewModifierList } from "../ast/spine.js";
-import type { Visitor } from "../ast/spine.js";
 import { SourceFile_ForEachChild } from "../ast/ast.js";
 import { NewNodeBuilder } from "./nodebuilder.js";
 import type { NodeBuilder } from "./nodebuilder.js";
@@ -1753,21 +1752,43 @@ export function EmitResolver_IsTopLevelValueImportEqualsWithEntityName(receiver:
  */
 export function EmitResolver_MarkLinkedReferencesRecursively(receiver: GoPtr<EmitResolver>, file: GoPtr<SourceFile>): void {
   receiver!.checkerMu!.Lock();
-  if (file !== undefined) {
-    const visit: Visitor = (n: GoPtr<Node>): bool => {
-      if (IsImportEqualsDeclaration(n) && (Node_ModifierFlags(n) & ModifierFlagsExport) === 0) {
+  try {
+    if (file !== undefined) {
+      const pending: GoPtr<Node>[] = [];
+      const pushChildrenInVisitOrder = (children: GoPtr<Node>[]): void => {
+        for (let index = children.length - 1; index >= 0; index--) {
+          pending.push(children[index]);
+        }
+      };
+      const sourceChildren: GoPtr<Node>[] = [];
+      SourceFile_ForEachChild(file, (n: GoPtr<Node>): bool => {
+        sourceChildren.push(n);
         return false as bool;
+      });
+      pushChildrenInVisitOrder(sourceChildren);
+      while (pending.length !== 0) {
+        const n = pending.pop();
+        if (n === undefined) {
+          continue;
+        }
+        if (IsImportEqualsDeclaration(n) && (Node_ModifierFlags(n) & ModifierFlagsExport) === 0) {
+          continue;
+        }
+        if (IsImportDeclaration(n)) {
+          continue;
+        }
+        Checker_markLinkedReferences(receiver!.checker, n, ReferenceHintUnspecified, undefined, undefined);
+        const children: GoPtr<Node>[] = [];
+        Node_ForEachChild(n, (child: GoPtr<Node>): bool => {
+          children.push(child);
+          return false as bool;
+        });
+        pushChildrenInVisitOrder(children);
       }
-      if (IsImportDeclaration(n)) {
-        return false as bool;
-      }
-      Checker_markLinkedReferences(receiver!.checker, n, ReferenceHintUnspecified, undefined, undefined);
-      Node_ForEachChild(n, visit);
-      return false as bool;
-    };
-    SourceFile_ForEachChild(file, visit);
+    }
+  } finally {
+    receiver!.checkerMu!.Unlock();
   }
-  receiver!.checkerMu!.Unlock();
 }
 
 /**

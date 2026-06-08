@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { cpus, tmpdir } from "node:os";
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import ts from "typescript";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const repoRoot = join(dirname(scriptPath), "../../../..");
@@ -13,8 +14,14 @@ const vendorRoot = join(packageRoot, "_vendor/typescript-go");
 const caseRoot = join(vendorRoot, "testdata/tests/cases");
 const baselineRoot = join(vendorRoot, "testdata/baselines/reference");
 const typeScriptSubmoduleCaseRoot = join(vendorRoot, "_submodules/TypeScript/tests/cases");
+const typeScriptSubmoduleBaselineRoot = join(vendorRoot, "_submodules/TypeScript/tests/baselines/reference");
 const testLibRoot = join(vendorRoot, "_submodules/TypeScript/tests/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
+const utf8Decoder = new TextDecoder("utf-8");
+const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
+const utf16BigEndianDecoder = new TextDecoder("utf-16be");
+const harnessSourceFilePattern = /\.(?:[cm]?tsx?|[cm]?jsx?)$/i;
+const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
@@ -78,10 +85,12 @@ const skippedTests = new Set([
 const compilerVaryByOptions = new Set([
   "allowjs",
   "allowsyntheticdefaultimports",
+  "alwaysstrict",
   "checkjs",
   "declaration",
   "declarationmap",
   "deduplicatepackages",
+  "downleveliteration",
   "emitdeclarationonly",
   "emitdecoratormetadata",
   "erasablesyntaxonly",
@@ -89,10 +98,14 @@ const compilerVaryByOptions = new Set([
   "exactoptionalpropertytypes",
   "experimentaldecorators",
   "incremental",
+  "importhelpers",
   "isolateddeclarations",
+  "jsx",
   "module",
+  "moduledetection",
   "moduleresolution",
   "noemit",
+  "nolib",
   "nouncheckedsideeffectimports",
   "nounusedlocals",
   "nounusedparameters",
@@ -105,16 +118,22 @@ const compilerVaryByOptions = new Set([
   "strictnullchecks",
   "target",
   "usedefineforclassfields",
+  "useunknownincatchvariables",
   "verbatimmodulesyntax",
 ]);
 const booleanOptions = new Set([
   "allowjs",
+  "allowarbitraryextensions",
+  "allowunusedlabels",
   "allowunreachablecode",
   "allowsyntheticdefaultimports",
+  "alwaysstrict",
   "checkjs",
+  "composite",
   "declaration",
   "declarationmap",
   "deduplicatepackages",
+  "downleveliteration",
   "emitdeclarationonly",
   "emitdecoratormetadata",
   "erasablesyntaxonly",
@@ -122,52 +141,93 @@ const booleanOptions = new Set([
   "exactoptionalpropertytypes",
   "experimentaldecorators",
   "incremental",
+  "inlinesourcemap",
+  "importhelpers",
   "isolateddeclarations",
   "noemit",
   "noemithelpers",
   "noerrortruncation",
   "noimplicitany",
+  "noimplicitreturns",
+  "noimplicitthis",
+  "noresolve",
+  "nolib",
   "nopropertyaccessfromindexsignature",
+  "nofallthroughcasesinswitch",
+  "nocheck",
+  "nouncheckedindexedaccess",
   "nouncheckedsideeffectimports",
   "nounusedlocals",
   "nounusedparameters",
+  "libreplacement",
   "preserveconstenums",
+  "pretty",
   "removecomments",
   "resolvejsonmodule",
   "resolvepackagejsonexports",
+  "rewriterelativeimportextensions",
   "skipdefaultlibcheck",
   "skiplibcheck",
   "strict",
   "strictbuiltiniteratorreturn",
   "strictnullchecks",
+  "strictpropertyinitialization",
+  "sourcemap",
   "traceresolution",
   "usedefineforclassfields",
+  "useunknownincatchvariables",
   "verbatimmodulesyntax",
 ]);
 const stringOptions = new Map([
   ["baseurl", "baseUrl"],
+  ["declarationdir", "declarationDir"],
   ["jsx", "jsx"],
+  ["jsxfactory", "jsxFactory"],
+  ["jsxfragmentfactory", "jsxFragmentFactory"],
   ["jsximportsource", "jsxImportSource"],
+  ["maproot", "mapRoot"],
   ["module", "module"],
+  ["moduledetection", "moduleDetection"],
   ["moduleresolution", "moduleResolution"],
   ["outdir", "outDir"],
   ["outfile", "outFile"],
+  ["reactnamespace", "reactNamespace"],
   ["rootdir", "rootDir"],
   ["target", "target"],
   ["tsbuildinfofile", "tsBuildInfoFile"],
 ]);
+const pathStringOptions = new Set([
+  "baseurl",
+  "declarationdir",
+  "outdir",
+  "outfile",
+  "rootdir",
+  "tsbuildinfofile",
+]);
 const listOptions = new Map([
   ["lib", "lib"],
+  ["typeroots", "typeRoots"],
   ["types", "types"],
+]);
+const pathListOptions = new Set([
+  "typeroots",
+]);
+const numberOptions = new Map([
+  ["maxnodemodulejsdepth", "maxNodeModuleJsDepth"],
 ]);
 const booleanOptionNames = new Map([
   ["allowjs", "allowJs"],
+  ["allowarbitraryextensions", "allowArbitraryExtensions"],
+  ["allowunusedlabels", "allowUnusedLabels"],
   ["allowunreachablecode", "allowUnreachableCode"],
   ["allowsyntheticdefaultimports", "allowSyntheticDefaultImports"],
+  ["alwaysstrict", "alwaysStrict"],
   ["checkjs", "checkJs"],
+  ["composite", "composite"],
   ["declaration", "declaration"],
   ["declarationmap", "declarationMap"],
   ["deduplicatepackages", "deduplicatePackages"],
+  ["downleveliteration", "downlevelIteration"],
   ["emitdeclarationonly", "emitDeclarationOnly"],
   ["emitdecoratormetadata", "emitDecoratorMetadata"],
   ["erasablesyntaxonly", "erasableSyntaxOnly"],
@@ -175,26 +235,41 @@ const booleanOptionNames = new Map([
   ["exactoptionalpropertytypes", "exactOptionalPropertyTypes"],
   ["experimentaldecorators", "experimentalDecorators"],
   ["incremental", "incremental"],
+  ["inlinesourcemap", "inlineSourceMap"],
+  ["importhelpers", "importHelpers"],
   ["isolateddeclarations", "isolatedDeclarations"],
   ["noemit", "noEmit"],
   ["noemithelpers", "noEmitHelpers"],
   ["noerrortruncation", "noErrorTruncation"],
   ["noimplicitany", "noImplicitAny"],
+  ["noimplicitreturns", "noImplicitReturns"],
+  ["noimplicitthis", "noImplicitThis"],
+  ["noresolve", "noResolve"],
+  ["nolib", "noLib"],
   ["nopropertyaccessfromindexsignature", "noPropertyAccessFromIndexSignature"],
+  ["nofallthroughcasesinswitch", "noFallthroughCasesInSwitch"],
+  ["nocheck", "noCheck"],
+  ["nouncheckedindexedaccess", "noUncheckedIndexedAccess"],
   ["nouncheckedsideeffectimports", "noUncheckedSideEffectImports"],
   ["nounusedlocals", "noUnusedLocals"],
   ["nounusedparameters", "noUnusedParameters"],
+  ["libreplacement", "libReplacement"],
   ["preserveconstenums", "preserveConstEnums"],
+  ["pretty", "pretty"],
   ["removecomments", "removeComments"],
   ["resolvejsonmodule", "resolveJsonModule"],
   ["resolvepackagejsonexports", "resolvePackageJsonExports"],
+  ["rewriterelativeimportextensions", "rewriteRelativeImportExtensions"],
   ["skipdefaultlibcheck", "skipDefaultLibCheck"],
   ["skiplibcheck", "skipLibCheck"],
   ["strict", "strict"],
   ["strictbuiltiniteratorreturn", "strictBuiltinIteratorReturn"],
   ["strictnullchecks", "strictNullChecks"],
+  ["strictpropertyinitialization", "strictPropertyInitialization"],
+  ["sourcemap", "sourceMap"],
   ["traceresolution", "traceResolution"],
   ["usedefineforclassfields", "useDefineForClassFields"],
+  ["useunknownincatchvariables", "useUnknownInCatchVariables"],
   ["verbatimmodulesyntax", "verbatimModuleSyntax"],
 ]);
 
@@ -260,8 +335,8 @@ Options:
 }
 
 export async function buildTestUniverseInventory() {
-  const currentHarness = await countFilesByChild(caseRoot, (file) => /\.(tsx?|jsx?)$/.test(file));
-  const typeScriptCases = await countFilesByChild(typeScriptSubmoduleCaseRoot, (file) => /\.(tsx?|jsx?)$/.test(file));
+  const currentHarness = await countFilesByChild(caseRoot, (file) => harnessSourceFilePattern.test(file));
+  const typeScriptCases = await countFilesByChild(typeScriptSubmoduleCaseRoot, (file) => harnessSourceFilePattern.test(file));
   const baselines = await countFilesByChild(baselineRoot, () => true);
   const goTests = await countGoTestFilesByPackage(vendorRoot);
   return {
@@ -349,13 +424,13 @@ export async function discoverCases(options) {
   for (const suite of suites) {
     const suiteRoot = join(selectedCaseRoot, suite);
     for (const file of await walkFiles(suiteRoot)) {
-      if (!/\.(tsx?|jsx?)$/.test(file)) {
+      if (!harnessSourceFilePattern.test(file)) {
         continue;
       }
       if (isEmittedJavaScriptSibling(file)) {
         continue;
       }
-      const sourceText = await readFile(file, "utf8");
+      const sourceText = await readSourceText(file);
       const parsed = parseFileBasedTest(sourceText, file.split(sep).at(-1));
       const configurations = getFileBasedTestConfigurations(parsed.globalOptions);
       const relativePath = relative(selectedCaseRoot, file).split(sep).join("/");
@@ -368,7 +443,7 @@ export async function discoverCases(options) {
           suite,
           sourcePath: file,
           relativePath,
-          caseName: relativePath.replace(/\.(tsx?|jsx?)$/, "").split("/").at(-1),
+          caseName: relativePath.replace(harnessSourceFilePattern, "").split("/").at(-1),
           sourceBaseName: relativePath.split("/").at(-1),
           configurationName: configuration.name,
           configuration: configuration.settings,
@@ -423,16 +498,20 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   };
 
   for (const line of lines) {
-    const linkMatch = /^\/\/\s*@link\s*:\s*([^\r\n]*)\s*->\s*([^\r\n]*)/.exec(line);
+    const directiveLine = line.replace(/^\uFEFF/, "");
+    const linkMatch = /^\/\/\s*@link\s*:\s*([^\r\n]*)\s*->\s*([^\r\n]*)/.exec(directiveLine);
     if (linkMatch !== null) {
       symlinks.set(linkMatch[2].trim(), linkMatch[1].trim());
       continue;
     }
-    const optionMatch = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/.exec(line);
+    const optionMatch = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/.exec(directiveLine);
     if (optionMatch !== null) {
       const optionName = optionMatch[1].toLowerCase();
       const optionValue = optionMatch[2].trim().replace(/;$/, "");
       if (optionName === "filename") {
+        if (!sawFileDirective && currentFileName === "") {
+          currentFileLines = [];
+        }
         flush();
         sawFileDirective = true;
         currentFileName = optionValue;
@@ -467,25 +546,58 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   };
 }
 
+export function decodeSourceText(bytes) {
+  if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return utf16LittleEndianDecoder.decode(bytes);
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    return utf16BigEndianDecoder.decode(bytes);
+  }
+  return utf8Decoder.decode(bytes);
+}
+
+async function readSourceText(file) {
+  return decodeSourceText(await readFile(file));
+}
+
 export function compilerOptionsFromSettings(settings) {
-  const compilerOptions = {
+  const compilerOptions = defaultCompilerOptions();
+  Object.assign(compilerOptions, explicitCompilerOptionsFromSettings(settings));
+  return compilerOptions;
+}
+
+function defaultCompilerOptions() {
+  return {
     newLine: "crlf",
     noErrorTruncation: true,
     skipDefaultLibCheck: true,
     target: "ES2024",
   };
+}
 
+function explicitCompilerOptionsFromSettings(settings) {
+  const compilerOptions = {};
   for (const [rawName, rawValue] of settings) {
     if (rawName === "filename" || rawName === "currentdirectory" || rawName === "symlink") {
       continue;
     }
     const listName = listOptions.get(rawName);
     if (listName !== undefined) {
-      compilerOptions[listName] = rawValue.replace(/;$/, "").split(",").map((entry) => entry.trim()).filter(Boolean);
+      compilerOptions[listName] = rawValue.replace(/;$/, "").split(",").map((entry) => entry.trim()).filter(Boolean).map((entry) =>
+        pathListOptions.has(rawName) ? normalizeHarnessOptionPath(entry) : entry
+      );
       continue;
     }
     const value = firstConcreteOptionValue(rawValue);
     if (value === undefined) {
+      continue;
+    }
+    const numberName = numberOptions.get(rawName);
+    if (numberName !== undefined) {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed)) {
+        compilerOptions[numberName] = parsed;
+      }
       continue;
     }
     if (booleanOptions.has(rawName)) {
@@ -494,11 +606,32 @@ export function compilerOptionsFromSettings(settings) {
     }
     const stringName = stringOptions.get(rawName);
     if (stringName !== undefined) {
-      compilerOptions[stringName] = rawName === "target" && value.toLowerCase() === "es5" ? "ES2016" : value;
+      compilerOptions[stringName] = rawName === "target" && value.toLowerCase() === "es5"
+        ? "ES2016"
+        : pathStringOptions.has(rawName)
+          ? normalizeHarnessOptionPath(value)
+          : value;
       continue;
     }
   }
 
+  return compilerOptions;
+}
+
+export function compilerOptionsForExistingProjectConfig(config, settings) {
+  return {
+    ...config,
+    compilerOptions: {
+      ...defaultCompilerOptions(),
+      ...(config.compilerOptions ?? {}),
+      ...explicitCompilerOptionsFromSettings(settings),
+    },
+  };
+}
+
+export function compilerOptionsForMaterializedCase(settings, parsed, inputFiles) {
+  const compilerOptions = compilerOptionsFromSettings(settings);
+  applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed, inputFiles);
   return compilerOptions;
 }
 
@@ -538,8 +671,8 @@ export function getFileBasedTestConfigurations(settings) {
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([option, value]) => `${option}=${value.toLowerCase()}`)
         .join(",");
-      const merged = new Map(varyingSettings);
-      for (const [option, value] of nonVaryingOptions) {
+      const merged = new Map(nonVaryingOptions);
+      for (const [option, value] of varyingSettings) {
         merged.set(option, value);
       }
       configurations.push({ name, settings: merged });
@@ -613,29 +746,60 @@ function parseBoolean(value) {
   return value === "true" || value === "1";
 }
 
-function baselineHasErrors(testCase) {
+export function baselineHasErrors(testCase) {
   for (const baselineDir of baselineDirectories(testCase)) {
-    const directPath = join(baselineDir, `${configuredCaseName(testCase)}.errors.txt`);
-    if (existsSync(directPath)) {
-      return true;
-    }
-    if (!existsSync(baselineDir)) {
-      continue;
-    }
-    const prefix = `${testCase.caseName}(`;
-    if (readdirSync(baselineDir).some((name) => name.startsWith(prefix) && name.endsWith(".errors.txt"))) {
-      return true;
+    const expected = baselineDirectoryHasErrors(baselineDir, testCase);
+    if (expected !== undefined) {
+      return expected;
     }
   }
   return false;
 }
 
+function baselineDirectoryHasErrors(baselineDir, testCase) {
+  const directPath = join(baselineDir, `${configuredCaseName(testCase)}.errors.txt`);
+  if (existsSync(directPath)) {
+    return true;
+  }
+  const diffPath = `${directPath}.diff`;
+  if (existsSync(diffPath)) {
+    return errorDiffNewSideHasErrors(diffPath);
+  }
+  if (!existsSync(baselineDir)) {
+    return undefined;
+  }
+  if (testCase.configurationName !== "") {
+    return undefined;
+  }
+  const prefix = `${testCase.caseName}(`;
+  const matchingErrorBaseline = readdirSync(baselineDir).find((name) => name.startsWith(prefix) && name.endsWith(".errors.txt"));
+  if (matchingErrorBaseline !== undefined) {
+    return true;
+  }
+  const matchingErrorDiff = readdirSync(baselineDir).find((name) => name.startsWith(prefix) && name.endsWith(".errors.txt.diff"));
+  if (matchingErrorDiff !== undefined) {
+    return errorDiffNewSideHasErrors(join(baselineDir, matchingErrorDiff));
+  }
+  return undefined;
+}
+
+export function errorDiffNewSideHasErrors(diffPath) {
+  const text = readFileSync(diffPath, "utf8");
+  return text.split(/\r?\n/).some((line) => {
+    if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("@@")) {
+      return false;
+    }
+    return (line.startsWith("+") || line.startsWith(" ")) && /\berror TS\d+:/.test(line);
+  });
+}
+
 function baselineDirectories(testCase) {
   if (testCase.corpus === "typescript") {
     return [
-      join(baselineRoot, "submodule", testCase.suite),
-      join(baselineRoot, "submoduleAccepted", testCase.suite),
       join(baselineRoot, "submoduleTriaged", testCase.suite),
+      join(baselineRoot, "submoduleAccepted", testCase.suite),
+      join(baselineRoot, "submodule", testCase.suite),
+      typeScriptSubmoduleBaselineRoot,
     ];
   }
   return [join(baselineRoot, testCase.suite)];
@@ -646,7 +810,7 @@ function configuredCaseName(testCase) {
 }
 
 async function materializeCase(testCase, runRoot) {
-  const sourceText = await readFile(testCase.sourcePath, "utf8");
+  const sourceText = await readSourceText(testCase.sourcePath);
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
   const caseDir = join(runRoot, caseDirectoryFragment(testCase));
   await mkdir(caseDir, { recursive: true });
@@ -661,7 +825,7 @@ async function materializeCase(testCase, runRoot) {
     const filePath = normalizeHarnessPath(unit.fileName);
     const fullPath = join(caseDir, filePath);
     await mkdir(dirname(fullPath), { recursive: true });
-    await writeFile(fullPath, rewriteHarnessAbsolutePaths(unit.content, filePath));
+    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath));
     writtenFiles.push(filePath);
   }
   if (!hasRootPackageJson(writtenFiles)) {
@@ -672,6 +836,7 @@ async function materializeCase(testCase, runRoot) {
 
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
+    await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
     return {
       caseDir,
       projectArg: join(caseDir, existingConfig),
@@ -683,10 +848,10 @@ async function materializeCase(testCase, runRoot) {
 
   const inputFiles = selectInputFiles(parsed, writtenFiles, testCase.configuration);
   const tsconfig = {
-    compilerOptions: compilerOptionsFromSettings(testCase.configuration),
+    compilerOptions: compilerOptionsForMaterializedCase(testCase.configuration, parsed, inputFiles),
     files: inputFiles,
   };
-  if (inputFiles.some((file) => /\.(jsx?|mjs|cjs)$/.test(file)) && tsconfig.compilerOptions.allowJs === undefined) {
+  if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && tsconfig.compilerOptions.allowJs === undefined) {
     tsconfig.compilerOptions.allowJs = true;
   }
   const configPath = join(caseDir, "tsconfig.json");
@@ -700,14 +865,24 @@ async function materializeCase(testCase, runRoot) {
   };
 }
 
+async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
+  const configText = await readSourceText(configPath);
+  const parsed = ts.parseConfigFileTextToJson(configPath, configText);
+  if (parsed.error !== undefined) {
+    throw new Error(`Failed to parse embedded tsconfig '${configPath}': ${parsed.error.messageText}`);
+  }
+  const merged = compilerOptionsForExistingProjectConfig(parsed.config ?? {}, settings);
+  await writeFile(configPath, `${JSON.stringify(merged, null, 2)}\n`);
+}
+
 export function hasRootPackageJson(writtenFiles) {
   return writtenFiles.some((file) => /^package\.json$/i.test(file));
 }
 
-function selectInputFiles(parsed, writtenFiles, configuration) {
-  const sourceFiles = writtenFiles.filter((file) => /\.(tsx?|jsx?)$/.test(file));
+export function selectInputFiles(parsed, writtenFiles, configuration) {
+  const sourceFiles = writtenFiles.filter((file) => harnessSourceFilePattern.test(file));
   const lastSourceFile = [...sourceFiles].at(-1);
-  const lastUnit = parsed.units.filter((unit) => /\.(tsx?|jsx?)$/.test(unit.fileName)).at(-1);
+  const lastUnit = parsed.units.filter((unit) => harnessSourceFilePattern.test(unit.fileName)).at(-1);
   const noImplicitReferences = configuration.get("noimplicitreferences") !== undefined;
   const hasRequireOrReference = lastUnit !== undefined && (lastUnit.content.includes("require(") || /reference\spath/.test(lastUnit.content));
   if (lastSourceFile !== undefined && (noImplicitReferences || hasRequireOrReference)) {
@@ -716,18 +891,39 @@ function selectInputFiles(parsed, writtenFiles, configuration) {
   return sourceFiles;
 }
 
-function rewriteHarnessAbsolutePaths(content, filePath) {
-  if (!content.includes("/.lib/")) {
-    return content;
+function rewriteHarnessFileContent(content, filePath) {
+  let rewritten = content;
+  if (rewritten.includes("/.lib/")) {
+    let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
+    if (libPath === "") {
+      libPath = ".";
+    }
+    if (!libPath.startsWith(".")) {
+      libPath = `./${libPath}`;
+    }
+    rewritten = rewritten.replaceAll("/.lib/", `${libPath}/`);
   }
-  let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
-  if (libPath === "") {
-    libPath = ".";
+  return rewritten.replace(
+    /(\/\/\/\s*<reference\s+path=["'])([^"']+)(["'])/gi,
+    (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath)}${suffix}`,
+  );
+}
+
+function rewriteHarnessReferencePath(referencePath, containingFilePath) {
+  if (!isHarnessAbsolutePath(referencePath)) {
+    return referencePath;
   }
-  if (!libPath.startsWith(".")) {
-    libPath = `./${libPath}`;
+  const targetPath = normalizeHarnessPath(referencePath);
+  let rewritten = posixPath.relative(posixPath.dirname(containingFilePath), targetPath);
+  if (rewritten === "") {
+    rewritten = posixPath.basename(targetPath);
   }
-  return content.replaceAll("/.lib/", `${libPath}/`);
+  return rewritten;
+}
+
+function isHarnessAbsolutePath(fileName) {
+  const normalized = fileName.replaceAll("\\", "/").trim();
+  return /^[a-zA-Z]:\//.test(normalized) || normalized.startsWith("/");
 }
 
 async function materializeSymlinks(caseDir, symlinks) {
@@ -745,7 +941,7 @@ async function materializeSymlinks(caseDir, symlinks) {
   }
 }
 
-function getSkipReason(testCase) {
+export function getSkipReason(testCase) {
   if (skippedTests.has(testCase.sourceBaseName)) {
     return `TS-Go runner skip list: ${testCase.sourceBaseName}`;
   }
@@ -769,10 +965,16 @@ function getSkipReason(testCase) {
   if (testCase.configuration.has("outfile")) {
     return `TS-Go runner skips outFile`;
   }
+  if (testCase.configuration.get("target")?.toLowerCase() === "es5") {
+    return `TS-Go runner skips unsupported target: es5`;
+  }
+  if (testCase.configuration.get("alwaysstrict")?.toLowerCase() === "false") {
+    return `TS-Go runner skips alwaysStrict=false`;
+  }
   return "";
 }
 
-function normalizeHarnessPath(fileName) {
+export function normalizeHarnessPath(fileName) {
   let normalized = fileName.replaceAll("\\", "/").trim();
   normalized = normalized.replace(/^[a-zA-Z]:\//, "");
   normalized = normalized.replace(/^\/+/, "");
@@ -780,6 +982,76 @@ function normalizeHarnessPath(fileName) {
     normalized = "input.ts";
   }
   return normalized;
+}
+
+export function normalizeHarnessOptionPath(fileName) {
+  let normalized = fileName.replaceAll("\\", "/").trim();
+  normalized = normalized.replace(/^[a-zA-Z]:(?=\/|$)/, "");
+  normalized = normalized.replace(/^\/+/, "");
+  return normalized === "" ? "." : normalized;
+}
+
+function applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed, inputFiles) {
+  if (compilerOptions.rootDir !== undefined) {
+    return;
+  }
+  if (!hasSyntheticConfigEmitLayoutOption(compilerOptions)) {
+    return;
+  }
+  const inputFileSet = new Set(inputFiles);
+  const sourceUnits = parsed.units.filter((unit) =>
+    harnessSourceFilePattern.test(unit.fileName) &&
+    !harnessDeclarationFilePattern.test(unit.fileName) &&
+    inputFileSet.has(normalizeHarnessPath(unit.fileName))
+  );
+  if (sourceUnits.length < 1) {
+    return;
+  }
+  const useCaseSensitiveFileNames = settings.get("usecasesensitivefilenames")?.toLowerCase() !== "false";
+  const firstVolume = harnessVolumeKey(sourceUnits[0].fileName, useCaseSensitiveFileNames);
+  if (!sourceUnits.every((unit) => harnessVolumeKey(unit.fileName, useCaseSensitiveFileNames) === firstVolume)) {
+    return;
+  }
+  const emittedInputFiles = sourceUnits.map((unit) => normalizeHarnessPath(unit.fileName));
+  const commonDirectory = commonDirectoryOfRelativeFiles(emittedInputFiles);
+  if (commonDirectory !== ".") {
+    compilerOptions.rootDir = commonDirectory;
+  }
+}
+
+const harnessDeclarationFilePattern = /\.d\.[cm]?ts$/i;
+
+function hasSyntheticConfigEmitLayoutOption(compilerOptions) {
+  return compilerOptions.outDir !== undefined ||
+    compilerOptions.declarationDir !== undefined ||
+    compilerOptions.outFile !== undefined;
+}
+
+function harnessVolumeKey(fileName, useCaseSensitiveFileNames) {
+  const normalized = fileName.replaceAll("\\", "/").trim();
+  const drive = /^([a-zA-Z]):\//.exec(normalized);
+  if (drive !== null) {
+    return useCaseSensitiveFileNames ? `${drive[1]}:` : `${drive[1].toLowerCase()}:`;
+  }
+  return normalized.startsWith("/") ? "/" : "";
+}
+
+function commonDirectoryOfRelativeFiles(files) {
+  if (files.length === 0) {
+    return ".";
+  }
+  const directories = files.map((file) => file.split("/").slice(0, -1));
+  const first = directories[0] ?? [];
+  const common = [];
+  for (let index = 0; index < first.length; index += 1) {
+    const segment = first[index];
+    if (directories.every((directory) => directory[index] === segment)) {
+      common.push(segment);
+    } else {
+      break;
+    }
+  }
+  return common.length === 0 ? "." : common.join("/");
 }
 
 function safePathFragment(path) {

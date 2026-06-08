@@ -1911,20 +1911,9 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
         setFlowNode(node, receiver!.currentFlow);
       }
       break;
-    case KindBinaryExpression: {
-      const kind = GetAssignmentDeclarationKind(node);
-      if (kind === JSDeclarationKindModuleExports) {
-        Binder_bindModuleExportsAssignment(receiver, node);
-      } else if (kind === JSDeclarationKindExportsProperty) {
-        Binder_bindExportsOrObjectDefineProperty(receiver, node);
-      } else if (kind === JSDeclarationKindProperty) {
-        Binder_bindExpandoPropertyAssignment(receiver, node);
-      } else if (kind === JSDeclarationKindThisProperty) {
-        Binder_bindThisPropertyAssignment(receiver, node);
-      }
-      Binder_checkStrictModeBinaryExpression(receiver, node);
+    case KindBinaryExpression:
+      Binder_bindBinaryExpressionNode(receiver, node);
       break;
-    }
     case KindCatchClause:
       Binder_checkStrictModeCatchClause(receiver, node);
       break;
@@ -2089,6 +2078,20 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
   }
   receiver!.parent = saveParent;
   return false;
+}
+
+function Binder_bindBinaryExpressionNode(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
+  const kind = GetAssignmentDeclarationKind(node);
+  if (kind === JSDeclarationKindModuleExports) {
+    Binder_bindModuleExportsAssignment(receiver, node);
+  } else if (kind === JSDeclarationKindExportsProperty) {
+    Binder_bindExportsOrObjectDefineProperty(receiver, node);
+  } else if (kind === JSDeclarationKindProperty) {
+    Binder_bindExpandoPropertyAssignment(receiver, node);
+  } else if (kind === JSDeclarationKindThisProperty) {
+    Binder_bindThisPropertyAssignment(receiver, node);
+  }
+  Binder_checkStrictModeBinaryExpression(receiver, node);
 }
 
 /**
@@ -5398,23 +5401,58 @@ export function Binder_bindBinaryExpressionFlow(receiver: GoPtr<Binder>, node: G
       Binder_bindLogicalLikeExpression(receiver, node, receiver!.currentTrueTarget, receiver!.currentFalseTarget);
     }
   } else {
-    Binder_bind(receiver, expr!.Left as unknown as GoPtr<Node>);
-    Binder_bind(receiver, (expr as unknown as { Type?: GoPtr<Node> }).Type);
-    if (operator === KindCommaToken) {
-      Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Left as unknown as GoPtr<Node>);
-    }
-    Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
-    Binder_bind(receiver, expr!.Right as unknown as GoPtr<Node>);
-    if (operator === KindCommaToken) {
-      Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Right as unknown as GoPtr<Node>);
-    }
-    if (IsAssignmentOperator(operator) && !IsAssignmentTarget(node)) {
-      Binder_bindAssignmentTargetFlow(receiver, expr!.Left as unknown as GoPtr<Node>);
-      if (operator === KindEqualsToken && expr!.Left!.Kind === KindElementAccessExpression) {
-        const elementAccess = AsElementAccessExpression(expr!.Left as unknown as GoPtr<Node>);
-        if (isNarrowableOperand(elementAccess!.Expression as unknown as GoPtr<Node>)) {
-          receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsArrayMutation, receiver!.currentFlow!, node);
-        }
+    Binder_bindNonLogicalBinaryExpressionFlow(receiver, node);
+  }
+}
+
+function Binder_bindNonLogicalBinaryExpressionFlow(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
+  const binaryChain: GoPtr<Node>[] = [node];
+  let leftEdge = AsBinaryExpression(node)!.Left as unknown as GoPtr<Node>;
+  while (isIterativelyBindableNonLogicalBinaryExpression(leftEdge)) {
+    binaryChain.push(leftEdge);
+    leftEdge = AsBinaryExpression(leftEdge)!.Left as unknown as GoPtr<Node>;
+  }
+
+  for (let index = 1; index < binaryChain.length; index++) {
+    binaryChain[index]!.Parent = binaryChain[index - 1];
+    Binder_bindBinaryExpressionNode(receiver, binaryChain[index]);
+  }
+
+  receiver!.parent = binaryChain[binaryChain.length - 1];
+  Binder_bind(receiver, leftEdge);
+  for (let index = binaryChain.length - 1; index >= 0; index--) {
+    receiver!.parent = binaryChain[index];
+    Binder_bindNonLogicalBinaryExpressionTail(receiver, binaryChain[index]);
+  }
+  receiver!.parent = node;
+}
+
+function isIterativelyBindableNonLogicalBinaryExpression(node: GoPtr<Node>): bool {
+  if (node === undefined || node.Kind !== KindBinaryExpression || IsDestructuringAssignment(node)) {
+    return false as bool;
+  }
+  const operator = AsBinaryExpression(node)!.OperatorToken!.Kind;
+  return (!IsLogicalOrCoalescingBinaryOperator(operator) && !IsLogicalOrCoalescingAssignmentOperator(operator)) as bool;
+}
+
+function Binder_bindNonLogicalBinaryExpressionTail(receiver: GoPtr<Binder>, node: GoPtr<Node>): void {
+  const expr = AsBinaryExpression(node);
+  const operator = expr!.OperatorToken!.Kind;
+  Binder_bind(receiver, (expr as unknown as { Type?: GoPtr<Node> }).Type);
+  if (operator === KindCommaToken) {
+    Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Left as unknown as GoPtr<Node>);
+  }
+  Binder_bind(receiver, expr!.OperatorToken as unknown as GoPtr<Node>);
+  Binder_bind(receiver, expr!.Right as unknown as GoPtr<Node>);
+  if (operator === KindCommaToken) {
+    Binder_maybeBindExpressionFlowIfCall(receiver, expr!.Right as unknown as GoPtr<Node>);
+  }
+  if (IsAssignmentOperator(operator) && !IsAssignmentTarget(node)) {
+    Binder_bindAssignmentTargetFlow(receiver, expr!.Left as unknown as GoPtr<Node>);
+    if (operator === KindEqualsToken && expr!.Left!.Kind === KindElementAccessExpression) {
+      const elementAccess = AsElementAccessExpression(expr!.Left as unknown as GoPtr<Node>);
+      if (isNarrowableOperand(elementAccess!.Expression as unknown as GoPtr<Node>)) {
+        receiver!.currentFlow = Binder_createFlowMutation(receiver, FlowFlagsArrayMutation, receiver!.currentFlow!, node);
       }
     }
   }

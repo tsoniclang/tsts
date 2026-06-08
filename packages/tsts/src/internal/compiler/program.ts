@@ -2363,11 +2363,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   if (options!.ModuleResolution === 2 /* ModuleResolutionKindNode10 */) {
     createRemovedOptionDiagnostic("moduleResolution", "node10", "");
   }
-  if (!Tristate_IsTrue(options!.DownlevelIteration) && !Tristate_IsFalse(options!.DownlevelIteration)) {
-    // not unknown means it was set
-    if (options!.DownlevelIteration !== 0 /* Tristate_Unknown */) {
-      createRemovedOptionDiagnostic("downlevelIteration", "", "");
-    }
+  if (options!.DownlevelIteration !== TSUnknown) {
+    createRemovedOptionDiagnostic("downlevelIteration", "", "");
   }
 
   if (Tristate_IsTrue(options!.StrictPropertyInitialization) && !CompilerOptions_GetStrictOptionValue(options, options!.StrictNullChecks)) {

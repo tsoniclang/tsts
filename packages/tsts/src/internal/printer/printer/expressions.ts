@@ -131,7 +131,7 @@ import {
   greatestEnd,
 } from "../utilities.js";
 import type { getLiteralTextFlags } from "../utilities.js";
-import type { Printer, PrinterOptions, PrintHandlers, WriteKind } from "./state.js";
+import type { Printer, PrinterOptions, PrintHandlers, WriteKind, printerState } from "./state.js";
 import type { ListFormat } from "./state.js";
 import {
   LFAllowTrailingComma,
@@ -1601,17 +1601,41 @@ export function Printer_getBinaryExpressionPrecedence(receiver: GoPtr<Printer>, 
  * }
  */
 export function Printer_emitBinaryExpression(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>): void {
-  let [leftPrec, rightPrec] = Printer_getBinaryExpressionPrecedence(receiver, node);
-  const emittedLeft = SkipPartiallyEmittedExpressions(node!.Left);
-  if (NodeIsSynthesized(emittedLeft) && emittedLeft!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(node!.OperatorToken!.Kind, AsBinaryExpression(emittedLeft)!.OperatorToken!.Kind)) {
-    leftPrec = OperatorPrecedenceHighest;
+  const pending: BinaryExpressionEmitFrame[] = [];
+  let current = node;
+  for (;;) {
+    let [leftPrec, rightPrec] = Printer_getBinaryExpressionPrecedence(receiver, current);
+    const emittedLeft = SkipPartiallyEmittedExpressions(current!.Left);
+    if (NodeIsSynthesized(emittedLeft) && emittedLeft!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(current!.OperatorToken!.Kind, AsBinaryExpression(emittedLeft)!.OperatorToken!.Kind)) {
+      leftPrec = OperatorPrecedenceHighest;
+    }
+    const emittedRight = SkipPartiallyEmittedExpressions(current!.Right);
+    if (NodeIsSynthesized(emittedRight) && emittedRight!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(current!.OperatorToken!.Kind, AsBinaryExpression(emittedRight)!.OperatorToken!.Kind)) {
+      rightPrec = OperatorPrecedenceHighest;
+    }
+    const state = Printer_enterNode(receiver, current);
+    if (current!.Left !== undefined && current!.Left.Kind === KindBinaryExpression && GetExpressionPrecedence(emittedLeft) >= leftPrec) {
+      pending.push({ node: current, rightPrec: rightPrec, state: state });
+      current = AsBinaryExpression(current!.Left);
+      continue;
+    }
+    Printer_emitExpression(receiver, current!.Left, leftPrec);
+    Printer_emitBinaryExpressionAfterLeft(receiver, current, rightPrec, state);
+    while (pending.length !== 0) {
+      const frame = pending.pop()!;
+      Printer_emitBinaryExpressionAfterLeft(receiver, frame.node, frame.rightPrec, frame.state);
+    }
+    return;
   }
-  const emittedRight = SkipPartiallyEmittedExpressions(node!.Right);
-  if (NodeIsSynthesized(emittedRight) && emittedRight!.Kind === KindBinaryExpression && mixingBinaryOperatorsRequiresParentheses(node!.OperatorToken!.Kind, AsBinaryExpression(emittedRight)!.OperatorToken!.Kind)) {
-    rightPrec = OperatorPrecedenceHighest;
-  }
-  const state = Printer_enterNode(receiver, node);
-  Printer_emitExpression(receiver, node!.Left, leftPrec);
+}
+
+interface BinaryExpressionEmitFrame {
+  node: GoPtr<BinaryExpression>;
+  rightPrec: OperatorPrecedence;
+  state: printerState;
+}
+
+function Printer_emitBinaryExpressionAfterLeft(receiver: GoPtr<Printer>, node: GoPtr<BinaryExpression>, rightPrec: OperatorPrecedence, state: printerState): void {
   const linesBeforeOperator = Printer_getLinesBetweenNodes(receiver, node, node!.Left, node!.OperatorToken);
   const linesAfterOperator = Printer_getLinesBetweenNodes(receiver, node, node!.OperatorToken, node!.Right);
   Printer_writeLinesAndIndent(receiver, linesBeforeOperator, (node!.OperatorToken!.Kind !== KindCommaToken) as bool /*writeSpaceIfNotIndenting*/);

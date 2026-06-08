@@ -1452,12 +1452,13 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
   // assignment check will fail. If we make no inferences, we'll likely end up with the constraint 'string' which,
   // upon instantiation, would collapse all the placeholders to just 'string', and an assignment check might
   // succeed. That would be a pointless and confusing outcome.
-  if (matches.length !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
+  const matchCount = matches?.length ?? 0;
+  if (matchCount !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
     outer: for (let i = 0; i < types.length; i++) {
       const targetType = types[i];
       let sourceType: GoPtr<Type>;
-      if (matches.length !== 0) {
-        sourceType = matches[i];
+      if (matchCount !== 0) {
+        sourceType = matches![i];
       } else {
         sourceType = c.neverType;
       }

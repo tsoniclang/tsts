@@ -110,6 +110,14 @@ export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> 
   };
 }
 
+function normalizeAutoGenerateOptions(options: GoPtr<AutoGenerateOptions>): AutoGenerateOptions {
+  return {
+    Flags: (options?.Flags ?? 0) as GeneratedIdentifierFlags,
+    Prefix: options?.Prefix ?? "",
+    Suffix: options?.Suffix ?? "",
+  };
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/factory.go::method::NodeFactory.newGeneratedIdentifier","kind":"method","status":"implemented","sigHash":"bd65bc9bb79cb9b5e957beb9597f38912038626f7684e4bfd9a342fcfddaf2b3","bodyHash":"4898d8a55f5291f9d781f03e48d9a81c8794f8ff23cb3966643119aba03aa716"}
  *
@@ -145,6 +153,7 @@ export function NewNodeFactory(context: GoPtr<EmitContext>): GoPtr<NodeFactory> 
  * }
  */
 export function NodeFactory_newGeneratedIdentifier(receiver: GoPtr<NodeFactory>, kind: GeneratedIdentifierFlags, text: string, node: GoPtr<Node>, options: AutoGenerateOptions): GoPtr<IdentifierNode> {
+  options = normalizeAutoGenerateOptions(options);
   const id = nextAutoGenerateId.Add(1 as never) as AutoGenerateId;
 
   if (text.length === 0) {
@@ -270,6 +279,7 @@ export function NodeFactory_NewGeneratedNameForNode(receiver: GoPtr<NodeFactory>
  * }
  */
 export function NodeFactory_NewGeneratedNameForNodeEx(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, options: AutoGenerateOptions): GoPtr<IdentifierNode> {
+  options = normalizeAutoGenerateOptions(options);
   // Go passes `options` by value; the |= below mutates that local copy only.
   const opts: AutoGenerateOptions = options.Prefix.length > 0 || options.Suffix.length > 0
     ? { Flags: options.Flags | GeneratedIdentifierFlagsOptimistic, Prefix: options.Prefix, Suffix: options.Suffix }
@@ -314,6 +324,7 @@ export function NodeFactory_NewGeneratedNameForNodeEx(receiver: GoPtr<NodeFactor
  * }
  */
 export function NodeFactory_newGeneratedPrivateIdentifier(receiver: GoPtr<NodeFactory>, kind: GeneratedIdentifierFlags, text: string, node: GoPtr<Node>, options: AutoGenerateOptions): GoPtr<PrivateIdentifierNode> {
+  options = normalizeAutoGenerateOptions(options);
   const id = nextAutoGenerateId.Add(1 as never) as AutoGenerateId;
 
   if (text.length === 0) {
@@ -393,6 +404,7 @@ export function NodeFactory_NewGeneratedPrivateNameForNode(receiver: GoPtr<NodeF
  * }
  */
 export function NodeFactory_NewGeneratedPrivateNameForNodeEx(receiver: GoPtr<NodeFactory>, node: GoPtr<Node>, options: AutoGenerateOptions): GoPtr<PrivateIdentifierNode> {
+  options = normalizeAutoGenerateOptions(options);
   // Go passes `options` by value; the |= below mutates that local copy only.
   const opts: AutoGenerateOptions = options.Prefix.length > 0 || options.Suffix.length > 0
     ? { Flags: options.Flags | GeneratedIdentifierFlagsOptimistic, Prefix: options.Prefix, Suffix: options.Suffix }

@@ -454,7 +454,7 @@ export function cloneNode(updated: GoPtr<Node>, original: GoPtr<Node>, hooks: No
  * }
  */
 export function NodeFactory_NewNodeList(receiver: GoPtr<NodeFactory>, nodes: GoSlice<GoPtr<Node>>): GoPtr<NodeList> {
-  const list: NodeList = { Loc: UndefinedTextRange(), Nodes: nodes };
+  const list: NodeList = { Loc: UndefinedTextRange(), Nodes: nodes ?? [] };
   return list;
 }
 

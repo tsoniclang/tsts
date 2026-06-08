@@ -1,10 +1,14 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../../go/compat.js";
 import { Builder, Index } from "../../../go/strings.js";
-import type { Node } from "../../ast/spine.js";
+import type { ModifierList, Node } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
-import { KindElementAccessExpression, KindMinusToken, KindMultiLineCommentTrivia, KindPropertyAccessExpression } from "../../ast/generated/kinds.js";
-import { NewBigIntLiteral, NewIdentifier, NewNumericLiteral, NewPrefixUnaryExpression, NewStringLiteral } from "../../ast/generated/factory.js";
+import type { BinaryExpression } from "../../ast/generated/data.js";
+import type { BinaryOperatorToken, Expression, TypeNode } from "../../ast/generated/unions.js";
+import { AsBinaryExpression } from "../../ast/generated/casts.js";
+import { KindBinaryExpression, KindElementAccessExpression, KindMinusToken, KindMultiLineCommentTrivia, KindPropertyAccessExpression } from "../../ast/generated/kinds.js";
+import type { NodeFactory } from "../../ast/generated/factory.js";
+import { NewBigIntLiteral, NewIdentifier, NewNumericLiteral, NewPrefixUnaryExpression, NewStringLiteral, NodeFactory_UpdateBinaryExpression } from "../../ast/generated/factory.js";
 import { TokenFlagsNone } from "../../ast/tokenflags.js";
 import { NodeIsSynthesized } from "../../ast/utilities.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
@@ -22,7 +26,7 @@ import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
-import { NodeVisitor_VisitEachChild } from "../../ast/visitor.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "../../ast/visitor.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. `strings.Index` likewise returns
@@ -147,6 +151,8 @@ export function ConstEnumInliningTransformer_visit(receiver: GoPtr<ConstEnumInli
   const astFactory = printerFactory!.__tsgoEmbedded0!;
   const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0) as ConcreteNodeVisitor;
   switch (node!.Kind) {
+    case KindBinaryExpression:
+      return ConstEnumInliningTransformer_visitBinaryExpression(node, visitor, astFactory);
     case KindPropertyAccessExpression:
     case KindElementAccessExpression: {
       const parse = EmitContext_ParseNode(emitCtx, node);
@@ -199,6 +205,103 @@ export function ConstEnumInliningTransformer_visit(receiver: GoPtr<ConstEnumInli
     }
   }
   return NodeVisitor_VisitEachChild(visitor, node);
+}
+
+interface BinaryExpressionVisitFrame {
+  node: GoPtr<Node>;
+  binary: GoPtr<BinaryExpression>;
+  step: number;
+  modifiers: GoPtr<ModifierList>;
+  left: GoPtr<Node>;
+  typeNode: GoPtr<Node>;
+  operatorToken: GoPtr<Node>;
+  right: GoPtr<Node>;
+}
+
+function ConstEnumInliningTransformer_visitBinaryExpression(node: GoPtr<Node>, visitor: GoPtr<ConcreteNodeVisitor>, astFactory: GoPtr<NodeFactory>): GoPtr<Node> {
+  const results = new Map<GoPtr<Node>, GoPtr<Node>>();
+  const stack: BinaryExpressionVisitFrame[] = [{
+    node: node,
+    binary: AsBinaryExpression(node),
+    step: 0,
+    modifiers: undefined,
+    left: undefined,
+    typeNode: undefined,
+    operatorToken: undefined,
+    right: undefined,
+  }];
+
+  while (stack.length !== 0) {
+    const frame = stack[stack.length - 1]!;
+    const binary = frame.binary!;
+    if (frame.step === 0) {
+      frame.modifiers = NodeVisitor_VisitModifiers(visitor, binary.modifiers);
+      frame.step = 1;
+      continue;
+    }
+    if (frame.step === 1) {
+      if (binary.Left !== undefined && binary.Left.Kind === KindBinaryExpression && !results.has(binary.Left)) {
+        stack.push({
+          node: binary.Left,
+          binary: AsBinaryExpression(binary.Left),
+          step: 0,
+          modifiers: undefined,
+          left: undefined,
+          typeNode: undefined,
+          operatorToken: undefined,
+          right: undefined,
+        });
+        continue;
+      }
+      frame.left = binary.Left !== undefined && binary.Left.Kind === KindBinaryExpression
+        ? results.get(binary.Left)
+        : NodeVisitor_VisitNode(visitor, binary.Left);
+      frame.step = 2;
+      continue;
+    }
+    if (frame.step === 2) {
+      frame.typeNode = NodeVisitor_VisitNode(visitor, binary.Type);
+      frame.step = 3;
+      continue;
+    }
+    if (frame.step === 3) {
+      frame.operatorToken = NodeVisitor_VisitNode(visitor, binary.OperatorToken);
+      frame.step = 4;
+      continue;
+    }
+    if (frame.step === 4) {
+      if (binary.Right !== undefined && binary.Right.Kind === KindBinaryExpression && !results.has(binary.Right)) {
+        stack.push({
+          node: binary.Right,
+          binary: AsBinaryExpression(binary.Right),
+          step: 0,
+          modifiers: undefined,
+          left: undefined,
+          typeNode: undefined,
+          operatorToken: undefined,
+          right: undefined,
+        });
+        continue;
+      }
+      frame.right = binary.Right !== undefined && binary.Right.Kind === KindBinaryExpression
+        ? results.get(binary.Right)
+        : NodeVisitor_VisitNode(visitor, binary.Right);
+      frame.step = 5;
+      continue;
+    }
+    const updated = NodeFactory_UpdateBinaryExpression(
+      astFactory,
+      binary,
+      frame.modifiers,
+      frame.left as GoPtr<Expression>,
+      frame.typeNode as GoPtr<TypeNode>,
+      frame.operatorToken as GoPtr<BinaryOperatorToken>,
+      frame.right as GoPtr<Expression>,
+    );
+    results.set(frame.node, updated);
+    stack.pop();
+  }
+  return results.get(node) ?? node;
 }
 
 /**

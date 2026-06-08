@@ -1529,6 +1529,7 @@ export function EmitContext_ReadEmitHelpers(receiver: GoPtr<EmitContext>): GoSli
 export function EmitContext_AddEmitHelper(receiver: GoPtr<EmitContext>, node: GoPtr<Node>, ...helper: Array<GoPtr<EmitHelper>>): void {
   const c = receiver!;
   const emitNode = LinkStore_Get(c.emitNodes, node)!;
+  emitNode.helpers ??= [];
   for (const h of helper) {
     emitNode.helpers = AppendIfUnique(emitNode.helpers, h);
   }
@@ -1572,12 +1573,13 @@ export function EmitContext_MoveEmitHelpers(receiver: GoPtr<EmitContext>, source
   if (sourceEmitNode === undefined) {
     return;
   }
-  const sourceEmitHelpers = sourceEmitNode.helpers;
+  const sourceEmitHelpers = sourceEmitNode.helpers ?? [];
   if (sourceEmitHelpers.length === 0) {
     return;
   }
 
   const targetEmitNode = LinkStore_Get(c.emitNodes, target)!;
+  targetEmitNode.helpers ??= [];
   let helpersRemoved = 0;
   for (let i = 0; i < sourceEmitHelpers.length; i++) {
     const helper = sourceEmitHelpers[i]!;
@@ -1610,7 +1612,7 @@ export function EmitContext_GetEmitHelpers(receiver: GoPtr<EmitContext>, node: G
   const c = receiver!;
   const emitNode = LinkStore_TryGet(c.emitNodes, node);
   if (emitNode !== undefined) {
-    return emitNode.helpers;
+    return emitNode.helpers ?? [];
   }
   return [];
 }

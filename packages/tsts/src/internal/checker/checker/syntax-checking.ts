@@ -42,7 +42,7 @@ import {
   IsPropertyAccessExpression, IsPrivateIdentifier, IsConstructorDeclaration,
   IsSetAccessorDeclaration, IsBlock, IsParameterDeclaration,
   IsBindingElement, IsClassStaticBlockDeclaration, IsCaseClause, IsDefaultClause, IsParenthesizedExpression,
-  IsLabeledStatement, IsConditionalExpression, IsBinaryExpression, IsSourceFile,
+  IsLabeledStatement, IsConditionalExpression, IsBinaryExpression, IsSourceFile, IsLogicalOrCoalescingAssignmentOperator,
 } from "../../ast/generated/predicates.js";
 import {
   GetSourceFileOfNode, IsExternalOrCommonJSModule,
@@ -2740,8 +2740,52 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
+  if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
+    return Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
+  }
   const binary = AsBinaryExpression(node);
   return Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
+}
+
+function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
+  const binaryChain: GoPtr<Node>[] = [];
+  let leftEdge: GoPtr<Node> = node;
+  while (isIterativelyCheckableNonLogicalBinaryExpression(leftEdge)) {
+    binaryChain.push(leftEdge);
+    leftEdge = AsBinaryExpression(leftEdge)!.Left;
+  }
+  let leftType = Checker_checkExpressionEx(receiver, leftEdge, checkMode);
+  for (let index = binaryChain.length - 1; index >= 0; index--) {
+    const current = binaryChain[index];
+    const binary = AsBinaryExpression(current);
+    const rightType = Checker_checkExpressionEx(receiver, binary!.Right, checkMode);
+    if (index === 0) {
+      return Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
+    }
+    const saveCurrentNode = receiver!.currentNode;
+    receiver!.currentNode = current;
+    receiver!.instantiationCount = 0;
+    const uninstantiatedType = Checker_checkBinaryLikeExpressionWithTypes(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, current, leftType, rightType);
+    leftType = Checker_instantiateTypeWithSingleGenericCallSignature(receiver, current, uninstantiatedType, checkMode);
+    if (isConstEnumObjectType(leftType)) {
+      Checker_checkConstEnumAccess(receiver, current, leftType);
+    }
+    receiver!.currentNode = saveCurrentNode;
+  }
+  return leftType;
+}
+
+function isIterativelyCheckableNonLogicalBinaryExpression(node: GoPtr<Node>): bool {
+  if (node === undefined || node.Kind !== KindBinaryExpression) {
+    return false as bool;
+  }
+  const binary = AsBinaryExpression(node);
+  const operator = binary!.OperatorToken!.Kind;
+  return (
+    !(operator === KindEqualsToken && (binary!.Left!.Kind === KindObjectLiteralExpression || binary!.Left!.Kind === KindArrayLiteralExpression)) &&
+    !IsLogicalOrCoalescingBinaryOperator(operator) &&
+    !IsLogicalOrCoalescingAssignmentOperator(operator)
+  ) as bool;
 }
 
 /**
@@ -2969,8 +3013,15 @@ export function Checker_checkBinaryLikeExpression(receiver: GoPtr<Checker>, left
   if (operator === KindEqualsToken && (left!.Kind === KindObjectLiteralExpression || left!.Kind === KindArrayLiteralExpression)) {
     return Checker_checkDestructuringAssignment(receiver, left, Checker_checkExpressionEx(receiver, right, checkMode), checkMode, right!.Kind === KindThisKeyword);
   }
-  let leftType = Checker_checkExpressionEx(receiver, left, checkMode);
-  let rightType = Checker_checkExpressionEx(receiver, right, checkMode);
+  const leftType = Checker_checkExpressionEx(receiver, left, checkMode);
+  const rightType = Checker_checkExpressionEx(receiver, right, checkMode);
+  return Checker_checkBinaryLikeExpressionWithTypes(receiver, left, operatorToken, right, checkMode, errorNode, leftType, rightType);
+}
+
+function Checker_checkBinaryLikeExpressionWithTypes(receiver: GoPtr<Checker>, left: GoPtr<Node>, operatorToken: GoPtr<Node>, right: GoPtr<Node>, checkMode: CheckMode, errorNode: GoPtr<Node>, initialLeftType: GoPtr<Type>, initialRightType: GoPtr<Type>): GoPtr<Type> {
+  const operator = operatorToken!.Kind;
+  let leftType = initialLeftType;
+  let rightType = initialRightType;
   if (IsLogicalOrCoalescingBinaryOperator(operator)) {
     let parent = left!.Parent!.Parent;
     while (IsParenthesizedExpression(parent) || IsLogicalOrCoalescingBinaryExpression(parent)) {

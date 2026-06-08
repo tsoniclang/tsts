@@ -4698,7 +4698,11 @@ export function Checker_checkTypeAliasDeclaration(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_checkTypeNameIsReserved(receiver: GoPtr<Checker>, name: GoPtr<Node>, message: GoPtr<Message>): void {
-  switch (Node_Text(name)) {
+  if (name === undefined || name.Kind !== KindIdentifier) {
+    return;
+  }
+  const text = Node_Text(name);
+  switch (text) {
     case "any":
     case "unknown":
     case "never":
@@ -4710,7 +4714,7 @@ export function Checker_checkTypeNameIsReserved(receiver: GoPtr<Checker>, name: 
     case "void":
     case "object":
     case "undefined":
-      Checker_error(receiver, name, message, Node_Text(name));
+      Checker_error(receiver, name, message, text);
       break;
   }
 }
@@ -10794,7 +10798,7 @@ export function Checker_getWriteTypeOfSymbol(receiver: GoPtr<Checker>, symbol_: 
     if ((symbol_!.CheckFlags & CheckFlagsInstantiated) !== 0) {
       return Checker_getWriteTypeOfInstantiatedSymbol(receiver, symbol_);
     }
-    return Checker_getTypeOfAccessors(receiver, symbol_);
+    return Checker_getWriteTypeOfAccessors(receiver, symbol_);
   }
   return Checker_getTypeOfSymbol(receiver, symbol_);
 }
@@ -18622,7 +18626,7 @@ export function Checker_discriminateContextualTypeByObjectMembers(receiver: GoPt
     const objectLiteralSymbol = Node_Symbol(node);
     const discriminantMembers = Filter(Checker_getPropertiesOfType(receiver, contextualType), (symbol_) =>
       (symbol_!.Flags & SymbolFlagsOptional) !== 0 &&
-      objectLiteralSymbol!.Members.get(symbol_!.Name) === undefined &&
+      objectLiteralSymbol!.Members?.get(symbol_!.Name) === undefined &&
       Checker_isDiscriminantProperty(receiver, contextualType, symbol_!.Name));
     const discriminator: ObjectLiteralDiscriminator = { c: receiver, props: discriminantProperties, members: discriminantMembers };
     discriminated = Checker_discriminateTypeByDiscriminableItems(receiver, contextualType, {
