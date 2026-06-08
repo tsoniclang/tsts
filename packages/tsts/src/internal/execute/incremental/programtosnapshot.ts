@@ -483,7 +483,7 @@ export function addReferencedFilesFromSymbol(file: GoPtr<SourceFile>, referenced
   if (symbol_ === undefined) {
     return;
   }
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     const fileOfDecl = GetSourceFileOfNode(declaration);
     if (fileOfDecl === undefined) {
       continue;

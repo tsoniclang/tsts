@@ -1,6 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../../go/compat.js";
-import { Node_ForEachChild } from "../../ast/spine.js";
+import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { NewNodeFactory, Node_ForEachChild } from "../../ast/spine.js";
 import type { ModifierList, Node, NodeList } from "../../ast/spine.js";
 // SourceFile, Pragma, CommentRange (structs) and NodeFactory_NewModifier (the
 // hand-written factory wrapper, ast.go: (*NodeFactory).NewModifier -> NewToken) live
@@ -55,6 +55,7 @@ import {
   KindStaticKeyword,
   KindStringLiteral,
   KindThisKeyword,
+  KindUnknown,
 } from "../../ast/generated/kinds.js";
 import { NodeFlagsAwaitContext, NodeFlagsDecoratorContext, NodeFlagsJSDoc, NodeFlagsJavaScriptFile, NodeFlagsJsonFile, NodeFlagsNone, NodeFlagsOptionalChain, NodeFlagsReparsed } from "../../ast/generated/flags.js";
 import { IsClassDeclaration, IsDecorator, IsModifierKind, IsNonNullExpression } from "../../ast/generated/predicates.js";
@@ -112,6 +113,8 @@ import { HasPrefix, Index, ToLower, TrimSuffix } from "../../../go/strings.js";
 import { Parser_newModifierList } from "./lists.js";
 import { Arena_Clone } from "../../core/arena.js";
 import type { Arena } from "../../core/arena.js";
+import { NewSetWithSizeHint } from "../../collections/set.js";
+import type { Set } from "../../collections/set.js";
 import {
   KindEnumDeclaration,
   KindInterfaceDeclaration,
@@ -180,7 +183,7 @@ import {
 import { Parser_newNodeList, Parser_parseList, Parser_parseParameters } from "./lists.js";
 import { ParseFlagsType } from "../types.js";
 import { PCSwitchClauseStatements } from "./state.js";
-import type { jsdocScannerInfo, Parser, ParserState } from "./state.js";
+import type { jsdocScannerInfo, Parser, ParserState, ParsingContexts } from "./state.js";
 import {
   Parser_hasPrecedingLineBreak,
   Parser_finishNodeWithEnd,
@@ -245,6 +248,9 @@ export function newParser(): GoPtr<Parser> {
  * }
  */
 export function getParser(): GoPtr<Parser> {
+  if (parserPool.New === undefined) {
+    parserPool.New = () => newParser() as Parser;
+  }
   return parserPool.Get() as GoPtr<Parser>;
 }
 
@@ -580,6 +586,32 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   if (scriptKind === ScriptKindUnknown) {
     throw new globalThis.Error("ScriptKind must be specified when parsing source file: " + opts.FileName);
   }
+
+  receiver!.factory = NewNodeFactory({})!;
+  receiver!.diagnostics = [];
+  receiver!.jsDiagnostics = [];
+  receiver!.jsdocDiagnostics = [];
+  receiver!.token = KindUnknown;
+  receiver!.sourceFlags = NodeFlagsNone;
+  receiver!.parsingContexts = 0 as ParsingContexts;
+  receiver!.statementHasAwaitIdentifier = false;
+  receiver!.hasDeprecatedTag = false;
+  receiver!.hasParseError = false;
+  receiver!.identifiers = undefined as unknown as GoMap<string, string>;
+  receiver!.identifierCount = 0 as int;
+  receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int) as Set;
+  receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
+  receiver!.stringSliceArena = { data: [] } as Arena<string>;
+  receiver!.jsdocInfos = [];
+  receiver!.possibleAwaitSpans = [];
+  receiver!.jsdocCommentsSpace = [];
+  receiver!.jsdocCommentRangesSpace = [];
+  receiver!.jsdocTagCommentsSpace = [];
+  receiver!.jsdocTagCommentsPartsSpace = [];
+  receiver!.reparseList = [];
+  receiver!.commonJSModuleIndicator = undefined;
+  receiver!.currentParent = undefined;
+  receiver!.reparsedClones = [];
 
   if (receiver!.scanner === undefined) {
     receiver!.scanner = NewScanner();
@@ -1884,7 +1916,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
         return [];
       }
       pos += 10;
-      const args: Record<string, { Name: string; Value: string; Pos: () => int; End: () => int }> = {};
+      const args = new globalThis.Map<string, Pragma["Args"] extends GoMap<string, infer T> ? T : never>();
       for (;;) {
         pos = skipBlanks(text, pos);
         if (match(text, pos, "/>")) {
@@ -1905,16 +1937,16 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
         }
         const argStart = commentRange.pos + pos + 1;
         const argEnd = commentRange.pos + pos + 1 + value.length;
-        args[argName] = {
+        args.set(argName, {
+          pos: argStart,
+          end: argEnd,
           Name: argName,
           Value: value,
-          Pos: () => argStart,
-          End: () => argEnd,
-        };
+        });
         pos += value.length + 2;
       }
       return [{
-        CommentRange: commentRange,
+        ...commentRange,
         Name: "reference",
         Args: args,
       } as unknown as Pragma];
@@ -1926,7 +1958,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
         return [];
       }
       return [{
-        CommentRange: commentRange,
+        ...commentRange,
         Name: pragmaName,
       } as unknown as Pragma];
     }
@@ -1951,16 +1983,15 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
       }
       const factoryStart = commentRange.pos + start;
       const factoryEnd = commentRange.pos + pos;
-      const args: Record<string, unknown> = {
-        factory: {
+      const args = new globalThis.Map<string, Pragma["Args"] extends GoMap<string, infer T> ? T : never>();
+      args.set("factory", {
+          pos: factoryStart,
+          end: factoryEnd,
           Name: "factory",
           Value: trimmed.slice(start, pos),
-          Pos: () => factoryStart,
-          End: () => factoryEnd,
-        },
-      };
+        });
       pragmas = [...pragmas, {
-        CommentRange: commentRange,
+        ...commentRange,
         Name: pragmaName,
         Args: args,
       } as unknown as Pragma];

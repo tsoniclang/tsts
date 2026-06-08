@@ -33,7 +33,7 @@ export interface Symbol {
   Flags: SymbolFlags;
   CheckFlags: CheckFlags;
   Name: string;
-  Declarations: GoSlice<GoPtr<Node>>;
+  Declarations: GoPtr<GoSlice<GoPtr<Node>>>;
   ValueDeclaration: GoPtr<Node>;
   Members: SymbolTable;
   Exports: SymbolTable;

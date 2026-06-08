@@ -2,7 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { FormatUint } from "../../go/strconv.js";
 import { Builder, ToUpper } from "../../go/strings.js";
-import { DecodeRuneInString } from "../../go/unicode/utf8.js";
+import { DecodeRuneInBytesAt, DecodeRuneInString } from "../../go/unicode/utf8.js";
 import type { CommentRange, SourceFile, SourceFileLike } from "../ast/ast.js";
 import { SourceFile_Text, SourceFile_ECMALineMap, AsSourceFile } from "../ast/ast.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -102,7 +102,7 @@ import {
 } from "../ast/utilities.js";
 import { IsTypeOrJSTypeAliasDeclaration } from "../ast/ast.js";
 import { Node_Expression, Node_ArgumentList, Node_TypeParameterList, Node_MemberList, Node_StatementList, Node_TypeArgumentList, Node_ElementList, Node_PropertyList, Node_Children, Node_Text, Node_RawText } from "../ast/ast.js";
-import { Node_Pos, Node_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
+import { Node_Pos, Node_End, NodeList_End, Node_ClassLikeData, Node_FunctionLikeData, Node_Modifiers } from "../ast/spine.js";
 import type { Expression, LiteralLikeNode, SourceFileNode } from "../ast/generated/unions.js";
 import { UTF16Len, IfElse } from "../core/core.js";
 import type { UTF16Offset } from "../core/core.js";
@@ -126,10 +126,46 @@ import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote
 // at the boundaries.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
+type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
+const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
+
+const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
+  const cached = utf8ByteInfoCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= 0x80) {
+      ascii = false;
+      break;
+    }
+  }
+  const info: Utf8ByteInfo = {
+    ascii,
+    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
+  };
+  if (s.length >= 4096) {
+    utf8ByteInfoCache.set(s, info);
+  }
+  return info;
+};
+
+export const byteLen = (s: string): int => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.length : info.bytes.length;
+};
+export const byteSlice = (s: string, start: int, end?: int): string => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
+};
+
+const decodeRuneInStringAt = (s: string, pos: int): [GoRune, int] => {
+  const info = getUtf8ByteInfo(s);
+  if (info.ascii) {
+    return pos >= s.length ? [0xfffd as GoRune, 0 as int] : [s.charCodeAt(pos), 1 as int];
+  }
+  return DecodeRuneInBytesAt(info.bytes, pos);
 };
 
 /**
@@ -372,7 +408,7 @@ export function escapeStringWorker(s: string, quoteChar: QuoteChar, flags: getLi
   let pos = 0;
   let i = 0;
   while (i < sLen) {
-    let [ch, size] = DecodeRuneInString(byteSlice(s, i));
+    let [ch, size] = decodeRuneInStringAt(s, i);
 
     let escape = false;
 
@@ -1415,11 +1451,26 @@ export function originalNodesHaveSameParent(nodeA: GoPtr<Node>, nodeB: GoPtr<Nod
  * 	return 0, false
  * }
  */
-export function tryGetEnd(node: { End: () => int } | undefined): [int, bool] {
+type EndCarrier = GoPtr<Node> | GoPtr<NodeList> | TextRange | { End: () => int };
+
+export function tryGetEnd(node: EndCarrier | undefined): [int, bool] {
   if (node === undefined) {
     return [0 as int, false];
   }
-  return [node.End(), true];
+  const value = node as unknown as Record<string, unknown>;
+  if (typeof value["End"] === "function") {
+    return [(node as { End: () => int }).End(), true];
+  }
+  if (value["Kind"] !== undefined) {
+    return [Node_End(node as GoPtr<Node>), true];
+  }
+  if (value["Nodes"] !== undefined) {
+    return [NodeList_End(node as GoPtr<NodeList>), true];
+  }
+  if (value["end"] !== undefined) {
+    return [TextRange_End(node as TextRange), true];
+  }
+  throw new globalThis.Error(`unhandled type in tryGetEnd`);
 }
 
 /**
@@ -1436,7 +1487,7 @@ export function tryGetEnd(node: { End: () => int } | undefined): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<{ End: () => int } | undefined>): int {
+export function greatestEnd(end: int, ...nodes: Array<EndCarrier | undefined>): int {
   for (let i = nodes.length - 1; i >= 0; i--) {
     const node = nodes[i];
     const [nodeEnd, ok] = tryGetEnd(node);
@@ -1754,9 +1805,9 @@ export function findSpanEnd<T>(array: GoSlice<T>, test: (value: T) => bool, star
 // GoPtr<int> = int | undefined and at runtime the actual value is a mutable object box.
 export function skipWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): void {
   const box = pos as unknown as { v: int };
-  const textBytes = utf8Encoder.encode(text);
-  while ((box.v as number) < textBytes.length) {
-    const [ch, size] = DecodeRuneInString(byteSlice(text, box.v));
+  const textLen = byteLen(text);
+  while ((box.v as number) < textLen) {
+    const [ch, size] = decodeRuneInStringAt(text, box.v);
     if (!IsWhiteSpaceSingleLine(ch)) {
       break;
     }
@@ -1796,7 +1847,7 @@ export function matchWhiteSpaceSingleLine(text: string, pos: GoPtr<int>): bool {
  */
 export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool {
   const box = pos as unknown as { v: int };
-  const [ch, size] = DecodeRuneInString(byteSlice(text, box.v));
+  const [ch, size] = decodeRuneInStringAt(text, box.v);
   if (ch === expected) {
     box.v = ((box.v as number) + size) as int;
     return true;
@@ -1830,15 +1881,15 @@ export function matchRune(text: string, pos: GoPtr<int>, expected: GoRune): bool
  */
 export function matchString(text: string, pos: GoPtr<int>, expected: string): bool {
   const box = pos as unknown as { v: int };
-  const textBytes = utf8Encoder.encode(text);
-  const expectedBytes = utf8Encoder.encode(expected);
+  const textLen = byteLen(text);
+  const expectedLen = byteLen(expected);
   let textPos = box.v as number;
   let expectedPos = 0;
-  while (expectedPos < expectedBytes.length) {
-    if (textPos >= textBytes.length) {
+  while (expectedPos < expectedLen) {
+    if (textPos >= textLen) {
       return false;
     }
-    const [expectedRune, expectedSize] = DecodeRuneInString(byteSlice(expected, expectedPos));
+    const [expectedRune, expectedSize] = decodeRuneInStringAt(expected, expectedPos);
     const tempBox = { v: textPos as int };
     if (!matchRune(text, tempBox as unknown as GoPtr<int>, expectedRune)) {
       return false;
@@ -1879,7 +1930,7 @@ export function matchString(text: string, pos: GoPtr<int>, expected: string): bo
 export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
   const box = pos as unknown as { v: int };
   let textPos = box.v as number;
-  const textBytes = utf8Encoder.encode(text);
+  const textLen = byteLen(text);
   let quoteChar: GoRune;
   const tempBox1 = { v: textPos as int };
   if (matchRune(text, tempBox1 as unknown as GoPtr<int>, 0x27 /* '\'' */)) {
@@ -1894,8 +1945,8 @@ export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
       return false;
     }
   }
-  while (textPos < textBytes.length) {
-    const [ch, size] = DecodeRuneInString(byteSlice(text, textPos));
+  while (textPos < textLen) {
+    const [ch, size] = decodeRuneInStringAt(text, textPos);
     textPos += size;
     if (ch === quoteChar) {
       box.v = textPos as int;
@@ -2093,7 +2144,7 @@ export function calculateIndent(text: string, pos: int, end: int): int {
   let currentLineIndent = 0;
   const indentSize = GetDefaultIndentSize();
   while (pos < end) {
-    const [ch, size] = DecodeRuneInString(byteSlice(text, pos));
+    const [ch, size] = decodeRuneInStringAt(text, pos);
     if (!IsWhiteSpaceSingleLine(ch)) {
       break;
     }

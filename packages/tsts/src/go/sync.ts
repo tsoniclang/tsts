@@ -77,7 +77,7 @@ export function OnceFunc(f: () => void): () => void {
 // returned by f. The returned function may be called any number of times.
 export function OnceValue<T>(f: () => T): () => T {
   let called = false;
-  let value: T;
+  let value!: T;
   return (): T => {
     if (!called) {
       called = true;
@@ -91,8 +91,8 @@ export function OnceValue<T>(f: () => T): () => T {
 // values returned by f. Modeled as a tuple return to match Go's (T1, T2).
 export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
   let called = false;
-  let v1: T1;
-  let v2: T2;
+  let v1!: T1;
+  let v2!: T2;
   return (): [T1, T2] => {
     if (!called) {
       called = true;

@@ -105,7 +105,7 @@ export interface Diagnostic {
  * 	*ast.Diagnostic
  * }
  */
-export interface ASTDiagnostic {
+export interface ASTDiagnostic extends Diagnostic {
   readonly __tsgoEmbedded0?: GoPtr<Diagnostic_34a9f76f>;
 }
 
@@ -126,7 +126,7 @@ export function ASTDiagnostic_RelatedInformation(receiver: GoPtr<ASTDiagnostic>)
   const related = ASTDiagnostic_RelatedInformation_inner(receiver!.__tsgoEmbedded0);
   const result: Diagnostic[] = new Array(related.length);
   for (let i = 0; i < related.length; i++) {
-    result[i] = { __tsgoEmbedded0: related[i] } as ASTDiagnostic as Diagnostic;
+    result[i] = WrapASTDiagnostic(related[i]) as Diagnostic;
   }
   return result;
 }
@@ -167,7 +167,7 @@ export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSl
   const chain = ASTDiagnostic_MessageChain_inner(receiver!.__tsgoEmbedded0);
   const result: Diagnostic[] = new Array(chain.length);
   for (let i = 0; i < chain.length; i++) {
-    result[i] = { __tsgoEmbedded0: chain[i] } as ASTDiagnostic as Diagnostic;
+    result[i] = WrapASTDiagnostic(chain[i]) as Diagnostic;
   }
   return result;
 }
@@ -181,7 +181,19 @@ export function ASTDiagnostic_MessageChain(receiver: GoPtr<ASTDiagnostic>): GoSl
  * }
  */
 export function WrapASTDiagnostic(d: GoPtr<Diagnostic_34a9f76f>): GoPtr<ASTDiagnostic> {
-  return { __tsgoEmbedded0: d };
+  const result = {
+    __tsgoEmbedded0: d,
+  } as ASTDiagnostic;
+  result.File = (): FileLike => ASTDiagnostic_File(result);
+  result.Pos = (): int => ASTDiagnostic_Pos(result.__tsgoEmbedded0);
+  result.End = (): int => ASTDiagnostic_End(result.__tsgoEmbedded0);
+  result.Len = (): int => ASTDiagnostic_Len(result.__tsgoEmbedded0);
+  result.Code = (): int => ASTDiagnostic_Code(result.__tsgoEmbedded0);
+  result.Category = (): Category => ASTDiagnostic_Category(result.__tsgoEmbedded0);
+  result.Localize = (locale_: Locale): string => ASTDiagnostic_Localize(result.__tsgoEmbedded0, locale_);
+  result.MessageChain = (): GoSlice<Diagnostic> => ASTDiagnostic_MessageChain(result);
+  result.RelatedInformation = (): GoSlice<Diagnostic> => ASTDiagnostic_RelatedInformation(result);
+  return result;
 }
 
 /**

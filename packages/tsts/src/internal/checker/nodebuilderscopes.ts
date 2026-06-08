@@ -1,10 +1,21 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 import type { Node } from "../ast/spine.js";
-import type { Symbol } from "../ast/symbol.js";
-import { GetSymbolId } from "../ast/utilities.js";
+import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
+import type { Symbol, SymbolTable } from "../ast/symbol.js";
+import { Node_Elements } from "../ast/ast.js";
+import { NewBlock } from "../ast/generated/factory.js";
+import { IsBindingElement, IsBlock, IsOmittedExpression, IsParameterDeclaration } from "../ast/generated/predicates.js";
+import { GetLocals, GetSymbolId, IsBindingPattern } from "../ast/utilities.js";
+import { Some } from "../core/core.js";
+import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import type { LinkStore } from "../core/linkstore.js";
+import { Assert } from "../debug/debug.js";
+import { FlagsGenerateNamesForShadowedTypeParams } from "../nodebuilder/types.js";
+import { NodeBuilderImpl_typeParameterToName } from "./nodebuilderimpl.js";
 import type { TypeMapper } from "./mapper.js";
-import type { NodeBuilderContext, NodeBuilderImpl } from "./nodebuilderimpl.js";
+import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks } from "./nodebuilderimpl.js";
+import { Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import type { Type } from "./types.js";
 
 /**
@@ -127,7 +138,7 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope","kind":"method","status":"stub","sigHash":"ad1edc80279b80f281d3d602714e955be116084433c938c9e2907f8b9cbd17d3","bodyHash":"d1371a576a3b6cbedd838df9dc1a6a829cf8c2b82b8b51ac1497eb5910d60fd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope","kind":"method","status":"implemented","sigHash":"ad1edc80279b80f281d3d602714e955be116084433c938c9e2907f8b9cbd17d3","bodyHash":"d1371a576a3b6cbedd838df9dc1a6a829cf8c2b82b8b51ac1497eb5910d60fd7"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) enterNewScope(declaration *ast.Node, expandedParams []*ast.Symbol, typeParameters []*Type, originalParameters []*ast.Symbol, mapper *TypeMapper) func() {
@@ -327,5 +338,147 @@ export function NodeBuilderImpl_addSymbolTypeToContext(receiver: GoPtr<NodeBuild
  * }
  */
 export function NodeBuilderImpl_enterNewScope(receiver: GoPtr<NodeBuilderImpl>, declaration: GoPtr<Node>, expandedParams: GoSlice<GoPtr<Symbol>>, typeParameters: GoSlice<GoPtr<Type>>, originalParameters: GoSlice<GoPtr<Symbol>>, mapper: GoPtr<TypeMapper>): () => void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::method::NodeBuilderImpl.enterNewScope");
+  const cleanupContext = cloneNodeBuilderContext(receiver!.ctx);
+  let cleanupParams: (() => void) | undefined;
+  let cleanupTypeParams: (() => void) | undefined;
+  const oldEnclosingDecl = receiver!.ctx!.enclosingDeclaration;
+  const oldMapper = receiver!.ctx!.mapper;
+  if (mapper !== undefined) {
+    receiver!.ctx!.mapper = mapper;
+  }
+  if (receiver!.ctx!.enclosingDeclaration !== undefined && declaration !== undefined) {
+    const links = receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>;
+    const pushFakeScope = (kind: string, addAll: (addSymbol: (name: string, symbol_: GoPtr<Symbol>) => void) => void): (() => void) | undefined => {
+      Assert(receiver!.ctx!.enclosingDeclaration !== undefined);
+      let existingFakeScope: GoPtr<Node>;
+      if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration)) {
+        const existingLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration);
+        if (existingLinks!.fakeScopeForSignatureDeclaration !== undefined && existingLinks!.fakeScopeForSignatureDeclaration === kind) {
+          existingFakeScope = receiver!.ctx!.enclosingDeclaration;
+        }
+      }
+      if (existingFakeScope === undefined && receiver!.ctx!.enclosingDeclaration!.Parent !== undefined) {
+        if (LinkStore_Has<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent)) {
+          const parentLinks = LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, receiver!.ctx!.enclosingDeclaration!.Parent);
+          if (parentLinks!.fakeScopeForSignatureDeclaration !== undefined && parentLinks!.fakeScopeForSignatureDeclaration === kind) {
+            existingFakeScope = receiver!.ctx!.enclosingDeclaration!.Parent;
+          }
+        }
+      }
+      Assert(existingFakeScope === undefined || IsBlock(existingFakeScope));
+      let locals: SymbolTable | undefined;
+      if (existingFakeScope !== undefined) {
+        locals = GetLocals(existingFakeScope);
+      }
+      locals ??= new globalThis.Map<string, GoPtr<Symbol>>();
+      const newLocals: string[] = [];
+      const oldLocals: localsRecord[] = [];
+      addAll((name: string, symbol_: GoPtr<Symbol>): void => {
+        if (existingFakeScope !== undefined) {
+          const oldSymbol = locals!.get(name);
+          if (oldSymbol === undefined) {
+            newLocals.push(name);
+          } else {
+            oldLocals.push({ name, oldSymbol });
+          }
+        }
+        locals!.set(name, symbol_);
+      });
+      if (existingFakeScope === undefined) {
+        const fakeScope = NewBlock(receiver!.f, NodeFactory_NewNodeList(receiver!.f, []), false);
+        LinkStore_Get<GoPtr<Node>, NodeBuilderLinks>(links, fakeScope)!.fakeScopeForSignatureDeclaration = kind;
+        const data = Node_LocalsContainerData(fakeScope);
+        (data as unknown as { Locals?: SymbolTable }).Locals = locals;
+        fakeScope!.Parent = receiver!.ctx!.enclosingDeclaration;
+        receiver!.ctx!.enclosingDeclaration = fakeScope;
+        return undefined;
+      }
+      return () => {
+        for (const name of newLocals) {
+          locals!.delete(name);
+        }
+        for (const record of oldLocals) {
+          locals!.set(record.name, record.oldSymbol);
+        }
+      };
+    };
+    if (expandedParams === undefined || !Some(expandedParams, (p: GoPtr<Symbol>) => p !== undefined)) {
+      cleanupParams = undefined;
+    } else {
+      cleanupParams = pushFakeScope("params", (add: (name: string, symbol_: GoPtr<Symbol>) => void): void => {
+        if (expandedParams === undefined) {
+          return;
+        }
+        for (let pIndex = 0; pIndex < expandedParams.length; pIndex++) {
+          const param = expandedParams[pIndex];
+          let originalParam: GoPtr<Symbol>;
+          if (pIndex < (originalParameters?.length ?? 0)) {
+            originalParam = originalParameters[pIndex];
+          }
+          if (originalParameters !== undefined && originalParam !== param) {
+            add(param!.Name, receiver!.ch!.unknownSymbol);
+            if (originalParam !== undefined) {
+              add(originalParam!.Name, receiver!.ch!.unknownSymbol);
+            }
+          } else if (!Some(param!.Declarations, (d: GoPtr<Node>) => {
+            const bindElement = (e: GoPtr<Node>): void => {
+              const name = Node_Name(e);
+              if (name !== undefined && IsBindingPattern(name)) {
+                bindPattern(name);
+                return;
+              }
+              const symbol_ = Checker_getSymbolOfDeclaration(receiver!.ch, e);
+              if (symbol_ !== undefined) {
+                add(symbol_!.Name, symbol_);
+              }
+            };
+            const bindPattern = (p: GoPtr<Node>): void => {
+              for (const e of Node_Elements(p) ?? []) {
+                if (IsOmittedExpression(e)) {
+                  return;
+                }
+                if (IsBindingElement(e)) {
+                  bindElement(e);
+                  return;
+                }
+                throw new globalThis.Error("Unhandled binding element kind");
+              }
+            };
+            if (IsParameterDeclaration(d) && Node_Name(d) !== undefined && IsBindingPattern(Node_Name(d))) {
+              bindPattern(Node_Name(d));
+              return true;
+            }
+            return false;
+          })) {
+            add(param!.Name, param);
+          }
+        }
+      });
+    }
+    if ((receiver!.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && typeParameters !== undefined && Some(typeParameters, (p: GoPtr<Type>) => p !== undefined)) {
+      cleanupTypeParams = pushFakeScope("typeParams", (add: (name: string, symbol_: GoPtr<Symbol>) => void): void => {
+        if (typeParameters === undefined) {
+          return;
+        }
+        for (const typeParam of typeParameters) {
+          if (typeParam === undefined) {
+            continue;
+          }
+          const typeParamName = NodeBuilderImpl_typeParameterToName(receiver, typeParam)!.Text;
+          add(typeParamName, typeParam!.symbol);
+        }
+      });
+    }
+  }
+  return () => {
+    if (cleanupParams !== undefined) {
+      cleanupParams();
+    }
+    if (cleanupTypeParams !== undefined) {
+      cleanupTypeParams();
+    }
+    cleanupContext();
+    receiver!.ctx!.enclosingDeclaration = oldEnclosingDecl;
+    receiver!.ctx!.mapper = oldMapper;
+  };
 }

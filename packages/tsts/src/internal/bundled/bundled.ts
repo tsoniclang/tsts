@@ -1,4 +1,6 @@
 import type { bool } from "@tsonic/core/types.js";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { FS } from "../vfs/vfs.js";
 import { embedded, wrapFS, libPath } from "./embed.js";
 
@@ -35,7 +37,7 @@ export function LibPath(): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"stub","sigHash":"b04d87ddb555f4f8ab4973fdb51e25a7181608b9b4ed6b381d65b9c27c293de1","bodyHash":"1afe1a7d5b5a23cb62cadfb28bc42e133b78ac4345432515b8ec6dea78cddddf"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::bundledSourceDir","kind":"varGroup","status":"implemented","sigHash":"b04d87ddb555f4f8ab4973fdb51e25a7181608b9b4ed6b381d65b9c27c293de1","bodyHash":"1afe1a7d5b5a23cb62cadfb28bc42e133b78ac4345432515b8ec6dea78cddddf"}
  *
  * Go source:
  * var bundledSourceDir = sync.OnceValue(func() string {
@@ -46,10 +48,16 @@ export function LibPath(): string {
  * 	return filepath.Dir(filepath.FromSlash(filename))
  * })
  */
-export let bundledSourceDir: unknown = undefined as never;
+export const bundledSourceDir = (() => {
+  let value: string | undefined;
+  return (): string => {
+    value ??= path.dirname(fileURLToPath(import.meta.url));
+    return value;
+  };
+})();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"stub","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe","bodyHash":"5d62285376c54a8572ae6d31b9f99a3aee5ecd1901c8df08f73e7f49ff21f53b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::varGroup::testingLibPath","kind":"varGroup","status":"implemented","sigHash":"ae9c824e9f3290815693dc17b3238b5880e487333e8412ef76295efaa320ebbe","bodyHash":"5d62285376c54a8572ae6d31b9f99a3aee5ecd1901c8df08f73e7f49ff21f53b"}
  *
  * Go source:
  * var testingLibPath = sync.OnceValue(func() string {
@@ -59,10 +67,16 @@ export let bundledSourceDir: unknown = undefined as never;
  * 	return tspath.NormalizeSlashes(filepath.Join(bundledSourceDir(), "libs"))
  * })
  */
-export let testingLibPath: unknown = undefined as never;
+export const testingLibPath = (() => {
+  let value: string | undefined;
+  return (): string => {
+    value ??= path.join(bundledSourceDir(), "libs").replaceAll(path.sep, "/");
+    return value;
+  };
+})();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"stub","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4","bodyHash":"7e27d547d53c817b225620915e89b5f7fe053a36aa36b6249c34652f03147aaa"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath","kind":"func","status":"implemented","sigHash":"ba7ce2ebda507afa53f7209bee1e8a78eaa40816a03b43b1e4b5aca77cea70b4","bodyHash":"7e27d547d53c817b225620915e89b5f7fe053a36aa36b6249c34652f03147aaa"}
  *
  * Go source:
  * func TestingLibPath() string {
@@ -70,5 +84,5 @@ export let testingLibPath: unknown = undefined as never;
  * }
  */
 export function TestingLibPath(): string {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/bundled/bundled.go::func::TestingLibPath");
+  return testingLibPath();
 }

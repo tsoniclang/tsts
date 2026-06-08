@@ -47,7 +47,7 @@ import type { Statistics } from "./statistics.js";
  * 	}
  * }
  */
-export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: CommandLineTesting): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
+export function GetTraceWithWriterFromSys(w: Writer, locale: Locale, testing: CommandLineTesting | undefined): (msg: GoPtr<Message>, ...args: Array<unknown>) => void {
   if (testing === undefined) {
     return (msg: GoPtr<Message>, ...args: Array<unknown>): void => {
       Fprintln(w, Message_Localize(msg, locale, ...args));
@@ -86,7 +86,7 @@ export interface EmitInput {
   Writer: Writer;
   WriteFile: WriteFile;
   CompileTimes: GoPtr<CompileTimes>;
-  Testing: CommandLineTesting;
+  Testing: CommandLineTesting | undefined;
   TestingMTimesCache: GoPtr<SyncMap>;
   Tracing: GoPtr<Tracing>;
 }

@@ -2,24 +2,24 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice, GoMap } from "../../go/compat.js";
 import type { Mutex } from "../../go/sync.js";
 import type { Node, SourceFile } from "../ast/ast.js";
-import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer } from "../ast/ast.js";
+import { Node_Body, Node_Symbol, AsSourceFile, Node_Elements, Node_ModifierFlags, Node_Text, Node_PropertyNameOrName, Node_Expression, Node_Type, Node_Initializer, NodeFactory_NewModifier, NodeFactory_UpdateIndexSignatureDeclaration, Node_ModifierNodes, Node_ParameterList, Node_QuestionToken } from "../ast/ast.js";
 import { Node_Name, Node_AsNode } from "../ast/spine.js";
 import type { Node as NodeSpine } from "../ast/spine.js";
 import type { Declaration, ElementAccessExpression, EntityName, IdentifierNode, ImportDeclaration, SignatureDeclaration, ImportAttributes } from "../ast/ast_generated.js";
-import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes } from "../ast/generated/casts.js";
-import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression, IsBindingElement, IsImportDeclaration } from "../ast/generated/predicates.js";
+import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes, AsIndexSignatureDeclaration } from "../ast/generated/casts.js";
+import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression, IsBindingElement, IsImportDeclaration, IsComputedPropertyName } from "../ast/generated/predicates.js";
 import { IsBindingPattern } from "../ast/utilities.js";
-import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSTypeAlias, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode } from "../ast/utilities.js";
+import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSTypeAlias, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode, IsEntityNameExpression } from "../ast/utilities.js";
 import type { JSDeclarationKind } from "../ast/utilities.js";
 import { JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty } from "../ast/utilities.js";
 import { CheckFlagsLate } from "../ast/checkflags.js";
 import { ModifierFlagsExport, ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsParameterPropertyModifier } from "../ast/modifierflags.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
-import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsConstEnumOnlyModule, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
+import { SymbolFlagsAlias, SymbolFlagsValue, SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsExportValue, SymbolFlagsTypeParameter, SymbolFlagsProperty, SymbolFlagsOptional, SymbolFlagsBlockScopedVariable } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import { NodeFlagsAmbient, NodeFlagsJSDoc } from "../ast/generated/flags.js";
-import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindExportDeclaration, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken } from "../ast/generated/kinds.js";
-import { NewKeywordTypeNode, NewKeywordExpression, NewStringLiteral, NewNumericLiteral, NewBigIntLiteral, NewPrefixUnaryExpression } from "../ast/generated/factory.js";
+import { KindImportEqualsDeclaration, KindSourceFile, KindQualifiedName, KindPropertyAccessExpression, KindElementAccessExpression, KindTypeQuery, KindExpressionWithTypeArguments, KindComputedPropertyName, KindTypePredicate, KindBinaryExpression, KindExportAssignment, KindExportSpecifier, KindExportDeclaration, KindIdentifier, KindStringLiteral, KindJSDocCallbackTag, KindJSDocTypedefTag, KindBindingElement, KindVariableDeclaration, KindModuleDeclaration, KindClassDeclaration, KindInterfaceDeclaration, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindFunctionDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindPropertySignature, KindGetAccessor, KindSetAccessor, KindMethodDeclaration, KindMethodSignature, KindConstructor, KindConstructSignature, KindCallSignature, KindIndexSignature, KindParameter, KindModuleBlock, KindFunctionType, KindConstructorType, KindTypeLiteral, KindTypeReference, KindArrayType, KindTupleType, KindUnionType, KindIntersectionType, KindParenthesizedType, KindNamedTupleMember, KindImportClause, KindNamespaceImport, KindImportSpecifier, KindTypeParameter, KindNamespaceExportDeclaration, KindJSDocPropertyTag, KindJSDocParameterTag, KindExternalModuleReference, KindAnyKeyword, KindTrueKeyword, KindFalseKeyword, KindMinusToken, KindStaticKeyword, KindReadonlyKeyword } from "../ast/generated/kinds.js";
+import { NewKeywordTypeNode, NewKeywordExpression, NewStringLiteral, NewNumericLiteral, NewBigIntLiteral, NewPrefixUnaryExpression, NewPropertyDeclaration } from "../ast/generated/factory.js";
 import type { TokenFlags } from "../ast/tokenflags.js";
 import { TokenFlagsNone } from "../ast/tokenflags.js";
 import { NewReferenceResolver } from "../binder/referenceresolver.js";
@@ -40,7 +40,7 @@ import { EmitContext_ParseNode } from "../printer/emitcontext.js";
 import { SymbolAccessibilityAccessible, SymbolAccessibilityNotAccessible, SymbolAccessibilityNotResolved, TypeReferenceSerializationKindUnknown, TypeReferenceSerializationKindPromise, TypeReferenceSerializationKindTypeWithConstructSignatureAndValue, TypeReferenceSerializationKindTypeWithCallSignature, TypeReferenceSerializationKindObjectType, TypeReferenceSerializationKindVoidNullableOrNeverType, TypeReferenceSerializationKindBooleanType, TypeReferenceSerializationKindNumberLikeType, TypeReferenceSerializationKindBigIntLikeType, TypeReferenceSerializationKindStringLikeType, TypeReferenceSerializationKindArrayLikeType, TypeReferenceSerializationKindESSymbolType } from "../printer/emitresolver.js";
 import type { EmitResolver as EmitResolver_969b36a1, SymbolAccessibilityResult, TypeReferenceSerializationKind, SymbolAccessibility } from "../printer/emitresolver.js";
 import { Some, Every } from "../core/core.js";
-import { Node_ForEachChild } from "../ast/spine.js";
+import { Node_ForEachChild, NodeFactory_NewModifierList } from "../ast/spine.js";
 import type { Visitor } from "../ast/spine.js";
 import { SourceFile_ForEachChild } from "../ast/ast.js";
 import { NewNodeBuilder } from "./nodebuilder.js";
@@ -65,7 +65,8 @@ import { Checker_GetEffectiveDeclarationFlags, Checker_GetResolutionModeOverride
 import { Checker_GetConstantValue } from "./services.js";
 import { Checker_tryGetElementAccessExpressionName } from "./flow.js";
 import { Checker_getResolvedSymbolOrNil } from "./checker/symbols.js";
-import { isFreshLiteralType, isConstEnumSymbol, isTupleType } from "./checker/state.js";
+import { isFreshLiteralType, isTupleType } from "./checker/state.js";
+import { isConstEnumOrConstEnumOnlyModule } from "./const-enum.js";
 import type { Checker, ReferenceHint } from "./checker/state.js";
 import { TypeFlagsAnyOrUnknown, TypeFlagsVoid, TypeFlagsNullable, TypeFlagsBooleanLike, TypeFlagsNumberLike, TypeFlagsBigIntLike, TypeFlagsStringLike, TypeFlagsEnumLike, TypeFlagsESSymbolLike, TypeFlagsLiteral, TypeFlagsNever } from "./types.js";
 import type { TypeFlags, AliasSymbolLinks, EnumMemberLinks, ReverseMappedSymbolLinks, IndexInfo, LiteralType, Type } from "./types.js";
@@ -77,7 +78,7 @@ import { Number_Abs } from "../jsnum/jsnum.js";
 import { Number_String } from "../jsnum/string.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"stub","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::JSXLinks","kind":"type","status":"implemented","sigHash":"dae8f8bc0fb4104dad60016e0fd4d5fcac487340e2f883962794096e4647f2c3","bodyHash":"b8a690f05f4e1e07abd521eeb0dff42e8ed3e1b8ee3c000e2464d886b8c9b3ba"}
  *
  * Go source:
  * JSXLinks struct {
@@ -89,7 +90,7 @@ export interface JSXLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"stub","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f","bodyHash":"4247c597fb66dc2dfad3458c2912b3b42c005bf1f8dea782fccf70811374cea3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationLinks","kind":"type","status":"implemented","sigHash":"f204cf15bed1d10379ef0b41e207ca327ce5cd16805fc59e249893eac963e39f","bodyHash":"4247c597fb66dc2dfad3458c2912b3b42c005bf1f8dea782fccf70811374cea3"}
  *
  * Go source:
  * DeclarationLinks struct {
@@ -101,7 +102,7 @@ export interface DeclarationLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"stub","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548","bodyHash":"dc7bbcbb9771249fa55f7f164d48be2cd6184f594940d3f43789d52a0b05fa0c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::DeclarationFileLinks","kind":"type","status":"implemented","sigHash":"4b6661a892f88bfe2a8477813e21bb4b2de659e69882e5cfd0d1a59df7fcd548","bodyHash":"dc7bbcbb9771249fa55f7f164d48be2cd6184f594940d3f43789d52a0b05fa0c"}
  *
  * Go source:
  * DeclarationFileLinks struct {
@@ -113,7 +114,7 @@ export interface DeclarationFileLinks {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"stub","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::type::EmitResolver","kind":"type","status":"implemented","sigHash":"aa28f97bdefb2b251294f9bbc7d012089c1646af46f1fb8a64ab0574d6228e00","bodyHash":"75694d31ff3949f18166efae478181368e56a6430bd72bd6ab2fd9e0264a86b1"}
  *
  * Go source:
  * EmitResolver struct {
@@ -714,7 +715,7 @@ export function EmitResolver_markLinkedAliases(receiver: GoPtr<EmitResolver>, no
     visited.set(symId, undefined);
 
     let nextSymbol: GoPtr<Symbol> = undefined;
-    for (const declaration of exportSymbol!.Declarations) {
+    for (const declaration of exportSymbol!.Declarations ?? []) {
       (LinkStore_Get<GoPtr<Node>, DeclarationLinks>(receiver!.declarationLinks, declaration) as DeclarationLinks).isVisible = TSTrue;
 
       if (IsInternalModuleImportEqualsDeclaration(declaration)) {
@@ -980,7 +981,7 @@ export function EmitResolver_hasVisibleDeclarations(receiver: GoPtr<EmitResolver
     addVisibleAlias = noopAddVisibleAlias;
   }
 
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if (IsIdentifier(declaration)) { continue; }
 
     if (!EmitResolver_isDeclarationVisible(receiver, declaration)) {
@@ -1148,8 +1149,8 @@ export function EmitResolver_IsImportRequiredByAugmentation(receiver: GoPtr<Emit
   for (const [, s] of exports) {
     const merged = Checker_getMergedSymbol(receiver!.checker, s);
     if (merged !== s) {
-      if (merged !== undefined && merged!.Declarations.length > 0) {
-        for (const d of merged!.Declarations) {
+      if (merged !== undefined && (merged!.Declarations?.length ?? 0) > 0) {
+        for (const d of merged!.Declarations ?? []) {
           const declFile = GetSourceFileOfNode(d);
           if (declFile === importTarget) {
             receiver!.checkerMu!.Unlock();
@@ -1489,18 +1490,6 @@ export function EmitResolver_isSymbolAccessible(receiver: GoPtr<EmitResolver>, s
  */
 export function EmitResolver_IsSymbolAccessible(receiver: GoPtr<EmitResolver>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>, meaning: SymbolFlags, shouldComputeAliasToMarkVisible: bool): SymbolAccessibilityResult {
   return EmitResolver_isSymbolAccessible(receiver, symbol_, enclosingDeclaration, meaning, shouldComputeAliasToMarkVisible);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::func::isConstEnumOrConstEnumOnlyModule","kind":"func","status":"implemented","sigHash":"55d841918a92ed5c2c67ea7b6d8fa0359e2ea281c23c8953dc793fda495b3dca","bodyHash":"a2d41aaabe390d42221701002e1516de3c195f0aca1f32893766700c71431d19"}
- *
- * Go source:
- * func isConstEnumOrConstEnumOnlyModule(s *ast.Symbol) bool {
- * 	return isConstEnumSymbol(s) || s.Flags&ast.SymbolFlagsConstEnumOnlyModule != 0
- * }
- */
-export function isConstEnumOrConstEnumOnlyModule(s: GoPtr<Symbol>): bool {
-  return (isConstEnumSymbol(s) || (s!.Flags & SymbolFlagsConstEnumOnlyModule) !== 0) as bool;
 }
 
 /**
@@ -2200,7 +2189,7 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures","kind":"method","status":"stub","sigHash":"0d29f2b50850d24cede0425c1ece2503aa0e34e10d939d6a80b47870f30090c3","bodyHash":"b5a25f4a31e0fde34f7eb9d711b75a8baa76c96db0bfcebc0d21f5e76180e03e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures","kind":"method","status":"implemented","sigHash":"0d29f2b50850d24cede0425c1ece2503aa0e34e10d939d6a80b47870f30090c3","bodyHash":"b5a25f4a31e0fde34f7eb9d711b75a8baa76c96db0bfcebc0d21f5e76180e03e"}
  *
  * Go source:
  * func (r *EmitResolver) CreateLateBoundIndexSignatures(emitContext *printer.EmitContext, container *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) []*ast.Node {
@@ -2294,7 +2283,91 @@ export function EmitResolver_CreateTypeOfExpression(receiver: GoPtr<EmitResolver
  * }
  */
 export function EmitResolver_CreateLateBoundIndexSignatures(receiver: GoPtr<EmitResolver>, emitContext: GoPtr<EmitContext>, container: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoSlice<GoPtr<Node>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.CreateLateBoundIndexSignatures");
+  container = EmitContext_ParseNode(emitContext, container);
+  receiver!.checkerMu!.Lock();
+
+  const sym = Node_Symbol(container);
+  const staticInfos = Checker_getIndexInfosOfType(receiver!.checker, Checker_getTypeOfSymbol(receiver!.checker, sym));
+  const instanceIndexSymbol = Checker_getIndexSymbol(receiver!.checker, sym);
+  let instanceInfos: GoSlice<GoPtr<IndexInfo>> = [];
+  if (instanceIndexSymbol !== undefined) {
+    const siblingSymbols = Array.from(Checker_getMembersOfSymbol(receiver!.checker, sym).values());
+    instanceInfos = Checker_getIndexInfosOfIndexSymbol(receiver!.checker, instanceIndexSymbol, siblingSymbols);
+  }
+
+  const requestNodeBuilder = NewNodeBuilder(receiver!.checker, emitContext);
+
+  const result: GoSlice<GoPtr<Node>> = [];
+  for (let index = 0; index < 2; index++) {
+    const infoList = index === 0 ? staticInfos : instanceInfos;
+    const isStatic = index === 0;
+    if (infoList.length === 0) {
+      continue;
+    }
+    for (const info of infoList) {
+      if (info!.declaration !== undefined) {
+        continue;
+      }
+      if (info === receiver!.checker!.anyBaseTypeIndexInfo) {
+        continue;
+      }
+      if (info!.components.length !== 0) {
+        const allComponentComputedNamesSerializable = enclosingDeclaration !== undefined && Every(info!.components, (component: GoPtr<Node>): bool => {
+          const name = Node_Name(component);
+          return name !== undefined &&
+            IsComputedPropertyName(name) &&
+            IsEntityNameExpression(Node_Expression(name)) &&
+            EmitResolver_isEntityNameVisible(receiver, Node_Expression(name), enclosingDeclaration, false).Accessibility === SymbolAccessibilityAccessible;
+        });
+        if (allComponentComputedNamesSerializable) {
+          for (const component of info!.components) {
+            if (Checker_hasLateBindableName(receiver!.checker, component)) {
+              continue;
+            }
+
+            const firstIdentifier = GetFirstIdentifier(Node_Expression(Node_Name(component)));
+            const name = receiver!.checker!.resolveName(firstIdentifier, Node_Text(firstIdentifier), (SymbolFlagsValue | SymbolFlagsExportValue) as SymbolFlags, undefined, true, false);
+            if (name !== undefined) {
+              tracker.TrackSymbol(name, enclosingDeclaration, SymbolFlagsValue);
+            }
+
+            const mods: GoSlice<GoPtr<Node>> = isStatic ? [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword)] : [];
+            if (info!.isReadonly) {
+              mods.push(NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindReadonlyKeyword));
+            }
+
+            const decl = NewPropertyDeclaration(
+              emitContext!.Factory!.__tsgoEmbedded0,
+              mods.length !== 0 ? NodeFactory_NewModifierList(emitContext!.Factory!.__tsgoEmbedded0, mods) : undefined,
+              Node_Name(component),
+              Node_QuestionToken(component),
+              NodeBuilder_TypeToTypeNode(requestNodeBuilder, Checker_getTypeOfSymbol(receiver!.checker, Node_Symbol(component)), enclosingDeclaration, flags, internalFlags, tracker),
+              undefined,
+            );
+            result.push(decl);
+          }
+          continue;
+        }
+      }
+      let node = NodeBuilder_IndexInfoToIndexSignatureDeclaration(requestNodeBuilder, info, enclosingDeclaration, flags, internalFlags, tracker);
+      if (node !== undefined && isStatic) {
+        const modNodes: GoSlice<GoPtr<Node>> = [NodeFactory_NewModifier(emitContext!.Factory!.__tsgoEmbedded0, KindStaticKeyword), ...(Node_ModifierNodes(node) ?? [])];
+        const mods = NodeFactory_NewModifierList(emitContext!.Factory!.__tsgoEmbedded0, modNodes);
+        node = NodeFactory_UpdateIndexSignatureDeclaration(
+          emitContext!.Factory!.__tsgoEmbedded0,
+          AsIndexSignatureDeclaration(node),
+          mods,
+          Node_ParameterList(node),
+          Node_Type(node),
+        );
+      }
+      if (node !== undefined) {
+        result.push(node);
+      }
+    }
+  }
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**

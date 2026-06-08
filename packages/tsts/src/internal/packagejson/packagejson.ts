@@ -1,12 +1,16 @@
 import type { bool, byte } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
+import type { OrderedMap } from "../collections/ordered_map.js";
 import { NewSetWithSizeHint, Set_Add } from "../collections/set.js";
 import type { Set } from "../collections/set.js";
 import { AllowDuplicateNames, Unmarshal } from "../json/json.js";
 import { Expected_GetValue } from "./expected.js";
 import type { Expected } from "./expected.js";
 import type { ExportsOrImports } from "./exportsorimports.js";
-import type { JSONValue } from "./jsonvalue.js";
+import { JSONValueTypeArray, JSONValueTypeBoolean, JSONValueTypeNotPresent, JSONValueTypeNull, JSONValueTypeNumber, JSONValueTypeObject, JSONValueTypeString } from "./jsonvalue.js";
+import type { JSONValue, JSONValueType } from "./jsonvalue.js";
+import { objectKindUnknown } from "./exportsorimports.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/packagejson.go::type::HeaderFields","kind":"type","status":"implemented","sigHash":"6558504c2fd9f243450ea189f22d05ceb3b0e27a987c4c06e2a16703307569ff","bodyHash":"53b0a2eea4b006f3eb6b5358b44a248fb246d2ee70f900c64dd96a8aacd569ee"}
@@ -267,5 +271,150 @@ export function Parse(data: GoSlice<byte>): [Fields, GoError] {
   if (err !== undefined) {
     return [{}, err];
   }
-  return [f, undefined];
+  try {
+    return [decodeFields(globalThis.JSON.parse(new globalThis.TextDecoder("utf-8").decode(new globalThis.Uint8Array(data as Array<number>)))), undefined];
+  } catch (error) {
+    return [{}, error instanceof globalThis.Error ? error : new globalThis.Error(String(error))];
+  }
+}
+
+function decodeFields(value: unknown): Fields {
+  const object = isPlainObject(value) ? value : {};
+  return {
+    __tsgoEmbedded0: {
+      Name: expectedString(object.name),
+      Version: expectedString(object.version),
+      Type: expectedString(object.type),
+    },
+    __tsgoEmbedded1: {
+      TSConfig: expectedString(object.tsconfig),
+      Main: expectedString(object.main),
+      Types: expectedString(object.types),
+      Typings: expectedString(object.typings),
+      TypesVersions: decodeJSONValue(object.typesVersions),
+      Imports: decodeExportsOrImports(object.imports),
+      Exports: decodeExportsOrImports(object.exports),
+    },
+    __tsgoEmbedded2: {
+      Dependencies: expectedStringMap(object.dependencies),
+      DevDependencies: expectedStringMap(object.devDependencies),
+      PeerDependencies: expectedStringMap(object.peerDependencies),
+      OptionalDependencies: expectedStringMap(object.optionalDependencies),
+    },
+  };
+}
+
+function expectedString(value: unknown): Expected<string> {
+  return {
+    actualJSONType: actualJSONType(value),
+    Null: (value === null) as bool,
+    Valid: (typeof value === "string") as bool,
+    Value: typeof value === "string" ? value : "",
+  };
+}
+
+function expectedStringMap(value: unknown): Expected<GoMap<string, string>> {
+  const map = new globalThis.Map<string, string>();
+  const object = isPlainObject(value) ? value : undefined;
+  let valid = object !== undefined;
+  if (object !== undefined) {
+    for (const [key, entry] of globalThis.Object.entries(object)) {
+      if (typeof entry !== "string") {
+        valid = false;
+        continue;
+      }
+      map.set(key, entry);
+    }
+  }
+  return {
+    actualJSONType: actualJSONType(value),
+    Null: (value === null) as bool,
+    Valid: valid as bool,
+    Value: map,
+  };
+}
+
+function decodeExportsOrImports(value: unknown): ExportsOrImports {
+  return {
+    __tsgoEmbedded0: decodeJSONValue(value, nested => decodeExportsOrImportsFromJSONValue(nested)),
+    objectKind: objectKindUnknown,
+  };
+}
+
+function decodeExportsOrImportsFromJSONValue(value: JSONValue): ExportsOrImports {
+  return {
+    __tsgoEmbedded0: value,
+    objectKind: objectKindUnknown,
+  };
+}
+
+function decodeJSONValue<T = JSONValue>(value: unknown, elementFactory: (value: JSONValue) => T = value => value as T): JSONValue {
+  if (value === undefined) {
+    return { Type: JSONValueTypeNotPresent, Value: undefined };
+  }
+  if (value === null) {
+    return { Type: JSONValueTypeNull, Value: undefined };
+  }
+  if (typeof value === "string") {
+    return { Type: JSONValueTypeString, Value: value };
+  }
+  if (typeof value === "number") {
+    return { Type: JSONValueTypeNumber, Value: value };
+  }
+  if (typeof value === "boolean") {
+    return { Type: JSONValueTypeBoolean, Value: value };
+  }
+  if (globalThis.Array.isArray(value)) {
+    return {
+      Type: JSONValueTypeArray,
+      Value: value.map(element => elementFactory(decodeJSONValue(element, elementFactory))) as GoSlice<T>,
+    };
+  }
+  if (typeof value === "object") {
+    const entries = globalThis.Object.entries(value as Record<string, unknown>);
+    const map = NewOrderedMapWithSizeHint<string, T>(entries.length as byte)!;
+    for (const [key, entry] of entries) {
+      OrderedMap_Set(map, key, elementFactory(decodeJSONValue(entry, elementFactory)));
+    }
+    return { Type: JSONValueTypeObject, Value: map };
+  }
+  return { Type: JSONValueTypeNotPresent, Value: undefined };
+}
+
+function actualJSONType(value: unknown): string {
+  return jsonValueTypeName(jsonValueTypeOf(value));
+}
+
+function jsonValueTypeOf(value: unknown): JSONValueType {
+  if (value === undefined) return JSONValueTypeNotPresent;
+  if (value === null) return JSONValueTypeNull;
+  if (typeof value === "string") return JSONValueTypeString;
+  if (typeof value === "number") return JSONValueTypeNumber;
+  if (typeof value === "boolean") return JSONValueTypeBoolean;
+  if (globalThis.Array.isArray(value)) return JSONValueTypeArray;
+  if (typeof value === "object") return JSONValueTypeObject;
+  return JSONValueTypeNotPresent;
+}
+
+function jsonValueTypeName(valueType: JSONValueType): string {
+  switch (valueType) {
+    case JSONValueTypeNull:
+      return "null";
+    case JSONValueTypeString:
+      return "string";
+    case JSONValueTypeNumber:
+      return "number";
+    case JSONValueTypeBoolean:
+      return "boolean";
+    case JSONValueTypeArray:
+      return "array";
+    case JSONValueTypeObject:
+      return "object";
+    default:
+      return "";
+  }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !globalThis.Array.isArray(value);
 }

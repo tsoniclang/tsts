@@ -361,10 +361,9 @@ const HAND_WRITTEN_BASES = new Set(["NodeBase"]);
 // The 20 nodeData methods, in declaration order, with their default targets in
 // spine.ts. Methods overridden by hand-written base structs resolve (via Go
 // embedding promotion) to that base's free-fn; the rest fall to NodeDefault_*.
-// Generated per-concrete overrides exist only for Clone/ForEachChild/
-// computeSubtreeFacts (+ subtreeFactsWorker via CompositeBase). VisitEachChild
-// requires the deferred NodeVisitor infrastructure, so its adapter slot routes
-// to NodeDefault_VisitEachChild this wave (recorded in generatedAstSkips).
+// Generated per-concrete overrides exist for Clone/ForEachChild/VisitEachChild/
+// computeSubtreeFacts (+ subtreeFactsWorker via CompositeBase). Hand-written
+// visitor exceptions route through ast.ts.
 const NODE_DATA_METHODS = [
   "AsNode",
   "ForEachChild",
@@ -410,13 +409,116 @@ const BASE_METHOD_PROVIDERS = {
   // generated per-node Concrete_computeSubtreeFacts wins. Handled specially.
 };
 
+const AST_MANUAL_COMPUTE_SUBTREE_FACTS = new Set([
+  "AccessorDeclarationBase",
+  "ArrowFunction",
+  "AsExpression",
+  "AwaitExpression",
+  "BigIntLiteral",
+  "BinaryExpression",
+  "BindingElement",
+  "BindingPattern",
+  "CallExpression",
+  "CatchClause",
+  "ClassStaticBlockDeclaration",
+  "ConstructorDeclaration",
+  "Decorator",
+  "EnumDeclaration",
+  "EnumMember",
+  "ExportAssignment",
+  "ExportDeclaration",
+  "ExportSpecifier",
+  "ExpressionWithTypeArguments",
+  "ForInOrOfStatement",
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "HeritageClause",
+  "Identifier",
+  "ImportClause",
+  "ImportEqualsDeclaration",
+  "ImportSpecifier",
+  "JsxAttribute",
+  "JsxAttributes",
+  "JsxClosingElement",
+  "JsxClosingFragment",
+  "JsxElement",
+  "JsxExpression",
+  "JsxFragment",
+  "JsxNamespacedName",
+  "JsxOpeningElement",
+  "JsxOpeningFragment",
+  "JsxSelfClosingElement",
+  "JsxSpreadAttribute",
+  "JsxText",
+  "KeywordExpression",
+  "MetaProperty",
+  "MethodDeclaration",
+  "ModuleDeclaration",
+  "NewExpression",
+  "NoSubstitutionTemplateLiteral",
+  "NonNullExpression",
+  "ParameterDeclaration",
+  "PrivateIdentifier",
+  "PropertyAccessExpression",
+  "PropertyAssignment",
+  "PropertyDeclaration",
+  "ReturnStatement",
+  "SatisfiesExpression",
+  "ShorthandPropertyAssignment",
+  "SourceFile",
+  "SpreadAssignment",
+  "SpreadElement",
+  "TaggedTemplateExpression",
+  "TemplateHead",
+  "TemplateMiddle",
+  "TemplateTail",
+  "Token",
+  "TypeAssertion",
+  "TypeSyntaxBase",
+  "VariableDeclaration",
+  "VariableDeclarationList",
+  "VariableStatement",
+  "YieldExpression",
+]);
+
+const AST_MANUAL_PROPAGATE_SUBTREE_FACTS = new Set([
+  "AccessorDeclarationBase",
+  "ArrayLiteralExpression",
+  "ArrowFunction",
+  "AsExpression",
+  "BindingPattern",
+  "CallExpression",
+  "CatchClause",
+  "ClassDeclaration",
+  "ClassExpression",
+  "ConstructorDeclaration",
+  "ElementAccessExpression",
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "MethodDeclaration",
+  "ModuleDeclaration",
+  "NewExpression",
+  "ObjectLiteralExpression",
+  "ParameterDeclaration",
+  "PropertyAccessExpression",
+  "PropertyDeclaration",
+  "SatisfiesExpression",
+  "TypeAssertion",
+  "TypeSyntaxBase",
+  "VariableDeclarationList",
+]);
+
 // Methods that have a GENERATED per-concrete override in this wave.
 function generatedOverrideMethodsFor(schema, nodeName) {
   const out = new Set();
   out.add("Clone"); // every concrete gets a Clone in ast_generated.go
+  if (schema.schemaMembers(nodeName).some((m) => m.name === "name")) {
+    out.add("Name");
+  }
   const childMembers = schema.schemaMembers(nodeName).filter((m) => m.isChild());
   if (childMembers.length > 0) {
     out.add("ForEachChild");
+    out.add("VisitEachChild");
   }
   if (schema.definitions[nodeName].generateSubtreeFacts) {
     out.add("computeSubtreeFacts");
@@ -436,21 +538,45 @@ function resolveAdapterTarget(schema, nodeName, method) {
     if (generated.has("computeSubtreeFacts")) {
       return { fn: `${nodeName}_computeSubtreeFacts`, takesSelf: false };
     }
+    if (AST_MANUAL_COMPUTE_SUBTREE_FACTS.has(nodeName)) {
+      return { fn: `AstManual.${nodeName}_computeSubtreeFacts`, takesSelf: false };
+    }
     if (chain.includes("ClassLikeBase")) {
       return { fn: "ClassLikeBase_computeSubtreeFacts", takesSelf: false };
     }
+    if (chain.includes("TypeSyntaxBase")) {
+      return { fn: "AstManual.TypeSyntaxBase_computeSubtreeFacts", takesSelf: false };
+    }
     return { fn: "NodeDefault_computeSubtreeFacts", takesSelf: false };
+  }
+
+  if (method === "propagateSubtreeFacts") {
+    if (AST_MANUAL_PROPAGATE_SUBTREE_FACTS.has(nodeName)) {
+      return { fn: `AstManual.${nodeName}_propagateSubtreeFacts`, takesSelf: false };
+    }
+    if (chain.includes("TypeSyntaxBase")) {
+      return { fn: "AstManual.TypeSyntaxBase_propagateSubtreeFacts", takesSelf: false };
+    }
   }
 
   if (method === "Clone") {
     return { fn: `${nodeName}_Clone`, takesSelf: false, takesFactory: true };
   }
+  if (method === "Name" && generated.has("Name")) {
+    return { fn: `${nodeName}_Name`, takesSelf: false };
+  }
   if (method === "ForEachChild") {
+    if (schema.definitions[nodeName].handWrittenVisitor) {
+      return { fn: `AstManual.forEachChild_${nodeName}`, takesVisitor: true };
+    }
     if (generated.has("ForEachChild")) return { fn: `${nodeName}_ForEachChild`, takesVisitor: true };
     return { fn: "NodeDefault_ForEachChild", takesVisitor: true };
   }
   if (method === "VisitEachChild") {
-    // Deferred to the NodeVisitor co-wave; route to the spine default for now.
+    if (schema.definitions[nodeName].handWrittenVisitor) {
+      return { fn: `AstManual.visitEachChild_${nodeName}`, takesNodeVisitor: true, takesConcreteNodeVisitor: true };
+    }
+    if (generated.has("VisitEachChild")) return { fn: `${nodeName}_VisitEachChild`, takesNodeVisitor: true };
     return { fn: "NodeDefault_VisitEachChild", takesNodeVisitor: true };
   }
 
@@ -597,9 +723,17 @@ function emitData(schema) {
   lines.push(`import type { Kind } from "./kinds.js";`);
   lines.push(`import type { TokenFlags } from "../tokenflags.js";`);
   lines.push(`import {`);
+  lines.push(`  AsSyntaxList,`);
+  lines.push(`} from "./casts.js";`);
+  lines.push(`import {`);
+  lines.push(`  KindSyntaxList,`);
+  lines.push(`} from "./kinds.js";`);
+  lines.push(`import {`);
   lines.push(`  cloneNode,`);
   lines.push(`  goReceiverKey,`);
   lines.push(`  invert,`);
+  lines.push(`  NodeFactory_NewModifierList,`);
+  lines.push(`  NodeFactory_NewNodeList,`);
   lines.push(`  visit,`);
   lines.push(`  visitModifiers,`);
   lines.push(`  visitNodeList,`);
@@ -610,7 +744,8 @@ function emitData(schema) {
   // base data-view free-fns referenced by adapters
   for (const fn of baseFreeFnsUsed()) lines.push(`  ${fn},`);
   lines.push(`} from "../spine.js";`);
-  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeIter, NodeList, Visitor, nodeData } from "../spine.js";`);
+  lines.push(`import type { ModifierList, Node, NodeBase, NodeFactoryCoercible, NodeIter, NodeList, NodeVisitor, Visitor, nodeData } from "../spine.js";`);
+  lines.push(`import type { NodeVisitor as ConcreteNodeVisitor } from "../visitor.js";`);
   lines.push(`import type { SubtreeFacts } from "../subtreefacts.js";`);
   lines.push(`import {`);
   lines.push(`  propagateBindingElementSubtreeFacts,`);
@@ -623,6 +758,7 @@ function emitData(schema) {
   lines.push(`} from "../subtreefacts.js";`);
   lines.push(`import type * as Kinds from "./kinds.js";`);
   lines.push(`import * as Factory from "./factory.js";`);
+  lines.push(`import * as AstManual from "../ast.js";`);
   // base interfaces and node-unions referenced by concrete fields / extends
   const baseImports = new Set();
   for (const baseName of schema.baseNames()) {
@@ -631,11 +767,16 @@ function emitData(schema) {
   lines.push(`import type {`);
   for (const b of [...baseImports].sort()) lines.push(`  ${b},`);
   lines.push(`} from "./node.js";`);
-  const unionImports = collectConcreteFieldRefs(schema);
+  const unionImportsSet = new Set(collectConcreteFieldRefs(schema));
+  for (const helperType of ["BlockOrExpression", "ParameterList", "Statement", "StatementList"]) {
+    unionImportsSet.add(helperType);
+  }
+  const unionImports = [...unionImportsSet].sort();
   lines.push(`import type {`);
   for (const u of unionImports) lines.push(`  ${u},`);
   lines.push(`} from "./unions.js";`);
   lines.push("");
+  emitGeneratedVisitHelpers(lines);
 
   for (const node of schema.nodeNames()) {
     if (schema.definitions[node].handWritten) {
@@ -665,16 +806,259 @@ function collectConcreteFieldRefs(schema) {
   const refs = new Set();
   for (const node of schema.nodeNames()) {
     if (schema.definitions[node].handWritten) continue;
-    // extends bases handled via node.js; field refs from unions.js (own,
-    // non-inherited, non-kind members only — matching emitConcreteInterface):
-    for (const m of schema.members(node)) {
+    // The interface itself only emits own concrete fields, but generated
+    // Clone/VisitEachChild functions use schemaMembers, including inherited
+    // factory fields. Import every union/list alias those functions reference.
+    for (const m of schema.schemaMembers(node)) {
       if (m.noTS) continue;
       if (m.isKindParam()) continue;
-      if (m.inherited) continue;
       addRefsFromTsType(m.tsReference(), refs);
     }
   }
   return [...refs].sort();
+}
+
+function emitGeneratedVisitHelpers(lines) {
+  lines.push(`type GeneratedNodeVisitorHooks = {`);
+  lines.push(`  VisitNode?: (node: GoPtr<Node>, v: GoPtr<NodeVisitor>) => GoPtr<Node>;`);
+  lines.push(`  VisitNodes?: (nodes: GoPtr<NodeList>, v: GoPtr<NodeVisitor>) => GoPtr<NodeList>;`);
+  lines.push(`  VisitModifiers?: (nodes: GoPtr<ModifierList>, v: GoPtr<NodeVisitor>) => GoPtr<ModifierList>;`);
+  lines.push(`  VisitEmbeddedStatement?: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;`);
+  lines.push(`  VisitIterationBody?: (node: GoPtr<Statement>, v: GoPtr<NodeVisitor>) => GoPtr<Statement>;`);
+  lines.push(`  VisitParameters?: (nodes: GoPtr<ParameterList>, v: GoPtr<NodeVisitor>) => GoPtr<ParameterList>;`);
+  lines.push(`  VisitFunctionBody?: (node: GoPtr<BlockOrExpression>, v: GoPtr<NodeVisitor>) => GoPtr<BlockOrExpression>;`);
+  lines.push(`  VisitTopLevelStatements?: (nodes: GoPtr<StatementList>, v: GoPtr<NodeVisitor>) => GoPtr<StatementList>;`);
+  lines.push(`};`);
+  lines.push("");
+  lines.push(`type GeneratedNodeVisitor = NodeVisitor & {`);
+  lines.push(`  Visit?: (node: GoPtr<Node>) => GoPtr<Node>;`);
+  lines.push(`  Factory: GoPtr<Factory.NodeFactory>;`);
+  lines.push(`  Hooks?: GeneratedNodeVisitorHooks;`);
+  lines.push(`};`);
+  lines.push("");
+  lines.push(`function generatedVisitor(v: GoPtr<NodeVisitor>): GoPtr<GeneratedNodeVisitor> {`);
+  lines.push(`  return v as GoPtr<GeneratedNodeVisitor>;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitorFactory(v: GoPtr<NodeVisitor>): GoPtr<Factory.NodeFactory> {`);
+  lines.push(`  return generatedVisitor(v)!.Factory;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitorHooks(v: GoPtr<NodeVisitor>): GeneratedNodeVisitorHooks {`);
+  lines.push(`  return generatedVisitor(v)!.Hooks ?? {};`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitNodeBase(v: GoPtr<NodeVisitor>, node: GoPtr<Node>): GoPtr<Node> {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  if (node === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`    return node;`);
+  lines.push(`  }`);
+  lines.push("");
+  lines.push(`  let visited = receiver!.Visit(node);`);
+  lines.push(`  if (visited !== undefined && visited.Kind === KindSyntaxList) {`);
+  lines.push(`    const nodes = AsSyntaxList(visited)!.Children;`);
+  lines.push(`    if (nodes.length !== 1) {`);
+  lines.push(`      throw new globalThis.Error("Expected only a single node to be written to output");`);
+  lines.push(`    }`);
+  lines.push(`    visited = nodes[0];`);
+  lines.push(`    if (visited !== undefined && visited.Kind === KindSyntaxList) {`);
+  lines.push(`      throw new globalThis.Error("The result of visiting and lifting a Node may not be SyntaxList");`);
+  lines.push(`    }`);
+  lines.push(`  }`);
+  lines.push(`  return visited;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitNode(v: GoPtr<NodeVisitor>, node: GoPtr<Node>): GoPtr<Node> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitNode;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(node, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitNodeBase(v, node);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitSlice(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): [GoSlice<GoPtr<Node>>, bool] {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`    return [nodes, false as bool];`);
+  lines.push(`  }`);
+  lines.push("");
+  lines.push(`  for (let i = 0; i < nodes.length; i++) {`);
+  lines.push(`    let node = nodes[i];`);
+  lines.push(`    if (receiver!.Visit === undefined) {`);
+  lines.push(`      break;`);
+  lines.push(`    }`);
+  lines.push("");
+  lines.push(`    let visited = receiver!.Visit(node);`);
+  lines.push(`    if (visited === undefined || visited !== node) {`);
+  lines.push(`      let updated = nodes.slice(0, i);`);
+  lines.push("");
+  lines.push(`      for (;;) {`);
+  lines.push(`        if (visited === undefined) {`);
+  lines.push(`          // do nothing`);
+  lines.push(`        } else if (visited.Kind === KindSyntaxList) {`);
+  lines.push(`          updated = [...updated, ...AsSyntaxList(visited)!.Children];`);
+  lines.push(`        } else {`);
+  lines.push(`          updated = [...updated, visited];`);
+  lines.push(`        }`);
+  lines.push("");
+  lines.push(`        i++;`);
+  lines.push(`        if (i >= nodes.length) {`);
+  lines.push(`          break;`);
+  lines.push(`        }`);
+  lines.push("");
+  lines.push(`        if (receiver!.Visit !== undefined) {`);
+  lines.push(`          node = nodes[i];`);
+  lines.push(`          visited = receiver!.Visit(node);`);
+  lines.push(`        } else {`);
+  lines.push(`          updated = [...updated, ...nodes.slice(i)];`);
+  lines.push(`          break;`);
+  lines.push(`        }`);
+  lines.push(`      }`);
+  lines.push("");
+  lines.push(`      return [updated, true as bool];`);
+  lines.push(`    }`);
+  lines.push(`  }`);
+  lines.push("");
+  lines.push(`  return [nodes, false as bool];`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitRawNodes(v: GoPtr<NodeVisitor>, nodes: GoSlice<GoPtr<Node>>): GoSlice<GoPtr<Node>> {`);
+  lines.push(`  if (nodes === undefined) {`);
+  lines.push(`    return nodes;`);
+  lines.push(`  }`);
+  lines.push(`  for (let i = 0; i < nodes.length; i++) {`);
+  lines.push(`    const node = nodes[i];`);
+  lines.push(`    const visited = generatedVisitNode(v, node);`);
+  lines.push(`    if (visited !== node) {`);
+  lines.push(`      const updated = nodes.slice(0, i);`);
+  lines.push(`      updated.push(visited);`);
+  lines.push(`      for (let j = i + 1; j < nodes.length; j++) {`);
+  lines.push(`        updated.push(generatedVisitNode(v, nodes[j]));`);
+  lines.push(`      }`);
+  lines.push(`      return updated;`);
+  lines.push(`    }`);
+  lines.push(`  }`);
+  lines.push(`  return nodes;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitNodesBase(v: GoPtr<NodeVisitor>, nodes: GoPtr<NodeList>): GoPtr<NodeList> {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`    return nodes;`);
+  lines.push(`  }`);
+  lines.push("");
+  lines.push(`  const [result, changed] = generatedVisitSlice(v, nodes.Nodes);`);
+  lines.push(`  if (changed) {`);
+  lines.push(`    const list = NodeFactory_NewNodeList(receiver!.Factory, result);`);
+  lines.push(`    list!.Loc = nodes.Loc;`);
+  lines.push(`    return list;`);
+  lines.push(`  }`);
+  lines.push(`  return nodes;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitNodes(v: GoPtr<NodeVisitor>, nodes: GoPtr<NodeList>): GoPtr<NodeList> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitNodes;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(nodes, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitNodesBase(v, nodes);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitModifiersBase(v: GoPtr<NodeVisitor>, nodes: GoPtr<ModifierList>): GoPtr<ModifierList> {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  if (nodes === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`    return nodes;`);
+  lines.push(`  }`);
+  lines.push("");
+  lines.push(`  const [result, changed] = generatedVisitSlice(v, nodes.Nodes);`);
+  lines.push(`  if (changed) {`);
+  lines.push(`    const list = NodeFactory_NewModifierList(receiver!.Factory, result);`);
+  lines.push(`    list!.Loc = nodes.Loc;`);
+  lines.push(`    return list;`);
+  lines.push(`  }`);
+  lines.push(`  return nodes;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitModifiers(v: GoPtr<NodeVisitor>, nodes: GoPtr<ModifierList>): GoPtr<ModifierList> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitModifiers;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(nodes, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitModifiersBase(v, nodes);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedLiftToBlock(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  let nodes: GoSlice<GoPtr<Node>> = [];`);
+  lines.push(`  if (node !== undefined) {`);
+  lines.push(`    if (node.Kind === KindSyntaxList) {`);
+  lines.push(`      nodes = AsSyntaxList(node)!.Children;`);
+  lines.push(`    } else {`);
+  lines.push(`      nodes = [node];`);
+  lines.push(`    }`);
+  lines.push(`  }`);
+  lines.push(`  if (nodes.length === 1) {`);
+  lines.push(`    node = nodes[0];`);
+  lines.push(`  } else {`);
+  lines.push(`    node = Factory.NewBlock(receiver!.Factory, NodeFactory_NewNodeList(receiver!.Factory, nodes), true as bool);`);
+  lines.push(`  }`);
+  lines.push(`  if (node!.Kind === KindSyntaxList) {`);
+  lines.push(`    throw new globalThis.Error("The result of visiting and lifting a Node may not be SyntaxList");`);
+  lines.push(`  }`);
+  lines.push(`  return node;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitEmbeddedStatementBase(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
+  lines.push(`  const receiver = generatedVisitor(v);`);
+  lines.push(`  if (node === undefined || receiver!.Visit === undefined) {`);
+  lines.push(`    return node;`);
+  lines.push(`  }`);
+  lines.push(`  return generatedLiftToBlock(v, receiver!.Visit(node));`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitEmbeddedStatement(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
+  lines.push(`  const hooks = generatedVisitorHooks(v);`);
+  lines.push(`  if (hooks.VisitEmbeddedStatement !== undefined) {`);
+  lines.push(`    return hooks.VisitEmbeddedStatement(node, v);`);
+  lines.push(`  }`);
+  lines.push(`  if (hooks.VisitNode !== undefined) {`);
+  lines.push(`    return generatedLiftToBlock(v, hooks.VisitNode(node, v));`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitEmbeddedStatementBase(v, node);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitIterationBody(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitIterationBody;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(node, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitEmbeddedStatement(v, node);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitParameters(v: GoPtr<NodeVisitor>, nodes: GoPtr<ParameterList>): GoPtr<ParameterList> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitParameters;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(nodes, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitNodes(v, nodes) as GoPtr<ParameterList>;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitFunctionBody(v: GoPtr<NodeVisitor>, node: GoPtr<BlockOrExpression>): GoPtr<BlockOrExpression> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitFunctionBody;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(node, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitNode(v, node) as GoPtr<BlockOrExpression>;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function generatedVisitTopLevelStatements(v: GoPtr<NodeVisitor>, nodes: GoPtr<StatementList>): GoPtr<StatementList> {`);
+  lines.push(`  const hook = generatedVisitorHooks(v).VisitTopLevelStatements;`);
+  lines.push(`  if (hook !== undefined) {`);
+  lines.push(`    return hook(nodes, v);`);
+  lines.push(`  }`);
+  lines.push(`  return generatedVisitNodes(v, nodes) as GoPtr<StatementList>;`);
+  lines.push(`}`);
+  lines.push("");
 }
 
 function emitConcreteInterface(schema, node, lines) {
@@ -698,8 +1082,14 @@ function emitOverrideFreeFns(schema, node, lines) {
   const generated = generatedOverrideMethodsFor(schema, node);
   // Clone (always)
   emitCloneFreeFn(schema, node, lines);
+  // Name (named declarations/expressions)
+  if (generated.has("Name")) emitNameFreeFn(node, lines);
   // ForEachChild (child-bearing)
   if (generated.has("ForEachChild")) emitForEachChildFreeFn(schema, node, lines);
+  // VisitEachChild (child-bearing)
+  if (generated.has("VisitEachChild") && !schema.definitions[node].handWrittenVisitor) {
+    emitVisitEachChildFreeFn(schema, node, lines);
+  }
   // computeSubtreeFacts (generateSubtreeFacts)
   if (generated.has("computeSubtreeFacts")) emitComputeSubtreeFactsFreeFn(schema, node, lines);
 }
@@ -727,6 +1117,13 @@ function emitCloneFreeFn(schema, node, lines) {
   lines.push("");
 }
 
+function emitNameFreeFn(node, lines) {
+  lines.push(`export function ${node}_Name(receiver: GoPtr<${node}>): GoPtr<Node> {`);
+  lines.push(`  return receiver!.name;`);
+  lines.push(`}`);
+  lines.push("");
+}
+
 function emitForEachChildFreeFn(schema, node, lines) {
   lines.push(`export function ${node}_ForEachChild(receiver: GoPtr<${node}>, v: Visitor): bool {`);
   const childMembers = schema.schemaMembers(node).filter((m) => m.isChild());
@@ -738,6 +1135,39 @@ function emitForEachChildFreeFn(schema, node, lines) {
     return `visit(v, ${access})`;
   });
   lines.push(`  return ${parts.join(" || ")};`);
+  lines.push(`}`);
+  lines.push("");
+}
+
+function visitEachChildArgList(schema, node) {
+  const members = schema.schemaMembers(node).filter((m) => !m.isKindParam());
+  return members.map((m) => visitEachChildArg(schema, node, m));
+}
+
+function visitEachChildArg(schema, node, m) {
+  const access = `receiver!.${m.name}`;
+  const cast = (expr) => `${expr} as ${m.tsReference()}`;
+  if (!m.isChild()) {
+    if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") return "receiver!.Flags";
+    return access;
+  }
+  if (m.listKind === "raw") return cast(`generatedVisitRawNodes(v, ${access})`);
+  if (m.listKind === "ModifierList") return cast(`generatedVisitModifiers(v, ${access})`);
+  if (m.listKind === "NodeList") {
+    if (m.visit === "parameters") return cast(`generatedVisitParameters(v, ${access})`);
+    if (m.visit === "topLevelStatements") return cast(`generatedVisitTopLevelStatements(v, ${access})`);
+    return cast(`generatedVisitNodes(v, ${access})`);
+  }
+  if (m.visit === "embeddedStatement") return cast(`generatedVisitEmbeddedStatement(v, ${access})`);
+  if (m.visit === "iterationBody") return cast(`generatedVisitIterationBody(v, ${access})`);
+  if (m.visit === "functionBody") return cast(`generatedVisitFunctionBody(v, ${access})`);
+  return cast(`generatedVisitNode(v, ${access})`);
+}
+
+function emitVisitEachChildFreeFn(schema, node, lines) {
+  const args = visitEachChildArgList(schema, node).join(", ");
+  lines.push(`export function ${node}_VisitEachChild(receiver: GoPtr<${node}>, v: GoPtr<NodeVisitor>): GoPtr<Node> {`);
+  lines.push(`  return Factory.NodeFactory_Update${node}(generatedVisitorFactory(v), receiver, ${args});`);
   lines.push(`}`);
   lines.push("");
 }
@@ -784,6 +1214,9 @@ function adapterSlot(method, t) {
     return `ForEachChild: (v: Visitor): bool => ${t.fn}(receiver, v),`;
   }
   if (method === "VisitEachChild") {
+    if (t.takesConcreteNodeVisitor) {
+      return `VisitEachChild: (v) => ${t.fn}(receiver, v as GoPtr<ConcreteNodeVisitor>),`;
+    }
     return `VisitEachChild: (v) => ${t.fn}(receiver, v),`;
   }
   if (method === "IterChildren") {
@@ -808,7 +1241,7 @@ function emitFactory(schema) {
   lines.push(`import type { bool, int } from "@tsonic/core/types.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
   lines.push(`import type { Arena } from "../../core/arena.js";`);
-  lines.push(`import { NodeFactory_newNode } from "../spine.js";`);
+  lines.push(`import { NodeDefault_AsNode, NodeFactory_newNode, updateNode } from "../spine.js";`);
   lines.push(`import type { ModifierList, Node, NodeFactoryHooks, NodeList, nodeData } from "../spine.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -856,6 +1289,12 @@ function emitFactory(schema) {
   for (const node of schema.nodeNames()) {
     if (schema.definitions[node].handWritten) continue;
     emitNewFactories(schema, node, lines);
+  }
+  for (const node of schema.nodeNames()) {
+    if (schema.definitions[node].handWritten) continue;
+    const childMembers = schema.schemaMembers(node).filter((m) => m.isChild());
+    if (childMembers.length === 0) continue;
+    emitUpdateFactory(schema, node, lines);
   }
   return lines.join("\n");
 }
@@ -965,6 +1404,27 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   }
   lines.push(`}`);
   lines.push("");
+}
+
+function emitUpdateFactory(schema, node, lines) {
+  const members = schema.schemaMembers(node);
+  const updateMembers = members.filter((m) => !m.isKindParam());
+  const params = updateMembers.map((m) => `${m.goParamName()}: ${m.tsReference()}`);
+  const paramList = ["receiver: GoPtr<NodeFactory>", `node: GoPtr<${node}>`, ...params].join(", ");
+  lines.push(`export function NodeFactory_Update${node}(${paramList}): GoPtr<Node> {`);
+  const comparisons = updateMembers.map((m) => `${m.goParamName()} !== ${updateCompareAccess(m)}`);
+  lines.push(`  if (${comparisons.join(" || ")}) {`);
+  const newArgs = members.map((m) => (m.isKindParam() ? "node!.Kind" : m.goParamName())).join(", ");
+  lines.push(`    return updateNode(New${node}(receiver, ${newArgs}), NodeDefault_AsNode(node), receiver!.hooks);`);
+  lines.push(`  }`);
+  lines.push(`  return NodeDefault_AsNode(node);`);
+  lines.push(`}`);
+  lines.push("");
+}
+
+function updateCompareAccess(m) {
+  if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") return "node!.Flags";
+  return `node!.${m.name}`;
 }
 
 // ── predicates.ts (IsXxx) ────────────────────────────────────────────────────
@@ -1118,13 +1578,10 @@ function emitCasts(schema) {
 
 function emitVisitor(schema) {
   const lines = [];
-  lines.push(`// forEachChild traversal surface — re-exports the generated per-kind`);
-  lines.push(`// Concrete_ForEachChild overrides (defined in data.ts) for every`);
-  lines.push(`// child-bearing concrete kind. Runtime dispatch goes through the nodeData`);
-  lines.push(`// adapter (Node_ForEachChild -> n.data.ForEachChild); this module gives the`);
-  lines.push(`// traversal functions a stable named surface. The per-kind VisitEachChild`);
-  lines.push(`// rewrite overrides require the NodeVisitor infrastructure (hand-written`);
-  lines.push(`// internal/ast/visitor.go) and land in that co-wave; see generatedAstSkips.`);
+  lines.push(`// forEachChild/VisitEachChild traversal surface — re-exports the generated`);
+  lines.push(`// per-kind concrete overrides (defined in data.ts) for every child-bearing`);
+  lines.push(`// concrete kind. Runtime dispatch goes through nodeData; this module gives`);
+  lines.push(`// traversal functions a stable named surface.`);
   lines.push("");
   const entries = [];
   for (const node of schema.nodeNames()) {
@@ -1135,7 +1592,10 @@ function emitVisitor(schema) {
     entries.push(node);
   }
   lines.push(`export {`);
-  for (const node of entries) lines.push(`  ${node}_ForEachChild,`);
+  for (const node of entries) {
+    lines.push(`  ${node}_ForEachChild,`);
+    lines.push(`  ${node}_VisitEachChild,`);
+  }
   lines.push(`} from "./data.js";`);
   lines.push("");
   return lines.join("\n");
@@ -1147,14 +1607,12 @@ export function buildGeneratedAstSkips(config) {
   const schema = loadSchemaModel(config);
   const handWritten = [];
   const handWrittenVisitor = [];
-  const visitEachChildDeferred = [];
   for (const node of schema.nodeNames()) {
     const def = schema.definitions[node];
     if (def.handWritten) handWritten.push(node);
     if (def.handWrittenVisitor) handWrittenVisitor.push(node);
-    const childMembers = schema.schemaMembers(node).filter((m) => m.isChild());
-    if (childMembers.length > 0 && !def.handWritten) visitEachChildDeferred.push(node);
   }
+  const visitEachChildDeferred = [];
   return { handWritten, handWrittenVisitor, visitEachChildDeferred };
 }
 

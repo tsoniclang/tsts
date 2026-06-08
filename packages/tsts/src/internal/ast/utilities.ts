@@ -590,6 +590,7 @@ export const nextSymbolId: Uint64 = new Uint64();
  * }
  */
 export function GetNodeId(node: GoPtr<Node>): NodeId {
+  node!.id ??= new Uint64();
   const id0: ulong = node!.id.Load();
   if (id0 !== (0 as ulong)) return id0 as NodeId;
   // Worst case, we burn a few ids if we have to CAS.
@@ -615,6 +616,7 @@ export function GetNodeId(node: GoPtr<Node>): NodeId {
  * }
  */
 export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
+  symbol_!.id ??= new Uint64();
   const id0: ulong = symbol_!.id.Load();
   if (id0 !== (0 as ulong)) return id0 as SymbolId;
   // Worst case, we burn a few ids if we have to CAS.
@@ -624,7 +626,7 @@ export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable","kind":"func","status":"stub","sigHash":"ecf0f51324cec402d67481361d90847014aa898b6ed40cbee4bf7b9f629c1b59","bodyHash":"3f5bb32631df999e48ff71408b4f65817b3cab476e254d6706372b38eb8c785e"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable","kind":"func","status":"implemented","sigHash":"ecf0f51324cec402d67481361d90847014aa898b6ed40cbee4bf7b9f629c1b59","bodyHash":"3f5bb32631df999e48ff71408b4f65817b3cab476e254d6706372b38eb8c785e"}
  *
  * Go source:
  * func GetSymbolTable(data *SymbolTable) SymbolTable {
@@ -635,7 +637,10 @@ export function GetSymbolId(symbol_: GoPtr<Symbol>): SymbolId {
  * }
  */
 export function GetSymbolTable(data: GoPtr<SymbolTable>): SymbolTable {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/ast/utilities.go::func::GetSymbolTable");
+  if (data === undefined) {
+    return new Map();
+  }
+  return data;
 }
 
 /**
@@ -2716,12 +2721,12 @@ export function SetImportsOfSourceFile(node: GoPtr<SourceFile>, imports: GoSlice
  * }
  */
 export function FindAncestor(node: GoPtr<Node>, callback: (arg0: GoPtr<Node>) => bool): GoPtr<Node> {
-  const loop = (current: GoPtr<Node>): GoPtr<Node> => {
-    if (current === undefined) return undefined;
-    if (callback(current)) return current;
-    return loop(current!.Parent);
-  };
-  return loop(node);
+  for (let current = node; current !== undefined; current = current!.Parent) {
+    if (callback(current)) {
+      return current;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2739,12 +2744,12 @@ export function FindAncestor(node: GoPtr<Node>, callback: (arg0: GoPtr<Node>) =>
  * }
  */
 export function FindAncestorKind(node: GoPtr<Node>, kind: Kind): GoPtr<Node> {
-  const loop = (current: GoPtr<Node>): GoPtr<Node> => {
-    if (current === undefined) return undefined;
-    if (current!.Kind === kind) return current;
-    return loop(current!.Parent);
-  };
-  return loop(node);
+  for (let current = node; current !== undefined; current = current!.Parent) {
+    if (current!.Kind === kind) {
+      return current;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -2805,17 +2810,15 @@ export function ToFindAncestorResult(b: bool): FindAncestorResult {
  * }
  */
 export function FindAncestorOrQuit(node: GoPtr<Node>, callback: (arg0: GoPtr<Node>) => FindAncestorResult): GoPtr<Node> {
-  const loop = (current: GoPtr<Node>): GoPtr<Node> => {
-    if (current === undefined) return undefined;
+  for (let current = node; current !== undefined; current = current!.Parent) {
     switch (callback(current)) {
       case FindAncestorQuit:
         return undefined;
       case FindAncestorTrue:
         return current;
     }
-    return loop(current!.Parent);
-  };
-  return loop(node);
+  }
+  return undefined;
 }
 
 /**
@@ -4599,9 +4602,9 @@ export function GetImplementsHeritageClauseElements(node: GoPtr<Node>): GoSlice<
 export function GetHeritageElements(node: GoPtr<Node>, kind: Kind): GoSlice<GoPtr<Node>> {
   const clause = GetHeritageClause(node, kind);
   if (clause !== undefined) {
-    return AsHeritageClause(clause)!.Types!.Nodes;
+    return AsHeritageClause(clause)!.Types!.Nodes ?? [];
   }
-  return undefined!;
+  return [];
 }
 
 /**
@@ -6478,7 +6481,7 @@ export function IsParameterLike(node: GoPtr<Node>): bool {
  * }
  */
 export function GetDeclarationOfKind(symbol_: GoPtr<Symbol>, kind: Kind): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if (declaration!.Kind === kind) {
       return declaration;
     }
@@ -6925,16 +6928,22 @@ export function nodeContainsPosition(node: GoPtr<Node>, position: int): bool {
  */
 export function findImportOrRequire(text: string, start: int): [int, int] {
   const n: int = text.length as int;
-  const loop = (index: int): [int, int] => {
-    if (index >= n) return [-1 as int, 0 as int];
+  let index = globalThis.Math.max(start, 0) as int;
+  while (index < n) {
     const next: int = strings.IndexAny(text.slice(index), "ir");
-    if (next < 0) return [-1 as int, 0 as int];
+    if (next < 0) {
+      return [-1 as int, 0 as int];
+    }
     const newIndex = (index + next) as int;
-    const [size, expected] = text.charCodeAt(newIndex) === "i".charCodeAt(0) ? [6 as int, "import"] : [7 as int, "require"];
-    if (newIndex + size <= n && text.slice(newIndex, newIndex + size) === expected) return [newIndex, size];
-    return loop((newIndex + 1) as int);
-  };
-  return loop(globalThis.Math.max(start, 0) as int);
+    const isImport = text.charCodeAt(newIndex) === "i".charCodeAt(0);
+    const size: int = isImport ? 6 as int : 7 as int;
+    const expected = isImport ? "import" : "require";
+    if (newIndex + size <= n && text.slice(newIndex, newIndex + size) === expected) {
+      return [newIndex, size];
+    }
+    index = (newIndex + 1) as int;
+  }
+  return [-1 as int, 0 as int];
 }
 
 /**
@@ -7462,7 +7471,7 @@ export function IsExclusivelyTypeOnlyImportOrExport(node: GoPtr<Node>): bool {
  * }
  */
 export function GetClassLikeDeclarationOfSymbol(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  return Find(symbol_!.Declarations, IsClassLike);
+  return Find(symbol_!.Declarations ?? [], IsClassLike);
 }
 
 /**
@@ -8997,7 +9006,7 @@ export function GetSourceFileOfModule(module_: GoPtr<Symbol>): GoPtr<SourceFile>
  * }
  */
 export function GetNonAugmentationDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  return Find(symbol_!.Declarations, (d: GoPtr<Node>): bool => {
+  return Find(symbol_!.Declarations ?? [], (d: GoPtr<Node>): bool => {
     return (!IsExternalModuleAugmentation(d) && !IsGlobalScopeAugmentation(d)) as bool;
   });
 }

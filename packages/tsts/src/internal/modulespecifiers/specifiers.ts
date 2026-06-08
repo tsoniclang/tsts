@@ -314,14 +314,14 @@ export function GetModuleSpecifiersForFileWithInfo(importingSourceFile: SourceFi
  * }
  */
 export function tryGetModuleNameFromAmbientModule(moduleSymbol: GoPtr<Symbol>, checker: CheckerShape): string {
-  for (const decl of moduleSymbol!.Declarations) {
+  for (const decl of moduleSymbol!.Declarations ?? []) {
     if (IsModuleWithStringLiteralName(decl) && (!IsModuleAugmentationExternal(decl) || !PathIsRelative(Node_Text(Node_Name(decl))))) {
       return Node_Text(Node_Name(decl));
     }
   }
 
   // the module could be a namespace, which is exported through "export=" from an ambient module.
-  for (const d of moduleSymbol!.Declarations) {
+  for (const d of moduleSymbol!.Declarations ?? []) {
     if (!IsModuleDeclaration(d)) {
       continue;
     }

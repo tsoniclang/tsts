@@ -95,7 +95,7 @@ import { Checker_error } from "./checker/support.js";
 import { Member_0_implicitly_has_an_1_type } from "../diagnostics/generated/messages.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowType","kind":"type","status":"stub","sigHash":"bc02a5461036608265091398679db2e7b0cb752f9d0a59b23a5678f16c24f02c","bodyHash":"7465c9c089b5303ec8615aa727b2669e5592a430905d1a3987212c329855f3d4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowType","kind":"type","status":"implemented","sigHash":"bc02a5461036608265091398679db2e7b0cb752f9d0a59b23a5678f16c24f02c","bodyHash":"7465c9c089b5303ec8615aa727b2669e5592a430905d1a3987212c329855f3d4"}
  *
  * Go source:
  * FlowType struct {
@@ -120,6 +120,19 @@ export function FlowType_isNil(receiver: GoPtr<FlowType>): bool {
   return receiver?.t === undefined;
 }
 
+const flowLoopNodeKeys = new WeakMap<FlowNode, int>();
+let nextFlowLoopNodeKey = 1 as int;
+
+function getFlowLoopKey(flow: GoPtr<FlowNode>, refKey: CacheHashKey): FlowLoopKey {
+  let flowKey = flowLoopNodeKeys.get(flow!);
+  if (flowKey === undefined) {
+    flowKey = nextFlowLoopNodeKey;
+    nextFlowLoopNodeKey = (nextFlowLoopNodeKey + 1) as int;
+    flowLoopNodeKeys.set(flow!, flowKey);
+  }
+  return `${flowKey}:${refKey.String()}` as unknown as FlowLoopKey;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.newFlowType","kind":"method","status":"implemented","sigHash":"83cfb5b6741c497ac5c9162a9bd2812937af41ff5d7c80fa36e2dd9c785974d1","bodyHash":"88de6537352db89ace11ef3a3204b8c72d272c03765bc6602a80b3f598f1fc72"}
  *
@@ -140,7 +153,7 @@ export function Checker_newFlowType(receiver: GoPtr<Checker>, t: GoPtr<Type>, in
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::SharedFlow","kind":"type","status":"stub","sigHash":"787b3fcb7e50568b7942ae6dcca6257ab12f9ced5f9cde63f334523932b72995","bodyHash":"99caec8338f5898c9c150c692974a1276a97dc9cde23cb72bce2ef586b6d8aa4"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::SharedFlow","kind":"type","status":"implemented","sigHash":"787b3fcb7e50568b7942ae6dcca6257ab12f9ced5f9cde63f334523932b72995","bodyHash":"99caec8338f5898c9c150c692974a1276a97dc9cde23cb72bce2ef586b6d8aa4"}
  *
  * Go source:
  * SharedFlow struct {
@@ -154,7 +167,7 @@ export interface SharedFlow {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowState","kind":"type","status":"stub","sigHash":"46df3c12b9f8fde1d4d141ef6bbc3c0f644f3dbeaa603ae02f171ee45e35f821","bodyHash":"eb27780cc8668408cbb7dc110659c02ae81fc931fe46785439856c79b8056950"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowState","kind":"type","status":"implemented","sigHash":"46df3c12b9f8fde1d4d141ef6bbc3c0f644f3dbeaa603ae02f171ee45e35f821","bodyHash":"eb27780cc8668408cbb7dc110659c02ae81fc931fe46785439856c79b8056950"}
  *
  * Go source:
  * FlowState struct {
@@ -495,7 +508,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         continue;
       }
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
-      f!.reduceLabels = [...f!.reduceLabels, Node_AsFlowReduceLabelData(currentFlow!.Node)];
+      f!.reduceLabels = [...(f!.reduceLabels ?? []), Node_AsFlowReduceLabelData(currentFlow!.Node)];
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
       f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
     } else if ((flags & FlowFlagsStart) !== 0) {
@@ -538,11 +551,11 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
  * 	return flow.Antecedents
  * }
  */
-export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoSlice<GoPtr<FlowReduceLabelData>>): GoPtr<FlowList> {
-  let i = reduceLabels.length;
+export function getBranchLabelAntecedents(flow: GoPtr<FlowNode>, reduceLabels: GoPtr<GoSlice<GoPtr<FlowReduceLabelData>>>): GoPtr<FlowList> {
+  let i = reduceLabels?.length ?? 0;
   while (i !== 0) {
     i--;
-    const data = reduceLabels[i];
+    const data = reduceLabels![i];
     if (data!.Target === flow) {
       return data!.Antecedents;
     }
@@ -1434,16 +1447,51 @@ export function Checker_narrowTypeByTypeof(receiver: GoPtr<Checker>, f: GoPtr<Fl
  * 	"function":  TypeFactsTypeofNEFunction,
  * }
  */
-export const typeofNEFacts: GoMap<string, TypeFacts> = new Map<string, TypeFacts>([
-  ["string", TypeFactsTypeofNEString],
-  ["number", TypeFactsTypeofNENumber],
-  ["bigint", TypeFactsTypeofNEBigInt],
-  ["boolean", TypeFactsTypeofNEBoolean],
-  ["symbol", TypeFactsTypeofNESymbol],
-  ["undefined", TypeFactsNEUndefined],
-  ["object", TypeFactsTypeofNEObject],
-  ["function", TypeFactsTypeofNEFunction],
-]);
+class LazyTypeofNEFacts extends Map<string, TypeFacts> {
+  private initialized = false;
+
+  private ensureInitialized(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+    this.set("string", TypeFactsTypeofNEString);
+    this.set("number", TypeFactsTypeofNENumber);
+    this.set("bigint", TypeFactsTypeofNEBigInt);
+    this.set("boolean", TypeFactsTypeofNEBoolean);
+    this.set("symbol", TypeFactsTypeofNESymbol);
+    this.set("undefined", TypeFactsNEUndefined);
+    this.set("object", TypeFactsTypeofNEObject);
+    this.set("function", TypeFactsTypeofNEFunction);
+  }
+
+  override get(key: string): TypeFacts | undefined {
+    this.ensureInitialized();
+    return super.get(key);
+  }
+
+  override has(key: string): boolean {
+    this.ensureInitialized();
+    return super.has(key);
+  }
+
+  override keys(): MapIterator<string> {
+    this.ensureInitialized();
+    return super.keys();
+  }
+
+  override entries(): MapIterator<[string, TypeFacts]> {
+    this.ensureInitialized();
+    return super.entries();
+  }
+
+  override [Symbol.iterator](): MapIterator<[string, TypeFacts]> {
+    this.ensureInitialized();
+    return super[Symbol.iterator]();
+  }
+}
+
+export const typeofNEFacts: GoMap<string, TypeFacts> = new LazyTypeofNEFacts();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.narrowTypeByLiteralExpression","kind":"method","status":"implemented","sigHash":"21f112067eb9ee2d1c20d821f0c06352592156aef66b408a5ee1d5afe6cf4ce3","bodyHash":"2af8f66909bca82bc04efb990224cf0b49b9bbb9aceb5c13febd5ee0024e9f5c"}
@@ -2926,7 +2974,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     // No cache key is generated when binding patterns are in unnarrowable situations
     return { t: f!.declaredType, incomplete: false };
   }
-  const key: FlowLoopKey = { flowNode: flow, refKey: f!.refKey };
+  const key = getFlowLoopKey(flow, f!.refKey);
   // If we have previously computed the control flow type for the reference at
   // this flow loop junction, return the cached type.
   const cached = receiver!.flowLoopCache.get(key);
@@ -2941,7 +2989,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
     }
   }
   // Add the flow loop junction and reference to the in-process stack and analyze each antecedent code path.
-  const antecedentTypes: GoSlice<GoPtr<Type>> = [];
+  let antecedentTypes: GoSlice<GoPtr<Type>> = [];
   let subtypeReduction = false;
   let firstAntecedentType: FlowType = { t: undefined, incomplete: false };
   let firstAntecedentSeen = false;
@@ -2970,7 +3018,7 @@ export function Checker_getTypeAtFlowLoopLabel(receiver: GoPtr<Checker>, f: GoPt
         return { t: cachedAfter, incomplete: false };
       }
     }
-    AppendIfUnique(antecedentTypes, flowType.t);
+    antecedentTypes = AppendIfUnique(antecedentTypes, flowType.t);
     // If an antecedent type is not a subset of the declared type, we need to perform subtype reduction.
     if (!Checker_isTypeSubsetOf(receiver, flowType.t, f!.initialType)) {
       subtypeReduction = true;
@@ -5538,6 +5586,7 @@ export function Checker_isReachableFlowNodeWorker(receiver: GoPtr<Checker>, f: G
       flow = flow!.Antecedent!;
     } else if (flags & FlowFlagsReduceLabel) {
       receiver!.lastFlowNode = undefined;
+      f!.reduceLabels ??= [];
       f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isReachableFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();
@@ -5666,6 +5715,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
     } else if (flags & FlowFlagsLoopLabel) {
       flow = flow!.Antecedents!.Flow!;
     } else if (flags & FlowFlagsReduceLabel) {
+      f!.reduceLabels ??= [];
       f!.reduceLabels.push(Node_AsFlowReduceLabelData(flow!.Node)!);
       const result = Checker_isPostSuperFlowNodeWorker(receiver, f, flow!.Antecedent!, false);
       f!.reduceLabels.pop();

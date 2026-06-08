@@ -557,7 +557,7 @@ export function affectedFilesHandler_handleDtsMayChangeOfAffectedFile(receiver: 
           continue;
         }
         if ((aliased!.Flags & SymbolFlagsConstEnum) !== 0) {
-          for (const d of aliased!.Declarations) {
+          for (const d of aliased!.Declarations ?? []) {
             if (GetSourceFileOfNode(d) === affectedFile) {
               invalidateJsFiles = true;
               break outer;

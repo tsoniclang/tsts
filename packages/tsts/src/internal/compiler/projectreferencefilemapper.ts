@@ -117,13 +117,13 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
     return [];
   }
   const refs = SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile);
-  const ok = receiver!.referencesInConfigFile.has(refs);
+  const ok = receiver!.referencesInConfigFile?.has(refs) ?? false;
   let result: GoSlice<GoPtr<ParsedCommandLine>> = [];
   if (ok) {
     const refPaths = receiver!.referencesInConfigFile.get(refs)!;
     result = [];
     for (const refPath of refPaths) {
-      const refConfig = receiver!.configToProjectReference.get(refPath);
+      const refConfig = receiver!.configToProjectReference?.get(refPath);
       result.push(refConfig);
     }
   }
@@ -139,7 +139,7 @@ export function projectReferenceFileMapper_getResolvedProjectReferences(receiver
  * }
  */
 export function projectReferenceFileMapper_getProjectReferenceFromSource(receiver: GoPtr<projectReferenceFileMapper>, path: Path): GoPtr<SourceOutputAndProjectReference> {
-  return receiver!.sourceToProjectReference.get(path);
+  return receiver!.sourceToProjectReference?.get(path);
 }
 
 /**
@@ -151,7 +151,7 @@ export function projectReferenceFileMapper_getProjectReferenceFromSource(receive
  * }
  */
 export function projectReferenceFileMapper_getProjectReferenceFromOutputDts(receiver: GoPtr<projectReferenceFileMapper>, path: Path): GoPtr<SourceOutputAndProjectReference> {
-  return receiver!.outputDtsToProjectReference.get(path);
+  return receiver!.outputDtsToProjectReference?.get(path);
 }
 
 /**
@@ -253,8 +253,8 @@ export function projectReferenceFileMapper_getRedirectForResolution(receiver: Go
  * }
  */
 export function projectReferenceFileMapper_getResolvedReferenceFor(receiver: GoPtr<projectReferenceFileMapper>, path: Path): [GoPtr<ParsedCommandLine>, bool] {
-  const config = receiver!.configToProjectReference.get(path);
-  const ok = receiver!.configToProjectReference.has(path);
+  const config = receiver!.configToProjectReference?.get(path);
+  const ok = receiver!.configToProjectReference?.has(path) ?? false;
   return [config, ok];
 }
 
@@ -278,9 +278,9 @@ export function projectReferenceFileMapper_rangeResolvedProjectReference(receive
   if (receiver!.opts.Config!.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile.size);
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0);
   Set_Add(seenRef, SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile));
-  const refs = receiver!.referencesInConfigFile.get(SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile)) ?? [];
+  const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(receiver!.opts.Config!.ConfigFile!.SourceFile)) ?? [];
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
 
@@ -315,11 +315,11 @@ export function projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver
     if (!Set_AddIfAbsent(seenRef as GoPtr<Set<Path>>, path)) {
       continue;
     }
-    const config = receiver!.configToProjectReference.get(path);
+    const config = receiver!.configToProjectReference?.get(path);
     if (!f(path, config, parent, index)) {
       return false;
     }
-    if (!projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, receiver!.referencesInConfigFile.get(path) ?? [], f, config, seenRef)) {
+    if (!projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, receiver!.referencesInConfigFile?.get(path) ?? [], f, config, seenRef)) {
       return false;
     }
   }
@@ -347,9 +347,9 @@ export function projectReferenceFileMapper_rangeResolvedProjectReferenceInChildC
   if (childConfig === undefined || childConfig.ConfigFile === undefined) {
     return false;
   }
-  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile.size);
+  const seenRef = NewSetWithSizeHint<Path>(receiver!.referencesInConfigFile?.size ?? 0);
   Set_Add(seenRef, SourceFile_Path(childConfig.ConfigFile!.SourceFile));
-  const refs = receiver!.referencesInConfigFile.get(SourceFile_Path(childConfig.ConfigFile!.SourceFile)) ?? [];
+  const refs = receiver!.referencesInConfigFile?.get(SourceFile_Path(childConfig.ConfigFile!.SourceFile)) ?? [];
   return projectReferenceFileMapper_rangeResolvedReferenceWorker(receiver, refs, f, receiver!.opts.Config, seenRef);
 }
 

@@ -69,9 +69,9 @@ export function EqualFunc<K, V1, V2>(
 
 // Keys returns an iterator over keys in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Keys<K, V>(m: GoMap<K, V>): GoSeq<K> {
+export function Keys<K, V>(m: GoMap<K, V> | undefined): GoSeq<K> {
   return (yieldValue: (value: K) => bool): void => {
-    for (const k of m.keys()) {
+    for (const k of (m ?? new globalThis.Map<K, V>()).keys()) {
       if (!yieldValue(k)) {
         return;
       }
@@ -81,9 +81,9 @@ export function Keys<K, V>(m: GoMap<K, V>): GoSeq<K> {
 
 // Values returns an iterator over values in m. The iteration order is not
 // specified and is not guaranteed to be the same from one call to the next.
-export function Values<K, V>(m: GoMap<K, V>): GoSeq<V> {
+export function Values<K, V>(m: GoMap<K, V> | undefined): GoSeq<V> {
   return (yieldValue: (value: V) => bool): void => {
-    for (const v of m.values()) {
+    for (const v of (m ?? new globalThis.Map<K, V>()).values()) {
       if (!yieldValue(v)) {
         return;
       }

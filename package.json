@@ -23,6 +23,8 @@
     "porter:diagnostics": "node packages/tsts/tools/porter/porter.mjs diagnostics",
     "porter:skeleton-check": "node packages/tsts/tools/porter/porter.mjs skeleton-check",
     "porter:test": "node --test packages/tsts/tools/porter/*.test.mjs",
+    "bundled:generate": "node packages/tsts/tools/bundled/generate-bundled.mjs --write",
+    "bundled:check": "node packages/tsts/tools/bundled/generate-bundled.mjs --check",
     "status": "git status --short --branch"
   },
   "devDependencies": {

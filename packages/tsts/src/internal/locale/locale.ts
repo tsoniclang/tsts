@@ -2,6 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { Context } from "../../go/context.js";
 import { WithValue } from "../../go/context.js";
 import type { Tag } from "../../go/golang.org/x/text/language.js";
+import { Und } from "../../go/golang.org/x/text/language.js";
 import { Parse as language_Parse } from "../../go/golang.org/x/text/language.js";
 
 /**
@@ -26,7 +27,7 @@ export type Locale = Tag;
  * Go source:
  * var Default Locale
  */
-export let Default: Locale = undefined as never;
+export let Default: Locale = Und as Locale;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/locale/locale.go::func::WithLocale","kind":"func","status":"implemented","sigHash":"98bcaed9c2841ab61a5aaab413b53f0aeefdf075c7be964fdfd3b6b17e8083ca","bodyHash":"e860ac1eb2433526b0d38fb21a8ddb065c6c90ec58bbbb08949a4e2035565a91"}

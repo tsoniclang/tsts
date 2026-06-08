@@ -2,12 +2,12 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../../go/compat.js";
 import type { ModifierList, Node, NodeList, NodeVisitor } from "../../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_Modifiers, Node_Name } from "../../ast/spine.js";
-import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
+import { Node_Body, Node_ParameterList, Node_Parameters, Node_StatementList, NodeFactory_UpdateArrowFunction, NodeFactory_UpdateBlock, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateFunctionExpression, NodeFactory_UpdateGetAccessorDeclaration, NodeFactory_UpdateMethodDeclaration, NodeFactory_UpdateReturnStatement, NodeFactory_UpdateSetAccessorDeclaration, NodeFactory_UpdateYieldExpression } from "../../ast/ast.js";
 import { AsSourceFile } from "../../ast/ast.js";
 import type { SourceFile } from "../../ast/ast.js";
 import type { AwaitExpression, ForInOrOfStatement, GetAccessorDeclaration, LabeledStatement, ReturnStatement, SetAccessorDeclaration, YieldExpression } from "../../ast/generated/data.js";
 import type { Expression as Expression_9ab73856 } from "../../ast/generated/unions.js";
-import { AsArrowFunction, AsAwaitExpression, AsConstructorDeclaration, AsForInOrOfStatement, AsFunctionDeclaration, AsFunctionExpression, AsGetAccessorDeclaration, AsLabeledStatement, AsMethodDeclaration, AsParameterDeclaration, AsReturnStatement, AsSetAccessorDeclaration, AsYieldExpression } from "../../ast/generated/casts.js";
+import { AsArrowFunction, AsAwaitExpression, AsBlock, AsConstructorDeclaration, AsForInOrOfStatement, AsFunctionDeclaration, AsFunctionExpression, AsGetAccessorDeclaration, AsLabeledStatement, AsMethodDeclaration, AsParameterDeclaration, AsReturnStatement, AsSetAccessorDeclaration, AsYieldExpression } from "../../ast/generated/casts.js";
 import { KindArrowFunction, KindAsyncKeyword, KindAsteriskToken, KindAwaitExpression, KindClassDeclaration, KindClassExpression, KindConstructor, KindDoStatement, KindExclamationToken, KindFalseKeyword, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindLabeledStatement, KindMethodDeclaration, KindReturnStatement, KindSetAccessor, KindSourceFile, KindTrueKeyword, KindWhileStatement, KindYieldExpression, KindAmpersandAmpersandToken } from "../../ast/generated/kinds.js";
 import { IsBlock, IsIdentifier } from "../../ast/generated/predicates.js";
 import { NodeFlagsNone } from "../../ast/generated/flags.js";
@@ -17,16 +17,16 @@ import { Node_SubtreeFacts } from "../../ast/spine.js";
 import { FunctionFlagsAsync, FunctionFlagsGenerator, GetFunctionFlags } from "../../ast/functionflags.js";
 import type { FunctionFlags } from "../../ast/functionflags.js";
 import type { CompilerOptions } from "../../core/compileroptions.js";
-import { NodeFactory_NewAssignmentExpression, NodeFactory_NewAwaitHelper, NodeFactory_NewAsyncValuesHelper, NodeFactory_NewAsyncDelegatorHelper, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewGeneratedNameForNodeEx, NodeFactory_NewTempVariable, NodeFactory_NewUniqueName, NodeFactory_InlineExpressions, NodeFactory_RestoreEnclosingLabel, NodeFactory_CreateForOfBindingStatement, NodeFactory_NewVoidZeroExpression, NodeFactory_NewFunctionCallCall } from "../../printer/factory.js";
+import { NodeFactory_NewAssignmentExpression, NodeFactory_NewAwaitHelper, NodeFactory_NewAsyncValuesHelper, NodeFactory_NewAsyncDelegatorHelper, NodeFactory_NewAsyncGeneratorHelper, NodeFactory_NewGeneratedNameForNode, NodeFactory_NewGeneratedNameForNodeEx, NodeFactory_NewTempVariable, NodeFactory_NewUniqueName, NodeFactory_NewUniqueNameEx, NodeFactory_InlineExpressions, NodeFactory_RestoreEnclosingLabel, NodeFactory_CreateForOfBindingStatement, NodeFactory_NewVoidZeroExpression, NodeFactory_NewFunctionCallCall } from "../../printer/factory.js";
 import type { AutoGenerateOptions } from "../../printer/emitcontext.js";
-import { EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AddInitializationStatement, EmitContext_AddVariableDeclaration, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_VisitFunctionBody, EmitContext_VisitParameters } from "../../printer/emitcontext.js";
+import { EmitContext_AddEmitFlags, EmitContext_AddEmitHelper, EmitContext_AddInitializationStatement, EmitContext_AddVariableDeclaration, EmitContext_EndAndMergeVariableEnvironmentList, EmitContext_NewNodeVisitor, EmitContext_ReadEmitHelpers, EmitContext_SetOriginal, EmitContext_SetSourceMapRange, EmitContext_StartVariableEnvironment, EmitContext_VisitFunctionBody, EmitContext_VisitParameters } from "../../printer/emitcontext.js";
 import { EFNoTokenTrailingSourceMaps, EFSingleLine } from "../../printer/emitflags.js";
-import { GeneratedIdentifierFlagsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
+import { GeneratedIdentifierFlagsFileLevel, GeneratedIdentifierFlagsOptimistic, GeneratedIdentifierFlagsReservedInNestedScopes } from "../../printer/generatedidentifierflags.js";
 import { AdvancedAsyncSuperHelper, AsyncSuperHelper } from "../../printer/helpers.js";
 import type { TransformOptions } from "../chain.js";
 import type { Transformer } from "../transformer.js";
 import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransformer, Transformer_Visitor } from "../transformer.js";
-import { NodeVisitor_VisitEachChild, NodeVisitor_VisitEmbeddedStatement, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode } from "../../ast/visitor.js";
+import { NodeVisitor_VisitEachChild, NodeVisitor_VisitEmbeddedStatement, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../../ast/visitor.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
 import { superAccessState_initSuperAccessVisitor, superAccessState_trackSuperAccess, superAccessState_substituteSuperAccessesInBody, superAccessState_createSuperAccessVariableStatement } from "./utilities.js";
 import type { superAccessState } from "./utilities.js";
@@ -1704,7 +1704,7 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionBody","kind":"method","status":"stub","sigHash":"992b27dd2a7dd18af05dab61a71b0acb1e31eb02068b6f3920758ce67dfaf1c3","bodyHash":"11c6e177b6d679e748eeba4186d5694950740b5e9c548883ab3a446b85f3c716"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionBody","kind":"method","status":"implemented","sigHash":"992b27dd2a7dd18af05dab61a71b0acb1e31eb02068b6f3920758ce67dfaf1c3","bodyHash":"11c6e177b6d679e748eeba4186d5694950740b5e9c548883ab3a446b85f3c716"}
  *
  * Go source:
  * func (tx *forawaitTransformer) transformAsyncGeneratorFunctionBody(node *ast.Node) *ast.Node {
@@ -1805,5 +1805,107 @@ export function forawaitTransformer_transformAsyncGeneratorFunctionParameterList
  * }
  */
 export function forawaitTransformer_transformAsyncGeneratorFunctionBody(receiver: GoPtr<forawaitTransformer>, node: GoPtr<Node>): GoPtr<Node> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/transformers/estransforms/forawait.go::method::forawaitTransformer.transformAsyncGeneratorFunctionBody");
+  const printerFactory = Transformer_Factory(receiver!.__tsgoEmbedded0!);
+  const factory = printerFactory!.__tsgoEmbedded0!;
+  const emitContext = Transformer_EmitContext(receiver!.__tsgoEmbedded0!);
+  const visitor = Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor;
+  let innerParameters: GoPtr<NodeList> = undefined;
+  if (!isSimpleParameterList(Node_Parameters(node))) {
+    innerParameters = EmitContext_VisitParameters(emitContext, Node_ParameterList(node), visitor);
+  }
+
+  const superState = receiver!.__tsgoEmbedded1!;
+  const savedCapturedSuperProperties = superState.capturedSuperProperties;
+  const savedHasSuperElementAccess = superState.hasSuperElementAccess;
+  const savedHasSuperPropertyAssignment = superState.hasSuperPropertyAssignment;
+  const savedSuperBinding = superState.superBinding;
+  const savedSuperIndexBinding = superState.superIndexBinding;
+  superState.capturedSuperProperties = NewOrderedSetWithSizeHint<string>(0);
+  superState.hasSuperElementAccess = false;
+  superState.hasSuperPropertyAssignment = false;
+  superState.superBinding = NodeFactory_NewUniqueNameEx(
+    printerFactory,
+    "_super",
+    { Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel } as AutoGenerateOptions,
+  );
+  superState.superIndexBinding = NodeFactory_NewUniqueNameEx(
+    printerFactory,
+    "_superIndex",
+    { Flags: GeneratedIdentifierFlagsOptimistic | GeneratedIdentifierFlagsFileLevel } as AutoGenerateOptions,
+  );
+
+  const body = AsBlock(Node_Body(node))!;
+  let asyncBody = NodeFactory_UpdateBlock(
+    factory,
+    body,
+    NodeVisitor_VisitNodes(visitor, Node_StatementList(body) as GoPtr<NodeList>) as unknown as GoPtr<never>,
+    body.MultiLine,
+  ) as unknown as GoPtr<Node>;
+  let asyncBodyBlock = AsBlock(asyncBody)!;
+  asyncBody = NodeFactory_UpdateBlock(
+    factory,
+    asyncBodyBlock,
+    EmitContext_EndAndMergeVariableEnvironmentList(emitContext, Node_StatementList(asyncBody) as GoPtr<NodeList>) as unknown as GoPtr<never>,
+    asyncBodyBlock.MultiLine,
+  ) as unknown as GoPtr<Node>;
+
+  const emitSuperHelpers = OrderedSet_Size(superState.capturedSuperProperties) > 0 || superState.hasSuperElementAccess;
+  if (emitSuperHelpers) {
+    asyncBody = superAccessState_substituteSuperAccessesInBody(superState, asyncBody);
+  }
+
+  const innerParams = innerParameters ?? NodeFactory_NewNodeList(factory, []) as GoPtr<NodeList>;
+  const name = Node_Name(node) !== undefined ? NodeFactory_NewGeneratedNameForNode(printerFactory, Node_Name(node)) : undefined;
+  const generatorFunc = NewFunctionExpression(
+    factory,
+    undefined,
+    NewToken(factory, KindAsteriskToken) as unknown as GoPtr<never>,
+    name as unknown as GoPtr<never>,
+    undefined,
+    innerParams as unknown as GoPtr<never>,
+    undefined,
+    undefined,
+    asyncBody as unknown as GoPtr<never>,
+  );
+
+  const returnStatement = NewReturnStatement(
+    factory,
+    NodeFactory_NewAsyncGeneratorHelper(
+      printerFactory,
+      generatorFunc as unknown as GoPtr<never>,
+      (receiver!.forAwaitHierarchyFacts & forAwaitHierarchyFactsHasLexicalThis) !== 0,
+    ) as unknown as GoPtr<never>,
+  );
+
+  EmitContext_StartVariableEnvironment(emitContext);
+  if (emitSuperHelpers && OrderedSet_Size(superState.capturedSuperProperties) > 0) {
+    EmitContext_AddInitializationStatement(emitContext, superAccessState_createSuperAccessVariableStatement(superState));
+  }
+
+  const outerStatements: GoPtr<Node>[] = [returnStatement];
+  const block = NodeFactory_UpdateBlock(
+    factory,
+    body,
+    EmitContext_EndAndMergeVariableEnvironmentList(
+      emitContext,
+      NodeFactory_NewNodeList(factory, outerStatements) as GoPtr<NodeList>,
+    ) as unknown as GoPtr<never>,
+    body.MultiLine,
+  ) as GoPtr<Node>;
+
+  if (emitSuperHelpers && superState.hasSuperElementAccess) {
+    if (superState.hasSuperPropertyAssignment) {
+      EmitContext_AddEmitHelper(emitContext, block, AdvancedAsyncSuperHelper);
+    } else {
+      EmitContext_AddEmitHelper(emitContext, block, AsyncSuperHelper);
+    }
+  }
+
+  superState.capturedSuperProperties = savedCapturedSuperProperties;
+  superState.hasSuperElementAccess = savedHasSuperElementAccess;
+  superState.hasSuperPropertyAssignment = savedHasSuperPropertyAssignment;
+  superState.superBinding = savedSuperBinding;
+  superState.superIndexBinding = savedSuperIndexBinding;
+
+  return block;
 }

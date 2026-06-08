@@ -60,13 +60,14 @@ const stringToRunes = (s: string): GoSlice<GoRune> => {
  * 	return slice
  * }
  */
-export function Filter<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoSlice<T> {
-  for (let i = 0; i < slice.length; i++) {
-    let value = slice[i]!;
+export function Filter<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSlice<T> {
+  const values = slice ?? [];
+  for (let i = 0; i < values.length; i++) {
+    let value = values[i]!;
     if (!f(value)) {
-      const result = slices.Clone(slice.slice(0, i))!;
-      for (i++; i < slice.length; i++) {
-        value = slice[i]!;
+      const result = slices.Clone(values.slice(0, i))!;
+      for (i++; i < values.length; i++) {
+        value = values[i]!;
         if (f(value)) {
           result.push(value);
         }
@@ -74,7 +75,7 @@ export function Filter<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoSlice<T> {
       return result;
     }
   }
-  return slice;
+  return values;
 }
 
 /**
@@ -93,9 +94,9 @@ export function Filter<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoSlice<T> {
  * 	}
  * }
  */
-export function FilterSeq<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoSeq<T> {
+export function FilterSeq<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T) => bool): GoSeq<T> {
   return (yield_: (value: T) => bool): void => {
-    for (const value of slice) {
+    for (const value of slice ?? []) {
       if (f(value)) {
         if (!yield_(value)) {
           return;
@@ -125,21 +126,22 @@ export function FilterSeq<T>(slice: GoSlice<T>, f: (arg0: T) => bool): GoSeq<T> 
  * 	return slice
  * }
  */
-export function FilterIndex<T>(slice: GoSlice<T>, f: (arg0: T, arg1: int, arg2: GoSlice<T>) => bool): GoSlice<T> {
-  for (let i = 0; i < slice.length; i++) {
-    let value = slice[i]!;
-    if (!f(value, i, slice)) {
-      const result = slices.Clone(slice.slice(0, i))!;
-      for (i++; i < slice.length; i++) {
-        value = slice[i]!;
-        if (f(value, i, slice)) {
+export function FilterIndex<T>(slice: GoPtr<GoSlice<T>>, f: (arg0: T, arg1: int, arg2: GoSlice<T>) => bool): GoSlice<T> {
+  const values = slice ?? [];
+  for (let i = 0; i < values.length; i++) {
+    let value = values[i]!;
+    if (!f(value, i, values)) {
+      const result = slices.Clone(values.slice(0, i))!;
+      for (i++; i < values.length; i++) {
+        value = values[i]!;
+        if (f(value, i, values)) {
           result.push(value);
         }
       }
       return result;
     }
   }
-  return slice;
+  return values;
 }
 
 /**
@@ -428,7 +430,10 @@ export function Same<T>(s1: GoSlice<T>, s2: GoSlice<T>): bool {
  * 	return false
  * }
  */
-export function Some<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
+export function Some<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+  if (slice === undefined) {
+    return false;
+  }
   for (const value of slice) {
     //nolint:modernize
     if (f(value)) {
@@ -451,7 +456,10 @@ export function Some<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
  * 	return true
  * }
  */
-export function Every<T>(slice: GoSlice<T>, f: (arg0: T) => bool): bool {
+export function Every<T>(slice: GoSlice<T> | undefined, f: (arg0: T) => bool): bool {
+  if (slice === undefined) {
+    return true;
+  }
   for (const value of slice) {
     if (!f(value)) {
       return false;
@@ -719,14 +727,16 @@ export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
  * 	return slices.Concat(s1, s2)
  * }
  */
-export function Concatenate<T>(s1: GoSlice<T>, s2: GoSlice<T>): GoSlice<T> {
-  if (s2.length === 0) {
-    return s1;
+export function Concatenate<T>(s1: GoPtr<GoSlice<T>>, s2: GoPtr<GoSlice<T>>): GoSlice<T> {
+  const left = s1 ?? [];
+  const right = s2 ?? [];
+  if (right.length === 0) {
+    return left;
   }
-  if (s1.length === 0) {
-    return s2;
+  if (left.length === 0) {
+    return right;
   }
-  return slices.Concat(s1, s2);
+  return slices.Concat(left, right);
 }
 
 /**

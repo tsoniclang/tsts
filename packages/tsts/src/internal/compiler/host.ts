@@ -9,7 +9,10 @@ import type { ExtendedConfigCache } from "../tsoptions/tsconfigparsing.js";
 import type { Path } from "../tspath/path.js";
 import type { FS as FS_4e804012 } from "../vfs/vfs.js";
 import { From as cachedvfsFrom, FS_as_vfs_FS as cachedvfsAsVfsFS } from "../vfs/cachedvfs/cachedvfs.js";
+import { init as initJSDocParser } from "../parser/jsdoc.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
+
+initJSDocParser();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/host.go::type::CompilerHost","kind":"type","status":"implemented","sigHash":"fe4c3558df3846c8c809f6f754925c2f026a98fccb83de1b54e0df90a3ac9d6b","bodyHash":"319f081bf4446cfb78e78229efac86213d9c967cf1530c9feb54b28489fea241"}

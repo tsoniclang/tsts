@@ -34,7 +34,7 @@ import {
   ShouldTransformImportCall,
   WalkUpParenthesizedExpressions,
 } from "../ast/utilities.js";
-import { NodeDefault_AsNode } from "../ast/spine.js";
+import { NewNodeFactory, NodeDefault_AsNode } from "../ast/spine.js";
 import * as casts from "../ast/generated/casts.js";
 import { IsExportDeclaration, IsImportDeclaration, IsImportEqualsDeclaration, IsExternalModuleReference, IsJSDocImportTag, IsLiteralTypeNode, IsImportTypeNode } from "../ast/generated/predicates.js";
 import { KindStringLiteral, KindJSImportDeclaration } from "../ast/generated/kinds.js";
@@ -481,7 +481,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
     totalFileCount: new Int32Impl(),
     libFileCount: new Int32Impl(),
     factoryMu: new Mutex(),
-    factory: {} as GoUnresolved<"github.com/microsoft/typescript-go/internal/ast.NodeFactory">,
+    factory: NewNodeFactory({}) as unknown as GoUnresolved<"github.com/microsoft/typescript-go/internal/ast.NodeFactory">,
     projectReferenceFileMapper: undefined,
     dtsDirectories: { M: new globalThis.Map() },
     pathForLibFileCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as unknown as SyncMap,
@@ -589,9 +589,30 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
   if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.opts.Config)!.AllowNonTsExtensions) || HasExtension(absPath)) {
     receiver!.rootTasks.push({
       normalizedFilePath: absPath,
+      path: "" as Path_9073472b,
+      file: undefined,
       libFile,
+      redirectedParseTask: undefined,
+      subTasks: [],
+      loaded: false,
+      startedSubTasks: false,
+      isForAutomaticTypeDirective: false as bool,
       includeReason,
-    } as unknown as parseTask);
+      packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+      metadata: {} as SourceFileMetaData,
+      resolutionsInFile: undefined as unknown as ModeAwareCache,
+      resolutionsTrace: [],
+      typeResolutionsInFile: undefined as unknown as ModeAwareCache,
+      typeResolutionsTrace: [],
+      resolutionDiagnostics: [],
+      processingDiagnostics: [],
+      importHelpersImportSpecifier: undefined,
+      jsxRuntimeImportSpecifier: undefined,
+      increaseDepth: false as bool,
+      elideOnDepth: false as bool,
+      loadedTask: undefined,
+      allIncludeReasons: [],
+    });
   }
 }
 
@@ -625,8 +646,30 @@ export function fileLoader_addAutomaticTypeDirectiveTasks(receiver: GoPtr<fileLo
   const containingFileName = CombinePaths(containingDirectory, InferredTypesContainingFile);
   receiver!.rootTasks.push({
     normalizedFilePath: containingFileName,
-    isForAutomaticTypeDirective: true,
-  } as unknown as parseTask);
+    path: "" as Path_9073472b,
+    file: undefined,
+    libFile: undefined,
+    redirectedParseTask: undefined,
+    subTasks: [],
+    loaded: false,
+    startedSubTasks: false,
+    isForAutomaticTypeDirective: true as bool,
+    includeReason: undefined,
+    packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+    metadata: {} as SourceFileMetaData,
+    resolutionsInFile: undefined as unknown as ModeAwareCache,
+    resolutionsTrace: [],
+    typeResolutionsInFile: undefined as unknown as ModeAwareCache,
+    typeResolutionsTrace: [],
+    resolutionDiagnostics: [],
+    processingDiagnostics: [],
+    importHelpersImportSpecifier: undefined,
+    jsxRuntimeImportSpecifier: undefined,
+    increaseDepth: false as bool,
+    elideOnDepth: false as bool,
+    loadedTask: undefined,
+    allIncludeReasons: [],
+  });
 }
 
 /**
@@ -771,6 +814,11 @@ export function fileLoader_addProjectReferenceTasks(receiver: GoPtr<fileLoader>,
   receiver!.projectReferenceFileMapper = {
     opts: receiver!.opts,
     host: receiver!.opts.Host,
+    configToProjectReference: new globalThis.Map(),
+    referencesInConfigFile: new globalThis.Map(),
+    sourceToProjectReference: new globalThis.Map(),
+    outputDtsToProjectReference: new globalThis.Map(),
+    realpathDtsToSource: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() },
   } as unknown as projectReferenceFileMapper;
   const projectReferences = ParsedCommandLine_ResolvedProjectReferencePaths(receiver!.opts.Config);
   if (projectReferences.length === 0) {
@@ -1390,11 +1438,11 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
     const importsStart = moduleNames.length;
 
-    const fileImports = SourceFile_Imports(file);
+    const fileImports = SourceFile_Imports(file) ?? [];
     for (const imp of fileImports) {
       moduleNames.push(imp);
     }
-    for (const imp of file!.ModuleAugmentations) {
+    for (const imp of file!.ModuleAugmentations ?? []) {
       if (imp!.Kind === KindStringLiteral) {
         moduleNames.push(imp);
       }

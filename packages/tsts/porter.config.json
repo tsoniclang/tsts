@@ -24,6 +24,20 @@
   "generatedPolicy": {
     "firstLinePrefix": "// Code generated"
   },
+  "unitPolicies": [
+    {
+      "id": "github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "The JSON-RPC/session API entrypoint depends on internal/api, which is outside the standalone compiler runtime port."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/execute/tsc.go::func::fmtMain",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "fmtMain is the commented formatter command path and depends on internal/format / language-service formatter settings, which are outside the standalone compiler runtime port."
+    }
+  ],
   "authoredFacadeModules": [
     "go/fmt.ts",
     "go/errors.ts",
@@ -53,12 +67,15 @@
     "go/io/fs.ts",
     "go/os.ts",
     "go/runtime.ts",
+    "go/runtime/pprof.ts",
     "go/regexp.ts",
     "go/encoding/base64.ts",
     "go/encoding/json.ts",
     "go/flag.ts",
     "go/github.com/go-json-experiment/json.ts",
     "go/github.com/go-json-experiment/json/jsontext.ts",
+    "go/golang.org/x/term.ts",
+    "go/golang.org/x/text/language.ts",
     "go/github.com/zeebo/xxh3.ts",
     "go/net/url.ts",
     "go/context.ts"
@@ -135,6 +152,16 @@
       "reason": "The LSP command entrypoint must not exist in the active standalone compiler source tree."
     },
     {
+      "match": "packages/tsts/src/cli/**",
+      "category": "public-entrypoint",
+      "reason": "Node executable adapter for the standalone compiler; it delegates to the TS-Go cmd/tsgo main port and has no upstream Go unit."
+    },
+    {
+      "match": "packages/tsts/src/index.ts",
+      "category": "public-entrypoint",
+      "reason": "Package public API barrel for embedding the standalone compiler; it re-exports ported compiler surfaces and has no upstream Go unit."
+    },
+    {
       "match": "packages/tsts/src/internal/ast/generated/**",
       "category": "ast-generated",
       "reason": "Generated AST infrastructure emitted by porter:ast from packages/tsts/schema/tsgo/*; carries @tsgo-generated metadata, not @tsgo-unit."
@@ -143,6 +170,16 @@
       "match": "packages/tsts/src/internal/diagnostics/generated/**",
       "category": "diagnostics-generated",
       "reason": "Generated diagnostic message catalog emitted by porter:diagnostics from the pinned diagnostics_generated.go; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/bundled/*_generated.ts",
+      "category": "bundled-generated",
+      "reason": "Generated bundled library indexes emitted by bundled:generate from TS-Go internal/bundled/libs; carries @tsgo-generated metadata, not @tsgo-unit."
+    },
+    {
+      "match": "packages/tsts/src/internal/bundled/libs/**",
+      "category": "bundled-generated",
+      "reason": "Generated bundled TypeScript lib declarations copied from TS-Go internal/bundled/libs; carries @tsgo-generated metadata, not @tsgo-unit."
     },
     {
       "match": "packages/tsts/src/internal/ast/*_generated.ts",

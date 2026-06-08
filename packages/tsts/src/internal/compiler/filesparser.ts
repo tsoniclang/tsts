@@ -432,8 +432,8 @@ export function parseTask_loadAutomaticTypeDirectives(receiver: GoPtr<parseTask>
   const [toParseTypeRefs, typeResolutionsInFile, typeResolutionsTrace, pDiagnostics] = fileLoader_resolveAutomaticTypeDirectives(loader, receiver!.normalizedFilePath);
   receiver!.typeResolutionsInFile = typeResolutionsInFile;
   receiver!.typeResolutionsTrace = typeResolutionsTrace;
-  receiver!.processingDiagnostics = [...receiver!.processingDiagnostics, ...pDiagnostics];
-  for (const typeResolution of toParseTypeRefs) {
+  receiver!.processingDiagnostics = [...(receiver!.processingDiagnostics ?? []), ...(pDiagnostics ?? [])];
+  for (const typeResolution of toParseTypeRefs ?? []) {
     parseTask_addSubTask(receiver, typeResolution, undefined);
   }
 }
@@ -488,7 +488,7 @@ export function parseTask_addSubTask(receiver: GoPtr<parseTask>, ref: resolvedRe
     startedSubTasks: false,
     isForAutomaticTypeDirective: false,
     includeReason: ref.includeReason,
-    packageId: ref.packageId,
+    packageId: ref.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
     metadata: {} as SourceFileMetaData,
     resolutionsInFile: undefined as unknown as ModeAwareCache,
     resolutionsTrace: [],
@@ -710,8 +710,10 @@ export function filesParser_start(receiver: GoPtr<filesParser>, loader: GoPtr<fi
       }
 
       // Propagate packageId to data if we have one and data doesn't yet
-      if (data!.packageId.Name === "" && capturedTask.packageId.Name !== "") {
-        data!.packageId = capturedTask.packageId;
+      const dataPackageId = data!.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
+      const taskPackageId = capturedTask.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
+      if (dataPackageId.Name === "" && taskPackageId.Name !== "") {
+        data!.packageId = taskPackageId;
       }
 
       const currentDepth = IfElse(capturedTask.increaseDepth, depth + 1, depth);
@@ -1091,8 +1093,9 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
       }
 
       let file = task!.file;
-      if (packageIdToSourceFile !== undefined && data!.packageId.Name !== "") {
-        const packageIdFile = packageIdToSourceFile.get(data!.packageId);
+      const dataPackageId = data!.packageId ?? { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
+      if (packageIdToSourceFile !== undefined && dataPackageId.Name !== "") {
+        const packageIdFile = packageIdToSourceFile.get(dataPackageId);
         if (packageIdFile !== undefined) {
           if (file !== undefined) {
             duplicateSourceFiles = [...duplicateSourceFiles, {
@@ -1118,7 +1121,7 @@ export function filesParser_getProcessedFiles(receiver: GoPtr<filesParser>, load
           }
           continue;
         } else if (file !== undefined) {
-          packageIdToSourceFile.set(data!.packageId, file);
+          packageIdToSourceFile.set(dataPackageId, file);
         }
       }
 

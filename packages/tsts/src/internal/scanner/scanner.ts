@@ -216,18 +216,64 @@ import {
 // sizes returned by utf8.* / strings.* match the byte-offset slicing semantics.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
+const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
+
+const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
+  const cached = utf8ByteInfoCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= utf8.RuneSelf) {
+      ascii = false;
+      break;
+    }
+  }
+  const info: Utf8ByteInfo = {
+    ascii,
+    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
+  };
+  if (s.length >= 4096) {
+    utf8ByteInfoCache.set(s, info);
+  }
+  return info;
+};
 
 const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
+  const info = getUtf8ByteInfo(s);
+  if (info.ascii) {
+    return s.slice(start, end);
+  }
+  return utf8Decoder.decode(info.bytes.subarray(start, end));
 };
 
 const byteAt = (s: string, i: int): int => {
-  const bytes = utf8Encoder.encode(s);
-  return bytes[i]!;
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.charCodeAt(i) : info.bytes[i]!;
 };
 
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
+const byteLen = (s: string): int => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.length : info.bytes.length;
+};
+
+const decodeRuneInStringAt = (s: string, pos: int): [GoRune, int] => {
+  const info = getUtf8ByteInfo(s);
+  if (info.ascii) {
+    return pos >= s.length ? [utf8.RuneError, 0] : [s.charCodeAt(pos), 1 as int];
+  }
+  return utf8.DecodeRuneInBytesAt(info.bytes, pos);
+};
+
+const decodeLastRuneInStringBefore = (s: string, end: int): [GoRune, int] => {
+  const info = getUtf8ByteInfo(s);
+  if (info.ascii) {
+    return end <= 0 ? [utf8.RuneError, 0] : [s.charCodeAt(end - 1), 1 as int];
+  }
+  return utf8.DecodeLastRuneInBytesBefore(info.bytes, end);
+};
 
 // stringFromRune reproduces Go's `string(rune)`: the rune is UTF-8 encoded.
 const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r);
@@ -1370,7 +1416,7 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
  */
 export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
   const s = receiver!;
-  const [r, size] = utf8.DecodeRuneInString(byteSlice(s.text, s.__tsgoEmbedded0.pos));
+  const [r, size] = decodeRuneInStringAt(s.text, s.__tsgoEmbedded0.pos);
   if (size > 1) {
     s.containsNonASCII = true;
   }
@@ -2917,7 +2963,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
       }
       // Whitespaces and semicolons at the end are not likely to be part of the regex
       while (p > startOfRegExpBody) {
-        const [ch, size] = utf8.DecodeLastRuneInString(byteSlice(s.text, 0, p));
+        const [ch, size] = decodeLastRuneInStringBefore(s.text, p);
         if (IsWhiteSpaceLike(ch) || ch === ";".charCodeAt(0)) {
           p -= size;
         } else {
@@ -2930,7 +2976,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
       p++;
       let regExpFlags: regularExpressionFlags = 0;
       while (p < s.end) {
-        const [ch, size] = utf8.DecodeRuneInString(byteSlice(s.text, p));
+        const [ch, size] = decodeRuneInStringAt(s.text, p);
         if (ch === utf8.RuneError || !IsIdentifierPart(ch)) {
           break;
         }
@@ -3386,9 +3432,9 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
         break;
       } else if (ch === "@".charCodeAt(0) && st.pos >= 0) {
         // @ doesn't start a new tag inside ``, and elsewhere, only after whitespace and before identifier
-        const [previous] = utf8.DecodeLastRuneInString(byteSlice(s.text, 0, st.pos));
+        const [previous] = decodeLastRuneInStringBefore(s.text, st.pos);
         if (IsWhiteSpaceSingleLine(previous)) {
-          const [next] = utf8.DecodeRuneInString(byteSlice(s.text, st.pos + size));
+          const [next] = decodeRuneInStringAt(s.text, st.pos + size);
           if (IsIdentifierStart(next)) {
             break;
           }
@@ -3423,7 +3469,7 @@ export function Scanner_CanFollowJSDocAt(receiver: GoPtr<Scanner>): bool {
   if (st.pos >= byteLen(s.text)) {
     return true;
   }
-  const [ch] = utf8.DecodeRuneInString(byteSlice(s.text, st.pos));
+  const [ch] = decodeRuneInStringAt(s.text, st.pos);
   return IsIdentifierStart(ch) || IsWhiteSpaceSingleLine(ch) || IsLineBreak(ch);
 }
 
@@ -5492,7 +5538,7 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
   let canConsumeStar = false;
   // Keep in sync with couldStartTrivia
   for (;;) {
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+    const [ch, size] = decodeRuneInStringAt(text, pos);
     switch (ch) {
       case "\r".charCodeAt(0): {
         if (pos + 1 < textLen && byteAt(text, pos + 1) === "\n".charCodeAt(0)) {
@@ -5528,7 +5574,7 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
           if (byteAt(text, pos + 1) === "/".charCodeAt(0)) {
             pos += 2;
             while (pos < textLen) {
-              const [ch2, size2] = utf8.DecodeRuneInString(byteSlice(text, pos));
+              const [ch2, size2] = decodeRuneInStringAt(text, pos);
               if (IsLineBreak(ch2)) {
                 break;
               }
@@ -5544,7 +5590,7 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
                 pos += 2;
                 break;
               }
-              const [, size2] = utf8.DecodeRuneInString(byteSlice(text, pos));
+              const [, size2] = decodeRuneInStringAt(text, pos);
               pos += size2;
             }
             canConsumeStar = false;
@@ -5642,7 +5688,7 @@ export function isConflictMarkerTrivia(text: string, pos: int): bool {
   // Conflict markers must be at the start of a line.
   let prev: GoRune = 0;
   if (pos >= 2) {
-    [prev] = utf8.DecodeLastRuneInString(byteSlice(text, 0, pos - 2));
+    [prev] = decodeLastRuneInStringBefore(text, pos - 2);
   }
   if (pos === 0 || IsLineBreak(prev) || (pos >= 1 && IsLineBreak(byteAt(text, pos - 1)))) {
     const ch = byteAt(text, pos);
@@ -5704,13 +5750,13 @@ export function scanConflictMarkerTrivia(
   if (reportError !== undefined) {
     reportError(Merge_conflict_marker_encountered, pos, mergeConflictMarkerLength);
   }
-  let [ch, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+  let [ch, size] = decodeRuneInStringAt(text, pos);
   const length = byteLen(text);
 
   if (ch === "<".charCodeAt(0) || ch === ">".charCodeAt(0)) {
     while (pos < length && !IsLineBreak(ch)) {
       pos += size;
-      [ch, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+      [ch, size] = decodeRuneInStringAt(text, pos);
     }
   } else {
     if (ch !== "|".charCodeAt(0) && ch !== "=".charCodeAt(0)) {
@@ -5778,7 +5824,7 @@ export function isShebangTrivia(text: string, pos: int): bool {
 export function scanShebangTrivia(text: string, pos: int): int {
   pos += 2;
   while (pos < byteLen(text)) {
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+    const [ch, size] = decodeRuneInStringAt(text, pos);
     if (IsLineBreak(ch)) {
       break;
     }
@@ -6227,7 +6273,7 @@ export function GetECMAEndLinePosition(sourceFile: GoPtr<SourceFile>, line: int)
   const like = sourceFileLikeFromSourceFile(sourceFile);
   let pos = GetECMALineStarts(like)[line]! as int;
   for (;;) {
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(SourceFile_Text(sourceFile), pos));
+    const [ch, size] = decodeRuneInStringAt(SourceFile_Text(sourceFile), pos);
     if (size === 0 || IsLineBreak(ch)) {
       return pos - 1;
     }
@@ -6369,7 +6415,7 @@ export function ComputePositionOfLineAndUTF16Character(lineStarts: GoSlice<TextP
       if (utf16Count >= character) {
         break;
       }
-      const [r, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+      const [r, size] = decodeRuneInStringAt(text, pos);
       utf16Count += utf16.RuneLen(r);
       pos += size;
     }
@@ -6551,7 +6597,7 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
       }
     }
     scan: for (; pos >= 0 && pos < byteLen(text); ) {
-      const [ch, size] = utf8.DecodeRuneInString(byteSlice(text, pos));
+      const [ch, size] = decodeRuneInStringAt(text, pos);
       switch (ch) {
         case "\r".charCodeAt(0):
         case "\n".charCodeAt(0): {
@@ -6597,7 +6643,7 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
             pos += 2;
             if (nextChar === "/".charCodeAt(0)) {
               while (pos < byteLen(text)) {
-                const [c, sz] = utf8.DecodeRuneInString(byteSlice(text, pos));
+                const [c, sz] = decodeRuneInStringAt(text, pos);
                 if (IsLineBreak(c)) {
                   hasTrailingNewLine = true;
                   break;
@@ -6606,7 +6652,7 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
               }
             } else {
               while (pos < byteLen(text)) {
-                const [c, sz] = utf8.DecodeRuneInString(byteSlice(text, pos));
+                const [c, sz] = decodeRuneInStringAt(text, pos);
                 if (c === "*".charCodeAt(0) && pos + 1 < byteLen(text) && byteAt(text, pos + 1) === "/".charCodeAt(0)) {
                   pos += 2;
                   break;

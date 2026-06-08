@@ -1,6 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import * as strconv from "../../go/strconv.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import {
   Node_Arguments,
@@ -363,7 +363,6 @@ import {
   GetMembers,
   GetModuleInstanceState,
   GetNameOfDeclaration,
-  GetSymbolTable,
   GetSymbolId,
   HasDynamicName,
   HasSyntacticModifier,
@@ -716,7 +715,10 @@ export function getBinder(): GoPtr<Binder> {
       return b;
     };
   }
-  return binderPool.Get() as Binder;
+  const binder = binderPool.Get() as Binder;
+  binder.classifiableNames = { M: undefined as unknown as GoMap<string, { readonly __tsgoEmpty?: never }> };
+  binder.notConstEnumOnlyModules = { M: undefined as unknown as GoMap<GoPtr<Symbol>, { readonly __tsgoEmpty?: never }> };
+  return binder;
 }
 
 /**
@@ -960,7 +962,7 @@ export function Binder_declareSymbol(receiver: GoPtr<Binder>, symbolTable: Symbo
  */
 export function Binder_declareSymbolEx(receiver: GoPtr<Binder>, symbolTable: SymbolTable, parent: GoPtr<Symbol>, node: GoPtr<Node>, includes: SymbolFlags, excludes: SymbolFlags, isReplaceableByMethod: bool, isComputedName: bool): GoPtr<Symbol> {
   // debug.Assert(isComputedName || !ast.HasDynamicName(node))
-  const isDefaultExport = HasSyntacticModifier(node, ModifierFlagsDefault) || IsExportSpecifier(node) && ModuleExportNameIsDefault(Node_Name(AsExportSpecifier(node)!.name as unknown as Node)!);
+  const isDefaultExport = HasSyntacticModifier(node, ModifierFlagsDefault) || IsExportSpecifier(node) && ModuleExportNameIsDefault(Node_Name(node)!);
   let name: string;
   if (isComputedName) {
     name = InternalSymbolNameComputed;
@@ -2134,7 +2136,7 @@ export function Binder_bindSourceFileIfExternalModule(receiver: GoPtr<Binder>): 
     const fileDecl = Node_DeclarationData(fileNode);
     const originalSymbol = (fileDecl as unknown as { Symbol?: GoPtr<Symbol> })?.Symbol;
     const fileSymbol = Node_Symbol(fileNode);
-    Binder_declareSymbol(receiver, GetSymbolTable(fileSymbol?.Exports), fileSymbol, fileNode, SymbolFlagsProperty, SymbolFlagsAll);
+    Binder_declareSymbol(receiver, GetExports(fileSymbol), fileSymbol, fileNode, SymbolFlagsProperty, SymbolFlagsAll);
     (fileDecl as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = originalSymbol;
   }
 }
@@ -2283,7 +2285,10 @@ export function Binder_bindNamespaceExportDeclaration(receiver: GoPtr<Binder>, n
   } else if (!AsSourceFile(node!.Parent)!.IsDeclarationFile) {
     Binder_errorOnNode(receiver, node, Global_module_exports_may_only_appear_in_declaration_files);
   } else {
-    Binder_declareSymbol(receiver, GetSymbolTable(receiver!.file!.GlobalExports), Node_Symbol(receiver!.file as unknown as GoPtr<Node>), node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
+    if (receiver!.file!.GlobalExports === undefined) {
+      receiver!.file!.GlobalExports = new Map();
+    }
+    Binder_declareSymbol(receiver, receiver!.file!.GlobalExports, Node_Symbol(receiver!.file as unknown as GoPtr<Node>), node, SymbolFlagsAlias, SymbolFlagsAliasExcludes);
   }
 }
 

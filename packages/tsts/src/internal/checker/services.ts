@@ -2361,7 +2361,7 @@ export function Checker_IsLibSymbolForHoverVerbosity(receiver: GoPtr<Checker>, s
   if (symbol_ === undefined) {
     return false;
   }
-  for (const decl of symbol_!.Declarations) {
+  for (const decl of symbol_!.Declarations ?? []) {
     const sf = GetSourceFileOfNode(decl);
     if (sf !== undefined && receiver!.program.IsSourceFileDefaultLibrary(SourceFile_Path(sf))) {
       return true;

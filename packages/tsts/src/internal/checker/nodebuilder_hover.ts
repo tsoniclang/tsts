@@ -198,7 +198,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
       members = [...members, NewEnumMember(receiver!.f, NewIdentifier(receiver!.f, last!.Name), NodeBuilderImpl_enumMemberInitializer(receiver, last))];
       break;
     }
-    const memberDecl = Find(p!.Declarations, IsEnumMember);
+    const memberDecl = Find(p!.Declarations ?? [], IsEnumMember);
     let initializer: GoPtr<Node>;
     if (memberDecl !== undefined && AsEnumMember(memberDecl)!.Initializer !== undefined) {
       initializer = NodeFactory_DeepCloneNode(receiver!.f, AsEnumMember(memberDecl)!.Initializer);
@@ -242,7 +242,7 @@ export function NodeBuilderImpl_expandEnumDecl(receiver: GoPtr<NodeBuilderImpl>,
  * }
  */
 export function NodeBuilderImpl_enumMemberInitializer(receiver: GoPtr<NodeBuilderImpl>, p: GoPtr<Symbol>): GoPtr<Node> {
-  const memberDecl = Find(p!.Declarations, IsEnumMember);
+  const memberDecl = Find(p!.Declarations ?? [], IsEnumMember);
   if (memberDecl === undefined) {
     return undefined;
   }
@@ -340,7 +340,7 @@ export function NodeBuilderImpl_enumMemberInitializer(receiver: GoPtr<NodeBuilde
 export function NodeBuilderImpl_expandClassDecl(receiver: GoPtr<NodeBuilderImpl>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 9 + name.length;
-  const classLikeDeclarations = Filter(symbol_!.Declarations, IsClassLike);
+  const classLikeDeclarations = Filter(symbol_!.Declarations ?? [], IsClassLike);
   const originalDecl = FirstOrNil(classLikeDeclarations);
   const oldEnclosing = receiver!.ctx!.enclosingDeclaration;
   if (originalDecl !== undefined) {
@@ -529,7 +529,7 @@ export function NodeBuilderImpl_expandInterfaceDecl(receiver: GoPtr<NodeBuilderI
   const name = SymbolName(symbol_);
   receiver!.ctx!.approximateLength += 14 + name.length;
   const interfaceType = Checker_getDeclaredTypeOfClassOrInterface(receiver!.ch, symbol_);
-  const interfaceDeclarations = Filter(symbol_!.Declarations, IsInterfaceDeclaration);
+  const interfaceDeclarations = Filter(symbol_!.Declarations ?? [], IsInterfaceDeclaration);
   const localParams = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver!.ch, symbol_);
   const typeParamDecls = Map(localParams, (p) => NodeBuilderImpl_typeParameterToDeclaration(receiver, p));
   const baseTypes = Checker_getBaseTypes(receiver!.ch, interfaceType);

@@ -3,18 +3,17 @@ import type { GoComparable, GoConstraint, GoMap, GoPtr, GoSeq, GoSlice } from ".
 import type { Context } from "../../../go/context.js";
 import type { Hasher, Uint128 } from "../../../go/github.com/zeebo/xxh3.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
-import type { Mutex, Once } from "../../../go/sync.js";
 import { Uint32, Uint64 } from "../../../go/sync/atomic.js";
 import * as strconv from "../../../go/strconv.js";
 import * as gostrings from "../../../go/strings.js";
 import * as utf8 from "../../../go/unicode/utf8.js";
-import { Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
+import { NewNodeFactory, Node_End, Node_ForEachChild, Node_Name } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { IsAnyExportAssignment, Node_Body, Node_Elements, Node_Expression, Node_Initializer, Node_IsTypeOnly, Node_Locals, Node_ModuleSpecifier, Node_Parameters, Node_PropertyName, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameters, SourceFile_FileName } from "../../ast/ast.js";
 import type { HasFileName, PatternAmbientModule, SourceFile, SourceFileMetaData, StringLiteralLike } from "../../ast/ast.js";
 import { AsArrayTypeNode, AsElementAccessExpression, AsExportSpecifier, AsExpressionWithTypeArguments, AsImportAttribute, AsImportAttributes, AsImportDeclaration, AsImportEqualsDeclaration, AsMappedTypeNode, AsParameterDeclaration, AsSyntheticExpression, AsTypeParameterDeclaration, AsTypeReferenceNode, AsIndexedAccessTypeNode } from "../../ast/generated/casts.js";
 import type { NodeFactory } from "../../ast/generated/factory.js";
-import { CheckFlagsContainsPrivate, CheckFlagsSyntheticMethod } from "../../ast/checkflags.js";
+import { CheckFlagsContainsPrivate, CheckFlagsReadonly, CheckFlagsSyntheticMethod } from "../../ast/checkflags.js";
 import { GetFunctionFlags, FunctionFlagsAsyncGenerator } from "../../ast/functionflags.js";
 import { KindArrowFunction, KindArrayType, KindBigIntKeyword, KindBlock, KindBooleanKeyword, KindClassDeclaration, KindComputedPropertyName, KindConstructor, KindElementAccessExpression, KindEnumDeclaration, KindExportDeclaration, KindExpressionWithTypeArguments, KindExternalModuleReference, KindForInStatement, KindForOfStatement, KindForStatement, KindFunctionDeclaration, KindFunctionExpression, KindGetAccessor, KindIdentifier, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindIndexedAccessType, KindInterfaceDeclaration, KindJSImportDeclaration, KindLiteralType, KindMethodDeclaration, KindMethodSignature, KindMinusToken, KindNamespaceImport, KindNeverKeyword, KindNumberKeyword, KindObjectKeyword, KindPropertyDeclaration, KindPropertySignature, KindQualifiedName, KindSetAccessor, KindStringKeyword, KindSuperKeyword, KindSymbolKeyword, KindThisKeyword, KindTypeAliasDeclaration, KindTypeReference, KindUndefinedKeyword, KindUnknownKeyword, KindVariableStatement, KindVoidKeyword, KindAnyKeyword } from "../../ast/generated/kinds.js";
 import { IsCallExpression, IsClassDeclaration, IsComputedPropertyName, IsConstructorDeclaration, IsElementAccessExpression, IsExportDeclaration, IsExportSpecifier, IsExpressionStatement, IsFunctionDeclaration, IsIdentifier, IsImportClause, IsImportDeclaration, IsImportEqualsDeclaration, IsInferTypeNode, IsJSImportDeclaration, IsMappedTypeNode, IsMethodDeclaration, IsNamespaceImport, IsObjectLiteralExpression, IsPropertyAccessExpression, IsPropertyDeclaration, IsSpreadElement, IsSyntheticExpression, IsTupleTypeNode, IsTypeAliasDeclaration, IsTypeParameterDeclaration } from "../../ast/generated/predicates.js";
@@ -22,20 +21,27 @@ import type { Declaration, IdentifierNode, TypeNode } from "../../ast/generated/
 import { NodeFlagsAmbient } from "../../ast/generated/flags.js";
 import type { NodeFlags, SymbolFlags } from "../../ast/generated/flags.js";
 import type { ModifierFlags } from "../../ast/modifierflags.js";
-import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
+import { SymbolFlagsAlias, SymbolFlagsAliasExcludes, SymbolFlagsBlockScopedVariable, SymbolFlagsBlockScopedVariableExcludes, SymbolFlagsClass, SymbolFlagsClassExcludes, SymbolFlagsConstEnum, SymbolFlagsConstEnumExcludes, SymbolFlagsEnumMember, SymbolFlagsEnumMemberExcludes, SymbolFlagsFunction, SymbolFlagsFunctionExcludes, SymbolFlagsFunctionScopedVariable, SymbolFlagsFunctionScopedVariableExcludes, SymbolFlagsGetAccessor, SymbolFlagsGetAccessorExcludes, SymbolFlagsInterface, SymbolFlagsInterfaceExcludes, SymbolFlagsMethod, SymbolFlagsMethodExcludes, SymbolFlagsModule, SymbolFlagsProperty, SymbolFlagsPropertyExcludes, SymbolFlagsRegularEnum, SymbolFlagsRegularEnumExcludes, SymbolFlagsSetAccessor, SymbolFlagsSetAccessorExcludes, SymbolFlagsTransient, SymbolFlagsTypeAlias, SymbolFlagsTypeAliasExcludes, SymbolFlagsTypeLiteral, SymbolFlagsTypeParameter, SymbolFlagsTypeParameterExcludes, SymbolFlagsValueModule, SymbolFlagsValueModuleExcludes } from "../../ast/symbolflags.js";
 import type { Diagnostic, DiagnosticsCollection } from "../../ast/diagnostic.js";
 import type { FlowNode } from "../../ast/flow.js";
 import type { NodeId, SymbolId } from "../../ast/ids.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
+import { InternalSymbolNameType } from "../../ast/symbol.js";
+import { NameResolver_Resolve } from "../../binder/nameresolver.js";
 import type { Set } from "../../collections/set.js";
+import { NewSetWithSizeHint } from "../../collections/set.js";
+import { NewOrderedSetWithSizeHint } from "../../collections/ordered_set.js";
 import type { Arena } from "../../core/arena.js";
-import { ModuleKindCommonJS, ModuleKindESNext } from "../../core/compileroptions.js";
+import { CompilerOptions_GetEmitModuleKind, CompilerOptions_GetEmitScriptTarget, CompilerOptions_GetEmitStandardClassFields, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, ModuleKindCommonJS, ModuleKindESNext } from "../../core/compileroptions.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, ScriptTarget } from "../../core/compileroptions.js";
 import { Every, Find, IfElse, LastOrNil, Map, Some } from "../../core/core.js";
 import type { LinkStore } from "../../core/linkstore.js";
+import { LinkStore_Get } from "../../core/linkstore.js";
+import { Tristate_IsFalseOrUnknown, TSTrue } from "../../core/tristate.js";
 import { ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax, ECMAScript_imports_and_exports_cannot_be_written_in_a_CommonJS_file_under_verbatimModuleSyntax_Adjust_the_type_field_in_the_nearest_package_json_to_make_this_file_an_ECMAScript_module_or_adjust_your_verbatimModuleSyntax_module_and_moduleResolution_settings_in_TypeScript } from "../../diagnostics/generated/messages.js";
 import type { Message } from "../../diagnostics/diagnostics.js";
-import type { Evaluator } from "../../evaluator/evaluator.js";
+import type { Evaluator, Result } from "../../evaluator/evaluator.js";
+import { NewEvaluator } from "../../evaluator/evaluator.js";
 import { FromString } from "../../jsnum/string.js";
 import type { Number } from "../../jsnum/jsnum.js";
 import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
@@ -49,7 +55,7 @@ import type { KnownSymlinks } from "../../symlinks/knownsymlinks.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../../tsoptions/parsedcommandline.js";
 import type { Path } from "../../tspath/path.js";
 import { ExtensionCjs, ExtensionCts, ExtensionIsTs, ExtensionJson, FileExtensionIsOneOf } from "../../tspath/extension.js";
-import { FindAncestor, GetClassLikeDeclarationOfSymbol, GetContainingFunction, GetExtendsHeritageClauseElement, GetImmediatelyInvokedFunctionExpression, GetModuleInstanceState, GetNameOfDeclaration, GetSourceFileOfNode, GetThisContainer, GetThisParameter, IsCallOrNewExpression, IsEntityNameExpression, IsExternalOrCommonJSModule, IsForInOrOfStatement, IsFunctionLike, IsParameterPropertyDeclaration, IsPrivateIdentifierClassElementDeclaration, IsStatic, IsStringLiteralLike, IsThisParameter, ModuleInstanceStateConstEnumOnly, ModuleInstanceStateInstantiated, NodeIsPresent, WalkUpParenthesizedExpressions } from "../../ast/utilities.js";
+import { FindAncestor, GetClassLikeDeclarationOfSymbol, GetContainingFunction, GetExtendsHeritageClauseElement, GetImmediatelyInvokedFunctionExpression, GetModuleInstanceState, GetNameOfDeclaration, GetSourceFileOfNode, GetThisContainer, GetThisParameter, IsCallOrNewExpression, IsEntityNameExpression, IsExternalOrCommonJSModule, IsForInOrOfStatement, IsFunctionLike, IsParameterPropertyDeclaration, IsPrivateIdentifierClassElementDeclaration, IsStatic, IsStringLiteralLike, IsThisParameter, ModuleInstanceStateConstEnumOnly, ModuleInstanceStateInstantiated, NodeIsPresent, OEKParentheses, WalkUpParenthesizedExpressions } from "../../ast/utilities.js";
 import type { EmitResolver } from "../emitresolver.js";
 import type { FlowState, SharedFlow } from "../flow.js";
 import type { InferenceState } from "../inference.js";
@@ -57,8 +63,8 @@ import type { JsxElementLinks } from "../jsx.js";
 import type { TypeMapper } from "../mapper.js";
 import type { ExpandingFlags, IntersectionState, Relater, Relation, RelationComparisonResult } from "../relater.js";
 import type { Tracer } from "../tracer.js";
-import { CompareTypes, getPropertyNameFromType, isNumericLiteralName, isTypeAlias, NewDiagnosticForNode } from "../utilities.js";
-import { ElementFlagsFixed, ElementFlagsRequired, ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariadic, ObjectFlagsAnonymous, ObjectFlagsMapped, ObjectFlagsPrimitiveUnion, ObjectFlagsReference, ObjectFlagsTuple, SignatureFlagsHasLiteralTypes, SignatureFlagsHasRestParameter, TernaryFalse, TernaryTrue, Type_AsLiteralType, Type_AsMappedType, Type_AsTypeReference, Type_AsUnionType, Type_Target, Type_TargetTupleType, Type_Types, TypeFlagsBoolean, TypeFlagsEnumLiteral, TypeFlagsIndex, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNull, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnionOrIntersection, TypeFlagsUnit, TypeFlagsVoid, TypeFlagsFreshable, TypeFlagsStringOrNumberLiteral } from "../types.js";
+import { Checker_compareSymbolsWorker, CompareTypes, getPropertyNameFromType, isNumericLiteralName, isTypeAlias, NewDiagnosticForNode } from "../utilities.js";
+import { ElementFlagsFixed, ElementFlagsRequired, ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariadic, ObjectFlagsAnonymous, ObjectFlagsContainsWideningType, ObjectFlagsMapped, ObjectFlagsNonInferrableType, ObjectFlagsPrimitiveUnion, ObjectFlagsReference, ObjectFlagsTuple, SignatureFlagsHasLiteralTypes, SignatureFlagsHasRestParameter, SignatureFlagsNone, TernaryFalse, TernaryTrue, Type_AsLiteralType, Type_AsMappedType, Type_AsObjectType, Type_AsTypeParameter, Type_AsTypeReference, Type_AsUnionType, Type_Target, Type_TargetTupleType, Type_Types, TypeFlagsAny, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsBooleanLiteral, TypeFlagsEnumLiteral, TypeFlagsESSymbol, TypeFlagsIndex, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNonPrimitive, TypeFlagsNull, TypeFlagsNumber, TypeFlagsString, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUnionOrIntersection, TypeFlagsUnit, TypeFlagsUnknown, TypeFlagsVoid, TypeFlagsFreshable, TypeFlagsStringOrNumberLiteral, TypePredicateKindIdentifier, VarianceFlagsCovariant } from "../types.js";
 import type { AccessFlags, AliasSymbolLinks, ArrayLiteralLinks, AssertionLinks, ContainingSymbolLinks, DeclaredTypeLinks, DeferredSymbolLinks, ElementFlags, EnumMemberLinks, ExportTypeLinks, IndexInfo, LateBoundLinks, MappedSymbolLinks, MarkedAssignmentSymbolLinks, MembersAndExportsLinks, ModuleSymbolLinks, NodeLinks, ReverseMappedSymbolLinks, Signature, SignatureLinks, SourceFileLinks, SpreadLinks, SwitchStatementLinks, SymbolNodeLinks, SymbolReferenceLinks, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeAliasLinks, TypeComparer, TypeFlags, TypeId, TypeNodeLinks, TypePredicate, ValueSymbolLinks, VarianceFlags, VarianceLinks } from "../types.js";
 import { BinarySearchFunc, Insert } from "../../../go/slices.js";
 import { keyBuilder_writeByte, keyBuilder_writeInt, keyBuilder_writeString } from "./support.js";
@@ -66,7 +72,16 @@ import { keyBuilder_hash } from "./support-queries.js";
 import { keyBuilder_writeType, keyBuilder_writeTypes, keyBuilder_writeGenericTypeReferences } from "./types.js";
 import { keyBuilder_writeNode, keyBuilder_writeNodeId } from "./syntax-checking.js";
 import { keyBuilder_writeAlias, keyBuilder_writeSymbol } from "./symbols.js";
-import { Checker_getTypeArguments } from "./signatures.js";
+import { Checker_compareSymbolChainsWorker } from "../symbolaccessibility.js";
+import { newFunctionTypeMapper } from "../mapper.js";
+import { Checker_getTypeArguments, Checker_getUniqueLiteralTypeForTypeParameter, Checker_newSignature, Checker_newTypeParameter } from "./signatures.js";
+import { Checker_evaluateEntity, Checker_initializeChecker, Checker_initializeClosures, Checker_initializeIterationResolvers, Checker_reportUnmeasurableWorker, Checker_reportUnreliableWorker } from "./support.js";
+import { Checker_createNameResolver, Checker_createNameResolverForSuggestion, Checker_createTypeFromGenericGlobalType, Checker_getGlobalStrictFunctionType, Checker_getGlobalTypeAliasResolver, Checker_getGlobalTypeResolver, Checker_getGlobalTypeSymbolResolver, Checker_getGlobalValueSymbolResolver, Checker_newSymbol, Checker_newSymbolEx } from "./symbols.js";
+import { Checker_createArrayType, Checker_createUnknownUnionType, Checker_createWideningType, Checker_getBigIntLiteralType, Checker_getNumberLiteralType, Checker_getStringLiteralType, Checker_getTemplateLiteralType, Checker_getUnionType, Checker_newAnonymousType, Checker_newIntrinsicType, Checker_newIntrinsicTypeEx, Checker_newLiteralType } from "./types.js";
+import { Checker_newObjectType } from "./types.js";
+import { Checker_permissiveMapperWorker, Checker_restrictiveMapperWorker } from "./inference.js";
+import { typeofNEFacts } from "../flow.js";
+import { Mutex, Once } from "../../../go/sync.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::CheckMode","kind":"type","status":"implemented","sigHash":"2d62e9eb34ed3aaeeef2b15a3fcc8e2c38feacbf9b95170eff1c8a8946192235","bodyHash":"fd000c0f73136e37569f36cab9cec7e26a980eacd1124f26b93cc8ecf94fc319"}
@@ -532,8 +547,7 @@ export interface NonExistentPropertyKey {
  * }
  */
 export interface FlowLoopKey {
-  flowNode: GoPtr<FlowNode>;
-  refKey: CacheHashKey;
+  readonly __flowLoopKey: unique symbol;
 }
 
 /**
@@ -1929,13 +1943,48 @@ export interface Checker {
   withinUnreachableCode: bool;
   reportedUnreachableNodes: Set;
   nonExistentProperties: Set;
-  deferredDiagnosticCallbacks: GoSlice<() => void>;
+  deferredDiagnosticCallbacks: GoSlice<() => void> | undefined;
   mu: Mutex;
   tracer: GoPtr<Tracer>;
 }
 
+function newArena<T>(): Arena<T> {
+  return { data: [] };
+}
+
+function newLinkStore<K extends GoComparable, V>(): LinkStore<K, V> {
+  return {
+    entries: undefined as unknown as GoMap<K, GoPtr<V>>,
+    arena: newArena<V>(),
+  };
+}
+
+function newCheckerSet<T extends GoComparable>(): Set<T> {
+  return NewSetWithSizeHint<T>(0 as int)!;
+}
+
+export function Checker_getSourceFileLinks(receiver: GoPtr<Checker>, sourceFile: GoPtr<SourceFile>): GoPtr<SourceFileLinks> {
+  const links = LinkStore_Get(receiver!.sourceFileLinks as LinkStore<GoPtr<SourceFile>, SourceFileLinks>, sourceFile);
+  links!.deferredNodes ??= NewOrderedSetWithSizeHint<GoPtr<Node>>(0 as int)!;
+  links!.identifierCheckNodes ??= [];
+  links!.localJsxNamespace ??= "";
+  links!.localJsxFragmentNamespace ??= "";
+  return links;
+}
+
+function newDiagnosticsCollection(): DiagnosticsCollection {
+  return {
+    mu: new Mutex(),
+    count: 0 as int,
+    fileDiagnostics: undefined,
+    fileDiagnosticsSorted: newCheckerSet<string>(),
+    nonFileDiagnostics: undefined,
+    nonFileDiagnosticsSorted: true,
+  };
+}
+
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::NewChecker","kind":"func","status":"stub","sigHash":"5a36339d895d820adc80ee044527546d77331ffbaa8c8d2e9c838edadf636da3","bodyHash":"69122d57bffbb48047da9a06d0020189c6fc8b63700333241db2e2b29e001119"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::func::NewChecker","kind":"func","status":"implemented","sigHash":"5a36339d895d820adc80ee044527546d77331ffbaa8c8d2e9c838edadf636da3","bodyHash":"69122d57bffbb48047da9a06d0020189c6fc8b63700333241db2e2b29e001119"}
  *
  * Go source:
  * func NewChecker(program Program, tracer *Tracer) (*Checker, *sync.Mutex) {
@@ -2154,7 +2203,288 @@ export interface Checker {
  * }
  */
 export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Checker>, GoPtr<Mutex>] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/checker.go::func::NewChecker");
+  program.BindSourceFiles();
+
+  const checker = {} as Checker;
+  checker.id = nextCheckerID.Add(1);
+  checker.TypeCount = 0;
+  checker.SymbolCount = 0;
+  checker.TotalInstantiationCount = 0;
+  checker.instantiationCount = 0;
+  checker.instantiationDepth = 0;
+  checker.inlineLevel = 0;
+  checker.resolutionStart = 0;
+  checker.flowInvocationCount = 0;
+  checker.tracer = tracer;
+  checker.program = program;
+  checker.compilerOptions = program.Options();
+  checker.files = program.SourceFiles();
+  checker.fileIndexMap = createFileIndexMap(checker.files);
+  checker.compareSymbols = (left, right): int => Checker_compareSymbolsWorker(checker, left, right);
+  checker.compareSymbolChains = (left, right): int => Checker_compareSymbolChainsWorker(checker, left, right);
+  checker.languageVersion = CompilerOptions_GetEmitScriptTarget(checker.compilerOptions);
+  checker.moduleKind = CompilerOptions_GetEmitModuleKind(checker.compilerOptions);
+  checker.moduleResolutionKind = CompilerOptions_GetModuleResolutionKind(checker.compilerOptions);
+  checker.legacyDecorators = checker.compilerOptions!.ExperimentalDecorators === TSTrue;
+  checker.emitStandardClassFields = CompilerOptions_GetEmitStandardClassFields(checker.compilerOptions);
+  checker.strictNullChecks = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.StrictNullChecks);
+  checker.strictFunctionTypes = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.StrictFunctionTypes);
+  checker.strictBindCallApply = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.StrictBindCallApply);
+  checker.strictPropertyInitialization = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.StrictPropertyInitialization);
+  checker.strictBuiltinIteratorReturn = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.StrictBuiltinIteratorReturn);
+  checker.noImplicitAny = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.NoImplicitAny);
+  checker.noImplicitThis = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.NoImplicitThis);
+  checker.useUnknownInCatchVariables = CompilerOptions_GetStrictOptionValue(checker.compilerOptions, checker.compilerOptions!.UseUnknownInCatchVariables);
+  checker.exactOptionalPropertyTypes = checker.compilerOptions!.ExactOptionalPropertyTypes === TSTrue;
+  checker.canCollectSymbolAliasAccessibilityData = Tristate_IsFalseOrUnknown(checker.compilerOptions!.VerbatimModuleSyntax);
+  checker.arrayVariances = [VarianceFlagsCovariant];
+  checker.globals = new globalThis.Map<string, GoPtr<Symbol>>();
+  checker.evaluate = NewEvaluator((expr, location): Result => Checker_evaluateEntity(checker, expr, location), OEKParentheses);
+  checker.stringLiteralTypes = new globalThis.Map();
+  checker.numberLiteralTypes = new globalThis.Map();
+  checker.bigintLiteralTypes = new globalThis.Map();
+  checker.enumLiteralTypes = new globalThis.Map();
+  checker.indexedAccessTypes = new globalThis.Map();
+  checker.templateLiteralTypes = new globalThis.Map();
+  checker.stringMappingTypes = new globalThis.Map();
+  checker.uniqueESSymbolTypes = new globalThis.Map();
+  checker.thisExpandoKinds = new globalThis.Map();
+  checker.thisExpandoLocations = new globalThis.Map();
+  checker.subtypeReductionCache = new globalThis.Map();
+  checker.cachedTypes = new globalThis.Map();
+  checker.cachedSignatures = new globalThis.Map();
+  checker.undefinedProperties = new globalThis.Map();
+  checker.narrowedTypes = new globalThis.Map();
+  checker.assignmentReducedTypes = new globalThis.Map();
+  checker.discriminatedContextualTypes = new globalThis.Map();
+  checker.instantiationExpressionTypes = new globalThis.Map();
+  checker.substitutionTypes = new globalThis.Map();
+  checker.reverseMappedCache = new globalThis.Map();
+  checker.reverseHomomorphicMappedCache = new globalThis.Map();
+  checker.iterationTypesCache = new globalThis.Map();
+  checker.markerTypes = newCheckerSet<GoPtr<Type>>();
+  checker.symbolArena = newArena<Symbol>();
+  checker.signatureArena = newArena<Signature>();
+  checker.indexInfoArena = newArena<IndexInfo>();
+  checker.undefinedSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "undefined");
+  checker.argumentsSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "arguments");
+  checker.requireSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "require");
+  checker.unknownSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "unknown");
+  checker.unresolvedSymbols = new globalThis.Map();
+  checker.errorTypes = new globalThis.Map();
+  checker.moduleSymbols = new globalThis.Map();
+  checker.globalThisSymbol = Checker_newSymbolEx(checker, SymbolFlagsModule as SymbolFlags, "globalThis", CheckFlagsReadonly);
+  checker.globalThisSymbol!.Exports = checker.globals;
+  checker.globals.set(checker.globalThisSymbol!.Name, checker.globalThisSymbol);
+  const nameResolver = Checker_createNameResolver(checker);
+  const suggestionNameResolver = Checker_createNameResolverForSuggestion(checker);
+  checker.resolveName = (location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals): GoPtr<Symbol> =>
+    NameResolver_Resolve(nameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
+  checker.resolveNameForSymbolSuggestion = (location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals): GoPtr<Symbol> =>
+    NameResolver_Resolve(suggestionNameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
+  checker.tupleTypes = new globalThis.Map();
+  checker.unionTypes = new globalThis.Map();
+  checker.unionOfUnionTypes = new globalThis.Map();
+  checker.intersectionTypes = new globalThis.Map();
+  checker.propertiesTypes = new globalThis.Map();
+  checker.diagnostics = newDiagnosticsCollection();
+  checker.suggestionDiagnostics = newDiagnosticsCollection();
+  checker.mergedSymbols = new globalThis.Map();
+  checker.factory = NewNodeFactory({})!;
+  checker.nodeLinks = newLinkStore<Node, NodeLinks>();
+  checker.signatureLinks = newLinkStore<Node, SignatureLinks>();
+  checker.symbolNodeLinks = newLinkStore<Node, SymbolNodeLinks>();
+  checker.typeNodeLinks = newLinkStore<Node, TypeNodeLinks>();
+  checker.enumMemberLinks = newLinkStore<Node, EnumMemberLinks>();
+  checker.assertionLinks = newLinkStore<Node, AssertionLinks>();
+  checker.arrayLiteralLinks = newLinkStore<Node, ArrayLiteralLinks>();
+  checker.switchStatementLinks = newLinkStore<Node, SwitchStatementLinks>();
+  checker.jsxElementLinks = newLinkStore<Node, JsxElementLinks>();
+  checker.symbolReferenceLinks = newLinkStore<Symbol, SymbolReferenceLinks>();
+  checker.valueSymbolLinks = newLinkStore<Symbol, ValueSymbolLinks>();
+  checker.mappedSymbolLinks = newLinkStore<Symbol, MappedSymbolLinks>();
+  checker.deferredSymbolLinks = newLinkStore<Symbol, DeferredSymbolLinks>();
+  checker.aliasSymbolLinks = newLinkStore<Symbol, AliasSymbolLinks>();
+  checker.moduleSymbolLinks = newLinkStore<Symbol, ModuleSymbolLinks>();
+  checker.lateBoundLinks = newLinkStore<Symbol, LateBoundLinks>();
+  checker.exportTypeLinks = newLinkStore<Symbol, ExportTypeLinks>();
+  checker.membersAndExportsLinks = newLinkStore<Symbol, MembersAndExportsLinks>();
+  checker.typeAliasLinks = newLinkStore<Symbol, TypeAliasLinks>();
+  checker.declaredTypeLinks = newLinkStore<Symbol, DeclaredTypeLinks>();
+  checker.spreadLinks = newLinkStore<Symbol, SpreadLinks>();
+  checker.varianceLinks = newLinkStore<Symbol, VarianceLinks>();
+  checker.ReverseMappedSymbolLinks = newLinkStore<Symbol, ReverseMappedSymbolLinks>();
+  checker.markedAssignmentSymbolLinks = newLinkStore<Symbol, MarkedAssignmentSymbolLinks>();
+  checker.symbolContainerLinks = newLinkStore<Symbol, ContainingSymbolLinks>();
+  checker.sourceFileLinks = newLinkStore<SourceFile, SourceFileLinks>();
+  checker.patternForType = new globalThis.Map();
+  checker.contextFreeTypes = new globalThis.Map();
+  checker.anyType = Checker_newIntrinsicType(checker, TypeFlagsAny, "any");
+  checker.autoType = Checker_newIntrinsicTypeEx(checker, TypeFlagsAny, "any", ObjectFlagsNonInferrableType);
+  checker.wildcardType = Checker_newIntrinsicType(checker, TypeFlagsAny, "any");
+  checker.blockedStringType = Checker_newIntrinsicType(checker, TypeFlagsAny, "any");
+  checker.errorType = Checker_newIntrinsicType(checker, TypeFlagsAny, "error");
+  checker.unresolvedType = Checker_newIntrinsicType(checker, TypeFlagsAny, "unresolved");
+  checker.nonInferrableAnyType = Checker_newIntrinsicTypeEx(checker, TypeFlagsAny, "any", ObjectFlagsContainsWideningType);
+  checker.intrinsicMarkerType = Checker_newIntrinsicType(checker, TypeFlagsAny, "intrinsic");
+  checker.unknownType = Checker_newIntrinsicType(checker, TypeFlagsUnknown, "unknown");
+  checker.undefinedType = Checker_newIntrinsicType(checker, TypeFlagsUndefined, "undefined");
+  checker.undefinedWideningType = Checker_createWideningType(checker, checker.undefinedType);
+  checker.missingType = Checker_newIntrinsicType(checker, TypeFlagsUndefined, "undefined");
+  checker.undefinedOrMissingType = IfElse(checker.exactOptionalPropertyTypes, checker.missingType, checker.undefinedType);
+  checker.optionalType = Checker_newIntrinsicType(checker, TypeFlagsUndefined, "undefined");
+  checker.nullType = Checker_newIntrinsicType(checker, TypeFlagsNull, "null");
+  checker.nullWideningType = Checker_createWideningType(checker, checker.nullType);
+  checker.stringType = Checker_newIntrinsicType(checker, TypeFlagsString, "string");
+  checker.numberType = Checker_newIntrinsicType(checker, TypeFlagsNumber, "number");
+  checker.bigintType = Checker_newIntrinsicType(checker, TypeFlagsBigInt, "bigint");
+  checker.regularFalseType = Checker_newLiteralType(checker, TypeFlagsBooleanLiteral, false, undefined);
+  checker.falseType = Checker_newLiteralType(checker, TypeFlagsBooleanLiteral, false, checker.regularFalseType);
+  Type_AsLiteralType(checker.regularFalseType)!.freshType = checker.falseType;
+  Type_AsLiteralType(checker.falseType)!.freshType = checker.falseType;
+  checker.regularTrueType = Checker_newLiteralType(checker, TypeFlagsBooleanLiteral, true, undefined);
+  checker.trueType = Checker_newLiteralType(checker, TypeFlagsBooleanLiteral, true, checker.regularTrueType);
+  Type_AsLiteralType(checker.regularTrueType)!.freshType = checker.trueType;
+  Type_AsLiteralType(checker.trueType)!.freshType = checker.trueType;
+  checker.booleanType = Checker_getUnionType(checker, [checker.regularFalseType, checker.regularTrueType]);
+  checker.esSymbolType = Checker_newIntrinsicType(checker, TypeFlagsESSymbol, "symbol");
+  checker.voidType = Checker_newIntrinsicType(checker, TypeFlagsVoid, "void");
+  checker.neverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
+  checker.silentNeverType = Checker_newIntrinsicTypeEx(checker, TypeFlagsNever, "never", ObjectFlagsNonInferrableType);
+  checker.implicitNeverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
+  checker.unreachableNeverType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
+  checker.nonPrimitiveType = Checker_newIntrinsicType(checker, TypeFlagsNonPrimitive, "object");
+  checker.stringOrNumberType = Checker_getUnionType(checker, [checker.stringType, checker.numberType]);
+  checker.stringNumberSymbolType = Checker_getUnionType(checker, [checker.stringType, checker.numberType, checker.esSymbolType]);
+  checker.numberOrBigIntType = Checker_getUnionType(checker, [checker.numberType, checker.bigintType]);
+  checker.numericStringType = Checker_getTemplateLiteralType(checker, ["", ""], [checker.numberType]);
+  checker.templateConstraintType = Checker_getUnionType(checker, [checker.stringType, checker.numberType, checker.booleanType, checker.bigintType, checker.nullType, checker.undefinedType]);
+  checker.uniqueLiteralType = Checker_newIntrinsicType(checker, TypeFlagsNever, "never");
+  checker.uniqueLiteralMapper = newFunctionTypeMapper((typeParameter): GoPtr<Type> => Checker_getUniqueLiteralTypeForTypeParameter(checker, typeParameter));
+  checker.reportUnreliableMapper = newFunctionTypeMapper((type): GoPtr<Type> => Checker_reportUnreliableWorker(checker, type));
+  checker.reportUnmeasurableMapper = newFunctionTypeMapper((type): GoPtr<Type> => Checker_reportUnmeasurableWorker(checker, type));
+  checker.restrictiveMapper = newFunctionTypeMapper((type): GoPtr<Type> => Checker_restrictiveMapperWorker(checker, type));
+  checker.permissiveMapper = newFunctionTypeMapper((type): GoPtr<Type> => Checker_permissiveMapperWorker(checker, type));
+  const nilSymbolTable = undefined as unknown as SymbolTable;
+  checker.emptyObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.emptyJsxObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.emptyFreshJsxObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.emptyTypeLiteralType = Checker_newAnonymousType(checker, Checker_newSymbol(checker, SymbolFlagsTypeLiteral, InternalSymbolNameType), nilSymbolTable, [], [], []);
+  checker.unknownEmptyObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.unknownUnionType = Checker_createUnknownUnionType(checker);
+  checker.emptyGenericType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  Type_AsObjectType(checker.emptyGenericType)!.instantiations = new globalThis.Map();
+  checker.anyFunctionType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.anyFunctionType!.objectFlags |= ObjectFlagsNonInferrableType;
+  checker.noConstraintType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.circularConstraintType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.resolvingDefaultType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
+  checker.markerSuperType = Checker_newTypeParameter(checker, undefined);
+  checker.markerSubType = Checker_newTypeParameter(checker, undefined);
+  Type_AsTypeParameter(checker.markerSubType)!.constraint = checker.markerSuperType;
+  checker.markerOtherType = Checker_newTypeParameter(checker, undefined);
+  checker.markerSuperTypeForCheck = Checker_newTypeParameter(checker, undefined);
+  checker.markerSubTypeForCheck = Checker_newTypeParameter(checker, undefined);
+  Type_AsTypeParameter(checker.markerSubTypeForCheck)!.constraint = checker.markerSuperTypeForCheck;
+  checker.noTypePredicate = { kind: TypePredicateKindIdentifier, parameterIndex: 0 as int, parameterName: "<<unresolved>>", t: checker.anyType };
+  checker.anySignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.anyType, undefined, 0);
+  checker.unknownSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.errorType, undefined, 0);
+  checker.resolvingSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.anyType, undefined, 0);
+  checker.silentNeverSignature = Checker_newSignature(checker, SignatureFlagsNone, undefined, [], undefined, [], checker.silentNeverType, undefined, 0);
+  checker.cachedArgumentsReferenced = new globalThis.Map();
+  checker.enumNumberIndexInfo = { keyType: checker.numberType, valueType: checker.stringType, isReadonly: true, declaration: undefined, indexSymbol: undefined, components: [] };
+  checker.anyBaseTypeIndexInfo = { keyType: checker.stringType, valueType: checker.anyType, isReadonly: false, declaration: undefined, indexSymbol: undefined, components: [] };
+  checker.patternAmbientModules = [];
+  checker.patternAmbientModuleAugmentations = new globalThis.Map();
+  checker.emptyStringType = Checker_getStringLiteralType(checker, "");
+  checker.zeroType = Checker_getNumberLiteralType(checker, FromString("0"));
+  checker.zeroBigIntType = Checker_getBigIntLiteralType(checker, { Negative: false, Base10Value: "" });
+  checker.typeofType = Checker_getUnionType(checker, globalThis.Array.from(typeofNEFacts.keys()).sort().map((factName) => Checker_getStringLiteralType(checker, factName)));
+  checker.contextualBindingPatterns = [];
+  checker.typeResolutions = [];
+  checker.flowLoopCache = new globalThis.Map();
+  checker.flowLoopStack = [];
+  checker.sharedFlows = [];
+  checker.antecedentTypes = [];
+  checker.flowNodeReachable = new globalThis.Map();
+  checker.flowNodePostSuper = new globalThis.Map();
+  checker.renamedBindingElementsInTypes = [];
+  checker.contextualInfos = [];
+  checker.inferenceContextInfos = [];
+  checker.awaitedTypeStack = [];
+  checker.reverseMappedSourceStack = [];
+  checker.reverseMappedTargetStack = [];
+  checker.subtypeRelation = { results: undefined as unknown as GoMap<CacheHashKey, RelationComparisonResult> };
+  checker.strictSubtypeRelation = { results: undefined as unknown as GoMap<CacheHashKey, RelationComparisonResult> };
+  checker.assignableRelation = { results: undefined as unknown as GoMap<CacheHashKey, RelationComparisonResult> };
+  checker.comparableRelation = { results: undefined as unknown as GoMap<CacheHashKey, RelationComparisonResult> };
+  checker.identityRelation = { results: undefined as unknown as GoMap<CacheHashKey, RelationComparisonResult> };
+  checker.enumRelation = new globalThis.Map();
+  checker.getGlobalESSymbolType = Checker_getGlobalTypeResolver(checker, "Symbol", 0, false);
+  checker.getGlobalBigIntType = Checker_getGlobalTypeResolver(checker, "BigInt", 0, false);
+  checker.getGlobalImportMetaType = Checker_getGlobalTypeResolver(checker, "ImportMeta", 0, true);
+  checker.getGlobalImportAttributesType = Checker_getGlobalTypeResolver(checker, "ImportAttributes", 0, false);
+  checker.getGlobalImportAttributesTypeChecked = Checker_getGlobalTypeResolver(checker, "ImportAttributes", 0, true);
+  checker.getGlobalNonNullableTypeAliasOrNil = Checker_getGlobalTypeAliasResolver(checker, "NonNullable", 1, false);
+  checker.getGlobalExtractSymbol = Checker_getGlobalTypeAliasResolver(checker, "Extract", 2, true);
+  checker.getGlobalDisposableType = Checker_getGlobalTypeResolver(checker, "Disposable", 0, true);
+  checker.getGlobalAsyncDisposableType = Checker_getGlobalTypeResolver(checker, "AsyncDisposable", 0, true);
+  checker.getGlobalAwaitedSymbol = Checker_getGlobalTypeAliasResolver(checker, "Awaited", 1, true);
+  checker.getGlobalAwaitedSymbolOrNil = Checker_getGlobalTypeAliasResolver(checker, "Awaited", 1, false);
+  checker.getGlobalNaNSymbolOrNil = Checker_getGlobalValueSymbolResolver(checker, "NaN", false);
+  checker.getGlobalRecordSymbol = Checker_getGlobalTypeAliasResolver(checker, "Record", 2, true);
+  checker.getGlobalTemplateStringsArrayType = Checker_getGlobalTypeResolver(checker, "TemplateStringsArray", 0, true);
+  checker.getGlobalESSymbolConstructorSymbolOrNil = Checker_getGlobalValueSymbolResolver(checker, "Symbol", false);
+  checker.getGlobalESSymbolConstructorTypeSymbolOrNil = Checker_getGlobalTypeSymbolResolver(checker, "SymbolConstructor", false);
+  checker.getGlobalImportCallOptionsType = Checker_getGlobalTypeResolver(checker, "ImportCallOptions", 0, false);
+  checker.getGlobalImportCallOptionsTypeChecked = Checker_getGlobalTypeResolver(checker, "ImportCallOptions", 0, true);
+  checker.getGlobalPromiseType = Checker_getGlobalTypeResolver(checker, "Promise", 1, false);
+  checker.getGlobalPromiseTypeChecked = Checker_getGlobalTypeResolver(checker, "Promise", 1, true);
+  checker.getGlobalPromiseLikeType = Checker_getGlobalTypeResolver(checker, "PromiseLike", 1, true);
+  checker.getGlobalPromiseConstructorSymbol = Checker_getGlobalValueSymbolResolver(checker, "Promise", true);
+  checker.getGlobalPromiseConstructorSymbolOrNil = Checker_getGlobalValueSymbolResolver(checker, "Promise", false);
+  checker.getGlobalOmitSymbol = Checker_getGlobalTypeAliasResolver(checker, "Omit", 2, true);
+  checker.getGlobalNoInferSymbolOrNil = Checker_getGlobalTypeAliasResolver(checker, "NoInfer", 1, false);
+  checker.getGlobalIteratorType = Checker_getGlobalTypeResolver(checker, "Iterator", 3, false);
+  checker.getGlobalIterableType = Checker_getGlobalTypeResolver(checker, "Iterable", 3, false);
+  checker.getGlobalIterableTypeChecked = Checker_getGlobalTypeResolver(checker, "Iterable", 3, true);
+  checker.getGlobalIterableIteratorType = Checker_getGlobalTypeResolver(checker, "IterableIterator", 3, false);
+  checker.getGlobalIterableIteratorTypeChecked = Checker_getGlobalTypeResolver(checker, "IterableIterator", 3, true);
+  checker.getGlobalIteratorObjectType = Checker_getGlobalTypeResolver(checker, "IteratorObject", 3, false);
+  checker.getGlobalGeneratorType = Checker_getGlobalTypeResolver(checker, "Generator", 3, false);
+  checker.getGlobalAsyncIteratorType = Checker_getGlobalTypeResolver(checker, "AsyncIterator", 3, false);
+  checker.getGlobalAsyncIterableType = Checker_getGlobalTypeResolver(checker, "AsyncIterable", 3, false);
+  checker.getGlobalAsyncIterableTypeChecked = Checker_getGlobalTypeResolver(checker, "AsyncIterable", 3, true);
+  checker.getGlobalAsyncIterableIteratorType = Checker_getGlobalTypeResolver(checker, "AsyncIterableIterator", 3, false);
+  checker.getGlobalAsyncIterableIteratorTypeChecked = Checker_getGlobalTypeResolver(checker, "AsyncIterableIterator", 3, true);
+  checker.getGlobalAsyncIteratorObjectType = Checker_getGlobalTypeResolver(checker, "AsyncIteratorObject", 3, false);
+  checker.getGlobalAsyncGeneratorType = Checker_getGlobalTypeResolver(checker, "AsyncGenerator", 3, false);
+  checker.getGlobalIteratorYieldResultType = Checker_getGlobalTypeResolver(checker, "IteratorYieldResult", 1, false);
+  checker.getGlobalIteratorReturnResultType = Checker_getGlobalTypeResolver(checker, "IteratorReturnResult", 1, false);
+  checker.getGlobalTypedPropertyDescriptorType = Checker_getGlobalTypeResolver(checker, "TypedPropertyDescriptor", 1, true);
+  checker.getGlobalClassDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassDecoratorContext", 1, true);
+  checker.getGlobalClassMethodDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassMethodDecoratorContext", 2, true);
+  checker.getGlobalClassGetterDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassGetterDecoratorContext", 2, true);
+  checker.getGlobalClassSetterDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassSetterDecoratorContext", 2, true);
+  checker.getGlobalClassAccessorDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorContext", 2, true);
+  checker.getGlobalClassAccessorDecoratorTargetType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorTarget", 2, true);
+  checker.getGlobalClassAccessorDecoratorResultType = Checker_getGlobalTypeResolver(checker, "ClassAccessorDecoratorResult", 2, true);
+  checker.getGlobalClassFieldDecoratorContextType = Checker_getGlobalTypeResolver(checker, "ClassFieldDecoratorContext", 2, true);
+  checker.skipDirectInferenceNodes = newCheckerSet<GoPtr<Node>>();
+  checker.packagesMap = program.GetPackagesMap();
+  checker.activeMappers = [];
+  checker.activeTypeMappersCaches = [];
+  checker.emitResolverOnce = new Once();
+  checker.ambientModulesOnce = new Once();
+  checker.ambientModules = [];
+  checker.reportedUnreachableNodes = newCheckerSet<GoPtr<Node>>();
+  checker.nonExistentProperties = newCheckerSet<NonExistentPropertyKey>();
+  checker.deferredDiagnosticCallbacks = [];
+  checker.mu = new Mutex();
+  Checker_initializeClosures(checker);
+  Checker_initializeIterationResolvers(checker);
+  Checker_initializeChecker(checker);
+  return [checker, checker.mu];
 }
 
 /**
@@ -2219,7 +2549,7 @@ export function countGlobalSymbols(files: GoSlice<GoPtr<SourceFile>>): int {
  * }
  */
 export function getGlobalTypeDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Declaration> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     switch (declaration!.Kind) {
       case KindClassDeclaration:
       case KindInterfaceDeclaration:
@@ -2555,7 +2885,7 @@ export function isInstantiatedModule(node: GoPtr<Node>, preserveConstEnums: bool
  * }
  */
 export function getFirstNonAmbientClassOrFunctionDeclaration(symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  for (const declaration of symbol_!.Declarations) {
+  for (const declaration of symbol_!.Declarations ?? []) {
     if ((IsClassDeclaration(declaration) || (IsFunctionDeclaration(declaration) && NodeIsPresent(Node_Body(declaration)))) && (declaration!.Flags & NodeFlagsAmbient) === 0) {
       return declaration;
     }
@@ -4155,8 +4485,10 @@ export function isGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
-  const ttt = Type_TargetTupleType(t);
-  return isGenericTupleType(t) && (ttt !== undefined && ttt!.elementInfos !== undefined ? ttt!.elementInfos.length : 0) === 1;
+  if (!isGenericTupleType(t)) {
+    return false;
+  }
+  return Type_TargetTupleType(t)!.elementInfos.length === 1;
 }
 
 /**
@@ -4169,7 +4501,7 @@ export function isSingleElementGenericTupleType(t: GoPtr<Type>): bool {
  * }
  */
 export function isLocalTypeAlias(symbol_: GoPtr<Symbol>): bool {
-  const declaration = Find(symbol_!.Declarations, isTypeAlias);
+  const declaration = Find(symbol_!.Declarations ?? [], isTypeAlias);
   return declaration !== undefined && GetContainingFunction(declaration) !== undefined;
 }
 
@@ -4215,8 +4547,10 @@ export function getTypeReferenceName(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isUnaryTupleTypeNode(node: GoPtr<Node>): bool {
-  const elements = Node_Elements(node);
-  return IsTupleTypeNode(node) && elements !== undefined && elements.length === 1;
+  if (!IsTupleTypeNode(node)) {
+    return false;
+  }
+  return Node_Elements(node)!.length === 1;
 }
 
 /**

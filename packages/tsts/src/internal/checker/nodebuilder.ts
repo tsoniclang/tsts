@@ -504,7 +504,7 @@ export function NodeBuilder_ExpandSymbolForHover(receiver: GoPtr<NodeBuilder>, s
  * }
  */
 export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr<Node>, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  const classDeclarations = Filter(symbol_!.Declarations, IsClassLike);
+  const classDeclarations = Filter(symbol_!.Declarations ?? [], IsClassLike);
   let originalClassDecl: GoPtr<Node>;
   if (classDeclarations.length > 0) {
     originalClassDecl = classDeclarations[0];
@@ -545,7 +545,7 @@ export function simplifyClassDeclaration(f: GoPtr<NodeFactory>, classDecl: GoPtr
  * }
  */
 export function simplifyModifiers(f: GoPtr<NodeFactory>, newDecl: GoPtr<Node>, isDeclKind: (arg0: GoPtr<Node>) => bool, symbol_: GoPtr<Symbol>): GoPtr<Node> {
-  const decls = Filter(symbol_!.Declarations, isDeclKind);
+  const decls = Filter(symbol_!.Declarations ?? [], isDeclKind);
   let declWithModifiers: GoPtr<Node>;
   if (decls.length > 0) {
     declWithModifiers = decls[0];

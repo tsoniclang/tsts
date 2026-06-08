@@ -1,6 +1,6 @@
 import type { bool, int, short } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import { Uint64 } from "../../go/sync/atomic.js";
+import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";
 import type { TextRange } from "../core/text.js";
 import type { Kind } from "./generated/kinds.js";
@@ -340,7 +340,7 @@ export function newNode(kind: Kind, data: nodeData, hooks: NodeFactoryHooks): Go
   n!.Loc = UndefinedTextRange();
   n!.Kind = kind;
   n!.data = data;
-  if (hooks.OnCreate !== undefined) {
+  if (hooks?.OnCreate !== undefined) {
     hooks.OnCreate(n);
   }
   return n;
@@ -1181,6 +1181,7 @@ export function FlowNodeBase_FlowNodeData(receiver: GoPtr<FlowNodeBaseType>): Go
  * }
  */
 export function CompositeBase_subtreeFactsWorker(receiver: GoPtr<CompositeBaseType>, self: nodeData): SubtreeFacts {
+  receiver!.facts ??= new Uint32();
   let facts: SubtreeFacts = receiver!.facts.Load();
   if ((facts & SubtreeFactsComputed) === 0) {
     facts = (facts | self.computeSubtreeFacts() | SubtreeFactsComputed) >>> 0;

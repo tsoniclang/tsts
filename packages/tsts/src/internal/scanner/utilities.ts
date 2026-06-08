@@ -19,10 +19,38 @@ import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from
 // operating over the UTF-8 byte view of the JS string.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
+type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
+const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
+
+const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
+  const cached = utf8ByteInfoCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= 0x80) {
+      ascii = false;
+      break;
+    }
+  }
+  const info: Utf8ByteInfo = {
+    ascii,
+    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
+  };
+  if (s.length >= 4096) {
+    utf8ByteInfoCache.set(s, info);
+  }
+  return info;
+};
+
+const byteLen = (s: string): int => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.length : info.bytes.length;
+};
 const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
 };
 
 /**

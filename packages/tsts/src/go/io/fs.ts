@@ -10,6 +10,14 @@ export const ModeSymlink: FileMode = 0x08000000;
 export const ModeIrregular: FileMode = 0x00080000;
 export const ModePerm: FileMode = 0o777;
 
+export function FileMode_IsDir(mode: FileMode): bool {
+  return (((mode as unknown as number) & (ModeDir as unknown as number)) !== 0) as bool;
+}
+
+export function FileMode_IsRegular(mode: FileMode): bool {
+  return (((mode as unknown as number) & ((ModeDir as unknown as number) | (ModeSymlink as unknown as number) | (ModeIrregular as unknown as number))) === 0) as bool;
+}
+
 export const ErrInvalid: Error = new globalThis.Error("invalid argument");
 export const ErrPermission: Error = new globalThis.Error("permission denied");
 export const ErrExist: Error = new globalThis.Error("file already exists");

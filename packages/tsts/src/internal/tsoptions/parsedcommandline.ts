@@ -7,7 +7,7 @@ import type { Diagnostic } from "../ast/diagnostic.js";
 import type { SourceFile } from "../ast/ast.js";
 import { SourceFile_FileName, SourceFile_Diagnostics } from "../ast/ast.js";
 import type { CompilerOptions as CompilerOptions_3bab6c7a } from "../core/compileroptions.js";
-import { CompilerOptions_GetAreDeclarationMapsEnabled, CompilerOptions_GetEmitDeclarations } from "../core/compileroptions.js";
+import { CompilerOptions_GetAreDeclarationMapsEnabled, CompilerOptions_GetEmitDeclarations, NormalizeCompilerOptions } from "../core/compileroptions.js";
 import { Filter, IfElse, Map as core_Map } from "../core/core.js";
 import type { ParsedOptions } from "../core/parsedoptions.js";
 import type { ProjectReference } from "../core/projectreference.js";
@@ -149,9 +149,10 @@ function ParsedCommandLine_as_OutputPathsHost(receiver: GoPtr<ParsedCommandLine>
  * }
  */
 export function NewParsedCommandLine(compilerOptions: GoPtr<CompilerOptions_3bab6c7a>, rootFileNames: GoSlice<string>, comparePathsOptions: ComparePathsOptions): GoPtr<ParsedCommandLine> {
+  const normalizedCompilerOptions = NormalizeCompilerOptions(compilerOptions);
   return {
     ParsedConfig: {
-      CompilerOptions: compilerOptions,
+      CompilerOptions: normalizedCompilerOptions,
       WatchOptions: undefined,
       FileNames: rootFileNames,
       TypeAcquisition: undefined,
@@ -631,7 +632,7 @@ export function ParsedCommandLine_SetParsedOptions(receiver: GoPtr<ParsedCommand
  * }
  */
 export function ParsedCommandLine_SetCompilerOptions(receiver: GoPtr<ParsedCommandLine>, o: GoPtr<CompilerOptions_3bab6c7a>): void {
-  receiver!.ParsedConfig!.CompilerOptions = o;
+  receiver!.ParsedConfig!.CompilerOptions = NormalizeCompilerOptions(o);
 }
 
 /**
@@ -650,7 +651,7 @@ export function ParsedCommandLine_CompilerOptions(receiver: GoPtr<ParsedCommandL
   if (p === undefined) {
     return undefined;
   }
-  return p.ParsedConfig!.CompilerOptions;
+  return NormalizeCompilerOptions(p.ParsedConfig!.CompilerOptions);
 }
 
 /**
@@ -725,7 +726,7 @@ export function ParsedCommandLine_FileNamesByPath(receiver: GoPtr<ParsedCommandL
  * }
  */
 export function ParsedCommandLine_ProjectReferences(receiver: GoPtr<ParsedCommandLine>): GoSlice<GoPtr<ProjectReference>> {
-  return receiver!.ParsedConfig!.ProjectReferences;
+  return receiver!.ParsedConfig!.ProjectReferences ?? [];
 }
 
 /**
@@ -742,7 +743,7 @@ export function ParsedCommandLine_ProjectReferences(receiver: GoPtr<ParsedComman
 export function ParsedCommandLine_ResolvedProjectReferencePaths(receiver: GoPtr<ParsedCommandLine>): GoSlice<string> {
   const p = receiver!;
   p.resolvedProjectReferencePathsOnce.Do((): void => {
-    p.resolvedProjectReferencePaths = core_Map(p.ParsedConfig!.ProjectReferences, ResolveProjectReferencePath);
+    p.resolvedProjectReferencePaths = core_Map(ParsedCommandLine_ProjectReferences(p), ResolveProjectReferencePath);
   });
   return p.resolvedProjectReferencePaths;
 }

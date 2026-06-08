@@ -213,6 +213,8 @@ export function exponentiationTransformer_visitExponentiationExpression(receiver
  * }
  */
 export function newExponentiationTransformer(opts: GoPtr<TransformOptions>): GoPtr<Transformer> {
-  const tx: exponentiationTransformer = {};
-  return Transformer_NewTransformer(tx as unknown as Transformer, (node) => exponentiationTransformer_visit(tx, node), opts!.Context);
+  const tx: exponentiationTransformer = {
+    __tsgoEmbedded0: { emitContext: undefined, factory: undefined, visitor: undefined },
+  };
+  return Transformer_NewTransformer(tx.__tsgoEmbedded0, (node) => exponentiationTransformer_visit(tx, node), opts!.Context);
 }

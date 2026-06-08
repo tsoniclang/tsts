@@ -32,7 +32,7 @@ export const TSTrue: Tristate = 2;
  * }
  */
 export function Tristate_IsTrue(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSTrue;
 }
 
@@ -45,7 +45,7 @@ export function Tristate_IsTrue(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsTrueOrUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSTrue || t === TSUnknown;
 }
 
@@ -58,7 +58,7 @@ export function Tristate_IsTrueOrUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsFalse(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSFalse;
 }
 
@@ -71,7 +71,7 @@ export function Tristate_IsFalse(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsFalseOrUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSFalse || t === TSUnknown;
 }
 
@@ -84,7 +84,7 @@ export function Tristate_IsFalseOrUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_IsUnknown(receiver: Tristate): bool {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   return t === TSUnknown;
 }
 
@@ -100,7 +100,7 @@ export function Tristate_IsUnknown(receiver: Tristate): bool {
  * }
  */
 export function Tristate_DefaultIfUnknown(receiver: Tristate, value: Tristate): Tristate {
-  const t: Tristate = receiver;
+  const t: Tristate = receiver ?? TSUnknown;
   if (t === TSUnknown) {
     return value;
   }
@@ -108,7 +108,7 @@ export function Tristate_DefaultIfUnknown(receiver: Tristate, value: Tristate): 
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::method::Tristate.UnmarshalJSON","kind":"method","status":"stub","sigHash":"dc8dfb64123d255e6a8b487249722136d46b033cde4fe500423025367c121db7","bodyHash":"36b2be3692b763fa578291e6a0e2254efb48fe042ff80115afb6ad7edfa23ab3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/tristate.go::method::Tristate.UnmarshalJSON","kind":"method","status":"implemented","sigHash":"dc8dfb64123d255e6a8b487249722136d46b033cde4fe500423025367c121db7","bodyHash":"36b2be3692b763fa578291e6a0e2254efb48fe042ff80115afb6ad7edfa23ab3"}
  *
  * Go source:
  * func (t *Tristate) UnmarshalJSON(data []byte) error {
@@ -124,7 +124,12 @@ export function Tristate_DefaultIfUnknown(receiver: Tristate, value: Tristate): 
  * }
  */
 export function Tristate_UnmarshalJSON(receiver: GoPtr<Tristate>, data: GoSlice<byte>): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/core/tristate.go::method::Tristate.UnmarshalJSON");
+  const str = bytesToString(data);
+  const value = str === "true" ? TSTrue : str === "false" ? TSFalse : TSUnknown;
+  if (typeof receiver === "object" && receiver !== null && "value" in receiver) {
+    (receiver as unknown as { value: Tristate }).value = value;
+  }
+  return undefined;
 }
 
 /**
@@ -156,8 +161,13 @@ export function Tristate_MarshalJSON(receiver: Tristate): [GoSlice<byte>, GoErro
 
 // Go's []byte(string) conversion: the UTF-8 encoding of the string as a byte slice.
 const utf8Encoder = new globalThis.TextEncoder();
+const utf8Decoder = new globalThis.TextDecoder();
 function stringToBytes(s: string): GoSlice<byte> {
   return globalThis.Array.from(utf8Encoder.encode(s));
+}
+
+function bytesToString(data: GoSlice<byte>): string {
+  return utf8Decoder.decode(new globalThis.Uint8Array(data as number[]));
 }
 
 /**

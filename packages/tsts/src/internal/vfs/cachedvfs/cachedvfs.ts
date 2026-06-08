@@ -71,11 +71,11 @@ export function From(fs: FS_296ac81f): GoPtr<FS> {
   const fsys: FS = {
     fs: fs,
     enabled: new Bool(),
-    directoryExistsCache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, bool>,
-    fileExistsCache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, bool>,
-    getAccessibleEntriesCache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, Entries>,
-    realpathCache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, string>,
-    statCache: { __tsgoBlank0: undefined as never, __tsgoBlank1: undefined as never, m: new SyncGoMap() } as SyncMap<string, FileInfo>,
+    directoryExistsCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, bool>,
+    fileExistsCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, bool>,
+    getAccessibleEntriesCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, Entries>,
+    realpathCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, string>,
+    statCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, FileInfo>,
   };
   fsys.enabled.Store(true as bool);
   return fsys;

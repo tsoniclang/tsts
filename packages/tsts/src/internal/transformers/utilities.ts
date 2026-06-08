@@ -739,6 +739,9 @@ export function IsSimpleInlineableExpression(expression: GoPtr<Expression>): boo
  */
 export function FindSuperStatementIndexPath(statements: GoSlice<GoPtr<Statement>>, start: int): GoSlice<int> {
   const indices = findSuperStatementIndexPathWorker(statements, start, []);
+  if (indices === undefined) {
+    return [];
+  }
   return [...indices].reverse();
 }
 

@@ -1,16 +1,15 @@
-import type { int } from "@tsonic/core/types.js";
+import type { byte, int } from "@tsonic/core/types.js";
 import type { GoError, GoSlice } from "./compat.js";
 import * as nodeFs from "node:fs";
 import * as nodeOs from "node:os";
 import * as nodePath from "node:path";
 import process from "node:process";
+import type { Writable } from "node:stream";
 import { NodeFS } from "./io/fs.js";
 import type { FileInfo, FS } from "./io/fs.js";
+import type { Writer } from "./io.js";
 
-export const Args: GoSlice<string> = process.argv;
-export const Stdin: unknown = process.stdin;
-export const Stdout: unknown = process.stdout;
-export const Stderr: unknown = process.stderr;
+export const Args: GoSlice<string> = [process.argv[1] ?? process.argv[0] ?? "node", ...process.argv.slice(2)];
 export const Interrupt = "SIGINT";
 export const PathError = Error;
 
@@ -19,13 +18,22 @@ export const O_CREATE: int = nodeFs.constants.O_CREAT as int;
 export const O_TRUNC: int = nodeFs.constants.O_TRUNC as int;
 export const O_WRONLY: int = nodeFs.constants.O_WRONLY as int;
 
-export interface File {
+export interface File extends Writer {
   WriteString(s: string): [int, GoError];
   Close(): GoError;
+  Fd(): int;
 }
 
 class NodeFile implements File {
   constructor(private readonly fd: int) {}
+
+  Write(p: GoSlice<byte>): [int, GoError] {
+    try {
+      return [nodeFs.writeSync(this.fd, Buffer.from(p), 0, p.length) as int, undefined];
+    } catch (error) {
+      return [0 as int, normalizeError(error)];
+    }
+  }
 
   WriteString(s: string): [int, GoError] {
     try {
@@ -43,7 +51,52 @@ class NodeFile implements File {
       return normalizeError(error);
     }
   }
+
+  Fd(): int {
+    return this.fd;
+  }
 }
+
+class stdioFile implements File {
+  constructor(private readonly stream: Writable, private readonly fd: int) {}
+
+  Write(p: GoSlice<byte>): [int, GoError] {
+    try {
+      if (this.fd >= 0) {
+        return [nodeFs.writeSync(this.fd, Buffer.from(p), 0, p.length) as int, undefined];
+      }
+      const bytes = Buffer.from(p);
+      this.stream.write(bytes);
+      return [bytes.length as int, undefined];
+    } catch (error) {
+      return [0 as int, normalizeError(error)];
+    }
+  }
+
+  WriteString(s: string): [int, GoError] {
+    try {
+      if (this.fd >= 0) {
+        return [nodeFs.writeSync(this.fd, s, undefined, "utf8") as int, undefined];
+      }
+      this.stream.write(s);
+      return [Buffer.byteLength(s, "utf8") as int, undefined];
+    } catch (error) {
+      return [0 as int, normalizeError(error)];
+    }
+  }
+
+  Close(): GoError {
+    return undefined;
+  }
+
+  Fd(): int {
+    return this.fd;
+  }
+}
+
+export const Stdin: File = new stdioFile(process.stdin, 0 as int);
+export const Stdout: File = new stdioFile(process.stdout, 1 as int);
+export const Stderr: File = new stdioFile(process.stderr, 2 as int);
 
 export function DirFS(root: string): FS {
   return NodeFS(root);

@@ -166,7 +166,7 @@ export interface Printer {
   Options: PrinterOptions;
   emitContext: GoPtr<EmitContext>;
   currentSourceFile: GoPtr<SourceFile>;
-  uniqueHelperNames: GoMap<string, GoPtr<IdentifierNode>>;
+  uniqueHelperNames: GoPtr<GoMap<string, GoPtr<IdentifierNode>>>;
   externalHelpersModuleName: GoPtr<IdentifierNode>;
   nextListElementPos: int;
   writer: EmitTextWriter;

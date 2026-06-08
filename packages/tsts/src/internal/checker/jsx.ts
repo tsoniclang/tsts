@@ -1,14 +1,17 @@
 import type { bool, int, uint } from "@tsonic/core/types.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
-import { Node_ForEachChild, Node_Name } from "../ast/spine.js";
+import { Values as SliceValues } from "../../go/slices.js";
+import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";
 import type { Node } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
-import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression } from "../ast/ast.js";
+import { Node_Text, SourceFile_Path, Node_Attributes, Node_Properties, Node_Children, Node_TagName, Node_Expression, Node_Initializer, Node_Symbol, Node_TypeArguments, Node_TypeArgumentList } from "../ast/ast.js";
 import type { EntityName, JsxChild } from "../ast/generated/unions.js";
-import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName } from "../ast/generated/predicates.js";
+import { KindJsxElement, KindJsxExpression, KindJsxFragment, KindJsxSelfClosingElement, KindJsxText } from "../ast/generated/kinds.js";
+import { IsJsxOpeningFragment, IsJsxElement, IsJsxAttribute, IsJsxOpeningElement, IsIdentifier, IsJsxNamespacedName, IsJsxText, IsJsxExpression, IsJsxSpreadAttribute, IsJsxSelfClosingElement, IsJsxFragment } from "../ast/generated/predicates.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
+import { Diagnostic_AddRelatedInfo, DiagnosticsCollection_Add, NewDiagnostic, NewDiagnosticChain } from "../ast/diagnostic.js";
 import type { Symbol } from "../ast/symbol.js";
-import { SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsValue, SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsTypeAlias, SymbolFlagsFunctionScopedVariable } from "../ast/symbolflags.js";
+import { SymbolFlagsType, SymbolFlagsNamespace, SymbolFlagsValue, SymbolFlagsAlias, SymbolFlagsBlockScopedVariable, SymbolFlagsEnum, SymbolFlagsTypeAlias, SymbolFlagsFunctionScopedVariable, SymbolFlagsOptional, SymbolFlagsProperty } from "../ast/symbolflags.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import type { SymbolTable } from "../ast/symbol.js";
 import type { Message } from "../diagnostics/diagnostics.js";
@@ -16,32 +19,41 @@ import { NewTextRange } from "../core/text.js";
 import { JsxEmitReactJSX, JsxEmitReactJSXDev, JsxEmitReact, JsxEmitPreserve, JsxEmitReactNative, JsxEmitNone, CompilerOptions_GetJSXTransformEnabled } from "../core/compileroptions.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import { LinkStore_Get } from "../core/linkstore.js";
-import { GetSourceFileOfNode, GetFirstIdentifier, GetPragmaFromSourceFile, GetPragmaArgument, IsInJSFile, IsJsxAttributeLike, GetSemanticJsxChildren } from "../ast/utilities.js";
+import { GetSourceFileOfNode, GetFirstIdentifier, GetPragmaFromSourceFile, GetPragmaArgument, IsInJSFile, IsJsxAttributeLike, GetSemanticJsxChildren, GetNodeId, IsJsxOpeningLikeElement } from "../ast/utilities.js";
 import { InternalSymbolNameMissing, SymbolName } from "../ast/symbol.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
-import { OrElse, IfElse, Find } from "../core/core.js";
-import { NewIdentifier, NewQualifiedName } from "../ast/generated/factory.js";
-import { AsJsxElement, AsJsxExpression, AsJsxFragment } from "../ast/generated/casts.js";
-import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments } from "../diagnostics/generated/messages.js";
-import { IsTypeAny, isJsxIntrinsicTagName } from "./utilities.js";
+import { OrElse, IfElse, Find, Map } from "../core/core.js";
+import { NewIdentifier, NewPropertySignatureDeclaration, NewQualifiedName } from "../ast/generated/factory.js";
+import { AsJsxElement, AsJsxExpression, AsJsxFragment, AsJsxText } from "../ast/generated/casts.js";
+import { The_global_type_JSX_0_may_not_have_more_than_one_property, This_JSX_tag_requires_the_module_path_0_to_exist_but_none_could_be_found_Make_sure_you_have_types_for_the_appropriate_package_installed, Using_JSX_fragments_requires_fragment_factory_0_to_be_in_scope_but_it_could_not_be_found, JSX_element_class_does_not_support_attributes_because_it_does_not_have_a_0_property, Cannot_use_JSX_unless_the_jsx_flag_is_provided, JSX_element_implicitly_has_type_any_because_the_global_type_JSX_Element_does_not_exist, JSX_element_implicitly_has_type_any_because_no_interface_JSX_0_exists, Property_0_does_not_exist_on_type_1, JSX_spread_child_must_be_an_array_type, The_jsxFragmentFactory_compiler_option_must_be_provided_to_use_JSX_fragments_with_the_jsxFactory_compiler_option, An_jsxFrag_pragma_is_required_when_using_an_jsx_pragma_with_JSX_fragments, This_JSX_tag_s_0_prop_expects_a_single_child_of_type_1_but_multiple_children_were_provided, This_JSX_tag_s_0_prop_expects_type_1_which_requires_multiple_children_but_only_a_single_child_was_provided, X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Its_type_0_is_not_a_valid_JSX_element_type, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, Tag_0_expects_at_least_1_arguments_but_the_JSX_factory_2_provides_at_most_3, X_0_is_declared_here, Expected_0_type_arguments_but_got_1, Spread_types_may_only_be_created_from_object_types, X_0_are_specified_twice_The_attribute_named_0_will_be_overwritten } from "../diagnostics/generated/messages.js";
+import { Its_element_type_0_is_not_a_valid_JSX_element, Its_instance_type_0_is_not_a_valid_JSX_element, Its_return_type_0_is_not_a_valid_JSX_element, X_0_cannot_be_used_as_a_JSX_component } from "../diagnostics/generated/messages.js";
+import { GetTextOfNode } from "../scanner/utilities.js";
+import { IsTypeAny, isJsxIntrinsicTagName, NewDiagnosticForNode, entityNameToString } from "./utilities.js";
 import { newTypeMapper } from "./mapper.js";
-import { Checker_isErrorType } from "./checker/diagnostics.js";
-import { Checker_checkGrammarJsxExpression } from "./grammarchecks.js";
-import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType } from "./checker/symbols.js";
-import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType } from "./checker/types.js";
-import type { Checker, CheckMode, InferenceContext } from "./checker/state.js";
-import { getStringLiteralValue, CheckModeNormal } from "./checker/state.js";
+import { Checker_isErrorType, Checker_checkDeprecatedSignature, Checker_resolveErrorCall, Checker_addDeprecatedSuggestion, Checker_isDeprecatedSymbol } from "./checker/diagnostics.js";
+import { Checker_checkGrammarJsxExpression, Checker_checkGrammarJsxElement } from "./grammarchecks.js";
+import { Checker_getPropertyOfType, Checker_getIndexTypeOfType, Checker_getTypeOfPropertyOfType, Checker_getIndexedAccessTypeOrUndefined, Checker_getPropertyNameFromIndex, Checker_markJsxAliasReferenced, Checker_isExactOptionalPropertyMismatch, Checker_resolveEntityName, Checker_getSymbolAtLocation } from "./checker/symbols.js";
+import { Checker_getUnionType, Checker_createTypeReference, Checker_intersectTypes, Checker_getIntersectionType, Checker_instantiateType, Checker_getPropertiesOfType, Checker_getContextualType, Checker_getApparentTypeOfContextualType, Checker_isArrayLikeType, Checker_getNumberLiteralType, Checker_mapTypeEx, Checker_getApparentType, Checker_getStringLiteralType, Checker_isArrayType, Checker_checkExpressionWithContextualType, ObjectLiteralDiscriminator_len, ObjectLiteralDiscriminator_name, ObjectLiteralDiscriminator_matches, Checker_filterType, Checker_createIterableType, Checker_isArrayOrTupleLikeType, Checker_createTupleType, Checker_removeMissingType, Checker_getIterationTypeOfIterable, Checker_getRegularTypeOfObjectLiteral, Checker_getSpreadType, Checker_getReducedType, Checker_isValidSpreadType, Checker_newAnonymousType, Checker_getPropagatingFlagsOfTypes, Checker_createArrayType, Checker_isTupleLikeType } from "./checker/types.js";
+import type { Checker, CheckMode, InferenceContext, DiscriminatedContextualTypeKey, ObjectLiteralDiscriminator } from "./checker/state.js";
+import { getStringLiteralValue, CheckModeInferential, CheckModeNormal, CheckModeSkipContextSensitive, InferencePriorityNone, Checker_getSourceFileLinks, IterationUseForOf, IterationTypeKindYield, createDiagnosticForNode, someType } from "./checker/state.js";
 import { Checker_error } from "./checker/support.js";
+import { Checker_checkSourceElements } from "./checker/support.js";
 import { Checker_getSymbol, Checker_getDeclaredTypeOfSymbol, Checker_getExportsOfSymbol, Checker_resolveSymbol, Checker_getMergedSymbol, Checker_getGlobalSymbol, Checker_getTypeOfSymbol, Checker_resolveAlias, Checker_getSpellingSuggestionForName, Checker_getTypeOfPropertyOfContextualType, Checker_getIndexedAccessType, Checker_newSymbol } from "./checker/symbols.js";
 import { Checker_resolveExternalModule } from "./checker/modules.js";
-import { Checker_findContextualNode, Checker_checkExpression, Checker_checkExpressionCached, Checker_checkNodeDeferred, Checker_checkExpressionEx } from "./checker/syntax-checking.js";
-import { Checker_fillMissingTypeArguments, Checker_getReturnTypeOfSignature, Checker_getMinTypeArgumentCount, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getTypeOfFirstParameterOfSignatureWithFallback, Checker_getContextualTypeForArgumentAtIndex, Checker_getSignaturesOfType, Checker_newSignature, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_getOrCreateTypeFromSignature } from "./checker/signatures.js";
-import { Checker_getTypeAliasInstantiation } from "./checker/inference.js";
+import { Checker_findContextualNode, Checker_checkExpression, Checker_checkExpressionCached, Checker_checkNodeDeferred, Checker_checkExpressionEx, Checker_checkExpressionForMutableLocation } from "./checker/syntax-checking.js";
+import { Checker_fillMissingTypeArguments, Checker_getReturnTypeOfSignature, Checker_getMinTypeArgumentCount, Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias, Checker_getTypeOfFirstParameterOfSignatureWithFallback, Checker_getContextualTypeForArgumentAtIndex, Checker_getSignaturesOfType, Checker_newSignature, Checker_getApplicableIndexInfoForName, Checker_getApplicableIndexSymbol, Checker_getTypeOfPropertyOrIndexSignatureOfType, Checker_getOrCreateTypeFromSignature, Checker_getUnionSignatures, Checker_getResolvedSignature, Checker_resolveCall, Checker_resolveUntypedCall, Checker_isUntypedFunctionCall } from "./checker/signatures.js";
+import { Checker_getInferenceContext, Checker_getTypeAliasInstantiation } from "./checker/inference.js";
+import { Checker_addIntraExpressionInferenceSite, Checker_inferTypes, Checker_getInferredTypes } from "./inference.js";
+import { Checker_isContextSensitive } from "./checker/support-queries.js";
+import { Checker_checkSpreadPropOverrides } from "./checker/classes.js";
+import { Checker_isPossiblyDiscriminantValue } from "./checker/flow-narrowing.js";
+import { Checker_TypeToString } from "./printer.js";
 import type { SourceFileLinks, TypeAliasLinks, InterfaceType, ValueSymbolLinks, SymbolNodeLinks } from "./types.js";
 import { Type_AsInterfaceType, InterfaceType_TypeParameters, SignatureFlagsNone } from "./types.js";
 import type { Relation } from "./relater.js";
-import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsStringLiteral } from "./types.js";
-import type { ContextFlags, Signature, Type } from "./types.js";
+import { Checker_checkTypeRelatedToEx, Checker_isTypeAssignableTo, Checker_checkTypeRelatedTo, Checker_reportDiagnostic, Checker_elaborateError, Checker_getBestMatchIndexedAccessTypeOrUndefined, Checker_checkExpressionForMutableLocationWithContextualType, Checker_elaborateElement, Checker_isDiscriminantProperty, Checker_discriminateTypeByDiscriminableItems, isHyphenatedJsxName, Checker_checkTypeAssignableToAndOptionallyElaborate, Checker_checkTypeRelatedToAndOptionallyElaborate, Checker_getTypeAtPosition, Checker_hasEffectiveRestParameter, Checker_getParameterCount, Checker_getMinArgumentCount } from "./relater.js";
+import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone, ObjectFlagsJsxAttributes, ObjectFlagsFreshLiteral, ObjectFlagsObjectLiteral, ObjectFlagsContainsObjectOrArrayLiteral, ObjectFlagsPropagatingFlags, TypeFlagsNone } from "./types.js";
+import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::type::JsxFlags","kind":"type","status":"implemented","sigHash":"bf33d850d9ce92d74d7ae47047276dff2682895a11571cf45456cd974c50ef00","bodyHash":"6beb053f234184782603299db6a5ebc5ec000ad404b32524fb1c92e5141e8b33"}
@@ -307,7 +319,7 @@ export function Checker_checkJsxAttributes(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxOpeningLikeElementOrOpeningFragment","kind":"method","status":"stub","sigHash":"852b0e25ae1ce9d3e69d23da4363182b2320bbe3eaebb580f52961acc5299a85","bodyHash":"9d69d13053b9601997eb45afa19351da3aae214f162c74a958e479062ef44426"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxOpeningLikeElementOrOpeningFragment","kind":"method","status":"implemented","sigHash":"852b0e25ae1ce9d3e69d23da4363182b2320bbe3eaebb580f52961acc5299a85","bodyHash":"9d69d13053b9601997eb45afa19351da3aae214f162c74a958e479062ef44426"}
  *
  * Go source:
  * func (c *Checker) checkJsxOpeningLikeElementOrOpeningFragment(node *ast.Node) {
@@ -340,7 +352,32 @@ export function Checker_checkJsxAttributes(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_checkJsxOpeningLikeElementOrOpeningFragment(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxOpeningLikeElementOrOpeningFragment");
+  const isNodeOpeningLikeElement = IsJsxOpeningLikeElement(node);
+  if (isNodeOpeningLikeElement) {
+    Checker_checkGrammarJsxElement(receiver, node);
+  }
+  Checker_checkJsxPreconditions(receiver, node);
+  Checker_markJsxAliasReferenced(receiver, node);
+  const sig = Checker_getResolvedSignature(receiver, node, undefined, CheckModeNormal);
+  Checker_checkDeprecatedSignature(receiver, sig, node);
+  if (isNodeOpeningLikeElement) {
+    const elementTypeConstraint = Checker_getJsxElementTypeTypeAt(receiver, node);
+    if (elementTypeConstraint !== undefined) {
+      const tagName = Node_TagName(node);
+      let tagType: GoPtr<Type>;
+      if (isJsxIntrinsicTagName(tagName)) {
+        tagType = Checker_getStringLiteralType(receiver, Node_Text(tagName));
+      } else {
+        tagType = Checker_checkExpression(receiver, tagName);
+      }
+      const diagnostics: GoSlice<GoPtr<Diagnostic>> = [];
+      if (!Checker_checkTypeRelatedToEx(receiver, tagType, elementTypeConstraint, receiver!.assignableRelation, tagName, Its_type_0_is_not_a_valid_JSX_element_type, diagnostics)) {
+        DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnosticChain(diagnostics[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(tagName)));
+      }
+    } else {
+      Checker_checkJsxReturnAssignableToAppropriateBound(receiver, Checker_getJsxReferenceKind(receiver, node), Checker_getReturnTypeOfSignature(receiver, sig), node);
+    }
+  }
 }
 
 /**
@@ -368,7 +405,7 @@ export function Checker_checkJsxPreconditions(receiver: GoPtr<Checker>, errorNod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxReturnAssignableToAppropriateBound","kind":"method","status":"stub","sigHash":"136c323163f21b619e5969f01bb526f508fa742f03f0f7ae7fd983c1abc51441","bodyHash":"472ee60f55d460eaccd8dd828da10bf68746b1762886ddc84cff7f14ee1e1c34"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxReturnAssignableToAppropriateBound","kind":"method","status":"implemented","sigHash":"136c323163f21b619e5969f01bb526f508fa742f03f0f7ae7fd983c1abc51441","bodyHash":"472ee60f55d460eaccd8dd828da10bf68746b1762886ddc84cff7f14ee1e1c34"}
  *
  * Go source:
  * func (c *Checker) checkJsxReturnAssignableToAppropriateBound(refKind JsxReferenceKind, elemInstanceType *Type, openingLikeElement *ast.Node) {
@@ -400,11 +437,41 @@ export function Checker_checkJsxPreconditions(receiver: GoPtr<Checker>, errorNod
  * }
  */
 export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoPtr<Checker>, refKind: JsxReferenceKind, elemInstanceType: GoPtr<Type>, openingLikeElement: GoPtr<Node>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxReturnAssignableToAppropriateBound");
+  const diags: GoSlice<GoPtr<Diagnostic>> = [];
+  switch (refKind) {
+    case JsxReferenceKindFunction: {
+      const sfcReturnConstraint = Checker_getJsxStatelessElementTypeAt(receiver, openingLikeElement);
+      if (sfcReturnConstraint !== undefined) {
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, sfcReturnConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_return_type_0_is_not_a_valid_JSX_element, diags);
+      }
+      break;
+    }
+    case JsxReferenceKindComponent: {
+      const classConstraint = Checker_getJsxElementClassTypeAt(receiver, openingLikeElement);
+      if (classConstraint !== undefined) {
+        // Issue an error if this return type isn't assignable to JSX.ElementClass, failing that
+        Checker_checkTypeRelatedToEx(receiver, elemInstanceType, classConstraint, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_instance_type_0_is_not_a_valid_JSX_element, diags);
+      }
+      break;
+    }
+    default: {
+      const sfcReturnConstraint = Checker_getJsxStatelessElementTypeAt(receiver, openingLikeElement);
+      const classConstraint = Checker_getJsxElementClassTypeAt(receiver, openingLikeElement);
+      if (sfcReturnConstraint === undefined || classConstraint === undefined) {
+        return;
+      }
+      const combined = Checker_getUnionType(receiver, [sfcReturnConstraint, classConstraint]);
+      Checker_checkTypeRelatedToEx(receiver, elemInstanceType, combined, receiver!.assignableRelation, Node_TagName(openingLikeElement), Its_element_type_0_is_not_a_valid_JSX_element, diags);
+      break;
+    }
+  }
+  if (diags.length !== 0) {
+    DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnosticChain(diags[0], X_0_cannot_be_used_as_a_JSX_component, GetTextOfNode(Node_TagName(openingLikeElement))));
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"stub","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102","bodyHash":"20174532fdbd2a02cf9e4286d4f514f1d9ae294d7d10c761caf1be42cce6c20d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments","kind":"method","status":"implemented","sigHash":"ad8d59d71522d4d08c4fa957a96368be3bbe0e8a8104d6ec7d8e0c0375625102","bodyHash":"20174532fdbd2a02cf9e4286d4f514f1d9ae294d7d10c761caf1be42cce6c20d"}
  *
  * Go source:
  * func (c *Checker) inferJsxTypeArguments(node *ast.Node, signature *Signature, checkMode CheckMode, context *InferenceContext) []*Type {
@@ -415,7 +482,10 @@ export function Checker_checkJsxReturnAssignableToAppropriateBound(receiver: GoP
  * }
  */
 export function Checker_inferJsxTypeArguments(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, checkMode: CheckMode, context: GoPtr<InferenceContext>): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.inferJsxTypeArguments");
+  const paramType = Checker_getEffectiveFirstArgumentForJsxSignature(receiver, signature, node);
+  const checkAttrType = Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), paramType, context, checkMode);
+  Checker_inferTypes(receiver, context!.inferences, checkAttrType, paramType, InferencePriorityNone, false);
+  return Checker_getInferredTypes(receiver, context);
 }
 
 /**
@@ -557,7 +627,7 @@ export function Checker_getContextualTypeForChildJsxExpression(receiver: GoPtr<C
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.discriminateContextualTypeByJSXAttributes","kind":"method","status":"stub","sigHash":"080f008bcde6844d0a881a7365fce752c271c4d2dc0eee32b4b7f9463238dbbb","bodyHash":"8c200baa7afd6095b10f5e1638d9fa7e82a31d9c3c624806074584802781f266"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.discriminateContextualTypeByJSXAttributes","kind":"method","status":"implemented","sigHash":"080f008bcde6844d0a881a7365fce752c271c4d2dc0eee32b4b7f9463238dbbb","bodyHash":"8c200baa7afd6095b10f5e1638d9fa7e82a31d9c3c624806074584802781f266"}
  *
  * Go source:
  * func (c *Checker) discriminateContextualTypeByJSXAttributes(node *ast.Node, contextualType *Type) *Type {
@@ -591,11 +661,44 @@ export function Checker_getContextualTypeForChildJsxExpression(receiver: GoPtr<C
  * }
  */
 export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPtr<Checker>, node: GoPtr<Node>, contextualType: GoPtr<Type>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.discriminateContextualTypeByJSXAttributes");
+  const key: DiscriminatedContextualTypeKey = { nodeId: GetNodeId(node), typeId: contextualType!.id };
+  const cachedDiscriminated = receiver!.discriminatedContextualTypes.get(key);
+  if (cachedDiscriminated !== undefined) {
+    return cachedDiscriminated;
+  }
+  const jsxChildrenPropertyName = Checker_getJsxElementChildrenPropertyName(receiver, Checker_getJsxNamespaceAt(receiver, node));
+  const discriminantProperties = (Node_Properties(node) ?? []).filter((property) => {
+    const symbol = Node_Symbol(property);
+    if (symbol === undefined || !IsJsxAttribute(property)) {
+      return false;
+    }
+    const initializer = Node_Initializer(property);
+    return (initializer === undefined || Checker_isPossiblyDiscriminantValue(receiver, initializer)) && Checker_isDiscriminantProperty(receiver, contextualType, symbol.Name);
+  });
+  const jsxAttributesSymbol = Node_Symbol(node);
+  const discriminantMembers = Checker_getPropertiesOfType(receiver, contextualType).filter((symbol) => {
+    if ((symbol!.Flags & SymbolFlagsOptional) === 0 || jsxAttributesSymbol === undefined) {
+      return false;
+    }
+    const element = node!.Parent!.Parent;
+    if (symbol!.Name === jsxChildrenPropertyName && IsJsxElement(element) && GetSemanticJsxChildren(Node_Children(element)!.Nodes).length !== 0) {
+      return false;
+    }
+    return jsxAttributesSymbol!.Members.get(symbol!.Name) === undefined && Checker_isDiscriminantProperty(receiver, contextualType, symbol!.Name);
+  });
+  const discriminatorData: ObjectLiteralDiscriminator = { c: receiver, props: discriminantProperties, members: discriminantMembers };
+  const discriminator = {
+    len: () => ObjectLiteralDiscriminator_len(discriminatorData),
+    name: (index: int) => ObjectLiteralDiscriminator_name(discriminatorData, index),
+    matches: (index: int, target: GoPtr<Type>) => ObjectLiteralDiscriminator_matches(discriminatorData, index, target),
+  };
+  const discriminated = Checker_discriminateTypeByDiscriminableItems(receiver, contextualType, discriminator);
+  receiver!.discriminatedContextualTypes.set(key, discriminated);
+  return discriminated;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateJsxComponents","kind":"method","status":"stub","sigHash":"fdb4c5ff5495c4adc0249f62b1b3552a14f6fdfb14afed9304ba0942825fb7b4","bodyHash":"870408902dc7c2885dda20a0428d5858581b6817c9fe69362e49403b7116481f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateJsxComponents","kind":"method","status":"implemented","sigHash":"fdb4c5ff5495c4adc0249f62b1b3552a14f6fdfb14afed9304ba0942825fb7b4","bodyHash":"870408902dc7c2885dda20a0428d5858581b6817c9fe69362e49403b7116481f"}
  *
  * Go source:
  * func (c *Checker) elaborateJsxComponents(node *ast.Node, source *Type, target *Type, relation *Relation, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -672,7 +775,72 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
  * }
  */
 export function Checker_elaborateJsxComponents(receiver: GoPtr<Checker>, node: GoPtr<Node>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateJsxComponents");
+  let reportedError = false;
+  for (const prop of Node_Properties(node) ?? []) {
+    if (!IsJsxSpreadAttribute(prop) && !isHyphenatedJsxName(Node_Text(Node_Name(prop)))) {
+      const nameType = Checker_getStringLiteralType(receiver, Node_Text(Node_Name(prop)));
+      if (nameType !== undefined && (nameType!.flags & TypeFlagsNever) === 0) {
+        reportedError = Checker_elaborateElement(receiver, source, target, relation, Node_Name(prop), Node_Initializer(prop), nameType, undefined, undefined, diagnosticOutput) || reportedError;
+      }
+    }
+  }
+  if (IsJsxOpeningElement(node!.Parent) && IsJsxElement(node!.Parent!.Parent)) {
+    const containingElement = node!.Parent!.Parent;
+    let childrenPropName = Checker_getJsxElementChildrenPropertyName(receiver, Checker_getJsxNamespaceAt(receiver, node));
+    if (childrenPropName === InternalSymbolNameMissing) {
+      childrenPropName = "children";
+    }
+    const childrenNameType = Checker_getStringLiteralType(receiver, childrenPropName);
+    const childrenTargetType = Checker_getIndexedAccessType(receiver, target, childrenNameType);
+    const validChildren = GetSemanticJsxChildren(Node_Children(containingElement)!.Nodes);
+    if (validChildren.length === 0) {
+      return reportedError;
+    }
+    const moreThanOneRealChildren = validChildren.length > 1;
+    let arrayLikeTargetParts: GoPtr<Type>;
+    let nonArrayLikeTargetParts: GoPtr<Type>;
+    const iterableType = receiver!.getGlobalIterableType();
+    if (iterableType !== receiver!.emptyGenericType) {
+      const anyIterable = Checker_createIterableType(receiver, receiver!.anyType);
+      arrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => Checker_isTypeAssignableTo(receiver, candidate, anyIterable));
+      nonArrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => !Checker_isTypeAssignableTo(receiver, candidate, anyIterable));
+    } else {
+      arrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => Checker_isArrayOrTupleLikeType(receiver, candidate));
+      nonArrayLikeTargetParts = Checker_filterType(receiver, childrenTargetType, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
+    }
+    let invalidTextDiagnostic: GoPtr<Message>;
+    let invalidTextDiagnosticArgs: GoSlice<unknown> = [];
+    const getInvalidTextualChildDiagnostic = (): [GoPtr<Message>, GoSlice<unknown>] => {
+      if (invalidTextDiagnostic === undefined) {
+        const tagNameText = GetTextOfNode(Node_TagName(node!.Parent));
+        invalidTextDiagnostic = X_0_components_don_t_accept_text_as_child_elements_Text_in_JSX_has_the_type_string_but_the_expected_type_of_1_is_2;
+        invalidTextDiagnosticArgs = [tagNameText, childrenPropName, Checker_TypeToString(receiver, childrenTargetType)];
+      }
+      return [invalidTextDiagnostic, invalidTextDiagnosticArgs];
+    };
+    if (moreThanOneRealChildren) {
+      if (arrayLikeTargetParts !== receiver!.neverType) {
+        const realSource = Checker_createTupleType(receiver, Checker_checkJsxChildren(receiver, containingElement, CheckModeNormal));
+        const children = Checker_generateJsxChildren(receiver, containingElement, getInvalidTextualChildDiagnostic);
+        reportedError = Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver, children, realSource, arrayLikeTargetParts, relation, diagnosticOutput) || reportedError;
+      } else if (!Checker_checkTypeRelatedTo(receiver, Checker_getIndexedAccessType(receiver, source, childrenNameType), childrenTargetType, relation, undefined)) {
+        const diagnostic = Checker_error(receiver, Node_TagName(AsJsxElement(containingElement)!.OpeningElement), This_JSX_tag_s_0_prop_expects_a_single_child_of_type_1_but_multiple_children_were_provided, childrenPropName, Checker_TypeToString(receiver, childrenTargetType));
+        Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
+        reportedError = true;
+      }
+    } else if (nonArrayLikeTargetParts !== receiver!.neverType) {
+      const child = validChildren[0];
+      const element = Checker_getElaborationElementForJsxChild(receiver, child, childrenNameType, getInvalidTextualChildDiagnostic);
+      if (element.errorNode !== undefined) {
+        reportedError = Checker_elaborateElement(receiver, source, target, relation, element.errorNode, element.innerExpression, element.nameType, undefined, element.createDiagnostic, diagnosticOutput) || reportedError;
+      }
+    } else if (!Checker_checkTypeRelatedTo(receiver, Checker_getIndexedAccessType(receiver, source, childrenNameType), childrenTargetType, relation, undefined)) {
+      const diagnostic = Checker_error(receiver, Node_TagName(AsJsxElement(containingElement)!.OpeningElement), This_JSX_tag_s_0_prop_expects_type_1_which_requires_multiple_children_but_only_a_single_child_was_provided, childrenPropName, Checker_TypeToString(receiver, childrenTargetType));
+      Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
+      reportedError = true;
+    }
+  }
+  return reportedError;
 }
 
 /**
@@ -690,11 +858,11 @@ export interface JsxElaborationElement {
   errorNode: GoPtr<Node>;
   innerExpression: GoPtr<Node>;
   nameType: GoPtr<Type>;
-  createDiagnostic: (prop: GoPtr<Node>) => GoPtr<Diagnostic>;
+  createDiagnostic: GoPtr<(prop: GoPtr<Node>) => GoPtr<Diagnostic>>;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"stub","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c","bodyHash":"77c725595328ecf8a43861623fca68bfaaf1132889a73bfd45d52a7b63a59f20"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren","kind":"method","status":"implemented","sigHash":"b0b9288d1d9fe6cb71fd998f70c09c2fe066733ab276593900c3e4eb6afb202c","bodyHash":"77c725595328ecf8a43861623fca68bfaaf1132889a73bfd45d52a7b63a59f20"}
  *
  * Go source:
  * func (c *Checker) generateJsxChildren(node *ast.Node, getInvalidTextDiagnostic func() (*diagnostics.Message, []any)) iter.Seq[JsxElaborationElement] {
@@ -715,11 +883,26 @@ export interface JsxElaborationElement {
  * }
  */
 export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): GoSeq<JsxElaborationElement> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.generateJsxChildren");
+  return (yieldValue) => {
+    let memberOffset = 0;
+    const children = Node_Children(node)!.Nodes;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]!;
+      const nameType = Checker_getNumberLiteralType(receiver, i - memberOffset);
+      const element = Checker_getElaborationElementForJsxChild(receiver, child, nameType, getInvalidTextDiagnostic);
+      if (element.errorNode !== undefined) {
+        if (!yieldValue(element)) {
+          return;
+        }
+      } else {
+        memberOffset++;
+      }
+    }
+  };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getElaborationElementForJsxChild","kind":"method","status":"stub","sigHash":"cfcaf07f3e077794d0dba0009a45bd038dfafa42dbb6a55125b2b36bab290e2d","bodyHash":"2629f5d69170ac491f374875c47fce5a9c2742a5e29c84cc42a516660ef4c7fc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getElaborationElementForJsxChild","kind":"method","status":"implemented","sigHash":"cfcaf07f3e077794d0dba0009a45bd038dfafa42dbb6a55125b2b36bab290e2d","bodyHash":"2629f5d69170ac491f374875c47fce5a9c2742a5e29c84cc42a516660ef4c7fc"}
  *
  * Go source:
  * func (c *Checker) getElaborationElementForJsxChild(child *ast.Node, nameType *Type, getInvalidTextDiagnostic func() (*diagnostics.Message, []any)) JsxElaborationElement {
@@ -750,11 +933,36 @@ export function Checker_generateJsxChildren(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker>, child: GoPtr<Node>, nameType: GoPtr<Type>, getInvalidTextDiagnostic: () => [GoPtr<Message>, GoSlice<unknown>]): JsxElaborationElement {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getElaborationElementForJsxChild");
+  switch (child!.Kind) {
+    case KindJsxExpression:
+      // child is of the type of the expression
+      return { errorNode: child, innerExpression: Node_Expression(child), nameType, createDiagnostic: undefined };
+    case KindJsxText:
+      if (AsJsxText(child)!.ContainsOnlyTriviaWhiteSpaces) {
+        // Whitespace only jsx text isn't real jsx text
+        return { errorNode: undefined, innerExpression: undefined, nameType: undefined, createDiagnostic: undefined };
+      }
+      // child is a string
+      return {
+        errorNode: child,
+        innerExpression: undefined,
+        nameType,
+        createDiagnostic: (prop: GoPtr<Node>): GoPtr<Diagnostic> => {
+          const [errorMessage, errorArgs] = getInvalidTextDiagnostic();
+          return NewDiagnosticForNode(prop, errorMessage, ...errorArgs);
+        },
+      };
+    case KindJsxElement:
+    case KindJsxSelfClosingElement:
+    case KindJsxFragment:
+      // child is of type JSX.Element
+      return { errorNode: child, innerExpression: child, nameType, createDiagnostic: undefined };
+  }
+  throw new globalThis.Error("Unhandled case in getElaborationElementForJsxChild");
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateIterableOrArrayLikeTargetElementwise","kind":"method","status":"stub","sigHash":"fbf41ffb15006925c2ca4e737bfa290ed00be17bfa98e667b9059860572f981e","bodyHash":"7cda1252005d6e8487dfca7c692b8ac78e882cb116e210a1516624cd74c35ec6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateIterableOrArrayLikeTargetElementwise","kind":"method","status":"implemented","sigHash":"fbf41ffb15006925c2ca4e737bfa290ed00be17bfa98e667b9059860572f981e","bodyHash":"7cda1252005d6e8487dfca7c692b8ac78e882cb116e210a1516624cd74c35ec6"}
  *
  * Go source:
  * func (c *Checker) elaborateIterableOrArrayLikeTargetElementwise(iterator iter.Seq[JsxElaborationElement], source *Type, target *Type, relation *Relation, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -823,7 +1031,65 @@ export function Checker_getElaborationElementForJsxChild(receiver: GoPtr<Checker
  * }
  */
 export function Checker_elaborateIterableOrArrayLikeTargetElementwise(receiver: GoPtr<Checker>, iterator: GoSeq<JsxElaborationElement>, source: GoPtr<Type>, target: GoPtr<Type>, relation: GoPtr<Relation>, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.elaborateIterableOrArrayLikeTargetElementwise");
+  const tupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => Checker_isArrayOrTupleLikeType(receiver, candidate));
+  const nonTupleOrArrayLikeTargetParts = Checker_filterType(receiver, target, (candidate) => !Checker_isArrayOrTupleLikeType(receiver, candidate));
+  let iterationType: GoPtr<Type>;
+  if (nonTupleOrArrayLikeTargetParts !== receiver!.neverType) {
+    iterationType = Checker_getIterationTypeOfIterable(receiver, IterationUseForOf, IterationTypeKindYield, nonTupleOrArrayLikeTargetParts, undefined);
+  }
+  let reportedError = false;
+  iterator((element) => {
+    const prop = element.errorNode;
+    const next = element.innerExpression;
+    const nameType = element.nameType;
+    let targetPropType = iterationType;
+    let targetIndexedPropType: GoPtr<Type>;
+    if (tupleOrArrayLikeTargetParts !== receiver!.neverType) {
+      targetIndexedPropType = Checker_getBestMatchIndexedAccessTypeOrUndefined(receiver, source, tupleOrArrayLikeTargetParts, nameType);
+    }
+    if (targetIndexedPropType !== undefined && (targetIndexedPropType!.flags & TypeFlagsIndexedAccess) === 0) {
+      if (iterationType !== undefined) {
+        targetPropType = Checker_getUnionType(receiver, [iterationType, targetIndexedPropType]);
+      } else {
+        targetPropType = targetIndexedPropType;
+      }
+    }
+    if (targetPropType === undefined) {
+      return true;
+    }
+    let sourcePropType = Checker_getIndexedAccessTypeOrUndefined(receiver, source, nameType, AccessFlagsNone, undefined, undefined);
+    if (sourcePropType === undefined) {
+      return true;
+    }
+    const propName = Checker_getPropertyNameFromIndex(receiver, nameType, undefined);
+    if (!Checker_checkTypeRelatedTo(receiver, sourcePropType, targetPropType, relation, undefined)) {
+      const elaborated = next !== undefined && Checker_elaborateError(receiver, next, sourcePropType, targetPropType, relation, undefined, diagnosticOutput);
+      reportedError = true;
+      if (!elaborated) {
+        let specificSource: GoPtr<Type> = sourcePropType;
+        if (next !== undefined) {
+          specificSource = Checker_checkExpressionForMutableLocationWithContextualType(receiver, next, sourcePropType);
+        }
+        if (element.createDiagnostic !== undefined) {
+          Checker_reportDiagnostic(receiver, element.createDiagnostic(prop), diagnosticOutput);
+        } else if (receiver!.exactOptionalPropertyTypes && Checker_isExactOptionalPropertyMismatch(receiver, specificSource, targetPropType)) {
+          const diagnostic = createDiagnosticForNode(prop, Type_0_is_not_assignable_to_type_1_with_exactOptionalPropertyTypes_Colon_true_Consider_adding_undefined_to_the_type_of_the_target, Checker_TypeToString(receiver, specificSource), Checker_TypeToString(receiver, targetPropType));
+          Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
+        } else {
+          const targetIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, tupleOrArrayLikeTargetParts, propName), receiver!.unknownSymbol)!.Flags & SymbolFlagsOptional) !== 0;
+          const sourceIsOptional = propName !== InternalSymbolNameMissing && (OrElse(Checker_getPropertyOfType(receiver, source, propName), receiver!.unknownSymbol)!.Flags & SymbolFlagsOptional) !== 0;
+          targetPropType = Checker_removeMissingType(receiver, targetPropType, targetIsOptional);
+          sourcePropType = Checker_removeMissingType(receiver, sourcePropType, targetIsOptional && sourceIsOptional);
+          const result = Checker_checkTypeRelatedToEx(receiver, specificSource, targetPropType, relation, prop, undefined, diagnosticOutput);
+          if (result && specificSource !== sourcePropType) {
+            Checker_checkTypeRelatedToEx(receiver, sourcePropType, targetPropType, relation, prop, undefined, diagnosticOutput);
+          }
+        }
+      }
+    }
+    return true;
+  });
+  return reportedError;
 }
 
 /**
@@ -859,7 +1125,7 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
   if (jsxSpecific !== undefined) {
     return jsxSpecific;
   }
-  return Checker_getSpellingSuggestionForName(receiver, name, properties.values() as unknown as GoSeq<GoPtr<Symbol>>, SymbolFlagsValue);
+  return Checker_getSpellingSuggestionForName(receiver, name, SliceValues(properties), SymbolFlagsValue);
 }
 
 /**
@@ -912,7 +1178,7 @@ export function Checker_getSuggestedSymbolForNonexistentJSXAttribute(receiver: G
  * }
  */
 export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Type> {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, GetSourceFileOfNode(node)) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, GetSourceFileOfNode(node));
   if (links!.jsxFragmentType !== undefined) {
     return links!.jsxFragmentType;
   }
@@ -954,7 +1220,7 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"stub","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9","bodyHash":"2b097e2d078317909f5d558b6a1fb7b1bb263834e9ed10e99808d22280fb2814"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement","kind":"method","status":"implemented","sigHash":"97d39fe2690ff55486fee1520811a27e5874f5021f686d7444e1a9ba3792b1b9","bodyHash":"2b097e2d078317909f5d558b6a1fb7b1bb263834e9ed10e99808d22280fb2814"}
  *
  * Go source:
  * func (c *Checker) resolveJsxOpeningLikeElement(node *ast.Node, candidatesOutArray *[]*Signature, checkMode CheckMode) *Signature {
@@ -997,11 +1263,53 @@ export function Checker_getJSXFragmentType(receiver: GoPtr<Checker>, node: GoPtr
  * }
  */
 export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidatesOutArray: GoPtr<GoSlice<GoPtr<Signature>>>, checkMode: CheckMode): GoPtr<Signature> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.resolveJsxOpeningLikeElement");
+  const isJsxOpenFragment = IsJsxOpeningFragment(node);
+  let exprTypes: GoPtr<Type>;
+  if (!isJsxOpenFragment) {
+    if (isJsxIntrinsicTagName(Node_TagName(node))) {
+      const result = Checker_getIntrinsicAttributesTypeFromJsxOpeningLikeElement(receiver, node);
+      const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, node, result);
+      Checker_checkTypeAssignableToAndOptionallyElaborate(
+        receiver,
+        Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), Checker_getEffectiveFirstArgumentForJsxSignature(receiver, fakeSignature, node), undefined, CheckModeNormal),
+        result,
+        Node_TagName(node),
+        Node_Attributes(node),
+        undefined,
+        undefined,
+      );
+      const typeArguments = Node_TypeArguments(node) ?? [];
+      if (typeArguments.length !== 0) {
+        Checker_checkSourceElements(receiver, typeArguments);
+        DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(GetSourceFileOfNode(node), Node_TypeArgumentList(node)!.Loc, Expected_0_type_arguments_but_got_1, 0, typeArguments.length));
+      }
+      return fakeSignature;
+    }
+    exprTypes = Checker_checkExpression(receiver, Node_TagName(node));
+  } else {
+    exprTypes = Checker_getJSXFragmentType(receiver, node);
+  }
+  const apparentType = Checker_getApparentType(receiver, exprTypes);
+  if (Checker_isErrorType(receiver, apparentType)) {
+    return Checker_resolveErrorCall(receiver, node);
+  }
+  const signatures = Checker_getUninstantiatedJsxSignaturesOfType(receiver, exprTypes, node);
+  if (Checker_isUntypedFunctionCall(receiver, exprTypes, apparentType, signatures.length, 0)) {
+    return Checker_resolveUntypedCall(receiver, node);
+  }
+  if (signatures.length === 0) {
+    if (isJsxOpenFragment) {
+      Checker_error(receiver, node, JSX_element_type_0_does_not_have_any_construct_or_call_signatures, GetTextOfNode(node));
+    } else {
+      Checker_error(receiver, Node_TagName(node), JSX_element_type_0_does_not_have_any_construct_or_call_signatures, GetTextOfNode(Node_TagName(node)));
+    }
+    return Checker_resolveErrorCall(receiver, node);
+  }
+  return Checker_resolveCall(receiver, node, signatures, candidatesOutArray, checkMode, SignatureFlagsNone, undefined);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"stub","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0","bodyHash":"0f1c831ad8b7bbb5626c05e117b889664970b3b598bc63bf8ec933fb542aa9d2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement","kind":"method","status":"implemented","sigHash":"fb19b1b335b7f42e456af28cbdc31670e45022224800bd79b38f1a896fe986e0","bodyHash":"0f1c831ad8b7bbb5626c05e117b889664970b3b598bc63bf8ec933fb542aa9d2"}
  *
  * Go source:
  * func (c *Checker) checkApplicableSignatureForJsxCallLikeElement(node *ast.Node, signature *Signature, relation *Relation, checkMode CheckMode, reportErrors bool, diagnosticOutput *[]*ast.Diagnostic) bool {
@@ -1117,11 +1425,110 @@ export function Checker_resolveJsxOpeningLikeElement(receiver: GoPtr<Checker>, n
  * }
  */
 export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: GoPtr<Checker>, node: GoPtr<Node>, signature: GoPtr<Signature>, relation: GoPtr<Relation>, checkMode: CheckMode, reportErrors: bool, diagnosticOutput: GoPtr<GoSlice<GoPtr<Diagnostic>>>): bool {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkApplicableSignatureForJsxCallLikeElement");
+  const paramType = Checker_getEffectiveFirstArgumentForJsxSignature(receiver, signature, node);
+  let attributesType: GoPtr<Type>;
+  if (IsJsxOpeningFragment(node)) {
+    attributesType = Checker_createJsxAttributesTypeFromAttributesProperty(receiver, node, CheckModeNormal);
+  } else {
+    attributesType = Checker_checkExpressionWithContextualType(receiver, Node_Attributes(node), paramType, undefined, checkMode);
+  }
+  let checkAttributesType: GoPtr<Type>;
+  const checkTagNameDoesNotExpectTooManyArguments = (): bool => {
+    if (Checker_getJsxNamespaceContainerForImplicitImport(receiver, node) !== undefined) {
+      return true;
+    }
+    let tagType: GoPtr<Type>;
+    if ((IsJsxOpeningElement(node) || IsJsxSelfClosingElement(node)) && !(isJsxIntrinsicTagName(Node_TagName(node)) || IsJsxNamespacedName(Node_TagName(node)))) {
+      tagType = Checker_checkExpression(receiver, Node_TagName(node));
+    }
+    if (tagType === undefined) {
+      return true;
+    }
+    const tagCallSignatures = Checker_getSignaturesOfType(receiver, tagType, SignatureKindCall);
+    if (tagCallSignatures.length === 0) {
+      return true;
+    }
+    const factory = Checker_getJsxFactoryEntity(receiver, node);
+    if (factory === undefined) {
+      return true;
+    }
+    const factorySymbol = Checker_resolveEntityName(receiver, factory, SymbolFlagsValue, true, false, node);
+    if (factorySymbol === undefined) {
+      return true;
+    }
+    const factoryType = Checker_getTypeOfSymbol(receiver, factorySymbol);
+    const callSignatures = Checker_getSignaturesOfType(receiver, factoryType, SignatureKindCall);
+    if (callSignatures.length === 0) {
+      return true;
+    }
+    let hasFirstParamSignatures = false;
+    let maxParamCount = 0;
+    for (const sig of callSignatures) {
+      const firstParam = Checker_getTypeAtPosition(receiver, sig, 0);
+      const signaturesOfParam = Checker_getSignaturesOfType(receiver, firstParam, SignatureKindCall);
+      if (signaturesOfParam.length === 0) {
+        continue;
+      }
+      for (const paramSig of signaturesOfParam) {
+        hasFirstParamSignatures = true;
+        if (Checker_hasEffectiveRestParameter(receiver, paramSig)) {
+          return true;
+        }
+        const paramCount = Checker_getParameterCount(receiver, paramSig);
+        if (paramCount > maxParamCount) {
+          maxParamCount = paramCount;
+        }
+      }
+    }
+    if (!hasFirstParamSignatures) {
+      return true;
+    }
+    let absoluteMinArgCount = Number.MAX_SAFE_INTEGER as int;
+    for (const tagSig of tagCallSignatures) {
+      const tagRequiredArgCount = Checker_getMinArgumentCount(receiver, tagSig);
+      if (tagRequiredArgCount < absoluteMinArgCount) {
+        absoluteMinArgCount = tagRequiredArgCount;
+      }
+    }
+    if (absoluteMinArgCount <= maxParamCount) {
+      return true;
+    }
+    if (reportErrors) {
+      const tagName = Node_TagName(node);
+      const diagnostic = NewDiagnosticForNode(tagName, Tag_0_expects_at_least_1_arguments_but_the_JSX_factory_2_provides_at_most_3, entityNameToString(tagName), absoluteMinArgCount, entityNameToString(factory), maxParamCount);
+      const tagNameSymbol = Checker_getSymbolAtLocation(receiver, tagName, false);
+      if (tagNameSymbol !== undefined && tagNameSymbol!.ValueDeclaration !== undefined) {
+        Diagnostic_AddRelatedInfo(diagnostic, NewDiagnosticForNode(tagNameSymbol!.ValueDeclaration, X_0_is_declared_here, entityNameToString(tagName)));
+      }
+      Checker_reportDiagnostic(receiver, diagnostic, diagnosticOutput);
+    }
+    return false;
+  };
+  if ((checkMode & CheckModeSkipContextSensitive) !== 0) {
+    checkAttributesType = Checker_getRegularTypeOfObjectLiteral(receiver, attributesType);
+  } else {
+    checkAttributesType = attributesType;
+  }
+  if (!checkTagNameDoesNotExpectTooManyArguments()) {
+    return false;
+  }
+  let errorNode: GoPtr<Node>;
+  if (reportErrors) {
+    if (IsJsxOpeningFragment(node)) {
+      errorNode = node;
+    } else {
+      errorNode = Node_TagName(node);
+    }
+  }
+  let attributes: GoPtr<Node>;
+  if (!IsJsxOpeningFragment(node)) {
+    attributes = Node_Attributes(node);
+  }
+  return Checker_checkTypeRelatedToAndOptionallyElaborate(receiver, checkAttributesType, paramType, relation, errorNode, attributes, undefined, diagnosticOutput);
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"stub","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94","bodyHash":"36cc949a1bd0733901e68380c392d08b1634c465ea17f1b09f192e6ebef40c6d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty","kind":"method","status":"implemented","sigHash":"7d0913e9a7b6a76d1c36bd936c78f6bc486c9d896cb991a3f02a52dea850cc94","bodyHash":"36cc949a1bd0733901e68380c392d08b1634c465ea17f1b09f192e6ebef40c6d"}
  *
  * Go source:
  * func (c *Checker) createJsxAttributesTypeFromAttributesProperty(openingLikeElement *ast.Node, checkMode CheckMode) *Type {
@@ -1290,11 +1697,162 @@ export function Checker_checkApplicableSignatureForJsxCallLikeElement(receiver: 
  * }
  */
 export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: GoPtr<Checker>, openingLikeElement: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.createJsxAttributesTypeFromAttributesProperty");
+  let allAttributesTable: GoPtr<SymbolTable>;
+  if (receiver!.strictNullChecks) {
+    allAttributesTable = new globalThis.Map();
+  }
+  let attributesTable: SymbolTable = new globalThis.Map();
+  let attributesSymbol: GoPtr<Symbol>;
+  let attributeParent = openingLikeElement;
+  let spread = receiver!.emptyJsxObjectType;
+  let hasSpreadAnyType = false;
+  let typeToIntersect: GoPtr<Type>;
+  let explicitlySpecifyChildrenAttribute = false;
+  let objectFlags: ObjectFlags = ObjectFlagsJsxAttributes;
+  const createJsxAttributesType = (): GoPtr<Type> => {
+    objectFlags = (objectFlags | ObjectFlagsFreshLiteral) as ObjectFlags;
+    const result = Checker_newAnonymousType(receiver, attributesSymbol, attributesTable, [], [], []);
+    result!.objectFlags = (result!.objectFlags | objectFlags | ObjectFlagsObjectLiteral | ObjectFlagsContainsObjectOrArrayLiteral) as ObjectFlags;
+    return result;
+  };
+  const jsxChildrenPropertyName = Checker_getJsxElementChildrenPropertyName(receiver, Checker_getJsxNamespaceAt(receiver, openingLikeElement));
+  const isJsxOpenFragment = IsJsxOpeningFragment(openingLikeElement);
+  if (!isJsxOpenFragment) {
+    const attributes = Node_Attributes(openingLikeElement);
+    attributesSymbol = Node_Symbol(attributes);
+    attributeParent = attributes;
+    const contextualType = Checker_getContextualType(receiver, attributes, ContextFlagsNone);
+    for (const attributeDecl of Node_Properties(attributes) ?? []) {
+      const member = Node_Symbol(attributeDecl);
+      if (IsJsxAttribute(attributeDecl)) {
+        const exprType = Checker_checkJsxAttribute(receiver, attributeDecl, checkMode);
+        objectFlags = (objectFlags | (exprType!.objectFlags & ObjectFlagsPropagatingFlags)) as ObjectFlags;
+        const attributeSymbol = Checker_newSymbol(receiver, (SymbolFlagsProperty | member!.Flags) as SymbolFlags, member!.Name);
+        attributeSymbol!.Declarations = member!.Declarations;
+        attributeSymbol!.Parent = member!.Parent;
+        if (member!.ValueDeclaration !== undefined) {
+          attributeSymbol!.ValueDeclaration = member!.ValueDeclaration;
+        }
+        const links = LinkStore_Get(receiver!.valueSymbolLinks, attributeSymbol) as GoPtr<ValueSymbolLinks>;
+        links!.resolvedType = exprType;
+        links!.target = member;
+        attributesTable.set(attributeSymbol!.Name, attributeSymbol);
+        if (allAttributesTable !== undefined) {
+          allAttributesTable.set(attributeSymbol!.Name, attributeSymbol);
+        }
+        if (Node_Text(Node_Name(attributeDecl)) === jsxChildrenPropertyName) {
+          explicitlySpecifyChildrenAttribute = true;
+        }
+        if (contextualType !== undefined) {
+          const prop = Checker_getPropertyOfType(receiver, contextualType, member!.Name);
+          if (prop !== undefined && prop!.Declarations !== undefined && Checker_isDeprecatedSymbol(receiver, prop) && IsIdentifier(Node_Name(attributeDecl))) {
+            Checker_addDeprecatedSuggestion(receiver, Node_Name(attributeDecl), prop!.Declarations, Node_Text(Node_Name(attributeDecl)));
+          }
+        }
+        if (contextualType !== undefined && (checkMode & CheckModeInferential) !== 0 && (checkMode & CheckModeSkipContextSensitive) === 0 && Checker_isContextSensitive(receiver, attributeDecl)) {
+          const inferenceContext = Checker_getInferenceContext(receiver, attributes);
+          const inferenceNode = Node_Expression(Node_Initializer(attributeDecl));
+          Checker_addIntraExpressionInferenceSite(receiver, inferenceContext, inferenceNode, exprType);
+        }
+      } else {
+        if (attributesTable.size !== 0) {
+          spread = Checker_getSpreadType(receiver, spread, createJsxAttributesType(), attributesSymbol, objectFlags, false);
+          attributesTable = new globalThis.Map();
+        }
+        const exprType = Checker_getReducedType(receiver, Checker_checkExpressionEx(receiver, Node_Expression(attributeDecl), (checkMode & CheckModeInferential) as CheckMode));
+        if (IsTypeAny(exprType)) {
+          hasSpreadAnyType = true;
+        }
+        if (Checker_isValidSpreadType(receiver, exprType)) {
+          spread = Checker_getSpreadType(receiver, spread, exprType, attributesSymbol, objectFlags, false);
+          if (allAttributesTable !== undefined) {
+            Checker_checkSpreadPropOverrides(receiver, exprType, allAttributesTable, attributeDecl);
+          }
+        } else {
+          Checker_error(receiver, Node_Expression(attributeDecl), Spread_types_may_only_be_created_from_object_types);
+          if (typeToIntersect !== undefined) {
+            typeToIntersect = Checker_getIntersectionType(receiver, [typeToIntersect, exprType]);
+          } else {
+            typeToIntersect = exprType;
+          }
+        }
+      }
+    }
+    if (!hasSpreadAnyType && attributesTable.size !== 0) {
+      spread = Checker_getSpreadType(receiver, spread, createJsxAttributesType(), attributesSymbol, objectFlags, false);
+    }
+  }
+  const parentHasSemanticJsxChildren = (element: GoPtr<Node>): bool => {
+    const parent = element!.Parent;
+    if (parent === undefined) {
+      return false;
+    }
+    let children: GoSlice<GoPtr<Node>> = [];
+    if (IsJsxElement(parent)) {
+      if (AsJsxElement(parent)!.OpeningElement === element) {
+        children = Node_Children(parent)!.Nodes;
+      }
+    } else if (IsJsxFragment(parent)) {
+      if (AsJsxFragment(parent)!.OpeningFragment === element) {
+        children = Node_Children(parent)!.Nodes;
+      }
+    }
+    return GetSemanticJsxChildren(children).length !== 0;
+  };
+  if (parentHasSemanticJsxChildren(openingLikeElement)) {
+    const childTypes = Checker_checkJsxChildren(receiver, openingLikeElement!.Parent, checkMode);
+    if (!hasSpreadAnyType && jsxChildrenPropertyName !== InternalSymbolNameMissing && jsxChildrenPropertyName !== "") {
+      if (explicitlySpecifyChildrenAttribute) {
+        Checker_error(receiver, attributeParent, X_0_are_specified_twice_The_attribute_named_0_will_be_overwritten, jsxChildrenPropertyName);
+      }
+      let childrenContextualType: GoPtr<Type>;
+      if (IsJsxOpeningElement(openingLikeElement)) {
+        const contextualType = Checker_getApparentTypeOfContextualType(receiver, Node_Attributes(openingLikeElement), ContextFlagsNone);
+        if (contextualType !== undefined) {
+          childrenContextualType = Checker_getTypeOfPropertyOfContextualType(receiver, contextualType, jsxChildrenPropertyName);
+        }
+      }
+      const childrenPropSymbol = Checker_newSymbol(receiver, SymbolFlagsProperty, jsxChildrenPropertyName);
+      const links = LinkStore_Get(receiver!.valueSymbolLinks, childrenPropSymbol) as GoPtr<ValueSymbolLinks>;
+      if (childTypes.length === 1) {
+        links!.resolvedType = childTypes[0];
+      } else if (childrenContextualType !== undefined && someType(childrenContextualType, (candidate) => Checker_isTupleLikeType(receiver, candidate))) {
+        links!.resolvedType = Checker_createTupleType(receiver, childTypes);
+      } else {
+        links!.resolvedType = Checker_createArrayType(receiver, Checker_getUnionType(receiver, childTypes));
+      }
+      childrenPropSymbol!.ValueDeclaration = NewPropertySignatureDeclaration(receiver!.factory, undefined, NewIdentifier(receiver!.factory, jsxChildrenPropertyName), undefined, undefined, undefined);
+      childrenPropSymbol!.ValueDeclaration!.Parent = attributeParent;
+      (Node_DeclarationData(childrenPropSymbol!.ValueDeclaration) as unknown as { Symbol?: GoPtr<Symbol> }).Symbol = childrenPropSymbol;
+      const childPropMap: SymbolTable = new globalThis.Map();
+      childPropMap.set(jsxChildrenPropertyName, childrenPropSymbol);
+      spread = Checker_getSpreadType(
+        receiver,
+        spread,
+        Checker_newAnonymousType(receiver, attributesSymbol, childPropMap, [], [], []),
+        attributesSymbol,
+        (objectFlags | Checker_getPropagatingFlagsOfTypes(receiver, childTypes, TypeFlagsNone)) as ObjectFlags,
+        false,
+      );
+    }
+  }
+  if (hasSpreadAnyType) {
+    return receiver!.anyType;
+  }
+  if (typeToIntersect !== undefined) {
+    if (spread !== receiver!.emptyJsxObjectType) {
+      return Checker_getIntersectionType(receiver, [typeToIntersect, spread]);
+    }
+    return typeToIntersect;
+  }
+  if (spread === receiver!.emptyJsxObjectType) {
+    return createJsxAttributesType();
+  }
+  return spread;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"stub","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3","bodyHash":"4503d6dd87c16cd6bd3f163626097723e1411dd9723368e38cba4c344c3bc4fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute","kind":"method","status":"implemented","sigHash":"2164d246ecc35ce2c2e9d56e13303a966a481af44b9fdc96f636ec553ce72dd3","bodyHash":"4503d6dd87c16cd6bd3f163626097723e1411dd9723368e38cba4c344c3bc4fd"}
  *
  * Go source:
  * func (c *Checker) checkJsxAttribute(node *ast.Node, checkMode CheckMode) *Type {
@@ -1306,11 +1864,15 @@ export function Checker_createJsxAttributesTypeFromAttributesProperty(receiver: 
  * }
  */
 export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxAttribute");
+  if (Node_Initializer(node) !== undefined) {
+    return Checker_checkExpressionForMutableLocation(receiver, Node_Initializer(node), checkMode);
+  }
+  // <Elem attr /> is sugar for <Elem attr={true} />
+  return receiver!.trueType;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"stub","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9","bodyHash":"fd91d770e52747679b729e2e11ca54f8bcf6c2c4628bfbc20a50158acec92430"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren","kind":"method","status":"implemented","sigHash":"4b2fe9b4dc465980084cfd63023a446a4dd3909c317874225160c8ef8beb39a9","bodyHash":"fd91d770e52747679b729e2e11ca54f8bcf6c2c4628bfbc20a50158acec92430"}
  *
  * Go source:
  * func (c *Checker) checkJsxChildren(node *ast.Node, checkMode CheckMode) []*Type {
@@ -1333,11 +1895,26 @@ export function Checker_checkJsxAttribute(receiver: GoPtr<Checker>, node: GoPtr<
  * }
  */
 export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoSlice<GoPtr<Type>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.checkJsxChildren");
+  const childTypes: GoSlice<GoPtr<Type>> = [];
+  for (const child of Node_Children(node)!.Nodes) {
+    // In React, JSX text that contains only whitespaces will be ignored so we don't want to type-check that
+    // because then type of children property will have constituent of string type.
+    if (IsJsxText(child)) {
+      if (!AsJsxText(child)!.ContainsOnlyTriviaWhiteSpaces) {
+        childTypes.push(receiver!.stringType);
+      }
+    } else if (IsJsxExpression(child) && Node_Expression(child) === undefined) {
+      // empty jsx expressions don't *really* count as present children
+      continue;
+    } else {
+      childTypes.push(Checker_checkExpressionForMutableLocation(receiver, child, checkMode));
+    }
+  }
+  return childTypes;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType","kind":"method","status":"stub","sigHash":"b221f9824a63e36f8f29b3b19c401bfd294187381de96d86fe8a192d3ef0f296","bodyHash":"0de4734eee222b49d4a5b6299d2651198c7dc940a76f8a2f67ea20685764a671"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType","kind":"method","status":"implemented","sigHash":"b221f9824a63e36f8f29b3b19c401bfd294187381de96d86fe8a192d3ef0f296","bodyHash":"0de4734eee222b49d4a5b6299d2651198c7dc940a76f8a2f67ea20685764a671"}
  *
  * Go source:
  * func (c *Checker) getUninstantiatedJsxSignaturesOfType(elementType *Type, caller *ast.Node) []*Signature {
@@ -1370,11 +1947,36 @@ export function Checker_checkJsxChildren(receiver: GoPtr<Checker>, node: GoPtr<N
  * }
  */
 export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Checker>, elementType: GoPtr<Type>, caller: GoPtr<Node>): GoSlice<GoPtr<Signature>> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getUninstantiatedJsxSignaturesOfType");
+  if ((elementType!.flags & TypeFlagsString) !== 0) {
+    return [receiver!.anySignature];
+  }
+  if ((elementType!.flags & TypeFlagsStringLiteral) !== 0) {
+    const intrinsicType = Checker_getIntrinsicAttributesTypeFromStringLiteralType(receiver, elementType, caller);
+    if (intrinsicType === undefined) {
+      Checker_error(receiver, caller, Property_0_does_not_exist_on_type_1, getStringLiteralValue(elementType), `JSX.${JsxNames.IntrinsicElements}`);
+      return [];
+    }
+    const fakeSignature = Checker_createSignatureForJSXIntrinsic(receiver, caller, intrinsicType);
+    return [fakeSignature];
+  }
+  const apparentElemType = Checker_getApparentType(receiver, elementType);
+  // Resolve the signatures, preferring constructor
+  let signatures = Checker_getSignaturesOfType(receiver, apparentElemType, SignatureKindConstruct);
+  if (signatures.length === 0) {
+    // No construct signatures, try call signatures
+    signatures = Checker_getSignaturesOfType(receiver, apparentElemType, SignatureKindCall);
+  }
+  if (signatures.length === 0 && (apparentElemType!.flags & TypeFlagsUnion) !== 0) {
+    // If each member has some combination of new/call signatures; make a union signature list for those
+    signatures = Checker_getUnionSignatures(receiver, Map(Type_Types(apparentElemType), (t: GoPtr<Type>): GoSlice<GoPtr<Signature>> => {
+      return Checker_getUninstantiatedJsxSignaturesOfType(receiver, t, caller);
+    }));
+  }
+  return signatures;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"stub","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426","bodyHash":"295bdf9e42d624bbe827a9708278fa8e19cec6602d5fe47263c378b61a5f0734"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature","kind":"method","status":"implemented","sigHash":"9d83ddd1166797a5cccc23f7703d7524f5c304684dff0b1e7a9add4b6a85c426","bodyHash":"295bdf9e42d624bbe827a9708278fa8e19cec6602d5fe47263c378b61a5f0734"}
  *
  * Go source:
  * func (c *Checker) getEffectiveFirstArgumentForJsxSignature(signature *Signature, node *ast.Node) *Type {
@@ -1385,7 +1987,10 @@ export function Checker_getUninstantiatedJsxSignaturesOfType(receiver: GoPtr<Che
  * }
  */
 export function Checker_getEffectiveFirstArgumentForJsxSignature(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, node: GoPtr<Node>): GoPtr<Type> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.getEffectiveFirstArgumentForJsxSignature");
+  if (IsJsxOpeningFragment(node) || Checker_getJsxReferenceKind(receiver, node) !== JsxReferenceKindComponent) {
+    return Checker_getJsxPropsTypeFromCallSignature(receiver, signature, node);
+  }
+  return Checker_getJsxPropsTypeFromClassType(receiver, signature, node);
 }
 
 /**
@@ -2299,7 +2904,7 @@ export function Checker_getJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
   if (location !== undefined) {
     const file = GetSourceFileOfNode(location);
     if (file !== undefined) {
-      const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+      const links = Checker_getSourceFileLinks(receiver, file);
       if (IsJsxOpeningFragment(location)) {
         if (links!.localJsxFragmentNamespace !== "") {
           return links!.localJsxFragmentNamespace;
@@ -2365,7 +2970,7 @@ export function Checker_getJsxNamespace(receiver: GoPtr<Checker>, location: GoPt
  * }
  */
 export function Checker_getLocalJsxNamespace(receiver: GoPtr<Checker>, file: GoPtr<SourceFile>): string {
-  const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+  const links = Checker_getSourceFileLinks(receiver, file);
   if (links!.localJsxNamespace !== "") {
     return links!.localJsxNamespace;
   }
@@ -2397,7 +3002,7 @@ export function Checker_getLocalJsxNamespace(receiver: GoPtr<Checker>, file: GoP
 export function Checker_getJsxFactoryEntity(receiver: GoPtr<Checker>, location: GoPtr<Node>): GoPtr<Node> {
   if (location !== undefined) {
     Checker_getJsxNamespace(receiver, location);
-    const localJsxFactory = (LinkStore_Get(receiver!.sourceFileLinks, GetSourceFileOfNode(location)) as GoPtr<SourceFileLinks>)!.localJsxFactory;
+    const localJsxFactory = Checker_getSourceFileLinks(receiver, GetSourceFileOfNode(location))!.localJsxFactory;
     if (localJsxFactory !== undefined) {
       return localJsxFactory;
     }
@@ -2434,7 +3039,7 @@ export function Checker_getJsxFragmentFactoryEntity(receiver: GoPtr<Checker>, lo
   if (location !== undefined) {
     const file = GetSourceFileOfNode(location);
     if (file !== undefined) {
-      const links = LinkStore_Get(receiver!.sourceFileLinks, file) as GoPtr<SourceFileLinks>;
+      const links = Checker_getSourceFileLinks(receiver, file);
       if (links!.localJsxFragmentFactory !== undefined) {
         return links!.localJsxFragmentFactory;
       }

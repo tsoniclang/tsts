@@ -1,6 +1,7 @@
 import type { bool } from "@tsonic/core/types.js";
-import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { DirEntry as DirEntry_697d4ab0, FileInfo as FileInfo_d0619f84, WalkDirFunc as WalkDirFunc_40040532 } from "../../go/io/fs.js";
+import { ErrInvalid as fs_ErrInvalid, ErrPermission as fs_ErrPermission, ErrExist as fs_ErrExist, ErrNotExist as fs_ErrNotExist, ErrClosed as fs_ErrClosed, SkipAll as fs_SkipAll, SkipDir as fs_SkipDir } from "../../go/io/fs.js";
 import type { Time } from "../../go/time.js";
 
 /**
@@ -69,11 +70,18 @@ export interface FS {
  * Entries struct {
  * 	Files       []string
  * 	Directories []string
+ * 	// Symlinks contains the names of entries in Files or Directories that were
+ * 	// originally symbolic links (or reparse points) on disk. The names are the
+ * 	// same as those in Files/Directories (i.e., the link name, not the target).
+ * 	// nil means symlink information is not available and the entries may need
+ * 	// to be re-checked for symlinks.
+ * 	Symlinks map[string]struct{}
  * }
  */
 export interface Entries {
   Files: GoSlice<string>;
   Directories: GoSlice<string>;
+  Symlinks: GoPtr<GoMap<string, { readonly __tsgoEmpty?: never }>>;
 }
 
 /**
@@ -104,11 +112,11 @@ export type FileInfo = FileInfo_d0619f84;
  * 	ErrClosed     = fs.ErrClosed     // "file already closed"
  * )
  */
-export let ErrInvalid: unknown = undefined as never;
-export let ErrPermission: unknown = undefined as never;
-export let ErrExist: unknown = undefined as never;
-export let ErrNotExist: unknown = undefined as never;
-export let ErrClosed: unknown = undefined as never;
+export const ErrInvalid = fs_ErrInvalid;
+export const ErrPermission = fs_ErrPermission;
+export const ErrExist = fs_ErrExist;
+export const ErrNotExist = fs_ErrNotExist;
+export const ErrClosed = fs_ErrClosed;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::WalkDirFunc","kind":"type","status":"implemented","sigHash":"ca37042359f26a00fc83e50feccf63f10e2500b876459905c74a9bda2c1cfec2","bodyHash":"301672f78484847fa673dfaecd15ffeff4359409ae960949fe1be7b744fa8046"}
@@ -130,5 +138,5 @@ export type WalkDirFunc = WalkDirFunc_40040532;
  * 	SkipDir = fs.SkipDir //nolint:errname
  * )
  */
-export let SkipAll: unknown = undefined as never;
-export let SkipDir: unknown = undefined as never;
+export const SkipAll = fs_SkipAll;
+export const SkipDir = fs_SkipDir;

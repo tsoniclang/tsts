@@ -103,7 +103,7 @@ export function NameMap_GetFromShort(receiver: GoPtr<NameMap>, shortName: string
   const nm = receiver!;
   // returns option only if shortName is a valid short option
   const ok = nm.shortOptionNames.has(shortName);
-  const name = nm.shortOptionNames.get(shortName)!;
+  const name = nm.shortOptionNames.get(shortName) ?? "";
   if (!ok) {
     return undefined;
   }
@@ -132,7 +132,7 @@ export function NameMap_GetOptionDeclarationFromName(receiver: GoPtr<NameMap>, o
   // Try to translate short option names to their full equivalents.
   const resolved = ((): string => {
     if (allowShort) {
-      const short = nm.shortOptionNames.get(lowered)!;
+      const short = nm.shortOptionNames.get(lowered) ?? "";
       if (short !== "") {
         return short;
       }

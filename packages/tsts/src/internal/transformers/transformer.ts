@@ -23,6 +23,18 @@ export interface Transformer {
   visitor: GoPtr<NodeVisitor>;
 }
 
+interface TransformerCarrier {
+  readonly __tsgoEmbedded0?: Transformer;
+}
+
+function resolveTransformer(receiver: GoPtr<Transformer | TransformerCarrier>): GoPtr<Transformer> {
+  if (receiver === undefined) {
+    return undefined;
+  }
+  const embedded = (receiver as TransformerCarrier).__tsgoEmbedded0;
+  return embedded === undefined ? receiver as Transformer : embedded;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/transformer.go::method::Transformer.NewTransformer","kind":"method","status":"implemented","sigHash":"eea5ad75fe651a3f5a4f134d075cc199ca0923570a303b33ea88ec5af90e92c2","bodyHash":"1a1dc3e5e465936245c2e337c5c3119892e4d9a1e7445e523f87804eb55c365f"}
  *
@@ -41,7 +53,7 @@ export interface Transformer {
  * }
  */
 export function Transformer_NewTransformer(receiver: GoPtr<Transformer>, visit: (node: GoPtr<Node>) => GoPtr<Node>, emitContext: GoPtr<EmitContext_680f09ca>): GoPtr<Transformer> {
-  const tx = receiver!;
+  const tx = resolveTransformer(receiver)!;
   if (tx.emitContext !== undefined) {
     throw new globalThis.Error("Transformer already initialized");
   }
@@ -61,7 +73,7 @@ export function Transformer_NewTransformer(receiver: GoPtr<Transformer>, visit: 
  * }
  */
 export function Transformer_EmitContext(receiver: GoPtr<Transformer>): GoPtr<EmitContext_680f09ca> {
-  return receiver!.emitContext;
+  return resolveTransformer(receiver)!.emitContext;
 }
 
 /**
@@ -73,7 +85,7 @@ export function Transformer_EmitContext(receiver: GoPtr<Transformer>): GoPtr<Emi
  * }
  */
 export function Transformer_Visitor(receiver: GoPtr<Transformer>): GoPtr<NodeVisitor> {
-  return receiver!.visitor;
+  return resolveTransformer(receiver)!.visitor;
 }
 
 /**
@@ -85,7 +97,7 @@ export function Transformer_Visitor(receiver: GoPtr<Transformer>): GoPtr<NodeVis
  * }
  */
 export function Transformer_Factory(receiver: GoPtr<Transformer>): GoPtr<NodeFactory> {
-  return receiver!.factory;
+  return resolveTransformer(receiver)!.factory;
 }
 
 /**
@@ -97,5 +109,5 @@ export function Transformer_Factory(receiver: GoPtr<Transformer>): GoPtr<NodeFac
  * }
  */
 export function Transformer_TransformSourceFile(receiver: GoPtr<Transformer>, file: GoPtr<SourceFile>): GoPtr<SourceFile> {
-  return NodeVisitor_VisitSourceFile(receiver!.visitor, file);
+  return NodeVisitor_VisitSourceFile(resolveTransformer(receiver)!.visitor, file);
 }

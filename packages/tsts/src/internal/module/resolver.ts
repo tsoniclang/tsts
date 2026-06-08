@@ -26,6 +26,7 @@ import {
   ModuleResolutionKindBundler,
   ModuleResolutionKindNode16,
   ModuleResolutionKindNodeNext,
+  ModuleResolutionKindUnknown,
   ResolutionModeCommonJS,
   ResolutionModeESM,
 } from "../core/compileroptions.js";
@@ -333,12 +334,12 @@ export function newResolutionState(name: string, containingDirectory: string, is
     isConfigLookup: false,
     features: NodeResolutionFeaturesNone,
     esmMode: false,
-    conditions: undefined as never,
+    conditions: [],
     extensions: 0 as extensions,
     resolvePackageDirectoryOnly: false,
     candidateEndingIsFromConfig: false,
     resolvedPackageDirectory: false,
-    diagnostics: undefined as never,
+    diagnostics: [],
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -459,8 +460,8 @@ export function NewResolver(host: ResolutionHost, options: GoPtr<CompilerOptions
     __tsgoEmbedded0: c,
     host: host,
     compilerOptions: options,
-    typingsLocation: typingsLocation,
-    projectName: projectName,
+    typingsLocation: typingsLocation ?? "",
+    projectName: projectName ?? "",
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -508,8 +509,8 @@ export function NewResolverWithOptions(host: ResolutionHost, compilerOptions: Go
     __tsgoEmbedded0: embedded,
     host: host,
     compilerOptions: compilerOptions,
-    typingsLocation: typingsLocation,
-    projectName: projectName,
+    typingsLocation: typingsLocation ?? "",
+    projectName: projectName ?? "",
     parsedPatternsForPathsOnce: new Once(),
     parsedPatternsForPaths: undefined,
   };
@@ -746,7 +747,8 @@ export function Resolver_ResolveModuleName(receiver: GoPtr<Resolver>, moduleName
     tracer_traceResolutionUsingProjectReference(traceBuilder, redirectedReference);
   }
   const moduleResolution = CompilerOptions_GetModuleResolutionKind(compilerOptions);
-  if (compilerOptions!.ModuleResolution !== moduleResolution) {
+  const specifiedModuleResolution = compilerOptions!.ModuleResolution ?? ModuleResolutionKindUnknown;
+  if (specifiedModuleResolution !== moduleResolution) {
     if (traceBuilder !== undefined) {
       tracer_write(traceBuilder, diagnostics.Module_resolution_kind_is_not_specified_using_0, ModuleResolutionKind_String(moduleResolution));
     }

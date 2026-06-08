@@ -2,7 +2,14 @@ import type { GoError, GoPtr } from "../../go/compat.js";
 import type { Writer } from "../../go/io.js";
 import type { File } from "../../go/os.js";
 import type { Mutex } from "../../go/sync.js";
+import * as errors from "../../go/errors.js";
+import * as fmt from "../../go/fmt.js";
+import * as io from "../../go/io.js";
+import * as os from "../../go/os.js";
+import * as filepath from "../../go/path/filepath.js";
 import * as runtime from "../../go/runtime.js";
+import * as pprof from "../../go/runtime/pprof.js";
+import * as time from "../../go/time.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::type::ProfileSession","kind":"type","status":"implemented","sigHash":"a76723aee5edb81e8c1f6267b0588ad887b2600150fd55b9359a35d02584972b","bodyHash":"9c7b63f36067a4f2f8855292fabf046b03e3b4ab7ee006c3f944514a17a2b87a"}
@@ -23,7 +30,7 @@ export interface ProfileSession {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"stub","sigHash":"a03af38b93e0ea5e9b3679a92098b32afd8ab657ebc16f01b62c318a3b301399","bodyHash":"21f6df63a3a5240f32fbcfa3e390f242daf5663fbaeba66e9d432c228a719057"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling","kind":"func","status":"implemented","sigHash":"a03af38b93e0ea5e9b3679a92098b32afd8ab657ebc16f01b62c318a3b301399","bodyHash":"21f6df63a3a5240f32fbcfa3e390f242daf5663fbaeba66e9d432c228a719057"}
  *
  * Go source:
  * func BeginProfiling(profileDir string, logWriter io.Writer) *ProfileSession {
@@ -53,11 +60,31 @@ export interface ProfileSession {
  * }
  */
 export function BeginProfiling(profileDir: string, logWriter: Writer): GoPtr<ProfileSession> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::BeginProfiling");
+  const mkdirErr = os.MkdirAll(profileDir, 0o755);
+  if (mkdirErr !== undefined) {
+    throw mkdirErr;
+  }
+  const pid = os.Getpid();
+  const cpuProfilePath = filepath.Join(profileDir, fmt.Sprintf("%d-cpuprofile.pb.gz", pid));
+  const memProfilePath = filepath.Join(profileDir, fmt.Sprintf("%d-memprofile.pb.gz", pid));
+  const [cpuFile, createErr] = os.Create(cpuProfilePath);
+  if (createErr !== undefined) {
+    throw createErr;
+  }
+  const startErr = pprof.StartCPUProfile(cpuFile);
+  if (startErr !== undefined) {
+    throw startErr;
+  }
+  return {
+    cpuFilePath: cpuProfilePath,
+    memFilePath: memProfilePath,
+    cpuFile,
+    logWriter,
+  };
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::ProfileSession.Stop","kind":"method","status":"stub","sigHash":"383f6c1004cf555d9405f4764a856ab6f44a6242bcc29aeeecd00a70350fb664","bodyHash":"24a708fabe90294b3553921965d509443694035da607f6f7de2b302d253e7365"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::ProfileSession.Stop","kind":"method","status":"implemented","sigHash":"383f6c1004cf555d9405f4764a856ab6f44a6242bcc29aeeecd00a70350fb664","bodyHash":"24a708fabe90294b3553921965d509443694035da607f6f7de2b302d253e7365"}
  *
  * Go source:
  * func (p *ProfileSession) Stop() {
@@ -80,7 +107,25 @@ export function BeginProfiling(profileDir: string, logWriter: Writer): GoPtr<Pro
  * }
  */
 export function ProfileSession_Stop(receiver: GoPtr<ProfileSession>): void {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::ProfileSession.Stop");
+  const p = receiver!;
+  pprof.StopCPUProfile();
+  p.cpuFile!.Close();
+
+  if (p.memFilePath !== "") {
+    const [memFile, createErr] = os.Create(p.memFilePath);
+    if (createErr !== undefined) {
+      throw createErr;
+    }
+    const profile = pprof.Lookup("allocs");
+    const writeErr = profile!.WriteTo(memFile, 0);
+    if (writeErr !== undefined) {
+      throw writeErr;
+    }
+    memFile.Close();
+    fmt.Fprintf(p.logWriter, "Memory profile: %v\n", p.memFilePath);
+  }
+
+  fmt.Fprintf(p.logWriter, "CPU profile: %v\n", p.cpuFilePath);
 }
 
 /**
@@ -98,7 +143,7 @@ export interface CPUProfiler {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"stub","sigHash":"336f17798607a75b5afc3ee6b67a7f5dd39f54e8b340ef8331e1478ba6b701ef","bodyHash":"37c77fbf384b13bebe991a21537c033f3a673a69dbb6b9156b5ea8b4d6870801"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile","kind":"method","status":"implemented","sigHash":"336f17798607a75b5afc3ee6b67a7f5dd39f54e8b340ef8331e1478ba6b701ef","bodyHash":"37c77fbf384b13bebe991a21537c033f3a673a69dbb6b9156b5ea8b4d6870801"}
  *
  * Go source:
  * func (c *CPUProfiler) StartCPUProfile(profileDir string) error {
@@ -134,7 +179,37 @@ export interface CPUProfiler {
  * }
  */
 export function CPUProfiler_StartCPUProfile(receiver: GoPtr<CPUProfiler>, profileDir: string): GoError {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::method::CPUProfiler.StartCPUProfile");
+  const c = receiver!;
+  c.mu.Lock();
+  try {
+    if (c.session !== undefined) {
+      return errors.New("CPU profiling already in progress");
+    }
+    const mkdirErr = os.MkdirAll(profileDir, 0o755);
+    if (mkdirErr !== undefined) {
+      return fmt.Errorf("failed to create profile directory: %w", mkdirErr);
+    }
+    const cpuProfilePath = filepath.Join(profileDir, fmt.Sprintf("%d-%d-cpuprofile.pb.gz", os.Getpid(), time.Now().UnixMilli()));
+    const [cpuFile, createErr] = os.Create(cpuProfilePath);
+    if (createErr !== undefined) {
+      return fmt.Errorf("failed to create CPU profile file: %w", createErr);
+    }
+    const startErr = pprof.StartCPUProfile(cpuFile);
+    if (startErr !== undefined) {
+      cpuFile.Close();
+      os.Remove(cpuProfilePath);
+      return fmt.Errorf("failed to start CPU profile: %w", startErr);
+    }
+    c.session = {
+      cpuFilePath: cpuProfilePath,
+      memFilePath: "",
+      cpuFile,
+      logWriter: io.Discard,
+    };
+    return undefined;
+  } finally {
+    c.mu.Unlock();
+  }
 }
 
 /**
@@ -175,7 +250,7 @@ export function CPUProfiler_StopCPUProfile(receiver: GoPtr<CPUProfiler>): [strin
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"stub","sigHash":"493a044c790af1b846f6a90ad8cd166dc93081e24d57ac0c319400474bfa114e","bodyHash":"8314850d02bdde5789f2b3c4541cc1d270a50953e0d0c5bedf6217f7bc3bf2b6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile","kind":"func","status":"implemented","sigHash":"493a044c790af1b846f6a90ad8cd166dc93081e24d57ac0c319400474bfa114e","bodyHash":"8314850d02bdde5789f2b3c4541cc1d270a50953e0d0c5bedf6217f7bc3bf2b6"}
  *
  * Go source:
  * func SaveHeapProfile(profileDir string) (string, error) {
@@ -200,11 +275,31 @@ export function CPUProfiler_StopCPUProfile(receiver: GoPtr<CPUProfiler>): [strin
  * }
  */
 export function SaveHeapProfile(profileDir: string): [string, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveHeapProfile");
+  const mkdirErr = os.MkdirAll(profileDir, 0o755);
+  if (mkdirErr !== undefined) {
+    return ["", fmt.Errorf("failed to create profile directory: %w", mkdirErr)];
+  }
+  const heapProfilePath = filepath.Join(profileDir, fmt.Sprintf("%d-%d-heapprofile.pb.gz", os.Getpid(), time.Now().UnixMilli()));
+  const [heapFile, createErr] = os.Create(heapProfilePath);
+  if (createErr !== undefined) {
+    return ["", fmt.Errorf("failed to create heap profile file: %w", createErr)];
+  }
+  try {
+    runtime.GC();
+    const profile = pprof.Lookup("heap");
+    const writeErr = profile!.WriteTo(heapFile, 0);
+    if (writeErr !== undefined) {
+      os.Remove(heapProfilePath);
+      return ["", fmt.Errorf("failed to write heap profile: %w", writeErr)];
+    }
+    return [heapProfilePath, undefined];
+  } finally {
+    heapFile.Close();
+  }
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"stub","sigHash":"88938cc5084d6b8f0ea6ded5d38ca9c8155b861b1cd9a998bfa4733955bf1e96","bodyHash":"cb4afc11bf378ca4cdc90ec1a7b33f336e3f6584f6386403ae4fc881d6ec2a07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile","kind":"func","status":"implemented","sigHash":"88938cc5084d6b8f0ea6ded5d38ca9c8155b861b1cd9a998bfa4733955bf1e96","bodyHash":"cb4afc11bf378ca4cdc90ec1a7b33f336e3f6584f6386403ae4fc881d6ec2a07"}
  *
  * Go source:
  * func SaveAllocProfile(profileDir string) (string, error) {
@@ -228,7 +323,26 @@ export function SaveHeapProfile(profileDir: string): [string, GoError] {
  * }
  */
 export function SaveAllocProfile(profileDir: string): [string, GoError] {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/pprof/pprof.go::func::SaveAllocProfile");
+  const mkdirErr = os.MkdirAll(profileDir, 0o755);
+  if (mkdirErr !== undefined) {
+    return ["", fmt.Errorf("failed to create profile directory: %w", mkdirErr)];
+  }
+  const allocProfilePath = filepath.Join(profileDir, fmt.Sprintf("%d-%d-allocprofile.pb.gz", os.Getpid(), time.Now().UnixMilli()));
+  const [allocFile, createErr] = os.Create(allocProfilePath);
+  if (createErr !== undefined) {
+    return ["", fmt.Errorf("failed to create alloc profile file: %w", createErr)];
+  }
+  try {
+    const profile = pprof.Lookup("allocs");
+    const writeErr = profile!.WriteTo(allocFile, 0);
+    if (writeErr !== undefined) {
+      os.Remove(allocProfilePath);
+      return ["", fmt.Errorf("failed to write alloc profile: %w", writeErr)];
+    }
+    return [allocProfilePath, undefined];
+  } finally {
+    allocFile.Close();
+  }
 }
 
 /**

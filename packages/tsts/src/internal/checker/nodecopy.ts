@@ -1,46 +1,83 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import type { Node, NodeVisitor } from "../ast/spine.js";
+import type { Node, NodeList, ModifierList, NodeVisitor } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
 import type { TypeNode } from "../ast/generated/unions.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
-import { KindIdentifier } from "../ast/generated/kinds.js";
-import { TokenFlagsNone } from "../ast/tokenflags.js";
-import { NewStringLiteral } from "../ast/generated/factory.js";
-import { AsIdentifier } from "../ast/generated/casts.js";
+import { KindAnyKeyword, KindAssertKeyword, KindComputedPropertyName, KindIdentifier, KindKeyOfKeyword, KindNullKeyword, KindQuestionToken, KindSymbolKeyword, KindUndefinedKeyword, KindUniqueKeyword } from "../ast/generated/kinds.js";
+import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
+import { NewArrayTypeNode, NewCallSignatureDeclaration, NewComputedPropertyName, NewConditionalTypeNode, NewConstructSignatureDeclaration, NewConstructorTypeNode, NewFunctionTypeNode, NewIdentifier, NewImportTypeNode, NewIndexedAccessTypeNode, NewJSDocSignature, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewPropertySignatureDeclaration, NewStringLiteral, NewToken, NewTypeLiteralNode, NewTypeOperatorNode, NewTypePredicateNode, NewTypeQueryNode, NewTypeReferenceNode, NewUnionTypeNode } from "../ast/generated/factory.js";
+import { AsCallSignatureDeclaration, AsComputedPropertyName, AsConditionalTypeNode, AsConstructSignatureDeclaration, AsConstructorTypeNode, AsFunctionTypeNode, AsIdentifier, AsImportAttributes, AsImportTypeNode, AsIndexSignatureDeclaration, AsIndexedAccessTypeNode, AsJSDocNonNullableType, AsJSDocNullableType, AsJSDocOptionalType, AsJSDocParameterOrPropertyTag, AsJSDocSignature, AsJSDocTypeExpression, AsJSDocTypeLiteral, AsJSDocVariadicType, AsLiteralTypeNode, AsMappedTypeNode, AsMethodSignatureDeclaration, AsParameterDeclaration, AsQualifiedName, AsStringLiteral, AsTypeOperatorNode, AsTypeParameterDeclaration, AsTypePredicateNode, AsTypeQueryNode, AsTypeReferenceNode } from "../ast/generated/casts.js";
 import {
+  IsComputedPropertyName,
+  IsConditionalTypeNode,
+  IsIdentifier,
   IsExpressionWithTypeArguments,
   IsImportTypeNode,
+  IsIndexedAccessTypeNode,
+  IsJSDocAllType,
+  IsJSDocNonNullableType,
+  IsJSDocNullableType,
+  IsJSDocOptionalType,
+  IsJSDocParameterTag,
+  IsJSDocTypeExpression,
+  IsJSDocTypeLiteral,
+  IsJSDocVariadicType,
+  IsMappedTypeNode,
+  IsPropertyDeclaration,
+  IsPropertySignatureDeclaration,
+  IsParameterDeclaration,
+  IsQualifiedName,
+  IsStringLiteral,
+  IsThisTypeNode,
+  IsTupleTypeNode,
+  IsTypeLiteralNode,
+  IsTypeOperatorNode,
   IsTypePredicateNode,
+  IsTypeQueryNode,
   IsTypeReferenceNode,
 } from "../ast/generated/predicates.js";
-import { Node_ForEachChild } from "../ast/spine.js";
+import { Node_Clone, Node_ForEachChild, Node_Modifiers, Node_Name, Node_VisitEachChild, NodeFactory_NewNodeList, NodeList_Clone } from "../ast/spine.js";
+import type { NodeVisitor as ConcreteNodeVisitor } from "../ast/visitor.js";
+import { NewNodeVisitor, NodeVisitor_VisitModifiers, NodeVisitor_VisitNode, NodeVisitor_VisitNodes } from "../ast/visitor.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get } from "../core/linkstore.js";
+import { NewTextRange } from "../core/text.js";
 import type { SymbolTracker } from "../nodebuilder/types.js";
-import { EmitContext_SetOriginal } from "../printer/emitcontext.js";
+import { FlagsMultilineObjectLiterals, FlagsUseSingleQuotesForStringLiteralType, InternalFlagsAllowUnresolvedNames } from "../nodebuilder/types.js";
+import { EFNoAsciiEscaping, EFSingleLine } from "../printer/emitflags.js";
+import { EmitContext_AddEmitFlags, EmitContext_MostOriginal, EmitContext_SetOriginal } from "../printer/emitcontext.js";
 import {
   NodeBuilderImpl_checkTypeExpandability,
   NodeBuilderImpl_getTypeFromTypeNode,
+  NodeBuilderImpl_newIdentifier,
+  NodeBuilderImpl_serializeTypeName,
   NodeBuilderImpl_setTextRange,
+  NodeBuilderImpl_typeParameterToName,
   NodeBuilderImpl_typeToTypeNode,
 } from "./nodebuilderimpl.js";
-import { AsImportAttributes, AsImportTypeNode } from "../ast/generated/casts.js";
-import { SymbolFlagsType, SymbolFlagsValue } from "../ast/generated/flags.js";
-import { GetSourceFileOfNode } from "../ast/utilities.js";
-import { Node_Text, Node_Symbol } from "../ast/ast.js";
+import { SymbolFlagsFunctionScopedVariable, SymbolFlagsType, SymbolFlagsTypeParameter, SymbolFlagsValue } from "../ast/generated/flags.js";
+import { FindAncestor, GetFirstIdentifier, GetSourceFileOfNode, HasDynamicName, IsConstTypeReference, IsDeclarationName, IsEntityNameExpression, IsExportsIdentifier, IsFunctionLike, IsInJSFile, IsLiteralImportTypeNode, IsModuleExportsAccessExpression, IsModuleIdentifier, IsPartOfParameterDeclaration, IsThisIdentifier, IsTypeNode, NodeIsSynthesized, SkipParentheses } from "../ast/utilities.js";
+import { Node_Initializer, Node_PostfixToken, Node_Text, Node_Symbol, Node_Type, NodeFactory_UpdateConstructorTypeNode, NodeFactory_UpdateIndexSignatureDeclaration, NodeFactory_UpdateMethodSignatureDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdatePropertySignatureDeclaration, NodeFactory_UpdateTypeParameterDeclaration } from "../ast/ast.js";
 import { ResolutionModeNone } from "../core/compileroptions.js";
 import { SymbolAccessibilityAccessible } from "../printer/emitresolver.js";
 import { Checker_IsSymbolAccessible } from "./symbolaccessibility.js";
 import type { Checker } from "./checker/state.js";
 import { Checker_checkNotCanceled, IsExternalModuleSymbol } from "./utilities.js";
+import { Checker_getThisContainer } from "./checker/support-queries.js";
+import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
 import { Checker_getResolutionModeOverride } from "./checker/classes.js";
 import { NewSymbolTrackerImpl, SymbolTrackerImpl_as_SymbolTracker } from "./symboltracker.js";
 import { NodeBuilderImpl_lookupSymbolChain, NodeBuilderImpl_getSpecifierForModuleSymbol } from "./nodebuilderimpl.js";
-import { Checker_getExternalModuleFileFromDeclaration } from "./checker/symbols.js";
+import { NodeBuilderImpl_enterNewScope } from "./nodebuilderscopes.js";
+import { TypeMapper_Map } from "./mapper.js";
+import { Checker_getDeclaredTypeOfSymbol, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getExternalModuleFileFromDeclaration, Checker_getPropertyOfType, Checker_getSymbolIfSameReference, Checker_getSymbolOfDeclaration, Checker_hasLateBindableName, Checker_checkComputedPropertyName, Checker_resolveEntityName } from "./checker/symbols.js";
+import { Checker_getDeclaredTypeOfTypeParameter, Checker_getInferTypeParameters, Checker_getSignatureFromDeclaration } from "./checker/signatures.js";
+import { getMeaningOfEntityNameReference } from "./emitresolver.js";
 import type { NodeBuilderContext, NodeBuilderImpl, NodeBuilderLinks, TrackedSymbolArgs } from "./nodebuilderimpl.js";
-import type { SymbolNodeLinks } from "./types.js";
+import type { SymbolNodeLinks, Type } from "./types.js";
+import { TypeFlagsAny } from "./types.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.reuseNode","kind":"method","status":"implemented","sigHash":"4dd3d0a7af1286966a11e12383e2ef457a4a06fd6f05408d7ceada8f3bde9de2","bodyHash":"163e063ba136506af7ea7baaafbe0a06ab5cb754809819c5fc86ba9c3c19fd30"}
@@ -559,7 +596,7 @@ export function NodeBuilderImpl_finalizeBoundary(receiver: GoPtr<NodeBuilderImpl
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.tryReuseExistingNodeHelper","kind":"method","status":"stub","sigHash":"c0f3a922317b5f0fdf2262ed81a7c4e222651bd0007fb3912de401c9ed6b63e5","bodyHash":"0f45f4753b177d777fa107349d3b459581ef8114c42bf328bec5304fa5a35f55"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.tryReuseExistingNodeHelper","kind":"method","status":"implemented","sigHash":"c0f3a922317b5f0fdf2262ed81a7c4e222651bd0007fb3912de401c9ed6b63e5","bodyHash":"0f45f4753b177d777fa107349d3b459581ef8114c42bf328bec5304fa5a35f55"}
  *
  * Go source:
  * func (b *NodeBuilderImpl) tryReuseExistingNodeHelper(existing *ast.TypeNode) *ast.TypeNode {
@@ -575,7 +612,15 @@ export function NodeBuilderImpl_finalizeBoundary(receiver: GoPtr<NodeBuilderImpl
  * }
  */
 export function NodeBuilderImpl_tryReuseExistingNodeHelper(receiver: GoPtr<NodeBuilderImpl>, existing: GoPtr<TypeNode>): GoPtr<TypeNode> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.tryReuseExistingNodeHelper");
+  const b = receiver!;
+  const bound = NodeBuilderImpl_createRecoveryBoundary(b);
+  const visitor = getExistingNodeTreeVisitor(b, bound) as GoPtr<ConcreteNodeVisitor>;
+  const transformed = NodeVisitor_VisitNode(visitor, existing as GoPtr<Node>) as GoPtr<TypeNode>;
+  if (!NodeBuilderImpl_finalizeBoundary(b, bound)) {
+    return undefined;
+  }
+  b.ctx!.approximateLength += existing!.Loc.end - existing!.Loc.pos;
+  return transformed;
 }
 
 /**
@@ -702,7 +747,7 @@ export function NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(receive
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::func::getExistingNodeTreeVisitor","kind":"func","status":"stub","sigHash":"f23a46dc64b0d3a0dcb8be0adbb3b14920a0890683fe6d3ae276db72fa8babde","bodyHash":"10be8760b4423c26868ce992890d08350c3ba2b485f4b57dd749a4f4f8432479"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::func::getExistingNodeTreeVisitor","kind":"func","status":"implemented","sigHash":"f23a46dc64b0d3a0dcb8be0adbb3b14920a0890683fe6d3ae276db72fa8babde","bodyHash":"10be8760b4423c26868ce992890d08350c3ba2b485f4b57dd749a4f4f8432479"}
  *
  * Go source:
  * func getExistingNodeTreeVisitor(b *NodeBuilderImpl, bound *recoveryBoundary) *ast.NodeVisitor {
@@ -714,5 +759,488 @@ export function NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(receive
  * }
  */
 export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoPtr<recoveryBoundary>): GoPtr<NodeVisitor> {
-  throw new globalThis.Error("TSGO_UNIMPLEMENTED github.com/microsoft/typescript-go::internal/checker/nodecopy.go::func::getExistingNodeTreeVisitor");
+  let visitor: GoPtr<ConcreteNodeVisitor>;
+  const asNodeVisitor = (): GoPtr<ConcreteNodeVisitor> => visitor!;
+  const visitNode = (node: GoPtr<Node>): GoPtr<Node> => NodeVisitor_VisitNode(asNodeVisitor(), node);
+  const visitNodes = (nodes: GoPtr<NodeList>): GoPtr<NodeList> => NodeVisitor_VisitNodes(asNodeVisitor(), nodes);
+  const visitModifiers = (nodes: GoPtr<ModifierList>): GoPtr<ModifierList> => NodeVisitor_VisitModifiers(asNodeVisitor(), nodes);
+  const visitEachChild = (node: GoPtr<Node>): GoPtr<Node> => Node_VisitEachChild(node, asNodeVisitor() as unknown as GoPtr<NodeVisitor>);
+
+  const attachSymbolToLeftmostIdentifier = (leftmost: GoPtr<Node>, node: GoPtr<Node>, sym: GoPtr<Symbol>): GoPtr<Node> => {
+    let vis: GoPtr<ConcreteNodeVisitor>;
+    const visitorFunc = (current: GoPtr<Node>): GoPtr<Node> => {
+      if (current === leftmost) {
+        let type_: GoPtr<Type> = undefined;
+        let name: GoPtr<Node> = undefined;
+        if (sym !== undefined) {
+          type_ = Checker_getDeclaredTypeOfSymbol(b!.ch, sym);
+          if ((sym.Flags & SymbolFlagsTypeParameter) !== 0) {
+            name = NodeBuilderImpl_typeParameterToName(b, type_) as unknown as GoPtr<Node>;
+          }
+        }
+        if (name === undefined) {
+          name = NodeBuilderImpl_newIdentifier(b, Node_Text(current), sym);
+        }
+        name = NodeBuilderImpl_setTextRange(b, name, current);
+        EmitContext_AddEmitFlags(b!.e, name, EFNoAsciiEscaping);
+        return name;
+      }
+      return NodeBuilderImpl_setTextRange(b, Node_VisitEachChild(current, vis as unknown as GoPtr<NodeVisitor>), current);
+    };
+    vis = NewNodeVisitor(visitorFunc, b!.f, {});
+    return visitorFunc(node);
+  };
+
+  const trackExistingEntityName = (node: GoPtr<Node>, overrideEnclosing: GoPtr<Node>): [bool, GoPtr<Node>, GoPtr<Symbol>] => {
+    let enclosingDeclaration = b!.ctx!.enclosingDeclaration;
+    if (overrideEnclosing !== undefined) {
+      enclosingDeclaration = overrideEnclosing;
+    }
+    let introducesError = false;
+    const leftmost = GetFirstIdentifier(node);
+    const parent = leftmost!.Parent;
+    if (IsInJSFile(node) &&
+      (IsExportsIdentifier(leftmost) ||
+        IsModuleExportsAccessExpression(parent) ||
+        (IsQualifiedName(parent) &&
+          IsModuleIdentifier(AsQualifiedName(parent)!.Left) &&
+          IsExportsIdentifier(AsQualifiedName(parent)!.Right)))) {
+      introducesError = true;
+      return [introducesError, NodeBuilderImpl_setTextRange(b, Node_Clone(node, b!.f!), node), undefined];
+    }
+    const meaning = getMeaningOfEntityNameReference(node);
+    let sym: GoPtr<Symbol> = undefined;
+    if (IsThisIdentifier(leftmost)) {
+      sym = Checker_getSymbolOfDeclaration(b!.ch, Checker_getThisContainer(b!.ch, leftmost, false, false));
+      if (Checker_IsSymbolAccessible(b!.ch, sym, leftmost, meaning, false).Accessibility !== SymbolAccessibilityAccessible) {
+        introducesError = true;
+        b!.ctx!.tracker!.ReportInaccessibleThisError();
+      }
+      return [introducesError, attachSymbolToLeftmostIdentifier(leftmost, node, sym), undefined];
+    }
+    sym = Checker_resolveEntityName(b!.ch, leftmost, meaning, true, true, undefined);
+    if (b!.ctx!.enclosingDeclaration !== undefined && !(sym !== undefined && (sym.Flags & SymbolFlagsTypeParameter) !== 0)) {
+      sym = Checker_getExportSymbolOfValueSymbolIfExported(b!.ch, sym);
+      const symAtLocation = Checker_resolveEntityName(b!.ch, leftmost, meaning, true, true, b!.ctx!.enclosingDeclaration);
+      if (symAtLocation === b!.ch!.unknownSymbol ||
+        (symAtLocation === undefined && sym !== undefined) ||
+        (symAtLocation !== undefined && sym !== undefined &&
+          Checker_getSymbolIfSameReference(b!.ch, Checker_getExportSymbolOfValueSymbolIfExported(b!.ch, symAtLocation), sym) === undefined)) {
+        if (symAtLocation !== b!.ch!.unknownSymbol) {
+          b!.ctx!.tracker!.ReportInferenceFallback(node);
+        }
+        introducesError = true;
+        return [introducesError, NodeBuilderImpl_setTextRange(b, Node_Clone(node, b!.f!), node), sym];
+      }
+      sym = symAtLocation;
+    }
+
+    if (sym !== undefined) {
+      if ((sym.Flags & SymbolFlagsFunctionScopedVariable) !== 0 && sym.ValueDeclaration !== undefined) {
+        if (IsPartOfParameterDeclaration(sym.ValueDeclaration) || IsJSDocParameterTag(sym.ValueDeclaration)) {
+          return [introducesError, attachSymbolToLeftmostIdentifier(leftmost, node, sym), undefined];
+        }
+      }
+      if ((sym.Flags & SymbolFlagsTypeParameter) === 0 &&
+        !IsDeclarationName(node) &&
+        Checker_IsSymbolAccessible(b!.ch, sym, enclosingDeclaration, meaning, false).Accessibility !== SymbolAccessibilityAccessible) {
+        b!.ctx!.tracker!.ReportInferenceFallback(node);
+        introducesError = true;
+      } else {
+        b!.ctx!.tracker!.TrackSymbol(sym, enclosingDeclaration, meaning);
+      }
+      return [introducesError, attachSymbolToLeftmostIdentifier(leftmost, node, sym), undefined];
+    }
+    return [introducesError, NodeBuilderImpl_setTextRange(b, Node_Clone(node, b!.f!), node), undefined];
+  };
+
+  let tryVisitSimpleTypeNode!: (node: GoPtr<Node>) => GoPtr<Node>;
+  const tryVisitIndexedAccess = (node: GoPtr<Node>): GoPtr<Node> => {
+    const indexed = AsIndexedAccessTypeNode(node)!;
+    const resultObjectType = tryVisitSimpleTypeNode(indexed.ObjectType);
+    if (resultObjectType === undefined) {
+      return undefined;
+    }
+    return NodeBuilderImpl_setTextRange(
+      b,
+      NewIndexedAccessTypeNode(b!.f!, resultObjectType as unknown as GoPtr<never>, visitNode(indexed.IndexType) as unknown as GoPtr<never>),
+      node,
+    );
+  };
+  const tryVisitKeyOf = (node: GoPtr<Node>): GoPtr<Node> => {
+    const typeOperator = AsTypeOperatorNode(node)!;
+    const typeNode = tryVisitSimpleTypeNode(typeOperator.Type);
+    if (typeNode === undefined) {
+      return undefined;
+    }
+    return NodeBuilderImpl_setTextRange(b, NewTypeOperatorNode(b!.f!, typeOperator.Operator, typeNode as unknown as GoPtr<never>), node);
+  };
+  const tryVisitTypeQuery = (node: GoPtr<Node>): GoPtr<Node> => {
+    const typeQuery = AsTypeQueryNode(node)!;
+    const [introducesError, exprName] = trackExistingEntityName(typeQuery.ExprName, undefined);
+    if (!introducesError) {
+      return NodeBuilderImpl_setTextRange(
+        b,
+        NewTypeQueryNode(b!.f, exprName as GoPtr<never>, visitNodes(typeQuery.TypeArguments) as GoPtr<never>),
+        node,
+      );
+    }
+    const serializedName = NodeBuilderImpl_serializeTypeName(b, typeQuery.ExprName, true, visitNodes(typeQuery.TypeArguments));
+    if (serializedName !== undefined) {
+      return NodeBuilderImpl_setTextRange(b, serializedName, typeQuery.ExprName);
+    }
+    return undefined;
+  };
+  const tryVisitTypeReference = (node: GoPtr<Node>): GoPtr<Node> => {
+    if (IsConstTypeReference(node)) {
+      return undefined;
+    }
+    const links = LinkStore_Get(b!.ch!.symbolNodeLinks, node) as unknown as GoPtr<SymbolNodeLinks>;
+    const symbol_ = links?.resolvedSymbol;
+    if (symbol_ === undefined) {
+      return undefined;
+    }
+    if ((symbol_.Flags & SymbolFlagsTypeParameter) !== 0) {
+      const declaredType = Checker_getDeclaredTypeOfSymbol(b!.ch, symbol_);
+      if (b!.ctx!.mapper !== undefined && TypeMapper_Map(b!.ctx!.mapper, declaredType) !== declaredType) {
+        return undefined;
+      }
+    }
+    const ref = AsTypeReferenceNode(node)!;
+    const [introducesError, newName] = trackExistingEntityName(ref.TypeName, undefined);
+    const typeArguments = visitNodes(ref.TypeArguments);
+    if (!introducesError) {
+      return NodeBuilderImpl_setTextRange(b, NewTypeReferenceNode(b!.f, newName as GoPtr<never>, typeArguments as GoPtr<never>), node);
+    }
+    const serializedName = NodeBuilderImpl_serializeTypeName(b, ref.TypeName, false, typeArguments);
+    if (serializedName !== undefined) {
+      return NodeBuilderImpl_setTextRange(b, serializedName, ref.TypeName);
+    }
+    return undefined;
+  };
+  tryVisitSimpleTypeNode = (node: GoPtr<Node>): GoPtr<Node> => {
+    const innerNode = SkipParentheses(node as GoPtr<never>) as GoPtr<Node>;
+    if (IsTypeReferenceNode(innerNode)) {
+      return tryVisitTypeReference(innerNode);
+    }
+    if (IsTypeQueryNode(innerNode)) {
+      return tryVisitTypeQuery(innerNode);
+    }
+    if (IsIndexedAccessTypeNode(innerNode)) {
+      return tryVisitIndexedAccess(innerNode);
+    }
+    if (IsTypeOperatorNode(innerNode) && AsTypeOperatorNode(innerNode)!.Operator === KindKeyOfKeyword) {
+      return tryVisitKeyOf(innerNode);
+    }
+    return visitNode(node);
+  };
+
+  const visitExistingNodeTreeSymbolsWorker = (node: GoPtr<Node>): GoPtr<Node> => {
+    const factory = b!.f!;
+    if (IsJSDocTypeExpression(node)) {
+      return visitNode(AsJSDocTypeExpression(node)!.Type);
+    }
+    if (IsJSDocAllType(node)) {
+      return NewKeywordTypeNode(factory, KindAnyKeyword);
+    }
+    if (IsJSDocNullableType(node)) {
+      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, [
+        visitNode(AsJSDocNullableType(node)!.Type),
+        NewLiteralTypeNode(factory, NewKeywordExpression(factory, KindNullKeyword)),
+      ]) as GoPtr<never>);
+    }
+    if (IsJSDocOptionalType(node)) {
+      return NewUnionTypeNode(factory, NodeFactory_NewNodeList(factory, [
+        visitNode(AsJSDocOptionalType(node)!.Type),
+        NewKeywordTypeNode(factory, KindUndefinedKeyword),
+      ]) as GoPtr<never>);
+    }
+    if (IsJSDocNonNullableType(node)) {
+      return visitNode(AsJSDocNonNullableType(node)!.Type);
+    }
+    if (IsJSDocVariadicType(node)) {
+      return NewArrayTypeNode(factory, visitNode(AsJSDocVariadicType(node)!.Type) as GoPtr<never>);
+    }
+    if (IsJSDocTypeLiteral(node)) {
+      const members: GoSlice<GoPtr<Node>> = [];
+      for (const tag of AsJSDocTypeLiteral(node)!.JSDocPropertyTags ?? []) {
+        const tagNode = tag!;
+        const nameNode = Node_Name(tagNode);
+        const targetName = IsIdentifier(nameNode) ? nameNode : AsQualifiedName(nameNode)!.Right;
+        const name = visitNode(targetName);
+        const tagData = AsJSDocParameterOrPropertyTag(tagNode)!;
+        const typeExpression = Node_Type(tagNode);
+        const shouldBeOptional = tagData.IsBracketed || (typeExpression !== undefined && IsJSDocOptionalType(typeExpression));
+        const question = shouldBeOptional ? NewToken(factory, KindQuestionToken) : undefined;
+        const typeNode = visitNode(typeExpression);
+        members.push(NewPropertySignatureDeclaration(factory, undefined, name as GoPtr<never>, question as GoPtr<never>, typeNode as GoPtr<never>, undefined));
+      }
+      return NewTypeLiteralNode(factory, NodeFactory_NewNodeList(factory, members) as GoPtr<never>);
+    }
+    if (IsTypeReferenceNode(node) && IsIdentifier(AsTypeReferenceNode(node)!.TypeName) && AsIdentifier(AsTypeReferenceNode(node)!.TypeName)!.Text === "") {
+      const replacement = NewKeywordTypeNode(factory, KindAnyKeyword);
+      EmitContext_SetOriginal(b!.e, replacement, node);
+      return replacement;
+    }
+    if (IsThisTypeNode(node)) {
+      return node;
+    }
+    if (AsTypeParameterDeclaration(node) !== undefined) {
+      const [, newName] = trackExistingEntityName(Node_Name(node), undefined);
+      const typeParam = AsTypeParameterDeclaration(node)!;
+      return NodeFactory_UpdateTypeParameterDeclaration(
+        factory,
+        typeParam,
+        visitModifiers(Node_Modifiers(node)),
+        newName as GoPtr<never>,
+        visitNode(typeParam.Constraint) as GoPtr<never>,
+        visitNode(typeParam.Expression) as GoPtr<never>,
+        visitNode(typeParam.DefaultType) as GoPtr<never>,
+      );
+    }
+    if (IsIndexedAccessTypeNode(node)) {
+      const result = tryVisitIndexedAccess(node);
+      if (result !== undefined) {
+        return result;
+      }
+      recoveryBoundary_markError(bound, undefined);
+      return node;
+    }
+    if (IsTypeReferenceNode(node)) {
+      const result = tryVisitTypeReference(node);
+      if (result !== undefined) {
+        return result;
+      }
+      recoveryBoundary_markError(bound, undefined);
+      return node;
+    }
+    if (IsTypeQueryNode(node)) {
+      const result = tryVisitTypeQuery(node);
+      if (result !== undefined) {
+        return result;
+      }
+      recoveryBoundary_markError(bound, undefined);
+      return node;
+    }
+    if (IsTypeOperatorNode(node)) {
+      const typeOperator = AsTypeOperatorNode(node)!;
+      if (typeOperator.Operator === KindUniqueKeyword && typeOperator.Type!.Kind === KindSymbolKeyword) {
+        const nonFakeEnclosing = NodeBuilderImpl_getEnclosingDeclarationIgnoringFakeScope(b);
+        const sameScope = FindAncestor(node, (ancestor) => ancestor === nonFakeEnclosing);
+        if (sameScope === undefined) {
+          recoveryBoundary_markError(bound, undefined);
+          return node;
+        }
+      } else if (typeOperator.Operator === KindKeyOfKeyword) {
+        const result = tryVisitKeyOf(node);
+        if (result !== undefined) {
+          return result;
+        }
+        recoveryBoundary_markError(bound, undefined);
+        return node;
+      }
+    }
+    if (IsLiteralImportTypeNode(node)) {
+      const importType = AsImportTypeNode(node)!;
+      if (importType.Attributes !== undefined && AsImportAttributes(importType.Attributes)!.Token === KindAssertKeyword) {
+        recoveryBoundary_markError(bound, undefined);
+        return node;
+      }
+      const type_ = NodeBuilderImpl_getTypeFromTypeNode(b, node as GoPtr<never>, true);
+      if (type_ === undefined) {
+        recoveryBoundary_markError(bound, undefined);
+        return node;
+      }
+      const originalSpec = AsLiteralTypeNode(importType.Argument)!.Literal;
+      let specifier = NodeBuilderImpl_rewriteModuleSpecifier(b, node, originalSpec);
+      if (originalSpec === specifier) {
+        specifier = visitNode(specifier);
+      }
+      let arg = importType.Argument;
+      if (specifier !== originalSpec) {
+        arg = NewLiteralTypeNode(factory, specifier) as GoPtr<never>;
+      }
+      return NewImportTypeNode(
+        factory,
+        importType.IsTypeOf,
+        arg,
+        visitNode(importType.Attributes) as GoPtr<never>,
+        visitNode(importType.Qualifier) as GoPtr<never>,
+        visitNodes(importType.TypeArguments) as GoPtr<never>,
+      );
+    }
+    const nodeName = Node_Name(node);
+    if (nodeName !== undefined && nodeName.Kind === KindComputedPropertyName && !Checker_hasLateBindableName(b!.ch, node)) {
+      if (!HasDynamicName(node)) {
+        return visitEachChild(node);
+      }
+      const expression = AsComputedPropertyName(nodeName)!.Expression;
+      const shouldRemoveDeclaration = !((b!.ctx!.internalFlags & InternalFlagsAllowUnresolvedNames) !== 0 &&
+        IsEntityNameExpression(expression) &&
+        (Checker_checkComputedPropertyName(b!.ch, nodeName)!.flags & TypeFlagsAny) !== 0);
+      if (shouldRemoveDeclaration) {
+        return undefined;
+      }
+    }
+    if ((IsFunctionLike(node) && Node_Type(node) === undefined) ||
+      (IsPropertyDeclaration(node) && Node_Type(node) === undefined && Node_Initializer(node) === undefined) ||
+      (IsPropertySignatureDeclaration(node) && Node_Type(node) === undefined && Node_Initializer(node) === undefined) ||
+      (IsParameterDeclaration(node) && Node_Type(node) === undefined && Node_Initializer(node) === undefined)) {
+      let visited = visitEachChild(node);
+      if (visited === node) {
+        visited = NodeBuilderImpl_setTextRange(b, Node_Clone(node, factory), node);
+      }
+      const newType = NewKeywordTypeNode(factory, KindAnyKeyword);
+      if (IsPropertyDeclaration(visited)) {
+        return NodeFactory_UpdatePropertyDeclaration(factory, visited as GoPtr<never>, Node_Modifiers(visited), Node_Name(visited) as GoPtr<never>, Node_PostfixToken(visited) as GoPtr<never>, newType as GoPtr<never>, undefined);
+      }
+      if (IsPropertySignatureDeclaration(visited)) {
+        return NodeFactory_UpdatePropertySignatureDeclaration(factory, visited as GoPtr<never>, Node_Modifiers(visited), Node_Name(visited) as GoPtr<never>, Node_PostfixToken(visited) as GoPtr<never>, newType as GoPtr<never>, undefined);
+      }
+      if (IsParameterDeclaration(visited)) {
+        const param = AsParameterDeclaration(visited)!;
+        return NodeFactory_UpdateParameterDeclaration(factory, param, undefined, param.DotDotDotToken, Node_Name(visited) as GoPtr<never>, param.QuestionToken, newType as GoPtr<never>, undefined);
+      }
+      if (AsMethodSignatureDeclaration(visited) !== undefined) {
+        const method = AsMethodSignatureDeclaration(visited)!;
+        return NodeFactory_UpdateMethodSignatureDeclaration(factory, method, Node_Modifiers(visited), Node_Name(visited) as GoPtr<never>, Node_PostfixToken(visited) as GoPtr<never>, method.TypeParameters, method.Parameters, newType as GoPtr<never>);
+      }
+      if (AsCallSignatureDeclaration(visited) !== undefined) {
+        const call = AsCallSignatureDeclaration(visited)!;
+        return NewCallSignatureDeclaration(factory, call.TypeParameters, call.Parameters, newType as GoPtr<never>);
+      }
+      if (AsJSDocSignature(visited) !== undefined) {
+        const jsdocSig = AsJSDocSignature(visited)!;
+        return NewJSDocSignature(factory, jsdocSig.TypeParameters, jsdocSig.Parameters, newType as GoPtr<never>);
+      }
+      if (AsConstructSignatureDeclaration(visited) !== undefined) {
+        const construct = AsConstructSignatureDeclaration(visited)!;
+        return NewConstructSignatureDeclaration(factory, construct.TypeParameters, construct.Parameters, newType as GoPtr<never>);
+      }
+      if (AsIndexSignatureDeclaration(visited) !== undefined) {
+        const index = AsIndexSignatureDeclaration(visited)!;
+        return NodeFactory_UpdateIndexSignatureDeclaration(factory, index, Node_Modifiers(visited), index.Parameters, newType as GoPtr<never>);
+      }
+      if (AsFunctionTypeNode(visited) !== undefined) {
+        const fn = AsFunctionTypeNode(visited)!;
+        return NewFunctionTypeNode(factory, fn.TypeParameters, fn.Parameters, newType as GoPtr<never>);
+      }
+      if (AsConstructorTypeNode(visited) !== undefined) {
+        const ctor = AsConstructorTypeNode(visited)!;
+        return NodeFactory_UpdateConstructorTypeNode(factory, ctor, Node_Modifiers(visited), ctor.TypeParameters, ctor.Parameters, newType as GoPtr<never>);
+      }
+    }
+    if (IsComputedPropertyName(node) && IsEntityNameExpression(AsComputedPropertyName(node)!.Expression)) {
+      const [introducesError, result] = trackExistingEntityName(AsComputedPropertyName(node)!.Expression, undefined);
+      if (!introducesError) {
+        return NewComputedPropertyName(factory, result as GoPtr<never>);
+      }
+      recoveryBoundary_markError(bound, undefined);
+      return visitEachChild(node);
+    }
+    if (IsTypePredicateNode(node)) {
+      let parameterName: GoPtr<Node> = undefined;
+      const predicate = AsTypePredicateNode(node)!;
+      if (IsIdentifier(predicate.ParameterName)) {
+        const [introducesError, result] = trackExistingEntityName(predicate.ParameterName, undefined);
+        if (introducesError) {
+          recoveryBoundary_markError(bound, undefined);
+        }
+        parameterName = result;
+      } else {
+        parameterName = Node_Clone(predicate.ParameterName, factory);
+      }
+      return NodeBuilderImpl_setTextRange(b, NewTypePredicateNode(
+        factory,
+        visitNode(predicate.AssertsModifier),
+        parameterName as GoPtr<never>,
+        visitNode(predicate.Type) as GoPtr<never>,
+      ), node);
+    }
+    if (IsConditionalTypeNode(node)) {
+      const conditional = AsConditionalTypeNode(node)!;
+      const checkType = visitNode(conditional.CheckType);
+      const dispose = NodeBuilderImpl_enterNewScope(b, node, [], Checker_getInferTypeParameters(b!.ch, node), [], undefined);
+      const extendsType = visitNode(conditional.ExtendsType);
+      const trueType = visitNode(conditional.TrueType);
+      dispose();
+      const falseType = visitNode(conditional.FalseType);
+      return NewConditionalTypeNode(factory, checkType as GoPtr<never>, extendsType as GoPtr<never>, trueType as GoPtr<never>, falseType as GoPtr<never>);
+    }
+    if (IsTupleTypeNode(node) || ((b!.ctx!.flags & FlagsMultilineObjectLiterals) === 0 && IsTypeLiteralNode(node)) || IsMappedTypeNode(node)) {
+      let result = visitEachChild(node);
+      if (result === node) {
+        result = Node_Clone(result, factory);
+        result = NodeBuilderImpl_setTextRange(b, result, node);
+      }
+      EmitContext_AddEmitFlags(b!.e, result, EFSingleLine);
+      return result;
+    }
+    if (IsStringLiteral(node) && (b!.ctx!.flags & FlagsUseSingleQuotesForStringLiteralType) !== 0 && (AsStringLiteral(node)!.TokenFlags & TokenFlagsSingleQuote) === 0) {
+      const clone = Node_Clone(node, b!.f!);
+      AsStringLiteral(clone)!.TokenFlags ^= TokenFlagsSingleQuote;
+      return clone;
+    }
+    return visitEachChild(node);
+  };
+
+  let nonLocalNode = true;
+  visitor = NewNodeVisitor((node: GoPtr<Node>): GoPtr<Node> => {
+    if (bound!.hadError) {
+      return node;
+    }
+    const recovery = recoveryBoundary_startRecoveryScope(bound);
+    const introducesNewScope = IsFunctionLike(node) || IsMappedTypeNode(node);
+    let exit: (() => void) | undefined = undefined;
+    if (introducesNewScope) {
+      let params: GoSlice<GoPtr<Symbol>> = [];
+      let typeParams: GoSlice<GoPtr<Type>> = [];
+      if (IsFunctionLike(node)) {
+        const signature = Checker_getSignatureFromDeclaration(b!.ch, node);
+        params = signature!.parameters ?? [];
+        typeParams = signature!.typeParameters ?? [];
+      } else if (IsConditionalTypeNode(node)) {
+        typeParams = Checker_getInferTypeParameters(b!.ch, node);
+      } else if (IsMappedTypeNode(node)) {
+        typeParams = [Checker_getDeclaredTypeOfTypeParameter(b!.ch, Checker_getSymbolOfDeclaration(b!.ch, AsMappedTypeNode(node)!.TypeParameter))];
+      }
+      exit = NodeBuilderImpl_enterNewScope(b, node, params, typeParams, [], undefined);
+    }
+    let result = visitExistingNodeTreeSymbolsWorker(node);
+    if (exit !== undefined) {
+      exit();
+    }
+    if (result === node && !NodeIsSynthesized(node)) {
+      result = NodeFactory_DeepCloneNode(b!.f!, node);
+    }
+    result = NodeBuilderImpl_setTextRange(b, result, node);
+    if (bound!.hadError) {
+      if (IsTypeNode(node) && !IsTypePredicateNode(node)) {
+        recoveryBoundary_endRecoveryScope(bound, recovery);
+        const type_ = NodeBuilderImpl_getTypeFromTypeNode(b, node as GoPtr<never>, false);
+        return NodeBuilderImpl_typeToTypeNode(b, type_);
+      }
+      return NodeBuilderImpl_setTextRange(b, Node_Clone(node, b!.f!), node);
+    }
+    return result;
+  }, b!.f, {
+    VisitNodes: (nodes: GoPtr<NodeList>, nodeVisitor: GoPtr<ConcreteNodeVisitor>): GoPtr<NodeList> => {
+      let result = NodeVisitor_VisitNodes(nodeVisitor, nodes);
+      if (nonLocalNode && result !== undefined) {
+        if (result === nodes) {
+          result = NodeList_Clone(nodes, b!.f!);
+        }
+        result!.Loc = NewTextRange(-1, -1);
+      }
+      return result;
+    },
+    VisitNode: (node: GoPtr<Node>, nodeVisitor: GoPtr<ConcreteNodeVisitor>): GoPtr<Node> => {
+      const oldNonLocalNode = nonLocalNode;
+      nonLocalNode = b!.ctx!.enclosingFile === undefined || b!.ctx!.enclosingFile !== GetSourceFileOfNode(EmitContext_MostOriginal(b!.e, node));
+      const result = NodeVisitor_VisitNode(nodeVisitor, node);
+      nonLocalNode = oldNonLocalNode;
+      return result;
+    },
+  });
+  return visitor as unknown as GoPtr<NodeVisitor>;
 }

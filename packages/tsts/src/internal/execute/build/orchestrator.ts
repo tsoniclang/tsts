@@ -55,7 +55,7 @@ import type { parseCache } from "./parseCache.js";
 export interface Options {
   Sys: System;
   Command: GoPtr<ParsedBuildCommandLine>;
-  Testing: CommandLineTesting;
+  Testing: CommandLineTesting | undefined;
 }
 
 /**

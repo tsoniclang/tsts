@@ -2,8 +2,8 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
 import { BigEndian, LittleEndian, Read as binary_Read } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
-import { ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFile as fs_ReadFile, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
-import type { FS, WalkDirFunc } from "../../../go/io/fs.js";
+import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFile as fs_ReadFile, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
+import type { FileMode, FS, WalkDirFunc } from "../../../go/io/fs.js";
 import { NewReader as strings_NewReader } from "../../../go/strings.js";
 import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
@@ -13,10 +13,7 @@ interface FileInfoMethods {
   IsDir(): bool;
   Mode(): FileModeValue;
 }
-interface FileModeValue {
-  IsDir(): bool;
-  IsRegular(): bool;
-}
+type FileModeValue = FileMode;
 interface DirEntryMethods {
   Name(): string;
   Type(): FileModeValue;
@@ -208,20 +205,22 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * }
  */
 export function Common_GetAccessibleEntries(receiver: GoPtr<Common>, path: string): Entries {
-  const result: Entries = { Files: [], Directories: [] };
+  const result: Entries = { Files: [], Directories: [], Symlinks: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() };
 
-  const addToResult = (name: string, mode: FileModeValue, _isLink: bool): bool => {
-    if (mode.IsDir()) {
+  const addToResult = (name: string, mode: FileModeValue, isLink: bool): bool => {
+    if (FileMode_IsDir(mode)) {
       result.Directories.push(name);
-      return true;
-    }
-
-    if (mode.IsRegular()) {
+    } else if (FileMode_IsRegular(mode)) {
       result.Files.push(name);
-      return true;
+    } else {
+      return false;
     }
 
-    return false;
+    if (isLink) {
+      result.Symlinks!.set(name, {});
+    }
+
+    return true;
   };
 
   for (const entry of Common_getEntries(receiver, path)) {

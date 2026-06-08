@@ -159,15 +159,16 @@ function findFirstWildcard(s: string): int {
  * 	return basePaths
  * }
  */
-export function getBasePaths(path: string, includes: GoSlice<string>, useCaseSensitiveFileNames: bool): GoSlice<string> {
+export function getBasePaths(path: string, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool): GoSlice<string> {
   const basePaths: string[] = [path];
+  const includeList = includes ?? [];
 
-  if (includes.length > 0) {
+  if (includeList.length > 0) {
     const comparePathsOptions: ComparePathsOptions = { CurrentDirectory: path, UseCaseSensitiveFileNames: useCaseSensitiveFileNames };
     const stringComparer = ComparePathsOptions_GetComparer(comparePathsOptions);
 
     const includeBasePaths: string[] = [];
-    for (const include of includes) {
+    for (const include of includeList) {
       let absolute: string;
       if (IsRootedDiskPath(include)) {
         absolute = include;
@@ -1096,20 +1097,22 @@ export interface globMatcher {
  * 	return m
  * }
  */
-export function newGlobMatcher(includeSpecs: GoSlice<string>, excludeSpecs: GoSlice<string>, basePath: string, caseSensitive: bool, usage: Usage): GoPtr<globMatcher> {
+export function newGlobMatcher(includeSpecs: GoPtr<GoSlice<string>>, excludeSpecs: GoPtr<GoSlice<string>>, basePath: string, caseSensitive: bool, usage: Usage): GoPtr<globMatcher> {
+  const includeList = includeSpecs ?? [];
+  const excludeList = excludeSpecs ?? [];
   const m: globMatcher = {
-    hadIncludes: includeSpecs.length > 0,
+    hadIncludes: includeList.length > 0,
     includes: [],
     excludes: [],
   };
 
-  for (const spec of includeSpecs) {
+  for (const spec of includeList) {
     const [p, ok] = compileGlobPattern(spec, basePath, usage, caseSensitive);
     if (ok) {
       m.includes.push(p);
     }
   }
-  for (const spec of excludeSpecs) {
+  for (const spec of excludeList) {
     const [p, ok] = compileGlobPattern(spec, basePath, UsageExclude, caseSensitive);
     if (ok) {
       m.excludes.push(p);
@@ -1282,7 +1285,7 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
   const absPrefix = ensureTrailingSlash(absolutePath);
 
   for (const file of entries.Files) {
-    if (receiver!.extensions.length > 0 && !FileExtensionIsOneOf(file, receiver!.extensions)) {
+    if ((receiver!.extensions?.length ?? 0) > 0 && !FileExtensionIsOneOf(file, receiver!.extensions)) {
       continue;
     }
     const [idx, ok] = globMatcher_matchesFileParts(receiver!.fileMatcher, absPrefix, file);
@@ -1340,10 +1343,11 @@ export function globVisitor_visit(receiver: GoPtr<globVisitor>, path: string, ab
  * 	return core.Flatten(v.results)
  * }
  */
-export function matchFiles(path: string, extensions: GoSlice<string>, excludes: GoSlice<string>, includes: GoSlice<string>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: FS): GoSlice<string> {
+export function matchFiles(path: string, extensions: GoPtr<GoSlice<string>>, excludes: GoPtr<GoSlice<string>>, includes: GoPtr<GoSlice<string>>, useCaseSensitiveFileNames: bool, currentDirectory: string, depth: int, host: FS): GoSlice<string> {
   const normalizedPath = NormalizePath(path);
   const normalizedCurrentDir = NormalizePath(currentDirectory);
   const absolutePath = CombinePaths(normalizedCurrentDir, normalizedPath);
+  const extensionList = extensions ?? [];
 
   const fileMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageFiles);
   const directoryMatcher = newGlobMatcher(includes, excludes, absolutePath, useCaseSensitiveFileNames, UsageDirectories);
@@ -1358,7 +1362,7 @@ export function matchFiles(path: string, extensions: GoSlice<string>, excludes: 
     host: host,
     fileMatcher: fileMatcher,
     directoryMatcher: directoryMatcher,
-    extensions: extensions,
+    extensions: extensionList,
     useCaseSensitiveFileNames: useCaseSensitiveFileNames,
     visited: NewSetWithSizeHint<string>(0 as int)!,
     results: results,
