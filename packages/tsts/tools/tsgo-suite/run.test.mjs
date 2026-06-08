@@ -500,6 +500,11 @@ test("errorDiffNewSideHasErrors treats accepted removed diagnostics as clean", (
   assert.equal(errorDiffNewSideHasErrors(diff.pathname), false);
 });
 
+test("errorDiffNewSideHasErrors preserves compact hidden diagnostics", () => {
+  const diff = new URL("../../_vendor/typescript-go/testdata/baselines/reference/submoduleAccepted/compiler/jsDeclarationEmitExportedClassWithExtends.errors.txt.diff", import.meta.url);
+  assert.equal(errorDiffNewSideHasErrors(diff.pathname), true);
+});
+
 test("baselineHasErrors requires exact matches for configured TS-Go variations", () => {
   const base = {
     corpus: "typescript",

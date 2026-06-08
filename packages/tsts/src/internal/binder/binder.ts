@@ -2923,7 +2923,7 @@ export function getInitializerSymbol(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
   if (IsFunctionDeclaration(declaration) || (IsInJSFile(declaration) && IsClassDeclaration(declaration))) {
     return symbol_;
   }
-  if (IsVariableDeclaration(declaration) && ((declaration!.Flags & NodeFlagsConst) !== 0 || IsInJSFile(declaration))) {
+  if (IsVariableDeclaration(declaration) && ((declaration!.Parent!.Flags & NodeFlagsConst) !== 0 || IsInJSFile(declaration))) {
     const initializer = Node_Initializer(declaration);
     if (IsExpandoInitializer(initializer)) {
       return Node_Symbol(initializer);

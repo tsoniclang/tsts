@@ -813,6 +813,7 @@ export function Checker_narrowTypeByTypePredicate(receiver: GoPtr<Checker>, f: G
       if (access !== undefined) {
         return Checker_narrowTypeByDiscriminant(receiver, localT, access, (innerT) => Checker_getNarrowedType(receiver, innerT, predicate!.t, assumeTrue, false));
       }
+      return localT;
     }
   }
   return t;

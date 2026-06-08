@@ -785,12 +785,22 @@ function baselineDirectoryHasErrors(baselineDir, testCase) {
 
 export function errorDiffNewSideHasErrors(diffPath) {
   const text = readFileSync(diffPath, "utf8");
-  return text.split(/\r?\n/).some((line) => {
+  for (const line of text.split(/\r?\n/)) {
     if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("@@")) {
+      const compactHunk = /^@@= skipped -\d+, \+(\d+) lines =@@/.exec(line);
+      if (compactHunk !== null && Number(compactHunk[1]) > 0) {
+        return true;
+      }
+      continue;
+    }
+    if (line === "+<no content>") {
       return false;
     }
-    return (line.startsWith("+") || line.startsWith(" ")) && /\berror TS\d+:/.test(line);
-  });
+    if ((line.startsWith("+") || line.startsWith(" ")) && /\berror TS\d+:/.test(line)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function baselineDirectories(testCase) {
@@ -814,7 +824,6 @@ async function materializeCase(testCase, runRoot) {
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
   const caseDir = join(runRoot, caseDirectoryFragment(testCase));
   await mkdir(caseDir, { recursive: true });
-  const skipReason = getSkipReason(testCase);
   const needsLibFolder = parsed.units.some((unit) => unit.content.includes("/.lib/")) || parsed.globalOptions.has("libfiles");
   if (needsLibFolder) {
     await cp(testLibRoot, join(caseDir, ".lib"), { recursive: true, force: true });
@@ -836,7 +845,8 @@ async function materializeCase(testCase, runRoot) {
 
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
-    await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
+    const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
+    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, merged.compilerOptions ?? {});
     return {
       caseDir,
       projectArg: join(caseDir, existingConfig),
@@ -854,6 +864,7 @@ async function materializeCase(testCase, runRoot) {
   if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && tsconfig.compilerOptions.allowJs === undefined) {
     tsconfig.compilerOptions.allowJs = true;
   }
+  const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, tsconfig.compilerOptions);
   const configPath = join(caseDir, "tsconfig.json");
   await writeFile(configPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
   return {
@@ -873,6 +884,7 @@ async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
   }
   const merged = compilerOptionsForExistingProjectConfig(parsed.config ?? {}, settings);
   await writeFile(configPath, `${JSON.stringify(merged, null, 2)}\n`);
+  return merged;
 }
 
 export function hasRootPackageJson(writtenFiles) {
@@ -942,36 +954,80 @@ async function materializeSymlinks(caseDir, symlinks) {
 }
 
 export function getSkipReason(testCase) {
-  if (skippedTests.has(testCase.sourceBaseName)) {
-    return `TS-Go runner skip list: ${testCase.sourceBaseName}`;
+  return getSkipReasonFromConfiguration(testCase.sourceBaseName, testCase.configuration);
+}
+
+function getSkipReasonFromConfiguration(sourceBaseName, configuration) {
+  if (skippedTests.has(sourceBaseName)) {
+    return `TS-Go runner skip list: ${sourceBaseName}`;
   }
-  const moduleValue = testCase.configuration.get("module")?.toLowerCase();
+  const moduleValue = configuration.get("module")?.toLowerCase();
   if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
     return `TS-Go runner skips unsupported module kind: ${moduleValue}`;
   }
-  const moduleResolutionValue = testCase.configuration.get("moduleresolution")?.toLowerCase();
+  const moduleResolutionValue = configuration.get("moduleresolution")?.toLowerCase();
   if (moduleResolutionValue === "classic" || moduleResolutionValue === "node10") {
     return `TS-Go runner skips unsupported module resolution: ${moduleResolutionValue}`;
   }
-  if (testCase.configuration.get("esmoduleinterop")?.toLowerCase() === "false") {
+  if (configuration.get("esmoduleinterop")?.toLowerCase() === "false") {
     return `TS-Go runner skips esModuleInterop=false`;
   }
-  if (testCase.configuration.get("allowsyntheticdefaultimports")?.toLowerCase() === "false") {
+  if (configuration.get("allowsyntheticdefaultimports")?.toLowerCase() === "false") {
     return `TS-Go runner skips allowSyntheticDefaultImports=false`;
   }
-  if (testCase.configuration.has("baseurl")) {
+  if (configuration.has("baseurl")) {
     return `TS-Go runner skips baseUrl`;
   }
-  if (testCase.configuration.has("outfile")) {
+  if (configuration.has("outfile")) {
     return `TS-Go runner skips outFile`;
   }
-  if (testCase.configuration.get("target")?.toLowerCase() === "es5") {
+  if (configuration.get("target")?.toLowerCase() === "es5") {
     return `TS-Go runner skips unsupported target: es5`;
   }
-  if (testCase.configuration.get("alwaysstrict")?.toLowerCase() === "false") {
+  if (configuration.get("alwaysstrict")?.toLowerCase() === "false") {
     return `TS-Go runner skips alwaysStrict=false`;
   }
   return "";
+}
+
+function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
+  if (skippedTests.has(sourceBaseName)) {
+    return `TS-Go runner skip list: ${sourceBaseName}`;
+  }
+  const moduleValue = stringCompilerOption(compilerOptions.module);
+  if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
+    return `TS-Go runner skips unsupported module kind: ${moduleValue}`;
+  }
+  const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
+  if (moduleResolutionValue === "classic" || moduleResolutionValue === "node10") {
+    return `TS-Go runner skips unsupported module resolution: ${moduleResolutionValue}`;
+  }
+  if (compilerOptions.esModuleInterop === false) {
+    return `TS-Go runner skips esModuleInterop=false`;
+  }
+  if (compilerOptions.allowSyntheticDefaultImports === false) {
+    return `TS-Go runner skips allowSyntheticDefaultImports=false`;
+  }
+  if (compilerOptions.baseUrl !== undefined && compilerOptions.baseUrl !== "") {
+    return `TS-Go runner skips baseUrl`;
+  }
+  if (
+    (compilerOptions.outFile !== undefined && compilerOptions.outFile !== "") ||
+    (compilerOptions.out !== undefined && compilerOptions.out !== "")
+  ) {
+    return `TS-Go runner skips outFile`;
+  }
+  if (stringCompilerOption(compilerOptions.target) === "es5") {
+    return `TS-Go runner skips unsupported target: es5`;
+  }
+  if (compilerOptions.alwaysStrict === false) {
+    return `TS-Go runner skips alwaysStrict=false`;
+  }
+  return "";
+}
+
+function stringCompilerOption(value) {
+  return typeof value === "string" ? value.toLowerCase() : "";
 }
 
 export function normalizeHarnessPath(fileName) {
