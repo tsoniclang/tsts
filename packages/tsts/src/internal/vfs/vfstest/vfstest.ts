@@ -36,6 +36,8 @@ interface InternalFileInfo {
 // Internal runtime shape of a fs.File.
 interface InternalFile {
   Stat(): [InternalFileInfo, GoError];
+  Read(buffer: GoSlice<number>): [int, GoError];
+  Close(): GoError;
 }
 
 // Internal runtime shape of a fs.ReadDirFile.
@@ -158,6 +160,13 @@ export function MapFS_as_iovfs_WritableFS(receiver: GoPtr<MapFS>): WritableFS {
     MkdirAll: (path: string, perm: FileMode): GoError => MapFS_MkdirAll(receiver, path, perm),
     Remove: (path: string): GoError => MapFS_Remove(receiver, path),
     Chtimes: (path: string, aTime: Time, mTime: Time): GoError => MapFS_Chtimes(receiver, path, aTime, mTime),
+  };
+}
+
+function MapFS_as_iovfs_FS(receiver: GoPtr<MapFS>): GoFS & RealpathFS & WritableFS {
+  return {
+    ...MapFS_as_iovfs_RealpathFS(receiver),
+    ...MapFS_as_iovfs_WritableFS(receiver),
   };
 }
 
@@ -313,7 +322,7 @@ export function FromMapWithClock<File>(m: GoMap<string, File>, useCaseSensitiveF
     throw new globalThis.Error("mixed posix and windows paths");
   }
 
-  return From(MapFS_as_io_fs_FS(convertMapFS(mfs as unknown as MapFS_5332fda7, useCaseSensitiveFileNames, clock)), useCaseSensitiveFileNames);
+  return From(MapFS_as_iovfs_FS(convertMapFS(mfs as unknown as MapFS_5332fda7, useCaseSensitiveFileNames, clock)), useCaseSensitiveFileNames);
 }
 
 /**
@@ -509,6 +518,8 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
   if (file === undefined) {
     return [undefined as unknown as File, ErrNotExist as unknown as GoError];
   }
+  let offset = 0;
+  const bytes = file.Data;
   // Build a synthetic fs.File backed by the internal map file.
   const fi: InternalFileInfo = {
     Name(): string { return baseName(p); },
@@ -519,6 +530,18 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
   };
   const f: InternalReadDirFile = {
     Stat(): [InternalFileInfo, GoError] { return [fi, undefined]; },
+    Read(buffer: GoSlice<number>): [int, GoError] {
+      const remaining = bytes.length - offset;
+      const count = Math.max(0, Math.min(buffer.length, remaining));
+      for (let index = 0; index < count; index += 1) {
+        buffer[index] = bytes[offset + index]!;
+      }
+      offset += count;
+      return [count as int, undefined];
+    },
+    Close(): GoError {
+      return undefined;
+    },
     ReadDir(_n: int): [InternalDirEntry[], GoError] {
       const prefix = p === "" ? "" : p + "/";
       const entries: InternalDirEntry[] = [];
@@ -981,6 +1004,12 @@ export interface fileInfo {
   readonly __tsgoEmbedded0?: FileInfo;
   sys: unknown;
   realpath: string;
+  Name(): string;
+  Size(): int;
+  Mode(): FileMode;
+  ModTime(): Date;
+  IsDir(): bool;
+  Sys(): unknown;
 }
 
 /**
@@ -1172,13 +1201,14 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
         throw new globalThis.Error(Sprintf("unexpected synthesized dir: %q", name));
       }
       const internalInfo = info as unknown as InternalFileInfo;
-      const rdfResult: readDirFile = {
+      const fileInfoResult = makeFileInfo(infoForConvert, internalInfo.Sys(), ".");
+      const rdfResult: readDirFile & ReadDirFile = {
         __tsgoEmbedded0: f as unknown as ReadDirFile,
-        fileInfo: {
-          __tsgoEmbedded0: infoForConvert,
-          sys: internalInfo.Sys(),
-          realpath: ".",
-        },
+        fileInfo: fileInfoResult,
+        Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
+        Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
+        Close: (): GoError => (f as unknown as File).Close(),
+        ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
@@ -1186,16 +1216,23 @@ export function MapFS_Open(receiver: GoPtr<MapFS>, name: string): [File, GoError
     // Check if f is a ReadDirFile (has ReadDir method)
     const internalRdf = f as unknown as Partial<InternalReadDirFile>;
     if (typeof internalRdf.ReadDir === "function") {
-      const rdfResult: readDirFile = {
+      const rdfResult: readDirFile & ReadDirFile = {
         __tsgoEmbedded0: f as unknown as ReadDirFile,
         fileInfo: newInfo!,
+        Stat: (): [FileInfo, GoError] => readDirFile_Stat(rdfResult),
+        Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
+        Close: (): GoError => (f as unknown as File).Close(),
+        ReadDir: (n: int): [GoSlice<DirEntry>, GoError] => readDirFile_ReadDir(rdfResult, n),
       };
       return [rdfResult as unknown as File, undefined];
     }
 
-    const fileResult: file = {
+    const fileResult: file & File = {
       __tsgoEmbedded0: f,
       fileInfo: newInfo!,
+      Stat: (): [FileInfo, GoError] => file_Stat(fileResult),
+      Read: (buffer: GoSlice<number>): [int, GoError] => (f as unknown as File).Read(buffer),
+      Close: (): GoError => (f as unknown as File).Close(),
     };
     return [fileResult as unknown as File, undefined];
   } finally {
@@ -1261,11 +1298,22 @@ export function convertInfo(info: FileInfo): [GoPtr<fileInfo>, bool] {
     return [undefined, false];
   }
   const typedSys = sysObj as sys;
-  return [{
+  return [makeFileInfo(info, typedSys.original, typedSys.realpath), true];
+}
+
+function makeFileInfo(info: FileInfo, sysValue: unknown, realpath: string): fileInfo {
+  const result: fileInfo = {
     __tsgoEmbedded0: info,
-    sys: typedSys.original,
-    realpath: typedSys.realpath,
-  }, true];
+    sys: sysValue,
+    realpath,
+    Name: (): string => fileInfo_Name(result),
+    Size: (): int => info.Size(),
+    Mode: (): FileMode => info.Mode(),
+    ModTime: (): Date => info.ModTime(),
+    IsDir: (): bool => info.IsDir(),
+    Sys: (): unknown => fileInfo_Sys(result),
+  };
+  return result;
 }
 
 /**
