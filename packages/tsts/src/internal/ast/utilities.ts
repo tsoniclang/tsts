@@ -8326,7 +8326,7 @@ export function GetExternalModuleImportEqualsDeclarationExpression(node: GoPtr<N
  * }
  */
 export function CreateModifiersFromModifierFlags(flags: ModifierFlags, createModifier: (kind: Kind) => GoPtr<Node>): GoSlice<GoPtr<Node>> {
-  let result: GoSlice<GoPtr<Node>> = undefined!;
+  let result: GoSlice<GoPtr<Node>> = [];
   if ((flags & ModifierFlagsExport) !== 0) {
     result = [...(result ?? []), createModifier(KindExportKeyword)];
   }

@@ -190,7 +190,7 @@ import {
 } from "../ast/generated/factory.js";
 import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
-import { Node_Clone, Node_Name, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
+import { Node_Clone, Node_Name, NodeDefault_AsNode, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
 import type { Set } from "../collections/set.js";
 import type { MultiMap } from "../collections/multimap.js";
@@ -344,7 +344,7 @@ import { EmitResolver_requiresAddingImplicitUndefined } from "./emitresolver.js"
 import { Checker_getTupleElementLabel, Checker_getTypePredicateOfSignature, Checker_instantiateTypePredicate } from "./relater.js";
 import type { TypeMapper } from "./mapper.js";
 import { newTypeMapper, prependTypeMapping, TypeMapper_Map } from "./mapper.js";
-import type { IndexInfo, InterfaceType, LiteralType, MappedType, ReverseMappedSymbolLinks, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeId, TypeParameter, TypePredicate, TypeReference, UniqueESSymbolType, ValueSymbolLinks } from "./types.js";
+import type { IndexInfo, InterfaceType, LiteralType, MappedType, ReverseMappedSymbolLinks, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeData, TypeId, TypeParameter, TypePredicate, TypeReference, UniqueESSymbolType, ValueSymbolLinks } from "./types.js";
 import { ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_OuterTypeParameters, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsInstantiationExpressionType, ObjectFlagsIsClassInstanceClone, ObjectFlagsMapped, ObjectFlagsReference, ObjectFlagsRequiresWidening, ObjectFlagsReverseMapped, ObjectFlagsTuple, SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsConditionalType, Type_AsIndexedAccessType, Type_AsInstantiationExpressionType, Type_AsInterfaceType, Type_AsIntersectionType, Type_AsLiteralType, Type_AsMappedType, Type_AsStringMappingType, Type_AsStructuredType, Type_AsSubstitutionType, Type_AsTemplateLiteralType, Type_AsTypeParameter, Type_AsTypeReference, Type_AsTupleType, Type_AsUnionOrIntersectionType, Type_AsUnionType, Type_Types, Type_AsUniqueESSymbolType, Type_Target, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsAny, TypeFlagsBigInt, TypeFlagsBigIntLiteral, TypeFlagsBoolean, TypeFlagsBooleanLiteral, TypeFlagsConditional, TypeFlagsESSymbol, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsIndex, TypeFlagsIndexedAccess, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNonPrimitive, TypeFlagsNull, TypeFlagsNumber, TypeFlagsNumberLiteral, TypeFlagsObject, TypeFlagsString, TypeFlagsStringLike, TypeFlagsStringLiteral, TypeFlagsStringMapping, TypeFlagsStringOrNumberLiteral, TypeFlagsSubstitution, TypeFlagsTemplateLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUniqueESSymbol, TypeFlagsUnknown, TypeFlagsVoid, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
 import { Checker_formatUnionTypes, Checker_symbolToString, Checker_valueToString } from "./printer.js";
 import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols, IsTypeAny, isThisTypeParameter } from "./utilities.js";
@@ -445,7 +445,7 @@ export interface CompositeTypeCacheIdentity {
  * }
  */
 export interface NodeBuilderLinks {
-  serializedTypes: GoMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>;
+  serializedTypes: GoMap<string, GoPtr<SerializedTypeEntry>>;
   fakeScopeForSignatureDeclaration: GoPtr<string>;
 }
 
@@ -520,7 +520,7 @@ export interface NodeBuilderContext {
   enclosingFile: GoPtr<SourceFile>;
   inferTypeParameters: GoSlice<GoPtr<Type>>;
   visitedTypes: Set;
-  symbolDepth: GoMap<CompositeSymbolIdentity, int>;
+  symbolDepth: GoMap<string, int>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   mapper: GoPtr<TypeMapper>;
   reverseMappedStack: GoSlice<GoPtr<Symbol>>;
@@ -612,6 +612,14 @@ export function newNodeBuilderImpl(ch: GoPtr<Checker>, e: GoPtr<EmitContext>, id
   };
   b.cloneBindingNameVisitor = NewNodeVisitor((node) => NodeBuilderImpl_cloneBindingName(b, node), b.f, {} as NodeVisitorHooks);
   return b;
+}
+
+function compositeSymbolIdentityKey(id: CompositeSymbolIdentity): string {
+  return `${id.isConstructorNode ? 1 : 0}:${id.symbolId}:${id.nodeId}`;
+}
+
+function compositeTypeCacheIdentityKey(id: CompositeTypeCacheIdentity): string {
+  return `${id.typeId}:${id.flags}:${id.internalFlags}`;
 }
 
 /**
@@ -3096,7 +3104,7 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
 export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<Type>, constraintNode: GoPtr<TypeNode>): GoPtr<TypeParameterDeclarationNode> {
   const restoreFlags = NodeBuilderImpl_saveRestoreFlags(receiver);
   receiver!.ctx!.flags &= ~FlagsWriteTypeParametersInQualifiedName;
-  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind));
+  const modifiers = CreateModifiersFromModifierFlags(Checker_getTypeParameterModifiers(receiver!.ch, typeParameter), (kind) => NodeFactory_NewModifier(receiver!.f, kind)) ?? [];
   const modifiersList = modifiers.length > 0 ? NodeFactory_NewModifierList(receiver!.f, modifiers) : undefined;
   const name = NodeBuilderImpl_typeParameterToName(receiver, typeParameter);
   const defaultParameter = Checker_getDefaultFromTypeParameter(receiver!.ch, typeParameter);
@@ -3105,7 +3113,7 @@ export function NodeBuilderImpl_typeParameterToDeclarationWithConstraint(receive
   return NewTypeParameterDeclaration(
     receiver!.f,
     modifiersList,
-    name as GoPtr<IdentifierNode>,
+    NodeDefault_AsNode(name) as GoPtr<IdentifierNode>,
     constraintNode,
     undefined,
     defaultParameterDeclarationNode,
@@ -3338,9 +3346,8 @@ export function NodeBuilderImpl_isMappedTypeHomomorphic(receiver: GoPtr<NodeBuil
  * }
  */
 export function NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstantiation(receiver: GoPtr<NodeBuilderImpl>, mapped: GoPtr<MappedType>): bool {
-  const target = mapped!.__tsgoEmbedded0!.target;
-  // mapped.AsType() = MappedType -> ObjectType -> StructuredType -> ConstrainedType -> TypeBase -> Type
-  const mappedAsType = mapped!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0;
+  const mappedAsType = (mapped as unknown as TypeData).AsType();
+  const target = Type_Target(mappedAsType);
   return (target !== undefined &&
     !NodeBuilderImpl_isMappedTypeHomomorphic(receiver, mappedAsType) &&
     NodeBuilderImpl_isMappedTypeHomomorphic(receiver, target)) as bool;
@@ -5146,8 +5153,7 @@ export function NodeBuilderImpl_getPropertyNameNodeForSymbolFromNameType(receive
     return NodeBuilderImpl_createPropertyNameNodeForIdentifierOrLiteral(receiver, name, singleQuote, stringNamed, isMethod, symbol_);
   }
   if ((nameType!.flags & TypeFlagsUniqueESSymbol) !== 0) {
-    const uniqueType = Type_AsUniqueESSymbolType(nameType);
-    const uniqueSymbol = uniqueType!.__tsgoEmbedded0!.__tsgoEmbedded0!["symbol"];
+    const uniqueSymbol = nameType!.symbol;
     return NewComputedPropertyName(receiver!.f, NodeBuilderImpl_symbolToExpression(receiver, uniqueSymbol, SymbolFlagsValue as SymbolFlags));
   }
   return undefined;
@@ -6455,7 +6461,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   } else if (t!.symbol !== undefined) {
     id = { isConstructorNode: isConstructorObject, symbolId: GetSymbolId(t!.symbol), nodeId: 0 as NodeId };
   }
-  const key: CompositeTypeCacheIdentity = { typeId: typeId, flags: receiver!.ctx!.flags, internalFlags: receiver!.ctx!.internalFlags };
+  const key = compositeTypeCacheIdentityKey({ typeId: typeId, flags: receiver!.ctx!.flags, internalFlags: receiver!.ctx!.internalFlags });
   if (receiver!.ctx!.enclosingDeclaration !== undefined && LinkStore_Has(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration)) {
     const links = LinkStore_Get(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration);
     const cachedResult = links!.serializedTypes?.get(key);
@@ -6472,11 +6478,12 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   }
   let depth = 0;
   if (id !== undefined) {
-    depth = receiver!.ctx!.symbolDepth.get(id) ?? 0;
+    const symbolDepthKey = compositeSymbolIdentityKey(id);
+    depth = receiver!.ctx!.symbolDepth.get(symbolDepthKey) ?? 0;
     if (depth > 10) {
       return NodeBuilderImpl_createElidedInformationPlaceholder(receiver);
     }
-    receiver!.ctx!.symbolDepth.set(id, depth + 1);
+    receiver!.ctx!.symbolDepth.set(symbolDepthKey, depth + 1);
   }
   Set_Add(receiver!.ctx!.visitedTypes, typeId);
   const prevTrackedSymbols = receiver!.ctx!.trackedSymbols;
@@ -6498,7 +6505,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   }
   Set_Delete(receiver!.ctx!.visitedTypes, typeId);
   if (id !== undefined) {
-    receiver!.ctx!.symbolDepth.set(id, depth);
+    receiver!.ctx!.symbolDepth.set(compositeSymbolIdentityKey(id), depth);
   }
   receiver!.ctx!.trackedSymbols = prevTrackedSymbols;
   return result;

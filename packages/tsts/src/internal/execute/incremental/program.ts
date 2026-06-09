@@ -462,7 +462,7 @@ export function Program_getSemanticDiagnosticsOfFile(receiver: GoPtr<Program>, f
     receiver!.snapshot!.options
   );
   const includeProcessorDiags = compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file);
-  return [...filtered, ...includeProcessorDiags];
+  return [...filtered, ...(includeProcessorDiags ?? [])];
 }
 
 /**
@@ -853,7 +853,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
         hasEmitDiagnostics = true;
         break;
       }
-      if (hasIncludeProcessingDiagnostics === undefined && compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file).length > 0) {
+      if (hasIncludeProcessingDiagnostics === undefined && (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? []).length > 0) {
         hasIncludeProcessingDiagnostics = (): bool => true as bool;
       }
     }
@@ -864,7 +864,7 @@ export function Program_ensureHasErrorsForState(receiver: GoPtr<Program>, ctx: C
     hasEmitDiagnostics = receiver!.snapshot!.hasEmitDiagnostics;
     hasIncludeProcessingDiagnostics = (): bool => {
       return compiler_Program_GetSourceFiles(program).some((file: GoPtr<SourceFile>) =>
-        compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file).length > 0
+        (compiler_Program_GetIncludeProcessorDiagnostics(receiver!.program, file) ?? []).length > 0
       ) as bool;
     };
   }

@@ -1,7 +1,9 @@
 import type { bool } from "@tsonic/core/types.js";
-import type { GoMap, GoPtr, GoSlice, GoUnresolved } from "../../../go/compat.js";
+import type { GoComparable, GoMap, GoPtr, GoSlice, GoUnresolved } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { TODO } from "../../../go/context.js";
+import { Map as GoSyncMap, Once } from "../../../go/sync.js";
+import { Bool } from "../../../go/sync/atomic.js";
 import * as core from "../../core/core.js";
 import { NewWorkGroup } from "../../core/workgroup.js";
 import type { Node, SourceFile } from "../../ast/ast.js";
@@ -45,7 +47,7 @@ import {
   Program_UseCaseSensitiveFileNames,
 } from "../../compiler/program.js";
 import { CompilerOptions_IsIncremental } from "../../core/compileroptions.js";
-import { Tristate_IsTrue } from "../../core/tristate.js";
+import { TSUnknown, Tristate_IsTrue } from "../../core/tristate.js";
 import type { ModeAwareCache } from "../../module/cache.js";
 import type { ResolvedTypeReferenceDirective } from "../../module/types.js";
 import {
@@ -78,6 +80,14 @@ import {
   snapshot_getAllFilesExcludingDefaultLibraryFile,
 } from "./snapshot.js";
 import { referenceMap_getReferences, referenceMap_storeReferences } from "./referencemap.js";
+
+function newSyncMap<K extends GoComparable, V>(): SyncMap<K, V> {
+  return { __tsgoBlank0: [], __tsgoBlank1: [], m: new GoSyncMap<K, V>() };
+}
+
+function newSyncSet<T extends GoComparable>(): SyncSet<T> {
+  return { m: newSyncMap<T, { readonly __tsgoEmpty?: never }>() };
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/incremental/programtosnapshot.go::func::programToSnapshot","kind":"func","status":"implemented","sigHash":"42d48a3553545dd6715fb0d453bb71be6beaed13999ae4fd186e8f33c1bcc1ed","bodyHash":"137f66a6c9d1dfc40826f77cbd0518efe9fb2d51acaeb9ffd286f6a6c5ddb4df"}
@@ -113,9 +123,30 @@ export function programToSnapshot(program: GoPtr<Program>, oldProgram: GoPtr<Pro
     return oldProgram.snapshot;
   }
   const snap: snapshot = {
+    fileInfos: newSyncMap<Path, GoPtr<FileInfo>>(),
     options: Program_Options(program),
+    referencedMap: {
+      references: newSyncMap<Path, GoPtr<Set<Path>>>(),
+      referencedBy: new globalThis.Map<Path, GoPtr<Set<Path>>>(),
+      referenceBy: new Once(),
+    },
+    semanticDiagnosticsPerFile: newSyncMap<Path, GoSlice<GoPtr<Diagnostic>>>(),
+    emitDiagnosticsPerFile: newSyncMap<Path, GoSlice<GoPtr<Diagnostic>>>(),
+    changedFilesSet: newSyncSet<Path>(),
+    affectedFilesPendingEmit: newSyncMap<Path, FileEmitKind>(),
+    latestChangedDtsFile: "",
+    emitSignatures: newSyncMap<Path, GoPtr<emitSignature>>(),
+    hasErrors: TSUnknown,
     hashWithText: hashWithText,
     checkPending: Tristate_IsTrue(Program_Options(program)!.NoCheck),
+    buildInfoEmitPending: new Bool(),
+    hasErrorsFromOldState: TSUnknown,
+    hasSemanticErrors: false,
+    hasSemanticErrorsFromOldState: false,
+    allFilesExcludingDefaultLibraryFileOnce: new Once(),
+    allFilesExcludingDefaultLibraryFile: [],
+    hasChangedDtsFile: false,
+    hasEmitDiagnostics: false,
   } as snapshot;
   const to: toProgramSnapshot = {
     program: program,

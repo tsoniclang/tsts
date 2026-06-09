@@ -810,7 +810,7 @@ export function isSyntacticDefault(node: GoPtr<Node>): bool {
  * }
  */
 export function hasExportAssignmentSymbol(moduleSymbol: GoPtr<Symbol>): bool {
-  return (moduleSymbol!.Exports.get(InternalSymbolNameExportEquals) !== undefined) as bool;
+  return (moduleSymbol!.Exports?.get(InternalSymbolNameExportEquals) !== undefined) as bool;
 }
 
 /**

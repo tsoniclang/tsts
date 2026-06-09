@@ -12,7 +12,8 @@ import type { Symbol } from "../ast/symbol.js";
 import { SymbolFlagsAlias } from "../ast/symbolflags.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
-import { SyncMap_Load, SyncMap_Range } from "../collections/syncmap.js";
+import { SyncMap_Load } from "../collections/syncmap.js";
+import { SyncSet_Range } from "../collections/syncset.js";
 import {
   CompilerOptions_GetModuleResolutionKind,
   CompilerOptions_GetPathsBasePath,
@@ -36,7 +37,7 @@ import { GetOutputDeclarationFileNameWorker, GetOutputJSFileNameWorker } from ".
 import { ExportsOrImports_AsArray, ExportsOrImports_AsObject, ExportsOrImports_IsSubpaths } from "../packagejson/exportsorimports.js";
 import type { ExportsOrImports } from "../packagejson/exportsorimports.js";
 import { JSONValueTypeArray, JSONValueTypeNotPresent, JSONValueTypeNull, JSONValueTypeObject, JSONValueTypeString } from "../packagejson/jsonvalue.js";
-import { InfoCacheEntry_GetContents, PackageJson_GetVersionPaths, VersionPaths_GetPaths } from "../packagejson/cache.js";
+import { InfoCacheEntry_GetContents, PackageJson_GetHeaderFields, PackageJson_GetPathFields, PackageJson_GetVersionPaths, VersionPaths_GetPaths } from "../packagejson/cache.js";
 import type { InfoCacheEntry } from "../packagejson/cache.js";
 import { HasPrefixAndSuffixWithoutOverlap, HasPrefix as stringutilHasPrefix, HasSuffix as stringutilHasSuffix } from "../stringutil/compare.js";
 import { KnownSymlinks_DirectoriesByRealpath } from "../symlinks/knownsymlinks.js";
@@ -706,7 +707,7 @@ export function GetEachFileNameOfModule(importingFileName: string, importedFileN
             UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),
             CurrentDirectory: cwd,
           });
-          SyncMap_Range(symlinkSet as any, (symlinkDirectory: string): bool => {
+          SyncSet_Range(symlinkSet as any, (symlinkDirectory: string): bool => {
             const option = ResolvePath(symlinkDirectory, relative);
             results.push({
               FileName: option,
@@ -1793,6 +1794,8 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
   const importModeInit = overrideMode === ResolutionModeNone ? host.GetDefaultResolutionModeForFile(importingSourceFile) : overrideMode;
 
   const packageJsonContent = InfoCacheEntry_GetContents(packageJson);
+  const packageJsonHeaderFields = PackageJson_GetHeaderFields(packageJsonContent);
+  const packageJsonPathFields = PackageJson_GetPathFields(packageJsonContent);
   let importMode = importModeInit;
   if (CompilerOptions_GetResolvePackageJsonExports(options)) {
     const nodeModulesDirectoryName = packageRootPath.slice(parts.TopLevelPackageNameIndex + 1);
@@ -1806,14 +1809,14 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
 
     const conditions = GetConditions(options, importMode);
 
-    if (packageJsonContent !== undefined && packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0!.Type !== JSONValueTypeNotPresent) {
+    if (packageJsonContent !== undefined && packageJsonPathFields.Exports.__tsgoEmbedded0!.Type !== JSONValueTypeNotPresent) {
       const fromExports = tryGetModuleNameFromExports(
         options,
         host,
         pathObj.FileName,
         packageRootPath,
         packageName,
-        packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports,
+        packageJsonPathFields.Exports,
         conditions,
       );
       if (fromExports.length > 0) {
@@ -1825,7 +1828,7 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
 
   let moduleFileToTry = moduleFileToTryInit;
   let maybeBlockedByTypesVersions = false;
-  if (packageJsonContent !== undefined && packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded1!.TypesVersions.Type === JSONValueTypeObject) {
+  if (packageJsonContent !== undefined && packageJsonPathFields.TypesVersions.Type === JSONValueTypeObject) {
     const versionPaths = PackageJson_GetVersionPaths(packageJsonContent, (_m, ..._args) => {});
     const paths = VersionPaths_GetPaths(versionPaths);
     if (paths !== undefined) {
@@ -1849,18 +1852,17 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
   // If the file is the main module, it can be imported by the package name
   let mainFileRelative = "index.js";
   if (packageJsonContent !== undefined) {
-    const pathFields = packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded1!;
-    if (pathFields.Typings.Valid) {
-      mainFileRelative = pathFields.Typings.Value;
-    } else if (pathFields.Types.Valid) {
-      mainFileRelative = pathFields.Types.Value;
-    } else if (pathFields.Main.Valid) {
-      mainFileRelative = pathFields.Main.Value;
+    if (packageJsonPathFields.Typings.Valid) {
+      mainFileRelative = packageJsonPathFields.Typings.Value;
+    } else if (packageJsonPathFields.Types.Valid) {
+      mainFileRelative = packageJsonPathFields.Types.Value;
+    } else if (packageJsonPathFields.Main.Valid) {
+      mainFileRelative = packageJsonPathFields.Main.Value;
     }
   }
 
   if (mainFileRelative.length > 0) {
-    const versionPaths2 = packageJsonContent !== undefined && packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded1!.TypesVersions.Type === JSONValueTypeObject
+    const versionPaths2 = packageJsonContent !== undefined && packageJsonPathFields.TypesVersions.Type === JSONValueTypeObject
       ? PackageJson_GetVersionPaths(packageJsonContent, (_m, ..._args) => {})
       : undefined;
     const vpPaths2 = versionPaths2 !== undefined ? VersionPaths_GetPaths(versionPaths2) : undefined;
@@ -1874,7 +1876,7 @@ export function tryDirectoryWithPackageJson(parts: NodeModulePathParts, pathObj:
       };
       if (ComparePaths(RemoveFileExtension(mainExportFile as string), RemoveFileExtension(moduleFileToTry), compareOpt) === 0) {
         return { packageRootPath, moduleFileToTry, blockedByExports: false, verbatimFromExports: false };
-      } else if ((packageJsonContent === undefined || (packageJsonContent.__tsgoEmbedded0!.__tsgoEmbedded0!.Type.Value !== "module" &&
+      } else if ((packageJsonContent === undefined || (packageJsonHeaderFields.Type.Value !== "module" &&
         !FileExtensionIsOneOf(moduleFileToTry, ExtensionsNotSupportingExtensionlessResolution) &&
         stringutilHasPrefix(moduleFileToTry, mainExportFile as string, host.UseCaseSensitiveFileNames()) &&
         ComparePaths(GetDirectoryPath(moduleFileToTry), RemoveTrailingDirectorySeparator(mainExportFile as string), compareOpt) === 0 &&
@@ -2051,8 +2053,8 @@ export function tryGetModuleNameFromPackageJsonImports(moduleFileName: string, s
   }
 
   const contents = InfoCacheEntry_GetContents(info);
-  const imports = contents?.__tsgoEmbedded0!.__tsgoEmbedded1!.Imports;
-  if (imports === undefined) {
+  const imports = PackageJson_GetPathFields(contents).Imports;
+  if (imports.__tsgoEmbedded0 === undefined) {
     return "";
   }
 

@@ -237,6 +237,7 @@ export interface PseudoTypeInferred extends PseudoTypeBase {
 export function NewPseudoTypeInferred(expr: GoPtr<Node>): GoPtr<PseudoType> {
   const data: PseudoTypeInferred = {} as PseudoTypeInferred;
   data.Expression = expr;
+  data.ErrorNodes = [];
   return newPseudoType(PseudoTypeKindInferred, PseudoTypeBase_as_pseudoTypeData(data));
 }
 

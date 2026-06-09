@@ -704,13 +704,12 @@ export function FirstNonNil<T, U extends GoComparable>(slice: GoSlice<T>, f: (ar
  * }
  */
 export function FirstNonZero<T extends GoComparable>(...values: Array<T>): T {
-  const zero = undefined as T;
   for (const value of values) {
-    if (value !== zero) {
+    if (!isGoZeroValue(value)) {
       return value;
     }
   }
-  return zero;
+  return undefined as T;
 }
 
 /**
@@ -897,11 +896,11 @@ export function MinAllFunc<T>(xs: GoSlice<T>, cmp: (a: T, b: T) => int): GoSlice
  * 	return append(slice, element)
  * }
  */
-export function AppendIfUnique<T extends GoComparable>(slice: GoSlice<T>, element: T): GoSlice<T> {
+export function AppendIfUnique<T extends GoComparable>(slice: GoPtr<GoSlice<T>>, element: T): GoSlice<T> {
   if (slices.Contains(slice, element)) {
-    return slice;
+    return slice ?? [];
   }
-  return [...slice, element];
+  return [...(slice ?? []), element];
 }
 
 /**
@@ -964,10 +963,27 @@ export function IfElse<T>(b: bool, whenTrue: T, whenFalse: T): T {
  * }
  */
 export function OrElse<T extends GoComparable>(value: T, defaultValue: T): T {
-  if (value !== (undefined as T)) {
+  if (!isGoZeroValue(value)) {
     return value;
   }
   return defaultValue;
+}
+
+function isGoZeroValue(value: unknown): bool {
+  switch (typeof value) {
+    case "undefined":
+      return true;
+    case "boolean":
+      return value === false;
+    case "number":
+      return value === 0;
+    case "bigint":
+      return value === 0n;
+    case "string":
+      return value === "";
+    default:
+      return false;
+  }
 }
 
 /**
@@ -1317,9 +1333,10 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  * }
  */
 export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: (arg0: T) => string, compare: (arg0: T, arg1: T) => int): T {
-  const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(byteLen(name) * 0.34));
-  let bestDistance = math.Floor(byteLen(name) * 0.4) + 0.9; // If the best result is worse than this, don't bother.
-  const runeName = stringToRunes(name);
+  const searchName = name ?? "";
+  const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(byteLen(searchName) * 0.34));
+  let bestDistance = math.Floor(byteLen(searchName) * 0.4) + 0.9; // If the best result is worse than this, don't bother.
+  const runeName = stringToRunes(searchName);
   // Go: levenshteinBuffersPool.Get().(*levenshteinBuffers) — the New factory is
   // always set, so the pool never yields nil and the type assertion holds.
   const buffers = levenshteinBuffersPool.Get()!;
@@ -1327,16 +1344,16 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
     let bestCandidate = undefined as T;
     let hasBest = false;
     candidates((candidate: T): bool => {
-      const candidateName = getName(candidate);
-      const maxLen = globalThis.Math.max(byteLen(candidateName), byteLen(name));
-      const minLen = globalThis.Math.min(byteLen(candidateName), byteLen(name));
+      const candidateName = getName(candidate) ?? "";
+      const maxLen = globalThis.Math.max(byteLen(candidateName), byteLen(searchName));
+      const minLen = globalThis.Math.min(byteLen(candidateName), byteLen(searchName));
       if (candidateName !== "" && maxLen - minLen <= maximumLengthDifference) {
-        if (candidateName === name) {
+        if (candidateName === searchName) {
           return true;
         }
         // Only consider candidates less than 3 characters long when they differ by case.
         // Otherwise, don't bother, since a user would usually notice differences of a 2-character name.
-        if (byteLen(candidateName) < 3 && !strings.EqualFold(candidateName, name)) {
+        if (byteLen(candidateName) < 3 && !strings.EqualFold(candidateName, searchName)) {
           return true;
         }
         const distance = levenshteinWithMax(buffers, runeName, stringToRunes(candidateName), bestDistance);

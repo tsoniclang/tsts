@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Regexp } from "../../go/regexp.js";
 import { Compile } from "../../go/regexp.js";
 import * as strings from "../../go/strings.js";
@@ -47,7 +48,7 @@ export interface regexPatternCacheKey {
  * )
  */
 export const regexPatternCacheMu: RWMutex = new RWMutex();
-export const regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = new Map<regexPatternCacheKey, GoPtr<Regexp>>();
+export const regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"f2cd303b3114a0cbc28de1a9be907e69afa26d9741dd0d5c9c9c95835e7a68ef"}

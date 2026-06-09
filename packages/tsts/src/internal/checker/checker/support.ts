@@ -86,7 +86,7 @@ import {
   KindExpressionStatement,
 } from "../../ast/generated/kinds.js";
 import type { Symbol, SymbolTable } from "../../ast/symbol.js";
-import { NodeFlagsAmbient, NodeFlagsReparsed, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsEnum, SymbolFlagsEnumMember, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
+import { NodeFlagsAmbient, NodeFlagsReparsed, NodeFlagsThisNodeOrAnySubNodesHasError, SymbolFlagsAlias, SymbolFlagsEnum, SymbolFlagsEnumMember, SymbolFlagsNone, SymbolFlagsOptional, SymbolFlagsValue } from "../../ast/generated/flags.js";
 import type { SymbolFlags } from "../../ast/generated/flags.js";
 import { IsClassExpression, IsFunctionExpression, IsIdentifier, IsVariableDeclaration } from "../../ast/generated/predicates.js";
 import { AsBindingElement, AsElementAccessExpression, AsJSDoc } from "../../ast/generated/casts.js";
@@ -967,7 +967,7 @@ export function Checker_reportUnusedBindingElements(receiver: GoPtr<Checker>, no
 export function Checker_checkUnusedRenamedBindingElements(receiver: GoPtr<Checker>): void {
   for (const node of receiver!.renamedBindingElementsInTypes) {
     const links = LinkStore_Get(receiver!.symbolReferenceLinks, Checker_getSymbolOfDeclaration(receiver, node)) as GoPtr<SymbolReferenceLinks>;
-    if (links!.referenceKinds === 0) {
+    if ((links!.referenceKinds ?? SymbolFlagsNone) === 0) {
       const wrappingDeclaration = WalkUpBindingElementsAndPatterns(node);
       Assert(IsPartOfParameterDeclaration(wrappingDeclaration), "Only parameter declaration should be checked here");
       const name = Node_Name(node);

@@ -42,7 +42,7 @@ import { KindSuperKeyword } from "../../ast/generated/kinds.js";
 import { GetFunctionFlags, FunctionFlagsAsync, FunctionFlagsAsyncGenerator, FunctionFlagsGenerator, FunctionFlagsInvalid } from "../../ast/functionflags.js";
 import { IsNumericLiteral } from "../../ast/generated/predicates.js";
 import { AsArrayTypeNode, AsBinaryExpression, AsConditionalTypeNode, AsConstructorDeclaration, AsElementAccessExpression, AsIndexSignatureDeclaration, AsInferTypeNode, AsMappedTypeNode, AsNamedTupleMember, AsNewExpression, AsParameterDeclaration, AsPrefixUnaryExpression, AsSyntheticExpression, AsTaggedTemplateExpression, AsTemplateExpression, AsTemplateSpan, AsTypeParameterDeclaration, AsTypeQueryNode, AsTypeReferenceNode, AsExpressionWithTypeArguments } from "../../ast/generated/casts.js";
-import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_FunctionLikeData, Node_Name, Node_Pos, NodeList_End } from "../../ast/spine.js";
+import { Node_End, Node_FlowNodeData, Node_ForEachChild, Node_FunctionLikeData, Node_Name, Node_Pos, NodeList_End, NodeList_HasTrailingComma } from "../../ast/spine.js";
 import { NewElementAccessExpression, NewFunctionTypeNode, NewKeywordExpression, NewKeywordTypeNode, NewPropertyAccessExpression } from "../../ast/generated/factory.js";
 import { AsSourceFile, IsTypeOrJSTypeAliasDeclaration, Node_ArgumentList, Node_Arguments, Node_Attributes, Node_Body, Node_Children, Node_Elements, Node_Expression, Node_Initializer, Node_Locals, Node_Members, Node_Parameters, Node_Properties, Node_QuestionToken, Node_Statements, Node_Symbol, Node_Text, Node_Type, Node_TypeArguments, Node_TypeParameterList, Node_TypeParameters } from "../../ast/ast.js";
 import { Node_QuestionDotToken, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -1741,7 +1741,7 @@ export function Checker_checkUnusedLocalsAndParameters(receiver: GoPtr<Checker>,
   const variableParents = new globalThis.Set<GoPtr<Node>>();
   const importClauses = new globalThis.Map<GoPtr<Node>, GoSlice<GoPtr<Node>>>();
   for (const local of Node_Locals(node)?.values() ?? []) {
-    const referenceKinds = (LinkStore_Get(receiver!.symbolReferenceLinks, local) as GoPtr<SymbolReferenceLinks>)!.referenceKinds;
+    const referenceKinds = (LinkStore_Get(receiver!.symbolReferenceLinks, local) as GoPtr<SymbolReferenceLinks>)!.referenceKinds ?? SymbolFlagsNone;
     if (((local!.Flags & SymbolFlagsTypeParameter) !== 0 && ((local!.Flags & SymbolFlagsVariable) === 0 || (referenceKinds & SymbolFlagsVariable) !== 0)) ||
       ((local!.Flags & SymbolFlagsTypeParameter) === 0 && (referenceKinds !== 0 || local!.ExportSymbol !== undefined || (local!.Flags & SymbolFlagsModuleExports) !== 0))) {
       continue;
@@ -1861,7 +1861,7 @@ export function Checker_checkUnusedTypeParameters(receiver: GoPtr<Checker>, node
  * }
  */
 export function Checker_isUnreferencedTypeParameter(receiver: GoPtr<Checker>, typeParameter: GoPtr<Node>): bool {
-  return (LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)))!.referenceKinds & SymbolFlagsTypeParameter) === 0 &&
+  return ((LinkStore_Get<GoPtr<Symbol>, SymbolReferenceLinks>(receiver!.symbolReferenceLinks as LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>, Checker_getMergedSymbol(receiver, Node_Symbol(typeParameter)))!.referenceKinds ?? SymbolFlagsNone) & SymbolFlagsTypeParameter) === 0 &&
     !isIdentifierThatStartsWithUnderscore(Node_Name(typeParameter));
 }
 
@@ -2889,11 +2889,8 @@ export function Checker_resolveCall(receiver: GoPtr<Checker>, node: GoPtr<Node>,
     args,
     isSingleNonGenericCandidate,
     argCheckMode,
-    signatureHelpTrailingComma: false as bool,
+    signatureHelpTrailingComma: ((checkMode & CheckModeIsForSignatureHelp) !== 0 && IsCallExpression(node) && NodeList_HasTrailingComma(Node_ArgumentList(node))) as bool,
   } as CallState;
-  if (IsCallExpression(node) && (checkMode & CheckModeIsForSignatureHelp) !== 0) {
-    callState.signatureHelpTrailingComma = false as bool;
-  }
   let result: GoPtr<Signature>;
   if (candidates.length > 1) {
     result = Checker_chooseOverload(receiver, callState, receiver!.subtypeRelation);
@@ -3285,12 +3282,13 @@ export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<No
   if (IsJsxOpeningFragment(node)) {
     return true as bool;
   }
+  const callArgs = args ?? [];
   let argCount = 0;
   let callIsIncomplete = false;
   let effectiveParameterCount = Checker_getParameterCount(receiver, signature);
   let effectiveMinimumArguments = Checker_getMinArgumentCount(receiver, signature);
   if (IsTaggedTemplateExpression(node)) {
-    argCount = args.length;
+    argCount = callArgs.length;
     const template = AsTaggedTemplateExpression(node)!.Template;
     if (IsTemplateExpression(template)) {
       const lastSpan = core.LastOrNil(AsTemplateExpression(template)!.TemplateSpans!.Nodes);
@@ -3308,20 +3306,20 @@ export function Checker_hasCorrectArity(receiver: GoPtr<Checker>, node: GoPtr<No
     if (callIsIncomplete) {
       return true as bool;
     }
-    argCount = core.IfElse(effectiveMinimumArguments === 0, args.length, 1);
-    effectiveParameterCount = core.IfElse(args.length === 0, effectiveParameterCount, 1);
+    argCount = core.IfElse(effectiveMinimumArguments === 0, callArgs.length, 1);
+    effectiveParameterCount = core.IfElse(callArgs.length === 0, effectiveParameterCount, 1);
     effectiveMinimumArguments = globalThis.Math.min(effectiveMinimumArguments, 1);
   } else if (IsNewExpression(node) && AsNewExpression(node)!.Arguments === undefined) {
     return Checker_getMinArgumentCount(receiver, signature) === 0;
   } else {
     if (signatureHelpTrailingComma) {
-      argCount = args.length + 1;
+      argCount = callArgs.length + 1;
     } else {
-      argCount = args.length;
+      argCount = callArgs.length;
     }
     const argumentList = Node_ArgumentList(node);
     callIsIncomplete = argumentList !== undefined && NodeList_End(argumentList) === Node_End(node);
-    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, args);
+    const spreadArgIndex = Checker_getSpreadArgumentIndex(receiver, callArgs);
     if (spreadArgIndex >= 0) {
       return spreadArgIndex >= Checker_getMinArgumentCount(receiver, signature) && (Checker_hasEffectiveRestParameter(receiver, signature) || spreadArgIndex < Checker_getParameterCount(receiver, signature));
     }
@@ -3465,7 +3463,7 @@ export function Checker_hasCorrectTypeArgumentArity(receiver: GoPtr<Checker>, si
  * 	return typeArgumentTypes
  * }
  */
-export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, typeArgumentNodes: GoSlice<GoPtr<Node>>, reportErrors: bool, headMessage: GoPtr<Message>): GoSlice<GoPtr<Type>> {
+export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: GoPtr<Signature>, typeArgumentNodes: GoSlice<GoPtr<Node>>, reportErrors: bool, headMessage: GoPtr<Message>): GoPtr<GoSlice<GoPtr<Type>>> {
   const isJavaScript = IsInJSFile(signature!.declaration);
   const typeParameters = signature!.typeParameters;
   const typeArgumentTypes = Checker_fillMissingTypeArguments(
@@ -3501,7 +3499,7 @@ export function Checker_checkTypeArguments(receiver: GoPtr<Checker>, signature: 
           }
           DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
         }
-        return [];
+        return undefined;
       }
     }
   }

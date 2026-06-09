@@ -223,6 +223,16 @@ import {
 import { Parser_jsErrorAtRange, Parser_parseErrorAt, Parser_parseErrorAtRange, Parser_scanError } from "./errors-recovery.js";
 import { parserPool, viableKeywordSuggestions } from "./state.js";
 
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+
+const byteLen = (s: string): int => utf8Encoder.encode(s).length;
+const byteAt = (s: string, i: int): int => utf8Encoder.encode(s)[i]!;
+const byteSlice = (s: string, start: int, end?: int): string => {
+  const bytes = utf8Encoder.encode(s);
+  return utf8Decoder.decode(bytes.subarray(start, end));
+};
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::newParser","kind":"func","status":"implemented","sigHash":"e8799413d77acc7643df3b0c789d3524ab29dc535207b91246362c4eacd2aeb8","bodyHash":"b4fa9b078df3485406fee29b38d0132dedfa4b1351c81b1d99b15963d5fdf489"}
  *
@@ -1799,7 +1809,7 @@ export function isReservedWord(token: Kind): bool {
 export function getCommentPragmas(f: GoPtr<NodeFactory>, sourceText: string): GoSlice<Pragma> {
   let pragmas: GoSlice<Pragma> = [];
   GetLeadingCommentRanges(f as NodeFactory, sourceText, 0)((commentRange: CommentRange): bool => {
-    const comment = sourceText.slice(commentRange.pos, commentRange.end);
+    const comment = byteSlice(sourceText, commentRange.pos, commentRange.end);
     pragmas = [...pragmas, ...extractPragmas(commentRange, comment)];
     return true;
   });
@@ -1936,14 +1946,14 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
           break;
         }
         const argStart = commentRange.pos + pos + 1;
-        const argEnd = commentRange.pos + pos + 1 + value.length;
+        const argEnd = commentRange.pos + pos + 1 + byteLen(value);
         args.set(argName, {
           pos: argStart,
           end: argEnd,
           Name: argName,
           Value: value,
         });
-        pos += value.length + 2;
+        pos += byteLen(value) + 2;
       }
       return [{
         ...commentRange,
@@ -1988,7 +1998,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
           pos: factoryStart,
           end: factoryEnd,
           Name: "factory",
-          Value: trimmed.slice(start, pos),
+          Value: byteSlice(trimmed, start, pos),
         });
       pragmas = [...pragmas, {
         ...commentRange,
@@ -2010,7 +2020,7 @@ export function extractPragmas(commentRange: CommentRange, text: string): GoSlic
  * }
  */
 export function match(text: string, pos: int, s: string): bool {
-  return HasPrefix(text.slice(pos), s);
+  return HasPrefix(byteSlice(text, pos), s);
 }
 
 /**
@@ -2026,7 +2036,7 @@ export function match(text: string, pos: int, s: string): bool {
  */
 export function skipBlanks(text: string, pos: int): int {
   let p = pos;
-  while (p < text.length && (text[p] === " " || text[p] === "\t")) {
+  while (p < byteLen(text) && (byteAt(text, p) === " ".charCodeAt(0) || byteAt(text, p) === "\t".charCodeAt(0))) {
     p++;
   }
   return p;
@@ -2045,7 +2055,11 @@ export function skipBlanks(text: string, pos: int): int {
  */
 export function skipNonBlanks(text: string, pos: int): int {
   let p = pos;
-  while (p < text.length && (text[p] !== " " && text[p] !== "\t" && text[p] !== "\r" && text[p] !== "\n")) {
+  while (p < byteLen(text) &&
+    byteAt(text, p) !== " ".charCodeAt(0) &&
+    byteAt(text, p) !== "\t".charCodeAt(0) &&
+    byteAt(text, p) !== "\r".charCodeAt(0) &&
+    byteAt(text, p) !== "\n".charCodeAt(0)) {
     p++;
   }
   return p;
@@ -2067,10 +2081,10 @@ export function skipNonBlanks(text: string, pos: int): int {
  * }
  */
 export function skipTo(text: string, pos: int, s: string): int {
-  if (pos >= text.length) {
+  if (pos >= byteLen(text)) {
     return -1;
   }
-  const i = Index(text.slice(pos), s);
+  const i = Index(byteSlice(text, pos), s);
   if (i < 0) {
     return -1;
   }
@@ -2092,10 +2106,16 @@ export function skipTo(text: string, pos: int, s: string): int {
 export function extractName(text: string, pos: int): string {
   const start = pos;
   let p = pos;
-  while (p < text.length && ((text[p]! >= "A" && text[p]! <= "Z") || (text[p]! >= "a" && text[p]! <= "z") || text[p] === "-")) {
+  while (p < byteLen(text)) {
+    const ch = byteAt(text, p);
+    if (!((ch >= "A".charCodeAt(0) && ch <= "Z".charCodeAt(0)) ||
+      (ch >= "a".charCodeAt(0) && ch <= "z".charCodeAt(0)) ||
+      ch === "-".charCodeAt(0))) {
+      break;
+    }
     p++;
   }
-  return ToLower(text.slice(start, p));
+  return ToLower(byteSlice(text, start, p));
 }
 
 /**
@@ -2122,22 +2142,22 @@ export function extractName(text: string, pos: int): string {
  * }
  */
 export function extractQuotedString(text: string, pos: int): [string, bool] {
-  if (pos === text.length) {
+  if (pos === byteLen(text)) {
     return ["", false];
   }
-  const quote = text[pos];
-  if (quote !== "'" && quote !== '"') {
+  const quote = byteAt(text, pos);
+  if (quote !== "'".charCodeAt(0) && quote !== '"'.charCodeAt(0)) {
     return ["", false];
   }
   let p = pos + 1;
   const start = p;
-  while (p < text.length && text[p] !== quote) {
+  while (p < byteLen(text) && byteAt(text, p) !== quote) {
     p++;
   }
-  if (p === text.length) {
+  if (p === byteLen(text)) {
     return ["", false];
   }
-  return [text.slice(start, p), true];
+  return [byteSlice(text, start, p), true];
 }
 
 /**

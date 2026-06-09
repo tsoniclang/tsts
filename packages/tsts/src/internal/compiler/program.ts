@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoMap, GoPtr, GoSeq2, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Context } from "../../go/context.js";
 import type { Writer } from "../../go/io.js";
 import { Once, Map as SyncMapMap } from "../../go/sync.js";
@@ -303,7 +304,7 @@ export function Program_GetCurrentDirectory(receiver: GoPtr<Program>): string {
  * }
  */
 export function Program_GetGlobalTypingsCacheLocation(receiver: GoPtr<Program>): string {
-  return receiver!.opts.TypingsLocation;
+  return receiver!.opts.TypingsLocation ?? "";
 }
 
 /**
@@ -2362,11 +2363,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
   if (options!.ModuleResolution === 2 /* ModuleResolutionKindNode10 */) {
     createRemovedOptionDiagnostic("moduleResolution", "node10", "");
   }
-  if (!Tristate_IsTrue(options!.DownlevelIteration) && !Tristate_IsFalse(options!.DownlevelIteration)) {
-    // not unknown means it was set
-    if (options!.DownlevelIteration !== 0 /* Tristate_Unknown */) {
-      createRemovedOptionDiagnostic("downlevelIteration", "", "");
-    }
+  if (options!.DownlevelIteration !== TSUnknown) {
+    createRemovedOptionDiagnostic("downlevelIteration", "", "");
   }
 
   if (Tristate_IsTrue(options!.StrictPropertyInitialization) && !CompilerOptions_GetStrictOptionValue(options, options!.StrictNullChecks)) {
@@ -4692,17 +4690,27 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * 	}
  * }
  */
+const emptyResolutionCache: GoMap<Path, ModeAwareCache> = new globalThis.Map<Path, ModeAwareCache>();
+const emptyModeAwareCache: ModeAwareCache = NewGoStructMap<ModeAwareCacheKey, unknown>();
+
+const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
+  map !== undefined ? map : empty;
+
+const resolutionCacheEntries = (resolutionCache: GoMap<Path, ModeAwareCache> | undefined): Iterable<[Path, ModeAwareCache]> =>
+  goMapEntries(resolutionCache, emptyResolutionCache);
+
+const modeAwareCacheEntries = (modeAwareCache: ModeAwareCache | undefined): Iterable<[ModeAwareCacheKey, unknown]> =>
+  goMapEntries(modeAwareCache, emptyModeAwareCache);
+
 export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {
     const resolutions = resolutionCache.get(SourceFile_Path(file));
-    if (resolutions !== undefined) {
-      for (const [key, resolution] of resolutions) {
-        callback(resolution as T, key.Name, key.Mode, SourceFile_Path(file));
-      }
+    for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
+      callback(resolution as T, key.Name, key.Mode, SourceFile_Path(file));
     }
   } else {
-    for (const [filePath, resolutions] of resolutionCache) {
-      for (const [key, resolution] of resolutions) {
+    for (const [filePath, resolutions] of resolutionCacheEntries(resolutionCache)) {
+      for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
         callback(resolution as T, key.Name, key.Mode, filePath);
       }
     }

@@ -2968,7 +2968,8 @@ export function classFieldsTransformer_visitTaggedTemplateExpression(receiver: G
 export function classFieldsTransformer_transformClassStaticBlockDeclaration(receiver: GoPtr<classFieldsTransformer>, node: GoPtr<Node>): GoPtr<Expression> {
   if (receiver!.shouldTransformPrivateElementsOrClassStaticBlocks) {
     if (isClassThisAssignmentBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      const result = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>));
+      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      const result = NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement));
       if (IsAssignmentExpression(result, true)) {
         const binary = AsBinaryExpression(result);
         if (binary!.Left === binary!.Right) {
@@ -2979,7 +2980,8 @@ export function classFieldsTransformer_transformClassStaticBlockDeclaration(rece
     }
 
     if (isClassNamedEvaluationHelperBlock(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), node)) {
-      return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)) as GoPtr<Expression>;
+      const firstStatement = AsBlock(AsClassStaticBlockDeclaration(node)!.Body as unknown as GoPtr<Node>)!.Statements!.Nodes[0];
+      return NodeVisitor_VisitNode((Transformer_Visitor(receiver!.__tsgoEmbedded0!) as ConcreteNodeVisitor), Node_Expression(firstStatement)) as GoPtr<Expression>;
     }
 
     EmitContext_StartVariableEnvironment(Transformer_EmitContext(receiver!.__tsgoEmbedded0!));

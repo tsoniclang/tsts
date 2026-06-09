@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice, GoUnresolved } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Map as SyncMapImpl } from "../../go/sync.js";
 import { Int32 as Int32Impl } from "../../go/sync/atomic.js";
@@ -733,7 +734,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
   const automaticTypeDirectiveNames = GetAutomaticTypeDirectiveNames(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), receiver!.opts.Host);
   if (automaticTypeDirectiveNames.length !== 0) {
     let toParse: GoSlice<resolvedRef> = [];
-    const typeResolutionsInFile = new globalThis.Map<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
+    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
     let pDiagnostics: GoSlice<GoPtr<processingDiagnostic>> = [];
     for (const name of automaticTypeDirectiveNames) {
@@ -1232,7 +1233,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
   }
   try {
     const meta = t!.metadata;
-    const typeResolutionsInFile = new globalThis.Map<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
+    const typeResolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedTypeReferenceDirective>>();
     let typeResolutionsTrace: GoSlice<DiagAndArgs> = [];
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
       const ref = file!.TypeReferenceDirectives[index]!;
@@ -1450,7 +1451,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     }
 
     if (moduleNames.length !== 0) {
-      const resolutionsInFile = new globalThis.Map<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
+      const resolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
       let resolutionsTrace: GoSlice<DiagAndArgs> = [];
 
       for (let index = 0; index < moduleNames.length; index++) {

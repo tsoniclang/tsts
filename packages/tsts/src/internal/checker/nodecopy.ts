@@ -11,20 +11,27 @@ import { NewArrayTypeNode, NewCallSignatureDeclaration, NewComputedPropertyName,
 import { AsCallSignatureDeclaration, AsComputedPropertyName, AsConditionalTypeNode, AsConstructSignatureDeclaration, AsConstructorTypeNode, AsFunctionTypeNode, AsIdentifier, AsImportAttributes, AsImportTypeNode, AsIndexSignatureDeclaration, AsIndexedAccessTypeNode, AsJSDocNonNullableType, AsJSDocNullableType, AsJSDocOptionalType, AsJSDocParameterOrPropertyTag, AsJSDocSignature, AsJSDocTypeExpression, AsJSDocTypeLiteral, AsJSDocVariadicType, AsLiteralTypeNode, AsMappedTypeNode, AsMethodSignatureDeclaration, AsParameterDeclaration, AsQualifiedName, AsStringLiteral, AsTypeOperatorNode, AsTypeParameterDeclaration, AsTypePredicateNode, AsTypeQueryNode, AsTypeReferenceNode } from "../ast/generated/casts.js";
 import {
   IsComputedPropertyName,
+  IsCallSignatureDeclaration,
   IsConditionalTypeNode,
+  IsConstructSignatureDeclaration,
+  IsConstructorTypeNode,
   IsIdentifier,
   IsExpressionWithTypeArguments,
+  IsFunctionTypeNode,
   IsImportTypeNode,
   IsIndexedAccessTypeNode,
+  IsIndexSignatureDeclaration,
   IsJSDocAllType,
   IsJSDocNonNullableType,
   IsJSDocNullableType,
   IsJSDocOptionalType,
+  IsJSDocSignature,
   IsJSDocParameterTag,
   IsJSDocTypeExpression,
   IsJSDocTypeLiteral,
   IsJSDocVariadicType,
   IsMappedTypeNode,
+  IsMethodSignatureDeclaration,
   IsPropertyDeclaration,
   IsPropertySignatureDeclaration,
   IsParameterDeclaration,
@@ -34,6 +41,7 @@ import {
   IsTupleTypeNode,
   IsTypeLiteralNode,
   IsTypeOperatorNode,
+  IsTypeParameterDeclaration,
   IsTypePredicateNode,
   IsTypeQueryNode,
   IsTypeReferenceNode,
@@ -985,7 +993,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsThisTypeNode(node)) {
       return node;
     }
-    if (AsTypeParameterDeclaration(node) !== undefined) {
+    if (IsTypeParameterDeclaration(node)) {
       const [, newName] = trackExistingEntityName(Node_Name(node), undefined);
       const typeParam = AsTypeParameterDeclaration(node)!;
       return NodeFactory_UpdateTypeParameterDeclaration(
@@ -1101,31 +1109,31 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
         const param = AsParameterDeclaration(visited)!;
         return NodeFactory_UpdateParameterDeclaration(factory, param, undefined, param.DotDotDotToken, Node_Name(visited) as GoPtr<never>, param.QuestionToken, newType as GoPtr<never>, undefined);
       }
-      if (AsMethodSignatureDeclaration(visited) !== undefined) {
+      if (IsMethodSignatureDeclaration(visited)) {
         const method = AsMethodSignatureDeclaration(visited)!;
         return NodeFactory_UpdateMethodSignatureDeclaration(factory, method, Node_Modifiers(visited), Node_Name(visited) as GoPtr<never>, Node_PostfixToken(visited) as GoPtr<never>, method.TypeParameters, method.Parameters, newType as GoPtr<never>);
       }
-      if (AsCallSignatureDeclaration(visited) !== undefined) {
+      if (IsCallSignatureDeclaration(visited)) {
         const call = AsCallSignatureDeclaration(visited)!;
         return NewCallSignatureDeclaration(factory, call.TypeParameters, call.Parameters, newType as GoPtr<never>);
       }
-      if (AsJSDocSignature(visited) !== undefined) {
+      if (IsJSDocSignature(visited)) {
         const jsdocSig = AsJSDocSignature(visited)!;
         return NewJSDocSignature(factory, jsdocSig.TypeParameters, jsdocSig.Parameters, newType as GoPtr<never>);
       }
-      if (AsConstructSignatureDeclaration(visited) !== undefined) {
+      if (IsConstructSignatureDeclaration(visited)) {
         const construct = AsConstructSignatureDeclaration(visited)!;
         return NewConstructSignatureDeclaration(factory, construct.TypeParameters, construct.Parameters, newType as GoPtr<never>);
       }
-      if (AsIndexSignatureDeclaration(visited) !== undefined) {
+      if (IsIndexSignatureDeclaration(visited)) {
         const index = AsIndexSignatureDeclaration(visited)!;
         return NodeFactory_UpdateIndexSignatureDeclaration(factory, index, Node_Modifiers(visited), index.Parameters, newType as GoPtr<never>);
       }
-      if (AsFunctionTypeNode(visited) !== undefined) {
+      if (IsFunctionTypeNode(visited)) {
         const fn = AsFunctionTypeNode(visited)!;
         return NewFunctionTypeNode(factory, fn.TypeParameters, fn.Parameters, newType as GoPtr<never>);
       }
-      if (AsConstructorTypeNode(visited) !== undefined) {
+      if (IsConstructorTypeNode(visited)) {
         const ctor = AsConstructorTypeNode(visited)!;
         return NodeFactory_UpdateConstructorTypeNode(factory, ctor, Node_Modifiers(visited), ctor.TypeParameters, ctor.Parameters, newType as GoPtr<never>);
       }

@@ -8,10 +8,10 @@ import type { Diagnostic } from "../../ast/diagnostic.js";
 import { IsImportDeclarationOrJSImportDeclaration, Node_Arguments, Node_Elements, Node_Expression, Node_ImportClause, Node_IsTypeOnly, Node_ModuleSpecifier, Node_PropertyNameOrName, Node_Symbol, Node_Text, SourceFile_FileName, SourceFile_Path } from "../../ast/ast.js";
 import { KindBindingElement, KindExportAssignment, KindExportDeclaration, KindExternalModuleReference, KindImportClause, KindImportDeclaration, KindImportEqualsDeclaration, KindImportType, KindJSImportDeclaration, KindModuleDeclaration, KindVariableDeclaration, KindVariableStatement } from "../../ast/generated/kinds.js";
 import { AsImportEqualsDeclaration, AsImportTypeNode, AsLiteralTypeNode, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
-import { NodeFlagsAmbient, SymbolFlagsNamespace, SymbolFlagsValueModule } from "../../ast/generated/flags.js";
+import { NodeFlagsAmbient, SymbolFlagsClass, SymbolFlagsFunction, SymbolFlagsNamespace, SymbolFlagsValueModule } from "../../ast/generated/flags.js";
 import { IsSourceFile } from "../../ast/generated/predicates.js";
 import { FindAncestor, FindAncestorKind, GetModuleSpecifierOfBareOrAccessedRequire, GetSourceFileOfNode, HasResolutionModeOverride, IsBindingPattern, IsEmittableImport, IsGlobalScopeAugmentation, IsImportCall, IsImportOrExportSpecifier, IsInternalModuleImportEqualsDeclaration, IsLiteralImportTypeNode, IsPartOfTypeOnlyImportOrExportDeclaration, IsResolutionModeOverrideHost, IsStringLiteralLike, IsVariableDeclarationInitializedToBareOrAccessedRequire, NewHasFileName } from "../../ast/utilities.js";
-import { InternalSymbolNameDefault, InternalSymbolNameExportStar, InternalSymbolNameModuleExports } from "../../ast/symbol.js";
+import { InternalSymbolNameDefault, InternalSymbolNameExportEquals, InternalSymbolNameExportStar, InternalSymbolNameModuleExports } from "../../ast/symbol.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { SymbolTable } from "../../ast/symbol.js";
 import type { ResolutionMode } from "../../core/compileroptions.js";
@@ -116,8 +116,11 @@ export function Checker_mergeModuleAugmentation(receiver: GoPtr<Checker>, module
   if (mainModule === undefined) {
     return;
   }
+  const originalModule = mainModule;
   mainModule = Checker_resolveExternalModuleSymbol(receiver, mainModule, false);
-  if ((mainModule!.Flags & SymbolFlagsNamespace) === 0) {
+  const isNamespaceCapableExportEqualsModule = originalModule.Exports?.get(InternalSymbolNameExportEquals) !== undefined &&
+    (mainModule!.Flags & (SymbolFlagsClass | SymbolFlagsFunction)) !== 0;
+  if ((mainModule!.Flags & SymbolFlagsNamespace) === 0 && !isNamespaceCapableExportEqualsModule) {
     Checker_error(receiver, moduleName, Cannot_augment_module_0_because_it_resolves_to_a_non_module_entity, Node_Text(moduleName));
     return;
   }

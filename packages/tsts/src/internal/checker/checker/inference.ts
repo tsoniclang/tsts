@@ -1967,7 +1967,13 @@ export function Checker_computeBaseConstraint(receiver: GoPtr<Checker>, t: GoPtr
     return Checker_getNextBaseConstraint(receiver, Checker_getConstraintFromConditionalType(receiver, t), stack);
   }
   if ((t!.flags & TypeFlagsSubstitution) !== 0) {
-    return Checker_getNextBaseConstraint(receiver, Checker_getSubstitutionIntersection(receiver, t), stack);
+    const substitutionIntersection = Checker_getSubstitutionIntersection(receiver, t);
+    const substitutionConstraint = Type_AsSubstitutionType(t)!.constraint;
+    const intersectionConstraint = Checker_getNextBaseConstraint(receiver, substitutionIntersection, stack);
+    if (intersectionConstraint !== undefined && Checker_isTypeAssignableTo(receiver, intersectionConstraint, substitutionConstraint)) {
+      return intersectionConstraint;
+    }
+    return OrElse(Checker_getNextBaseConstraint(receiver, substitutionConstraint, stack), intersectionConstraint);
   }
   if (Checker_isGenericTupleType(receiver, t)) {
     const elementTypes = Checker_getElementTypes(receiver, t);

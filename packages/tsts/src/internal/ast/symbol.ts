@@ -173,7 +173,7 @@ export function SymbolName(symbol_: GoPtr<Symbol>): string {
   if (symbol_!.ValueDeclaration !== undefined && IsPrivateIdentifierClassElementDeclaration(symbol_!.ValueDeclaration)) {
     return Node_Text(Node_Name(symbol_!.ValueDeclaration));
   }
-  return symbol_!.Name;
+  return symbol_!.Name ?? "";
 }
 
 /**

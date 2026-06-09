@@ -41,9 +41,10 @@ import { InfoCache_Get, InfoCache_Set, InfoCacheEntry_Exists, PackageJson_GetVer
 import type { InfoCache, InfoCacheEntry, PackageJson, VersionPaths } from "../packagejson/cache.js";
 import { Expected_ActualJSONType, Expected_ExpectedJSONType, Expected_GetValue, Expected_IsPresent, Expected_IsValid } from "../packagejson/expected.js";
 import type { Expected } from "../packagejson/expected.js";
-import { ExportsOrImports_AsArray, ExportsOrImports_AsObject, ExportsOrImports_IsConditions, ExportsOrImports_IsSubpaths } from "../packagejson/exportsorimports.js";
+import { ExportsOrImports_AsArray, ExportsOrImports_AsObject, ExportsOrImports_IsConditions, ExportsOrImports_IsSubpaths, objectKindUnknown } from "../packagejson/exportsorimports.js";
 import type { ExportsOrImports } from "../packagejson/exportsorimports.js";
 import { JSONValueTypeArray, JSONValueTypeNull, JSONValueTypeNotPresent, JSONValueTypeObject, JSONValueTypeString, JSONValue_AsString, JSONValue_IsFalsy, JSONValue_IsPresent } from "../packagejson/jsonvalue.js";
+import type { JSONValue } from "../packagejson/jsonvalue.js";
 import { Parse as ParsePackageJson } from "../packagejson/packagejson.js";
 import type { Fields as PackageJsonFields } from "../packagejson/packagejson.js";
 import type { TypeValidatedField } from "../packagejson/validated.js";
@@ -77,6 +78,61 @@ import {
 } from "./types.js";
 import type { extensions, NodeResolutionFeatures, PackageId, ResolutionHost, ResolvedModule, ResolvedProjectReference, ResolvedTypeReferenceDirective } from "./types.js";
 import { ComparePatternKeys, InferredTypesContainingFile, IsApplicableVersionedTypesKey, MangleScopedPackageName, ParseNodeModuleFromPath, ParsePackageName, TryGetJSExtensionForFile } from "./util.js";
+
+const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
+
+const packageJsonZeroExportsOrImports = (): ExportsOrImports => ({
+  __tsgoEmbedded0: packageJsonNotPresentValue(),
+  objectKind: objectKindUnknown,
+});
+
+const packageJsonExports = (packageJson: GoPtr<PackageJson>): ExportsOrImports => {
+  const exportsField = packageJson?.__tsgoEmbedded0?.__tsgoEmbedded1?.Exports;
+  return exportsField?.__tsgoEmbedded0 !== undefined ? exportsField : packageJsonZeroExportsOrImports();
+};
+
+const packageJsonImports = (packageJson: GoPtr<PackageJson>): ExportsOrImports => {
+  const importsField = packageJson?.__tsgoEmbedded0?.__tsgoEmbedded1?.Imports;
+  return importsField?.__tsgoEmbedded0 !== undefined ? importsField : packageJsonZeroExportsOrImports();
+};
+
+const packageJsonMissingExpectedString = (): Expected<string> => ({
+  actualJSONType: "",
+  Null: false as bool,
+  Valid: false as bool,
+  Value: "",
+});
+
+const packageJsonPathStringField = (
+  packageJson: GoPtr<PackageJson>,
+  field: "TSConfig" | "Typings" | "Types" | "Main",
+): Expected<string> => {
+  const pathFields = packageJson?.__tsgoEmbedded0?.__tsgoEmbedded1;
+  return pathFields?.[field] ?? packageJsonMissingExpectedString();
+};
+
+const packageJsonHeaderStringField = (
+  packageJson: GoPtr<PackageJson>,
+  field: "Name" | "Version" | "Type",
+): Expected<string> => {
+  const headerFields = packageJson?.__tsgoEmbedded0?.__tsgoEmbedded0;
+  return headerFields?.[field] ?? packageJsonMissingExpectedString();
+};
+
+const packageJsonMissingExpectedStringMap = (): Expected<GoMap<string, string>> => ({
+  actualJSONType: "",
+  Null: false as bool,
+  Valid: false as bool,
+  Value: new globalThis.Map(),
+});
+
+const packageJsonDependencyMapField = (
+  packageJson: GoPtr<PackageJson>,
+  field: "Dependencies" | "DevDependencies" | "PeerDependencies" | "OptionalDependencies",
+): Expected<GoMap<string, string>> => {
+  const dependencyFields = packageJson?.__tsgoEmbedded0?.__tsgoEmbedded2;
+  return dependencyFields?.[field] ?? packageJsonMissingExpectedStringMap();
+};
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::type::resolved","kind":"type","status":"implemented","sigHash":"311657b76bbd117570ff3ef10140ca4f7c058399b9bfb21f60da4a7bbfd4fae4","bodyHash":"988536547950ecf65d459f7d1b2920e811bfcc3b4c02eb4fb4c1b7a1ecaeb092"}
@@ -1393,10 +1449,10 @@ export function resolutionState_resolveNodeLikeWorker(receiver: GoPtr<resolution
 export function resolutionState_loadModuleFromSelfNameReference(receiver: GoPtr<resolutionState>): GoPtr<resolved> {
   const directoryPath = tspath.GetNormalizedAbsolutePath(receiver!.containingDirectory, receiver!.resolver!.host.GetCurrentDirectory());
   const scope = resolutionState_getPackageScopeForPath(receiver, directoryPath);
-  if (!InfoCacheEntry_Exists(scope) || JSONValue_IsFalsy(scope!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)) {
+  if (!InfoCacheEntry_Exists(scope) || JSONValue_IsFalsy(packageJsonExports(scope!.Contents).__tsgoEmbedded0)) {
     return continueSearching();
   }
-  const [name, nameOk] = Expected_GetValue<string>(scope!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded0!.Name);
+  const [name, nameOk] = Expected_GetValue<string>(packageJsonHeaderStringField(scope!.Contents, "Name"));
   if (!nameOk) {
     return continueSearching();
   }
@@ -1477,13 +1533,14 @@ export function resolutionState_loadModuleFromImports(receiver: GoPtr<resolution
     }
     return continueSearching();
   }
-  if (scope!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Imports.__tsgoEmbedded0!.Type !== JSONValueTypeObject) {
+  const scopeImports = packageJsonImports(scope!.Contents);
+  if (scopeImports.__tsgoEmbedded0!.Type !== JSONValueTypeObject) {
     if (receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.X_package_json_scope_0_has_no_imports_defined, scope!.PackageDirectory);
     }
     return continueSearching();
   }
-  const result = resolutionState_loadModuleFromExportsOrImports(receiver, receiver!.extensions, receiver!.name, ExportsOrImports_AsObject(scope!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Imports), scope, true);
+  const result = resolutionState_loadModuleFromExportsOrImports(receiver, receiver!.extensions, receiver!.name, ExportsOrImports_AsObject(scopeImports), scope, true);
   if (!resolved_shouldContinueSearching(result)) {
     return result;
   }
@@ -1531,19 +1588,20 @@ export function resolutionState_loadModuleFromImports(receiver: GoPtr<resolution
  * }
  */
 export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolutionState>, packageInfo: GoPtr<InfoCacheEntry>, ext: extensions, subpath: string): GoPtr<resolved> {
-  if (!InfoCacheEntry_Exists(packageInfo) || JSONValue_IsFalsy(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)) {
+  const packageExports = packageJsonExports(packageInfo?.Contents);
+  if (!InfoCacheEntry_Exists(packageInfo) || JSONValue_IsFalsy(packageExports.__tsgoEmbedded0)) {
     return continueSearching();
   }
-  const exportsType = packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0!.Type;
+  const exportsType = packageExports.__tsgoEmbedded0!.Type;
   if (subpath === ".") {
     let mainExport: ExportsOrImports | undefined;
     if (exportsType === JSONValueTypeString || exportsType === JSONValueTypeArray) {
-      mainExport = packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports;
+      mainExport = packageExports;
     } else if (exportsType === JSONValueTypeObject) {
-      if (ExportsOrImports_IsConditions(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports)) {
-        mainExport = packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports;
+      if (ExportsOrImports_IsConditions(packageExports)) {
+        mainExport = packageExports;
       } else {
-        const [dotEntry, dotOk] = OrderedMap_Get<string, ExportsOrImports>(ExportsOrImports_AsObject(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports) as GoPtr<OrderedMap<string, ExportsOrImports>>, ".");
+        const [dotEntry, dotOk] = OrderedMap_Get<string, ExportsOrImports>(ExportsOrImports_AsObject(packageExports) as GoPtr<OrderedMap<string, ExportsOrImports>>, ".");
         if (dotOk) {
           mainExport = dotEntry;
         }
@@ -1552,8 +1610,8 @@ export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolution
     if (mainExport !== undefined && mainExport.__tsgoEmbedded0!.Type !== JSONValueTypeNotPresent) {
       return resolutionState_loadModuleFromTargetExportOrImport(receiver, ext, subpath, packageInfo, false, mainExport, "", false, ".");
     }
-  } else if (exportsType === JSONValueTypeObject && ExportsOrImports_IsSubpaths(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports)) {
-    const result = resolutionState_loadModuleFromExportsOrImports(receiver, ext, subpath, ExportsOrImports_AsObject(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports) as GoPtr<OrderedMap<string, ExportsOrImports>>, packageInfo, false);
+  } else if (exportsType === JSONValueTypeObject && ExportsOrImports_IsSubpaths(packageExports)) {
+    const result = resolutionState_loadModuleFromExportsOrImports(receiver, ext, subpath, ExportsOrImports_AsObject(packageExports) as GoPtr<OrderedMap<string, ExportsOrImports>>, packageInfo, false);
     if (!resolved_shouldContinueSearching(result)) {
       return result;
     }
@@ -2406,7 +2464,7 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     if ((receiver!.features & NodeResolutionFeaturesExports) !== 0) {
       rootPackageInfo = resolutionState_getPackageJsonInfo(receiver, packageDirectory);
     }
-    if (!InfoCacheEntry_Exists(rootPackageInfo) || rootPackageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0!.Type === JSONValueTypeNotPresent) {
+    if (!InfoCacheEntry_Exists(rootPackageInfo) || packageJsonExports(rootPackageInfo!.Contents).__tsgoEmbedded0!.Type === JSONValueTypeNotPresent) {
       const fromFile = resolutionState_loadModuleFromFile(receiver, ext, candidate);
       if (!resolved_shouldContinueSearching(fromFile)) {
         return fromFile;
@@ -2434,7 +2492,7 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     if (
       rest === "" &&
       InfoCacheEntry_Exists(packageInfo) &&
-      (packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0!.Type === JSONValueTypeNotPresent || packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0!.Type === JSONValueTypeNull) &&
+      (packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0!.Type === JSONValueTypeNotPresent || packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0!.Type === JSONValueTypeNull) &&
       receiver!.esmMode
     ) {
       const indexResult = resolutionState_loadModuleFromFile(receiver, loaderExt, tspath.CombinePaths(loaderCandidate, "index.js"));
@@ -2456,7 +2514,7 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     if (
       (receiver!.features & NodeResolutionFeaturesExports) !== 0 &&
       InfoCacheEntry_Exists(packageInfo) &&
-      !JSONValue_IsFalsy(packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)
+      !JSONValue_IsFalsy(packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0)
     ) {
       return resolutionState_loadModuleFromExports(receiver, packageInfo, ext, tspath.CombinePaths(".", rest));
     }
@@ -3568,7 +3626,7 @@ export function resolutionState_loadNodeModuleFromDirectoryWorker(receiver: GoPt
     const saveESMMode = receiver!.esmMode;
     const saveCandidateEndingIsFromConfig = receiver!.candidateEndingIsFromConfig;
     receiver!.candidateEndingIsFromConfig = true as bool;
-    if (InfoCacheEntry_Exists(packageInfo) && packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded0!.Type.Value !== "module") {
+    if (InfoCacheEntry_Exists(packageInfo) && packageJsonHeaderStringField(packageInfo!.Contents, "Type").Value !== "module") {
       receiver!.esmMode = false as bool;
     }
     const result = resolutionState_nodeLoadModuleByRelativeName(receiver, expandedExtensions, loaderCandidate, false as bool);
@@ -3721,20 +3779,20 @@ export function resolutionState_getPackageFile(receiver: GoPtr<resolutionState>,
     return ["", false as bool];
   }
   if (receiver!.isConfigLookup) {
-    return resolutionState_getPackageJSONPathField(receiver, "tsconfig", packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.TSConfig, packageInfo!.PackageDirectory);
+    return resolutionState_getPackageJSONPathField(receiver, "tsconfig", packageJsonPathStringField(packageInfo!.Contents, "TSConfig"), packageInfo!.PackageDirectory);
   }
   if ((extensions & extensionsDeclaration) !== 0) {
-    const [typingsFile, typingsOk] = resolutionState_getPackageJSONPathField(receiver, "typings", packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Typings, packageInfo!.PackageDirectory);
+    const [typingsFile, typingsOk] = resolutionState_getPackageJSONPathField(receiver, "typings", packageJsonPathStringField(packageInfo!.Contents, "Typings"), packageInfo!.PackageDirectory);
     if (typingsOk) {
       return [typingsFile, typingsOk];
     }
-    const [typesFile, typesOk] = resolutionState_getPackageJSONPathField(receiver, "types", packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Types, packageInfo!.PackageDirectory);
+    const [typesFile, typesOk] = resolutionState_getPackageJSONPathField(receiver, "types", packageJsonPathStringField(packageInfo!.Contents, "Types"), packageInfo!.PackageDirectory);
     if (typesOk) {
       return [typesFile, typesOk];
     }
   }
   if ((extensions & (extensionsImplementationFiles | extensionsDeclaration)) !== 0) {
-    return resolutionState_getPackageJSONPathField(receiver, "main", packageInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Main, packageInfo!.PackageDirectory);
+    return resolutionState_getPackageJSONPathField(receiver, "main", packageJsonPathStringField(packageInfo!.Contents, "Main"), packageInfo!.PackageDirectory);
   }
   return ["", false as bool];
 }
@@ -3884,9 +3942,9 @@ export function resolutionState_getPackageJsonInfo(receiver: GoPtr<resolutionSta
 export function resolutionState_getPackageId(receiver: GoPtr<resolutionState>, resolvedFileName: string, packageInfo: GoPtr<InfoCacheEntry>): PackageId {
   if (InfoCacheEntry_Exists(packageInfo)) {
     const packageJsonContent = packageInfo!.Contents;
-    const [name, nameOk] = Expected_GetValue<string>(packageJsonContent!.__tsgoEmbedded0!.__tsgoEmbedded0!.Name);
+    const [name, nameOk] = Expected_GetValue<string>(packageJsonHeaderStringField(packageJsonContent, "Name"));
     if (nameOk) {
-      const [ver, verOk] = Expected_GetValue<string>(packageJsonContent!.__tsgoEmbedded0!.__tsgoEmbedded0!.Version);
+      const [ver, verOk] = Expected_GetValue<string>(packageJsonHeaderStringField(packageJsonContent, "Version"));
       if (verOk) {
         const subModuleName = resolvedFileName.length > packageInfo!.PackageDirectory.length
           ? resolvedFileName.slice(packageInfo!.PackageDirectory.length + 1)
@@ -3944,7 +4002,7 @@ export function resolutionState_getPackageId(receiver: GoPtr<resolutionState>, r
  * }
  */
 export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<resolutionState>, packageJsonInfo: GoPtr<InfoCacheEntry>): string {
-  const peerDependencies = packageJsonInfo!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded2!.PeerDependencies;
+  const peerDependencies = packageJsonDependencyMapField(packageJsonInfo!.Contents, "PeerDependencies");
   const ok = resolutionState_validatePackageJSONField(receiver, "peerDependencies", peerDependencies);
   if (!ok || !Expected_IsValid(peerDependencies) || (peerDependencies.Value?.size ?? 0) === 0) {
     return "";
@@ -3968,7 +4026,7 @@ export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<
   for (const name of names) {
     const peerPackageJson = resolutionState_getPackageJsonInfo(receiver, nodeModules + name);
     if (peerPackageJson !== undefined) {
-      const version = peerPackageJson.Contents!.__tsgoEmbedded0!.__tsgoEmbedded0!.Version.Value;
+      const version = packageJsonHeaderStringField(peerPackageJson.Contents, "Version").Value;
       builder += "+" + name + "@" + version;
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.Found_peerDependency_0_with_1_version, name, version);
@@ -4713,8 +4771,9 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     tracer: undefined,
   };
 
-  if (InfoCacheEntry_Exists(packageJson) && JSONValue_IsPresent(packageJson!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)) {
-    return resolutionState_loadEntrypointsFromExportMap(state, packageJson, packageName, packageJson!.Contents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports);
+  const exportsField = packageJsonExports(packageJson?.Contents);
+  if (InfoCacheEntry_Exists(packageJson) && JSONValue_IsPresent(exportsField.__tsgoEmbedded0)) {
+    return resolutionState_loadEntrypointsFromExportMap(state, packageJson, packageName, exportsField);
   }
 
   const result: GoSlice<GoPtr<ResolvedEntrypoint>> = [];

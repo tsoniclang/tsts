@@ -23,7 +23,7 @@ import { OrderedMap_Entries, OrderedMap_Has, OrderedMap_Set, OrderedMap_GetOrZer
 import type { Set } from "../collections/set.js";
 import { Set_Add, Set_Keys } from "../collections/set.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
-import { CompilerOptions_GetAllowJS, CompilerOptions_GetResolveJsonModule } from "../core/compileroptions.js";
+import { CompilerOptions_GetAllowJS, CompilerOptions_GetResolveJsonModule, NormalizeCompilerOptions } from "../core/compileroptions.js";
 import type { ProjectReference } from "../core/projectreference.js";
 import type { ParsedOptions } from "../core/parsedoptions.js";
 import type { ScriptKind } from "../core/scriptkind.js";
@@ -2710,6 +2710,7 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap>, source
   const [parsedConfig, parseConfigErrors] = parseConfig(json, sourceFile, host, basePath, configFileName, resolutionStack, extendedConfigCache);
   errors.push(...parseConfigErrors);
   mergeCompilerOptions(parsedConfig!.options, existingOptions, existingOptionsRaw as GoPtr<OrderedMap<string, unknown>>);
+  parsedConfig!.options = NormalizeCompilerOptions(parsedConfig!.options);
   handleOptionConfigDirTemplateSubstitution(parsedConfig!.options, basePathForFileNames);
   const rawConfig = parseJsonToStringKey(parsedConfig!.raw) as GoPtr<OrderedMap<string, unknown>>;
   if (configFileName !== "" && parsedConfig!.options !== undefined) {
@@ -3632,15 +3633,15 @@ export function getFileNamesFromConfigSpecs(configFileSpecs: configFileSpecs, ba
   const files: string[] = [];
   OrderedMap_Values(literalFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   OrderedMap_Values(wildcardFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   OrderedMap_Values(wildCardJsonFileMap as GoPtr<OrderedMap<string, string>>)((file: string): bool => {
     files.push(file);
-    return false;
+    return true;
   });
   return [files, OrderedMap_Size(literalFileMap as GoPtr<OrderedMap<string, string>>)];
 }

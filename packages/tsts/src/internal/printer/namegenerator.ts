@@ -6,7 +6,7 @@ import type { NodeId } from "../ast/ids.js";
 import { GetNodeId, GetExternalModuleName, IsNodeDescendantOf } from "../ast/utilities.js";
 import { IsIdentifier, IsPrivateIdentifier, IsStringLiteral } from "../ast/generated/predicates.js";
 import { KindClassDeclaration, KindClassExpression, KindComputedPropertyName, KindEnumDeclaration, KindExportAssignment, KindExportDeclaration, KindFunctionDeclaration, KindGetAccessor, KindIdentifier, KindImportDeclaration, KindJSImportDeclaration, KindMethodDeclaration, KindModuleDeclaration, KindPrivateIdentifier, KindSetAccessor } from "../ast/generated/kinds.js";
-import { Node_Locals } from "../ast/ast.js";
+import { Node_Locals, Node_Text } from "../ast/ast.js";
 import { Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
 import { SymbolFlagsValue, SymbolFlagsExportValue, SymbolFlagsAlias } from "../ast/symbolflags.js";
 import { IfElse } from "../core/core.js";
@@ -715,7 +715,7 @@ export function NameGenerator_makeName(receiver: GoPtr<NameGenerator>, name: GoP
         case GeneratedIdentifierFlagsUnique:
           return NameGenerator_makeUniqueName(
             receiver,
-            receiver!.GetTextOfNode(name),
+            Node_Text(name),
             GeneratedIdentifierFlags_IsFileLevel(autoGenerate.Flags)
               ? receiver!.IsFileLevelUniqueNameInCurrentFile
               : (undefined as unknown as (n: string, pn: bool) => bool),

@@ -94,6 +94,16 @@ import { NewIdentifier, NewPrivateIdentifier, NewPropertyAccessExpression, NewKe
 import { Checker_error } from "./checker/support.js";
 import { Member_0_implicitly_has_an_1_type } from "../diagnostics/generated/messages.js";
 
+function getMarkedAssignmentSymbolLinks(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): MarkedAssignmentSymbolLinks {
+  const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(
+    receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>,
+    symbol_,
+  )!;
+  links.lastAssignmentPos ??= 0 as int;
+  links.hasDefiniteAssignment ??= false as bool;
+  return links;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::type::FlowType","kind":"type","status":"implemented","sigHash":"bc02a5461036608265091398679db2e7b0cb752f9d0a59b23a5678f16c24f02c","bodyHash":"7465c9c089b5303ec8615aa727b2669e5592a430905d1a3987212c329855f3d4"}
  *
@@ -803,6 +813,7 @@ export function Checker_narrowTypeByTypePredicate(receiver: GoPtr<Checker>, f: G
       if (access !== undefined) {
         return Checker_narrowTypeByDiscriminant(receiver, localT, access, (innerT) => Checker_getNarrowedType(receiver, innerT, predicate!.t, assumeTrue, false));
       }
+      return localT;
     }
   }
   return t;
@@ -4251,13 +4262,14 @@ export function isCoercibleUnderDoubleEquals(source: GoPtr<Type>, target: GoPtr<
  */
 export function Checker_isExhaustiveSwitchStatement(receiver: GoPtr<Checker>, node: GoPtr<Node>): bool {
   const links = LinkStore_Get<GoPtr<Node>, SwitchStatementLinks>(receiver!.switchStatementLinks as LinkStore<GoPtr<Node>, SwitchStatementLinks>, node);
-  if (links!.exhaustiveState === ExhaustiveStateUnknown) {
+  const exhaustiveState = links!.exhaustiveState ?? ExhaustiveStateUnknown;
+  if (exhaustiveState === ExhaustiveStateUnknown) {
     links!.exhaustiveState = ExhaustiveStateComputing;
     const isExhaustive = Checker_computeExhaustiveSwitchStatement(receiver, node);
     if (links!.exhaustiveState === ExhaustiveStateComputing) {
       links!.exhaustiveState = IfElse(isExhaustive, ExhaustiveStateTrue, ExhaustiveStateFalse);
     }
-  } else if (links!.exhaustiveState === ExhaustiveStateComputing) {
+  } else if (exhaustiveState === ExhaustiveStateComputing) {
     links!.exhaustiveState = ExhaustiveStateFalse;
   }
   return links!.exhaustiveState === ExhaustiveStateTrue;
@@ -5737,7 +5749,7 @@ export function Checker_isPostSuperFlowNodeWorker(receiver: GoPtr<Checker>, f: G
  */
 export function Checker_isSymbolAssignedDefinitely(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   Checker_ensureAssignmentsMarked(receiver, symbol_);
-  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.hasDefiniteAssignment;
+  return getMarkedAssignmentSymbolLinks(receiver, symbol_).hasDefiniteAssignment;
 }
 
 /**
@@ -5751,7 +5763,7 @@ export function Checker_isSymbolAssignedDefinitely(receiver: GoPtr<Checker>, sym
  */
 export function Checker_isSymbolAssigned(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): bool {
   Checker_ensureAssignmentsMarked(receiver, symbol_);
-  return LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos !== 0;
+  return getMarkedAssignmentSymbolLinks(receiver, symbol_).lastAssignmentPos !== 0;
 }
 
 /**
@@ -5766,7 +5778,7 @@ export function Checker_isSymbolAssigned(receiver: GoPtr<Checker>, symbol_: GoPt
  */
 export function Checker_isPastLastAssignment(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>, location: GoPtr<Node>): bool {
   Checker_ensureAssignmentsMarked(receiver, symbol_);
-  const lastAssignmentPos = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos;
+  const lastAssignmentPos = getMarkedAssignmentSymbolLinks(receiver, symbol_).lastAssignmentPos;
   return lastAssignmentPos === 0 || (location !== undefined && lastAssignmentPos < Node_Pos(location));
 }
 
@@ -5792,7 +5804,7 @@ export function Checker_isPastLastAssignment(receiver: GoPtr<Checker>, symbol_: 
  * }
  */
 export function Checker_ensureAssignmentsMarked(receiver: GoPtr<Checker>, symbol_: GoPtr<Symbol>): void {
-  if (LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol_)!.lastAssignmentPos !== 0) { return; }
+  if (getMarkedAssignmentSymbolLinks(receiver, symbol_).lastAssignmentPos !== 0) { return; }
   const parent = FindAncestor(symbol_!.ValueDeclaration, IsFunctionOrSourceFile);
   if (parent === undefined) { return; }
   const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
@@ -5875,7 +5887,7 @@ export function Checker_markNodeAssignmentsWorker(receiver: GoPtr<Checker>, node
       if (assignmentKind !== AssignmentKindNone) {
         const symbol = Checker_getResolvedSymbol(receiver, node);
         if (Checker_isParameterOrMutableLocalVariable(receiver, symbol)) {
-          const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol)!;
+          const links = getMarkedAssignmentSymbolLinks(receiver, symbol);
           const pos = links.lastAssignmentPos;
           if (pos === 0 || pos !== 2147483647) {
             const referencingFunction = FindAncestor(node, IsFunctionOrSourceFile);
@@ -5903,7 +5915,7 @@ export function Checker_markNodeAssignmentsWorker(receiver: GoPtr<Checker>, node
     if (!AsExportSpecifier(node)!.IsTypeOnly && !exportDeclaration!.IsTypeOnly && exportDeclaration!.ModuleSpecifier === undefined && !IsStringLiteral(name)) {
       const symbol = Checker_resolveEntityName(receiver, name, SymbolFlagsValue, true, true, undefined);
       if (symbol !== undefined && Checker_isParameterOrMutableLocalVariable(receiver, symbol)) {
-        const links = LinkStore_Get<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>(receiver!.markedAssignmentSymbolLinks as unknown as LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>, symbol)!;
+        const links = getMarkedAssignmentSymbolLinks(receiver, symbol);
         links.lastAssignmentPos = 2147483647;
       }
     }

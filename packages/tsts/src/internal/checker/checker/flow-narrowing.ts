@@ -44,7 +44,7 @@ import {
 import { CheckFlagsHasNeverType, CheckFlagsNonUniformAndLiteral } from "../../ast/checkflags.js";
 import { GetFunctionFlags, FunctionFlagsNormal } from "../../ast/functionflags.js";
 import { ModifierFlagsAmbient } from "../../ast/modifierflags.js";
-import { IsArrayBindingPattern, IsBinaryExpression, IsBindingElement, IsBlock, IsConditionalTypeNode, IsConstructorDeclaration, IsIdentifier, IsMappedTypeNode, IsModuleBlock, IsObjectBindingPattern, IsParameterDeclaration, IsPropertyAccessExpression, IsPropertyDeclaration, IsSourceFile, IsTypeAssertion, IsVariableDeclaration } from "../../ast/generated/predicates.js";
+import { IsArrayBindingPattern, IsBinaryExpression, IsBindingElement, IsBlock, IsConditionalTypeNode, IsConstructorDeclaration, IsIdentifier, IsMappedTypeNode, IsModuleBlock, IsObjectBindingPattern, IsParameterDeclaration, IsPropertyAccessExpression, IsPropertyDeclaration, IsSourceFile, IsVariableDeclaration } from "../../ast/generated/predicates.js";
 import type { Symbol } from "../../ast/symbol.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { NodeFlagsAmbient, NodeFlagsConstant, SymbolFlagsAccessor, SymbolFlagsEnum, SymbolFlagsMethod, SymbolFlagsOptional, SymbolFlagsProperty, SymbolFlagsVariable } from "../../ast/generated/flags.js";
@@ -134,6 +134,7 @@ import type { Checker, CheckMode, PredicateSemantics } from "./state.js";
 import { Checker_getResolvedSymbol } from "./symbols.js";
 import { Checker_checkSourceElement, Checker_error } from "./support.js";
 import { Checker_symbolToString } from "../printer.js";
+import { isTypeAssertion } from "../utilities.js";
 import { DiagnosticsCollection_Add, NewDiagnosticChain } from "../../ast/diagnostic.js";
 import {
   A_type_predicate_cannot_reference_element_0_in_a_binding_pattern,
@@ -443,7 +444,7 @@ export function Checker_checkTestingKnownTruthyType(receiver: GoPtr<Checker>, co
     Checker_error(receiver, location, This_condition_will_always_return_0, IsTruthy(Type_AsLiteralType(t)!.value) ? "true" : "false");
     return;
   }
-  const isPropertyExpressionCast = IsPropertyAccessExpression(location) && IsTypeAssertion(Node_Expression(location));
+  const isPropertyExpressionCast = IsPropertyAccessExpression(location) && isTypeAssertion(Node_Expression(location));
   if (!Checker_hasTypeFacts(receiver, t, TypeFactsTruthy) || isPropertyExpressionCast) {
     return;
   }

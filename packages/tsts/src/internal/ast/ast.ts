@@ -2,7 +2,7 @@ import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
-import { Bool } from "../../go/sync/atomic.js";
+import { Bool, Uint32 } from "../../go/sync/atomic.js";
 import type { Set } from "../collections/set.js";
 import { ModuleKindCommonJS, ResolutionModeESM, ResolutionModeNone } from "../core/compileroptions.js";
 import type { ResolutionMode } from "../core/compileroptions.js";
@@ -272,6 +272,7 @@ import {
   SubtreeExclusionsProperty,
   SubtreeExclusionsPropertyAccess,
   SubtreeExclusionsVariableDeclarationList,
+  SubtreeFactsComputed,
   SubtreeFactsNone,
   propagateEraseableSyntaxListSubtreeFacts,
   propagateEraseableSyntaxSubtreeFacts,
@@ -537,7 +538,7 @@ export function Node_Text(receiver: GoPtr<Node>): string {
     case KindJSDocLinkPlain:
       return strings.Join(casts.AsJSDocLinkPlain(receiver)!.text, "");
   }
-  throw new globalThis.Error("Unhandled case in Node.Text");
+  throw new globalThis.Error(`Unhandled case in Node.Text: ${KindString(receiver!.Kind)}`);
 }
 
 /**
@@ -4263,16 +4264,29 @@ export function NoSubstitutionTemplateLiteral_computeSubtreeFacts(receiver: GoPt
  * }
  */
 export function BinaryExpression_computeSubtreeFacts(receiver: GoPtr<BinaryExpression>): SubtreeFacts {
-  let facts = (propagateModifierListSubtreeFacts(receiver!.modifiers) |
-    propagateSubtreeFacts(receiver!.Left) |
-    propagateSubtreeFacts(receiver!.Type) |
-    propagateSubtreeFacts(receiver!.OperatorToken) |
-    propagateSubtreeFacts(receiver!.Right) |
-    IfElse(receiver!.OperatorToken!.Kind === KindInKeyword && predicates.IsPrivateIdentifier(receiver!.Left), (SubtreeContainsClassFields | SubtreeContainsPrivateIdentifierInExpression) >>> 0, SubtreeFactsNone)) >>> 0;
-  if (receiver!.OperatorToken!.Kind === KindEqualsToken) {
-    if ((predicates.IsObjectLiteralExpression(receiver!.Left) || predicates.IsArrayLiteralExpression(receiver!.Left)) && utilities.ContainsObjectRestOrSpread(receiver!.Left)) {
-      facts = (facts | SubtreeContainsObjectRestOrSpread) >>> 0;
+  const binaryChain: GoPtr<BinaryExpression>[] = [];
+  let leftEdge = receiver as unknown as GoPtr<Node>;
+  while (leftEdge !== undefined && leftEdge.Kind === KindBinaryExpression) {
+    const binary = casts.AsBinaryExpression(leftEdge) as GoPtr<BinaryExpression>;
+    binaryChain.push(binary);
+    leftEdge = binary!.Left as unknown as GoPtr<Node>;
+  }
+  let facts = propagateSubtreeFacts(leftEdge);
+  for (let index = binaryChain.length - 1; index >= 0; index--) {
+    const binary = binaryChain[index];
+    facts = (facts |
+      propagateModifierListSubtreeFacts(binary!.modifiers) |
+      propagateSubtreeFacts(binary!.Type) |
+      propagateSubtreeFacts(binary!.OperatorToken) |
+      propagateSubtreeFacts(binary!.Right) |
+      IfElse(binary!.OperatorToken!.Kind === KindInKeyword && predicates.IsPrivateIdentifier(binary!.Left), (SubtreeContainsClassFields | SubtreeContainsPrivateIdentifierInExpression) >>> 0, SubtreeFactsNone)) >>> 0;
+    if (binary!.OperatorToken!.Kind === KindEqualsToken) {
+      if ((predicates.IsObjectLiteralExpression(binary!.Left) || predicates.IsArrayLiteralExpression(binary!.Left)) && utilities.ContainsObjectRestOrSpread(binary!.Left)) {
+        facts = (facts | SubtreeContainsObjectRestOrSpread) >>> 0;
+      }
     }
+    binary!.facts ??= new Uint32();
+    binary!.facts.Store((facts | SubtreeFactsComputed) >>> 0);
   }
   return facts;
 }

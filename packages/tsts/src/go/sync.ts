@@ -1,4 +1,5 @@
 import type { int, bool } from "@tsonic/core/types.js";
+import { NewGoStructMap } from "./compat.js";
 
 // Go: package sync
 //
@@ -107,7 +108,7 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 // Map is like a Go sync.Map: a concurrent map of any/any. Single-threaded, it is
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
-  private readonly m: globalThis.Map<K, V> = new globalThis.Map<K, V>();
+  private readonly m: globalThis.Map<K, V> = NewGoStructMap<K, V>();
 
   // Load returns the value stored for key, and whether it was present.
   Load(key: K): [V | undefined, bool] {

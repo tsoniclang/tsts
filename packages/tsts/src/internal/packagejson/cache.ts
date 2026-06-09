@@ -22,7 +22,10 @@ import { ToPath } from "../tspath/path.js";
 import type { Path } from "../tspath/path.js";
 import { JSONValue_AsArray, JSONValue_AsObject, JSONValueType_String, JSONValueTypeArray, JSONValueTypeObject, JSONValueTypeString, JSONValueTypeNotPresent } from "./jsonvalue.js";
 import type { JSONValue } from "./jsonvalue.js";
-import type { Fields } from "./packagejson.js";
+import { objectKindUnknown } from "./exportsorimports.js";
+import type { ExportsOrImports } from "./exportsorimports.js";
+import type { DependencyFields, Fields, HeaderFields, PathFields } from "./packagejson.js";
+import type { Expected } from "./expected.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/packagejson/cache.go::varGroup::typeScriptVersion","kind":"varGroup","status":"implemented","sigHash":"5ea790652197b354557a923968e58da28d67b2ec3f25c5727cf388cf991ad24a","bodyHash":"aa456a24b17567514562ee03f13a59f6391067b1c2ff7f896b46df2dde1f4bfb"}
@@ -50,6 +53,56 @@ export interface PackageJson {
   versionPaths: VersionPaths;
   versionTraces: GoSlice<diagnosticAndArgs>;
   once: Once;
+}
+
+const packageJsonMissingString = (): Expected<string> => ({
+  actualJSONType: "",
+  Null: false as bool,
+  Valid: false as bool,
+  Value: "",
+});
+
+const packageJsonMissingStringMap = (): Expected<globalThis.Map<string, string>> => ({
+  actualJSONType: "",
+  Null: false as bool,
+  Valid: false as bool,
+  Value: new globalThis.Map<string, string>(),
+});
+
+const packageJsonNotPresentValue = (): JSONValue => ({ Type: JSONValueTypeNotPresent, Value: undefined });
+
+const packageJsonNotPresentExportsOrImports = (): ExportsOrImports => ({
+  __tsgoEmbedded0: packageJsonNotPresentValue(),
+  objectKind: objectKindUnknown,
+});
+
+export function PackageJson_GetHeaderFields(receiver: GoPtr<PackageJson>): HeaderFields {
+  return receiver?.__tsgoEmbedded0?.__tsgoEmbedded0 ?? {
+    Name: packageJsonMissingString(),
+    Version: packageJsonMissingString(),
+    Type: packageJsonMissingString(),
+  };
+}
+
+export function PackageJson_GetPathFields(receiver: GoPtr<PackageJson>): PathFields {
+  return receiver?.__tsgoEmbedded0?.__tsgoEmbedded1 ?? {
+    TSConfig: packageJsonMissingString(),
+    Main: packageJsonMissingString(),
+    Types: packageJsonMissingString(),
+    Typings: packageJsonMissingString(),
+    TypesVersions: packageJsonNotPresentValue(),
+    Imports: packageJsonNotPresentExportsOrImports(),
+    Exports: packageJsonNotPresentExportsOrImports(),
+  };
+}
+
+export function PackageJson_GetDependencyFields(receiver: GoPtr<PackageJson>): DependencyFields {
+  return receiver?.__tsgoEmbedded0?.__tsgoEmbedded2 ?? {
+    Dependencies: packageJsonMissingStringMap(),
+    DevDependencies: packageJsonMissingStringMap(),
+    PeerDependencies: packageJsonMissingStringMap(),
+    OptionalDependencies: packageJsonMissingStringMap(),
+  };
 }
 
 /**
@@ -132,19 +185,20 @@ export interface diagnosticAndArgs {
  */
 export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace: (m: GoPtr<Message>, ...args: Array<unknown>) => void): VersionPaths {
   receiver!.once.Do(() => {
-    const fields = receiver!.__tsgoEmbedded0!;
-    const pathFields = fields.__tsgoEmbedded1!;
-    if (pathFields.TypesVersions.Type === JSONValueTypeNotPresent) {
+    const typesVersions: JSONValue = receiver!.__tsgoEmbedded0?.__tsgoEmbedded1?.TypesVersions ?? { Type: JSONValueTypeNotPresent, Value: undefined };
+    receiver!.versionTraces ??= [];
+    receiver!.versionPaths ??= { Version: "", pathsJSON: undefined, paths: undefined };
+    if (typesVersions.Type === JSONValueTypeNotPresent) {
       receiver!.versionTraces = [...receiver!.versionTraces, {
         message: X_package_json_does_not_have_a_0_field,
         args: ["typesVersions"],
       }];
       return;
     }
-    if (pathFields.TypesVersions.Type !== JSONValueTypeObject) {
+    if (typesVersions.Type !== JSONValueTypeObject) {
       receiver!.versionTraces = [...receiver!.versionTraces, {
         message: Expected_type_of_0_field_in_package_json_to_be_1_got_2,
-        args: ["typesVersions", "object", JSONValueType_String(pathFields.TypesVersions.Type)],
+        args: ["typesVersions", "object", JSONValueType_String(typesVersions.Type)],
       }];
       return;
     }
@@ -154,7 +208,7 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
       args: ["typesVersions"],
     }];
 
-    const obj = JSONValue_AsObject(pathFields.TypesVersions);
+    const obj = JSONValue_AsObject(typesVersions);
     let done = false;
     OrderedMap_Entries<string, JSONValue>(obj as GoPtr<OrderedMap<string, JSONValue>>)((key, value) => {
       if (done) return false;

@@ -108,6 +108,7 @@ import { Checker_isErrorType } from "./checker/diagnostics.js";
 import { newSimpleTypeMapper } from "./mapper.js";
 import type { LinkStore } from "../core/linkstore.js";
 import { LinkStore_Get, LinkStore_Has } from "../core/linkstore.js";
+import * as slices from "../../go/slices.js";
 import { SymbolFlagsTypeAlias } from "../ast/symbolflags.js";
 import {
   Target_signature_provides_too_few_arguments_Expected_0_or_more_but_got_1,
@@ -5164,9 +5165,9 @@ export function Checker_isTypeMatchedByTemplateLiteralType(receiver: GoPtr<Check
  * 	}
  * }
  */
-export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> {
+export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> | undefined {
   if ((source!.flags & TypeFlagsStringLiteral) !== 0) {
-    return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, [getStringLiteralValue(source)], undefined!, target);
+    return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, [getStringLiteralValue(source)], [], target);
   }
   if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
     const srcTexts = Type_AsTemplateLiteralType(source)!.texts;
@@ -5184,7 +5185,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
     }
     return Checker_inferFromLiteralPartsToTemplateLiteral(receiver, srcTexts, srcTypes, target);
   }
-  return undefined!;
+  return undefined;
 }
 
 /**
@@ -5259,7 +5260,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
  * 	return matches
  * }
  */
-export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<Checker>, sourceTexts: GoSlice<string>, sourceTypes: GoSlice<GoPtr<Type>>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> {
+export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<Checker>, sourceTexts: GoSlice<string>, sourceTypes: GoSlice<GoPtr<Type>>, target: GoPtr<TemplateLiteralType>): GoSlice<GoPtr<Type>> | undefined {
   const lastSourceIndex = sourceTexts.length - 1;
   const sourceStartText = sourceTexts[0]!;
   const sourceEndText = sourceTexts[lastSourceIndex]!;
@@ -5268,7 +5269,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
   const targetStartText = targetTexts[0]!;
   const targetEndText = targetTexts[lastTargetIndex]!;
   if (lastSourceIndex === 0 && sourceStartText.length < targetStartText.length + targetEndText.length || !sourceStartText.startsWith(targetStartText) || !sourceEndText.endsWith(targetEndText)) {
-    return undefined!;
+    return undefined;
   }
   const remainingEndText = sourceEndText.slice(0, sourceEndText.length - targetEndText.length);
   let seg = 0;
@@ -5310,7 +5311,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
         }
         s++;
         if (s === sourceTexts.length) {
-          return undefined!;
+          return undefined;
         }
         p = 0;
       }
@@ -5325,7 +5326,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
       } else if (seg < lastSourceIndex) {
         addMatch(seg + 1, 0);
       } else {
-        return undefined!;
+        return undefined;
       }
     }
   }
@@ -7716,7 +7717,7 @@ export function Relater_structuredTypeRelatedToWorker(receiver: GoPtr<Relater>, 
     } else if ((source!.flags & TypeFlagsTemplateLiteral) !== 0) {
       const sourceTemplate = Type_AsTemplateLiteralType(source)!;
       const targetTemplate = Type_AsTemplateLiteralType(target)!;
-      if (Same(sourceTemplate.texts, targetTemplate.texts)) {
+      if (slices.Equal(sourceTemplate.texts, targetTemplate.texts)) {
         result = TernaryTrue;
         for (let index = 0; index < sourceTemplate.types.length; index++) {
           result = (result & Relater_isRelatedTo(receiver, sourceTemplate.types[index], targetTemplate.types[index], RecursionFlagsBoth, false)) as Ternary;

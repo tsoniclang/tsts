@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import * as slices from "../../go/slices.js";
 import * as core from "../core/core.js";
 import { Set_Has } from "../collections/set.js";
@@ -203,6 +204,7 @@ import {
   Type_AsReverseMappedType,
   Type_AsStringMappingType,
   Type_AsSubstitutionType,
+  Type_AsTemplateLiteralType,
   Type_AsTypeReference,
   Type_AsUnionType,
   Type_Distributed,
@@ -326,7 +328,7 @@ export function Checker_getInferenceState(receiver: GoPtr<Checker>): GoPtr<Infer
     bivariant: false,
     expandingFlags: 0,
     propagationType: undefined,
-    visited: new Map<InferenceKey, InferencePriority>(),
+    visited: NewGoStructMap<InferenceKey, InferencePriority>(),
     sourceStack: [],
     targetStack: [],
     next: undefined,
@@ -776,7 +778,6 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
         }
       }
     }
-    return;
   }
   if (
     (source!.objectFlags & ObjectFlagsReference) !== 0 &&
@@ -812,7 +813,7 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
       Checker_inferFromTypes(c, state, sourceType, target);
     }
   } else if ((target!.flags & TypeFlagsTemplateLiteral) !== 0) {
-    Checker_inferToTemplateLiteralType(c, state, source, target as GoPtr<TemplateLiteralType>);
+    Checker_inferToTemplateLiteralType(c, state, source, Type_AsTemplateLiteralType(target));
   } else {
     source = Checker_getReducedType(c, source);
     if (Checker_isGenericMappedType(c, source) && Checker_isGenericMappedType(c, target)) {
@@ -990,7 +991,7 @@ export function Checker_invokeOnce(receiver: GoPtr<Checker>, n: GoPtr<InferenceS
     return;
   }
   if (state.visited === undefined) {
-    state.visited = new Map<InferenceKey, InferencePriority>();
+    state.visited = NewGoStructMap<InferenceKey, InferencePriority>();
   }
   state.visited.set(key, InferencePriorityCircularity);
   const saveInferencePriority = state.inferencePriority;
@@ -1450,12 +1451,13 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
   // assignment check will fail. If we make no inferences, we'll likely end up with the constraint 'string' which,
   // upon instantiation, would collapse all the placeholders to just 'string', and an assignment check might
   // succeed. That would be a pointless and confusing outcome.
-  if (matches.length !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
+  const matchCount = matches?.length ?? 0;
+  if (matchCount !== 0 || core.Every(target!.texts, (s: string): bool => s === "")) {
     outer: for (let i = 0; i < types.length; i++) {
       const targetType = types[i];
       let sourceType: GoPtr<Type>;
-      if (matches.length !== 0) {
-        sourceType = matches[i];
+      if (matchCount !== 0) {
+        sourceType = matches![i];
       } else {
         sourceType = c.neverType;
       }
@@ -1494,7 +1496,7 @@ export function Checker_inferToTemplateLiteralType(receiver: GoPtr<Checker>, n: 
                 if ((left!.flags & TypeFlagsTemplateLiteral) !== 0) {
                   return left;
                 }
-                if ((right!.flags & TypeFlagsTemplateLiteral) !== 0 && Checker_isTypeMatchedByTemplateLiteralType(c, sourceType, right as GoPtr<TemplateLiteralType>, c.compareTypesAssignable)) {
+                if ((right!.flags & TypeFlagsTemplateLiteral) !== 0 && Checker_isTypeMatchedByTemplateLiteralType(c, sourceType, Type_AsTemplateLiteralType(right), c.compareTypesAssignable)) {
                   return sourceType;
                 }
                 if ((left!.flags & TypeFlagsStringMapping) !== 0) {
