@@ -177,6 +177,11 @@
       "reason": "Go test files must be ported through the test-parity harness, not production source scaffolding."
     },
     {
+      "match": "packages/tsts/src/**/*.test.ts",
+      "category": "test-parity",
+      "reason": "Node test mirrors for upstream TS-Go tests; these are validation artifacts, not production @tsgo-unit source."
+    },
+    {
       "match": "packages/tsts/src/cmd/tsgo/lsp.ts",
       "category": "forbidden-source",
       "reason": "The LSP command entrypoint must not exist in the active standalone compiler source tree."
