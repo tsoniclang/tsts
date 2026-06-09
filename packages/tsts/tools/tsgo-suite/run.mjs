@@ -27,14 +27,15 @@ const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
-  ["typescript", new Set(["compiler", "conformance", "transpile"])],
+  ["typescript", new Set(["compiler", "conformance", "project", "transpile"])],
 ]);
 const caseRootByCorpus = new Map([
   ["current", caseRoot],
   ["typescript", typeScriptSubmoduleCaseRoot],
 ]);
-const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "projects", "transpile"]);
+const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile"]);
 const outOfScopeTypeScriptSuites = new Set(["fourslash", "unittests"]);
+const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
 const inScopeBaselineCategories = new Set(["api", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsc", "tsoptions"]);
 const outOfScopeBaselineCategories = new Set(["astnav", "fourslash", "lsp", "tsbuildWatch", "tscWatch"]);
 const compilerVaryByOptions = new Set([
@@ -304,8 +305,8 @@ Runs upstream TS-Go/TypeScript file-based tests through the TSTS CLI.
 
 Options:
   --corpus <current|typescript>        current=testdata/tests/cases; typescript=_submodules/TypeScript/tests/cases. Default: current.
-  --suite <all|compiler|conformance|transpile>
-                                      Suite to run. Default: all. Project suites are tracked but require specialized harnesses.
+  --suite <all|compiler|conformance|project|transpile>
+                                      Suite to run. Default: all.
   --filter <substring>                Run cases whose relative path contains the substring.
   --limit <n>                         Run at most n cases after filtering.
   --jobs <n>                          Parallel TSTS processes. Default: min(cpu count, 8).
@@ -387,6 +388,14 @@ async function countTypeScriptCaseFilesByChild(root) {
   for (const child of children) {
     const fullPath = join(root, child.name);
     if (child.isDirectory()) {
+      if (child.name === "project") {
+        entries[child.name] = (await walkFiles(fullPath)).filter((file) => /\.json$/i.test(file)).length;
+        continue;
+      }
+      if (fixtureOnlyTypeScriptSuites.has(child.name)) {
+        entries[child.name] = 0;
+        continue;
+      }
       const files = (await walkFiles(fullPath)).filter((file) => harnessSourceFilePattern.test(file));
       entries[child.name] = files.length;
       if (inScopeTypeScriptSuites.has(child.name)) {
@@ -438,6 +447,10 @@ export async function discoverCases(options) {
   const suites = options.suite === "all" ? [...supportedSuites] : [options.suite];
   const caseFiles = [];
   for (const suite of suites) {
+    if (options.corpus === "typescript" && suite === "project") {
+      caseFiles.push(...await discoverProjectCases(selectedCaseRoot, options));
+      continue;
+    }
     const suiteRoot = join(selectedCaseRoot, suite);
     for (const file of await walkFiles(suiteRoot)) {
       if (!harnessSourceFilePattern.test(file)) {
@@ -472,6 +485,74 @@ export async function discoverCases(options) {
   }
   caseFiles.sort((left, right) => `${left.relativePath}:${left.configurationName}`.localeCompare(`${right.relativePath}:${right.configurationName}`));
   return options.limit > 0 ? caseFiles.slice(0, options.limit) : caseFiles;
+}
+
+async function discoverProjectCases(selectedCaseRoot, options) {
+  const suiteRoot = join(selectedCaseRoot, "project");
+  const cases = [];
+  for (const file of await walkFiles(suiteRoot)) {
+    if (!/\.json$/i.test(file)) {
+      continue;
+    }
+    const relativePath = relative(selectedCaseRoot, file).split(sep).join("/");
+    if (options.filter !== "" && !relativePath.includes(options.filter)) {
+      continue;
+    }
+    const descriptor = await readProjectTestDescriptor(file);
+    const caseName = relativePath.split("/").at(-1).replace(/\.json$/i, "");
+    for (const moduleKind of ["commonjs", "amd"]) {
+      cases.push({
+        corpus: options.corpus,
+        suite: "project",
+        kind: "project",
+        sourcePath: file,
+        relativePath,
+        caseName,
+        sourceBaseName: relativePath.split("/").at(-1),
+        configurationName: `module=${moduleKind}`,
+        configuration: new Map([["module", moduleKind]]),
+        descriptor,
+        moduleKind,
+      });
+    }
+  }
+  return cases;
+}
+
+async function readProjectTestDescriptor(file) {
+  const sourceText = await readSourceText(file);
+  try {
+    const descriptor = JSON.parse(sourceText);
+    assertProjectTestDescriptor(file, descriptor);
+    return descriptor;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid project test descriptor '${file}': ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+function assertProjectTestDescriptor(file, descriptor) {
+  if (descriptor === null || typeof descriptor !== "object" || Array.isArray(descriptor)) {
+    throw new Error("descriptor must be an object");
+  }
+  if (typeof descriptor.scenario !== "string" || descriptor.scenario === "") {
+    throw new Error("descriptor.scenario must be a non-empty string");
+  }
+  if (typeof descriptor.projectRoot !== "string" || descriptor.projectRoot === "") {
+    throw new Error("descriptor.projectRoot must be a non-empty string");
+  }
+  if (descriptor.inputFiles !== undefined && (!Array.isArray(descriptor.inputFiles) || !descriptor.inputFiles.every((entry) => typeof entry === "string"))) {
+    throw new Error("descriptor.inputFiles must be an array of strings when present");
+  }
+  const projectRoot = projectRootRelativeToCaseRoot(descriptor.projectRoot);
+  if (!projectRoot.startsWith("projects/")) {
+    throw new Error(`descriptor.projectRoot must point under tests/cases/projects in '${file}'`);
+  }
+  if (descriptor.project !== undefined && typeof descriptor.project !== "string") {
+    throw new Error("descriptor.project must be a string when present");
+  }
 }
 
 export function isLanguageServiceHarnessCase(sourceText) {
@@ -939,6 +1020,9 @@ function parseBoolean(value) {
 }
 
 export function baselineHasErrors(testCase) {
+  if (testCase.corpus === "typescript" && testCase.suite === "project") {
+    return projectBaselineHasErrors(testCase);
+  }
   for (const baselineDir of baselineDirectories(testCase)) {
     const expected = baselineDirectoryHasErrors(baselineDir, testCase);
     if (expected !== undefined) {
@@ -946,6 +1030,15 @@ export function baselineHasErrors(testCase) {
     }
   }
   return false;
+}
+
+function projectBaselineHasErrors(testCase) {
+  const moduleFolder = testCase.moduleKind === "amd" ? "amd" : "node";
+  const errorsPath = join(typeScriptSubmoduleBaselineRoot, "project", testCase.caseName, moduleFolder, `${testCase.caseName}.errors.txt`);
+  if (!existsSync(errorsPath)) {
+    return false;
+  }
+  return /\berror TS\d+:/.test(stripAnsiEscapes(readFileSync(errorsPath, "utf8")));
 }
 
 function baselineDirectoryHasErrors(baselineDir, testCase) {
@@ -1004,6 +1097,10 @@ function configuredCaseName(testCase) {
 }
 
 async function materializeCase(testCase, runRoot) {
+  if (testCase.kind === "project") {
+    return materializeProjectCase(testCase, runRoot);
+  }
+
   const sourceText = await readSourceText(testCase.sourcePath);
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
   const pathOptions = harnessPathOptionsFromSettings(testCase.configuration);
@@ -1075,6 +1172,151 @@ async function materializeCase(testCase, runRoot) {
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
     skipReason,
   };
+}
+
+async function materializeProjectCase(testCase, runRoot) {
+  const descriptor = testCase.descriptor ?? await readProjectTestDescriptor(testCase.sourcePath);
+  const projectRoot = projectRootRelativeToCaseRoot(descriptor.projectRoot);
+  const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRoot);
+
+  const caseDir = join(runRoot, caseDirectoryFragment(testCase));
+  const materializedCaseRoot = join(caseDir, "tests/cases");
+  const materializedProjectRoot = join(materializedCaseRoot, projectRoot);
+  await mkdir(materializedProjectRoot, { recursive: true });
+  if (existsSync(sourceProjectRoot)) {
+    await cp(sourceProjectRoot, materializedProjectRoot, { recursive: true, force: true });
+  }
+  await writeFile(join(caseDir, "package.json"), "{}\n");
+
+  const compilerOptions = compilerOptionsForProjectDescriptor(descriptor, testCase.moduleKind, caseDir);
+  const invocation = projectInvocationForDescriptor(descriptor, compilerOptions, materializedProjectRoot);
+  return {
+    caseDir,
+    invocation,
+    writtenFiles: (await walkFiles(materializedProjectRoot)).map((file) => relative(materializedProjectRoot, file).split(sep).join("/")),
+    expectedErrors: caseExpectedErrors(testCase, compilerOptions),
+    skipReason: getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions),
+  };
+}
+
+function projectRootRelativeToCaseRoot(projectRoot) {
+  return normalizeProjectDescriptorPath(projectRoot).replace(/^tests\/cases\//, "");
+}
+
+function normalizeProjectDescriptorPath(path) {
+  return path.replaceAll("\\", "/").replace(/^\/+/, "").replace(/\/+$/, "");
+}
+
+export function compilerOptionsForProjectDescriptor(descriptor, moduleKind, caseDir = "") {
+  const compilerOptions = {
+    noErrorTruncation: false,
+    skipDefaultLibCheck: false,
+    moduleResolution: "classic",
+    module: moduleKind,
+    newLine: "crlf",
+  };
+  const projectMetaKeys = new Set([
+    "scenario",
+    "projectRoot",
+    "inputFiles",
+    "resolveMapRoot",
+    "resolveSourceRoot",
+    "baselineCheck",
+    "runTest",
+    "bug",
+    "project",
+    "emittedFiles",
+  ]);
+  for (const [rawName, rawValue] of Object.entries(descriptor)) {
+    const name = rawName.toLowerCase();
+    if (projectMetaKeys.has(rawName)) {
+      continue;
+    }
+    if (rawName === "mapRoot") {
+      compilerOptions.mapRoot = descriptor.resolveMapRoot === true && typeof rawValue === "string"
+        ? join(caseDir, normalizeProjectDescriptorPath(rawValue))
+        : rawValue;
+      continue;
+    }
+    if (rawName === "sourceRoot") {
+      compilerOptions.sourceRoot = descriptor.resolveSourceRoot === true && typeof rawValue === "string"
+        ? join(caseDir, normalizeProjectDescriptorPath(rawValue))
+        : rawValue;
+      continue;
+    }
+    const optionName = compilerOptionNameFromJsonKey(name);
+    if (optionName === undefined) {
+      continue;
+    }
+    compilerOptions[optionName] = rawValue;
+  }
+  return compilerOptions;
+}
+
+function compilerOptionNameFromJsonKey(name) {
+  if (booleanOptions.has(name)) {
+    return booleanOptionNames.get(name);
+  }
+  return stringOptions.get(name) ?? numberOptions.get(name) ?? listOptions.get(name);
+}
+
+function projectInvocationForDescriptor(descriptor, compilerOptions, materializedProjectRoot) {
+  if (typeof descriptor.project === "string" && descriptor.project !== "") {
+    return {
+      cwd: materializedProjectRoot,
+      args: [
+        "-p",
+        join(materializedProjectRoot, descriptor.project, "tsconfig.json"),
+        ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+        "--pretty",
+        "false",
+      ],
+    };
+  }
+
+  if (Array.isArray(descriptor.inputFiles) && descriptor.inputFiles.length !== 0) {
+    return {
+      cwd: materializedProjectRoot,
+      args: [
+        "--ignoreConfig",
+        ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+        "--pretty",
+        "false",
+        ...descriptor.inputFiles,
+      ],
+    };
+  }
+
+  return {
+    cwd: materializedProjectRoot,
+    args: [
+      "-p",
+      join(materializedProjectRoot, "tsconfig.json"),
+      ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+      "--pretty",
+      "false",
+    ],
+  };
+}
+
+function compilerCommandLineArgsForProjectOptions(compilerOptions) {
+  const args = [];
+  for (const key of Object.keys(compilerOptions).sort()) {
+    const value = compilerOptions[key];
+    if (value === undefined) {
+      continue;
+    }
+    args.push(`--${key}`);
+    if (value === true) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      args.push(value.join(","));
+      continue;
+    }
+    args.push(String(value));
+  }
+  return args;
 }
 
 async function materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions) {

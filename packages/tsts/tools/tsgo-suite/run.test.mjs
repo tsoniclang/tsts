@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -913,9 +913,11 @@ test("getFileBasedTestConfigurations expands JSX and moduleDetection variations"
 test("parseArgs validates supported suites", () => {
   assert.equal(parseArgs(["--suite", "compiler"]).suite, "compiler");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "conformance"]).corpus, "typescript");
+  assert.equal(parseArgs(["--corpus", "typescript", "--suite", "project"]).suite, "project");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "transpile"]).suite, "transpile");
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
+  assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "current", "--suite", "transpile"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "unknown"]), /Unsupported corpus/);
 });
@@ -979,6 +981,68 @@ test("discoverCases excludes TypeScript LS harness cases before scheduling", asy
   assert.deepEqual(parserIndenterCases, []);
 });
 
+test("discoverCases schedules project descriptors instead of fixture source files", async () => {
+  const cases = await discoverCases({
+    corpus: "typescript",
+    suite: "project",
+    filter: "project/baseline.json",
+    limit: 0,
+  });
+  assert.deepEqual(cases.map((testCase) => ({
+    suite: testCase.suite,
+    kind: testCase.kind,
+    relativePath: testCase.relativePath,
+    caseName: testCase.caseName,
+    configurationName: testCase.configurationName,
+    projectRoot: testCase.descriptor.projectRoot,
+    inputFiles: testCase.descriptor.inputFiles,
+  })), [
+    {
+      suite: "project",
+      kind: "project",
+      relativePath: "project/baseline.json",
+      caseName: "baseline",
+      configurationName: "module=amd",
+      projectRoot: "tests/cases/projects/baseline",
+      inputFiles: ["emit.ts"],
+    },
+    {
+      suite: "project",
+      kind: "project",
+      relativePath: "project/baseline.json",
+      caseName: "baseline",
+      configurationName: "module=commonjs",
+      projectRoot: "tests/cases/projects/baseline",
+      inputFiles: ["emit.ts"],
+    },
+  ]);
+});
+
+test("compilerOptionsForProjectDescriptor mirrors upstream project defaults and descriptor overrides", () => {
+  assert.deepEqual(compilerOptionsForProjectDescriptor({
+    scenario: "map roots",
+    projectRoot: "tests/cases/projects/outputdir_simple",
+    inputFiles: ["test.ts"],
+    declaration: true,
+    sourceMap: true,
+    outDir: "outdir/simple",
+    mapRoot: "tests/cases/projects/outputdir_simple/mapFiles",
+    resolveMapRoot: true,
+    sourceRoot: "../src",
+  }, "amd", "/tmp/case"), {
+    noErrorTruncation: false,
+    skipDefaultLibCheck: false,
+    moduleResolution: "classic",
+    module: "amd",
+    newLine: "crlf",
+    declaration: true,
+    sourceMap: true,
+    outDir: "outdir/simple",
+    mapRoot: "/tmp/case/tests/cases/projects/outputdir_simple/mapFiles",
+    sourceRoot: "../src",
+  });
+});
+
 test("errorDiffNewSideHasErrors reads effective TS-Go expectations from baseline diffs", () => {
   const diff = new URL("../../_vendor/typescript-go/testdata/baselines/reference/submoduleTriaged/compiler/augmentExportEquals2.errors.txt.diff", import.meta.url);
   assert.equal(errorDiffNewSideHasErrors(diff.pathname), false);
@@ -1040,6 +1104,25 @@ test("baselineHasErrors falls back to TypeScript submodule baselines for submodu
   }), true);
 });
 
+test("baselineHasErrors reads TypeScript project baselines by module variant", () => {
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "project",
+    relativePath: "project/baseline.json",
+    caseName: "baseline",
+    configurationName: "module=commonjs",
+    moduleKind: "commonjs",
+  }), true);
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "project",
+    relativePath: "project/baseline.json",
+    caseName: "baseline",
+    configurationName: "module=amd",
+    moduleKind: "amd",
+  }), true);
+});
+
 test("getSkipReason does not skip compiler cases", () => {
   const base = { sourceBaseName: "case.ts", configuration: new Map() };
   assert.equal(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), "");
@@ -1082,6 +1165,8 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.equal(inventory.currentHarness.inScope, 166);
   assert.ok(inventory.typeScriptCases.entries.compiler > inventory.currentHarness.entries.compiler);
   assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
+  assert.equal(inventory.typeScriptCases.entries.project, 316);
+  assert.equal(inventory.typeScriptCases.entries.projects, 0);
   assert.equal(inventory.typeScriptCases.languageServiceHarnessCases, 2);
   assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.unittests + inventory.typeScriptCases.languageServiceHarnessCases);
   assert.ok(inventory.baselines.entries.fourslash > 0);
