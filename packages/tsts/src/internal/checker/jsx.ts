@@ -684,7 +684,7 @@ export function Checker_discriminateContextualTypeByJSXAttributes(receiver: GoPt
     if (symbol!.Name === jsxChildrenPropertyName && IsJsxElement(element) && GetSemanticJsxChildren(Node_Children(element)!.Nodes).length !== 0) {
       return false;
     }
-    return jsxAttributesSymbol!.Members.get(symbol!.Name) === undefined && Checker_isDiscriminantProperty(receiver, contextualType, symbol!.Name);
+    return jsxAttributesSymbol!.Members?.get(symbol!.Name) === undefined && Checker_isDiscriminantProperty(receiver, contextualType, symbol!.Name);
   });
   const discriminatorData: ObjectLiteralDiscriminator = { c: receiver, props: discriminantProperties, members: discriminantMembers };
   const discriminator = {

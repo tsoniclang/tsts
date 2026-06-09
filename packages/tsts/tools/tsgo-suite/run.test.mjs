@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, compilerCommandLineArgsForMaterializedCase, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsFromSettings, decodeSourceText, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, hasRootPackageJson, isEmittedJavaScriptSibling, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, selectInputFiles } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -36,20 +36,58 @@ import "foo";`, "fallback.ts");
   ]);
 });
 
+test("rewriteHarnessFileContent rewrites virtual JSON paths relative to the materialized file", () => {
+  assert.equal(
+    rewriteHarnessFileContent(`{ "name": "typescript", "types": "/.ts/typescript.d.ts" }`, "node_modules/typescript/package.json", { useCaseSensitiveFileNames: true }),
+    `{\n    "name": "typescript",\n    "types": "../../.ts/typescript.d.ts"\n}\n`,
+  );
+});
+
+test("rewriteHarnessFileContent rewrites virtual absolute module specifiers into the case root", () => {
+  assert.equal(
+    rewriteHarnessFileContent(`import thing from "/pkg";
+export { thing } from "/pkg/sub";
+const lazy = import("/some-mod");
+const cjs = require("/nested/cjs");`, "src/index.ts", { useCaseSensitiveFileNames: true }),
+    `import thing from "../pkg";
+export { thing } from "../pkg/sub";
+const lazy = import("../some-mod");
+const cjs = require("../nested/cjs");`,
+  );
+});
+
+test("harnessApiDeclarationFileNames discovers TypeScript API virtual declarations", () => {
+  const parsed = parseFileBasedTest(`// @filename: node_modules/typescript/package.json
+{ "types": "/.ts/typescript.d.ts" }
+
+// @filename: node_modules/tsserverlibrary-internal/package.json
+{ "types": "/.ts/tsserverlibrary.internal.d.ts" }
+
+// @filename: index.ts
+import ts = require("typescript");`, "api.ts");
+  assert.deepEqual(harnessApiDeclarationFileNames(parsed), ["tsserverlibrary.internal.d.ts", "typescript.d.ts"]);
+});
+
 test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
   const settings = new Map([
     ["strict", "true"],
     ["target", "es2020"],
     ["module", "commonjs"],
+    ["allowimportingtsextensions", "true"],
+    ["allowumdglobalaccess", "true"],
+    ["importsnotusedasvalues", "preserve"],
     ["lib", "es2020,dom"],
     ["declaration", "true;"],
     ["importhelpers", "true"],
+    ["keyofstringsonly", "true"],
     ["isolatedmodules", "true"],
     ["maxnodemodulejsdepth", "1"],
     ["noresolve", "true"],
     ["nolib", "true"],
     ["downleveliteration", "true"],
     ["nopropertyaccessfromindexsignature", "true"],
+    ["noimplicitoverride", "true"],
+    ["preservevalueimports", "true"],
     ["allowarbitraryextensions", "true"],
     ["allowunusedlabels", "false"],
     ["composite", "true"],
@@ -59,6 +97,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     ["nofallthroughcasesinswitch", "true"],
     ["noimplicitreturns", "true"],
     ["noimplicitthis", "true"],
+    ["noimplicitusestrict", "true"],
     ["nouncheckedindexedaccess", "true"],
     ["pretty", "true"],
     ["rewriterelativeimportextensions", "true"],
@@ -72,16 +111,22 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     skipDefaultLibCheck: true,
     target: "es2020",
     module: "commonjs",
+    allowImportingTsExtensions: true,
+    allowUmdGlobalAccess: true,
+    importsNotUsedAsValues: "preserve",
     strict: true,
     lib: ["es2020", "dom"],
     declaration: true,
     importHelpers: true,
+    keyofStringsOnly: true,
     isolatedModules: true,
     maxNodeModuleJsDepth: 1,
     noResolve: true,
     noLib: true,
     downlevelIteration: true,
     noPropertyAccessFromIndexSignature: true,
+    noImplicitOverride: true,
+    preserveValueImports: true,
     allowArbitraryExtensions: true,
     allowUnusedLabels: false,
     composite: true,
@@ -91,6 +136,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     noFallthroughCasesInSwitch: true,
     noImplicitReturns: true,
     noImplicitThis: true,
+    noImplicitUseStrict: true,
     noUncheckedIndexedAccess: true,
     pretty: true,
     rewriteRelativeImportExtensions: true,
@@ -150,6 +196,39 @@ function bar() {
   assert.deepEqual(selectInputFiles(parsed, writtenFiles, new Map()), ["a.ts", "b.js", "b.js.map"]);
 });
 
+test("selectInputFiles does not promote materialized JSON imports to command-line roots", () => {
+  const parsed = parseFileBasedTest(`// @allowArbitraryExtensions: true
+// @resolveJsonModule: false
+// @filename: main.ts
+import data from "./data.json";
+// @filename: data.json
+{}
+// @filename: data.d.json.ts
+declare var val: string;`, "json.ts");
+  const writtenFiles = ["main.ts", "data.json", "data.d.json.ts", "package.json"];
+  assert.deepEqual(selectInputFiles(parsed, writtenFiles, parsed.globalOptions), ["main.ts", "data.d.json.ts"]);
+});
+
+test("selectInputFiles does not treat a declaration named require as a require call", () => {
+  const parsed = parseFileBasedTest(`// @filename: subfolder/index.ts
+function require() {}
+export const value = 1;
+// @filename: index.ts
+function require() {}
+export const value = 2;`, "generatedNameCollisions.ts");
+  const writtenFiles = ["subfolder/index.ts", "index.ts", "package.json"];
+  assert.deepEqual(selectInputFiles(parsed, writtenFiles, parsed.globalOptions), ["subfolder/index.ts", "index.ts"]);
+});
+
+test("selectInputFiles treats real CommonJS require calls as explicit-reference roots", () => {
+  const parsed = parseFileBasedTest(`// @filename: dependency.ts
+export const value = 1;
+// @filename: index.ts
+const dependency = require("./dependency");`, "requireCall.ts");
+  const writtenFiles = ["dependency.ts", "index.ts", "package.json"];
+  assert.deepEqual(selectInputFiles(parsed, writtenFiles, parsed.globalOptions), ["index.ts"]);
+});
+
 test("selectInputFiles does not promote authored project metadata to root files", () => {
   const parsed = parseFileBasedTest(`// @filename: package.json
 {"name":"pkg"}
@@ -166,6 +245,7 @@ export const value = 1;`, "fallback.ts");
 test("compilerOptionsFromSettings maps virtual path options into the materialized case", () => {
   const settings = new Map([
     ["outdir", "A:/"],
+    ["out", "/legacy.js"],
     ["rootdir", "A:/src"],
     ["declarationdir", "/decls"],
     ["tsbuildinfofile", "/a.tsbuildinfo"],
@@ -176,6 +256,7 @@ test("compilerOptionsFromSettings maps virtual path options into the materialize
     skipDefaultLibCheck: true,
     target: "ES2024",
     outDir: "A:/",
+    out: "legacy.js",
     rootDir: "A:/src",
     declarationDir: "decls",
     tsBuildInfoFile: "a.tsbuildinfo",
@@ -337,6 +418,28 @@ test("compilerOptionsForExistingProjectConfig gives file-based directives comman
   });
 });
 
+test("compilerOptionsForExistingProjectConfig normalizes file-based harness string lists", () => {
+  assert.deepEqual(compilerOptionsForExistingProjectConfig({
+    files: "a.ts",
+    include: "src/**/*.ts",
+    exclude: "dist",
+    compilerOptions: {
+      moduleResolution: "node16",
+    },
+  }, new Map()), {
+    files: ["a.ts"],
+    include: ["src/**/*.ts"],
+    exclude: ["dist"],
+    compilerOptions: {
+      newLine: "crlf",
+      noErrorTruncation: true,
+      skipDefaultLibCheck: true,
+      target: "ES2024",
+      moduleResolution: "node16",
+    },
+  });
+});
+
 test("compilerOptionsForMaterializedCase respects virtual volume mismatches", () => {
   const parsed = parseFileBasedTest(`// @target: es2015
 // @useCaseSensitiveFileNames: true
@@ -412,6 +515,59 @@ test("getFileBasedTestConfigurations expands TS-Go variations", () => {
   ]);
 });
 
+test("getFileBasedTestConfigurations expands wildcard targets and modules", () => {
+  const targetConfigurations = getFileBasedTestConfigurations(new Map([
+    ["target", "*,-es3"],
+  ]));
+  assert.equal(targetConfigurations.length, 13);
+  assert.deepEqual(targetConfigurations.slice(0, 3).map((configuration) => configuration.settings.get("target")), ["es5", "es6", "es2016"]);
+  assert.equal(targetConfigurations.at(-1).settings.get("target"), "esnext");
+
+  const moduleConfigurations = getFileBasedTestConfigurations(new Map([
+    ["module", "*"],
+  ]));
+  assert.equal(moduleConfigurations.length, 13);
+  assert.deepEqual(moduleConfigurations.slice(0, 4).map((configuration) => configuration.settings.get("module")), ["commonjs", "amd", "umd", "system"]);
+});
+
+test("getFileBasedTestConfigurations de-duplicates enum aliases by compiler value", () => {
+  assert.deepEqual(getFileBasedTestConfigurations(new Map([
+    ["target", "es6,es2015"],
+    ["module", "es6,es2015"],
+  ])).map((configuration) => ({
+    name: configuration.name,
+    module: configuration.settings.get("module"),
+    target: configuration.settings.get("target"),
+  })), [{
+    name: "",
+    module: "es6",
+    target: "es6",
+  }]);
+});
+
+test("compilerOptionsForMaterializedCase preserves missing module for node module-resolution diagnostics", () => {
+  const parsed = parseFileBasedTest(`// @moduleResolution: node16
+// @filename: a.ts
+import "./b";`, "a.ts");
+  assert.equal(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["a.ts"]).module, undefined);
+});
+
+test("compilerOptionsForMaterializedCase prevents JavaScript emit overwrite when harness suppresses output-path checks", () => {
+  const parsed = parseFileBasedTest(`// @allowJS: true
+// @suppressOutputPathCheck: true
+// @filename: 0.js
+/** @param {number=} n */
+function foo(n) {}`, "jsdoc.ts");
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["0.js"]), {
+    newLine: "crlf",
+    noErrorTruncation: true,
+    skipDefaultLibCheck: true,
+    target: "ES2024",
+    allowJs: true,
+    outDir: ".out",
+  });
+});
+
 test("getFileBasedTestConfigurations lets variation values override base options", () => {
   const configurations = getFileBasedTestConfigurations(new Map([
     ["target", "es5, es2015"],
@@ -467,6 +623,24 @@ test("getFileBasedTestConfigurations expands noLib with target variations", () =
       target: "es2015",
     },
   ]);
+});
+
+test("getFileBasedTestConfigurations expands override, property-access, and value-import variations", () => {
+  const configurations = getFileBasedTestConfigurations(new Map([
+    ["noimplicitoverride", "true,false"],
+    ["nopropertyaccessfromindexsignature", "true,false"],
+    ["preservevalueimports", "true,false"],
+    ["nouncheckedindexedaccess", "true,false"],
+  ]));
+  assert.equal(configurations.length, 16);
+  assert.deepEqual(configurations[0].settings.get("noimplicitoverride"), "true");
+  assert.deepEqual(configurations[0].settings.get("nopropertyaccessfromindexsignature"), "true");
+  assert.deepEqual(configurations[0].settings.get("preservevalueimports"), "true");
+  assert.deepEqual(configurations[0].settings.get("nouncheckedindexedaccess"), "true");
+  assert.deepEqual(configurations.at(-1).settings.get("noimplicitoverride"), "false");
+  assert.deepEqual(configurations.at(-1).settings.get("nopropertyaccessfromindexsignature"), "false");
+  assert.deepEqual(configurations.at(-1).settings.get("preservevalueimports"), "false");
+  assert.deepEqual(configurations.at(-1).settings.get("nouncheckedindexedaccess"), "false");
 });
 
 test("getFileBasedTestConfigurations expands alwaysStrict with target variations", () => {
@@ -605,6 +779,40 @@ test("isEmittedJavaScriptSibling excludes generated JS beside TS sources", () =>
   assert.equal(isEmittedJavaScriptSibling(emitted.pathname), true);
 });
 
+test("isLanguageServiceHarnessCase identifies LS harness real-world cases only", () => {
+  assert.equal(isLanguageServiceHarnessCase(`///<reference path='..\\services\\typescriptServices.ts' />
+declare var assert: Harness.Assert;
+declare var describe;
+declare var it;
+declare var run;
+declare var IO: IIO;`), true);
+  assert.equal(isLanguageServiceHarnessCase(`///<reference path='formatting.ts' />
+export class Indenter implements ILineIndenationResolver {
+  constructor(public snapshot: ITextSnapshot, public editorOptions: Services.EditorOptions) {}
+}`), true);
+  assert.equal(isLanguageServiceHarnessCase(`declare var it: Iterator<number>;
+for (const value of it) {
+  value;
+}`), false);
+});
+
+test("discoverCases excludes TypeScript LS harness cases before scheduling", async () => {
+  const parserHarnessCases = await discoverCases({
+    corpus: "typescript",
+    suite: "conformance",
+    filter: "parserharness",
+    limit: 0,
+  });
+  const parserIndenterCases = await discoverCases({
+    corpus: "typescript",
+    suite: "conformance",
+    filter: "parserindenter",
+    limit: 0,
+  });
+  assert.deepEqual(parserHarnessCases, []);
+  assert.deepEqual(parserIndenterCases, []);
+});
+
 test("errorDiffNewSideHasErrors reads effective TS-Go expectations from baseline diffs", () => {
   const diff = new URL("../../_vendor/typescript-go/testdata/baselines/reference/submoduleTriaged/compiler/augmentExportEquals2.errors.txt.diff", import.meta.url);
   assert.equal(errorDiffNewSideHasErrors(diff.pathname), false);
@@ -666,15 +874,41 @@ test("baselineHasErrors falls back to TypeScript submodule baselines for submodu
   }), true);
 });
 
-test("getSkipReason mirrors TS-Go unsupported compiler-option skips", () => {
+test("getSkipReason does not skip compiler cases", () => {
   const base = { sourceBaseName: "case.ts", configuration: new Map() };
-  assert.match(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), /unsupported target/);
-  assert.match(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), /alwaysStrict=false/);
+  assert.equal(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), "");
+  assert.equal(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), "");
+  assert.equal(getSkipReason({ ...base, sourceBaseName: "moduleNoneDynamicImport.ts" }), "");
 });
 
-test("compilerOptionsFromSettings preserves unsupported target values for skip policy", () => {
+test("compilerOptionsFromSettings preserves removed option values for TS-Go diagnostics", () => {
   const options = compilerOptionsFromSettings(new Map([["target", "ES5"]]));
   assert.equal(options.target, "ES5");
+});
+
+test("caseExpectedErrors treats TS-Go removed option diagnostics as expected errors", () => {
+  const cleanCase = {
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/emitHelpersWithLocalCollisions.ts",
+    caseName: "emitHelpersWithLocalCollisions",
+    configurationName: "",
+  };
+  assert.equal(baselineHasErrors(cleanCase), false);
+  assert.equal(caseExpectedErrors(cleanCase, { target: "ES5" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { module: "amd" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { moduleResolution: "classic" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { alwaysStrict: false }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { esModuleInterop: false }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { allowSyntheticDefaultImports: false }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { baseUrl: "." }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { out: "all.js" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { outFile: "bundle.js" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { keyofStringsOnly: true }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { noImplicitUseStrict: true }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { importsNotUsedAsValues: "preserve" }), true);
+  assert.equal(caseExpectedErrors(cleanCase, { downlevelIteration: true }), true);
+  assert.equal(compilerOptionsRequireTsGoRemovedOptionDiagnostic({ target: "ES2024" }), false);
 });
 
 test("buildTestUniverseInventory tracks full compiler scope and excludes language service scope", async () => {
@@ -682,7 +916,8 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.equal(inventory.currentHarness.inScope, 166);
   assert.ok(inventory.typeScriptCases.entries.compiler > inventory.currentHarness.entries.compiler);
   assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
-  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.unittests);
+  assert.equal(inventory.typeScriptCases.languageServiceHarnessCases, 2);
+  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.unittests + inventory.typeScriptCases.languageServiceHarnessCases);
   assert.ok(inventory.baselines.entries.fourslash > 0);
   assert.ok(inventory.baselines.entries.lsp > 0);
   assert.ok(inventory.baselines.outOfScope > inventory.baselines.entries.fourslash);

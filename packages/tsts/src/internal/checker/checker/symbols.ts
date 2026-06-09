@@ -36,7 +36,7 @@ import { CompilerOptions_GetAllowImportingTsExtensions, CompilerOptions_GetIsola
 import { ModuleKindNode16, ModuleKindNode18, ModuleKindNode20, ModuleKindNodeNext, ModuleKindESNext, ModuleKindSystem } from "../../core/compileroptions.js";
 import { ModuleKind_String } from "../../core/modulekind_stringer_generated.js";
 import type { Tristate } from "../../core/tristate.js";
-import { Tristate_IsFalseOrUnknown, Tristate_IsTrue, Tristate_IsTrueOrUnknown, TSTrue } from "../../core/tristate.js";
+import { Tristate_IsFalseOrUnknown, Tristate_IsTrue, Tristate_IsTrueOrUnknown, TSUnknown, TSTrue } from "../../core/tristate.js";
 import { NodeFlagsJSDoc, NodeFlagsAmbient, NodeFlagsHasAsyncFunctions, NodeFlagsHasImplicitReturn, NodeFlagsHasExplicitReturn, NodeFlagsExportContext, NodeFlagsUsing } from "../../ast/nodeflags.js";
 import { Node_Pos, Node_Name, Node_FunctionLikeData, Node_ForEachChild, Node_FlowNodeData } from "../../ast/spine.js";
 import { NewElementAccessExpression, NewParenthesizedExpression, NewStringLiteral, NewKeywordExpression, NewPropertyAccessExpression } from "../../ast/generated/factory.js";
@@ -417,7 +417,7 @@ export function Checker_createNameResolverForSuggestion(receiver: GoPtr<Checker>
  * }
  */
 export function Checker_getRequiresScopeChangeCache(receiver: GoPtr<Checker>, node: GoPtr<Node>): Tristate {
-  return (LinkStore_Get(receiver!.nodeLinks, node) as GoPtr<NodeLinks>)!.declarationRequiresScopeChange;
+  return (LinkStore_Get(receiver!.nodeLinks, node) as GoPtr<NodeLinks>)!.declarationRequiresScopeChange ?? TSUnknown;
 }
 
 /**
@@ -6198,7 +6198,7 @@ export function Checker_checkIdentifier(receiver: GoPtr<Checker>, node: GoPtr<No
   const typeIsAutomatic = t === receiver!.autoType || t === receiver!.autoArrayType;
   const isAutomaticTypeInNonNull = typeIsAutomatic && node!.Parent !== undefined && node!.Parent.Kind === KindNonNullExpression;
   while (flowContainer !== declarationContainer &&
-      (IsArrowFunction(flowContainer) || IsObjectLiteralOrClassExpressionMethodOrAccessor(flowContainer)) &&
+      (flowContainer!.Kind === KindFunctionExpression || IsArrowFunction(flowContainer) || IsObjectLiteralOrClassExpressionMethodOrAccessor(flowContainer)) &&
       ((Checker_isConstantVariable(receiver, localOrExportSymbol) && t !== receiver!.autoArrayType) ||
         (Checker_isParameterOrMutableLocalVariable(receiver, localOrExportSymbol) && Checker_isPastLastAssignment(receiver, localOrExportSymbol, node)))) {
     flowContainer = Checker_getControlFlowContainer(receiver, flowContainer);
@@ -15121,7 +15121,12 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
  */
 export function Checker_getEnumMemberValue(receiver: GoPtr<Checker>, node: GoPtr<Node>): Result {
   Checker_computeEnumMemberValues(receiver, node!.Parent);
-  return LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, node)!.value;
+  return LinkStore_Get(receiver!.enumMemberLinks as unknown as GoPtr<LinkStore<GoPtr<Node>, { value: Result }>>, node)!.value ?? {
+    Value: undefined,
+    IsSyntacticallyString: false as bool,
+    ResolvedOtherFiles: false as bool,
+    HasExternalReferences: false as bool,
+  };
 }
 
 /**
