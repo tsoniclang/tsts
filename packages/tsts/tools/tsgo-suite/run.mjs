@@ -27,7 +27,7 @@ const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
-  ["typescript", new Set(["compiler", "conformance"])],
+  ["typescript", new Set(["compiler", "conformance", "transpile"])],
 ]);
 const caseRootByCorpus = new Map([
   ["current", caseRoot],
@@ -304,7 +304,8 @@ Runs upstream TS-Go/TypeScript file-based tests through the TSTS CLI.
 
 Options:
   --corpus <current|typescript>        current=testdata/tests/cases; typescript=_submodules/TypeScript/tests/cases. Default: current.
-  --suite <all|compiler|conformance>  Suite to run. Default: all. Transpile/project suites are tracked but require specialized harnesses.
+  --suite <all|compiler|conformance|transpile>
+                                      Suite to run. Default: all. Project suites are tracked but require specialized harnesses.
   --filter <substring>                Run cases whose relative path contains the substring.
   --limit <n>                         Run at most n cases after filtering.
   --jobs <n>                          Parallel TSTS processes. Default: min(cpu count, 8).
@@ -697,6 +698,25 @@ export function compilerCommandLineArgsForMaterializedCase(compilerOptions, inpu
   return args;
 }
 
+export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, kind) {
+  const transpileOptions = {
+    ...compilerOptions,
+    noCheck: true,
+  };
+  delete transpileOptions.noEmit;
+  if (kind === "module") {
+    delete transpileOptions.declaration;
+    delete transpileOptions.declarationMap;
+    delete transpileOptions.emitDeclarationOnly;
+  } else if (kind === "declaration") {
+    transpileOptions.declaration = true;
+    transpileOptions.emitDeclarationOnly = true;
+  } else {
+    throw new Error(`Unsupported transpile invocation kind '${kind}'`);
+  }
+  return compilerCommandLineArgsForMaterializedCase(transpileOptions, [inputFile]);
+}
+
 function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   if (compilerOptions.typeRoots !== undefined || !settings.has("types")) {
     return;
@@ -704,9 +724,10 @@ function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   const pathOptions = harnessPathOptionsFromSettings(settings);
   const roots = [];
   const seen = new Set();
+  const files = parsed.units.map((unit) => normalizeHarnessPath(unit.fileName, pathOptions));
   for (const unit of parsed.units) {
     const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
-    const marker = "/node_modules/@types/";
+    const marker = "node_modules/@types/";
     const index = filePath.toLowerCase().indexOf(marker);
     if (index < 0) {
       continue;
@@ -719,7 +740,27 @@ function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   }
   if (roots.length !== 0) {
     compilerOptions.typeRoots = roots;
+  } else if (!hasMaterializedExplicitTypePackage(compilerOptions.types, files)) {
+    compilerOptions.typeRoots = [".empty-types"];
   }
+}
+
+function hasMaterializedExplicitTypePackage(typeNames, files) {
+  if (!Array.isArray(typeNames)) {
+    return false;
+  }
+  const normalizedFiles = new Set(files.map((file) => file.toLowerCase()));
+  for (const typeName of typeNames) {
+    const packagePath = `node_modules/${typeName.toLowerCase()}/`;
+    if (
+      normalizedFiles.has(`${packagePath}package.json`) ||
+      normalizedFiles.has(`${packagePath}index.d.ts`) ||
+      files.some((file) => file.toLowerCase().startsWith(packagePath))
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function applySafeJavaScriptEmitOutputDirectory(compilerOptions, settings, inputFiles) {
@@ -988,6 +1029,18 @@ async function materializeCase(testCase, runRoot) {
   }
   await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
 
+  if (isTranspileCase(testCase)) {
+    const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, writtenFiles);
+    return {
+      caseDir,
+      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions),
+      writtenFiles,
+      expectedErrors: false,
+      skipReason: "",
+      transpile: true,
+    };
+  }
+
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
@@ -1010,6 +1063,7 @@ async function materializeCase(testCase, runRoot) {
   if (needsLibFolder) {
     compilerOptions.skipLibCheck = true;
   }
+  await materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions);
   const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
   return {
     caseDir,
@@ -1021,6 +1075,72 @@ async function materializeCase(testCase, runRoot) {
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
     skipReason,
   };
+}
+
+async function materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions) {
+  if (Array.isArray(compilerOptions.typeRoots) && compilerOptions.typeRoots.includes(".empty-types")) {
+    await mkdir(join(caseDir, ".empty-types"), { recursive: true });
+  }
+}
+
+function isTranspileCase(testCase) {
+  return testCase.corpus === "typescript" && testCase.suite === "transpile";
+}
+
+export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions()) {
+  const sourceFiles = parsed.units
+    .map((unit) => normalizeHarnessPath(unit.fileName, pathOptions))
+    .filter((file) => harnessSourceFilePattern.test(file));
+  const invocations = [];
+  if (compilerOptions.emitDeclarationOnly !== true) {
+    for (const inputFile of sourceFiles) {
+      invocations.push({
+        label: `module:${inputFile}`,
+        args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "module"),
+        expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "module"),
+      });
+    }
+  }
+  if (compilerOptions.declaration === true) {
+    for (const inputFile of sourceFiles) {
+      invocations.push({
+        label: `declaration:${inputFile}`,
+        args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "declaration"),
+        expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "declaration"),
+      });
+    }
+  }
+  return invocations;
+}
+
+export function transpileExpectedOutputFiles(inputFile, compilerOptions, kind) {
+  if (kind === "module") {
+    const jsFile = changeHarnessExtension(inputFile, getJsOutputExtension(inputFile, compilerOptions));
+    const outputs = [jsFile];
+    if (compilerOptions.sourceMap === true && compilerOptions.inlineSourceMap !== true) {
+      outputs.push(`${jsFile}.map`);
+    }
+    return outputs;
+  }
+  if (kind === "declaration") {
+    const declarationFile = changeHarnessExtension(inputFile, ts.getDeclarationEmitExtensionForPath(inputFile));
+    const outputs = [declarationFile];
+    if (compilerOptions.declarationMap === true) {
+      outputs.push(`${declarationFile}.map`);
+    }
+    return outputs;
+  }
+  throw new Error(`Unsupported transpile output kind '${kind}'`);
+}
+
+function getJsOutputExtension(inputFile, compilerOptions) {
+  return ts.getOutputExtension(inputFile, {
+    jsx: compilerOptions.jsx === "preserve" ? ts.JsxEmit.Preserve : undefined,
+  });
+}
+
+function changeHarnessExtension(inputFile, extension) {
+  return inputFile.replace(/\.[cm]?[tj]sx?$/i, extension);
 }
 
 async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
@@ -1063,6 +1183,9 @@ function isExplicitRootFile(file) {
     return false;
   }
   if (/(^|\/)\.lib\//i.test(file)) {
+    return false;
+  }
+  if (/\.tsbuildinfo$/i.test(file)) {
     return false;
   }
   if (/\.json$/i.test(file)) {
@@ -1456,6 +1579,21 @@ async function runCase(testCase, runRoot) {
       stderr: "",
     };
   }
+  if (materialized.transpile === true) {
+    const result = await runTranspileInvocations(materialized);
+    return {
+      ...testCase,
+      caseDir: materialized.caseDir,
+      expectedErrors: materialized.expectedErrors,
+      actualErrors: result.actualErrors,
+      exitCode: result.exitCode,
+      signal: result.signal,
+      status: result.actualErrors ? "fail" : "pass",
+      skipReason: "",
+      stdout: result.stdout,
+      stderr: result.stderr,
+    };
+  }
   const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
   const statusMatches = actualErrors === materialized.expectedErrors;
@@ -1469,6 +1607,46 @@ async function runCase(testCase, runRoot) {
     status: statusMatches ? "pass" : "fail",
     skipReason: "",
     stdout: result.stdout,
+    stderr: result.stderr,
+  };
+}
+
+async function runTranspileInvocations(materialized) {
+  const outputs = [];
+  let actualErrors = false;
+  let exitCode = 0;
+  let signal = null;
+  for (const invocation of materialized.invocations) {
+    const result = await runTsts({
+      cwd: materialized.caseDir,
+      args: invocation.args,
+    });
+    const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
+    if (missingOutputs.length !== 0) {
+      actualErrors = true;
+    }
+    if (result.exitCode !== 0 && exitCode === 0) {
+      exitCode = result.exitCode;
+    }
+    if (result.signal !== null && signal === null) {
+      signal = result.signal;
+    }
+    outputs.push(renderTranspileInvocationOutput(invocation, result, missingOutputs));
+  }
+  return {
+    actualErrors,
+    exitCode,
+    signal,
+    stdout: outputs.map((output) => output.stdout).join(""),
+    stderr: outputs.map((output) => output.stderr).join(""),
+  };
+}
+
+function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
+  const header = `## ${invocation.label}\n`;
+  const missing = missingOutputs.length === 0 ? "" : `Missing outputs: ${missingOutputs.join(", ")}\n`;
+  return {
+    stdout: `${header}${missing}${result.stdout}`,
     stderr: result.stderr,
   };
 }
