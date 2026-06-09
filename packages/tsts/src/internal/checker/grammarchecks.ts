@@ -3172,7 +3172,14 @@ export function Checker_checkGrammarForInvalidDynamicName(receiver: GoPtr<Checke
   if (!Checker_isNonBindableDynamicName(receiver, node)) {
     return false;
   }
-  return Checker_grammarErrorOnNode(receiver, node as unknown as GoPtr<Node>, message);
+  const asNode = node as unknown as GoPtr<Node>;
+  const expression = IsElementAccessExpression(asNode)
+    ? SkipParentheses(AsElementAccessExpression(asNode)!.ArgumentExpression)
+    : Node_Expression(asNode);
+  if (!IsEntityNameExpression(expression)) {
+    return Checker_grammarErrorOnNode(receiver, asNode, message);
+  }
+  return false;
 }
 
 /**

@@ -106,6 +106,7 @@ const compilerVaryByOptions = new Set([
   "moduledetection",
   "moduleresolution",
   "noemit",
+  "noimplicitany",
   "nolib",
   "nouncheckedsideeffectimports",
   "nounusedlocals",
@@ -580,6 +581,7 @@ function defaultCompilerOptions() {
 
 function explicitCompilerOptionsFromSettings(settings) {
   const compilerOptions = {};
+  const pathOptions = harnessPathOptionsFromSettings(settings);
   for (const [rawName, rawValue] of settings) {
     if (rawName === "filename" || rawName === "currentdirectory" || rawName === "symlink") {
       continue;
@@ -587,7 +589,7 @@ function explicitCompilerOptionsFromSettings(settings) {
     const listName = listOptions.get(rawName);
     if (listName !== undefined) {
       compilerOptions[listName] = rawValue.replace(/;$/, "").split(",").map((entry) => entry.trim()).filter(Boolean).map((entry) =>
-        pathListOptions.has(rawName) ? normalizeHarnessOptionPath(entry) : entry
+        pathListOptions.has(rawName) ? normalizeHarnessOptionPath(entry, pathOptions) : entry
       );
       continue;
     }
@@ -610,9 +612,9 @@ function explicitCompilerOptionsFromSettings(settings) {
     const stringName = stringOptions.get(rawName);
     if (stringName !== undefined) {
       compilerOptions[stringName] = rawName === "jsximportsource"
-        ? normalizeHarnessModuleSpecifier(value)
+        ? normalizeHarnessModuleSpecifier(value, pathOptions)
         : pathStringOptions.has(rawName)
-        ? normalizeHarnessOptionPath(value)
+        ? normalizeHarnessOptionPath(value, pathOptions)
         : value;
       continue;
     }
@@ -634,8 +636,56 @@ export function compilerOptionsForExistingProjectConfig(config, settings) {
 
 export function compilerOptionsForMaterializedCase(settings, parsed, inputFiles) {
   const compilerOptions = compilerOptionsFromSettings(settings);
+  applyVirtualTypeRoots(compilerOptions, settings, parsed);
   applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed, inputFiles);
   return compilerOptions;
+}
+
+export function compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles) {
+  const args = ["--ignoreConfig"];
+  for (const key of Object.keys(compilerOptions).sort()) {
+    const value = compilerOptions[key];
+    if (value === undefined) {
+      continue;
+    }
+    args.push(`--${key}`);
+    if (value === true) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      args.push(value.join(","));
+      continue;
+    }
+    args.push(String(value));
+  }
+  args.push("--pretty", "false");
+  args.push(...inputFiles);
+  return args;
+}
+
+function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
+  if (compilerOptions.typeRoots !== undefined || !settings.has("types")) {
+    return;
+  }
+  const pathOptions = harnessPathOptionsFromSettings(settings);
+  const roots = [];
+  const seen = new Set();
+  for (const unit of parsed.units) {
+    const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
+    const marker = "/node_modules/@types/";
+    const index = filePath.toLowerCase().indexOf(marker);
+    if (index < 0) {
+      continue;
+    }
+    const root = filePath.slice(0, index + marker.length - 1);
+    if (!seen.has(root)) {
+      seen.add(root);
+      roots.push(root);
+    }
+  }
+  if (roots.length !== 0) {
+    compilerOptions.typeRoots = roots;
+  }
 }
 
 export function getFileBasedTestConfigurations(settings) {
@@ -817,6 +867,7 @@ function configuredCaseName(testCase) {
 async function materializeCase(testCase, runRoot) {
   const sourceText = await readSourceText(testCase.sourcePath);
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
+  const pathOptions = harnessPathOptionsFromSettings(testCase.configuration);
   const caseDir = join(runRoot, caseDirectoryFragment(testCase));
   await mkdir(caseDir, { recursive: true });
   const needsLibFolder = parsed.units.some((unit) => unit.content.includes("/.lib/")) || parsed.globalOptions.has("libfiles");
@@ -826,17 +877,17 @@ async function materializeCase(testCase, runRoot) {
 
   const writtenFiles = [];
   for (const unit of parsed.units) {
-    const filePath = normalizeHarnessPath(unit.fileName);
+    const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
     const fullPath = join(caseDir, filePath);
     await mkdir(dirname(fullPath), { recursive: true });
-    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath));
+    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions));
     writtenFiles.push(filePath);
   }
   if (!hasRootPackageJson(writtenFiles)) {
     await writeFile(join(caseDir, "package.json"), "{}\n");
     writtenFiles.push("package.json");
   }
-  await materializeSymlinks(caseDir, parsed.symlinks);
+  await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
 
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
@@ -844,7 +895,10 @@ async function materializeCase(testCase, runRoot) {
     const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, merged.compilerOptions ?? {});
     return {
       caseDir,
-      projectArg: join(caseDir, existingConfig),
+      invocation: {
+        cwd: caseDir,
+        args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
+      },
       writtenFiles,
       expectedErrors: baselineHasErrors(testCase),
       skipReason,
@@ -852,22 +906,20 @@ async function materializeCase(testCase, runRoot) {
   }
 
   const inputFiles = selectInputFiles(parsed, writtenFiles, testCase.configuration);
-  const tsconfig = {
-    compilerOptions: compilerOptionsForMaterializedCase(testCase.configuration, parsed, inputFiles),
-    files: inputFiles,
-  };
+  const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, inputFiles);
   if (needsLibFolder) {
-    tsconfig.compilerOptions.skipLibCheck = true;
+    compilerOptions.skipLibCheck = true;
   }
-  if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && tsconfig.compilerOptions.allowJs === undefined) {
-    tsconfig.compilerOptions.allowJs = true;
+  if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && compilerOptions.allowJs === undefined) {
+    compilerOptions.allowJs = true;
   }
-  const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, tsconfig.compilerOptions);
-  const configPath = join(caseDir, "tsconfig.json");
-  await writeFile(configPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+  const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
   return {
     caseDir,
-    projectArg: configPath,
+    invocation: {
+      cwd: caseDir,
+      args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
+    },
     writtenFiles,
     expectedErrors: baselineHasErrors(testCase),
     skipReason,
@@ -915,7 +967,7 @@ function isExplicitRootFile(file) {
   return true;
 }
 
-function rewriteHarnessFileContent(content, filePath) {
+function rewriteHarnessFileContent(content, filePath, pathOptions) {
   let rewritten = content;
   if (rewritten.includes("/.lib/")) {
     let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
@@ -929,15 +981,15 @@ function rewriteHarnessFileContent(content, filePath) {
   }
   return rewritten.replace(
     /(\/\/\/\s*<reference\s+path=["'])([^"']+)(["'])/gi,
-    (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath)}${suffix}`,
+    (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`,
   );
 }
 
-function rewriteHarnessReferencePath(referencePath, containingFilePath) {
+function rewriteHarnessReferencePath(referencePath, containingFilePath, pathOptions) {
   if (!isHarnessAbsolutePath(referencePath)) {
     return referencePath;
   }
-  const targetPath = normalizeHarnessPath(referencePath);
+  const targetPath = normalizeHarnessPath(referencePath, pathOptions);
   let rewritten = posixPath.relative(posixPath.dirname(containingFilePath), targetPath);
   if (rewritten === "") {
     rewritten = posixPath.basename(targetPath);
@@ -950,10 +1002,10 @@ function isHarnessAbsolutePath(fileName) {
   return /^[a-zA-Z]:\//.test(normalized) || normalized.startsWith("/");
 }
 
-async function materializeSymlinks(caseDir, symlinks) {
+async function materializeSymlinks(caseDir, symlinks, pathOptions) {
   for (const [link, target] of symlinks) {
-    const linkPath = join(caseDir, normalizeHarnessPath(link));
-    const targetPath = join(caseDir, normalizeHarnessPath(target));
+    const linkPath = join(caseDir, normalizeHarnessPath(link, pathOptions));
+    const targetPath = join(caseDir, normalizeHarnessPath(target, pathOptions));
     await mkdir(dirname(linkPath), { recursive: true });
     try {
       await symlink(targetPath, linkPath, "dir");
@@ -1042,9 +1094,9 @@ function stringCompilerOption(value) {
   return typeof value === "string" ? value.toLowerCase() : "";
 }
 
-export function normalizeHarnessPath(fileName) {
+export function normalizeHarnessPath(fileName, options = defaultHarnessPathOptions()) {
   let normalized = fileName.replaceAll("\\", "/").trim();
-  normalized = normalized.replace(/^[a-zA-Z]:\//, "");
+  normalized = normalizeVirtualDrivePrefix(normalized, options);
   normalized = normalized.replace(/^\/+/, "");
   if (normalized === "") {
     normalized = "input.ts";
@@ -1052,18 +1104,18 @@ export function normalizeHarnessPath(fileName) {
   return normalized;
 }
 
-export function normalizeHarnessOptionPath(fileName) {
+export function normalizeHarnessOptionPath(fileName, options = defaultHarnessPathOptions()) {
   let normalized = fileName.replaceAll("\\", "/").trim();
-  normalized = normalized.replace(/^[a-zA-Z]:(?=\/|$)/, "");
+  normalized = normalizeVirtualDrivePrefix(normalized, options);
   normalized = normalized.replace(/^\/+/, "");
   return normalized === "" ? "." : normalized;
 }
 
-function normalizeHarnessModuleSpecifier(specifier) {
+function normalizeHarnessModuleSpecifier(specifier, options = defaultHarnessPathOptions()) {
   if (!isHarnessAbsolutePath(specifier)) {
     return specifier;
   }
-  const normalized = normalizeHarnessOptionPath(specifier);
+  const normalized = normalizeHarnessOptionPath(specifier, options);
   return normalized === "." ? "." : `./${normalized}`;
 }
 
@@ -1074,11 +1126,12 @@ function applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed
   if (!hasSyntheticConfigEmitLayoutOption(compilerOptions)) {
     return;
   }
+  const pathOptions = harnessPathOptionsFromSettings(settings);
   const inputFileSet = new Set(inputFiles);
   const sourceUnits = parsed.units.filter((unit) =>
     harnessSourceFilePattern.test(unit.fileName) &&
     !harnessDeclarationFilePattern.test(unit.fileName) &&
-    inputFileSet.has(normalizeHarnessPath(unit.fileName))
+    inputFileSet.has(normalizeHarnessPath(unit.fileName, pathOptions))
   );
   if (sourceUnits.length < 1) {
     return;
@@ -1088,7 +1141,7 @@ function applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed
   if (!sourceUnits.every((unit) => harnessVolumeKey(unit.fileName, useCaseSensitiveFileNames) === firstVolume)) {
     return;
   }
-  const emittedInputFiles = sourceUnits.map((unit) => normalizeHarnessPath(unit.fileName));
+  const emittedInputFiles = sourceUnits.map((unit) => normalizeHarnessPath(unit.fileName, pathOptions));
   const commonDirectory = commonDirectoryOfRelativeFiles(emittedInputFiles);
   if (commonDirectory !== ".") {
     compilerOptions.rootDir = commonDirectory;
@@ -1110,6 +1163,25 @@ function harnessVolumeKey(fileName, useCaseSensitiveFileNames) {
     return useCaseSensitiveFileNames ? `${drive[1]}:` : `${drive[1].toLowerCase()}:`;
   }
   return normalized.startsWith("/") ? "/" : "";
+}
+
+function defaultHarnessPathOptions() {
+  return { useCaseSensitiveFileNames: true };
+}
+
+function harnessPathOptionsFromSettings(settings) {
+  return {
+    useCaseSensitiveFileNames: settings.get("usecasesensitivefilenames")?.toLowerCase() !== "false",
+  };
+}
+
+function normalizeVirtualDrivePrefix(path, options) {
+  const match = /^([a-zA-Z]):(?=\/|$)/.exec(path);
+  if (match === null) {
+    return path;
+  }
+  const drive = options.useCaseSensitiveFileNames ? match[1] : match[1].toLowerCase();
+  return `${drive}:${path.slice(match[0].length)}`;
 }
 
 function commonDirectoryOfRelativeFiles(files) {
@@ -1138,17 +1210,14 @@ export function caseDirectoryFragment(testCase) {
   return safePathFragment(`${testCase.corpus ?? "current"}/${testCase.suite}/${configuredCaseName(testCase)}`);
 }
 
-async function runTsts(projectArg) {
+async function runTsts(invocation) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [
       "--max-old-space-size=8192",
       cliPath,
-      "-p",
-      projectArg,
-      "--pretty",
-      "false",
+      ...invocation.args,
     ], {
-      cwd: repoRoot,
+      cwd: invocation.cwd,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -1181,7 +1250,7 @@ async function runCase(testCase, runRoot) {
       stderr: "",
     };
   }
-  const result = await runTsts(materialized.projectArg);
+  const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
   const statusMatches = actualErrors === materialized.expectedErrors;
   return {

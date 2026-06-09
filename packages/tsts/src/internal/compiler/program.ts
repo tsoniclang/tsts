@@ -4693,11 +4693,14 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
 const emptyResolutionCache: GoMap<Path, ModeAwareCache> = new globalThis.Map<Path, ModeAwareCache>();
 const emptyModeAwareCache: ModeAwareCache = NewGoStructMap<ModeAwareCacheKey, unknown>();
 
+const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
+  map !== undefined ? map : empty;
+
 const resolutionCacheEntries = (resolutionCache: GoMap<Path, ModeAwareCache> | undefined): Iterable<[Path, ModeAwareCache]> =>
-  resolutionCache instanceof globalThis.Map ? resolutionCache : emptyResolutionCache;
+  goMapEntries(resolutionCache, emptyResolutionCache);
 
 const modeAwareCacheEntries = (modeAwareCache: ModeAwareCache | undefined): Iterable<[ModeAwareCacheKey, unknown]> =>
-  modeAwareCache instanceof globalThis.Map ? modeAwareCache : emptyModeAwareCache;
+  goMapEntries(modeAwareCache, emptyModeAwareCache);
 
 export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {

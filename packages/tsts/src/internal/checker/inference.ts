@@ -778,7 +778,6 @@ export function Checker_inferFromTypes(receiver: GoPtr<Checker>, n: GoPtr<Infere
         }
       }
     }
-    return;
   }
   if (
     (source!.objectFlags & ObjectFlagsReference) !== 0 &&

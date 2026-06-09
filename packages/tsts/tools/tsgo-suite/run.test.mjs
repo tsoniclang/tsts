@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsFromSettings, decodeSourceText, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, hasRootPackageJson, isEmittedJavaScriptSibling, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, selectInputFiles } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, compilerCommandLineArgsForMaterializedCase, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsFromSettings, decodeSourceText, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, hasRootPackageJson, isEmittedJavaScriptSibling, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, selectInputFiles } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -175,13 +175,15 @@ test("compilerOptionsFromSettings maps virtual path options into the materialize
     noErrorTruncation: true,
     skipDefaultLibCheck: true,
     target: "ES2024",
-    outDir: ".",
-    rootDir: "src",
+    outDir: "A:/",
+    rootDir: "A:/src",
     declarationDir: "decls",
     tsBuildInfoFile: "a.tsbuildinfo",
   });
-  assert.equal(normalizeHarnessPath("A:/foo/bar.ts"), "foo/bar.ts");
-  assert.equal(normalizeHarnessOptionPath("A:/"), ".");
+  assert.equal(normalizeHarnessPath("A:/foo/bar.ts"), "A:/foo/bar.ts");
+  assert.equal(normalizeHarnessPath("A:/foo/bar.ts", { useCaseSensitiveFileNames: false }), "a:/foo/bar.ts");
+  assert.equal(normalizeHarnessOptionPath("A:/"), "A:/");
+  assert.equal(normalizeHarnessOptionPath("A:/", { useCaseSensitiveFileNames: false }), "a:/");
   assert.equal(normalizeHarnessOptionPath("/out"), "out");
 });
 
@@ -194,7 +196,7 @@ test("compilerOptionsFromSettings maps virtual typeRoots into the materialized c
     noErrorTruncation: true,
     skipDefaultLibCheck: true,
     target: "ES2024",
-    typeRoots: ["types", "workspace/vendor-types"],
+    typeRoots: ["types", "C:/workspace/vendor-types"],
   });
 });
 
@@ -206,13 +208,32 @@ var x: number;
 
 // @Filename: A:/foo/baz.ts
 var y: number;`, "commonSourceDir1.ts");
-  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["foo/bar.ts", "foo/baz.ts"]), {
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["A:/foo/bar.ts", "A:/foo/baz.ts"]), {
     newLine: "crlf",
     noErrorTruncation: true,
     skipDefaultLibCheck: true,
     target: "es2015",
-    outDir: ".",
-    rootDir: "foo",
+    outDir: "A:/",
+    rootDir: "A:/foo",
+  });
+});
+
+test("compilerOptionsForMaterializedCase canonicalizes drive roots for case-insensitive virtual hosts", () => {
+  const parsed = parseFileBasedTest(`// @target: es2015
+// @useCaseSensitiveFileNames: false
+// @outDir: A:/
+// @Filename: A:/foo/bar.ts
+var x: number;
+
+// @Filename: a:/foo/baz.ts
+var y: number;`, "commonSourceDir3.ts");
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["a:/foo/bar.ts", "a:/foo/baz.ts"]), {
+    newLine: "crlf",
+    noErrorTruncation: true,
+    skipDefaultLibCheck: true,
+    target: "es2015",
+    outDir: "a:/",
+    rootDir: "a:/foo",
   });
 });
 
@@ -239,6 +260,55 @@ export class Foo {}`, "importDeclFromTypeNodeInJsSource.ts");
     outDir: "./dist",
     rootDir: "src",
   });
+});
+
+test("compilerOptionsForMaterializedCase discovers virtual @types roots for explicit types", () => {
+  const parsed = parseFileBasedTest(`// @module: commonjs
+// @types: *
+// @filename: /.src/node_modules/@types/node/index.d.ts
+declare module "url" {
+  export function parse(): unknown;
+}
+
+// @filename: usage.ts
+import { parse } from "url";
+export const value = parse();`, "referenceTypesPreferedToPathIfPossible.ts");
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["usage.ts"]), {
+    newLine: "crlf",
+    noErrorTruncation: true,
+    skipDefaultLibCheck: true,
+    target: "ES2024",
+    module: "commonjs",
+    types: ["*"],
+    typeRoots: [".src/node_modules/@types"],
+  });
+});
+
+test("compilerCommandLineArgsForMaterializedCase emits file-mode compiler invocations", () => {
+  assert.deepEqual(compilerCommandLineArgsForMaterializedCase({
+    target: "es2015",
+    module: "nodenext",
+    declaration: true,
+    outDir: "./dist",
+    typeRoots: [".src/node_modules/@types", "vendor-types"],
+    skipDefaultLibCheck: true,
+  }, ["index.ts", "src/extra.ts"]), [
+    "--ignoreConfig",
+    "--declaration",
+    "--module",
+    "nodenext",
+    "--outDir",
+    "./dist",
+    "--skipDefaultLibCheck",
+    "--target",
+    "es2015",
+    "--typeRoots",
+    ".src/node_modules/@types,vendor-types",
+    "--pretty",
+    "false",
+    "index.ts",
+    "src/extra.ts",
+  ]);
 });
 
 test("compilerOptionsForExistingProjectConfig gives file-based directives command-line precedence", () => {
@@ -276,12 +346,12 @@ var x: number;
 
 // @Filename: a:/foo/baz.ts
 var y: number;`, "commonSourceDir4.ts");
-  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["foo/bar.ts", "foo/baz.ts"]), {
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["A:/foo/bar.ts", "a:/foo/baz.ts"]), {
     newLine: "crlf",
     noErrorTruncation: true,
     skipDefaultLibCheck: true,
     target: "es2015",
-    outDir: ".",
+    outDir: "A:/",
   });
 });
 
@@ -299,24 +369,42 @@ test("decodeSourceText handles UTF-16 compiler corpus files", () => {
 
 test("getFileBasedTestConfigurations expands TS-Go variations", () => {
   const configurations = getFileBasedTestConfigurations(new Map([
+    ["noimplicitany", "true, false"],
     ["strict", "*"],
     ["strictbuiltiniteratorreturn", "*, !true"],
     ["target", "es2020"],
   ]));
   assert.deepEqual(configurations.map((configuration) => ({
     name: configuration.name,
+    noImplicitAny: configuration.settings.get("noimplicitany"),
     strict: configuration.settings.get("strict"),
     strictBuiltinIteratorReturn: configuration.settings.get("strictbuiltiniteratorreturn"),
     target: configuration.settings.get("target"),
   })), [
     {
-      name: "strict=true",
+      name: "noimplicitany=true,strict=true",
+      noImplicitAny: "true",
       strict: "true",
       strictBuiltinIteratorReturn: "false",
       target: "es2020",
     },
     {
-      name: "strict=false",
+      name: "noimplicitany=true,strict=false",
+      noImplicitAny: "true",
+      strict: "false",
+      strictBuiltinIteratorReturn: "false",
+      target: "es2020",
+    },
+    {
+      name: "noimplicitany=false,strict=true",
+      noImplicitAny: "false",
+      strict: "true",
+      strictBuiltinIteratorReturn: "false",
+      target: "es2020",
+    },
+    {
+      name: "noimplicitany=false,strict=false",
+      noImplicitAny: "false",
       strict: "false",
       strictBuiltinIteratorReturn: "false",
       target: "es2020",
