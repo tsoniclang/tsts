@@ -3182,13 +3182,12 @@ export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralE
       if (!IsPropertyAssignment(property)) {
         continue;
       }
-      const [propName, ok] = TryGetTextOfPropertyName(property);
+      // Go: ast.TryGetTextOfPropertyName(property.Name()) — the NAME node, and the
+      // callback's result is returned unconditionally on the first key match.
+      const [propName, ok] = TryGetTextOfPropertyName(Node_Name(property));
       if (ok) {
         if (propName === key || (key2.length > 0 && key2[0] === propName)) {
-          const result = callback(AsPropertyAssignment(property));
-          if (result !== undefined) {
-            return result;
-          }
+          return callback(AsPropertyAssignment(property));
         }
       }
     }

@@ -10,9 +10,13 @@ const dist = (p) => import(new URL(p, distRoot).href);
 const [
   { CompilerOptions_GetAreDeclarationMapsEnabled },
   { Tristate_IsTrue },
+  { Program_GetSourceFiles },
+  { SourceFile_FileName, SourceFile_Text },
 ] = await Promise.all([
   dist("internal/core/compileroptions.js"),
   dist("internal/core/tristate.js"),
+  dist("internal/compiler/program.js"),
+  dist("internal/ast/ast.js"),
 ]);
 
 export const NoContent = "<no content>";
@@ -56,7 +60,7 @@ function createSourceMapPreviewLink(sourceMap, outputs, inputs) {
 
 // sourcemap_baseline.go DoSourcemapBaseline (assembly portion). Returns the baseline text
 // or undefined when upstream would not write a sourcemap baseline at all.
-export function generateSourceMapBaseline({ caseDir, program, compilerOptions, allUnits, hasDiagnostics, fullEmitPaths, emittedOutputs }) {
+export function generateSourceMapBaseline({ program, compilerOptions, hasDiagnostics, fullEmitPaths, emittedOutputs }) {
   const declMaps = CompilerOptions_GetAreDeclarationMapsEnabled(compilerOptions);
   if (Tristate_IsTrue(compilerOptions.InlineSourceMap)) {
     return undefined;
@@ -65,14 +69,18 @@ export function generateSourceMapBaseline({ caseDir, program, compilerOptions, a
     return undefined;
   }
 
-  const { JS, DTS, Maps } = orderedEmittedFiles(program, caseDir, emittedOutputs);
+  const { JS, DTS, Maps } = orderedEmittedFiles(program, emittedOutputs);
   if ((Tristate_IsTrue(compilerOptions.NoEmitOnError) && hasDiagnostics) || Maps.length === 0) {
     return NoContent;
   }
 
-  // Inputs for the preview-link suffix matching are the case units in upstream unit-name
-  // coordinates; outputs are the emitted JS and DTS files.
-  const inputs = allUnits.map((unit) => ({ unitName: unit.unitName, content: unit.content }));
+  // harnessutil newCompilationResult: result.Inputs() lists every PROGRAM source file
+  // (program order, program coordinates) — the preview-link suffix matching picks the
+  // FIRST program file whose name ends with the map's source entry.
+  const inputs = Program_GetSourceFiles(program).map((sourceFile) => ({
+    unitName: SourceFile_FileName(sourceFile),
+    content: SourceFile_Text(sourceFile),
+  }));
   const outputs = [...JS, ...DTS];
 
   let sourceMapCode = "";

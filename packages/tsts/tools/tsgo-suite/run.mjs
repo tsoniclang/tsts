@@ -1376,6 +1376,36 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   // Strada-era baselines used by the transpile/project suites.
   const isCurrentCorpus = usesTsgoAuthorityBaselines(testCase);
   const mismatches = [];
+  // TS-Go-authority cases compile in an in-memory harness vfs (harnessCompile.mjs):
+  // upstream unit coordinates end to end, all-stage diagnostics collected before emit
+  // (mirroring compiler_runner.go's verify order), no real-filesystem translation. The
+  // CLI invocation on the materialized directory remains the product-behavior signal.
+  const usesVfsHarness = isCurrentCorpus && materialized.units !== undefined && materialized.invocation !== undefined;
+  let sharedVfsCase;
+  const ensureVfsCase = async () => {
+    if (sharedVfsCase === undefined) {
+      const { compileHarnessCase } = await import("./tsbaseline/harnessCompile.mjs");
+      try {
+        sharedVfsCase = compileHarnessCase({
+          units: (materialized.units ?? []).map((unit) => ({ fileName: unit.unitName, content: unit.content })),
+          symlinks: materialized.symlinks ?? new Map(),
+          configuration: testCase.configuration ?? new Map(),
+        });
+      } catch (error) {
+        // A failed harness compile must fail THIS case loudly, not kill the runner.
+        sharedVfsCase = {
+          error,
+          harnessOptions: {},
+          toBeCompiled: [],
+          otherFiles: [],
+          diagnostics: [],
+          emittedOutputs: new Map(),
+        };
+        mismatches.push(`Harness compile failed: ${error?.stack?.split("\n").slice(0, 2).join(" | ") ?? error}.`);
+      }
+    }
+    return sharedVfsCase;
+  };
   const wholeFileJs = [];
   let sectionComparable = comparable;
   const wholeFileSourceMaps = [];
@@ -1400,8 +1430,12 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     // disabling the type/symbol writers (compiler_runner.go verifyTypesAndSymbols), and
     // a compilation that emits nothing (the js/sourcemap writers then produce
     // NoContent). Anything else with zero reference artifacts is a real mismatch.
-    const emitted = await emittedOutputsForCase(materialized);
-    if (materialized.noTypesAndSymbols !== true) {
+    const vfsCase = usesVfsHarness ? await ensureVfsCase() : undefined;
+    const emitted = vfsCase !== undefined ? vfsCase.emittedOutputs : await emittedOutputsForCase(materialized);
+    const noTypesAndSymbols = vfsCase !== undefined
+      ? vfsCase.harnessOptions.notypesandsymbols === true
+      : materialized.noTypesAndSymbols === true;
+    if (!noTypesAndSymbols) {
       mismatches.push("No reference baseline artifacts were found for this case, and type/symbol baselines are enabled (no @noTypesAndSymbols).");
     } else if (emitted.size !== 0) {
       mismatches.push(`No reference baseline artifacts were found for this case, but the compilation emitted ${[...emitted.keys()].sort().join(", ")}.`);
@@ -1450,60 +1484,21 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     mismatches.push(...problems);
   }
   const baselineHeader = `tests/cases/${testCase.relativePath}`;
-  let sharedProgramEntry;
-  const ensureProgram = async () => {
-    if (sharedProgramEntry === undefined) {
-      const { createProgramForCase } = await import("./tsbaseline/typeSymbolWalker.mjs");
-      const realpathCache = new Map();
-      sharedProgramEntry = createProgramForCase(
-        materialized.caseDir,
-        materialized.invocation.args,
-        (path) => isCompilerCreatedPath(materialized, path, realpathCache),
-      );
-    }
-    return sharedProgramEntry;
-  };
   // The reference baselines are HARNESS output: harnessutil.go collects every
   // diagnostics stage unconditionally (program, syntactic, SEMANTIC, global,
   // declaration) and then emits, while the CLI's staged pipeline skips the semantic
   // check when an earlier stage reported — and declaration-emit node reuse depends on
-  // the links that check populates. Both the diagnostics and the emit outputs for
-  // baseline comparison therefore come from the in-process harness-mirror compile,
-  // captured in memory and translated to upstream unit coordinates.
-  let sharedHarnessCompile;
-  const ensureHarnessCompile = async () => {
-    if (sharedHarnessCompile === undefined) {
-      const { runHarnessCompile } = await import("./tsbaseline/typeSymbolWalker.mjs");
-      const programEntry = await ensureProgram();
-      const outputs = new Map();
-      if (programEntry === undefined) {
-        sharedHarnessCompile = { diagnostics: undefined, outputs };
-      } else {
-        const compiled = runHarnessCompile(programEntry.program);
-        for (const [fileName, content] of compiled.outputs) {
-          const relativeFile = relative(materialized.caseDir, fileName).split(sep).join("/");
-          outputs.set(normalizedBaselineSectionPath(relativeFile), translateEmittedContentToUnitCoordinates(materialized, content));
-        }
-        sharedHarnessCompile = { diagnostics: compiled.diagnostics, outputs };
-      }
-    }
-    return sharedHarnessCompile;
-  };
-  const ensureHarnessEmittedOutputs = async () => (await ensureHarnessCompile()).outputs;
-  const usesHarnessCompile = isCurrentCorpus && materialized.units !== undefined && materialized.invocation !== undefined;
-
-  let actualDiagnosticsRaw = diagnosticHeadlineText(commandOutput);
+  // the links that check populates. Diagnostics for the errors.txt comparison come from
+  // the vfs harness compile, already rendered in upstream coordinates.
+  let actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, diagnosticHeadlineText(commandOutput));
   let harnessDiagnostics;
-  if (usesHarnessCompile) {
-    const compiled = await ensureHarnessCompile();
-    if (compiled.diagnostics !== undefined) {
-      harnessDiagnostics = compiled.diagnostics;
-      const { formatHarnessDiagnostics } = await import("./tsbaseline/typeSymbolWalker.mjs");
-      actualDiagnosticsRaw = diagnosticHeadlineText(formatHarnessDiagnostics(materialized.caseDir, harnessDiagnostics));
-    }
+  if (usesVfsHarness) {
+    const vfsCase = await ensureVfsCase();
+    harnessDiagnostics = vfsCase.diagnostics;
+    const { formatHarnessDiagnostics } = await import("./tsbaseline/typeSymbolWalker.mjs");
+    actualDiagnostics = diagnosticHeadlineText(formatHarnessDiagnostics("", harnessDiagnostics));
   }
   const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
-  const actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, actualDiagnosticsRaw);
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
     mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
     const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
@@ -1516,64 +1511,27 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0, where
   // result.Diagnostics is the harness compile's all-stage diagnostics.
   const hasDiagnostics = harnessDiagnostics !== undefined ? harnessDiagnostics.length > 0 : diagnosticHeadlineText(commandOutput) !== "";
-  // compiler_runner.go newCompilerTest: the tsconfig unit lives in tsConfigFiles, never
-  // in toBeCompiled or otherFiles, so it appears in no type/symbol/js-emit baseline.
-  // With a tsconfig, units named by the config's FileNames are toBeCompiled (membership
-  // partition, unit order both sides). Without one, the harness rule applies: if
-  // @noImplicitReferences is set or the LAST unit contains `require(` or a
-  // `reference path`, only the last unit is toBeCompiled; otherwise EVERY unit is —
-  // including .json units, which the harness keeps out of the program's root files but
-  // still lists first in baseline order (jsonImportMultipleTopLevelObjects).
-  const partitionUnitsForBaselines = (rootFileNames) => {
-    const units = (materialized.units ?? []).filter((unit) => !/(^|\/)tsconfig\.json$/i.test(unit.filePath));
-    if (materialized.hasTsconfigUnit === true) {
-      const rootSet = new Set(rootFileNames.map((fileName) => {
-        const normalized = fileName.split(sep).join("/");
-        const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
-        return normalized.startsWith(caseDirPrefix) ? normalized.slice(caseDirPrefix.length) : normalized;
-      }));
-      return {
-        toBeCompiled: units.filter((unit) => rootSet.has(unit.filePath)),
-        otherFiles: units.filter((unit) => !rootSet.has(unit.filePath)),
-      };
-    }
-    const lastUnit = units.at(-1);
-    if (lastUnit !== undefined &&
-      (materialized.noImplicitReferences === true || lastUnit.content.includes("require(") || /reference\spath/.test(lastUnit.content))) {
-      return { toBeCompiled: [lastUnit], otherFiles: units.slice(0, -1) };
-    }
-    return { toBeCompiled: units, otherFiles: [] };
-  };
-  // compiler_runner.go verify order: error -> output -> sourcemap -> types/symbols. The
-  // harness emit must run before the walker exercises the program's checkers and the
-  // shared emit-context pool; run it eagerly in that order.
-  if ((wholeFileJs.length !== 0 || wholeFileSourceMaps.length !== 0) && materialized.units !== undefined && materialized.invocation !== undefined) {
-    await ensureHarnessEmittedOutputs();
-  }
   if (typeSymbol.length !== 0 && materialized.noTypesAndSymbols === true) {
     // compiler_runner.go verifyTypesAndSymbols returns early under @noTypesAndSymbols,
     // so a committed type/symbol reference baseline is unreachable upstream: stale.
     mismatches.push(`Type/symbol baselines exist but @noTypesAndSymbols disables them upstream: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
   } else if (typeSymbol.length !== 0) {
-    if (materialized.units === undefined || materialized.invocation === undefined) {
+    if (!usesVfsHarness) {
       mismatches.push(`Type/symbol baselines are not supported for this case kind: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
     } else {
       try {
         const { generateTypeAndSymbolBaselines } = await import("./tsbaseline/typeSymbolWalker.mjs");
-        const programEntry = await ensureProgram();
-        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
-        const allFiles = [...partition.toBeCompiled, ...partition.otherFiles].map((unit) => ({
-          unitName: unit.unitName,
-          programPath: unit.filePath,
-          content: unit.content,
+        const vfsCase = await ensureVfsCase();
+        const allFiles = [...vfsCase.toBeCompiled, ...vfsCase.otherFiles].map((file) => ({
+          unitName: file.unitName,
+          programPath: file.unitName,
+          content: file.content,
         }));
         const generated = generateTypeAndSymbolBaselines({
-          caseDir: materialized.caseDir,
-          args: materialized.invocation.args,
           allFiles,
           header: baselineHeader,
           hasErrorBaseline: hasDiagnostics,
-          program: programEntry?.program,
+          program: vfsCase.program,
         });
         for (const artifact of typeSymbol) {
           const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
@@ -1592,22 +1550,24 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   }
 
   if (wholeFileJs.length !== 0) {
-    if (materialized.units === undefined || materialized.invocation === undefined) {
+    if (!usesVfsHarness) {
       mismatches.push(`JS emit baselines are not supported for this case kind: ${wholeFileJs.map((artifact) => artifact.name).join(", ")}.`);
     } else {
       try {
         const { generateJsEmitBaseline } = await import("./tsbaseline/jsEmitBaseline.mjs");
-        const programEntry = await ensureProgram();
-        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
+        const { compileDeclarationFiles } = await import("./tsbaseline/harnessCompile.mjs");
+        const vfsCase = await ensureVfsCase();
+        const declarationCompilation = vfsCase.error === undefined ? await compileDeclarationFiles(vfsCase) : undefined;
         const assembled = generateJsEmitBaseline({
-          caseDir: materialized.caseDir,
-          program: programEntry?.program,
-          toBeCompiled: partition.toBeCompiled,
-          otherFiles: partition.otherFiles,
+          program: vfsCase.program,
+          toBeCompiled: vfsCase.toBeCompiled,
+          otherFiles: vfsCase.otherFiles,
+          tsConfigFiles: vfsCase.tsConfigFiles,
           header: baselineHeader,
           hasDiagnostics,
-          fullEmitPaths: materialized.fullEmitPaths === true,
-          emittedOutputs: await ensureHarnessEmittedOutputs(),
+          fullEmitPaths: vfsCase.harnessOptions.fullemitpaths === true,
+          emittedOutputs: vfsCase.emittedOutputs,
+          declarationCompilation,
         });
         const actual = normalizeEmittedOutputText(assembled);
         for (const artifact of wholeFileJs) {
@@ -1624,21 +1584,18 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   }
 
   if (wholeFileSourceMaps.length !== 0) {
-    if (materialized.units === undefined || materialized.invocation === undefined) {
+    if (!usesVfsHarness) {
       mismatches.push(`Source map baselines are not supported for this case kind: ${wholeFileSourceMaps.map((artifact) => artifact.name).join(", ")}.`);
     } else {
       try {
-        const { generateSourceMapBaseline, NoContent } = await import("./tsbaseline/sourceMapBaseline.mjs");
-        const programEntry = await ensureProgram();
-        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
+        const { generateSourceMapBaseline } = await import("./tsbaseline/sourceMapBaseline.mjs");
+        const vfsCase = await ensureVfsCase();
         const assembled = generateSourceMapBaseline({
-          caseDir: materialized.caseDir,
-          program: programEntry?.program,
-          compilerOptions: programEntry?.compilerOptions,
-          allUnits: [...partition.toBeCompiled, ...partition.otherFiles],
+          program: vfsCase.program,
+          compilerOptions: vfsCase.compilerOptions,
           hasDiagnostics,
-          fullEmitPaths: materialized.fullEmitPaths === true,
-          emittedOutputs: await ensureHarnessEmittedOutputs(),
+          fullEmitPaths: vfsCase.harnessOptions.fullemitpaths === true,
+          emittedOutputs: vfsCase.emittedOutputs,
         });
         for (const artifact of wholeFileSourceMaps) {
           if (assembled === undefined) {
@@ -1923,6 +1880,7 @@ async function materializeCase(testCase, runRoot) {
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
       units,
+      symlinks: parsed.symlinks,
       fullEmitPaths,
       noTypesAndSymbols,
       noImplicitReferences,
@@ -1952,6 +1910,7 @@ async function materializeCase(testCase, runRoot) {
     // (membership in the parsed command line's root files, unit order preserved) the
     // same way compiler_runner.go does.
     units,
+    symlinks: parsed.symlinks,
     fullEmitPaths,
     noTypesAndSymbols,
     noImplicitReferences,

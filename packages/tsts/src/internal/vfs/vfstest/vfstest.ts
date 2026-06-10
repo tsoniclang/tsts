@@ -514,9 +514,27 @@ export function MapFS_getCanonicalPath(receiver: GoPtr<MapFS>, p: string): canon
  */
 export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoError] {
   const internalMap = receiver!.m as unknown as InternalMapFS;
-  const file = internalMap.get(p);
+  let file = internalMap.get(p);
   if (file === undefined) {
-    return [undefined as unknown as File, ErrNotExist as unknown as GoError];
+    // Go's fstest.MapFS synthesizes directories on the fly: opening "." (the root) or
+    // any path that prefixes existing entries yields a directory file even without an
+    // explicit map entry. convertMapFS creates intermediate directories explicitly, but
+    // the root never gets an entry, so synthesize it here like the Go stdlib does.
+    const isRoot = p === "." || p === "";
+    const prefix = isRoot ? "" : `${p}/`;
+    let isSyntheticDir = isRoot && internalMap.size > 0;
+    if (!isSyntheticDir) {
+      for (const key of internalMap.keys()) {
+        if (key.startsWith(prefix)) {
+          isSyntheticDir = true;
+          break;
+        }
+      }
+    }
+    if (!isSyntheticDir) {
+      return [undefined as unknown as File, ErrNotExist as unknown as GoError];
+    }
+    file = { Data: new Uint8Array(0), Mode: ModeDir as unknown as number, ModTime: undefined as never, Sys: undefined };
   }
   let offset = 0;
   const bytes = file.Data;
@@ -543,7 +561,8 @@ export function MapFS_open(receiver: GoPtr<MapFS>, p: canonicalPath): [File, GoE
       return undefined;
     },
     ReadDir(_n: int): [InternalDirEntry[], GoError] {
-      const prefix = p === "" ? "" : p + "/";
+      // fstest.MapFS uses "." for the root directory; its children carry bare keys.
+      const prefix = p === "" || p === "." ? "" : p + "/";
       const entries: InternalDirEntry[] = [];
       for (const [k, v] of internalMap.entries()) {
         if (k !== p && k.startsWith(prefix) && k.slice(prefix.length).indexOf("/") < 0) {

@@ -220,19 +220,21 @@ export function runHarnessCompile(program) {
   return { diagnostics, outputs, emitResult };
 }
 
-// error_baseline.go presentation: wrap the harness diagnostics, sort with
-// diagnosticwriter.CompareASTDiagnostics, and format each like the CLI's non-pretty
-// reporter (WriteFormatDiagnostic, cwd-relative paths) so the suite's headline
-// comparison sees the same `file(line,char): error TSxxxx: message` lines the upstream
-// errors.txt baselines carry. The staged CLI pipeline cannot reproduce these once an
-// earlier stage reported (it skips the semantic check), so the comparison must run on
-// the harness compile's diagnostics.
-export function formatHarnessDiagnostics(caseDir, diagnostics) {
+// error_baseline.go diagnostics presentation (minimalDiagnosticsToString + the lib
+// location masking applied to it): wrap, sort with CompareASTDiagnostics, format with
+// the harness FormattingOptions (NewLine only — paths print as-is), then strip the
+// harness test-path prefixes (/.src/ etc.) and mask lib file locations. This is the
+// exact headline text the upstream errors.txt baselines carry; the staged CLI pipeline
+// cannot reproduce it once an earlier stage reported (it skips the semantic check), so
+// the comparison must run on the harness compile's diagnostics.
+const libLocationPrefixPattern = /^(lib.*\.d\.ts)\(\d+,\d+\)/gim;
+
+export function formatHarnessDiagnostics(currentDirectory, diagnostics) {
   const wrapped = [...WrapASTDiagnostics(diagnostics ?? [])];
   wrapped.sort(CompareASTDiagnostics);
   const formatOpts = {
     NewLine: "\n",
-    __tsgoEmbedded0: { CurrentDirectory: caseDir, UseCaseSensitiveFileNames: true },
+    __tsgoEmbedded0: { CurrentDirectory: currentDirectory ?? "", UseCaseSensitiveFileNames: true },
     Locale: LocaleDefault,
   };
   const chunks = [];
@@ -245,7 +247,7 @@ export function formatHarnessDiagnostics(caseDir, diagnostics) {
   for (const diagnostic of wrapped) {
     WriteFormatDiagnostic(writer, diagnostic, formatOpts);
   }
-  return chunks.join("");
+  return removeTestPathPrefixes(chunks.join("")).replace(libLocationPrefixPattern, "$1(--,--)");
 }
 
 // type_symbol_baseline.go newTypeWriterWalker

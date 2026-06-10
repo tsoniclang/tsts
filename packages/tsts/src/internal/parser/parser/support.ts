@@ -2259,6 +2259,9 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
             pos: lib.pos,
             end: lib.end,
             FileName: lib.Value,
+            // Go zero value: ResolutionModeNone (the printer emits the attribute for
+            // any other value).
+            ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
           } as unknown as GoPtr<FileReference>];
         } else if (path !== undefined) {
@@ -2266,6 +2269,8 @@ export function Parser_processPragmasIntoFields(receiver: GoPtr<Parser>, context
             pos: path.pos,
             end: path.end,
             FileName: path.Value,
+            // Go zero value: ResolutionModeNone.
+            ResolutionMode: 0 as ResolutionMode,
             Preserve: preserve !== undefined && preserve.Value === "true",
           } as unknown as GoPtr<FileReference>];
         } else {

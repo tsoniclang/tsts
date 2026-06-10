@@ -1,16 +1,15 @@
 // Faithful JS port of internal/testutil/tsbaseline/js_emit_baseline.go (pinned TS-Go),
 // assembling the `<case>.js` whole-file baseline from the case inputs plus the emitted
 // JS/DTS outputs in program source order (mirroring harnessutil's inputsAndOutputs
-// population). Differences from the Go original, each justified:
-// - The DtsFileErrors block (a second compilation of the emitted declaration files) is not
-//   ported yet; no current-corpus reference baseline contains "//// [DtsFileErrors]". If a
-//   declaration-compilation diagnostic case ever appears, the whole-file comparison fails
-//   loudly rather than silently passing.
+// population), the JSON-output parse-error baselines, and the //// [DtsFileErrors]
+// block (the declaration recompile's error baseline). Differences from the Go
+// original, each justified:
 // - The noCheck-repeat comparison ("!!!! File ... differs from original emit") is not
-//   ported yet; no current-corpus reference baseline contains those markers.
+//   ported yet; a reference baseline containing those markers fails the whole-file
+//   comparison loudly rather than silently passing.
 // - Sections are assembled with \n and compared after newline normalization (the suite
 //   normalizes both sides), where Go writes \r\n.
-import { relative, sep } from "node:path";
+import { getErrorBaseline } from "./errorBaseline.mjs";
 
 const distRoot = new URL("../../../dist/src/", import.meta.url);
 const dist = (p) => import(new URL(p, distRoot).href);
@@ -53,31 +52,32 @@ function compareTestFiles(a, b) {
 
 // harnessutil.go compilation-output population: pair each non-declaration program source
 // file (in program order) with its computed output paths, then append stragglers sorted
-// by unit name.
-export function orderedEmittedFiles(program, caseDir, emittedOutputs) {
+// by unit name. `emittedOutputs` is keyed in the program's own coordinates (the vfs
+// paths the harness WriteFile override received), which are exactly the paths
+// GetOutputPathsFor computes.
+export function orderedEmittedFiles(program, emittedOutputs) {
   const js = new Map();
   const dts = new Map();
   const maps = new Map();
-  for (const [rel, content] of emittedOutputs) {
-    if (/\.d\.[cm]?ts$/i.test(rel)) {
-      dts.set(rel, content);
-    } else if (/\.map$/i.test(rel)) {
-      maps.set(rel, content);
-    } else if (/\.[cm]?jsx?$/i.test(rel)) {
-      js.set(rel, content);
+  for (const [name, content] of emittedOutputs) {
+    if (/\.d\.[cm]?ts$/i.test(name)) {
+      dts.set(name, content);
+    } else if (/\.map$/i.test(name)) {
+      maps.set(name, content);
+    } else if (/\.[cm]?jsx?$/i.test(name)) {
+      js.set(name, content);
     }
   }
   const JS = [];
   const DTS = [];
   const Maps = [];
-  const take = (map, into, absolutePath) => {
-    if (absolutePath === undefined || absolutePath === "") {
+  const take = (map, into, outputPath) => {
+    if (outputPath === undefined || outputPath === "") {
       return;
     }
-    const rel = relative(caseDir, absolutePath).split(sep).join("/");
-    if (map.has(rel)) {
-      into.push({ unitName: rel, content: map.get(rel) });
-      map.delete(rel);
+    if (map.has(outputPath)) {
+      into.push({ unitName: outputPath, content: map.get(outputPath) });
+      map.delete(outputPath);
     }
   };
   for (const sourceFile of Program_GetSourceFiles(program)) {
@@ -106,7 +106,7 @@ export function orderedEmittedFiles(program, caseDir, emittedOutputs) {
 }
 
 // js_emit_baseline.go DoJSEmitBaseline (assembly portion)
-export function generateJsEmitBaseline({ caseDir, program, toBeCompiled, otherFiles, header, hasDiagnostics, fullEmitPaths, emittedOutputs }) {
+export function generateJsEmitBaseline({ program, toBeCompiled, otherFiles, tsConfigFiles, header, hasDiagnostics, fullEmitPaths, emittedOutputs, declarationCompilation }) {
   let tsCode = `//// [${header}] ////\n\n`;
   const tsSources = [...otherFiles, ...toBeCompiled];
   for (let index = 0; index < tsSources.length; index++) {
@@ -118,7 +118,7 @@ export function generateJsEmitBaseline({ caseDir, program, toBeCompiled, otherFi
     }
   }
 
-  const { JS, DTS } = orderedEmittedFiles(program, caseDir, emittedOutputs);
+  const { JS, DTS } = orderedEmittedFiles(program, emittedOutputs);
 
   let jsCode = "";
   for (const file of JS) {
@@ -129,7 +129,8 @@ export function generateJsEmitBaseline({ caseDir, program, toBeCompiled, otherFi
       const parseResult = ParseSourceFile({ FileName: file.unitName, Path: file.unitName }, file.content, ScriptKindJSON);
       const parseDiagnostics = SourceFile_Diagnostics(parseResult) ?? [];
       if (parseDiagnostics.length > 0) {
-        throw new Error(`jsEmitBaseline: JSON output '${file.unitName}' has parse diagnostics; the GetErrorBaseline path of js_emit_baseline.go is not ported yet.`);
+        jsCode += getErrorBaseline([file], parseDiagnostics);
+        continue;
       }
     }
     jsCode += fileOutput(file, fullEmitPaths);
@@ -140,6 +141,15 @@ export function generateJsEmitBaseline({ caseDir, program, toBeCompiled, otherFi
     for (const declFile of DTS) {
       jsCode += fileOutput(declFile, fullEmitPaths);
     }
+  }
+
+  if (declarationCompilation !== undefined && (declarationCompilation.declResult.diagnostics ?? []).length > 0) {
+    jsCode += "\n\n//// [DtsFileErrors]\n";
+    jsCode += "\n\n";
+    jsCode += getErrorBaseline(
+      [...(tsConfigFiles ?? []), ...declarationCompilation.declInputFiles, ...declarationCompilation.declOtherFiles],
+      declarationCompilation.declResult.diagnostics,
+    );
   }
 
   if (jsCode.length > 0) {
