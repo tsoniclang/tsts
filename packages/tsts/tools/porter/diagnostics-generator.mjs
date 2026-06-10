@@ -139,12 +139,11 @@ const CATEGORY_ORDER = ["CategoryWarning", "CategoryError", "CategorySuggestion"
 export function emitMessages(records) {
   const usedCategories = CATEGORY_ORDER.filter((name) => records.some((record) => record.category === name));
   const lines = [];
-  lines.push(`import type { Key, Message } from "../diagnostics.js";`);
-  lines.push(`import {`);
+  lines.push(`import type { Category, Key, Message } from "../diagnostics.js";`);
+  lines.push("");
   for (const name of usedCategories) {
-    lines.push(`  ${name},`);
+    lines.push(`const ${name}: Category = ${CATEGORY_ORDER.indexOf(name)};`);
   }
-  lines.push(`} from "../diagnostics.js";`);
   lines.push("");
   for (const record of records) {
     lines.push(emitMessage(record));

@@ -2770,11 +2770,11 @@ export function parseJsonConfigFileContentWorker(json: GoPtr<OrderedMap>, source
     includeSpecs = { sliceValue: [defaultIncludeSpec], wrongValue: "" };
     isDefaultIncludeSpec = true;
   }
-  let validatedIncludeSpecs: GoSlice<string> = undefined as unknown as GoSlice<string>;
-  let validatedIncludeSpecsBeforeSubstitution: GoSlice<string> = undefined as unknown as GoSlice<string>;
-  let validatedExcludeSpecs: GoSlice<string> = undefined as unknown as GoSlice<string>;
-  let validatedFilesSpec: GoSlice<string> = undefined as unknown as GoSlice<string>;
-  let validatedFilesSpecBeforeSubstitution: GoSlice<string> = undefined as unknown as GoSlice<string>;
+  let validatedIncludeSpecs: GoSlice<string> = [];
+  let validatedIncludeSpecsBeforeSubstitution: GoSlice<string> = [];
+  let validatedExcludeSpecs: GoSlice<string> = [];
+  let validatedFilesSpec: GoSlice<string> = [];
+  let validatedFilesSpecBeforeSubstitution: GoSlice<string> = [];
   if ((includeSpecs.sliceValue as unknown) !== undefined) {
     const [vspecs, err] = validateSpecs(includeSpecs.sliceValue, true /*disallowTrailingRecursion*/, tsconfigToSourceFile(sourceFile), "include");
     validatedIncludeSpecsBeforeSubstitution = vspecs;

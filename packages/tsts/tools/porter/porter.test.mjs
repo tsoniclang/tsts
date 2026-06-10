@@ -1425,11 +1425,12 @@ test("diagnostics-generator: emitMessages renders faithful Message constants + k
     body,
     /export const Unterminated_string_literal: Message = \{ code: 1002, category: CategoryError, key: "Unterminated_string_literal_1002", text: "Unterminated string literal\." \};/,
   );
-  // Only categories actually used are imported (no CategoryWarning here).
-  assert.ok(body.includes("CategoryError,"));
-  assert.ok(body.includes("CategorySuggestion,"));
-  assert.ok(body.includes("CategoryMessage,"));
-  assert.ok(!body.includes("CategoryWarning,"));
+  assert.ok(body.includes("const CategoryError: Category = 1;"));
+  assert.ok(body.includes("const CategorySuggestion: Category = 2;"));
+  assert.ok(body.includes("const CategoryMessage: Category = 3;"));
+  assert.ok(!body.includes("const CategoryWarning: Category = 0;"));
+  assert.ok(body.includes('import type { Category, Key, Message } from "../diagnostics.js";'));
+  assert.ok(!body.includes("import {\n"));
   // Optional bool fields are emitted only when true, mirroring generate.go.
   assert.match(body, /text: "'\{0\}' is deprecated\.", reportsDeprecated: true \};/);
   assert.match(body, /text: "Unreachable code detected\.", reportsUnnecessary: true \};/);
@@ -1450,7 +1451,7 @@ test("diagnostics-generator: buildDiagnosticsGeneratedFiles embeds deterministic
     assert.equal(metadata.kind, "diagnostics-generated");
     assert.equal(metadata.generator, "porter:diagnostics");
     assert.equal(metadata.sourceRevision, "rev-diag-1");
-    assert.equal(metadata.catalogInputs.length, 1);
+    assert.equal(metadata.inputs.length, 1);
     assert.ok(typeof metadata.contentHash === "string" && metadata.contentHash.length === 64);
     // Deterministic: same inputs produce byte-identical output.
     const again = buildDiagnosticsGeneratedFiles(config, "rev-diag-1");
@@ -1459,34 +1460,33 @@ test("diagnostics-generator: buildDiagnosticsGeneratedFiles embeds deterministic
 });
 
 test("diagnostics-generator: buildDiagnosticsGeneratedArtifactStatus detects missing/stale and writeDiagnosticsGenerated honors safe-write", () => {
-  withSampleCatalog((config) => {
-    const tsRootAbs = resolveRepo("packages/tsts/src");
+  withSampleCatalog((sampleConfig) => {
+    const tsRootAbs = mkdtempSync(path.join(tmpdir(), "tsts-diag-tsroot-"));
+    const config = { ...sampleConfig, tsRoot: tsRootAbs };
     const messagesPath = path.join(tsRootAbs, "internal/diagnostics/generated/messages.ts");
-    const existed = existsSync(messagesPath);
-    const original = existed ? readFileSync(messagesPath, "utf8") : undefined;
     try {
-      // Point the real tsRoot at a temp catalog so the committed messages.ts is
-      // "stale" relative to the synthetic expected output, then overwrite it.
       const missingStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
-      // The committed file (built from the real catalog) differs from the
-      // synthetic expectation, so it is reported stale (or missing if absent).
       assert.ok(
-        missingStatus.stale.length === 1 || missingStatus.missing.length === 1,
-        "expected the committed messages.ts to be stale/missing against the synthetic catalog",
+        missingStatus.missing.length >= 1,
+        "expected generated artifacts to be missing from the temp tsRoot",
       );
-      // Safe-write refuses to clobber an existing different file without --force.
-      if (existed) {
-        assert.throws(
-          () => writeDiagnosticsGenerated(config, "rev-diag-2", { force: false }),
-          /refusing to overwrite existing diagnostics generated artifact/,
-        );
-      }
-      // --force writes; afterwards the artifact status is clean for this config.
+
       writeDiagnosticsGenerated(config, "rev-diag-2", { force: true });
       const cleanStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
       assert.equal(collectDiagnosticsArtifactFailures(cleanStatus).length, 0);
+
+      writeFileSync(messagesPath, `${readFileSync(messagesPath, "utf8")}\n// stale edit\n`);
+      const staleStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
+      assert.equal(staleStatus.stale.length, 1);
+      assert.throws(
+        () => writeDiagnosticsGenerated(config, "rev-diag-2", { force: false }),
+        /refusing to overwrite existing diagnostics generated artifact/,
+      );
+      writeDiagnosticsGenerated(config, "rev-diag-2", { force: true });
+      const restoredStatus = buildDiagnosticsGeneratedArtifactStatus(config, "rev-diag-2");
+      assert.equal(collectDiagnosticsArtifactFailures(restoredStatus).length, 0);
     } finally {
-      if (original !== undefined) writeFileSync(messagesPath, original);
+      rmSync(tsRootAbs, { recursive: true, force: true });
     }
   });
 });
