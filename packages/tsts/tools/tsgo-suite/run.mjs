@@ -657,6 +657,11 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
     if (currentFileName === "" && sawFileDirective) {
       currentFileName = fallbackFileName;
     }
+    if (line === "" && currentFileLines.length === 0) {
+      // test_case_parser.go only writes a separating newline once content exists, which
+      // drops every leading blank line of a unit (matching the TS harness behavior).
+      continue;
+    }
     currentFileLines.push(line);
   }
 
@@ -1322,14 +1327,31 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
   const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
   const typeSymbol = artifacts.filter((artifact) => !artifact.diff && typeSymbolBaselineFilePattern.test(artifact.name));
+  // The current corpus carries TS-Go's own whole-file baselines: a single `<case>.js`
+  // assembled by js_emit_baseline.go (inputs + emitted JS + emitted DTS) instead of the
+  // per-section layout of the TypeScript-submodule baselines.
+  const isCurrentCorpus = (testCase.corpus ?? "current") === "current";
   const mismatches = [];
+  const wholeFileJs = [];
+  let sectionComparable = comparable;
+  if (isCurrentCorpus) {
+    sectionComparable = [];
+    for (const artifact of comparable) {
+      if (/\.js$/i.test(artifact.name)) {
+        wholeFileJs.push(artifact);
+      } else {
+        // e.g. <case>.js.map source-map baselines: sourcemap_baseline.go is not ported yet.
+        mismatches.push(`Exact baseline artifact '${artifact.name}' is not supported for the current corpus yet.`);
+      }
+    }
+  }
   const expectedDiagnosticHeadlines = [];
   const expectedDiagnosticSources = [];
   if (artifacts.length === 0) {
     mismatches.push("No reference baseline artifacts were found for this case.");
   }
   const expectedOutputs = new Map();
-  for (const artifact of comparable) {
+  for (const artifact of sectionComparable) {
     const sections = parseBaselineSections(readFileSync(artifact.path, "utf8"));
     const sectionNameCounts = new Map();
     for (const section of sections) {
@@ -1361,7 +1383,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     expectedDiagnosticSources.push(artifact.name);
   }
   const tsgoAccepted = [];
-  for (const artifact of [...comparable, ...diagnostics]) {
+  for (const artifact of [...sectionComparable, ...diagnostics]) {
     const overlaySections = loadTsgoAcceptedOverlay(testCase.corpus, testCase.suite, artifact.name);
     if (overlaySections === undefined) {
       continue;
@@ -1378,6 +1400,17 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
   }
 
+  const baselineHeader = `tests/cases/${testCase.relativePath}`;
+  // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0
+  const hasDiagnostics = diagnosticHeadlineText(commandOutput) !== "";
+  let sharedProgram;
+  const ensureProgram = async () => {
+    if (sharedProgram === undefined) {
+      const { createProgramForCase } = await import("./tsbaseline/typeSymbolWalker.mjs");
+      sharedProgram = createProgramForCase(materialized.caseDir, materialized.invocation.args);
+    }
+    return sharedProgram;
+  };
   if (typeSymbol.length !== 0) {
     if (materialized.units === undefined || materialized.invocation === undefined) {
       mismatches.push(`Type/symbol baselines are not supported for this case kind: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
@@ -1393,9 +1426,9 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           caseDir: materialized.caseDir,
           args: materialized.invocation.args,
           allFiles,
-          header: `tests/cases/${testCase.relativePath}`,
-          // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0
-          hasErrorBaseline: diagnosticHeadlineText(commandOutput) !== "",
+          header: baselineHeader,
+          hasErrorBaseline: hasDiagnostics,
+          program: await ensureProgram(),
         });
         for (const artifact of typeSymbol) {
           const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
@@ -1413,24 +1446,56 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
   }
 
-  const actualOutputsRaw = await emittedOutputsForCase(materialized);
-  const actualOutputs = new Map();
-  for (const [outputFile, content] of actualOutputsRaw) {
-    actualOutputs.set(upstreamOutputName(materialized, outputFile), content);
-  }
-  for (const [outputFile, actualContent] of actualOutputs) {
-    const expected = expectedOutputs.get(outputFile);
-    if (expected === undefined) {
-      mismatches.push(`Unexpected emitted output '${outputFile}'.`);
-      continue;
+  if (wholeFileJs.length !== 0) {
+    if (materialized.toBeCompiledUnits === undefined || materialized.invocation === undefined) {
+      mismatches.push(`JS emit baselines are not supported for this case kind: ${wholeFileJs.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateJsEmitBaseline } = await import("./tsbaseline/jsEmitBaseline.mjs");
+        const assembled = generateJsEmitBaseline({
+          caseDir: materialized.caseDir,
+          program: await ensureProgram(),
+          toBeCompiled: materialized.toBeCompiledUnits,
+          otherFiles: materialized.otherUnits,
+          header: baselineHeader,
+          hasDiagnostics,
+          fullEmitPaths: materialized.fullEmitPaths === true,
+          emittedOutputs: await emittedOutputsForCase(materialized),
+        });
+        const actual = normalizeEmittedOutputText(assembled);
+        for (const artifact of wholeFileJs) {
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          if (actual !== expected) {
+            mismatches.push(`JS emit baseline '${artifact.name}' does not match the assembled baseline.`);
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`JS emit baseline generation failed: ${error?.message ?? error}.`);
+      }
     }
-    if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
-      mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
-    }
   }
-  for (const outputFile of expectedOutputs.keys()) {
-    if (!actualOutputs.has(outputFile)) {
-      mismatches.push(`Expected baseline output '${outputFile}' was not emitted.`);
+
+  if (!isCurrentCorpus) {
+    const actualOutputsRaw = await emittedOutputsForCase(materialized);
+    const actualOutputs = new Map();
+    for (const [outputFile, content] of actualOutputsRaw) {
+      actualOutputs.set(upstreamOutputName(materialized, outputFile), content);
+    }
+    for (const [outputFile, actualContent] of actualOutputs) {
+      const expected = expectedOutputs.get(outputFile);
+      if (expected === undefined) {
+        mismatches.push(`Unexpected emitted output '${outputFile}'.`);
+        continue;
+      }
+      if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
+        mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
+      }
+    }
+    for (const outputFile of expectedOutputs.keys()) {
+      if (!actualOutputs.has(outputFile)) {
+        mismatches.push(`Expected baseline output '${outputFile}' was not emitted.`);
+      }
     }
   }
   if (unsupported.length !== 0) {
@@ -1587,6 +1652,8 @@ async function materializeCase(testCase, runRoot) {
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
       units,
+      toBeCompiledUnits: units,
+      otherUnits: [],
       fullEmitPaths,
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
@@ -1602,13 +1669,20 @@ async function materializeCase(testCase, runRoot) {
   }
   await materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions);
   const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
+  // Mirror compiler_runner.go's allFiles ordering: toBeCompiled (the command-line
+  // inputs, in input order) ahead of otherFiles (remaining units, in unit order).
+  const inputFileSet = new Set(inputFiles);
+  const toBeCompiledUnits = inputFiles.map((file) => units.find((unit) => unit.filePath === file)).filter((unit) => unit !== undefined);
+  const otherUnits = units.filter((unit) => !inputFileSet.has(unit.filePath));
   return {
     caseDir,
     invocation: {
       cwd: caseDir,
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
-    units,
+    units: [...toBeCompiledUnits, ...otherUnits],
+    toBeCompiledUnits,
+    otherUnits,
     fullEmitPaths,
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),

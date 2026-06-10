@@ -87,7 +87,7 @@ const bracketLineRegex = /^\s*[{|}]\s*$/;
 const lineDelimiter = /\r?\n/g;
 
 // util.go removeTestPathPrefixes (retainTrailingDirectorySeparator=false branch)
-function removeTestPathPrefixes(text) {
+export function removeTestPathPrefixes(text) {
   return text
     .replaceAll("/.ts/", "")
     .replaceAll("/.lib/", "")
@@ -99,7 +99,7 @@ function removeTestPathPrefixes(text) {
 }
 
 // util.go isDefaultLibraryFile
-function isDefaultLibraryFile(filePath) {
+export function isDefaultLibraryFile(filePath) {
   const fileName = GetBaseFileName(filePath);
   return fileName.startsWith("lib.") && fileName.endsWith(".d.ts");
 }
@@ -107,7 +107,7 @@ function isDefaultLibraryFile(filePath) {
 // Builds the in-process Program for a materialized case directory using the same command
 // line the suite passed to the TSTS CLI. Mirrors how cmd/tsgo constructs its compile
 // (bundled-lib-wrapped OS FS, bundled default library path).
-function createProgramForCase(caseDir, args) {
+export function createProgramForCase(caseDir, args) {
   const fs = WrapFS(osFS());
   const parseHost = {
     FS: () => fs,
@@ -432,8 +432,8 @@ function generateBaseline(allFiles, fullWalker, header, isSymbolBaseline) {
 
 // Entry point for the suite runner. Mirrors DoTypeAndSymbolBaseline's fullWalker usage
 // (the Go test-only diff fixups and t.Run wrappers do not apply here).
-export function generateTypeAndSymbolBaselines({ caseDir, args, allFiles, header, hasErrorBaseline }) {
-  const program = createProgramForCase(caseDir, args);
+export function generateTypeAndSymbolBaselines({ caseDir, args, allFiles, header, hasErrorBaseline, program }) {
+  program ??= createProgramForCase(caseDir, args);
   if (program === undefined) {
     throw new Error(`tsbaseline: could not create a program for ${caseDir}`);
   }
