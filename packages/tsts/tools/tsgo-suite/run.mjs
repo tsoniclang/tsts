@@ -1397,7 +1397,7 @@ async function materializeCase(testCase, runRoot) {
     const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, writtenFiles);
     return {
       caseDir,
-      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions),
+      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions, testCase.configuration),
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: false,
@@ -1605,17 +1605,19 @@ function isTranspileCase(testCase) {
   return testCase.corpus === "typescript" && testCase.suite === "transpile";
 }
 
-export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions()) {
+export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions(), settings = new Map()) {
   const sourceFiles = parsed.units
     .map((unit) => normalizeHarnessPath(unit.fileName, pathOptions))
     .filter((file) => harnessSourceFilePattern.test(file));
   const invocations = [];
+  const reportDiagnostics = settings.get("reportdiagnostics")?.toLowerCase() === "true";
   if (compilerOptions.emitDeclarationOnly !== true) {
     for (const inputFile of sourceFiles) {
       invocations.push({
         label: `module:${inputFile}`,
         kind: "module",
         inputFile,
+        reportDiagnostics,
         compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "module"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "module"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "module"),
@@ -1628,6 +1630,7 @@ export function transpileInvocationsForMaterializedCase(compilerOptions, parsed,
         label: `declaration:${inputFile}`,
         kind: "declaration",
         inputFile,
+        reportDiagnostics,
         compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "declaration"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "declaration"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "declaration"),
@@ -2174,7 +2177,7 @@ async function runTstsTranspileApi(caseDir, invocation) {
   const transpileOptions = {
     compilerOptions: invocation.compilerOptions,
     fileName: invocation.inputFile,
-    reportDiagnostics: true,
+    reportDiagnostics: invocation.reportDiagnostics,
   };
   const output = invocation.kind === "declaration"
     ? api.transpileDeclaration(inputText, transpileOptions)

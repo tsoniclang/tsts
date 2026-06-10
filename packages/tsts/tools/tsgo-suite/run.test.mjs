@@ -570,6 +570,7 @@ export const b = 2;`, "fallback.ts");
       label: "module:a.ts",
       kind: "module",
       inputFile: "a.ts",
+      reportDiagnostics: false,
       compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "module"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "a.ts", "module"),
       expectedOutputFiles: ["a.js", "a.js.map"],
@@ -578,6 +579,7 @@ export const b = 2;`, "fallback.ts");
       label: "module:b.ts",
       kind: "module",
       inputFile: "b.ts",
+      reportDiagnostics: false,
       compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "module"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "b.ts", "module"),
       expectedOutputFiles: ["b.js", "b.js.map"],
@@ -586,6 +588,7 @@ export const b = 2;`, "fallback.ts");
       label: "declaration:a.ts",
       kind: "declaration",
       inputFile: "a.ts",
+      reportDiagnostics: false,
       compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "declaration"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "a.ts", "declaration"),
       expectedOutputFiles: ["a.d.ts", "a.d.ts.map"],
@@ -594,10 +597,29 @@ export const b = 2;`, "fallback.ts");
       label: "declaration:b.ts",
       kind: "declaration",
       inputFile: "b.ts",
+      reportDiagnostics: false,
       compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "declaration"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "b.ts", "declaration"),
       expectedOutputFiles: ["b.d.ts", "b.d.ts.map"],
     },
+  ]);
+});
+
+test("transpileInvocationsForMaterializedCase preserves upstream reportDiagnostics directive", () => {
+  const parsed = parseFileBasedTest(`// @filename: index.ts
+export const value = 1;`, "fallback.ts");
+  const invocations = transpileInvocationsForMaterializedCase(
+    { declaration: true },
+    parsed,
+    undefined,
+    new Map([["reportdiagnostics", "true"]]),
+  );
+  assert.deepEqual(invocations.map((invocation) => ({
+    label: invocation.label,
+    reportDiagnostics: invocation.reportDiagnostics,
+  })), [
+    { label: "module:index.ts", reportDiagnostics: true },
+    { label: "declaration:index.ts", reportDiagnostics: true },
   ]);
 });
 
