@@ -1476,21 +1476,33 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
     return sharedHarnessOutputs;
   };
-  // compiler_runner.go: the tsconfig unit lives in tsConfigFiles, never in toBeCompiled or
-  // otherFiles, so it appears in no type/symbol/js-emit baseline; toBeCompiled = the units
-  // the parsed command line names as root files (config FileNames or CLI inputs), in root
-  // order, otherFiles = the remaining units in unit order.
+  // compiler_runner.go newCompilerTest: the tsconfig unit lives in tsConfigFiles, never
+  // in toBeCompiled or otherFiles, so it appears in no type/symbol/js-emit baseline.
+  // With a tsconfig, units named by the config's FileNames are toBeCompiled (membership
+  // partition, unit order both sides). Without one, the harness rule applies: if
+  // @noImplicitReferences is set or the LAST unit contains `require(` or a
+  // `reference path`, only the last unit is toBeCompiled; otherwise EVERY unit is —
+  // including .json units, which the harness keeps out of the program's root files but
+  // still lists first in baseline order (jsonImportMultipleTopLevelObjects).
   const partitionUnitsForBaselines = (rootFileNames) => {
     const units = (materialized.units ?? []).filter((unit) => !/(^|\/)tsconfig\.json$/i.test(unit.filePath));
-    const rootSet = new Set(rootFileNames.map((fileName) => {
-      const normalized = fileName.split(sep).join("/");
-      const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
-      return normalized.startsWith(caseDirPrefix) ? normalized.slice(caseDirPrefix.length) : normalized;
-    }));
-    // compiler_runner.go appends in UNIT order on both sides of the membership partition.
-    const toBeCompiled = units.filter((unit) => rootSet.has(unit.filePath));
-    const otherFiles = units.filter((unit) => !rootSet.has(unit.filePath));
-    return { toBeCompiled, otherFiles };
+    if (materialized.hasTsconfigUnit === true) {
+      const rootSet = new Set(rootFileNames.map((fileName) => {
+        const normalized = fileName.split(sep).join("/");
+        const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
+        return normalized.startsWith(caseDirPrefix) ? normalized.slice(caseDirPrefix.length) : normalized;
+      }));
+      return {
+        toBeCompiled: units.filter((unit) => rootSet.has(unit.filePath)),
+        otherFiles: units.filter((unit) => !rootSet.has(unit.filePath)),
+      };
+    }
+    const lastUnit = units.at(-1);
+    if (lastUnit !== undefined &&
+      (materialized.noImplicitReferences === true || lastUnit.content.includes("require(") || /reference\spath/.test(lastUnit.content))) {
+      return { toBeCompiled: [lastUnit], otherFiles: units.slice(0, -1) };
+    }
+    return { toBeCompiled: units, otherFiles: [] };
   };
   // compiler_runner.go verify order: error -> output -> sourcemap -> types/symbols. The
   // harness emit must run before the walker exercises the program's checkers and the
@@ -1855,6 +1867,10 @@ async function materializeCase(testCase, runRoot) {
   // Harness-only option: compiler_runner.go verifyTypesAndSymbols returns early under
   // @noTypesAndSymbols, so upstream writes no type/symbol baselines for such cases.
   const noTypesAndSymbols = (parsed.globalOptions?.get("notypesandsymbols") ?? testCase.configuration?.get?.("notypesandsymbols")) === "true";
+  // compiler_runner.go: `configuration["noimplicitreferences"] != ""` switches the
+  // baseline partition to last-unit-only.
+  const noImplicitReferencesValue = parsed.globalOptions?.get("noimplicitreferences") ?? testCase.configuration?.get?.("noimplicitreferences");
+  const noImplicitReferences = noImplicitReferencesValue !== undefined && noImplicitReferencesValue !== "";
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
@@ -1869,6 +1885,8 @@ async function materializeCase(testCase, runRoot) {
       units,
       fullEmitPaths,
       noTypesAndSymbols,
+      noImplicitReferences,
+      hasTsconfigUnit: true,
       contentRewrites: dedupedContentRewrites(contentRewrites),
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
@@ -1896,6 +1914,8 @@ async function materializeCase(testCase, runRoot) {
     units,
     fullEmitPaths,
     noTypesAndSymbols,
+    noImplicitReferences,
+    hasTsconfigUnit: false,
     contentRewrites: dedupedContentRewrites(contentRewrites),
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),
