@@ -1161,7 +1161,15 @@ function exactBaselineArtifacts(testCase) {
         continue;
       }
       const artifactName = entry.name.endsWith(".diff") ? entry.name.slice(0, -".diff".length) : entry.name;
-      if (!baseNames.some((baseName) => artifactName.startsWith(`${baseName}.`)) || selected.has(artifactName)) {
+      // For TS-Go-authority baselines the writers produce exactly these artifact kinds;
+      // a bare prefix match would let a case swallow a sibling case's baselines
+      // (asyncFunctionReturnType.ts vs asyncFunctionReturnType.2.ts).
+      const matchesCase = skipDiffArtifacts
+        ? baseNames.some((baseName) =>
+          artifactName.startsWith(`${baseName}.`) &&
+          ["js", "js.map", "symbols", "types", "errors.txt"].includes(artifactName.slice(baseName.length + 1)))
+        : baseNames.some((baseName) => artifactName.startsWith(`${baseName}.`));
+      if (!matchesCase || selected.has(artifactName)) {
         continue;
       }
       selected.set(artifactName, {
