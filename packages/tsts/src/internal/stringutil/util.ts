@@ -529,8 +529,9 @@ export function RemoveByteOrderMark(text: string): string {
  */
 export function AddUTF8ByteOrderMark(text: string): string {
   if (getByteOrderMarkLength(text) === 0) {
-    // "\xEF\xBB\xBF" is the UTF-8 byte-order mark (U+FEFF).
-    return utf8Decoder.decode(Uint8Array.from([0xef, 0xbb, 0xbf])) + text;
+    // Go prepends the raw bytes EF BB BF; in a JS string that is U+FEFF. (TextDecoder
+    // must not be used here: it strips a leading BOM by default, yielding "".)
+    return "\uFEFF" + text;
   }
   return text;
 }

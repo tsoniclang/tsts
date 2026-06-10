@@ -188,7 +188,7 @@ import {
   NewUnionTypeNode,
   NewIndexSignatureDeclaration,
 } from "../ast/generated/factory.js";
-import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Initializer, Node_Type, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
 import { Node_Clone, Node_Name, NodeDefault_AsNode, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
@@ -3554,7 +3554,9 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
   EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
 
   if ((b.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstantiation(receiver, mapped)) {
-    let rawConstraintTypeFromDeclaration = NodeBuilderImpl_getTypeFromTypeNode(receiver, AsTypeParameterDeclaration(declaration.TypeParameter)!.Constraint, false);
+    // Go: ...TypeParameter.AsTypeParameterDeclaration().Constraint.Type() — the
+    // OPERAND of the `keyof` constraint node, not the constraint node itself.
+    let rawConstraintTypeFromDeclaration = NodeBuilderImpl_getTypeFromTypeNode(receiver, Node_Type(AsTypeParameterDeclaration(declaration.TypeParameter)!.Constraint), false);
     if (rawConstraintTypeFromDeclaration !== undefined) {
       rawConstraintTypeFromDeclaration = Checker_getConstraintOfTypeParameter(b.ch, rawConstraintTypeFromDeclaration);
     }
