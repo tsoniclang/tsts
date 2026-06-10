@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -915,11 +915,28 @@ test("parseArgs validates supported suites", () => {
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "conformance"]).corpus, "typescript");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "project"]).suite, "project");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "transpile"]).suite, "transpile");
+  assert.equal(parseArgs(["--exact-baselines"]).exactBaselines, true);
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "current", "--suite", "transpile"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "unknown"]), /Unsupported corpus/);
+});
+
+test("parseBaselineSections preserves repeated section names for input/output baselines", () => {
+  const sections = parseBaselineSections(`//// [index.js] ////\r\nconst input = 1;\r\n//// [index.js]\r\nconst output = 1;\r\n//// [index.d.ts] ////\r\nexport {};\r\n`);
+  assert.deepEqual(sections, [
+    { name: "index.js", content: "const input = 1;" },
+    { name: "index.js", content: "const output = 1;" },
+    { name: "index.d.ts", content: "export {};\n" },
+  ]);
+});
+
+test("diagnosticHeadlineText compares the command-line diagnostic contract", () => {
+  assert.equal(
+    diagnosticHeadlineText(`file.ts(1,1): error TS1000: First.\r\nfile.ts(2,1): error TS1001: Second.\r\n\r\n==== file.ts (2 errors) ====\r\n    source\r\n`),
+    "file.ts(1,1): error TS1000: First.\nfile.ts(2,1): error TS1001: Second.",
+  );
 });
 
 test("hasRootPackageJson detects only root package boundaries", () => {
