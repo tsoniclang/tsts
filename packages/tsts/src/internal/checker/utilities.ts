@@ -2529,7 +2529,9 @@ export function IsPrivateIdentifierSymbol(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function isLateBoundName(name: string): bool {
-  return (name.length >= 2 && name.charCodeAt(0) === 0xfe && name.charCodeAt(1) === 0x40) as bool;
+  // Go checks the raw internal-name prefix byte; the port's prefix is the
+  // InternalSymbolNamePrefix constant (a Unicode noncharacter), not 0xFE.
+  return (name.length >= 2 && name.startsWith(InternalSymbolNamePrefix) && name.charCodeAt(1) === 0x40) as bool;
 }
 
 /**
@@ -3935,7 +3937,8 @@ export function getAnyImportSyntax(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isReservedMemberName(name: string): bool {
-  return (name.length >= 2 && name.charCodeAt(0) === 0xfe && name.charCodeAt(1) !== 0x40 && name.charCodeAt(1) !== 0x23) as bool;
+  // Same prefix-constant note as isLateBoundName.
+  return (name.length >= 2 && name.startsWith(InternalSymbolNamePrefix) && name.charCodeAt(1) !== 0x40 && name.charCodeAt(1) !== 0x23) as bool;
 }
 
 /**
