@@ -1270,11 +1270,19 @@ test("baselineHasErrors reads TypeScript project baselines by module variant", (
   }), true);
 });
 
-test("getSkipReason does not skip compiler cases", () => {
+test("getSkipReason mirrors TS-Go runner skips", () => {
+  // compiler_runner.go skippedTests + harnessutil.go SkipUnsupportedCompilerOptions:
+  // the pinned TS-Go runner skips these outright, so no reference baselines exist and
+  // there is nothing to gate against. The suite mirrors the skip, counted and reasoned.
   const base = { sourceBaseName: "case.ts", configuration: new Map() };
-  assert.equal(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), "");
-  assert.equal(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), "");
-  assert.equal(getSkipReason({ ...base, sourceBaseName: "moduleNoneDynamicImport.ts" }), "");
+  assert.match(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), /unsupported target es5/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), /alwaysStrict=false/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["moduleresolution", "classic"]]) }), /unsupported module resolution kind classic/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["module", "amd"]]) }), /unsupported module kind amd/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["baseurl", "./"]]) }), /unsupported baseUrl/);
+  assert.match(getSkipReason({ ...base, sourceBaseName: "moduleNoneDynamicImport.ts" }), /TS-Go runner skip list/);
+  assert.equal(getSkipReason({ ...base, configuration: new Map([["module", "esnext"]]) }), "");
+  assert.equal(getSkipReason(base), "");
 });
 
 test("compilerOptionsFromSettings preserves removed option values for TS-Go diagnostics", () => {

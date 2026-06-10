@@ -1371,7 +1371,18 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const expectedDiagnosticHeadlines = [];
   const expectedDiagnosticSources = [];
   if (artifacts.length === 0) {
-    mismatches.push("No reference baseline artifacts were found for this case.");
+    // Upstream legitimately writes zero reference baselines when every writer yields no
+    // content: baseline.Run treats NoContent as "this baseline file must not exist".
+    // That requires zero diagnostics (gated separately below), @noTypesAndSymbols
+    // disabling the type/symbol writers (compiler_runner.go verifyTypesAndSymbols), and
+    // a compilation that emits nothing (the js/sourcemap writers then produce
+    // NoContent). Anything else with zero reference artifacts is a real mismatch.
+    const emitted = await emittedOutputsForCase(materialized);
+    if (materialized.noTypesAndSymbols !== true) {
+      mismatches.push("No reference baseline artifacts were found for this case, and type/symbol baselines are enabled (no @noTypesAndSymbols).");
+    } else if (emitted.size !== 0) {
+      mismatches.push(`No reference baseline artifacts were found for this case, but the compilation emitted ${[...emitted.keys()].sort().join(", ")}.`);
+    }
   }
   const expectedOutputs = new Map();
   for (const artifact of sectionComparable) {
@@ -1453,7 +1464,11 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     const otherFiles = units.filter((unit) => !rootSet.has(unit.filePath));
     return { toBeCompiled, otherFiles };
   };
-  if (typeSymbol.length !== 0) {
+  if (typeSymbol.length !== 0 && materialized.noTypesAndSymbols === true) {
+    // compiler_runner.go verifyTypesAndSymbols returns early under @noTypesAndSymbols,
+    // so a committed type/symbol reference baseline is unreachable upstream: stale.
+    mismatches.push(`Type/symbol baselines exist but @noTypesAndSymbols disables them upstream: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
+  } else if (typeSymbol.length !== 0) {
     if (materialized.units === undefined || materialized.invocation === undefined) {
       mismatches.push(`Type/symbol baselines are not supported for this case kind: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
     } else {
@@ -1724,6 +1739,9 @@ async function materializeCase(testCase, runRoot) {
     content: unit.content,
   }));
   const fullEmitPaths = (parsed.globalOptions?.get("fullemitpaths") ?? testCase.configuration?.get?.("fullemitpaths")) === "true";
+  // Harness-only option: compiler_runner.go verifyTypesAndSymbols returns early under
+  // @noTypesAndSymbols, so upstream writes no type/symbol baselines for such cases.
+  const noTypesAndSymbols = (parsed.globalOptions?.get("notypesandsymbols") ?? testCase.configuration?.get?.("notypesandsymbols")) === "true";
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
@@ -1737,6 +1755,7 @@ async function materializeCase(testCase, runRoot) {
       },
       units,
       fullEmitPaths,
+      noTypesAndSymbols,
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -1762,6 +1781,7 @@ async function materializeCase(testCase, runRoot) {
     // same way compiler_runner.go does.
     units,
     fullEmitPaths,
+    noTypesAndSymbols,
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -2233,10 +2253,95 @@ export function getSkipReason(testCase) {
 }
 
 function getSkipReasonFromConfiguration(sourceBaseName, configuration) {
-  return "";
+  return getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptionsFromSettings(configuration ?? new Map()));
 }
 
+// compiler_runner.go skippedTests: test files the pinned TS-Go runner skips by name
+// (typescript.d.ts dependents and tests whose options were removed from the option
+// parser entirely, so the harness config fails to parse).
+const tsgoRunnerSkippedTestNames = new Set([
+  "APILibCheck.ts",
+  "APISample_Watch.ts",
+  "APISample_WatchWithDefaults.ts",
+  "APISample_WatchWithOwnWatchHost.ts",
+  "APISample_compile.ts",
+  "APISample_jsdoc.ts",
+  "APISample_linter.ts",
+  "APISample_parseConfig.ts",
+  "APISample_transform.ts",
+  "APISample_watcher.ts",
+  "preserveUnusedImports.ts",
+  "noCrashWithVerbatimModuleSyntaxAndImportsNotUsedAsValues.ts",
+  "verbatimModuleSyntaxCompat.ts",
+  "verbatimModuleSyntaxCompat2.ts",
+  "verbatimModuleSyntaxCompat3.ts",
+  "verbatimModuleSyntaxCompat4.ts",
+  "preserveValueImports.ts",
+  "preserveValueImports_importsNotUsedAsValues.ts",
+  "preserveValueImports_errors.ts",
+  "preserveValueImports_mixedImports.ts",
+  "preserveValueImports_module.ts",
+  "importsNotUsedAsValues_error.ts",
+  "alwaysStrictNoImplicitUseStrict.ts",
+  "nonPrimitiveIndexingWithForInSupressError.ts",
+  "parameterInitializerBeforeDestructuringEmit.ts",
+  "mappedTypeUnionConstraintInferences.ts",
+  "lateBoundConstraintTypeChecksCorrectly.ts",
+  "keyofDoesntContainSymbols.ts",
+  "isolatedModulesOut.ts",
+  "noStrictGenericChecks.ts",
+  "noImplicitUseStrict_umd.ts",
+  "noImplicitUseStrict_system.ts",
+  "noImplicitUseStrict_es6.ts",
+  "noImplicitUseStrict_commonjs.ts",
+  "noImplicitUseStrict_amd.ts",
+  "noImplicitAnyIndexingSuppressed.ts",
+  "excessPropertyErrorsSuppressed.ts",
+  "moduleNoneDynamicImport.ts",
+  "moduleNoneErrors.ts",
+  "moduleNoneOutFile.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile1.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile2.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile3.ts",
+  "requireOfJsonFileWithModuleEmitNone.ts",
+  "requireOfJsonFileWithModuleNodeResolutionEmitNone.ts",
+]);
+
+// Mirrors compiler_runner.go skippedTests plus harnessutil.go
+// SkipUnsupportedCompilerOptions: the pinned TS-Go runner skips these tests and
+// configurations outright, so no reference baselines exist for them. Skipping (counted
+// and reasoned) is the faithful mirror; running them would gate against nothing.
+// Condition order matches SkipUnsupportedCompilerOptions exactly.
 function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
+  if (tsgoRunnerSkippedTestNames.has(sourceBaseName)) {
+    return `TS-Go runner skip list: ${sourceBaseName}`;
+  }
+  const moduleValue = stringCompilerOption(compilerOptions.module);
+  if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
+    return `TS-Go runner skips unsupported module kind ${moduleValue}`;
+  }
+  const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
+  if (moduleResolutionValue === "node10" || moduleResolutionValue === "classic") {
+    return `TS-Go runner skips unsupported module resolution kind ${moduleResolutionValue}`;
+  }
+  if (compilerOptions.esModuleInterop === false) {
+    return "TS-Go runner skips esModuleInterop=false";
+  }
+  if (compilerOptions.allowSyntheticDefaultImports === false) {
+    return "TS-Go runner skips allowSyntheticDefaultImports=false";
+  }
+  if (optionIsPresent(compilerOptions.baseUrl)) {
+    return `TS-Go runner skips unsupported baseUrl ${compilerOptions.baseUrl}`;
+  }
+  if (optionIsPresent(compilerOptions.outFile)) {
+    return `TS-Go runner skips unsupported outFile ${compilerOptions.outFile}`;
+  }
+  if (stringCompilerOption(compilerOptions.target) === "es5") {
+    return "TS-Go runner skips unsupported target es5";
+  }
+  if (compilerOptions.alwaysStrict === false) {
+    return "TS-Go runner skips alwaysStrict=false";
+  }
   return "";
 }
 
