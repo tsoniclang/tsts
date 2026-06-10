@@ -1403,13 +1403,29 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const baselineHeader = `tests/cases/${testCase.relativePath}`;
   // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0
   const hasDiagnostics = diagnosticHeadlineText(commandOutput) !== "";
-  let sharedProgram;
+  let sharedProgramEntry;
   const ensureProgram = async () => {
-    if (sharedProgram === undefined) {
+    if (sharedProgramEntry === undefined) {
       const { createProgramForCase } = await import("./tsbaseline/typeSymbolWalker.mjs");
-      sharedProgram = createProgramForCase(materialized.caseDir, materialized.invocation.args);
+      sharedProgramEntry = createProgramForCase(materialized.caseDir, materialized.invocation.args);
     }
-    return sharedProgram;
+    return sharedProgramEntry;
+  };
+  // compiler_runner.go: the tsconfig unit lives in tsConfigFiles, never in toBeCompiled or
+  // otherFiles, so it appears in no type/symbol/js-emit baseline; toBeCompiled = the units
+  // the parsed command line names as root files (config FileNames or CLI inputs), in root
+  // order, otherFiles = the remaining units in unit order.
+  const partitionUnitsForBaselines = (rootFileNames) => {
+    const units = (materialized.units ?? []).filter((unit) => !/(^|\/)tsconfig\.json$/i.test(unit.filePath));
+    const rootSet = new Set(rootFileNames.map((fileName) => {
+      const normalized = fileName.split(sep).join("/");
+      const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
+      return normalized.startsWith(caseDirPrefix) ? normalized.slice(caseDirPrefix.length) : normalized;
+    }));
+    // compiler_runner.go appends in UNIT order on both sides of the membership partition.
+    const toBeCompiled = units.filter((unit) => rootSet.has(unit.filePath));
+    const otherFiles = units.filter((unit) => !rootSet.has(unit.filePath));
+    return { toBeCompiled, otherFiles };
   };
   if (typeSymbol.length !== 0) {
     if (materialized.units === undefined || materialized.invocation === undefined) {
@@ -1417,7 +1433,9 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     } else {
       try {
         const { generateTypeAndSymbolBaselines } = await import("./tsbaseline/typeSymbolWalker.mjs");
-        const allFiles = materialized.units.map((unit) => ({
+        const programEntry = await ensureProgram();
+        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
+        const allFiles = [...partition.toBeCompiled, ...partition.otherFiles].map((unit) => ({
           unitName: unit.unitName,
           programPath: unit.filePath,
           content: unit.content,
@@ -1428,7 +1446,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           allFiles,
           header: baselineHeader,
           hasErrorBaseline: hasDiagnostics,
-          program: await ensureProgram(),
+          program: programEntry?.program,
         });
         for (const artifact of typeSymbol) {
           const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
@@ -1447,16 +1465,18 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   }
 
   if (wholeFileJs.length !== 0) {
-    if (materialized.toBeCompiledUnits === undefined || materialized.invocation === undefined) {
+    if (materialized.units === undefined || materialized.invocation === undefined) {
       mismatches.push(`JS emit baselines are not supported for this case kind: ${wholeFileJs.map((artifact) => artifact.name).join(", ")}.`);
     } else {
       try {
         const { generateJsEmitBaseline } = await import("./tsbaseline/jsEmitBaseline.mjs");
+        const programEntry = await ensureProgram();
+        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
         const assembled = generateJsEmitBaseline({
           caseDir: materialized.caseDir,
-          program: await ensureProgram(),
-          toBeCompiled: materialized.toBeCompiledUnits,
-          otherFiles: materialized.otherUnits,
+          program: programEntry?.program,
+          toBeCompiled: partition.toBeCompiled,
+          otherFiles: partition.otherFiles,
           header: baselineHeader,
           hasDiagnostics,
           fullEmitPaths: materialized.fullEmitPaths === true,
@@ -1652,8 +1672,6 @@ async function materializeCase(testCase, runRoot) {
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
       units,
-      toBeCompiledUnits: units,
-      otherUnits: [],
       fullEmitPaths,
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
@@ -1669,20 +1687,16 @@ async function materializeCase(testCase, runRoot) {
   }
   await materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions);
   const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
-  // Mirror compiler_runner.go's allFiles ordering: toBeCompiled (the command-line
-  // inputs, in input order) ahead of otherFiles (remaining units, in unit order).
-  const inputFileSet = new Set(inputFiles);
-  const toBeCompiledUnits = inputFiles.map((file) => units.find((unit) => unit.filePath === file)).filter((unit) => unit !== undefined);
-  const otherUnits = units.filter((unit) => !inputFileSet.has(unit.filePath));
   return {
     caseDir,
     invocation: {
       cwd: caseDir,
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
-    units: [...toBeCompiledUnits, ...otherUnits],
-    toBeCompiledUnits,
-    otherUnits,
+    // Parsed unit order; the baseline writers partition into toBeCompiled/otherFiles
+    // (membership in the parsed command line's root files, unit order preserved) the
+    // same way compiler_runner.go does.
+    units,
     fullEmitPaths,
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),

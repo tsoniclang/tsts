@@ -13,6 +13,7 @@ const [
   { FS: osFS },
   { WrapFS, LibPath },
   { ParseCommandLine },
+  { ParsedCommandLine_FileNames },
   { GetParsedCommandLineOfConfigFile },
   { NewCompilerHost },
   { NewProgram, Program_GetSourceFile, Program_GetTypeCheckerForFile },
@@ -52,6 +53,7 @@ const [
   dist("internal/vfs/osvfs/os.js"),
   dist("internal/bundled/bundled.js"),
   dist("internal/tsoptions/commandlineparser.js"),
+  dist("internal/tsoptions/parsedcommandline.js"),
   dist("internal/tsoptions/tsconfigparsing.js"),
   dist("internal/compiler/host.js"),
   dist("internal/compiler/program.js"),
@@ -131,7 +133,7 @@ export function createProgramForCase(caseDir, args) {
     return undefined;
   }
   const host = NewCompilerHost(caseDir, fs, LibPath(), undefined, undefined);
-  return NewProgram({
+  const program = NewProgram({
     Host: host,
     Config: parsed,
     UseSourceOfProjectReference: false,
@@ -141,6 +143,7 @@ export function createProgramForCase(caseDir, args) {
     ProjectName: "",
     Tracing: undefined,
   });
+  return { program, rootFileNames: ParsedCommandLine_FileNames(parsed) ?? [] };
 }
 
 // type_symbol_baseline.go newTypeWriterWalker
@@ -433,7 +436,7 @@ function generateBaseline(allFiles, fullWalker, header, isSymbolBaseline) {
 // Entry point for the suite runner. Mirrors DoTypeAndSymbolBaseline's fullWalker usage
 // (the Go test-only diff fixups and t.Run wrappers do not apply here).
 export function generateTypeAndSymbolBaselines({ caseDir, args, allFiles, header, hasErrorBaseline, program }) {
-  program ??= createProgramForCase(caseDir, args);
+  program ??= createProgramForCase(caseDir, args)?.program;
   if (program === undefined) {
     throw new Error(`tsbaseline: could not create a program for ${caseDir}`);
   }
