@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
@@ -1058,6 +1058,15 @@ test("diagnosticHeadlineText compares the command-line diagnostic contract", () 
     diagnosticHeadlineText(`file.ts(1,1): error TS1000: First.\r\nfile.ts(2,1): error TS1001: Second.\r\n\r\n==== file.ts (2 errors) ====\r\n    source\r\n`),
     "file.ts(1,1): error TS1000: First.\nfile.ts(2,1): error TS1001: Second.",
   );
+});
+
+test("sortDiagnosticsForBaseline orders diagnostics by source position", () => {
+  const diagnostics = [
+    { file: { fileName: "/b.ts" }, loc: { pos: 2, end: 3 }, code: 2000 },
+    { file: { fileName: "/a.ts" }, loc: { pos: 15, end: 20 }, code: 1005 },
+    { file: { fileName: "/a.ts" }, loc: { pos: 13, end: 14 }, code: 9010 },
+  ];
+  assert.deepEqual(sortDiagnosticsForBaseline(diagnostics).map((diagnostic) => diagnostic.code), [9010, 1005, 2000]);
 });
 
 test("hasRootPackageJson detects only root package boundaries", () => {

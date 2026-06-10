@@ -2145,11 +2145,13 @@ async function runCase(testCase, runRoot, options) {
 
 async function runTranspileInvocations(materialized) {
   const outputs = [];
+  const diagnostics = [];
   let actualErrors = false;
   let exitCode = 0;
   let signal = null;
   for (const invocation of materialized.invocations) {
     const result = await runTstsTranspileApi(materialized.caseDir, invocation);
+    diagnostics.push(...result.diagnostics);
     const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
     if (missingOutputs.length !== 0) {
       actualErrors = true;
@@ -2162,11 +2164,13 @@ async function runTranspileInvocations(materialized) {
     }
     outputs.push(renderTranspileInvocationOutput(invocation, result, missingOutputs));
   }
+  const api = await loadTstsApi();
+  const diagnosticText = api.formatDiagnostics(sortDiagnosticsForBaseline(diagnostics), "/");
   return {
     actualErrors,
     exitCode,
     signal,
-    stdout: outputs.map((output) => output.stdout).join(""),
+    stdout: `${outputs.map((output) => output.stdout).join("")}${diagnosticText}`,
     stderr: outputs.map((output) => output.stderr).join(""),
   };
 }
@@ -2193,9 +2197,41 @@ async function runTstsTranspileApi(caseDir, invocation) {
   return {
     exitCode: 0,
     signal: null,
-    stdout: api.formatDiagnostics(output.diagnostics, "/"),
+    diagnostics: output.diagnostics,
+    stdout: "",
     stderr: "",
   };
+}
+
+export function sortDiagnosticsForBaseline(diagnostics) {
+  return [...diagnostics].sort(compareDiagnosticsForBaseline);
+}
+
+function compareDiagnosticsForBaseline(left, right) {
+  return compareStrings(diagnosticFileName(left), diagnosticFileName(right)) ||
+    diagnosticStart(left) - diagnosticStart(right) ||
+    diagnosticEnd(left) - diagnosticEnd(right) ||
+    diagnosticCode(left) - diagnosticCode(right);
+}
+
+function diagnosticFileName(diagnostic) {
+  return diagnostic?.file?.fileName ?? diagnostic?.file?.FileName?.() ?? "";
+}
+
+function diagnosticStart(diagnostic) {
+  return diagnostic?.loc?.pos ?? -1;
+}
+
+function diagnosticEnd(diagnostic) {
+  return diagnostic?.loc?.end ?? diagnosticStart(diagnostic);
+}
+
+function diagnosticCode(diagnostic) {
+  return diagnostic?.code ?? 0;
+}
+
+function compareStrings(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 async function loadTstsApi() {
