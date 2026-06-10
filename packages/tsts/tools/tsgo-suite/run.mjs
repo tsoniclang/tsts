@@ -1123,7 +1123,8 @@ function baselineDirectories(testCase) {
 
 const comparableBaselineFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
 const diagnosticBaselineFilePattern = /\.errors\.txt$/i;
-const unsupportedExactBaselineFilePattern = /\.(?:symbols|types)$/i;
+const typeSymbolBaselineFilePattern = /\.(?:symbols|types)$/i;
+const unsupportedExactBaselineFilePattern = /$^/;
 const emittedOutputFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
 
 function exactBaselineArtifacts(testCase) {
@@ -1267,6 +1268,52 @@ export function applyTsgoAcceptedOverlay(artifactName, overlaySections, expected
   return { used, problems };
 }
 
+
+const emittedSourceExtensionPattern = /\.(?:d\.[cm]?ts|[cm]?[jt]sx?)$/i;
+
+// Strips test-path prefixes the same way tsbaseline/util.go removeTestPathPrefixes does
+// (retainTrailingDirectorySeparator=false branch).
+export function removeTestPathPrefixes(text) {
+  return text
+    .replaceAll("/.ts/", "")
+    .replaceAll("/.lib/", "")
+    .replaceAll("/.src/", "")
+    .replaceAll("bundled:///libs/", "")
+    .replaceAll("file:///./ts/", "file:///")
+    .replaceAll("file:///./lib/", "file:///")
+    .replaceAll("file:///./src/", "file:///");
+}
+
+// Maps a materialized emitted-output path (relative to the case dir) back to the name the
+// upstream baseline writer uses for it. js_emit_baseline.go fileOutput keys each emitted
+// file by the emitted file's unit name: basename-only unless @fullEmitPaths.
+export function upstreamOutputName(materialized, outputFile) {
+  if (materialized.units === undefined) {
+    return outputFile;
+  }
+  if (materialized.fullEmitPaths === true) {
+    return normalizedBaselineSectionPath(removeTestPathPrefixes(outputFile));
+  }
+  return outputFile.split("/").at(-1);
+}
+
+// Rewrites materialized (case-dir-relative) file paths in diagnostic output back to the
+// upstream unit names so headline comparison happens in the upstream coordinate system.
+export function translateDiagnosticPathsToUnitNames(materialized, text) {
+  const units = materialized.units;
+  if (units === undefined) {
+    return text;
+  }
+  return text.split("\n").map((line) => {
+    for (const unit of units) {
+      if (unit.unitName !== unit.filePath && line.startsWith(`${unit.filePath}(`)) {
+        return removeTestPathPrefixes(unit.unitName) + line.slice(unit.filePath.length);
+      }
+    }
+    return line;
+  }).join("\n");
+}
+
 async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const artifacts = exactBaselineArtifacts(testCase);
   const unsupported = artifacts
@@ -1274,6 +1321,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     .map((artifact) => artifact.diff ? `${artifact.name}.diff` : artifact.name);
   const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
   const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
+  const typeSymbol = artifacts.filter((artifact) => !artifact.diff && typeSymbolBaselineFilePattern.test(artifact.name));
   const mismatches = [];
   const expectedDiagnosticHeadlines = [];
   const expectedDiagnosticSources = [];
@@ -1323,14 +1371,53 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     mismatches.push(...problems);
   }
   const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
-  const actualDiagnostics = diagnosticHeadlineText(commandOutput);
+  const actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, diagnosticHeadlineText(commandOutput));
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
     mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
   } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
     mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
   }
 
-  const actualOutputs = await emittedOutputsForCase(materialized);
+  if (typeSymbol.length !== 0) {
+    if (materialized.units === undefined || materialized.invocation === undefined) {
+      mismatches.push(`Type/symbol baselines are not supported for this case kind: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateTypeAndSymbolBaselines } = await import("./tsbaseline/typeSymbolWalker.mjs");
+        const allFiles = materialized.units.map((unit) => ({
+          unitName: unit.unitName,
+          programPath: unit.filePath,
+          content: unit.content,
+        }));
+        const generated = generateTypeAndSymbolBaselines({
+          caseDir: materialized.caseDir,
+          args: materialized.invocation.args,
+          allFiles,
+          header: `tests/cases/${testCase.relativePath}`,
+          // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0
+          hasErrorBaseline: diagnosticHeadlineText(commandOutput) !== "",
+        });
+        for (const artifact of typeSymbol) {
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          const actual = normalizeEmittedOutputText(artifact.name.endsWith(".symbols") ? generated.symbols : generated.types);
+          if (actual !== expected) {
+            mismatches.push(`Type/symbol baseline '${artifact.name}' does not match the generated baseline.`);
+            // Mirror upstream baseline.Run, which writes the actual ("local") baseline on
+            // every difference so it can be diffed against the reference.
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`Type/symbol baseline generation failed: ${error?.message ?? error}.`);
+      }
+    }
+  }
+
+  const actualOutputsRaw = await emittedOutputsForCase(materialized);
+  const actualOutputs = new Map();
+  for (const [outputFile, content] of actualOutputsRaw) {
+    actualOutputs.set(upstreamOutputName(materialized, outputFile), content);
+  }
   for (const [outputFile, actualContent] of actualOutputs) {
     const expected = expectedOutputs.get(outputFile);
     if (expected === undefined) {
@@ -1351,7 +1438,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   }
   return {
     checked: artifacts.length,
-    comparable: comparable.length + diagnostics.length,
+    comparable: comparable.length + diagnostics.length + typeSymbol.length,
     unsupported,
     tsgoAccepted,
     mismatches,
@@ -1479,6 +1566,15 @@ async function materializeCase(testCase, runRoot) {
     };
   }
 
+  const units = parsed.units.map((unit) => ({
+    unitName: unit.fileName,
+    filePath: normalizeHarnessPath(unit.fileName, pathOptions),
+    // Upstream TestFile.Content is the unit text as authored; the baseline writers
+    // interleave it verbatim. (The materialized on-disk copy may have rewritten
+    // harness-virtual paths for the real filesystem.)
+    content: unit.content,
+  }));
+  const fullEmitPaths = (parsed.globalOptions?.get("fullemitpaths") ?? testCase.configuration?.get?.("fullemitpaths")) === "true";
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
@@ -1490,6 +1586,8 @@ async function materializeCase(testCase, runRoot) {
         cwd: caseDir,
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
+      units,
+      fullEmitPaths,
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -1510,6 +1608,8 @@ async function materializeCase(testCase, runRoot) {
       cwd: caseDir,
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
+    units,
+    fullEmitPaths,
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
