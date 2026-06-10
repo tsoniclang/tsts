@@ -1355,13 +1355,15 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const mismatches = [];
   const wholeFileJs = [];
   let sectionComparable = comparable;
+  const wholeFileSourceMaps = [];
   if (isCurrentCorpus) {
     sectionComparable = [];
     for (const artifact of comparable) {
       if (/\.js$/i.test(artifact.name)) {
         wholeFileJs.push(artifact);
+      } else if (/\.js\.map$/i.test(artifact.name)) {
+        wholeFileSourceMaps.push(artifact);
       } else {
-        // e.g. <case>.js.map source-map baselines: sourcemap_baseline.go is not ported yet.
         mismatches.push(`Exact baseline artifact '${artifact.name}' is not supported for the current corpus yet.`);
       }
     }
@@ -1520,6 +1522,42 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
   }
 
+  if (wholeFileSourceMaps.length !== 0) {
+    if (materialized.units === undefined || materialized.invocation === undefined) {
+      mismatches.push(`Source map baselines are not supported for this case kind: ${wholeFileSourceMaps.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateSourceMapBaseline, NoContent } = await import("./tsbaseline/sourceMapBaseline.mjs");
+        const programEntry = await ensureProgram();
+        const partition = partitionUnitsForBaselines(programEntry?.rootFileNames ?? []);
+        const assembled = generateSourceMapBaseline({
+          caseDir: materialized.caseDir,
+          program: programEntry?.program,
+          compilerOptions: programEntry?.compilerOptions,
+          allUnits: [...partition.toBeCompiled, ...partition.otherFiles],
+          hasDiagnostics,
+          fullEmitPaths: materialized.fullEmitPaths === true,
+          emittedOutputs: await emittedOutputsForCase(materialized),
+        });
+        for (const artifact of wholeFileSourceMaps) {
+          if (assembled === undefined) {
+            mismatches.push(`Source map baseline '${artifact.name}' exists but the compilation produces no source map baseline.`);
+            continue;
+          }
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          const actual = normalizeEmittedOutputText(assembled);
+          if (actual !== expected) {
+            mismatches.push(`Source map baseline '${artifact.name}' does not match the assembled baseline.`);
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`Source map baseline generation failed: ${error?.message ?? error}.`);
+      }
+    }
+  }
+
+
   if (!isCurrentCorpus) {
     const actualOutputsRaw = await emittedOutputsForCase(materialized);
     const actualOutputs = new Map();
@@ -1586,7 +1624,9 @@ async function emittedOutputsForCase(materialized) {
     if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
       continue;
     }
-    outputs.set(normalized, normalizeComparableText(await readFile(file, "utf8")));
+    // Keep raw bytes: every textual comparison normalizes newlines itself, and the
+    // source-map preview links base64 the EXACT emitted file contents (CRLF included).
+    outputs.set(normalized, await readFile(file, "utf8"));
   }
   return outputs;
 }

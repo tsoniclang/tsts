@@ -18,7 +18,7 @@ const dist = (p) => import(new URL(p, distRoot).href);
 const [
   { Program_GetSourceFiles },
   { newEmitHost, emitHost_as_outputpaths_OutputPathsHost, emitHost_Options },
-  { GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_DeclarationFilePath },
+  { GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_DeclarationFilePath, OutputPaths_SourceMapFilePath },
   { SourceFile_FileName, SourceFile_Diagnostics },
   { IsDeclarationFileName },
   { GetBaseFileName },
@@ -42,7 +42,7 @@ import { removeTestPathPrefixes } from "./typeSymbolWalker.mjs";
 export const NoContent = "<no content>";
 
 // js_emit_baseline.go fileOutput
-function fileOutput(file, fullEmitPaths) {
+export function fileOutput(file, fullEmitPaths) {
   const fileName = fullEmitPaths ? removeTestPathPrefixes(file.unitName) : GetBaseFileName(file.unitName);
   return `//// [${fileName}]\n${file.content}`;
 }
@@ -54,21 +54,32 @@ function compareTestFiles(a, b) {
 // harnessutil.go compilation-output population: pair each non-declaration program source
 // file (in program order) with its computed output paths, then append stragglers sorted
 // by unit name.
-function orderedEmittedFiles(program, caseDir, emittedOutputs) {
+export function orderedEmittedFiles(program, caseDir, emittedOutputs) {
   const js = new Map();
   const dts = new Map();
+  const maps = new Map();
   for (const [rel, content] of emittedOutputs) {
     if (/\.d\.[cm]?ts$/i.test(rel)) {
       dts.set(rel, content);
     } else if (/\.map$/i.test(rel)) {
-      // Source maps are baselined separately (sourcemap_baseline.go), never inside the
-      // .js emit baseline.
+      maps.set(rel, content);
     } else if (/\.[cm]?jsx?$/i.test(rel)) {
       js.set(rel, content);
     }
   }
   const JS = [];
   const DTS = [];
+  const Maps = [];
+  const take = (map, into, absolutePath) => {
+    if (absolutePath === undefined || absolutePath === "") {
+      return;
+    }
+    const rel = relative(caseDir, absolutePath).split(sep).join("/");
+    if (map.has(rel)) {
+      into.push({ unitName: rel, content: map.get(rel) });
+      map.delete(rel);
+    }
+  };
   for (const sourceFile of Program_GetSourceFiles(program)) {
     const fileName = SourceFile_FileName(sourceFile);
     if (fileName.startsWith("bundled:") || IsDeclarationFileName(fileName)) {
@@ -78,32 +89,20 @@ function orderedEmittedFiles(program, caseDir, emittedOutputs) {
     try {
       const host = emitHost_as_outputpaths_OutputPathsHost(emitHost);
       const paths = GetOutputPathsFor(sourceFile, emitHost_Options(emitHost), host, false);
-      const jsPath = OutputPaths_JsFilePath(paths);
-      const dtsPath = OutputPaths_DeclarationFilePath(paths);
-      if (jsPath !== undefined && jsPath !== "") {
-        const rel = relative(caseDir, jsPath).split(sep).join("/");
-        if (js.has(rel)) {
-          JS.push({ unitName: rel, content: js.get(rel) });
-          js.delete(rel);
-        }
-      }
-      if (dtsPath !== undefined && dtsPath !== "") {
-        const rel = relative(caseDir, dtsPath).split(sep).join("/");
-        if (dts.has(rel)) {
-          DTS.push({ unitName: rel, content: dts.get(rel) });
-          dts.delete(rel);
-        }
-      }
+      take(js, JS, OutputPaths_JsFilePath(paths));
+      take(dts, DTS, OutputPaths_DeclarationFilePath(paths));
+      // harnessutil pairs only the JS source map (extname+".map"); declaration maps are
+      // never paired and always land in the name-sorted leftovers.
+      take(maps, Maps, OutputPaths_SourceMapFilePath(paths));
     } finally {
       done();
     }
   }
   // add any unhandled outputs, ordered by unit name
-  const jsLeftovers = [...js].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles);
-  JS.push(...jsLeftovers);
-  const dtsLeftovers = [...dts].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles);
-  DTS.push(...dtsLeftovers);
-  return { JS, DTS };
+  JS.push(...[...js].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles));
+  DTS.push(...[...dts].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles));
+  Maps.push(...[...maps].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles));
+  return { JS, DTS, Maps };
 }
 
 // js_emit_baseline.go DoJSEmitBaseline (assembly portion)

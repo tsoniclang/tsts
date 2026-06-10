@@ -13,7 +13,7 @@ const [
   { FS: osFS },
   { WrapFS, LibPath },
   { ParseCommandLine },
-  { ParsedCommandLine_FileNames },
+  { ParsedCommandLine_FileNames, ParsedCommandLine_CompilerOptions },
   { GetParsedCommandLineOfConfigFile },
   { NewCompilerHost },
   { NewProgram, Program_GetSourceFile, Program_GetTypeCheckerForFile },
@@ -143,7 +143,7 @@ export function createProgramForCase(caseDir, args) {
     ProjectName: "",
     Tracing: undefined,
   });
-  return { program, rootFileNames: ParsedCommandLine_FileNames(parsed) ?? [] };
+  return { program, rootFileNames: ParsedCommandLine_FileNames(parsed) ?? [], compilerOptions: ParsedCommandLine_CompilerOptions(parsed) };
 }
 
 // type_symbol_baseline.go newTypeWriterWalker
