@@ -4,7 +4,7 @@ import { cpus } from "node:os";
 import { dirname, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import ts from "typescript";
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -1444,7 +1444,12 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const ensureProgram = async () => {
     if (sharedProgramEntry === undefined) {
       const { createProgramForCase } = await import("./tsbaseline/typeSymbolWalker.mjs");
-      sharedProgramEntry = createProgramForCase(materialized.caseDir, materialized.invocation.args);
+      const realpathCache = new Map();
+      sharedProgramEntry = createProgramForCase(
+        materialized.caseDir,
+        materialized.invocation.args,
+        (path) => isCompilerCreatedPath(materialized, path, realpathCache),
+      );
     }
     return sharedProgramEntry;
   };
@@ -1625,25 +1630,103 @@ export function diagnosticHeadlineText(text) {
   return headlines.join("\n");
 }
 
+// Classifies a case-dir-relative path as a compiler-emitted output (vs a materialized
+// input). Returns the normalized relative path, or undefined for inputs. Shared by the
+// output collector and the in-process Program's FS filter so both agree exactly on what
+// "emitted" means.
+function emittedOutputRelativePath(materialized, relativeFile) {
+  const normalized = normalizedBaselineSectionPath(relativeFile);
+  if (!emittedOutputFilePattern.test(normalized)) {
+    return undefined;
+  }
+  if (materialized.writtenFileSet.has(normalized)) {
+    return undefined;
+  }
+  if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
+    return undefined;
+  }
+  return normalized;
+}
+
+// Snapshot of every file in the case dir (by resolved real path) taken after
+// materialization and before the CLI runs: exactly the inputs upstream's vfs holds.
+async function snapshotCaseRealFilePaths(caseDir) {
+  const paths = new Set();
+  for (const file of await walkFiles(caseDir)) {
+    try {
+      paths.add(realpathSync(file));
+    } catch {
+      // Dangling symlink or racing removal: nothing to record.
+    }
+  }
+  return paths;
+}
+
+// FS predicate for the in-process Program: hide files the CLI run created (it runs
+// first and writes its outputs into the case dir) so module resolution sees only the
+// materialized inputs, like upstream's vfs. An emitted y.d.ts must not shadow a y.js
+// input. Queried paths are realpath-resolved so inputs reached through materialized
+// symlinks (node_modules/b -> packages/b) stay visible.
+function isCompilerCreatedPath(materialized, path, realpathCache) {
+  const preexisting = materialized.preexistingFilePaths;
+  if (preexisting === undefined) {
+    return false;
+  }
+  let resolved = realpathCache.get(path);
+  if (resolved === undefined) {
+    try {
+      resolved = realpathSync(path);
+    } catch {
+      resolved = "";
+    }
+    realpathCache.set(path, resolved);
+  }
+  if (resolved === "") {
+    return false;
+  }
+  return resolved.startsWith(`${materialized.caseDirRealPath}${sep}`) && !preexisting.has(resolved);
+}
+
 async function emittedOutputsForCase(materialized) {
   const outputs = new Map();
   for (const file of await walkFiles(materialized.caseDir)) {
     const relativeFile = relative(materialized.caseDir, file).split(sep).join("/");
-    const normalized = normalizedBaselineSectionPath(relativeFile);
-    if (!emittedOutputFilePattern.test(normalized)) {
-      continue;
-    }
-    if (materialized.writtenFileSet.has(normalized)) {
-      continue;
-    }
-    if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
+    const normalized = emittedOutputRelativePath(materialized, relativeFile);
+    if (normalized === undefined) {
       continue;
     }
     // Keep raw bytes: every textual comparison normalizes newlines itself, and the
     // source-map preview links base64 the EXACT emitted file contents (CRLF included).
-    outputs.set(normalized, await readFile(file, "utf8"));
+    outputs.set(normalized, translateEmittedContentToUnitCoordinates(materialized, await readFile(file, "utf8")));
   }
   return outputs;
+}
+
+// Inverse of the materializer's source-content rewrites: the compiler copies rewritten
+// fragments (triple-slash reference paths, module specifiers, /.lib/ references)
+// verbatim into emitted outputs, while upstream compiles the unrewritten units in a vfs
+// and emits the original fragments. Replay the recorded pairs in reverse so emitted
+// outputs compare in upstream unit coordinates.
+function translateEmittedContentToUnitCoordinates(materialized, content) {
+  let translated = content;
+  for (const [from, to] of materialized.contentRewrites ?? []) {
+    translated = translated.replaceAll(from, to);
+  }
+  return translated;
+}
+
+function dedupedContentRewrites(contentRewrites) {
+  const seen = new Set();
+  const deduped = [];
+  for (const pair of contentRewrites) {
+    const key = JSON.stringify(pair);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(pair);
+    }
+  }
+  // Longest rewritten fragment first so a shorter pair can never clip a longer one.
+  return deduped.sort(([left], [right]) => right.length - left.length);
 }
 
 function normalizedBaselineSectionPath(fileName) {
@@ -1703,11 +1786,12 @@ async function materializeCase(testCase, runRoot) {
   }
 
   const writtenFiles = [];
+  const contentRewrites = [];
   for (const unit of parsed.units) {
     const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
     const fullPath = join(caseDir, filePath);
     await mkdir(dirname(fullPath), { recursive: true });
-    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions));
+    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions, contentRewrites));
     writtenFiles.push(filePath);
   }
   await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
@@ -1756,6 +1840,7 @@ async function materializeCase(testCase, runRoot) {
       units,
       fullEmitPaths,
       noTypesAndSymbols,
+      contentRewrites: dedupedContentRewrites(contentRewrites),
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -1782,6 +1867,7 @@ async function materializeCase(testCase, runRoot) {
     units,
     fullEmitPaths,
     noTypesAndSymbols,
+    contentRewrites: dedupedContentRewrites(contentRewrites),
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -2066,7 +2152,13 @@ function isExplicitRootFile(file) {
   return true;
 }
 
-export function rewriteHarnessFileContent(content, filePath, pathOptions) {
+// `rewrites`, when provided, collects [rewrittenFragment, originalFragment] pairs for
+// every source-content rule application. The compiler copies these fragments verbatim
+// into emitted outputs (triple-slash reference paths, module specifiers, /.lib/
+// references), while upstream compiles the unrewritten units in a vfs and emits the
+// originals; the recorded pairs drive the inverse translation of emitted outputs back
+// to upstream unit coordinates.
+export function rewriteHarnessFileContent(content, filePath, pathOptions, rewrites) {
   let rewritten = content;
   if (rewritten.includes("/.lib/")) {
     let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
@@ -2077,34 +2169,39 @@ export function rewriteHarnessFileContent(content, filePath, pathOptions) {
       libPath = `./${libPath}`;
     }
     rewritten = rewritten.replaceAll("/.lib/", `${libPath}/`);
+    rewrites?.push([`${libPath}/`, "/.lib/"]);
   }
   if (/\.json$/i.test(filePath)) {
     rewritten = rewriteHarnessJsonContent(rewritten, filePath, pathOptions);
   }
   if (harnessSourceFilePattern.test(filePath)) {
-    rewritten = rewriteHarnessModuleSpecifiers(rewritten, filePath, pathOptions);
+    rewritten = rewriteHarnessModuleSpecifiers(rewritten, filePath, pathOptions, rewrites);
   }
   return rewritten.replace(
     /(\/\/\/\s*<reference\s+path=["'])([^"']+)(["'])/gi,
-    (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`,
+    (match, prefix, referencePath, suffix) => {
+      const next = `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`;
+      if (next !== match) {
+        rewrites?.push([next, match]);
+      }
+      return next;
+    },
   );
 }
 
-function rewriteHarnessModuleSpecifiers(content, filePath, pathOptions) {
+function rewriteHarnessModuleSpecifiers(content, filePath, pathOptions, rewrites) {
   const rewriteSpecifier = (specifier) => isHarnessAbsolutePath(specifier) ? rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) : specifier;
+  const rewriteMatch = (match, prefix, specifier, suffix) => {
+    const next = `${prefix}${rewriteSpecifier(specifier)}${suffix}`;
+    if (next !== match) {
+      rewrites?.push([next, match]);
+    }
+    return next;
+  };
   return content
-    .replace(
-      /(\b(?:import|export)\s+(?:(?!\bfrom\b)[^"'`])*?\bfrom\s*["'])(\/[^"']+)(["'])/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    )
-    .replace(
-      /(\bimport\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    )
-    .replace(
-      /(\brequire\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    );
+    .replace(/(\b(?:import|export)\s+(?:(?!\bfrom\b)[^"'`])*?\bfrom\s*["'])(\/[^"']+)(["'])/g, rewriteMatch)
+    .replace(/(\bimport\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g, rewriteMatch)
+    .replace(/(\brequire\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g, rewriteMatch);
 }
 
 function rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) {
@@ -2535,6 +2632,12 @@ async function runCase(testCase, runRoot, options) {
       stdout: "",
       stderr: "",
     };
+  }
+  // Snapshot the materialized inputs before the CLI writes its outputs; the in-process
+  // Program for baseline generation must see exactly this file set (upstream's vfs).
+  if (options.exactBaselines) {
+    materialized.preexistingFilePaths = await snapshotCaseRealFilePaths(materialized.caseDir);
+    materialized.caseDirRealPath = realpathSync(materialized.caseDir);
   }
   if (materialized.transpile === true) {
     const result = await runTranspileInvocations(materialized);

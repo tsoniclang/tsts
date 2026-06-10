@@ -4,7 +4,7 @@ import { Node_Locals, Node_Body, Node_Type, Node_Parameters, Node_Expression, No
 import { Node_Name, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End } from "../ast/spine.js";
 import type { Node } from "../ast/ast.js";
 import { AsConditionalTypeNode, AsFunctionExpression, AsHeritageClause, AsParameterDeclaration, AsBindingElement, AsInferTypeNode, AsExportSpecifier, AsPropertyDeclaration, AsTypeParameterDeclaration } from "../ast/generated/casts.js";
-import { KindSourceFile, KindModuleDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindClassDeclaration, KindClassExpression, KindInterfaceDeclaration, KindExpressionWithTypeArguments, KindComputedPropertyName, KindMethodDeclaration, KindConstructor, KindGetAccessor, KindSetAccessor, KindFunctionDeclaration, KindFunctionExpression, KindDecorator, KindParameter, KindBindingElement, KindInferType, KindExportSpecifier, KindConditionalType, KindJSDoc, KindJSDocParameterTag, KindJSDocReturnTag, KindTypeParameter, KindExtendsKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindNamespaceExport, KindArrowFunction, KindPropertyAssignment } from "../ast/generated/kinds.js";
+import { KindSourceFile, KindModuleDeclaration, KindEnumDeclaration, KindPropertyDeclaration, KindClassDeclaration, KindClassExpression, KindInterfaceDeclaration, KindExpressionWithTypeArguments, KindComputedPropertyName, KindMethodDeclaration, KindConstructor, KindGetAccessor, KindSetAccessor, KindFunctionDeclaration, KindFunctionExpression, KindDecorator, KindParameter, KindBindingElement, KindInferType, KindExportSpecifier, KindConditionalType, KindTypeParameter, KindExtendsKeyword, KindTypeAliasDeclaration, KindJSTypeAliasDeclaration, KindNamespaceExport, KindArrowFunction, KindPropertyAssignment } from "../ast/generated/kinds.js";
 import { NodeFlagsSynthesized, NodeFlagsAmbient, SymbolFlagsFunction } from "../ast/generated/flags.js";
 import { SymbolFlagsType, SymbolFlagsTypeParameter, SymbolFlagsVariable, SymbolFlagsFunctionScopedVariable, SymbolFlagsClass, SymbolFlagsGlobalLookup, SymbolFlagsModuleMember, SymbolFlagsEnumMember, SymbolFlagsProperty, SymbolFlagsTransient, SymbolFlagsAlias, SymbolFlagsValue } from "../ast/symbolflags.js";
 import { ModifierFlagsDefault, ModifierFlagsAsync } from "../ast/modifierflags.js";
@@ -14,7 +14,7 @@ import type { Symbol, SymbolTable } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/symbolflags.js";
 import {
   IsConstAssertion, IsModuleOrEnumDeclaration, IsGlobalSourceFile, IsFunctionLike,
-  IsBindingPattern, IsPartOfParameterDeclaration, IsClassLike,
+  IsBindingPattern, IsParameterLike, IsPartOfParameterDeclaration, IsClassLike,
   IsClassElement, IsExternalOrCommonJSModule, IsGlobalScopeAugmentation, GetDeclarationOfKind,
   IsStatic, FindConstructorDeclaration, IsNullishCoalesce, IsOptionalChain, IsTypeNode,
   IsFunctionLikeDeclaration, HasStaticModifier, GetImmediatelyInvokedFunctionExpression,
@@ -414,18 +414,9 @@ export function NameResolver_Resolve(receiver: GoPtr<NameResolver>, location: Go
           // - Type parameters of a function are in scope in the entire function declaration, including the parameter
           //   list and return type. However, local types are only in scope in the function body.
           // - parameters are only in the scope of function body
-          // This restriction does not apply to JSDoc comment types because they are parented
-          // at a higher level than type parameters would normally be
-          if ((meaning & result!.Flags & SymbolFlagsType) !== 0 && lastLocation!.Kind !== KindJSDoc) {
-            // type parameters are visible in parameter list, return type and type parameter list.
-            // Synthetic fake scopes are added for signatures so type parameters are accessible from them.
+          if ((meaning & result!.Flags & SymbolFlagsType) !== 0) {
             useResult = (result!.Flags & SymbolFlagsTypeParameter) !== 0 &&
-              ((lastLocation!.Flags & NodeFlagsSynthesized) !== 0 ||
-                lastLocation === Node_Type(location) ||
-                lastLocation!.Kind === KindParameter ||
-                lastLocation!.Kind === KindJSDocParameterTag ||
-                lastLocation!.Kind === KindJSDocReturnTag ||
-                lastLocation!.Kind === KindTypeParameter);
+              (lastLocation === Node_Type(location) || IsParameterLike(lastLocation));
           }
           if ((meaning & result!.Flags & SymbolFlagsVariable) !== 0) {
             // expression inside parameter will lookup as normal variable scope when targeting es2015+

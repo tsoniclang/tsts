@@ -106,11 +106,43 @@ export function isDefaultLibraryFile(filePath) {
   return fileName.startsWith("lib.") && fileName.endsWith(".d.ts");
 }
 
+// The suite's CLI invocation runs before the in-process Program is built, so the case
+// directory already contains the emitted outputs. Upstream compiles in a vfs holding
+// only the test units; without filtering, an emitted y.d.ts would shadow a y.js input
+// during module resolution and corrupt both program file order and checked types. Hide
+// exactly the paths the caller classifies as emitted outputs.
+function hidePaths(fs, isHiddenPath) {
+  const visibleEntryName = (dir, name) => !isHiddenPath(`${dir.replace(/\/+$/, "")}/${name}`);
+  return {
+    UseCaseSensitiveFileNames: () => fs.UseCaseSensitiveFileNames(),
+    FileExists: (path) => !isHiddenPath(path) && fs.FileExists(path),
+    ReadFile: (path) => (isHiddenPath(path) ? ["", false] : fs.ReadFile(path)),
+    WriteFile: (path, data) => fs.WriteFile(path, data),
+    AppendFile: (path, data) => fs.AppendFile(path, data),
+    Remove: (path) => fs.Remove(path),
+    Chtimes: (path, aTime, mTime) => fs.Chtimes(path, aTime, mTime),
+    DirectoryExists: (path) => fs.DirectoryExists(path),
+    GetAccessibleEntries: (path) => {
+      const entries = fs.GetAccessibleEntries(path);
+      return { ...entries, Files: (entries.Files ?? []).filter((name) => visibleEntryName(path, name)) };
+    },
+    Stat: (path) => (isHiddenPath(path) ? undefined : fs.Stat(path)),
+    WalkDir: (root, walkFn) => fs.WalkDir(root, (path, dirEntry, err) => {
+      if (dirEntry !== undefined && !dirEntry.IsDir() && isHiddenPath(path)) {
+        return undefined;
+      }
+      return walkFn(path, dirEntry, err);
+    }),
+    Realpath: (path) => fs.Realpath(path),
+  };
+}
+
 // Builds the in-process Program for a materialized case directory using the same command
 // line the suite passed to the TSTS CLI. Mirrors how cmd/tsgo constructs its compile
 // (bundled-lib-wrapped OS FS, bundled default library path).
-export function createProgramForCase(caseDir, args) {
-  const fs = WrapFS(osFS());
+export function createProgramForCase(caseDir, args, isHiddenPath) {
+  const baseFS = WrapFS(osFS());
+  const fs = isHiddenPath === undefined ? baseFS : hidePaths(baseFS, isHiddenPath);
   const parseHost = {
     FS: () => fs,
     GetCurrentDirectory: () => caseDir,
