@@ -81,3 +81,14 @@ test("OptionsDeclarations mirrors the CompilerOptions declaration surface", () =
   assert.deepEqual(missingDeclarations, []);
   assert.deepEqual([...declarations.values()].sort(), []);
 });
+
+test("OptionsDeclarations marks semantic-diagnostic options as affecting build info", () => {
+  const missingBuildInfoFlags: string[] = [];
+  for (const option of OptionsDeclarations) {
+    if (option!.AffectsSemanticDiagnostics && !option!.AffectsBuildInfo) {
+      missingBuildInfoFlags.push(option!.Name);
+    }
+  }
+
+  assert.deepEqual(missingBuildInfoFlags, []);
+});

@@ -1239,7 +1239,6 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
     return targetOptions;
   }
 
-  // Collect explicitly null field names from raw JSON (keyed by JSON option name)
   const explicitNullFields = new globalThis.Set<string>();
   if (rawSource !== undefined) {
     const rawMap = asOrderedMap(rawSource) as GoPtr<OrderedMap<string, unknown>>;
@@ -1259,16 +1258,16 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
     }
   }
 
-  // Do the merge: iterate over all keys of source options object
   const target = targetOptions as unknown as globalThis.Record<string, unknown>;
   const source = sourceOptions as unknown as globalThis.Record<string, unknown>;
+  for (const jsonKey of explicitNullFields) {
+    target[compilerOptionJsonKeyToFieldName(jsonKey)] = undefined;
+  }
   for (const key of globalThis.Object.keys(source)) {
-    // Check if this field's JSON name is explicitly null (zero it in target)
-    if (explicitNullFields.has(key)) {
+    if (explicitNullFields.has(compilerOptionFieldNameToJsonKey(key))) {
       target[key] = undefined;
       continue;
     }
-    // Normal merge behavior: copy non-zero/non-undefined fields
     const sourceVal = source[key];
     if (sourceVal !== undefined && sourceVal !== null && sourceVal !== 0 && sourceVal !== false && sourceVal !== "") {
       target[key] = sourceVal;
@@ -1276,6 +1275,20 @@ export function mergeCompilerOptions(targetOptions: GoPtr<CompilerOptions>, sour
   }
 
   return targetOptions;
+}
+
+function compilerOptionJsonKeyToFieldName(key: string): string {
+  if (key === "esModuleInterop") {
+    return "ESModuleInterop";
+  }
+  return key.slice(0, 1).toUpperCase() + key.slice(1);
+}
+
+function compilerOptionFieldNameToJsonKey(fieldName: string): string {
+  if (fieldName === "ESModuleInterop") {
+    return "esModuleInterop";
+  }
+  return fieldName.slice(0, 1).toLowerCase() + fieldName.slice(1);
 }
 
 /**
