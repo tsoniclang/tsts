@@ -507,6 +507,7 @@ test("compilerCommandLineArgsForTranspileInvocation runs declaration transpile a
     "--declaration",
     "--declarationMap",
     "--emitDeclarationOnly",
+    "--isolatedDeclarations",
     "--module",
     "commonjs",
     "--noCheck",
@@ -548,6 +549,40 @@ export const b = 2;`, "fallback.ts");
       label: "declaration:b.ts",
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "b.ts", "declaration"),
       expectedOutputFiles: ["b.d.ts", "b.d.ts.map"],
+    },
+  ]);
+});
+
+test("getFileBasedTestConfigurations varies source map transpile directives", () => {
+  const configurations = getFileBasedTestConfigurations(new Map([
+    ["sourcemap", "true,false"],
+    ["inlinesourcemap", "true,false"],
+    ["target", "es6"],
+  ]));
+  assert.deepEqual(configurations.map((configuration) => ({
+    name: configuration.name,
+    sourceMap: configuration.settings.get("sourcemap"),
+    inlineSourceMap: configuration.settings.get("inlinesourcemap"),
+  })), [
+    {
+      name: "inlinesourcemap=true,sourcemap=true",
+      sourceMap: "true",
+      inlineSourceMap: "true",
+    },
+    {
+      name: "inlinesourcemap=false,sourcemap=true",
+      sourceMap: "true",
+      inlineSourceMap: "false",
+    },
+    {
+      name: "inlinesourcemap=true,sourcemap=false",
+      sourceMap: "false",
+      inlineSourceMap: "true",
+    },
+    {
+      name: "inlinesourcemap=false,sourcemap=false",
+      sourceMap: "false",
+      inlineSourceMap: "false",
     },
   ]);
 });
@@ -929,6 +964,14 @@ test("parseBaselineSections preserves repeated section names for input/output ba
     { name: "index.js", content: "const input = 1;" },
     { name: "index.js", content: "const output = 1;" },
     { name: "index.d.ts", content: "export {};\n" },
+  ]);
+});
+
+test("parseBaselineSections preserves embedded diagnostics sections", () => {
+  const sections = parseBaselineSections(`//// [index.d.ts] ////\r\nexport {};\r\n//// [Diagnostics reported]\r\nindex.ts(1,1): error TS9007: Needs annotation.\r\n`);
+  assert.deepEqual(sections, [
+    { name: "index.d.ts", content: "export {};" },
+    { name: "Diagnostics reported", content: "index.ts(1,1): error TS9007: Needs annotation.\n" },
   ]);
 });
 

@@ -79,6 +79,8 @@ const compilerVaryByOptions = new Set([
   "strict",
   "strictbuiltiniteratorreturn",
   "strictnullchecks",
+  "inlinesourcemap",
+  "sourcemap",
   "target",
   "usedefineforclassfields",
   "useunknownincatchvariables",
@@ -796,6 +798,7 @@ export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, i
   } else if (kind === "declaration") {
     transpileOptions.declaration = true;
     transpileOptions.emitDeclarationOnly = true;
+    transpileOptions.isolatedDeclarations = true;
   } else {
     throw new Error(`Unsupported transpile invocation kind '${kind}'`);
   }
@@ -1186,6 +1189,8 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
   const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
   const mismatches = [];
+  const expectedDiagnosticHeadlines = [];
+  const expectedDiagnosticSources = [];
   if (artifacts.length === 0) {
     mismatches.push("No reference baseline artifacts were found for this case.");
   }
@@ -1199,6 +1204,11 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
     const seen = new Map();
     for (const section of sections) {
+      if (section.name === "Diagnostics reported") {
+        expectedDiagnosticHeadlines.push(diagnosticHeadlineText(section.content));
+        expectedDiagnosticSources.push(`${artifact.name}#Diagnostics reported`);
+        continue;
+      }
       const key = normalizedBaselineSectionPath(section.name);
       const occurrence = (seen.get(key) ?? 0) + 1;
       seen.set(key, occurrence);
@@ -1213,11 +1223,15 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
   }
   for (const artifact of diagnostics) {
-    const expectedHeadlines = diagnosticHeadlineText(readFileSync(artifact.path, "utf8"));
-    const actualHeadlines = diagnosticHeadlineText(commandOutput);
-    if (expectedHeadlines !== actualHeadlines) {
-      mismatches.push(`Diagnostic headline baseline '${artifact.name}' does not match actual compiler diagnostics.`);
-    }
+    expectedDiagnosticHeadlines.push(diagnosticHeadlineText(readFileSync(artifact.path, "utf8")));
+    expectedDiagnosticSources.push(artifact.name);
+  }
+  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
+  const actualDiagnostics = diagnosticHeadlineText(commandOutput);
+  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
+    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
+  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
+    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
   }
 
   const actualOutputs = await emittedOutputsForCase(materialized);
