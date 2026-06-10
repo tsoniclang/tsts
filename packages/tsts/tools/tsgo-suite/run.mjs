@@ -2174,6 +2174,7 @@ function summarize(results) {
   const passed = results.filter((result) => result.status === "pass").length;
   const skipped = results.filter((result) => result.status === "skip").length;
   const failed = results.length - passed - skipped;
+  const exactBaselineResults = results.map((result) => result.exactBaseline).filter((baseline) => baseline !== undefined);
   return {
     total: results.length,
     passed,
@@ -2181,6 +2182,11 @@ function summarize(results) {
     skipped,
     expectedErrorCases: results.filter((result) => result.expectedErrors).length,
     expectedCleanCases: results.filter((result) => !result.expectedErrors).length,
+    exactBaselineCases: exactBaselineResults.length,
+    exactBaselineFailedCases: exactBaselineResults.filter((baseline) => baseline.status === "fail").length,
+    exactBaselineComparableArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.comparable, 0),
+    exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupported.length, 0),
+    exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatches.length, 0),
   };
 }
 
@@ -2190,6 +2196,7 @@ function trimResult(result) {
     corpus: result.corpus,
     suite: result.suite,
     relativePath: result.relativePath,
+    configurationName: result.configurationName,
     status: result.status,
     expectedErrors: result.expectedErrors,
     actualErrors: result.actualErrors,
@@ -2214,6 +2221,11 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     `- Skipped: ${summary.skipped}`,
     `- Expected-error cases: ${summary.expectedErrorCases}`,
     `- Expected-clean cases: ${summary.expectedCleanCases}`,
+    `- Exact-baseline cases: ${summary.exactBaselineCases}`,
+    `- Exact-baseline failed cases: ${summary.exactBaselineFailedCases}`,
+    `- Exact-baseline comparable artifacts: ${summary.exactBaselineComparableArtifacts}`,
+    `- Exact-baseline unsupported artifacts: ${summary.exactBaselineUnsupportedArtifacts}`,
+    `- Exact-baseline mismatches: ${summary.exactBaselineMismatches}`,
     "",
     "## Upstream Test Universe",
     "",
