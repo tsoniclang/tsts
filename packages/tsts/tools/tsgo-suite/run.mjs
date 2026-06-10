@@ -20,6 +20,7 @@ const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api"
 const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
 const apiPath = join(packageRoot, "dist/src/index.js");
+const tsgoAcceptedRoot = join(dirname(scriptPath), "tsgo-accepted");
 const utf8Decoder = new TextDecoder("utf-8");
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
@@ -1205,6 +1206,67 @@ export function parseBaselineSections(text) {
   return sections;
 }
 
+// TS-Go-accepted overlays: where the pinned TS-Go compiler demonstrably diverges from the
+// Strada-generated reference baselines, the committed files under tools/tsgo-suite/tsgo-accepted/
+// capture pinned TS-Go's actual output for the divergent sections. TSTS mirrors TS-Go, so the
+// gate compares against the overlay for exactly those sections and against the Strada baseline
+// for everything else. Overlays are generated from real pinned-TS-Go runs by
+// capture-tsgo-accepted.mjs — never hand-edited, never derived from TSTS output.
+export function loadTsgoAcceptedOverlay(corpus, suite, artifactName) {
+  const overlayPath = join(tsgoAcceptedRoot, corpus, suite, artifactName);
+  if (!existsSync(overlayPath)) {
+    return undefined;
+  }
+  return parseBaselineSections(readFileSync(overlayPath, "utf8"));
+}
+
+export function applyTsgoAcceptedOverlay(artifactName, overlaySections, expectedOutputs, expectedDiagnosticHeadlines, expectedDiagnosticSources) {
+  const used = [];
+  const problems = [];
+  for (const section of overlaySections) {
+    if (section.name === "Diagnostics reported") {
+      // The overlay carries the COMPLETE diagnostic expectation for the artifact, so it
+      // supersedes every 'Diagnostics reported' section the reference baseline declares.
+      const indices = [];
+      for (let index = 0; index < expectedDiagnosticSources.length; index++) {
+        if (expectedDiagnosticSources[index] === `${artifactName}#Diagnostics reported`) {
+          indices.push(index);
+        }
+      }
+      if (indices.length === 0) {
+        problems.push(`tsgo-accepted overlay '${artifactName}' overrides 'Diagnostics reported' but the reference baseline has no such section.`);
+        continue;
+      }
+      const headline = diagnosticHeadlineText(section.content);
+      const baselineHeadline = indices.map((index) => expectedDiagnosticHeadlines[index]).filter((text) => text !== "").join("\n");
+      if (baselineHeadline === headline) {
+        problems.push(`tsgo-accepted overlay '${artifactName}#Diagnostics reported' matches the reference baseline; remove the stale overlay.`);
+        continue;
+      }
+      expectedDiagnosticHeadlines[indices[0]] = headline;
+      expectedDiagnosticSources[indices[0]] = `${artifactName}#Diagnostics reported (tsgo-accepted)`;
+      for (const index of indices.slice(1)) {
+        expectedDiagnosticHeadlines[index] = "";
+        expectedDiagnosticSources[index] = `${artifactName}#Diagnostics reported (tsgo-accepted)`;
+      }
+      used.push(`${artifactName}#Diagnostics reported`);
+      continue;
+    }
+    const key = normalizedBaselineSectionPath(section.name);
+    if (!expectedOutputs.has(key)) {
+      problems.push(`tsgo-accepted overlay '${artifactName}' overrides '${section.name}' but the reference baseline has no such emitted output.`);
+      continue;
+    }
+    if (expectedOutputs.get(key) === section.content) {
+      problems.push(`tsgo-accepted overlay '${artifactName}#${section.name}' matches the reference baseline; remove the stale overlay.`);
+      continue;
+    }
+    expectedOutputs.set(key, section.content);
+    used.push(`${artifactName}#${section.name}`);
+  }
+  return { used, problems };
+}
+
 async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const artifacts = exactBaselineArtifacts(testCase);
   const unsupported = artifacts
@@ -1250,6 +1312,16 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     expectedDiagnosticHeadlines.push(diagnosticHeadlineText(readFileSync(artifact.path, "utf8")));
     expectedDiagnosticSources.push(artifact.name);
   }
+  const tsgoAccepted = [];
+  for (const artifact of [...comparable, ...diagnostics]) {
+    const overlaySections = loadTsgoAcceptedOverlay(testCase.corpus, testCase.suite, artifact.name);
+    if (overlaySections === undefined) {
+      continue;
+    }
+    const { used, problems } = applyTsgoAcceptedOverlay(artifact.name, overlaySections, expectedOutputs, expectedDiagnosticHeadlines, expectedDiagnosticSources);
+    tsgoAccepted.push(...used);
+    mismatches.push(...problems);
+  }
   const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
   const actualDiagnostics = diagnosticHeadlineText(commandOutput);
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
@@ -1281,6 +1353,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     checked: artifacts.length,
     comparable: comparable.length + diagnostics.length,
     unsupported,
+    tsgoAccepted,
     mismatches,
     status: mismatches.length === 0 ? "pass" : "fail",
   };
@@ -2276,7 +2349,8 @@ function printProgress(done, total, result) {
   const prefix = result.status === "pass" ? "PASS" : result.status === "skip" ? "SKIP" : "FAIL";
   const configuration = result.configurationName === "" ? "" : ` configuration=${result.configurationName}`;
   const skip = result.skipReason === "" ? "" : ` reason=${result.skipReason}`;
-  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}`;
+  const tsgoAccepted = (result.exactBaseline?.tsgoAccepted?.length ?? 0) === 0 ? "" : ` tsgoAccepted=${result.exactBaseline.tsgoAccepted.length}`;
+  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}${tsgoAccepted}`;
   console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
 }
 
@@ -2302,6 +2376,7 @@ function summarize(results) {
     exactBaselineFailedCases: exactBaselineResults.filter((baseline) => baseline.status === "fail").length,
     exactBaselineComparableArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.comparable, 0),
     exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupported.length, 0),
+    exactBaselineTsgoAcceptedSections: exactBaselineResults.reduce((sum, baseline) => sum + (baseline.tsgoAccepted?.length ?? 0), 0),
     exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatches.length, 0),
   };
 }
@@ -2341,6 +2416,7 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     `- Exact-baseline failed cases: ${summary.exactBaselineFailedCases}`,
     `- Exact-baseline comparable artifacts: ${summary.exactBaselineComparableArtifacts}`,
     `- Exact-baseline unsupported artifacts: ${summary.exactBaselineUnsupportedArtifacts}`,
+    `- Exact-baseline tsgo-accepted sections: ${summary.exactBaselineTsgoAcceptedSections}`,
     `- Exact-baseline mismatches: ${summary.exactBaselineMismatches}`,
     "",
     "## Upstream Test Universe",

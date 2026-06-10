@@ -1327,3 +1327,66 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.ok(inventory.goTests.entries["internal/fourslash"] > 0);
   assert.ok(inventory.goTests.outOfScope >= inventory.goTests.entries["internal/fourslash"]);
 });
+
+test("applyTsgoAcceptedOverlay replaces emitted output sections and reports use", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const expectedOutputs = new Map([["v1.d.ts", "strada content"], ["v2.d.ts", "untouched"]]);
+  const headlines = [];
+  const sources = [];
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [{ name: "v1.d.ts", content: "tsgo content" }],
+    expectedOutputs,
+    headlines,
+    sources,
+  );
+  assert.deepEqual(used, ["case.d.ts#v1.d.ts"]);
+  assert.deepEqual(problems, []);
+  assert.equal(expectedOutputs.get("v1.d.ts"), "tsgo content");
+  assert.equal(expectedOutputs.get("v2.d.ts"), "untouched");
+});
+
+test("applyTsgoAcceptedOverlay rejects stale and unknown overlay sections", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const expectedOutputs = new Map([["v1.d.ts", "same content"]]);
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [
+      { name: "v1.d.ts", content: "same content" },
+      { name: "missing.d.ts", content: "anything" },
+    ],
+    expectedOutputs,
+    [],
+    [],
+  );
+  assert.deepEqual(used, []);
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /matches the reference baseline/);
+  assert.match(problems[1], /no such emitted output/);
+});
+
+test("applyTsgoAcceptedOverlay supersedes every Diagnostics reported section of the artifact", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const headlines = ["a.ts(1,1): error TS1: old.", "b.ts(1,1): error TS2: old."];
+  const sources = ["case.d.ts#Diagnostics reported", "case.d.ts#Diagnostics reported"];
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [{ name: "Diagnostics reported", content: "a.ts(2,2): error TS9: new." }],
+    new Map(),
+    headlines,
+    sources,
+  );
+  assert.deepEqual(used, ["case.d.ts#Diagnostics reported"]);
+  assert.deepEqual(problems, []);
+  assert.equal(headlines[0], "a.ts(2,2): error TS9: new.");
+  assert.equal(headlines[1], "");
+});
+
+test("loadTsgoAcceptedOverlay returns sections for committed overlays and undefined otherwise", async () => {
+  const { loadTsgoAcceptedOverlay } = await import("./run.mjs");
+  assert.equal(loadTsgoAcceptedOverlay("typescript", "transpile", "no-such-overlay.d.ts"), undefined);
+  const sections = loadTsgoAcceptedOverlay("typescript", "transpile", "declarationRestParameters.d.ts");
+  assert.ok(Array.isArray(sections));
+  assert.ok(sections.some((section) => section.name === "v1.d.ts"));
+  assert.ok(sections.some((section) => section.name === "Diagnostics reported"));
+});
