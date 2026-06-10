@@ -367,11 +367,9 @@ export function EncodeURI(s: string): string {
       continue;
     }
 
-    for (const escaped of utf8Encoder.encode(byteSlice(s, i, i + 1))) {
-      builder.WriteByte(0x25 /* '%' */);
-      builder.WriteByte(byteAt(upperhex, escaped >> 4));
-      builder.WriteByte(byteAt(upperhex, escaped & 0x0f));
-    }
+    builder.WriteByte(0x25 /* '%' */);
+    builder.WriteByte(byteAt(upperhex, b >> 4));
+    builder.WriteByte(byteAt(upperhex, b & 0x0f));
   }
   return builder.String();
 }

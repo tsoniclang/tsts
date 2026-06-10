@@ -126,6 +126,7 @@ export function ParseValidBigInt(text: string): PseudoBigInt {
  */
 export function ParsePseudoBigInt(stringValue: string): string {
   stringValue = TrimSuffix(stringValue, "n");
+  stringValue = stringValue.replaceAll("_", "");
   let b1: byte = 0 as byte;
   if (byteLen(stringValue) > 1) {
     b1 = byteAt(stringValue, 1);
@@ -146,12 +147,13 @@ export function ParsePseudoBigInt(stringValue: string): string {
       }
       return stringValue;
   }
-  // `new(big.Int).SetString(stringValue, 0)` parses with base inference. The
-  // scanner has already validated and stripped numeric separators from the
-  // literal, so it is a positive, separator-free, prefix-tagged integer string
-  // that native BigInt parses identically. A malformed string makes Go report
-  // ok=false and panic; native BigInt throws on the same malformed input, so the
-  // panic is mirrored as a throw with the same message.
+  // `new(big.Int).SetString(stringValue, 0)` parses with base inference. Go's
+  // parser accepts numeric separators in base-inferred strings, while native
+  // BigInt requires a separator-free string, so separators are stripped above
+  // before this positive, prefix-tagged integer string reaches BigInt. A
+  // malformed string makes Go report ok=false and panic; native BigInt throws on
+  // the same malformed input, so the panic is mirrored as a throw with the same
+  // message.
   let bi: bigint;
   try {
     bi = globalThis.BigInt(stringValue);

@@ -82,14 +82,63 @@ export function GetAccessibleEntries(fsys: FS, name: string): unknown {
 }
 
 export function ReadFile(fsys: FS, name: string): [string, GoError] {
+  if (fsys.Open !== undefined) {
+    const [file, openErr] = fsys.Open(name);
+    if (openErr !== undefined) {
+      return ["", openErr];
+    }
+    const chunks: number[] = [];
+    const buffer = new globalThis.Array<number>(8192).fill(0);
+    for (;;) {
+      const [count, readErr] = file.Read(buffer);
+      if (readErr !== undefined) {
+        const closeErr = file.Close();
+        return ["", readErr ?? closeErr];
+      }
+      if (count === 0) {
+        break;
+      }
+      for (let index = 0; index < count; index += 1) {
+        chunks.push(buffer[index]!);
+      }
+      if (count < buffer.length) {
+        break;
+      }
+    }
+    const closeErr = file.Close();
+    if (closeErr !== undefined) {
+      return ["", closeErr];
+    }
+    return [bytesToBinaryString(Uint8Array.from(chunks)), undefined];
+  }
   try {
-    return [nodeFs.readFileSync(resolveFsPath(fsys, name), "utf8"), undefined];
+    return [bytesToBinaryString(nodeFs.readFileSync(resolveFsPath(fsys, name))), undefined];
   } catch (error) {
     return ["", normalizeFsError(error)];
   }
 }
 
 export function ReadDir(fsys: FS, name: string): [GoSlice<DirEntry>, GoError] {
+  if (fsys.Open !== undefined) {
+    const [file, openErr] = fsys.Open(name);
+    if (openErr !== undefined) {
+      return [[], openErr];
+    }
+    const readDirFile = file as Partial<ReadDirFile>;
+    if (readDirFile.ReadDir === undefined) {
+      const closeErr = file.Close();
+      return [[], closeErr ?? ErrInvalid];
+    }
+    const [entries, readErr] = readDirFile.ReadDir(-1 as int);
+    const closeErr = file.Close();
+    if (readErr !== undefined) {
+      return [[], readErr];
+    }
+    if (closeErr !== undefined) {
+      return [[], closeErr];
+    }
+    return [entries, undefined];
+  }
   try {
     const dirents = nodeFs.readdirSync(resolveFsPath(fsys, name), { withFileTypes: true });
     return [dirents.map(dirEntryFromNodeDirent), undefined];
@@ -99,6 +148,21 @@ export function ReadDir(fsys: FS, name: string): [GoSlice<DirEntry>, GoError] {
 }
 
 export function Stat(fsys: FS, name: string): [FileInfo, GoError] {
+  if (fsys.Open !== undefined) {
+    const [file, openErr] = fsys.Open(name);
+    if (openErr !== undefined) {
+      return [undefined as unknown as FileInfo, openErr];
+    }
+    const [info, statErr] = file.Stat();
+    const closeErr = file.Close();
+    if (statErr !== undefined) {
+      return [undefined as unknown as FileInfo, statErr];
+    }
+    if (closeErr !== undefined) {
+      return [undefined as unknown as FileInfo, closeErr];
+    }
+    return [info, undefined];
+  }
   try {
     const fullPath = resolveFsPath(fsys, name);
     return [fileInfoFromStats(nodePath.basename(fullPath), nodeFs.statSync(fullPath)), undefined];
@@ -161,6 +225,15 @@ export function FileInfoToDirEntry(info: unknown): DirEntry {
 }
 
 export function Sub(fsys: FS, dir: string): [FS, GoError] {
+  if (fsys.Open !== undefined) {
+    const prefix = dir.replace(/\/+$/, "");
+    return [{
+      Open(name: string): [File, GoError] {
+        const childName = name === "." || name === "" ? prefix : `${prefix}/${name}`;
+        return fsys.Open!(childName);
+      },
+    }, undefined];
+  }
   try {
     return [NodeFS(resolveFsPath(fsys, dir)), undefined];
   } catch (error) {
@@ -272,4 +345,13 @@ function normalizeFsError(error: unknown): GoError {
     return error;
   }
   return new globalThis.Error(String(error));
+}
+
+function bytesToBinaryString(bytes: Uint8Array): string {
+  let result = "";
+  const chunkSize = 8192;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    result += globalThis.String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return result;
 }

@@ -54,12 +54,6 @@ export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: Go
     receiver!.actualJSONType = "null";
     return undefined;
   }
-  try {
-    receiver!.Value = globalThis.JSON.parse(str) as T;
-    receiver!.Valid = true as bool;
-  } catch (_) {
-    // leave Valid false
-  }
   const first = data[0] ?? 0;
   receiver!.actualJSONType =
     first === 0x22 ? "string" :
@@ -67,6 +61,16 @@ export function Expected_UnmarshalJSON<T>(receiver: GoPtr<Expected<T>>, data: Go
     first === 0x5b ? "array" :
     first === 0x7b ? "object" :
     "number";
+  try {
+    const value = globalThis.JSON.parse(str);
+    const expectedJSONType = Expected_ExpectedJSONType(receiver);
+    if (expectedJSONType === "unknown" || expectedJSONType === receiver!.actualJSONType) {
+      receiver!.Value = value as T;
+      receiver!.Valid = true as bool;
+    }
+  } catch (_) {
+    // leave Valid false
+  }
   return undefined;
 }
 

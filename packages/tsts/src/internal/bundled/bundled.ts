@@ -1,4 +1,5 @@
 import type { bool } from "@tsonic/core/types.js";
+import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { FS } from "../vfs/vfs.js";
@@ -51,7 +52,15 @@ export function LibPath(): string {
 export const bundledSourceDir = (() => {
   let value: string | undefined;
   return (): string => {
-    value ??= path.dirname(fileURLToPath(import.meta.url));
+    if (value === undefined) {
+      const dir = path.dirname(fileURLToPath(import.meta.url));
+      if (existsSync(path.join(dir, "libs"))) {
+        value = dir;
+      } else {
+        const sourceDir = path.resolve(dir, "../../../../src/internal/bundled");
+        value = existsSync(path.join(sourceDir, "libs")) ? sourceDir : dir;
+      }
+    }
     return value;
   };
 })();

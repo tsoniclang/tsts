@@ -4432,7 +4432,7 @@ export function MatchPatternOrExact(patterns: GoPtr<ParsedPatterns>, candidate: 
     return { Text: candidate, StarIndex: -1 };
   }
   if ((patterns!.patterns?.length ?? 0) === 0) {
-    return { Text: "", StarIndex: -1 };
+    return { Text: "", StarIndex: 0 };
   }
   return FindBestPatternMatch(patterns!.patterns, (v: Pattern) => v, candidate);
 }

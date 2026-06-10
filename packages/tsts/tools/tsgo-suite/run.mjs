@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { cpus, tmpdir } from "node:os";
+import { cpus } from "node:os";
 import { dirname, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
@@ -16,6 +16,8 @@ const baselineRoot = join(vendorRoot, "testdata/baselines/reference");
 const typeScriptSubmoduleCaseRoot = join(vendorRoot, "_submodules/TypeScript/tests/cases");
 const typeScriptSubmoduleBaselineRoot = join(vendorRoot, "_submodules/TypeScript/tests/baselines/reference");
 const testLibRoot = join(vendorRoot, "_submodules/TypeScript/tests/lib");
+const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api");
+const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
 const utf8Decoder = new TextDecoder("utf-8");
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
@@ -25,65 +27,20 @@ const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
-  ["typescript", new Set(["compiler", "conformance"])],
+  ["typescript", new Set(["compiler", "conformance", "project", "transpile"])],
 ]);
 const caseRootByCorpus = new Map([
   ["current", caseRoot],
   ["typescript", typeScriptSubmoduleCaseRoot],
 ]);
-const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "projects", "transpile"]);
-const outOfScopeTypeScriptSuites = new Set(["fourslash", "unittests"]);
-const inScopeBaselineCategories = new Set(["api", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsc", "tsoptions"]);
-const outOfScopeBaselineCategories = new Set(["astnav", "fourslash", "lsp", "tsbuildWatch", "tscWatch"]);
-const skippedTests = new Set([
-  "APILibCheck.ts",
-  "APISample_Watch.ts",
-  "APISample_WatchWithDefaults.ts",
-  "APISample_WatchWithOwnWatchHost.ts",
-  "APISample_compile.ts",
-  "APISample_jsdoc.ts",
-  "APISample_linter.ts",
-  "APISample_parseConfig.ts",
-  "APISample_transform.ts",
-  "APISample_watcher.ts",
-  "preserveUnusedImports.ts",
-  "noCrashWithVerbatimModuleSyntaxAndImportsNotUsedAsValues.ts",
-  "verbatimModuleSyntaxCompat.ts",
-  "verbatimModuleSyntaxCompat2.ts",
-  "verbatimModuleSyntaxCompat3.ts",
-  "verbatimModuleSyntaxCompat4.ts",
-  "preserveValueImports.ts",
-  "preserveValueImports_importsNotUsedAsValues.ts",
-  "preserveValueImports_errors.ts",
-  "preserveValueImports_mixedImports.ts",
-  "preserveValueImports_module.ts",
-  "importsNotUsedAsValues_error.ts",
-  "alwaysStrictNoImplicitUseStrict.ts",
-  "nonPrimitiveIndexingWithForInSupressError.ts",
-  "parameterInitializerBeforeDestructuringEmit.ts",
-  "mappedTypeUnionConstraintInferences.ts",
-  "lateBoundConstraintTypeChecksCorrectly.ts",
-  "keyofDoesntContainSymbols.ts",
-  "isolatedModulesOut.ts",
-  "noStrictGenericChecks.ts",
-  "noImplicitUseStrict_umd.ts",
-  "noImplicitUseStrict_system.ts",
-  "noImplicitUseStrict_es6.ts",
-  "noImplicitUseStrict_commonjs.ts",
-  "noImplicitUseStrict_amd.ts",
-  "noImplicitAnyIndexingSuppressed.ts",
-  "excessPropertyErrorsSuppressed.ts",
-  "moduleNoneDynamicImport.ts",
-  "moduleNoneErrors.ts",
-  "moduleNoneOutFile.ts",
-  "noErrorUsingImportExportModuleAugmentationInDeclarationFile1.ts",
-  "noErrorUsingImportExportModuleAugmentationInDeclarationFile2.ts",
-  "noErrorUsingImportExportModuleAugmentationInDeclarationFile3.ts",
-  "requireOfJsonFileWithModuleEmitNone.ts",
-  "requireOfJsonFileWithModuleNodeResolutionEmitNone.ts",
-]);
+const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile", "unittests"]);
+const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
+const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
+const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
+const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
 const compilerVaryByOptions = new Set([
   "allowjs",
+  "allowimportingtsextensions",
   "allowsyntheticdefaultimports",
   "alwaysstrict",
   "checkjs",
@@ -107,11 +64,15 @@ const compilerVaryByOptions = new Set([
   "moduleresolution",
   "noemit",
   "noimplicitany",
+  "noimplicitoverride",
   "nolib",
+  "nopropertyaccessfromindexsignature",
+  "nouncheckedindexedaccess",
   "nouncheckedsideeffectimports",
   "nounusedlocals",
   "nounusedparameters",
   "preserveconstenums",
+  "preservevalueimports",
   "removecomments",
   "resolvejsonmodule",
   "resolvepackagejsonexports",
@@ -125,7 +86,9 @@ const compilerVaryByOptions = new Set([
 ]);
 const booleanOptions = new Set([
   "allowjs",
+  "allowimportingtsextensions",
   "allowarbitraryextensions",
+  "allowumdglobalaccess",
   "allowunusedlabels",
   "allowunreachablecode",
   "allowsyntheticdefaultimports",
@@ -145,6 +108,7 @@ const booleanOptions = new Set([
   "incremental",
   "inlinesourcemap",
   "importhelpers",
+  "keyofstringsonly",
   "isolatedmodules",
   "isolateddeclarations",
   "noemit",
@@ -153,6 +117,8 @@ const booleanOptions = new Set([
   "noimplicitany",
   "noimplicitreturns",
   "noimplicitthis",
+  "noimplicitoverride",
+  "noimplicitusestrict",
   "noresolve",
   "nolib",
   "nopropertyaccessfromindexsignature",
@@ -164,6 +130,7 @@ const booleanOptions = new Set([
   "nounusedparameters",
   "libreplacement",
   "preserveconstenums",
+  "preservevalueimports",
   "pretty",
   "removecomments",
   "resolvejsonmodule",
@@ -192,6 +159,8 @@ const stringOptions = new Map([
   ["module", "module"],
   ["moduledetection", "moduleDetection"],
   ["moduleresolution", "moduleResolution"],
+  ["importsnotusedasvalues", "importsNotUsedAsValues"],
+  ["out", "out"],
   ["outdir", "outDir"],
   ["outfile", "outFile"],
   ["reactnamespace", "reactNamespace"],
@@ -202,6 +171,7 @@ const stringOptions = new Map([
 const pathStringOptions = new Set([
   "baseurl",
   "declarationdir",
+  "out",
   "outdir",
   "outfile",
   "rootdir",
@@ -220,7 +190,9 @@ const numberOptions = new Map([
 ]);
 const booleanOptionNames = new Map([
   ["allowjs", "allowJs"],
+  ["allowimportingtsextensions", "allowImportingTsExtensions"],
   ["allowarbitraryextensions", "allowArbitraryExtensions"],
+  ["allowumdglobalaccess", "allowUmdGlobalAccess"],
   ["allowunusedlabels", "allowUnusedLabels"],
   ["allowunreachablecode", "allowUnreachableCode"],
   ["allowsyntheticdefaultimports", "allowSyntheticDefaultImports"],
@@ -240,6 +212,7 @@ const booleanOptionNames = new Map([
   ["incremental", "incremental"],
   ["inlinesourcemap", "inlineSourceMap"],
   ["importhelpers", "importHelpers"],
+  ["keyofstringsonly", "keyofStringsOnly"],
   ["isolatedmodules", "isolatedModules"],
   ["isolateddeclarations", "isolatedDeclarations"],
   ["noemit", "noEmit"],
@@ -248,6 +221,8 @@ const booleanOptionNames = new Map([
   ["noimplicitany", "noImplicitAny"],
   ["noimplicitreturns", "noImplicitReturns"],
   ["noimplicitthis", "noImplicitThis"],
+  ["noimplicitoverride", "noImplicitOverride"],
+  ["noimplicitusestrict", "noImplicitUseStrict"],
   ["noresolve", "noResolve"],
   ["nolib", "noLib"],
   ["nopropertyaccessfromindexsignature", "noPropertyAccessFromIndexSignature"],
@@ -259,6 +234,7 @@ const booleanOptionNames = new Map([
   ["nounusedparameters", "noUnusedParameters"],
   ["libreplacement", "libReplacement"],
   ["preserveconstenums", "preserveConstEnums"],
+  ["preservevalueimports", "preserveValueImports"],
   ["pretty", "pretty"],
   ["removecomments", "removeComments"],
   ["resolvejsonmodule", "resolveJsonModule"],
@@ -329,7 +305,8 @@ Runs upstream TS-Go/TypeScript file-based tests through the TSTS CLI.
 
 Options:
   --corpus <current|typescript>        current=testdata/tests/cases; typescript=_submodules/TypeScript/tests/cases. Default: current.
-  --suite <all|compiler|conformance>  Suite to run. Default: all. Transpile/project suites are tracked but require specialized harnesses.
+  --suite <all|compiler|conformance|project|transpile>
+                                      Suite to run. Default: all.
   --filter <substring>                Run cases whose relative path contains the substring.
   --limit <n>                         Run at most n cases after filtering.
   --jobs <n>                          Parallel TSTS processes. Default: min(cpu count, 8).
@@ -340,14 +317,24 @@ Options:
 
 export async function buildTestUniverseInventory() {
   const currentHarness = await countFilesByChild(caseRoot, (file) => harnessSourceFilePattern.test(file));
-  const typeScriptCases = await countFilesByChild(typeScriptSubmoduleCaseRoot, (file) => harnessSourceFilePattern.test(file));
+  const typeScriptCases = await countTypeScriptCaseFilesByChild(typeScriptSubmoduleCaseRoot);
   const baselines = await countFilesByChild(baselineRoot, () => true);
   const goTests = await countGoTestFilesByPackage(vendorRoot);
   return {
     currentHarness: summarizeNamedCounts(currentHarness, supportedSuitesByCorpus.get("current")),
-    typeScriptCases: summarizeNamedCounts(typeScriptCases, inScopeTypeScriptSuites, outOfScopeTypeScriptSuites),
+    typeScriptCases: summarizeTypeScriptCaseCounts(typeScriptCases),
     baselines: summarizeNamedCounts(baselines, inScopeBaselineCategories, outOfScopeBaselineCategories),
     goTests,
+  };
+}
+
+function summarizeTypeScriptCaseCounts(typeScriptCases) {
+  const summary = summarizeNamedCounts(typeScriptCases.entries, inScopeTypeScriptSuites, outOfScopeTypeScriptSuites);
+  return {
+    ...summary,
+    inScope: summary.inScope - typeScriptCases.languageServiceHarnessCases,
+    outOfScope: summary.outOfScope + typeScriptCases.languageServiceHarnessCases,
+    languageServiceHarnessCases: typeScriptCases.languageServiceHarnessCases,
   };
 }
 
@@ -391,6 +378,40 @@ async function countFilesByChild(root, includeFile) {
   return counts;
 }
 
+async function countTypeScriptCaseFilesByChild(root) {
+  if (!existsSync(root)) {
+    return { entries: {}, languageServiceHarnessCases: 0 };
+  }
+  const entries = {};
+  let languageServiceHarnessCases = 0;
+  const children = await readdir(root, { withFileTypes: true });
+  for (const child of children) {
+    const fullPath = join(root, child.name);
+    if (child.isDirectory()) {
+      if (child.name === "project") {
+        entries[child.name] = (await walkFiles(fullPath)).filter((file) => /\.json$/i.test(file)).length;
+        continue;
+      }
+      if (fixtureOnlyTypeScriptSuites.has(child.name)) {
+        entries[child.name] = 0;
+        continue;
+      }
+      const files = (await walkFiles(fullPath)).filter((file) => harnessSourceFilePattern.test(file));
+      entries[child.name] = files.length;
+      if (inScopeTypeScriptSuites.has(child.name)) {
+        for (const file of files) {
+          if (isLanguageServiceHarnessCase(await readSourceText(file))) {
+            languageServiceHarnessCases += 1;
+          }
+        }
+      }
+    } else if (child.isFile() && harnessSourceFilePattern.test(fullPath)) {
+      entries["."] = (entries["."] ?? 0) + 1;
+    }
+  }
+  return { entries, languageServiceHarnessCases };
+}
+
 async function countGoTestFilesByPackage(root) {
   const counts = {};
   for (const file of await walkFiles(root, (entryPath) => entryPath.endsWith(`${sep}node_modules`))) {
@@ -426,6 +447,10 @@ export async function discoverCases(options) {
   const suites = options.suite === "all" ? [...supportedSuites] : [options.suite];
   const caseFiles = [];
   for (const suite of suites) {
+    if (options.corpus === "typescript" && suite === "project") {
+      caseFiles.push(...await discoverProjectCases(selectedCaseRoot, options));
+      continue;
+    }
     const suiteRoot = join(selectedCaseRoot, suite);
     for (const file of await walkFiles(suiteRoot)) {
       if (!harnessSourceFilePattern.test(file)) {
@@ -435,6 +460,9 @@ export async function discoverCases(options) {
         continue;
       }
       const sourceText = await readSourceText(file);
+      if (options.corpus === "typescript" && isLanguageServiceHarnessCase(sourceText)) {
+        continue;
+      }
       const parsed = parseFileBasedTest(sourceText, file.split(sep).at(-1));
       const configurations = getFileBasedTestConfigurations(parsed.globalOptions);
       const relativePath = relative(selectedCaseRoot, file).split(sep).join("/");
@@ -457,6 +485,80 @@ export async function discoverCases(options) {
   }
   caseFiles.sort((left, right) => `${left.relativePath}:${left.configurationName}`.localeCompare(`${right.relativePath}:${right.configurationName}`));
   return options.limit > 0 ? caseFiles.slice(0, options.limit) : caseFiles;
+}
+
+async function discoverProjectCases(selectedCaseRoot, options) {
+  const suiteRoot = join(selectedCaseRoot, "project");
+  const cases = [];
+  for (const file of await walkFiles(suiteRoot)) {
+    if (!/\.json$/i.test(file)) {
+      continue;
+    }
+    const relativePath = relative(selectedCaseRoot, file).split(sep).join("/");
+    if (options.filter !== "" && !relativePath.includes(options.filter)) {
+      continue;
+    }
+    const descriptor = await readProjectTestDescriptor(file);
+    const caseName = relativePath.split("/").at(-1).replace(/\.json$/i, "");
+    for (const moduleKind of ["commonjs", "amd"]) {
+      cases.push({
+        corpus: options.corpus,
+        suite: "project",
+        kind: "project",
+        sourcePath: file,
+        relativePath,
+        caseName,
+        sourceBaseName: relativePath.split("/").at(-1),
+        configurationName: `module=${moduleKind}`,
+        configuration: new Map([["module", moduleKind]]),
+        descriptor,
+        moduleKind,
+      });
+    }
+  }
+  return cases;
+}
+
+async function readProjectTestDescriptor(file) {
+  const sourceText = await readSourceText(file);
+  try {
+    const descriptor = JSON.parse(sourceText);
+    assertProjectTestDescriptor(file, descriptor);
+    return descriptor;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid project test descriptor '${file}': ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+function assertProjectTestDescriptor(file, descriptor) {
+  if (descriptor === null || typeof descriptor !== "object" || Array.isArray(descriptor)) {
+    throw new Error("descriptor must be an object");
+  }
+  if (typeof descriptor.scenario !== "string" || descriptor.scenario === "") {
+    throw new Error("descriptor.scenario must be a non-empty string");
+  }
+  if (typeof descriptor.projectRoot !== "string" || descriptor.projectRoot === "") {
+    throw new Error("descriptor.projectRoot must be a non-empty string");
+  }
+  if (descriptor.inputFiles !== undefined && (!Array.isArray(descriptor.inputFiles) || !descriptor.inputFiles.every((entry) => typeof entry === "string"))) {
+    throw new Error("descriptor.inputFiles must be an array of strings when present");
+  }
+  const projectRoot = projectRootRelativeToCaseRoot(descriptor.projectRoot);
+  if (!projectRoot.startsWith("projects/")) {
+    throw new Error(`descriptor.projectRoot must point under tests/cases/projects in '${file}'`);
+  }
+  if (descriptor.project !== undefined && typeof descriptor.project !== "string") {
+    throw new Error("descriptor.project must be a string when present");
+  }
+}
+
+export function isLanguageServiceHarnessCase(sourceText) {
+  return /\/\/\/\s*<reference\s+path=['"][^'"]*(?:services[\\/]typescriptServices|typescriptServices|formatting)\.ts['"]/i.test(sourceText) ||
+    (/declare\s+var\s+assert\s*:\s*Harness\.Assert\b/.test(sourceText) && /declare\s+var\s+(?:describe|it|run|IO)\b/.test(sourceText)) ||
+    /\b(?:ILineIndenationResolver|ITextSnapshot|Services\.EditorOptions)\b/.test(sourceText);
 }
 
 export function isEmittedJavaScriptSibling(file) {
@@ -624,18 +726,32 @@ function explicitCompilerOptionsFromSettings(settings) {
 }
 
 export function compilerOptionsForExistingProjectConfig(config, settings) {
-  return {
-    ...config,
-    compilerOptions: {
-      ...defaultCompilerOptions(),
-      ...(config.compilerOptions ?? {}),
-      ...explicitCompilerOptionsFromSettings(settings),
-    },
+  const normalizedConfig = normalizeEmbeddedProjectConfig(config);
+  const compilerOptions = {
+    ...defaultCompilerOptions(),
+    ...(normalizedConfig.compilerOptions ?? {}),
+    ...explicitCompilerOptionsFromSettings(settings),
   };
+  return {
+    ...normalizedConfig,
+    compilerOptions,
+  };
+}
+
+function normalizeEmbeddedProjectConfig(config) {
+  const normalized = { ...config };
+  for (const listKey of ["files", "include", "exclude"]) {
+    const value = normalized[listKey];
+    if (typeof value === "string") {
+      normalized[listKey] = [value];
+    }
+  }
+  return normalized;
 }
 
 export function compilerOptionsForMaterializedCase(settings, parsed, inputFiles) {
   const compilerOptions = compilerOptionsFromSettings(settings);
+  applySafeJavaScriptEmitOutputDirectory(compilerOptions, settings, inputFiles);
   applyVirtualTypeRoots(compilerOptions, settings, parsed);
   applyVirtualRootCommonSourceDirectory(compilerOptions, settings, parsed, inputFiles);
   return compilerOptions;
@@ -663,6 +779,25 @@ export function compilerCommandLineArgsForMaterializedCase(compilerOptions, inpu
   return args;
 }
 
+export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, kind) {
+  const transpileOptions = {
+    ...compilerOptions,
+    noCheck: true,
+  };
+  delete transpileOptions.noEmit;
+  if (kind === "module") {
+    delete transpileOptions.declaration;
+    delete transpileOptions.declarationMap;
+    delete transpileOptions.emitDeclarationOnly;
+  } else if (kind === "declaration") {
+    transpileOptions.declaration = true;
+    transpileOptions.emitDeclarationOnly = true;
+  } else {
+    throw new Error(`Unsupported transpile invocation kind '${kind}'`);
+  }
+  return compilerCommandLineArgsForMaterializedCase(transpileOptions, [inputFile]);
+}
+
 function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   if (compilerOptions.typeRoots !== undefined || !settings.has("types")) {
     return;
@@ -670,9 +805,10 @@ function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   const pathOptions = harnessPathOptionsFromSettings(settings);
   const roots = [];
   const seen = new Set();
+  const files = parsed.units.map((unit) => normalizeHarnessPath(unit.fileName, pathOptions));
   for (const unit of parsed.units) {
     const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
-    const marker = "/node_modules/@types/";
+    const marker = "node_modules/@types/";
     const index = filePath.toLowerCase().indexOf(marker);
     if (index < 0) {
       continue;
@@ -685,6 +821,41 @@ function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
   }
   if (roots.length !== 0) {
     compilerOptions.typeRoots = roots;
+  } else if (!hasMaterializedExplicitTypePackage(compilerOptions.types, files)) {
+    compilerOptions.typeRoots = [".empty-types"];
+  }
+}
+
+function hasMaterializedExplicitTypePackage(typeNames, files) {
+  if (!Array.isArray(typeNames)) {
+    return false;
+  }
+  const normalizedFiles = new Set(files.map((file) => file.toLowerCase()));
+  for (const typeName of typeNames) {
+    const packagePath = `node_modules/${typeName.toLowerCase()}/`;
+    if (
+      normalizedFiles.has(`${packagePath}package.json`) ||
+      normalizedFiles.has(`${packagePath}index.d.ts`) ||
+      files.some((file) => file.toLowerCase().startsWith(packagePath))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function applySafeJavaScriptEmitOutputDirectory(compilerOptions, settings, inputFiles) {
+  if (settings.get("suppressoutputpathcheck")?.toLowerCase() !== "true") {
+    return;
+  }
+  if (compilerOptions.noEmit === true || compilerOptions.emitDeclarationOnly === true) {
+    return;
+  }
+  if (compilerOptions.outDir !== undefined || compilerOptions.outFile !== undefined) {
+    return;
+  }
+  if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file))) {
+    compilerOptions.outDir = ".out";
   }
 }
 
@@ -751,7 +922,7 @@ function splitOptionValues(rawValue, option) {
     if (value === "*") {
       includeAll = true;
     } else if (value.startsWith("-") || value.startsWith("!")) {
-      excludes.add(normalizeOptionValue(option, value.slice(1)));
+      excludes.add(optionValueIdentity(option, value.slice(1)));
     } else {
       includes.push(normalizeOptionValue(option, value));
     }
@@ -765,21 +936,70 @@ function splitOptionValues(rawValue, option) {
   const deduped = [];
   const seen = new Set();
   for (const value of candidates) {
-    if (!excludes.has(value) && !seen.has(value)) {
-      seen.add(value);
+    const identity = optionValueIdentity(option, value);
+    if (!excludes.has(identity) && !seen.has(identity)) {
+      seen.add(identity);
       deduped.push(value);
     }
   }
   return deduped;
 }
 
-function normalizeOptionValue(_option, value) {
+function normalizeOptionValue(option, value) {
   return value.trim().replace(/;$/, "");
+}
+
+function optionValueIdentity(option, value) {
+  const normalizedOption = option.toLowerCase();
+  const normalizedValue = normalizeOptionValue(option, value).toLowerCase();
+  if ((normalizedOption === "target" || normalizedOption === "module") && (normalizedValue === "es6" || normalizedValue === "es2015")) {
+    return `${normalizedOption}:es2015`;
+  }
+  if (normalizedOption === "moduleresolution" && (normalizedValue === "node" || normalizedValue === "node10")) {
+    return `${normalizedOption}:node10`;
+  }
+  return `${normalizedOption}:${normalizedValue}`;
 }
 
 function allOptionValues(option) {
   if (booleanOptions.has(option)) {
     return ["true", "false"];
+  }
+  if (option === "target") {
+    return [
+      "es5",
+      "es6",
+      "es2015",
+      "es2016",
+      "es2017",
+      "es2018",
+      "es2019",
+      "es2020",
+      "es2021",
+      "es2022",
+      "es2023",
+      "es2024",
+      "es2025",
+      "esnext",
+    ];
+  }
+  if (option === "module") {
+    return [
+      "commonjs",
+      "amd",
+      "umd",
+      "system",
+      "es6",
+      "es2015",
+      "es2020",
+      "es2022",
+      "esnext",
+      "node16",
+      "node18",
+      "node20",
+      "nodenext",
+      "preserve",
+    ];
   }
   return [];
 }
@@ -800,6 +1020,9 @@ function parseBoolean(value) {
 }
 
 export function baselineHasErrors(testCase) {
+  if (testCase.corpus === "typescript" && testCase.suite === "project") {
+    return projectBaselineHasErrors(testCase);
+  }
   for (const baselineDir of baselineDirectories(testCase)) {
     const expected = baselineDirectoryHasErrors(baselineDir, testCase);
     if (expected !== undefined) {
@@ -807,6 +1030,15 @@ export function baselineHasErrors(testCase) {
     }
   }
   return false;
+}
+
+function projectBaselineHasErrors(testCase) {
+  const moduleFolder = testCase.moduleKind === "amd" ? "amd" : "node";
+  const errorsPath = join(typeScriptSubmoduleBaselineRoot, "project", testCase.caseName, moduleFolder, `${testCase.caseName}.errors.txt`);
+  if (!existsSync(errorsPath)) {
+    return false;
+  }
+  return /\berror TS\d+:/.test(stripAnsiEscapes(readFileSync(errorsPath, "utf8")));
 }
 
 function baselineDirectoryHasErrors(baselineDir, testCase) {
@@ -865,6 +1097,10 @@ function configuredCaseName(testCase) {
 }
 
 async function materializeCase(testCase, runRoot) {
+  if (testCase.kind === "project") {
+    return materializeProjectCase(testCase, runRoot);
+  }
+
   const sourceText = await readSourceText(testCase.sourcePath);
   const parsed = parseFileBasedTest(sourceText, testCase.relativePath.split("/").at(-1));
   const pathOptions = harnessPathOptionsFromSettings(testCase.configuration);
@@ -883,16 +1119,30 @@ async function materializeCase(testCase, runRoot) {
     await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions));
     writtenFiles.push(filePath);
   }
+  await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
   if (!hasRootPackageJson(writtenFiles)) {
     await writeFile(join(caseDir, "package.json"), "{}\n");
     writtenFiles.push("package.json");
   }
   await materializeSymlinks(caseDir, parsed.symlinks, pathOptions);
 
+  if (isTranspileCase(testCase)) {
+    const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, writtenFiles);
+    return {
+      caseDir,
+      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions),
+      writtenFiles,
+      expectedErrors: false,
+      skipReason: "",
+      transpile: true,
+    };
+  }
+
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
-    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, merged.compilerOptions ?? {});
+    const compilerOptions = merged.compilerOptions ?? {};
+    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
     return {
       caseDir,
       invocation: {
@@ -900,7 +1150,7 @@ async function materializeCase(testCase, runRoot) {
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
       writtenFiles,
-      expectedErrors: baselineHasErrors(testCase),
+      expectedErrors: caseExpectedErrors(testCase, compilerOptions),
       skipReason,
     };
   }
@@ -910,9 +1160,7 @@ async function materializeCase(testCase, runRoot) {
   if (needsLibFolder) {
     compilerOptions.skipLibCheck = true;
   }
-  if (inputFiles.some((file) => harnessJavaScriptFilePattern.test(file)) && compilerOptions.allowJs === undefined) {
-    compilerOptions.allowJs = true;
-  }
+  await materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions);
   const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
   return {
     caseDir,
@@ -921,9 +1169,220 @@ async function materializeCase(testCase, runRoot) {
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
     writtenFiles,
-    expectedErrors: baselineHasErrors(testCase),
+    expectedErrors: caseExpectedErrors(testCase, compilerOptions),
     skipReason,
   };
+}
+
+async function materializeProjectCase(testCase, runRoot) {
+  const descriptor = testCase.descriptor ?? await readProjectTestDescriptor(testCase.sourcePath);
+  const projectRoot = projectRootRelativeToCaseRoot(descriptor.projectRoot);
+  const sourceProjectRoot = join(typeScriptSubmoduleCaseRoot, projectRoot);
+
+  const caseDir = join(runRoot, caseDirectoryFragment(testCase));
+  const materializedCaseRoot = join(caseDir, "tests/cases");
+  const materializedProjectRoot = join(materializedCaseRoot, projectRoot);
+  await mkdir(materializedProjectRoot, { recursive: true });
+  if (existsSync(sourceProjectRoot)) {
+    await cp(sourceProjectRoot, materializedProjectRoot, { recursive: true, force: true });
+  }
+  await writeFile(join(caseDir, "package.json"), "{}\n");
+
+  const compilerOptions = compilerOptionsForProjectDescriptor(descriptor, testCase.moduleKind, caseDir);
+  const invocation = projectInvocationForDescriptor(descriptor, compilerOptions, materializedProjectRoot);
+  return {
+    caseDir,
+    invocation,
+    writtenFiles: (await walkFiles(materializedProjectRoot)).map((file) => relative(materializedProjectRoot, file).split(sep).join("/")),
+    expectedErrors: caseExpectedErrors(testCase, compilerOptions),
+    skipReason: getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions),
+  };
+}
+
+function projectRootRelativeToCaseRoot(projectRoot) {
+  return normalizeProjectDescriptorPath(projectRoot).replace(/^tests\/cases\//, "");
+}
+
+function normalizeProjectDescriptorPath(path) {
+  return path.replaceAll("\\", "/").replace(/^\/+/, "").replace(/\/+$/, "");
+}
+
+export function compilerOptionsForProjectDescriptor(descriptor, moduleKind, caseDir = "") {
+  const compilerOptions = {
+    noErrorTruncation: false,
+    skipDefaultLibCheck: false,
+    moduleResolution: "classic",
+    module: moduleKind,
+    newLine: "crlf",
+  };
+  const projectMetaKeys = new Set([
+    "scenario",
+    "projectRoot",
+    "inputFiles",
+    "resolveMapRoot",
+    "resolveSourceRoot",
+    "baselineCheck",
+    "runTest",
+    "bug",
+    "project",
+    "emittedFiles",
+  ]);
+  for (const [rawName, rawValue] of Object.entries(descriptor)) {
+    const name = rawName.toLowerCase();
+    if (projectMetaKeys.has(rawName)) {
+      continue;
+    }
+    if (rawName === "mapRoot") {
+      compilerOptions.mapRoot = descriptor.resolveMapRoot === true && typeof rawValue === "string"
+        ? join(caseDir, normalizeProjectDescriptorPath(rawValue))
+        : rawValue;
+      continue;
+    }
+    if (rawName === "sourceRoot") {
+      compilerOptions.sourceRoot = descriptor.resolveSourceRoot === true && typeof rawValue === "string"
+        ? join(caseDir, normalizeProjectDescriptorPath(rawValue))
+        : rawValue;
+      continue;
+    }
+    const optionName = compilerOptionNameFromJsonKey(name);
+    if (optionName === undefined) {
+      continue;
+    }
+    compilerOptions[optionName] = rawValue;
+  }
+  return compilerOptions;
+}
+
+function compilerOptionNameFromJsonKey(name) {
+  if (booleanOptions.has(name)) {
+    return booleanOptionNames.get(name);
+  }
+  return stringOptions.get(name) ?? numberOptions.get(name) ?? listOptions.get(name);
+}
+
+function projectInvocationForDescriptor(descriptor, compilerOptions, materializedProjectRoot) {
+  if (typeof descriptor.project === "string" && descriptor.project !== "") {
+    return {
+      cwd: materializedProjectRoot,
+      args: [
+        "-p",
+        join(materializedProjectRoot, descriptor.project, "tsconfig.json"),
+        ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+        "--pretty",
+        "false",
+      ],
+    };
+  }
+
+  if (Array.isArray(descriptor.inputFiles) && descriptor.inputFiles.length !== 0) {
+    return {
+      cwd: materializedProjectRoot,
+      args: [
+        "--ignoreConfig",
+        ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+        "--pretty",
+        "false",
+        ...descriptor.inputFiles,
+      ],
+    };
+  }
+
+  return {
+    cwd: materializedProjectRoot,
+    args: [
+      "-p",
+      join(materializedProjectRoot, "tsconfig.json"),
+      ...compilerCommandLineArgsForProjectOptions(compilerOptions),
+      "--pretty",
+      "false",
+    ],
+  };
+}
+
+function compilerCommandLineArgsForProjectOptions(compilerOptions) {
+  const args = [];
+  for (const key of Object.keys(compilerOptions).sort()) {
+    const value = compilerOptions[key];
+    if (value === undefined) {
+      continue;
+    }
+    args.push(`--${key}`);
+    if (value === true) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      args.push(value.join(","));
+      continue;
+    }
+    args.push(String(value));
+  }
+  return args;
+}
+
+async function materializeSyntheticCompilerOptionRoots(caseDir, compilerOptions) {
+  if (Array.isArray(compilerOptions.typeRoots) && compilerOptions.typeRoots.includes(".empty-types")) {
+    await mkdir(join(caseDir, ".empty-types"), { recursive: true });
+  }
+}
+
+function isTranspileCase(testCase) {
+  return testCase.corpus === "typescript" && testCase.suite === "transpile";
+}
+
+export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions()) {
+  const sourceFiles = parsed.units
+    .map((unit) => normalizeHarnessPath(unit.fileName, pathOptions))
+    .filter((file) => harnessSourceFilePattern.test(file));
+  const invocations = [];
+  if (compilerOptions.emitDeclarationOnly !== true) {
+    for (const inputFile of sourceFiles) {
+      invocations.push({
+        label: `module:${inputFile}`,
+        args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "module"),
+        expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "module"),
+      });
+    }
+  }
+  if (compilerOptions.declaration === true) {
+    for (const inputFile of sourceFiles) {
+      invocations.push({
+        label: `declaration:${inputFile}`,
+        args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "declaration"),
+        expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "declaration"),
+      });
+    }
+  }
+  return invocations;
+}
+
+export function transpileExpectedOutputFiles(inputFile, compilerOptions, kind) {
+  if (kind === "module") {
+    const jsFile = changeHarnessExtension(inputFile, getJsOutputExtension(inputFile, compilerOptions));
+    const outputs = [jsFile];
+    if (compilerOptions.sourceMap === true && compilerOptions.inlineSourceMap !== true) {
+      outputs.push(`${jsFile}.map`);
+    }
+    return outputs;
+  }
+  if (kind === "declaration") {
+    const declarationFile = changeHarnessExtension(inputFile, ts.getDeclarationEmitExtensionForPath(inputFile));
+    const outputs = [declarationFile];
+    if (compilerOptions.declarationMap === true) {
+      outputs.push(`${declarationFile}.map`);
+    }
+    return outputs;
+  }
+  throw new Error(`Unsupported transpile output kind '${kind}'`);
+}
+
+function getJsOutputExtension(inputFile, compilerOptions) {
+  return ts.getOutputExtension(inputFile, {
+    jsx: compilerOptions.jsx === "preserve" ? ts.JsxEmit.Preserve : undefined,
+  });
+}
+
+function changeHarnessExtension(inputFile, extension) {
+  return inputFile.replace(/\.[cm]?[tj]sx?$/i, extension);
 }
 
 async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
@@ -947,11 +1406,15 @@ export function selectInputFiles(parsed, writtenFiles, configuration) {
   const lastSourceFile = [...sourceFiles].at(-1);
   const lastUnit = parsed.units.filter((unit) => harnessSourceFilePattern.test(unit.fileName)).at(-1);
   const noImplicitReferences = configuration.get("noimplicitreferences") !== undefined;
-  const hasRequireOrReference = lastUnit !== undefined && (lastUnit.content.includes("require(") || /reference\spath/.test(lastUnit.content));
+  const hasRequireOrReference = lastUnit !== undefined && (hasCommonJsRequireCall(lastUnit.content) || /reference\spath/.test(lastUnit.content));
   if (lastSourceFile !== undefined && (noImplicitReferences || hasRequireOrReference)) {
     return [lastSourceFile];
   }
   return [...new Set([...sourceFiles, ...explicitRootFiles])];
+}
+
+function hasCommonJsRequireCall(sourceText) {
+  return /(?:^|[^\w$])require\s*\(\s*["']/.test(sourceText);
 }
 
 function isExplicitRootFile(file) {
@@ -964,10 +1427,16 @@ function isExplicitRootFile(file) {
   if (/(^|\/)\.lib\//i.test(file)) {
     return false;
   }
+  if (/\.tsbuildinfo$/i.test(file)) {
+    return false;
+  }
+  if (/\.json$/i.test(file)) {
+    return false;
+  }
   return true;
 }
 
-function rewriteHarnessFileContent(content, filePath, pathOptions) {
+export function rewriteHarnessFileContent(content, filePath, pathOptions) {
   let rewritten = content;
   if (rewritten.includes("/.lib/")) {
     let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
@@ -979,10 +1448,85 @@ function rewriteHarnessFileContent(content, filePath, pathOptions) {
     }
     rewritten = rewritten.replaceAll("/.lib/", `${libPath}/`);
   }
+  if (/\.json$/i.test(filePath)) {
+    rewritten = rewriteHarnessJsonContent(rewritten, filePath, pathOptions);
+  }
+  if (harnessSourceFilePattern.test(filePath)) {
+    rewritten = rewriteHarnessModuleSpecifiers(rewritten, filePath, pathOptions);
+  }
   return rewritten.replace(
     /(\/\/\/\s*<reference\s+path=["'])([^"']+)(["'])/gi,
     (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`,
   );
+}
+
+function rewriteHarnessModuleSpecifiers(content, filePath, pathOptions) {
+  const rewriteSpecifier = (specifier) => isHarnessAbsolutePath(specifier) ? rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) : specifier;
+  return content
+    .replace(
+      /(\b(?:import|export)\s+(?:(?!\bfrom\b)[^"'`])*?\bfrom\s*["'])(\/[^"']+)(["'])/g,
+      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
+    )
+    .replace(
+      /(\bimport\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
+      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
+    )
+    .replace(
+      /(\brequire\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
+      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
+    );
+}
+
+function rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) {
+  const targetPath = normalizeHarnessPath(specifier, pathOptions);
+  let rewritten = posixPath.relative(posixPath.dirname(filePath), targetPath);
+  if (rewritten === "") {
+    rewritten = posixPath.basename(targetPath);
+  }
+  if (!rewritten.startsWith(".")) {
+    rewritten = `./${rewritten}`;
+  }
+  return rewritten;
+}
+
+function rewriteHarnessJsonContent(content, filePath, pathOptions) {
+  try {
+    return `${JSON.stringify(rewriteHarnessJsonValue(JSON.parse(content), filePath, pathOptions), null, 4)}\n`;
+  } catch {
+    return content;
+  }
+}
+
+function rewriteHarnessJsonValue(value, filePath, pathOptions) {
+  if (typeof value === "string") {
+    return rewriteHarnessJsonString(value, filePath, pathOptions);
+  }
+  if (Array.isArray(value)) {
+    return value.map((element) => rewriteHarnessJsonValue(element, filePath, pathOptions));
+  }
+  if (value !== null && typeof value === "object") {
+    const rewritten = {};
+    for (const [key, nestedValue] of Object.entries(value)) {
+      rewritten[key] = rewriteHarnessJsonValue(nestedValue, filePath, pathOptions);
+    }
+    return rewritten;
+  }
+  return value;
+}
+
+function rewriteHarnessJsonString(value, filePath, pathOptions) {
+  if (!isHarnessAbsolutePath(value)) {
+    return value;
+  }
+  const targetPath = normalizeHarnessPath(value, pathOptions);
+  let rewritten = posixPath.relative(posixPath.dirname(filePath), targetPath);
+  if (rewritten === "") {
+    rewritten = posixPath.basename(targetPath);
+  }
+  if (!rewritten.startsWith(".")) {
+    rewritten = `./${rewritten}`;
+  }
+  return rewritten;
 }
 
 function rewriteHarnessReferencePath(referencePath, containingFilePath, pathOptions) {
@@ -1017,77 +1561,104 @@ async function materializeSymlinks(caseDir, symlinks, pathOptions) {
   }
 }
 
+async function materializeHarnessApiDeclarations(caseDir, parsed, pathOptions) {
+  const declarationFileNames = harnessApiDeclarationFileNames(parsed, pathOptions);
+  for (const fileName of declarationFileNames) {
+    const text = harnessApiDeclarationText(fileName);
+    if (text === undefined) {
+      throw new Error(`No TypeScript API declaration source available for '${fileName}'`);
+    }
+    const fullPath = join(caseDir, ".ts", fileName);
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, text);
+  }
+}
+
+export function harnessApiDeclarationFileNames(parsed, pathOptions = defaultHarnessPathOptions()) {
+  const names = new Set();
+  const apiPathPattern = /["']\/\.ts\/([^"']+\.d\.ts)["']/g;
+  for (const unit of parsed.units) {
+    for (const match of unit.content.matchAll(apiPathPattern)) {
+      const fileName = normalizeHarnessPath(`/.ts/${match[1]}`, pathOptions).replace(/^\.ts\//, "");
+      if (!/^[a-zA-Z0-9._-]+\.d\.ts$/.test(fileName)) {
+        throw new Error(`Unsupported TypeScript API declaration path '/.ts/${match[1]}'`);
+      }
+      names.add(fileName);
+    }
+  }
+  return [...names].sort();
+}
+
+function harnessApiDeclarationText(fileName) {
+  const directCandidates = [
+    join(typeScriptApiDeclarationRoot, fileName),
+    join(vendoredTypeScriptLibRoot, fileName),
+  ];
+  for (const candidate of directCandidates) {
+    if (existsSync(candidate)) {
+      return readFileSync(candidate, "utf8");
+    }
+  }
+  const aliasTarget = harnessApiDeclarationAliasTarget(fileName);
+  if (aliasTarget !== "") {
+    const importTarget = `./${aliasTarget.replace(/\.d\.ts$/i, "")}`;
+    return `import ts = require("${importTarget}");\nexport = ts;\n`;
+  }
+  return undefined;
+}
+
+function harnessApiDeclarationAliasTarget(fileName) {
+  switch (fileName) {
+    case "typescript.internal.d.ts":
+      return "typescript.d.ts";
+    case "tsserverlibrary.internal.d.ts":
+      return "tsserverlibrary.d.ts";
+    default:
+      return "";
+  }
+}
+
 export function getSkipReason(testCase) {
   return getSkipReasonFromConfiguration(testCase.sourceBaseName, testCase.configuration);
 }
 
 function getSkipReasonFromConfiguration(sourceBaseName, configuration) {
-  if (skippedTests.has(sourceBaseName)) {
-    return `TS-Go runner skip list: ${sourceBaseName}`;
-  }
-  const moduleValue = configuration.get("module")?.toLowerCase();
-  if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
-    return `TS-Go runner skips unsupported module kind: ${moduleValue}`;
-  }
-  const moduleResolutionValue = configuration.get("moduleresolution")?.toLowerCase();
-  if (moduleResolutionValue === "classic" || moduleResolutionValue === "node10") {
-    return `TS-Go runner skips unsupported module resolution: ${moduleResolutionValue}`;
-  }
-  if (configuration.get("esmoduleinterop")?.toLowerCase() === "false") {
-    return `TS-Go runner skips esModuleInterop=false`;
-  }
-  if (configuration.get("allowsyntheticdefaultimports")?.toLowerCase() === "false") {
-    return `TS-Go runner skips allowSyntheticDefaultImports=false`;
-  }
-  if (configuration.has("baseurl")) {
-    return `TS-Go runner skips baseUrl`;
-  }
-  if (configuration.has("outfile")) {
-    return `TS-Go runner skips outFile`;
-  }
-  if (configuration.get("target")?.toLowerCase() === "es5") {
-    return `TS-Go runner skips unsupported target: es5`;
-  }
-  if (configuration.get("alwaysstrict")?.toLowerCase() === "false") {
-    return `TS-Go runner skips alwaysStrict=false`;
-  }
   return "";
 }
 
 function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
-  if (skippedTests.has(sourceBaseName)) {
-    return `TS-Go runner skip list: ${sourceBaseName}`;
-  }
-  const moduleValue = stringCompilerOption(compilerOptions.module);
-  if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
-    return `TS-Go runner skips unsupported module kind: ${moduleValue}`;
-  }
-  const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
-  if (moduleResolutionValue === "classic" || moduleResolutionValue === "node10") {
-    return `TS-Go runner skips unsupported module resolution: ${moduleResolutionValue}`;
-  }
-  if (compilerOptions.esModuleInterop === false) {
-    return `TS-Go runner skips esModuleInterop=false`;
-  }
-  if (compilerOptions.allowSyntheticDefaultImports === false) {
-    return `TS-Go runner skips allowSyntheticDefaultImports=false`;
-  }
-  if (compilerOptions.baseUrl !== undefined && compilerOptions.baseUrl !== "") {
-    return `TS-Go runner skips baseUrl`;
-  }
-  if (
-    (compilerOptions.outFile !== undefined && compilerOptions.outFile !== "") ||
-    (compilerOptions.out !== undefined && compilerOptions.out !== "")
-  ) {
-    return `TS-Go runner skips outFile`;
-  }
-  if (stringCompilerOption(compilerOptions.target) === "es5") {
-    return `TS-Go runner skips unsupported target: es5`;
-  }
-  if (compilerOptions.alwaysStrict === false) {
-    return `TS-Go runner skips alwaysStrict=false`;
-  }
   return "";
+}
+
+export function caseExpectedErrors(testCase, compilerOptions) {
+  return baselineHasErrors(testCase) || compilerOptionsRequireTsGoRemovedOptionDiagnostic(compilerOptions);
+}
+
+export function compilerOptionsRequireTsGoRemovedOptionDiagnostic(compilerOptions) {
+  const moduleValue = stringCompilerOption(compilerOptions.module);
+  const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
+  return (
+    optionIsPresent(compilerOptions.baseUrl) ||
+    optionIsPresent(compilerOptions.outFile) ||
+    optionIsPresent(compilerOptions.out) ||
+    stringCompilerOption(compilerOptions.target) === "es5" ||
+    moduleValue === "amd" ||
+    moduleValue === "umd" ||
+    moduleValue === "system" ||
+    moduleResolutionValue === "classic" ||
+    moduleResolutionValue === "node10" ||
+    compilerOptions.alwaysStrict === false ||
+    compilerOptions.esModuleInterop === false ||
+    compilerOptions.allowSyntheticDefaultImports === false ||
+    compilerOptions.keyofStringsOnly !== undefined ||
+    compilerOptions.noImplicitUseStrict !== undefined ||
+    compilerOptions.importsNotUsedAsValues !== undefined ||
+    compilerOptions.downlevelIteration !== undefined
+  );
+}
+
+function optionIsPresent(value) {
+  return value !== undefined && value !== "";
 }
 
 function stringCompilerOption(value) {
@@ -1250,6 +1821,21 @@ async function runCase(testCase, runRoot) {
       stderr: "",
     };
   }
+  if (materialized.transpile === true) {
+    const result = await runTranspileInvocations(materialized);
+    return {
+      ...testCase,
+      caseDir: materialized.caseDir,
+      expectedErrors: materialized.expectedErrors,
+      actualErrors: result.actualErrors,
+      exitCode: result.exitCode,
+      signal: result.signal,
+      status: result.actualErrors ? "fail" : "pass",
+      skipReason: "",
+      stdout: result.stdout,
+      stderr: result.stderr,
+    };
+  }
   const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
   const statusMatches = actualErrors === materialized.expectedErrors;
@@ -1263,6 +1849,46 @@ async function runCase(testCase, runRoot) {
     status: statusMatches ? "pass" : "fail",
     skipReason: "",
     stdout: result.stdout,
+    stderr: result.stderr,
+  };
+}
+
+async function runTranspileInvocations(materialized) {
+  const outputs = [];
+  let actualErrors = false;
+  let exitCode = 0;
+  let signal = null;
+  for (const invocation of materialized.invocations) {
+    const result = await runTsts({
+      cwd: materialized.caseDir,
+      args: invocation.args,
+    });
+    const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
+    if (missingOutputs.length !== 0) {
+      actualErrors = true;
+    }
+    if (result.exitCode !== 0 && exitCode === 0) {
+      exitCode = result.exitCode;
+    }
+    if (result.signal !== null && signal === null) {
+      signal = result.signal;
+    }
+    outputs.push(renderTranspileInvocationOutput(invocation, result, missingOutputs));
+  }
+  return {
+    actualErrors,
+    exitCode,
+    signal,
+    stdout: outputs.map((output) => output.stdout).join(""),
+    stderr: outputs.map((output) => output.stderr).join(""),
+  };
+}
+
+function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
+  const header = `## ${invocation.label}\n`;
+  const missing = missingOutputs.length === 0 ? "" : `Missing outputs: ${missingOutputs.join(", ")}\n`;
+  return {
+    stdout: `${header}${missing}${result.stdout}`,
     stderr: result.stderr,
   };
 }
@@ -1374,7 +2000,7 @@ function renderInventoryTable(inventory) {
     "| Bucket | Total | In Scope | Excluded | Unclassified | Notes |",
     "|---|---:|---:|---:|---:|---|",
     `| Current TSTS harness | ${inventory.currentHarness.total} | ${inventory.currentHarness.inScope} | ${inventory.currentHarness.outOfScope} | ${inventory.currentHarness.unclassified} | Executed by this runner today |`,
-    `| TypeScript submodule cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile in scope; language-service fourslash and TS harness unit tests excluded |`,
+    `| TypeScript submodule cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile direct cases plus TS harness unit mirrors are in scope; language-service fourslash and LS harness cases excluded |`,
     `| TS-Go reference baselines | ${inventory.baselines.total} | ${inventory.baselines.inScope} | ${inventory.baselines.outOfScope} | ${inventory.baselines.unclassified} | Exact baseline comparison is the next acceptance-strength gate |`,
     `| TS-Go Go unit tests | ${inventory.goTests.total} | ${inventory.goTests.inScope} | ${inventory.goTests.outOfScope} | ${inventory.goTests.unclassified} | Go unit coverage to port or mirror, excluding LS packages |`,
   ];
@@ -1430,10 +2056,10 @@ async function main() {
   }
   const testCases = await discoverCases(options);
   const timestamp = new Date().toISOString().replaceAll(":", "").replace(".", "-").replace("Z", `-${process.pid}`);
-  const caseRootForRun = join(tmpdir(), "tsts-tsgo-suite", timestamp);
   const reportRoot = join(repoRoot, ".temp/tsgo-suite", timestamp);
-  await mkdir(caseRootForRun, { recursive: true });
+  const caseRootForRun = join(reportRoot, "cases");
   await mkdir(reportRoot, { recursive: true });
+  await mkdir(caseRootForRun, { recursive: true });
 
   if (!existsSync(cliPath)) {
     throw new Error(`TSTS CLI not found at ${cliPath}. Run TSTS emit first.`);

@@ -17,6 +17,7 @@ import type { Tag } from "../../go/golang.org/x/text/language.js";
 import { Und } from "../../go/golang.org/x/text/language.js";
 import { SameMap } from "../core/core.js";
 import type { Locale } from "../locale/locale.js";
+import { loadMatchedLocaleMessages } from "./generated/loc.js";
 import { keyToMessage } from "./generated/messages.js";
 
 /**
@@ -240,17 +241,6 @@ export const localizedMessagesCache: Map<Tag, GoMap<Key, string> | undefined> = 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/diagnostics/diagnostics.go::func::getLocalizedMessages","kind":"func","status":"implemented","sigHash":"938c8f866fbc7ee358e1b68eceb4d247f7dae4739f97723bc330ddc5a3047236","bodyHash":"79c121d4902ea2df4ae30c8163ca050fd98619c9fb79b1a85d5287003efc1cdb"}
  *
- * BLOCKED: getLocalizedMessages depends on the `matcher` and `localeFuncs`
- * tables emitted by internal/diagnostics/loc_generated.go (a `generated`-category
- * Go file built from the gzip-embedded src/loc/lcl/*.lcl localization data via
- * Go `//go:embed`), and on the unimplemented `golang.org/x/text/language`
- * external facade (NewMatcher/Match/Low/Und all throw). Neither the embedded
- * locale data layer nor the language matcher has a runtime here yet, so this
- * helper is left as a faithful-signature stub. English (the default,
- * non-localized) path through Localize never reaches a real localized table, so
- * Localize is fully functional for the default locale; only non-default-locale
- * resolution is deferred until loc_generated.go and the language facade land.
- *
  * Go source:
  * func getLocalizedMessages(loc language.Tag) map[Key]string {
  * 	if loc == language.Und {
@@ -286,8 +276,9 @@ export function getLocalizedMessages(loc: Tag): GoMap<Key, string> | undefined {
   if (cached[1]) {
     return cached[0];
   }
-  localizedMessagesCache.Store(loc, undefined);
-  return undefined;
+  const messages = loadMatchedLocaleMessages(loc);
+  localizedMessagesCache.Store(loc, messages);
+  return messages;
 }
 
 /**

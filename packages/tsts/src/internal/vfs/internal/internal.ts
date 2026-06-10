@@ -1,10 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
-import { BigEndian, LittleEndian, Read as binary_Read } from "../../../go/encoding/binary.js";
+import { BigEndian, LittleEndian } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
 import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFile as fs_ReadFile, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
 import type { FileMode, FS, WalkDirFunc } from "../../../go/io/fs.js";
-import { NewReader as strings_NewReader } from "../../../go/strings.js";
 import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
 
@@ -394,21 +393,22 @@ export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string,
  * }
  */
 export function decodeBytes(s: string): [string, bool] {
-  if (s.length >= 2) {
-    const bom0 = s.charCodeAt(0);
-    const bom1 = s.charCodeAt(1);
+  let bytes = binaryStringToBytes(s);
+  if (bytes.length >= 2) {
+    const bom0 = bytes[0]!;
+    const bom1 = bytes[1]!;
     if (bom0 === 0xFF && bom1 === 0xFE) {
-      return [decodeUtf16(s.slice(2), LittleEndian as unknown as ByteOrder), true];
+      return [decodeUtf16(bytes.subarray(2), LittleEndian as unknown as ByteOrder), true];
     }
     if (bom0 === 0xFE && bom1 === 0xFF) {
-      return [decodeUtf16(s.slice(2), BigEndian as unknown as ByteOrder), true];
+      return [decodeUtf16(bytes.subarray(2), BigEndian as unknown as ByteOrder), true];
     }
   }
-  if (s.length >= 3 && s.charCodeAt(0) === 0xEF && s.charCodeAt(1) === 0xBB && s.charCodeAt(2) === 0xBF) {
-    s = s.slice(3);
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    bytes = bytes.subarray(3);
   }
 
-  return [s, true];
+  return [new TextDecoder("utf-8").decode(bytes), true];
 }
 
 /**
@@ -423,11 +423,23 @@ export function decodeBytes(s: string): [string, bool] {
  * 	return string(utf16.Decode(ints))
  * }
  */
-export function decodeUtf16(s: string, order: ByteOrder): string {
-  const ints: number[] = new globalThis.Array(Math.floor(s.length / 2));
-  const err = binary_Read(strings_NewReader(s), order, ints) as GoError;
-  if (err !== undefined) {
-    return "";
+export function decodeUtf16(bytes: Uint8Array, order: ByteOrder): string {
+  const codeUnits: number[] = [];
+  for (let offset = 0; offset + 1 < bytes.length; offset += 2) {
+    codeUnits.push(order.Uint16([bytes[offset]!, bytes[offset + 1]!] as GoSlice<number>) as number);
   }
-  return globalThis.String.fromCharCode(...ints);
+  let result = "";
+  const chunkSize = 8192;
+  for (let offset = 0; offset < codeUnits.length; offset += chunkSize) {
+    result += globalThis.String.fromCharCode(...codeUnits.slice(offset, offset + chunkSize));
+  }
+  return result;
+}
+
+function binaryStringToBytes(s: string): Uint8Array {
+  const bytes = new Uint8Array(s.length);
+  for (let index = 0; index < s.length; index += 1) {
+    bytes[index] = s.charCodeAt(index) & 0xff;
+  }
+  return bytes;
 }

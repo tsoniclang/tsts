@@ -38,6 +38,8 @@ export function diagnosticsConfig(config) {
     tsRoot,
     generatedDir: config.diagnosticsGeneratedDir ?? "internal/diagnostics/generated",
     catalogInput: config.diagnosticsCatalogInput ?? `${sourceRoot}/internal/diagnostics/diagnostics_generated.go`,
+    localeInput: config.diagnosticsLocaleInput ?? `${sourceRoot}/internal/diagnostics/loc_generated.go`,
+    localeDir: config.diagnosticsLocaleDir ?? `${sourceRoot}/internal/diagnostics/loc`,
   };
 }
 
@@ -137,12 +139,11 @@ const CATEGORY_ORDER = ["CategoryWarning", "CategoryError", "CategorySuggestion"
 export function emitMessages(records) {
   const usedCategories = CATEGORY_ORDER.filter((name) => records.some((record) => record.category === name));
   const lines = [];
-  lines.push(`import type { Key, Message } from "../diagnostics.js";`);
-  lines.push(`import {`);
+  lines.push(`import type { Category, Key, Message } from "../diagnostics.js";`);
+  lines.push("");
   for (const name of usedCategories) {
-    lines.push(`  ${name},`);
+    lines.push(`const ${name}: Category = ${CATEGORY_ORDER.indexOf(name)};`);
   }
-  lines.push(`} from "../diagnostics.js";`);
   lines.push("");
   for (const record of records) {
     lines.push(emitMessage(record));
@@ -165,8 +166,83 @@ export function emitMessages(records) {
   return lines.join("\n");
 }
 
+const LOCALES = [
+  { tag: "zh-CN", constName: "zhCN" },
+  { tag: "zh-TW", constName: "zhTW" },
+  { tag: "cs-CZ", constName: "csCZ" },
+  { tag: "de-DE", constName: "deDE" },
+  { tag: "es-ES", constName: "esES" },
+  { tag: "fr-FR", constName: "frFR" },
+  { tag: "it-IT", constName: "itIT" },
+  { tag: "ja-JP", constName: "jaJP" },
+  { tag: "ko-KR", constName: "koKR" },
+  { tag: "pl-PL", constName: "plPL" },
+  { tag: "pt-BR", constName: "ptBR" },
+  { tag: "ru-RU", constName: "ruRU" },
+  { tag: "tr-TR", constName: "trTR" },
+];
+
+export function emitLocalizedMessages(_records, config) {
+  const dc = diagnosticsConfig(config);
+  const lines = [];
+  lines.push(`import { gunzipSync } from "node:zlib";`);
+  lines.push(`import { Buffer } from "node:buffer";`);
+  lines.push(`import type { int } from "@tsonic/core/types.js";`);
+  lines.push(`import type { GoMap } from "../../../go/compat.js";`);
+  lines.push(`import type { Tag } from "../../../go/golang.org/x/text/language.js";`);
+  lines.push(`import { English, Low, MustParse, NewMatcher } from "../../../go/golang.org/x/text/language.js";`);
+  lines.push(`import type { Key } from "../diagnostics.js";`);
+  lines.push("");
+  for (const locale of LOCALES) {
+    const gzPath = resolveRepo(path.join(dc.localeDir, `${locale.tag}.json.gz`));
+    const data = readFileSync(gzPath).toString("base64");
+    lines.push(`const ${locale.constName}Data = ${JSON.stringify(data)};`);
+  }
+  lines.push("");
+  lines.push(`export const matcher = NewMatcher([`);
+  lines.push(`  English,`);
+  for (const locale of LOCALES) {
+    lines.push(`  MustParse(${JSON.stringify(locale.tag)}),`);
+  }
+  lines.push(`]);`);
+  lines.push("");
+  lines.push(`type LocaleLoader = (() => GoMap<Key, string>) | undefined;`);
+  lines.push("");
+  lines.push(`function loadLocaleData(data: string): GoMap<Key, string> {`);
+  lines.push(`  const text = gunzipSync(Buffer.from(data, "base64")).toString("utf8");`);
+  lines.push(`  return new globalThis.Map<Key, string>(globalThis.Object.entries(JSON.parse(text)) as Array<[Key, string]>);`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`function once(loader: () => GoMap<Key, string>): () => GoMap<Key, string> {`);
+  lines.push(`  let cached: GoMap<Key, string> | undefined;`);
+  lines.push(`  return (): GoMap<Key, string> => {`);
+  lines.push(`    cached ??= loader();`);
+  lines.push(`    return cached;`);
+  lines.push(`  };`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`const localeFuncs: LocaleLoader[] = [`);
+  lines.push(`  undefined,`);
+  for (const locale of LOCALES) {
+    lines.push(`  once(() => loadLocaleData(${locale.constName}Data)),`);
+  }
+  lines.push(`];`);
+  lines.push("");
+  lines.push(`export function loadMatchedLocaleMessages(loc: Tag): GoMap<Key, string> | undefined {`);
+  lines.push(`  const [, index, confidence] = matcher.Match(loc);`);
+  lines.push(`  if (confidence < Low || index < 0 || index >= localeFuncs.length) {`);
+  lines.push(`    return undefined;`);
+  lines.push(`  }`);
+  lines.push(`  const load = localeFuncs[index as int];`);
+  lines.push(`  return load?.();`);
+  lines.push(`}`);
+  lines.push("");
+  return lines.join("\n");
+}
+
 const EMITTERS = [
-  { file: "messages.ts", emit: emitMessages },
+  { file: "messages.ts", emit: emitMessages, inputs: catalogInputDigests },
+  { file: "loc.ts", emit: emitLocalizedMessages, inputs: localeInputDigests },
 ];
 
 // ---------------------------------------------------------------------------
@@ -182,13 +258,29 @@ function catalogInputDigests(dc) {
   ];
 }
 
-function generatedHeader(relativePath, body, sourceRevision, catalogInputs) {
+function localeInputDigests(dc) {
+  return [
+    {
+      path: dc.localeInput,
+      contentHash: hashText(readFileSync(resolveRepo(dc.localeInput), "utf8")),
+    },
+    ...LOCALES.map((locale) => {
+      const inputPath = `${dc.localeDir}/${locale.tag}.json.gz`;
+      return {
+        path: inputPath,
+        contentHash: hashText(readFileSync(resolveRepo(inputPath)).toString("base64")),
+      };
+    }),
+  ];
+}
+
+function generatedHeader(relativePath, body, sourceRevision, inputs) {
   const metadata = {
     schemaVersion: 1,
     kind: GENERATED_KIND,
     generator: GENERATOR,
     sourceRevision,
-    catalogInputs,
+    inputs,
     path: relativePath,
     contentHash: hashText(body),
   };
@@ -199,12 +291,11 @@ function generatedHeader(relativePath, body, sourceRevision, catalogInputs) {
 export function buildDiagnosticsGeneratedFiles(config, sourceRevision) {
   const dc = diagnosticsConfig(config);
   const records = loadCatalog(config);
-  const catalogInputs = catalogInputDigests(dc);
   const files = new Map();
   for (const emitter of EMITTERS) {
     const relativePath = `${dc.generatedDir}/${emitter.file}`;
-    const body = emitter.emit(records);
-    const header = generatedHeader(relativePath, body, sourceRevision, catalogInputs);
+    const body = emitter.emit(records, config);
+    const header = generatedHeader(relativePath, body, sourceRevision, emitter.inputs(dc));
     files.set(relativePath, header + body);
   }
   return files;

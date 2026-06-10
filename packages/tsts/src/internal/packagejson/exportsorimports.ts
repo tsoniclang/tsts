@@ -91,11 +91,11 @@ export function ExportsOrImports_UnmarshalJSONFrom(receiver: GoPtr<ExportsOrImpo
  * 	return e.Value.(*collections.OrderedMap[string, ExportsOrImports])
  * }
  */
-export function ExportsOrImports_AsObject(receiver: ExportsOrImports): GoPtr<OrderedMap> {
+export function ExportsOrImports_AsObject<T = ExportsOrImports>(receiver: ExportsOrImports): GoPtr<OrderedMap<string, T>> {
   if (receiver.__tsgoEmbedded0!.Type !== JSONValueTypeObject) {
     throw new globalThis.Error("expected object");
   }
-  return receiver.__tsgoEmbedded0!.Value as GoPtr<OrderedMap>;
+  return receiver.__tsgoEmbedded0!.Value as GoPtr<OrderedMap<string, T>>;
 }
 
 /**

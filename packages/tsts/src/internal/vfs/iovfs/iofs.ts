@@ -1,10 +1,11 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoError, GoPtr } from "../../../go/compat.js";
 import type { FileMode, FS } from "../../../go/io/fs.js";
+import { Sub as fs_Sub } from "../../../go/io/fs.js";
 import type { Time } from "../../../go/time.js";
 import type { Common } from "../internal/internal.js";
 import { Common_DirectoryExists, Common_FileExists, Common_GetAccessibleEntries, Common_Stat, Common_ReadFile, Common_WalkDir, RootLength, SplitPath } from "../internal/internal.js";
-import { GetDirectoryPath, NormalizePath } from "../../tspath/path.js";
+import { GetDirectoryPath, IsUrl, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { Entries, FileInfo, FS as FS_f717df58, WalkDirFunc } from "../vfs.js";
 
 /**
@@ -227,11 +228,15 @@ export function From(fsys: FS, useCaseSensitiveFileNames: bool): FsWithSys {
         if (root === "/") {
           return fsys;
         }
-        // Remove trailing directory separator from root
-        const p = root.replace(/[/\\]$/, "");
-        void p;
-        // In TS port we cannot call fs.Sub; return the fsys itself (URLs return undefined)
-        return fsys;
+        const p = RemoveTrailingDirectorySeparator(root);
+        const [sub, err] = fs_Sub(fsys, p);
+        if (err !== undefined) {
+          if (IsUrl(root)) {
+            return undefined as unknown as FS;
+          }
+          throw new globalThis.Error(`vfs: failed to create sub file system for ${JSON.stringify(p)}: ${err.message}`);
+        }
+        return sub;
       },
       IsReparsePoint: undefined as unknown as (path: string) => bool,
     },

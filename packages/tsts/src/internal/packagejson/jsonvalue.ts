@@ -152,11 +152,11 @@ export function JSONValue_IsFalsy(receiver: GoPtr<JSONValue>): bool {
  * 	return v.Value.(*collections.OrderedMap[string, JSONValue])
  * }
  */
-export function JSONValue_AsObject(receiver: JSONValue): GoPtr<OrderedMap> {
+export function JSONValue_AsObject<T = JSONValue>(receiver: JSONValue): GoPtr<OrderedMap<string, T>> {
   if (receiver.Type !== JSONValueTypeObject) {
     throw new globalThis.Error(`expected object, got ${JSONValueType_String(receiver.Type)}`);
   }
-  return receiver.Value as GoPtr<OrderedMap>;
+  return receiver.Value as GoPtr<OrderedMap<string, T>>;
 }
 
 /**
