@@ -1468,7 +1468,8 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     const vfsCase = await ensureVfsCase();
     harnessDiagnostics = vfsCase.diagnostics;
     const { formatHarnessDiagnostics } = await import("./tsbaseline/typeSymbolWalker.mjs");
-    actualDiagnostics = diagnosticHeadlineText(formatHarnessDiagnostics("", harnessDiagnostics));
+    const tristateTruePretty = 2;
+    actualDiagnostics = diagnosticHeadlineText(formatHarnessDiagnostics("", harnessDiagnostics, vfsCase.compilerOptions?.Pretty === tristateTruePretty));
   }
   const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {

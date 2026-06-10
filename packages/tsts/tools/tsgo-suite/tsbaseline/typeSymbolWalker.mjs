@@ -53,7 +53,7 @@ const [
   { GetBaseFileName },
   { TSTrue },
   { CompilerOptions_GetEmitDeclarations },
-  { WrapASTDiagnostics, CompareASTDiagnostics, WriteFormatDiagnostic },
+  { WrapASTDiagnostics, CompareASTDiagnostics, WriteFormatDiagnostic, FormatDiagnosticsWithColorAndContext, ToDiagnostics },
   { Default: LocaleDefault },
   { Background },
 ] = await Promise.all([
@@ -229,7 +229,7 @@ export function runHarnessCompile(program) {
 // the comparison must run on the harness compile's diagnostics.
 const libLocationPrefixPattern = /^(lib.*\.d\.ts)\(\d+,\d+\)/gim;
 
-export function formatHarnessDiagnostics(currentDirectory, diagnostics) {
+export function formatHarnessDiagnostics(currentDirectory, diagnostics, pretty = false) {
   const wrapped = [...WrapASTDiagnostics(diagnostics ?? [])];
   wrapped.sort(CompareASTDiagnostics);
   const formatOpts = {
@@ -244,8 +244,13 @@ export function formatHarnessDiagnostics(currentDirectory, diagnostics) {
       return [bytes.length, undefined];
     },
   };
-  for (const diagnostic of wrapped) {
-    WriteFormatDiagnostic(writer, diagnostic, formatOpts);
+  if (pretty) {
+    // error_baseline.go minimalDiagnosticsToString pretty branch.
+    FormatDiagnosticsWithColorAndContext(writer, ToDiagnostics(wrapped), formatOpts);
+  } else {
+    for (const diagnostic of wrapped) {
+      WriteFormatDiagnostic(writer, diagnostic, formatOpts);
+    }
   }
   return removeTestPathPrefixes(chunks.join("")).replace(libLocationPrefixPattern, "$1(--,--)");
 }
