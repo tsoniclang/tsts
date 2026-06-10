@@ -553,7 +553,8 @@ export function superAccessState_createSuperAccessVariableStatement(receiver: Go
     const descriptor = NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, descriptorProperties) as unknown as GoPtr<NodeList>, false);
     const accessor = NewPropertyAssignment(f, undefined, NewIdentifier(f, name) as unknown as GoPtr<never>, undefined, undefined, descriptor as unknown as GoPtr<Expression>);
     accessors = [...accessors, accessor];
-    return false;
+    // Go `for ... range` iterates every captured property.
+    return true;
   });
 
   const descriptorsObject = NewObjectLiteralExpression(f, NodeFactory_NewNodeList(f, accessors) as unknown as GoPtr<NodeList>, true);

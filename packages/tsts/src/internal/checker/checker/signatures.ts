@@ -3968,14 +3968,16 @@ export function Checker_getCandidateForOverloadFailure(receiver: GoPtr<Checker>,
  * }
  */
 export function Checker_pickLongestCandidateSignature(receiver: GoPtr<Checker>, node: GoPtr<Node>, candidates: GoSlice<GoPtr<Signature>>, args: GoSlice<GoPtr<Node>>, checkMode: CheckMode): GoPtr<Signature> {
-  let argCount = args.length;
+  // Go: len(nil) == 0.
+  let argCount = (args ?? []).length;
   if (receiver!.apparentArgumentCount !== undefined) {
     argCount = receiver!.apparentArgumentCount;
   }
   const bestIndex = Checker_getLongestCandidateIndex(receiver, candidates, argCount as int);
   const candidate = candidates[bestIndex];
   const typeParameters = candidate!.typeParameters;
-  if (typeParameters.length === 0) {
+  // Go: len(nil) == 0.
+  if ((typeParameters ?? []).length === 0) {
     return candidate;
   }
   let typeArgumentNodes: GoSlice<GoPtr<Node>> = [];

@@ -335,8 +335,7 @@ import {
   Checker_newSymbolEx,
   Checker_resolveAlias,
   Checker_resolveEntityName,
-  Checker_resolveStructuredTypeMembers,
-} from "./checker/symbols.js";
+  Checker_resolveStructuredTypeMembers, Checker_GetSymbolAtLocation, Checker_GetAliasedSymbol } from "./checker/symbols.js";
 import { Checker_getTypeParameterModifiers, Checker_isTypeIdenticalTo } from "./relater.js";
 import { Checker_GetEmitResolver } from "./checker/support.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
@@ -3049,9 +3048,15 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
     Imports: () => SourceFile_Imports(contextFile) as never,
     IsJS: () => SourceFile_IsJS(contextFile),
   };
+  // Go passes b.ch directly because Checker implements modulespecifiers.Checker via
+  // methods; the port adapts the struct to the interface shape with the free functions.
+  const checkerShape = {
+    GetSymbolAtLocation: (node: GoPtr<Node>) => Checker_GetSymbolAtLocation(receiver!.ch, node),
+    GetAliasedSymbol: (aliasSymbol: GoPtr<Symbol>) => Checker_GetAliasedSymbol(receiver!.ch, aliasSymbol),
+  };
   const allSpecifiers = GetModuleSpecifiers(
     symbol_,
-    receiver!.ch as never,
+    checkerShape as never,
     specifierCompilerOptions,
     importingSourceFile,
     host,

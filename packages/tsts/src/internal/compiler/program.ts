@@ -2488,7 +2488,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         }
       }
     }
-    return false as bool;
+    // Go `for ... range` iterates every entry; the GoSeq yield returns true to continue.
+    return true as bool;
   });
 
   if (Tristate_IsFalseOrUnknown(options!.SourceMap) && Tristate_IsFalseOrUnknown(options!.InlineSourceMap)) {

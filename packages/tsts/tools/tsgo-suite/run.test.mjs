@@ -895,22 +895,27 @@ test("getFileBasedTestConfigurations expands noLib with target variations", () =
   ]);
 });
 
-test("getFileBasedTestConfigurations expands override, property-access, and value-import variations", () => {
+test("getFileBasedTestConfigurations expands override, property-access, and module variations", () => {
+  // The vary-by set is derived from the ported OptionsDeclarations exactly like
+  // compiler_runner.go getCompilerVaryByMap; preserveValueImports no longer exists in
+  // TS-Go's option declarations, so it does NOT vary (its tests are name-skipped).
   const configurations = getFileBasedTestConfigurations(new Map([
     ["noimplicitoverride", "true,false"],
     ["nopropertyaccessfromindexsignature", "true,false"],
-    ["preservevalueimports", "true,false"],
+    ["isolatedmodules", "true,false"],
     ["nouncheckedindexedaccess", "true,false"],
   ]));
   assert.equal(configurations.length, 16);
   assert.deepEqual(configurations[0].settings.get("noimplicitoverride"), "true");
   assert.deepEqual(configurations[0].settings.get("nopropertyaccessfromindexsignature"), "true");
-  assert.deepEqual(configurations[0].settings.get("preservevalueimports"), "true");
+  assert.deepEqual(configurations[0].settings.get("isolatedmodules"), "true");
   assert.deepEqual(configurations[0].settings.get("nouncheckedindexedaccess"), "true");
   assert.deepEqual(configurations.at(-1).settings.get("noimplicitoverride"), "false");
   assert.deepEqual(configurations.at(-1).settings.get("nopropertyaccessfromindexsignature"), "false");
-  assert.deepEqual(configurations.at(-1).settings.get("preservevalueimports"), "false");
+  assert.deepEqual(configurations.at(-1).settings.get("isolatedmodules"), "false");
   assert.deepEqual(configurations.at(-1).settings.get("nouncheckedindexedaccess"), "false");
+  const nonVarying = getFileBasedTestConfigurations(new Map([["preservevalueimports", "true,false"]]));
+  assert.equal(nonVarying.length, 1);
 });
 
 test("getFileBasedTestConfigurations expands alwaysStrict with target variations", () => {

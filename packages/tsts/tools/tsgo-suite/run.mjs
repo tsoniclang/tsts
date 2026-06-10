@@ -41,53 +41,25 @@ const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
 const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
 const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
 const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
+// compiler_runner.go getCompilerVaryByMap: every non-command-line-only boolean/enum
+// option with an Affects* flag varies, plus noEmit and isolatedModules.
+const { OptionsDeclarations: tstsOptionsDeclarations } = await import(new URL("../../dist/src/internal/tsoptions/declscompiler.js", import.meta.url).href);
 const compilerVaryByOptions = new Set([
-  "allowjs",
-  "allowimportingtsextensions",
-  "allowsyntheticdefaultimports",
-  "alwaysstrict",
-  "checkjs",
-  "declaration",
-  "declarationmap",
-  "deduplicatepackages",
-  "downleveliteration",
-  "emitdeclarationonly",
-  "emitdecoratormetadata",
-  "erasablesyntaxonly",
-  "esmoduleinterop",
-  "exactoptionalpropertytypes",
-  "experimentaldecorators",
-  "incremental",
-  "importhelpers",
-  "isolatedmodules",
-  "isolateddeclarations",
-  "jsx",
-  "module",
-  "moduledetection",
-  "moduleresolution",
+  ...tstsOptionsDeclarations
+    .filter((option) =>
+      !option.IsCommandLineOnly &&
+      (option.Kind === "boolean" || option.Kind === "enum") &&
+      (option.AffectsProgramStructure ||
+        option.AffectsEmit ||
+        option.AffectsModuleResolution ||
+        option.AffectsBindDiagnostics ||
+        option.AffectsSemanticDiagnostics ||
+        option.AffectsSourceFile ||
+        option.AffectsDeclarationPath ||
+        option.AffectsBuildInfo))
+    .map((option) => option.Name.toLowerCase()),
   "noemit",
-  "noimplicitany",
-  "noimplicitoverride",
-  "nolib",
-  "nopropertyaccessfromindexsignature",
-  "nouncheckedindexedaccess",
-  "nouncheckedsideeffectimports",
-  "nounusedlocals",
-  "nounusedparameters",
-  "preserveconstenums",
-  "preservevalueimports",
-  "removecomments",
-  "resolvejsonmodule",
-  "resolvepackagejsonexports",
-  "strict",
-  "strictbuiltiniteratorreturn",
-  "strictnullchecks",
-  "inlinesourcemap",
-  "sourcemap",
-  "target",
-  "usedefineforclassfields",
-  "useunknownincatchvariables",
-  "verbatimmodulesyntax",
+  "isolatedmodules",
 ]);
 const booleanOptions = new Set([
   "allowjs",
@@ -1841,7 +1813,10 @@ async function materializeCase(testCase, runRoot) {
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
     const compilerOptions = merged.compilerOptions ?? {};
-    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
+    // SkipUnsupportedCompilerOptions runs on the EFFECTIVE options, so follow the
+    // config's `extends` chain (parents merged under the child) for the skip decision.
+    const inheritedOptions = await inheritedConfigCompilerOptions(join(caseDir, existingConfig), merged);
+    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, { ...inheritedOptions, ...compilerOptions });
     return {
       caseDir,
       invocation: {
@@ -2116,6 +2091,40 @@ function getJsOutputExtension(inputFile, compilerOptions) {
 
 function changeHarnessExtension(inputFile, extension) {
   return inputFile.replace(/\.[cm]?[tj]sx?$/i, extension);
+}
+
+// Follows a tsconfig's `extends` chain (string or array, relative paths) and returns
+// the union of ancestor compilerOptions, nearest ancestor winning. Only used to mirror
+// SkipUnsupportedCompilerOptions on the effective options.
+async function inheritedConfigCompilerOptions(configPath, rootConfig) {
+  let options = {};
+  const visit = async (path, config, depth) => {
+    if (depth > 8 || config === undefined) {
+      return;
+    }
+    const extendsList = config.extends === undefined ? [] : Array.isArray(config.extends) ? config.extends : [config.extends];
+    for (const ext of extendsList) {
+      if (typeof ext !== "string" || (!ext.startsWith(".") && !ext.startsWith("/"))) {
+        continue;
+      }
+      let parentPath = join(dirname(path), ext);
+      if (!existsSync(parentPath) && existsSync(`${parentPath}.json`)) {
+        parentPath = `${parentPath}.json`;
+      }
+      let parentConfig;
+      try {
+        parentConfig = ts.parseConfigFileTextToJson(parentPath, await readSourceText(parentPath)).config;
+      } catch {
+        continue;
+      }
+      if (parentConfig !== undefined) {
+        await visit(parentPath, parentConfig, depth + 1);
+        options = { ...options, ...(parentConfig.compilerOptions ?? {}) };
+      }
+    }
+  };
+  await visit(configPath, rootConfig, 0);
+  return options;
 }
 
 async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
@@ -2435,7 +2444,8 @@ function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
     return `TS-Go runner skips unsupported module kind ${moduleValue}`;
   }
   const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
-  if (moduleResolutionValue === "node10" || moduleResolutionValue === "classic") {
+  // "node" is the tsconfig alias for Node10 (core.ModuleResolutionKindNode10).
+  if (moduleResolutionValue === "node10" || moduleResolutionValue === "node" || moduleResolutionValue === "classic") {
     return `TS-Go runner skips unsupported module resolution kind ${moduleResolutionValue}`;
   }
   if (compilerOptions.esModuleInterop === false) {

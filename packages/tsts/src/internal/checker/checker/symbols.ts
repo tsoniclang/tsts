@@ -8863,7 +8863,8 @@ export function Checker_reportNonExportedMember(receiver: GoPtr<Checker>, name: 
   }
   const exports = moduleSymbol!.Exports;
   if (localSymbol !== undefined) {
-    const exportedEqualsSymbol = exports.get(InternalSymbolNameExportEquals);
+    // Go reads from a possibly-nil map (legal; yields the zero value).
+    const exportedEqualsSymbol = exports?.get(InternalSymbolNameExportEquals);
     if (exportedEqualsSymbol !== undefined) {
       if (Checker_getSymbolIfSameReference(receiver, exportedEqualsSymbol, localSymbol) !== undefined) {
         Checker_reportInvalidImportEqualsExportMember(receiver, name, declarationName, moduleName);

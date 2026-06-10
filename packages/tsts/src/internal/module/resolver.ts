@@ -4434,7 +4434,9 @@ export function MatchPatternOrExact(patterns: GoPtr<ParsedPatterns>, candidate: 
   if ((patterns!.patterns?.length ?? 0) === 0) {
     return { Text: "", StarIndex: 0 };
   }
-  return FindBestPatternMatch(patterns!.patterns, (v: Pattern) => v, candidate);
+  // Go instantiates FindBestPatternMatch with T=core.Pattern, whose zero value is
+  // Pattern{} (StarIndex 0, empty Text) — IsValid() false — not nil.
+  return FindBestPatternMatch(patterns!.patterns, (v: Pattern) => v, candidate) ?? { Text: "", StarIndex: 0 };
 }
 
 /**

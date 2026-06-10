@@ -272,7 +272,8 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
  * }
  */
 export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: (arg0: V) => bool): V {
-  for (const value of m.values()) {
+  // Go ranges over a nil map as a no-op.
+  for (const value of m?.values() ?? []) {
     if (predicate(value)) {
       return value;
     }
