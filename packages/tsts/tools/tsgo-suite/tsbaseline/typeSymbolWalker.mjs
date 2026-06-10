@@ -16,7 +16,11 @@ const [
   { ParsedCommandLine_FileNames, ParsedCommandLine_CompilerOptions },
   { GetParsedCommandLineOfConfigFile },
   { NewCompilerHost },
-  { NewProgram, Program_GetSourceFile, Program_GetTypeCheckerForFile },
+  {
+    NewProgram, Program_GetSourceFile, Program_GetTypeCheckerForFile, Program_Options, Program_Emit,
+    Program_GetProgramDiagnostics, Program_GetSyntacticDiagnostics, Program_GetSemanticDiagnostics,
+    Program_GetGlobalDiagnostics, Program_GetDeclarationDiagnostics,
+  },
   { Checker_GetTypeAtLocation },
   { Checker_GetSymbolAtLocation },
   { Checker_SymbolToStringEx },
@@ -48,6 +52,7 @@ const [
   { NodeFlagsReparsed },
   { GetBaseFileName },
   { TSTrue },
+  { CompilerOptions_GetEmitDeclarations },
   { Background },
 ] = await Promise.all([
   dist("internal/vfs/osvfs/os.js"),
@@ -79,6 +84,7 @@ const [
   dist("internal/ast/generated/flags.js"),
   dist("internal/tspath/path.js"),
   dist("internal/core/tristate.js"),
+  dist("internal/core/compileroptions.js"),
   dist("go/context.js"),
 ]);
 
@@ -176,6 +182,38 @@ export function createProgramForCase(caseDir, args, isHiddenPath) {
     Tracing: undefined,
   });
   return { program, rootFileNames: ParsedCommandLine_FileNames(parsed) ?? [], compilerOptions: ParsedCommandLine_CompilerOptions(parsed) };
+}
+
+// harnessutil.go compileFilesWithHost: every diagnostics stage is collected
+// unconditionally (program, syntactic, semantic, global, declaration), THEN the program
+// emits. The staged tsc pipeline (execute/tsc GetDiagnosticsOfAnyProgram) skips the
+// semantic check when program diagnostics exist, but declaration-emit node reuse depends
+// on checker links populated by that check, so the harness emit can differ from the CLI
+// emit (typedefHoisting: TS5055 program diagnostics + reused JSDoc annotations). The
+// reference baselines are harness output; this mirrors the harness compile. Emit output
+// is captured in memory via the WriteFile override; files the program blocked
+// (blockEmittingOfFile, e.g. would-overwrite-input) never reach it, exactly like the
+// harness vfs.
+export function runHarnessCompile(program) {
+  const ctx = Background();
+  const diagnostics = [];
+  diagnostics.push(...(Program_GetProgramDiagnostics(program) ?? []));
+  diagnostics.push(...(Program_GetSyntacticDiagnostics(program, ctx, undefined) ?? []));
+  diagnostics.push(...(Program_GetSemanticDiagnostics(program, ctx, undefined) ?? []));
+  diagnostics.push(...(Program_GetGlobalDiagnostics(program, ctx) ?? []));
+  if (CompilerOptions_GetEmitDeclarations(Program_Options(program))) {
+    diagnostics.push(...(Program_GetDeclarationDiagnostics(program, ctx, undefined) ?? []));
+  }
+  const outputs = new Map();
+  const emitResult = Program_Emit(program, ctx, {
+    TargetSourceFile: undefined,
+    EmitOnly: 0,
+    WriteFile: (fileName, text, _data) => {
+      outputs.set(fileName, text);
+      return undefined;
+    },
+  });
+  return { diagnostics, outputs, emitResult };
 }
 
 // type_symbol_baseline.go newTypeWriterWalker

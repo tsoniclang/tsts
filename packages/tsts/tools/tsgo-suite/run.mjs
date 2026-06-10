@@ -1453,6 +1453,29 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
     return sharedProgramEntry;
   };
+  // The reference emit baselines are HARNESS output: harnessutil.go collects every
+  // diagnostics stage (semantic check included) before emitting, while the CLI's staged
+  // pipeline skips the check when program diagnostics exist — and declaration-emit node
+  // reuse depends on the links that check populates. Emit outputs for baseline
+  // comparison therefore come from the in-process harness-mirror compile, captured in
+  // memory and translated to upstream unit coordinates.
+  let sharedHarnessOutputs;
+  const ensureHarnessEmittedOutputs = async () => {
+    if (sharedHarnessOutputs === undefined) {
+      const { runHarnessCompile } = await import("./tsbaseline/typeSymbolWalker.mjs");
+      const programEntry = await ensureProgram();
+      const outputs = new Map();
+      if (programEntry !== undefined) {
+        const compiled = runHarnessCompile(programEntry.program);
+        for (const [fileName, content] of compiled.outputs) {
+          const relativeFile = relative(materialized.caseDir, fileName).split(sep).join("/");
+          outputs.set(normalizedBaselineSectionPath(relativeFile), translateEmittedContentToUnitCoordinates(materialized, content));
+        }
+      }
+      sharedHarnessOutputs = outputs;
+    }
+    return sharedHarnessOutputs;
+  };
   // compiler_runner.go: the tsconfig unit lives in tsConfigFiles, never in toBeCompiled or
   // otherFiles, so it appears in no type/symbol/js-emit baseline; toBeCompiled = the units
   // the parsed command line names as root files (config FileNames or CLI inputs), in root
@@ -1469,6 +1492,12 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     const otherFiles = units.filter((unit) => !rootSet.has(unit.filePath));
     return { toBeCompiled, otherFiles };
   };
+  // compiler_runner.go verify order: error -> output -> sourcemap -> types/symbols. The
+  // harness emit must run before the walker exercises the program's checkers and the
+  // shared emit-context pool; run it eagerly in that order.
+  if ((wholeFileJs.length !== 0 || wholeFileSourceMaps.length !== 0) && materialized.units !== undefined && materialized.invocation !== undefined) {
+    await ensureHarnessEmittedOutputs();
+  }
   if (typeSymbol.length !== 0 && materialized.noTypesAndSymbols === true) {
     // compiler_runner.go verifyTypesAndSymbols returns early under @noTypesAndSymbols,
     // so a committed type/symbol reference baseline is unreachable upstream: stale.
@@ -1526,7 +1555,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           header: baselineHeader,
           hasDiagnostics,
           fullEmitPaths: materialized.fullEmitPaths === true,
-          emittedOutputs: await emittedOutputsForCase(materialized),
+          emittedOutputs: await ensureHarnessEmittedOutputs(),
         });
         const actual = normalizeEmittedOutputText(assembled);
         for (const artifact of wholeFileJs) {
@@ -1557,7 +1586,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           allUnits: [...partition.toBeCompiled, ...partition.otherFiles],
           hasDiagnostics,
           fullEmitPaths: materialized.fullEmitPaths === true,
-          emittedOutputs: await emittedOutputsForCase(materialized),
+          emittedOutputs: await ensureHarnessEmittedOutputs(),
         });
         for (const artifact of wholeFileSourceMaps) {
           if (assembled === undefined) {
