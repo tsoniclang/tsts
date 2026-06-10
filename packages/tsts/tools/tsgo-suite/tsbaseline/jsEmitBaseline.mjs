@@ -2,13 +2,10 @@
 // assembling the `<case>.js` whole-file baseline from the case inputs plus the emitted
 // JS/DTS outputs in program source order (mirroring harnessutil's inputsAndOutputs
 // population), the JSON-output parse-error baselines, and the //// [DtsFileErrors]
-// block (the declaration recompile's error baseline). Differences from the Go
-// original, each justified:
-// - The noCheck-repeat comparison ("!!!! File ... differs from original emit") is not
-//   ported yet; a reference baseline containing those markers fails the whole-file
-//   comparison loudly rather than silently passing.
-// - Sections are assembled with \n and compared after newline normalization (the suite
-//   normalizes both sides), where Go writes \r\n.
+// block (the declaration recompile's error baseline), and the noCheck-repeat
+// comparison ("!!!! File ..." patience diffs). Difference from the Go original:
+// sections are assembled with \n and compared after newline normalization (the suite
+// normalizes both sides), where Go writes \r\n.
 import { getErrorBaseline } from "./errorBaseline.mjs";
 
 const distRoot = new URL("../../../dist/src/", import.meta.url);
@@ -23,6 +20,8 @@ const [
   { GetBaseFileName },
   { ParseSourceFile },
   { ScriptKindJSON },
+  { Diff, UnifiedDiffTextWithOptions },
+  { SplitLines },
   { Background },
 ] = await Promise.all([
   dist("internal/compiler/program.js"),
@@ -33,12 +32,25 @@ const [
   dist("internal/tspath/path.js"),
   dist("internal/parser/parser/statements-declarations.js"),
   dist("internal/core/scriptkind.js"),
+  dist("go/github.com/peter-evans/patience.js"),
+  dist("internal/stringutil/util.js"),
   dist("go/context.js"),
 ]);
 
 import { removeTestPathPrefixes } from "./typeSymbolWalker.mjs";
 
 export const NoContent = "<no content>";
+
+// baseline.go DiffText: patience diff, unified output, 3 lines of context.
+function diffText(oldName, newName, expected, actual) {
+  const lines = Diff(SplitLines(expected), SplitLines(actual));
+  return UnifiedDiffTextWithOptions(lines, {
+    Precontext: 3,
+    Postcontext: 3,
+    SrcHeader: oldName,
+    DstHeader: newName,
+  });
+}
 
 // js_emit_baseline.go fileOutput
 export function fileOutput(file, fullEmitPaths) {
@@ -106,7 +118,7 @@ export function orderedEmittedFiles(program, emittedOutputs) {
 }
 
 // js_emit_baseline.go DoJSEmitBaseline (assembly portion)
-export function generateJsEmitBaseline({ program, toBeCompiled, otherFiles, tsConfigFiles, header, hasDiagnostics, fullEmitPaths, emittedOutputs, declarationCompilation }) {
+export function generateJsEmitBaseline({ program, toBeCompiled, otherFiles, tsConfigFiles, header, hasDiagnostics, fullEmitPaths, emittedOutputs, declarationCompilation, noCheckRepeat }) {
   let tsCode = `//// [${header}] ////\n\n`;
   const tsSources = [...otherFiles, ...toBeCompiled];
   for (let index = 0; index < tsSources.length; index++) {
@@ -150,6 +162,32 @@ export function generateJsEmitBaseline({ program, toBeCompiled, otherFiles, tsCo
       [...(tsConfigFiles ?? []), ...declarationCompilation.declInputFiles, ...declarationCompilation.declOtherFiles],
       declarationCompilation.declResult.diagnostics,
     );
+  }
+
+  // js_emit_baseline.go noCheck-repeat comparison: the same compilation re-run with
+  // noCheck must emit identical JS and DTS; differences print `!!!! File ...` blocks
+  // with a patience unified diff (baseline.DiffText, 3 lines of context).
+  if (noCheckRepeat !== undefined) {
+    const original = orderedEmittedFiles(program, emittedOutputs);
+    const withoutChecking = orderedEmittedFiles(noCheckRepeat.program, noCheckRepeat.emittedOutputs);
+    const byName = (files) => new Map(files.map((file) => [file.unitName, file]));
+    const compareResultFileSets = (a, b) => {
+      const originals = byName(b);
+      for (const doc of a) {
+        const originalFile = originals.get(doc.unitName);
+        if (originalFile === undefined) {
+          jsCode += `\n\n!!!! File ${removeTestPathPrefixes(doc.unitName)} missing from original emit, but present in noCheck emit\n`;
+          jsCode += fileOutput(doc, fullEmitPaths);
+        } else if (originalFile.content !== doc.content) {
+          jsCode += `\n\n!!!! File ${removeTestPathPrefixes(doc.unitName)} differs from original emit in noCheck emit\n`;
+          const fileName = fullEmitPaths ? removeTestPathPrefixes(doc.unitName) : GetBaseFileName(doc.unitName);
+          jsCode += `//// [${fileName}]\n`;
+          jsCode += diffText("Expected\tThe full check baseline", "Actual\twith noCheck set", originalFile.content, doc.content);
+        }
+      }
+    };
+    compareResultFileSets(withoutChecking.DTS, original.DTS);
+    compareResultFileSets(withoutChecking.JS, original.JS);
   }
 
   if (jsCode.length > 0) {

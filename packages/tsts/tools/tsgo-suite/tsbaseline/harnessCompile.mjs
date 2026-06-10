@@ -469,3 +469,18 @@ export async function compileDeclarationFiles(vfsCase) {
   });
   return { declInputFiles, declOtherFiles, declResult };
 }
+
+// harnessutil.go CompilationResult.Repeat with {noCheck: "true"}: rerun the same
+// compilation with NoCheck set, for js_emit_baseline.go's noCheck-repeat comparison.
+export function repeatWithNoCheck(vfsCase) {
+  return compileHarnessFiles({
+    toBeCompiled: vfsCase.toBeCompiled,
+    otherFiles: vfsCase.otherFiles,
+    tsConfigFiles: vfsCase.tsConfigFiles,
+    compilerOptions: { ...vfsCase.compilerOptions, NoCheck: TSTrue },
+    harnessOptions: vfsCase.harnessOptions,
+    currentDirectory: vfsCase.currentDirectory,
+    symlinks: vfsCase.symlinks,
+    configFile: vfsCase.parsed?.ConfigFile,
+  });
+}

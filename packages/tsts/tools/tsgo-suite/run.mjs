@@ -1555,9 +1555,16 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     } else {
       try {
         const { generateJsEmitBaseline } = await import("./tsbaseline/jsEmitBaseline.mjs");
-        const { compileDeclarationFiles } = await import("./tsbaseline/harnessCompile.mjs");
+        const { compileDeclarationFiles, repeatWithNoCheck } = await import("./tsbaseline/harnessCompile.mjs");
         const vfsCase = await ensureVfsCase();
         const declarationCompilation = vfsCase.error === undefined ? await compileDeclarationFiles(vfsCase) : undefined;
+        // js_emit_baseline.go: rerun with noCheck unless the case sets noCheck/noEmit.
+        const tristateTrue = 2;
+        const noCheckRepeat = vfsCase.error === undefined &&
+          vfsCase.compilerOptions.NoCheck !== tristateTrue &&
+          vfsCase.compilerOptions.NoEmit !== tristateTrue
+          ? repeatWithNoCheck(vfsCase)
+          : undefined;
         const assembled = generateJsEmitBaseline({
           program: vfsCase.program,
           toBeCompiled: vfsCase.toBeCompiled,
@@ -1568,6 +1575,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
           fullEmitPaths: vfsCase.harnessOptions.fullemitpaths === true,
           emittedOutputs: vfsCase.emittedOutputs,
           declarationCompilation,
+          noCheckRepeat,
         });
         const actual = normalizeEmittedOutputText(assembled);
         for (const artifact of wholeFileJs) {
