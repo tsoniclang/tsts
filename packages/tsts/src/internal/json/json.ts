@@ -2,6 +2,7 @@ import type { bool, byte } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../go/compat.js";
 import {
   Deterministic as json_Deterministic,
+  JsonFieldNames,
   Marshal as json_Marshal,
   MarshalEncode as json_MarshalEncode,
   MarshalWrite as json_MarshalWrite,
@@ -10,6 +11,8 @@ import {
   UnmarshalRead as json_UnmarshalRead,
 } from "../../go/github.com/go-json-experiment/json.js";
 import type { MarshalerTo as MarshalerTo_fd081708, Options, UnmarshalerFrom as UnmarshalerFrom_68b23da1 } from "../../go/github.com/go-json-experiment/json.js";
+export { JsonFieldNames };
+export type { JsonFieldName, JsonFieldNameMap, JsonFieldSpec } from "../../go/github.com/go-json-experiment/json.js";
 import {
   AllowDuplicateNames as jsontext_AllowDuplicateNames,
   AllowInvalidUTF8 as jsontext_AllowInvalidUTF8,

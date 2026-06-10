@@ -19,11 +19,13 @@ const testLibRoot = join(vendorRoot, "_submodules/TypeScript/tests/lib");
 const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api");
 const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
+const apiPath = join(packageRoot, "dist/src/index.js");
 const utf8Decoder = new TextDecoder("utf-8");
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
 const harnessSourceFilePattern = /\.(?:[cm]?tsx?|[cm]?jsx?)$/i;
 const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
+let tstsApi;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
@@ -79,6 +81,8 @@ const compilerVaryByOptions = new Set([
   "strict",
   "strictbuiltiniteratorreturn",
   "strictnullchecks",
+  "inlinesourcemap",
+  "sourcemap",
   "target",
   "usedefineforclassfields",
   "useunknownincatchvariables",
@@ -263,6 +267,7 @@ export function parseArgs(argv) {
     failFast: false,
     keepGoing: true,
     inventory: false,
+    exactBaselines: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -281,6 +286,8 @@ export function parseArgs(argv) {
       parsed.keepGoing = false;
     } else if (arg === "--inventory") {
       parsed.inventory = true;
+    } else if (arg === "--exact-baselines") {
+      parsed.exactBaselines = true;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -311,6 +318,7 @@ Options:
   --limit <n>                         Run at most n cases after filtering.
   --jobs <n>                          Parallel TSTS processes. Default: min(cpu count, 8).
   --fail-fast                         Stop after the first failure.
+  --exact-baselines                   Compare emitted output sections against TS-Go/TypeScript reference baselines.
   --inventory                         Print the tracked upstream test universe and exit.
 `);
 }
@@ -591,10 +599,16 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   let currentFileName = "";
   let currentFileLines = [];
   let sawFileDirective = false;
+  let sawGlobalDirectiveBeforeContent = false;
 
-  const flush = () => {
+  const flush = (trimTrailingBlankLines = false) => {
     if (currentFileName === "") {
       return;
+    }
+    if (trimTrailingBlankLines) {
+      while (currentFileLines.length !== 0 && currentFileLines.at(-1) === "") {
+        currentFileLines.pop();
+      }
     }
     units.push({
       fileName: currentFileName,
@@ -630,7 +644,13 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
         }
       } else {
         globalOptions.set(optionName, optionValue);
+        if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0) {
+          sawGlobalDirectiveBeforeContent = true;
+        }
       }
+      continue;
+    }
+    if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0 && sawGlobalDirectiveBeforeContent && line.trim() === "") {
       continue;
     }
     if (currentFileName === "" && sawFileDirective) {
@@ -780,6 +800,10 @@ export function compilerCommandLineArgsForMaterializedCase(compilerOptions, inpu
 }
 
 export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, kind) {
+  return compilerCommandLineArgsForMaterializedCase(compilerOptionsForTranspileInvocation(compilerOptions, kind), [inputFile]);
+}
+
+export function compilerOptionsForTranspileInvocation(compilerOptions, kind) {
   const transpileOptions = {
     ...compilerOptions,
     noCheck: true,
@@ -792,10 +816,11 @@ export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, i
   } else if (kind === "declaration") {
     transpileOptions.declaration = true;
     transpileOptions.emitDeclarationOnly = true;
+    transpileOptions.isolatedDeclarations = true;
   } else {
     throw new Error(`Unsupported transpile invocation kind '${kind}'`);
   }
-  return compilerCommandLineArgsForMaterializedCase(transpileOptions, [inputFile]);
+  return transpileOptions;
 }
 
 function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
@@ -1042,13 +1067,15 @@ function projectBaselineHasErrors(testCase) {
 }
 
 function baselineDirectoryHasErrors(baselineDir, testCase) {
-  const directPath = join(baselineDir, `${configuredCaseName(testCase)}.errors.txt`);
-  if (existsSync(directPath)) {
-    return true;
-  }
-  const diffPath = `${directPath}.diff`;
-  if (existsSync(diffPath)) {
-    return errorDiffNewSideHasErrors(diffPath);
+  for (const caseName of configuredBaselineCaseNames(testCase)) {
+    const directPath = join(baselineDir, `${caseName}.errors.txt`);
+    if (existsSync(directPath)) {
+      return true;
+    }
+    const diffPath = `${directPath}.diff`;
+    if (existsSync(diffPath)) {
+      return errorDiffNewSideHasErrors(diffPath);
+    }
   }
   if (!existsSync(baselineDir)) {
     return undefined;
@@ -1086,14 +1113,254 @@ function baselineDirectories(testCase) {
       join(baselineRoot, "submoduleTriaged", testCase.suite),
       join(baselineRoot, "submoduleAccepted", testCase.suite),
       join(baselineRoot, "submodule", testCase.suite),
+      join(typeScriptSubmoduleBaselineRoot, testCase.suite),
       typeScriptSubmoduleBaselineRoot,
     ];
   }
   return [join(baselineRoot, testCase.suite)];
 }
 
+const comparableBaselineFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
+const diagnosticBaselineFilePattern = /\.errors\.txt$/i;
+const unsupportedExactBaselineFilePattern = /\.(?:symbols|types)$/i;
+const emittedOutputFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
+
+function exactBaselineArtifacts(testCase) {
+  if (testCase.corpus === "typescript" && testCase.suite === "project") {
+    return exactProjectBaselineArtifacts(testCase);
+  }
+  const selected = new Map();
+  const baseNames = configuredBaselineCaseNames(testCase);
+  for (const baselineDir of baselineDirectories(testCase)) {
+    if (!existsSync(baselineDir)) {
+      continue;
+    }
+    for (const entry of readdirSync(baselineDir, { withFileTypes: true })) {
+      if (!entry.isFile()) {
+        continue;
+      }
+      const artifactName = entry.name.endsWith(".diff") ? entry.name.slice(0, -".diff".length) : entry.name;
+      if (!baseNames.some((baseName) => artifactName.startsWith(`${baseName}.`)) || selected.has(artifactName)) {
+        continue;
+      }
+      selected.set(artifactName, {
+        name: artifactName,
+        path: join(baselineDir, entry.name),
+        diff: entry.name.endsWith(".diff"),
+      });
+    }
+  }
+  return [...selected.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function exactProjectBaselineArtifacts(testCase) {
+  const moduleFolder = testCase.moduleKind === "amd" ? "amd" : "node";
+  const baselineDir = join(typeScriptSubmoduleBaselineRoot, "project", testCase.caseName, moduleFolder);
+  if (!existsSync(baselineDir)) {
+    return [];
+  }
+  return readdirSync(baselineDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.startsWith(`${testCase.caseName}.`))
+    .map((entry) => ({
+      name: entry.name.endsWith(".diff") ? entry.name.slice(0, -".diff".length) : entry.name,
+      path: join(baselineDir, entry.name),
+      diff: entry.name.endsWith(".diff"),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function parseBaselineSections(text) {
+  const lines = normalizeComparableText(text).split("\n");
+  const sections = [];
+  let currentName = "";
+  let currentLines = [];
+  const flush = (trimTrailingBlankLines = false) => {
+    if (currentName === "") {
+      return;
+    }
+    if (trimTrailingBlankLines) {
+      while (currentLines.length !== 0 && currentLines.at(-1) === "") {
+        currentLines.pop();
+      }
+    }
+    sections.push({
+      name: currentName,
+      content: currentLines.join("\n"),
+    });
+    currentLines = [];
+  };
+  for (const line of lines) {
+    const marker = /^\/\/\/\/ \[(.*)](?: \/\/\/\/)?$/.exec(line);
+    if (marker !== null) {
+      const nextName = marker[1];
+      flush(nextName === "Diagnostics reported");
+      currentName = nextName;
+      continue;
+    }
+    if (currentName !== "") {
+      currentLines.push(line);
+    }
+  }
+  flush();
+  return sections;
+}
+
+async function evaluateExactBaselines(testCase, materialized, commandOutput) {
+  const artifacts = exactBaselineArtifacts(testCase);
+  const unsupported = artifacts
+    .filter((artifact) => artifact.diff || unsupportedExactBaselineFilePattern.test(artifact.name))
+    .map((artifact) => artifact.diff ? `${artifact.name}.diff` : artifact.name);
+  const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
+  const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
+  const mismatches = [];
+  const expectedDiagnosticHeadlines = [];
+  const expectedDiagnosticSources = [];
+  if (artifacts.length === 0) {
+    mismatches.push("No reference baseline artifacts were found for this case.");
+  }
+  const expectedOutputs = new Map();
+  for (const artifact of comparable) {
+    const sections = parseBaselineSections(readFileSync(artifact.path, "utf8"));
+    const sectionNameCounts = new Map();
+    for (const section of sections) {
+      const key = normalizedBaselineSectionPath(section.name);
+      sectionNameCounts.set(key, (sectionNameCounts.get(key) ?? 0) + 1);
+    }
+    const seen = new Map();
+    for (const section of sections) {
+      if (section.name === "Diagnostics reported") {
+        expectedDiagnosticHeadlines.push(diagnosticHeadlineText(section.content));
+        expectedDiagnosticSources.push(`${artifact.name}#Diagnostics reported`);
+        continue;
+      }
+      const key = normalizedBaselineSectionPath(section.name);
+      const occurrence = (seen.get(key) ?? 0) + 1;
+      seen.set(key, occurrence);
+      if (!emittedOutputFilePattern.test(key)) {
+        continue;
+      }
+      if (materialized.writtenFileSet.has(key) && (sectionNameCounts.get(key) ?? 0) > 1 && occurrence === sectionNameCounts.get(key)) {
+        expectedOutputs.set(key, section.content);
+      } else if (!materialized.writtenFileSet.has(key)) {
+        expectedOutputs.set(key, section.content);
+      }
+    }
+  }
+  for (const artifact of diagnostics) {
+    expectedDiagnosticHeadlines.push(diagnosticHeadlineText(readFileSync(artifact.path, "utf8")));
+    expectedDiagnosticSources.push(artifact.name);
+  }
+  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
+  const actualDiagnostics = diagnosticHeadlineText(commandOutput);
+  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
+    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
+  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
+    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
+  }
+
+  const actualOutputs = await emittedOutputsForCase(materialized);
+  for (const [outputFile, actualContent] of actualOutputs) {
+    const expected = expectedOutputs.get(outputFile);
+    if (expected === undefined) {
+      mismatches.push(`Unexpected emitted output '${outputFile}'.`);
+      continue;
+    }
+    if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
+      mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
+    }
+  }
+  for (const outputFile of expectedOutputs.keys()) {
+    if (!actualOutputs.has(outputFile)) {
+      mismatches.push(`Expected baseline output '${outputFile}' was not emitted.`);
+    }
+  }
+  if (unsupported.length !== 0) {
+    mismatches.push(`Unsupported exact baseline artifact(s): ${unsupported.join(", ")}.`);
+  }
+  return {
+    checked: artifacts.length,
+    comparable: comparable.length + diagnostics.length,
+    unsupported,
+    mismatches,
+    status: mismatches.length === 0 ? "pass" : "fail",
+  };
+}
+
+export function diagnosticHeadlineText(text) {
+  const lines = stripAnsiEscapes(normalizeComparableText(text)).split("\n");
+  const headlines = [];
+  for (const line of lines) {
+    if (line.trim() === "") {
+      if (headlines.length !== 0) {
+        break;
+      }
+      continue;
+    }
+    if (/\berror TS\d+:/.test(line)) {
+      headlines.push(line);
+    }
+  }
+  return headlines.join("\n");
+}
+
+async function emittedOutputsForCase(materialized) {
+  const outputs = new Map();
+  for (const file of await walkFiles(materialized.caseDir)) {
+    const relativeFile = relative(materialized.caseDir, file).split(sep).join("/");
+    const normalized = normalizedBaselineSectionPath(relativeFile);
+    if (!emittedOutputFilePattern.test(normalized)) {
+      continue;
+    }
+    if (materialized.writtenFileSet.has(normalized)) {
+      continue;
+    }
+    if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
+      continue;
+    }
+    outputs.set(normalized, normalizeComparableText(await readFile(file, "utf8")));
+  }
+  return outputs;
+}
+
+function normalizedBaselineSectionPath(fileName) {
+  return fileName.replaceAll("\\", "/").replace(/^\/+/, "");
+}
+
+function normalizeComparableText(text) {
+  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function normalizeEmittedOutputText(text) {
+  return normalizeComparableText(text).replace(/\n$/, "");
+}
+
 function configuredCaseName(testCase) {
   return testCase.configurationName === "" ? testCase.caseName : `${testCase.caseName}(${testCase.configurationName})`;
+}
+
+function configuredBaselineCaseNames(testCase) {
+  if (testCase.configurationName === "") {
+    return [testCase.caseName];
+  }
+  const names = [configuredCaseName(testCase)];
+  const canonical = testCase.configurationName
+    .split(",")
+    .map((entry) => {
+      const [option, ...valueParts] = entry.split("=");
+      const value = valueParts.join("=");
+      const displayName = compilerOptionDisplayName(option);
+      return displayName === undefined ? entry : `${displayName}=${value}`;
+    })
+    .join(",");
+  const canonicalName = `${testCase.caseName}(${canonical})`;
+  if (!names.includes(canonicalName)) {
+    names.push(canonicalName);
+  }
+  return names;
+}
+
+function compilerOptionDisplayName(option) {
+  return booleanOptionNames.get(option) ?? stringOptions.get(option) ?? listOptions.get(option) ?? numberOptions.get(option);
 }
 
 async function materializeCase(testCase, runRoot) {
@@ -1130,8 +1397,9 @@ async function materializeCase(testCase, runRoot) {
     const compilerOptions = compilerOptionsForMaterializedCase(testCase.configuration, parsed, writtenFiles);
     return {
       caseDir,
-      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions),
+      invocations: transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions, testCase.configuration),
       writtenFiles,
+      writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: false,
       skipReason: "",
       transpile: true,
@@ -1150,6 +1418,7 @@ async function materializeCase(testCase, runRoot) {
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
       writtenFiles,
+      writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: caseExpectedErrors(testCase, compilerOptions),
       skipReason,
     };
@@ -1169,6 +1438,7 @@ async function materializeCase(testCase, runRoot) {
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
     writtenFiles,
+    writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
     skipReason,
   };
@@ -1190,13 +1460,19 @@ async function materializeProjectCase(testCase, runRoot) {
 
   const compilerOptions = compilerOptionsForProjectDescriptor(descriptor, testCase.moduleKind, caseDir);
   const invocation = projectInvocationForDescriptor(descriptor, compilerOptions, materializedProjectRoot);
+  const writtenFiles = (await walkFiles(materializedProjectRoot)).map((file) => relative(materializedProjectRoot, file).split(sep).join("/"));
   return {
     caseDir,
     invocation,
-    writtenFiles: (await walkFiles(materializedProjectRoot)).map((file) => relative(materializedProjectRoot, file).split(sep).join("/")),
+    writtenFiles,
+    writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
     skipReason: getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions),
   };
+}
+
+function normalizedWrittenFileSet(writtenFiles) {
+  return new Set(writtenFiles.map((file) => normalizedBaselineSectionPath(file)));
 }
 
 function projectRootRelativeToCaseRoot(projectRoot) {
@@ -1329,15 +1605,20 @@ function isTranspileCase(testCase) {
   return testCase.corpus === "typescript" && testCase.suite === "transpile";
 }
 
-export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions()) {
+export function transpileInvocationsForMaterializedCase(compilerOptions, parsed, pathOptions = defaultHarnessPathOptions(), settings = new Map()) {
   const sourceFiles = parsed.units
     .map((unit) => normalizeHarnessPath(unit.fileName, pathOptions))
     .filter((file) => harnessSourceFilePattern.test(file));
   const invocations = [];
+  const reportDiagnostics = settings.get("reportdiagnostics")?.toLowerCase() === "true";
   if (compilerOptions.emitDeclarationOnly !== true) {
     for (const inputFile of sourceFiles) {
       invocations.push({
         label: `module:${inputFile}`,
+        kind: "module",
+        inputFile,
+        reportDiagnostics,
+        compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "module"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "module"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "module"),
       });
@@ -1347,6 +1628,10 @@ export function transpileInvocationsForMaterializedCase(compilerOptions, parsed,
     for (const inputFile of sourceFiles) {
       invocations.push({
         label: `declaration:${inputFile}`,
+        kind: "declaration",
+        inputFile,
+        reportDiagnostics,
+        compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "declaration"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "declaration"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "declaration"),
       });
@@ -1805,7 +2090,7 @@ async function runTsts(invocation) {
   });
 }
 
-async function runCase(testCase, runRoot) {
+async function runCase(testCase, runRoot, options) {
   const materialized = await materializeCase(testCase, runRoot);
   if (materialized.skipReason !== "") {
     return {
@@ -1823,6 +2108,8 @@ async function runCase(testCase, runRoot) {
   }
   if (materialized.transpile === true) {
     const result = await runTranspileInvocations(materialized);
+    const exactBaseline = options.exactBaselines ? await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`) : undefined;
+    const statusMatches = !result.actualErrors && (exactBaseline === undefined || exactBaseline.status === "pass");
     return {
       ...testCase,
       caseDir: materialized.caseDir,
@@ -1830,15 +2117,17 @@ async function runCase(testCase, runRoot) {
       actualErrors: result.actualErrors,
       exitCode: result.exitCode,
       signal: result.signal,
-      status: result.actualErrors ? "fail" : "pass",
+      status: statusMatches ? "pass" : "fail",
       skipReason: "",
       stdout: result.stdout,
       stderr: result.stderr,
+      exactBaseline,
     };
   }
   const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
-  const statusMatches = actualErrors === materialized.expectedErrors;
+  const exactBaseline = options.exactBaselines ? await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`) : undefined;
+  const statusMatches = actualErrors === materialized.expectedErrors && (exactBaseline === undefined || exactBaseline.status === "pass");
   return {
     ...testCase,
     caseDir: materialized.caseDir,
@@ -1850,19 +2139,19 @@ async function runCase(testCase, runRoot) {
     skipReason: "",
     stdout: result.stdout,
     stderr: result.stderr,
+    exactBaseline,
   };
 }
 
 async function runTranspileInvocations(materialized) {
   const outputs = [];
+  const diagnostics = [];
   let actualErrors = false;
   let exitCode = 0;
   let signal = null;
   for (const invocation of materialized.invocations) {
-    const result = await runTsts({
-      cwd: materialized.caseDir,
-      args: invocation.args,
-    });
+    const result = await runTstsTranspileApi(materialized.caseDir, invocation);
+    diagnostics.push(...result.diagnostics);
     const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
     if (missingOutputs.length !== 0) {
       actualErrors = true;
@@ -1875,13 +2164,79 @@ async function runTranspileInvocations(materialized) {
     }
     outputs.push(renderTranspileInvocationOutput(invocation, result, missingOutputs));
   }
+  const api = await loadTstsApi();
+  const diagnosticText = api.formatDiagnostics(sortDiagnosticsForBaseline(diagnostics), "/");
   return {
     actualErrors,
     exitCode,
     signal,
-    stdout: outputs.map((output) => output.stdout).join(""),
+    stdout: `${outputs.map((output) => output.stdout).join("")}${diagnosticText}`,
     stderr: outputs.map((output) => output.stderr).join(""),
   };
+}
+
+async function runTstsTranspileApi(caseDir, invocation) {
+  const api = await loadTstsApi();
+  const inputText = await readFile(join(caseDir, invocation.inputFile), "utf8");
+  const transpileOptions = {
+    compilerOptions: invocation.compilerOptions,
+    fileName: invocation.inputFile,
+    reportDiagnostics: invocation.reportDiagnostics,
+  };
+  const output = invocation.kind === "declaration"
+    ? api.transpileDeclaration(inputText, transpileOptions)
+    : api.transpileModule(inputText, transpileOptions);
+  const primaryOutput = invocation.expectedOutputFiles.find((file) => !file.endsWith(".map"));
+  if (primaryOutput !== undefined) {
+    await writeFile(join(caseDir, primaryOutput), output.outputText);
+  }
+  const sourceMapOutput = invocation.expectedOutputFiles.find((file) => file.endsWith(".map"));
+  if (sourceMapOutput !== undefined && output.sourceMapText !== undefined) {
+    await writeFile(join(caseDir, sourceMapOutput), output.sourceMapText);
+  }
+  return {
+    exitCode: 0,
+    signal: null,
+    diagnostics: output.diagnostics,
+    stdout: "",
+    stderr: "",
+  };
+}
+
+export function sortDiagnosticsForBaseline(diagnostics) {
+  return [...diagnostics].sort(compareDiagnosticsForBaseline);
+}
+
+function compareDiagnosticsForBaseline(left, right) {
+  return compareStrings(diagnosticFileName(left), diagnosticFileName(right)) ||
+    diagnosticStart(left) - diagnosticStart(right) ||
+    diagnosticEnd(left) - diagnosticEnd(right) ||
+    diagnosticCode(left) - diagnosticCode(right);
+}
+
+function diagnosticFileName(diagnostic) {
+  return diagnostic?.file?.fileName ?? diagnostic?.file?.FileName?.() ?? "";
+}
+
+function diagnosticStart(diagnostic) {
+  return diagnostic?.loc?.pos ?? -1;
+}
+
+function diagnosticEnd(diagnostic) {
+  return diagnostic?.loc?.end ?? diagnosticStart(diagnostic);
+}
+
+function diagnosticCode(diagnostic) {
+  return diagnostic?.code ?? 0;
+}
+
+function compareStrings(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+async function loadTstsApi() {
+  tstsApi ??= import(apiPath);
+  return tstsApi;
 }
 
 function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
@@ -1893,7 +2248,7 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
   };
 }
 
-async function runQueue(testCases, runRoot, jobs, failFast) {
+async function runQueue(testCases, runRoot, jobs, failFast, options) {
   const results = [];
   let cursor = 0;
   let stopped = false;
@@ -1905,7 +2260,7 @@ async function runQueue(testCases, runRoot, jobs, failFast) {
         return;
       }
       const testCase = testCases[currentIndex];
-      const result = await runCase(testCase, runRoot);
+      const result = await runCase(testCase, runRoot, options);
       results[currentIndex] = result;
       if (result.status === "fail" && failFast) {
         stopped = true;
@@ -1921,7 +2276,8 @@ function printProgress(done, total, result) {
   const prefix = result.status === "pass" ? "PASS" : result.status === "skip" ? "SKIP" : "FAIL";
   const configuration = result.configurationName === "" ? "" : ` configuration=${result.configurationName}`;
   const skip = result.skipReason === "" ? "" : ` reason=${result.skipReason}`;
-  console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${skip}`);
+  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}`;
+  console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
 }
 
 async function writeReports(reportRoot, results, inventory, caseRoot) {
@@ -1934,6 +2290,7 @@ function summarize(results) {
   const passed = results.filter((result) => result.status === "pass").length;
   const skipped = results.filter((result) => result.status === "skip").length;
   const failed = results.length - passed - skipped;
+  const exactBaselineResults = results.map((result) => result.exactBaseline).filter((baseline) => baseline !== undefined);
   return {
     total: results.length,
     passed,
@@ -1941,6 +2298,11 @@ function summarize(results) {
     skipped,
     expectedErrorCases: results.filter((result) => result.expectedErrors).length,
     expectedCleanCases: results.filter((result) => !result.expectedErrors).length,
+    exactBaselineCases: exactBaselineResults.length,
+    exactBaselineFailedCases: exactBaselineResults.filter((baseline) => baseline.status === "fail").length,
+    exactBaselineComparableArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.comparable, 0),
+    exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupported.length, 0),
+    exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatches.length, 0),
   };
 }
 
@@ -1950,6 +2312,7 @@ function trimResult(result) {
     corpus: result.corpus,
     suite: result.suite,
     relativePath: result.relativePath,
+    configurationName: result.configurationName,
     status: result.status,
     expectedErrors: result.expectedErrors,
     actualErrors: result.actualErrors,
@@ -1957,6 +2320,7 @@ function trimResult(result) {
     signal: result.signal,
     caseDir: result.caseDir,
     skipReason: result.skipReason,
+    exactBaseline: result.exactBaseline,
     firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20),
   };
 }
@@ -1973,6 +2337,11 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     `- Skipped: ${summary.skipped}`,
     `- Expected-error cases: ${summary.expectedErrorCases}`,
     `- Expected-clean cases: ${summary.expectedCleanCases}`,
+    `- Exact-baseline cases: ${summary.exactBaselineCases}`,
+    `- Exact-baseline failed cases: ${summary.exactBaselineFailedCases}`,
+    `- Exact-baseline comparable artifacts: ${summary.exactBaselineComparableArtifacts}`,
+    `- Exact-baseline unsupported artifacts: ${summary.exactBaselineUnsupportedArtifacts}`,
+    `- Exact-baseline mismatches: ${summary.exactBaselineMismatches}`,
     "",
     "## Upstream Test Universe",
     "",
@@ -1984,11 +2353,14 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
   if (failed.length === 0) {
     lines.push("None.");
   } else {
-    lines.push("| Case | Expected Errors | Actual Errors | Exit | First Output |");
-    lines.push("|---|---:|---:|---:|---|");
+    lines.push("| Case | Expected Errors | Actual Errors | Exact Baselines | Exit | First Output |");
+    lines.push("|---|---:|---:|---|---:|---|");
     for (const result of failed.slice(0, 200)) {
       const output = `${result.stdout}${result.stderr}`.split(/\r?\n/).find(Boolean) ?? "";
-      lines.push(`| ${result.relativePath} | ${result.expectedErrors} | ${result.actualErrors} | ${result.exitCode} | ${escapeTable(output)} |`);
+      const exact = result.exactBaseline === undefined
+        ? ""
+        : `${result.exactBaseline.status}: ${result.exactBaseline.mismatches.slice(0, 3).join("; ")}`;
+      lines.push(`| ${result.relativePath} | ${result.expectedErrors} | ${result.actualErrors} | ${escapeTable(exact)} | ${result.exitCode} | ${escapeTable(output)} |`);
     }
   }
   lines.push("");
@@ -2070,7 +2442,7 @@ async function main() {
   console.log(`caseRoot=${caseRootForRun}`);
   console.log(`reportRoot=${reportRoot}`);
 
-  const results = await runQueue(testCases, caseRootForRun, options.jobs, options.failFast);
+  const results = await runQueue(testCases, caseRootForRun, options.jobs, options.failFast, options);
   await writeReports(reportRoot, results, inventory, caseRootForRun);
   const summary = summarize(results);
   console.log(`SUMMARY total=${summary.total} passed=${summary.passed} failed=${summary.failed}`);

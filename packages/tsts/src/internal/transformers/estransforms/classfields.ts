@@ -2063,7 +2063,7 @@ export function classFieldsTransformer_transformPublicFieldInitializer(receiver:
       Node_Initializer(node as unknown as GoPtr<Node>) !== undefined || CompilerOptions_GetUseDefineForClassFields(receiver!.compilerOptions),
     );
     if (expr !== undefined) {
-      flattenCommaList(expr)((e) => { classFieldsTransformer_addPendingExpressions(receiver, e); return false; });
+      flattenCommaList(expr)((e) => { classFieldsTransformer_addPendingExpressions(receiver, e); return true; });
     }
 
     // When target >= ES2022 (i.e., !shouldTransformPrivateElementsOrClassStaticBlocks) and we

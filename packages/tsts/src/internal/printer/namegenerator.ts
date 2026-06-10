@@ -585,7 +585,7 @@ export function NameGenerator_generateNameForModuleOrEnum(receiver: GoPtr<NameGe
 export function NameGenerator_generateNameForImportOrExportDeclaration(receiver: GoPtr<NameGenerator>, node: GoPtr<Node>): string {
   const expr = GetExternalModuleName(node);
   const baseName = IsStringLiteral(expr)
-    ? makeIdentifierFromModuleName(receiver!.GetTextOfNode(expr))
+    ? makeIdentifierFromModuleName(Node_Text(expr))
     : "module";
   return NameGenerator_makeUniqueName(
     receiver,

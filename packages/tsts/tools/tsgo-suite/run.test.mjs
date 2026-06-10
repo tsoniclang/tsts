@@ -1,11 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
+import { baselineHasErrors, buildTestUniverseInventory, caseDirectoryFragment, caseExpectedErrors, compilerCommandLineArgsForMaterializedCase, compilerCommandLineArgsForTranspileInvocation, compilerOptionsForExistingProjectConfig, compilerOptionsForMaterializedCase, compilerOptionsForProjectDescriptor, compilerOptionsForTranspileInvocation, compilerOptionsFromSettings, compilerOptionsRequireTsGoRemovedOptionDiagnostic, decodeSourceText, diagnosticHeadlineText, discoverCases, errorDiffNewSideHasErrors, getFileBasedTestConfigurations, getSkipReason, harnessApiDeclarationFileNames, hasRootPackageJson, isEmittedJavaScriptSibling, isLanguageServiceHarnessCase, normalizeHarnessOptionPath, normalizeHarnessPath, parseArgs, parseBaselineSections, parseFileBasedTest, rewriteHarnessFileContent, selectInputFiles, sortDiagnosticsForBaseline, transpileExpectedOutputFiles, transpileInvocationsForMaterializedCase } from "./run.mjs";
 
 test("parseFileBasedTest materializes single-file tests", () => {
   const parsed = parseFileBasedTest("const value: number = 1;", "single.ts");
   assert.deepEqual(parsed.units, [{ fileName: "single.ts", content: "const value: number = 1;" }]);
   assert.equal(parsed.currentDirectory, "/src");
+});
+
+test("parseFileBasedTest removes the global directive separator from source content", () => {
+  const parsed = parseFileBasedTest(`// @declaration: true
+// @target: esnext
+
+export function fn() {
+  return 1;
+}`, "single.ts");
+  assert.deepEqual(parsed.units, [{ fileName: "single.ts", content: "export function fn() {\n  return 1;\n}" }]);
 });
 
 test("parseFileBasedTest materializes TS-Go @filename sections", () => {
@@ -476,6 +486,18 @@ test("compilerCommandLineArgsForMaterializedCase emits file-mode compiler invoca
 });
 
 test("compilerCommandLineArgsForTranspileInvocation runs module transpile without declaration emit", () => {
+  assert.deepEqual(compilerOptionsForTranspileInvocation({
+    target: "es2015",
+    module: "commonjs",
+    declaration: true,
+    declarationMap: true,
+    emitDeclarationOnly: true,
+    noEmit: true,
+  }, "module"), {
+    target: "es2015",
+    module: "commonjs",
+    noCheck: true,
+  });
   assert.deepEqual(compilerCommandLineArgsForTranspileInvocation({
     target: "es2015",
     module: "commonjs",
@@ -497,6 +519,20 @@ test("compilerCommandLineArgsForTranspileInvocation runs module transpile withou
 });
 
 test("compilerCommandLineArgsForTranspileInvocation runs declaration transpile as isolated declaration emit", () => {
+  assert.deepEqual(compilerOptionsForTranspileInvocation({
+    target: "es2015",
+    module: "commonjs",
+    declarationMap: true,
+    noEmit: true,
+  }, "declaration"), {
+    target: "es2015",
+    module: "commonjs",
+    declarationMap: true,
+    noCheck: true,
+    declaration: true,
+    emitDeclarationOnly: true,
+    isolatedDeclarations: true,
+  });
   assert.deepEqual(compilerCommandLineArgsForTranspileInvocation({
     target: "es2015",
     module: "commonjs",
@@ -507,6 +543,7 @@ test("compilerCommandLineArgsForTranspileInvocation runs declaration transpile a
     "--declaration",
     "--declarationMap",
     "--emitDeclarationOnly",
+    "--isolatedDeclarations",
     "--module",
     "commonjs",
     "--noCheck",
@@ -531,23 +568,91 @@ export const b = 2;`, "fallback.ts");
   }, parsed), [
     {
       label: "module:a.ts",
+      kind: "module",
+      inputFile: "a.ts",
+      reportDiagnostics: false,
+      compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "module"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "a.ts", "module"),
       expectedOutputFiles: ["a.js", "a.js.map"],
     },
     {
       label: "module:b.ts",
+      kind: "module",
+      inputFile: "b.ts",
+      reportDiagnostics: false,
+      compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "module"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "b.ts", "module"),
       expectedOutputFiles: ["b.js", "b.js.map"],
     },
     {
       label: "declaration:a.ts",
+      kind: "declaration",
+      inputFile: "a.ts",
+      reportDiagnostics: false,
+      compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "declaration"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "a.ts", "declaration"),
       expectedOutputFiles: ["a.d.ts", "a.d.ts.map"],
     },
     {
       label: "declaration:b.ts",
+      kind: "declaration",
+      inputFile: "b.ts",
+      reportDiagnostics: false,
+      compilerOptions: compilerOptionsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "declaration"),
       args: compilerCommandLineArgsForTranspileInvocation({ declaration: true, declarationMap: true, sourceMap: true, target: "es2015" }, "b.ts", "declaration"),
       expectedOutputFiles: ["b.d.ts", "b.d.ts.map"],
+    },
+  ]);
+});
+
+test("transpileInvocationsForMaterializedCase preserves upstream reportDiagnostics directive", () => {
+  const parsed = parseFileBasedTest(`// @filename: index.ts
+export const value = 1;`, "fallback.ts");
+  const invocations = transpileInvocationsForMaterializedCase(
+    { declaration: true },
+    parsed,
+    undefined,
+    new Map([["reportdiagnostics", "true"]]),
+  );
+  assert.deepEqual(invocations.map((invocation) => ({
+    label: invocation.label,
+    reportDiagnostics: invocation.reportDiagnostics,
+  })), [
+    { label: "module:index.ts", reportDiagnostics: true },
+    { label: "declaration:index.ts", reportDiagnostics: true },
+  ]);
+});
+
+test("getFileBasedTestConfigurations varies source map transpile directives", () => {
+  const configurations = getFileBasedTestConfigurations(new Map([
+    ["sourcemap", "true,false"],
+    ["inlinesourcemap", "true,false"],
+    ["target", "es6"],
+  ]));
+  assert.deepEqual(configurations.map((configuration) => ({
+    name: configuration.name,
+    sourceMap: configuration.settings.get("sourcemap"),
+    inlineSourceMap: configuration.settings.get("inlinesourcemap"),
+  })), [
+    {
+      name: "inlinesourcemap=true,sourcemap=true",
+      sourceMap: "true",
+      inlineSourceMap: "true",
+    },
+    {
+      name: "inlinesourcemap=false,sourcemap=true",
+      sourceMap: "true",
+      inlineSourceMap: "false",
+    },
+    {
+      name: "inlinesourcemap=true,sourcemap=false",
+      sourceMap: "false",
+      inlineSourceMap: "true",
+    },
+    {
+      name: "inlinesourcemap=false,sourcemap=false",
+      sourceMap: "false",
+      inlineSourceMap: "false",
     },
   ]);
 });
@@ -915,11 +1020,53 @@ test("parseArgs validates supported suites", () => {
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "conformance"]).corpus, "typescript");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "project"]).suite, "project");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "transpile"]).suite, "transpile");
+  assert.equal(parseArgs(["--exact-baselines"]).exactBaselines, true);
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "current", "--suite", "transpile"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "unknown"]), /Unsupported corpus/);
+});
+
+test("parseBaselineSections preserves repeated section names for input/output baselines", () => {
+  const sections = parseBaselineSections(`//// [index.js] ////\r\nconst input = 1;\r\n//// [index.js]\r\nconst output = 1;\r\n//// [index.d.ts] ////\r\nexport {};\r\n`);
+  assert.deepEqual(sections, [
+    { name: "index.js", content: "const input = 1;" },
+    { name: "index.js", content: "const output = 1;" },
+    { name: "index.d.ts", content: "export {};\n" },
+  ]);
+});
+
+test("parseBaselineSections preserves embedded diagnostics sections", () => {
+  const sections = parseBaselineSections(`//// [index.d.ts] ////\r\nexport {};\r\n//// [Diagnostics reported]\r\nindex.ts(1,1): error TS9007: Needs annotation.\r\n`);
+  assert.deepEqual(sections, [
+    { name: "index.d.ts", content: "export {};" },
+    { name: "Diagnostics reported", content: "index.ts(1,1): error TS9007: Needs annotation.\n" },
+  ]);
+});
+
+test("parseBaselineSections trims diagnostic separators from emitted output sections", () => {
+  const sections = parseBaselineSections(`//// [index.d.ts] ////\r\nexport declare function fn(): void;\r\n\r\n\r\n//// [Diagnostics reported]\r\nindex.ts(1,1): error TS9007: Needs annotation.\r\n`);
+  assert.deepEqual(sections, [
+    { name: "index.d.ts", content: "export declare function fn(): void;" },
+    { name: "Diagnostics reported", content: "index.ts(1,1): error TS9007: Needs annotation.\n" },
+  ]);
+});
+
+test("diagnosticHeadlineText compares the command-line diagnostic contract", () => {
+  assert.equal(
+    diagnosticHeadlineText(`file.ts(1,1): error TS1000: First.\r\nfile.ts(2,1): error TS1001: Second.\r\n\r\n==== file.ts (2 errors) ====\r\n    source\r\n`),
+    "file.ts(1,1): error TS1000: First.\nfile.ts(2,1): error TS1001: Second.",
+  );
+});
+
+test("sortDiagnosticsForBaseline orders diagnostics by source position", () => {
+  const diagnostics = [
+    { file: { fileName: "/b.ts" }, loc: { pos: 2, end: 3 }, code: 2000 },
+    { file: { fileName: "/a.ts" }, loc: { pos: 15, end: 20 }, code: 1005 },
+    { file: { fileName: "/a.ts" }, loc: { pos: 13, end: 14 }, code: 9010 },
+  ];
+  assert.deepEqual(sortDiagnosticsForBaseline(diagnostics).map((diagnostic) => diagnostic.code), [9010, 1005, 2000]);
 });
 
 test("hasRootPackageJson detects only root package boundaries", () => {
