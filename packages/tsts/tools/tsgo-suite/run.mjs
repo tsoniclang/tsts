@@ -1426,20 +1426,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     tsgoAccepted.push(...used);
     mismatches.push(...problems);
   }
-  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
-  const actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, diagnosticHeadlineText(commandOutput));
-  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
-    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
-    const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
-    await writeFile(join(materialized.caseDir, `${diagnosticArtifactName}.actual`), actualDiagnostics);
-  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
-    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
-    await writeFile(join(materialized.caseDir, "diagnostics.errors.txt.actual"), actualDiagnostics);
-  }
-
   const baselineHeader = `tests/cases/${testCase.relativePath}`;
-  // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0
-  const hasDiagnostics = diagnosticHeadlineText(commandOutput) !== "";
   let sharedProgramEntry;
   const ensureProgram = async () => {
     if (sharedProgramEntry === undefined) {
@@ -1453,29 +1440,59 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     }
     return sharedProgramEntry;
   };
-  // The reference emit baselines are HARNESS output: harnessutil.go collects every
-  // diagnostics stage (semantic check included) before emitting, while the CLI's staged
-  // pipeline skips the check when program diagnostics exist — and declaration-emit node
-  // reuse depends on the links that check populates. Emit outputs for baseline
-  // comparison therefore come from the in-process harness-mirror compile, captured in
-  // memory and translated to upstream unit coordinates.
-  let sharedHarnessOutputs;
-  const ensureHarnessEmittedOutputs = async () => {
-    if (sharedHarnessOutputs === undefined) {
+  // The reference baselines are HARNESS output: harnessutil.go collects every
+  // diagnostics stage unconditionally (program, syntactic, SEMANTIC, global,
+  // declaration) and then emits, while the CLI's staged pipeline skips the semantic
+  // check when an earlier stage reported — and declaration-emit node reuse depends on
+  // the links that check populates. Both the diagnostics and the emit outputs for
+  // baseline comparison therefore come from the in-process harness-mirror compile,
+  // captured in memory and translated to upstream unit coordinates.
+  let sharedHarnessCompile;
+  const ensureHarnessCompile = async () => {
+    if (sharedHarnessCompile === undefined) {
       const { runHarnessCompile } = await import("./tsbaseline/typeSymbolWalker.mjs");
       const programEntry = await ensureProgram();
       const outputs = new Map();
-      if (programEntry !== undefined) {
+      if (programEntry === undefined) {
+        sharedHarnessCompile = { diagnostics: undefined, outputs };
+      } else {
         const compiled = runHarnessCompile(programEntry.program);
         for (const [fileName, content] of compiled.outputs) {
           const relativeFile = relative(materialized.caseDir, fileName).split(sep).join("/");
           outputs.set(normalizedBaselineSectionPath(relativeFile), translateEmittedContentToUnitCoordinates(materialized, content));
         }
+        sharedHarnessCompile = { diagnostics: compiled.diagnostics, outputs };
       }
-      sharedHarnessOutputs = outputs;
     }
-    return sharedHarnessOutputs;
+    return sharedHarnessCompile;
   };
+  const ensureHarnessEmittedOutputs = async () => (await ensureHarnessCompile()).outputs;
+  const usesHarnessCompile = isCurrentCorpus && materialized.units !== undefined && materialized.invocation !== undefined;
+
+  let actualDiagnosticsRaw = diagnosticHeadlineText(commandOutput);
+  let harnessDiagnostics;
+  if (usesHarnessCompile) {
+    const compiled = await ensureHarnessCompile();
+    if (compiled.diagnostics !== undefined) {
+      harnessDiagnostics = compiled.diagnostics;
+      const { formatHarnessDiagnostics } = await import("./tsbaseline/typeSymbolWalker.mjs");
+      actualDiagnosticsRaw = diagnosticHeadlineText(formatHarnessDiagnostics(materialized.caseDir, harnessDiagnostics));
+    }
+  }
+  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
+  const actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, actualDiagnosticsRaw);
+  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
+    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
+    const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
+    await writeFile(join(materialized.caseDir, `${diagnosticArtifactName}.actual`), actualDiagnostics);
+  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
+    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
+    await writeFile(join(materialized.caseDir, "diagnostics.errors.txt.actual"), actualDiagnostics);
+  }
+
+  // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0, where
+  // result.Diagnostics is the harness compile's all-stage diagnostics.
+  const hasDiagnostics = harnessDiagnostics !== undefined ? harnessDiagnostics.length > 0 : diagnosticHeadlineText(commandOutput) !== "";
   // compiler_runner.go newCompilerTest: the tsconfig unit lives in tsConfigFiles, never
   // in toBeCompiled or otherFiles, so it appears in no type/symbol/js-emit baseline.
   // With a tsconfig, units named by the config's FileNames are toBeCompiled (membership

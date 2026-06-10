@@ -53,6 +53,8 @@ const [
   { GetBaseFileName },
   { TSTrue },
   { CompilerOptions_GetEmitDeclarations },
+  { WrapASTDiagnostics, CompareASTDiagnostics, WriteFormatDiagnostic },
+  { Default: LocaleDefault },
   { Background },
 ] = await Promise.all([
   dist("internal/vfs/osvfs/os.js"),
@@ -85,6 +87,8 @@ const [
   dist("internal/tspath/path.js"),
   dist("internal/core/tristate.js"),
   dist("internal/core/compileroptions.js"),
+  dist("internal/diagnosticwriter/diagnosticwriter.js"),
+  dist("internal/locale/locale.js"),
   dist("go/context.js"),
 ]);
 
@@ -214,6 +218,34 @@ export function runHarnessCompile(program) {
     },
   });
   return { diagnostics, outputs, emitResult };
+}
+
+// error_baseline.go presentation: wrap the harness diagnostics, sort with
+// diagnosticwriter.CompareASTDiagnostics, and format each like the CLI's non-pretty
+// reporter (WriteFormatDiagnostic, cwd-relative paths) so the suite's headline
+// comparison sees the same `file(line,char): error TSxxxx: message` lines the upstream
+// errors.txt baselines carry. The staged CLI pipeline cannot reproduce these once an
+// earlier stage reported (it skips the semantic check), so the comparison must run on
+// the harness compile's diagnostics.
+export function formatHarnessDiagnostics(caseDir, diagnostics) {
+  const wrapped = [...WrapASTDiagnostics(diagnostics ?? [])];
+  wrapped.sort(CompareASTDiagnostics);
+  const formatOpts = {
+    NewLine: "\n",
+    __tsgoEmbedded0: { CurrentDirectory: caseDir, UseCaseSensitiveFileNames: true },
+    Locale: LocaleDefault,
+  };
+  const chunks = [];
+  const writer = {
+    Write: (bytes) => {
+      chunks.push(Buffer.from(bytes).toString("utf8"));
+      return [bytes.length, undefined];
+    },
+  };
+  for (const diagnostic of wrapped) {
+    WriteFormatDiagnostic(writer, diagnostic, formatOpts);
+  }
+  return chunks.join("");
 }
 
 // type_symbol_baseline.go newTypeWriterWalker
