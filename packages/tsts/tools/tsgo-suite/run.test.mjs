@@ -1167,11 +1167,16 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
   assert.equal(inventory.typeScriptCases.entries.project, 316);
   assert.equal(inventory.typeScriptCases.entries.projects, 0);
+  assert.equal(inventory.typeScriptCases.entries.unittests, 1);
   assert.equal(inventory.typeScriptCases.languageServiceHarnessCases, 2);
-  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.entries.unittests + inventory.typeScriptCases.languageServiceHarnessCases);
+  assert.equal(inventory.typeScriptCases.outOfScope, inventory.typeScriptCases.entries.fourslash + inventory.typeScriptCases.languageServiceHarnessCases);
+  assert.ok(inventory.typeScriptCases.inScope >= inventory.typeScriptCases.entries.unittests);
+  assert.ok(inventory.baselines.entries.astnav > 0);
+  assert.ok(inventory.baselines.entries.tsbuildWatch > 0);
+  assert.ok(inventory.baselines.entries.tscWatch > 0);
   assert.ok(inventory.baselines.entries.fourslash > 0);
   assert.ok(inventory.baselines.entries.lsp > 0);
-  assert.ok(inventory.baselines.outOfScope > inventory.baselines.entries.fourslash);
+  assert.equal(inventory.baselines.outOfScope, inventory.baselines.entries.fourslash + inventory.baselines.entries.lsp);
   assert.ok(inventory.goTests.entries["internal/fourslash"] > 0);
   assert.ok(inventory.goTests.outOfScope >= inventory.goTests.entries["internal/fourslash"]);
 });

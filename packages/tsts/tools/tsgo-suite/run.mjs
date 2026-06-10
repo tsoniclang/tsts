@@ -33,11 +33,11 @@ const caseRootByCorpus = new Map([
   ["current", caseRoot],
   ["typescript", typeScriptSubmoduleCaseRoot],
 ]);
-const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile"]);
-const outOfScopeTypeScriptSuites = new Set(["fourslash", "unittests"]);
+const inScopeTypeScriptSuites = new Set(["compiler", "conformance", "project", "transpile", "unittests"]);
+const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
 const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
-const inScopeBaselineCategories = new Set(["api", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsc", "tsoptions"]);
-const outOfScopeBaselineCategories = new Set(["astnav", "fourslash", "lsp", "tsbuildWatch", "tscWatch"]);
+const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
+const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
 const compilerVaryByOptions = new Set([
   "allowjs",
   "allowimportingtsextensions",
@@ -2000,7 +2000,7 @@ function renderInventoryTable(inventory) {
     "| Bucket | Total | In Scope | Excluded | Unclassified | Notes |",
     "|---|---:|---:|---:|---:|---|",
     `| Current TSTS harness | ${inventory.currentHarness.total} | ${inventory.currentHarness.inScope} | ${inventory.currentHarness.outOfScope} | ${inventory.currentHarness.unclassified} | Executed by this runner today |`,
-    `| TypeScript submodule cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile in scope; language-service fourslash, LS harness cases, and TS harness unit tests excluded |`,
+    `| TypeScript submodule cases | ${inventory.typeScriptCases.total} | ${inventory.typeScriptCases.inScope} | ${inventory.typeScriptCases.outOfScope} | ${inventory.typeScriptCases.unclassified} | Compiler/conformance/project/transpile direct cases plus TS harness unit mirrors are in scope; language-service fourslash and LS harness cases excluded |`,
     `| TS-Go reference baselines | ${inventory.baselines.total} | ${inventory.baselines.inScope} | ${inventory.baselines.outOfScope} | ${inventory.baselines.unclassified} | Exact baseline comparison is the next acceptance-strength gate |`,
     `| TS-Go Go unit tests | ${inventory.goTests.total} | ${inventory.goTests.inScope} | ${inventory.goTests.outOfScope} | ${inventory.goTests.unclassified} | Go unit coverage to port or mirror, excluding LS packages |`,
   ];
