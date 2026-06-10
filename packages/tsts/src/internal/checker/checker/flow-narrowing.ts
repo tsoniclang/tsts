@@ -91,7 +91,7 @@ import { IsTruthy } from "../../evaluator/evaluator.js";
 import { Checker_checkTypeAssignableToEx, Checker_getTypeNameForErrorDisplay, Checker_getTypePredicateOfSignature } from "../relater.js";
 import { Checker_checkIfExpressionRefinesAnyParameter, Checker_getConstraintOfTypeParameter, Checker_getContextualSignature, Checker_getSignatureFromDeclaration, Checker_getSignaturesOfType, Checker_getTypeParameterFromMappedType } from "./signatures.js";
 import { Checker_getSyntheticElementAccess, Checker_getIndexedAccessType, Checker_getResolvedSymbolOrNil, Checker_getSymbolAtLocation, Checker_getTypeOfPropertyInBaseClass, Checker_getTypeOfSymbol, Checker_isAutoTypedProperty, Checker_isPropertyWithoutInitializer, Checker_isSomeSymbolAssigned, Checker_isSymbolUsedInBinaryExpressionChain, Checker_isSymbolUsedInConditionBody } from "./symbols.js";
-import { Checker_checkExpression, Checker_checkExpressionEx, Checker_errorAndMaybeSuggestAwait, Checker_functionHasImplicitReturn } from "./syntax-checking.js";
+import { Checker_checkExpression, Checker_checkExpressionEx, Checker_errorAndMaybeSuggestAwait, Checker_functionHasImplicitReturn, Checker_getCombinedNodeFlagsCached } from "./syntax-checking.js";
 import {
   Checker_filterType,
   Checker_getActualTypeVariable,
@@ -843,7 +843,9 @@ export function Checker_getNarrowedTypeOfSymbol(receiver: GoPtr<Checker>, symbol
       const parent = declaration!.Parent!.Parent;
       const rootDeclaration = GetRootDeclaration(parent);
       if (
-        (IsVariableDeclaration(rootDeclaration) && (rootDeclaration!.Flags & NodeFlagsConstant) !== 0) ||
+        // Go: c.getCombinedNodeFlagsCached(rootDeclaration) — const-ness lives on the
+        // enclosing VariableDeclarationList, not the declaration node itself.
+        (IsVariableDeclaration(rootDeclaration) && (Checker_getCombinedNodeFlagsCached(receiver, rootDeclaration) & NodeFlagsConstant) !== 0) ||
         IsParameterDeclaration(rootDeclaration)
       ) {
         const links = LinkStore_Get<GoPtr<Node>, NodeLinks>(receiver!.nodeLinks as unknown as LinkStore<GoPtr<Node>, NodeLinks>, parent)!;
