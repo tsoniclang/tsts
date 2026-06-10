@@ -6,7 +6,8 @@ import type { WriteCloser } from "../../go/io.js";
 import { Builder } from "../../go/strings.js";
 import { Clone as slicesClone } from "../../go/slices.js";
 import type { UTF16Offset } from "../core/core.js";
-import { Marshal as jsonMarshal } from "../json/json.js";
+import { JsonFieldNames, Marshal as jsonMarshal } from "../json/json.js";
+import type { JsonFieldNameMap } from "../json/json.js";
 import { GetRelativePathToDirectoryOrUrl } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 
@@ -126,6 +127,7 @@ export interface Generator {
  * }
  */
 export interface RawSourceMap {
+  [JsonFieldNames]?: JsonFieldNameMap;
   Version: int;
   File: string;
   SourceRoot: string;
@@ -134,6 +136,16 @@ export interface RawSourceMap {
   Mappings: string;
   SourcesContent: GoSlice<GoPtr<string>>;
 }
+
+export const rawSourceMapJsonFieldNames: JsonFieldNameMap = {
+  Version: "version",
+  File: "file",
+  SourceRoot: "sourceRoot",
+  Sources: "sources",
+  Names: "names",
+  Mappings: "mappings",
+  SourcesContent: { name: "sourcesContent", omitZero: true },
+};
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/sourcemap/generator.go::func::NewGenerator","kind":"func","status":"implemented","sigHash":"c47b2eee893e75a4b3c33c30638e0ba067f4f3e0bab5e3c8d63aa6bec6033aea","bodyHash":"ceb2044bd99d55af4bf12a12ff7c5dcad99d41b4fd772161cae7e8d8e15b5da9"}
@@ -763,6 +775,7 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
     names = [];
   }
   return {
+    [JsonFieldNames]: rawSourceMapJsonFieldNames,
     Version: 3,
     File: gen.file,
     SourceRoot: gen.sourceRoot,

@@ -19,11 +19,13 @@ const testLibRoot = join(vendorRoot, "_submodules/TypeScript/tests/lib");
 const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api");
 const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
+const apiPath = join(packageRoot, "dist/src/index.js");
 const utf8Decoder = new TextDecoder("utf-8");
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
 const harnessSourceFilePattern = /\.(?:[cm]?tsx?|[cm]?jsx?)$/i;
 const harnessJavaScriptFilePattern = /\.(?:[cm]?jsx?)$/i;
+let tstsApi;
 
 const supportedSuitesByCorpus = new Map([
   ["current", new Set(["compiler", "conformance"])],
@@ -597,10 +599,16 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   let currentFileName = "";
   let currentFileLines = [];
   let sawFileDirective = false;
+  let sawGlobalDirectiveBeforeContent = false;
 
-  const flush = () => {
+  const flush = (trimTrailingBlankLines = false) => {
     if (currentFileName === "") {
       return;
+    }
+    if (trimTrailingBlankLines) {
+      while (currentFileLines.length !== 0 && currentFileLines.at(-1) === "") {
+        currentFileLines.pop();
+      }
     }
     units.push({
       fileName: currentFileName,
@@ -636,7 +644,13 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
         }
       } else {
         globalOptions.set(optionName, optionValue);
+        if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0) {
+          sawGlobalDirectiveBeforeContent = true;
+        }
       }
+      continue;
+    }
+    if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0 && sawGlobalDirectiveBeforeContent && line.trim() === "") {
       continue;
     }
     if (currentFileName === "" && sawFileDirective) {
@@ -786,6 +800,10 @@ export function compilerCommandLineArgsForMaterializedCase(compilerOptions, inpu
 }
 
 export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, kind) {
+  return compilerCommandLineArgsForMaterializedCase(compilerOptionsForTranspileInvocation(compilerOptions, kind), [inputFile]);
+}
+
+export function compilerOptionsForTranspileInvocation(compilerOptions, kind) {
   const transpileOptions = {
     ...compilerOptions,
     noCheck: true,
@@ -802,7 +820,7 @@ export function compilerCommandLineArgsForTranspileInvocation(compilerOptions, i
   } else {
     throw new Error(`Unsupported transpile invocation kind '${kind}'`);
   }
-  return compilerCommandLineArgsForMaterializedCase(transpileOptions, [inputFile]);
+  return transpileOptions;
 }
 
 function applyVirtualTypeRoots(compilerOptions, settings, parsed) {
@@ -1156,9 +1174,14 @@ export function parseBaselineSections(text) {
   const sections = [];
   let currentName = "";
   let currentLines = [];
-  const flush = () => {
+  const flush = (trimTrailingBlankLines = false) => {
     if (currentName === "") {
       return;
+    }
+    if (trimTrailingBlankLines) {
+      while (currentLines.length !== 0 && currentLines.at(-1) === "") {
+        currentLines.pop();
+      }
     }
     sections.push({
       name: currentName,
@@ -1169,8 +1192,9 @@ export function parseBaselineSections(text) {
   for (const line of lines) {
     const marker = /^\/\/\/\/ \[(.*)](?: \/\/\/\/)?$/.exec(line);
     if (marker !== null) {
-      flush();
-      currentName = marker[1];
+      const nextName = marker[1];
+      flush(nextName === "Diagnostics reported");
+      currentName = nextName;
       continue;
     }
     if (currentName !== "") {
@@ -1241,7 +1265,7 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
       mismatches.push(`Unexpected emitted output '${outputFile}'.`);
       continue;
     }
-    if (normalizeComparableText(actualContent) !== expected) {
+    if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
       mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
     }
   }
@@ -1304,6 +1328,10 @@ function normalizedBaselineSectionPath(fileName) {
 
 function normalizeComparableText(text) {
   return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function normalizeEmittedOutputText(text) {
+  return normalizeComparableText(text).replace(/\n$/, "");
 }
 
 function configuredCaseName(testCase) {
@@ -1586,6 +1614,9 @@ export function transpileInvocationsForMaterializedCase(compilerOptions, parsed,
     for (const inputFile of sourceFiles) {
       invocations.push({
         label: `module:${inputFile}`,
+        kind: "module",
+        inputFile,
+        compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "module"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "module"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "module"),
       });
@@ -1595,6 +1626,9 @@ export function transpileInvocationsForMaterializedCase(compilerOptions, parsed,
     for (const inputFile of sourceFiles) {
       invocations.push({
         label: `declaration:${inputFile}`,
+        kind: "declaration",
+        inputFile,
+        compilerOptions: compilerOptionsForTranspileInvocation(compilerOptions, "declaration"),
         args: compilerCommandLineArgsForTranspileInvocation(compilerOptions, inputFile, "declaration"),
         expectedOutputFiles: transpileExpectedOutputFiles(inputFile, compilerOptions, "declaration"),
       });
@@ -2112,10 +2146,7 @@ async function runTranspileInvocations(materialized) {
   let exitCode = 0;
   let signal = null;
   for (const invocation of materialized.invocations) {
-    const result = await runTsts({
-      cwd: materialized.caseDir,
-      args: invocation.args,
-    });
+    const result = await runTstsTranspileApi(materialized.caseDir, invocation);
     const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
     if (missingOutputs.length !== 0) {
       actualErrors = true;
@@ -2135,6 +2166,38 @@ async function runTranspileInvocations(materialized) {
     stdout: outputs.map((output) => output.stdout).join(""),
     stderr: outputs.map((output) => output.stderr).join(""),
   };
+}
+
+async function runTstsTranspileApi(caseDir, invocation) {
+  const api = await loadTstsApi();
+  const inputText = await readFile(join(caseDir, invocation.inputFile), "utf8");
+  const transpileOptions = {
+    compilerOptions: invocation.compilerOptions,
+    fileName: invocation.inputFile,
+    reportDiagnostics: true,
+  };
+  const output = invocation.kind === "declaration"
+    ? api.transpileDeclaration(inputText, transpileOptions)
+    : api.transpileModule(inputText, transpileOptions);
+  const primaryOutput = invocation.expectedOutputFiles.find((file) => !file.endsWith(".map"));
+  if (primaryOutput !== undefined) {
+    await writeFile(join(caseDir, primaryOutput), output.outputText);
+  }
+  const sourceMapOutput = invocation.expectedOutputFiles.find((file) => file.endsWith(".map"));
+  if (sourceMapOutput !== undefined && output.sourceMapText !== undefined) {
+    await writeFile(join(caseDir, sourceMapOutput), output.sourceMapText);
+  }
+  return {
+    exitCode: 0,
+    signal: null,
+    stdout: api.formatDiagnostics(output.diagnostics, "/"),
+    stderr: "",
+  };
+}
+
+async function loadTstsApi() {
+  tstsApi ??= import(apiPath);
+  return tstsApi;
 }
 
 function renderTranspileInvocationOutput(invocation, result, missingOutputs) {

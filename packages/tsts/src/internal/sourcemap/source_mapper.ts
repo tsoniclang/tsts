@@ -12,6 +12,8 @@ import { GetCanonicalFileName, GetDirectoryPath, GetNormalizedAbsolutePath } fro
 import { DecodeMappings, Mapping_IsSourceMapping, MappingsDecoder_Error, MappingsDecoder_Values, MissingSource } from "./decoder.js";
 import { TryGetSourceMappingURL } from "./util.js";
 import type { NameIndex, RawSourceMap, SourceIndex } from "./generator.js";
+import { rawSourceMapJsonFieldNames } from "./generator.js";
+import { JsonFieldNames } from "../json/json.js";
 import type { ECMALineInfo } from "./lineinfo.js";
 
 // Go strings are immutable UTF-8 byte sequences; `[]byte(s)` and ranging over a
@@ -616,6 +618,7 @@ export function convertDocumentToSourceMapper(host: Host, contents: string, mapF
  */
 export function tryParseRawSourceMap(contents: string): GoPtr<RawSourceMap> {
   const sourceMap: RawSourceMap = {
+    [JsonFieldNames]: rawSourceMapJsonFieldNames,
     Version: 0,
     File: "",
     SourceRoot: "",
