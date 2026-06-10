@@ -600,7 +600,6 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   let currentFileName = "";
   let currentFileLines = [];
   let sawFileDirective = false;
-  let sawGlobalDirectiveBeforeContent = false;
 
   const flush = (trimTrailingBlankLines = false) => {
     if (currentFileName === "") {
@@ -645,13 +644,7 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
         }
       } else {
         globalOptions.set(optionName, optionValue);
-        if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0) {
-          sawGlobalDirectiveBeforeContent = true;
-        }
       }
-      continue;
-    }
-    if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0 && sawGlobalDirectiveBeforeContent && line.trim() === "") {
       continue;
     }
     if (currentFileName === "" && sawFileDirective) {
