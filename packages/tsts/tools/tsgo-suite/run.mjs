@@ -1302,14 +1302,35 @@ export function upstreamOutputName(materialized, outputFile) {
   return outputFile.split("/").at(-1);
 }
 
-// Rewrites materialized (case-dir-relative) file paths in diagnostic output back to the
-// upstream unit names so headline comparison happens in the upstream coordinate system.
+// Rewrites materialized file paths in diagnostic output back to the upstream unit-name
+// coordinates so headline comparison happens in the upstream coordinate system. Upstream
+// compiles with the unit names verbatim (a vfs), so message-embedded paths print exactly
+// as authored; on the real filesystem the CLI prints absolute case paths instead.
 export function translateDiagnosticPathsToUnitNames(materialized, text) {
   const units = materialized.units;
   if (units === undefined) {
     return text;
   }
-  return text.split("\n").map((line) => {
+  const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
+  const sourceExtension = /\.(?:d\.[cm]?ts|[cm]?[jt]sx?)$/i;
+  const replacements = [];
+  for (const unit of units) {
+    if (unit.unitName === unit.filePath) {
+      continue;
+    }
+    replacements.push([`${caseDirPrefix}${unit.filePath}`, removeTestPathPrefixes(unit.unitName)]);
+    const stem = unit.filePath.replace(sourceExtension, "");
+    if (stem !== unit.filePath) {
+      replacements.push([`${caseDirPrefix}${stem}`, removeTestPathPrefixes(unit.unitName.replace(sourceExtension, ""))]);
+    }
+  }
+  replacements.sort(([left], [right]) => right.length - left.length);
+  let translated = text;
+  for (const [from, to] of replacements) {
+    translated = translated.replaceAll(from, to);
+  }
+  translated = translated.replaceAll(caseDirPrefix, "");
+  return translated.split("\n").map((line) => {
     for (const unit of units) {
       if (unit.unitName !== unit.filePath && line.startsWith(`${unit.filePath}(`)) {
         return removeTestPathPrefixes(unit.unitName) + line.slice(unit.filePath.length);
@@ -1396,8 +1417,11 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, diagnosticHeadlineText(commandOutput));
   if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
     mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
+    const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
+    await writeFile(join(materialized.caseDir, `${diagnosticArtifactName}.actual`), actualDiagnostics);
   } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
     mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
+    await writeFile(join(materialized.caseDir, "diagnostics.errors.txt.actual"), actualDiagnostics);
   }
 
   const baselineHeader = `tests/cases/${testCase.relativePath}`;

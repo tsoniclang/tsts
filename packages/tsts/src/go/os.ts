@@ -57,15 +57,34 @@ class NodeFile implements File {
   }
 }
 
+// Go's os.File.Write blocks until every byte is written (or fails). Node's
+// fs.writeSync on a piped stdio fd can perform short writes and raise EAGAIN when the
+// pipe buffer is full (the fd is non-blocking under the libuv event loop), which would
+// silently truncate compiler output. Loop to full completion to keep Go semantics.
+function writeFullySync(fd: int, bytes: Buffer): void {
+  let offset = 0;
+  while (offset < bytes.length) {
+    try {
+      offset += nodeFs.writeSync(fd, bytes, offset, bytes.length - offset);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EAGAIN") {
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 class stdioFile implements File {
   constructor(private readonly stream: Writable, private readonly fd: int) {}
 
   Write(p: GoSlice<byte>): [int, GoError] {
     try {
-      if (this.fd >= 0) {
-        return [nodeFs.writeSync(this.fd, Buffer.from(p), 0, p.length) as int, undefined];
-      }
       const bytes = Buffer.from(p);
+      if (this.fd >= 0) {
+        writeFullySync(this.fd, bytes);
+        return [bytes.length as int, undefined];
+      }
       this.stream.write(bytes);
       return [bytes.length as int, undefined];
     } catch (error) {
@@ -75,11 +94,13 @@ class stdioFile implements File {
 
   WriteString(s: string): [int, GoError] {
     try {
+      const bytes = Buffer.from(s, "utf8");
       if (this.fd >= 0) {
-        return [nodeFs.writeSync(this.fd, s, undefined, "utf8") as int, undefined];
+        writeFullySync(this.fd, bytes);
+        return [bytes.length as int, undefined];
       }
-      this.stream.write(s);
-      return [Buffer.byteLength(s, "utf8") as int, undefined];
+      this.stream.write(bytes);
+      return [bytes.length as int, undefined];
     } catch (error) {
       return [0 as int, normalizeError(error)];
     }
