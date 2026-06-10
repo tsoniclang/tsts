@@ -4,7 +4,7 @@ import { cpus } from "node:os";
 import { dirname, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
-import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -1686,45 +1686,6 @@ function emittedOutputRelativePath(materialized, relativeFile) {
   return normalized;
 }
 
-// Snapshot of every file in the case dir (by resolved real path) taken after
-// materialization and before the CLI runs: exactly the inputs upstream's vfs holds.
-async function snapshotCaseRealFilePaths(caseDir) {
-  const paths = new Set();
-  for (const file of await walkFiles(caseDir)) {
-    try {
-      paths.add(realpathSync(file));
-    } catch {
-      // Dangling symlink or racing removal: nothing to record.
-    }
-  }
-  return paths;
-}
-
-// FS predicate for the in-process Program: hide files the CLI run created (it runs
-// first and writes its outputs into the case dir) so module resolution sees only the
-// materialized inputs, like upstream's vfs. An emitted y.d.ts must not shadow a y.js
-// input. Queried paths are realpath-resolved so inputs reached through materialized
-// symlinks (node_modules/b -> packages/b) stay visible.
-function isCompilerCreatedPath(materialized, path, realpathCache) {
-  const preexisting = materialized.preexistingFilePaths;
-  if (preexisting === undefined) {
-    return false;
-  }
-  let resolved = realpathCache.get(path);
-  if (resolved === undefined) {
-    try {
-      resolved = realpathSync(path);
-    } catch {
-      resolved = "";
-    }
-    realpathCache.set(path, resolved);
-  }
-  if (resolved === "") {
-    return false;
-  }
-  return resolved.startsWith(`${materialized.caseDirRealPath}${sep}`) && !preexisting.has(resolved);
-}
-
 async function emittedOutputsForCase(materialized) {
   const outputs = new Map();
   for (const file of await walkFiles(materialized.caseDir)) {
@@ -2680,12 +2641,6 @@ async function runCase(testCase, runRoot, options) {
       stdout: "",
       stderr: "",
     };
-  }
-  // Snapshot the materialized inputs before the CLI writes its outputs; the in-process
-  // Program for baseline generation must see exactly this file set (upstream's vfs).
-  if (options.exactBaselines) {
-    materialized.preexistingFilePaths = await snapshotCaseRealFilePaths(materialized.caseDir);
-    materialized.caseDirRealPath = realpathSync(materialized.caseDir);
   }
   if (materialized.transpile === true) {
     const result = await runTranspileInvocations(materialized);
