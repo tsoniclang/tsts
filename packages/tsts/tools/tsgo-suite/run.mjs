@@ -1113,8 +1113,24 @@ function stripAnsiEscapes(text) {
   return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
+// True when the reference baselines for this case are pinned TS-Go's own outputs
+// (testdata/baselines/reference), gated with the whole-file writers and the
+// harness-mirror compile. baseline.Run writes the FULL submodule output to
+// reference/submodule/<suite>/<name> for every submodule test; the .diff files beside
+// them (and in submoduleAccepted/, submoduleTriaged/) only record the divergence from
+// Strada and are not the gate.
+function usesTsgoAuthorityBaselines(testCase) {
+  if ((testCase.corpus ?? "current") === "current") {
+    return true;
+  }
+  return testCase.corpus === "typescript" && (testCase.suite === "compiler" || testCase.suite === "conformance");
+}
+
 function baselineDirectories(testCase) {
   if (testCase.corpus === "typescript") {
+    if (usesTsgoAuthorityBaselines(testCase)) {
+      return [join(baselineRoot, "submodule", testCase.suite)];
+    }
     return [
       join(baselineRoot, "submoduleTriaged", testCase.suite),
       join(baselineRoot, "submoduleAccepted", testCase.suite),
@@ -1138,12 +1154,17 @@ function exactBaselineArtifacts(testCase) {
   }
   const selected = new Map();
   const baseNames = configuredBaselineCaseNames(testCase);
+  const skipDiffArtifacts = usesTsgoAuthorityBaselines(testCase);
   for (const baselineDir of baselineDirectories(testCase)) {
     if (!existsSync(baselineDir)) {
       continue;
     }
     for (const entry of readdirSync(baselineDir, { withFileTypes: true })) {
       if (!entry.isFile()) {
+        continue;
+      }
+      if (skipDiffArtifacts && entry.name.endsWith(".diff")) {
+        // Strada-divergence bookkeeping next to the full TS-Go baselines; not a gate.
         continue;
       }
       const artifactName = entry.name.endsWith(".diff") ? entry.name.slice(0, -".diff".length) : entry.name;
@@ -1348,10 +1369,11 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
   const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
   const typeSymbol = artifacts.filter((artifact) => !artifact.diff && typeSymbolBaselineFilePattern.test(artifact.name));
-  // The current corpus carries TS-Go's own whole-file baselines: a single `<case>.js`
-  // assembled by js_emit_baseline.go (inputs + emitted JS + emitted DTS) instead of the
-  // per-section layout of the TypeScript-submodule baselines.
-  const isCurrentCorpus = (testCase.corpus ?? "current") === "current";
+  // TS-Go-authority baselines (current corpus testdata and the reference/submodule
+  // trees) are whole-file: a single `<case>.js` assembled by js_emit_baseline.go
+  // (inputs + emitted JS + emitted DTS) instead of the per-section layout of the
+  // Strada-era baselines used by the transpile/project suites.
+  const isCurrentCorpus = usesTsgoAuthorityBaselines(testCase);
   const mismatches = [];
   const wholeFileJs = [];
   let sectionComparable = comparable;

@@ -1207,7 +1207,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           if (param!.Type === undefined && parameterTag!.TypeExpression !== undefined) {
             param!.Type = Parser_reparseJSDocTypeLiteral(receiver, Node_Type(parameterTag!.TypeExpression));
           }
-          if (param!.QuestionToken === undefined) {
+          if (param!.QuestionToken === undefined && param!.Initializer === undefined) {
             const question = Parser_makeQuestionIfOptional(receiver, parameterTag);
             if (question !== undefined) {
               param!.QuestionToken = question;

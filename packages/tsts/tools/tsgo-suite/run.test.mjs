@@ -1241,14 +1241,25 @@ test("baselineHasErrors detects ANSI-colored pretty baselines", () => {
   }), true);
 });
 
-test("baselineHasErrors falls back to TypeScript submodule baselines for submodule corpus", () => {
+test("baselineHasErrors reads pinned TS-Go submodule baselines for submodule corpus", () => {
+  // The typescript corpus gates against reference/submodule/<suite> (pinned TS-Go's own
+  // full outputs); Strada baselines are no longer consulted for compiler/conformance.
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/ArrowFunctionExpression1.ts",
+    caseName: "ArrowFunctionExpression1",
+    configurationName: "",
+  }), true);
+  // Upstream skips @module: system cases (SkipUnsupportedCompilerOptions), so no
+  // submodule baseline exists for them.
   assert.equal(baselineHasErrors({
     corpus: "typescript",
     suite: "compiler",
     relativePath: "compiler/SystemModuleForStatementNoInitializer.ts",
     caseName: "SystemModuleForStatementNoInitializer",
     configurationName: "",
-  }), true);
+  }), false);
 });
 
 test("baselineHasErrors reads TypeScript project baselines by module variant", () => {

@@ -869,7 +869,8 @@ export function CommonJSModuleTransformer_transformCommonJSModule(receiver: GoPt
   const exportedFunctionsStart = statements.length;
   OrderedSet_Values(receiver!.currentModuleInfo!.exportedFunctions as GoPtr<OrderedSet<GoPtr<FunctionDeclarationNode>>>)((f_: GoPtr<FunctionDeclarationNode>) => {
     statements = CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclaration(receiver, statements, f_ as GoPtr<Declaration>);
-    return false;
+    // Go `for ... range` iterates the whole set; the GoSeq yield returns true to continue.
+    return true;
   });
   for (const s of statements.slice(exportedFunctionsStart)) {
     EmitContext_AddEmitFlags(emitContext, s, EFCustomPrologue);
