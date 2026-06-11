@@ -22,6 +22,7 @@ import {
 } from "../ast/diagnostic.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import { UTF16Len } from "../core/core.js";
+import { byteLen, byteSlice } from "../parser/utilities.js";
 import type { TextPos } from "../core/text.js";
 import { Tristate_IsTrue } from "../core/tristate.js";
 import {
@@ -517,7 +518,7 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
     lastLineChar++;
   }
 
-  const lastLineOfFile = GetECMALineOfPosition(sourceFile, sourceFile.Text().length);
+  const lastLineOfFile = GetECMALineOfPosition(sourceFile, byteLen(sourceFile.Text()));
 
   const hasMoreThanFiveLines = lastLine - firstLine >= 4;
   let gutterWidth = Itoa(lastLine + 1).length;
@@ -543,10 +544,10 @@ export function writeCodeSnippet(writer: Writer, sourceFile: FileLike, start: in
     if (i < lastLineOfFile) {
       lineEnd = GetECMAPositionOfLineAndByteOffset(sourceFile, i + 1, 0);
     } else {
-      lineEnd = sourceFile.Text().length;
+      lineEnd = byteLen(sourceFile.Text());
     }
 
-    let lineContent = TrimRightFunc(sourceFile.Text().slice(lineStart, lineEnd), IsSpace);
+    let lineContent = TrimRightFunc(byteSlice(sourceFile.Text(), lineStart, lineEnd), IsSpace);
     lineContent = ReplaceAll(lineContent, "\t", " ");
 
     Fprint(writer, indent);
