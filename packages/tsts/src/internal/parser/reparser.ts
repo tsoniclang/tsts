@@ -113,7 +113,6 @@ import {
   GetRightMostAssignedExpression,
   JSDeclarationKindNone,
   HasSamePropertyAccessName,
-  IsThisIdentifier,
   IsFunctionLike,
   IsFunctionLikeDeclaration,
 } from "../ast/utilities.js";
@@ -1045,8 +1044,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         case KindExportAssignment:
         case KindPropertyDeclaration:
         case KindPropertyAssignment:
-        case KindShorthandPropertyAssignment:
-        case KindGetAccessor: {
+        case KindShorthandPropertyAssignment: {
           if (Node_Type(parent) === undefined && Node_TypeExpression(tag) !== undefined) {
             MutableNode_SetType(Node_AsMutable(parent), Parser_addDeepCloneReparse(receiver, Node_Type(Node_TypeExpression(tag))));
             Parser_finishMutatedNode(receiver, parent);
@@ -1222,7 +1220,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       const fun = getFunctionLikeHost(parent);
       if (fun !== undefined) {
         const params = Node_Parameters(fun);
-        if (params.length === 0 || (params[0]!.Kind !== KindThisKeyword && !IsThisIdentifier(Node_Name(params[0])))) {
+        if (params.length === 0 || Node_Name(params[0])!.Kind !== KindThisKeyword) {
           const thisParam = NewParameterDeclaration(
             receiver!.factory,
             undefined, // decorators
