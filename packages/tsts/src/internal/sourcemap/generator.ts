@@ -90,7 +90,7 @@ export interface Generator {
   rawSources: GoSlice<string>;
   sources: GoSlice<string>;
   sourceToSourceIndexMap: GoMap<string, SourceIndex>;
-  sourcesContent: GoSlice<GoPtr<string>>;
+  sourcesContent: GoSlice<GoPtr<string>> | undefined;
   names: GoSlice<string>;
   nameToNameIndexMap: GoMap<string, NameIndex>;
   mappings: Builder;
@@ -134,7 +134,7 @@ export interface RawSourceMap {
   Sources: GoSlice<string>;
   Names: GoSlice<string>;
   Mappings: string;
-  SourcesContent: GoSlice<GoPtr<string>>;
+  SourcesContent: GoSlice<GoPtr<string>> | undefined;
 }
 
 export const rawSourceMapJsonFieldNames: JsonFieldNameMap = {
@@ -169,7 +169,7 @@ export function NewGenerator(file: string, sourceRoot: string, sourcesDirectoryP
     rawSources: [],
     sources: [],
     sourceToSourceIndexMap: new globalThis.Map<string, SourceIndex>(),
-    sourcesContent: [],
+    sourcesContent: undefined,
     names: [],
     nameToNameIndexMap: new globalThis.Map<string, NameIndex>(),
     mappings: new Builder(),
@@ -273,10 +273,10 @@ export function Generator_SetSourceContent(receiver: GoPtr<Generator>, sourceInd
   if (sourceIndex < 0 || sourceIndex >= gen.sources.length) {
     return errorsNew("sourceIndex is out of range");
   }
-  while (gen.sourcesContent.length <= sourceIndex) {
-    gen.sourcesContent.push(undefined);
+  while ((gen.sourcesContent ?? []).length <= sourceIndex) {
+    gen.sourcesContent = [...(gen.sourcesContent ?? []), undefined];
   }
-  gen.sourcesContent[sourceIndex] = content;
+  gen.sourcesContent![sourceIndex] = content;
   return undefined;
 }
 
@@ -782,7 +782,7 @@ export function Generator_RawSourceMap(receiver: GoPtr<Generator>): GoPtr<RawSou
     Sources: sources,
     Names: names,
     Mappings: gen.mappings.String(),
-    SourcesContent: slicesClone(gen.sourcesContent)!,
+    SourcesContent: slicesClone(gen.sourcesContent),
   };
 }
 
