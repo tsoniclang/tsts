@@ -409,6 +409,10 @@ const BASE_METHOD_PROVIDERS = {
   // generated per-node Concrete_computeSubtreeFacts wins. Handled specially.
 };
 
+// Hand-written CONCRETE-type setModifiers overrides (ast.go), ported in ast.ts.
+// Go: func (node *BinaryExpression) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
+const AST_MANUAL_SET_MODIFIERS = new Set(["BinaryExpression"]);
+
 const AST_MANUAL_COMPUTE_SUBTREE_FACTS = new Set([
   "AccessorDeclarationBase",
   "ArrowFunction",
@@ -531,6 +535,12 @@ function generatedOverrideMethodsFor(schema, nodeName) {
 function resolveAdapterTarget(schema, nodeName, method) {
   const chain = schema.baseChainOf(nodeName); // most-derived first
   const generated = generatedOverrideMethodsFor(schema, nodeName);
+
+  // Hand-written concrete setModifiers overrides (ast.go), living in ast.ts.
+  // Go: func (node *BinaryExpression) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
+  if (method === "setModifiers" && AST_MANUAL_SET_MODIFIERS.has(nodeName)) {
+    return { fn: `AstManual.${nodeName}_setModifiers`, takesModifiers: true };
+  }
 
   // computeSubtreeFacts: ClassLikeBase override beats generated only when the
   // node embeds ClassLikeBase and has no own generateSubtreeFacts.
