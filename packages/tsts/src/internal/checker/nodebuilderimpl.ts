@@ -5575,7 +5575,7 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
         receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
       }
       if (IsPrivateIdentifierSymbol(propertySymbol)) {
-        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
+        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(SymbolName(propertySymbol));
       }
     }
     if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < properties.length - 1)) {

@@ -110,9 +110,11 @@ export type SymbolTable = GoMap<string, GoPtr<Symbol>>;
  */
 // Go uses the single byte 0xFE (an invalid UTF-8 sequence). In JavaScript "\xFE" is
 // U+00FE (þ), which IS a valid identifier character — breaking the invariant every
-// consumer relies on (canUsePropertyAccess, escaping, name validity checks). U+FFFF is
-// a Unicode noncharacter: never a valid IdentifierName, never present in source text.
-export const InternalSymbolNamePrefix: string = "\uFFFF"; // Never occurs as IdentifierName
+// consumer relies on (canUsePropertyAccess, escaping, name validity checks). U+FFFD
+// (the replacement character) is not an identifier character, and it is exactly what
+// Go's invalid byte becomes wherever the name is decoded for display — so printed
+// escapes match pinned TS-Go byte for byte ("\uFFFDmissing" in enumWithBigint).
+export const InternalSymbolNamePrefix: string = "\uFFFD"; // Never occurs as IdentifierName
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbol.go::constGroup::InternalSymbolNameCall+InternalSymbolNameConstructor+InternalSymbolNameNew+InternalSymbolNameIndex+InternalSymbolNameExportStar+InternalSymbolNameGlobal+InternalSymbolNameMissing+InternalSymbolNameType+InternalSymbolNameObject+InternalSymbolNameJSXAttributes+InternalSymbolNameClass+InternalSymbolNameFunction+InternalSymbolNameComputed+InternalSymbolNameAssignmentDeclaration+InternalSymbolNameInstantiationExpression+InternalSymbolNameImportAttributes+InternalSymbolNameExportEquals+InternalSymbolNameDefault+InternalSymbolNameThis+InternalSymbolNameModuleExports","kind":"constGroup","status":"implemented","sigHash":"a2c8c20c9adc58b1f356dca683a71a66f4c0de95af1cb1f778eda19473f0ae72","bodyHash":"c9b9d9e98f8f94075b1f20865ba7a655b85c5f436dd72e22e9bd0048b5b96375"}

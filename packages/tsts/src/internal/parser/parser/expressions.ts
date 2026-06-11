@@ -434,7 +434,10 @@ export function Parser_reparseTopLevelAwait(receiver: GoPtr<Parser>, sourceFile:
     });
     let diagnosticEnd: int;
     if (diagnosticStart >= 0) {
-      diagnosticEnd = FindIndex(savedParseDiagnostics.slice(diagnosticStart), (diagnostic) => {
+      // Go searches the PREFIX savedParseDiagnostics[:diagnosticStart] (not the suffix),
+      // so diagnosticStart == 0 always yields -1 and the whole saved list is copied;
+      // re-parse duplicates are collapsed later by program-level deduplication.
+      diagnosticEnd = FindIndex(savedParseDiagnostics.slice(0, diagnosticStart), (diagnostic) => {
         return Diagnostic_Pos(diagnostic) >= Node_Pos(nextStatement);
       });
     } else {

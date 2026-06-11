@@ -1728,32 +1728,6 @@ export function Parser_parseThisTag(receiver: GoPtr<Parser>, start: int, tagName
   return Parser_finishNode(receiver, result, start);
 }
 
-function Parser_parseJSDocTypeNameWithNamespace(receiver: GoPtr<Parser>, nested: bool): GoPtr<Node> {
-  const start = Scanner_TokenStart(receiver!.scanner);
-  if (!tokenIsIdentifierOrKeyword(receiver!.token)) {
-    return undefined;
-  }
-  const typeNameOrNamespaceName = Parser_parseJSDocIdentifierName(receiver, undefined);
-  if (Parser_parseOptionalJsdoc(receiver, KindDotToken)) {
-    const body = Parser_parseJSDocTypeNameWithNamespace(receiver, true /*nested*/);
-    const jsDocNamespaceNode = NewModuleDeclaration(
-      receiver!.factory,
-      undefined /*modifiers*/,
-      KindNamespaceKeyword /*keyword*/,
-      typeNameOrNamespaceName,
-      body,
-    );
-    if (nested) {
-      jsDocNamespaceNode!.Flags |= NodeFlagsOptionalChain; // NodeFlagsNestedNamespace = NodeFlagsOptionalChain
-    }
-    return Parser_finishNode(receiver, jsDocNamespaceNode, start);
-  }
-  if (nested) {
-    typeNameOrNamespaceName!.Flags |= NodeFlagsHasAsyncFunctions; // NodeFlagsIdentifierIsInJSDocNamespace = NodeFlagsHasAsyncFunctions
-  }
-  return typeNameOrNamespaceName;
-}
-
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/jsdoc.go::method::Parser.parseTypedefTag","kind":"method","status":"implemented","sigHash":"5d56ed9fa8a5d4d2f7d04ebb717d03b62cf3d34b70138e46b4967dc3679b000f","bodyHash":"0de048995e261c2102341aa3968b1694c2e9c965775b5dd1f3ac210b6dc38f59"}
  *
@@ -1762,10 +1736,7 @@ function Parser_parseJSDocTypeNameWithNamespace(receiver: GoPtr<Parser>, nested:
 export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
   let typeExpression = Parser_tryParseTypeExpression(receiver);
   Parser_skipWhitespaceOrAsterisk(receiver);
-  let fullName = Parser_parseJSDocTypeNameWithNamespace(receiver, false /*nested*/);
-  if (fullName === undefined) {
-    fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
-  }
+  const fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
   Parser_skipWhitespace(receiver);
   const comment = Parser_parseTagComments(receiver, indent, undefined);
 
@@ -1899,10 +1870,7 @@ export function Parser_parseJSDocSignature(receiver: GoPtr<Parser>, start: int, 
  * Go source: (uses parseTagComments / parseJSDocSignature)
  */
 export function Parser_parseCallbackTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  let fullName = Parser_parseJSDocTypeNameWithNamespace(receiver, false);
-  if (fullName === undefined) {
-    fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
-  }
+  const fullName = Parser_parseJSDocIdentifierName(receiver, Identifier_expected);
   Parser_skipWhitespace(receiver);
   let comment = Parser_parseTagComments(receiver, indent, undefined);
   const typeExpression = Parser_parseJSDocSignature(receiver, Parser_nodePos(receiver), indent);

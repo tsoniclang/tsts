@@ -2816,7 +2816,9 @@ async function runQueue(testCases, runRoot, jobs, failFast, options) {
       }
       const testCase = testCases[currentIndex];
       const result = await runCase(testCase, runRoot, options);
-      results[currentIndex] = result;
+      // Store the trimmed record immediately: retaining every case's full
+      // stdout/stderr exhausts the heap on the 7k-case submodule corpus.
+      results[currentIndex] = trimResult(result);
       if (result.status === "fail" && failFast) {
         stopped = true;
       }
@@ -2864,6 +2866,10 @@ function summarize(results) {
 }
 
 function trimResult(result) {
+  if (result.firstOutputLines !== undefined) {
+    // Already trimmed at accumulation time.
+    return result;
+  }
   const output = `${result.stdout}${result.stderr}`;
   return {
     corpus: result.corpus,

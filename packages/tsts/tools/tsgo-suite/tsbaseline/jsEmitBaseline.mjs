@@ -12,20 +12,17 @@ const distRoot = new URL("../../../dist/src/", import.meta.url);
 const dist = (p) => import(new URL(p, distRoot).href);
 
 const [
-  { Program_GetSourceFiles },
-  { newEmitHost, emitHost_as_outputpaths_OutputPathsHost, emitHost_Options },
-  { GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_DeclarationFilePath, OutputPaths_SourceMapFilePath },
+  { Program_GetSourceFiles, Program_Options, Program_GetCurrentDirectory, Program_UseCaseSensitiveFileNames, Program_CommonSourceDirectory },
+  { GetOutputExtension },
   { SourceFile_FileName, SourceFile_Diagnostics },
-  { IsDeclarationFileName },
-  { GetBaseFileName },
+  { IsDeclarationFileName, ChangeExtension, GetDeclarationEmitExtensionForPath },
+  { GetBaseFileName, ResolvePath, CombinePaths, GetRelativePathFromDirectory },
   { ParseSourceFile },
   { ScriptKindJSON },
   { Diff, UnifiedDiffTextWithOptions },
   { SplitLines },
-  { Background },
 ] = await Promise.all([
   dist("internal/compiler/program.js"),
-  dist("internal/compiler/emitHost.js"),
   dist("internal/outputpaths/outputpaths.js"),
   dist("internal/ast/ast.js"),
   dist("internal/tspath/extension.js"),
@@ -34,7 +31,6 @@ const [
   dist("internal/core/scriptkind.js"),
   dist("go/github.com/peter-evans/patience.js"),
   dist("internal/stringutil/util.js"),
-  dist("go/context.js"),
 ]);
 
 import { removeTestPathPrefixes } from "./typeSymbolWalker.mjs";
@@ -63,21 +59,21 @@ function compareTestFiles(a, b) {
 }
 
 // harnessutil.go compilation-output population: pair each non-declaration program source
-// file (in program order) with its computed output paths, then append stragglers sorted
-// by unit name. `emittedOutputs` is keyed in the program's own coordinates (the vfs
-// paths the harness WriteFile override received), which are exactly the paths
-// GetOutputPathsFor computes.
+// file (in program order) with the harness-local getOutputPath computation, then append
+// stragglers sorted by unit name. `emittedOutputs` is keyed in the program's own
+// coordinates (the vfs paths the harness WriteFile override received).
 export function orderedEmittedFiles(program, emittedOutputs) {
   const js = new Map();
   const dts = new Map();
   const maps = new Map();
   for (const [name, content] of emittedOutputs) {
-    if (/\.d\.[cm]?ts$/i.test(name)) {
+    // harnessutil.go: the JS bucket takes JS extensions AND .json outputs.
+    if (/\.[cm]?jsx?$/i.test(name) || /\.json$/i.test(name)) {
+      js.set(name, content);
+    } else if (/\.d\.[cm]?ts$/i.test(name)) {
       dts.set(name, content);
     } else if (/\.map$/i.test(name)) {
       maps.set(name, content);
-    } else if (/\.[cm]?jsx?$/i.test(name)) {
-      js.set(name, content);
     }
   }
   const JS = [];
@@ -92,23 +88,47 @@ export function orderedEmittedFiles(program, emittedOutputs) {
       map.delete(outputPath);
     }
   };
+  const options = Program_Options(program);
+  const currentDirectory = Program_GetCurrentDirectory(program);
+  const useCaseSensitiveFileNames = Program_UseCaseSensitiveFileNames(program);
+  // harnessutil.go CompilationResult.getOutputPath. Note the Go quirk: the rebase
+  // target is always Options.OutDir even when DeclarationDir passed the outDir
+  // guard, so declarationDir != outDir outputs never pair and always land in the
+  // name-sorted leftovers.
+  const getOutputPath = (path, ext) => {
+    let resolved = ResolvePath(currentDirectory, path);
+    let outDir;
+    if (ext === ".d.ts" || ext === ".d.mts" || ext === ".d.cts" || (ext.endsWith(".ts") && ext.includes(".d."))) {
+      outDir = options.DeclarationDir ?? "";
+      if (outDir === "") {
+        outDir = options.OutDir ?? "";
+      }
+    } else {
+      outDir = options.OutDir ?? "";
+    }
+    if (outDir !== "") {
+      const common = Program_CommonSourceDirectory(program);
+      if (common !== "") {
+        resolved = GetRelativePathFromDirectory(common, resolved, {
+          UseCaseSensitiveFileNames: useCaseSensitiveFileNames,
+          CurrentDirectory: currentDirectory,
+        });
+        resolved = CombinePaths(ResolvePath(currentDirectory, options.OutDir ?? ""), resolved);
+      }
+    }
+    return ChangeExtension(resolved, ext);
+  };
   for (const sourceFile of Program_GetSourceFiles(program)) {
     const fileName = SourceFile_FileName(sourceFile);
-    if (fileName.startsWith("bundled:") || IsDeclarationFileName(fileName)) {
+    if (IsDeclarationFileName(fileName)) {
       continue;
     }
-    const [emitHost, done] = newEmitHost(Background(), program, sourceFile);
-    try {
-      const host = emitHost_as_outputpaths_OutputPathsHost(emitHost);
-      const paths = GetOutputPathsFor(sourceFile, emitHost_Options(emitHost), host, false);
-      take(js, JS, OutputPaths_JsFilePath(paths));
-      take(dts, DTS, OutputPaths_DeclarationFilePath(paths));
-      // harnessutil pairs only the JS source map (extname+".map"); declaration maps are
-      // never paired and always land in the name-sorted leftovers.
-      take(maps, Maps, OutputPaths_SourceMapFilePath(paths));
-    } finally {
-      done();
-    }
+    const extname = GetOutputExtension(fileName, options.Jsx);
+    take(js, JS, getOutputPath(fileName, extname));
+    take(dts, DTS, getOutputPath(fileName, GetDeclarationEmitExtensionForPath(fileName)));
+    // harnessutil pairs only the JS source map (extname+".map"); declaration maps are
+    // never paired and always land in the name-sorted leftovers.
+    take(maps, Maps, getOutputPath(fileName, extname + ".map"));
   }
   // add any unhandled outputs, ordered by unit name
   JS.push(...[...js].map(([rel, content]) => ({ unitName: rel, content })).sort(compareTestFiles));

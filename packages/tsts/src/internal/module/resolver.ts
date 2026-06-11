@@ -2514,7 +2514,9 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     if (
       (receiver!.features & NodeResolutionFeaturesExports) !== 0 &&
       InfoCacheEntry_Exists(packageInfo) &&
-      !JSONValue_IsFalsy(packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0)
+      // Go: Exports.Type != JSONValueTypeNotPresent — a present-but-null "exports"
+      // still routes through loadModuleFromExports (blocking main/index fallbacks).
+      packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0!.Type !== JSONValueTypeNotPresent
     ) {
       return resolutionState_loadModuleFromExports(receiver, packageInfo, ext, tspath.CombinePaths(".", rest));
     }

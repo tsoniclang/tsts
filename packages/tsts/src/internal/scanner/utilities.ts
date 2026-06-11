@@ -118,8 +118,13 @@ export function surrogatePairToCodepoint(r1: GoRune, r2: GoRune): GoRune {
  * }
  */
 export function encodeSurrogate(r: GoRune): string {
-  const bytes = new globalThis.Uint8Array([0xed, (0x80 | ((r >> 6) & 0x3f)), (0x80 | (r & 0x3f))]);
-  return utf8Decoder.decode(bytes);
+  // Go encodes the surrogate as a 3-byte CESU-8 sequence because Go strings
+  // cannot hold surrogate code points via string(rune). JS strings hold lone
+  // surrogate code units natively, so the sentinel is the unit itself;
+  // TextDecoder would destroy the CESU-8 bytes (invalid UTF-8 -> U+FFFD).
+  // byteLen of a lone surrogate is 3 (TextEncoder emits U+FFFD), matching
+  // Go's len() of the CESU-8 sentinel for the class-range size checks.
+  return globalThis.String.fromCharCode(r);
 }
 
 /**
@@ -135,10 +140,16 @@ export function encodeSurrogate(r: GoRune): string {
  * }
  */
 export function decodeClassAtomRune(s: string): [GoRune, int] {
-  const bytes = utf8Encoder.encode(s);
-  if (bytes.length >= 3 && bytes[0] === 0xed && bytes[1]! >= 0xa0 && bytes[1]! <= 0xbf && bytes[2]! >= 0x80 && bytes[2]! <= 0xbf) {
-    const r = (0xd000 | ((bytes[1]! & 0x3f) << 6) | (bytes[2]! & 0x3f)) as GoRune;
-    return [r, 3];
+  // The sentinel from encodeSurrogate is a lone surrogate code unit (Go: a
+  // 3-byte CESU-8 sequence). A high surrogate followed by a matching low
+  // surrogate is a real astral character (raw source text / combined \u
+  // escapes; 4-byte UTF-8 in Go) and decodes as the full code point instead.
+  const first = s.length > 0 ? s.charCodeAt(0) : 0;
+  if (first >= 0xd800 && first <= 0xdfff) {
+    const second = s.length > 1 ? s.charCodeAt(1) : 0;
+    if (!(first < 0xdc00 && second >= 0xdc00 && second <= 0xdfff)) {
+      return [first as GoRune, 3];
+    }
   }
   return DecodeRuneInString(s);
 }
