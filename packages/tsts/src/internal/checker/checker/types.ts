@@ -10753,10 +10753,16 @@ export function Checker_getStringLiteralType(receiver: GoPtr<Checker>, value: st
  * }
  */
 export function Checker_getNumberLiteralType(receiver: GoPtr<Checker>, value: Number): GoPtr<Type> {
-  let t = receiver!.numberLiteralTypes.get(value);
+  // Go map semantics: a NaN key never compares equal to anything, so NaN
+  // requests ALWAYS miss the cache and each produces a fresh literal type.
+  // JS Map uses SameValueZero (NaN === NaN), so NaN must bypass the cache.
+  const isNaNKey = globalThis.Number.isNaN(value as unknown as number);
+  let t = isNaNKey ? undefined : receiver!.numberLiteralTypes.get(value);
   if (t === undefined) {
     t = Checker_newLiteralType(receiver, TypeFlagsNumberLiteral, value, undefined);
-    receiver!.numberLiteralTypes.set(value, t);
+    if (!isNaNKey) {
+      receiver!.numberLiteralTypes.set(value, t);
+    }
   }
   return t;
 }
@@ -10829,12 +10835,20 @@ export function Checker_getEnumLiteralType(receiver: GoPtr<Checker>, value: unkn
   } else {
     throw new globalThis.Error("Unhandled case in getEnumLiteralType");
   }
+  // Go map semantics: a key containing NaN never compares equal to anything
+  // (not even itself), so NaN-valued enum members ALWAYS miss the cache and
+  // each gets its own literal type (e.g. E5.d = 0/0 and E5.e = NaN stay
+  // distinct types). The struct-keyed map here canonicalizes NaN, so the
+  // lookup/store must be bypassed to mirror Go.
+  const isNaNKey = typeof value === "number" && globalThis.Number.isNaN(value);
   const key: EnumLiteralKey = { enumSymbol, value };
-  let t = receiver!.enumLiteralTypes.get(key);
+  let t = isNaNKey ? undefined : receiver!.enumLiteralTypes.get(key);
   if (t === undefined) {
     t = Checker_newLiteralType(receiver, flags, value, undefined);
     t!.symbol = symbol_;
-    receiver!.enumLiteralTypes.set(key, t);
+    if (!isNaNKey) {
+      receiver!.enumLiteralTypes.set(key, t);
+    }
   }
   return t;
 }

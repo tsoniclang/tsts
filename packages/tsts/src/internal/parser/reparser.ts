@@ -1473,37 +1473,29 @@ export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDo
  * 	return nil
  * }
  */
-function skipSatisfiesExpressions(node: GoPtr<Node>): GoPtr<Node> {
-  let n = node;
-  while (n !== undefined && n!.Kind === KindSatisfiesExpression) {
-    n = Node_Expression(n);
-  }
-  return n;
-}
-
 export function getFunctionLikeHost(host: GoPtr<Node>): GoPtr<Node> {
+  // Faithful to Go: NO skipping of satisfies/as wrappers — once a @satisfies
+  // tag has wrapped an initializer in a SatisfiesExpression, later tags (e.g.
+  // @param) no longer find a function-like host and intentionally no-op.
   let fun: GoPtr<Node> = host;
-  switch (host!.Kind) {
-    case KindVariableStatement: {
-      const nodes = AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes;
-      if (nodes.length !== 0) {
-        fun = Node_Initializer(nodes[0]);
+  if (host!.Kind === KindVariableStatement && AsVariableStatement(host)!.DeclarationList !== undefined) {
+    for (const declaration of AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes) {
+      if (IsFunctionLike(Node_Initializer(declaration))) {
+        fun = Node_Initializer(declaration);
+        break;
       }
-      break;
     }
-    case KindPropertyAssignment:
-    case KindPropertyDeclaration:
-      fun = Node_Initializer(host);
-      break;
-    case KindExportAssignment:
-    case KindReturnStatement:
-      fun = Node_Expression(host);
-      break;
-    case KindExpressionStatement:
-      fun = GetRightMostAssignedExpression(Node_Expression(host));
-      break;
+  } else if (host!.Kind === KindPropertyAssignment) {
+    fun = Node_Initializer(host);
+  } else if (host!.Kind === KindPropertyDeclaration) {
+    fun = Node_Initializer(host);
+  } else if (host!.Kind === KindExportAssignment) {
+    fun = Node_Expression(host);
+  } else if (host!.Kind === KindReturnStatement) {
+    fun = Node_Expression(host);
+  } else if (host!.Kind === KindExpressionStatement) {
+    fun = GetRightMostAssignedExpression(Node_Expression(host));
   }
-  fun = skipSatisfiesExpressions(fun);
   if (IsFunctionLike(fun)) {
     return fun;
   }

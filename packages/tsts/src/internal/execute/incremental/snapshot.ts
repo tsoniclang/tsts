@@ -54,6 +54,7 @@ import {
 import type { Path } from "../../tspath/path.js";
 import * as xxh3 from "../../../go/github.com/zeebo/xxh3.js";
 import * as hex from "../../../go/encoding/hex.js";
+import { byteSlice } from "../../printer/utilities.js";
 import type { referenceMap } from "./referencemap.js";
 
 /**
@@ -856,7 +857,7 @@ export function snapshot_getAllFilesExcludingDefaultLibraryFile(receiver: GoPtr<
  */
 export function getTextHandlingSourceMapForSignature(text: string, data: GoPtr<WriteFileData>): string {
   if (data!.SourceMapUrlPos !== -1) {
-    return text.slice(0, data!.SourceMapUrlPos);
+    return byteSlice(text, 0, data!.SourceMapUrlPos);
   }
   return text;
 }

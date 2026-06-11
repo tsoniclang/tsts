@@ -1,6 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { HasPrefix, LastIndex, TrimLeft, TrimRightFunc } from "../../go/strings.js";
+import { byteLen, byteSlice } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { SetParseJSDocForNode, Node_TagName, Node_Text, Node_Type } from "../ast/ast.js";
@@ -493,10 +494,10 @@ export function Parser_parseJSDocNameReference(receiver: GoPtr<Parser>): GoPtr<N
  */
 export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<Node>, start: int, end: int, fullStart: int): GoPtr<Node> {
   if (end === -1) {
-    end = receiver!.sourceText.length;
+    end = byteLen(receiver!.sourceText);
   }
   // Check for /** (JSDoc opening part)
-  if (!isJSDocLikeText(receiver!.sourceText.slice(start))) {
+  if (!isJSDocLikeText(byteSlice(receiver!.sourceText, start))) {
     // TODO: This should be a panic, unless parseSingleJSDocComment is calling this (not ported yet)
     return undefined;
   }
@@ -513,9 +514,9 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   // initial indent is start+4 to account for leading `/** `
   // + 1 because \n is one character before the first character in the line and,
   // if there is no \n before start, -1 is one index before the first character in the string
-  const initialIndent = start + 4 - (LastIndex(receiver!.sourceText.slice(0, start), "\n") + 1);
+  const initialIndent = start + 4 - (LastIndex(byteSlice(receiver!.sourceText, 0, start), "\n") + 1);
   // -2 for trailing `*/`
-  receiver!.sourceText = receiver!.sourceText.slice(0, end - 2);
+  receiver!.sourceText = byteSlice(receiver!.sourceText, 0, end - 2);
   Scanner_SetText(receiver!.scanner, receiver!.sourceText);
   // +3 for leading `/**`
   Scanner_ResetPos(receiver!.scanner, start + 3);
@@ -1576,7 +1577,7 @@ export function Parser_parseTypeTag(receiver: GoPtr<Parser>, previousTags: GoSli
  * Go source: (uses parseTrailingTagComments)
  */
 export function Parser_parseSeeTag(receiver: GoPtr<Parser>, start: int, tagName: GoPtr<IdentifierNode>, indent: int, indentText: string): GoPtr<Node> {
-  const hasNameReference = (Parser_isIdentifier(receiver) && !HasPrefix(receiver!.sourceText.slice(Scanner_TokenEnd(receiver!.scanner)), "://")) ||
+  const hasNameReference = (Parser_isIdentifier(receiver) && !HasPrefix(byteSlice(receiver!.sourceText, Scanner_TokenEnd(receiver!.scanner)), "://")) ||
     (receiver!.token === KindOpenBraceToken && Parser_lookAhead(receiver, (p: GoPtr<Parser>): bool => Parser_nextTokenIsIdentifierOrKeyword(p)));
   let nameExpression: GoPtr<Node>;
   if (hasNameReference) {
@@ -1753,25 +1754,23 @@ export function Parser_parseTypedefTag(receiver: GoPtr<Parser>, start: int, tagN
         Parser_rewind(receiver, state);
         break;
       }
+      if (child!.Kind === KindJSDocTemplateTag) {
+        break;
+      }
       hasChildren = true;
-      switch (child!.Kind) {
-        case KindJSDocTemplateTag:
-          Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
-          break;
-        case KindJSDocTypeTag:
-          if (childTypeTag === undefined) {
-            childTypeTag = AsJSDocTypeTag(child);
-          } else {
-            const lastError = Parser_parseErrorAtCurrentToken(receiver, A_JSDoc_typedef_comment_may_not_contain_multiple_type_tags);
-            if (lastError !== undefined) {
-              const related = NewDiagnostic(undefined, NewTextRange(0, 0), The_tag_was_first_specified_here);
-              Diagnostic_AddRelatedInfo(lastError, related);
-            }
+      if (child!.Kind === KindJSDocTypeTag) {
+        if (childTypeTag === undefined) {
+          childTypeTag = AsJSDocTypeTag(child);
+        } else {
+          const lastError = Parser_parseErrorAtCurrentToken(receiver, A_JSDoc_typedef_comment_may_not_contain_multiple_type_tags);
+          if (lastError !== undefined) {
+            const related = NewDiagnostic(undefined, NewTextRange(0, 0), The_tag_was_first_specified_here);
+            Diagnostic_AddRelatedInfo(lastError, related);
           }
           break;
-        default:
-          jsdocPropertyTags.push(child!);
-          break;
+        }
+      } else {
+        jsdocPropertyTags.push(child!);
       }
     }
     if (hasChildren) {
@@ -1836,9 +1835,9 @@ export function Parser_parseCallbackTagParameters(receiver: GoPtr<Parser>, inden
     }
     if (child.Kind === KindJSDocTemplateTag) {
       Parser_parseErrorAtRange(receiver, Node_TagName(child)!.Loc, A_JSDoc_template_tag_may_not_follow_a_typedef_callback_or_overload_tag);
-    } else {
-      parameters.push(child);
+      break;
     }
+    parameters.push(child);
   }
   return Parser_newNodeList(receiver, NewTextRange(pos, Parser_nodePos(receiver)), parameters);
 }

@@ -72,6 +72,7 @@ import type { ComparePathsOptions, Path } from "../tspath/path.js";
 import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
 import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath, type OutputPathsHost } from "../outputpaths/outputpaths.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
+import { byteAt, byteLen } from "../parser/utilities.js";
 import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo, checkerPool_as_compiler_CheckerPool } from "./checkerpool.js";
 import type { checkerPool, CheckerPool } from "./checkerpool.js";
 import { newCheckerPoolWithTracing } from "./checkerpool.js";
@@ -3159,12 +3160,13 @@ export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Prog
  * }
  */
 export function isCommentOrBlankLine(text: string, pos: int): bool {
-  while (pos < text.length && (text[pos] === " " || text[pos] === "\t")) {
+  const n = byteLen(text);
+  while (pos < n && (byteAt(text, pos) === 0x20 /* ' ' */ || byteAt(text, pos) === 0x09 /* '\t' */)) {
     pos++;
   }
-  return (pos === text.length ||
-    (pos < text.length && (text[pos] === "\r" || text[pos] === "\n")) ||
-    (pos + 1 < text.length && text[pos] === "/" && text[pos + 1] === "/")) as bool;
+  return (pos === n ||
+    (pos < n && (byteAt(text, pos) === 0x0d /* '\r' */ || byteAt(text, pos) === 0x0a /* '\n' */)) ||
+    (pos + 1 < n && byteAt(text, pos) === 0x2f /* '/' */ && byteAt(text, pos + 1) === 0x2f /* '/' */)) as bool;
 }
 
 /**

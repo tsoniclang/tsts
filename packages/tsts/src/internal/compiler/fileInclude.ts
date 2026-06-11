@@ -16,6 +16,7 @@ import type { Message } from "../diagnostics/diagnostics.js";
 import { PackageId_String } from "../module/types.js";
 import type { PackageId } from "../module/types.js";
 import { SkipTrivia } from "../scanner/scanner.js";
+import { byteSlice } from "../parser/utilities.js";
 import { GetNormalizedAbsolutePath, GetRelativePathFromDirectory } from "../tspath/path.js";
 import { ScriptTarget_String } from "../core/scripttarget_stringer_generated.js";
 import { CreateDiagnosticForNodeInSourceFile } from "../tsoptions/errors.js";
@@ -141,13 +142,13 @@ export function referenceFileLocation_text(receiver: GoPtr<referenceFileLocation
   if (receiver!.node !== undefined) {
     if (!NodeIsSynthesized(receiver!.node)) {
       const text = SourceFile_Text(receiver!.file);
-      return text.slice(SkipTrivia(text, TextRange_Pos(receiver!.node.Loc)), Node_End(receiver!.node));
+      return byteSlice(text, SkipTrivia(text, TextRange_Pos(receiver!.node.Loc)), Node_End(receiver!.node));
     } else {
       return `"${Node_Text(receiver!.node)}"`;
     }
   } else {
     const text = SourceFile_Text(receiver!.file);
-    return text.slice(TextRange_Pos(receiver!.ref!), TextRange_End(receiver!.ref!));
+    return byteSlice(text, TextRange_Pos(receiver!.ref!), TextRange_End(receiver!.ref!));
   }
 }
 

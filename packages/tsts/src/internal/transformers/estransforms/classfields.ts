@@ -856,8 +856,10 @@ export function classFieldsTransformer_visitDestructuringAssignmentTarget(receiv
         name = NodeFactory_NewStringLiteralFromNode(Transformer_Factory(receiver!.__tsgoEmbedded0!), AsPropertyAccessExpression(node)!.name);
       }
       if (name !== undefined) {
+        // Go does NOT AddVariableDeclaration here: the temp becomes the
+        // synthesized setter's parameter (function-scoped), so it is never
+        // hoisted and its name resolves inside the setter's own scope (_a).
         const temp = NodeFactory_NewTempVariable(Transformer_Factory(receiver!.__tsgoEmbedded0!));
-        EmitContext_AddVariableDeclaration(Transformer_EmitContext(receiver!.__tsgoEmbedded0!), temp);
         const setExpr = NodeFactory_NewReflectSetCall(
           Transformer_Factory(receiver!.__tsgoEmbedded0!),
           data!.superClassReference,

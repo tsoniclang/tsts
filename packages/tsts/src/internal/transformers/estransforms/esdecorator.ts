@@ -58,6 +58,7 @@ import {
   KindBigIntLiteral,
   KindStringLiteral,
   KindEqualsToken,
+  KindTaggedTemplateExpression,
 } from "../../ast/generated/kinds.js";
 import {
   IsClassStaticBlockDeclaration,
@@ -978,6 +979,8 @@ export function esDecoratorTransformer_visit(receiver: GoPtr<esDecoratorTransfor
       return esDecoratorTransformer_visitPartiallyEmittedExpression(tx, node, false);
     case KindCallExpression:
       return esDecoratorTransformer_visitCallExpression(tx, node);
+    case KindTaggedTemplateExpression:
+      return esDecoratorTransformer_visitTaggedTemplateExpression(tx, node);
     case KindPrefixUnaryExpression:
     case KindPostfixUnaryExpression:
       return esDecoratorTransformer_visitPreOrPostfixUnaryExpression(tx, node, false);

@@ -3599,7 +3599,7 @@ export function BinaryExpression_as_nodeData(receiver: GoPtr<BinaryExpression>):
     Clone: (f: NodeFactoryCoercible): GoPtr<Node> => BinaryExpression_Clone(receiver, f),
     Name: () => NodeDefault_Name(receiver),
     Modifiers: () => ModifiersBase_Modifiers(receiver),
-    setModifiers: (modifiers): void => NodeDefault_setModifiers(receiver, modifiers),
+    setModifiers: (modifiers): void => AstManual.BinaryExpression_setModifiers(receiver, modifiers),
     FlowNodeData: () => NodeDefault_FlowNodeData(receiver),
     DeclarationData: () => DeclarationBase_DeclarationData(receiver),
     ExportableData: () => NodeDefault_ExportableData(receiver),
