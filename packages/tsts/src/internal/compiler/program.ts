@@ -110,12 +110,12 @@ import { OrderedMap_Entries } from "../collections/ordered_map.js";
 export interface ProgramOptions {
   Host: CompilerHost;
   Config: GoPtr<ParsedCommandLine>;
-  UseSourceOfProjectReference: bool;
-  SingleThreaded: Tristate;
-  CreateCheckerPool: (arg0: GoPtr<Program>) => CheckerPool;
-  TypingsLocation: string;
-  ProjectName: string;
-  Tracing: GoPtr<Tracing_bcfc8412>;
+  UseSourceOfProjectReference?: bool;
+  SingleThreaded?: Tristate;
+  CreateCheckerPool?: (arg0: GoPtr<Program>) => CheckerPool;
+  TypingsLocation?: string;
+  ProjectName?: string;
+  Tracing?: GoPtr<Tracing_bcfc8412>;
 }
 
 /**
@@ -127,7 +127,7 @@ export interface ProgramOptions {
  * }
  */
 export function ProgramOptions_canUseProjectReferenceSource(receiver: GoPtr<ProgramOptions>): bool {
-  return (receiver!.UseSourceOfProjectReference && !Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.Config)!.DisableSourceOfProjectReferenceRedirect)) as bool;
+  return (receiver!.UseSourceOfProjectReference === true && !Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.Config)!.DisableSourceOfProjectReferenceRedirect)) as bool;
 }
 
 /**
@@ -721,7 +721,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
  */
 export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
   // Compute singleThreaded before creating the program (needed for processAllProgramFiles)
-  const singleThreaded = Tristate_IsTrue(Tristate_DefaultIfUnknown(opts.SingleThreaded, ParsedCommandLine_CompilerOptions(opts.Config)!.SingleThreaded));
+  const singleThreaded = Tristate_IsTrue(Tristate_DefaultIfUnknown(opts.SingleThreaded ?? TSUnknown, ParsedCommandLine_CompilerOptions(opts.Config)!.SingleThreaded));
   let popTrace: (() => void) | undefined;
   if (opts.Tracing !== undefined) {
     popTrace = Tracing_Push(opts.Tracing, PhaseProgram, "createProgram", new globalThis.Map([["configFilePath", ParsedCommandLine_CompilerOptions(opts.Config)!.ConfigFilePath]]), true);
@@ -1133,7 +1133,7 @@ export function Program_extractUnresolvedImportsFromSourceFile(receiver: GoPtr<P
  * }
  */
 export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
-  return Tristate_IsTrue(Tristate_DefaultIfUnknown(receiver!.opts.SingleThreaded, Program_Options(receiver)!.SingleThreaded));
+  return Tristate_IsTrue(Tristate_DefaultIfUnknown(receiver!.opts.SingleThreaded ?? TSUnknown, Program_Options(receiver)!.SingleThreaded));
 }
 
 /**

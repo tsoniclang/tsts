@@ -491,7 +491,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
     supportedExtensionsWithJsonIfResolveJsonModule: supportedExtensionsWithJsonIfResolveJsonModule,
   };
   fileLoader_addProjectReferenceTasks(loader, singleThreaded);
-  loader.resolver = NewResolver(loader.projectReferenceFileMapper!.host!, compilerOptions, opts.TypingsLocation, opts.ProjectName);
+  loader.resolver = NewResolver(loader.projectReferenceFileMapper!.host!, compilerOptions, opts.TypingsLocation ?? "", opts.ProjectName ?? "");
   let traceDone: (() => void) | undefined;
   if (opts.Tracing !== undefined) {
     traceDone = Tracing_Push(opts.Tracing, PhaseProgram, "processRootFiles", new globalThis.Map([["count", rootFiles.length]]), false);
