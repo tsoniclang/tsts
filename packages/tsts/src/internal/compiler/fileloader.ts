@@ -84,7 +84,7 @@ import {
 import type { DiagAndArgs, Resolver } from "../module/resolver.js";
 import { GetResolutionDiagnostic, InferredTypesContainingFile } from "../module/util.js";
 import type { ModeAwareCacheKey } from "../module/types.js";
-import type { ResolvedModule, ResolvedProjectReference, ResolvedTypeReferenceDirective } from "../module/types.js";
+import type { ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { ResolvedModule_IsResolved, ResolvedTypeReferenceDirective_IsResolved } from "../module/types.js";
 import { InfoCacheEntry_Exists } from "../packagejson/cache.js";
 import { Expected_GetValue } from "../packagejson/expected.js";
@@ -741,7 +741,7 @@ export function fileLoader_resolveAutomaticTypeDirectives(receiver: GoPtr<fileLo
       // Under node16/nodenext module resolution, load `types`/ata include names as cjs resolution results by passing an `undefined` mode.
       // Under bundler module resolution, this also triggers the "import" condition to be used.
       const resolutionMode = ResolutionModeNone;
-      const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, name, containingFileName, resolutionMode, undefined as unknown as ResolvedProjectReference);
+      const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, name, containingFileName, resolutionMode, undefined);
       let traceDone: (() => void) | undefined;
       if (receiver!.opts.Tracing !== undefined) {
         traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", name], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindAutomaticTypeDirectiveFile]]), false);
@@ -1238,8 +1238,9 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
     for (let index = 0; index < file!.TypeReferenceDirectives.length; index++) {
       const ref = file!.TypeReferenceDirectives[index]!;
       const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
-      const resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, meta, GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirect as unknown as ResolvedProjectReference));
-      const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, ref.FileName, fileName, resolutionMode, redirect as unknown as ResolvedProjectReference);
+      const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
+      const resolutionMode = getModeForTypeReferenceDirectiveInFile(ref, file, meta, GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectedReference));
+      const [resolved, trace] = Resolver_ResolveTypeReferenceDirective(receiver!.resolver, ref.FileName, fileName, resolutionMode, redirectedReference);
       let innerTraceDone: (() => void) | undefined;
       if (receiver!.opts.Tracing !== undefined) {
         innerTraceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "processTypeReferenceDirective", new globalThis.Map<string, unknown>([["directive", ref.FileName], ["hasResolved", ResolvedTypeReferenceDirective_IsResolved(resolved)], ["refKind", fileIncludeKindTypeReferenceDirective], ["refPath", t!.path as string]]), false);
@@ -1418,7 +1419,10 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     const isExternalModuleFile = IsExternalModule(file);
 
     const [redirect, fileName] = projectReferenceFileMapper_getRedirectForResolution(receiver!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
-    const optionsForFile = GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirect as unknown as ResolvedProjectReference);
+    const optionsForFile = GetCompilerOptionsWithRedirect(
+      ParsedCommandLine_CompilerOptions(receiver!.opts.Config),
+      redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined,
+    );
     if (isJavaScriptFile || (!file!.IsDeclarationFile && (CompilerOptions_GetIsolatedModules(optionsForFile) || isExternalModuleFile))) {
       if (Tristate_IsTrue(optionsForFile!.ImportHelpers)) {
         const specifier = fileLoader_createSyntheticImport(receiver, externalHelpersModuleNameText, file);
@@ -1462,7 +1466,8 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
         }
 
         const mode = getModeForUsageLocation(SourceFile_FileName(file), meta, entry as unknown as GoPtr<StringLiteralLike>, optionsForFile);
-        const [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirect as unknown as ResolvedProjectReference);
+        const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
+        const [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
         resolutionsInFile.set({ Name: moduleName, Mode: mode }, resolvedModule);
         resolutionsTrace = [...resolutionsTrace, ...trace];
 
@@ -1621,7 +1626,7 @@ export function fileLoader_resolveLibrary(receiver: GoPtr<fileLoader>, libraryNa
     traceDone = Tracing_Push(receiver!.opts.Tracing, PhaseProgram, "resolveLibrary", new globalThis.Map([["resolveFrom", resolveFrom]]), false);
   }
   try {
-    return Resolver_ResolveModuleName(receiver!.resolver, libraryName, resolveFrom, ModuleKindCommonJS, undefined as unknown as ResolvedProjectReference);
+    return Resolver_ResolveModuleName(receiver!.resolver, libraryName, resolveFrom, ModuleKindCommonJS, undefined);
   } finally {
     if (traceDone !== undefined) {
       traceDone();

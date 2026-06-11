@@ -4618,7 +4618,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
           }
         }
 
-        const packageResolution = Resolver_ResolvePackageDirectory(receiver!.__tsgoEmbedded0!.resolver, dep, packageJsonName, ResolutionModeCommonJS, undefined as unknown as import("../module/types.js").ResolvedProjectReference);
+        const packageResolution = Resolver_ResolvePackageDirectory(receiver!.__tsgoEmbedded0!.resolver, dep, packageJsonName, ResolutionModeCommonJS, undefined);
         if (packageResolution !== undefined && ResolvedModule_IsResolved(packageResolution as GoPtr<ResolvedModule>)) {
           const resolved = packageResolution as GoPtr<ResolvedModule>;
           KnownSymlinks_ProcessResolution(
@@ -4643,7 +4643,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
  * }
  */
 export function Program_ResolveModuleName(receiver: GoPtr<Program>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode): GoPtr<ResolvedModule> {
-  const [resolved] = Resolver_ResolveModuleName(receiver!.__tsgoEmbedded0!.resolver, moduleName, containingFile, resolutionMode, undefined as unknown as import("../module/types.js").ResolvedProjectReference);
+  const [resolved] = Resolver_ResolveModuleName(receiver!.__tsgoEmbedded0!.resolver, moduleName, containingFile, resolutionMode, undefined);
   return resolved;
 }
 
