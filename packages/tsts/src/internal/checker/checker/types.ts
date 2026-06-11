@@ -7542,7 +7542,10 @@ export function Checker_instantiateMappedTupleType(receiver: GoPtr<Checker>, tup
   const modifiers = getMappedTypeModifiers(mappedType);
   const elementTypes = Checker_getElementTypes(receiver, tupleType);
   const newElementTypes: GoSlice<GoPtr<Type>> = new Array(elementTypes.length);
-  const newElementInfos = slices.Clone(elementInfos)!;
+  // Go slices.Clone copies TupleElementInfo STRUCT VALUES; a shallow array
+  // clone would share the info objects with the (interned) tuple target, and
+  // the flags mutations below would corrupt every tuple of the same shape.
+  const newElementInfos: TupleElementInfo[] = elementInfos.map((info) => ({ ...info }));
   for (let i = 0; i < elementTypes.length; i++) {
     const e = elementTypes[i];
     const flags = elementInfos[i]!.flags;
@@ -8616,7 +8619,10 @@ export function TupleNormalizer_add(receiver: GoPtr<TupleNormalizer>, t: GoPtr<T
     receiver!.lastOptionalOrRestIndex = receiver!.types.length;
   }
   receiver!.types.push(Checker_addOptionalityEx(receiver!.c, t, true, (info.flags & ElementFlagsOptionalFlag) !== 0));
-  receiver!.infos.push(info);
+  // Go appends the TupleElementInfo STRUCT BY VALUE; normalize() later mutates
+  // n.infos[i].flags, which must not write through to the caller's (possibly
+  // interned tuple target's) element infos.
+  receiver!.infos.push({ ...info });
 }
 
 /**
