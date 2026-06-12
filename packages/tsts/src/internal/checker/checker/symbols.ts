@@ -491,7 +491,10 @@ export function Checker_onFailedToResolveSymbol(receiver: GoPtr<Checker>, errorL
   if (suggestion !== undefined && !(suggestion!.ValueDeclaration !== undefined && IsAmbientModule(suggestion!.ValueDeclaration) && IsGlobalScopeAugmentation(suggestion!.ValueDeclaration))) {
     const suggestionName = Checker_symbolToString(receiver, suggestion);
     const isUncheckedJS = Checker_isUncheckedJSSuggestion(receiver, errorLocation, suggestion, false as bool);
-    const message = IfElse((meaning & SymbolFlagsNamespace) !== 0, Cannot_find_namespace_0_Did_you_mean_1,
+    // Go: meaning == ast.SymbolFlagsNamespace — EXACT equality, not intersection. A
+    // value lookup's meaning intersects Namespace (ValueModule/Enum) and must keep the
+    // "Cannot find name" message.
+    const message = IfElse(meaning === (SymbolFlagsNamespace as SymbolFlags), Cannot_find_namespace_0_Did_you_mean_1,
       IfElse(isUncheckedJS as boolean, Could_not_find_name_0_Did_you_mean_1, Cannot_find_name_0_Did_you_mean_1));
     const diagnostic = NewDiagnosticForNode(errorLocation, message, name, suggestionName);
     if (suggestion!.ValueDeclaration !== undefined) {
@@ -4675,7 +4678,7 @@ export function Checker_checkTypeAliasDeclaration(receiver: GoPtr<Checker>, node
   Checker_checkTypeParameters(receiver, typeParameters);
   if (typeNode !== undefined && typeNode.Kind === KindIntrinsicKeyword) {
     const nameText = Node_Text(Node_Name(node));
-    if (!((typeParameters.length === 0 && nameText === "BuiltinIteratorReturn") || (typeParameters.length === 1 && intrinsicTypeKinds.get(nameText) !== IntrinsicTypeKindUnknown))) {
+    if (!((typeParameters.length === 0 && nameText === "BuiltinIteratorReturn") || (typeParameters.length === 1 && (intrinsicTypeKinds.get(nameText) ?? IntrinsicTypeKindUnknown) !== IntrinsicTypeKindUnknown))) {
       Checker_error(receiver, typeNode, The_intrinsic_keyword_can_only_be_used_to_declare_compiler_provided_intrinsic_types);
     }
     return;
@@ -8860,7 +8863,8 @@ export function Checker_reportNonExportedMember(receiver: GoPtr<Checker>, name: 
   }
   const exports = moduleSymbol!.Exports;
   if (localSymbol !== undefined) {
-    const exportedEqualsSymbol = exports.get(InternalSymbolNameExportEquals);
+    // Go reads from a possibly-nil map (legal; yields the zero value).
+    const exportedEqualsSymbol = exports?.get(InternalSymbolNameExportEquals);
     if (exportedEqualsSymbol !== undefined) {
       if (Checker_getSymbolIfSameReference(receiver, exportedEqualsSymbol, localSymbol) !== undefined) {
         Checker_reportInvalidImportEqualsExportMember(receiver, name, declarationName, moduleName);

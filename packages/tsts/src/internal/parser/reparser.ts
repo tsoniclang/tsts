@@ -113,7 +113,6 @@ import {
   GetRightMostAssignedExpression,
   JSDeclarationKindNone,
   HasSamePropertyAccessName,
-  IsThisIdentifier,
   IsFunctionLike,
   IsFunctionLikeDeclaration,
 } from "../ast/utilities.js";
@@ -1045,8 +1044,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
         case KindExportAssignment:
         case KindPropertyDeclaration:
         case KindPropertyAssignment:
-        case KindShorthandPropertyAssignment:
-        case KindGetAccessor: {
+        case KindShorthandPropertyAssignment: {
           if (Node_Type(parent) === undefined && Node_TypeExpression(tag) !== undefined) {
             MutableNode_SetType(Node_AsMutable(parent), Parser_addDeepCloneReparse(receiver, Node_Type(Node_TypeExpression(tag))));
             Parser_finishMutatedNode(receiver, parent);
@@ -1207,7 +1205,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
           if (param!.Type === undefined && parameterTag!.TypeExpression !== undefined) {
             param!.Type = Parser_reparseJSDocTypeLiteral(receiver, Node_Type(parameterTag!.TypeExpression));
           }
-          if (param!.QuestionToken === undefined) {
+          if (param!.QuestionToken === undefined && param!.Initializer === undefined) {
             const question = Parser_makeQuestionIfOptional(receiver, parameterTag);
             if (question !== undefined) {
               param!.QuestionToken = question;
@@ -1222,7 +1220,7 @@ export function Parser_reparseHosted(receiver: GoPtr<Parser>, tag: GoPtr<Node>, 
       const fun = getFunctionLikeHost(parent);
       if (fun !== undefined) {
         const params = Node_Parameters(fun);
-        if (params.length === 0 || (params[0]!.Kind !== KindThisKeyword && !IsThisIdentifier(Node_Name(params[0])))) {
+        if (params.length === 0 || Node_Name(params[0])!.Kind !== KindThisKeyword) {
           const thisParam = NewParameterDeclaration(
             receiver!.factory,
             undefined, // decorators
@@ -1473,37 +1471,29 @@ export function findMatchingParameter(fun: GoPtr<Node>, parameterTag: GoPtr<JSDo
  * 	return nil
  * }
  */
-function skipSatisfiesExpressions(node: GoPtr<Node>): GoPtr<Node> {
-  let n = node;
-  while (n !== undefined && n!.Kind === KindSatisfiesExpression) {
-    n = Node_Expression(n);
-  }
-  return n;
-}
-
 export function getFunctionLikeHost(host: GoPtr<Node>): GoPtr<Node> {
+  // Faithful to Go: NO skipping of satisfies/as wrappers — once a @satisfies
+  // tag has wrapped an initializer in a SatisfiesExpression, later tags (e.g.
+  // @param) no longer find a function-like host and intentionally no-op.
   let fun: GoPtr<Node> = host;
-  switch (host!.Kind) {
-    case KindVariableStatement: {
-      const nodes = AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes;
-      if (nodes.length !== 0) {
-        fun = Node_Initializer(nodes[0]);
+  if (host!.Kind === KindVariableStatement && AsVariableStatement(host)!.DeclarationList !== undefined) {
+    for (const declaration of AsVariableDeclarationList(AsVariableStatement(host)!.DeclarationList)!.Declarations!.Nodes) {
+      if (IsFunctionLike(Node_Initializer(declaration))) {
+        fun = Node_Initializer(declaration);
+        break;
       }
-      break;
     }
-    case KindPropertyAssignment:
-    case KindPropertyDeclaration:
-      fun = Node_Initializer(host);
-      break;
-    case KindExportAssignment:
-    case KindReturnStatement:
-      fun = Node_Expression(host);
-      break;
-    case KindExpressionStatement:
-      fun = GetRightMostAssignedExpression(Node_Expression(host));
-      break;
+  } else if (host!.Kind === KindPropertyAssignment) {
+    fun = Node_Initializer(host);
+  } else if (host!.Kind === KindPropertyDeclaration) {
+    fun = Node_Initializer(host);
+  } else if (host!.Kind === KindExportAssignment) {
+    fun = Node_Expression(host);
+  } else if (host!.Kind === KindReturnStatement) {
+    fun = Node_Expression(host);
+  } else if (host!.Kind === KindExpressionStatement) {
+    fun = GetRightMostAssignedExpression(Node_Expression(host));
   }
-  fun = skipSatisfiesExpressions(fun);
   if (IsFunctionLike(fun)) {
     return fun;
   }

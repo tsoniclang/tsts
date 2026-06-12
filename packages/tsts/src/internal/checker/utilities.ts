@@ -272,7 +272,8 @@ export function NewDiagnosticChainForNode(chain: GoPtr<Diagnostic>, node: GoPtr<
  * }
  */
 export function findInMap<K extends GoComparable, V>(m: GoMap<K, V>, predicate: (arg0: V) => bool): V {
-  for (const value of m.values()) {
+  // Go ranges over a nil map as a no-op.
+  for (const value of m?.values() ?? []) {
     if (predicate(value)) {
       return value;
     }
@@ -2528,7 +2529,9 @@ export function IsPrivateIdentifierSymbol(symbol_: GoPtr<Symbol>): bool {
  * }
  */
 export function isLateBoundName(name: string): bool {
-  return (name.length >= 2 && name.charCodeAt(0) === 0xfe && name.charCodeAt(1) === 0x40) as bool;
+  // Go checks the raw internal-name prefix byte; the port's prefix is the
+  // InternalSymbolNamePrefix constant (a Unicode noncharacter), not 0xFE.
+  return (name.length >= 2 && name.startsWith(InternalSymbolNamePrefix) && name.charCodeAt(1) === 0x40) as bool;
 }
 
 /**
@@ -3934,7 +3937,8 @@ export function getAnyImportSyntax(node: GoPtr<Node>): GoPtr<Node> {
  * }
  */
 export function isReservedMemberName(name: string): bool {
-  return (name.length >= 2 && name.charCodeAt(0) === 0xfe && name.charCodeAt(1) !== 0x40 && name.charCodeAt(1) !== 0x23) as bool;
+  // Same prefix-constant note as isLateBoundName.
+  return (name.length >= 2 && name.startsWith(InternalSymbolNamePrefix) && name.charCodeAt(1) !== 0x40 && name.charCodeAt(1) !== 0x23) as bool;
 }
 
 /**

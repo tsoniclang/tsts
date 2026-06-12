@@ -561,6 +561,52 @@ import {
 import { Assert, FailBadSyntaxKind } from "../debug/debug.js";
 import { Pool as PoolValue } from "../../go/sync.js";
 
+// Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
+// `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. Source
+// positions are byte offsets, so position-indexed reads of source text must go
+// through the UTF-8 byte view rather than JS string indexing.
+const utilUtf8Encoder: TextEncoder = new globalThis.TextEncoder();
+const utilUtf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+type UtilUtf8ByteInfo = { ascii: bool; bytes: Uint8Array };
+const utilUtf8ByteInfoCache = new globalThis.Map<string, UtilUtf8ByteInfo>();
+
+const utilGetUtf8ByteInfo = (s: string): UtilUtf8ByteInfo => {
+  const cached = utilUtf8ByteInfoCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= 0x80) {
+      ascii = false;
+      break;
+    }
+  }
+  const info: UtilUtf8ByteInfo = {
+    ascii,
+    bytes: ascii ? undefined as unknown as Uint8Array : utilUtf8Encoder.encode(s),
+  };
+  if (s.length >= 4096) {
+    utilUtf8ByteInfoCache.set(s, info);
+  }
+  return info;
+};
+
+const utilByteLen = (s: string): int => {
+  const info = utilGetUtf8ByteInfo(s);
+  return info.ascii ? s.length : info.bytes.length;
+};
+
+const utilByteSlice = (s: string, start: int, end?: int): string => {
+  const info = utilGetUtf8ByteInfo(s);
+  return info.ascii ? s.slice(start, end) : utilUtf8Decoder.decode(info.bytes.subarray(start, end));
+};
+
+const utilByteAt = (s: string, i: int): int => {
+  const info = utilGetUtf8ByteInfo(s);
+  return info.ascii ? s.charCodeAt(i) : info.bytes[i]!;
+};
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/utilities.go::varGroup::nextNodeId+nextSymbolId","kind":"varGroup","status":"implemented","sigHash":"023956e168736dc0e2e208f1009bb0207dce5c0c6e326fb624acc258ef9d4fd8","bodyHash":"bdf7525df846448041c907613da60444d42d43aa68effc987f7d071a0163c770"}
  *
@@ -6927,18 +6973,20 @@ export function nodeContainsPosition(node: GoPtr<Node>, position: int): bool {
  * }
  */
 export function findImportOrRequire(text: string, start: int): [int, int] {
-  const n: int = text.length as int;
+  // Go strings are UTF-8 byte sequences; `start`/`index` are byte offsets into
+  // the source text, so reads must go through the byte view.
+  const n: int = utilByteLen(text);
   let index = globalThis.Math.max(start, 0) as int;
   while (index < n) {
-    const next: int = strings.IndexAny(text.slice(index), "ir");
+    const next: int = strings.IndexAny(utilByteSlice(text, index), "ir");
     if (next < 0) {
       return [-1 as int, 0 as int];
     }
     const newIndex = (index + next) as int;
-    const isImport = text.charCodeAt(newIndex) === "i".charCodeAt(0);
+    const isImport = utilByteAt(text, newIndex) === 0x69 /* 'i' */;
     const size: int = isImport ? 6 as int : 7 as int;
     const expected = isImport ? "import" : "require";
-    if (newIndex + size <= n && text.slice(newIndex, newIndex + size) === expected) {
+    if (newIndex + size <= n && utilByteSlice(text, newIndex, newIndex + size) === expected) {
       return [newIndex, size];
     }
     index = (newIndex + 1) as int;

@@ -8,6 +8,7 @@ import {
   KindBlock,
   KindCaseBlock,
   KindClassDeclaration,
+  KindClassExpression,
   KindComputedPropertyName,
   KindConstructor,
   KindEnumDeclaration,
@@ -46,7 +47,7 @@ import { IsConstructorDeclaration, IsEnumDeclaration, IsIdentifier, IsModuleDecl
 import { ChildIsDecorated, IsBindingPattern, IsEnumConst, IsInstantiatedModule, IsParameterPropertyDeclaration } from "../../ast/utilities.js";
 import { Node_Elements, Node_ModifierFlags, Node_ParameterList, Node_Parameters, Node_Text, NodeFactory_UpdateBlock, NodeFactory_UpdateClassDeclaration, NodeFactory_UpdateClassExpression, NodeFactory_UpdateConstructorDeclaration, NodeFactory_UpdateFunctionDeclaration, NodeFactory_UpdateShorthandPropertyAssignment, NodeFactory_UpdateTryStatement } from "../../ast/ast.js";
 import { SubtreeContainsIdentifier, SubtreeContainsTypeScript } from "../../ast/subtreefacts.js";
-import { AsBlock, AsClassDeclaration, AsComputedPropertyName, AsConstructorDeclaration, AsEnumDeclaration, AsEnumMember, AsFunctionDeclaration, AsImportEqualsDeclaration, AsModuleBlock, AsModuleDeclaration, AsParameterDeclaration, AsShorthandPropertyAssignment, AsTryStatement, AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
+import { AsBlock, AsClassDeclaration, AsClassExpression, AsComputedPropertyName, AsConstructorDeclaration, AsEnumDeclaration, AsEnumMember, AsFunctionDeclaration, AsImportEqualsDeclaration, AsModuleBlock, AsModuleDeclaration, AsParameterDeclaration, AsShorthandPropertyAssignment, AsTryStatement, AsVariableDeclaration, AsVariableDeclarationList, AsVariableStatement } from "../../ast/generated/casts.js";
 import { TokenFlagsNone } from "../../ast/tokenflags.js";
 import { CompilerOptions_GetEmitModuleKind, CompilerOptions_ShouldPreserveConstEnums, ModuleKindSystem } from "../../core/compileroptions.js";
 import type { NodeVisitor as ConcreteNodeVisitor } from "../../ast/visitor.js";
@@ -404,6 +405,8 @@ const RuntimeSyntaxTransformer_visitInner = (receiver: GoPtr<RuntimeSyntaxTransf
       return RuntimeSyntaxTransformer_visitModuleDeclaration(receiver, AsModuleDeclaration(node));
     case KindClassDeclaration:
       return RuntimeSyntaxTransformer_visitClassDeclaration(receiver, AsClassDeclaration(node));
+    case KindClassExpression:
+      return RuntimeSyntaxTransformer_visitClassExpression(receiver, AsClassExpression(node));
     case KindConstructor:
       return RuntimeSyntaxTransformer_visitConstructorDeclaration(receiver, AsConstructorDeclaration(node));
     case KindFunctionDeclaration:

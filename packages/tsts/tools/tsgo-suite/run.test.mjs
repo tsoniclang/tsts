@@ -895,22 +895,27 @@ test("getFileBasedTestConfigurations expands noLib with target variations", () =
   ]);
 });
 
-test("getFileBasedTestConfigurations expands override, property-access, and value-import variations", () => {
+test("getFileBasedTestConfigurations expands override, property-access, and module variations", () => {
+  // The vary-by set is derived from the ported OptionsDeclarations exactly like
+  // compiler_runner.go getCompilerVaryByMap; preserveValueImports no longer exists in
+  // TS-Go's option declarations, so it does NOT vary (its tests are name-skipped).
   const configurations = getFileBasedTestConfigurations(new Map([
     ["noimplicitoverride", "true,false"],
     ["nopropertyaccessfromindexsignature", "true,false"],
-    ["preservevalueimports", "true,false"],
+    ["isolatedmodules", "true,false"],
     ["nouncheckedindexedaccess", "true,false"],
   ]));
   assert.equal(configurations.length, 16);
   assert.deepEqual(configurations[0].settings.get("noimplicitoverride"), "true");
   assert.deepEqual(configurations[0].settings.get("nopropertyaccessfromindexsignature"), "true");
-  assert.deepEqual(configurations[0].settings.get("preservevalueimports"), "true");
+  assert.deepEqual(configurations[0].settings.get("isolatedmodules"), "true");
   assert.deepEqual(configurations[0].settings.get("nouncheckedindexedaccess"), "true");
   assert.deepEqual(configurations.at(-1).settings.get("noimplicitoverride"), "false");
   assert.deepEqual(configurations.at(-1).settings.get("nopropertyaccessfromindexsignature"), "false");
-  assert.deepEqual(configurations.at(-1).settings.get("preservevalueimports"), "false");
+  assert.deepEqual(configurations.at(-1).settings.get("isolatedmodules"), "false");
   assert.deepEqual(configurations.at(-1).settings.get("nouncheckedindexedaccess"), "false");
+  const nonVarying = getFileBasedTestConfigurations(new Map([["preservevalueimports", "true,false"]]));
+  assert.equal(nonVarying.length, 1);
 });
 
 test("getFileBasedTestConfigurations expands alwaysStrict with target variations", () => {
@@ -1241,14 +1246,25 @@ test("baselineHasErrors detects ANSI-colored pretty baselines", () => {
   }), true);
 });
 
-test("baselineHasErrors falls back to TypeScript submodule baselines for submodule corpus", () => {
+test("baselineHasErrors reads pinned TS-Go submodule baselines for submodule corpus", () => {
+  // The typescript corpus gates against reference/submodule/<suite> (pinned TS-Go's own
+  // full outputs); Strada baselines are no longer consulted for compiler/conformance.
+  assert.equal(baselineHasErrors({
+    corpus: "typescript",
+    suite: "compiler",
+    relativePath: "compiler/ArrowFunctionExpression1.ts",
+    caseName: "ArrowFunctionExpression1",
+    configurationName: "",
+  }), true);
+  // Upstream skips @module: system cases (SkipUnsupportedCompilerOptions), so no
+  // submodule baseline exists for them.
   assert.equal(baselineHasErrors({
     corpus: "typescript",
     suite: "compiler",
     relativePath: "compiler/SystemModuleForStatementNoInitializer.ts",
     caseName: "SystemModuleForStatementNoInitializer",
     configurationName: "",
-  }), true);
+  }), false);
 });
 
 test("baselineHasErrors reads TypeScript project baselines by module variant", () => {
@@ -1270,11 +1286,19 @@ test("baselineHasErrors reads TypeScript project baselines by module variant", (
   }), true);
 });
 
-test("getSkipReason does not skip compiler cases", () => {
+test("getSkipReason mirrors TS-Go runner skips", () => {
+  // compiler_runner.go skippedTests + harnessutil.go SkipUnsupportedCompilerOptions:
+  // the pinned TS-Go runner skips these outright, so no reference baselines exist and
+  // there is nothing to gate against. The suite mirrors the skip, counted and reasoned.
   const base = { sourceBaseName: "case.ts", configuration: new Map() };
-  assert.equal(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), "");
-  assert.equal(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), "");
-  assert.equal(getSkipReason({ ...base, sourceBaseName: "moduleNoneDynamicImport.ts" }), "");
+  assert.match(getSkipReason({ ...base, configuration: new Map([["target", "ES5"]]) }), /unsupported target es5/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["alwaysstrict", "false"]]) }), /alwaysStrict=false/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["moduleresolution", "classic"]]) }), /unsupported module resolution kind classic/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["module", "amd"]]) }), /unsupported module kind amd/);
+  assert.match(getSkipReason({ ...base, configuration: new Map([["baseurl", "./"]]) }), /unsupported baseUrl/);
+  assert.match(getSkipReason({ ...base, sourceBaseName: "moduleNoneDynamicImport.ts" }), /TS-Go runner skip list/);
+  assert.equal(getSkipReason({ ...base, configuration: new Map([["module", "esnext"]]) }), "");
+  assert.equal(getSkipReason(base), "");
 });
 
 test("compilerOptionsFromSettings preserves removed option values for TS-Go diagnostics", () => {
@@ -1326,4 +1350,67 @@ test("buildTestUniverseInventory tracks full compiler scope and excludes languag
   assert.equal(inventory.baselines.outOfScope, inventory.baselines.entries.fourslash + inventory.baselines.entries.lsp);
   assert.ok(inventory.goTests.entries["internal/fourslash"] > 0);
   assert.ok(inventory.goTests.outOfScope >= inventory.goTests.entries["internal/fourslash"]);
+});
+
+test("applyTsgoAcceptedOverlay replaces emitted output sections and reports use", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const expectedOutputs = new Map([["v1.d.ts", "strada content"], ["v2.d.ts", "untouched"]]);
+  const headlines = [];
+  const sources = [];
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [{ name: "v1.d.ts", content: "tsgo content" }],
+    expectedOutputs,
+    headlines,
+    sources,
+  );
+  assert.deepEqual(used, ["case.d.ts#v1.d.ts"]);
+  assert.deepEqual(problems, []);
+  assert.equal(expectedOutputs.get("v1.d.ts"), "tsgo content");
+  assert.equal(expectedOutputs.get("v2.d.ts"), "untouched");
+});
+
+test("applyTsgoAcceptedOverlay rejects stale and unknown overlay sections", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const expectedOutputs = new Map([["v1.d.ts", "same content"]]);
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [
+      { name: "v1.d.ts", content: "same content" },
+      { name: "missing.d.ts", content: "anything" },
+    ],
+    expectedOutputs,
+    [],
+    [],
+  );
+  assert.deepEqual(used, []);
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /matches the reference baseline/);
+  assert.match(problems[1], /no such emitted output/);
+});
+
+test("applyTsgoAcceptedOverlay supersedes every Diagnostics reported section of the artifact", async () => {
+  const { applyTsgoAcceptedOverlay } = await import("./run.mjs");
+  const headlines = ["a.ts(1,1): error TS1: old.", "b.ts(1,1): error TS2: old."];
+  const sources = ["case.d.ts#Diagnostics reported", "case.d.ts#Diagnostics reported"];
+  const { used, problems } = applyTsgoAcceptedOverlay(
+    "case.d.ts",
+    [{ name: "Diagnostics reported", content: "a.ts(2,2): error TS9: new." }],
+    new Map(),
+    headlines,
+    sources,
+  );
+  assert.deepEqual(used, ["case.d.ts#Diagnostics reported"]);
+  assert.deepEqual(problems, []);
+  assert.equal(headlines[0], "a.ts(2,2): error TS9: new.");
+  assert.equal(headlines[1], "");
+});
+
+test("loadTsgoAcceptedOverlay returns sections for committed overlays and undefined otherwise", async () => {
+  const { loadTsgoAcceptedOverlay } = await import("./run.mjs");
+  assert.equal(loadTsgoAcceptedOverlay("typescript", "transpile", "no-such-overlay.d.ts"), undefined);
+  const sections = loadTsgoAcceptedOverlay("typescript", "transpile", "declarationRestParameters.d.ts");
+  assert.ok(Array.isArray(sections));
+  assert.ok(sections.some((section) => section.name === "v1.d.ts"));
+  assert.ok(sections.some((section) => section.name === "Diagnostics reported"));
 });

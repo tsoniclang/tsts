@@ -584,9 +584,11 @@ export function metadataSerializer_serializeUnionOrIntersectionConstituents(rece
     if (typeNode.Kind === KindAnyKeyword) {
       return NewIdentifier(f, "Object");
     }
-    if (!receiver!.strictNullChecks &&
-        ((IsLiteralTypeNode(typeNode) && AsLiteralTypeNode(typeNode)!.Literal!.Kind === KindNullKeyword) ||
-         typeNode.Kind === KindUndefinedKeyword)) {
+    // Go operator precedence: (!strictNullChecks && isNullLiteral) || isUndefinedKeyword —
+    // the undefined keyword is elided regardless of strictNullChecks.
+    if ((!receiver!.strictNullChecks &&
+        (IsLiteralTypeNode(typeNode) && AsLiteralTypeNode(typeNode)!.Literal!.Kind === KindNullKeyword)) ||
+        typeNode.Kind === KindUndefinedKeyword) {
       continue;
     }
     const serializedConstituent = metadataSerializer_serializeTypeNode(receiver, typeNode);

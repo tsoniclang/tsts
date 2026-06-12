@@ -10,7 +10,7 @@ import type { SyncMap } from "../collections/syncmap.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
 import { Tristate_IsTrue } from "../core/tristate.js";
 import { GetCompilerOptionsWithRedirect } from "../module/resolver.js";
-import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_ConfigName } from "../tsoptions/parsedcommandline.js";
+import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_as_ResolvedProjectReference } from "../tsoptions/parsedcommandline.js";
 import type { ResolvedProjectReference, ResolutionHost } from "../module/types.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
 import type { Path } from "../tspath/path.js";
@@ -177,10 +177,10 @@ export function projectReferenceFileMapper_isSourceFromProjectReference(receiver
  */
 export function projectReferenceFileMapper_getCompilerOptionsForFile(receiver: GoPtr<projectReferenceFileMapper>, file: HasFileName): GoPtr<CompilerOptions> {
   const redirect = projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver, file);
-  const redirectedReference: ResolvedProjectReference | undefined = redirect !== undefined
-    ? { ConfigName: (): string => ParsedCommandLine_ConfigName(redirect), CompilerOptions: (): GoPtr<CompilerOptions> => ParsedCommandLine_CompilerOptions(redirect) }
+  const redirectedReference: GoPtr<ResolvedProjectReference> = redirect !== undefined
+    ? ParsedCommandLine_as_ResolvedProjectReference(redirect)
     : undefined;
-  return GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectedReference as ResolvedProjectReference);
+  return GetCompilerOptionsWithRedirect(ParsedCommandLine_CompilerOptions(receiver!.opts.Config), redirectedReference);
 }
 
 /**

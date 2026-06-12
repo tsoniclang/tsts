@@ -1387,7 +1387,9 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
  * }
  */
 export function GetSpellingSuggestionForStrings(name: string, candidates: GoSeq<string>): string {
-  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare);
+  // Go instantiates GetSpellingSuggestion with T=string, whose zero value is "" — the
+  // value callers test for "no suggestion". The generic port yields undefined instead.
+  return GetSpellingSuggestion(name, candidates, Identity, strings.Compare) ?? "";
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool, int } from "@tsonic/core/types.js";
 import { DeleteFunc } from "../../go/slices.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { CommentRange } from "../ast/ast.js";
@@ -24,6 +24,52 @@ import { LanguageVariantJSX, LanguageVariantStandard } from "../core/languagevar
 import type { ScriptKind } from "../core/scriptkind.js";
 import { ScriptKindJS, ScriptKindJSON, ScriptKindJSX, ScriptKindTSX } from "../core/scriptkind.js";
 import { GetLeadingCommentRanges, GetTrailingCommentRanges } from "../scanner/scanner.js";
+
+// Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
+// `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. Parser
+// positions are byte offsets, so reads of the source text by position must go
+// through the UTF-8 byte view rather than JS string indexing.
+const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
+const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
+
+const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
+  const cached = utf8ByteInfoCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= 0x80) {
+      ascii = false;
+      break;
+    }
+  }
+  const info: Utf8ByteInfo = {
+    ascii,
+    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
+  };
+  if (s.length >= 4096) {
+    utf8ByteInfoCache.set(s, info);
+  }
+  return info;
+};
+
+export const byteLen = (s: string): int => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.length : info.bytes.length;
+};
+
+export const byteSlice = (s: string, start: int, end?: int): string => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
+};
+
+export const byteAt = (s: string, i: int): int => {
+  const info = getUtf8ByteInfo(s);
+  return info.ascii ? s.charCodeAt(i) : info.bytes[i]!;
+};
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/utilities.go::func::getLanguageVariant","kind":"func","status":"implemented","sigHash":"4c5ee87fd9820be6daa04017b5c0edc7a2877024645c650bdab8194a3da6286b","bodyHash":"13c7111a0611fe78ed4af50148613b6c6f4ac28950c0080c87902c309eb7de82"}
@@ -130,9 +176,9 @@ export function GetJSDocCommentRanges(f: GoPtr<NodeFactory>, commentRanges: GoSl
     const commentLen = TextRange_End(comment) - commentStart;
     return (TextRange_End(comment) > Node_End(node) ||
       commentLen < 4 ||
-      text[commentStart + 1] !== "*" ||
-      text[commentStart + 2] !== "*" ||
-      text[commentStart + 3] === "/") as bool;
+      byteAt(text, commentStart + 1) !== 0x2a /* '*' */ ||
+      byteAt(text, commentStart + 2) !== 0x2a /* '*' */ ||
+      byteAt(text, commentStart + 3) === 0x2f /* '/' */) as bool;
   });
 }
 
@@ -157,5 +203,5 @@ export function isKeywordOrPunctuation(token: Kind): bool {
  * }
  */
 export function isJSDocLikeText(text: string): bool {
-  return (text.length >= 4 && text[1] === "*" && text[2] === "*" && text[3] !== "/") as bool;
+  return (byteLen(text) >= 4 && byteAt(text, 1) === 0x2a /* '*' */ && byteAt(text, 2) === 0x2a /* '*' */ && byteAt(text, 3) !== 0x2f /* '/' */) as bool;
 }

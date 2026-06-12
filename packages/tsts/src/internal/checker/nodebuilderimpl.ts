@@ -188,7 +188,7 @@ import {
   NewUnionTypeNode,
   NewIndexSignatureDeclaration,
 } from "../ast/generated/factory.js";
-import { Node_Arguments, Node_Expression, Node_Initializer, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Initializer, Node_Type, Node_ModifierNodes, Node_ModuleSpecifier, Node_TypeArgumentList, Node_TypeArguments, NodeFactory_NewModifier, NodeFactory_UpdateBindingElement, SourceFile_FileName, SourceFile_Imports, SourceFile_IsJS, SourceFile_Path } from "../ast/ast.js";
 import { NodeFactory_DeepCloneNode } from "../ast/deepclone.js";
 import { Node_Clone, Node_Name, NodeDefault_AsNode, NodeFactory_AsNodeFactory, NodeFactory_NewModifierList, NodeFactory_NewNodeList, updateNode } from "../ast/spine.js";
 import { NewTextRange } from "../core/text.js";
@@ -335,8 +335,7 @@ import {
   Checker_newSymbolEx,
   Checker_resolveAlias,
   Checker_resolveEntityName,
-  Checker_resolveStructuredTypeMembers,
-} from "./checker/symbols.js";
+  Checker_resolveStructuredTypeMembers, Checker_GetSymbolAtLocation, Checker_GetAliasedSymbol } from "./checker/symbols.js";
 import { Checker_getTypeParameterModifiers, Checker_isTypeIdenticalTo } from "./relater.js";
 import { Checker_GetEmitResolver } from "./checker/support.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
@@ -345,7 +344,7 @@ import { Checker_getTupleElementLabel, Checker_getTypePredicateOfSignature, Chec
 import type { TypeMapper } from "./mapper.js";
 import { newTypeMapper, prependTypeMapping, TypeMapper_Map } from "./mapper.js";
 import type { IndexInfo, InterfaceType, LiteralType, MappedType, ReverseMappedSymbolLinks, Signature, StructuredType, SymbolNodeLinks, Type, TypeAlias, TypeData, TypeId, TypeParameter, TypePredicate, TypeReference, UniqueESSymbolType, ValueSymbolLinks } from "./types.js";
-import { ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_OuterTypeParameters, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsInstantiationExpressionType, ObjectFlagsIsClassInstanceClone, ObjectFlagsMapped, ObjectFlagsReference, ObjectFlagsRequiresWidening, ObjectFlagsReverseMapped, ObjectFlagsTuple, SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsConditionalType, Type_AsIndexedAccessType, Type_AsInstantiationExpressionType, Type_AsInterfaceType, Type_AsIntersectionType, Type_AsLiteralType, Type_AsMappedType, Type_AsStringMappingType, Type_AsStructuredType, Type_AsSubstitutionType, Type_AsTemplateLiteralType, Type_AsTypeParameter, Type_AsTypeReference, Type_AsTupleType, Type_AsUnionOrIntersectionType, Type_AsUnionType, Type_Types, Type_AsUniqueESSymbolType, Type_Target, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsAny, TypeFlagsBigInt, TypeFlagsBigIntLiteral, TypeFlagsBoolean, TypeFlagsBooleanLiteral, TypeFlagsConditional, TypeFlagsESSymbol, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsIndex, TypeFlagsIndexedAccess, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNonPrimitive, TypeFlagsNull, TypeFlagsNumber, TypeFlagsNumberLiteral, TypeFlagsObject, TypeFlagsString, TypeFlagsStringLike, TypeFlagsStringLiteral, TypeFlagsStringMapping, TypeFlagsStringOrNumberLiteral, TypeFlagsSubstitution, TypeFlagsTemplateLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUniqueESSymbol, TypeFlagsUnknown, TypeFlagsVoid, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
+import { ElementFlagsOptional, ElementFlagsRest, ElementFlagsVariable, InterfaceType_OuterTypeParameters, InterfaceType_TypeParameters, ObjectFlagsAnonymous, ObjectFlagsClassOrInterface, ObjectFlagsInstantiationExpressionType, ObjectFlagsIsClassInstanceClone, ObjectFlagsMapped, ObjectFlagsReference, ObjectFlagsRequiresWidening, ObjectFlagsReverseMapped, ObjectFlagsTuple, SignatureFlagsAbstract, SignatureFlagsNone, SignatureKindCall, StructuredType_CallSignatures, StructuredType_ConstructSignatures, Type_AsConditionalType, Type_AsIndexedAccessType, Type_AsInstantiationExpressionType, Type_AsInterfaceType, Type_AsIntersectionType, Type_AsLiteralType, Type_AsMappedType, Type_AsObjectType, Type_AsStringMappingType, Type_AsStructuredType, Type_AsSubstitutionType, Type_AsTemplateLiteralType, Type_AsTypeParameter, Type_AsTypeReference, Type_AsTupleType, Type_AsUnionOrIntersectionType, Type_AsUnionType, Type_Types, Type_AsUniqueESSymbolType, Type_Target, TypeAlias_Symbol, TypeAlias_TypeArguments, TypeBase_AsType, TypeFlagsAny, TypeFlagsBigInt, TypeFlagsBigIntLiteral, TypeFlagsBoolean, TypeFlagsBooleanLiteral, TypeFlagsConditional, TypeFlagsESSymbol, TypeFlagsEnumLike, TypeFlagsEnumLiteral, TypeFlagsIndex, TypeFlagsIndexedAccess, TypeFlagsIntersection, TypeFlagsNever, TypeFlagsNonPrimitive, TypeFlagsNull, TypeFlagsNumber, TypeFlagsNumberLiteral, TypeFlagsObject, TypeFlagsString, TypeFlagsStringLike, TypeFlagsStringLiteral, TypeFlagsStringMapping, TypeFlagsStringOrNumberLiteral, TypeFlagsSubstitution, TypeFlagsTemplateLiteral, TypeFlagsTypeParameter, TypeFlagsUndefined, TypeFlagsUnion, TypeFlagsUniqueESSymbol, TypeFlagsUnknown, TypeFlagsVoid, TypePredicateKindAssertsIdentifier, TypePredicateKindAssertsThis, TypePredicateKindIdentifier } from "./types.js";
 import { Checker_formatUnionTypes, Checker_symbolToString, Checker_valueToString } from "./printer.js";
 import { containsNonMissingUndefinedType, getDeclarationModifierFlagsFromSymbol, Checker_isOptionalParameter, isLateBoundName, isNumericLiteralName, isOptionalDeclaration, IsPrivateIdentifierSymbol, isReservedMemberName, pseudoBigIntToString, Checker_sortSymbols, IsTypeAny, isThisTypeParameter } from "./utilities.js";
 import { PathIsRelative } from "../tspath/path.js";
@@ -1434,11 +1433,11 @@ export function NodeBuilderImpl_existingTypeNodeIsNotReferenceOrIsReferenceWithC
     return true;
   }
   const existingTarget = Checker_getDeclaredTypeOfSymbol(receiver!.ch, symbol);
-  if (existingTarget === undefined || existingTarget !== Type_AsTypeReference(t)!.__tsgoEmbedded0!.target) {
+  if (existingTarget === undefined || existingTarget !== Type_AsObjectType(t)!.target) {
     return true;
   }
   const typeArgs = Node_TypeArguments(existing);
-  return (typeArgs !== undefined ? typeArgs.length : 0) >= Checker_getMinTypeArgumentCount(receiver!.ch, InterfaceType_TypeParameters(Type_AsInterfaceType(Type_AsTypeReference(t)!.__tsgoEmbedded0!.target)));
+  return (typeArgs !== undefined ? typeArgs.length : 0) >= Checker_getMinTypeArgumentCount(receiver!.ch, InterfaceType_TypeParameters(Type_AsInterfaceType(Type_AsObjectType(t)!.target)));
 }
 
 /**
@@ -1498,8 +1497,7 @@ export function NodeBuilderImpl_tryReuseExistingNonParameterTypeNode(receiver: G
  * }
  */
 export function NodeBuilderImpl_getResolvedTypeWithoutAbstractConstructSignatures(receiver: GoPtr<NodeBuilderImpl>, t: GoPtr<StructuredType>): GoPtr<Type> {
-  const typeBase = t!.__tsgoEmbedded0!.__tsgoEmbedded0;
-  const asType = TypeBase_AsType(typeBase);
+  const asType = (t as unknown as TypeData).AsType();
   if (StructuredType_ConstructSignatures(t).length === 0) {
     return asType;
   }
@@ -3050,9 +3048,15 @@ export function NodeBuilderImpl_getSpecifierForModuleSymbol(receiver: GoPtr<Node
     Imports: () => SourceFile_Imports(contextFile) as never,
     IsJS: () => SourceFile_IsJS(contextFile),
   };
+  // Go passes b.ch directly because Checker implements modulespecifiers.Checker via
+  // methods; the port adapts the struct to the interface shape with the free functions.
+  const checkerShape = {
+    GetSymbolAtLocation: (node: GoPtr<Node>) => Checker_GetSymbolAtLocation(receiver!.ch, node),
+    GetAliasedSymbol: (aliasSymbol: GoPtr<Symbol>) => Checker_GetAliasedSymbol(receiver!.ch, aliasSymbol),
+  };
   const allSpecifiers = GetModuleSpecifiers(
     symbol_,
-    receiver!.ch as never,
+    checkerShape as never,
     specifierCompilerOptions,
     importingSourceFile,
     host,
@@ -3550,14 +3554,16 @@ export function NodeBuilderImpl_createMappedTypeNodeFromType(receiver: GoPtr<Nod
   EmitContext_AddEmitFlags(b.e, result, EFSingleLine);
 
   if ((b.ctx!.flags & FlagsGenerateNamesForShadowedTypeParams) !== 0 && NodeBuilderImpl_isHomomorphicMappedTypeWithNonHomomorphicInstantiation(receiver, mapped)) {
-    let rawConstraintTypeFromDeclaration = NodeBuilderImpl_getTypeFromTypeNode(receiver, AsTypeParameterDeclaration(declaration.TypeParameter)!.Constraint, false);
+    // Go: ...TypeParameter.AsTypeParameterDeclaration().Constraint.Type() — the
+    // OPERAND of the `keyof` constraint node, not the constraint node itself.
+    let rawConstraintTypeFromDeclaration = NodeBuilderImpl_getTypeFromTypeNode(receiver, Node_Type(AsTypeParameterDeclaration(declaration.TypeParameter)!.Constraint), false);
     if (rawConstraintTypeFromDeclaration !== undefined) {
       rawConstraintTypeFromDeclaration = Checker_getConstraintOfTypeParameter(b.ch, rawConstraintTypeFromDeclaration);
     }
     if (rawConstraintTypeFromDeclaration === undefined) {
       rawConstraintTypeFromDeclaration = b.ch!.unknownType;
     }
-    const originalConstraint = Checker_instantiateType(b.ch, rawConstraintTypeFromDeclaration, mapped.__tsgoEmbedded0!.mapper);
+    const originalConstraint = Checker_instantiateType(b.ch, rawConstraintTypeFromDeclaration, (mapped as unknown as TypeData).AsObjectType()!.mapper);
     const originalConstraintNode = (originalConstraint!.flags & TypeFlagsUnknown) === 0
       ? NodeBuilderImpl_typeToTypeNode(receiver, originalConstraint)
       : undefined;
@@ -5547,7 +5553,7 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
     }
     typeElements.push(NodeBuilderImpl_signatureToSignatureDeclarationHelper(receiver, signature, KindConstructSignature, undefined) as GoPtr<TypeElement>);
   }
-  const resolvedObjectFlags = resolvedType!.__tsgoEmbedded0!.__tsgoEmbedded0!.__tsgoEmbedded0!.objectFlags;
+  const resolvedObjectFlags = (resolvedType as unknown as TypeData).AsType()!.objectFlags;
   for (const info of resolvedType!.indexInfos ?? []) {
     typeElements.push(NodeBuilderImpl_indexInfoToIndexSignatureDeclarationHelper(receiver, info, (resolvedObjectFlags & ObjectFlagsReverseMapped) !== 0 ? NodeBuilderImpl_createElidedInformationPlaceholder(receiver) : undefined) as GoPtr<TypeElement>);
   }
@@ -5569,7 +5575,7 @@ export function NodeBuilderImpl_createTypeNodesFromResolvedType(receiver: GoPtr<
         receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
       }
       if (IsPrivateIdentifierSymbol(propertySymbol)) {
-        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(propertySymbol!.Name);
+        receiver!.ctx!.tracker!.ReportPrivateInBaseOfClassExpression(SymbolName(propertySymbol));
       }
     }
     if (NodeBuilderImpl_checkTruncationLength(receiver) && (i + 2 < properties.length - 1)) {
@@ -6066,8 +6072,9 @@ export function NodeBuilderImpl_conditionalTypeToTypeNode(receiver: GoPtr<NodeBu
  * }
  */
 export function NodeBuilderImpl_getParentSymbolOfTypeParameter(receiver: GoPtr<NodeBuilderImpl>, typeParameter: GoPtr<TypeParameter>): GoPtr<Symbol> {
-  const typeBase = typeParameter!.__tsgoEmbedded0!.__tsgoEmbedded0;
-  const typeObj = TypeBase_AsType(typeBase);
+  // Checker type data objects are flat (installTypeData); the Go embedded chain is
+  // represented by the AsType() backlink, not __tsgoEmbedded0 navigation.
+  const typeObj = (typeParameter as unknown as TypeData).AsType();
   const tp = GetDeclarationOfKind(typeObj!["symbol"], KindTypeParameter);
   const host = tp!.Parent;
   if (host === undefined) {

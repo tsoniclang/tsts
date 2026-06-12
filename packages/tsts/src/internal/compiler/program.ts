@@ -72,6 +72,7 @@ import type { ComparePathsOptions, Path } from "../tspath/path.js";
 import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
 import { ForEachEmittedFile, GetOutputPathsFor, OutputPaths_JsFilePath, OutputPaths_SourceMapFilePath, OutputPaths_DeclarationFilePath, OutputPaths_DeclarationMapPath, type OutputPathsHost } from "../outputpaths/outputpaths.js";
 import { ParseIsolatedEntityName } from "../parser/parser/support.js";
+import { byteAt, byteLen } from "../parser/utilities.js";
 import { checkerPool_GetGlobalDiagnostics, checkerPool_getCheckerNonExclusive, checkerPool_getCheckerForFileNonExclusive, checkerPool_getCheckerForFileExclusive, checkerPool_forEachCheckerParallel, checkerPool_forEachCheckerGroupDo, checkerPool_as_compiler_CheckerPool } from "./checkerpool.js";
 import type { checkerPool, CheckerPool } from "./checkerpool.js";
 import { newCheckerPoolWithTracing } from "./checkerpool.js";
@@ -110,12 +111,12 @@ import { OrderedMap_Entries } from "../collections/ordered_map.js";
 export interface ProgramOptions {
   Host: CompilerHost;
   Config: GoPtr<ParsedCommandLine>;
-  UseSourceOfProjectReference: bool;
-  SingleThreaded: Tristate;
-  CreateCheckerPool: (arg0: GoPtr<Program>) => CheckerPool;
-  TypingsLocation: string;
-  ProjectName: string;
-  Tracing: GoPtr<Tracing_bcfc8412>;
+  UseSourceOfProjectReference?: bool;
+  SingleThreaded?: Tristate;
+  CreateCheckerPool?: (arg0: GoPtr<Program>) => CheckerPool;
+  TypingsLocation?: string;
+  ProjectName?: string;
+  Tracing?: GoPtr<Tracing_bcfc8412>;
 }
 
 /**
@@ -127,7 +128,7 @@ export interface ProgramOptions {
  * }
  */
 export function ProgramOptions_canUseProjectReferenceSource(receiver: GoPtr<ProgramOptions>): bool {
-  return (receiver!.UseSourceOfProjectReference && !Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.Config)!.DisableSourceOfProjectReferenceRedirect)) as bool;
+  return (receiver!.UseSourceOfProjectReference === true && !Tristate_IsTrue(ParsedCommandLine_CompilerOptions(receiver!.Config)!.DisableSourceOfProjectReferenceRedirect)) as bool;
 }
 
 /**
@@ -721,7 +722,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
  */
 export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
   // Compute singleThreaded before creating the program (needed for processAllProgramFiles)
-  const singleThreaded = Tristate_IsTrue(Tristate_DefaultIfUnknown(opts.SingleThreaded, ParsedCommandLine_CompilerOptions(opts.Config)!.SingleThreaded));
+  const singleThreaded = Tristate_IsTrue(Tristate_DefaultIfUnknown(opts.SingleThreaded ?? TSUnknown, ParsedCommandLine_CompilerOptions(opts.Config)!.SingleThreaded));
   let popTrace: (() => void) | undefined;
   if (opts.Tracing !== undefined) {
     popTrace = Tracing_Push(opts.Tracing, PhaseProgram, "createProgram", new globalThis.Map([["configFilePath", ParsedCommandLine_CompilerOptions(opts.Config)!.ConfigFilePath]]), true);
@@ -1133,7 +1134,7 @@ export function Program_extractUnresolvedImportsFromSourceFile(receiver: GoPtr<P
  * }
  */
 export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
-  return Tristate_IsTrue(Tristate_DefaultIfUnknown(receiver!.opts.SingleThreaded, Program_Options(receiver)!.SingleThreaded));
+  return Tristate_IsTrue(Tristate_DefaultIfUnknown(receiver!.opts.SingleThreaded ?? TSUnknown, Program_Options(receiver)!.SingleThreaded));
 }
 
 /**
@@ -2488,7 +2489,8 @@ export function Program_verifyCompilerOptions(receiver: GoPtr<Program>): void {
         }
       }
     }
-    return false as bool;
+    // Go `for ... range` iterates every entry; the GoSeq yield returns true to continue.
+    return true as bool;
   });
 
   if (Tristate_IsFalseOrUnknown(options!.SourceMap) && Tristate_IsFalseOrUnknown(options!.InlineSourceMap)) {
@@ -3158,12 +3160,13 @@ export function Program_getSuggestionDiagnosticsWithChecker(receiver: GoPtr<Prog
  * }
  */
 export function isCommentOrBlankLine(text: string, pos: int): bool {
-  while (pos < text.length && (text[pos] === " " || text[pos] === "\t")) {
+  const n = byteLen(text);
+  while (pos < n && (byteAt(text, pos) === 0x20 /* ' ' */ || byteAt(text, pos) === 0x09 /* '\t' */)) {
     pos++;
   }
-  return (pos === text.length ||
-    (pos < text.length && (text[pos] === "\r" || text[pos] === "\n")) ||
-    (pos + 1 < text.length && text[pos] === "/" && text[pos + 1] === "/")) as bool;
+  return (pos === n ||
+    (pos < n && (byteAt(text, pos) === 0x0d /* '\r' */ || byteAt(text, pos) === 0x0a /* '\n' */)) ||
+    (pos + 1 < n && byteAt(text, pos) === 0x2f /* '/' */ && byteAt(text, pos + 1) === 0x2f /* '/' */)) as bool;
 }
 
 /**
@@ -4617,7 +4620,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
           }
         }
 
-        const packageResolution = Resolver_ResolvePackageDirectory(receiver!.__tsgoEmbedded0!.resolver, dep, packageJsonName, ResolutionModeCommonJS, undefined as unknown as import("../module/types.js").ResolvedProjectReference);
+        const packageResolution = Resolver_ResolvePackageDirectory(receiver!.__tsgoEmbedded0!.resolver, dep, packageJsonName, ResolutionModeCommonJS, undefined);
         if (packageResolution !== undefined && ResolvedModule_IsResolved(packageResolution as GoPtr<ResolvedModule>)) {
           const resolved = packageResolution as GoPtr<ResolvedModule>;
           KnownSymlinks_ProcessResolution(
@@ -4642,7 +4645,7 @@ export function Program_GetSymlinkCache(receiver: GoPtr<Program>): GoPtr<KnownSy
  * }
  */
 export function Program_ResolveModuleName(receiver: GoPtr<Program>, moduleName: string, containingFile: string, resolutionMode: ResolutionMode): GoPtr<ResolvedModule> {
-  const [resolved] = Resolver_ResolveModuleName(receiver!.__tsgoEmbedded0!.resolver, moduleName, containingFile, resolutionMode, undefined as unknown as import("../module/types.js").ResolvedProjectReference);
+  const [resolved] = Resolver_ResolveModuleName(receiver!.__tsgoEmbedded0!.resolver, moduleName, containingFile, resolutionMode, undefined);
   return resolved;
 }
 

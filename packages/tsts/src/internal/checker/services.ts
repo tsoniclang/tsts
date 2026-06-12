@@ -1,7 +1,9 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { Index } from "../../go/strings.js";
 import type { Node, SourceFile } from "../ast/ast.js";
 import { SourceFile_Path, SourceFile_Text } from "../ast/ast.js";
+import { byteAt, byteLen, byteSlice } from "../parser/utilities.js";
 import type { SymbolTable } from "../ast/symbol.js";
 import { Node_Pos, Node_End } from "../ast/spine.js";
 import { Node_Locals, Node_Expression, Node_Properties, Node_Elements, Node_TypeArguments, Node_TagName, Node_PropertyNameOrName, Node_ModuleSpecifier, Node_Text, Node_Symbol } from "../ast/ast.js";
@@ -1420,30 +1422,31 @@ export function getPossibleSymbolReferencePositions(sourceFile: GoPtr<SourceFile
   }
 
   const text = SourceFile_Text(sourceFile);
-  const sourceLength = text.length;
-  const symbolNameLength = symbolName.length;
+  const sourceLength = byteLen(text);
+  const symbolNameLength = byteLen(symbolName);
 
   const containerNode = container ?? (sourceFile as unknown as GoPtr<Node>);
-  const endPos = Node_End(containerNode);
 
-  let startSearch = Node_Pos(containerNode);
-  for (;;) {
-    const foundIndex = text.indexOf(symbolName, startSearch);
-    if (foundIndex < 0 || foundIndex >= endPos) {
-      break;
-    }
-    const position = foundIndex;
-    // We found a match. Make sure it's not part of a larger word (i.e. the char
+  let position = Index(byteSlice(text, Node_Pos(containerNode)), symbolName);
+  const endPos = Node_End(containerNode);
+  while (position >= 0 && position < endPos) {
+    // We found a match.  Make sure it's not part of a larger word (i.e. the char
     // before and after it have to be a non-identifier char).
     const endPosition = position + symbolNameLength;
 
-    if ((position === 0 || !IsIdentifierPart(text.charCodeAt(position - 1))) &&
-      (endPosition === sourceLength || !IsIdentifierPart(text.charCodeAt(endPosition)))) {
-      // Found a real match. Keep searching.
+    if ((position === 0 || !IsIdentifierPart(byteAt(text, position - 1))) &&
+      (endPosition === sourceLength || !IsIdentifierPart(byteAt(text, endPosition)))) {
+      // Found a real match.  Keep searching.
       positions.push(position);
     }
-    startSearch = position + symbolNameLength + 1;
-    if (startSearch > text.length) {
+    const startIndex = position + symbolNameLength + 1;
+    if (startIndex > byteLen(text)) {
+      break;
+    }
+    const foundIndex = Index(byteSlice(text, startIndex), symbolName);
+    if (foundIndex !== -1) {
+      position = startIndex + foundIndex;
+    } else {
       break;
     }
   }

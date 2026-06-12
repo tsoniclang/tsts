@@ -186,7 +186,7 @@ export function newCaches(currentDirectory: string, useCaseSensitiveFileNames: b
  * 	return redirect.ConfigName()
  * }
  */
-export function getRedirectConfigName(redirect: ResolvedProjectReference): string {
+export function getRedirectConfigName(redirect: GoPtr<ResolvedProjectReference>): string {
   if (redirect === undefined) {
     return "";
   }

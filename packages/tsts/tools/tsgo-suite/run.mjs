@@ -20,6 +20,7 @@ const typeScriptApiDeclarationRoot = join(typeScriptSubmoduleBaselineRoot, "api"
 const vendoredTypeScriptLibRoot = join(vendorRoot, "node_modules/typescript/lib");
 const cliPath = join(packageRoot, "dist/src/cli/index.js");
 const apiPath = join(packageRoot, "dist/src/index.js");
+const tsgoAcceptedRoot = join(dirname(scriptPath), "tsgo-accepted");
 const utf8Decoder = new TextDecoder("utf-8");
 const utf16LittleEndianDecoder = new TextDecoder("utf-16le");
 const utf16BigEndianDecoder = new TextDecoder("utf-16be");
@@ -40,53 +41,25 @@ const outOfScopeTypeScriptSuites = new Set(["fourslash"]);
 const fixtureOnlyTypeScriptSuites = new Set(["projects"]);
 const inScopeBaselineCategories = new Set(["api", "astnav", "compiler", "config", "conformance", "submodule", "submoduleAccepted", "submoduleTriaged", "tsbuild", "tsbuildWatch", "tsc", "tscWatch", "tsoptions"]);
 const outOfScopeBaselineCategories = new Set(["fourslash", "lsp"]);
+// compiler_runner.go getCompilerVaryByMap: every non-command-line-only boolean/enum
+// option with an Affects* flag varies, plus noEmit and isolatedModules.
+const { OptionsDeclarations: tstsOptionsDeclarations } = await import(new URL("../../dist/src/internal/tsoptions/declscompiler.js", import.meta.url).href);
 const compilerVaryByOptions = new Set([
-  "allowjs",
-  "allowimportingtsextensions",
-  "allowsyntheticdefaultimports",
-  "alwaysstrict",
-  "checkjs",
-  "declaration",
-  "declarationmap",
-  "deduplicatepackages",
-  "downleveliteration",
-  "emitdeclarationonly",
-  "emitdecoratormetadata",
-  "erasablesyntaxonly",
-  "esmoduleinterop",
-  "exactoptionalpropertytypes",
-  "experimentaldecorators",
-  "incremental",
-  "importhelpers",
-  "isolatedmodules",
-  "isolateddeclarations",
-  "jsx",
-  "module",
-  "moduledetection",
-  "moduleresolution",
+  ...tstsOptionsDeclarations
+    .filter((option) =>
+      !option.IsCommandLineOnly &&
+      (option.Kind === "boolean" || option.Kind === "enum") &&
+      (option.AffectsProgramStructure ||
+        option.AffectsEmit ||
+        option.AffectsModuleResolution ||
+        option.AffectsBindDiagnostics ||
+        option.AffectsSemanticDiagnostics ||
+        option.AffectsSourceFile ||
+        option.AffectsDeclarationPath ||
+        option.AffectsBuildInfo))
+    .map((option) => option.Name.toLowerCase()),
   "noemit",
-  "noimplicitany",
-  "noimplicitoverride",
-  "nolib",
-  "nopropertyaccessfromindexsignature",
-  "nouncheckedindexedaccess",
-  "nouncheckedsideeffectimports",
-  "nounusedlocals",
-  "nounusedparameters",
-  "preserveconstenums",
-  "preservevalueimports",
-  "removecomments",
-  "resolvejsonmodule",
-  "resolvepackagejsonexports",
-  "strict",
-  "strictbuiltiniteratorreturn",
-  "strictnullchecks",
-  "inlinesourcemap",
-  "sourcemap",
-  "target",
-  "usedefineforclassfields",
-  "useunknownincatchvariables",
-  "verbatimmodulesyntax",
+  "isolatedmodules",
 ]);
 const booleanOptions = new Set([
   "allowjs",
@@ -599,7 +572,6 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
   let currentFileName = "";
   let currentFileLines = [];
   let sawFileDirective = false;
-  let sawGlobalDirectiveBeforeContent = false;
 
   const flush = (trimTrailingBlankLines = false) => {
     if (currentFileName === "") {
@@ -644,17 +616,16 @@ export function parseFileBasedTest(sourceText, fallbackFileName) {
         }
       } else {
         globalOptions.set(optionName, optionValue);
-        if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0) {
-          sawGlobalDirectiveBeforeContent = true;
-        }
       }
-      continue;
-    }
-    if (currentFileName === "" && !sawFileDirective && currentFileLines.length === 0 && sawGlobalDirectiveBeforeContent && line.trim() === "") {
       continue;
     }
     if (currentFileName === "" && sawFileDirective) {
       currentFileName = fallbackFileName;
+    }
+    if (line === "" && currentFileLines.length === 0) {
+      // test_case_parser.go only writes a separating newline once content exists, which
+      // drops every leading blank line of a unit (matching the TS harness behavior).
+      continue;
     }
     currentFileLines.push(line);
   }
@@ -1107,8 +1078,24 @@ function stripAnsiEscapes(text) {
   return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
+// True when the reference baselines for this case are pinned TS-Go's own outputs
+// (testdata/baselines/reference), gated with the whole-file writers and the
+// harness-mirror compile. baseline.Run writes the FULL submodule output to
+// reference/submodule/<suite>/<name> for every submodule test; the .diff files beside
+// them (and in submoduleAccepted/, submoduleTriaged/) only record the divergence from
+// Strada and are not the gate.
+function usesTsgoAuthorityBaselines(testCase) {
+  if ((testCase.corpus ?? "current") === "current") {
+    return true;
+  }
+  return testCase.corpus === "typescript" && (testCase.suite === "compiler" || testCase.suite === "conformance");
+}
+
 function baselineDirectories(testCase) {
   if (testCase.corpus === "typescript") {
+    if (usesTsgoAuthorityBaselines(testCase)) {
+      return [join(baselineRoot, "submodule", testCase.suite)];
+    }
     return [
       join(baselineRoot, "submoduleTriaged", testCase.suite),
       join(baselineRoot, "submoduleAccepted", testCase.suite),
@@ -1122,7 +1109,8 @@ function baselineDirectories(testCase) {
 
 const comparableBaselineFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
 const diagnosticBaselineFilePattern = /\.errors\.txt$/i;
-const unsupportedExactBaselineFilePattern = /\.(?:symbols|types)$/i;
+const typeSymbolBaselineFilePattern = /\.(?:symbols|types)$/i;
+const unsupportedExactBaselineFilePattern = /$^/;
 const emittedOutputFilePattern = /\.(?:[cm]?jsx?|d\.[cm]?ts|map)$/i;
 
 function exactBaselineArtifacts(testCase) {
@@ -1131,6 +1119,7 @@ function exactBaselineArtifacts(testCase) {
   }
   const selected = new Map();
   const baseNames = configuredBaselineCaseNames(testCase);
+  const skipDiffArtifacts = usesTsgoAuthorityBaselines(testCase);
   for (const baselineDir of baselineDirectories(testCase)) {
     if (!existsSync(baselineDir)) {
       continue;
@@ -1139,8 +1128,20 @@ function exactBaselineArtifacts(testCase) {
       if (!entry.isFile()) {
         continue;
       }
+      if (skipDiffArtifacts && entry.name.endsWith(".diff")) {
+        // Strada-divergence bookkeeping next to the full TS-Go baselines; not a gate.
+        continue;
+      }
       const artifactName = entry.name.endsWith(".diff") ? entry.name.slice(0, -".diff".length) : entry.name;
-      if (!baseNames.some((baseName) => artifactName.startsWith(`${baseName}.`)) || selected.has(artifactName)) {
+      // For TS-Go-authority baselines the writers produce exactly these artifact kinds;
+      // a bare prefix match would let a case swallow a sibling case's baselines
+      // (asyncFunctionReturnType.ts vs asyncFunctionReturnType.2.ts).
+      const matchesCase = skipDiffArtifacts
+        ? baseNames.some((baseName) =>
+          artifactName.startsWith(`${baseName}.`) &&
+          ["js", "js.map", "symbols", "types", "errors.txt"].includes(artifactName.slice(baseName.length + 1)))
+        : baseNames.some((baseName) => artifactName.startsWith(`${baseName}.`));
+      if (!matchesCase || selected.has(artifactName)) {
         continue;
       }
       selected.set(artifactName, {
@@ -1205,6 +1206,134 @@ export function parseBaselineSections(text) {
   return sections;
 }
 
+// TS-Go-accepted overlays: where the pinned TS-Go compiler demonstrably diverges from the
+// Strada-generated reference baselines, the committed files under tools/tsgo-suite/tsgo-accepted/
+// capture pinned TS-Go's actual output for the divergent sections. TSTS mirrors TS-Go, so the
+// gate compares against the overlay for exactly those sections and against the Strada baseline
+// for everything else. Overlays are generated from real pinned-TS-Go runs by
+// capture-tsgo-accepted.mjs — never hand-edited, never derived from TSTS output.
+export function loadTsgoAcceptedOverlay(corpus, suite, artifactName) {
+  const overlayPath = join(tsgoAcceptedRoot, corpus, suite, artifactName);
+  if (!existsSync(overlayPath)) {
+    return undefined;
+  }
+  return parseBaselineSections(readFileSync(overlayPath, "utf8"));
+}
+
+export function applyTsgoAcceptedOverlay(artifactName, overlaySections, expectedOutputs, expectedDiagnosticHeadlines, expectedDiagnosticSources) {
+  const used = [];
+  const problems = [];
+  for (const section of overlaySections) {
+    if (section.name === "Diagnostics reported") {
+      // The overlay carries the COMPLETE diagnostic expectation for the artifact, so it
+      // supersedes every 'Diagnostics reported' section the reference baseline declares.
+      const indices = [];
+      for (let index = 0; index < expectedDiagnosticSources.length; index++) {
+        if (expectedDiagnosticSources[index] === `${artifactName}#Diagnostics reported`) {
+          indices.push(index);
+        }
+      }
+      if (indices.length === 0) {
+        problems.push(`tsgo-accepted overlay '${artifactName}' overrides 'Diagnostics reported' but the reference baseline has no such section.`);
+        continue;
+      }
+      const headline = diagnosticHeadlineText(section.content);
+      const baselineHeadline = indices.map((index) => expectedDiagnosticHeadlines[index]).filter((text) => text !== "").join("\n");
+      if (baselineHeadline === headline) {
+        problems.push(`tsgo-accepted overlay '${artifactName}#Diagnostics reported' matches the reference baseline; remove the stale overlay.`);
+        continue;
+      }
+      expectedDiagnosticHeadlines[indices[0]] = headline;
+      expectedDiagnosticSources[indices[0]] = `${artifactName}#Diagnostics reported (tsgo-accepted)`;
+      for (const index of indices.slice(1)) {
+        expectedDiagnosticHeadlines[index] = "";
+        expectedDiagnosticSources[index] = `${artifactName}#Diagnostics reported (tsgo-accepted)`;
+      }
+      used.push(`${artifactName}#Diagnostics reported`);
+      continue;
+    }
+    const key = normalizedBaselineSectionPath(section.name);
+    if (!expectedOutputs.has(key)) {
+      problems.push(`tsgo-accepted overlay '${artifactName}' overrides '${section.name}' but the reference baseline has no such emitted output.`);
+      continue;
+    }
+    if (expectedOutputs.get(key) === section.content) {
+      problems.push(`tsgo-accepted overlay '${artifactName}#${section.name}' matches the reference baseline; remove the stale overlay.`);
+      continue;
+    }
+    expectedOutputs.set(key, section.content);
+    used.push(`${artifactName}#${section.name}`);
+  }
+  return { used, problems };
+}
+
+
+const emittedSourceExtensionPattern = /\.(?:d\.[cm]?ts|[cm]?[jt]sx?)$/i;
+
+// Strips test-path prefixes the same way tsbaseline/util.go removeTestPathPrefixes does
+// (retainTrailingDirectorySeparator=false branch).
+export function removeTestPathPrefixes(text) {
+  return text
+    .replaceAll("/.ts/", "")
+    .replaceAll("/.lib/", "")
+    .replaceAll("/.src/", "")
+    .replaceAll("bundled:///libs/", "")
+    .replaceAll("file:///./ts/", "file:///")
+    .replaceAll("file:///./lib/", "file:///")
+    .replaceAll("file:///./src/", "file:///");
+}
+
+// Maps a materialized emitted-output path (relative to the case dir) back to the name the
+// upstream baseline writer uses for it. js_emit_baseline.go fileOutput keys each emitted
+// file by the emitted file's unit name: basename-only unless @fullEmitPaths.
+export function upstreamOutputName(materialized, outputFile) {
+  if (materialized.units === undefined) {
+    return outputFile;
+  }
+  if (materialized.fullEmitPaths === true) {
+    return normalizedBaselineSectionPath(removeTestPathPrefixes(outputFile));
+  }
+  return outputFile.split("/").at(-1);
+}
+
+// Rewrites materialized file paths in diagnostic output back to the upstream unit-name
+// coordinates so headline comparison happens in the upstream coordinate system. Upstream
+// compiles with the unit names verbatim (a vfs), so message-embedded paths print exactly
+// as authored; on the real filesystem the CLI prints absolute case paths instead.
+export function translateDiagnosticPathsToUnitNames(materialized, text) {
+  const units = materialized.units;
+  if (units === undefined) {
+    return text;
+  }
+  const caseDirPrefix = `${materialized.caseDir.split(sep).join("/")}/`;
+  const sourceExtension = /\.(?:d\.[cm]?ts|[cm]?[jt]sx?)$/i;
+  const replacements = [];
+  for (const unit of units) {
+    if (unit.unitName === unit.filePath) {
+      continue;
+    }
+    replacements.push([`${caseDirPrefix}${unit.filePath}`, removeTestPathPrefixes(unit.unitName)]);
+    const stem = unit.filePath.replace(sourceExtension, "");
+    if (stem !== unit.filePath) {
+      replacements.push([`${caseDirPrefix}${stem}`, removeTestPathPrefixes(unit.unitName.replace(sourceExtension, ""))]);
+    }
+  }
+  replacements.sort(([left], [right]) => right.length - left.length);
+  let translated = text;
+  for (const [from, to] of replacements) {
+    translated = translated.replaceAll(from, to);
+  }
+  translated = translated.replaceAll(caseDirPrefix, "");
+  return translated.split("\n").map((line) => {
+    for (const unit of units) {
+      if (unit.unitName !== unit.filePath && line.startsWith(`${unit.filePath}(`)) {
+        return removeTestPathPrefixes(unit.unitName) + line.slice(unit.filePath.length);
+      }
+    }
+    return line;
+  }).join("\n");
+}
+
 async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   const artifacts = exactBaselineArtifacts(testCase);
   const unsupported = artifacts
@@ -1212,14 +1341,80 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     .map((artifact) => artifact.diff ? `${artifact.name}.diff` : artifact.name);
   const comparable = artifacts.filter((artifact) => !artifact.diff && comparableBaselineFilePattern.test(artifact.name));
   const diagnostics = artifacts.filter((artifact) => !artifact.diff && diagnosticBaselineFilePattern.test(artifact.name));
+  const typeSymbol = artifacts.filter((artifact) => !artifact.diff && typeSymbolBaselineFilePattern.test(artifact.name));
+  // TS-Go-authority baselines (current corpus testdata and the reference/submodule
+  // trees) are whole-file: a single `<case>.js` assembled by js_emit_baseline.go
+  // (inputs + emitted JS + emitted DTS) instead of the per-section layout of the
+  // Strada-era baselines used by the transpile/project suites.
+  const isCurrentCorpus = usesTsgoAuthorityBaselines(testCase);
   const mismatches = [];
+  // TS-Go-authority cases compile in an in-memory harness vfs (harnessCompile.mjs):
+  // upstream unit coordinates end to end, all-stage diagnostics collected before emit
+  // (mirroring compiler_runner.go's verify order), no real-filesystem translation. The
+  // CLI invocation on the materialized directory remains the product-behavior signal.
+  const usesVfsHarness = isCurrentCorpus && materialized.units !== undefined && materialized.invocation !== undefined;
+  let sharedVfsCase;
+  const ensureVfsCase = async () => {
+    if (sharedVfsCase === undefined) {
+      const { compileHarnessCase } = await import("./tsbaseline/harnessCompile.mjs");
+      try {
+        sharedVfsCase = compileHarnessCase({
+          units: (materialized.units ?? []).map((unit) => ({ fileName: unit.unitName, content: unit.content })),
+          symlinks: materialized.symlinks ?? new Map(),
+          configuration: testCase.configuration ?? new Map(),
+        });
+      } catch (error) {
+        // A failed harness compile must fail THIS case loudly, not kill the runner.
+        sharedVfsCase = {
+          error,
+          harnessOptions: {},
+          toBeCompiled: [],
+          otherFiles: [],
+          diagnostics: [],
+          emittedOutputs: new Map(),
+        };
+        mismatches.push(`Harness compile failed: ${error?.stack?.split("\n").slice(0, 2).join(" | ") ?? error}.`);
+      }
+    }
+    return sharedVfsCase;
+  };
+  const wholeFileJs = [];
+  let sectionComparable = comparable;
+  const wholeFileSourceMaps = [];
+  if (isCurrentCorpus) {
+    sectionComparable = [];
+    for (const artifact of comparable) {
+      if (/\.js$/i.test(artifact.name)) {
+        wholeFileJs.push(artifact);
+      } else if (/\.js\.map$/i.test(artifact.name)) {
+        wholeFileSourceMaps.push(artifact);
+      } else {
+        mismatches.push(`Exact baseline artifact '${artifact.name}' is not supported for the current corpus yet.`);
+      }
+    }
+  }
   const expectedDiagnosticHeadlines = [];
   const expectedDiagnosticSources = [];
   if (artifacts.length === 0) {
-    mismatches.push("No reference baseline artifacts were found for this case.");
+    // Upstream legitimately writes zero reference baselines when every writer yields no
+    // content: baseline.Run treats NoContent as "this baseline file must not exist".
+    // That requires zero diagnostics (gated separately below), @noTypesAndSymbols
+    // disabling the type/symbol writers (compiler_runner.go verifyTypesAndSymbols), and
+    // a compilation that emits nothing (the js/sourcemap writers then produce
+    // NoContent). Anything else with zero reference artifacts is a real mismatch.
+    const vfsCase = usesVfsHarness ? await ensureVfsCase() : undefined;
+    const emitted = vfsCase !== undefined ? vfsCase.emittedOutputs : await emittedOutputsForCase(materialized);
+    const noTypesAndSymbols = vfsCase !== undefined
+      ? vfsCase.harnessOptions.notypesandsymbols === true
+      : materialized.noTypesAndSymbols === true;
+    if (!noTypesAndSymbols) {
+      mismatches.push("No reference baseline artifacts were found for this case, and type/symbol baselines are enabled (no @noTypesAndSymbols).");
+    } else if (emitted.size !== 0) {
+      mismatches.push(`No reference baseline artifacts were found for this case, but the compilation emitted ${[...emitted.keys()].sort().join(", ")}.`);
+    }
   }
   const expectedOutputs = new Map();
-  for (const artifact of comparable) {
+  for (const artifact of sectionComparable) {
     const sections = parseBaselineSections(readFileSync(artifact.path, "utf8"));
     const sectionNameCounts = new Map();
     for (const section of sections) {
@@ -1250,28 +1445,178 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     expectedDiagnosticHeadlines.push(diagnosticHeadlineText(readFileSync(artifact.path, "utf8")));
     expectedDiagnosticSources.push(artifact.name);
   }
-  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
-  const actualDiagnostics = diagnosticHeadlineText(commandOutput);
-  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
-    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
-  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
-    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
-  }
-
-  const actualOutputs = await emittedOutputsForCase(materialized);
-  for (const [outputFile, actualContent] of actualOutputs) {
-    const expected = expectedOutputs.get(outputFile);
-    if (expected === undefined) {
-      mismatches.push(`Unexpected emitted output '${outputFile}'.`);
+  const tsgoAccepted = [];
+  for (const artifact of [...sectionComparable, ...diagnostics]) {
+    const overlaySections = loadTsgoAcceptedOverlay(testCase.corpus, testCase.suite, artifact.name);
+    if (overlaySections === undefined) {
       continue;
     }
-    if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
-      mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
+    const { used, problems } = applyTsgoAcceptedOverlay(artifact.name, overlaySections, expectedOutputs, expectedDiagnosticHeadlines, expectedDiagnosticSources);
+    tsgoAccepted.push(...used);
+    mismatches.push(...problems);
+  }
+  const baselineHeader = `tests/cases/${testCase.relativePath}`;
+  // The reference baselines are HARNESS output: harnessutil.go collects every
+  // diagnostics stage unconditionally (program, syntactic, SEMANTIC, global,
+  // declaration) and then emits, while the CLI's staged pipeline skips the semantic
+  // check when an earlier stage reported — and declaration-emit node reuse depends on
+  // the links that check populates. Diagnostics for the errors.txt comparison come from
+  // the vfs harness compile, already rendered in upstream coordinates.
+  let actualDiagnostics = translateDiagnosticPathsToUnitNames(materialized, diagnosticHeadlineText(commandOutput));
+  let harnessDiagnostics;
+  if (usesVfsHarness) {
+    const vfsCase = await ensureVfsCase();
+    harnessDiagnostics = vfsCase.diagnostics;
+    const { formatHarnessDiagnostics } = await import("./tsbaseline/typeSymbolWalker.mjs");
+    const tristateTruePretty = 2;
+    actualDiagnostics = diagnosticHeadlineText(formatHarnessDiagnostics("", harnessDiagnostics, vfsCase.compilerOptions?.Pretty === tristateTruePretty));
+  }
+  const expectedDiagnostics = expectedDiagnosticHeadlines.filter((text) => text !== "").join("\n");
+  if (expectedDiagnosticSources.length !== 0 && expectedDiagnostics !== actualDiagnostics) {
+    mismatches.push(`Diagnostic headline baseline '${expectedDiagnosticSources.join(", ")}' does not match actual compiler diagnostics.`);
+    const diagnosticArtifactName = diagnostics[0]?.name ?? "diagnostics.errors.txt";
+    await writeFile(join(materialized.caseDir, `${diagnosticArtifactName}.actual`), actualDiagnostics);
+  } else if (expectedDiagnosticSources.length === 0 && actualDiagnostics !== "") {
+    mismatches.push("Unexpected compiler diagnostics with no reference diagnostic baseline.");
+    await writeFile(join(materialized.caseDir, "diagnostics.errors.txt.actual"), actualDiagnostics);
+  }
+
+  // compiler_runner.go passes hasErrorBaseline = len(result.Diagnostics) > 0, where
+  // result.Diagnostics is the harness compile's all-stage diagnostics.
+  const hasDiagnostics = harnessDiagnostics !== undefined ? harnessDiagnostics.length > 0 : diagnosticHeadlineText(commandOutput) !== "";
+  if (typeSymbol.length !== 0 && materialized.noTypesAndSymbols === true) {
+    // compiler_runner.go verifyTypesAndSymbols returns early under @noTypesAndSymbols,
+    // so a committed type/symbol reference baseline is unreachable upstream: stale.
+    mismatches.push(`Type/symbol baselines exist but @noTypesAndSymbols disables them upstream: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
+  } else if (typeSymbol.length !== 0) {
+    if (!usesVfsHarness) {
+      mismatches.push(`Type/symbol baselines are not supported for this case kind: ${typeSymbol.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateTypeAndSymbolBaselines } = await import("./tsbaseline/typeSymbolWalker.mjs");
+        const vfsCase = await ensureVfsCase();
+        const allFiles = [...vfsCase.toBeCompiled, ...vfsCase.otherFiles].map((file) => ({
+          unitName: file.unitName,
+          programPath: file.unitName,
+          content: file.content,
+        }));
+        const generated = generateTypeAndSymbolBaselines({
+          allFiles,
+          header: baselineHeader,
+          hasErrorBaseline: hasDiagnostics,
+          program: vfsCase.program,
+        });
+        for (const artifact of typeSymbol) {
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          const actual = normalizeEmittedOutputText(artifact.name.endsWith(".symbols") ? generated.symbols : generated.types);
+          if (actual !== expected) {
+            mismatches.push(`Type/symbol baseline '${artifact.name}' does not match the generated baseline.`);
+            // Mirror upstream baseline.Run, which writes the actual ("local") baseline on
+            // every difference so it can be diffed against the reference.
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`Type/symbol baseline generation failed: ${error?.message ?? error}.`);
+      }
     }
   }
-  for (const outputFile of expectedOutputs.keys()) {
-    if (!actualOutputs.has(outputFile)) {
-      mismatches.push(`Expected baseline output '${outputFile}' was not emitted.`);
+
+  if (wholeFileJs.length !== 0) {
+    if (!usesVfsHarness) {
+      mismatches.push(`JS emit baselines are not supported for this case kind: ${wholeFileJs.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateJsEmitBaseline } = await import("./tsbaseline/jsEmitBaseline.mjs");
+        const { compileDeclarationFiles, repeatWithNoCheck } = await import("./tsbaseline/harnessCompile.mjs");
+        const vfsCase = await ensureVfsCase();
+        const declarationCompilation = vfsCase.error === undefined ? await compileDeclarationFiles(vfsCase) : undefined;
+        // js_emit_baseline.go: rerun with noCheck unless the case sets noCheck/noEmit.
+        const tristateTrue = 2;
+        const noCheckRepeat = vfsCase.error === undefined &&
+          vfsCase.compilerOptions.NoCheck !== tristateTrue &&
+          vfsCase.compilerOptions.NoEmit !== tristateTrue
+          ? repeatWithNoCheck(vfsCase)
+          : undefined;
+        const assembled = generateJsEmitBaseline({
+          program: vfsCase.program,
+          toBeCompiled: vfsCase.toBeCompiled,
+          otherFiles: vfsCase.otherFiles,
+          tsConfigFiles: vfsCase.tsConfigFiles,
+          header: baselineHeader,
+          hasDiagnostics,
+          fullEmitPaths: vfsCase.harnessOptions.fullemitpaths === true,
+          emittedOutputs: vfsCase.emittedOutputs,
+          declarationCompilation,
+          noCheckRepeat,
+        });
+        const actual = normalizeEmittedOutputText(assembled);
+        for (const artifact of wholeFileJs) {
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          if (actual !== expected) {
+            mismatches.push(`JS emit baseline '${artifact.name}' does not match the assembled baseline.`);
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`JS emit baseline generation failed: ${error?.message ?? error}.`);
+      }
+    }
+  }
+
+  if (wholeFileSourceMaps.length !== 0) {
+    if (!usesVfsHarness) {
+      mismatches.push(`Source map baselines are not supported for this case kind: ${wholeFileSourceMaps.map((artifact) => artifact.name).join(", ")}.`);
+    } else {
+      try {
+        const { generateSourceMapBaseline } = await import("./tsbaseline/sourceMapBaseline.mjs");
+        const vfsCase = await ensureVfsCase();
+        const assembled = generateSourceMapBaseline({
+          program: vfsCase.program,
+          compilerOptions: vfsCase.compilerOptions,
+          hasDiagnostics,
+          fullEmitPaths: vfsCase.harnessOptions.fullemitpaths === true,
+          emittedOutputs: vfsCase.emittedOutputs,
+        });
+        for (const artifact of wholeFileSourceMaps) {
+          if (assembled === undefined) {
+            mismatches.push(`Source map baseline '${artifact.name}' exists but the compilation produces no source map baseline.`);
+            continue;
+          }
+          const expected = normalizeEmittedOutputText(readFileSync(artifact.path, "utf8"));
+          const actual = normalizeEmittedOutputText(assembled);
+          if (actual !== expected) {
+            mismatches.push(`Source map baseline '${artifact.name}' does not match the assembled baseline.`);
+            await writeFile(join(materialized.caseDir, `${artifact.name}.actual`), actual);
+          }
+        }
+      } catch (error) {
+        mismatches.push(`Source map baseline generation failed: ${error?.message ?? error}.`);
+      }
+    }
+  }
+
+
+  if (!isCurrentCorpus) {
+    const actualOutputsRaw = await emittedOutputsForCase(materialized);
+    const actualOutputs = new Map();
+    for (const [outputFile, content] of actualOutputsRaw) {
+      actualOutputs.set(upstreamOutputName(materialized, outputFile), content);
+    }
+    for (const [outputFile, actualContent] of actualOutputs) {
+      const expected = expectedOutputs.get(outputFile);
+      if (expected === undefined) {
+        mismatches.push(`Unexpected emitted output '${outputFile}'.`);
+        continue;
+      }
+      if (normalizeEmittedOutputText(actualContent) !== normalizeEmittedOutputText(expected)) {
+        mismatches.push(`Emitted output '${outputFile}' does not match its reference baseline section.`);
+      }
+    }
+    for (const outputFile of expectedOutputs.keys()) {
+      if (!actualOutputs.has(outputFile)) {
+        mismatches.push(`Expected baseline output '${outputFile}' was not emitted.`);
+      }
     }
   }
   if (unsupported.length !== 0) {
@@ -1279,8 +1624,9 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
   }
   return {
     checked: artifacts.length,
-    comparable: comparable.length + diagnostics.length,
+    comparable: comparable.length + diagnostics.length + typeSymbol.length,
     unsupported,
+    tsgoAccepted,
     mismatches,
     status: mismatches.length === 0 ? "pass" : "fail",
   };
@@ -1303,23 +1649,64 @@ export function diagnosticHeadlineText(text) {
   return headlines.join("\n");
 }
 
+// Classifies a case-dir-relative path as a compiler-emitted output (vs a materialized
+// input). Returns the normalized relative path, or undefined for inputs. Shared by the
+// output collector and the in-process Program's FS filter so both agree exactly on what
+// "emitted" means.
+function emittedOutputRelativePath(materialized, relativeFile) {
+  const normalized = normalizedBaselineSectionPath(relativeFile);
+  if (!emittedOutputFilePattern.test(normalized)) {
+    return undefined;
+  }
+  if (materialized.writtenFileSet.has(normalized)) {
+    return undefined;
+  }
+  if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
+    return undefined;
+  }
+  return normalized;
+}
+
 async function emittedOutputsForCase(materialized) {
   const outputs = new Map();
   for (const file of await walkFiles(materialized.caseDir)) {
     const relativeFile = relative(materialized.caseDir, file).split(sep).join("/");
-    const normalized = normalizedBaselineSectionPath(relativeFile);
-    if (!emittedOutputFilePattern.test(normalized)) {
+    const normalized = emittedOutputRelativePath(materialized, relativeFile);
+    if (normalized === undefined) {
       continue;
     }
-    if (materialized.writtenFileSet.has(normalized)) {
-      continue;
-    }
-    if (normalized.startsWith(".lib/") || normalized.startsWith(".ts/") || normalized.startsWith(".empty-types/")) {
-      continue;
-    }
-    outputs.set(normalized, normalizeComparableText(await readFile(file, "utf8")));
+    // Keep raw bytes: every textual comparison normalizes newlines itself, and the
+    // source-map preview links base64 the EXACT emitted file contents (CRLF included).
+    outputs.set(normalized, translateEmittedContentToUnitCoordinates(materialized, await readFile(file, "utf8")));
   }
   return outputs;
+}
+
+// Inverse of the materializer's source-content rewrites: the compiler copies rewritten
+// fragments (triple-slash reference paths, module specifiers, /.lib/ references)
+// verbatim into emitted outputs, while upstream compiles the unrewritten units in a vfs
+// and emits the original fragments. Replay the recorded pairs in reverse so emitted
+// outputs compare in upstream unit coordinates.
+function translateEmittedContentToUnitCoordinates(materialized, content) {
+  let translated = content;
+  for (const [from, to] of materialized.contentRewrites ?? []) {
+    translated = translated.replaceAll(from, to);
+  }
+  return translated;
+}
+
+function dedupedContentRewrites(contentRewrites) {
+  const seen = new Set();
+  const deduped = [];
+  for (const pair of contentRewrites) {
+    const key = JSON.stringify(pair);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(pair);
+    }
+  }
+  // Longest rewritten fragment first so a shorter pair can never clip a longer one.
+  return deduped.sort(([left], [right]) => right.length - left.length);
 }
 
 function normalizedBaselineSectionPath(fileName) {
@@ -1379,11 +1766,12 @@ async function materializeCase(testCase, runRoot) {
   }
 
   const writtenFiles = [];
+  const contentRewrites = [];
   for (const unit of parsed.units) {
     const filePath = normalizeHarnessPath(unit.fileName, pathOptions);
     const fullPath = join(caseDir, filePath);
     await mkdir(dirname(fullPath), { recursive: true });
-    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions));
+    await writeFile(fullPath, rewriteHarnessFileContent(unit.content, filePath, pathOptions, contentRewrites));
     writtenFiles.push(filePath);
   }
   await materializeHarnessApiDeclarations(caseDir, parsed, pathOptions);
@@ -1406,17 +1794,43 @@ async function materializeCase(testCase, runRoot) {
     };
   }
 
+  const units = parsed.units.map((unit) => ({
+    unitName: unit.fileName,
+    filePath: normalizeHarnessPath(unit.fileName, pathOptions),
+    // Upstream TestFile.Content is the unit text as authored; the baseline writers
+    // interleave it verbatim. (The materialized on-disk copy may have rewritten
+    // harness-virtual paths for the real filesystem.)
+    content: unit.content,
+  }));
+  const fullEmitPaths = (parsed.globalOptions?.get("fullemitpaths") ?? testCase.configuration?.get?.("fullemitpaths")) === "true";
+  // Harness-only option: compiler_runner.go verifyTypesAndSymbols returns early under
+  // @noTypesAndSymbols, so upstream writes no type/symbol baselines for such cases.
+  const noTypesAndSymbols = (parsed.globalOptions?.get("notypesandsymbols") ?? testCase.configuration?.get?.("notypesandsymbols")) === "true";
+  // compiler_runner.go: `configuration["noimplicitreferences"] != ""` switches the
+  // baseline partition to last-unit-only.
+  const noImplicitReferencesValue = parsed.globalOptions?.get("noimplicitreferences") ?? testCase.configuration?.get?.("noimplicitreferences");
+  const noImplicitReferences = noImplicitReferencesValue !== undefined && noImplicitReferencesValue !== "";
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
     const compilerOptions = merged.compilerOptions ?? {};
-    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, compilerOptions);
+    // SkipUnsupportedCompilerOptions runs on the EFFECTIVE options, so follow the
+    // config's `extends` chain (parents merged under the child) for the skip decision.
+    const inheritedOptions = await inheritedConfigCompilerOptions(join(caseDir, existingConfig), merged);
+    const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, { ...inheritedOptions, ...compilerOptions });
     return {
       caseDir,
       invocation: {
         cwd: caseDir,
         args: ["-p", join(caseDir, existingConfig), "--pretty", "false"],
       },
+      units,
+      symlinks: parsed.symlinks,
+      fullEmitPaths,
+      noTypesAndSymbols,
+      noImplicitReferences,
+      hasTsconfigUnit: true,
+      contentRewrites: dedupedContentRewrites(contentRewrites),
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
       expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -1437,6 +1851,16 @@ async function materializeCase(testCase, runRoot) {
       cwd: caseDir,
       args: compilerCommandLineArgsForMaterializedCase(compilerOptions, inputFiles),
     },
+    // Parsed unit order; the baseline writers partition into toBeCompiled/otherFiles
+    // (membership in the parsed command line's root files, unit order preserved) the
+    // same way compiler_runner.go does.
+    units,
+    symlinks: parsed.symlinks,
+    fullEmitPaths,
+    noTypesAndSymbols,
+    noImplicitReferences,
+    hasTsconfigUnit: false,
+    contentRewrites: dedupedContentRewrites(contentRewrites),
     writtenFiles,
     writtenFileSet: normalizedWrittenFileSet(writtenFiles),
     expectedErrors: caseExpectedErrors(testCase, compilerOptions),
@@ -1670,6 +2094,40 @@ function changeHarnessExtension(inputFile, extension) {
   return inputFile.replace(/\.[cm]?[tj]sx?$/i, extension);
 }
 
+// Follows a tsconfig's `extends` chain (string or array, relative paths) and returns
+// the union of ancestor compilerOptions, nearest ancestor winning. Only used to mirror
+// SkipUnsupportedCompilerOptions on the effective options.
+async function inheritedConfigCompilerOptions(configPath, rootConfig) {
+  let options = {};
+  const visit = async (path, config, depth) => {
+    if (depth > 8 || config === undefined) {
+      return;
+    }
+    const extendsList = config.extends === undefined ? [] : Array.isArray(config.extends) ? config.extends : [config.extends];
+    for (const ext of extendsList) {
+      if (typeof ext !== "string" || (!ext.startsWith(".") && !ext.startsWith("/"))) {
+        continue;
+      }
+      let parentPath = join(dirname(path), ext);
+      if (!existsSync(parentPath) && existsSync(`${parentPath}.json`)) {
+        parentPath = `${parentPath}.json`;
+      }
+      let parentConfig;
+      try {
+        parentConfig = ts.parseConfigFileTextToJson(parentPath, await readSourceText(parentPath)).config;
+      } catch {
+        continue;
+      }
+      if (parentConfig !== undefined) {
+        await visit(parentPath, parentConfig, depth + 1);
+        options = { ...options, ...(parentConfig.compilerOptions ?? {}) };
+      }
+    }
+  };
+  await visit(configPath, rootConfig, 0);
+  return options;
+}
+
 async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
   const configText = await readSourceText(configPath);
   const parsed = ts.parseConfigFileTextToJson(configPath, configText);
@@ -1721,7 +2179,13 @@ function isExplicitRootFile(file) {
   return true;
 }
 
-export function rewriteHarnessFileContent(content, filePath, pathOptions) {
+// `rewrites`, when provided, collects [rewrittenFragment, originalFragment] pairs for
+// every source-content rule application. The compiler copies these fragments verbatim
+// into emitted outputs (triple-slash reference paths, module specifiers, /.lib/
+// references), while upstream compiles the unrewritten units in a vfs and emits the
+// originals; the recorded pairs drive the inverse translation of emitted outputs back
+// to upstream unit coordinates.
+export function rewriteHarnessFileContent(content, filePath, pathOptions, rewrites) {
   let rewritten = content;
   if (rewritten.includes("/.lib/")) {
     let libPath = relative(dirname(filePath), ".lib").split(sep).join("/");
@@ -1732,34 +2196,39 @@ export function rewriteHarnessFileContent(content, filePath, pathOptions) {
       libPath = `./${libPath}`;
     }
     rewritten = rewritten.replaceAll("/.lib/", `${libPath}/`);
+    rewrites?.push([`${libPath}/`, "/.lib/"]);
   }
   if (/\.json$/i.test(filePath)) {
     rewritten = rewriteHarnessJsonContent(rewritten, filePath, pathOptions);
   }
   if (harnessSourceFilePattern.test(filePath)) {
-    rewritten = rewriteHarnessModuleSpecifiers(rewritten, filePath, pathOptions);
+    rewritten = rewriteHarnessModuleSpecifiers(rewritten, filePath, pathOptions, rewrites);
   }
   return rewritten.replace(
     /(\/\/\/\s*<reference\s+path=["'])([^"']+)(["'])/gi,
-    (_match, prefix, referencePath, suffix) => `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`,
+    (match, prefix, referencePath, suffix) => {
+      const next = `${prefix}${rewriteHarnessReferencePath(referencePath, filePath, pathOptions)}${suffix}`;
+      if (next !== match) {
+        rewrites?.push([next, match]);
+      }
+      return next;
+    },
   );
 }
 
-function rewriteHarnessModuleSpecifiers(content, filePath, pathOptions) {
+function rewriteHarnessModuleSpecifiers(content, filePath, pathOptions, rewrites) {
   const rewriteSpecifier = (specifier) => isHarnessAbsolutePath(specifier) ? rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) : specifier;
+  const rewriteMatch = (match, prefix, specifier, suffix) => {
+    const next = `${prefix}${rewriteSpecifier(specifier)}${suffix}`;
+    if (next !== match) {
+      rewrites?.push([next, match]);
+    }
+    return next;
+  };
   return content
-    .replace(
-      /(\b(?:import|export)\s+(?:(?!\bfrom\b)[^"'`])*?\bfrom\s*["'])(\/[^"']+)(["'])/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    )
-    .replace(
-      /(\bimport\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    )
-    .replace(
-      /(\brequire\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g,
-      (_match, prefix, specifier, suffix) => `${prefix}${rewriteSpecifier(specifier)}${suffix}`,
-    );
+    .replace(/(\b(?:import|export)\s+(?:(?!\bfrom\b)[^"'`])*?\bfrom\s*["'])(\/[^"']+)(["'])/g, rewriteMatch)
+    .replace(/(\bimport\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g, rewriteMatch)
+    .replace(/(\brequire\s*\(\s*["'])(\/[^"']+)(["']\s*\))/g, rewriteMatch);
 }
 
 function rewriteHarnessModuleSpecifier(specifier, filePath, pathOptions) {
@@ -1908,10 +2377,96 @@ export function getSkipReason(testCase) {
 }
 
 function getSkipReasonFromConfiguration(sourceBaseName, configuration) {
-  return "";
+  return getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptionsFromSettings(configuration ?? new Map()));
 }
 
+// compiler_runner.go skippedTests: test files the pinned TS-Go runner skips by name
+// (typescript.d.ts dependents and tests whose options were removed from the option
+// parser entirely, so the harness config fails to parse).
+const tsgoRunnerSkippedTestNames = new Set([
+  "APILibCheck.ts",
+  "APISample_Watch.ts",
+  "APISample_WatchWithDefaults.ts",
+  "APISample_WatchWithOwnWatchHost.ts",
+  "APISample_compile.ts",
+  "APISample_jsdoc.ts",
+  "APISample_linter.ts",
+  "APISample_parseConfig.ts",
+  "APISample_transform.ts",
+  "APISample_watcher.ts",
+  "preserveUnusedImports.ts",
+  "noCrashWithVerbatimModuleSyntaxAndImportsNotUsedAsValues.ts",
+  "verbatimModuleSyntaxCompat.ts",
+  "verbatimModuleSyntaxCompat2.ts",
+  "verbatimModuleSyntaxCompat3.ts",
+  "verbatimModuleSyntaxCompat4.ts",
+  "preserveValueImports.ts",
+  "preserveValueImports_importsNotUsedAsValues.ts",
+  "preserveValueImports_errors.ts",
+  "preserveValueImports_mixedImports.ts",
+  "preserveValueImports_module.ts",
+  "importsNotUsedAsValues_error.ts",
+  "alwaysStrictNoImplicitUseStrict.ts",
+  "nonPrimitiveIndexingWithForInSupressError.ts",
+  "parameterInitializerBeforeDestructuringEmit.ts",
+  "mappedTypeUnionConstraintInferences.ts",
+  "lateBoundConstraintTypeChecksCorrectly.ts",
+  "keyofDoesntContainSymbols.ts",
+  "isolatedModulesOut.ts",
+  "noStrictGenericChecks.ts",
+  "noImplicitUseStrict_umd.ts",
+  "noImplicitUseStrict_system.ts",
+  "noImplicitUseStrict_es6.ts",
+  "noImplicitUseStrict_commonjs.ts",
+  "noImplicitUseStrict_amd.ts",
+  "noImplicitAnyIndexingSuppressed.ts",
+  "excessPropertyErrorsSuppressed.ts",
+  "moduleNoneDynamicImport.ts",
+  "moduleNoneErrors.ts",
+  "moduleNoneOutFile.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile1.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile2.ts",
+  "noErrorUsingImportExportModuleAugmentationInDeclarationFile3.ts",
+  "requireOfJsonFileWithModuleEmitNone.ts",
+  "requireOfJsonFileWithModuleNodeResolutionEmitNone.ts",
+]);
+
+// Mirrors compiler_runner.go skippedTests plus harnessutil.go
+// SkipUnsupportedCompilerOptions: the pinned TS-Go runner skips these tests and
+// configurations outright, so no reference baselines exist for them. Skipping (counted
+// and reasoned) is the faithful mirror; running them would gate against nothing.
+// Condition order matches SkipUnsupportedCompilerOptions exactly.
 function getSkipReasonFromCompilerOptions(sourceBaseName, compilerOptions) {
+  if (tsgoRunnerSkippedTestNames.has(sourceBaseName)) {
+    return `TS-Go runner skip list: ${sourceBaseName}`;
+  }
+  const moduleValue = stringCompilerOption(compilerOptions.module);
+  if (moduleValue === "amd" || moduleValue === "umd" || moduleValue === "system") {
+    return `TS-Go runner skips unsupported module kind ${moduleValue}`;
+  }
+  const moduleResolutionValue = stringCompilerOption(compilerOptions.moduleResolution);
+  // "node" is the tsconfig alias for Node10 (core.ModuleResolutionKindNode10).
+  if (moduleResolutionValue === "node10" || moduleResolutionValue === "node" || moduleResolutionValue === "classic") {
+    return `TS-Go runner skips unsupported module resolution kind ${moduleResolutionValue}`;
+  }
+  if (compilerOptions.esModuleInterop === false) {
+    return "TS-Go runner skips esModuleInterop=false";
+  }
+  if (compilerOptions.allowSyntheticDefaultImports === false) {
+    return "TS-Go runner skips allowSyntheticDefaultImports=false";
+  }
+  if (optionIsPresent(compilerOptions.baseUrl)) {
+    return `TS-Go runner skips unsupported baseUrl ${compilerOptions.baseUrl}`;
+  }
+  if (optionIsPresent(compilerOptions.outFile)) {
+    return `TS-Go runner skips unsupported outFile ${compilerOptions.outFile}`;
+  }
+  if (stringCompilerOption(compilerOptions.target) === "es5") {
+    return "TS-Go runner skips unsupported target es5";
+  }
+  if (compilerOptions.alwaysStrict === false) {
+    return "TS-Go runner skips alwaysStrict=false";
+  }
   return "";
 }
 
@@ -2261,7 +2816,9 @@ async function runQueue(testCases, runRoot, jobs, failFast, options) {
       }
       const testCase = testCases[currentIndex];
       const result = await runCase(testCase, runRoot, options);
-      results[currentIndex] = result;
+      // Store the trimmed record immediately: retaining every case's full
+      // stdout/stderr exhausts the heap on the 7k-case submodule corpus.
+      results[currentIndex] = trimResult(result);
       if (result.status === "fail" && failFast) {
         stopped = true;
       }
@@ -2276,7 +2833,8 @@ function printProgress(done, total, result) {
   const prefix = result.status === "pass" ? "PASS" : result.status === "skip" ? "SKIP" : "FAIL";
   const configuration = result.configurationName === "" ? "" : ` configuration=${result.configurationName}`;
   const skip = result.skipReason === "" ? "" : ` reason=${result.skipReason}`;
-  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}`;
+  const tsgoAccepted = (result.exactBaseline?.tsgoAccepted?.length ?? 0) === 0 ? "" : ` tsgoAccepted=${result.exactBaseline.tsgoAccepted.length}`;
+  const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}${tsgoAccepted}`;
   console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
 }
 
@@ -2302,11 +2860,23 @@ function summarize(results) {
     exactBaselineFailedCases: exactBaselineResults.filter((baseline) => baseline.status === "fail").length,
     exactBaselineComparableArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.comparable, 0),
     exactBaselineUnsupportedArtifacts: exactBaselineResults.reduce((sum, baseline) => sum + baseline.unsupported.length, 0),
+    exactBaselineTsgoAcceptedSections: exactBaselineResults.reduce((sum, baseline) => sum + (baseline.tsgoAccepted?.length ?? 0), 0),
     exactBaselineMismatches: exactBaselineResults.reduce((sum, baseline) => sum + baseline.mismatches.length, 0),
   };
 }
 
+// V8 represents substrings from split()/slice() as SlicedStrings that retain
+// the parent string. Without flattening, every trimmed record keeps its case's
+// FULL stdout+stderr alive and a 7k-case sweep exhausts the default heap.
+function flattenString(value) {
+  return Buffer.from(value, "utf8").toString("utf8");
+}
+
 function trimResult(result) {
+  if (result.firstOutputLines !== undefined) {
+    // Already trimmed at accumulation time.
+    return result;
+  }
   const output = `${result.stdout}${result.stderr}`;
   return {
     corpus: result.corpus,
@@ -2320,8 +2890,8 @@ function trimResult(result) {
     signal: result.signal,
     caseDir: result.caseDir,
     skipReason: result.skipReason,
-    exactBaseline: result.exactBaseline,
-    firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20),
+    exactBaseline: result.exactBaseline === undefined ? undefined : JSON.parse(JSON.stringify(result.exactBaseline)),
+    firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20).map((line) => flattenString(line.slice(0, 1000))),
   };
 }
 
@@ -2341,6 +2911,7 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     `- Exact-baseline failed cases: ${summary.exactBaselineFailedCases}`,
     `- Exact-baseline comparable artifacts: ${summary.exactBaselineComparableArtifacts}`,
     `- Exact-baseline unsupported artifacts: ${summary.exactBaselineUnsupportedArtifacts}`,
+    `- Exact-baseline tsgo-accepted sections: ${summary.exactBaselineTsgoAcceptedSections}`,
     `- Exact-baseline mismatches: ${summary.exactBaselineMismatches}`,
     "",
     "## Upstream Test Universe",

@@ -58,6 +58,7 @@ import {
   KindBigIntLiteral,
   KindStringLiteral,
   KindEqualsToken,
+  KindTaggedTemplateExpression,
 } from "../../ast/generated/kinds.js";
 import {
   IsClassStaticBlockDeclaration,
@@ -978,6 +979,8 @@ export function esDecoratorTransformer_visit(receiver: GoPtr<esDecoratorTransfor
       return esDecoratorTransformer_visitPartiallyEmittedExpression(tx, node, false);
     case KindCallExpression:
       return esDecoratorTransformer_visitCallExpression(tx, node);
+    case KindTaggedTemplateExpression:
+      return esDecoratorTransformer_visitTaggedTemplateExpression(tx, node);
     case KindPrefixUnaryExpression:
     case KindPostfixUnaryExpression:
       return esDecoratorTransformer_visitPreOrPostfixUnaryExpression(tx, node, false);
@@ -2245,7 +2248,8 @@ export function esDecoratorTransformer_emitMemberInfoDeclarations(receiver: GoPt
   const stmts: GoPtr<Statement>[] = [];
   (OrderedMap_Entries(ci!.memberInfos) as ReturnType<typeof OrderedMap_Entries<GoPtr<Node>, GoPtr<memberInfo>>>)((member, mi) => {
     if (IsStatic(member as GoPtr<Node>) !== isStatic) {
-      return false;
+      // Go `continue`: the GoSeq yield returns true to keep iterating.
+      return true;
     }
     stmts.push(esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDecoratorsName, undefined));
     if ((mi as GoPtr<memberInfo>)!.memberInitializersName !== undefined) {
@@ -2257,7 +2261,8 @@ export function esDecoratorTransformer_emitMemberInfoDeclarations(receiver: GoPt
     if ((mi as GoPtr<memberInfo>)!.memberDescriptorName !== undefined) {
       stmts.push(esDecoratorTransformer_createLet(tx, (mi as GoPtr<memberInfo>)!.memberDescriptorName, undefined));
     }
-    return false;
+    // Go `for ... range` iterates every entry.
+    return true;
   });
   return stmts;
 }

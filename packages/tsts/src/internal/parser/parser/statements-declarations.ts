@@ -548,7 +548,7 @@ export function Parser_finishSourceFile(receiver: GoPtr<Parser>, result: GoPtr<S
   }
   SortFunc(receiver!.reparsedClones, CompareNodePositions);
   result!.ReparsedClones = Clone(receiver!.reparsedClones)!;
-  SetExternalModuleIndicator(result, receiver!.opts!.ExternalModuleIndicatorOptions);
+  SetExternalModuleIndicator(result, receiver!.opts!.ExternalModuleIndicatorOptions ?? { JSX: false, Force: false });
 }
 
 /**

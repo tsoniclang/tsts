@@ -1539,59 +1539,37 @@ export function addUndefinedIfDefinitelyRequired(expr: GoPtr<PseudoType>): GoPtr
  * 	return NewPseudoTypeNoResult(node.AsNode())
  * }
  */
-// lastRequiredParamIndex returns the index just past the last required parameter.
-// A parameter is "required" if it has no question token, no initializer, and no rest token.
-function lastRequiredParamIndex(params: GoSlice<GoPtr<Node>>): int {
-  for (let i = params.length - 1; i >= 0; i--) {
-    if (!isOptionalInitializedOrRestParameter(params[i])) {
-      return (i + 1) as int;
-    }
-  }
-  return 0 as int;
-}
-
-function PseudoChecker_typeFromParameterWorker(receiver: GoPtr<PseudoChecker>, node: GoPtr<ParameterDeclaration>, selfIdx: int, lastRequired: int): GoPtr<PseudoType> {
+export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, node: GoPtr<ParameterDeclaration>): GoPtr<PseudoType> {
   const parent = node!.Parent;
   if (parent!.Kind === KindSetAccessor) {
     return PseudoChecker_GetTypeOfAccessor(receiver, parent);
   }
-  const hasRequiredAfter = selfIdx < lastRequired - 1;
   const declaredType = node!.Type;
   if (declaredType !== undefined) {
-    const result = NewPseudoTypeDirect(declaredType);
-    if (receiver!.strictNullChecks && node!.Initializer !== undefined && hasRequiredAfter) {
-      return addUndefinedIfDefinitelyRequired(result);
-    }
-    return result;
+    return NewPseudoTypeDirect(declaredType);
   }
   if (node!.Initializer !== undefined && IsIdentifier(Node_Name(Node_AsNode(node))) && !isContextuallyTyped(Node_AsNode(node))) {
     const expr = PseudoChecker_typeFromExpression(receiver, node!.Initializer as unknown as GoPtr<Node>);
     if (!receiver!.strictNullChecks) {
       return expr;
     }
-    if (!hasRequiredAfter) {
+    const p = Node_Parameters(parent);
+    const selfIdx = p.indexOf(Node_AsNode(node));
+    if (selfIdx === p.length - 1) {
+      return expr;
+    }
+    // if there is a non-optional parameter after this one, a `| undefined` will need to explicitly be emitted on this parameter, if it's not already there
+    const remainingParams = p.slice(selfIdx + 1);
+    if (Every(remainingParams, isOptionalInitializedOrRestParameter)) {
       return expr;
     }
     return addUndefinedIfDefinitelyRequired(expr);
   }
+  // TODO: In strada, the ID checker doesn't infer a parameter type from binding pattern names, but the real checker _does_!
+  // This means ID won't let you write, say, `({elem}) => false` without an annotation, even though it's trivially of type
+  // `(p0: {elem: any}) => boolean` and error-free under `noImplicitAny: false`!
+  // That limitation is retained here.
   return NewPseudoTypeNoResult(Node_AsNode(node));
-}
-
-export function PseudoChecker_typeFromParameter(receiver: GoPtr<PseudoChecker>, node: GoPtr<ParameterDeclaration>): GoPtr<PseudoType> {
-  const parent = node!.Parent;
-  if (parent!.Kind === KindSetAccessor) {
-    return PseudoChecker_GetTypeOfAccessor(receiver, parent);
-  }
-  if (node!.Initializer === undefined) {
-    if (node!.Type !== undefined) {
-      return NewPseudoTypeDirect(node!.Type);
-    }
-    return NewPseudoTypeNoResult(Node_AsNode(node));
-  }
-  const p = Node_Parameters(parent);
-  const selfIdx = p.indexOf(Node_AsNode(node)) as int;
-  const lastRequired = lastRequiredParamIndex(p);
-  return PseudoChecker_typeFromParameterWorker(receiver, node, selfIdx, lastRequired);
 }
 
 /**
@@ -1624,20 +1602,14 @@ export function PseudoChecker_cloneParameters(receiver: GoPtr<PseudoChecker>, no
   if (nodes!.Nodes.length === 0) {
     return [];
   }
-  const lastRequired = lastRequiredParamIndex(nodes!.Nodes);
   const result: GoSlice<GoPtr<PseudoParameter>> = [];
-  for (let i = 0; i < nodes!.Nodes.length; i++) {
-    const e = nodes!.Nodes[i];
+  for (const e of nodes!.Nodes) {
     const p = AsParameterDeclaration(e);
-    let optional = p!.QuestionToken !== undefined;
-    if (!optional && p!.Initializer !== undefined) {
-      optional = i >= lastRequired - 1;
-    }
     result.push(NewPseudoParameter(
       p!.DotDotDotToken !== undefined,
       Node_Name(e),
-      optional,
-      PseudoChecker_typeFromParameterWorker(receiver, p, i as int, lastRequired),
+      p!.QuestionToken !== undefined || p!.Initializer !== undefined,
+      PseudoChecker_typeFromParameter(receiver, p),
     ));
   }
   return result;

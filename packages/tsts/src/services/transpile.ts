@@ -11,6 +11,7 @@ import {
   Program_GetProgramDiagnostics,
   Program_GetSourceFile,
   Program_GetSyntacticDiagnostics,
+  SortAndDeduplicateDiagnostics,
 } from "../internal/compiler/program.js";
 import { EmitOnlyDts, EmitOnlyJs } from "../internal/compiler/emitter.js";
 import type { Diagnostic } from "../internal/ast/diagnostic.js";
@@ -48,7 +49,7 @@ export type TranspileCompilerOptionValue =
   | readonly number[]
   | undefined;
 
-const barebonesLibContent = `interface Boolean {}
+export const barebonesLibContent = `interface Boolean {}
 interface Function {}
 interface CallableFunction {}
 interface NewableFunction {}
@@ -61,20 +62,7 @@ interface Array<T> { length: number; [n: number]: T; }
 interface SymbolConstructor {
     (desc?: string | number): symbol;
     for(name: string): symbol;
-    readonly asyncDispose: unique symbol;
-    readonly dispose: unique symbol;
-    readonly hasInstance: unique symbol;
-    readonly isConcatSpreadable: unique symbol;
-    readonly iterator: unique symbol;
-    readonly match: unique symbol;
-    readonly matchAll: unique symbol;
-    readonly replace: unique symbol;
-    readonly search: unique symbol;
-    readonly species: unique symbol;
-    readonly split: unique symbol;
-    readonly toPrimitive: unique symbol;
-    readonly toStringTag: unique symbol;
-    readonly unscopables: unique symbol;
+    readonly toStringTag: symbol;
 }
 declare var Symbol: SymbolConstructor;
 interface Symbol {
@@ -191,9 +179,14 @@ function transpileWorker(input: string, options: TranspileOptions, declaration: 
   if (outputText === undefined) {
     throw new Error("TSTS transpile did not emit an output file");
   }
+  // Mirror TS-Go's user-facing diagnostic presentation: tsc's EmitFilesAndReportErrors runs
+  // compiler.SortAndDeduplicateDiagnostics over the combined program+emit diagnostics before
+  // reporting (internal/execute/tsc/emit.go). The raw emit pipeline intentionally produces
+  // duplicates (recovery boundaries replay deferred reports); the dedup is presentation-level.
+  const presentedDiagnostics = [...SortAndDeduplicateDiagnostics(diagnostics)].filter((diagnostic): diagnostic is Diagnostic => diagnostic !== undefined);
   return sourceMapText === undefined
-    ? { outputText, diagnostics }
-    : { outputText, diagnostics, sourceMapText };
+    ? { outputText, diagnostics: presentedDiagnostics }
+    : { outputText, diagnostics: presentedDiagnostics, sourceMapText };
 }
 
 function appendDiagnostics(target: Diagnostic[], diagnostics: GoSlice<GoPtr<Diagnostic>>): void {

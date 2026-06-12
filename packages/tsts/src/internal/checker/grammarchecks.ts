@@ -34,6 +34,7 @@ import {
   IsPropertySignatureDeclaration, IsJSTypeAliasDeclaration, IsSpreadElement, IsJsxNamespacedName, IsMethodDeclaration, IsElementAccessExpression, IsForStatement,
   IsBlock, IsVariableStatement, IsPropertyDeclaration, IsCaseClause, IsDefaultClause, IsStringLiteral, IsArrayLiteralExpression, IsObjectLiteralExpression, IsComputedPropertyName,
   IsDecorator, IsInterfaceDeclaration, IsCallSignatureDeclaration, IsConstructSignatureDeclaration, IsMethodSignatureDeclaration, IsFunctionTypeNode, IsConstructorTypeNode,
+  IsTypeAliasDeclaration,
 } from "../ast/generated/predicates.js";
 import {
   ModifierFlagsNone, ModifierFlagsExport, ModifierFlagsAbstract, ModifierFlagsAmbient, ModifierFlagsStatic, ModifierFlagsAccessor, ModifierFlagsAsync, ModifierFlagsDefault,
@@ -54,7 +55,7 @@ import { GetTextOfNode } from "../scanner/utilities.js";
 import { GetErrorRangeForNode } from "../scanner/scanner.js";
 import { FindUseStrictPrologue } from "../binder/binder.js";
 import { Find, LastOrNil, Filter, Some } from "../core/core.js";
-import { Node_Expression, Node_Body, IsTypeOrJSTypeAliasDeclaration, SourceFile_Text, SourceFile_ECMALineMap } from "../ast/ast.js";
+import { Node_Expression, Node_Body, SourceFile_Text, SourceFile_ECMALineMap } from "../ast/ast.js";
 import { GetContainingClass, IsExpressionNode, IsModifier, NodeIsPresent, IsThisParameter, IsPrivateIdentifierClassElementDeclaration, NewHasFileName } from "../ast/utilities.js";
 import { NodeFlagsNone } from "../ast/generated/flags.js";
 import { TSTrue } from "../core/tristate.js";
@@ -297,10 +298,6 @@ import {
   Duplicate_identifier_0,
   Initializers_are_not_allowed_in_ambient_contexts,
 } from "../diagnostics/generated/messages.js";
-
-function hasSyntacticQuestionToken(token: GoPtr<Node>): bool {
-  return (token !== undefined && (token!.Flags & NodeFlagsReparsed) === 0) as bool;
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/grammarchecks.go::method::Checker.grammarErrorOnFirstToken","kind":"method","status":"implemented","sigHash":"9fab30665e440946aaaa3690f3b401ad23c823e57bb21da03bf92c49f43e9680","bodyHash":"cba3dfc9412a3a0b96a7238d68566af2aadcfd2045009567a4afc062d63201d9"}
@@ -1368,7 +1365,7 @@ export function Checker_checkGrammarModifiers(receiver: GoPtr<Checker>, node: Go
           const inOutFlag: ModifierFlags = modifier!.Kind === KindInKeyword ? ModifierFlagsIn : ModifierFlagsOut;
           const inOutText: string = modifier!.Kind === KindInKeyword ? "in" : "out";
           const parent = node!.Parent;
-          if (node!.Kind !== KindTypeParameter || (parent !== undefined && !(IsInterfaceDeclaration(parent) || IsClassLike(parent) || IsTypeOrJSTypeAliasDeclaration(parent)))) {
+          if (node!.Kind !== KindTypeParameter || (parent !== undefined && !(IsInterfaceDeclaration(parent) || IsClassLike(parent) || IsTypeAliasDeclaration(parent) || isJSDocTypedefTag(parent)))) {
             return Checker_grammarErrorOnNode(receiver, modifier, X_0_modifier_can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias, inOutText);
           }
           if ((flags & inOutFlag) !== 0) {
@@ -1737,7 +1734,7 @@ export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, para
       if ((parameter!.Flags & NodeFlagsAmbient) === 0) {
         Checker_checkGrammarForDisallowedTrailingComma(receiver, parameters, A_rest_parameter_or_binding_pattern_may_not_have_a_trailing_comma);
       }
-      if (hasSyntacticQuestionToken(parameter!.QuestionToken)) {
+      if (parameter!.QuestionToken !== undefined) {
         return Checker_grammarErrorOnNode(receiver, parameter!.QuestionToken, A_rest_parameter_cannot_be_optional);
       }
       if (parameter!.Initializer !== undefined) {
@@ -1747,7 +1744,7 @@ export function Checker_checkGrammarParameterList(receiver: GoPtr<Checker>, para
       // !!!
       // used to be hasEffectiveQuestionToken for JSDoc
       seenOptionalParameter = true;
-      if (hasSyntacticQuestionToken(parameter!.QuestionToken) && parameter!.Initializer !== undefined) {
+      if (parameter!.QuestionToken !== undefined && parameter!.Initializer !== undefined) {
         return Checker_grammarErrorOnNode(receiver, Node_Name(parameter as unknown as GoPtr<Node>), Parameter_cannot_have_question_mark_and_initializer);
       }
     } else if (seenOptionalParameter && parameter!.Initializer === undefined) {
@@ -3031,7 +3028,7 @@ export function Checker_checkGrammarAccessor(receiver: GoPtr<Checker>, accessor:
     if (parameter!.DotDotDotToken !== undefined) {
       return Checker_grammarErrorOnNode(receiver, parameter!.DotDotDotToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_rest_parameter);
     }
-    if (hasSyntacticQuestionToken(parameter!.QuestionToken as unknown as GoPtr<Node>)) {
+    if (parameter!.QuestionToken !== undefined) {
       return Checker_grammarErrorOnNode(receiver, parameter!.QuestionToken as unknown as GoPtr<Node>, A_set_accessor_cannot_have_an_optional_parameter);
     }
     if (parameter!.Initializer !== undefined) {

@@ -2233,7 +2233,8 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
   // fetches interface type, or initializes symbol links type parameters
   if (managedSym!.Flags & SymbolFlagsTypeAlias) {
     const params = (LinkStore_Get(receiver!.typeAliasLinks, managedSym) as GoPtr<TypeAliasLinks>)!.typeParameters;
-    if (params.length >= typeArguments.length) {
+    // Go len(nil) == 0: a non-generic alias has a nil typeParameters slice.
+    if ((params ?? []).length >= typeArguments.length) {
       const args = Checker_fillMissingTypeArguments(receiver, typeArguments, params, typeArguments.length, inJavaScript);
       if (args.length === 0) {
         return declaredManagedType;

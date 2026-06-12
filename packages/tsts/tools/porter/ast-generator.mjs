@@ -409,6 +409,10 @@ const BASE_METHOD_PROVIDERS = {
   // generated per-node Concrete_computeSubtreeFacts wins. Handled specially.
 };
 
+// Hand-written CONCRETE-type setModifiers overrides (ast.go), ported in ast.ts.
+// Go: func (node *BinaryExpression) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
+const AST_MANUAL_SET_MODIFIERS = new Set(["BinaryExpression"]);
+
 const AST_MANUAL_COMPUTE_SUBTREE_FACTS = new Set([
   "AccessorDeclarationBase",
   "ArrowFunction",
@@ -532,14 +536,24 @@ function resolveAdapterTarget(schema, nodeName, method) {
   const chain = schema.baseChainOf(nodeName); // most-derived first
   const generated = generatedOverrideMethodsFor(schema, nodeName);
 
+  // Hand-written concrete setModifiers overrides (ast.go), living in ast.ts.
+  // Go: func (node *BinaryExpression) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
+  if (method === "setModifiers" && AST_MANUAL_SET_MODIFIERS.has(nodeName)) {
+    return { fn: `AstManual.${nodeName}_setModifiers`, takesModifiers: true };
+  }
+
   // computeSubtreeFacts: ClassLikeBase override beats generated only when the
   // node embeds ClassLikeBase and has no own generateSubtreeFacts.
   if (method === "computeSubtreeFacts") {
     if (generated.has("computeSubtreeFacts")) {
       return { fn: `${nodeName}_computeSubtreeFacts`, takesSelf: false };
     }
-    if (AST_MANUAL_COMPUTE_SUBTREE_FACTS.has(nodeName)) {
-      return { fn: `AstManual.${nodeName}_computeSubtreeFacts`, takesSelf: false };
+    // Go promotes embedded-base methods onto the concrete; resolve the most-derived
+    // hand-written provider by walking the base chain (e.g. AccessorDeclarationBase
+    // provides computeSubtreeFacts for Get/SetAccessorDeclaration).
+    const manualComputeProvider = [nodeName, ...chain].find((name) => AST_MANUAL_COMPUTE_SUBTREE_FACTS.has(name));
+    if (manualComputeProvider !== undefined) {
+      return { fn: `AstManual.${manualComputeProvider}_computeSubtreeFacts`, takesSelf: false };
     }
     if (chain.includes("ClassLikeBase")) {
       return { fn: "ClassLikeBase_computeSubtreeFacts", takesSelf: false };
@@ -551,8 +565,9 @@ function resolveAdapterTarget(schema, nodeName, method) {
   }
 
   if (method === "propagateSubtreeFacts") {
-    if (AST_MANUAL_PROPAGATE_SUBTREE_FACTS.has(nodeName)) {
-      return { fn: `AstManual.${nodeName}_propagateSubtreeFacts`, takesSelf: false };
+    const manualPropagateProvider = [nodeName, ...chain].find((name) => AST_MANUAL_PROPAGATE_SUBTREE_FACTS.has(name));
+    if (manualPropagateProvider !== undefined) {
+      return { fn: `AstManual.${manualPropagateProvider}_propagateSubtreeFacts`, takesSelf: false };
     }
     if (chain.includes("TypeSyntaxBase")) {
       return { fn: "AstManual.TypeSyntaxBase_propagateSubtreeFacts", takesSelf: false };
