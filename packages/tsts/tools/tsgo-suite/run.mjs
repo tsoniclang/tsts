@@ -2864,6 +2864,11 @@ function printProgress(done, total, result) {
   const tsgoAccepted = (result.exactBaseline?.tsgoAccepted?.length ?? 0) === 0 ? "" : ` tsgoAccepted=${result.exactBaseline.tsgoAccepted.length}`;
   const baseline = result.exactBaseline === undefined ? "" : ` exactBaselines=${result.exactBaseline.status} mismatches=${result.exactBaseline.mismatches.length}${tsgoAccepted}`;
   console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
+  if (done % 100 === 0 || total <= 20 || process.env.TSGO_MEM_EVERY === "1") {
+    const m = process.memoryUsage();
+    const mb = (n) => Math.round(n / 1024 / 1024);
+    console.log(`MEM ${done}/${total} rss=${mb(m.rss)}MB heapUsed=${mb(m.heapUsed)}MB heapTotal=${mb(m.heapTotal)}MB external=${mb(m.external)}MB arrayBuffers=${mb(m.arrayBuffers)}MB`);
+  }
 }
 
 async function writeReports(reportRoot, resultsPath, inventory, caseRoot) {
@@ -3046,6 +3051,12 @@ async function main() {
   const run = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options);
   const summary = await writeReports(reportRoot, run.resultsPath, inventory, caseRootForRun);
   console.log(`SUMMARY total=${summary.total} passed=${summary.passed} failed=${summary.failed}`);
+  if (process.env.TSGO_HOLD_SECONDS !== undefined) {
+    // Diagnostics hook: keep the process alive (e.g. for --heapsnapshot-signal)
+    // so retained memory can be inspected after the run completes.
+    console.log(`HOLDING for ${process.env.TSGO_HOLD_SECONDS}s (TSGO_HOLD_SECONDS)`);
+    await new Promise((resolve) => setTimeout(resolve, Number(process.env.TSGO_HOLD_SECONDS) * 1000));
+  }
   console.log(`REPORT ${join(reportRoot, "summary.md")}`);
   if (summary.failed > 0) {
     process.exitCode = 1;
