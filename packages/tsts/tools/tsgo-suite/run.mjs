@@ -2865,6 +2865,13 @@ function summarize(results) {
   };
 }
 
+// V8 represents substrings from split()/slice() as SlicedStrings that retain
+// the parent string. Without flattening, every trimmed record keeps its case's
+// FULL stdout+stderr alive and a 7k-case sweep exhausts the default heap.
+function flattenString(value) {
+  return Buffer.from(value, "utf8").toString("utf8");
+}
+
 function trimResult(result) {
   if (result.firstOutputLines !== undefined) {
     // Already trimmed at accumulation time.
@@ -2883,8 +2890,8 @@ function trimResult(result) {
     signal: result.signal,
     caseDir: result.caseDir,
     skipReason: result.skipReason,
-    exactBaseline: result.exactBaseline,
-    firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20),
+    exactBaseline: result.exactBaseline === undefined ? undefined : JSON.parse(JSON.stringify(result.exactBaseline)),
+    firstOutputLines: output.split(/\r?\n/).filter(Boolean).slice(0, 20).map((line) => flattenString(line.slice(0, 1000))),
   };
 }
 
