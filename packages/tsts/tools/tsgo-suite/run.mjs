@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { dirname, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
 
@@ -2803,8 +2803,19 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
   };
 }
 
-async function runQueue(testCases, runRoot, jobs, failFast, options) {
-  const results = [];
+// Run all cases, streaming each trimmed result record to results.ndjson in the
+// report root as it completes. The runner holds NO per-case records in memory:
+// memory stays O(in-flight cases) regardless of corpus size, and a killed run
+// leaves a complete machine-readable record of everything it finished. Each
+// NDJSON line is the results.json record plus a `caseIndex` field recording the
+// case's position in discovery order (workers finish out of order).
+async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options) {
+  const resultsPath = join(reportRoot, "results.ndjson");
+  await writeFile(resultsPath, "");
+  // Appends are serialized through a promise chain; each worker awaits its own
+  // append so a finished case is durable on disk before the worker continues.
+  let appendChain = Promise.resolve();
+  let completed = 0;
   let cursor = 0;
   let stopped = false;
   const workers = Array.from({ length: jobs }, async () => {
@@ -2816,17 +2827,34 @@ async function runQueue(testCases, runRoot, jobs, failFast, options) {
       }
       const testCase = testCases[currentIndex];
       const result = await runCase(testCase, runRoot, options);
-      // Store the trimmed record immediately: retaining every case's full
-      // stdout/stderr exhausts the heap on the 7k-case submodule corpus.
-      results[currentIndex] = trimResult(result);
+      // Trim immediately (bounded, flattened strings only), then persist.
+      const record = { caseIndex: currentIndex, ...trimResult(result) };
+      const append = appendChain.then(() => appendFile(resultsPath, `${JSON.stringify(record)}\n`));
+      appendChain = append;
+      await append;
+      completed += 1;
       if (result.status === "fail" && failFast) {
         stopped = true;
       }
-      printProgress(results.filter(Boolean).length, testCases.length, result);
+      printProgress(completed, testCases.length, result);
     }
   });
   await Promise.all(workers);
-  return results.filter(Boolean);
+  return { resultsPath, completed };
+}
+
+// Read the streamed records back, restore discovery order, and strip the
+// caseIndex envelope so the returned records match the results.json shape.
+// Every record was trimmed (capped, flattened) at write time, so the
+// materialized array is bounded regardless of per-case output sizes.
+export async function readResults(resultsPath) {
+  const text = await readFile(resultsPath, "utf8");
+  const records = text
+    .split("\n")
+    .filter((line) => line !== "")
+    .map((line) => JSON.parse(line));
+  records.sort((a, b) => a.caseIndex - b.caseIndex);
+  return records.map(({ caseIndex: _caseIndex, ...record }) => record);
 }
 
 function printProgress(done, total, result) {
@@ -2838,13 +2866,15 @@ function printProgress(done, total, result) {
   console.log(`${prefix} ${done}/${total} ${result.relativePath}${configuration} expectedErrors=${result.expectedErrors} actualErrors=${result.actualErrors}${baseline}${skip}`);
 }
 
-async function writeReports(reportRoot, results, inventory, caseRoot) {
+async function writeReports(reportRoot, resultsPath, inventory, caseRoot) {
+  const results = await readResults(resultsPath);
   const summary = summarize(results);
-  await writeFile(join(reportRoot, "results.json"), `${JSON.stringify({ summary, inventory, caseRoot, results: results.map(trimResult) }, null, 2)}\n`);
+  await writeFile(join(reportRoot, "results.json"), `${JSON.stringify({ summary, inventory, caseRoot, results }, null, 2)}\n`);
   await writeFile(join(reportRoot, "summary.md"), renderMarkdown(summary, results, inventory, caseRoot));
+  return summary;
 }
 
-function summarize(results) {
+export function summarize(results) {
   const passed = results.filter((result) => result.status === "pass").length;
   const skipped = results.filter((result) => result.status === "skip").length;
   const failed = results.length - passed - skipped;
@@ -2872,7 +2902,7 @@ function flattenString(value) {
   return Buffer.from(value, "utf8").toString("utf8");
 }
 
-function trimResult(result) {
+export function trimResult(result) {
   if (result.firstOutputLines !== undefined) {
     // Already trimmed at accumulation time.
     return result;
@@ -2927,7 +2957,7 @@ function renderMarkdown(summary, results, inventory, caseRoot) {
     lines.push("| Case | Expected Errors | Actual Errors | Exact Baselines | Exit | First Output |");
     lines.push("|---|---:|---:|---|---:|---|");
     for (const result of failed.slice(0, 200)) {
-      const output = `${result.stdout}${result.stderr}`.split(/\r?\n/).find(Boolean) ?? "";
+      const output = result.firstOutputLines?.[0] ?? "";
       const exact = result.exactBaseline === undefined
         ? ""
         : `${result.exactBaseline.status}: ${result.exactBaseline.mismatches.slice(0, 3).join("; ")}`;
@@ -3013,9 +3043,8 @@ async function main() {
   console.log(`caseRoot=${caseRootForRun}`);
   console.log(`reportRoot=${reportRoot}`);
 
-  const results = await runQueue(testCases, caseRootForRun, options.jobs, options.failFast, options);
-  await writeReports(reportRoot, results, inventory, caseRootForRun);
-  const summary = summarize(results);
+  const run = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options);
+  const summary = await writeReports(reportRoot, run.resultsPath, inventory, caseRootForRun);
   console.log(`SUMMARY total=${summary.total} passed=${summary.passed} failed=${summary.failed}`);
   console.log(`REPORT ${join(reportRoot, "summary.md")}`);
   if (summary.failed > 0) {
