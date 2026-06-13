@@ -74,6 +74,7 @@ import { keyBuilder_writeType, keyBuilder_writeTypes, keyBuilder_writeGenericTyp
 import { keyBuilder_writeNode, keyBuilder_writeNodeId } from "./syntax-checking.js";
 import { keyBuilder_writeAlias, keyBuilder_writeSymbol } from "./symbols.js";
 import { Checker_compareSymbolChainsWorker } from "../symbolaccessibility.js";
+import type { symbolTableID } from "../symbolaccessibility.js";
 import { newFunctionTypeMapper } from "../mapper.js";
 import { Checker_getTypeArguments, Checker_getUniqueLiteralTypeForTypeParameter, Checker_newSignature, Checker_newTypeParameter } from "./signatures.js";
 import { Checker_evaluateEntity, Checker_initializeChecker, Checker_initializeClosures, Checker_initializeIterationResolvers, Checker_reportUnmeasurableWorker, Checker_reportUnreliableWorker } from "./support.js";
@@ -1390,6 +1391,7 @@ export let nextCheckerID: Uint32 = new Uint32();
  * 	errorTypes                                  map[CacheHashKey]*Type
  * 	moduleSymbols                               map[*ast.Node]*ast.Symbol
  * 	globalThisSymbol                            *ast.Symbol
+ * 	symbolTableAliasCache                       map[symbolTableID][]*ast.Symbol
  * 	resolveName                                 func(location *ast.Node, name string, meaning ast.SymbolFlags, nameNotFoundMessage *diagnostics.Message, isUse bool, excludeGlobals bool) *ast.Symbol
  * 	resolveNameForSymbolSuggestion              func(location *ast.Node, name string, meaning ast.SymbolFlags, nameNotFoundMessage *diagnostics.Message, isUse bool, excludeGlobals bool) *ast.Symbol
  * 	tupleTypes                                  map[CacheHashKey]*Type
@@ -1704,6 +1706,7 @@ export interface Checker {
   errorTypes: GoMap<CacheHashKey, GoPtr<Type>>;
   moduleSymbols: GoMap<GoPtr<Node>, GoPtr<Symbol>>;
   globalThisSymbol: GoPtr<Symbol>;
+  symbolTableAliasCache: GoMap<symbolTableID, GoSlice<GoPtr<Symbol>>>;
   resolveName: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
   resolveNameForSymbolSuggestion: (location: GoPtr<Node>, name: string, meaning: SymbolFlags, nameNotFoundMessage: GoPtr<Message>, isUse: bool, excludeGlobals: bool) => GoPtr<Symbol>;
   tupleTypes: GoMap<CacheHashKey, GoPtr<Type>>;
