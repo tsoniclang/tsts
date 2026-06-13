@@ -1526,6 +1526,20 @@ test("buildSchemaSourceSyncStatus flags schema-dir copies that drift from live s
   }
 });
 
+test("real porter config checks every schema input with a live upstream counterpart", () => {
+  const config = JSON.parse(readFileSync(resolveRepo("packages/tsts/porter.config.json"), "utf8"));
+  assert.deepEqual(
+    config.schemaSourceSyncChecks.map((check) => [check.schema, check.source]).sort(),
+    [
+      ["packages/tsts/schema/tsgo/ast.json", "_scripts/ast.json"],
+      ["packages/tsts/schema/tsgo/ast.schema.json", "_scripts/ast.schema.json"],
+      ["packages/tsts/schema/tsgo/nodeflags.go", "internal/ast/nodeflags.go"],
+      ["packages/tsts/schema/tsgo/protocol.ts", "_packages/native-preview/src/api/node/protocol.ts"],
+      ["packages/tsts/schema/tsgo/symbolflags.go", "internal/ast/symbolflags.go"],
+    ].sort(),
+  );
+});
+
 test("buildSchemaSourceSyncStatus flags a missing live source file (upstream removed it)", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "porter-schemasync2-"));
   try {

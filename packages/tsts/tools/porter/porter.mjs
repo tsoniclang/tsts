@@ -80,6 +80,10 @@ export function main() {
   if (command === "ast") {
     const snapshot = runScan(config);
     const sourceRevision = snapshot.gitRevision;
+    const schemaSourceSyncFailures = collectSchemaSourceSyncFailures(buildSchemaSourceSyncStatus(config));
+    if (schemaSourceSyncFailures.length > 0) {
+      fail(`AST schema/source sync check failed: ${schemaSourceSyncFailures.join(", ")}`);
+    }
     if (options.write === true) {
       const results = writeAstGenerated(config, sourceRevision, { force: options.force === true });
       for (const result of results) {

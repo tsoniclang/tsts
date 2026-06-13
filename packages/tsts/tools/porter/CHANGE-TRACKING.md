@@ -1,10 +1,10 @@
 # Porter as a change-tracking tool — findings, approach, and review
 
-Status: for review. Covers (1) how an upstream-delta is computed today, (2) the
+Status: landed hardening. Covers (1) how an upstream-delta is computed today, (2) the
 measured delta from our pin to current `main`, (3) a full review of whether the
 porter is geared to track upstream changes, (4) the one completeness hardening
-shipped on this branch, and (5) a real latent incoherence that hardening
-immediately surfaced. Policy lens throughout, per maintainer direction:
+shipped on this branch, and (5) the real latent incoherence that hardening
+immediately surfaced and this branch reconciles. Policy lens throughout, per maintainer direction:
 **never miss a real change; false positives are free; prefer simplicity.**
 
 ---
@@ -32,8 +32,8 @@ immediately surfaced. Policy lens throughout, per maintainer direction:
   copy of `symbolflags.go` is pinned ahead of the source pin, and the AST
   generator baked the newer symbol-merge masks into `generated/flags.ts`. Runtime
   is unaffected (the binder uses the hand-ported `ast/symbolflags.ts`), but the
-  generated duplicate disagrees with its source. Reconciliation is a content
-  decision (below), intentionally not bundled into the tooling change.
+  generated duplicate disagreed with its source. This branch reconciles the schema
+  copy and regenerated AST artifacts so the primary porter gates can stay green.
 
 ---
 
@@ -173,14 +173,20 @@ The missing half is planning/assist, which the policy lens says not to build.
 assert the schema-dir copy is byte-identical (CRLF-normalised) to its live source
 file under `config.sourceRoot`; fail `verify` on any mismatch. Config-driven
 (`schemaSourceSyncChecks`), so new copies are covered without code. Surfaced in
-`printStatus` and `collectVerifyFailures`. Bias toward over-reporting (any byte
-difference fails) per policy. 4 new tests; `porter:test` 46/46.
+`printStatus` and `collectVerifyFailures`. The same check also gates `porter:ast`
+before check or write mode, so generated AST artifacts cannot be trusted or
+rewritten from a schema directory that disagrees with the checked-out source pin.
+Bias toward over-reporting (any byte difference fails) per policy.
+
+The sync list covers every schema-directory input with a live vendored upstream
+counterpart: `ast.json`, `ast.schema.json`, `protocol.ts`, `nodeflags.go`, and
+`symbolflags.go`.
 
 This closes risk (a): the schema pin can no longer silently lag the source pin.
 
-## 6. The incoherence the check immediately caught
+## 6. The incoherence the check immediately caught and reconciled
 
-Running it on the current pin flags **1 mismatch: `symbolflags.go`** — a real,
+Running it on the current pin flagged **1 mismatch: `symbolflags.go`** — a real,
 pre-existing issue that was sitting behind a green gate:
 
 - `schema/tsgo/symbolflags.go` is pinned **ahead** (`879968116c`, May 20) of the
@@ -199,30 +205,24 @@ This is exactly the never-miss value of the new check: a generated type-system
 constant that disagrees with its source, with no active runtime symptom, now made
 impossible to miss.
 
-### Recommended resolution (content decision — not bundled here)
-Bring the schema/generated artifacts back into coherence with the pin:
-- Copy live-source (`515d036f`) `symbolflags.go` → `schema/tsgo/symbolflags.go`,
-  regenerate AST (`porter:ast --write --force`) so `generated/flags.ts` matches the
-  hand-ported `ast/symbolflags.ts`, and update `schema/tsgo/VERSION.md`.
-- Expected to be behaviourally inert (the live path already uses the hand-ported
-  515d036f masks), but should be confirmed by `source:test` + the current-corpus
-  byte-exact gate before merge.
-- Alternatively, fold it into the upcoming pin bump (which moves source forward to
-  where the schema already is), reconciling both at the new rev.
+### Resolution applied on this branch
 
-Either way it is a deliberate content change requiring sign-off, not a tooling edit.
+The schema copy of `symbolflags.go` has been brought back to the checked-out
+`515d036f` source pin, `schema/tsgo/VERSION.md` now records that pin and the
+matching SHA, and `porter:ast --write --force` regenerated the AST artifacts. The
+generated `SymbolFlags*Excludes` values now match the hand-ported live-source
+semantics used by the binder.
 
 ## 7. Recommendations / next steps
 
-1. **Merge the sync check** (this branch). Note it makes `verify` correctly red
-   until §6 is reconciled — that red is the check doing its job.
-2. **Reconcile `symbolflags`/`flags.ts`** per §6 (or via the bump). Greens the gate
-   and removes the divergent generated duplicate.
-3. **Schedule the pin bump soon.** 7 weeks / 285 commits is on the high side; each
+1. **Merge only with porter hygiene green.** This branch is intended to carry both
+   the sync check and the `symbolflags` reconciliation so main never knowingly
+   contains a red primary porter gate.
+2. **Schedule the pin bump soon.** 7 weeks / 285 commits is on the high side; each
    delay grows the stale count and baseline drift, and Tsonic-TSTS landing is a
    forcing function to stay near TS 7.0 head. Real surface is ~610 well-localised
    units; budget a few focused days.
-4. **Optional, low priority** (ergonomics only; skip unless a bump proves painful):
+3. **Optional, low priority** (ergonomics only; skip unless a bump proves painful):
    a `porter delta --against <rev>` wrapper around the existing engine (the
    `.analysis` driver is a working prototype). Not a completeness need.
 
@@ -232,6 +232,5 @@ Either way it is a deliberate content change requiring sign-off, not a tooling e
 - New-rev worktree: `.analysis/porter-delta/tsgo-c78d39e7` (detached; pin untouched).
 - Gate results on the memory-fixed dist (prior task, for context): submodule
   compiler 7,275/7,275 and conformance 7,694/7,694, 0 failures; peak RSS 2.26 GB.
-- This branch: `porter:test` 46/46; `porter status` reports
-  `Schema/source sync mismatches: 1` (symbolflags), `verify` fails with
-  `1 schema/source sync mismatches (symbolflags.go)` — the intended catch.
+- This branch: the expected final gate state is `porter:test`, `porter:ast`, and
+  `porter:verify` green, with `Schema/source sync mismatches: 0`.
