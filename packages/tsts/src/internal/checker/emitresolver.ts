@@ -142,6 +142,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
   return {
     GetReferencedExportContainer: (node: GoPtr<IdentifierNode>, prefixLocals: bool): GoPtr<Node> => EmitResolver_GetReferencedExportContainer(receiver, node, prefixLocals),
     GetReferencedImportDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedImportDeclaration(receiver, node),
+    GetReferencedMemberValueDeclaration: (node: GoPtr<Node>): GoPtr<Declaration> => EmitResolver_GetReferencedMemberValueDeclaration(receiver, node),
     GetReferencedValueDeclaration: (node: GoPtr<IdentifierNode>): GoPtr<Declaration> => EmitResolver_GetReferencedValueDeclaration(receiver, node),
     GetReferencedValueDeclarations: (node: GoPtr<IdentifierNode>): GoSlice<GoPtr<Declaration>> => EmitResolver_GetReferencedValueDeclarations(receiver, node),
     GetElementAccessExpressionName: (expression: GoPtr<ElementAccessExpression>): string => EmitResolver_GetElementAccessExpressionName(receiver, expression),
@@ -1887,6 +1888,29 @@ export function EmitResolver_SetReferencedImportDeclaration(receiver: GoPtr<Emit
   receiver!.checkerMu!.Lock();
   (LinkStore_Get<GoPtr<Node>, JSXLinks>(receiver!.jsxLinks, node as unknown as GoPtr<Node>) as JSXLinks).importRef = ref as unknown as GoPtr<Node>;
   receiver!.checkerMu!.Unlock();
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetReferencedMemberValueDeclaration","kind":"method","status":"implemented","sigHash":"c70e3392c1f83d613660fb70bb502ef2c4f5ec1deb38881c42f7add9514e2772","bodyHash":"dcf691686c68eab4d7d31118e5f964ddc3038369148067c1d66b83a775debe9d"}
+ *
+ * Go source:
+ * func (r *EmitResolver) GetReferencedMemberValueDeclaration(node *ast.Node) *ast.Declaration {
+ * 	if !ast.IsParseTreeNode(node) {
+ * 		return nil
+ * 	}
+ * 	r.checkerMu.Lock()
+ * 	defer r.checkerMu.Unlock()
+ * 	return r.getReferenceResolver().GetReferencedMemberValueDeclaration(node)
+ * }
+ */
+export function EmitResolver_GetReferencedMemberValueDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoPtr<Declaration> {
+  if (!IsParseTreeNode(node)) {
+    return undefined;
+  }
+  receiver!.checkerMu!.Lock();
+  const result = EmitResolver_getReferenceResolver(receiver).GetReferencedMemberValueDeclaration(node);
+  receiver!.checkerMu!.Unlock();
+  return result;
 }
 
 /**
