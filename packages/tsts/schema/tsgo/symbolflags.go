@@ -56,7 +56,7 @@ const (
 	SymbolFlagsBlockScopedVariableExcludes = SymbolFlagsValue
 
 	SymbolFlagsParameterExcludes                   = SymbolFlagsValue
-	SymbolFlagsPropertyExcludes                    = SymbolFlagsValue & ^(SymbolFlagsProperty | SymbolFlagsAccessor)
+	SymbolFlagsPropertyExcludes                    = SymbolFlagsValue & ^SymbolFlagsProperty
 	SymbolFlagsEnumMemberExcludes                  = SymbolFlagsValue | SymbolFlagsType
 	SymbolFlagsFunctionExcludes                    = SymbolFlagsValue & ^(SymbolFlagsFunction | SymbolFlagsValueModule | SymbolFlagsClass)
 	SymbolFlagsClassExcludes                       = (SymbolFlagsValue | SymbolFlagsType) & ^(SymbolFlagsValueModule | SymbolFlagsInterface | SymbolFlagsFunction) // class-interface mergability done in checker.ts
@@ -66,9 +66,9 @@ const (
 	SymbolFlagsValueModuleExcludes                 = SymbolFlagsValue & ^(SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum | SymbolFlagsValueModule)
 	SymbolFlagsNamespaceModuleExcludes             = SymbolFlagsNone
 	SymbolFlagsMethodExcludes                      = SymbolFlagsValue & ^SymbolFlagsMethod
-	SymbolFlagsGetAccessorExcludes                 = SymbolFlagsValue & ^(SymbolFlagsSetAccessor | SymbolFlagsProperty)
-	SymbolFlagsSetAccessorExcludes                 = SymbolFlagsValue & ^(SymbolFlagsGetAccessor | SymbolFlagsProperty)
-	SymbolFlagsAccessorExcludes                    = SymbolFlagsValue & ^SymbolFlagsProperty
+	SymbolFlagsGetAccessorExcludes                 = SymbolFlagsValue & ^SymbolFlagsSetAccessor
+	SymbolFlagsSetAccessorExcludes                 = SymbolFlagsValue & ^SymbolFlagsGetAccessor
+	SymbolFlagsAccessorExcludes                    = SymbolFlagsValue
 	SymbolFlagsTypeParameterExcludes               = SymbolFlagsType & ^SymbolFlagsTypeParameter
 	SymbolFlagsTypeAliasExcludes                   = SymbolFlagsType
 	SymbolFlagsAliasExcludes                       = SymbolFlagsAlias

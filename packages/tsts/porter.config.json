@@ -18,6 +18,13 @@
     "packages/tsts/schema/tsgo/symbolflags.go"
   ],
   "astGeneratedStatusOut": ".temp/porter/ast-generated.json",
+  "schemaSourceSyncChecks": [
+    { "schema": "packages/tsts/schema/tsgo/ast.json", "source": "_scripts/ast.json" },
+    { "schema": "packages/tsts/schema/tsgo/ast.schema.json", "source": "_scripts/ast.schema.json" },
+    { "schema": "packages/tsts/schema/tsgo/protocol.ts", "source": "_packages/native-preview/src/api/node/protocol.ts" },
+    { "schema": "packages/tsts/schema/tsgo/nodeflags.go", "source": "internal/ast/nodeflags.go" },
+    { "schema": "packages/tsts/schema/tsgo/symbolflags.go", "source": "internal/ast/symbolflags.go" }
+  ],
   "diagnosticsGeneratedDir": "internal/diagnostics/generated",
   "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
   "diagnosticsGeneratedStatusOut": ".temp/porter/diagnostics-generated.json",
