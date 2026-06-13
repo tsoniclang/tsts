@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
@@ -502,60 +503,67 @@ export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTas
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Start","kind":"method","status":"implemented","sigHash":"72d2253f47f06d4f835deebdd88a0f4311c20683113bd4562c8b742de70fadd4","bodyHash":"04f53d05a08f5a0c01b6ba34ba87f0b88906dc900679bbeeb3b08efd4517b781"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Start","kind":"method","status":"implemented","sigHash":"0262ef5622e64e786c5441a5853ea21c76e8a20aa686c24179e144412a923b89","bodyHash":"9b1c7dea303633b2c3b13b0619e942ee19321e384be7627900742afec2c87dfe"}
  *
  * Go source:
- * func (o *Orchestrator) Start() tsc.CommandLineResult {
+ * func (o *Orchestrator) Start(ctx context.Context) tsc.CommandLineResult {
  * 	if o.opts.Command.CompilerOptions.Watch.IsTrue() {
  * 		o.watchStatusReporter(ast.NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode))
  * 	}
  * 	o.GenerateGraph(nil)
  * 	result := o.buildOrClean()
  * 	if o.opts.Command.CompilerOptions.Watch.IsTrue() {
- * 		o.Watch()
+ * 		o.Watch(ctx)
  * 		result.Watcher = o
  * 	}
  * 	return result
  * }
  */
-export function Orchestrator_Start(receiver: GoPtr<Orchestrator>): CommandLineResult {
+export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context): CommandLineResult {
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
     receiver!.watchStatusReporter!(NewCompilerDiagnostic(diagnostics.Starting_compilation_in_watch_mode));
   }
   Orchestrator_GenerateGraph(receiver, undefined);
   const result = Orchestrator_buildOrClean(receiver);
   if (Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.Watch)) {
-    Orchestrator_Watch(receiver);
+    Orchestrator_Watch(receiver, ctx);
     result.Watcher = Orchestrator_as_tsc_Watcher(receiver);
   }
   return result;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"32f25fe26837c2ce16ef240d6f7edc7e9b2fa184a324d2396dca322f114688d1","bodyHash":"fc35bb0a775f937e29e712e9bf669b31db8dc27ed3afc71dccac79a5752eb36f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"3a5d894f9edb920da49f99bb7ba9f2c595d97d3d4fcd5f67246ea84066ad4839","bodyHash":"b50b16f6fc23b9e22cbdf28744e5dd67df3de1c59667fcbde9f7a031f6042df2"}
  *
  * Go source:
- * func (o *Orchestrator) Watch() {
+ * func (o *Orchestrator) Watch(ctx context.Context) {
  * 	o.updateWatch()
  * 	o.resetCaches()
  *
  * 	// Start watching for file changes
  * 	if o.opts.Testing == nil {
  * 		watchInterval := o.opts.Command.WatchOptions.WatchInterval()
+ * 		ticker := time.NewTicker(watchInterval)
+ * 		defer ticker.Stop()
  * 		for {
- * 			// Testing mode: run a single cycle and exit
- * 			time.Sleep(watchInterval)
- * 			o.DoCycle()
+ * 			select {
+ * 			case <-ctx.Done():
+ * 				return
+ * 			case <-ticker.C:
+ * 				o.DoCycle()
+ * 			}
  * 		}
  * 	}
  * }
  */
-export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>): void {
+export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>, ctx: Context): void {
+  void ctx;
   Orchestrator_updateWatch(receiver);
   Orchestrator_resetCaches(receiver);
   // In single-threaded TSTS, no goroutine loop; testing mode only
   if (receiver!.opts.Testing === undefined || receiver!.opts.Testing === null) {
-    // Non-test: the go code would loop forever with time.Sleep — no-op in single-threaded JS
+    // Non-test: the go code would block forever in a ticker/ctx.Done() select
+    // loop calling o.DoCycle() — no-op in single-threaded JS.
   }
 }
 

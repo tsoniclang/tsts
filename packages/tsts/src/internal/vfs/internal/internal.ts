@@ -154,35 +154,38 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"4ce17bf0db936b6644e90a870c7903b113d2149b6311cf70d940cd57887404e9","bodyHash":"5aa78b714a83c93411cfb81ed9440e9a8c2051243cb2277e22ba177a12ba343b"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/internal/internal.go::method::Common.GetAccessibleEntries","kind":"method","status":"implemented","sigHash":"4ce17bf0db936b6644e90a870c7903b113d2149b6311cf70d940cd57887404e9","bodyHash":"25b3a172da03da00c5b9bfe959694e8ab75fc140d815b356c3ae49591774572b"}
  *
  * Go source:
  * func (vfs *Common) GetAccessibleEntries(path string) (result vfs.Entries) {
- * 	addToResult := func(name string, mode fs.FileMode) (added bool) {
+ * 	result.Symlinks = map[string]struct{}{}
+ *
+ * 	addToResult := func(name string, mode fs.FileMode, isLink bool) (added bool) {
  * 		if mode.IsDir() {
  * 			result.Directories = append(result.Directories, name)
- * 			return true
- * 		}
- *
- * 		if mode.IsRegular() {
+ * 		} else if mode.IsRegular() {
  * 			result.Files = append(result.Files, name)
- * 			return true
+ * 		} else {
+ * 			return false
  * 		}
  *
- * 		return false
+ * 		if isLink {
+ * 			result.Symlinks[name] = struct{}{}
+ * 		}
+ * 		return true
  * 	}
  *
  * 	for _, entry := range vfs.getEntries(path) {
  * 		entryType := entry.Type()
  *
- * 		if addToResult(entry.Name(), entryType) {
+ * 		if addToResult(entry.Name(), entryType, false) {
  * 			continue
  * 		}
  *
  * 		if entryType&fs.ModeSymlink != 0 {
  * 			// Easy case; UNIX-like system will clearly mark symlinks.
  * 			if stat := vfs.Stat(path + "/" + entry.Name()); stat != nil {
- * 				addToResult(entry.Name(), stat.Mode())
+ * 				addToResult(entry.Name(), stat.Mode(), true)
  * 			}
  * 			continue
  * 		}
@@ -193,7 +196,7 @@ export function Common_DirectoryExists(receiver: GoPtr<Common>, path: string): b
  * 			fullPath := path + "/" + entry.Name()
  * 			if vfs.IsReparsePoint(fullPath) {
  * 				if stat := vfs.Stat(fullPath); stat != nil {
- * 					addToResult(entry.Name(), stat.Mode())
+ * 					addToResult(entry.Name(), stat.Mode(), true)
  * 				}
  * 			}
  * 			continue

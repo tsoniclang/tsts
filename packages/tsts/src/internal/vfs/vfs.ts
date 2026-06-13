@@ -64,7 +64,7 @@ export interface FS {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::Entries","kind":"type","status":"implemented","sigHash":"697650e259811d1d518f77cfdc2e2573468ae2dc5e9b906f4fd4bece634065aa","bodyHash":"3bb610abd6ce368748ebb4ea3a5cb8ad9ed3ab723d2cda2fd0d8ba4007f3d4ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::Entries","kind":"type","status":"implemented","sigHash":"697650e259811d1d518f77cfdc2e2573468ae2dc5e9b906f4fd4bece634065aa","bodyHash":"370d83d54e45af72c9318f741d1517899e306581ae43cf20deb2bc52fab73202"}
  *
  * Go source:
  * Entries struct {
