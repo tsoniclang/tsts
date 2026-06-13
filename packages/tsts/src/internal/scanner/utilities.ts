@@ -1,16 +1,22 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
-import { ContainsRune } from "../../go/strings.js";
+import { Builder, ContainsRune, TrimRightFunc } from "../../go/strings.js";
 import { DecodeRuneInString } from "../../go/unicode/utf8.js";
-import { Node_End, Node_Pos } from "../ast/spine.js";
-import type { Node } from "../ast/spine.js";
+import { IsSpace } from "../../go/unicode.js";
+import { Node_End, Node_KindString, Node_Pos } from "../ast/spine.js";
+import type { Node, NodeList } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
-import { SourceFile_Text } from "../ast/ast.js";
+import { Node_Text, SourceFile_Text } from "../ast/ast.js";
 import { GetSourceFileOfNode, NodeIsMissing } from "../ast/utilities.js";
 import type { Identifier } from "../ast/generated/data.js";
 import type { SourceFileNode } from "../ast/generated/unions.js";
 import type { Kind } from "../ast/generated/kinds.js";
-import { KindIdentifier, KindUnknown } from "../ast/generated/kinds.js";
+import { KindIdentifier, KindJSDocLink, KindJSDocLinkCode, KindJSDocLinkPlain, KindJSDocText, KindUnknown } from "../ast/generated/kinds.js";
+import { IsIdentifier, IsStringLiteral } from "../ast/generated/predicates.js";
+import { AsStringLiteral } from "../ast/generated/casts.js";
+import { NodeFlagsReparserTransformedLiteral } from "../ast/generated/flags.js";
+import { TokenFlagsSingleQuote } from "../ast/tokenflags.js";
+import { FailBadSyntaxKind } from "../debug/debug.js";
 import type { LanguageVariant } from "../core/languagevariant.js";
 import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from "./scanner.js";
 
@@ -90,7 +96,7 @@ export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFileNo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNodeFromSourceText","kind":"func","status":"implemented","sigHash":"50273fa97318ececf08f0e40b5aa9b625dc22ee36fa65aa43b3792df6e056025","bodyHash":"ccc4594cd54e8aa853fdbe1e0f238807f30db56fdb1e3f3bfb45b888d0611196"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfNodeFromSourceText","kind":"func","status":"implemented","sigHash":"50273fa97318ececf08f0e40b5aa9b625dc22ee36fa65aa43b3792df6e056025","bodyHash":"47a01b3f218bc6c7c312b4edaa3d3f249510a38fc1166397d5bf1723de48581b"}
  *
  * Go source:
  * func GetTextOfNodeFromSourceText(sourceText string, node *ast.Node, includeTrivia bool) string {
@@ -102,6 +108,21 @@ export function GetSourceTextOfNodeFromSourceFile(sourceFile: GoPtr<SourceFileNo
  * 		pos = SkipTrivia(sourceText, pos)
  * 	}
  * 	text := sourceText[pos:node.End()]
+ * 	if node.Flags&ast.NodeFlagsReparserTransformedLiteral != 0 {
+ * 		// This is similar to `getLiteralTextOfNode` in the printer, but without the context of an `emitContext` to provide overrides
+ * 		if ast.IsStringLiteral(node) {
+ * 			if node.AsStringLiteral().TokenFlags&ast.TokenFlagsSingleQuote != 0 {
+ * 				return "'" + text + "'"
+ * 			}
+ * 			return "\"" + text + "\""
+ * 		} else if ast.IsIdentifier(node) {
+ * 			return node.Text()
+ * 		}
+ * 		// Only the above node kinds are currently transformed into one another by the reparser, requiring the textual remapping.
+ * 		// (Any reamppings done by emit transforms are handled by `getLiteralTextOfNode` in the printer)
+ * 		// Fail on any other kinds.
+ * 		debug.FailBadSyntaxKind(node, "Unexpected reparser-transformed node kind")
+ * 	}
  * 	// if (isJSDocTypeExpressionOrChild(node)) {
  * 	//     // strip space + asterisk at line start
  * 	//     text = text.split(/\r\n|\n|\r/).map(line => line.replace(/^\s*\* /, "").trimStart()).join("\n");
@@ -115,7 +136,27 @@ export function GetTextOfNodeFromSourceText(sourceText: string, node: GoPtr<Node
   }
   const rawPos = Node_Pos(node);
   const pos = includeTrivia ? rawPos : SkipTrivia(sourceText, rawPos);
-  return byteSlice(sourceText, pos, Node_End(node));
+  const text = byteSlice(sourceText, pos, Node_End(node));
+  if ((node!.Flags & NodeFlagsReparserTransformedLiteral) !== 0) {
+    // This is similar to `getLiteralTextOfNode` in the printer, but without the context of an `emitContext` to provide overrides
+    if (IsStringLiteral(node)) {
+      if ((AsStringLiteral(node)!.TokenFlags & TokenFlagsSingleQuote) !== 0) {
+        return "'" + text + "'";
+      }
+      return '"' + text + '"';
+    } else if (IsIdentifier(node)) {
+      return Node_Text(node);
+    }
+    // Only the above node kinds are currently transformed into one another by the reparser, requiring the textual remapping.
+    // (Any reamppings done by emit transforms are handled by `getLiteralTextOfNode` in the printer)
+    // Fail on any other kinds.
+    FailBadSyntaxKind({ KindString: () => Node_KindString(node) }, "Unexpected reparser-transformed node kind");
+  }
+  // if (isJSDocTypeExpressionOrChild(node)) {
+  //     // strip space + asterisk at line start
+  //     text = text.split(/\r\n|\n|\r/).map(line => line.replace(/^\s*\* /, "").trimStart()).join("\n");
+  // }
+  return text;
 }
 
 /**
@@ -128,6 +169,46 @@ export function GetTextOfNodeFromSourceText(sourceText: string, node: GoPtr<Node
  */
 export function GetTextOfNode(node: GoPtr<Node>): string {
   return GetSourceTextOfNodeFromSourceFile(GetSourceFileOfNode(node), node, false as bool);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::GetTextOfJSDocComment","kind":"func","status":"implemented","sigHash":"c56e5529d44d70a1ad892f8b69253533bdf88fb199c093507075e44a673f0e1b","bodyHash":"923ac6ce0d7e1afddfa1d6492a52a8363a0b5b41bd95c9cdfc387ca8f2acc0dd"}
+ *
+ * Go source:
+ * func GetTextOfJSDocComment(comment *ast.NodeList) string {
+ * 	if comment == nil {
+ * 		return ""
+ * 	}
+ * 	var b strings.Builder
+ * 	for _, n := range comment.Nodes {
+ * 		switch n.Kind {
+ * 		case ast.KindJSDocText:
+ * 			b.WriteString(n.Text())
+ * 		case ast.KindJSDocLink, ast.KindJSDocLinkCode, ast.KindJSDocLinkPlain:
+ * 			b.WriteString(GetTextOfNode(n))
+ * 		}
+ * 	}
+ * 	return strings.TrimRightFunc(b.String(), unicode.IsSpace)
+ * }
+ */
+export function GetTextOfJSDocComment(comment: GoPtr<NodeList>): string {
+  if (comment === undefined) {
+    return "";
+  }
+  const b = new Builder();
+  for (const n of comment!.Nodes) {
+    switch (n!.Kind) {
+      case KindJSDocText:
+        b.WriteString(Node_Text(n));
+        break;
+      case KindJSDocLink:
+      case KindJSDocLinkCode:
+      case KindJSDocLinkPlain:
+        b.WriteString(GetTextOfNode(n));
+        break;
+    }
+  }
+  return TrimRightFunc(b.String(), IsSpace);
 }
 
 /**

@@ -16,18 +16,21 @@ import {
   CommentDirectiveKindExpectError,
   CommentDirectiveKindIgnore,
   Node_Body,
+  Node_EagerJSDoc,
   Node_JSDoc,
   Node_Statements,
+  Node_TagName,
+  Node_Type,
   NodeFactory_NewCommentRange,
   SourceFile_ECMALineMap,
   SourceFile_Text,
 } from "../ast/ast.js";
 import type { Node } from "../ast/spine.js";
-import { Node_End, Node_Pos } from "../ast/spine.js";
+import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
 import { GetNameOfDeclaration, IsJSDocNode, NodeIsMissing, PositionIsSynthesized } from "../ast/utilities.js";
-import { IsJsxText } from "../ast/generated/predicates.js";
-import { AsSatisfiesExpression } from "../ast/generated/casts.js";
-import { NodeFlagsJSDoc, NodeFlagsReparsed } from "../ast/generated/flags.js";
+import { IsJsxText, IsJSDocSatisfiesTag } from "../ast/generated/predicates.js";
+import { AsJSDoc, AsJSDocSatisfiesTag, AsSatisfiesExpression } from "../ast/generated/casts.js";
+import { NodeFlagsHasJSDoc, NodeFlagsJSDoc, NodeFlagsReparsed } from "../ast/generated/flags.js";
 import * as kinds from "../ast/generated/kinds.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { Kind } from "../ast/generated/kinds.js";
@@ -1397,10 +1400,18 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"5f1e888178685ec5ba51e9faee8205d8a1d7f0fcd5244327530fe9cd8264157c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"53999882a6597734c93b240d0823bd51399ff1732381f6aa94eaff838eee7084"}
  *
  * Go source:
  * func (s *Scanner) charAndSize() (rune, int) {
+ * 	// Fast path: a single ASCII byte. The vast majority of source bytes are
+ * 	// ASCII; handling them here avoids constructing a string slice header and
+ * 	// calling the non-inlined utf8.DecodeRuneInString on every byte.
+ * 	if s.pos < s.end {
+ * 		if b := s.text[s.pos]; b < utf8.RuneSelf {
+ * 			return rune(b), 1
+ * 		}
+ * 	}
  * 	r, size := utf8.DecodeRuneInString(s.text[s.pos:])
  * 	if size > 1 {
  * 		s.containsNonASCII = true
@@ -1410,6 +1421,15 @@ export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
  */
 export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
   const s = receiver!;
+  // Fast path: a single ASCII byte. The vast majority of source bytes are
+  // ASCII; handling them here avoids constructing a string slice header and
+  // calling the non-inlined utf8.DecodeRuneInString on every byte.
+  if (s.__tsgoEmbedded0.pos < s.end) {
+    const b = byteAt(s.text, s.__tsgoEmbedded0.pos);
+    if (b < utf8.RuneSelf) {
+      return [b, 1 as int];
+    }
+  }
   const [r, size] = decodeRuneInStringAt(s.text, s.__tsgoEmbedded0.pos);
   if (size > 1) {
     s.containsNonASCII = true;
@@ -1418,16 +1438,50 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Scan","kind":"method","status":"implemented","sigHash":"4b2d16399efbd4afd7ee8c9b9dfeec6408ed7100a1a83bcded650f8c210392b0","bodyHash":"c49148d2c806e9259d2e45f9027f71f52b1297cb0bebd8e0c7d483cd8013ffc8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanASCIIWhile","kind":"method","status":"implemented","sigHash":"43b4e929d6def6f9ba2bd93f8ceb888db4e5dffbbc6a805e447a79074d942f12","bodyHash":"b98fd457d9e43cde7e81a876f1b69058c8e0c77a94321c20ef8a6df042cc8c3e"}
+ *
+ * Go source:
+ * // scanASCIIWhile advances s.pos over the longest run of ASCII bytes for which
+ * // pred returns true. It stops at end-of-text, the first non-ASCII byte, or the
+ * // first byte where pred is false.
+ * func (s *Scanner) scanASCIIWhile(pred func(byte) bool) {
+ * 	text := s.text[s.pos:s.end]
+ * 	i := 0
+ * 	for i < len(text) {
+ * 		b := text[i]
+ * 		if b >= utf8.RuneSelf || !pred(b) {
+ * 			break
+ * 		}
+ * 		i++
+ * 	}
+ * 	s.pos += i
+ * }
+ */
+export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (b: byte) => bool): void {
+  const s = receiver!;
+  const text = byteSlice(s.text, s.__tsgoEmbedded0.pos, s.end);
+  let i = 0 as int;
+  while (i < byteLen(text)) {
+    const b = byteAt(text, i) as byte;
+    if (b >= utf8.RuneSelf || !pred(b)) {
+      break;
+    }
+    i++;
+  }
+  s.__tsgoEmbedded0.pos += i;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Scan","kind":"method","status":"implemented","sigHash":"4b2d16399efbd4afd7ee8c9b9dfeec6408ed7100a1a83bcded650f8c210392b0","bodyHash":"3310d5907b0bb6c2ef92faecb27f889f73ca4449ae4e85910506c86198763186"}
  *
  * Go source:
  * func (s *Scanner) Scan() ast.Kind {
  * 	s.fullStartPos = s.pos
  * 	s.tokenFlags = ast.TokenFlagsNone
  * 	for {
- * 		s.tokenStart = s.pos
  * 		ch := s.char()
- * 
+ * 		s.tokenStart = s.pos
+ *
  * 		switch ch {
  * 		case '\t', '\v', '\f', ' ':
  * 			s.pos++
@@ -1446,6 +1500,9 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			s.tokenFlags |= ast.TokenFlagsPrecedingLineBreak
  * 			if s.skipTrivia {
  * 				s.pos++
+ * 				s.scanASCIIWhile(func(b byte) bool {
+ * 					return b == ' ' || (b >= '\t' && b <= '\r')
+ * 				})
  * 				continue
  * 			}
  * 			if ch == '\r' && s.charAt(1) == '\n' {
@@ -1481,7 +1538,8 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				s.token = ast.KindPercentToken
  * 			}
  * 		case '&':
- * 			if s.charAt(1) == '&' {
+ * 			next := s.charAt(1)
+ * 			if next == '&' {
  * 				if s.charAt(2) == '=' {
  * 					s.pos += 3
  * 					s.token = ast.KindAmpersandAmpersandEqualsToken
@@ -1489,7 +1547,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 					s.pos += 2
  * 					s.token = ast.KindAmpersandAmpersandToken
  * 				}
- * 			} else if s.charAt(1) == '=' {
+ * 			} else if next == '=' {
  * 				s.pos += 2
  * 				s.token = ast.KindAmpersandEqualsToken
  * 			} else {
@@ -1503,10 +1561,11 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			s.pos++
  * 			s.token = ast.KindCloseParenToken
  * 		case '*':
- * 			if s.charAt(1) == '=' {
+ * 			next := s.charAt(1)
+ * 			if next == '=' {
  * 				s.pos += 2
  * 				s.token = ast.KindAsteriskEqualsToken
- * 			} else if s.charAt(1) == '*' {
+ * 			} else if next == '*' {
  * 				if s.charAt(2) == '=' {
  * 					s.pos += 3
  * 					s.token = ast.KindAsteriskAsteriskEqualsToken
@@ -1525,10 +1584,11 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				s.token = ast.KindAsteriskToken
  * 			}
  * 		case '+':
- * 			if s.charAt(1) == '=' {
+ * 			next := s.charAt(1)
+ * 			if next == '=' {
  * 				s.pos += 2
  * 				s.token = ast.KindPlusEqualsToken
- * 			} else if s.charAt(1) == '+' {
+ * 			} else if next == '+' {
  * 				s.pos += 2
  * 				s.token = ast.KindPlusPlusToken
  * 			} else {
@@ -1539,10 +1599,11 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			s.pos++
  * 			s.token = ast.KindCommaToken
  * 		case '-':
- * 			if s.charAt(1) == '=' {
+ * 			next := s.charAt(1)
+ * 			if next == '=' {
  * 				s.pos += 2
  * 				s.token = ast.KindMinusEqualsToken
- * 			} else if s.charAt(1) == '-' {
+ * 			} else if next == '-' {
  * 				s.pos += 2
  * 				s.token = ast.KindMinusMinusToken
  * 			} else {
@@ -1550,9 +1611,10 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				s.token = ast.KindMinusToken
  * 			}
  * 		case '.':
- * 			if stringutil.IsDigit(s.charAt(1)) {
+ * 			next := s.charAt(1)
+ * 			if stringutil.IsDigit(next) {
  * 				s.token = s.scanNumber()
- * 			} else if s.charAt(1) == '.' && s.charAt(2) == '.' {
+ * 			} else if next == '.' && s.charAt(2) == '.' {
  * 				s.pos += 3
  * 				s.token = ast.KindDotDotDotToken
  * 			} else {
@@ -1563,8 +1625,11 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			// Single-line comment
  * 			if s.charAt(1) == '/' {
  * 				s.pos += 2
- * 
+ *
  * 				for {
+ * 					s.scanASCIIWhile(func(b byte) bool {
+ * 						return b != '\n' && b != '\r'
+ * 					})
  * 					ch1, size := s.charAndSize()
  * 					if size == 0 || stringutil.IsLineBreak(ch1) {
  * 						break
@@ -1588,6 +1653,9 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				commentClosed := false
  * 				lastLineStart := s.tokenStart
  * 				for {
+ * 					s.scanASCIIWhile(func(b byte) bool {
+ * 						return b != '*' && b != '\n' && b != '\r'
+ * 					})
  * 					ch1, size := s.charAndSize()
  * 					if size == 0 {
  * 						break
@@ -1696,7 +1764,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			s.pos++
  * 			s.token = ast.KindSemicolonToken
  * 		case '<':
- * 			if isConflictMarkerTrivia(s.text, s.pos) {
+ * 			if s.charAt(1) == '<' && isConflictMarkerTrivia(s.text, s.pos) {
  * 				s.pos = scanConflictMarkerTrivia(s.text, s.pos, s.errorAt)
  * 				if s.skipTrivia {
  * 					continue
@@ -1724,7 +1792,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				s.token = ast.KindLessThanToken
  * 			}
  * 		case '=':
- * 			if isConflictMarkerTrivia(s.text, s.pos) {
+ * 			if s.charAt(1) == '=' && isConflictMarkerTrivia(s.text, s.pos) {
  * 				s.pos = scanConflictMarkerTrivia(s.text, s.pos, s.errorAt)
  * 				if s.skipTrivia {
  * 					continue
@@ -1749,7 +1817,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 				s.token = ast.KindEqualsToken
  * 			}
  * 		case '>':
- * 			if isConflictMarkerTrivia(s.text, s.pos) {
+ * 			if s.charAt(1) == '>' && isConflictMarkerTrivia(s.text, s.pos) {
  * 				s.pos = scanConflictMarkerTrivia(s.text, s.pos, s.errorAt)
  * 				if s.skipTrivia {
  * 					continue
@@ -1794,7 +1862,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  * 			s.pos++
  * 			s.token = ast.KindOpenBraceToken
  * 		case '|':
- * 			if isConflictMarkerTrivia(s.text, s.pos) {
+ * 			if s.charAt(1) == '|' && isConflictMarkerTrivia(s.text, s.pos) {
  * 				s.pos = scanConflictMarkerTrivia(s.text, s.pos, s.errorAt)
  * 				if s.skipTrivia {
  * 					continue
@@ -1916,8 +1984,8 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
   st.fullStartPos = st.pos;
   st.tokenFlags = TokenFlagsNone;
   for (;;) {
-    st.tokenStart = st.pos;
     const ch = Scanner_char(s);
+    st.tokenStart = st.pos;
 
     switch (ch) {
       case "\t".charCodeAt(0):
@@ -1943,6 +2011,9 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         st.tokenFlags |= TokenFlagsPrecedingLineBreak;
         if (s.skipTrivia) {
           st.pos++;
+          Scanner_scanASCIIWhile(s, (b) => {
+            return (b === " ".charCodeAt(0) || (b >= "\t".charCodeAt(0) && b <= "\r".charCodeAt(0))) as bool;
+          });
           continue;
         }
         if (ch === "\r".charCodeAt(0) && Scanner_charAt(s, 1) === "\n".charCodeAt(0)) {
@@ -1989,7 +2060,8 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "&".charCodeAt(0): {
-        if (Scanner_charAt(s, 1) === "&".charCodeAt(0)) {
+        const next = Scanner_charAt(s, 1);
+        if (next === "&".charCodeAt(0)) {
           if (Scanner_charAt(s, 2) === "=".charCodeAt(0)) {
             st.pos += 3;
             st.token = KindAmpersandAmpersandEqualsToken;
@@ -1997,7 +2069,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
             st.pos += 2;
             st.token = KindAmpersandAmpersandToken;
           }
-        } else if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
+        } else if (next === "=".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindAmpersandEqualsToken;
         } else {
@@ -2017,10 +2089,11 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "*".charCodeAt(0): {
-        if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
+        const next = Scanner_charAt(s, 1);
+        if (next === "=".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindAsteriskEqualsToken;
-        } else if (Scanner_charAt(s, 1) === "*".charCodeAt(0)) {
+        } else if (next === "*".charCodeAt(0)) {
           if (Scanner_charAt(s, 2) === "=".charCodeAt(0)) {
             st.pos += 3;
             st.token = KindAsteriskAsteriskEqualsToken;
@@ -2043,10 +2116,11 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "+".charCodeAt(0): {
-        if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
+        const next = Scanner_charAt(s, 1);
+        if (next === "=".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindPlusEqualsToken;
-        } else if (Scanner_charAt(s, 1) === "+".charCodeAt(0)) {
+        } else if (next === "+".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindPlusPlusToken;
         } else {
@@ -2061,10 +2135,11 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "-".charCodeAt(0): {
-        if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
+        const next = Scanner_charAt(s, 1);
+        if (next === "=".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindMinusEqualsToken;
-        } else if (Scanner_charAt(s, 1) === "-".charCodeAt(0)) {
+        } else if (next === "-".charCodeAt(0)) {
           st.pos += 2;
           st.token = KindMinusMinusToken;
         } else {
@@ -2074,9 +2149,10 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case ".".charCodeAt(0): {
-        if (IsDigit(Scanner_charAt(s, 1))) {
+        const next = Scanner_charAt(s, 1);
+        if (IsDigit(next)) {
           st.token = Scanner_scanNumber(s);
-        } else if (Scanner_charAt(s, 1) === ".".charCodeAt(0) && Scanner_charAt(s, 2) === ".".charCodeAt(0)) {
+        } else if (next === ".".charCodeAt(0) && Scanner_charAt(s, 2) === ".".charCodeAt(0)) {
           st.pos += 3;
           st.token = KindDotDotDotToken;
         } else {
@@ -2091,6 +2167,9 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
           st.pos += 2;
 
           for (;;) {
+            Scanner_scanASCIIWhile(s, (b) => {
+              return (b !== "\n".charCodeAt(0) && b !== "\r".charCodeAt(0)) as bool;
+            });
             const [ch1, size] = Scanner_charAndSize(s);
             if (size === 0 || IsLineBreak(ch1)) {
               break;
@@ -2114,6 +2193,9 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
           let commentClosed = false;
           let lastLineStart = st.tokenStart;
           for (;;) {
+            Scanner_scanASCIIWhile(s, (b) => {
+              return (b !== "*".charCodeAt(0) && b !== "\n".charCodeAt(0) && b !== "\r".charCodeAt(0)) as bool;
+            });
             const [ch1, size] = Scanner_charAndSize(s);
             if (size === 0) {
               break;
@@ -2242,7 +2324,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "<".charCodeAt(0): {
-        if (isConflictMarkerTrivia(s.text, st.pos)) {
+        if (Scanner_charAt(s, 1) === "<".charCodeAt(0) && isConflictMarkerTrivia(s.text, st.pos)) {
           st.pos = scanConflictMarkerTrivia(s.text, st.pos, (diag, pos, length, ...args) => Scanner_errorAt(s, diag, pos, length, ...args));
           if (s.skipTrivia) {
             continue;
@@ -2272,7 +2354,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "=".charCodeAt(0): {
-        if (isConflictMarkerTrivia(s.text, st.pos)) {
+        if (Scanner_charAt(s, 1) === "=".charCodeAt(0) && isConflictMarkerTrivia(s.text, st.pos)) {
           st.pos = scanConflictMarkerTrivia(s.text, st.pos, (diag, pos, length, ...args) => Scanner_errorAt(s, diag, pos, length, ...args));
           if (s.skipTrivia) {
             continue;
@@ -2299,7 +2381,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case ">".charCodeAt(0): {
-        if (isConflictMarkerTrivia(s.text, st.pos)) {
+        if (Scanner_charAt(s, 1) === ">".charCodeAt(0) && isConflictMarkerTrivia(s.text, st.pos)) {
           st.pos = scanConflictMarkerTrivia(s.text, st.pos, (diag, pos, length, ...args) => Scanner_errorAt(s, diag, pos, length, ...args));
           if (s.skipTrivia) {
             continue;
@@ -2356,7 +2438,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         break;
       }
       case "|".charCodeAt(0): {
-        if (isConflictMarkerTrivia(s.text, st.pos)) {
+        if (Scanner_charAt(s, 1) === "|".charCodeAt(0) && isConflictMarkerTrivia(s.text, st.pos)) {
           st.pos = scanConflictMarkerTrivia(s.text, st.pos, (diag, pos, length, ...args) => Scanner_errorAt(s, diag, pos, length, ...args));
           if (s.skipTrivia) {
             continue;
@@ -2596,32 +2678,12 @@ export function Scanner_ReScanLessThanToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanGreaterThanToken","kind":"method","status":"implemented","sigHash":"e452c833a215e1071dd6e67ed4d5d6e080aa43f1e384e4f804f3b55dcf712c63","bodyHash":"e2a64fd91ac3d9cc0ffc6fade23b5481bf78267231de2310e104d4fb539dbef9"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.ReScanGreaterThanToken","kind":"method","status":"implemented","sigHash":"e452c833a215e1071dd6e67ed4d5d6e080aa43f1e384e4f804f3b55dcf712c63","bodyHash":"d103f60b7c6a59146fcfdd513cb65b1ada6ef5f9a94163dda0b3cf3f47c3b1e4"}
  *
  * Go source:
  * func (s *Scanner) ReScanGreaterThanToken() ast.Kind {
  * 	if s.token == ast.KindGreaterThanToken {
- * 		s.pos = s.tokenStart + 1
- * 		if s.char() == '>' {
- * 			if s.charAt(1) == '>' {
- * 				if s.charAt(2) == '=' {
- * 					s.pos += 3
- * 					s.token = ast.KindGreaterThanGreaterThanGreaterThanEqualsToken
- * 				} else {
- * 					s.pos += 2
- * 					s.token = ast.KindGreaterThanGreaterThanGreaterThanToken
- * 				}
- * 			} else if s.charAt(1) == '=' {
- * 				s.pos += 2
- * 				s.token = ast.KindGreaterThanGreaterThanEqualsToken
- * 			} else {
- * 				s.pos++
- * 				s.token = ast.KindGreaterThanGreaterThanToken
- * 			}
- * 		} else if s.char() == '=' {
- * 			s.pos++
- * 			s.token = ast.KindGreaterThanEqualsToken
- * 		}
+ * 		s.reScanGreaterThanTokenInner()
  * 	}
  * 	return s.token
  * }
@@ -2630,29 +2692,63 @@ export function Scanner_ReScanGreaterThanToken(receiver: GoPtr<Scanner>): Kind {
   const s = receiver!;
   const st = s.__tsgoEmbedded0;
   if (st.token === KindGreaterThanToken) {
-    st.pos = st.tokenStart + 1;
-    if (Scanner_char(s) === ">".charCodeAt(0)) {
-      if (Scanner_charAt(s, 1) === ">".charCodeAt(0)) {
-        if (Scanner_charAt(s, 2) === "=".charCodeAt(0)) {
-          st.pos += 3;
-          st.token = KindGreaterThanGreaterThanGreaterThanEqualsToken;
-        } else {
-          st.pos += 2;
-          st.token = KindGreaterThanGreaterThanGreaterThanToken;
-        }
-      } else if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
-        st.pos += 2;
-        st.token = KindGreaterThanGreaterThanEqualsToken;
-      } else {
-        st.pos++;
-        st.token = KindGreaterThanGreaterThanToken;
-      }
-    } else if (Scanner_char(s) === "=".charCodeAt(0)) {
-      st.pos++;
-      st.token = KindGreaterThanEqualsToken;
-    }
+    Scanner_reScanGreaterThanTokenInner(s);
   }
   return st.token;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.reScanGreaterThanTokenInner","kind":"method","status":"implemented","sigHash":"83fdb65bf3205c4b65e3ba8d5a6d39937fd378d6db8b228392c45d6914b4ec8b","bodyHash":"0e4311dcb2931d8e0f3722e86b5340855665e00e2bc63042f1303d1bab7098b5"}
+ *
+ * Go source:
+ * func (s *Scanner) reScanGreaterThanTokenInner() {
+ * 	s.pos = s.tokenStart + 1
+ * 	if s.char() == '>' {
+ * 		if s.charAt(1) == '>' {
+ * 			if s.charAt(2) == '=' {
+ * 				s.pos += 3
+ * 				s.token = ast.KindGreaterThanGreaterThanGreaterThanEqualsToken
+ * 			} else {
+ * 				s.pos += 2
+ * 				s.token = ast.KindGreaterThanGreaterThanGreaterThanToken
+ * 			}
+ * 		} else if s.charAt(1) == '=' {
+ * 			s.pos += 2
+ * 			s.token = ast.KindGreaterThanGreaterThanEqualsToken
+ * 		} else {
+ * 			s.pos++
+ * 			s.token = ast.KindGreaterThanGreaterThanToken
+ * 		}
+ * 	} else if s.char() == '=' {
+ * 		s.pos++
+ * 		s.token = ast.KindGreaterThanEqualsToken
+ * 	}
+ * }
+ */
+export function Scanner_reScanGreaterThanTokenInner(receiver: GoPtr<Scanner>): void {
+  const s = receiver!;
+  const st = s.__tsgoEmbedded0;
+  st.pos = st.tokenStart + 1;
+  if (Scanner_char(s) === ">".charCodeAt(0)) {
+    if (Scanner_charAt(s, 1) === ">".charCodeAt(0)) {
+      if (Scanner_charAt(s, 2) === "=".charCodeAt(0)) {
+        st.pos += 3;
+        st.token = KindGreaterThanGreaterThanGreaterThanEqualsToken;
+      } else {
+        st.pos += 2;
+        st.token = KindGreaterThanGreaterThanGreaterThanToken;
+      }
+    } else if (Scanner_charAt(s, 1) === "=".charCodeAt(0)) {
+      st.pos += 2;
+      st.token = KindGreaterThanGreaterThanEqualsToken;
+    } else {
+      st.pos++;
+      st.token = KindGreaterThanGreaterThanToken;
+    }
+  } else if (Scanner_char(s) === "=".charCodeAt(0)) {
+    st.pos++;
+    st.token = KindGreaterThanEqualsToken;
+  }
 }
 
 /**
@@ -3701,7 +3797,7 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifier","kind":"method","status":"implemented","sigHash":"8d0b6ebcb4ea537e635fa8157441f3c091dc975721578bcc8957a7d672b26a75","bodyHash":"523fbd9aa998110ee9bd1144779b0871344f8c2eabd3d910b7f5531828cae9dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanIdentifier","kind":"method","status":"implemented","sigHash":"8d0b6ebcb4ea537e635fa8157441f3c091dc975721578bcc8957a7d672b26a75","bodyHash":"f12c4d9842d62c237d4883ecea3e245508588b1c84863882c896100aa3061341"}
  *
  * Go source:
  * func (s *Scanner) scanIdentifier(prefixLength int) bool {
@@ -3710,13 +3806,11 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
  * 	ch := s.char()
  * 	// Fast path for simple ASCII identifiers
  * 	if stringutil.IsASCIILetter(ch) || ch == '_' || ch == '$' {
- * 		for {
- * 			s.pos++
- * 			ch = s.char()
- * 			if !(isWordCharacter(ch) || ch == '$') {
- * 				break
- * 			}
- * 		}
+ * 		s.pos++
+ * 		s.scanASCIIWhile(func(b byte) bool {
+ * 			return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_' || b == '$'
+ * 		})
+ * 		ch = s.char()
  * 		if ch < utf8.RuneSelf && ch != '\\' {
  * 			s.tokenValue = s.text[start:s.pos]
  * 			return true
@@ -3749,13 +3843,11 @@ export function Scanner_scanIdentifier(receiver: GoPtr<Scanner>, prefixLength: i
   let ch = Scanner_char(s);
   // Fast path for simple ASCII identifiers
   if (IsASCIILetter(ch) || ch === "_".charCodeAt(0) || ch === "$".charCodeAt(0)) {
-    for (;;) {
-      st.pos++;
-      ch = Scanner_char(s);
-      if (!(isWordCharacter(ch) || ch === "$".charCodeAt(0))) {
-        break;
-      }
-    }
+    st.pos++;
+    Scanner_scanASCIIWhile(s, (b) => {
+      return ((b >= "a".charCodeAt(0) && b <= "z".charCodeAt(0)) || (b >= "A".charCodeAt(0) && b <= "Z".charCodeAt(0)) || (b >= "0".charCodeAt(0) && b <= "9".charCodeAt(0)) || b === "_".charCodeAt(0) || b === "$".charCodeAt(0)) as bool;
+    });
+    ch = Scanner_char(s);
     if (ch < utf8.RuneSelf && ch !== "\\".charCodeAt(0)) {
       st.tokenValue = byteSlice(s.text, start, st.pos);
       return true;
@@ -3836,7 +3928,7 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379","bodyHash":"1c8c44333fc0d8acc0c2be7680bc12ceae31d0b7b4271bf8688b738cc45d5e4c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379","bodyHash":"bb449bb53dae2ba8d795d9e8e7189db93174c6e4dec732213aa8d523afef69af"}
  *
  * Go source:
  * func (s *Scanner) scanString(jsxAttributeString bool) string {
@@ -3846,14 +3938,15 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
  * 	}
  * 	s.pos++
  * 	// Fast path for simple strings without escape sequences.
- * 	strLen := strings.IndexRune(s.text[s.pos:], quote)
+ * 	strLen := strings.IndexByte(s.text[s.pos:], byte(quote))
  * 	if strLen == 0 {
  * 		s.pos++
  * 		return ""
  * 	}
  * 	if strLen > 0 {
  * 		str := s.text[s.pos : s.pos+strLen]
- * 		if !jsxAttributeString && !strings.ContainsAny(str, "\r\n\\") {
+ * 		if jsxAttributeString ||
+ * 			strings.IndexByte(str, '\\') < 0 && strings.IndexByte(str, '\r') < 0 && strings.IndexByte(str, '\n') < 0 {
  * 			s.pos += strLen + 1
  * 			return str
  * 		}
@@ -3899,14 +3992,17 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
   }
   st.pos++;
   // Fast path for simple strings without escape sequences.
-  const strLen = strings.IndexRune(byteSlice(s.text, st.pos), quote);
+  const strLen = strings.IndexByte(byteSlice(s.text, st.pos), quote as byte);
   if (strLen === 0) {
     st.pos++;
     return "";
   }
   if (strLen > 0) {
     const str = byteSlice(s.text, st.pos, st.pos + strLen);
-    if (!jsxAttributeString && !strings.ContainsAny(str, "\r\n\\")) {
+    if (
+      jsxAttributeString ||
+      ((strings.IndexByte(str, "\\".charCodeAt(0) as byte) < 0 && strings.IndexByte(str, "\r".charCodeAt(0) as byte) < 0 && strings.IndexByte(str, "\n".charCodeAt(0) as byte) < 0) as bool)
+    ) {
       st.pos += strLen + 1;
       return str;
     }
@@ -3944,7 +4040,7 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanTemplateAndSetTokenValue","kind":"method","status":"implemented","sigHash":"cdb72c37603e1f52d47695665dc1968c946dc859b904297162a536d5ddaede2e","bodyHash":"f5e1e77671ad2709ee424134f7327f337206cd1e0e47971ab21fa419c460a63d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanTemplateAndSetTokenValue","kind":"method","status":"implemented","sigHash":"cdb72c37603e1f52d47695665dc1968c946dc859b904297162a536d5ddaede2e","bodyHash":"62f48bfa5164a51de3d0cd7e724084d49342619564ded3af874aba58d63e52a1"}
  *
  * Go source:
  * func (s *Scanner) scanTemplateAndSetTokenValue(shouldEmitInvalidEscapeError bool) ast.Kind {
@@ -3954,6 +4050,9 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
  * 	parts := make([]string, 0, 4)
  * 	var token ast.Kind
  * 	for {
+ * 		s.scanASCIIWhile(func(b byte) bool {
+ * 			return b != '`' && b != '$' && b != '\\' && b != '\r'
+ * 		})
  * 		ch := s.char()
  * 		if ch < 0 || ch == '`' {
  * 			parts = append(parts, s.text[start:s.pos])
@@ -4005,6 +4104,9 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
   const parts: GoSlice<string> = [];
   let token: Kind = KindUnknown;
   for (;;) {
+    Scanner_scanASCIIWhile(s, (b) => {
+      return (b !== "`".charCodeAt(0) && b !== "$".charCodeAt(0) && b !== "\\".charCodeAt(0) && b !== "\r".charCodeAt(0)) as bool;
+    });
     const ch = Scanner_char(s);
     if (ch < 0 || ch === "`".charCodeAt(0)) {
       parts.push(byteSlice(s.text, start, st.pos));
@@ -4048,7 +4150,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06","bodyHash":"103bfd6aed1874f7135de2c06ae8eeee440e1ff940c9a1d4632d880382d29db3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanEscapeSequence","kind":"method","status":"implemented","sigHash":"ee4e8e838a412353a31302b798a09ce4608c22fbd9cf5e6cbad8cb37cac4df06","bodyHash":"2ccbc32f98cb965c5cdc6211ee737c03a0023357b7748131c63e8269d97ccab1"}
  *
  * Go source:
  * func (s *Scanner) scanEscapeSequence(flags EscapeSequenceScanningFlags) string {
@@ -4136,31 +4238,42 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
  * 			if codePoint < 0 {
  * 				return s.text[start:s.pos]
  * 			}
- * 			return string(codePoint)
+ * 			// In string literals, a high surrogate \u{...} followed by a low
+ * 			// surrogate escape forms a single code point, exactly as adjacent
+ * 			// UTF-16 code units would in a JavaScript string.
+ * 			if flags&EscapeSequenceScanningFlagsRegularExpression == 0 && stringutil.IsHighSurrogate(codePoint) {
+ * 				if combined, ok := s.scanLowSurrogateEscape(codePoint); ok {
+ * 					return string(combined)
+ * 				}
+ * 			}
+ * 			return stringutil.EncodeJSStringRune(codePoint)
  * 		}
  * 		if codePoint < 0 {
  * 			return s.text[start:s.pos]
- * 		} else if codePointIsHighSurrogate(codePoint) &&
- * 			(flags&EscapeSequenceScanningFlagsRegularExpression == 0 || flags&EscapeSequenceScanningFlagsAnyUnicodeMode != 0) &&
- * 			s.char() == '\\' && s.charAt(1) == 'u' && s.charAt(2) != '{' {
- * 			// Combine \uHigh\uLow into a single code point in string literals (always) and
- * 			// in regex AnyUnicodeMode. In non-unicode regex mode they are separate atoms.
- * 			savedPos := s.pos
- * 			nextCodePoint := s.scanUnicodeEscape(flags&EscapeSequenceScanningFlagsReportInvalidEscapeErrors != 0)
- * 			if codePointIsLowSurrogate(nextCodePoint) {
- * 				return string(surrogatePairToCodepoint(codePoint, nextCodePoint))
+ * 		} else if stringutil.IsHighSurrogate(codePoint) {
+ * 			if flags&EscapeSequenceScanningFlagsRegularExpression == 0 {
+ * 				// Combine \uHigh followed by any low surrogate escape (\uLow or
+ * 				// \u{Low}) into a single code point in string literals, matching
+ * 				// how adjacent UTF-16 code units pair in a JavaScript string.
+ * 				if combined, ok := s.scanLowSurrogateEscape(codePoint); ok {
+ * 					return string(combined)
+ * 				}
+ * 			} else if flags&EscapeSequenceScanningFlagsAnyUnicodeMode != 0 &&
+ * 				s.char() == '\\' && s.charAt(1) == 'u' && s.charAt(2) != '{' {
+ * 				// In regex AnyUnicodeMode, combine \uHigh\uLow so scanClassRanges
+ * 				// can compare the pair numerically. In non-unicode regex mode they
+ * 				// are separate atoms, and extended \u{...} escapes never combine.
+ * 				savedPos := s.pos
+ * 				nextCodePoint := s.scanUnicodeEscape(flags&EscapeSequenceScanningFlagsReportInvalidEscapeErrors != 0)
+ * 				if stringutil.IsLowSurrogate(nextCodePoint) {
+ * 					return string(stringutil.SurrogatePairToCodePoint(codePoint, nextCodePoint))
+ * 				}
+ * 				s.pos = savedPos
  * 			}
- * 			s.pos = savedPos
- * 			if flags&EscapeSequenceScanningFlagsRegularExpression != 0 {
- * 				return encodeSurrogate(codePoint)
- * 			}
- * 		} else if (codePointIsHighSurrogate(codePoint) || codePointIsLowSurrogate(codePoint)) &&
- * 			flags&EscapeSequenceScanningFlagsRegularExpression != 0 {
- * 			// Lone surrogate inside a non-unicode regex: encode as CESU-8 so scanClassRanges
- * 			// can compare surrogates numerically. Must NOT apply to string literals.
- * 			return encodeSurrogate(codePoint)
  * 		}
- * 		return string(codePoint)
+ * 		// Lone surrogate: encode as CESU-8 so it survives losslessly. In a
+ * 		// non-unicode regex this also lets scanClassRanges compare it numerically.
+ * 		return stringutil.EncodeJSStringRune(codePoint)
  * 	case 'x':
  * 		// '\xDD'
  * 		for ; s.pos < start+4; s.pos++ {
@@ -4183,12 +4296,23 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
  * 		}
  * 		fallthrough
  * 	case '\n':
- * 		// case CharacterCodes.lineSeparator !!!
- * 		// case CharacterCodes.paragraphSeparator !!!
  * 		return ""
  * 	default:
+ * 		// ch was read as a single byte; for multi-byte UTF-8 characters,
+ * 		// we need to decode the full rune and advance past all its bytes.
+ * 		if ch >= utf8.RuneSelf {
+ * 			s.pos-- // back up past the single-byte advance
+ * 			var size int
+ * 			ch, size = utf8.DecodeRuneInString(s.text[s.pos:])
+ * 			s.pos += size
+ * 			s.containsNonASCII = true
+ * 		}
+ * 		// LineContinuation: a backslash followed by a line terminator is "the empty code unit sequence".
+ * 		if ch == ' ' || ch == ' ' {
+ * 			return ""
+ * 		}
  * 		if flags&EscapeSequenceScanningFlagsAnyUnicodeMode != 0 || flags&EscapeSequenceScanningFlagsRegularExpression != 0 && flags&EscapeSequenceScanningFlagsAnnexB == 0 && IsIdentifierPart(ch) {
- * 			s.errorAt(diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, s.pos-2, 2)
+ * 			s.errorAt(diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, start, s.pos-start)
  * 		}
  * 		return string(ch)
  * 	}
@@ -4303,34 +4427,43 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
         if (codePoint < 0) {
           return byteSlice(s.text, start, st.pos);
         }
-        return stringFromRune(codePoint);
+        // In string literals, a high surrogate \u{...} followed by a low
+        // surrogate escape forms a single code point, exactly as adjacent
+        // UTF-16 code units would in a JavaScript string.
+        if ((flags & EscapeSequenceScanningFlagsRegularExpression) === 0 && IsHighSurrogate(codePoint)) {
+          const [combined, ok] = Scanner_scanLowSurrogateEscape(s, codePoint);
+          if (ok) {
+            return stringFromRune(combined);
+          }
+        }
+        return EncodeJSStringRune(codePoint);
       }
       if (codePoint < 0) {
         return byteSlice(s.text, start, st.pos);
-      } else if (
-        IsHighSurrogate(codePoint) &&
-        ((flags & EscapeSequenceScanningFlagsRegularExpression) === 0 || (flags & EscapeSequenceScanningFlagsAnyUnicodeMode) !== 0) &&
-        Scanner_char(s) === "\\".charCodeAt(0) &&
-        Scanner_charAt(s, 1) === "u".charCodeAt(0) &&
-        Scanner_charAt(s, 2) !== "{".charCodeAt(0)
-      ) {
-        // Combine \uHigh\uLow into a single code point in string literals (always) and
-        // in regex AnyUnicodeMode. In non-unicode regex mode they are separate atoms.
-        const savedPos = st.pos;
-        const nextCodePoint = Scanner_scanUnicodeEscape(s, (flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors) !== 0);
-        if (IsLowSurrogate(nextCodePoint)) {
-          return stringFromRune(SurrogatePairToCodePoint(codePoint, nextCodePoint));
+      } else if (IsHighSurrogate(codePoint)) {
+        if ((flags & EscapeSequenceScanningFlagsRegularExpression) === 0) {
+          // Combine \uHigh followed by any low surrogate escape (\uLow or
+          // \u{Low}) into a single code point in string literals, matching
+          // how adjacent UTF-16 code units pair in a JavaScript string.
+          const [combined, ok] = Scanner_scanLowSurrogateEscape(s, codePoint);
+          if (ok) {
+            return stringFromRune(combined);
+          }
+        } else if ((flags & EscapeSequenceScanningFlagsAnyUnicodeMode) !== 0 && Scanner_char(s) === "\\".charCodeAt(0) && Scanner_charAt(s, 1) === "u".charCodeAt(0) && Scanner_charAt(s, 2) !== "{".charCodeAt(0)) {
+        // In regex AnyUnicodeMode, combine \uHigh\uLow so scanClassRanges
+        // can compare the pair numerically. In non-unicode regex mode they
+        // are separate atoms, and extended \u{...} escapes never combine.
+          const savedPos = st.pos;
+          const nextCodePoint = Scanner_scanUnicodeEscape(s, (flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors) !== 0);
+          if (IsLowSurrogate(nextCodePoint)) {
+            return stringFromRune(SurrogatePairToCodePoint(codePoint, nextCodePoint));
+          }
+          st.pos = savedPos;
         }
-        st.pos = savedPos;
-        if ((flags & EscapeSequenceScanningFlagsRegularExpression) !== 0) {
-          return EncodeJSStringRune(codePoint);
-        }
-      } else if ((IsHighSurrogate(codePoint) || IsLowSurrogate(codePoint)) && (flags & EscapeSequenceScanningFlagsRegularExpression) !== 0) {
-        // Lone surrogate inside a non-unicode regex: encode as CESU-8 so scanClassRanges
-        // can compare surrogates numerically. Must NOT apply to string literals.
-        return EncodeJSStringRune(codePoint);
       }
-      return stringFromRune(codePoint);
+      // Lone surrogate: encode as CESU-8 so it survives losslessly. In a
+      // non-unicode regex this also lets scanClassRanges compare it numerically.
+      return EncodeJSStringRune(codePoint);
     }
     case "x".charCodeAt(0): {
       // '\xDD'
@@ -4354,23 +4487,33 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
         st.pos++;
       }
       // fallthrough to '\n'
-      // case CharacterCodes.lineSeparator !!!
-      // case CharacterCodes.paragraphSeparator !!!
       return "";
     }
     case "\n".charCodeAt(0): {
-      // case CharacterCodes.lineSeparator !!!
-      // case CharacterCodes.paragraphSeparator !!!
       return "";
     }
     default: {
+      // ch was read as a single byte; for multi-byte UTF-8 characters,
+      // we need to decode the full rune and advance past all its bytes.
+      let chDefault = ch;
+      if (chDefault >= utf8.RuneSelf) {
+        st.pos--; // back up past the single-byte advance
+        const [decoded, size] = decodeRuneInStringAt(s.text, st.pos);
+        chDefault = decoded;
+        st.pos += size;
+        s.containsNonASCII = true;
+      }
+      // LineContinuation: a backslash followed by a line terminator is "the empty code unit sequence".
+      if (chDefault === 0x2028 || chDefault === 0x2029) {
+        return "";
+      }
       if (
         (flags & EscapeSequenceScanningFlagsAnyUnicodeMode) !== 0 ||
-        ((flags & EscapeSequenceScanningFlagsRegularExpression) !== 0 && (flags & EscapeSequenceScanningFlagsAnnexB) === 0 && IsIdentifierPart(ch))
+        ((flags & EscapeSequenceScanningFlagsRegularExpression) !== 0 && (flags & EscapeSequenceScanningFlagsAnnexB) === 0 && IsIdentifierPart(chDefault))
       ) {
-        Scanner_errorAt(s, This_character_cannot_be_escaped_in_a_regular_expression, st.pos - 2, 2);
+        Scanner_errorAt(s, This_character_cannot_be_escaped_in_a_regular_expression, start, st.pos - start);
       }
-      return stringFromRune(ch);
+      return stringFromRune(chDefault);
     }
   }
 }
@@ -4479,6 +4622,55 @@ export function Scanner_scanUnicodeEscape(receiver: GoPtr<Scanner>, shouldEmitIn
     st.tokenFlags |= TokenFlagsExtendedUnicodeEscape;
   }
   return hexValue as GoRune;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanLowSurrogateEscape","kind":"method","status":"implemented","sigHash":"1cc0ef6e3a6fda2e3c88bbe9114b88806bc07575d62f0b08ff659e3e4420aaac","bodyHash":"0005d0e7cc211fda4de147fc36afd044b608695c776466939ab77a00c334b01e"}
+ *
+ * Go source:
+ * // scanLowSurrogateEscape attempts to consume a low-surrogate Unicode escape
+ * // (either '\uLow' or '\u{Low}') immediately following an already-scanned high
+ * // surrogate and combine them into a single supplementary code point. This
+ * // mirrors how adjacent UTF-16 code units form a surrogate pair in a JavaScript
+ * // string, regardless of which escape syntax produced each half. On success it
+ * // returns the combined code point and true; otherwise it restores the scanner
+ * // position and returns false.
+ * func (s *Scanner) scanLowSurrogateEscape(high rune) (rune, bool) {
+ * 	if s.char() != '\\' || s.charAt(1) != 'u' {
+ * 		return 0, false
+ * 	}
+ * 	savedPos := s.pos
+ * 	savedTokenFlags := s.tokenFlags
+ * 	// Speculatively scan the escape with diagnostics suppressed: if it isn't a
+ * 	// low surrogate we rewind below, and the caller re-scans the same escape and
+ * 	// reports any error then, so reporting here would duplicate diagnostics.
+ * 	low := s.scanUnicodeEscape(false)
+ * 	if stringutil.IsLowSurrogate(low) {
+ * 		return stringutil.SurrogatePairToCodePoint(high, low), true
+ * 	}
+ * 	s.pos = savedPos
+ * 	s.tokenFlags = savedTokenFlags
+ * 	return 0, false
+ * }
+ */
+export function Scanner_scanLowSurrogateEscape(receiver: GoPtr<Scanner>, high: GoRune): [GoRune, bool] {
+  const s = receiver!;
+  const st = s.__tsgoEmbedded0;
+  if (Scanner_char(s) !== "\\".charCodeAt(0) || Scanner_charAt(s, 1) !== "u".charCodeAt(0)) {
+    return [0 as GoRune, false as bool];
+  }
+  const savedPos = st.pos;
+  const savedTokenFlags = st.tokenFlags;
+  // Speculatively scan the escape with diagnostics suppressed: if it isn't a
+  // low surrogate we rewind below, and the caller re-scans the same escape and
+  // reports any error then, so reporting here would duplicate diagnostics.
+  const low = Scanner_scanUnicodeEscape(s, false);
+  if (IsLowSurrogate(low)) {
+    return [SurrogatePairToCodePoint(high, low), true as bool];
+  }
+  st.pos = savedPos;
+  st.tokenFlags = savedTokenFlags;
+  return [0 as GoRune, false as bool];
 }
 
 /**
@@ -4718,7 +4910,7 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumberFragment","kind":"method","status":"implemented","sigHash":"107eac2d2e9ee776e96ea451d6cfc0c5ece86f77f0bb651ff35be1e39a2a99ed","bodyHash":"6ffe2275c03f3889a5c253c5c1c834999f86004dcb32f9a99bbdf8210c3a1b8c"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanNumberFragment","kind":"method","status":"implemented","sigHash":"107eac2d2e9ee776e96ea451d6cfc0c5ece86f77f0bb651ff35be1e39a2a99ed","bodyHash":"87edd40884f034481fed14d577944801df0fff461a2abab496bac20045fe0376"}
  *
  * Go source:
  * func (s *Scanner) scanNumberFragment() string {
@@ -4727,6 +4919,14 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
  * 	isPreviousTokenSeparator := false
  * 	var result strings.Builder
  * 	for {
+ * 		before := s.pos
+ * 		s.scanASCIIWhile(func(b byte) bool {
+ * 			return b >= '0' && b <= '9'
+ * 		})
+ * 		if s.pos > before {
+ * 			allowSeparator = true
+ * 			isPreviousTokenSeparator = false
+ * 		}
  * 		ch := s.char()
  * 		if ch == '_' {
  * 			s.tokenFlags |= ast.TokenFlagsContainsSeparator
@@ -4746,17 +4946,14 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
  * 			start = s.pos
  * 			continue
  * 		}
- * 		if stringutil.IsDigit(ch) {
- * 			allowSeparator = true
- * 			isPreviousTokenSeparator = false
- * 			s.pos++
- * 			continue
- * 		}
  * 		break
  * 	}
  * 	if isPreviousTokenSeparator {
  * 		s.tokenFlags |= ast.TokenFlagsContainsInvalidSeparator
  * 		s.errorAt(diagnostics.Numeric_separators_are_not_allowed_here, s.pos-1, 1)
+ * 	}
+ * 	if result.Len() == 0 {
+ * 		return s.text[start:s.pos]
  * 	}
  * 	result.WriteString(s.text[start:s.pos])
  * 	return result.String()
@@ -4769,6 +4966,14 @@ export function Scanner_scanNumberFragment(receiver: GoPtr<Scanner>): string {
   let isPreviousTokenSeparator = false;
   const result = new Builder();
   for (;;) {
+    const before = s.__tsgoEmbedded0.pos;
+    Scanner_scanASCIIWhile(s, (b) => {
+      return (b >= "0".charCodeAt(0) && b <= "9".charCodeAt(0)) as bool;
+    });
+    if (s.__tsgoEmbedded0.pos > before) {
+      allowSeparator = true;
+      isPreviousTokenSeparator = false;
+    }
     const ch = Scanner_char(s);
     if (ch === "_".charCodeAt(0)) {
       s.__tsgoEmbedded0.tokenFlags |= TokenFlagsContainsSeparator;
@@ -4788,17 +4993,14 @@ export function Scanner_scanNumberFragment(receiver: GoPtr<Scanner>): string {
       start = s.__tsgoEmbedded0.pos;
       continue;
     }
-    if (IsDigit(ch)) {
-      allowSeparator = true;
-      isPreviousTokenSeparator = false;
-      s.__tsgoEmbedded0.pos++;
-      continue;
-    }
     break;
   }
   if (isPreviousTokenSeparator) {
     s.__tsgoEmbedded0.tokenFlags |= TokenFlagsContainsInvalidSeparator;
     Scanner_errorAt(s, Numeric_separators_are_not_allowed_here, s.__tsgoEmbedded0.pos - 1, 1);
+  }
+  if (result.Len() === 0) {
+    return byteSlice(s.text, start, s.__tsgoEmbedded0.pos);
   }
   result.WriteString(byteSlice(s.text, start, s.__tsgoEmbedded0.pos));
   return result.String();
@@ -5352,7 +5554,7 @@ export function SkipTrivia(text: string, pos: int): int {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTriviaEx","kind":"func","status":"implemented","sigHash":"f42acfbbaab25a2aa14a08e991389f62a5072c61df54c5805c5d6b51e941080e","bodyHash":"8a743779d6ccf684f4076b85acf341470fcffa4732805e6564184860a2bea3dc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::SkipTriviaEx","kind":"func","status":"implemented","sigHash":"f42acfbbaab25a2aa14a08e991389f62a5072c61df54c5805c5d6b51e941080e","bodyHash":"264f0ba89784e8af4179e796b7094804838591eb6ee18f155ed929dacf112ada"}
  *
  * Go source:
  * func SkipTriviaEx(text string, pos int, options *SkipTriviaOptions) int {
@@ -5362,11 +5564,14 @@ export function SkipTrivia(text: string, pos: int): int {
  * 	if options == nil {
  * 		options = &SkipTriviaOptions{}
  * 	}
- * 
+ *
  * 	textLen := len(text)
  * 	canConsumeStar := false
  * 	// Keep in sync with couldStartTrivia
  * 	for {
+ * 		if pos >= textLen {
+ * 			return pos
+ * 		}
  * 		ch, size := utf8.DecodeRuneInString(text[pos:])
  * 		switch ch {
  * 		case '\r':
@@ -5456,6 +5661,9 @@ export function SkipTriviaEx(text: string, pos: int, options: GoPtr<SkipTriviaOp
   let canConsumeStar = false;
   // Keep in sync with couldStartTrivia
   for (;;) {
+    if (pos >= textLen) {
+      return pos;
+    }
     const [ch, size] = decodeRuneInStringAt(text, pos);
     switch (ch) {
       case "\r".charCodeAt(0): {
@@ -5568,33 +5776,41 @@ export const mergeConflictMarkerLength: int = byteLen("<<<<<<<");
 export const maxAsciiCharacter: byte = 127 as byte;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"9ea6f9f957b7886eeeb5b9323e900e44d6ace7d03a8b8a1b27df3442b47addc4","bodyHash":"10f97fc1b93d039660e15bcd28c64ff359a39737351374ed9ba6a693432f34c8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::isConflictMarkerTrivia","kind":"func","status":"implemented","sigHash":"9ea6f9f957b7886eeeb5b9323e900e44d6ace7d03a8b8a1b27df3442b47addc4","bodyHash":"8d05e9232b29f7976a75551535369a390faa47616116f73064629084f3a2ae3e"}
  *
  * Go source:
  * func isConflictMarkerTrivia(text string, pos int) bool {
  * 	if pos < 0 {
  * 		panic("pos < 0")
  * 	}
- * 
- * 	// Conflict markers must be at the start of a line.
- * 	var prev rune
- * 	if pos >= 2 {
- * 		prev, _ = utf8.DecodeLastRuneInString(text[:pos-2])
+ *
+ * 	// Fast reject: a conflict marker is the same byte repeated seven times. If the
+ * 	// second byte differs (the overwhelmingly common case for `<`, `>`, `=`, `|`
+ * 	// tokens), it cannot be a marker, so skip the line-start check entirely.
+ * 	if pos+1 >= len(text) || text[pos+1] != text[pos] {
+ * 		return false
  * 	}
- * 	if pos == 0 || stringutil.IsLineBreak(prev) || pos >= 1 && stringutil.IsLineBreak(rune(text[pos-1])) {
+ *
+ * 	// Conflict markers must be at the start of a line.
+ * 	atLineStart := pos == 0 || stringutil.IsLineBreak(rune(text[pos-1]))
+ * 	if !atLineStart && pos >= 2 {
+ * 		prev, _ := utf8.DecodeLastRuneInString(text[:pos-2])
+ * 		atLineStart = stringutil.IsLineBreak(prev)
+ * 	}
+ * 	if atLineStart {
  * 		ch := text[pos]
- * 
+ *
  * 		if (pos + mergeConflictMarkerLength) < len(text) {
  * 			for i := range mergeConflictMarkerLength {
  * 				if text[pos+i] != ch {
  * 					return false
  * 				}
  * 			}
- * 
+ *
  * 			return ch == '=' || text[pos+mergeConflictMarkerLength] == ' '
  * 		}
  * 	}
- * 
+ *
  * 	return false
  * }
  */
@@ -5603,12 +5819,20 @@ export function isConflictMarkerTrivia(text: string, pos: int): bool {
     throw new globalThis.Error("pos < 0");
   }
 
-  // Conflict markers must be at the start of a line.
-  let prev: GoRune = 0;
-  if (pos >= 2) {
-    [prev] = decodeLastRuneInStringBefore(text, pos - 2);
+  // Fast reject: a conflict marker is the same byte repeated seven times. If the
+  // second byte differs (the overwhelmingly common case for `<`, `>`, `=`, `|`
+  // tokens), it cannot be a marker, so skip the line-start check entirely.
+  if (pos + 1 >= byteLen(text) || byteAt(text, pos + 1) !== byteAt(text, pos)) {
+    return false;
   }
-  if (pos === 0 || IsLineBreak(prev) || (pos >= 1 && IsLineBreak(byteAt(text, pos - 1)))) {
+
+  // Conflict markers must be at the start of a line.
+  let atLineStart = pos === 0 || IsLineBreak(byteAt(text, pos - 1));
+  if (!atLineStart && pos >= 2) {
+    const [prev] = decodeLastRuneInStringBefore(text, pos - 2);
+    atLineStart = IsLineBreak(prev);
+  }
+  if (atLineStart) {
     const ch = byteAt(text, pos);
 
     if (pos + mergeConflictMarkerLength < byteLen(text)) {
@@ -5899,7 +6123,78 @@ export function getErrorRangeForArrowFunction(sourceFile: GoPtr<SourceFile>, nod
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetErrorRangeForNode","kind":"func","status":"implemented","sigHash":"2c7127c8ae87742dba321bd9edcb696827cf7e18cf6b86504269b47f981d0b8f","bodyHash":"7b9ce38bff67175709274732d2df11020c319dda1d26757821905f0f8fed6e21"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::findOriginatingJSDocSatisfiesTag","kind":"func","status":"implemented","sigHash":"cb7d7bf439f1a032ef71624184dc920359f82a46e1b6df8d58a6c02c1159a8fd","bodyHash":"3411ad91775919a51e6e33233327d4794b8e65f625db168c8de4ffe526eeec47"}
+ *
+ * Go source:
+ * func findOriginatingJSDocSatisfiesTag(sourceFile *ast.SourceFile, node *ast.Node) *ast.Node {
+ * 	targetType := node.AsSatisfiesExpression().Type
+ * 	if targetType.Flags&ast.NodeFlagsReparsed == 0 {
+ * 		return nil
+ * 	}
+ * 	for current := node.Parent; current != nil; current = current.Parent {
+ * 		if current.Flags&ast.NodeFlagsHasJSDoc == 0 {
+ * 			continue
+ * 		}
+ * 		var firstSatisfiesTag *ast.Node
+ * 		for _, jsDoc := range current.EagerJSDoc(sourceFile) {
+ * 			if tags := jsDoc.AsJSDoc().Tags; tags != nil {
+ * 				for _, tag := range tags.Nodes {
+ * 					if !ast.IsJSDocSatisfiesTag(tag) {
+ * 						continue
+ * 					}
+ * 					if firstSatisfiesTag == nil {
+ * 						firstSatisfiesTag = tag
+ * 					}
+ * 					if typeExpr := tag.AsJSDocSatisfiesTag().TypeExpression; typeExpr != nil {
+ * 						if t := typeExpr.Type(); t != nil && t.Loc == targetType.Loc {
+ * 							return tag
+ * 						}
+ * 					}
+ * 				}
+ * 			}
+ * 		}
+ * 		return firstSatisfiesTag
+ * 	}
+ * 	return nil
+ * }
+ */
+export function findOriginatingJSDocSatisfiesTag(sourceFile: GoPtr<SourceFile>, node: GoPtr<Node>): GoPtr<Node> {
+  const targetType = AsSatisfiesExpression(node)!.Type;
+  if ((targetType!.Flags & NodeFlagsReparsed) === 0) {
+    return undefined;
+  }
+  for (let current = node!.Parent; current !== undefined; current = current!.Parent) {
+    if ((current!.Flags & NodeFlagsHasJSDoc) === 0) {
+      continue;
+    }
+    let firstSatisfiesTag: GoPtr<Node> = undefined;
+    for (const jsDoc of Node_EagerJSDoc(current, sourceFile)) {
+      const tags = AsJSDoc(jsDoc)!.Tags;
+      if (tags !== undefined) {
+        for (const tag of tags!.Nodes) {
+          if (!IsJSDocSatisfiesTag(tag)) {
+            continue;
+          }
+          if (firstSatisfiesTag === undefined) {
+            firstSatisfiesTag = tag;
+          }
+          const typeExpr = AsJSDocSatisfiesTag(tag)!.TypeExpression;
+          if (typeExpr !== undefined) {
+            const t = Node_Type(typeExpr);
+            if (t !== undefined && t!.Loc.pos === targetType!.Loc.pos && t!.Loc.end === targetType!.Loc.end) {
+              return tag;
+            }
+          }
+        }
+      }
+    }
+    return firstSatisfiesTag;
+  }
+  return undefined;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetErrorRangeForNode","kind":"func","status":"implemented","sigHash":"2c7127c8ae87742dba321bd9edcb696827cf7e18cf6b86504269b47f981d0b8f","bodyHash":"fcafd548fdbaf5609f0e3b840e8df366db40b15113be48581aa4fbbe9cf15763"}
  *
  * Go source:
  * func GetErrorRangeForNode(sourceFile *ast.SourceFile, node *ast.Node) core.TextRange {
@@ -5918,11 +6213,14 @@ export function getErrorRangeForArrowFunction(sourceFile: GoPtr<SourceFile>, nod
  * 			break
  * 		}
  * 		fallthrough
- * 	case ast.KindVariableDeclaration, ast.KindBindingElement, ast.KindClassDeclaration, ast.KindClassExpression, ast.KindInterfaceDeclaration,
+ * 	case ast.KindVariableDeclaration, ast.KindBindingElement, ast.KindClassDeclaration, ast.KindInterfaceDeclaration,
  * 		ast.KindModuleDeclaration, ast.KindEnumDeclaration, ast.KindEnumMember, ast.KindFunctionExpression,
  * 		ast.KindGetAccessor, ast.KindSetAccessor, ast.KindTypeAliasDeclaration, ast.KindJSTypeAliasDeclaration, ast.KindPropertyDeclaration,
  * 		ast.KindPropertySignature, ast.KindNamespaceImport:
  * 		errorNode = ast.GetNameOfDeclaration(node)
+ * 	case ast.KindClassExpression:
+ * 		errorNode = node.Name()
+ *
  * 	case ast.KindArrowFunction:
  * 		return getErrorRangeForArrowFunction(sourceFile, node)
  * 	case ast.KindCaseClause, ast.KindDefaultClause:
@@ -5937,6 +6235,10 @@ export function getErrorRangeForArrowFunction(sourceFile: GoPtr<SourceFile>, nod
  * 		pos := SkipTrivia(sourceFile.Text(), node.Pos())
  * 		return GetRangeOfTokenAtPosition(sourceFile, pos)
  * 	case ast.KindSatisfiesExpression:
+ * 		if jsDocSatisfiesTag := findOriginatingJSDocSatisfiesTag(sourceFile, node); jsDocSatisfiesTag != nil {
+ * 			pos := SkipTrivia(sourceFile.Text(), jsDocSatisfiesTag.TagName().Pos())
+ * 			return GetRangeOfTokenAtPosition(sourceFile, pos)
+ * 		}
  * 		pos := SkipTrivia(sourceFile.Text(), node.AsSatisfiesExpression().Expression.End())
  * 		return GetRangeOfTokenAtPosition(sourceFile, pos)
  * 	case ast.KindConstructor:
@@ -5950,10 +6252,6 @@ export function getErrorRangeForArrowFunction(sourceFile: GoPtr<SourceFile>, nod
  * 			scanner.Scan()
  * 		}
  * 		return core.NewTextRange(start, scanner.TokenEnd())
- * 		// !!!
- * 		// case KindJSDocSatisfiesTag:
- * 		// 	pos := scanner.SkipTrivia(sourceFile.Text(), node.tagName.pos)
- * 		// 	return scanner.GetRangeOfTokenAtPosition(sourceFile, pos)
  * 	}
  * 	if errorNode == nil {
  * 		// If we don't have a better node, then just set the error on the first token of
@@ -5997,7 +6295,6 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
     kind === kinds.KindVariableDeclaration ||
     kind === kinds.KindBindingElement ||
     kind === kinds.KindClassDeclaration ||
-    kind === kinds.KindClassExpression ||
     kind === kinds.KindInterfaceDeclaration ||
     kind === kinds.KindModuleDeclaration ||
     kind === kinds.KindEnumDeclaration ||
@@ -6015,6 +6312,9 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
       errorNode = GetNameOfDeclaration(node);
       handled = true;
     }
+  } else if (!handled && kind === kinds.KindClassExpression) {
+    errorNode = Node_Name(node);
+    handled = true;
   } else if (!handled && kind === kinds.KindArrowFunction) {
     return getErrorRangeForArrowFunction(sourceFile, node);
   } else if (!handled && (kind === kinds.KindCaseClause || kind === kinds.KindDefaultClause)) {
@@ -6029,6 +6329,11 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
     const pos = SkipTrivia(SourceFile_Text(sourceFile), Node_Pos(node));
     return GetRangeOfTokenAtPosition(sourceFile, pos);
   } else if (!handled && kind === kinds.KindSatisfiesExpression) {
+    const jsDocSatisfiesTag = findOriginatingJSDocSatisfiesTag(sourceFile, node);
+    if (jsDocSatisfiesTag !== undefined) {
+      const pos = SkipTrivia(SourceFile_Text(sourceFile), Node_Pos(Node_TagName(jsDocSatisfiesTag)));
+      return GetRangeOfTokenAtPosition(sourceFile, pos);
+    }
     const pos = SkipTrivia(SourceFile_Text(sourceFile), Node_End(AsSatisfiesExpression(node)!.Expression));
     return GetRangeOfTokenAtPosition(sourceFile, pos);
   } else if (!handled && kind === kinds.KindConstructor) {
@@ -6045,10 +6350,6 @@ export function GetErrorRangeForNode(sourceFile: GoPtr<SourceFile>, node: GoPtr<
         Scanner_Scan(scanner);
       }
       return NewTextRange(start, Scanner_TokenEnd(scanner));
-      // !!!
-      // case KindJSDocSatisfiesTag:
-      // 	pos := scanner.SkipTrivia(sourceFile.Text(), node.tagName.pos)
-      // 	return scanner.GetRangeOfTokenAtPosition(sourceFile, pos)
     }
   }
 
@@ -6388,7 +6689,7 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec","bodyHash":"d35ea916207f1295b8ec7b311ca6c0bdd811dd4c13ec5294eb4b7b77dcc30963"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec","bodyHash":"f132c9ea9991faeac70e2d456bd494f5c398097f236bb1040bb7b1fbe7b6ab24"}
  *
  * Go source:
  * func iterateCommentRanges(f *ast.NodeFactory, text string, pos int, trailing bool) iter.Seq[ast.CommentRange] {
@@ -6455,16 +6756,13 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
  * 							pos += s
  * 						}
  * 					} else {
- * 						for pos < len(text) {
- * 							c, s := utf8.DecodeRuneInString(text[pos:])
- * 							if c == '*' && pos+1 < len(text) && text[pos+1] == '/' {
- * 								pos += 2
- * 								break
- * 							}
- * 							pos += s
+ * 						if i := strings.Index(text[pos:], "* /"); i >= 0 {
+ * 							pos += i + 2
+ * 						} else {
+ * 							pos = len(text)
  * 						}
  * 					}
- * 
+ *
  * 					if collecting {
  * 						if hasPendingCommentRange {
  * 							if !yield(f.NewCommentRange(pendingKind, pendingPos, pendingEnd, pendingHasTrailingNewLine)) {
@@ -6483,7 +6781,7 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
  * 				}
  * 				break scan
  * 			default:
- * 				if ch > unicode.MaxASCII && (stringutil.IsWhiteSpaceLike(ch)) {
+ * 				if ch > unicode.MaxASCII && stringutil.IsWhiteSpaceLike(ch) {
  * 					if hasPendingCommentRange && stringutil.IsLineBreak(ch) {
  * 						pendingHasTrailingNewLine = true
  * 					}
@@ -6569,13 +6867,11 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
                 pos += sz;
               }
             } else {
-              while (pos < byteLen(text)) {
-                const [c, sz] = decodeRuneInStringAt(text, pos);
-                if (c === "*".charCodeAt(0) && pos + 1 < byteLen(text) && byteAt(text, pos + 1) === "/".charCodeAt(0)) {
-                  pos += 2;
-                  break;
-                }
-                pos += sz;
+              const i = strings.Index(byteSlice(text, pos), "*/");
+              if (i >= 0) {
+                pos += i + 2;
+              } else {
+                pos = byteLen(text);
               }
             }
 
