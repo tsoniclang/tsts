@@ -5,7 +5,7 @@ import * as strings from "../../go/strings.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
 import type { SourceFile } from "../ast/ast.js";
-import { Node_Text, Node_Expression, Node_Elements, SourceFile_FileName, SourceFile_Diagnostics, SourceFile_SetDiagnostics, NodeFactory_NewSourceFile, AsSourceFile } from "../ast/ast.js";
+import { Node_Text, Node_Expression, Node_Elements, Node_QuestionToken, SourceFile_FileName, SourceFile_Diagnostics, SourceFile_SetDiagnostics, NodeFactory_NewSourceFile, AsSourceFile } from "../ast/ast.js";
 import { AsObjectLiteralExpression, AsPropertyAssignment, AsPrefixUnaryExpression, AsStringLiteral } from "../ast/generated/casts.js";
 import type { NodeFactory } from "../ast/generated/factory.js";
 import type { TokenNode } from "../ast/generated/unions.js";
@@ -16,6 +16,7 @@ import { IsArrayLiteralExpression, IsObjectLiteralExpression, IsPropertyAssignme
 import { IsComputedNonLiteralName, TryGetTextOfPropertyName } from "../ast/utilities.js";
 import type { Expression } from "../ast/generated/unions.js";
 import type { ObjectLiteralExpression, PropertyAssignment, StringLiteral } from "../ast/generated/data.js";
+import { PropertyAssignment_Name } from "../ast/generated/data.js";
 import { NewDiagnostic, NewCompilerDiagnostic } from "../ast/diagnostic.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
@@ -70,6 +71,7 @@ import {
   getCompilerOptionValueTypeString,
   createUnknownOptionError,
   extraKeyDiagnostics,
+  extraKeyDidYouMeanDiagnostics,
 } from "./errors.js";
 import {
   convertJsonOptionOfEnumType,
@@ -402,15 +404,15 @@ export interface FileExtensionInfo {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"135ba27068dc2b3d079395ded2b9b3986b49df6139fe7c2fcfc72fef9e15f0a4","bodyHash":"9db397aed2fad18b06357c86a334ef2ad5de99c9d6c69b1319845fed6a1c3903"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::type::ExtendedConfigCache","kind":"type","status":"implemented","sigHash":"135ba27068dc2b3d079395ded2b9b3986b49df6139fe7c2fcfc72fef9e15f0a4","bodyHash":"5fbf3b6eedba08333953f5076ed836101f629e45b24bad8dc8982c04c512255e"}
  *
  * Go source:
  * ExtendedConfigCache interface {
- * 	GetExtendedConfig(fileName string, path tspath.Path, resolutionStack []string, host ParseConfigHost) *ExtendedConfigCacheEntry
+ * 	GetExtendedConfig(fileName string, path tspath.Path, resolutionStack []tspath.Path, host ParseConfigHost) *ExtendedConfigCacheEntry
  * }
  */
 export interface ExtendedConfigCache {
-  GetExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry>;
+  GetExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: ParseConfigHost): GoPtr<ExtendedConfigCacheEntry>;
 }
 
 /**
@@ -468,7 +470,7 @@ export interface parsedTsconfig {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseOwnConfigOfJsonSourceFile","kind":"func","status":"implemented","sigHash":"ab9c853771e6f91dac31f6fc1ddce0cc22dc55cd1bf699f6f104d55c573d077f","bodyHash":"5794fbceaff4bed514398e27276df16d08ccea088bd9d667714d2229a74b0758"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseOwnConfigOfJsonSourceFile","kind":"func","status":"implemented","sigHash":"ab9c853771e6f91dac31f6fc1ddce0cc22dc55cd1bf699f6f104d55c573d077f","bodyHash":"396395cb31f83436c9af30add3f8d5a8708f1855188b359577ad85dd74aac39c"}
  *
  * Go source:
  * func parseOwnConfigOfJsonSourceFile(
@@ -508,15 +510,25 @@ export interface parsedTsconfig {
  * 			} else if keyText != "" && extraKeyDiagnostics(parentOption.Name) != nil {
  * 				unknownNameDiag := extraKeyDiagnostics(parentOption.Name)
  * 				if parentOption.ElementOptions != nil {
- * 					// !!! TODO: support suggestion
- * 					propertySetErrors = append(propertySetErrors, createUnknownOptionError(
- * 						keyText,
- * 						unknownNameDiag,
- * 						"", /*unknownOptionErrorText* /
- * 						propertyAssignment.Name(),
- * 						sourceFile,
- * 						nil, /*alternateMode* /
- * 					))
+ * 					possibleOption := parentOption.ElementOptions.Get(keyText)
+ * 					if possibleOption != nil && possibleOption.Name != keyText {
+ * 						propertySetErrors = append(propertySetErrors, CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(
+ * 							sourceFile,
+ * 							propertyAssignment.Name(),
+ * 							extraKeyDidYouMeanDiagnostics(parentOption.Name),
+ * 							keyText,
+ * 							possibleOption.Name,
+ * 						))
+ * 					} else {
+ * 						propertySetErrors = append(propertySetErrors, createUnknownOptionError(
+ * 							keyText,
+ * 							unknownNameDiag,
+ * 							"", /*unknownOptionErrorText* /
+ * 							propertyAssignment.Name(),
+ * 							sourceFile,
+ * 							nil, /*alternateMode* /
+ * 						))
+ * 					}
  * 				} else {
  * 					// errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Unknown_compiler_option_0_Did_you_mean_1, keyText, core.FindKey(parentOption.ElementOptions, keyText)))
  * 				}
@@ -598,14 +610,25 @@ export function parseOwnConfigOfJsonSourceFile(sourceFile: GoPtr<SourceFile>, ho
       } else if (keyText !== "" && extraKeyDiagnostics(parentOption!.Name) !== undefined) {
         const unknownNameDiag = extraKeyDiagnostics(parentOption!.Name);
         if (parentOption!.ElementOptions !== undefined) {
-          propertySetErrors.push(createUnknownOptionError(
-            keyText,
-            unknownNameDiag,
-            "" /*unknownOptionErrorText*/,
-            propertyAssignment as unknown as GoPtr<Node>,
-            sourceFile,
-            undefined /*alternateMode*/,
-          ));
+          const possibleOption = CommandLineOptionNameMap_Get(parentOption!.ElementOptions, keyText);
+          if (possibleOption !== undefined && possibleOption.Name !== keyText) {
+            propertySetErrors.push(CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(
+              sourceFile,
+              PropertyAssignment_Name(propertyAssignment),
+              extraKeyDidYouMeanDiagnostics(parentOption!.Name),
+              keyText,
+              possibleOption.Name,
+            ));
+          } else {
+            propertySetErrors.push(createUnknownOptionError(
+              keyText,
+              unknownNameDiag,
+              "" /*unknownOptionErrorText*/,
+              PropertyAssignment_Name(propertyAssignment),
+              sourceFile,
+              undefined /*alternateMode*/,
+            ));
+          }
         } else {
           // errors = append(errors, ast.NewCompilerDiagnostic(diagnostics.Unknown_compiler_option_0_Did_you_mean_1, keyText, core.FindKey(parentOption.ElementOptions, keyText)))
         }
@@ -1043,7 +1066,7 @@ export function normalizeNonListOptionValue(option: GoPtr<CommandLineOption>, ba
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertJsonOption","kind":"func","status":"implemented","sigHash":"016694a7f3347b9d2bf950c36a574be0c112f15d18ed130c311e04b383d52d3c","bodyHash":"804dee7f3ba5080ea45d1ca223e1e8ab5bc005793f5cc073098f21d5581bcd1f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertJsonOption","kind":"func","status":"implemented","sigHash":"016694a7f3347b9d2bf950c36a574be0c112f15d18ed130c311e04b383d52d3c","bodyHash":"b40f58d1c089228ea4ae5307406cbf555f47f06619f2dc4e83dd72faed89ccee"}
  *
  * Go source:
  * func convertJsonOption(
@@ -1076,9 +1099,12 @@ export function normalizeNonListOptionValue(option: GoPtr<CommandLineOption>, ba
  * 				return convertJsonOption(opt.Elements(), value, basePath, propertyAssignment, valueExpression, sourceFile)
  * 			}
  * 		case CommandLineOptionTypeEnum:
+ * 			if value == nil {
+ * 				return nil, nil
+ * 			}
  * 			return convertJsonOptionOfEnumType(opt, value.(string), valueExpression, sourceFile)
  * 		}
- * 
+ *
  * 		validatedValue, errors := validateJsonOptionValue(opt, value, valueExpression, sourceFile)
  * 		if len(errors) > 0 || validatedValue == nil {
  * 			return validatedValue, errors
@@ -1113,6 +1139,9 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown,
           return convertJsonOption(CommandLineOption_Elements(opt), value, basePath, propertyAssignment, valueExpression, sourceFile);
         }
       case CommandLineOptionTypeEnum:
+        if (value === undefined || value === null) {
+          return [undefined, []];
+        }
         return convertJsonOptionOfEnumType(opt, value as string, valueExpression, sourceFile);
     }
     const [validatedValue, errors] = validateJsonOptionValue(opt, value, valueExpression, sourceFile);
@@ -1127,7 +1156,7 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendsConfigPathOrArray","kind":"func","status":"implemented","sigHash":"2c664fce3bd6961044fab9b02fc0aad600aa4acee54f38be3422451956e6e140","bodyHash":"113ad2f6c38f337f555d464f2cea981cc9cbe343722e752e5a95c1e6f0e9dcff"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendsConfigPathOrArray","kind":"func","status":"implemented","sigHash":"2c664fce3bd6961044fab9b02fc0aad600aa4acee54f38be3422451956e6e140","bodyHash":"b5fa7a8274483f8ab35e2f6ab779e718788401a04a0d5e13e3bb365ce3b423f0"}
  *
  * Go source:
  * func getExtendsConfigPathOrArray(
@@ -1143,6 +1172,10 @@ export function convertJsonOption(opt: GoPtr<CommandLineOption>, value: unknown,
  * 	newBase := basePath
  * 	if configFileName != "" {
  * 		newBase = directoryOfCombinedPath(configFileName, basePath)
+ * 	}
+ * 	if value == nil {
+ * 		_, errors := convertJsonOption(extendsOptionDeclaration, value, basePath, propertyAssignment, valueExpression, sourceFile)
+ * 		return extendedConfigPathArray, errors
  * 	}
  * 	if reflect.TypeOf(value).Kind() == reflect.String {
  * 		val, err := getExtendsConfigPath(value.(string), host, newBase, valueExpression, sourceFile)
@@ -1180,6 +1213,10 @@ export function getExtendsConfigPathOrArray(value: CompilerOptionsValue, host: P
   let newBase = basePath;
   if (configFileName !== "") {
     newBase = directoryOfCombinedPath(configFileName, basePath);
+  }
+  if (value === undefined || value === null) {
+    const [, errors] = convertJsonOption(extendsOptionDeclaration, value, basePath, propertyAssignment, valueExpression, sourceFile);
+    return [extendedConfigPathArray, errors];
   }
   if (typeof value === "string") {
     const [val, err] = getExtendsConfigPath(value, host, newBase, valueExpression, sourceFile);
@@ -1375,7 +1412,7 @@ export function convertMapToOptions<O extends optionParser>(compilerOptions: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertOptionsFromJson","kind":"func","status":"implemented","sigHash":"4f41de962d1396420c47dc1c4dd23cd671c33c016d893f1c2df5ece23d645d12","bodyHash":"48d9ffddd407c47733efb0bab8f59310a553a33a04fe06b26ca67de46f5e57ea"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertOptionsFromJson","kind":"func","status":"implemented","sigHash":"4f41de962d1396420c47dc1c4dd23cd671c33c016d893f1c2df5ece23d645d12","bodyHash":"87036e39c8678d8142a5ed6a2ab2ef32d3ba7f20e943ac4f30eaacd1d5f49356"}
  *
  * Go source:
  * func convertOptionsFromJson[O optionParser](optionsNameMap CommandLineOptionNameMap, jsonOptions any, basePath string, result O) (O, []*ast.Diagnostic) {
@@ -1390,17 +1427,28 @@ export function convertMapToOptions<O extends optionParser>(compilerOptions: GoP
  * 	var errors []*ast.Diagnostic
  * 	for key, value := range jsonMap.Entries() {
  * 		opt := optionsNameMap.Get(key)
+ * 		if opt != nil && opt.Name != key {
+ * 			// Case-insensitive match found but exact case doesn't match - provide "did you mean" suggestion
+ * 			errors = append(errors, CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(nil, nil, result.UnknownDidYouMeanDiagnostic(), key, opt.Name))
+ * 			continue
+ * 		}
  * 		if opt == nil {
- * 			// !!! TODO?: support suggestion
  * 			errors = append(errors, createUnknownOptionError(key, result.UnknownOptionDiagnostic(), "", nil, nil, nil))
  * 			continue
  * 		}
- * 
+ *
  * 		commandLineOptionEnumMapVal := opt.EnumMap()
  * 		if commandLineOptionEnumMapVal != nil {
- * 			val, ok := commandLineOptionEnumMapVal.Get(strings.ToLower(value.(string)))
- * 			if ok {
- * 				errors = result.ParseOption(key, val)
+ * 			if value, ok := value.(string); ok {
+ * 				val, ok := commandLineOptionEnumMapVal.Get(strings.ToLower(value))
+ * 				if ok {
+ * 					errors = result.ParseOption(key, val)
+ * 				}
+ * 			} else {
+ * 				convertJson, err := convertJsonOption(opt, value, basePath, nil, nil, nil)
+ * 				errors = append(errors, err...)
+ * 				compilerOptionsErr := result.ParseOption(key, convertJson)
+ * 				errors = append(errors, compilerOptionsErr...)
  * 			}
  * 		} else {
  * 			convertJson, err := convertJsonOption(opt, value, basePath, nil, nil, nil)
@@ -1424,16 +1472,27 @@ export function convertOptionsFromJson<O extends optionParser>(optionsNameMap: C
   const errors: GoPtr<Diagnostic>[] = [];
   OrderedMap_Entries(jsonMap)((key: string, value: unknown): bool => {
     const opt = CommandLineOptionNameMap_Get(optionsNameMap, key);
+    if (opt !== undefined && opt.Name !== key) {
+      // Case-insensitive match found but exact case doesn't match - provide "did you mean" suggestion
+      errors.push(CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(undefined, undefined, result.UnknownDidYouMeanDiagnostic(), key, opt.Name));
+      return true;
+    }
     if (opt === undefined) {
-      // !!! TODO?: support suggestion
       errors.push(createUnknownOptionError(key, result.UnknownOptionDiagnostic(), "", undefined, undefined, undefined));
       return true;
     }
     const commandLineOptionEnumMapVal = CommandLineOption_EnumMap(opt);
     if (commandLineOptionEnumMapVal !== undefined) {
-      const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value as string));
-      if (ok) {
-        const compilerOptionsErr = result.ParseOption(key, val);
+      if (typeof value === "string") {
+        const [val, ok] = OrderedMap_Get(commandLineOptionEnumMapVal as GoPtr<OrderedMap<string, unknown>>, strings.ToLower(value));
+        if (ok) {
+          const compilerOptionsErr = result.ParseOption(key, val);
+          errors.push(...(compilerOptionsErr ?? []));
+        }
+      } else {
+        const [convertJson, err] = convertJsonOption(opt, value, basePath, undefined, undefined, undefined);
+        errors.push(...err);
+        const compilerOptionsErr = result.ParseOption(key, convertJson);
         errors.push(...(compilerOptionsErr ?? []));
       }
     } else {
@@ -1611,7 +1670,7 @@ export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigS
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertObjectLiteralExpressionToJson","kind":"func","status":"implemented","sigHash":"97a987a89f8574822bfd32242b78a9db4c6da618731935e2dce1dfcd1a82c0f9","bodyHash":"a30a3b075a8536aece033103d65519dfc805b546c1dc86af61af5124a1d822a5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::convertObjectLiteralExpressionToJson","kind":"func","status":"implemented","sigHash":"97a987a89f8574822bfd32242b78a9db4c6da618731935e2dce1dfcd1a82c0f9","bodyHash":"9ca30b439a6fcb9fcd7b46917a7c65fe070b64de94db6cd55ce1b96f6727abe0"}
  *
  * Go source:
  * func convertObjectLiteralExpressionToJson(
@@ -1631,15 +1690,10 @@ export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigS
  * 			errors = append(errors, ast.NewDiagnostic(sourceFile, element.Loc, diagnostics.Property_assignment_expected))
  * 			continue
  * 		}
- * 
- * 		// !!!
- * 		// if ast.IsQuestionToken(element) {
- * 		// 	errors = append(errors, ast.NewDiagnostic(sourceFile, element.Loc, diagnostics.Property_assignment_expected))
- * 		// }
- * 		if element.Name() != nil && !isDoubleQuotedString(element.Name()) {
- * 			errors = append(errors, ast.NewDiagnostic(sourceFile, element.Loc, diagnostics.String_literal_with_double_quotes_expected))
+ *
+ * 		if token := element.QuestionToken(); token != nil {
+ * 			errors = append(errors, ast.NewDiagnostic(sourceFile, token.Loc, diagnostics.The_0_modifier_can_only_be_used_in_TypeScript_files, "?"))
  * 		}
- * 
  * 		textOfKey := ""
  * 		if !ast.IsComputedNonLiteralName(element.Name()) {
  * 			textOfKey, _ = ast.TryGetTextOfPropertyName(element.Name())
@@ -1648,6 +1702,9 @@ export function ParseJsonSourceFileConfigFileContent(sourceFile: GoPtr<TsConfigS
  * 		var option *CommandLineOption = nil
  * 		if keyText != "" && objectOption != nil && objectOption.ElementOptions != nil {
  * 			option = objectOption.ElementOptions.Get(keyText)
+ * 			if option != nil && option.Name != keyText {
+ * 				option = nil
+ * 			}
  * 		}
  * 		value, err := convertPropertyValueToJson(sourceFile, element.AsPropertyAssignment().Initializer, option, returnValue, jsonConversionNotifier)
  * 		errors = append(errors, err...)
@@ -1676,14 +1733,12 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
       errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.Property_assignment_expected));
       continue;
     }
-    if (element!.Kind !== KindPropertyAssignment && !isDoubleQuotedString(element)) {
-      // !!! note: in Go, the question token check is commented out
+    const token = Node_QuestionToken(element);
+    if (token !== undefined) {
+      errors.push(NewDiagnostic(sourceFile, token!.Loc, diagnostics.The_0_modifier_can_only_be_used_in_TypeScript_files, "?"));
     }
     const propAssign = AsPropertyAssignment(element);
     const elementName = Node_Name(element);
-    if (elementName !== undefined && !isDoubleQuotedString(elementName)) {
-      errors.push(NewDiagnostic(sourceFile, element!.Loc, diagnostics.String_literal_with_double_quotes_expected));
-    }
     let textOfKey = "";
     if (elementName !== undefined && !IsComputedNonLiteralName(elementName)) {
       const [txt] = TryGetTextOfPropertyName(elementName);
@@ -1693,6 +1748,9 @@ export function convertObjectLiteralExpressionToJson(sourceFile: GoPtr<SourceFil
     let option: GoPtr<CommandLineOption> = undefined;
     if (keyText !== "" && objectOption !== undefined && objectOption!.ElementOptions !== undefined) {
       option = CommandLineOptionNameMap_Get(objectOption!.ElementOptions, keyText);
+      if (option !== undefined && option.Name !== keyText) {
+        option = undefined;
+      }
     }
     const [value, err] = convertPropertyValueToJson(sourceFile, propAssign!.Initializer, option, returnValue, jsonConversionNotifier);
     errors.push(...err);
@@ -2095,31 +2153,35 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendedConfig","kind":"func","status":"implemented","sigHash":"67d348bf78221c2c296a527a95b731c67cdc0fd6103dc0f59e7a5f0fd45d5c03","bodyHash":"7effc57cb73089e82d7d57b28abb40d2363ad0a7b3d7827e82ad3064d4afed06"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getExtendedConfig","kind":"func","status":"implemented","sigHash":"97935625ee5c8195784e7fda94b3e4dd47d9a465a012bde61aaf86782b28283d","bodyHash":"177b19e8754db18386644ae999c3903fe13b1636f09f5c2e8ce387c8510bb6a2"}
  *
  * Go source:
  * func getExtendedConfig(
  * 	sourceFile *TsConfigSourceFile,
  * 	extendedConfigFileName string,
  * 	host ParseConfigHost,
- * 	resolutionStack []string,
+ * 	resolutionStack []tspath.Path,
  * 	extendedConfigCache ExtendedConfigCache,
  * 	result *extendsResult,
  * ) (*parsedTsconfig, []*ast.Diagnostic) {
  * 	var errors []*ast.Diagnostic
  * 	extendedConfigPath := tspath.ToPath(extendedConfigFileName, host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames())
- * 
+ *
  * 	var cacheEntry *ExtendedConfigCacheEntry
- * 	if extendedConfigCache != nil {
+ * 	// Bypass the cache when we detect a cycle in the resolution stack.
+ * 	// The cache locks entries during parsing, and a cycle would cause the same goroutine
+ * 	// to re-lock the same entry, resulting in a deadlock. Let parseConfig handle the
+ * 	// circularity error via its own resolution stack check.
+ * 	if extendedConfigCache != nil && !slices.Contains(resolutionStack, extendedConfigPath) {
  * 		cacheEntry = extendedConfigCache.GetExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host)
  * 	} else {
  * 		cacheEntry = ParseExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host, extendedConfigCache)
  * 	}
- * 
+ *
  * 	if len(cacheEntry.errors) > 0 {
  * 		errors = append(errors, cacheEntry.errors...)
  * 	}
- * 
+ *
  * 	if cacheEntry.extendedResult != nil {
  * 		if sourceFile != nil {
  * 			result.extendedSourceFiles.Add(cacheEntry.extendedResult.SourceFile.FileName())
@@ -2131,12 +2193,15 @@ export function readJsonConfigFile(fileName: string, path: Path, readFile: (file
  * 	return cacheEntry.extendedConfig, errors
  * }
  */
-export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: ParseConfigHost, resolutionStack: GoSlice<string>, extendedConfigCache: GoPtr<ExtendedConfigCache>, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extendedConfigFileName: string, host: ParseConfigHost, resolutionStack: GoSlice<Path>, extendedConfigCache: GoPtr<ExtendedConfigCache>, result: GoPtr<extendsResult>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   const errors: GoPtr<Diagnostic>[] = [];
   const extendedConfigPath = ToPath(extendedConfigFileName, host.GetCurrentDirectory(), host.FS().UseCaseSensitiveFileNames());
 
   let cacheEntry: GoPtr<ExtendedConfigCacheEntry>;
   // Bypass the cache when we detect a cycle in the resolution stack.
+  // The cache locks entries during parsing, and a cycle would cause the same goroutine
+  // to re-lock the same entry, resulting in a deadlock. Let parseConfig handle the
+  // circularity error via its own resolution stack check.
   if (extendedConfigCache !== undefined && !Contains(resolutionStack, extendedConfigPath)) {
     cacheEntry = extendedConfigCache.GetExtendedConfig(extendedConfigFileName, extendedConfigPath, resolutionStack, host);
   } else {
@@ -2159,50 +2224,64 @@ export function getExtendedConfig(sourceFile: GoPtr<TsConfigSourceFile>, extende
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseExtendedConfig","kind":"func","status":"implemented","sigHash":"f805956c4be95a81dc4a058a5331b21d515f537ecf5a336be0acaa901fa26c3b","bodyHash":"1d4674731fe094f5ac640ebfad7cbd230de9fc748dcc537dfd6db3d1c06c9880"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::ParseExtendedConfig","kind":"func","status":"implemented","sigHash":"7d5ef8759588edfc02e87e53044892276036a348da5423565bc91aaab1ae2a0b","bodyHash":"9ec615c18215d2cf9a07f2f77d6aa398634f500c92f99222aca254d06b7aab23"}
  *
  * Go source:
  * func ParseExtendedConfig(
  * 	fileName string,
  * 	path tspath.Path,
- * 	resolutionStack []string,
+ * 	resolutionStack []tspath.Path,
  * 	host ParseConfigHost,
  * 	extendedConfigCache ExtendedConfigCache,
  * ) *ExtendedConfigCacheEntry {
- * 	var extendedConfig *parsedTsconfig
- * 	var entryErrors []*ast.Diagnostic
- * 	extendedResult, err := readJsonConfigFile(fileName, path, host.FS().ReadFile)
- * 	entryErrors = append(entryErrors, err...)
- * 	if len(extendedResult.SourceFile.Diagnostics()) == 0 {
- * 		extendedConfig, err = parseConfig(nil, extendedResult, host, tspath.GetDirectoryPath(fileName), tspath.GetBaseFileName(fileName), resolutionStack, extendedConfigCache)
- * 		entryErrors = append(entryErrors, err...)
- * 	}
- * 	return &ExtendedConfigCacheEntry{
+ * 	extendedResult, readErrors := readJsonConfigFile(fileName, path, host.FS().ReadFile)
+ * 	entry := &ExtendedConfigCacheEntry{
  * 		extendedResult: extendedResult,
- * 		extendedConfig: extendedConfig,
- * 		errors:         entryErrors,
  * 	}
+ *
+ * 	if len(readErrors) > 0 {
+ * 		entry.errors = readErrors
+ * 		return entry
+ * 	}
+ *
+ * 	if parseDiagnostics := extendedResult.SourceFile.Diagnostics(); len(parseDiagnostics) > 0 {
+ * 		entry.errors = parseDiagnostics
+ * 		return entry
+ * 	}
+ *
+ * 	var parseErrors []*ast.Diagnostic
+ * 	entry.extendedConfig, parseErrors = parseConfig(nil, extendedResult, host, tspath.GetDirectoryPath(fileName), tspath.GetBaseFileName(fileName), resolutionStack, extendedConfigCache)
+ * 	entry.errors = parseErrors
+ * 	return entry
  * }
  */
-export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<string>, host: ParseConfigHost, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ExtendedConfigCacheEntry> {
-  let extendedConfig: GoPtr<parsedTsconfig> = undefined;
-  const entryErrors: GoPtr<Diagnostic>[] = [];
-  const [extendedResult, err] = readJsonConfigFile(fileName, path, host.FS().ReadFile.bind(host.FS()));
-  entryErrors.push(...err);
-  if ((SourceFile_Diagnostics(extendedResult!.SourceFile) ?? []).length === 0) {
-    const [cfg, err2] = parseConfig(undefined, extendedResult, host, GetDirectoryPath(fileName), GetBaseFileName(fileName), resolutionStack, extendedConfigCache);
-    extendedConfig = cfg;
-    entryErrors.push(...err2);
-  }
-  return {
+export function ParseExtendedConfig(fileName: string, path: Path, resolutionStack: GoSlice<Path>, host: ParseConfigHost, extendedConfigCache: GoPtr<ExtendedConfigCache>): GoPtr<ExtendedConfigCacheEntry> {
+  const [extendedResult, readErrors] = readJsonConfigFile(fileName, path, host.FS().ReadFile.bind(host.FS()));
+  const entry: ExtendedConfigCacheEntry = {
     extendedResult: extendedResult,
-    extendedConfig: extendedConfig,
-    errors: entryErrors,
+    extendedConfig: undefined,
+    errors: [],
   };
+
+  if ((readErrors ?? []).length > 0) {
+    entry.errors = readErrors;
+    return entry;
+  }
+
+  const parseDiagnostics = SourceFile_Diagnostics(extendedResult!.SourceFile);
+  if ((parseDiagnostics ?? []).length > 0) {
+    entry.errors = parseDiagnostics;
+    return entry;
+  }
+
+  const [cfg, parseErrors] = parseConfig(undefined, extendedResult, host, GetDirectoryPath(fileName), GetBaseFileName(fileName), resolutionStack, extendedConfigCache);
+  entry.extendedConfig = cfg;
+  entry.errors = parseErrors;
+  return entry;
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"1f0df9920291781cd9f789a0168d0fb5ec97b9148e609769fcdc386bcddf6bcd","bodyHash":"1d1f02a23f2e5db4d94e101a3f9d294db0fa55946e7db9f4526e719209d14e6f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseConfig","kind":"func","status":"implemented","sigHash":"45dfb38c07a9a7d025ff07e892e4089507cb96f59134e822a7cd4969350e0111","bodyHash":"4cf0d88cea179fa53b684d8ed237cbc493859c4b2db0af51fed423bdb5d3dc08"}
  *
  * Go source:
  * func parseConfig(
@@ -2211,11 +2290,11 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 	host ParseConfigHost,
  * 	basePath string,
  * 	configFileName string,
- * 	resolutionStack []string,
+ * 	resolutionStack []tspath.Path,
  * 	extendedConfigCache ExtendedConfigCache,
  * ) (*parsedTsconfig, []*ast.Diagnostic) {
  * 	basePath = tspath.NormalizeSlashes(basePath)
- * 	resolvedPath := tspath.GetNormalizedAbsolutePath(configFileName, basePath)
+ * 	resolvedPath := tspath.ToPath(configFileName, basePath, host.FS().UseCaseSensitiveFileNames())
  * 	var errors []*ast.Diagnostic
  * 	if slices.Contains(resolutionStack, resolvedPath) {
  * 		var result *parsedTsconfig
@@ -2335,9 +2414,9 @@ export function ParseExtendedConfig(fileName: string, path: Path, resolutionStac
  * 	return ownConfig, errors
  * }
  */
-export function parseConfig(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, configFileName: string, resolutionStack: GoSlice<string>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
+export function parseConfig(json: GoPtr<OrderedMap>, sourceFile: GoPtr<TsConfigSourceFile>, host: ParseConfigHost, basePath: string, configFileName: string, resolutionStack: GoSlice<Path>, extendedConfigCache: GoPtr<ExtendedConfigCache>): [GoPtr<parsedTsconfig>, GoSlice<GoPtr<Diagnostic>>] {
   basePath = NormalizeSlashes(basePath);
-  const resolvedPath = GetNormalizedAbsolutePath(configFileName, basePath);
+  const resolvedPath = ToPath(configFileName, basePath, host.FS().UseCaseSensitiveFileNames());
   const errors: GoPtr<Diagnostic>[] = [];
 
   if (Contains(resolutionStack, resolvedPath)) {
@@ -2491,7 +2570,7 @@ export interface propOfRaw {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e","bodyHash":"c89841d765d26353357aeaa7bf1e2b595ddedf1f9308ea58c5b9fa5adb08cc88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::parseJsonConfigFileContentWorker","kind":"func","status":"implemented","sigHash":"1a2442f8f361ee448256966f5838e8ae357182fb10a4e1e4ef3de627b71aa08e","bodyHash":"4349650316d909310878709025d63a77949d6fb8eef1a22158759ce135495972"}
  *
  * Go source:
  * func parseJsonConfigFileContentWorker(
@@ -2516,8 +2595,7 @@ export interface propOfRaw {
  * 	}
  * 
  * 	var errors []*ast.Diagnostic
- * 	resolutionStackString := []string{}
- * 	parsedConfig, errors := parseConfig(json, sourceFile, host, basePath, configFileName, resolutionStackString, extendedConfigCache)
+ * 	parsedConfig, errors := parseConfig(json, sourceFile, host, basePath, configFileName, resolutionStack, extendedConfigCache)
  * 	mergeCompilerOptions(parsedConfig.options, existingOptions, existingOptionsRaw)
  * 	handleOptionConfigDirTemplateSubstitution(parsedConfig.options, basePathForFileNames)
  * 	rawConfig := parseJsonToStringKey(parsedConfig.raw)
@@ -2901,13 +2979,17 @@ export function shouldReportNoInputFiles(fileNames: GoSlice<string>, canJsonRepo
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::validateSpecs","kind":"func","status":"implemented","sigHash":"713d8e4ed9c9f5a76238a468d5bd8bf2e191247effe8e08e3677af4d765352f6","bodyHash":"b364a091932e3ca2a86e3eb9ac90833169fa51588aabccdfde14f4ef70191e8f"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::validateSpecs","kind":"func","status":"implemented","sigHash":"713d8e4ed9c9f5a76238a468d5bd8bf2e191247effe8e08e3677af4d765352f6","bodyHash":"d206c84699b0e346ea8a183285d322d628d5b632a020322709312a4b30696b88"}
  *
  * Go source:
  * func validateSpecs(specs any, disallowTrailingRecursion bool, jsonSourceFile *ast.SourceFile, specKey string) ([]string, []*ast.Diagnostic) {
  * 	createDiagnostic := func(message *diagnostics.Message, spec string) *ast.Diagnostic {
  * 		element := GetTsConfigPropArrayElementValue(jsonSourceFile, specKey, spec)
- * 		return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(jsonSourceFile, element.AsNode(), message, spec)
+ * 		var node *ast.Node
+ * 		if element != nil {
+ * 			node = element.AsNode()
+ * 		}
+ * 		return CreateDiagnosticForNodeInSourceFileOrCompilerDiagnostic(jsonSourceFile, node, message, spec)
  * 	}
  * 	var errors []*ast.Diagnostic
  * 	var finalSpecs []string
@@ -2951,26 +3033,24 @@ export function validateSpecs(specs: unknown, disallowTrailingRecursion: bool, j
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::specToDiagnostic","kind":"func","status":"implemented","sigHash":"7cd4ce0b5abd2a2a15ff9f2630185376c03fc54d445ba2aee7a336787d35c3c9","bodyHash":"6412e1861d8c01eb44e91f2d04b2ab2f1f6739955f3992b8e53fa1e3e64940c3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::specToDiagnostic","kind":"func","status":"implemented","sigHash":"7cd4ce0b5abd2a2a15ff9f2630185376c03fc54d445ba2aee7a336787d35c3c9","bodyHash":"a3208ccbac12459efd35316c6cad10591a9ddb22b2d2e3e321b7aa23e612d0cd"}
  *
  * Go source:
  * func specToDiagnostic(spec string, disallowTrailingRecursion bool) *diagnostics.Message {
- * 	if disallowTrailingRecursion {
- * 		if invalidTrailingRecursion(spec) {
- * 			return diagnostics.File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0
- * 		}
- * 	} else if invalidDotDotAfterRecursiveWildcard(spec) {
+ * 	if disallowTrailingRecursion && invalidTrailingRecursion(spec) {
+ * 		return diagnostics.File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0
+ * 	}
+ * 	if invalidDotDotAfterRecursiveWildcard(spec) {
  * 		return diagnostics.File_specification_cannot_contain_a_parent_directory_that_appears_after_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0
  * 	}
  * 	return nil
  * }
  */
 export function specToDiagnostic(spec: string, disallowTrailingRecursion: bool): GoPtr<Message> {
-  if (disallowTrailingRecursion) {
-    if (invalidTrailingRecursion(spec)) {
-      return diagnostics.File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0;
-    }
-  } else if (invalidDotDotAfterRecursiveWildcard(spec)) {
+  if (disallowTrailingRecursion && invalidTrailingRecursion(spec)) {
+    return diagnostics.File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0;
+  }
+  if (invalidDotDotAfterRecursiveWildcard(spec)) {
     return diagnostics.File_specification_cannot_contain_a_parent_directory_that_appears_after_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0;
   }
   return undefined;
@@ -3196,13 +3276,15 @@ export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralE
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getTsConfigObjectLiteralExpression","kind":"func","status":"implemented","sigHash":"e119d31336255985993ef341b2d1829b3f6030f42c2a20efa2d877172127cb54","bodyHash":"1513af28e794704d609ee1dfba2b1bd60bff82aec547a7fd813ada57c00edef0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tsoptions/tsconfigparsing.go::func::getTsConfigObjectLiteralExpression","kind":"func","status":"implemented","sigHash":"e119d31336255985993ef341b2d1829b3f6030f42c2a20efa2d877172127cb54","bodyHash":"4060a9958fa137f54b8da7c5025c0c481f6b1d4cb7001c015dcd526ab32502ac"}
  *
  * Go source:
  * func getTsConfigObjectLiteralExpression(tsConfigSourceFile *ast.SourceFile) *ast.ObjectLiteralExpression {
  * 	if tsConfigSourceFile != nil && tsConfigSourceFile.Statements != nil && len(tsConfigSourceFile.Statements.Nodes) > 0 {
  * 		expression := tsConfigSourceFile.Statements.Nodes[0].Expression()
- * 		return expression.AsObjectLiteralExpression()
+ * 		if ast.IsObjectLiteralExpression(expression) {
+ * 			return expression.AsObjectLiteralExpression()
+ * 		}
  * 	}
  * 	return nil
  * }
@@ -3210,7 +3292,9 @@ export function ForEachPropertyAssignment<T>(objectLiteral: GoPtr<ObjectLiteralE
 export function getTsConfigObjectLiteralExpression(tsConfigSourceFile: GoPtr<SourceFile>): GoPtr<ObjectLiteralExpression> {
   if (tsConfigSourceFile !== undefined && tsConfigSourceFile!.Statements !== undefined && tsConfigSourceFile!.Statements.Nodes.length > 0) {
     const expression = Node_Expression(tsConfigSourceFile!.Statements.Nodes[0]);
-    return AsObjectLiteralExpression(expression);
+    if (IsObjectLiteralExpression(expression)) {
+      return AsObjectLiteralExpression(expression);
+    }
   }
   return undefined;
 }
