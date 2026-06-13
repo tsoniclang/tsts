@@ -52,7 +52,7 @@ import type { SourceFileLinks, TypeAliasLinks, InterfaceType, ValueSymbolLinks, 
 import { Type_AsInterfaceType, InterfaceType_TypeParameters, SignatureFlagsNone } from "./types.js";
 import type { Relation } from "./relater.js";
 import { Checker_checkTypeRelatedToEx, Checker_isTypeAssignableTo, Checker_checkTypeRelatedTo, Checker_reportDiagnostic, Checker_elaborateError, Checker_getBestMatchIndexedAccessTypeOrUndefined, Checker_checkExpressionForMutableLocationWithContextualType, Checker_elaborateElement, Checker_isDiscriminantProperty, Checker_discriminateTypeByDiscriminableItems, isHyphenatedJsxName, Checker_checkTypeAssignableToAndOptionallyElaborate, Checker_checkTypeRelatedToAndOptionallyElaborate, Checker_getTypeAtPosition, Checker_hasEffectiveRestParameter, Checker_getParameterCount, Checker_getMinArgumentCount } from "./relater.js";
-import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone, ObjectFlagsJsxAttributes, ObjectFlagsFreshLiteral, ObjectFlagsObjectLiteral, ObjectFlagsContainsObjectOrArrayLiteral, ObjectFlagsPropagatingFlags, TypeFlagsNone } from "./types.js";
+import { ContextFlagsNone, ContextFlagsIgnoreNodeInferences, SignatureKindCall, SignatureKindConstruct, TypeFlagsString, TypeFlagsStringLiteral, TypeFlagsUnion, Type_Types, TypeFlagsNever, TypeFlagsIndexedAccess, AccessFlagsNone, ObjectFlagsJsxAttributes, ObjectFlagsFreshLiteral, ObjectFlagsObjectLiteral, ObjectFlagsContainsObjectOrArrayLiteral, ObjectFlagsPropagatingFlags, ObjectFlagsClassOrInterface, TypeFlagsNone } from "./types.js";
 import type { ContextFlags, ObjectFlags, Signature, Type } from "./types.js";
 
 /**
@@ -2205,7 +2205,7 @@ export function Checker_getJsxManagedAttributesFromLocatedAttributes(receiver: G
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.instantiateAliasOrInterfaceWithDefaults","kind":"method","status":"implemented","sigHash":"2c5fb9ea101c19494e0b3f14fb32b8b0a3c40082f874baa2a32245863d47095b","bodyHash":"8a9a97e23d16a68bd1d09d4ed2704c418ea1bac3cd4e5c0a46afec447bce67a2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/jsx.go::method::Checker.instantiateAliasOrInterfaceWithDefaults","kind":"method","status":"implemented","sigHash":"2c5fb9ea101c19494e0b3f14fb32b8b0a3c40082f874baa2a32245863d47095b","bodyHash":"527e9a6cdc423ee173ce39cec603dd058c829b44eeed4ce86ba637fda05fbbc3"}
  *
  * Go source:
  * func (c *Checker) instantiateAliasOrInterfaceWithDefaults(managedSym *ast.Symbol, typeArguments []*Type, inJavaScript bool) *Type {
@@ -2221,7 +2221,7 @@ export function Checker_getJsxManagedAttributesFromLocatedAttributes(receiver: G
  * 			return c.getTypeAliasInstantiation(managedSym, args, nil)
  * 		}
  * 	}
- * 	if len(declaredManagedType.AsInterfaceType().TypeParameters()) >= len(typeArguments) {
+ * 	if declaredManagedType.objectFlags&ObjectFlagsClassOrInterface != 0 && len(declaredManagedType.AsInterfaceType().TypeParameters()) >= len(typeArguments) {
  * 		args := c.fillMissingTypeArguments(typeArguments, declaredManagedType.AsInterfaceType().TypeParameters(), len(typeArguments), inJavaScript)
  * 		return c.createTypeReference(declaredManagedType, args)
  * 	}
@@ -2242,7 +2242,7 @@ export function Checker_instantiateAliasOrInterfaceWithDefaults(receiver: GoPtr<
       return Checker_getTypeAliasInstantiation(receiver, managedSym, args, undefined);
     }
   }
-  if (InterfaceType_TypeParameters(Type_AsInterfaceType(declaredManagedType)).length >= typeArguments.length) {
+  if ((declaredManagedType!.objectFlags & ObjectFlagsClassOrInterface) !== 0 && InterfaceType_TypeParameters(Type_AsInterfaceType(declaredManagedType)).length >= typeArguments.length) {
     const args = Checker_fillMissingTypeArguments(receiver, typeArguments, InterfaceType_TypeParameters(Type_AsInterfaceType(declaredManagedType)), typeArguments.length, inJavaScript);
     return Checker_createTypeReference(receiver, declaredManagedType, args);
   }
