@@ -5,7 +5,7 @@ import type { SourceFile } from "../ast/ast.js";
 import type { TypeNode } from "../ast/generated/unions.js";
 import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
-import { KindAnyKeyword, KindAssertKeyword, KindComputedPropertyName, KindIdentifier, KindJSDocParameterTag, KindJSDocPropertyTag, KindKeyOfKeyword, KindNullKeyword, KindQuestionToken, KindSymbolKeyword, KindUndefinedKeyword, KindUniqueKeyword } from "../ast/generated/kinds.js";
+import { KindAnyKeyword, KindAssertKeyword, KindComputedPropertyName, KindJSDocParameterTag, KindJSDocPropertyTag, KindKeyOfKeyword, KindNullKeyword, KindQuestionToken, KindSymbolKeyword, KindUndefinedKeyword, KindUniqueKeyword } from "../ast/generated/kinds.js";
 import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 import { NewArrayTypeNode, NewCallSignatureDeclaration, NewComputedPropertyName, NewConditionalTypeNode, NewConstructSignatureDeclaration, NewConstructorTypeNode, NewFunctionTypeNode, NewIdentifier, NewImportTypeNode, NewIndexedAccessTypeNode, NewJSDocSignature, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewPropertySignatureDeclaration, NewStringLiteral, NewToken, NewTypeLiteralNode, NewTypeOperatorNode, NewTypePredicateNode, NewTypeQueryNode, NewTypeReferenceNode, NewUnionTypeNode } from "../ast/generated/factory.js";
 import { AsCallSignatureDeclaration, AsComputedPropertyName, AsConditionalTypeNode, AsConstructSignatureDeclaration, AsConstructorTypeNode, AsFunctionTypeNode, AsIdentifier, AsImportAttributes, AsImportTypeNode, AsIndexSignatureDeclaration, AsIndexedAccessTypeNode, AsJSDocNonNullableType, AsJSDocNullableType, AsJSDocOptionalType, AsJSDocParameterOrPropertyTag, AsJSDocSignature, AsJSDocTypeExpression, AsJSDocTypeLiteral, AsJSDocVariadicType, AsLiteralTypeNode, AsMappedTypeNode, AsMethodSignatureDeclaration, AsParameterDeclaration, AsQualifiedName, AsStringLiteral, AsTypeOperatorNode, AsTypeParameterDeclaration, AsTypePredicateNode, AsTypeQueryNode, AsTypeReferenceNode } from "../ast/generated/casts.js";
@@ -57,6 +57,7 @@ import { FlagsMultilineObjectLiterals, FlagsUseSingleQuotesForStringLiteralType,
 import { EFNoAsciiEscaping, EFSingleLine } from "../printer/emitflags.js";
 import { EmitContext_AddEmitFlags, EmitContext_MostOriginal, EmitContext_SetOriginal } from "../printer/emitcontext.js";
 import {
+  classifyPropertyName,
   NodeBuilderImpl_checkTypeExpandability,
   NodeBuilderImpl_getTypeFromTypeNode,
   NodeBuilderImpl_newIdentifier,
@@ -64,9 +65,11 @@ import {
   NodeBuilderImpl_setTextRange,
   NodeBuilderImpl_typeParameterToName,
   NodeBuilderImpl_typeToTypeNode,
+  propertyNameNodeKindIdentifier,
+  propertyNameNodeKindStringLiteral,
 } from "./nodebuilderimpl.js";
 import { SymbolFlagsFunctionScopedVariable, SymbolFlagsType, SymbolFlagsTypeParameter, SymbolFlagsValue } from "../ast/generated/flags.js";
-import { FindAncestor, GetFirstIdentifier, GetSourceFileOfNode, HasDynamicName, IsConstTypeReference, IsDeclarationName, IsEntityNameExpression, IsExportsIdentifier, IsFunctionLike, IsInJSFile, IsLiteralImportTypeNode, IsModuleExportsAccessExpression, IsModuleIdentifier, IsPartOfParameterDeclaration, IsStringLiteralLike, IsThisIdentifier, IsTypeNode, NodeIsSynthesized, SkipParentheses } from "../ast/utilities.js";
+import { FindAncestor, GetFirstIdentifier, GetSourceFileOfNode, HasDynamicName, IsConstTypeReference, IsDeclarationName, IsEntityNameExpression, IsExportsIdentifier, IsFunctionLike, IsInJSFile, IsLiteralImportTypeNode, IsModuleExportsAccessExpression, IsModuleIdentifier, IsPartOfParameterDeclaration, IsStringLiteralLike, IsThisIdentifier, IsTypeNode, NodeIsSynthesized, SkipParentheses, TryGetTextOfPropertyName } from "../ast/utilities.js";
 import { Node_Initializer, Node_PostfixToken, Node_Text, Node_Symbol, Node_Type, NodeFactory_UpdateConstructorTypeNode, NodeFactory_UpdateIndexSignatureDeclaration, NodeFactory_UpdateMethodSignatureDeclaration, NodeFactory_UpdateParameterDeclaration, NodeFactory_UpdatePropertyDeclaration, NodeFactory_UpdatePropertySignatureDeclaration, NodeFactory_UpdateTypeParameterDeclaration } from "../ast/ast.js";
 import { ResolutionModeNone } from "../core/compileroptions.js";
 import { SymbolAccessibilityAccessible } from "../printer/emitresolver.js";
@@ -120,27 +123,70 @@ export function NodeBuilderImpl_tryJSTypeNodeToTypeNode(receiver: GoPtr<NodeBuil
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.reuseName","kind":"method","status":"implemented","sigHash":"d1f1f35a6a9b688f73d168f8bbbce3a00f1b0553938632154e6eb76abfcc7d1c","bodyHash":"f66c9a894888b5a3c6edc34fbe27f40bd10c3fee824ef9bcde8fe1e89ece50fe"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodecopy.go::method::NodeBuilderImpl.reuseName","kind":"method","status":"implemented","sigHash":"5df99735ef14d158dfea3be1c7b4f2f0919d2c484d5cb4a9e518d1ea020d1cc4","bodyHash":"8a732b81e3c69d1ce54c94ed84befa993c5dd959f2009c9fd0b298896296f181"}
  *
  * Go source:
- * func (b *NodeBuilderImpl) reuseName(node *ast.Node) *ast.Node {
+ * func (b *NodeBuilderImpl) reuseName(node *ast.Node, isMethod bool) *ast.Node {
  * 	res := b.reuseNode(node)
- * 	if res != nil && res.Kind == ast.KindIdentifier && node.AsIdentifier().Text == "new" {
- * 		str := b.f.NewStringLiteral("new", ast.TokenFlagsNone)
- * 		b.e.SetOriginal(str, res)
- * 		return b.setTextRange(str, res)
+ * 	if res == nil {
+ * 		return res
  * 	}
- * 	return res
+ *
+ * 	text, ok := ast.TryGetTextOfPropertyName(res)
+ * 	if !ok {
+ * 		return res
+ * 	}
+ *
+ * 	kind := classifyPropertyName(text, ast.IsStringLiteral(res), isMethod)
+ * 	if ast.IsIdentifier(res) && kind == propertyNameNodeKindIdentifier {
+ * 		return res
+ * 	}
+ * 	if ast.IsStringLiteral(res) && kind == propertyNameNodeKindStringLiteral {
+ * 		return res
+ * 	}
+ *
+ * 	var renamed *ast.Node
+ * 	switch kind {
+ * 	case propertyNameNodeKindIdentifier:
+ * 		renamed = b.newIdentifier(text, nil)
+ * 	case propertyNameNodeKindStringLiteral:
+ * 		renamed = b.f.NewStringLiteral(text, ast.TokenFlagsNone)
+ * 	default:
+ * 		return res
+ * 	}
+ * 	b.e.SetOriginal(renamed, res)
+ * 	return b.setTextRange(renamed, res)
  * }
  */
-export function NodeBuilderImpl_reuseName(receiver: GoPtr<NodeBuilderImpl>, node: GoPtr<Node>): GoPtr<Node> {
+export function NodeBuilderImpl_reuseName(receiver: GoPtr<NodeBuilderImpl>, node: GoPtr<Node>, isMethod: bool): GoPtr<Node> {
   const res = NodeBuilderImpl_reuseNode(receiver, node);
-  if (res !== undefined && res.Kind === KindIdentifier && AsIdentifier(node)!.Text === "new") {
-    const str = NewStringLiteral(receiver!.f, "new", TokenFlagsNone);
-    EmitContext_SetOriginal(receiver!.e, str, res);
-    return NodeBuilderImpl_setTextRange(receiver, str, res);
+  if (res === undefined) {
+    return res;
   }
-  return res;
+  const [text, ok] = TryGetTextOfPropertyName(res);
+  if (!ok) {
+    return res;
+  }
+  const kind = classifyPropertyName(text, IsStringLiteral(res), isMethod);
+  if (IsIdentifier(res) && kind === propertyNameNodeKindIdentifier) {
+    return res;
+  }
+  if (IsStringLiteral(res) && kind === propertyNameNodeKindStringLiteral) {
+    return res;
+  }
+  let renamed: GoPtr<Node>;
+  switch (kind) {
+    case propertyNameNodeKindIdentifier:
+      renamed = NodeBuilderImpl_newIdentifier(receiver, text, undefined);
+      break;
+    case propertyNameNodeKindStringLiteral:
+      renamed = NewStringLiteral(receiver!.f, text, TokenFlagsNone);
+      break;
+    default:
+      return res;
+  }
+  EmitContext_SetOriginal(receiver!.e, renamed, res);
+  return NodeBuilderImpl_setTextRange(receiver, renamed, res);
 }
 
 /**

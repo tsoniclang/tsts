@@ -1,5 +1,5 @@
 import type { GoPtr, GoSlice } from "../../go/compat.js";
-import * as maps from "../../go/maps.js";
+import { CopyOnWriteMap_EnterScope, CopyOnWriteSet_EnterScope } from "../collections/cow.js";
 import type { Node } from "../ast/spine.js";
 import { NodeFactory_NewNodeList, Node_LocalsContainerData, Node_Name } from "../ast/spine.js";
 import type { Symbol, SymbolTable } from "../ast/symbol.js";
@@ -19,7 +19,7 @@ import { Checker_getSymbolOfDeclaration } from "./checker/symbols.js";
 import type { Signature, Type } from "./types.js";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::func::cloneNodeBuilderContext","kind":"func","status":"implemented","sigHash":"cef5cfcbd3fe93c77a553213fca509928f8bb4ea24a9c34c720f8900e0675e8b","bodyHash":"55420526cbb5a67935b47f9032eb6f2660d540a0574d6f89aec3764fb4590a07"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilderscopes.go::func::cloneNodeBuilderContext","kind":"func","status":"implemented","sigHash":"cef5cfcbd3fe93c77a553213fca509928f8bb4ea24a9c34c720f8900e0675e8b","bodyHash":"9c908b5249db817bb567a98ee8eedc1a1695e9b9951eccdef7ac08289701fe98"}
  *
  * Go source:
  * func cloneNodeBuilderContext(context *NodeBuilderContext) func() {
@@ -35,25 +35,15 @@ import type { Signature, Type } from "./types.js";
  * 	// we write it out like that, rather than as
  * 	// export const x: <T>(x: T) => T
  * 	// export const y: <T_1>(x: T_1) => T_1
- * 	oldMustCreateTypeParameterSymbolList := context.hasCreatedTypeParameterSymbolList
- * 	oldMustCreateTypeParametersNamesLookups := context.hasCreatedTypeParametersNamesLookups
- * 	oldTypeParameterNames := context.typeParameterNames
- * 	oldTypeParameterNamesByText := context.typeParameterNamesByText
- * 	oldTypeParameterNamesByTextNextNameCount := context.typeParameterNamesByTextNextNameCount
- * 	oldTypeParameterSymbolList := context.typeParameterSymbolList
- * 	context.hasCreatedTypeParameterSymbolList = oldTypeParameterSymbolList != nil
- * 	context.hasCreatedTypeParametersNamesLookups = oldTypeParameterNames != nil
- * 	context.typeParameterNames = maps.Clone(context.typeParameterNames)
- * 	context.typeParameterNamesByText = maps.Clone(context.typeParameterNamesByText)
- * 	context.typeParameterNamesByTextNextNameCount = maps.Clone(context.typeParameterNamesByTextNextNameCount)
- * 	context.typeParameterSymbolList = maps.Clone(context.typeParameterSymbolList)
+ * 	restoreNames := context.typeParameterNames.EnterScope()
+ * 	restoreNamesByText := context.typeParameterNamesByText.EnterScope()
+ * 	restoreNamesByTextNextNameCount := context.typeParameterNamesByTextNextNameCount.EnterScope()
+ * 	restoreSymbolList := context.typeParameterSymbolList.EnterScope()
  * 	return func() {
- * 		context.typeParameterNames = oldTypeParameterNames
- * 		context.typeParameterNamesByText = oldTypeParameterNamesByText
- * 		context.typeParameterNamesByTextNextNameCount = oldTypeParameterNamesByTextNextNameCount
- * 		context.typeParameterSymbolList = oldTypeParameterSymbolList
- * 		context.hasCreatedTypeParameterSymbolList = oldMustCreateTypeParameterSymbolList
- * 		context.hasCreatedTypeParametersNamesLookups = oldMustCreateTypeParametersNamesLookups
+ * 		restoreNames()
+ * 		restoreNamesByText()
+ * 		restoreNamesByTextNextNameCount()
+ * 		restoreSymbolList()
  * 	}
  * }
  */
@@ -70,25 +60,15 @@ export function cloneNodeBuilderContext(context: GoPtr<NodeBuilderContext>): () 
   // we write it out like that, rather than as
   // export const x: <T>(x: T) => T
   // export const y: <T_1>(x: T_1) => T_1
-  const oldMustCreateTypeParameterSymbolList = context!.hasCreatedTypeParameterSymbolList;
-  const oldMustCreateTypeParametersNamesLookups = context!.hasCreatedTypeParametersNamesLookups;
-  const oldTypeParameterNames = context!.typeParameterNames;
-  const oldTypeParameterNamesByText = context!.typeParameterNamesByText;
-  const oldTypeParameterNamesByTextNextNameCount = context!.typeParameterNamesByTextNextNameCount;
-  const oldTypeParameterSymbolList = context!.typeParameterSymbolList;
-  context!.hasCreatedTypeParameterSymbolList = oldTypeParameterSymbolList !== undefined;
-  context!.hasCreatedTypeParametersNamesLookups = oldTypeParameterNames !== undefined;
-  context!.typeParameterNames = maps.Clone(context!.typeParameterNames)!;
-  context!.typeParameterNamesByText = maps.Clone(context!.typeParameterNamesByText)!;
-  context!.typeParameterNamesByTextNextNameCount = maps.Clone(context!.typeParameterNamesByTextNextNameCount)!;
-  context!.typeParameterSymbolList = maps.Clone(context!.typeParameterSymbolList)!;
+  const restoreNames = CopyOnWriteMap_EnterScope(context!.typeParameterNames);
+  const restoreNamesByText = CopyOnWriteSet_EnterScope(context!.typeParameterNamesByText);
+  const restoreNamesByTextNextNameCount = CopyOnWriteMap_EnterScope(context!.typeParameterNamesByTextNextNameCount);
+  const restoreSymbolList = CopyOnWriteSet_EnterScope(context!.typeParameterSymbolList);
   return () => {
-    context!.typeParameterNames = oldTypeParameterNames;
-    context!.typeParameterNamesByText = oldTypeParameterNamesByText;
-    context!.typeParameterNamesByTextNextNameCount = oldTypeParameterNamesByTextNextNameCount;
-    context!.typeParameterSymbolList = oldTypeParameterSymbolList;
-    context!.hasCreatedTypeParameterSymbolList = oldMustCreateTypeParameterSymbolList;
-    context!.hasCreatedTypeParametersNamesLookups = oldMustCreateTypeParametersNamesLookups;
+    restoreNames();
+    restoreNamesByText();
+    restoreNamesByTextNextNameCount();
+    restoreSymbolList();
   };
 }
 

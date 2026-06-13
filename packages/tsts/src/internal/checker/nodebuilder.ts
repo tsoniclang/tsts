@@ -171,12 +171,10 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     enclosingSymbolTypes: new globalThis.Map(),
     suppressReportInferenceFallback: false as bool,
     remappedSymbolReferences: new globalThis.Map(),
-    hasCreatedTypeParameterSymbolList: false as bool,
-    hasCreatedTypeParametersNamesLookups: false as bool,
-    typeParameterNames: new globalThis.Map(),
-    typeParameterNamesByText: new globalThis.Map(),
-    typeParameterNamesByTextNextNameCount: new globalThis.Map(),
-    typeParameterSymbolList: new globalThis.Map(),
+    typeParameterNames: { m: new globalThis.Map(), owned: false as bool },
+    typeParameterNamesByText: { m: { m: new globalThis.Map(), owned: false as bool } },
+    typeParameterNamesByTextNextNameCount: { m: new globalThis.Map(), owned: false as bool },
+    typeParameterSymbolList: { m: { m: new globalThis.Map(), owned: false as bool } },
   };
   const newTracker = NewSymbolTrackerImpl(b.impl!.ctx, tracker);
   b.impl!.ctx.tracker = SymbolTrackerImpl_as_SymbolTracker(newTracker);
