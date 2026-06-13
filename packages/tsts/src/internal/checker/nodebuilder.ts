@@ -37,6 +37,7 @@ import {
   NodeBuilderImpl_typePredicateToTypePredicateNode,
   NodeBuilderImpl_typeToTypeNode,
 } from "./nodebuilderimpl.js";
+import { NodeBuilderImpl_enterSignatureScope } from "./nodebuilderscopes.js";
 import { NodeBuilderImpl_expandSymbolForHover } from "./nodebuilder_hover.js";
 import { NodeBuilderImpl_tryJSTypeNodeToTypeNode } from "./nodecopy.js";
 import { Node_ModifierFlags, NodeFactory_NewModifier, NodeFactory_UpdateClassDeclaration } from "../ast/ast.js";
@@ -324,20 +325,26 @@ export function NodeBuilder_IndexInfoToIndexSignatureDeclaration(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.SerializeReturnTypeForSignature","kind":"method","status":"implemented","sigHash":"dc877bc065bd8890f1e87d7e4c4564e09187eb849ed01bb3e5993e90ca1bd754","bodyHash":"122ee788bcc2b4fb2c66f2a283f3eb4fffdfa2a929b17df797a22b8b17035cad"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::NodeBuilder.SerializeReturnTypeForSignature","kind":"method","status":"implemented","sigHash":"dc877bc065bd8890f1e87d7e4c4564e09187eb849ed01bb3e5993e90ca1bd754","bodyHash":"35f9e1859d230ea7508066125726800e1dd2209704c8f865cf108232510d09ca"}
  *
  * Go source:
  * func (b *NodeBuilder) SerializeReturnTypeForSignature(signatureDeclaration *ast.Node, enclosingDeclaration *ast.Node, flags nodebuilder.Flags, internalFlags nodebuilder.InternalFlags, tracker nodebuilder.SymbolTracker) *ast.Node {
  * 	b.enterContext(enclosingDeclaration, flags, internalFlags, tracker)
  * 	signature := b.impl.ch.getSignatureFromDeclaration(signatureDeclaration)
- * 	return b.exitContext(b.impl.serializeReturnTypeForSignature(signature, true))
+ * 	_, cleanup := b.impl.enterSignatureScope(signature)
+ * 	result := b.impl.serializeReturnTypeForSignature(signature, true)
+ * 	cleanup()
+ * 	return b.exitContext(result)
  * }
  */
 export function NodeBuilder_SerializeReturnTypeForSignature(receiver: GoPtr<NodeBuilder>, signatureDeclaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: GoPtr<SymbolTracker>): GoPtr<Node> {
   const b = receiver!;
   NodeBuilder_enterContext(b, enclosingDeclaration, flags, internalFlags, tracker);
   const signature = Checker_getSignatureFromDeclaration(b.impl!.ch, signatureDeclaration);
-  return NodeBuilder_exitContext(b, NodeBuilderImpl_serializeReturnTypeForSignature(b.impl, signature, true));
+  const [, cleanup] = NodeBuilderImpl_enterSignatureScope(b.impl, signature);
+  const result = NodeBuilderImpl_serializeReturnTypeForSignature(b.impl, signature, true);
+  cleanup();
+  return NodeBuilder_exitContext(b, result);
 }
 
 /**
