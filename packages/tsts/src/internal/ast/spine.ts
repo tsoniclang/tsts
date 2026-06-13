@@ -1082,6 +1082,16 @@ export function ModifiersBase_Modifiers(receiver: GoPtr<ModifiersBaseType>): GoP
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::ModifiersBase.setModifiers","kind":"method","status":"implemented","sigHash":"70e84486508af2e059d5bc386a14f604fb32d6f38b697a857ca5b7a9ab3ae972","bodyHash":"84715edbf84f1652412c65498516cb39af8fcde4f09c49c4a3f03899a4f78cc6"}
+ *
+ * Go source:
+ * func (node *ModifiersBase) setModifiers(modifiers *ModifierList) { node.modifiers = modifiers }
+ */
+export function ModifiersBase_setModifiers(receiver: GoPtr<ModifiersBaseType>, modifiers: GoPtr<ModifierList>): void {
+  receiver!.modifiers = modifiers;
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::LocalsContainerBase.LocalsContainerData","kind":"method","status":"implemented","sigHash":"13c121f80a7e981226a492d2f099e636c21bbe27c5e77fdec23aa6e0ccdf4903","bodyHash":"eec7743534a2fc315a54ce5ac26e1684193787c0e2bc86872ff86af0c16208b4"}
  *
  * Go source:

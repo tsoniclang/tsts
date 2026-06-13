@@ -2417,7 +2417,7 @@ export function Node_QuestionDotToken(receiver: GoPtr<Node>): GoPtr<Node> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeExpression","kind":"method","status":"implemented","sigHash":"bb7658e1d6e5f6aa338ec32c9e49eec023f48508794f163c1ef6158702d095f7","bodyHash":"856dbdc15622154cbb233128f6f2cd31b00e07114f17516a7f495fea49887b0d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::Node.TypeExpression","kind":"method","status":"implemented","sigHash":"bb7658e1d6e5f6aa338ec32c9e49eec023f48508794f163c1ef6158702d095f7","bodyHash":"71b45a89b3ab38d6736c6df140d449be54b3e7dd9fbd5932d74b65dfef7a4b92"}
  *
  * Go source:
  * func (n *Node) TypeExpression() *Node {
@@ -2430,6 +2430,8 @@ export function Node_QuestionDotToken(receiver: GoPtr<Node>): GoPtr<Node> {
  * 		return n.AsJSDocTypeTag().TypeExpression
  * 	case KindJSDocTypedefTag:
  * 		return n.AsJSDocTypedefTag().TypeExpression
+ * 	case KindJSDocCallbackTag:
+ * 		return n.AsJSDocCallbackTag().TypeExpression
  * 	case KindJSDocSatisfiesTag:
  * 		return n.AsJSDocSatisfiesTag().TypeExpression
  * 	case KindJSDocThrowsTag:
@@ -2449,6 +2451,8 @@ export function Node_TypeExpression(receiver: GoPtr<Node>): GoPtr<Node> {
       return casts.AsJSDocTypeTag(receiver)!.TypeExpression;
     case KindJSDocTypedefTag:
       return casts.AsJSDocTypedefTag(receiver)!.TypeExpression;
+    case KindJSDocCallbackTag:
+      return casts.AsJSDocCallbackTag(receiver)!.TypeExpression;
     case KindJSDocSatisfiesTag:
       return casts.AsJSDocSatisfiesTag(receiver)!.TypeExpression;
     case KindJSDocThrowsTag:
@@ -4552,15 +4556,15 @@ export function NewExpression_propagateSubtreeFacts(receiver: GoPtr<NewExpressio
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MetaProperty.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"82d7e8d44699deae2dbf0aec7bd37df933e1f9cc48b4b48f4486bc49dd3e82f7","bodyHash":"1100acca1a586d05d1b321c12c3edd8b89848503de7c9d14bb1b5f06e965c837"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::MetaProperty.computeSubtreeFacts","kind":"method","status":"implemented","sigHash":"82d7e8d44699deae2dbf0aec7bd37df933e1f9cc48b4b48f4486bc49dd3e82f7","bodyHash":"a6ab2c1bbbed3191d16ba9af599c4e227ccc40bb40fd30e56274908b347e75c3"}
  *
  * Go source:
  * func (node *MetaProperty) computeSubtreeFacts() SubtreeFacts {
- * 	return propagateSubtreeFacts(node.name)
+ * 	return propagateSubtreeFacts(node.name) &^ SubtreeContainsIdentifier
  * }
  */
 export function MetaProperty_computeSubtreeFacts(receiver: GoPtr<MetaProperty>): SubtreeFacts {
-  return propagateSubtreeFacts(receiver!.name);
+  return (propagateSubtreeFacts(receiver!.name) & ~SubtreeContainsIdentifier) >>> 0;
 }
 
 /**
@@ -6667,6 +6671,30 @@ export function NodeFactory_UpdateJSDocParameterOrPropertyTag(receiver: GoPtr<No
     return updateNode(NodeFactory_NewJSDocParameterOrPropertyTag(receiver, node!.Kind, tagName, name, isBracketed, typeExpression, isNameFirst, comment), NodeDefault_AsNode(node), receiver!.hooks);
   }
   return NodeDefault_AsNode(node);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::method::NodeFactory.ReleaseArenas","kind":"method","status":"implemented","sigHash":"5f60c1b96ee97c17702c2b35d40a988074adcf77965b995340c93883e9758567","bodyHash":"5a2c80ebdf5af96bdf002847add0dcda4cfc5871ca3f4eeda347a471517863bf"}
+ *
+ * Go source:
+ * func (f *NodeFactory) ReleaseArenas() {
+ * 	*f = NodeFactory{
+ * 		hooks:     f.hooks,
+ * 		textCount: f.textCount,
+ * 		nodeCount: f.nodeCount,
+ * 	}
+ * }
+ */
+export function NodeFactory_ReleaseArenas(receiver: GoPtr<NodeFactory>): void {
+  const f = receiver!;
+  // Go replaces the whole struct value, retaining only hooks/textCount/nodeCount and
+  // zeroing every arena field. Mirror that reset in place so existing aliases observe it;
+  // the AsNodeFactory self-reference is the struct's method and is preserved.
+  for (const key of globalThis.Object.keys(f)) {
+    if (key !== "hooks" && key !== "textCount" && key !== "nodeCount" && key !== "AsNodeFactory") {
+      globalThis.Reflect.deleteProperty(f, key);
+    }
+  }
 }
 
 export function NodeFactory_UpdateBlock(receiver: GoPtr<NodeFactory>, node: GoPtr<Block>, statements: GoPtr<StatementList_3cde134f>, multiLine: bool): GoPtr<Node> {

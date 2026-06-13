@@ -385,7 +385,7 @@ import {
   IsForInOrOfStatement,
   IsFunctionLike,
   IsGlobalScopeAugmentation,
-  IsImplicitlyExportedJSTypeAlias,
+  IsImplicitlyExportedJSDocDeclaration,
   IsInJSFile,
   IsInTopLevelContext,
   IsLeftHandSideExpression,
@@ -1271,7 +1271,7 @@ export function GetSymbolNameForPrivateIdentifier(containingClassSymbol: GoPtr<S
  */
 export function Binder_declareModuleMember(receiver: GoPtr<Binder>, node: GoPtr<Node>, symbolFlags: SymbolFlags, symbolExcludes: SymbolFlags): GoPtr<Symbol> {
   const container = receiver!.container;
-  const hasExportModifier = (GetCombinedModifierFlags(node) & ModifierFlagsExport) !== 0 || IsImplicitlyExportedJSTypeAlias(node);
+  const hasExportModifier = (GetCombinedModifierFlags(node) & ModifierFlagsExport) !== 0 || IsImplicitlyExportedJSDocDeclaration(node);
   if ((symbolFlags & SymbolFlagsAlias) !== 0) {
     if (node!.Kind === KindExportSpecifier || (node!.Kind === KindImportEqualsDeclaration && hasExportModifier)) {
       return Binder_declareSymbol(receiver, GetExports(Node_Symbol(container)!)!, Node_Symbol(container)!, node, symbolFlags, symbolExcludes);
@@ -2925,13 +2925,13 @@ export function getInitializerSymbol(symbol_: GoPtr<Symbol>): GoPtr<Symbol> {
   }
   if (IsVariableDeclaration(declaration) && ((declaration!.Parent!.Flags & NodeFlagsConst) !== 0 || IsInJSFile(declaration))) {
     const initializer = Node_Initializer(declaration);
-    if (IsExpandoInitializer(initializer)) {
+    if (IsExpandoInitializer(declaration, initializer)) {
       return Node_Symbol(initializer);
     }
   }
   if (IsBinaryExpression(declaration) && IsInJSFile(declaration)) {
     const initializer = AsBinaryExpression(declaration)!.Right;
-    if (IsExpandoInitializer(initializer)) {
+    if (IsExpandoInitializer(declaration, initializer)) {
       return Node_Symbol(initializer);
     }
   }

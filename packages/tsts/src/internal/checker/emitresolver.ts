@@ -9,7 +9,7 @@ import type { Declaration, ElementAccessExpression, EntityName, IdentifierNode, 
 import { AsBinaryExpression, AsImportEqualsDeclaration, AsExportDeclaration, AsTypePredicateNode, AsQualifiedName, AsImportAttributes, AsIndexSignatureDeclaration } from "../ast/generated/casts.js";
 import { IsVariableDeclaration, IsVariableStatement, IsIdentifier, IsNamespaceExport, IsGetAccessorDeclaration, IsSetAccessorDeclaration, IsImportEqualsDeclaration, IsSourceFile, IsParameterDeclaration, IsBinaryExpression, IsExpressionStatement, IsExportAssignment, IsPropertyAccessExpression, IsBindingElement, IsImportDeclaration, IsComputedPropertyName } from "../ast/generated/predicates.js";
 import { IsBindingPattern } from "../ast/utilities.js";
-import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSTypeAlias, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode, IsEntityNameExpression } from "../ast/utilities.js";
+import { GetAssignmentDeclarationKind, IsExternalOrCommonJSModule, IsParseTreeNode, IsGlobalSourceFile, IsLateVisibilityPaintedStatement, IsExternalModuleAugmentation, IsImplicitlyExportedJSDocDeclaration, GetDeclarationContainer, IsInternalModuleImportEqualsDeclaration, GetFirstIdentifier, WalkUpBindingElementsAndPatterns, IsNonLocalAlias, HasSyntacticModifier, IsAliasSymbolDeclaration, GetSymbolId, GetNodeId, IsPartOfTypeNode, IsFunctionLikeDeclaration, NodeIsPresent, IsVarConst, IsTypeOnlyImportOrExportDeclaration, IsExpandoPropertyDeclaration, IsInJSFile, IsThisIdentifier, GetSourceFileOfNode, IsEntityNameExpression } from "../ast/utilities.js";
 import type { JSDeclarationKind } from "../ast/utilities.js";
 import { JSDeclarationKindModuleExports, JSDeclarationKindExportsProperty } from "../ast/utilities.js";
 import { CheckFlagsLate } from "../ast/checkflags.js";
@@ -513,7 +513,7 @@ export function EmitResolver_determineIfDeclarationIsVisible(receiver: GoPtr<Emi
           return false as bool;
         }
       }
-      if (IsExternalModuleAugmentation(node) || IsImplicitlyExportedJSTypeAlias(node)) {
+      if (IsExternalModuleAugmentation(node) || IsImplicitlyExportedJSDocDeclaration(node)) {
         return true as bool;
       }
       const parent = GetDeclarationContainer(node);
