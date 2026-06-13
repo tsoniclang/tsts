@@ -280,7 +280,7 @@ export function ChangeTrackerWriter_getEnd(receiver: GoPtr<ChangeTrackerWriter>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.setLastNonTriviaPosition","kind":"method","status":"implemented","sigHash":"f0504bc73374f407635e845c2cb871b9b2d0d37fe33b9def0654cc11171acb70","bodyHash":"fa1dfb884a57689c1ba83f63792f3a6f48f8b10297c4417726e152dfa50f2115"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/changetrackerwriter.go::method::ChangeTrackerWriter.setLastNonTriviaPosition","kind":"method","status":"implemented","sigHash":"f0504bc73374f407635e845c2cb871b9b2d0d37fe33b9def0654cc11171acb70","bodyHash":"7f51cd89bb7d3298d5202991b76d5c8b867fcdd6691a47a7fc5674f4f8dfb698"}
  *
  * Go source:
  * func (ct *ChangeTrackerWriter) setLastNonTriviaPosition(s string, force bool) {

@@ -50,10 +50,11 @@ import { Checker_isOptionalParameter } from "./utilities.js";
 import { isDeclarationReadonly, isOptionalDeclaration, containsNonMissingUndefinedType, getAnyImportSyntax, pseudoBigIntToString } from "./utilities.js";
 import { Checker_getSymbolOfDeclaration, Checker_getMergedSymbol, Checker_getExportsOfModule, Checker_resolveAlias, Checker_getSymbolFlags, Checker_getSymbolFlagsEx, Checker_getExportSymbolOfValueSymbolIfExported, Checker_getTypeOnlyAliasDeclaration, Checker_getTypeOnlyAliasDeclarationEx, Checker_resolveEntityName, Checker_getDeclaredTypeOfSymbol, Checker_getReferencedValueOrAliasSymbol, Checker_getDeclarationOfAliasSymbol, Checker_getResolvedSymbol, Checker_getGlobalSymbol, Checker_getMembersOfSymbol, Checker_getIndexInfosOfType, Checker_getIndexSymbol, Checker_getIndexInfosOfIndexSymbol, Checker_getParentOfSymbol, Checker_resolveExternalModuleSymbol, Checker_hasLateBindableName, Checker_getTargetOfExportSpecifier, Checker_getExternalModuleFileFromDeclaration } from "./checker/symbols.js";
 import { Checker_getTypeOfSymbol } from "./checker/symbols.js";
+import { Checker_getPropertyOfObjectType } from "./checker/symbols.js";
 import { Checker_computeEnumMemberValues } from "./checker/symbols.js";
 import { Checker_getSignaturesOfSymbol } from "./checker/signatures.js";
 import { Checker_isErrorType } from "./checker/diagnostics.js";
-import { Checker_getTypeFromTypeNode, Checker_containsUndefinedType, Checker_isFunctionType, Checker_isArrayType, Checker_getPropertiesOfType } from "./checker/types.js";
+import { Checker_getTypeFromTypeNode, Checker_containsUndefinedType, Checker_isFunctionType, Checker_isArrayType, Checker_getPropertiesOfType, Checker_getBaseTypes } from "./checker/types.js";
 import { Checker_isConstructorType } from "./checker/signatures.js";
 import { Checker_isTypeAssignableToKind } from "./checker/relations.js";
 import { Checker_getCombinedModifierFlagsCached } from "./checker/support-queries.js";
@@ -172,6 +173,7 @@ export function EmitResolver_as_printer_EmitResolver(receiver: GoPtr<EmitResolve
     GetEnumMemberValue: (node: GoPtr<Node>): Result => EmitResolver_GetEnumMemberValue(receiver, node),
     IsLateBound: (node: GoPtr<Node>): bool => EmitResolver_IsLateBound(receiver, node),
     IsOptionalParameter: (node: GoPtr<Node>): bool => EmitResolver_IsOptionalParameter(receiver, node),
+    GetBaseDeclarationsForPropertyDeclaration: (node: GoPtr<Node>): GoSlice<GoPtr<Node>> => EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver, node),
     GetPropertiesOfContainerFunction: (node: GoPtr<Node>): GoSlice<GoPtr<Symbol>> => EmitResolver_GetPropertiesOfContainerFunction(receiver, node),
     RequiresAddingImplicitUndefinedUnsafe: (node: GoPtr<Node>, symbol_: GoPtr<Symbol>, enclosingDeclaration: GoPtr<Node>): bool => EmitResolver_RequiresAddingImplicitUndefinedUnsafe(receiver, node, symbol_, enclosingDeclaration),
     CreateTypeOfDeclaration: (emitContext: GoPtr<EmitContext>, declaration: GoPtr<Node>, enclosingDeclaration: GoPtr<Node>, flags: Flags, internalFlags: InternalFlags, tracker: SymbolTracker): GoPtr<Node> => EmitResolver_CreateTypeOfDeclaration(receiver, emitContext, declaration, enclosingDeclaration, flags, internalFlags, tracker),
@@ -267,6 +269,67 @@ export function EmitResolver_IsOptionalParameter(receiver: GoPtr<EmitResolver>, 
   const result = EmitResolver_isOptionalParameter(receiver, node);
   receiver!.checkerMu!.Unlock();
   return result;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/emitresolver.go::method::EmitResolver.GetBaseDeclarationsForPropertyDeclaration","kind":"method","status":"implemented","sigHash":"615a139be292cc3af844256e43ae6d33a7216a83504b7b5d0a8b64c4e1d64a21","bodyHash":"97d4300010e17b340b886d7cdd8c18f8b437ee4d6827c770fea7a437b575eb67"}
+ *
+ * Go source:
+ * func (r *EmitResolver) GetBaseDeclarationsForPropertyDeclaration(node *ast.Node) []*ast.Node {
+ * 	if node == nil {
+ * 		return nil
+ * 	}
+ *
+ * 	r.checkerMu.Lock()
+ * 	defer r.checkerMu.Unlock()
+ *
+ * 	s := r.checker.getSymbolOfDeclaration(node)
+ * 	if s == nil || s.Parent == nil {
+ * 		return nil
+ * 	}
+ * 	parentType := r.checker.getDeclaredTypeOfSymbol(s.Parent)
+ * 	if parentType == nil {
+ * 		return nil
+ * 	}
+ * 	bases := r.checker.getBaseTypes(parentType)
+ * 	for _, b := range bases {
+ * 		baseProp := r.checker.getPropertyOfObjectType(b, s.Name)
+ * 		if baseProp != nil {
+ * 			return baseProp.Declarations
+ * 			// TODO: return base declarations from all base types if any callers actually look at the list
+ * 		}
+ * 	}
+ * 	return nil
+ * }
+ */
+export function EmitResolver_GetBaseDeclarationsForPropertyDeclaration(receiver: GoPtr<EmitResolver>, node: GoPtr<Node>): GoSlice<GoPtr<Node>> {
+  if (node === undefined) {
+    return [];
+  }
+
+  receiver!.checkerMu!.Lock();
+
+  const s = Checker_getSymbolOfDeclaration(receiver!.checker, node);
+  if (s === undefined || s!.Parent === undefined) {
+    receiver!.checkerMu!.Unlock();
+    return [];
+  }
+  const parentType = Checker_getDeclaredTypeOfSymbol(receiver!.checker, s!.Parent);
+  if (parentType === undefined) {
+    receiver!.checkerMu!.Unlock();
+    return [];
+  }
+  const bases = Checker_getBaseTypes(receiver!.checker, parentType);
+  for (const b of bases ?? []) {
+    const baseProp = Checker_getPropertyOfObjectType(receiver!.checker, b, s!.Name);
+    if (baseProp !== undefined) {
+      receiver!.checkerMu!.Unlock();
+      return baseProp!.Declarations ?? [];
+      // TODO: return base declarations from all base types if any callers actually look at the list
+    }
+  }
+  receiver!.checkerMu!.Unlock();
+  return [];
 }
 
 /**
