@@ -348,6 +348,12 @@
       "reason": "File watching must map to the TypeScript/Node host layer."
     },
     {
+      "match": "internal/fswatch/**",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Upstream's vendored file-watch library (fsnotify fork: fanotify/FSEvents/debounce, ~270 units) replaces vfswatch. TSTS does not port the OS-level watch internals; file watching is provided through the TypeScript/Node host layer behind the WatchBackend interface that execute/watcher consumes."
+    },
+    {
       "match": "internal/lsp/**",
       "category": "out-of-scope",
       "active": false,
