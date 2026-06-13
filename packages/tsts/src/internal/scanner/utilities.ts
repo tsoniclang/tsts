@@ -1,5 +1,5 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoRune } from "../../go/compat.js";
+import type { GoPtr } from "../../go/compat.js";
 import { ContainsRune } from "../../go/strings.js";
 import { DecodeRuneInString } from "../../go/unicode/utf8.js";
 import { Node_End, Node_Pos } from "../ast/spine.js";
@@ -52,107 +52,6 @@ const byteSlice = (s: string, start: int, end?: int): string => {
   const info = getUtf8ByteInfo(s);
   return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
 };
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::constGroup::surr1+surr2+surr3+surrSelf","kind":"constGroup","status":"implemented","sigHash":"0e4cdbe5c1d322b9af95d6c77f69a05739bab0e45336667b992bf7c92fca7dd9","bodyHash":"67e1b31d0cceafb3e2707a399cfabd3f63f6e56d8193ce64954382028e3ce63b"}
- *
- * Go source:
- * const (
- * 	surr1    = 0xd800
- * 	surr2    = 0xdc00
- * 	surr3    = 0xe000
- * 	surrSelf = 0x10000
- * )
- */
-export const surr1: int = 0xd800;
-export const surr2: int = 0xdc00;
-export const surr3: int = 0xe000;
-export const surrSelf: int = 0x10000;
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::codePointIsHighSurrogate","kind":"func","status":"implemented","sigHash":"f7a44a51c8fbd010ccbba85f29b852c6564c375015a7e33101f7b073ee3b9a0c","bodyHash":"81f2e22ab2c0b827b5c5501bcad1a19b1ca5152f7113a965ad1c2361f66c78bd"}
- *
- * Go source:
- * func codePointIsHighSurrogate(r rune) bool {
- * 	return surr1 <= r && r < surr2
- * }
- */
-export function codePointIsHighSurrogate(r: GoRune): bool {
-  return surr1 <= r && r < surr2;
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::codePointIsLowSurrogate","kind":"func","status":"implemented","sigHash":"825bbbe7cf5701993b3ac56d641001a11829341ea0b29d669485a87a7911ce92","bodyHash":"c98568c49fe4f03652e8c37c70c4d753e25dc2ef582f83d722f0392bf71e0d02"}
- *
- * Go source:
- * func codePointIsLowSurrogate(r rune) bool {
- * 	return surr2 <= r && r < surr3
- * }
- */
-export function codePointIsLowSurrogate(r: GoRune): bool {
-  return surr2 <= r && r < surr3;
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::surrogatePairToCodepoint","kind":"func","status":"implemented","sigHash":"22f8a9877c5fc258538d63447f9914d64e2067ac7c1988b9c53afd7311678663","bodyHash":"36bd782ea3b3621a270b64583270fa1e54823ded9ecfa4cee20f86026b3621c0"}
- *
- * Go source:
- * func surrogatePairToCodepoint(r1, r2 rune) rune {
- * 	return (r1-surr1)<<10 | (r2 - surr2) + surrSelf
- * }
- */
-export function surrogatePairToCodepoint(r1: GoRune, r2: GoRune): GoRune {
-  return ((r1 - surr1) << 10) | (r2 - surr2 + surrSelf);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::encodeSurrogate","kind":"func","status":"implemented","sigHash":"2b3f3c1d70db7cbc381e823a09fc809b955ffba8986d29998983627281329861","bodyHash":"3d338da63ad530763726641b11a1c6d2e2e6df3b5c5c495805536a303b9e4551"}
- *
- * Go source:
- * func encodeSurrogate(r rune) string {
- * 	return string([]byte{
- * 		0xED,
- * 		byte(0x80 | ((r >> 6) & 0x3F)),
- * 		byte(0x80 | (r & 0x3F)),
- * 	})
- * }
- */
-export function encodeSurrogate(r: GoRune): string {
-  // Go encodes the surrogate as a 3-byte CESU-8 sequence because Go strings
-  // cannot hold surrogate code points via string(rune). JS strings hold lone
-  // surrogate code units natively, so the sentinel is the unit itself;
-  // TextDecoder would destroy the CESU-8 bytes (invalid UTF-8 -> U+FFFD).
-  // byteLen of a lone surrogate is 3 (TextEncoder emits U+FFFD), matching
-  // Go's len() of the CESU-8 sentinel for the class-range size checks.
-  return globalThis.String.fromCharCode(r);
-}
-
-/**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::decodeClassAtomRune","kind":"func","status":"implemented","sigHash":"048ab810c787cc11e24b6295a27752b82c19a2eff78ccbe45af38d1e22cfb704","bodyHash":"4f44ff79d920c9fbebbd0125eb47b01dbb7f6ab771f17fe2562903f349fb3e63"}
- *
- * Go source:
- * func decodeClassAtomRune(s string) (rune, int) {
- * 	if len(s) >= 3 && s[0] == 0xED && s[1] >= 0xA0 && s[1] <= 0xBF && s[2] >= 0x80 && s[2] <= 0xBF {
- * 		r := rune(0xD000) | rune(s[1]&0x3F)<<6 | rune(s[2]&0x3F)
- * 		return r, 3
- * 	}
- * 	return utf8.DecodeRuneInString(s)
- * }
- */
-export function decodeClassAtomRune(s: string): [GoRune, int] {
-  // The sentinel from encodeSurrogate is a lone surrogate code unit (Go: a
-  // 3-byte CESU-8 sequence). A high surrogate followed by a matching low
-  // surrogate is a real astral character (raw source text / combined \u
-  // escapes; 4-byte UTF-8 in Go) and decodes as the full code point instead.
-  const first = s.length > 0 ? s.charCodeAt(0) : 0;
-  if (first >= 0xd800 && first <= 0xdfff) {
-    const second = s.length > 1 ? s.charCodeAt(1) : 0;
-    if (!(first < 0xdc00 && second >= 0xdc00 && second <= 0xdfff)) {
-      return [first as GoRune, 3];
-    }
-  }
-  return DecodeRuneInString(s);
-}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::tokenIsIdentifierOrKeyword","kind":"func","status":"implemented","sigHash":"538026bcddd56581a52c2d4c5ae6b1f36ef3386ee89dd8f7605ba57f9f21df7d","bodyHash":"b09ca2afbed17046efb355bbc5fa534f58fc7cb9b3b212c37a3ba8428a1b3726"}
