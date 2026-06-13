@@ -9,7 +9,9 @@ import {
   buildGeneratedArtifactStatus,
   buildExternalFacadeMap,
   buildLargeFileSplitStatus,
+  buildSchemaSourceSyncStatus,
   buildStatus,
+  collectSchemaSourceSyncFailures,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -1489,4 +1491,86 @@ test("diagnostics-generator: buildDiagnosticsGeneratedArtifactStatus detects mis
       rmSync(tsRootAbs, { recursive: true, force: true });
     }
   });
+});
+
+test("buildSchemaSourceSyncStatus flags schema-dir copies that drift from live source", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "porter-schemasync-"));
+  try {
+    // Fake source root + schema dir.
+    const sourceRoot = path.join(dir, "src");
+    const schemaDir = path.join(dir, "schema");
+    mkdirSync(path.join(sourceRoot, "internal", "ast"), { recursive: true });
+    mkdirSync(schemaDir, { recursive: true });
+    writeFileSync(path.join(sourceRoot, "internal/ast/nodeflags.go"), "package ast\nconst A = 1\n");
+    writeFileSync(path.join(sourceRoot, "internal/ast/symbolflags.go"), "package ast\nconst B = 2\n");
+    // nodeflags copy matches; symbolflags copy drifts.
+    writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\nconst A = 1\n");
+    writeFileSync(path.join(schemaDir, "symbolflags.go"), "package ast\nconst B = 999\n");
+
+    const relSource = path.relative(repoRoot, sourceRoot).split(path.sep).join("/");
+    const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
+    const config = {
+      sourceRoot: relSource,
+      schemaSourceSyncChecks: [
+        { schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" },
+        { schema: `${relSchema}/symbolflags.go`, source: "internal/ast/symbolflags.go" },
+      ],
+    };
+    const status = buildSchemaSourceSyncStatus(config);
+    assert.equal(status.mismatches.length, 1, "only the drifted copy is flagged");
+    assert.equal(status.mismatches[0].schema.endsWith("symbolflags.go"), true);
+    assert.equal(collectSchemaSourceSyncFailures(status).length, 1);
+    assert.match(collectSchemaSourceSyncFailures(status)[0], /symbolflags\.go/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("buildSchemaSourceSyncStatus flags a missing live source file (upstream removed it)", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "porter-schemasync2-"));
+  try {
+    const schemaDir = path.join(dir, "schema");
+    mkdirSync(schemaDir, { recursive: true });
+    writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\n");
+    const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
+    const config = {
+      sourceRoot: path.relative(repoRoot, dir).split(path.sep).join("/"),
+      schemaSourceSyncChecks: [{ schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" }],
+    };
+    const status = buildSchemaSourceSyncStatus(config);
+    assert.equal(status.mismatches.length, 1);
+    assert.match(status.mismatches[0].reason, /live source file is missing/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("buildSchemaSourceSyncStatus passes when copies are byte-identical, and ignores CRLF", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "porter-schemasync3-"));
+  try {
+    const sourceRoot = path.join(dir, "src");
+    const schemaDir = path.join(dir, "schema");
+    mkdirSync(path.join(sourceRoot, "internal", "ast"), { recursive: true });
+    mkdirSync(schemaDir, { recursive: true });
+    writeFileSync(path.join(sourceRoot, "internal/ast/nodeflags.go"), "package ast\nconst A = 1\n");
+    writeFileSync(path.join(schemaDir, "nodeflags.go"), "package ast\r\nconst A = 1\r\n"); // CRLF variant
+    const relSchema = path.relative(repoRoot, schemaDir).split(path.sep).join("/");
+    const config = {
+      sourceRoot: path.relative(repoRoot, sourceRoot).split(path.sep).join("/"),
+      schemaSourceSyncChecks: [{ schema: `${relSchema}/nodeflags.go`, source: "internal/ast/nodeflags.go" }],
+    };
+    assert.equal(buildSchemaSourceSyncStatus(config).mismatches.length, 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("collectVerifyFailures fails when schemaSourceSync has mismatches", () => {
+  const status = {
+    counts: { parseErrors: 0, duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
+    schemaSourceSync: { mismatches: [{ schema: "packages/tsts/schema/tsgo/symbolflags.go", source: "internal/ast/symbolflags.go", reason: "differs" }] },
+    rows: [],
+  };
+  const failures = collectVerifyFailures(status, {});
+  assert.equal(failures.some((f) => /schema\/source sync/.test(f)), true);
 });

@@ -124,7 +124,8 @@ export function main() {
     const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
     const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
     const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts);
+    const schemaSourceSync = buildSchemaSourceSyncStatus(config);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, schemaSourceSync);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);
     writeText(resolveRepo(config.reportOut), renderStatusMarkdown(status));
@@ -172,6 +173,45 @@ export function runScan(config) {
   }
 }
 
+export function emptySchemaSourceSyncStatus() {
+  return { mismatches: [] };
+}
+
+// Some vendored-schema inputs (packages/tsts/schema/tsgo/*) are verbatim copies
+// of TS-Go source files. The AST generator validates artifacts against those
+// COPIES, never against live source, so a real upstream change that wasn't
+// mirrored into the schema dir would sit behind a green `verify`. This check
+// asserts each declared copy is byte-identical (CRLF-normalized) to its live
+// source file under config.sourceRoot, so the schema pin cannot silently lag
+// the source pin. Bias is toward over-reporting: any byte difference fails.
+export function buildSchemaSourceSyncStatus(config) {
+  const checks = config.schemaSourceSyncChecks ?? [];
+  const sourceRoot = resolveRepo(config.sourceRoot);
+  const mismatches = [];
+  const normalize = (text) => text.replace(/\r\n/g, "\n");
+  for (const check of checks) {
+    const schemaPath = resolveRepo(check.schema);
+    const sourcePath = path.join(sourceRoot, check.source);
+    if (!existsSync(schemaPath)) {
+      mismatches.push({ schema: check.schema, source: check.source, reason: "schema-dir copy is missing" });
+      continue;
+    }
+    if (!existsSync(sourcePath)) {
+      mismatches.push({ schema: check.schema, source: check.source, reason: "live source file is missing (upstream moved/removed it; refresh the schema pin)" });
+      continue;
+    }
+    if (normalize(readFileSync(schemaPath, "utf8")) !== normalize(readFileSync(sourcePath, "utf8"))) {
+      mismatches.push({ schema: check.schema, source: check.source, reason: "schema-dir copy differs from live source; refresh the AST schema pin and regenerate" });
+    }
+  }
+  return { mismatches };
+}
+
+export function collectSchemaSourceSyncFailures(status) {
+  if (status.mismatches.length === 0) return [];
+  return [`${status.mismatches.length} schema/source sync mismatches (${status.mismatches.map((m) => m.schema.split("/").pop()).join(", ")})`];
+}
+
 export function buildStatus(
   config,
   snapshot,
@@ -180,6 +220,7 @@ export function buildStatus(
   astGeneratedArtifacts = emptyAstGeneratedArtifactStatus(),
   diagnosticsGeneratedArtifacts = emptyDiagnosticsGeneratedArtifactStatus(),
   bundledGeneratedArtifacts = emptyBundledGeneratedArtifactStatus(),
+  schemaSourceSync = emptySchemaSourceSyncStatus(),
 ) {
   const primaryKinds = new Set(config.primaryUnitKinds);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
@@ -369,6 +410,7 @@ export function buildStatus(
       untrackedBundledArtifacts: bundledGeneratedArtifacts.untracked.length,
       invalidBundledArtifacts: bundledGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
+      schemaSourceMismatches: schemaSourceSync.mismatches.length,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
@@ -385,6 +427,7 @@ export function buildStatus(
     astGeneratedArtifacts,
     diagnosticsGeneratedArtifacts,
     bundledGeneratedArtifacts,
+    schemaSourceSync,
     largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
@@ -2510,6 +2553,7 @@ export function collectVerifyFailures(status, options) {
   if (status.counts.forbiddenTsFiles > 0) failures.push(`${status.counts.forbiddenTsFiles} forbidden TS files`);
   if (status.counts.untrackedTsFiles > 0) failures.push(`${status.counts.untrackedTsFiles} TS files without @tsgo-unit metadata`);
   if (status.counts.stale > 0) failures.push(`${status.counts.stale} stale TS units`);
+  failures.push(...collectSchemaSourceSyncFailures(status.schemaSourceSync ?? emptySchemaSourceSyncStatus()));
   failures.push(...collectGeneratedArtifactFailures(status.generatedArtifacts ?? emptyGeneratedArtifactStatus()));
   failures.push(...collectAstArtifactFailures(status.astGeneratedArtifacts ?? emptyAstGeneratedArtifactStatus()));
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
@@ -2574,6 +2618,7 @@ export function printStatus(config, status) {
   console.log(`Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   console.log(`Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
   console.log(`Report: ${path.relative(repoRoot, resolveRepo(config.reportOut))}`);
