@@ -10,6 +10,9 @@ import * as math from "../../go/math.js";
 import * as slices from "../../go/slices.js";
 import * as strings from "../../go/strings.js";
 import { Pool } from "../../go/sync.js";
+import { Getenv } from "../../go/os.js";
+import { Atoi } from "../../go/strconv.js";
+import { SetMaxStack } from "../../go/runtime/debug.js";
 import * as sort from "../../go/sort.js";
 import * as unicode from "../../go/unicode.js";
 import * as utf16 from "../../go/unicode/utf16.js";
@@ -39,6 +42,34 @@ const stringToRunes = (s: string): GoSlice<GoRune> => {
   }
   return runes;
 };
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::ApplyDebugStackLimit","kind":"func","status":"implemented","sigHash":"e324219fcfed6b193cbbae4e48d23f39a4248205de2000c52f88be69b3325e82","bodyHash":"5744f3950258acadb6cbaec3b5524cbb978beec091488983d22c723feb462ec5"}
+ *
+ * Go source:
+ * func ApplyDebugStackLimit() {
+ * 	v := os.Getenv("TS_GO_DEBUG_STACK_LIMIT") //nolint:forbidigo
+ * 	if v == "" {
+ * 		return
+ * 	}
+ * 	n, err := strconv.Atoi(v)
+ * 	if err != nil || n <= 0 {
+ * 		return
+ * 	}
+ * 	rtdebug.SetMaxStack(n)
+ * }
+ */
+export function ApplyDebugStackLimit(): void {
+  const v = Getenv("TS_GO_DEBUG_STACK_LIMIT");
+  if (v === "") {
+    return;
+  }
+  const [n, err] = Atoi(v);
+  if (err !== undefined || n <= 0) {
+    return;
+  }
+  SetMaxStack(n);
+}
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::Filter","kind":"func","status":"implemented","sigHash":"c6f3794b23a576819ceb29c279308a1f44ca586c2ad73bca238043ddf5cc2be6","bodyHash":"d6f2f463faf92b0ac14d252dfde5b636c9d042a563bc223423e1dd6c7d26f801"}
@@ -1290,7 +1321,7 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"971be06af4af217009a0ac68576e7d5fbb4686b6c0e82c8a9b6d7bd09ba6b162","bodyHash":"4c5e8cc03570026c0fb713bbd2b2b3f447b1ad7cb9e48ea91fbceeb4e4ae43fd"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::GetSpellingSuggestion","kind":"func","status":"implemented","sigHash":"971be06af4af217009a0ac68576e7d5fbb4686b6c0e82c8a9b6d7bd09ba6b162","bodyHash":"067b471f2f1945f376dd1ea3a3edd7864f2d291bee70bed3222f9c76a667e1bb"}
  *
  * Go source:
  * func GetSpellingSuggestion[T any](name string, candidates iter.Seq[T], getName func(T) string, compare func(T, T) int) T {
@@ -1334,9 +1365,9 @@ export function GetScriptKindFromFileName(fileName: string): ScriptKind {
  */
 export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, getName: (arg0: T) => string, compare: (arg0: T, arg1: T) => int): T {
   const searchName = name ?? "";
-  const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(byteLen(searchName) * 0.34));
-  let bestDistance = math.Floor(byteLen(searchName) * 0.4) + 0.9; // If the best result is worse than this, don't bother.
   const runeName = stringToRunes(searchName);
+  const maximumLengthDifference = globalThis.Math.max(2, globalThis.Math.trunc(runeName.length * 0.34));
+  let bestDistance = math.Floor(runeName.length * 0.4) + 0.9; // If the best result is worse than this, don't bother.
   // Go: levenshteinBuffersPool.Get().(*levenshteinBuffers) — the New factory is
   // always set, so the pool never yields nil and the type assertion holds.
   const buffers = levenshteinBuffersPool.Get()!;
@@ -1345,8 +1376,8 @@ export function GetSpellingSuggestion<T>(name: string, candidates: GoSeq<T>, get
     let hasBest = false;
     candidates((candidate: T): bool => {
       const candidateName = getName(candidate) ?? "";
-      const maxLen = globalThis.Math.max(byteLen(candidateName), byteLen(searchName));
-      const minLen = globalThis.Math.min(byteLen(candidateName), byteLen(searchName));
+      const maxLen = globalThis.Math.max(byteLen(candidateName), runeName.length);
+      const minLen = globalThis.Math.min(byteLen(candidateName), runeName.length);
       if (candidateName !== "" && maxLen - minLen <= maximumLengthDifference) {
         if (candidateName === searchName) {
           return true;
