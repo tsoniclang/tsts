@@ -297,7 +297,7 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.explainRedirectAndImpliedFormat","kind":"method","status":"implemented","sigHash":"e202b35c33de1654b2cd84c97131572b8405bf39afe3f60583766fbfb5eadc5c","bodyHash":"2739a668b2601f3040990b78762a9f9bcfd9d58376d41a740a9dc4cb495364e3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/includeprocessor.go::method::includeProcessor.explainRedirectAndImpliedFormat","kind":"method","status":"implemented","sigHash":"e202b35c33de1654b2cd84c97131572b8405bf39afe3f60583766fbfb5eadc5c","bodyHash":"f841b15d333cbe0a2fca5f0a30520fb1928e1215c0c395b5e25cd850ca910a2d"}
  *
  * Go source:
  * func (i *includeProcessor) explainRedirectAndImpliedFormat(
@@ -315,6 +315,9 @@ export function includeProcessor_getRelatedInfo(receiver: GoPtr<includeProcessor
  * 		file = redirectsFile
  * 	} else {
  * 		sourceFile = program.GetSourceFileByPath(filePath)
+ * 		if sourceFile == nil {
+ * 			return nil
+ * 		}
  * 		file = sourceFile
  * 	}
  * 	var result []*ast.Diagnostic

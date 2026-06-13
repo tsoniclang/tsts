@@ -14,7 +14,7 @@ import { NewDiagnostic, NewCompilerDiagnostic, CompareDiagnostics, EqualDiagnost
 import type { Diagnostic, DiagnosticsCollection } from "../ast/diagnostic.js";
 import { Diagnostic_Pos, Diagnostic_Code, Diagnostic_RelatedInformation, Diagnostic_SkippedOnNoEmit, Diagnostic_AddMessageChain, Diagnostic_Clone, Diagnostic_SetRelatedInfo, Diagnostic_Localize } from "../ast/diagnostic.js";
 import { DiagnosticsCollection_GetGlobalDiagnostics, DiagnosticsCollection_GetDiagnosticsForFile } from "../ast/diagnostic.js";
-import { IsStringLiteralLike, IsSourceFileJS, IsCheckJSEnabledForFile, IsPlainJSFile, HasDecorators, NewHasFileName, GetEmitModuleFormatOfFileWorker, GetImpliedNodeFormatForEmitWorker } from "../ast/utilities.js";
+import { IsStringLiteralLike, IsSourceFileJS, IsCheckJSEnabledForFile, IsPlainJSFile, HasDecorators, NewHasFileName, GetEmitModuleFormatOfFileWorker, GetImpliedNodeFormatForEmitWorker, IsExternalModule } from "../ast/utilities.js";
 import { IsDecorator, IsObjectLiteralExpression, IsArrayLiteralExpression, IsStringLiteral } from "../ast/generated/predicates.js";
 import { KindParameter } from "../ast/generated/kinds.js";
 import type { ArrayLiteralExpression, ObjectLiteralExpression, PropertyAssignment } from "../ast/generated/data.js";
@@ -30,7 +30,7 @@ import { SyncMap_Load, SyncMap_LoadOrStore } from "../collections/syncmap.js";
 import type { SyncMap } from "../collections/syncmap.js";
 import { Concatenate, Filter, FindIndex, Map as core_Map, Some, Memoize, IfElse, Find } from "../core/core.js";
 import type { CompilerOptions, ModuleKind, ModuleResolutionKind, ResolutionMode, JsxEmit } from "../core/compileroptions.js";
-import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String, NewLineKind_GetNewLineCharacter } from "../core/compileroptions.js";
+import { CompilerOptions_GetAllowJS, CompilerOptions_GetEmitDeclarations, CompilerOptions_GetEmitModuleKind, CompilerOptions_GetIsolatedModules, CompilerOptions_GetModuleResolutionKind, CompilerOptions_GetStrictOptionValue, JsxEmit_String, JsxEmitReact, JsxEmitReactJSX, JsxEmitReactJSXDev, ModuleKindNode16, ModuleKindNodeNext, ModuleKindES2015, ModuleKindESNext, ModuleKindPreserve, ModuleKindCommonJS, ModuleResolutionKindNode16, ModuleResolutionKindNodeNext, ModuleResolutionKindBundler, ResolutionModeNone, ResolutionModeCommonJS, ModuleKindToModuleResolutionKind, ModuleResolutionKind_String, NewLineKind_GetNewLineCharacter } from "../core/compileroptions.js";
 import { ModuleKind_String } from "../core/modulekind_stringer_generated.js";
 import { ScriptKindTS, ScriptKindTSX, ScriptKindJS, ScriptKindJSX, ScriptKindExternal, ScriptKindDeferred } from "../core/scriptkind.js";
 import { Tristate_DefaultIfUnknown, Tristate_IsTrue, Tristate_IsFalse, Tristate_IsFalseOrUnknown, TSUnknown } from "../core/tristate.js";
@@ -42,13 +42,14 @@ import type { Locale } from "../locale/locale.js";
 import type { ModeAwareCache } from "../module/cache.js";
 import type { ModeAwareCacheKey, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { ResolvedModule_IsResolved } from "../module/types.js";
-import { Resolver_GetPackageScopeForPath, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
+import { GetCompilerOptionsWithRedirect, Resolver_GetPackageScopeForPath, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
 import type { Resolver } from "../module/resolver.js";
-import { GetTypesPackageName } from "../module/util.js";
+import { GetPackageNameFromTypesPackageName, GetTypesPackageName, ParsePackageName } from "../module/util.js";
 import type { ModuleSpecifierGenerationHost } from "../modulespecifiers/types.js";
 import { GetPackageNameFromDirectory } from "../modulespecifiers/util.js";
 import type { InfoCacheEntry } from "../packagejson/cache.js";
 import { InfoCacheEntry_Exists, InfoCacheEntry_GetContents } from "../packagejson/cache.js";
+import { JSONValue_IsPresent } from "../packagejson/jsonvalue.js";
 import type { DependencyFields } from "../packagejson/packagejson.js";
 import { DependencyFields_GetRuntimeDependencyNames } from "../packagejson/packagejson.js";
 import type { Expected } from "../packagejson/expected.js";
@@ -62,7 +63,7 @@ import { NewKnownSymlink, KnownSymlinks_HasDirectory, KnownSymlinks_ProcessResol
 import { PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import type { Tracing as Tracing_bcfc8412 } from "../tracing/tracing.js";
 import type { ParsedCommandLine, SourceOutputAndProjectReference } from "../tsoptions/parsedcommandline.js";
-import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_FileNames, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_ProjectReferences } from "../tsoptions/parsedcommandline.js";
+import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsingDiagnostics, ParsedCommandLine_FileNames, ParsedCommandLine_GetBuildInfoFileName, ParsedCommandLine_ProjectReferences, ParsedCommandLine_as_ResolvedProjectReference } from "../tsoptions/parsedcommandline.js";
 import { GetSupportedExtensions, GetSupportedExtensionsWithJsonIfResolveJsonModule, ForEachTsConfigPropArray, ForEachPropertyAssignment, CreateDiagnosticAtReferenceSyntax } from "../tsoptions/tsconfigparsing.js";
 import { CreateDiagnosticForNodeInSourceFile } from "../tsoptions/errors.js";
 import { GetLibFileName } from "../tsoptions/enummaps.js";
@@ -190,17 +191,19 @@ export function lazyValue_tryReuse<T>(receiver: GoPtr<lazyValue<T>>, from_: GoPt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::packageNamesInfo","kind":"type","status":"implemented","sigHash":"b1133be40de190cc9ad88f29fa923d2eabb6da9c0a4536486cd5f1cd440e4c40","bodyHash":"ac4e888f4d5f30ece67266482bc2da43b6644812aea683b3818e5d4a722cb059"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::packageNamesInfo","kind":"type","status":"implemented","sigHash":"b1133be40de190cc9ad88f29fa923d2eabb6da9c0a4536486cd5f1cd440e4c40","bodyHash":"bfeaa7189f0877fc81a2ff5b75fe178c5c5a2cb2d25b4d8a16a334184e413361"}
  *
  * Go source:
  * packageNamesInfo struct {
- * 	resolved   *collections.Set[string]
- * 	unresolved *collections.Set[string]
+ * 	resolved           *collections.Set[string]
+ * 	unresolved         *collections.Set[string]
+ * 	deepImportPackages *collections.Set[string]
  * }
  */
 export interface packageNamesInfo {
   resolved: GoPtr<Set>;
   unresolved: GoPtr<Set>;
+  deepImportPackages: GoPtr<Set>;
 }
 
 /**
@@ -623,7 +626,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
 export let __7d754c38_0: Program_e32ad451 = Program_as_checker_Program(undefined);
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"d17110acc4563d1cc15b71c7c34578869a09f5420d3f57151d53da44c275e35a","bodyHash":"6c4dd86bd3230b7969abeafc110c34cdf50f32d0687443b858250398bba7b25d"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSourceFileFromReference","kind":"method","status":"implemented","sigHash":"d17110acc4563d1cc15b71c7c34578869a09f5420d3f57151d53da44c275e35a","bodyHash":"fa60f7bd6b6821c8baf868087040d91ae551ba151dd64012f963992d886ff221"}
  *
  * Go source:
  * func (p *Program) GetSourceFileFromReference(origin *ast.SourceFile, ref *ast.FileReference) *ast.SourceFile {
@@ -650,18 +653,18 @@ export let __7d754c38_0: Program_e32ad451 = Program_as_checker_Program(undefined
  * 			}
  * 		}
  * 
- * 		return p.GetSourceFile(fileName)
+ * 		return p.GetSourceFileForResolvedModule(fileName)
  * 	}
  * 	if allowNonTsExtensions {
- * 		extensionless := p.GetSourceFile(fileName)
+ * 		extensionless := p.GetSourceFileForResolvedModule(fileName)
  * 		if extensionless != nil {
  * 			return extensionless
  * 		}
  * 	}
- * 
+ *
  * 	// Only try adding extensions from the first supported group (which should be .ts/.tsx/.d.ts)
  * 	for _, ext := range supportedExtensions[0] {
- * 		result := p.GetSourceFile(fileName + ext)
+ * 		result := p.GetSourceFileForResolvedModule(fileName + ext)
  * 		if result != nil {
  * 			return result
  * 		}
@@ -688,16 +691,16 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
         return undefined;
       }
     }
-    return Program_GetSourceFile(receiver, fileName);
+    return Program_GetSourceFileForResolvedModule(receiver, fileName);
   }
   if (allowNonTsExtensions) {
-    const extensionless = Program_GetSourceFile(receiver, fileName);
+    const extensionless = Program_GetSourceFileForResolvedModule(receiver, fileName);
     if (extensionless !== undefined) {
       return extensionless;
     }
   }
   for (const ext of (supportedExtensions[0] ?? [])) {
-    const result = Program_GetSourceFile(receiver, fileName + ext);
+    const result = Program_GetSourceFileForResolvedModule(receiver, fileName + ext);
     if (result !== undefined) {
       return result;
     }
@@ -759,10 +762,14 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"ff2b2e3adc932881837f79bac6418819fac436b08a638285345eeaeb79522f94","bodyHash":"eb70be145b4b5e9881ac232a8d2bcee6270b299311159a8823bb822f8d7ee382"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.UpdateProgram","kind":"method","status":"implemented","sigHash":"097d85513c9c582286da9c22bc2c9f5b1879006347dc4b6bf85f79c2b301cd05","bodyHash":"81f4986f608f54ad7ae60db8e41b0ad10e4830f66fa0ff27e3e7e829f1fce643"}
  *
  * Go source:
- * func (p *Program) UpdateProgram(changedFilePath tspath.Path, newHost CompilerHost, createCheckerPool func(*Program) CheckerPool) (*Program, bool) {
+ * // The returned *ast.SourceFile is the changed file as acquired through newHost; it is nil
+ * // only if the host cannot locate the file (e.g. it was deleted). Callers that manage
+ * // host-side parse caches must release this exact pointer when the old program could not be
+ * // reused, since it was acquired speculatively before that decision was made.
+ * func (p *Program) UpdateProgram(changedFilePath tspath.Path, newHost CompilerHost, createCheckerPool func(*Program) CheckerPool) (*Program, *ast.SourceFile, bool) {
  * 	newOpts := p.opts
  * 	newOpts.Host = newHost
  * 	if createCheckerPool != nil {
@@ -778,11 +785,14 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * 	_, inRedirectFiles := p.redirectFilesByPath[changedFilePath]
  * 	_, isRedirectTarget := p.redirectTargetsMap[changedFilePath]
  * 	if inRedirectFiles || isRedirectTarget {
- * 		return NewProgram(newOpts), false
+ * 		return NewProgram(newOpts), newFile, false
  * 	}
  *
  * 	if !canReplaceFileInProgram(oldFile, newFile) {
- * 		return NewProgram(newOpts), false
+ * 		return NewProgram(newOpts), newFile, false
+ * 	}
+ * 	if oldNeedsImportHelpers := p.importHelpersImportSpecifiers[oldFile.Path()] != nil; oldNeedsImportHelpers != p.needsImportHelpersImportSpecifier(newFile) {
+ * 		return NewProgram(newOpts), newFile, false
  * 	}
  * 	// TODO: reverify compiler options when config has changed?
  * 	result := &Program{
@@ -803,10 +813,10 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
  * 	result.filesByPath = maps.Clone(result.filesByPath)
  * 	result.filesByPath[newFile.Path()] = newFile
  * 	updateFileIncludeProcessor(result)
- * 	return result, true
+ * 	return result, newFile, true
  * }
  */
-export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: CompilerHost, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, bool] {
+export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath: Path, newHost: CompilerHost, createCheckerPool: (arg0: GoPtr<Program>) => CheckerPool): [GoPtr<Program>, GoPtr<SourceFile>, bool] {
   const newOpts: ProgramOptions = { ...receiver!.opts, Host: newHost };
   if (createCheckerPool !== undefined) {
     newOpts.CreateCheckerPool = createCheckerPool;
@@ -821,11 +831,15 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   const inRedirectFiles = receiver!.__tsgoEmbedded0!.redirectFilesByPath.has(changedFilePath);
   const isRedirectTarget = receiver!.__tsgoEmbedded0!.redirectTargetsMap.has(changedFilePath);
   if (inRedirectFiles || isRedirectTarget) {
-    return [NewProgram(newOpts), false as bool];
+    return [NewProgram(newOpts), newFile, false as bool];
   }
 
   if (!canReplaceFileInProgram(oldFile, newFile)) {
-    return [NewProgram(newOpts), false as bool];
+    return [NewProgram(newOpts), newFile, false as bool];
+  }
+  const oldNeedsImportHelpers = receiver!.__tsgoEmbedded0!.importHelpersImportSpecifiers.get(SourceFile_Path(oldFile)) !== undefined;
+  if (oldNeedsImportHelpers !== Program_needsImportHelpersImportSpecifier(receiver, newFile)) {
+    return [NewProgram(newOpts), newFile, false as bool];
   }
   // TODO: reverify compiler options when config has changed?
   // Clone processedFiles (embedded struct) since we will modify files and filesByPath
@@ -866,7 +880,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   resultPf.filesByPath = maps.Clone(resultPf.filesByPath) ?? new globalThis.Map();
   resultPf.filesByPath.set(SourceFile_Path(newFile), newFile);
   updateFileIncludeProcessor(result);
-  return [result, true as bool];
+  return [result, newFile, true as bool];
 }
 
 /**
@@ -901,6 +915,19 @@ export function Program_initCheckerPool(receiver: GoPtr<Program>): void {
 }
 
 /**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetCheckerPool","kind":"method","status":"implemented","sigHash":"366050abc6a31e95bec7998d21cc67dbc0de33075b90f132b3753745b4e78356","bodyHash":"b9be1dff87c3190f592ec2fdc2be9674000b34b0d11856cf858ac8b70b6ede27"}
+ *
+ * Go source:
+ * // GetCheckerPool returns the checker pool associated with this program.
+ * func (p *Program) GetCheckerPool() CheckerPool {
+ * 	return p.checkerPool
+ * }
+ */
+export function Program_GetCheckerPool(receiver: GoPtr<Program>): CheckerPool {
+  return receiver!.checkerPool!;
+}
+
+/**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::canReplaceFileInProgram","kind":"func","status":"implemented","sigHash":"4f8fd32177e983587505934059babd27f42b0d687899b031ac73f14c2924ef7a","bodyHash":"f64fa43a750022e7e6e78a294444faf9a31e9bb05c60aa9a2872f188cbc75ac5"}
  *
  * Go source:
@@ -928,6 +955,41 @@ export function canReplaceFileInProgram(file1: GoPtr<SourceFile>, file2: GoPtr<S
     slices.EqualFunc(file1!.TypeReferenceDirectives, file2!.TypeReferenceDirectives, equalFileReferences) &&
     slices.EqualFunc(file1!.LibReferenceDirectives, file2!.LibReferenceDirectives, equalFileReferences) &&
     equalCheckJSDirectives(file1!.CheckJsDirective, file2!.CheckJsDirective)) as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.needsImportHelpersImportSpecifier","kind":"method","status":"implemented","sigHash":"1c70bf32d9548dc6b9c333b3d4a17d9621bdb2d1f4425b6fc44eab874b88ec9a","bodyHash":"947e6aeb675d5743ece09c80086987e8505fc14d01d40dd813e646ba4a65fce6"}
+ *
+ * Go source:
+ * func (p *Program) needsImportHelpersImportSpecifier(file *ast.SourceFile) bool {
+ * 	redirect, _ := p.projectReferenceFileMapper.getRedirectForResolution(file)
+ * 	optionsForFile := module.GetCompilerOptionsWithRedirect(p.opts.Config.CompilerOptions(), redirect)
+ * 	if !optionsForFile.ImportHelpers.IsTrue() {
+ * 		return false
+ * 	}
+ * 	isJavaScriptFile := ast.IsSourceFileJS(file)
+ * 	isExternalModuleFile := ast.IsExternalModule(file)
+ * 	if !isJavaScriptFile && (file.IsDeclarationFile || (!optionsForFile.GetIsolatedModules() && !isExternalModuleFile)) {
+ * 		return false
+ * 	}
+ * 	return true
+ * }
+ */
+export function Program_needsImportHelpersImportSpecifier(receiver: GoPtr<Program>, file: GoPtr<SourceFile>): bool {
+  const [redirect] = projectReferenceFileMapper_getRedirectForResolution(receiver!.__tsgoEmbedded0!.projectReferenceFileMapper, SourceFile_as_ast_HasFileName(file));
+  const optionsForFile = GetCompilerOptionsWithRedirect(
+    ParsedCommandLine_CompilerOptions(receiver!.opts.Config),
+    redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined,
+  );
+  if (!Tristate_IsTrue(optionsForFile!.ImportHelpers)) {
+    return false as bool;
+  }
+  const isJavaScriptFile = IsSourceFileJS(file);
+  const isExternalModuleFile = IsExternalModule(file);
+  if (!isJavaScriptFile && (file!.IsDeclarationFile || (!CompilerOptions_GetIsolatedModules(optionsForFile) && !isExternalModuleFile))) {
+    return false as bool;
+  }
+  return true as bool;
 }
 
 /**
@@ -3962,7 +4024,7 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::GetDiagnosticsOfAnyProgram","kind":"func","status":"implemented","sigHash":"83c1b7952f0c3423e8da28b9f912beda2d8a85c7d4385beed1bbae4c8c45876b","bodyHash":"09a013f58d52e39f10d6c8b3195747bf79bacc31cbed58e72bb40d32d8a206a0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::GetDiagnosticsOfAnyProgram","kind":"func","status":"implemented","sigHash":"83c1b7952f0c3423e8da28b9f912beda2d8a85c7d4385beed1bbae4c8c45876b","bodyHash":"61bcff9a2f65f8cd53b0f29e8d69499e04c7faea584b8d36dbf386aaf0867171"}
  *
  * Go source:
  * func GetDiagnosticsOfAnyProgram(
@@ -3977,9 +4039,12 @@ export function HandleNoEmitOnError(ctx: Context, program: ProgramLike, file: Go
  * 	configFileParsingDiagnosticsLength := len(allDiagnostics)
  * 
  * 	allDiagnostics = append(allDiagnostics, program.GetSyntacticDiagnostics(ctx, file)...)
- * 	allDiagnostics = append(allDiagnostics, program.GetProgramDiagnostics()...)
- * 
+ *
+ * 	// If we didn't have any syntactic errors, then also try getting the program (options),
+ * 	// global and semantic errors.
  * 	if len(allDiagnostics) == configFileParsingDiagnosticsLength {
+ * 		allDiagnostics = append(allDiagnostics, program.GetProgramDiagnostics()...)
+ *
  * 		// Do binding early so we can track the time.
  * 		getBindDiagnostics(ctx, file)
  * 
@@ -4005,9 +4070,12 @@ export function GetDiagnosticsOfAnyProgram(ctx: Context, program: ProgramLike, f
   const configFileParsingDiagnosticsLength = allDiagnostics.length;
 
   allDiagnostics = [...allDiagnostics, ...(program.GetSyntacticDiagnostics(ctx, file) ?? [])];
-  allDiagnostics = [...allDiagnostics, ...(program.GetProgramDiagnostics() ?? [])];
 
+  // If we didn't have any syntactic errors, then also try getting the program (options),
+  // global and semantic errors.
   if (allDiagnostics.length === configFileParsingDiagnosticsLength) {
+    allDiagnostics = [...allDiagnostics, ...(program.GetProgramDiagnostics() ?? [])];
+
     getBindDiagnostics(ctx, file);
 
     if (Tristate_IsFalseOrUnknown(program.Options()!.ListFilesOnly)) {
@@ -4412,12 +4480,24 @@ export function Program_UnresolvedPackageNames(receiver: GoPtr<Program>): GoPtr<
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectPackageNames","kind":"method","status":"implemented","sigHash":"48bd1d40dc59b3b222b445f4d905a5c7b6991751c29cfadbed625d7869a41037","bodyHash":"ca4efc8c11f3baee8a93fec97845175301ddc294be620969361238abcbb5afc0"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.DeepImportPackageNames","kind":"method","status":"implemented","sigHash":"c139be1518025bdcaea27c57cbd5eefef08c80dd33bfa7744fc211b5ba427891","bodyHash":"63949777d99e886a3eacbda860111ccb77436254613033e20128e6f1e96f0749"}
+ *
+ * Go source:
+ * func (p *Program) DeepImportPackageNames() *collections.Set[string] {
+ * 	return p.collectPackageNames().deepImportPackages
+ * }
+ */
+export function Program_DeepImportPackageNames(receiver: GoPtr<Program>): GoPtr<Set> {
+  return Program_collectPackageNames(receiver)!.deepImportPackages;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.collectPackageNames","kind":"method","status":"implemented","sigHash":"48bd1d40dc59b3b222b445f4d905a5c7b6991751c29cfadbed625d7869a41037","bodyHash":"482b399397b0a23ad5296b541a075a6d443fc1dc4cd770fa050e226492740f96"}
  *
  * Go source:
  * func (p *Program) collectPackageNames() *packageNamesInfo {
  * 	return p.packageNames.getValue(func() *packageNamesInfo {
- * 		packageNames := &packageNamesInfo{&collections.Set[string]{}, &collections.Set[string]{}}
+ * 		packageNames := &packageNamesInfo{&collections.Set[string]{}, &collections.Set[string]{}, &collections.Set[string]{}}
  * 		for _, file := range p.files {
  * 			if p.IsSourceFileDefaultLibrary(file.Path()) || p.IsSourceFileFromExternalLibrary(file) || strings.Contains(file.FileName(), "/node_modules/") {
  * 				// Checking for /node_modules/ is a little imprecise, but ATA treats locally installed typings
@@ -4452,6 +4532,15 @@ export function Program_UnresolvedPackageNames(receiver: GoPtr<Program>): GoPtr<
  * 						// 4. If all fail, don't add empty string
  * 						if name != "" {
  * 							packageNames.resolved.Add(name)
+ * 							// Detect deep imports: subpath imports in packages without exports.
+ * 							// These are imports like "lodash/fp" where the package has no exports
+ * 							// map, so auto-import can only find them via recursive directory search.
+ * 							_, rest := module.ParsePackageName(imp.Text())
+ * 							if rest != "" {
+ * 								if scope := p.resolver.GetPackageScopeForPath(resolvedModule.ResolvedFileName); scope != nil && scope.Exists() && !scope.Contents.Exports.IsPresent() {
+ * 									packageNames.deepImportPackages.Add(module.GetPackageNameFromTypesPackageName(name))
+ * 								}
+ * 							}
  * 						}
  * 						continue
  * 					}
@@ -4468,6 +4557,7 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
     const packageNames: packageNamesInfo = {
       resolved: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
       unresolved: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
+      deepImportPackages: { M: new globalThis.Map<string, { readonly __tsgoEmpty?: never }>() },
     };
     for (const file of receiver!.__tsgoEmbedded0!.files) {
       if (
@@ -4515,6 +4605,24 @@ export function Program_collectPackageNames(receiver: GoPtr<Program>): GoPtr<pac
             }
             if (name !== "") {
               Set_Add(packageNames.resolved!, name);
+              // Detect deep imports: subpath imports in packages without exports.
+              // These are imports like "lodash/fp" where the package has no exports
+              // map, so auto-import can only find them via recursive directory search.
+              const [, rest] = ParsePackageName(impText);
+              if (rest !== "") {
+                const scope = Resolver_GetPackageScopeForPath(receiver!.__tsgoEmbedded0!.resolver, mod!.ResolvedFileName);
+                if (scope !== undefined && InfoCacheEntry_Exists(scope)) {
+                  const scopeContents = InfoCacheEntry_GetContents(scope);
+                  if (
+                    scopeContents !== undefined &&
+                    scopeContents!.__tsgoEmbedded0 !== undefined &&
+                    scopeContents!.__tsgoEmbedded0!.__tsgoEmbedded1 !== undefined &&
+                    !JSONValue_IsPresent(scopeContents!.__tsgoEmbedded0!.__tsgoEmbedded1!.Exports.__tsgoEmbedded0)
+                  ) {
+                    Set_Add(packageNames.deepImportPackages!, GetPackageNameFromTypesPackageName(name));
+                  }
+                }
+              }
             }
             continue;
           }

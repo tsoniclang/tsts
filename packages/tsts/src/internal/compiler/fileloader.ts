@@ -122,6 +122,7 @@ import {
   fileIncludeKindReferenceFile,
   fileIncludeKindRootFile,
   fileIncludeKindTypeReferenceDirective,
+  FileIncludeReason_isReferencedFile,
 } from "./fileInclude.js";
 import type { FileIncludeReason, automaticTypeDirectiveFileData, referencedFileData } from "./fileInclude.js";
 import {
@@ -388,7 +389,7 @@ export interface jsxRuntimeImportSpecifier {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::func::processAllProgramFiles","kind":"func","status":"implemented","sigHash":"e38059a13537c31d50a7ef49c7d0d511f7b51bcbfa1e1375a459fe88a6b62a6f","bodyHash":"b704a34feaf4326ab708bb87a49091eb52d93663900e8c5e49fd2b83a70e2d46"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::func::processAllProgramFiles","kind":"func","status":"implemented","sigHash":"e38059a13537c31d50a7ef49c7d0d511f7b51bcbfa1e1375a459fe88a6b62a6f","bodyHash":"d480563f6ce2ad89532596ed6fb94becd172fbecf039dc11100a6f4651d5f558"}
  *
  * Go source:
  * func processAllProgramFiles(
@@ -424,7 +425,7 @@ export interface jsxRuntimeImportSpecifier {
  * 		defer opts.Tracing.Push(tracing.PhaseProgram, "processRootFiles", map[string]any{"count": len(rootFiles)}, false)()
  * 	}
  * 	for index, rootFile := range rootFiles {
- * 		loader.addRootTask(rootFile, nil, &FileIncludeReason{kind: fileIncludeKindRootFile, data: index})
+ * 		loader.addRootFileTask(rootFile, nil, &FileIncludeReason{kind: fileIncludeKindRootFile, data: index})
  * 	}
  * 	if len(rootFiles) > 0 && compilerOptions.NoLib.IsFalseOrUnknown() {
  * 		if compilerOptions.Lib == nil {
@@ -499,7 +500,7 @@ export function processAllProgramFiles(opts: ProgramOptions, singleThreaded: boo
   try {
     for (let index = 0; index < rootFiles.length; index++) {
       const rootFile = rootFiles[index]!;
-      fileLoader_addRootTask(loader, rootFile, undefined, {
+      fileLoader_addRootFileTask(loader, rootFile, undefined, {
         kind: fileIncludeKindRootFile,
         data: index,
         relativeFileNameDiag: undefined,
@@ -615,6 +616,85 @@ export function fileLoader_addRootTask(receiver: GoPtr<fileLoader>, fileName: st
       allIncludeReasons: [],
     });
   }
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.addRootFileTask","kind":"method","status":"implemented","sigHash":"a071cb8c5c4e4dff113edf5f094da60e566c68d7c5b18b38905d7621fea6c305","bodyHash":"0f0572225075257726c994bbe42000170e104120165d9481d485937729309773"}
+ *
+ * Go source:
+ * func (p *fileLoader) addRootFileTask(fileName string, libFile *LibFile, includeReason *FileIncludeReason) {
+ * 	currDir := p.opts.Host.GetCurrentDirectory()
+ * 	absPath := tspath.GetNormalizedAbsolutePath(fileName, currDir)
+ * 	containingFile := currDir
+ * 	if p.opts.Config.ConfigFile != nil {
+ * 		containingFile = tspath.GetNormalizedAbsolutePath(p.opts.Config.ConfigFile.SourceFile.FileName(), currDir)
+ * 	}
+ * 	resolvedFile, diagnostic := p.getSourceFileFromReference(absPath, fileName, containingFile, includeReason)
+ * 	rootTask := &parseTask{
+ * 		normalizedFilePath: resolvedFile,
+ * 		libFile:            libFile,
+ * 		includeReason:      includeReason,
+ * 	}
+ * 	if diagnostic != nil {
+ * 		rootTask.normalizedFilePath = absPath
+ * 		rootTask.processingDiagnostics = []*processingDiagnostic{{
+ * 			kind: processingDiagnosticKindExplainingFileInclude,
+ * 			data: &includeExplainingDiagnostic{
+ * 				diagnosticReason: includeReason,
+ * 				message:          diagnostic.message,
+ * 				args:             diagnostic.args,
+ * 			},
+ * 		}}
+ * 	}
+ * 	p.rootTasks = append(p.rootTasks, rootTask)
+ * }
+ */
+export function fileLoader_addRootFileTask(receiver: GoPtr<fileLoader>, fileName: string, libFile: GoPtr<LibFile>, includeReason: GoPtr<FileIncludeReason>): void {
+  const currDir = receiver!.opts.Host.GetCurrentDirectory();
+  const absPath = GetNormalizedAbsolutePath(fileName, currDir);
+  let containingFile = currDir;
+  if (receiver!.opts.Config!.ConfigFile !== undefined) {
+    containingFile = GetNormalizedAbsolutePath(SourceFile_FileName(receiver!.opts.Config!.ConfigFile!.SourceFile), currDir);
+  }
+  const [resolvedFile, diagnostic] = fileLoader_getSourceFileFromReference(receiver, absPath, fileName, containingFile, includeReason);
+  const rootTask: parseTask = {
+    normalizedFilePath: resolvedFile,
+    path: "" as Path_9073472b,
+    file: undefined,
+    libFile,
+    redirectedParseTask: undefined,
+    subTasks: [],
+    loaded: false,
+    startedSubTasks: false,
+    isForAutomaticTypeDirective: false as bool,
+    includeReason,
+    packageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+    metadata: {} as SourceFileMetaData,
+    resolutionsInFile: undefined as unknown as ModeAwareCache,
+    resolutionsTrace: [],
+    typeResolutionsInFile: undefined as unknown as ModeAwareCache,
+    typeResolutionsTrace: [],
+    resolutionDiagnostics: [],
+    processingDiagnostics: [],
+    importHelpersImportSpecifier: undefined,
+    jsxRuntimeImportSpecifier: undefined,
+    increaseDepth: false as bool,
+    elideOnDepth: false as bool,
+    loadedTask: undefined,
+    allIncludeReasons: [],
+  };
+  if (diagnostic !== undefined) {
+    rootTask.normalizedFilePath = absPath;
+    rootTask.processingDiagnostics = [{
+      kind: processingDiagnosticKindExplainingFileInclude,
+      data: {
+        diagnosticReason: includeReason,
+        message: diagnostic.message,
+        args: diagnostic.args,
+      } as includeExplainingDiagnostic,
+    }];
+  }
+  receiver!.rootTasks.push(rootTask);
 }
 
 /**
@@ -1004,13 +1084,14 @@ export function fileLoader_isSupportedExtension(receiver: GoPtr<fileLoader>, can
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.getSourceFileFromReference","kind":"method","status":"implemented","sigHash":"81cd3dd9decd4b0a0f087d9f75017721a870411ff5c27fd15b89335d88e5e64b","bodyHash":"8ab91a71c95976ee62aa0d4b454f87d0d4eda35747e12b93919eaaf140291bf5"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.getSourceFileFromReference","kind":"method","status":"implemented","sigHash":"aa8770197d1fc35b01983334e70441bfcf0222c038a99f1fb32f2a5a9e57e4fe","bodyHash":"403124a48ec3b00d8f2e2dcb9947686a54d1462727de465dc7c6504ef82b80dd"}
  *
  * Go source:
  * func (p *fileLoader) getSourceFileFromReference(
  * 	fileName string,
  * 	referenceText string,
  * 	containingFile string,
+ * 	includeReason *FileIncludeReason,
  * ) (string, *sourceFileFromReferenceDiagnostic) {
  * 	options := p.opts.Config.CompilerOptions()
  * 	allowNonTsExtensions := options.AllowNonTsExtensions.IsTrue()
@@ -1029,7 +1110,7 @@ export function fileLoader_isSupportedExtension(receiver: GoPtr<fileLoader>, can
  * 			return "", &sourceFileFromReferenceDiagnostic{message: diagnostics.File_0_not_found, args: []any{diagnosticFileName}}
  * 		}
  * 
- * 		if tspath.GetCanonicalFileName(containingFile, p.opts.Host.FS().UseCaseSensitiveFileNames()) == canonicalFileName {
+ * 		if includeReason.isReferencedFile() && tspath.GetCanonicalFileName(containingFile, p.opts.Host.FS().UseCaseSensitiveFileNames()) == canonicalFileName {
  * 			return "", &sourceFileFromReferenceDiagnostic{message: diagnostics.A_file_cannot_have_a_reference_to_itself}
  * 		}
  * 		return fileName, nil
@@ -1053,7 +1134,7 @@ export function fileLoader_isSupportedExtension(receiver: GoPtr<fileLoader>, can
  * 	return "", &sourceFileFromReferenceDiagnostic{message: diagnostics.Could_not_resolve_the_path_0_with_the_extensions_Colon_1, args: []any{diagnosticFileName, "'" + strings.Join(core.Flatten(p.supportedExtensions), "', '") + "'"}}
  * }
  */
-export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader>, fileName: string, referenceText: string, containingFile: string): [string, GoPtr<sourceFileFromReferenceDiagnostic>] {
+export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader>, fileName: string, referenceText: string, containingFile: string, includeReason: GoPtr<FileIncludeReason>): [string, GoPtr<sourceFileFromReferenceDiagnostic>] {
   const options = ParsedCommandLine_CompilerOptions(receiver!.opts.Config);
   const allowNonTsExtensions = Tristate_IsTrue(options!.AllowNonTsExtensions);
   const diagnosticFileName = NormalizeSlashes(referenceText);
@@ -1068,7 +1149,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
     if (!receiver!.opts.Host.FS().FileExists(fileName)) {
       return ["", { message: diagnostics.File_0_not_found, args: [diagnosticFileName] }];
     }
-    if (GetCanonicalFileName(containingFile, receiver!.opts.Host.FS().UseCaseSensitiveFileNames()) === canonicalFileName) {
+    if (FileIncludeReason_isReferencedFile(includeReason) && GetCanonicalFileName(containingFile, receiver!.opts.Host.FS().UseCaseSensitiveFileNames()) === canonicalFileName) {
       return ["", { message: diagnostics.A_file_cannot_have_a_reference_to_itself, args: [] }];
     }
     return [fileName, undefined];
@@ -1089,7 +1170,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveTripleslashPathReference","kind":"method","status":"implemented","sigHash":"dc1782934b78538f4b4e345dc9f82cb86d9a14bb07fcb202249d66017806a553","bodyHash":"919438c0ce62e2fcee9fd575978b3cf21d0b2584569d8374bf95d8a7f891dfce"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveTripleslashPathReference","kind":"method","status":"implemented","sigHash":"dc1782934b78538f4b4e345dc9f82cb86d9a14bb07fcb202249d66017806a553","bodyHash":"f299bf40a882589570f87a88a47d8e02b3125f8bad6996f3bd7cedfb89b765aa"}
  *
  * Go source:
  * func (p *fileLoader) resolveTripleslashPathReference(moduleName string, containingFile string, index int) (*resolvedRef, *processingDiagnostic) {
@@ -1112,6 +1193,7 @@ export function fileLoader_getSourceFileFromReference(receiver: GoPtr<fileLoader
  * 		normalizedFileName,
  * 		moduleName,
  * 		containingFile,
+ * 		includeReason,
  * 	)
  * 	if diagnostic != nil {
  * 		return nil, &processingDiagnostic{
@@ -1148,7 +1230,7 @@ export function fileLoader_resolveTripleslashPathReference(receiver: GoPtr<fileL
     diag: undefined,
     diagOnce: new OnceImpl(),
   };
-  const [resolvedFileName, diagnostic] = fileLoader_getSourceFileFromReference(receiver, normalizedFileName, moduleName, containingFile);
+  const [resolvedFileName, diagnostic] = fileLoader_getSourceFileFromReference(receiver, normalizedFileName, moduleName, containingFile, includeReason);
   if (diagnostic !== undefined) {
     return [undefined, {
       kind: processingDiagnosticKindExplainingFileInclude,
@@ -1297,7 +1379,7 @@ export function fileLoader_resolveTypeReferenceDirectives(receiver: GoPtr<fileLo
 export const externalHelpersModuleNameText: string = "tslib";
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"87087a4d8389e42965513b4553f0d28856760b96b9ccdb8bbbcfa7424eedfd41"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"4171ca82fab8e6403e0310bc745bd8eb0680c1c25558125fe9ff409afeaecafd"}
  *
  * Go source:
  * func (p *fileLoader) resolveImportsAndModuleAugmentations(t *parseTask) {
@@ -1320,7 +1402,9 @@ export const externalHelpersModuleNameText: string = "tslib";
  * 			moduleNames = append(moduleNames, specifier)
  * 			t.importHelpersImportSpecifier = specifier
  * 		}
+ * 	}
  *
+ * 	if file.ScriptKind == core.ScriptKindJSX || file.ScriptKind == core.ScriptKindTSX {
  * 		jsxImport := ast.GetJSXRuntimeImport(ast.GetJSXImplicitImportBase(optionsForFile, file), optionsForFile)
  * 		if jsxImport != "" {
  * 			specifier := p.createSyntheticImport(jsxImport, file)
@@ -1429,7 +1513,9 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
         moduleNames.push(specifier as unknown as GoPtr<Node>);
         t!.importHelpersImportSpecifier = specifier;
       }
+    }
 
+    if (file!.ScriptKind === ScriptKindJSX || file!.ScriptKind === ScriptKindTSX) {
       const jsxImport = GetJSXRuntimeImport(GetJSXImplicitImportBase(optionsForFile, file), optionsForFile);
       if (jsxImport !== "") {
         const specifier = fileLoader_createSyntheticImport(receiver, jsxImport, file);
