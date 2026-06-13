@@ -1126,7 +1126,7 @@ export function sourceFileMayBeEmitted(sourceFile: GoPtr<SourceFile>, host: Sour
 
   // Otherwise, if rootDir is specified or a config file exists, we know the common source directory and can check if the file would be emitted in the same location
   if (options!.RootDir !== "" || options!.ConfigFilePath !== "") {
-    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => [], host.GetCurrentDirectory(), host.UseCaseSensitiveFileNames()), host.GetCurrentDirectory());
+    const commonDir = GetNormalizedAbsolutePath(GetCommonSourceDirectory(options, () => [], host.GetCurrentDirectory(), host.UseCaseSensitiveFileNames(), undefined), host.GetCurrentDirectory());
     const outputPath = GetSourceFilePathInNewDirWorker(SourceFile_FileName(sourceFile), options!.OutDir, host.GetCurrentDirectory(), commonDir, host.UseCaseSensitiveFileNames());
     if (ComparePaths(SourceFile_FileName(sourceFile), outputPath, {
       UseCaseSensitiveFileNames: host.UseCaseSensitiveFileNames(),

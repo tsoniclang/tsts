@@ -66,7 +66,7 @@ import { ParsedCommandLine_CompilerOptions, ParsedCommandLine_GetConfigFileParsi
 import { GetSupportedExtensions, GetSupportedExtensionsWithJsonIfResolveJsonModule, ForEachTsConfigPropArray, ForEachPropertyAssignment, CreateDiagnosticAtReferenceSyntax } from "../tsoptions/tsconfigparsing.js";
 import { CreateDiagnosticForNodeInSourceFile } from "../tsoptions/errors.js";
 import { GetLibFileName } from "../tsoptions/enummaps.js";
-import { ContainsPath, ToPath, GetDirectoryPath, GetCanonicalFileName, GetRelativePathFromFile, GetRelativePathFromDirectory, PathIsRelative, PathIsAbsolute, IsExternalModuleNameRelative, GetBaseFileName, GetRootLength, CombinePaths, ToFileNameLowerCase, ResolvePath, HasExtension } from "../tspath/path.js";
+import { ContainsPath, ToPath, GetDirectoryPath, GetCanonicalFileName, GetNormalizedAbsolutePath, GetRelativePathFromFile, GetRelativePathFromDirectory, PathIsRelative, PathIsAbsolute, IsExternalModuleNameRelative, GetBaseFileName, GetRootLength, CombinePaths, ToFileNameLowerCase, ResolvePath, HasExtension } from "../tspath/path.js";
 import { IsDeclarationFileName, HasImplementationTSFileExtension, FileExtensionIsOneOf, ExtensionIsOneOf, SupportedTSExtensionsWithJsonFlat } from "../tspath/extension.js";
 import type { ComparePathsOptions, Path } from "../tspath/path.js";
 import { GetCommonSourceDirectory, GetComputedCommonSourceDirectory } from "../outputpaths/commonsourcedirectory.js";
@@ -3528,7 +3528,7 @@ export function Program_GetDefaultLibFile(receiver: GoPtr<Program>, path: Path):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.CommonSourceDirectory","kind":"method","status":"implemented","sigHash":"937483ca5bd530054d5ba315e96d4b45935515604e16ae770a62e2b3763ef557","bodyHash":"ce5d989d9263750c8fc36defe77afb694356c59c3ff03816806077126db88349"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.CommonSourceDirectory","kind":"method","status":"implemented","sigHash":"937483ca5bd530054d5ba315e96d4b45935515604e16ae770a62e2b3763ef557","bodyHash":"8d127abef7f7bbd9c7f1e2fb3b9e0c803559826788cf7b9a2ae13c57db621cff"}
  *
  * Go source:
  * func (p *Program) CommonSourceDirectory() string {
@@ -3546,6 +3546,7 @@ export function Program_GetDefaultLibFile(receiver: GoPtr<Program>, path: Path):
  * 			},
  * 			p.GetCurrentDirectory(),
  * 			p.UseCaseSensitiveFileNames(),
+ * 			p.checkSourceFilesBelongToPath,
  * 		)
  * 	})
  * 	return p.commonSourceDirectory
@@ -3566,9 +3567,54 @@ export function Program_CommonSourceDirectory(receiver: GoPtr<Program>): string 
       },
       Program_GetCurrentDirectory(receiver),
       Program_UseCaseSensitiveFileNames(receiver),
+      (sourceFiles, rootDirectory) => Program_checkSourceFilesBelongToPath(receiver, sourceFiles, rootDirectory),
     );
   });
   return receiver!.commonSourceDirectory;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.checkSourceFilesBelongToPath","kind":"method","status":"implemented","sigHash":"8cecb85222182aa47aab6f17ea783e121c7da0c58143b277e78d731b96f8a268","bodyHash":"c5556644b9f6a6e1839e93fc48107775a60195287b62c448a7d6304ca20ddf81"}
+ *
+ * Go source:
+ * func (p *Program) checkSourceFilesBelongToPath(sourceFiles []string, rootDirectory string) bool {
+ * 	allFilesBelongToPath := true
+ * 	for _, file := range sourceFiles {
+ * 		absoluteSourceFilePath := tspath.GetCanonicalFileName(tspath.GetNormalizedAbsolutePath(file, p.GetCurrentDirectory()), p.UseCaseSensitiveFileNames())
+ * 		if !tspath.ContainsPath(rootDirectory, file, p.comparePathsOptions) {
+ * 			p.includeProcessor.addProcessingDiagnostic(&processingDiagnostic{
+ * 				kind: processingDiagnosticKindExplainingFileInclude,
+ * 				data: &includeExplainingDiagnostic{
+ * 					file:    tspath.Path(absoluteSourceFilePath),
+ * 					message: diagnostics.File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files,
+ * 					args:    []any{file, rootDirectory},
+ * 				},
+ * 			})
+ * 			allFilesBelongToPath = false
+ * 		}
+ * 	}
+ *
+ * 	return allFilesBelongToPath
+ * }
+ */
+export function Program_checkSourceFilesBelongToPath(receiver: GoPtr<Program>, sourceFiles: GoSlice<string>, rootDirectory: string): bool {
+  let allFilesBelongToPath = true as bool;
+  for (const file of sourceFiles) {
+    const absoluteSourceFilePath = GetCanonicalFileName(GetNormalizedAbsolutePath(file, Program_GetCurrentDirectory(receiver)), Program_UseCaseSensitiveFileNames(receiver));
+    if (!ContainsPath(rootDirectory, file, receiver!.comparePathsOptions)) {
+      includeProcessor_addProcessingDiagnostic(receiver!.__tsgoEmbedded0!.includeProcessor, {
+        kind: processingDiagnosticKindExplainingFileInclude,
+        data: {
+          file: absoluteSourceFilePath as Path,
+          message: diagnostics.File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files,
+          args: [file, rootDirectory],
+        } as includeExplainingDiagnostic,
+      });
+      allFilesBelongToPath = false as bool;
+    }
+  }
+
+  return allFilesBelongToPath;
 }
 
 /**
