@@ -526,23 +526,16 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
       return { Status: ExitStatusSuccess, Watcher: undefined };
     }
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(configForCompilation)!.Watch)) {
-      // NOTE (fswatch boundary): the new Go threads `commandLineRaw` into
-      // createWatcher(...) and `ctx` into watcher.start(ctx). Both createWatcher
-      // and Watcher_start are part of the fswatch-based watcher rewrite that is
-      // blocked on an architecture decision (host package internal/fswatch is not
-      // in TS), so they remain at their previous signatures here. ctx is threaded
-      // as far as this boundary; commandLineRaw is computed above. When the watcher
-      // rewrite lands, pass commandLineRaw to createWatcher and ctx to Watcher_start.
-      void ctx;
       const watcher = createWatcher(
         sys,
         configForCompilation,
         compilerOptionsFromCommandLine,
+        commandLineRaw,
         reportDiagnostic,
         reportErrorSummary,
         testing,
       );
-      Watcher_start(watcher);
+      Watcher_start(watcher, ctx);
       return { Status: ExitStatusSuccess, Watcher: Watcher_as_tsc_Watcher(watcher) };
     } else if (CompilerOptions_IsIncremental(ParsedCommandLine_CompilerOptions(configForCompilation))) {
       return performIncrementalCompilation(
