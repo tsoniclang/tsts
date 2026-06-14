@@ -4,7 +4,9 @@ import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
 import { Node_ModifierFlags } from "../ast/ast.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
-import { DiagnosticsCollection_Add, NewDiagnosticChain, Diagnostic_SetRelatedInfo, Diagnostic_AddRelatedInfo } from "../ast/diagnostic.js";
+import { NewDiagnosticChain, Diagnostic_SetRelatedInfo, Diagnostic_AddRelatedInfo } from "../ast/diagnostic.js";
+import { Checker_addDiagnostic } from "./checker.js";
+import { CombineSurrogatePairs } from "../stringutil/util.js";
 import { ModifierFlagsPrivate, ModifierFlagsProtected, ModifierFlagsIn, ModifierFlagsOut, ModifierFlagsConst, ModifierFlagsNonPublicAccessibilityModifier } from "../ast/modifierflags.js";
 import type { ModifierFlags } from "../ast/modifierflags.js";
 import type { Symbol } from "../ast/symbol.js";
@@ -79,7 +81,7 @@ import { IntersectionFlagsNoConstraintReduction, CheckModeContextual, CheckModeF
 import { getRelationKey, isFreshLiteralType, containsType, everyType, getMappedTypeModifiers, isSingleElementGenericTupleType, isMutableTupleType, isPartialMappedType, getStartElementCount, getEndElementCount, isConflictingPrivateProperty, countTypes } from "./checker/state.js";
 import type { TypeMapper } from "./mapper.js";
 import type { AccessFlags, ConditionalRoot, ElementFlags, ExportTypeLinks, IndexInfo, Signature, SignatureKind, StructuredType, TemplateLiteralType, Ternary, TupleElementInfo, TupleType, Type, TypeAlias, TypeComparer, TypeFlags, TypeId, TypePredicate, TypePredicateKind, VarianceFlags, VarianceLinks } from "./types.js";
-import { TernaryFalse, TernaryTrue, TernaryMaybe, TernaryUnknown, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTypeVariable, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsStructuredType, TypeFlagsUniqueESSymbol, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsMapped, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, VarianceFlagsAllowsStructuralFallback, AccessFlagsNone, AccessFlagsWriting, AccessFlagsNoIndexSignatures, IndexFlagsNoIndexSignatures, IndexFlagsNoReducibleCheck, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexType, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ElementFlagsRest, ElementFlagsNone, ElementFlagsNonRest, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsMappedType, Type_AsIntrinsicType, Type_AsTypeParameter, SignatureKindCall, SignatureKindConstruct, InterfaceType_TypeParameters, SignatureFlagsAbstract, ObjectFlagsIsNeverIntersection, TypeFormatFlagsNoTypeReduction } from "./types.js";
+import { TernaryFalse, TernaryTrue, TernaryMaybe, TernaryUnknown, TypeFlagsNever, TypeFlagsObject, TypeFlagsString, TypeFlagsNumber, TypeFlagsBigInt, TypeFlagsBoolean, TypeFlagsESSymbol, TypeFlagsStringLiteral, TypeFlagsNumberLiteral, TypeFlagsBigIntLiteral, TypeFlagsBooleanLiteral, TypeFlagsBigIntLike, TypeFlagsBooleanLike, TypeFlagsESSymbolLike, TypeFlagsStringLike, TypeFlagsNumberLike, TypeFlagsEnum, TypeFlagsEnumLiteral, TypeFlagsEnumLike, TypeFlagsUndefined, TypeFlagsNull, TypeFlagsUnionOrIntersection, TypeFlagsVoid, TypeFlagsNonPrimitive, TypeFlagsAny, TypeFlagsUnknown, TypeFlagsSingleton, TypeFlagsStructuredOrInstantiable, TypeFlagsUnion, TypeFlagsIntersection, TypeFlagsConditional, TypeFlagsSubstitution, TypeFlagsIndexedAccess, TypeFlagsLiteral, TypeFlagsTypeParameter, TypeFlagsTypeVariable, TypeFlagsTemplateLiteral, TypeFlagsStringMapping, TypeFlagsInstantiable, TypeFlagsInstantiableNonPrimitive, TypeFlagsUnit, TypeFlagsDefinitelyNonNullable, TypeFlagsNullable, TypeFlagsPrimitive, TypeFlagsIndex, TypeFlagsInstantiablePrimitive, TypeFlagsStringOrNumberLiteralOrUnique, TypeFlagsStructuredType, TypeFlagsUniqueESSymbol, ObjectFlagsObjectLiteralPatternWithComputedProperties, ObjectFlagsFreshLiteral, ObjectFlagsReference, ObjectFlagsAnonymous, ObjectFlagsInstantiated, ObjectFlagsInstantiatedMapped, ObjectFlagsTuple, ObjectFlagsPrimitiveUnion, ObjectFlagsObjectLiteral, ObjectFlagsJsxAttributes, ObjectFlagsJSLiteral, ObjectFlagsNonInferrableType, ObjectFlagsMapped, ObjectFlagsFromTypeNode, VarianceFlagsCovariant, VarianceFlagsContravariant, VarianceFlagsInvariant, VarianceFlagsBivariant, VarianceFlagsIndependent, VarianceFlagsVarianceMask, VarianceFlagsUnmeasurable, VarianceFlagsUnreliable, VarianceFlagsAllowsStructuralFallback, AccessFlagsNone, AccessFlagsWriting, AccessFlagsNoIndexSignatures, IndexFlagsNoIndexSignatures, IndexFlagsNoReducibleCheck, Type_AsLiteralType, Type_AsSubstitutionType, Type_Types, Type_Target, Type_AsIndexType, Type_AsIndexedAccessType, Type_AsConditionalType, Type_AsInterfaceType, Type_AsTypeReference, Type_AsUnionType, Type_Distributed, Type_TargetTupleType, ElementFlagsVariable, ElementFlagsRest, ElementFlagsNone, ElementFlagsNonRest, ObjectFlagsObjectRestType, ObjectFlagsReverseMapped, Type_AsReverseMappedType, TypeFlagsDisjointDomains, Type_AsStringMappingType, Type_AsTemplateLiteralType, Type_AsMappedType, Type_AsIntrinsicType, Type_AsTypeParameter, SignatureKindCall, SignatureKindConstruct, InterfaceType_TypeParameters, SignatureFlagsAbstract, ObjectFlagsIsNeverIntersection, TypeFormatFlagsNoTypeReduction } from "./types.js";
 import { UnionReductionNone } from "./checker/state.js";
 import { Checker_IsEmptyAnonymousObjectType, Checker_isUnknownLikeUnionType, Checker_getBaseTypeOfEnumLikeType, Checker_getRegularTypeOfObjectLiteral, Checker_getIntersectionType, Checker_extractTypesOfKind, Checker_getModifiersTypeFromMappedType, Checker_filterType, Checker_maybeTypeOfKind, Checker_hasBaseType, Checker_isArrayType, Checker_isReadonlyArrayType, Checker_isFunctionObjectType, Checker_getTargetType, Checker_getRegularTypeOfLiteralType, Checker_getPropertiesOfObjectType, Checker_getPropertiesOfUnionOrIntersectionType, Checker_isGenericType, Checker_getReducedType, Checker_getUnionTypeEx, Checker_instantiateTypes, Checker_createPromiseType, Checker_createTypeReference, Checker_checkArrayLiteral, Checker_isTupleLikeType, Checker_getApparentType, Checker_getIntersectionTypeEx, Checker_getNormalizedType, Checker_getTemplateLiteralType, Checker_isArrayLikeType, Checker_isArrayOrTupleType, Checker_isMutableArrayOrTuple, Checker_isGenericMappedType, Checker_isGenericObjectType, Checker_isNonGenericObjectType, Checker_isGenericTupleType, Checker_getCombinedMappedTypeOptionality, Checker_getTemplateTypeFromMappedType, Checker_getTypeWithFacts, Checker_pushContextualType, Checker_popContextualType, Checker_intersectTypes, Checker_getApparentMappedTypeKeys, Checker_isEmptyArrayLiteralType, Checker_isEmptyObjectType, Checker_getTrueTypeFromConditionalType, Checker_getFalseTypeFromConditionalType, Checker_removeMissingType, Checker_getBaseTypeOfLiteralType, Checker_getSuggestedTypeForNonexistentStringLiteralType } from "./checker/types.js";
 import { Checker_checkExpressionForMutableLocation, Checker_getEffectiveCheckNode } from "./checker/syntax-checking.js";
@@ -1109,7 +1111,7 @@ export function createDiagnosticChainFromErrorChain(chain: GoPtr<ErrorChain>, er
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.reportDiagnostic","kind":"method","status":"implemented","sigHash":"894dad158033587ed0a325c337051d877625103b2b72d51a065aa4de1b3047a1","bodyHash":"38a3de5b21bbbddca4fa41912d1853bc0624ffac926970cd178024fa9b9d2f88"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.reportDiagnostic","kind":"method","status":"implemented","sigHash":"894dad158033587ed0a325c337051d877625103b2b72d51a065aa4de1b3047a1","bodyHash":"bc8027543fdeb6b28e534c11bc7074b289b72c6a5cea488b0ba8c2a3ac56fa0f"}
  *
  * Go source:
  * func (c *Checker) reportDiagnostic(diagnostic *ast.Diagnostic, diagnosticOutput *[]*ast.Diagnostic) {
@@ -1127,7 +1129,7 @@ export function Checker_reportDiagnostic(receiver: GoPtr<Checker>, diagnostic: G
     if (diagnosticOutput !== undefined) {
       diagnosticOutput.push(diagnostic);
     } else {
-      DiagnosticsCollection_Add(receiver!.diagnostics, diagnostic);
+      Checker_addDiagnostic(receiver, diagnostic);
     }
   }
 }
@@ -1958,7 +1960,7 @@ export function Checker_hasMatchingRecursionIdentity(receiver: GoPtr<Checker>, t
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::func::getRecursionIdentity","kind":"func","status":"implemented","sigHash":"480caa5e1dce7046727a2542aa372b9e65a9a545802b89f462e45eec4d70440c","bodyHash":"ddbc9346a2ffb1b930e4d3c2440f303b4bb25c346763a63566a9b4f3c7f44905"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::func::getRecursionIdentity","kind":"func","status":"implemented","sigHash":"480caa5e1dce7046727a2542aa372b9e65a9a545802b89f462e45eec4d70440c","bodyHash":"c45a983faaa0541fcc11e01931bceeec1f9155da194fc6b6c5bff31c1323cf52"}
  *
  * Go source:
  * func getRecursionIdentity(t *Type) RecursionId {
@@ -1970,12 +1972,14 @@ export function Checker_hasMatchingRecursionIdentity(receiver: GoPtr<Checker>, t
  * 			// unique AST node.
  * 			return asRecursionId(t.AsTypeReference().node)
  * 		}
- * 		if t.symbol != nil && !(t.objectFlags&ObjectFlagsAnonymous != 0 && t.symbol.Flags&ast.SymbolFlagsClass != 0) {
+ * 		if t.symbol != nil && !(t.objectFlags&ObjectFlagsAnonymous != 0 && t.symbol.Flags&ast.SymbolFlagsClass != 0) && t.objectFlags&ObjectFlagsFromTypeNode == 0 {
  * 			// We track object types that have a symbol by that symbol (representing the origin of the type), but
- * 			// exclude the static side of a class since it shares its symbol with the instance side.
+ * 			// exclude the static sides of classes (since they share their symbols with the instance sides) and type
+ * 			// references that originate in resolution of AST type nodes (since such type nodes cannot be the source
+ * 			// of generative recursion without first being instantiated).
  * 			return asRecursionId(t.symbol)
  * 		}
- * 		if isTupleType(t) {
+ * 		if isTupleType(t) && t.objectFlags&ObjectFlagsFromTypeNode == 0 {
  * 			return asRecursionId(t.Target())
  * 		}
  * 	}
@@ -2004,10 +2008,10 @@ export function getRecursionIdentity(t: GoPtr<Type>): RecursionId {
     if ((t!.objectFlags & ObjectFlagsReference) !== 0 && Type_AsTypeReference(t)!.node !== undefined) {
       return asRecursionId(Type_AsTypeReference(t)!.node);
     }
-    if (t!.symbol !== undefined && !((t!.objectFlags & ObjectFlagsAnonymous) !== 0 && (t!.symbol!.Flags & SymbolFlagsClass) !== 0)) {
+    if (t!.symbol !== undefined && !((t!.objectFlags & ObjectFlagsAnonymous) !== 0 && (t!.symbol!.Flags & SymbolFlagsClass) !== 0) && (t!.objectFlags & ObjectFlagsFromTypeNode) === 0) {
       return asRecursionId(t!.symbol);
     }
-    if (isTupleType(t)) {
+    if (isTupleType(t) && (t!.objectFlags & ObjectFlagsFromTypeNode) === 0) {
       return asRecursionId(Type_Target(t));
     }
   }
@@ -5196,7 +5200,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.inferFromLiteralPartsToTemplateLiteral","kind":"method","status":"implemented","sigHash":"f775ef3f0af4f8266224b735b052ed3eb5820efac6f50f920cd063ec4593524e","bodyHash":"586b456bb34c0f39016f29792030e6296c40e4526fb71f9afc40d5fed37ff4f8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.inferFromLiteralPartsToTemplateLiteral","kind":"method","status":"implemented","sigHash":"f775ef3f0af4f8266224b735b052ed3eb5820efac6f50f920cd063ec4593524e","bodyHash":"7c0a0b3102db6dab117124dc37a39ff778007ff1cac92d3decab1ef005804cd6"}
  *
  * Go source:
  * func (c *Checker) inferFromLiteralPartsToTemplateLiteral(sourceTexts []string, sourceTypes []*Type, target *TemplateLiteralType) []*Type {
@@ -5223,7 +5227,7 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
  * 	addMatch := func(s int, p int) {
  * 		var matchType *Type
  * 		if s == seg {
- * 			matchType = c.getStringLiteralType(getSourceText(s)[pos:p])
+ * 			matchType = c.getStringLiteralType(stringutil.CombineSurrogatePairs(getSourceText(s)[pos:p]))
  * 		} else {
  * 			matchTexts := make([]string, s-seg+1)
  * 			matchTexts[0] = sourceTexts[seg][pos:]
@@ -5255,7 +5259,23 @@ export function Checker_inferTypesFromTemplateLiteralType(receiver: GoPtr<Checke
  * 			addMatch(s, p)
  * 			pos += len(delim)
  * 		} else if sourceText := getSourceText(seg); pos < len(sourceText) {
- * 			_, size := utf8.DecodeRuneInString(sourceText[pos:])
+ * 			// Consume one code point at a time, matching the string iterator
+ * 			// (`[x, ..._] = s`) rather than UTF-16 code-unit indexing (`s[0]`).
+ * 			// DecodeJSStringRune is required rather than utf8.DecodeRuneInString
+ * 			// because a lone surrogate is stored as an invalid-UTF-8 sentinel;
+ * 			// utf8 would treat that as an error and advance a single byte,
+ * 			// breaking the sentinel into stray bytes, whereas DecodeJSStringRune
+ * 			// pulls the whole sentinel off as one code point.
+ * 			//
+ * 			// This intentionally diverges from Strada, which advances one UTF-16
+ * 			// code unit at a time (`s[0]` semantics) and therefore splits a
+ * 			// supplementary code point such as an emoji into its surrogate
+ * 			// halves. If we ever need to match that, expand sourceTexts and
+ * 			// targetTexts into code-unit space up front with a SplitSurrogatePairs
+ * 			// helper (the inverse of CombineSurrogatePairs) and decode by code
+ * 			// unit here; the CombineSurrogatePairs call in addMatch already
+ * 			// recombines captured halves back into canonical form.
+ * 			_, size := stringutil.DecodeJSStringRune(sourceText[pos:])
  * 			addMatch(seg, pos+size)
  * 		} else if seg < lastSourceIndex {
  * 			addMatch(seg+1, 0)
@@ -5291,7 +5311,7 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
   const addMatch = (s: int, p: int): void => {
     let matchType: GoPtr<Type>;
     if (s === seg) {
-      matchType = Checker_getStringLiteralType(receiver, getSourceText(s).slice(pos, p));
+      matchType = Checker_getStringLiteralType(receiver, CombineSurrogatePairs(getSourceText(s).slice(pos, p)));
     } else {
       const matchTexts: string[] = new Array(s - seg + 1);
       matchTexts[0] = sourceTexts[seg]!.slice(pos);
@@ -5327,6 +5347,12 @@ export function Checker_inferFromLiteralPartsToTemplateLiteral(receiver: GoPtr<C
     } else {
       const sourceText = getSourceText(seg);
       if (pos < sourceText.length) {
+        // Go's stringutil.DecodeJSStringRune advances one code point at a time in
+        // byte space (lone surrogate -> sentinel size 3, astral pair -> size 4).
+        // Here pos/size are UTF-16 code-unit offsets (the whole function slices and
+        // indexes in code units), so the code-unit realization is codePointAt: an
+        // astral code point is a surrogate pair (2 units), and a lone surrogate or
+        // BMP char is 1 unit. This matches "consume one code point at a time".
         const cp = sourceText.codePointAt(pos)!;
         const size = cp > 0xFFFF ? 2 : 1;
         addMatch(seg, pos + size);
