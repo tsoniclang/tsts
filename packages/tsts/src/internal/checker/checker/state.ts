@@ -2228,8 +2228,27 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.instantiationCount = 0;
   checker.instantiationDepth = 0;
   checker.inlineLevel = 0;
+  // Go zero-value for the serializationLevel counter. Without this it is undefined, and
+  // `undefined < maxSerializationLevel` is false, so addDiagnostic silently drops every checker
+  // diagnostic (the `{} as Checker` cast hides the missing field from tsc).
+  checker.serializationLevel = 0;
   checker.resolutionStart = 0;
   checker.flowInvocationCount = 0;
+  // Go struct zero-values for counter/flag fields that the incremental `{} as Checker` init
+  // otherwise leaves `undefined` (the cast hides them from tsc). `undefined` silently breaks
+  // bitwise math (`|=`/`&` -> NaN) and bool control flow (`undefined !== false`), which dropped
+  // or corrupted checker diagnostics across the corpus. Pointer/map fields correctly stay
+  // `undefined` (≈ Go nil) and are guarded at their read sites.
+  checker.reliabilityFlags = 0;
+  checker.reverseExpandingFlags = 0;
+  checker.lastGetCombinedNodeFlagsResult = 0;
+  checker.lastGetCombinedModifierFlagsResult = 0;
+  checker.wasCanceled = false as bool;
+  checker.flowAnalysisDisabled = false as bool;
+  checker.inVarianceComputation = false as bool;
+  checker.isInferencePartiallyBlocked = false as bool;
+  checker.saveDeferredDiagnostics = false as bool;
+  checker.lastFlowNodeReachable = false as bool;
   checker.tracer = tracer;
   checker.program = program;
   checker.compilerOptions = program.Options();

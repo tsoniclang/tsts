@@ -2751,8 +2751,11 @@ async function runTranspileInvocations(materialized) {
   for (const invocation of materialized.invocations) {
     const result = await runTstsTranspileApi(materialized.caseDir, invocation);
     diagnostics.push(...result.diagnostics);
+    // Diagnostics are the primary truth for actualErrors; missing output is an additional symptom
+    // (e.g. --isolatedDeclarations blocks .d.ts emit). A case that reports diagnostics while still
+    // emitting all expected outputs must still count as having errors.
     const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
-    if (missingOutputs.length !== 0) {
+    if (result.diagnostics.length !== 0 || missingOutputs.length !== 0) {
       actualErrors = true;
     }
     if (result.exitCode !== 0 && exitCode === 0) {
