@@ -220,6 +220,12 @@ export function Checker_getFlowState(receiver: GoPtr<Checker>): GoPtr<FlowState>
   let f = receiver!.freeFlowState;
   if (f === undefined) {
     f = {} as FlowState;
+    // A fresh FlowState must start at Go zero-values (the recycled path is reset by putFlowState).
+    // Otherwise depth is undefined -> depth++ is NaN so the depth===2000 recursion guard never
+    // fires, and sharedFlowStart is undefined so the shared-flow loop is skipped.
+    f.depth = 0;
+    f.sharedFlowStart = 0;
+    f.reduceLabels = [];
   }
   receiver!.freeFlowState = f.next;
   return f;
