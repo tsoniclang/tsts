@@ -395,7 +395,7 @@ const BASE_METHOD_PROVIDERS = {
   DeclarationData: ["NamedMemberBase", "DeclarationBase"],
   ExportableData: ["ExportableBase"],
   Modifiers: ["NamedMemberBase", "ModifiersBase"],
-  setModifiers: ["NamedMemberBase"],
+  setModifiers: ["NamedMemberBase", "ModifiersBase"],
   Name: ["NamedMemberBase", "ClassLikeBase"],
   LocalsContainerData: ["FunctionLikeWithBodyBase", "FunctionLikeBase", "LocalsContainerBase"],
   FunctionLikeData: ["FunctionLikeWithBodyBase", "FunctionLikeBase"],
