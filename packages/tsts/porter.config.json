@@ -249,6 +249,11 @@
       "reason": "The Go compatibility layer is authored TypeScript infrastructure, not a TS-Go source unit."
     },
     {
+      "match": "packages/tsts/src/internal/fswatch/**",
+      "category": "host-native",
+      "reason": "Authored host-native facade for the upstream internal/fswatch package (out-of-scope OS file-watch internals: fanotify/FSEvents/kqueue/inotify). Exposes the public surface the execute watcher consumes with a stub that throws TSGO_EXTERNAL_FACADE_UNIMPLEMENTED; not a ported TS-Go unit, so it carries no @tsgo-unit metadata."
+    },
+    {
       "match": "packages/tsts/src/**/*.ts",
       "category": "requires-tsgo-unit",
       "reason": "Every source file must carry at least one @tsgo-unit unless an explicit policy allows it."
