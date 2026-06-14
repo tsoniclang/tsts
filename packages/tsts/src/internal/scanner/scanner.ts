@@ -1459,16 +1459,21 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
  */
 export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (b: byte) => bool): void {
   const s = receiver!;
-  const text = byteSlice(s.text, s.__tsgoEmbedded0.pos, s.end);
-  let i = 0 as int;
-  while (i < byteLen(text)) {
-    const b = byteAt(text, i) as byte;
+  // Scan in place over s.text rather than materializing s.text[pos:end] each call. The byte-string
+  // slice is O(rest-of-file) (decode/copy) per call, which is O(n^2) over a large source such as the
+  // bundled lib (TS-Go's Go slice is O(1)). byteAt(s.text, pos) reuses the cached Utf8ByteInfo for
+  // s.text, so this stays O(run). Semantics are identical to the Go: advance over the longest run of
+  // ASCII bytes for which pred holds, stopping at end, the first non-ASCII byte, or the first !pred.
+  const end = s.end;
+  let pos = s.__tsgoEmbedded0.pos;
+  while (pos < end) {
+    const b = byteAt(s.text, pos) as byte;
     if (b >= utf8.RuneSelf || !pred(b)) {
       break;
     }
-    i++;
+    pos++;
   }
-  s.__tsgoEmbedded0.pos += i;
+  s.__tsgoEmbedded0.pos = pos;
 }
 
 /**

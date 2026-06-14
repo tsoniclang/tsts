@@ -2646,6 +2646,8 @@ export function caseDirectoryFragment(testCase) {
   return safePathFragment(`${testCase.corpus ?? "current"}/${testCase.suite}/${configuredCaseName(testCase)}`);
 }
 
+const CASE_TIMEOUT_MS = Number(process.env.TSGO_CASE_TIMEOUT_MS ?? "120000");
+
 async function runTsts(invocation) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [
@@ -2658,6 +2660,13 @@ async function runTsts(invocation) {
     });
     let stdout = "";
     let stderr = "";
+    let timedOut = false;
+    // A single infinite loop in TSTS would otherwise wedge a worker forever and stall the whole
+    // run. Kill a case that exceeds the (generous) budget and surface it as a visible failure.
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGKILL");
+    }, CASE_TIMEOUT_MS);
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
     });
@@ -2665,6 +2674,11 @@ async function runTsts(invocation) {
       stderr += chunk.toString();
     });
     child.on("close", (exitCode, signal) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        resolve({ exitCode: 1, signal: "SIGKILL", stdout, stderr: `${stderr}\nTSTS case timed out after ${CASE_TIMEOUT_MS}ms (likely an infinite loop).` });
+        return;
+      }
       resolve({ exitCode: exitCode ?? 1, signal, stdout, stderr });
     });
   });
