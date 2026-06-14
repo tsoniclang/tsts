@@ -2235,10 +2235,14 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.resolutionStart = 0;
   checker.flowInvocationCount = 0;
   // Go struct zero-values for counter/flag fields that the incremental `{} as Checker` init
-  // otherwise leaves `undefined` (the cast hides them from tsc). `undefined` silently breaks
-  // bitwise math (`|=`/`&` -> NaN) and bool control flow (`undefined !== false`), which dropped
-  // or corrupted checker diagnostics across the corpus. Pointer/map fields correctly stay
-  // `undefined` (≈ Go nil) and are guarded at their read sites.
+  // otherwise leaves `undefined` (the cast hides them from tsc). In JS, `undefined` is only
+  // wrong in comparison / increment / loop-init / strict-bool contexts (`undefined < n` is
+  // false; `undefined++` is NaN; `undefined === false` is false). Bitwise math coerces it
+  // through 0 (`undefined | n === n`, `undefined & n === 0`) and `if (x)` treats it as false,
+  // so flag and `if`-guarded fields tolerate it -- but we still set every one to its Go
+  // zero-value to match the struct exactly and remove the whole class. The proven bug this
+  // fixes is `serializationLevel` (`<`-compared above) silently dropping every diagnostic.
+  // Pointer/map fields correctly stay `undefined` (≈ Go nil) and are guarded at read sites.
   checker.reliabilityFlags = 0;
   checker.reverseExpandingFlags = 0;
   checker.lastGetCombinedNodeFlagsResult = 0;

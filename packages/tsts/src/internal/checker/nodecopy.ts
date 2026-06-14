@@ -7,7 +7,7 @@ import type { Symbol } from "../ast/symbol.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import { KindAnyKeyword, KindAssertKeyword, KindComputedPropertyName, KindJSDocParameterTag, KindJSDocPropertyTag, KindKeyOfKeyword, KindNullKeyword, KindQuestionToken, KindSymbolKeyword, KindUndefinedKeyword, KindUniqueKeyword } from "../ast/generated/kinds.js";
 import { TokenFlagsNone, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
-import { NewArrayTypeNode, NewCallSignatureDeclaration, NewComputedPropertyName, NewConditionalTypeNode, NewConstructSignatureDeclaration, NewConstructorTypeNode, NewFunctionTypeNode, NewIdentifier, NewImportTypeNode, NewIndexedAccessTypeNode, NewJSDocSignature, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewPropertySignatureDeclaration, NewStringLiteral, NewToken, NewTypeLiteralNode, NewTypeOperatorNode, NewTypePredicateNode, NewTypeQueryNode, NewTypeReferenceNode, NewUnionTypeNode } from "../ast/generated/factory.js";
+import { NewArrayTypeNode, NewCallSignatureDeclaration, NewComputedPropertyName, NewConditionalTypeNode, NewConstructSignatureDeclaration, NewConstructorTypeNode, NewFunctionTypeNode, NewIdentifier, NewImportTypeNode, NewIndexedAccessTypeNode, NewJSDocSignature, NewKeywordExpression, NewKeywordTypeNode, NewLiteralTypeNode, NewPropertySignatureDeclaration, NewStringLiteral, NewToken, NewTypeLiteralNode, NewTypeOperatorNode, NewTypePredicateNode, NewTypeQueryNode, NewTypeReferenceNode, NewUnionTypeNode, NodeFactory_UpdateCallSignatureDeclaration, NodeFactory_UpdateComputedPropertyName, NodeFactory_UpdateConditionalTypeNode, NodeFactory_UpdateConstructSignatureDeclaration, NodeFactory_UpdateFunctionTypeNode, NodeFactory_UpdateImportTypeNode, NodeFactory_UpdateIndexedAccessTypeNode, NodeFactory_UpdateJSDocSignature, NodeFactory_UpdateTypeOperatorNode, NodeFactory_UpdateTypePredicateNode, NodeFactory_UpdateTypeQueryNode, NodeFactory_UpdateTypeReferenceNode } from "../ast/generated/factory.js";
 import { AsCallSignatureDeclaration, AsComputedPropertyName, AsConditionalTypeNode, AsConstructSignatureDeclaration, AsConstructorTypeNode, AsFunctionTypeNode, AsIdentifier, AsImportAttributes, AsImportTypeNode, AsIndexSignatureDeclaration, AsIndexedAccessTypeNode, AsJSDocNonNullableType, AsJSDocNullableType, AsJSDocOptionalType, AsJSDocParameterOrPropertyTag, AsJSDocSignature, AsJSDocTypeExpression, AsJSDocTypeLiteral, AsJSDocVariadicType, AsLiteralTypeNode, AsMappedTypeNode, AsMethodSignatureDeclaration, AsParameterDeclaration, AsQualifiedName, AsStringLiteral, AsTypeOperatorNode, AsTypeParameterDeclaration, AsTypePredicateNode, AsTypeQueryNode, AsTypeReferenceNode } from "../ast/generated/casts.js";
 import {
   IsComputedPropertyName,
@@ -922,7 +922,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     }
     return NodeBuilderImpl_setTextRange(
       b,
-      NewIndexedAccessTypeNode(b!.f!, resultObjectType as unknown as GoPtr<never>, visitNode(indexed.IndexType) as unknown as GoPtr<never>),
+      NodeFactory_UpdateIndexedAccessTypeNode(b!.f!, indexed, resultObjectType as unknown as GoPtr<never>, visitNode(indexed.IndexType) as unknown as GoPtr<never>),
       node,
     );
   };
@@ -932,7 +932,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (typeNode === undefined) {
       return undefined;
     }
-    return NodeBuilderImpl_setTextRange(b, NewTypeOperatorNode(b!.f!, typeOperator.Operator, typeNode as unknown as GoPtr<never>), node);
+    return NodeBuilderImpl_setTextRange(b, NodeFactory_UpdateTypeOperatorNode(b!.f!, typeOperator, typeOperator.Operator, typeNode as unknown as GoPtr<never>), node);
   };
   const tryVisitTypeQuery = (node: GoPtr<Node>): GoPtr<Node> => {
     const typeQuery = AsTypeQueryNode(node)!;
@@ -940,7 +940,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (!introducesError) {
       return NodeBuilderImpl_setTextRange(
         b,
-        NewTypeQueryNode(b!.f, exprName as GoPtr<never>, visitNodes(typeQuery.TypeArguments) as GoPtr<never>),
+        NodeFactory_UpdateTypeQueryNode(b!.f, typeQuery, exprName as GoPtr<never>, visitNodes(typeQuery.TypeArguments) as GoPtr<never>),
         node,
       );
     }
@@ -969,7 +969,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     const [introducesError, newName] = trackExistingEntityName(ref.TypeName, undefined);
     const typeArguments = visitNodes(ref.TypeArguments);
     if (!introducesError) {
-      return NodeBuilderImpl_setTextRange(b, NewTypeReferenceNode(b!.f, newName as GoPtr<never>, typeArguments as GoPtr<never>), node);
+      return NodeBuilderImpl_setTextRange(b, NodeFactory_UpdateTypeReferenceNode(b!.f, ref, newName as GoPtr<never>, typeArguments as GoPtr<never>), node);
     }
     const serializedName = NodeBuilderImpl_serializeTypeName(b, ref.TypeName, false, typeArguments);
     if (serializedName !== undefined) {
@@ -1122,8 +1122,9 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       if (specifier !== originalSpec) {
         arg = NewLiteralTypeNode(factory, specifier) as GoPtr<never>;
       }
-      return NewImportTypeNode(
+      return NodeFactory_UpdateImportTypeNode(
         factory,
+        importType,
         importType.IsTypeOf,
         arg,
         visitNode(importType.Attributes) as GoPtr<never>,
@@ -1169,15 +1170,15 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       }
       if (IsCallSignatureDeclaration(visited)) {
         const call = AsCallSignatureDeclaration(visited)!;
-        return NewCallSignatureDeclaration(factory, call.TypeParameters, call.Parameters, newType as GoPtr<never>);
+        return NodeFactory_UpdateCallSignatureDeclaration(factory, call, call.TypeParameters, call.Parameters, newType as GoPtr<never>);
       }
       if (IsJSDocSignature(visited)) {
         const jsdocSig = AsJSDocSignature(visited)!;
-        return NewJSDocSignature(factory, jsdocSig.TypeParameters, jsdocSig.Parameters, newType as GoPtr<never>);
+        return NodeFactory_UpdateJSDocSignature(factory, jsdocSig, jsdocSig.TypeParameters, jsdocSig.Parameters, newType as GoPtr<never>);
       }
       if (IsConstructSignatureDeclaration(visited)) {
         const construct = AsConstructSignatureDeclaration(visited)!;
-        return NewConstructSignatureDeclaration(factory, construct.TypeParameters, construct.Parameters, newType as GoPtr<never>);
+        return NodeFactory_UpdateConstructSignatureDeclaration(factory, construct, construct.TypeParameters, construct.Parameters, newType as GoPtr<never>);
       }
       if (IsIndexSignatureDeclaration(visited)) {
         const index = AsIndexSignatureDeclaration(visited)!;
@@ -1185,7 +1186,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       }
       if (IsFunctionTypeNode(visited)) {
         const fn = AsFunctionTypeNode(visited)!;
-        return NewFunctionTypeNode(factory, fn.TypeParameters, fn.Parameters, newType as GoPtr<never>);
+        return NodeFactory_UpdateFunctionTypeNode(factory, fn, fn.TypeParameters, fn.Parameters, newType as GoPtr<never>);
       }
       if (IsConstructorTypeNode(visited)) {
         const ctor = AsConstructorTypeNode(visited)!;
@@ -1195,7 +1196,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
     if (IsComputedPropertyName(node) && IsEntityNameExpression(AsComputedPropertyName(node)!.Expression)) {
       const [introducesError, result] = trackExistingEntityName(AsComputedPropertyName(node)!.Expression, undefined);
       if (!introducesError) {
-        return NewComputedPropertyName(factory, result as GoPtr<never>);
+        return NodeFactory_UpdateComputedPropertyName(factory, AsComputedPropertyName(node)!, result as GoPtr<never>);
       }
       recoveryBoundary_markError(bound, undefined);
       return visitEachChild(node);
@@ -1212,8 +1213,9 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       } else {
         parameterName = Node_Clone(predicate.ParameterName, factory);
       }
-      return NodeBuilderImpl_setTextRange(b, NewTypePredicateNode(
+      return NodeBuilderImpl_setTextRange(b, NodeFactory_UpdateTypePredicateNode(
         factory,
+        predicate,
         visitNode(predicate.AssertsModifier),
         parameterName as GoPtr<never>,
         visitNode(predicate.Type) as GoPtr<never>,
@@ -1227,7 +1229,7 @@ export function getExistingNodeTreeVisitor(b: GoPtr<NodeBuilderImpl>, bound: GoP
       const trueType = visitNode(conditional.TrueType);
       dispose();
       const falseType = visitNode(conditional.FalseType);
-      return NewConditionalTypeNode(factory, checkType as GoPtr<never>, extendsType as GoPtr<never>, trueType as GoPtr<never>, falseType as GoPtr<never>);
+      return NodeFactory_UpdateConditionalTypeNode(factory, conditional, checkType as GoPtr<never>, extendsType as GoPtr<never>, trueType as GoPtr<never>, falseType as GoPtr<never>);
     }
     if (IsTupleTypeNode(node) || ((b!.ctx!.flags & FlagsMultilineObjectLiterals) === 0 && IsTypeLiteralNode(node)) || IsMappedTypeNode(node)) {
       let result = visitEachChild(node);
