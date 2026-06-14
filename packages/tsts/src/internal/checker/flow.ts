@@ -26,7 +26,7 @@ import type { Symbol } from "../ast/symbol.js";
 import { GetRangeOfTokenAtPosition } from "../scanner/scanner.js";
 import type { SourceFile } from "../ast/ast.js";
 import { The_containing_function_or_module_body_is_too_large_for_control_flow_analysis } from "../diagnostics/generated/messages.js";
-import { DiagnosticsCollection_Add } from "../ast/diagnostic.js";
+import { Checker_addDiagnostic } from "./checker.js";
 import type { CacheHashKey, Checker, keyBuilder, TypeFacts, UnionReduction } from "./checker/state.js";
 import type { CachedTypeKey, NarrowedTypeKey, AssignmentReducedKey } from "./checker/state.js";
 import { CachedTypeKindEvolvingArrayType, CheckModeNormal, TypeFactsAllTypeofNE, TypeFactsEQNull, TypeFactsEQUndefined, TypeFactsEQUndefinedOrNull, TypeFactsFalsy, TypeFactsNENull, TypeFactsNEUndefined, TypeFactsNEUndefinedOrNull, TypeFactsNone, TypeFactsTruthy, TypeFactsTypeofEQBigInt, TypeFactsTypeofEQBoolean, TypeFactsTypeofEQFunction, TypeFactsTypeofEQHostObject, TypeFactsTypeofEQNumber, TypeFactsTypeofEQObject, TypeFactsTypeofEQString, TypeFactsTypeofEQSymbol, TypeFactsTypeofNEBigInt, TypeFactsTypeofNEBoolean, TypeFactsTypeofNEFunction, TypeFactsTypeofNEHostObject, TypeFactsTypeofNENumber, TypeFactsTypeofNEObject, TypeFactsTypeofNEString, TypeFactsTypeofNESymbol } from "./checker/state.js";
@@ -3461,21 +3461,21 @@ export function Checker_createFinalArrayType(receiver: GoPtr<Checker>, elementTy
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.reportFlowControlError","kind":"method","status":"implemented","sigHash":"68ed81198cbced5a42afc2c55cfb67a63d396056ca54bd7eb77ddd22275f91b5","bodyHash":"bdfffaa971ccc499e387ba2e169dbb245495969e295c237ab0763a923f2090e1"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.reportFlowControlError","kind":"method","status":"implemented","sigHash":"68ed81198cbced5a42afc2c55cfb67a63d396056ca54bd7eb77ddd22275f91b5","bodyHash":"9891d9d77ef6a30a484b82f09b41483c4f82ee8012e11874ed76fbc3660e70d7"}
  *
  * Go source:
  * func (c *Checker) reportFlowControlError(node *ast.Node) {
  * 	block := ast.FindAncestor(node, ast.IsFunctionOrModuleBlock)
  * 	sourceFile := ast.GetSourceFileOfNode(node)
  * 	span := scanner.GetRangeOfTokenAtPosition(sourceFile, block.StatementList().Pos())
- * 	c.diagnostics.Add(ast.NewDiagnostic(sourceFile, span, diagnostics.The_containing_function_or_module_body_is_too_large_for_control_flow_analysis))
+ * 	c.addDiagnostic(ast.NewDiagnostic(sourceFile, span, diagnostics.The_containing_function_or_module_body_is_too_large_for_control_flow_analysis))
  * }
  */
 export function Checker_reportFlowControlError(receiver: GoPtr<Checker>, node: GoPtr<Node>): void {
   const block = FindAncestor(node, IsFunctionOrModuleBlock);
   const sourceFile = GetSourceFileOfNode(node);
   const span = GetRangeOfTokenAtPosition(sourceFile, NodeList_Pos(Node_StatementList(block)));
-  DiagnosticsCollection_Add(receiver!.diagnostics, NewDiagnostic(sourceFile, span, The_containing_function_or_module_body_is_too_large_for_control_flow_analysis));
+  Checker_addDiagnostic(receiver, NewDiagnostic(sourceFile, span, The_containing_function_or_module_body_is_too_large_for_control_flow_analysis));
 }
 
 /**

@@ -40,7 +40,7 @@ import {
 import { NodeBuilderImpl_enterSignatureScope } from "./nodebuilderscopes.js";
 import { NodeBuilderImpl_expandSymbolForHover } from "./nodebuilder_hover.js";
 import { NodeBuilderImpl_tryJSTypeNodeToTypeNode } from "./nodecopy.js";
-import { Node_ModifierFlags, NodeFactory_NewModifier, NodeFactory_UpdateClassDeclaration } from "../ast/ast.js";
+import { Node_ModifierFlags, NodeFactory_NewModifier, NodeFactory_ReleaseArenas, NodeFactory_UpdateClassDeclaration } from "../ast/ast.js";
 import { AsClassDeclaration } from "../ast/generated/casts.js";
 import { IsClassExpression, IsEnumDeclaration, IsInterfaceDeclaration, IsModuleDeclaration } from "../ast/generated/predicates.js";
 import { NodeFactory_NewModifierList, Node_Modifiers } from "../ast/spine.js";
@@ -723,15 +723,29 @@ export function NewNodeBuilderEx(ch: GoPtr<Checker>, e: GoPtr<EmitContext_3f6f58
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::Checker.getNodeBuilder","kind":"method","status":"implemented","sigHash":"edda71033b2e42b9e4df5df19ec4868057afacb05bdfa47dcd6124225000a4f9","bodyHash":"3907fd354632cf5b05aacd5bc7172046670b2762c2dceb3a6835082396877676"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/nodebuilder.go::method::Checker.getNodeBuilder","kind":"method","status":"implemented","sigHash":"0f65596090092dce318a6048e2eddba4fe1bc58ff3308455575c96cd36759d4b","bodyHash":"f51ac1e66f8b3c07710412d0f975205a98d2f302cb623ea3c51cd7c4cde70b15"}
  *
  * Go source:
- * func (c *Checker) getNodeBuilder() *NodeBuilder {
- * 	return c.getNodeBuilderEx(nil /*idToSymbol* /)
+ * func (c *Checker) getNodeBuilder() (*NodeBuilder, func()) {
+ * 	releaseNodes := func() {
+ * 		c.typeToStringNodebuilder.EmitContext().Factory.ReleaseArenas() // Allow any allocated nodes to be freed if they're no longer in a cache
+ * 	}
+ * 	if c.typeToStringNodebuilder != nil {
+ * 		return c.typeToStringNodebuilder, releaseNodes
+ * 	}
+ * 	c.typeToStringNodebuilder = c.getNodeBuilderEx(nil /*idToSymbol* /)
+ * 	return c.typeToStringNodebuilder, releaseNodes
  * }
  */
-export function Checker_getNodeBuilder(receiver: GoPtr<Checker>): GoPtr<NodeBuilder> {
-  return Checker_getNodeBuilderEx(receiver, new globalThis.Map() as GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>);
+export function Checker_getNodeBuilder(receiver: GoPtr<Checker>): [GoPtr<NodeBuilder>, () => void] {
+  const releaseNodes = (): void => {
+    NodeFactory_ReleaseArenas(NodeBuilder_EmitContext(receiver!.typeToStringNodebuilder)!.Factory!.AsNodeFactory()); // Allow any allocated nodes to be freed if they're no longer in a cache
+  };
+  if (receiver!.typeToStringNodebuilder !== undefined) {
+    return [receiver!.typeToStringNodebuilder, releaseNodes];
+  }
+  receiver!.typeToStringNodebuilder = Checker_getNodeBuilderEx(receiver, new globalThis.Map() as GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>);
+  return [receiver!.typeToStringNodebuilder, releaseNodes];
 }
 
 /**
