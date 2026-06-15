@@ -1026,6 +1026,11 @@ test("parseArgs validates supported suites", () => {
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "project"]).suite, "project");
   assert.equal(parseArgs(["--corpus", "typescript", "--suite", "transpile"]).suite, "transpile");
   assert.equal(parseArgs(["--exact-baselines"]).exactBaselines, true);
+  // Weak mode removed: exact-baseline comparison is the default (and only) mode.
+  assert.equal(parseArgs([]).exactBaselines, true);
+  // Default concurrency is all cores; --jobs 1 selects serial.
+  assert.ok(parseArgs([]).jobs >= 1);
+  assert.equal(parseArgs(["--jobs", "1"]).jobs, 1);
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
