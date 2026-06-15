@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { spawn, fork } from "node:child_process";
 import { cpus } from "node:os";
-import { dirname, join, posix as posixPath, relative, sep } from "node:path";
+import { dirname, isAbsolute, join, posix as posixPath, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { appendFile, cp, mkdir, readFile, readdir, stat, symlink, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
@@ -250,6 +251,10 @@ export function parseArgs(argv) {
     // This is the provable on-disk-coverage gate; default off (harness-only fast
     // path) since 0 divergences over the corpus proves the two paths equivalent.
     verifyOnDisk: false,
+    // Resume a suspended run: path to a prior reportRoot. The runner skips cases
+    // already recorded in that run's results.ndjson and runs only the remainder,
+    // appending to the same file. Empty = fresh run.
+    resume: "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -272,6 +277,8 @@ export function parseArgs(argv) {
       parsed.exactBaselines = true;
     } else if (arg === "--verify-on-disk") {
       parsed.verifyOnDisk = true;
+    } else if (arg === "--resume") {
+      parsed.resume = argv[++index] ?? "";
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -304,6 +311,7 @@ Options:
   --fail-fast                         Stop after the first failure.
   --exact-baselines                   Deprecated no-op: exact-baseline comparison is always on (weak mode removed).
   --verify-on-disk                    Also run the real on-disk CLI compile per case and prove it matches the in-memory harness (error verdict + emitted .js/.d.ts). Full on-disk-coverage gate; default off (fast harness-only path).
+  --resume <reportRoot>               Resume a suspended run: skip cases already recorded in that run's results.ndjson and run only the remainder. Re-use the SAME --corpus/--suite/--filter/--limit. To suspend, just stop the process.
   --inventory                         Print the tracked upstream test universe and exit.
 `);
 }
@@ -2946,6 +2954,40 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
 // leaves a complete machine-readable record of everything it finished. Each
 // NDJSON line is the results.json record plus a `caseIndex` field recording the
 // case's position in discovery order (workers finish out of order).
+// Stable identifier for a discovered case (independent of position in the list):
+// used to verify a --resume target points at the SAME case set the suspended run
+// was built from, so recorded caseIndex values still line up.
+function caseIdentifier(testCase) {
+  return `${testCase.corpus}/${testCase.suite}/${testCase.relativePath}#${testCase.configurationName ?? ""}`;
+}
+
+function hashCaseIds(testCases) {
+  return createHash("sha256").update(testCases.map(caseIdentifier).join("\n")).digest("hex");
+}
+
+// Load the set of caseIndex values already durably recorded in a prior run's
+// results.ndjson (each completed case appends exactly one line tagged with its index).
+function loadCompletedCaseIndices(resultsPath) {
+  const done = new Set();
+  if (!existsSync(resultsPath)) {
+    return done;
+  }
+  for (const line of readFileSync(resultsPath, "utf8").split("\n")) {
+    if (line.trim() === "") {
+      continue;
+    }
+    try {
+      const record = JSON.parse(line);
+      if (typeof record.caseIndex === "number") {
+        done.add(record.caseIndex);
+      }
+    } catch {
+      // Ignore a truncated trailing line (killed mid-append) — that case just re-runs.
+    }
+  }
+  return done;
+}
+
 // Process-pool runner. Each "job" is a long-lived worker process (this same
 // script re-forked with TSGO_SUITE_WORKER=1) that loads the compiler + harness
 // once and then evaluates whole cases (emit + exact-baseline assembly +
@@ -2955,9 +2997,13 @@ function renderTranspileInvocationOutput(invocation, result, missingOutputs) {
 // busy. --jobs sets the pool size (default = all cores; --jobs 1 = serial).
 // Results stream to results.ndjson tagged with caseIndex, so discovery order is
 // restored on read regardless of completion order.
-async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options) {
+async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options, doneIndices = new Set()) {
   const resultsPath = join(reportRoot, "results.ndjson");
-  await writeFile(resultsPath, "");
+  const resuming = doneIndices.size > 0;
+  if (!resuming) {
+    // Fresh run truncates; resume keeps the prior results and appends the remainder.
+    await writeFile(resultsPath, "");
+  }
   const total = testCases.length;
   // Backstop for an in-process hang inside a worker (e.g. an infinite loop in
   // the baseline assembly that the CLI's own timeout can't catch): kill+replace
@@ -2965,7 +3011,7 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options)
   // surface as themselves first.
   const POOL_CASE_TIMEOUT_MS = Number(process.env.TSGO_POOL_TIMEOUT_MS ?? "300000");
   let appendChain = Promise.resolve();
-  let completed = 0;
+  let completed = doneIndices.size;
   let cursor = 0;
   let stopped = false;
 
@@ -2994,7 +3040,7 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options)
     stderr,
   });
 
-  if (total === 0) {
+  if (total === 0 || completed >= total) {
     return { resultsPath, completed };
   }
 
@@ -3039,6 +3085,10 @@ async function runQueue(testCases, runRoot, reportRoot, jobs, failFast, options)
       };
 
       const assignNext = () => {
+        // Skip cases already recorded by a suspended run (--resume).
+        while (cursor < total && doneIndices.has(cursor)) {
+          cursor += 1;
+        }
         if (stopped || cursor >= total) {
           try { child.send({ type: "shutdown" }); } catch { try { child.kill(); } catch {} }
           return;
@@ -3312,22 +3362,59 @@ async function main() {
     return;
   }
   const testCases = await discoverCases(options);
-  const timestamp = new Date().toISOString().replaceAll(":", "").replace(".", "-").replace("Z", `-${process.pid}`);
-  const reportRoot = join(repoRoot, ".temp/tsgo-suite", timestamp);
+  let reportRoot;
+  let doneIndices = new Set();
+  if (options.resume !== "") {
+    // Resume a suspended run: reuse its reportRoot, verify the case set is identical
+    // (so recorded caseIndex values still line up), and skip the cases it recorded.
+    reportRoot = isAbsolute(options.resume) ? options.resume : join(repoRoot, options.resume);
+    const configPath = join(reportRoot, "run-config.json");
+    if (!existsSync(configPath)) {
+      throw new Error(`Cannot resume: no run-config.json in ${reportRoot}.`);
+    }
+    const config = JSON.parse(readFileSync(configPath, "utf8"));
+    const mismatched = [];
+    if (config.corpus !== options.corpus) mismatched.push(`corpus(${config.corpus} != ${options.corpus})`);
+    if (config.suite !== options.suite) mismatched.push(`suite(${config.suite} != ${options.suite})`);
+    if (config.filter !== options.filter) mismatched.push(`filter(${config.filter} != ${options.filter})`);
+    if (config.limit !== options.limit) mismatched.push(`limit(${config.limit} != ${options.limit})`);
+    if (mismatched.length !== 0) {
+      throw new Error(`Cannot resume: run options differ from the suspended run [${mismatched.join(", ")}]. Re-run --resume with matching --corpus/--suite/--filter/--limit.`);
+    }
+    if (config.total !== testCases.length || config.caseIdsHash !== hashCaseIds(testCases)) {
+      throw new Error(`Cannot resume: the discovered case set changed since suspend (corpus/testdata drift). Start a fresh run.`);
+    }
+    doneIndices = loadCompletedCaseIndices(join(reportRoot, "results.ndjson"));
+  } else {
+    const timestamp = new Date().toISOString().replaceAll(":", "").replace(".", "-").replace("Z", `-${process.pid}`);
+    reportRoot = join(repoRoot, ".temp/tsgo-suite", timestamp);
+  }
   const caseRootForRun = join(reportRoot, "cases");
   await mkdir(reportRoot, { recursive: true });
   await mkdir(caseRootForRun, { recursive: true });
+  if (options.resume === "") {
+    // Record this run's identity so it can be resumed later; resume refuses if the
+    // case set differs.
+    await writeFile(join(reportRoot, "run-config.json"), JSON.stringify({
+      corpus: options.corpus,
+      suite: options.suite,
+      filter: options.filter,
+      limit: options.limit,
+      total: testCases.length,
+      caseIdsHash: hashCaseIds(testCases),
+    }));
+  }
 
   if (!existsSync(cliPath)) {
     throw new Error(`TSTS CLI not found at ${cliPath}. Run TSTS emit first.`);
   }
-  console.log(`TSTS TS-Go suite run`);
-  console.log(`cases=${testCases.length} corpus=${options.corpus} suite=${options.suite} jobs=${options.jobs}`);
+  console.log(`TSTS TS-Go suite run${options.resume !== "" ? " (RESUME)" : ""}`);
+  console.log(`cases=${testCases.length} corpus=${options.corpus} suite=${options.suite} jobs=${options.jobs}${doneIndices.size > 0 ? ` resumeSkip=${doneIndices.size}` : ""}`);
   console.log(`upstreamInScope=${inventory.typeScriptCases.inScope + inventory.baselines.inScope + inventory.goTests.inScope} upstreamExcluded=${inventory.typeScriptCases.outOfScope + inventory.baselines.outOfScope + inventory.goTests.outOfScope}`);
   console.log(`caseRoot=${caseRootForRun}`);
   console.log(`reportRoot=${reportRoot}`);
 
-  const run = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options);
+  const run = await runQueue(testCases, caseRootForRun, reportRoot, options.jobs, options.failFast, options, doneIndices);
   const summary = await writeReports(reportRoot, run.resultsPath, inventory, caseRootForRun);
   console.log(`SUMMARY total=${summary.total} passed=${summary.passed} failed=${summary.failed}`);
   if (process.env.TSGO_HOLD_SECONDS !== undefined) {
