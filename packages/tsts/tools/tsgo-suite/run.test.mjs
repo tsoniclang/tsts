@@ -1031,6 +1031,9 @@ test("parseArgs validates supported suites", () => {
   // Default concurrency is all cores; --jobs 1 selects serial.
   assert.ok(parseArgs([]).jobs >= 1);
   assert.equal(parseArgs(["--jobs", "1"]).jobs, 1);
+  // On-disk verification is opt-in (default off = fast harness-only path).
+  assert.equal(parseArgs([]).verifyOnDisk, false);
+  assert.equal(parseArgs(["--verify-on-disk"]).verifyOnDisk, true);
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);

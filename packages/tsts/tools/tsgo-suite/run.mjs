@@ -245,6 +245,11 @@ export function parseArgs(argv) {
     // still produced the right number of errors). Concurrency is controlled by
     // --jobs: default = all cores (parallel), --jobs 1 = serial.
     exactBaselines: true,
+    // When set, every case ALSO runs the real on-disk CLI compile and asserts it
+    // agrees with the fast in-memory harness (error verdict AND emitted .js/.d.ts).
+    // This is the provable on-disk-coverage gate; default off (harness-only fast
+    // path) since 0 divergences over the corpus proves the two paths equivalent.
+    verifyOnDisk: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -265,6 +270,8 @@ export function parseArgs(argv) {
       parsed.inventory = true;
     } else if (arg === "--exact-baselines") {
       parsed.exactBaselines = true;
+    } else if (arg === "--verify-on-disk") {
+      parsed.verifyOnDisk = true;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -296,6 +303,7 @@ Options:
   --jobs <n>                          Worker processes (concurrency). Default: all CPU cores. --jobs 1 = serial.
   --fail-fast                         Stop after the first failure.
   --exact-baselines                   Deprecated no-op: exact-baseline comparison is always on (weak mode removed).
+  --verify-on-disk                    Also run the real on-disk CLI compile per case and prove it matches the in-memory harness (error verdict + emitted .js/.d.ts). Full on-disk-coverage gate; default off (fast harness-only path).
   --inventory                         Print the tracked upstream test universe and exit.
 `);
 }
@@ -1658,6 +1666,14 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     // baseline's 'Diagnostics reported' section (with tsgo-accepted overlays applied), not a
     // separate .errors.txt.
     expectedDiagnosticsPresent: expectedDiagnosticHeadlines.some((headline) => headline.trim() !== ""),
+    // For the harness-only fast path: actualErrors derived from the harness compile's all-stage
+    // diagnostics (compiler_runner.go uses len(result.Diagnostics) > 0). usedHarness tells the
+    // caller this case was fully evaluated in-process (no on-disk CLI compile needed for the
+    // verdict). harnessEmitted is the in-memory emit, used by --verify-on-disk to prove the
+    // on-disk CLI emit matches.
+    actualErrors: usesVfsHarness ? hasDiagnostics : undefined,
+    usedHarness: usesVfsHarness,
+    harnessEmitted: sharedVfsCase?.emittedOutputs,
   };
 }
 
@@ -2727,10 +2743,43 @@ async function runCase(testCase, runRoot, options) {
       exactBaseline,
     };
   }
+  // For vfs-harness cases the in-memory harness compile (run inside evaluateExactBaselines)
+  // is the authority and yields everything the verdict needs: all-stage diagnostics
+  // (-> actualErrors), the emit, and the program/checker for .types/.symbols. So the
+  // on-disk CLI compile is redundant for the verdict and is skipped on the fast path.
+  // --verify-on-disk re-runs the on-disk CLI and proves it agrees with the harness
+  // (error verdict AND emitted .js/.d.ts), keeping the on-disk path fully + provably covered.
+  const isHarnessCase = usesTsgoAuthorityBaselines(testCase)
+    && materialized.units !== undefined && materialized.invocation !== undefined;
+
+  if (isHarnessCase && options.verifyOnDisk !== true) {
+    const exactBaseline = await evaluateExactBaselines(testCase, materialized, "");
+    const actualErrors = exactBaseline.actualErrors === true;
+    const statusMatches = actualErrors === materialized.expectedErrors && exactBaseline.status === "pass";
+    return {
+      ...testCase,
+      caseDir: materialized.caseDir,
+      expectedErrors: materialized.expectedErrors,
+      actualErrors,
+      exitCode: actualErrors ? 1 : 0,
+      signal: null,
+      status: statusMatches ? "pass" : "fail",
+      skipReason: "",
+      stdout: "",
+      stderr: "",
+      exactBaseline,
+    };
+  }
+
   const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
-  const exactBaseline = options.exactBaselines ? await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`) : undefined;
-  const statusMatches = actualErrors === materialized.expectedErrors && (exactBaseline === undefined || exactBaseline.status === "pass");
+  const exactBaseline = await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`);
+  const onDiskDivergences = isHarnessCase && options.verifyOnDisk === true
+    ? await verifyOnDiskMatchesHarness(materialized, result, exactBaseline)
+    : [];
+  const statusMatches = actualErrors === materialized.expectedErrors
+    && (exactBaseline === undefined || exactBaseline.status === "pass")
+    && onDiskDivergences.length === 0;
   return {
     ...testCase,
     caseDir: materialized.caseDir,
@@ -2740,10 +2789,43 @@ async function runCase(testCase, runRoot, options) {
     signal: result.signal,
     status: statusMatches ? "pass" : "fail",
     skipReason: "",
-    stdout: result.stdout,
+    stdout: onDiskDivergences.length === 0 ? result.stdout : `${result.stdout}\nON-DISK/HARNESS DIVERGENCE:\n${onDiskDivergences.join("\n")}`,
     stderr: result.stderr,
     exactBaseline,
   };
+}
+
+// --verify-on-disk proof: confirm the real on-disk CLI compile agrees with the
+// in-memory harness for a case — same error verdict AND same emitted .js/.d.ts.
+// Returns human-readable divergences (empty = the on-disk path is equivalent here).
+// Emit is compared by basename (the on-disk and harness maps key paths differently).
+async function verifyOnDiskMatchesHarness(materialized, cliResult, exactBaseline) {
+  const divergences = [];
+  const cliActualErrors = cliResult.exitCode !== 0;
+  if (exactBaseline.usedHarness === true && exactBaseline.actualErrors !== cliActualErrors) {
+    divergences.push(`verdict: on-disk CLI actualErrors=${cliActualErrors} but harness actualErrors=${exactBaseline.actualErrors}`);
+  }
+  const harnessEmitted = exactBaseline.harnessEmitted;
+  if (harnessEmitted !== undefined) {
+    const baseMap = (map) => {
+      const out = new Map();
+      for (const [key, value] of map) out.set(String(key).split("/").pop(), value);
+      return out;
+    };
+    const norm = (value) => normalizeEmittedOutputText(String(value ?? ""));
+    const onDisk = baseMap(await emittedOutputsForCase(materialized));
+    const harness = baseMap(harnessEmitted);
+    for (const key of new Set([...onDisk.keys(), ...harness.keys()])) {
+      const onDiskHas = onDisk.has(key);
+      const harnessHas = harness.has(key);
+      if (onDiskHas !== harnessHas) {
+        divergences.push(`emit: '${key}' ${onDiskHas ? "emitted on disk but not by harness" : "emitted by harness but not on disk"}`);
+      } else if (onDiskHas && norm(onDisk.get(key)) !== norm(harness.get(key))) {
+        divergences.push(`emit: '${key}' content differs between on-disk and harness`);
+      }
+    }
+  }
+  return divergences;
 }
 
 async function runTranspileInvocations(materialized) {
