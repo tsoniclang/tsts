@@ -1034,6 +1034,9 @@ test("parseArgs validates supported suites", () => {
   // On-disk verification is opt-in (default off = fast harness-only path).
   assert.equal(parseArgs([]).verifyOnDisk, false);
   assert.equal(parseArgs(["--verify-on-disk"]).verifyOnDisk, true);
+  // Resume is off by default; --resume takes the prior reportRoot.
+  assert.equal(parseArgs([]).resume, "");
+  assert.equal(parseArgs(["--resume", ".temp/tsgo-suite/x"]).resume, ".temp/tsgo-suite/x");
   assert.equal(parseArgs(["--inventory"]).inventory, true);
   assert.throws(() => parseArgs(["--suite", "fourslash"]), /Unsupported suite/);
   assert.throws(() => parseArgs(["--corpus", "typescript", "--suite", "projects"]), /Unsupported suite/);
