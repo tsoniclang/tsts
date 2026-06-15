@@ -1281,13 +1281,13 @@ function interfaceType(members) {
 // AST node/data/factory/etc emitter tests (free-fn/adapter model).
 // ───────────────────────────────────────────────────────────────────────────
 
-test("ast-schema-model: alias derivation matches ast_generated.go (231 node + 71 union + 23 list)", () => {
+test("ast-schema-model: alias derivation matches ast_generated.go (231 node + 72 union + 23 list)", () => {
   const ast = JSON.parse(readFileSync(resolveRepo("packages/tsts/schema/tsgo/ast.json"), "utf8"));
   const schema = new AstSchema(ast);
   const nodeAliasCount = schema.nodeNames().length
     + schema.nodeNames().reduce((acc, n) => acc + schema.instantiationAliasesOf(n).length, 0);
   assert.equal(nodeAliasCount, 231);
-  assert.equal(Object.keys(schema.aliases).length, 71);
+  assert.equal(Object.keys(schema.aliases).length, 72);
   assert.equal(Object.keys(schema.listAliases).length, 23);
 });
 

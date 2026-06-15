@@ -37,7 +37,7 @@ import { TSFalse, TSTrue } from "../core/tristate.js";
 import { Version } from "../core/version.js";
 import * as diagnostics from "../diagnostics/generated/messages.js";
 import type { Message } from "../diagnostics/diagnostics.js";
-import { InfoCache_Get, InfoCache_Set, InfoCacheEntry_Exists, PackageJson_GetVersionPaths, VersionPaths_Exists, VersionPaths_GetPaths } from "../packagejson/cache.js";
+import { InfoCache_Get, InfoCache_Set, InfoCacheEntry_Exists, InfoCacheEntry_WithPackageDirectory, PackageJson_GetVersionPaths, VersionPaths_Exists, VersionPaths_GetPaths } from "../packagejson/cache.js";
 import type { InfoCache, InfoCacheEntry, PackageJson, VersionPaths } from "../packagejson/cache.js";
 import { Expected_ActualJSONType, Expected_ExpectedJSONType, Expected_GetValue, Expected_IsPresent, Expected_IsValid } from "../packagejson/expected.js";
 import type { Expected } from "../packagejson/expected.js";
@@ -2017,7 +2017,7 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.tryLoadInputFileForPath","kind":"method","status":"implemented","sigHash":"73cc54880646df80cb71846074c51f8586d37214897e17b4a3bebf5fb82525bb","bodyHash":"0784025014f3c99d80902bd5b5556aa2aa8c885c735f71b05d8d6592884f8bf8"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.tryLoadInputFileForPath","kind":"method","status":"implemented","sigHash":"73cc54880646df80cb71846074c51f8586d37214897e17b4a3bebf5fb82525bb","bodyHash":"216a2d322e17ee130a12773537c72f056310cb37eb0d753aafddf0762eaec4e9"}
  *
  * Go source:
  * func (r *resolutionState) tryLoadInputFileForPath(finalPath string, entry string, packagePath string, isImports bool) *resolved {
@@ -2066,7 +2066,10 @@ export function resolutionState_loadModuleFromTargetExportOrImport(receiver: GoP
  * 				CurrentDirectory:          r.resolver.host.GetCurrentDirectory(),
  * 			}) {
  * 				// The matched export is looking up something in either the out declaration or js dir, now map the written path back into the source dir and source extension
- * 				pathFragment := finalPath[len(candidateDir)+1:] // +1 to also remove directory separator
+ * 				var pathFragment string
+ * 				if len(finalPath) > len(candidateDir) {
+ * 					pathFragment = finalPath[len(candidateDir)+1:] // +1 to also remove directory separator
+ * 				}
  * 				possibleInputBase := tspath.CombinePaths(rootDir, pathFragment)
  * 				jsAndDtsExtensions := []string{tspath.ExtensionMjs, tspath.ExtensionCjs, tspath.ExtensionJs, tspath.ExtensionJson, tspath.ExtensionDmts, tspath.ExtensionDcts, tspath.ExtensionDts}
  * 				for _, ext := range jsAndDtsExtensions {
@@ -2132,7 +2135,10 @@ export function resolutionState_tryLoadInputFileForPath(receiver: GoPtr<resoluti
         UseCaseSensitiveFileNames: receiver!.resolver!.host.FS().UseCaseSensitiveFileNames(),
         CurrentDirectory: receiver!.resolver!.host.GetCurrentDirectory(),
       })) {
-        const pathFragment = finalPath.slice(candidateDir.length + 1);
+        let pathFragment = "";
+        if (finalPath.length > candidateDir.length) {
+          pathFragment = finalPath.slice(candidateDir.length + 1);
+        }
         const possibleInputBase = tspath.CombinePaths(rootDir, pathFragment);
         const jsAndDtsExtensions = [extension.ExtensionMjs, extension.ExtensionCjs, extension.ExtensionJs, extension.ExtensionJson, extension.ExtensionDmts, extension.ExtensionDcts, extension.ExtensionDts];
         for (const ext of jsAndDtsExtensions) {
@@ -2343,7 +2349,7 @@ export function resolutionState_loadModuleFromImmediateNodeModulesDirectory(rece
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadModuleFromSpecificNodeModulesDirectory","kind":"method","status":"implemented","sigHash":"78802dbc4ebad8c03b6098a429ea1131f7923daa173003c9998aba2bc033710a","bodyHash":"df680e53f050e147f113fb4ca47515db747d7392895981907467832d5e75b980"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadModuleFromSpecificNodeModulesDirectory","kind":"method","status":"implemented","sigHash":"78802dbc4ebad8c03b6098a429ea1131f7923daa173003c9998aba2bc033710a","bodyHash":"e7a46b030a4aa5beb48ad9024b8c6d4fa00877f0cb0ee3753e4d08623c67e899"}
  *
  * Go source:
  * func (r *resolutionState) loadModuleFromSpecificNodeModulesDirectory(ext extensions, moduleName string, nodeModulesDirectory string) *resolved {
@@ -2400,7 +2406,6 @@ export function resolutionState_loadModuleFromImmediateNodeModulesDirectory(rece
  * 			fromDirectory.packageId = r.getPackageId(fromDirectory.path, packageInfo)
  * 			return fromDirectory
  * 		}
- * 		// !!! this is ported exactly, but checking for null seems wrong?
  * 		if rest == "" && packageInfo.Exists() &&
  * 			(packageInfo.Contents.Exports.Type == packagejson.JSONValueTypeNotPresent || packageInfo.Contents.Exports.Type == packagejson.JSONValueTypeNull) &&
  * 			r.esmMode {
@@ -2425,11 +2430,13 @@ export function resolutionState_loadModuleFromImmediateNodeModulesDirectory(rece
  * 		r.resolvedPackageDirectory = true
  * 		if r.features&NodeResolutionFeaturesExports != 0 &&
  * 			packageInfo.Exists() &&
- * 			packageInfo.Contents.Exports.Type != packagejson.JSONValueTypeNotPresent {
- * 			// package exports are higher priority than file/directory/typesVersions lookups and (and, if there's exports present, blocks them)
+ * 			!packageInfo.Contents.Exports.IsFalsy() {
+ * 			// package exports are higher priority than file/directory/typesVersions lookups and (and, if there's exports present*, blocks them)
+ * 			// *Well, weirdly enough a top-level `"exports": null` does NOT block fallback resolution.
+ * 			// https://github.com/microsoft/TypeScript/pull/49327
  * 			return r.loadModuleFromExports(packageInfo, ext, tspath.CombinePaths(".", rest))
  * 		}
- * 		if rest != "" {
+ * 		if rest != "" && packageInfo.Exists() {
  * 			versionPaths := packageInfo.Contents.GetVersionPaths(r.getTraceFunc())
  * 			if versionPaths.Exists() {
  * 				if r.tracer != nil {
@@ -2514,13 +2521,14 @@ export function resolutionState_loadModuleFromSpecificNodeModulesDirectory(recei
     if (
       (receiver!.features & NodeResolutionFeaturesExports) !== 0 &&
       InfoCacheEntry_Exists(packageInfo) &&
-      // Go: Exports.Type != JSONValueTypeNotPresent — a present-but-null "exports"
-      // still routes through loadModuleFromExports (blocking main/index fallbacks).
-      packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0!.Type !== JSONValueTypeNotPresent
+      // package exports are higher priority than file/directory/typesVersions lookups
+      // (if exports is present it blocks them) — but a top-level `"exports": null`
+      // (Exports.IsFalsy()) does NOT block fallback resolution. See TS#49327.
+      !JSONValue_IsFalsy(packageJsonExports(packageInfo!.Contents).__tsgoEmbedded0)
     ) {
       return resolutionState_loadModuleFromExports(receiver, packageInfo, ext, tspath.CombinePaths(".", rest));
     }
-    if (rest !== "") {
+    if (rest !== "" && InfoCacheEntry_Exists(packageInfo)) {
       const versionPaths = PackageJson_GetVersionPaths(packageInfo!.Contents, resolutionState_getTraceFunc(receiver) ?? ((_m, ..._args) => {}));
       if (VersionPaths_Exists(versionPaths)) {
         if (receiver!.tracer !== undefined) {
@@ -3800,7 +3808,7 @@ export function resolutionState_getPackageFile(receiver: GoPtr<resolutionState>,
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.getPackageJsonInfo","kind":"method","status":"implemented","sigHash":"56447a469580d8a0fde408450f9b3ba9973023854fb0a054e81148b76f929984","bodyHash":"70c1216735d64e1393a35c9fa6d22c9c5e30ef3bf9b6b3a3d34dae2cc5dd2cdc"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.getPackageJsonInfo","kind":"method","status":"implemented","sigHash":"56447a469580d8a0fde408450f9b3ba9973023854fb0a054e81148b76f929984","bodyHash":"635e5ad7e974ac4467b760064966b343a59374b2762f878a8f33e981ca9c798a"}
  *
  * Go source:
  * func (r *resolutionState) getPackageJsonInfo(packageDirectory string) *packagejson.InfoCacheEntry {
@@ -3811,15 +3819,7 @@ export function resolutionState_getPackageFile(receiver: GoPtr<resolutionState>,
  * 			if r.tracer != nil {
  * 				r.tracer.write(diagnostics.File_0_exists_according_to_earlier_cached_lookups, packageJsonPath)
  * 			}
- * 			if existing.PackageDirectory == packageDirectory {
- * 				return existing
- * 			}
- * 			// https://github.com/microsoft/TypeScript/pull/50740
- * 			return &packagejson.InfoCacheEntry{
- * 				PackageDirectory: packageDirectory,
- * 				DirectoryExists:  true,
- * 				Contents:         existing.Contents,
- * 			}
+ * 			return existing.WithPackageDirectory(packageDirectory)
  * 		} else {
  * 			if existing.DirectoryExists && r.tracer != nil {
  * 				r.tracer.write(diagnostics.File_0_does_not_exist_according_to_earlier_cached_lookups, packageJsonPath)
@@ -3845,7 +3845,7 @@ export function resolutionState_getPackageFile(receiver: GoPtr<resolutionState>,
  * 			},
  * 		}
  * 		result = r.resolver.packageJsonInfoCache.Set(packageJsonPath, result)
- * 		return result
+ * 		return result.WithPackageDirectory(packageDirectory)
  * 	} else {
  * 		if directoryExists && r.tracer != nil {
  * 			r.tracer.write(diagnostics.File_0_does_not_exist, packageJsonPath)
@@ -3867,14 +3867,7 @@ export function resolutionState_getPackageJsonInfo(receiver: GoPtr<resolutionSta
       if (receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.File_0_exists_according_to_earlier_cached_lookups, packageJsonPath);
       }
-      if (existing.PackageDirectory === packageDirectory) {
-        return existing;
-      }
-      return {
-        PackageDirectory: packageDirectory,
-        DirectoryExists: true as bool,
-        Contents: existing.Contents,
-      };
+      return InfoCacheEntry_WithPackageDirectory(existing, packageDirectory);
     } else {
       if (existing.DirectoryExists && receiver!.tracer !== undefined) {
         tracer_write(receiver!.tracer, diagnostics.File_0_does_not_exist_according_to_earlier_cached_lookups, packageJsonPath);
@@ -3902,7 +3895,7 @@ export function resolutionState_getPackageJsonInfo(receiver: GoPtr<resolutionSta
         once: new Once(),
       },
     };
-    return InfoCache_Set(receiver!.resolver!.__tsgoEmbedded0!.packageJsonInfoCache, packageJsonPath, result);
+    return InfoCacheEntry_WithPackageDirectory(InfoCache_Set(receiver!.resolver!.__tsgoEmbedded0!.packageJsonInfoCache, packageJsonPath, result), packageDirectory);
   } else {
     if (directoryExists && receiver!.tracer !== undefined) {
       tracer_write(receiver!.tracer, diagnostics.File_0_does_not_exist, packageJsonPath);
@@ -4693,10 +4686,10 @@ export function ResolvedEntrypoint_SymlinkOrRealpath(receiver: GoPtr<ResolvedEnt
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::Resolver.GetEntrypointsFromPackageJsonInfo","kind":"method","status":"implemented","sigHash":"085baad7350f34ae2c467cd60ee871f40cb7a234cff5be1950a57c9ea1b2367d","bodyHash":"31d673e3b059d4d06cac90931d640a95adce5ebc32fe1305c6e89c2b691c5000"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::Resolver.GetEntrypointsFromPackageJsonInfo","kind":"method","status":"implemented","sigHash":"379ba2a30309eea802228253e99872e05d509e885c88e1909106b57ede40b64a","bodyHash":"66f6a9eff3ee9033db323b9511f9e45d1898d6d83789b0a03229ae96121184a5"}
  *
  * Go source:
- * func (r *Resolver) GetEntrypointsFromPackageJsonInfo(packageJson *packagejson.InfoCacheEntry, packageName string) []*ResolvedEntrypoint {
+ * func (r *Resolver) GetEntrypointsFromPackageJsonInfo(packageJson *packagejson.InfoCacheEntry, packageName string, enableDirectorySearch bool) []*ResolvedEntrypoint {
  * 	extensions := extensionsTypeScript | extensionsDeclaration
  * 	features := NodeResolutionFeaturesAll
  * 	state := &resolutionState{resolver: r, extensions: extensions, features: features, compilerOptions: r.compilerOptions}
@@ -4712,16 +4705,6 @@ export function ResolvedEntrypoint_SymlinkOrRealpath(receiver: GoPtr<ResolvedEnt
  * 		packageJson,
  * 	)
  * 
- * 	otherFiles := vfsmatch.ReadDirectory(
- * 		r.host.FS(),
- * 		r.host.GetCurrentDirectory(),
- * 		packageJson.PackageDirectory,
- * 		extensions.Array(),
- * 		[]string{"node_modules"},
- * 		[]string{"** /*"},
- * 		vfsmatch.UnlimitedDepth,
- * 	)
- * 
  * 	if mainResolution.isResolved() {
  * 		result = append(result, r.createResolvedEntrypointHandlingSymlink(
  * 			mainResolution.path,
@@ -4732,19 +4715,30 @@ export function ResolvedEntrypoint_SymlinkOrRealpath(receiver: GoPtr<ResolvedEnt
  * 		))
  * 	}
  * 
- * 	comparePathsOptions := tspath.ComparePathsOptions{UseCaseSensitiveFileNames: r.host.FS().UseCaseSensitiveFileNames()}
- * 	for _, file := range otherFiles {
- * 		if mainResolution.isResolved() && tspath.ComparePaths(file, mainResolution.path, comparePathsOptions) == 0 {
- * 			continue
+ * 	if enableDirectorySearch {
+ * 		otherFiles := vfsmatch.ReadDirectory(
+ * 			r.host.FS(),
+ * 			r.host.GetCurrentDirectory(),
+ * 			packageJson.PackageDirectory,
+ * 			extensions.Array(),
+ * 			[]string{"node_modules"},
+ * 			[]string{"** /*"},
+ * 			vfsmatch.UnlimitedDepth,
+ * 		)
+ * 		comparePathsOptions := tspath.ComparePathsOptions{UseCaseSensitiveFileNames: r.host.FS().UseCaseSensitiveFileNames()}
+ * 		for _, file := range otherFiles {
+ * 			if mainResolution.isResolved() && tspath.ComparePaths(file, mainResolution.path, comparePathsOptions) == 0 {
+ * 				continue
+ * 			}
+ *
+ * 			result = append(result, r.createResolvedEntrypointHandlingSymlink(
+ * 				file,
+ * 				tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson.PackageDirectory, file, comparePathsOptions)),
+ * 				nil,
+ * 				nil,
+ * 				EndingChangeable,
+ * 			))
  * 		}
- * 
- * 		result = append(result, r.createResolvedEntrypointHandlingSymlink(
- * 			file,
- * 			tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson.PackageDirectory, file, comparePathsOptions)),
- * 			nil,
- * 			nil,
- * 			EndingChangeable,
- * 		))
  * 	}
  * 
  * 	if len(result) > 0 {
@@ -4753,7 +4747,7 @@ export function ResolvedEntrypoint_SymlinkOrRealpath(receiver: GoPtr<ResolvedEnt
  * 	return nil
  * }
  */
-export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resolver>, packageJson: GoPtr<InfoCacheEntry>, packageName: string): GoSlice<GoPtr<ResolvedEntrypoint>> {
+export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resolver>, packageJson: GoPtr<InfoCacheEntry>, packageName: string, enableDirectorySearch: bool): GoSlice<GoPtr<ResolvedEntrypoint>> {
   const exts = extensionsTypeScript | extensionsDeclaration;
   const features = NodeResolutionFeaturesAll;
   const state: resolutionState = {
@@ -4788,16 +4782,6 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     packageJson,
   );
 
-  const otherFiles = vfsmatch.ReadDirectory(
-    receiver!.host.FS(),
-    receiver!.host.GetCurrentDirectory(),
-    packageJson!.PackageDirectory,
-    extensions_Array(exts),
-    ["node_modules"],
-    ["**/*"],
-    vfsmatch.UnlimitedDepth as int,
-  );
-
   if (resolved_isResolved(mainResolution)) {
     result.push(Resolver_createResolvedEntrypointHandlingSymlink(
       receiver,
@@ -4809,20 +4793,31 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
     ));
   }
 
-  const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host.FS().UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
-  for (const file of otherFiles) {
-    if (resolved_isResolved(mainResolution) && tspath.ComparePaths(file, mainResolution!.path, comparePathsOptions) === 0) {
-      continue;
-    }
+  if (enableDirectorySearch) {
+    const otherFiles = vfsmatch.ReadDirectory(
+      receiver!.host.FS(),
+      receiver!.host.GetCurrentDirectory(),
+      packageJson!.PackageDirectory,
+      extensions_Array(exts),
+      ["node_modules"],
+      ["**/*"],
+      vfsmatch.UnlimitedDepth as int,
+    );
+    const comparePathsOptions: tspath.ComparePathsOptions = { UseCaseSensitiveFileNames: receiver!.host.FS().UseCaseSensitiveFileNames() as bool, CurrentDirectory: "" };
+    for (const file of otherFiles) {
+      if (resolved_isResolved(mainResolution) && tspath.ComparePaths(file, mainResolution!.path, comparePathsOptions) === 0) {
+        continue;
+      }
 
-    result.push(Resolver_createResolvedEntrypointHandlingSymlink(
-      receiver,
-      file,
-      tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson!.PackageDirectory, file, comparePathsOptions)),
-      undefined,
-      undefined,
-      EndingChangeable,
-    ));
+      result.push(Resolver_createResolvedEntrypointHandlingSymlink(
+        receiver,
+        file,
+        tspath.ResolvePath(packageName, tspath.GetRelativePathFromDirectory(packageJson!.PackageDirectory, file, comparePathsOptions)),
+        undefined,
+        undefined,
+        EndingChangeable,
+      ));
+    }
   }
 
   if (result.length > 0) {
@@ -4871,7 +4866,7 @@ export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadEntrypointsFromExportMap","kind":"method","status":"implemented","sigHash":"79d0cb01251aae6024782d34783c8cf21215a6b42a6da28905b545f2a14742db","bodyHash":"0e769c0179632d2032d5db386f9088f82e8a6ab29f737c708ad86d01738037e6"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/module/resolver.go::method::resolutionState.loadEntrypointsFromExportMap","kind":"method","status":"implemented","sigHash":"79d0cb01251aae6024782d34783c8cf21215a6b42a6da28905b545f2a14742db","bodyHash":"b758caf8a7f0d3b1f4ef4ee0702d4e113dc4f663ea8e96d5fe3fc0e4e46d57a3"}
  *
  * Go source:
  * func (r *resolutionState) loadEntrypointsFromExportMap(
@@ -4945,7 +4940,7 @@ export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr
  * 
  * 				conditionAlwaysMatches := condition == "default" || condition == "types" || IsApplicableVersionedTypesKey(condition)
  * 				newIncludeConditions := includeConditions
- * 				if !(conditionAlwaysMatches) {
+ * 				if !conditionAlwaysMatches {
  * 					newIncludeConditions = includeConditions.Clone()
  * 					excludeConditions = excludeConditions.Clone()
  * 					if newIncludeConditions == nil {

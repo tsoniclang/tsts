@@ -7,7 +7,7 @@ import * as strings from "../../go/strings.js";
 import { RWMutex } from "../../go/sync.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import type { CompilerOptions } from "../core/compileroptions.js";
-import { IndexAfter } from "../core/core.js";
+import { CompareBooleans, IndexAfter } from "../core/core.js";
 import { TSTrue } from "../core/tristate.js";
 import { EndingChangeable, EndingFixed } from "../module/resolver.js";
 import type { ResolvedEntrypoint } from "../module/resolver.js";
@@ -17,7 +17,7 @@ import { GetSupportedExtensions } from "../tsoptions/tsconfigparsing.js";
 import type { FileExtensionInfo } from "../tsoptions/tsconfigparsing.js";
 import { ScriptKindExternal, ScriptKindJSON } from "../core/scriptkind.js";
 import { ChangeAnyExtension, ExtensionCjs, ExtensionCts, ExtensionDcts, ExtensionDmts, ExtensionDts, ExtensionJs, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, FileExtensionIsOneOf, RemoveExtension, RemoveFileExtension, TryGetExtensionFromPath, GetDeclarationFileExtension } from "../tspath/extension.js";
-import { ComparePaths, GetBaseFileName, GetNormalizedAbsolutePath, GetRelativePathToDirectoryOrUrl, IsRootedDiskPath, PathIsAbsolute, PathIsRelative } from "../tspath/path.js";
+import { ComparePaths, CompareNumberOfDirectorySeparators, GetBaseFileName, GetNormalizedAbsolutePath, GetRelativePathToDirectoryOrUrl, IsRootedDiskPath, PathIsAbsolute, PathIsRelative } from "../tspath/path.js";
 import type { ComparePathsOptions } from "../tspath/path.js";
 import { GetAllowedEndingsInPreferredOrder } from "./preferences.js";
 import { getAllModulePaths, getInfo, tryGetModuleNameAsNodeModule } from "./specifiers.js";
@@ -51,27 +51,35 @@ export const regexPatternCacheMu: RWMutex = new RWMutex();
 export const regexPatternCache: GoMap<regexPatternCacheKey, GoPtr<Regexp>> = NewGoStructMap<regexPatternCacheKey, GoPtr<Regexp>>();
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"f2cd303b3114a0cbc28de1a9be907e69afa26d9741dd0d5c9c9c95835e7a68ef"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/modulespecifiers/util.go::func::comparePathsByRedirect","kind":"func","status":"implemented","sigHash":"d1ddf359d6332eede302f451c3e819b0bbd2485ea838b6b05debfaf1aaf63eca","bodyHash":"fdfc55605498de1fa827e50b1eda9800918b2bab712c7736842daf17ba308196"}
  *
  * Go source:
  * func comparePathsByRedirect(a ModulePath, b ModulePath, useCaseSensitiveFileNames bool) int {
- * 	if a.IsRedirect == b.IsRedirect {
- * 		return tspath.ComparePaths(a.FileName, b.FileName, tspath.ComparePathsOptions{UseCaseSensitiveFileNames: useCaseSensitiveFileNames})
+ * 	// Redirects sort first, matching Strada's compareBooleans(b.isRedirect, a.isRedirect).
+ * 	if c := core.CompareBooleans(b.IsRedirect, a.IsRedirect); c != 0 {
+ * 		return c
  * 	}
- * 	if a.IsRedirect {
- * 		return 1
+ * 	if c := tspath.CompareNumberOfDirectorySeparators(a.FileName, b.FileName); c != 0 {
+ * 		return c
  * 	}
- * 	return -1
+ * 	// Strada relies on Map insertion order to break remaining ties deterministically;
+ * 	// Go maps are unordered, so compare paths to keep the ordering stable.
+ * 	return tspath.ComparePaths(a.FileName, b.FileName, tspath.ComparePathsOptions{UseCaseSensitiveFileNames: useCaseSensitiveFileNames})
  * }
  */
 export function comparePathsByRedirect(a: ModulePath, b: ModulePath, useCaseSensitiveFileNames: bool): int {
-  if (a.IsRedirect === b.IsRedirect) {
-    return ComparePaths(a.FileName, b.FileName, { UseCaseSensitiveFileNames: useCaseSensitiveFileNames, CurrentDirectory: "" });
+  // Redirects sort first, matching Strada's compareBooleans(b.isRedirect, a.isRedirect).
+  const c1 = CompareBooleans(b.IsRedirect, a.IsRedirect);
+  if (c1 !== 0) {
+    return c1;
   }
-  if (a.IsRedirect) {
-    return 1;
+  const c2 = CompareNumberOfDirectorySeparators(a.FileName, b.FileName);
+  if (c2 !== 0) {
+    return c2;
   }
-  return -1;
+  // Strada relies on Map insertion order to break remaining ties deterministically;
+  // Go maps are unordered, so compare paths to keep the ordering stable.
+  return ComparePaths(a.FileName, b.FileName, { UseCaseSensitiveFileNames: useCaseSensitiveFileNames, CurrentDirectory: "" });
 }
 
 /**

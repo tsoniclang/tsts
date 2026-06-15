@@ -220,6 +220,7 @@ export function NewPrinter(options: PrinterOptions, handlers: PrintHandlers, emi
     makeFileLevelOptimisticUniqueName: undefined!,
     commentStateArena: { data: [] },
     sourceMapStateArena: { data: [] },
+    IdToSymbol: undefined,
   };
   printer.emitContext = printer.emitContext ?? NewEmitContext();
   printer.nameGenerator.Context = printer.emitContext;

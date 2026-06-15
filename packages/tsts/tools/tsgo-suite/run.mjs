@@ -1206,6 +1206,14 @@ export function parseBaselineSections(text) {
   return sections;
 }
 
+// Sentinel a tsgo-accepted overlay uses to declare that pinned TS-Go intentionally emits NO
+// output for a section the Strada reference baseline still contains — e.g. a .d.ts/.d.ts.map the
+// new pin blocks under --isolatedDeclarations. capture-tsgo-accepted.mjs writes it (after proving
+// the section exists in Strada but is absent from real pinned output); applyTsgoAcceptedOverlay
+// drops the section from the expected outputs so the gate does not treat the intentional
+// non-emission as a missing baseline output.
+export const TSGO_ACCEPTED_ABSENT_MARKER = "<<< pinned TS-Go intentionally emits no output for this section >>>";
+
 // TS-Go-accepted overlays: where the pinned TS-Go compiler demonstrably diverges from the
 // Strada-generated reference baselines, the committed files under tools/tsgo-suite/tsgo-accepted/
 // capture pinned TS-Go's actual output for the divergent sections. TSTS mirrors TS-Go, so the
@@ -1253,6 +1261,18 @@ export function applyTsgoAcceptedOverlay(artifactName, overlaySections, expected
       continue;
     }
     const key = normalizedBaselineSectionPath(section.name);
+    if (section.content.trim() === TSGO_ACCEPTED_ABSENT_MARKER) {
+      // Pinned TS-Go intentionally emits nothing here while Strada still has the section.
+      // Drop it from the expected outputs so the intentional non-emission is not flagged as a
+      // missing baseline output, and count it as a tsgo-accepted divergence.
+      if (!expectedOutputs.has(key)) {
+        problems.push(`tsgo-accepted overlay '${artifactName}' marks '${section.name}' absent but the reference baseline has no such emitted output.`);
+        continue;
+      }
+      expectedOutputs.delete(key);
+      used.push(`${artifactName}#${section.name} (absent)`);
+      continue;
+    }
     if (!expectedOutputs.has(key)) {
       problems.push(`tsgo-accepted overlay '${artifactName}' overrides '${section.name}' but the reference baseline has no such emitted output.`);
       continue;
@@ -1629,6 +1649,11 @@ async function evaluateExactBaselines(testCase, materialized, commandOutput) {
     tsgoAccepted,
     mismatches,
     status: mismatches.length === 0 ? "pass" : "fail",
+    // Whether the post-overlay reference baseline expects any diagnostics. In exact mode this is
+    // the authoritative "expectedErrors" for transpile cases, whose diagnostics live in the
+    // baseline's 'Diagnostics reported' section (with tsgo-accepted overlays applied), not a
+    // separate .errors.txt.
+    expectedDiagnosticsPresent: expectedDiagnosticHeadlines.some((headline) => headline.trim() !== ""),
   };
 }
 
@@ -2621,6 +2646,8 @@ export function caseDirectoryFragment(testCase) {
   return safePathFragment(`${testCase.corpus ?? "current"}/${testCase.suite}/${configuredCaseName(testCase)}`);
 }
 
+const CASE_TIMEOUT_MS = Number(process.env.TSGO_CASE_TIMEOUT_MS ?? "120000");
+
 async function runTsts(invocation) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [
@@ -2633,6 +2660,13 @@ async function runTsts(invocation) {
     });
     let stdout = "";
     let stderr = "";
+    let timedOut = false;
+    // A single infinite loop in TSTS would otherwise wedge a worker forever and stall the whole
+    // run. Kill a case that exceeds the (generous) budget and surface it as a visible failure.
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGKILL");
+    }, CASE_TIMEOUT_MS);
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
     });
@@ -2640,6 +2674,11 @@ async function runTsts(invocation) {
       stderr += chunk.toString();
     });
     child.on("close", (exitCode, signal) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        resolve({ exitCode: 1, signal: "SIGKILL", stdout, stderr: `${stderr}\nTSTS case timed out after ${CASE_TIMEOUT_MS}ms (likely an infinite loop).` });
+        return;
+      }
       resolve({ exitCode: exitCode ?? 1, signal, stdout, stderr });
     });
   });
@@ -2664,11 +2703,16 @@ async function runCase(testCase, runRoot, options) {
   if (materialized.transpile === true) {
     const result = await runTranspileInvocations(materialized);
     const exactBaseline = options.exactBaselines ? await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`) : undefined;
-    const statusMatches = !result.actualErrors && (exactBaseline === undefined || exactBaseline.status === "pass");
+    // In exact mode, transpile diagnostics live in the baseline's (post-overlay) 'Diagnostics
+    // reported' section, not a .errors.txt; derive expectedErrors from there so the new pin's
+    // --isolatedDeclarations diagnostics are accounted for rather than always failing on
+    // actualErrors=true.
+    const expectedErrors = exactBaseline !== undefined ? exactBaseline.expectedDiagnosticsPresent : materialized.expectedErrors;
+    const statusMatches = result.actualErrors === expectedErrors && (exactBaseline === undefined || exactBaseline.status === "pass");
     return {
       ...testCase,
       caseDir: materialized.caseDir,
-      expectedErrors: materialized.expectedErrors,
+      expectedErrors,
       actualErrors: result.actualErrors,
       exitCode: result.exitCode,
       signal: result.signal,
@@ -2707,8 +2751,11 @@ async function runTranspileInvocations(materialized) {
   for (const invocation of materialized.invocations) {
     const result = await runTstsTranspileApi(materialized.caseDir, invocation);
     diagnostics.push(...result.diagnostics);
+    // Diagnostics are the primary truth for actualErrors; missing output is an additional symptom
+    // (e.g. --isolatedDeclarations blocks .d.ts emit). A case that reports diagnostics while still
+    // emitting all expected outputs must still count as having errors.
     const missingOutputs = invocation.expectedOutputFiles.filter((file) => !existsSync(join(materialized.caseDir, file)));
-    if (missingOutputs.length !== 0) {
+    if (result.diagnostics.length !== 0 || missingOutputs.length !== 0) {
       actualErrors = true;
     }
     if (result.exitCode !== 0 && exitCode === 0) {
@@ -2742,7 +2789,11 @@ async function runTstsTranspileApi(caseDir, invocation) {
     ? api.transpileDeclaration(inputText, transpileOptions)
     : api.transpileModule(inputText, transpileOptions);
   const primaryOutput = invocation.expectedOutputFiles.find((file) => !file.endsWith(".map"));
-  if (primaryOutput !== undefined) {
+  // A declaration transpile that yields empty output emitted no file (e.g. blocked by
+  // --isolatedDeclarations); the pinned binary writes nothing and the tsgo-accepted overlay marks
+  // the section absent, so skip writing it to keep the absent-section comparison correct.
+  const emittedNoOutputFile = invocation.kind === "declaration" && output.outputText === "";
+  if (primaryOutput !== undefined && !emittedNoOutputFile) {
     await writeFile(join(caseDir, primaryOutput), output.outputText);
   }
   const sourceMapOutput = invocation.expectedOutputFiles.find((file) => file.endsWith(".map"));

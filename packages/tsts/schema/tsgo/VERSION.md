@@ -5,31 +5,36 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 | Field | Value |
 | --- | --- |
 | Upstream | `microsoft/typescript-go` |
-| Commit | `515d036f927aba8b468011098e2721335f0e2d00` |
-| `ast.json` SHA-256 | `b51eb936a91ac24b61ea5ad7fa83d99b92c7329c4676c675c8b71713bcf28db3` |
+| Commit | `c78d39e7075b4fc641b12b1f35d905c54cdc13ef` |
+| `ast.json` SHA-256 | `9259791a628105b1ed375a1a69f2002ad478f10e60ae68e01e5527e0fe619546` |
 | `ast.schema.json` SHA-256 | `c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2` |
 | `protocol.ts` SHA-256 | `02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830` |
-| `nodeflags.go` SHA-256 | `9f4095b280fa37ee638cd2d01efe5cc1b6b7306e9ee2471c9e736bd0cb64f2c4` |
-| `symbolflags.go` SHA-256 | `e5719b64a2690bde88accca009017424dd54801d97b8e8f6b7887cb457c430a7` |
+| `nodeflags.go` SHA-256 | `8be5737c5cfe5478fcef3f0b50847d7ca4045157a6d039ffaac658977a181dc2` |
+| `symbolflags.go` SHA-256 | `eb2c56aac8513ac676f48313eb5c3fa65ba90990474b7e873ff9ec6cdb35ebca` |
 
 ## Policy
 
 - Generated AST contract code must be derived from these files.
 - Schema drift is a hard failure.
 - Updating the schema requires updating this file, regenerating artifacts, and explaining the upstream TS-Go change.
+- The AST schema inputs must not be pinned on a separate track from the source
+  submodule. `porter:verify` compares every schema-directory copy that has a live
+  upstream counterpart against the checked-out source tree and fails on any
+  byte-level drift.
 
-## Reconciliation — 2026-06-13
+## Pin bump — 2026-06-13
 
-Reconciled the schema directory to the checked-out TS-Go source submodule pin
-`515d036f927aba8b468011098e2721335f0e2d00`.
+Bumped the schema directory and the TS-Go source submodule together from
+`515d036f927aba8b468011098e2721335f0e2d00` (2026-04-24) to
+`c78d39e7075b4fc641b12b1f35d905c54cdc13ef` (2026-06-12), 285 upstream commits.
 
-The AST schema inputs must not be pinned on a separate track from the source
-submodule. `porter:verify` now compares every schema-directory copy that has a
-live upstream counterpart against the checked-out source tree and fails on any
-byte-level drift.
+Schema input drift across that range:
 
-The previous schema copy of `symbolflags.go` was ahead of the source submodule
-and caused generated AST flags to disagree with the hand-ported live-source
-symbol flags. The schema copy now matches the source pin; a future TS-Go pin bump
-must update the submodule, schema copies, generated artifacts, and this file in
-one batch.
+- `ast.json` — changed (new AST node shapes / kinds).
+- `nodeflags.go` — changed (new node flags).
+- `symbolflags.go` — changed (symbol-merge exclusion masks now exclude accessor/
+  property cross-merges; this is the upstream behaviour the bump adopts).
+- `ast.schema.json`, `protocol.ts` — unchanged.
+
+Generated AST artifacts were regenerated from these inputs; the hand-ported
+`internal/ast/symbolflags.ts` was re-ported to the new masks as part of the bump.

@@ -9,7 +9,7 @@ import type { int, uint } from "@tsonic/core/types.js";
 export type SymbolFlags = uint;
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbolflags.go::constGroup::SymbolFlagsNone+SymbolFlagsFunctionScopedVariable+SymbolFlagsBlockScopedVariable+SymbolFlagsProperty+SymbolFlagsEnumMember+SymbolFlagsFunction+SymbolFlagsClass+SymbolFlagsInterface+SymbolFlagsConstEnum+SymbolFlagsRegularEnum+SymbolFlagsValueModule+SymbolFlagsNamespaceModule+SymbolFlagsTypeLiteral+SymbolFlagsObjectLiteral+SymbolFlagsMethod+SymbolFlagsConstructor+SymbolFlagsGetAccessor+SymbolFlagsSetAccessor+SymbolFlagsSignature+SymbolFlagsTypeParameter+SymbolFlagsTypeAlias+SymbolFlagsExportValue+SymbolFlagsAlias+SymbolFlagsPrototype+SymbolFlagsExportStar+SymbolFlagsOptional+SymbolFlagsTransient+SymbolFlagsAssignment+SymbolFlagsModuleExports+SymbolFlagsConstEnumOnlyModule+SymbolFlagsReplaceableByMethod+SymbolFlagsGlobalLookup+SymbolFlagsAll+SymbolFlagsEnum+SymbolFlagsVariable+SymbolFlagsValue+SymbolFlagsType+SymbolFlagsNamespace+SymbolFlagsModule+SymbolFlagsAccessor+SymbolFlagsFunctionScopedVariableExcludes+SymbolFlagsBlockScopedVariableExcludes+SymbolFlagsParameterExcludes+SymbolFlagsPropertyExcludes+SymbolFlagsEnumMemberExcludes+SymbolFlagsFunctionExcludes+SymbolFlagsClassExcludes+SymbolFlagsInterfaceExcludes+SymbolFlagsRegularEnumExcludes+SymbolFlagsConstEnumExcludes+SymbolFlagsValueModuleExcludes+SymbolFlagsNamespaceModuleExcludes+SymbolFlagsMethodExcludes+SymbolFlagsGetAccessorExcludes+SymbolFlagsSetAccessorExcludes+SymbolFlagsAccessorExcludes+SymbolFlagsTypeParameterExcludes+SymbolFlagsTypeAliasExcludes+SymbolFlagsAliasExcludes+SymbolFlagsModuleMember+SymbolFlagsExportHasLocal+SymbolFlagsBlockScoped+SymbolFlagsPropertyOrAccessor+SymbolFlagsClassMember+SymbolFlagsExportSupportsDefaultModifier+SymbolFlagsExportDoesNotSupportDefaultModifier+SymbolFlagsClassifiable+SymbolFlagsLateBindingContainer","kind":"constGroup","status":"implemented","sigHash":"e33c0ef2c29ce44b42978953bbf03d3089350ab184045ca9badf8add51064c91","bodyHash":"3353f28370ead956862e648216f470bd5f84d556f2658cb4a6ed1be8ae5e0199"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/symbolflags.go::constGroup::SymbolFlagsNone+SymbolFlagsFunctionScopedVariable+SymbolFlagsBlockScopedVariable+SymbolFlagsProperty+SymbolFlagsEnumMember+SymbolFlagsFunction+SymbolFlagsClass+SymbolFlagsInterface+SymbolFlagsConstEnum+SymbolFlagsRegularEnum+SymbolFlagsValueModule+SymbolFlagsNamespaceModule+SymbolFlagsTypeLiteral+SymbolFlagsObjectLiteral+SymbolFlagsMethod+SymbolFlagsConstructor+SymbolFlagsGetAccessor+SymbolFlagsSetAccessor+SymbolFlagsSignature+SymbolFlagsTypeParameter+SymbolFlagsTypeAlias+SymbolFlagsExportValue+SymbolFlagsAlias+SymbolFlagsPrototype+SymbolFlagsExportStar+SymbolFlagsOptional+SymbolFlagsTransient+SymbolFlagsAssignment+SymbolFlagsModuleExports+SymbolFlagsConstEnumOnlyModule+SymbolFlagsReplaceableByMethod+SymbolFlagsGlobalLookup+SymbolFlagsAll+SymbolFlagsEnum+SymbolFlagsVariable+SymbolFlagsValue+SymbolFlagsType+SymbolFlagsNamespace+SymbolFlagsModule+SymbolFlagsAccessor+SymbolFlagsFunctionScopedVariableExcludes+SymbolFlagsBlockScopedVariableExcludes+SymbolFlagsParameterExcludes+SymbolFlagsPropertyExcludes+SymbolFlagsEnumMemberExcludes+SymbolFlagsFunctionExcludes+SymbolFlagsClassExcludes+SymbolFlagsInterfaceExcludes+SymbolFlagsRegularEnumExcludes+SymbolFlagsConstEnumExcludes+SymbolFlagsValueModuleExcludes+SymbolFlagsNamespaceModuleExcludes+SymbolFlagsMethodExcludes+SymbolFlagsGetAccessorExcludes+SymbolFlagsSetAccessorExcludes+SymbolFlagsAccessorExcludes+SymbolFlagsTypeParameterExcludes+SymbolFlagsTypeAliasExcludes+SymbolFlagsAliasExcludes+SymbolFlagsModuleMember+SymbolFlagsExportHasLocal+SymbolFlagsBlockScoped+SymbolFlagsPropertyOrAccessor+SymbolFlagsClassMember+SymbolFlagsExportSupportsDefaultModifier+SymbolFlagsExportDoesNotSupportDefaultModifier+SymbolFlagsClassifiable+SymbolFlagsLateBindingContainer","kind":"constGroup","status":"implemented","sigHash":"e33c0ef2c29ce44b42978953bbf03d3089350ab184045ca9badf8add51064c91","bodyHash":"901a849307070a0bcf4327009b0fbe60e85f21b8164908c6c8f87e182842f312"}
  *
  * Go source:
  * const (
@@ -64,7 +64,7 @@ export type SymbolFlags = uint;
  * 	SymbolFlagsBlockScopedVariableExcludes = SymbolFlagsValue
  *
  * 	SymbolFlagsParameterExcludes                   = SymbolFlagsValue
- * 	SymbolFlagsPropertyExcludes                    = SymbolFlagsValue & ^SymbolFlagsProperty
+ * 	SymbolFlagsPropertyExcludes                    = SymbolFlagsValue & ^(SymbolFlagsProperty | SymbolFlagsAccessor)
  * 	SymbolFlagsEnumMemberExcludes                  = SymbolFlagsValue | SymbolFlagsType
  * 	SymbolFlagsFunctionExcludes                    = SymbolFlagsValue & ^(SymbolFlagsFunction | SymbolFlagsValueModule | SymbolFlagsClass)
  * 	SymbolFlagsClassExcludes                       = (SymbolFlagsValue | SymbolFlagsType) & ^(SymbolFlagsValueModule | SymbolFlagsInterface | SymbolFlagsFunction) // class-interface mergability done in checker.ts
@@ -74,9 +74,9 @@ export type SymbolFlags = uint;
  * 	SymbolFlagsValueModuleExcludes                 = SymbolFlagsValue & ^(SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum | SymbolFlagsValueModule)
  * 	SymbolFlagsNamespaceModuleExcludes             = SymbolFlagsNone
  * 	SymbolFlagsMethodExcludes                      = SymbolFlagsValue & ^SymbolFlagsMethod
- * 	SymbolFlagsGetAccessorExcludes                 = SymbolFlagsValue & ^SymbolFlagsSetAccessor
- * 	SymbolFlagsSetAccessorExcludes                 = SymbolFlagsValue & ^SymbolFlagsGetAccessor
- * 	SymbolFlagsAccessorExcludes                    = SymbolFlagsValue
+ * 	SymbolFlagsGetAccessorExcludes                 = SymbolFlagsValue & ^(SymbolFlagsSetAccessor | SymbolFlagsProperty)
+ * 	SymbolFlagsSetAccessorExcludes                 = SymbolFlagsValue & ^(SymbolFlagsGetAccessor | SymbolFlagsProperty)
+ * 	SymbolFlagsAccessorExcludes                    = SymbolFlagsValue & ^SymbolFlagsProperty
  * 	SymbolFlagsTypeParameterExcludes               = SymbolFlagsType & ^SymbolFlagsTypeParameter
  * 	SymbolFlagsTypeAliasExcludes                   = SymbolFlagsType
  * 	SymbolFlagsAliasExcludes                       = SymbolFlagsAlias
@@ -136,7 +136,7 @@ export const SymbolFlagsAccessor: int = SymbolFlagsGetAccessor | SymbolFlagsSetA
 export const SymbolFlagsFunctionScopedVariableExcludes: int = SymbolFlagsValue & ~SymbolFlagsFunctionScopedVariable;
 export const SymbolFlagsBlockScopedVariableExcludes: int = SymbolFlagsValue;
 export const SymbolFlagsParameterExcludes: int = SymbolFlagsValue;
-export const SymbolFlagsPropertyExcludes: int = SymbolFlagsValue & ~SymbolFlagsProperty;
+export const SymbolFlagsPropertyExcludes: int = SymbolFlagsValue & ~(SymbolFlagsProperty | SymbolFlagsAccessor);
 export const SymbolFlagsEnumMemberExcludes: int = SymbolFlagsValue | SymbolFlagsType;
 export const SymbolFlagsFunctionExcludes: int = SymbolFlagsValue & ~(SymbolFlagsFunction | SymbolFlagsValueModule | SymbolFlagsClass);
 export const SymbolFlagsClassExcludes: int = (SymbolFlagsValue | SymbolFlagsType) & ~(SymbolFlagsValueModule | SymbolFlagsInterface | SymbolFlagsFunction);
@@ -146,9 +146,9 @@ export const SymbolFlagsConstEnumExcludes: int = (SymbolFlagsValue | SymbolFlags
 export const SymbolFlagsValueModuleExcludes: int = SymbolFlagsValue & ~(SymbolFlagsFunction | SymbolFlagsClass | SymbolFlagsRegularEnum | SymbolFlagsValueModule);
 export const SymbolFlagsNamespaceModuleExcludes: SymbolFlags = SymbolFlagsNone;
 export const SymbolFlagsMethodExcludes: int = SymbolFlagsValue & ~SymbolFlagsMethod;
-export const SymbolFlagsGetAccessorExcludes: int = SymbolFlagsValue & ~SymbolFlagsSetAccessor;
-export const SymbolFlagsSetAccessorExcludes: int = SymbolFlagsValue & ~SymbolFlagsGetAccessor;
-export const SymbolFlagsAccessorExcludes: int = SymbolFlagsValue;
+export const SymbolFlagsGetAccessorExcludes: int = SymbolFlagsValue & ~(SymbolFlagsSetAccessor | SymbolFlagsProperty);
+export const SymbolFlagsSetAccessorExcludes: int = SymbolFlagsValue & ~(SymbolFlagsGetAccessor | SymbolFlagsProperty);
+export const SymbolFlagsAccessorExcludes: int = SymbolFlagsValue & ~SymbolFlagsProperty;
 export const SymbolFlagsTypeParameterExcludes: int = SymbolFlagsType & ~SymbolFlagsTypeParameter;
 export const SymbolFlagsTypeAliasExcludes: int = SymbolFlagsType;
 export const SymbolFlagsAliasExcludes: SymbolFlags = SymbolFlagsAlias;

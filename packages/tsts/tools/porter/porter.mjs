@@ -22,6 +22,11 @@ import {
   collectBundledArtifactFailures,
   emptyBundledGeneratedArtifactStatus,
 } from "../bundled/generate-bundled.mjs";
+import {
+  buildUnicodeGeneratedArtifactStatus,
+  collectUnicodeArtifactFailures,
+  emptyUnicodeGeneratedArtifactStatus,
+} from "../unicode/generate-unicode-data.mjs";
 
 export const repoRoot = findRepoRoot(process.cwd());
 export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
@@ -128,8 +133,9 @@ export function main() {
     const astGeneratedArtifacts = buildAstGeneratedArtifactStatus(config, snapshot.gitRevision);
     const diagnosticsGeneratedArtifacts = buildDiagnosticsGeneratedArtifactStatus(config, snapshot.gitRevision);
     const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
+    const unicodeGeneratedArtifacts = buildUnicodeGeneratedArtifactStatus(config);
     const schemaSourceSync = buildSchemaSourceSyncStatus(config);
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, schemaSourceSync);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync);
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);
     writeText(resolveRepo(config.reportOut), renderStatusMarkdown(status));
@@ -224,6 +230,7 @@ export function buildStatus(
   astGeneratedArtifacts = emptyAstGeneratedArtifactStatus(),
   diagnosticsGeneratedArtifacts = emptyDiagnosticsGeneratedArtifactStatus(),
   bundledGeneratedArtifacts = emptyBundledGeneratedArtifactStatus(),
+  unicodeGeneratedArtifacts = emptyUnicodeGeneratedArtifactStatus(),
   schemaSourceSync = emptySchemaSourceSyncStatus(),
 ) {
   const primaryKinds = new Set(config.primaryUnitKinds);
@@ -413,6 +420,11 @@ export function buildStatus(
       orphanBundledArtifacts: bundledGeneratedArtifacts.orphan.length,
       untrackedBundledArtifacts: bundledGeneratedArtifacts.untracked.length,
       invalidBundledArtifacts: bundledGeneratedArtifacts.invalid.length,
+      missingUnicodeArtifacts: unicodeGeneratedArtifacts.missing.length,
+      staleUnicodeArtifacts: unicodeGeneratedArtifacts.stale.length,
+      orphanUnicodeArtifacts: unicodeGeneratedArtifacts.orphan.length,
+      untrackedUnicodeArtifacts: unicodeGeneratedArtifacts.untracked.length,
+      invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
     },
@@ -431,6 +443,7 @@ export function buildStatus(
     astGeneratedArtifacts,
     diagnosticsGeneratedArtifacts,
     bundledGeneratedArtifacts,
+    unicodeGeneratedArtifacts,
     schemaSourceSync,
     largeFileSplits,
     missing: missing.slice(0, 500),
@@ -2562,6 +2575,7 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectAstArtifactFailures(status.astGeneratedArtifacts ?? emptyAstGeneratedArtifactStatus()));
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   failures.push(...collectBundledArtifactFailures(status.bundledGeneratedArtifacts ?? emptyBundledGeneratedArtifactStatus()));
+  failures.push(...collectUnicodeArtifactFailures(status.unicodeGeneratedArtifacts ?? emptyUnicodeGeneratedArtifactStatus()));
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort) {
     const rows = status.rows ?? [];
@@ -2621,6 +2635,7 @@ export function printStatus(config, status) {
   console.log(`AST generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingAstArtifacts}/${status.counts.staleAstArtifacts}/${status.counts.orphanAstArtifacts}/${status.counts.untrackedAstArtifacts}/${status.counts.invalidAstArtifacts}`);
   console.log(`Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   console.log(`Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
+  console.log(`Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
@@ -2652,6 +2667,7 @@ export function renderStatusMarkdown(status) {
   lines.push(`- AST generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingAstArtifacts}/${status.counts.staleAstArtifacts}/${status.counts.orphanAstArtifacts}/${status.counts.untrackedAstArtifacts}/${status.counts.invalidAstArtifacts}`);
   lines.push(`- Diagnostics generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingDiagnosticsArtifacts}/${status.counts.staleDiagnosticsArtifacts}/${status.counts.orphanDiagnosticsArtifacts}/${status.counts.untrackedDiagnosticsArtifacts}/${status.counts.invalidDiagnosticsArtifacts}`);
   lines.push(`- Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
+  lines.push(`- Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
