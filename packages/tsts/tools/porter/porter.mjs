@@ -1206,9 +1206,11 @@ export function renderUnitGroup(config, snapshot, relativeTargetPath, units, opt
 }
 
 function rendererContext(config, snapshot, relativeTargetPath, units, options) {
-  const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
+  const filesByPath = options.filesByPath ?? new Map(snapshot.files.map((file) => [file.path, file]));
   const largeFileSplits = options.largeFileSplits ?? buildLargeFileSplitStatus(config, snapshot);
-  const symbolIndex = buildSymbolIndex(config, snapshot, largeFileSplits);
+  // The symbol/value/facade indexes are expensive global builds over the whole
+  // snapshot; callers that render many units in a loop may inject pre-built ones.
+  const symbolIndex = options.symbolIndex ?? buildSymbolIndex(config, snapshot, largeFileSplits);
   const firstUnit = units[0];
   const goPath = firstUnit?.metadata?.goPath ?? "";
   const file = filesByPath.get(goPath) ?? fileFromUnit(firstUnit);
@@ -1222,7 +1224,7 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
     config,
     snapshot,
     symbolIndex,
-    valueTypeIndex: buildValueTypeIndex(config, snapshot, largeFileSplits),
+    valueTypeIndex: options.valueTypeIndex ?? buildValueTypeIndex(config, snapshot, largeFileSplits),
     file,
     relativeTargetPath,
     imports: new Map(),
@@ -1232,6 +1234,21 @@ function rendererContext(config, snapshot, relativeTargetPath, units, options) {
     localTypeNames,
     localTopLevelNames,
     importAliases: importAliasMap(file.imports ?? []),
+    externalFacades: options.externalFacades ?? buildExternalFacadeMap(config, snapshot),
+  };
+}
+
+// Builds the expensive whole-snapshot indexes once, for callers that render many
+// units in a loop (e.g. the signature checker). Pass the result as renderUnitGroup
+// `options` so rendererContext reuses them instead of rebuilding per call.
+export function buildRenderIndexes(config, snapshot) {
+  const filesByPath = new Map(snapshot.files.map((file) => [file.path, file]));
+  const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
+  return {
+    filesByPath,
+    largeFileSplits,
+    symbolIndex: buildSymbolIndex(config, snapshot, largeFileSplits),
+    valueTypeIndex: buildValueTypeIndex(config, snapshot, largeFileSplits),
     externalFacades: buildExternalFacadeMap(config, snapshot),
   };
 }
