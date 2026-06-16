@@ -69,7 +69,7 @@ export function GetNameMapFromList(optDecls: GoSlice<GoPtr<CommandLineOption>>):
  * }
  */
 export interface NameMap {
-  optionsNames: GoPtr<OrderedMap>;
+  optionsNames: GoPtr<OrderedMap<string, GoPtr<CommandLineOption>>>;
   shortOptionNames: GoMap<string, string>;
 }
 

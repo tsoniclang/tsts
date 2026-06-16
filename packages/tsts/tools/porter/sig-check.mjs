@@ -12,7 +12,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
 import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
-import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
+import { buildExpectedIndex, goUnitDescriptor, nilableTypeRefs } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
@@ -25,26 +25,29 @@ function globToRegExp(glob) {
   return new RegExp(`^${escaped}$`);
 }
 
-// Resolve config + inline overrides for a unit. `overrides` is profile.overrides.
-// Returns { all, ignore:Set, reason }.
+// Resolve config + inline overrides for a unit. Overrides are deliberately
+// aspect-scoped only; there is no "accept all" path because that would hide
+// drift in unrelated parts of the same signature.
 function resolveOverride(overrides, id, metadata) {
   const ignore = new Set();
-  let all = false;
   const reasons = [];
   for (const o of overrides ?? []) {
     const matches = (o.id && o.id === id) || (o.match && globToRegExp(o.match).test(id));
     if (!matches) continue;
-    if (o.ignore) for (const a of o.ignore) ignore.add(a);
-    else all = true; // an override with no `ignore` accepts all divergence
+    if (!Array.isArray(o.ignore) || o.ignore.length === 0) {
+      throw new Error(`signature override for ${id} must list explicit mismatch aspects in 'ignore'`);
+    }
+    for (const a of o.ignore) ignore.add(a);
     if (o.reason) reasons.push(o.reason);
   }
-  if (metadata?.sigCheck === "manual") all = true;
   if (metadata?.sigOverride) {
-    if (Array.isArray(metadata.sigOverride.ignore)) for (const a of metadata.sigOverride.ignore) ignore.add(a);
-    else all = true;
+    if (!Array.isArray(metadata.sigOverride.ignore) || metadata.sigOverride.ignore.length === 0) {
+      throw new Error(`inline signature override for ${id} must list explicit mismatch aspects in 'ignore'`);
+    }
+    for (const a of metadata.sigOverride.ignore) ignore.add(a);
     if (metadata.sigOverride.reason) reasons.push(metadata.sigOverride.reason);
   }
-  return { all, ignore, reason: reasons.join("; ") };
+  return { ignore, reason: reasons.join("; ") };
 }
 
 // --- comparison ---------------------------------------------------------------
@@ -56,8 +59,7 @@ const isTopConstraint = (c) => !!c && c.t === "kw" && (c.kw === "unknown" || c.k
 
 // Returns an array of mismatch objects: { kind, detail, expected?, actual? }.
 // `canon` resolves ref ids through TS re-exports to their definition module.
-export function compareSignatures(expected, actual, override, canon = (x) => x, conv = { equivalences: [], structural: {} }) {
-  if (override?.all) return [];
+export function compareSignatures(expected, actual, override, canon = (x) => x, conv = { equivalences: [], structural: {} }, allowedGlobalNames = []) {
   const ignore = override?.ignore ?? new Set();
   const out = [];
   const push = (kind, detail, exp, act) => {
@@ -88,7 +90,8 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
   // Gate unresolved refs: surface (don't silently name-match) any type whose
   // identity could not be resolved to a real module on either side — after
   // convention normalization, so convention-handled constraints aren't flagged.
-  const soft = [...new Set([...unitSoftIds(expected, conv), ...unitSoftIds(actual, conv)])];
+  const allowedGlobals = allowedGlobalNames instanceof Set ? allowedGlobalNames : new Set(allowedGlobalNames ?? []);
+  const soft = [...new Set([...unitSoftIds(expected, conv, allowedGlobals), ...unitSoftIds(actual, conv, allowedGlobals)])];
   if (soft.length > 0) {
     push("unresolved-ref", `unresolved type identity: ${soft.slice(0, 6).join(", ")}`, undefined, undefined);
   }
@@ -118,13 +121,14 @@ function softIdsIn(d, acc) {
   else if (d.t === "tuple") for (const e of d.elements) softIdsIn(e, acc);
   else if (d.t === "union" || d.t === "intersect") for (const m of d.members) softIdsIn(m, acc);
   else if (d.t === "fn") { for (const p of d.params) softIdsIn(p.type, acc); softIdsIn(d.ret, acc); }
+  else if (d.t === "object") for (const m of d.members) if (m.type) softIdsIn(m.type, acc);
   return acc;
 }
 
-function unitSoftIds(desc, conv) {
+function unitSoftIds(desc, conv, allowedGlobals = new Set()) {
   const acc = new Set();
   for (const [context, t] of unitTypeNodes(desc)) softIdsIn(normalizeDescriptor(t, conv, context), acc);
-  return [...acc];
+  return [...acc].filter((id) => !(id.startsWith("global::") && allowedGlobals.has(id.slice("global::".length))));
 }
 
 function compareTypeParams(expected, actual, push, eq, conv) {
@@ -182,7 +186,11 @@ function compareInterface(expected, actual, push, eq) {
   const em = memberMap(expected);
   const am = memberMap(actual);
   for (const [name, mem] of em) {
-    if (!am.has(name)) { push("missing-member", `member '${name}' present in Go but missing in TS`, name); continue; }
+    if (!am.has(name)) {
+      if (mem.optional) continue;
+      push("missing-member", `member '${name}' present in Go but missing in TS`, name);
+      continue;
+    }
     const got = am.get(name);
     if (got.unsupported) { push("unsupported-member", `member '${name}' is an unsupported shape (${got.unsupported})`, name); continue; }
     if (!eq(mem.type, got.type)) push("member-type", `member '${name}' type differs`, keyOf(mem.type), keyOf(got.type));
@@ -216,9 +224,19 @@ function compareValue(expected, actual, push, eq) {
 // following TS re-exports (named + star), so a type referenced via a re-export
 // module matches the same type at its definition. core.Node != ast.Node holds
 // because they resolve to different definitions.
-function makeCanon(namedReexport, starReexport, definedAt, canonicalTypes = {}) {
+function makeCanon(namedReexport, starReexport, definedAt, canonicalTypes = {}, nodeFormAliases = undefined) {
   const cache = new Map();
   const split = (id) => { const i = id.lastIndexOf("::"); return [id.slice(0, i), id.slice(i + 2)]; };
+  const nodeEnvelopeAlias = (id) => {
+    if (!nodeFormAliases?.unionModule || !nodeFormAliases?.sourceModulePrefixes?.length) return undefined;
+    const [mod, name] = split(id);
+    const sourceMatch = nodeFormAliases.sourceModulePrefixes.some((p) => mod === p || mod.startsWith(`${p}/`));
+    const dataMatch = mod === nodeFormAliases.dataModule && new Set(nodeFormAliases.dataTypeNames ?? []).has(name);
+    if (!sourceMatch && !dataMatch) return undefined;
+    const candidateName = name.endsWith("Node") ? name : `${name}Node`;
+    const candidate = `${nodeFormAliases.unionModule}::${candidateName}`;
+    return definedAt.has(candidate) ? candidate : undefined;
+  };
   const resolve = (id, seen) => {
     if (cache.has(id)) return cache.get(id);
     if (seen.has(id)) return id;
@@ -243,6 +261,8 @@ function makeCanon(namedReexport, starReexport, definedAt, canonicalTypes = {}) 
     // A globally-unique duplicated type collapses to its one canonical module.
     const name = id.slice(id.lastIndexOf("::") + 2);
     if (canonicalTypes[name]) return `${canonicalTypes[name]}::${name}`;
+    const nodeAlias = nodeEnvelopeAlias(id);
+    if (nodeAlias) return nodeAlias;
     return resolve(id, new Set());
   };
 }
@@ -338,8 +358,11 @@ export async function computeSignatureReport(deps, options = {}) {
   // A type's actual declaring module is its canonical definition, so re-exports
   // (e.g. the generated barrel) resolve to the same module the expected side picks.
   for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
-  const canon = makeCanon(namedReexport, starReexport, definedAt, profile.canonicalTypes ?? {});
+  const canon = makeCanon(namedReexport, starReexport, definedAt, profile.canonicalTypes ?? {}, profile.nodeFormAliases);
   const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, tsDecls);
+  if (conv.structural.acceptNilableGoTypes) {
+    conv.structural.nilableRefs = nilableTypeRefs(index);
+  }
 
   const idRe = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];
@@ -355,9 +378,9 @@ export async function computeSignatureReport(deps, options = {}) {
       if (!go || !RENDERABLE.has(go.kind)) continue;
       checked++;
       const override = resolveOverride(overrides, u.id, u.metadata);
-      if (override.all) { overriddenUnits++; continue; }
+      if (override.ignore.size > 0) overriddenUnits++;
       const expected = goUnitDescriptor(go, index);
-      const ms = compareSignatures(expected, u.descriptor, override, canon, conv);
+      const ms = compareSignatures(expected, u.descriptor, override, canon, conv, profile.allowedGlobals);
       for (const m of ms) mismatches.push({ id: u.id, file: file.path, ...m });
     }
   }

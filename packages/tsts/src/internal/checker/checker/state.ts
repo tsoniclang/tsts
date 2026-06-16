@@ -401,11 +401,11 @@ export interface CachedSignatureKey {
  * 	SignatureKeyOuter     = CacheHashKey(xxh3.HashString128(">"))
  * )
  */
-export let SignatureKeyErased: CacheHashKey = xxh3.HashString128("-").String();
-export let SignatureKeyCanonical: CacheHashKey = xxh3.HashString128("*").String();
-export let SignatureKeyBase: CacheHashKey = xxh3.HashString128("#").String();
-export let SignatureKeyInner: CacheHashKey = xxh3.HashString128("<").String();
-export let SignatureKeyOuter: CacheHashKey = xxh3.HashString128(">").String();
+export let SignatureKeyErased: CacheHashKey = xxh3.HashString128("-");
+export let SignatureKeyCanonical: CacheHashKey = xxh3.HashString128("*");
+export let SignatureKeyBase: CacheHashKey = xxh3.HashString128("#");
+export let SignatureKeyInner: CacheHashKey = xxh3.HashString128("<");
+export let SignatureKeyOuter: CacheHashKey = xxh3.HashString128(">");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::StringMappingKey","kind":"type","status":"implemented","sigHash":"36d0b3230681a2ba96631d0fce4219fc2162e5500fc39060aad3e0497e2db767","bodyHash":"10cfb3db96c6b66442f6a60f0d29262d0fa27f53d2dffa9870799bfe93a5e443"}
@@ -551,7 +551,8 @@ export interface NonExistentPropertyKey {
  * }
  */
 export interface FlowLoopKey {
-  readonly __flowLoopKey: unique symbol;
+  flowNode: GoPtr<FlowNode>;
+  refKey: CacheHashKey;
 }
 
 /**
@@ -1289,7 +1290,7 @@ export interface Program {
   GetEmitSyntaxForUsageLocation(sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode;
   GetImpliedNodeFormatForEmit(sourceFile: HasFileName): ModuleKind;
   GetResolvedModule(currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule>;
-  GetResolvedModules(): GoMap<Path, ModeAwareCache>;
+  GetResolvedModules(): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>>;
   GetPackagesMap(): GoMap<string, bool>;
   GetSourceFileMetaData(path: Path): SourceFileMetaData;
   GetJSXRuntimeImportSpecifier(path: Path): [string, GoPtr<Node>];
@@ -1685,7 +1686,7 @@ export interface Checker {
   stringLiteralTypes: GoMap<string, GoPtr<Type>>;
   numberLiteralTypes: GoMap<Number, GoPtr<Type>>;
   nanType: GoPtr<Type>;
-  bigintLiteralTypes: GoMap<string, GoPtr<Type>>;
+  bigintLiteralTypes: GoMap<PseudoBigInt, GoPtr<Type>>;
   enumLiteralTypes: GoMap<EnumLiteralKey, GoPtr<Type>>;
   enumNaNLiteralTypes: GoMap<GoPtr<Symbol>, GoPtr<Type>>;
   indexedAccessTypes: GoMap<CacheHashKey, GoPtr<Type>>;
@@ -1706,7 +1707,7 @@ export interface Checker {
   reverseMappedCache: GoMap<ReverseMappedTypeKey, GoPtr<Type>>;
   reverseHomomorphicMappedCache: GoMap<ReverseMappedTypeKey, GoPtr<Type>>;
   iterationTypesCache: GoMap<IterationTypesKey, IterationTypes>;
-  markerTypes: Set;
+  markerTypes: Set<GoPtr<Type>>;
   undefinedSymbol: GoPtr<Symbol>;
   argumentsSymbol: GoPtr<Symbol>;
   requireSymbol: GoPtr<Symbol>;
@@ -1725,37 +1726,37 @@ export interface Checker {
   propertiesTypes: GoMap<PropertiesTypesKey, GoPtr<Type>>;
   diagnostics: DiagnosticsCollection;
   suggestionDiagnostics: DiagnosticsCollection;
-  symbolArena: Arena;
-  signatureArena: Arena;
-  indexInfoArena: Arena;
+  symbolArena: Arena<Symbol>;
+  signatureArena: Arena<Signature>;
+  indexInfoArena: Arena<IndexInfo>;
   mergedSymbols: GoMap<GoPtr<Symbol>, GoPtr<Symbol>>;
   factory: NodeFactory;
-  nodeLinks: LinkStore;
-  signatureLinks: LinkStore;
-  symbolNodeLinks: LinkStore;
+  nodeLinks: LinkStore<GoPtr<Node>, NodeLinks>;
+  signatureLinks: LinkStore<GoPtr<Node>, SignatureLinks>;
+  symbolNodeLinks: LinkStore<GoPtr<Node>, SymbolNodeLinks>;
   typeNodeLinks: LinkStore<GoPtr<Node>, TypeNodeLinks>;
-  enumMemberLinks: LinkStore;
-  assertionLinks: LinkStore;
-  arrayLiteralLinks: LinkStore;
-  switchStatementLinks: LinkStore;
-  jsxElementLinks: LinkStore;
-  symbolReferenceLinks: LinkStore;
+  enumMemberLinks: LinkStore<GoPtr<Node>, EnumMemberLinks>;
+  assertionLinks: LinkStore<GoPtr<Node>, AssertionLinks>;
+  arrayLiteralLinks: LinkStore<GoPtr<Node>, ArrayLiteralLinks>;
+  switchStatementLinks: LinkStore<GoPtr<Node>, SwitchStatementLinks>;
+  jsxElementLinks: LinkStore<GoPtr<Node>, JsxElementLinks>;
+  symbolReferenceLinks: LinkStore<GoPtr<Symbol>, SymbolReferenceLinks>;
   valueSymbolLinks: LinkStore<GoPtr<Symbol>, ValueSymbolLinks>;
-  mappedSymbolLinks: LinkStore;
-  deferredSymbolLinks: LinkStore;
-  aliasSymbolLinks: LinkStore;
-  moduleSymbolLinks: LinkStore;
-  lateBoundLinks: LinkStore;
-  exportTypeLinks: LinkStore;
-  membersAndExportsLinks: LinkStore;
+  mappedSymbolLinks: LinkStore<GoPtr<Symbol>, MappedSymbolLinks>;
+  deferredSymbolLinks: LinkStore<GoPtr<Symbol>, DeferredSymbolLinks>;
+  aliasSymbolLinks: LinkStore<GoPtr<Symbol>, AliasSymbolLinks>;
+  moduleSymbolLinks: LinkStore<GoPtr<Symbol>, ModuleSymbolLinks>;
+  lateBoundLinks: LinkStore<GoPtr<Symbol>, LateBoundLinks>;
+  exportTypeLinks: LinkStore<GoPtr<Symbol>, ExportTypeLinks>;
+  membersAndExportsLinks: LinkStore<GoPtr<Symbol>, MembersAndExportsLinks>;
   typeAliasLinks: LinkStore<GoPtr<Symbol>, TypeAliasLinks>;
-  declaredTypeLinks: LinkStore;
-  spreadLinks: LinkStore;
-  varianceLinks: LinkStore;
-  ReverseMappedSymbolLinks: LinkStore;
-  markedAssignmentSymbolLinks: LinkStore;
-  symbolContainerLinks: LinkStore;
-  sourceFileLinks: LinkStore;
+  declaredTypeLinks: LinkStore<GoPtr<Symbol>, DeclaredTypeLinks>;
+  spreadLinks: LinkStore<GoPtr<Symbol>, SpreadLinks>;
+  varianceLinks: LinkStore<GoPtr<Symbol>, VarianceLinks>;
+  ReverseMappedSymbolLinks: LinkStore<GoPtr<Symbol>, ReverseMappedSymbolLinks>;
+  markedAssignmentSymbolLinks: LinkStore<GoPtr<Symbol>, MarkedAssignmentSymbolLinks>;
+  symbolContainerLinks: LinkStore<GoPtr<Symbol>, ContainingSymbolLinks>;
+  sourceFileLinks: LinkStore<GoPtr<SourceFile>, SourceFileLinks>;
   regExpScanner: GoPtr<Scanner>;
   patternForType: GoMap<GoPtr<Type>, GoPtr<Node>>;
   contextFreeTypes: GoMap<GoPtr<Node>, GoPtr<Type>>;
@@ -1946,7 +1947,7 @@ export interface Checker {
   emitResolverOnce: Once;
   _jsxNamespace: string;
   _jsxFactoryEntity: GoPtr<Node>;
-  skipDirectInferenceNodes: Set;
+  skipDirectInferenceNodes: Set<GoPtr<Node>>;
   ctx: Context;
   packagesMap: GoMap<string, bool>;
   activeMappers: GoSlice<GoPtr<TypeMapper>>;
@@ -1954,8 +1955,8 @@ export interface Checker {
   ambientModulesOnce: Once;
   ambientModules: GoSlice<GoPtr<Symbol>>;
   withinUnreachableCode: bool;
-  reportedUnreachableNodes: Set;
-  nonExistentProperties: Set;
+  reportedUnreachableNodes: Set<GoPtr<Node>>;
+  nonExistentProperties: Set<NonExistentPropertyKey>;
   deferredDiagnosticCallbacks: GoSlice<() => void> | undefined;
   typeToStringNodebuilder: GoPtr<NodeBuilder>;
   mu: Mutex;
@@ -2281,16 +2282,16 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.evaluate = NewEvaluator((expr, location): Result => Checker_evaluateEntity(checker, expr, location), OEKParentheses);
   checker.stringLiteralTypes = new globalThis.Map();
   checker.numberLiteralTypes = new globalThis.Map();
-  checker.bigintLiteralTypes = new globalThis.Map();
+  checker.bigintLiteralTypes = NewGoStructMap();
   checker.enumLiteralTypes = NewGoStructMap();
   checker.enumNaNLiteralTypes = new globalThis.Map();
-  checker.indexedAccessTypes = new globalThis.Map();
-  checker.templateLiteralTypes = new globalThis.Map();
+  checker.indexedAccessTypes = NewGoStructMap();
+  checker.templateLiteralTypes = NewGoStructMap();
   checker.stringMappingTypes = NewGoStructMap();
   checker.uniqueESSymbolTypes = new globalThis.Map();
   checker.thisExpandoKinds = new globalThis.Map();
   checker.thisExpandoLocations = new globalThis.Map();
-  checker.subtypeReductionCache = new globalThis.Map();
+  checker.subtypeReductionCache = NewGoStructMap();
   checker.cachedTypes = NewGoStructMap();
   checker.cachedSignatures = NewGoStructMap();
   checker.undefinedProperties = new globalThis.Map();
@@ -2311,7 +2312,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.requireSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "require");
   checker.unknownSymbol = Checker_newSymbol(checker, SymbolFlagsProperty, "unknown");
   checker.unresolvedSymbols = new globalThis.Map();
-  checker.errorTypes = new globalThis.Map();
+  checker.errorTypes = NewGoStructMap();
   checker.moduleSymbols = new globalThis.Map();
   checker.globalThisSymbol = Checker_newSymbolEx(checker, SymbolFlagsModule as SymbolFlags, "globalThis", CheckFlagsReadonly);
   checker.globalThisSymbol!.Exports = checker.globals;
@@ -2322,10 +2323,10 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
     NameResolver_Resolve(nameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
   checker.resolveNameForSymbolSuggestion = (location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals): GoPtr<Symbol> =>
     NameResolver_Resolve(suggestionNameResolver, location, name, meaning, nameNotFoundMessage, isUse, excludeGlobals);
-  checker.tupleTypes = new globalThis.Map();
-  checker.unionTypes = new globalThis.Map();
+  checker.tupleTypes = NewGoStructMap();
+  checker.unionTypes = NewGoStructMap();
   checker.unionOfUnionTypes = NewGoStructMap();
-  checker.intersectionTypes = new globalThis.Map();
+  checker.intersectionTypes = NewGoStructMap();
   checker.propertiesTypes = NewGoStructMap();
   checker.diagnostics = newDiagnosticsCollection();
   checker.suggestionDiagnostics = newDiagnosticsCollection();
@@ -2413,7 +2414,7 @@ export function NewChecker(program: Program, tracer: GoPtr<Tracer>): [GoPtr<Chec
   checker.unknownEmptyObjectType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
   checker.unknownUnionType = Checker_createUnknownUnionType(checker);
   checker.emptyGenericType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
-  Type_AsObjectType(checker.emptyGenericType)!.instantiations = new globalThis.Map();
+  Type_AsObjectType(checker.emptyGenericType)!.instantiations = NewGoStructMap();
   checker.anyFunctionType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
   checker.anyFunctionType!.objectFlags |= ObjectFlagsNonInferrableType;
   checker.noConstraintType = Checker_newAnonymousType(checker, undefined, nilSymbolTable, [], [], []);
@@ -2625,6 +2626,8 @@ export function isES2015OrLaterConstructorName(s: string): bool {
   return s === "Promise" || s === "Symbol" || s === "Map" || s === "WeakMap" || s === "Set" || s === "WeakSet";
 }
 
+let _primitiveTypeAliasSuggestionsCache: GoMap<string, GoPtr<Symbol>> | undefined;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::varGroup::primitiveTypeAliasSuggestions","kind":"varGroup","status":"implemented","sigHash":"2fd770542aac8bc457823b7b60e78e79b839581a9a2fd80969eb4f4e50ef2376","bodyHash":"2c24498cd0e6cd6c1fd27a069bea95a46ae4db6ad6f60b012a30e9a81742a211"}
  *
@@ -2647,7 +2650,6 @@ export function isES2015OrLaterConstructorName(s: string): bool {
  * 	return result
  * })
  */
-let _primitiveTypeAliasSuggestionsCache: GoMap<string, GoPtr<Symbol>> | undefined;
 function _getPrimitiveTypeAliasSuggestionsMap(): GoMap<string, GoPtr<Symbol>> {
   if (_primitiveTypeAliasSuggestionsCache === undefined) {
     const result: GoMap<string, GoPtr<Symbol>> = new globalThis.Map();
@@ -3527,7 +3529,7 @@ export function signatureHasRestParameter(sig: GoPtr<Signature>): bool {
  * 	})
  * }
  */
-export function hashWrite32<T>(h: GoPtr<Hasher>, value: T): void {
+export function hashWrite32<T extends GoConstraint<"~int32 | ~uint32"> & number>(h: GoPtr<Hasher>, value: T): void {
   const v = value as unknown as number;
   (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
     v & 0xff,
@@ -3555,7 +3557,7 @@ export function hashWrite32<T>(h: GoPtr<Hasher>, value: T): void {
  * 	})
  * }
  */
-export function hashWrite64<T>(h: GoPtr<Hasher>, value: T): void {
+export function hashWrite64<T extends GoConstraint<"~int | ~uint | ~int64 | ~uint64"> & number>(h: GoPtr<Hasher>, value: T): void {
   const v = value as unknown as number;
   (h as unknown as { Write(b: GoSlice<byte>): void }).Write([
     v & 0xff,
@@ -3575,13 +3577,11 @@ export function hashWrite64<T>(h: GoPtr<Hasher>, value: T): void {
  * Go source:
  * CacheHashKey xxh3.Uint128
  *
- * Ported as the canonical hex string of the 128-bit hash rather than a Uint128
- * object: Go map keys have value equality, and the checker caches here are
- * plain Maps. A primitive string gives value semantics natively; an object key
- * would need a global intern table, which grows without bound across
- * compilations (it exhausted the runner heap on full-lib checks).
+ * CacheHashKey remains the Go value type. Cache maps that use this key must use
+ * GoStructMap/NewGoStructMap so Uint128 keys compare by value rather than JS
+ * object identity.
  */
-export type CacheHashKey = string;
+export type CacheHashKey = Uint128;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::type::keyBuilder","kind":"type","status":"implemented","sigHash":"61a39d68253539619efdc805aa5cde328442284428e189b1b3653a95f63dc755","bodyHash":"5f8f2fd3c63315426ec051fcedddce54e8f6ef8616a62580ceb6ea75e1736712"}

@@ -172,7 +172,7 @@ export interface asyncTransformer {
   readonly __tsgoEmbedded0?: Transformer;
   readonly __tsgoEmbedded1?: superAccessState;
   contextFlags: asyncContextFlags;
-  enclosingFunctionParameterNames: GoPtr<Set>;
+  enclosingFunctionParameterNames: GoPtr<Set<string>>;
   lexicalArguments: lexicalArgumentsInfo;
   asyncBodyVisitor: GoPtr<NodeVisitor>;
   fallbackNodeVisitor: GoPtr<NodeVisitor>;
@@ -1211,7 +1211,7 @@ export function asyncTransformer_visitArrowFunction(receiver: GoPtr<asyncTransfo
  * 	}
  * }
  */
-export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>, names: GoPtr<Set>): void {
+export function asyncTransformer_recordDeclarationName(receiver: GoPtr<asyncTransformer>, node: GoPtr<Node>, names: GoPtr<Set<string>>): void {
   const name = Node_Name(node);
   if (name === undefined) {
     return;
@@ -1754,7 +1754,7 @@ export function asyncTransformer_transformAsyncFunctionBody(receiver: GoPtr<asyn
   const savedEnclosingFunctionParameterNames = receiver!.enclosingFunctionParameterNames;
   receiver!.enclosingFunctionParameterNames = NewSetWithSizeHint<string>(0);
   for (const parameter of Node_Parameters(node)) {
-    asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames as unknown as GoPtr<Set>);
+    asyncTransformer_recordDeclarationName(receiver, parameter as unknown as GoPtr<Node>, receiver!.enclosingFunctionParameterNames);
   }
   const hasLexicalThis = asyncTransformer_inHasLexicalThisContext(receiver);
   let asyncBody = asyncTransformer_transformAsyncFunctionBodyWorker(receiver, Node_Body(node));

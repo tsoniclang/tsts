@@ -32,7 +32,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
  * Go source:
  * const _procSelfFD = "/proc/self/fd/"
  */
-export const _procSelfFD = "/proc/self/fd/";
+export const _procSelfFD: string = "/proc/self/fd/";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/osvfs/realpath_linux.go::varGroup::hasProcSelfFD","kind":"varGroup","status":"implemented","sigHash":"fa50ebb74a38bb74213095f710ab17ecc5bcb43fe79851afd819c0b1639a3233","bodyHash":"167bc9acff221338d8a8cf37c697c0655a0006bd54bcd25664f930d0e88922d5"}

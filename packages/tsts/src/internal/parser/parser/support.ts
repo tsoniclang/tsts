@@ -611,7 +611,7 @@ export function Parser_initializeState(receiver: GoPtr<Parser>, opts: SourceFile
   receiver!.hasParseError = false;
   receiver!.identifiers = undefined as unknown as GoMap<string, string>;
   receiver!.identifierCount = 0 as int;
-  receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int) as Set;
+  receiver!.notParenthesizedArrow = NewSetWithSizeHint<int>(0 as int)!;
   receiver!.nodeSliceArena = { data: [] } as Arena<GoPtr<Node>>;
   receiver!.stringSliceArena = { data: [] } as Arena<string>;
   receiver!.jsdocInfos = [];

@@ -84,7 +84,7 @@ export interface JSXTransformer {
   emitResolver: EmitResolver;
   importSpecifier: string;
   filenameDeclaration: GoPtr<Node>;
-  utilizedImplicitRuntimeImports: OrderedMap;
+  utilizedImplicitRuntimeImports: OrderedMap<string, GoMap<string, GoPtr<Node>>>;
   inJsxChild: bool;
   currentSourceFile: GoPtr<SourceFile>;
 }

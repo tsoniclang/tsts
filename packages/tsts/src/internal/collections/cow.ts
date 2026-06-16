@@ -2,9 +2,6 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import * as maps from "../../go/maps.js";
 
-// Go struct{} value type for set membership.
-type EmptyStruct = { readonly __tsgoEmpty?: never };
-
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/collections/cow.go::type::CopyOnWriteMap","kind":"type","status":"implemented","sigHash":"03b1be1ac4b9a5a1409fe9912998e5fd6ae9e9c521fb413c59dfb750753eeb50","bodyHash":"8b79aaca4698ef01fe0843f83d39777eddcc15b867531b8d7fe3ef9356ccbc3b"}
  *
@@ -30,7 +27,7 @@ export interface CopyOnWriteMap<K extends GoComparable = unknown, V = unknown> {
  * 	return v, ok
  * }
  */
-export function CopyOnWriteMap_Get<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): [V, bool] {
+export function CopyOnWriteMap_Get<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): [V, bool] {
   const ok = receiver!.m?.has(k) ?? false;
   return [receiver!.m?.get(k) as V, ok];
 }
@@ -44,7 +41,7 @@ export function CopyOnWriteMap_Get<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, 
  * 	return ok
  * }
  */
-export function CopyOnWriteMap_Has<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): bool {
+export function CopyOnWriteMap_Has<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K): bool {
   return (receiver!.m?.has(k) ?? false) as bool;
 }
 
@@ -57,7 +54,7 @@ export function CopyOnWriteMap_Has<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, 
  * 	c.m[k] = v
  * }
  */
-export function CopyOnWriteMap_Set<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, v: V): void {
+export function CopyOnWriteMap_Set<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, k: K, v: V): void {
   CopyOnWriteMap_ensureOwned(receiver);
   receiver!.m!.set(k, v);
 }
@@ -78,7 +75,7 @@ export function CopyOnWriteMap_Set<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>, 
  * 	c.owned = true
  * }
  */
-export function CopyOnWriteMap_ensureOwned<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): void {
+export function CopyOnWriteMap_ensureOwned<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): void {
   if (receiver!.owned) {
     return;
   }
@@ -100,7 +97,7 @@ export function CopyOnWriteMap_ensureOwned<K, V>(receiver: GoPtr<CopyOnWriteMap<
  * 	return func() { *c = saved }
  * }
  */
-export function CopyOnWriteMap_EnterScope<K, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): () => void {
+export function CopyOnWriteMap_EnterScope<K extends GoComparable, V>(receiver: GoPtr<CopyOnWriteMap<K, V>>): () => void {
   // `saved := *c` copies the struct by value (the backing-map reference and the
   // owned flag); the returned closure restores both via `*c = saved`.
   const saved = { m: receiver!.m, owned: receiver!.owned };
@@ -120,7 +117,7 @@ export function CopyOnWriteMap_EnterScope<K, V>(receiver: GoPtr<CopyOnWriteMap<K
  * }
  */
 export interface CopyOnWriteSet<K extends GoComparable = unknown> {
-  m: CopyOnWriteMap<K, EmptyStruct>;
+  m: CopyOnWriteMap<K, { readonly __tsgoEmpty?: never }>;
 }
 
 /**
@@ -132,7 +129,7 @@ export interface CopyOnWriteSet<K extends GoComparable = unknown> {
  * 	return ok
  * }
  */
-export function CopyOnWriteSet_Has<K>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): bool {
+export function CopyOnWriteSet_Has<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): bool {
   const [, ok] = CopyOnWriteMap_Get(receiver!.m, k);
   return ok;
 }
@@ -145,7 +142,7 @@ export function CopyOnWriteSet_Has<K>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K):
  * 	c.m.Set(k, struct{}{})
  * }
  */
-export function CopyOnWriteSet_Add<K>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): void {
+export function CopyOnWriteSet_Add<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K): void {
   CopyOnWriteMap_Set(receiver!.m, k, {});
 }
 
@@ -157,6 +154,6 @@ export function CopyOnWriteSet_Add<K>(receiver: GoPtr<CopyOnWriteSet<K>>, k: K):
  * 	return c.m.EnterScope()
  * }
  */
-export function CopyOnWriteSet_EnterScope<K>(receiver: GoPtr<CopyOnWriteSet<K>>): () => void {
+export function CopyOnWriteSet_EnterScope<K extends GoComparable>(receiver: GoPtr<CopyOnWriteSet<K>>): () => void {
   return CopyOnWriteMap_EnterScope(receiver!.m);
 }

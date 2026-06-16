@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoComparable, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { ModifierList, Node, NodeFactoryCoercible, NodeList, NodeVisitor } from "../ast/spine.js";
 import type { Identifier, IndexedAccessTypeNode } from "../ast/generated/data.js";
 import type { SourceFile } from "../ast/ast.js";
@@ -449,7 +450,7 @@ export interface CompositeTypeCacheIdentity {
  * }
  */
 export interface NodeBuilderLinks {
-  serializedTypes: GoMap<string, GoPtr<SerializedTypeEntry>>;
+  serializedTypes: GoMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>;
   fakeScopeForSignatureDeclaration: GoPtr<string>;
 }
 
@@ -462,7 +463,7 @@ export interface NodeBuilderLinks {
  * }
  */
 export interface NodeBuilderSymbolLinks {
-  specifierCache: ModeAwareCache;
+  specifierCache: ModeAwareCache<string>;
 }
 
 /**
@@ -521,8 +522,8 @@ export interface NodeBuilderContext {
   enclosingDeclaration: GoPtr<Node>;
   enclosingFile: GoPtr<SourceFile>;
   inferTypeParameters: GoSlice<GoPtr<Type>>;
-  visitedTypes: Set;
-  symbolDepth: GoMap<string, int>;
+  visitedTypes: Set<TypeId>;
+  symbolDepth: GoMap<CompositeSymbolIdentity, int>;
   trackedSymbols: GoSlice<GoPtr<TrackedSymbolArgs>>;
   mapper: GoPtr<TypeMapper>;
   reverseMappedStack: GoSlice<GoPtr<Symbol>>;
@@ -565,8 +566,8 @@ export interface NodeBuilderImpl {
   ch: GoPtr<Checker>;
   e: GoPtr<EmitContext>;
   pc: GoPtr<PseudoChecker>;
-  links: LinkStore;
-  symbolLinks: LinkStore;
+  links: LinkStore<GoPtr<Node>, NodeBuilderLinks>;
+  symbolLinks: LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>;
   ctx: GoPtr<NodeBuilderContext>;
   cloneBindingNameVisitor: GoPtr<NodeVisitor>;
   idToSymbol: GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>;
@@ -604,22 +605,14 @@ export function newNodeBuilderImpl(ch: GoPtr<Checker>, e: GoPtr<EmitContext>, id
     ch,
     e,
     pc: NewPseudoChecker(ch!.strictNullChecks, ch!.exactOptionalPropertyTypes),
-    links: { entries: new globalThis.Map(), arena: { data: [] } } as unknown as LinkStore,
-    symbolLinks: { entries: new globalThis.Map(), arena: { data: [] } } as unknown as LinkStore,
+    links: { entries: new globalThis.Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Node>, NodeBuilderLinks>,
+    symbolLinks: { entries: new globalThis.Map(), arena: { data: [] } } as unknown as LinkStore<GoPtr<Symbol>, NodeBuilderSymbolLinks>,
     ctx: undefined,
     cloneBindingNameVisitor: undefined,
     idToSymbol: resolvedIdToSymbol,
   };
   b.cloneBindingNameVisitor = NewNodeVisitor((node) => NodeBuilderImpl_cloneBindingName(b, node), b.f, {} as NodeVisitorHooks);
   return b;
-}
-
-function compositeSymbolIdentityKey(id: CompositeSymbolIdentity): string {
-  return `${id.isConstructorNode ? 1 : 0}:${id.symbolId}:${id.nodeId}`;
-}
-
-function compositeTypeCacheIdentityKey(id: CompositeTypeCacheIdentity): string {
-  return `${id.typeId}:${id.flags}:${id.internalFlags}`;
 }
 
 /**
@@ -6654,7 +6647,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   } else if (t!.symbol !== undefined) {
     id = { isConstructorNode: isConstructorObject, symbolId: GetSymbolId(t!.symbol), nodeId: 0 as NodeId };
   }
-  const key = compositeTypeCacheIdentityKey({ typeId: typeId, flags: receiver!.ctx!.flags, internalFlags: receiver!.ctx!.internalFlags });
+  const key: CompositeTypeCacheIdentity = { typeId: typeId, flags: receiver!.ctx!.flags, internalFlags: receiver!.ctx!.internalFlags };
   // Don't rely on type cache if we're expanding a type, because we need to compute `canIncreaseExpansionDepth`.
   const canUseCache = receiver!.ctx!.maxExpansionDepth < 0;
   if (canUseCache && receiver!.ctx!.enclosingDeclaration !== undefined && LinkStore_Has(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration)) {
@@ -6673,12 +6666,11 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   }
   let depth = 0;
   if (id !== undefined) {
-    const symbolDepthKey = compositeSymbolIdentityKey(id);
-    depth = receiver!.ctx!.symbolDepth.get(symbolDepthKey) ?? 0;
+    depth = receiver!.ctx!.symbolDepth.get(id) ?? 0;
     if (depth > 10) {
       return NodeBuilderImpl_createElidedInformationPlaceholder(receiver);
     }
-    receiver!.ctx!.symbolDepth.set(symbolDepthKey, depth + 1);
+    receiver!.ctx!.symbolDepth.set(id, depth + 1);
   }
   Set_Add(receiver!.ctx!.visitedTypes, typeId);
   const prevTrackedSymbols = receiver!.ctx!.trackedSymbols;
@@ -6689,7 +6681,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   if (canUseCache && !receiver!.ctx!.reportedDiagnostic && !receiver!.ctx!.encounteredError) {
     const links = LinkStore_Get(receiver!.links as LinkStore<GoPtr<Node>, NodeBuilderLinks>, receiver!.ctx!.enclosingDeclaration);
     if (links!.serializedTypes === undefined) {
-      links!.serializedTypes = new globalThis.Map();
+      links!.serializedTypes = NewGoStructMap<CompositeTypeCacheIdentity, GoPtr<SerializedTypeEntry>>();
     }
     links!.serializedTypes.set(key, {
       node: result,
@@ -6700,7 +6692,7 @@ export function NodeBuilderImpl_visitAndTransformType(receiver: GoPtr<NodeBuilde
   }
   Set_Delete(receiver!.ctx!.visitedTypes, typeId);
   if (id !== undefined) {
-    receiver!.ctx!.symbolDepth.set(compositeSymbolIdentityKey(id), depth);
+    receiver!.ctx!.symbolDepth.set(id, depth);
   }
   receiver!.ctx!.trackedSymbols = prevTrackedSymbols;
   return result;

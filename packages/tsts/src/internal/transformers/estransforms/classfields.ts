@@ -260,7 +260,7 @@ export interface classFieldsTransformer {
   currentClassContainer: GoPtr<ClassLikeDeclaration>;
   currentClassElement: GoPtr<ClassElement>;
   classAliases: GoMap<GoPtr<Node>, GoPtr<IdentifierNode>>;
-  enclosingClassDeclarations: Set;
+  enclosingClassDeclarations: Set<GoPtr<Node>>;
   inIterationStatement: bool;
   insideComputedPropertyName: bool;
   parentNode: GoPtr<Node>;

@@ -249,7 +249,7 @@ export function FromASTDiagnostics(diags: GoSlice<GoPtr<Diagnostic_34a9f76f>>): 
  * 	return result
  * }
  */
-export function ToDiagnostics<T>(diags: GoSlice<T>): GoSlice<Diagnostic> {
+export function ToDiagnostics<T extends Diagnostic>(diags: GoSlice<T>): GoSlice<Diagnostic> {
   const result: Diagnostic[] = new Array(diags.length);
   for (let i = 0; i < diags.length; i++) {
     result[i] = diags[i] as unknown as Diagnostic;

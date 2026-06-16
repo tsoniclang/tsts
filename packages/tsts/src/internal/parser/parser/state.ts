@@ -191,9 +191,9 @@ export interface Parser {
   hasParseError: bool;
   identifiers: GoMap<string, string>;
   identifierCount: int;
-  notParenthesizedArrow: Set;
-  nodeSliceArena: Arena;
-  stringSliceArena: Arena;
+  notParenthesizedArrow: Set<int>;
+  nodeSliceArena: Arena<GoPtr<Node>>;
+  stringSliceArena: Arena<string>;
   jsdocInfos: GoSlice<JSDocInfo>;
   possibleAwaitSpans: GoSlice<int>;
   jsdocCommentsSpace: GoSlice<string>;

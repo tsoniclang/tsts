@@ -22,7 +22,7 @@ export const TSTS_PROFILE = {
     compat: "packages/tsts/src/go/compat.ts",
   },
   // Go composite kinds -> bridge generic name (resolved in `modules.compat`).
-  bridge: { pointer: "GoPtr", slice: "GoSlice", array: "GoArray", map: "GoMap", chan: "GoChan" },
+  bridge: { pointer: "GoPtr", ref: "GoRef", slice: "GoSlice", array: "GoArray", map: "GoMap", chan: "GoChan" },
   primitives: {
     keyword: { string: "string", any: "unknown" },
     core: {
@@ -52,6 +52,58 @@ export const TSTS_PROFILE = {
     "NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
     "NodeVisitor": "packages/tsts/src/internal/ast/spine.ts",
     "ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts",
+  },
+  // TSTS represents TS-Go AST nodes as a Node envelope plus generated data
+  // interfaces. A Go `*SourceFile` in signature position corresponds to the TS
+  // node-envelope alias `SourceFileNode`, not the data interface `SourceFile`.
+  nodeFormAliases: {
+    unionModule: "packages/tsts/src/internal/ast/generated/unions.ts",
+    sourceModulePrefixes: [
+      "packages/tsts/src/internal/ast/ast.ts",
+    ],
+    dataModule: "packages/tsts/src/internal/ast/generated/data.ts",
+    dataTypeNames: ["ConditionalTypeNode", "MappedTypeNode"],
+  },
+  // Ambient TypeScript/host globals that are intentional signature surface.
+  // Everything else under global::/name::/unresolved:: remains a hard
+  // unresolved-ref mismatch.
+  allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
+  // External Go interface aliases whose zero value is nil and therefore may be
+  // represented as GoPtr<Alias> in the TypeScript port.
+  externalNilableTypes: ["io/fs.FileInfo", "io/fs.DirEntry", "io.Writer"],
+  externalInterfaceMembers: {
+    "io/fs.FileInfo": [
+      { name: "Name", type: { t: "fn", params: [], ret: { t: "kw", kw: "string" } } },
+      { name: "Size", type: { t: "fn", params: [], ret: { t: "ref", id: "@tsonic/core/types.ts::int", args: [] } } },
+      { name: "Mode", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/io/fs.ts::FileMode", args: [] } } },
+      { name: "ModTime", type: { t: "fn", params: [], ret: { t: "ref", id: "global::Date", args: [] } } },
+      { name: "IsDir", type: { t: "fn", params: [], ret: { t: "ref", id: "@tsonic/core/types.ts::bool", args: [] } } },
+      { name: "Sys", type: { t: "fn", params: [], ret: { t: "kw", kw: "unknown" } } }
+    ]
+  },
+  // Exact return/value types for authored Go facades. These are explicit
+  // facade contracts, not name guesses; internal TS-Go symbols still resolve
+  // from the Go snapshot.
+  externalFunctionReturns: {
+    "regexp.MustCompile": { module: "packages/tsts/src/go/regexp.ts", name: "Regexp" },
+    "strings.NewReplacer": { module: "packages/tsts/src/go/strings.ts", name: "Replacer" },
+    "reflect.TypeFor": { module: "packages/tsts/src/go/reflect.ts", name: "Type" },
+  },
+  externalValueTypes: {
+    "fs.ErrInvalid": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.ErrPermission": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.ErrExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.ErrNotExist": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.ErrClosed": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.SkipAll": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "fs.SkipDir": { module: "packages/tsts/src/go/compat.ts", name: "GoError" },
+    "jsontext.BeginArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
+    "jsontext.BeginObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
+    "jsontext.EndArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
+    "jsontext.EndObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
+    "jsontext.Null": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
+    "math.MaxInt": { module: "@tsonic/core/types.ts", name: "int" },
+    "time.Millisecond": { module: "packages/tsts/src/go/time.ts", name: "Duration" },
   },
 };
 

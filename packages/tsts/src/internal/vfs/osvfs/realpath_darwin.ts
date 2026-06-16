@@ -1,5 +1,5 @@
-import type { bool, int } from "@tsonic/core/types.js";
-import type { GoError } from "../../../go/compat.js";
+import type { bool, byte, int, nuint } from "@tsonic/core/types.js";
+import type { GoArray, GoError, GoPtr } from "../../../go/compat.js";
 import { EvalSymlinks } from "../../../go/path/filepath.js";
 import { OnceValue } from "../../../go/sync.js";
 import * as unix from "../../../go/golang.org/x/sys/unix.js";
@@ -38,7 +38,7 @@ import { ignoringEINTR } from "./eintr_unix.js";
  */
 export const hasFGetPath: () => bool = OnceValue<bool>((): bool => {
   // Verify that F_GETPATH is supported by this kernel version.
-  const buf = new Uint8Array(unix.PathMax as number);
+  const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "unix.PathMax">;
   const [fd, err] = unix.Open(".", (unix.O_EVTONLY as number) | (unix.O_NONBLOCK as number) | (unix.O_CLOEXEC as number), 0) as [int, GoError];
   if (err !== undefined) {
     return false as bool;
@@ -61,9 +61,9 @@ export const hasFGetPath: () => bool = OnceValue<bool>((): bool => {
  * 	})
  * }
  */
-export function fcntlGetPath(fd: int, buf: Uint8Array): [int, GoError] {
+export function fcntlGetPath(fd: int, buf: GoPtr<GoArray<byte, "unix.PathMax">>): [int, GoError] {
   return ignoringEINTR<int>((): [int, GoError] => {
-    return fcntlGetPathPtr(fd, buf);
+    return fcntlGetPathPtr(fd as unknown as nuint, buf as unknown as nuint);
   });
 }
 
@@ -76,7 +76,7 @@ export function fcntlGetPath(fd: int, buf: Uint8Array): [int, GoError] {
  * 	return unix.FcntlInt(fd, unix.F_GETPATH, int(buf))
  * }
  */
-export function fcntlGetPathPtr(fd: int, buf: Uint8Array): [int, GoError] {
+export function fcntlGetPathPtr(fd: nuint, buf: nuint): [int, GoError] {
   return unix.FcntlInt(fd, unix.F_GETPATH, buf) as [int, GoError];
 }
 
@@ -113,7 +113,7 @@ export function realpath(path: string): [string, GoError] {
     return ["", err];
   }
   try {
-    const buf = new Uint8Array(unix.PathMax as number);
+    const buf = new globalThis.Array<byte>(unix.PathMax as number).fill(0 as byte) as GoArray<byte, "unix.PathMax">;
     const [, getPathErr] = fcntlGetPath(fd, buf);
     if (getPathErr !== undefined) {
       return ["", getPathErr];

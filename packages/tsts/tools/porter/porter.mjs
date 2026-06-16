@@ -142,6 +142,18 @@ export async function main() {
     const unicodeGeneratedArtifacts = buildUnicodeGeneratedArtifactStatus(config);
     const schemaSourceSync = buildSchemaSourceSyncStatus(config);
     const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync);
+    if (command === "verify") {
+      const signatureReport = await computeSignatureReport(
+        {
+          config,
+          snapshot,
+          repoRoot,
+          tsFiles: tsUnits.files.filter((file) => file.metadataCount > 0),
+          tsById: new Map(tsUnits.units.map((unit) => [unit.id, unit])),
+        },
+      );
+      status.signatureCheck = summarizeSignatureReport(signatureReport);
+    }
     writeJson(resolveRepo(config.snapshotOut), snapshot);
     writeJson(resolveRepo(config.statusOut), status);
     writeText(resolveRepo(config.reportOut), renderStatusMarkdown(status));
@@ -165,11 +177,10 @@ export async function main() {
   fail(`unknown command '${command}'. Expected scan, status, verify, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
 }
 
-// Signature/type-equivalence check (standalone command). Compares each ported
-// @tsgo-unit's actual TS signature against the signature derived from Go.
-// NOT yet part of `verify` — that hard gate is wired only once the tree reaches
-// zero un-overridden mismatches. `--id <glob>` scopes; `--json` raw; `--no-gate`
-// exits 0 regardless (local exploration).
+// Signature/type-equivalence check. Compares each ported @tsgo-unit's actual TS
+// signature against the signature derived from Go. `porter verify` always runs
+// this as a hard gate; the standalone command supports `--id <glob>`, `--json`,
+// and `--no-gate` for local exploration.
 async function runSigCheck(config, options) {
   const snapshot = runScan(config);
   const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
@@ -187,6 +198,17 @@ async function runSigCheck(config, options) {
   if (report.mismatches.length > 0 && options["no-gate"] !== true) {
     process.exit(1);
   }
+}
+
+function summarizeSignatureReport(report) {
+  const byKind = {};
+  for (const mismatch of report.mismatches) byKind[mismatch.kind] = (byKind[mismatch.kind] ?? 0) + 1;
+  return {
+    checked: report.checked,
+    overriddenUnits: report.overriddenUnits,
+    mismatches: report.mismatches.length,
+    byKind,
+  };
 }
 
 function printSigReport(report) {
@@ -2316,6 +2338,7 @@ function renderGoCompatModule() {
 declare const __goBrand: unique symbol;
 
 export type GoPtr<T> = T | undefined;
+export type GoRef<T> = { v: T };
 export type GoSlice<T> = T[];
 export type GoArray<T, Length extends string> = T[] & { readonly [__goBrand]?: { readonly length: Length } };
 export type GoMap<K, V> = Map<K, V>;
@@ -2476,6 +2499,9 @@ function isValueStruct(value: Record<PropertyKey, unknown>): boolean {
     return true;
   }
   if (typeof value.Negative === "boolean" && typeof value.Base10Value === "string") {
+    return true;
+  }
+  if (typeof value.pos === "number" && typeof value.end === "number") {
     return true;
   }
   return false;
@@ -2640,6 +2666,13 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   failures.push(...collectBundledArtifactFailures(status.bundledGeneratedArtifacts ?? emptyBundledGeneratedArtifactStatus()));
   failures.push(...collectUnicodeArtifactFailures(status.unicodeGeneratedArtifacts ?? emptyUnicodeGeneratedArtifactStatus()));
+  if ((status.signatureCheck?.mismatches ?? 0) > 0) {
+    const byKind = Object.entries(status.signatureCheck.byKind ?? {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([kind, count]) => `${kind}=${count}`)
+      .join(", ");
+    failures.push(`${status.signatureCheck.mismatches} signature/type mismatches${byKind ? ` (${byKind})` : ""}`);
+  }
   if (strictPort && status.counts.missing > 0) failures.push(`${status.counts.missing} missing Go units`);
   if (strictPort) {
     const rows = status.rows ?? [];

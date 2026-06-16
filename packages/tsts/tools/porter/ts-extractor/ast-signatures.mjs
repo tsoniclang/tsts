@@ -189,7 +189,10 @@ export function canonicalizeType(node, ctx) {
       return canonicalizeFn(node, ctx);
     case K.KindTypeReference:
       return canonicalizeRef(node, ctx);
+    case K.KindTypeLiteral:
+      return canonicalizeObjectType(node.Members?.Nodes ?? [], ctx);
     case K.KindLiteralType:
+      if (typeof node.Literal?.Text === "string") return { t: "lit", text: JSON.stringify(node.Literal.Text) };
       return { t: "lit", text: sliceText(api, text, node) };
     default: {
       const kw = keywordOf(api, node.Kind);
@@ -210,6 +213,13 @@ function canonicalizeFn(node, ctx) {
     };
   });
   return { t: "fn", params, ret: node.Type ? canonicalizeType(node.Type, ctx) : { t: "kw", kw: "void" } };
+}
+
+function canonicalizeObjectType(members, ctx) {
+  return {
+    t: "object",
+    members: members.map((m) => memberDescriptor(ctx.api, m, ctx)).filter(Boolean),
+  };
 }
 
 function entityName(api, tn) {
@@ -295,13 +305,18 @@ export function canonicalKey(d) {
     case "tuple":
       return `T:[${d.elements.map(canonicalKey).join(",")}]`;
     case "union":
-      return `U:{${d.members.map(canonicalKey).sort().join("|")}}`;
+      return `U:{${flattenCompositeMembers(d, "union").map(canonicalKey).sort().join("|")}}`;
     case "intersect":
-      return `I:{${d.members.map(canonicalKey).sort().join("&")}}`;
+      return `I:{${flattenCompositeMembers(d, "intersect").map(canonicalKey).sort().join("&")}}`;
     case "fn":
       return `F:(${d.params
         .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${canonicalKey(p.type)}`)
         .join(",")})=>${canonicalKey(d.ret)}`;
+    case "object":
+      return `O:{${d.members
+        .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKey(m.type)}`)
+        .sort()
+        .join(";")}}`;
     case "kw":
       return `K:${d.kw}`;
     case "tp":
@@ -314,6 +329,34 @@ export function canonicalKey(d) {
       return `C:${d.token}`;
     default:
       return `?:${JSON.stringify(d)}`;
+  }
+}
+
+function canonicalKeyWithResolver(d, canon) {
+  switch (d.t) {
+    case "ref": {
+      const id = canon(d.id);
+      return d.args.length ? `R:${id}<${d.args.map((a) => canonicalKeyWithResolver(a, canon)).join(",")}>` : `R:${id}`;
+    }
+    case "array":
+      return `A:[${canonicalKeyWithResolver(d.element, canon)}]`;
+    case "tuple":
+      return `T:[${d.elements.map((e) => canonicalKeyWithResolver(e, canon)).join(",")}]`;
+    case "union":
+      return `U:{${flattenCompositeMembers(d, "union").map((m) => canonicalKeyWithResolver(m, canon)).sort().join("|")}}`;
+    case "intersect":
+      return `I:{${flattenCompositeMembers(d, "intersect").map((m) => canonicalKeyWithResolver(m, canon)).sort().join("&")}}`;
+    case "fn":
+      return `F:(${d.params
+        .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${canonicalKeyWithResolver(p.type, canon)}`)
+        .join(",")})=>${canonicalKeyWithResolver(d.ret, canon)}`;
+    case "object":
+      return `O:{${d.members
+        .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : canonicalKeyWithResolver(m.type, canon)}`)
+        .sort()
+        .join(";")}}`;
+    default:
+      return canonicalKey(d);
   }
 }
 
@@ -345,15 +388,31 @@ export function typesEqual(a, b, canon = (x) => x) {
       return a.elements.length === b.elements.length && a.elements.every((x, i) => typesEqual(x, b.elements[i], canon));
     case "union":
     case "intersect": {
-      if (a.members.length !== b.members.length) return false;
-      const ak = a.members.map(canonicalKey).sort();
-      const bk = b.members.map(canonicalKey).sort();
+      const aMembers = flattenCompositeMembers(a, a.t);
+      const bMembers = flattenCompositeMembers(b, b.t);
+      if (aMembers.length !== bMembers.length) return false;
+      const ak = aMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort();
+      const bk = bMembers.map((m) => canonicalKeyWithResolver(m, canon)).sort();
       return ak.every((k, i) => k === bk[i]);
     }
     case "fn":
       return a.params.length === b.params.length
         && a.params.every((p, i) => !!p.rest === !!b.params[i].rest && typesEqual(p.type, b.params[i].type, canon))
         && typesEqual(a.ret, b.ret, canon);
+    case "object": {
+      if (a.members.length !== b.members.length) return false;
+      const am = new Map(a.members.map((m) => [m.name, m]));
+      for (const bm of b.members) {
+        const m = am.get(bm.name);
+        if (!m || !!m.optional !== !!bm.optional || !!m.unsupported !== !!bm.unsupported) return false;
+        if (m.unsupported || bm.unsupported) {
+          if (m.unsupported !== bm.unsupported) return false;
+        } else if (!typesEqual(m.type, bm.type, canon)) {
+          return false;
+        }
+      }
+      return true;
+    }
     case "kw":
       return a.kw === b.kw;
     case "tp":
@@ -366,6 +425,15 @@ export function typesEqual(a, b, canon = (x) => x) {
     default:
       return canonicalKey(a) === canonicalKey(b);
   }
+}
+
+function flattenCompositeMembers(d, kind) {
+  const out = [];
+  for (const member of d.members) {
+    if (member.t === kind) out.push(...flattenCompositeMembers(member, kind));
+    else out.push(member);
+  }
+  return out;
 }
 
 // Whether a descriptor references any unresolved (global::/name::/unresolved::) id.
@@ -381,6 +449,8 @@ export function hasUnresolved(d) {
       return (d.members ?? d.elements).some(hasUnresolved);
     case "fn":
       return d.params.some((p) => hasUnresolved(p.type)) || hasUnresolved(d.ret);
+    case "object":
+      return d.members.some((m) => m.type && hasUnresolved(m.type));
     default:
       return false;
   }
@@ -483,6 +553,9 @@ function memberDescriptor(api, m, ctx) {
   }
   if (m.Kind === api.Kinds.KindPropertySignature) {
     const sig = api.Casts.AsPropertySignatureDeclaration(m);
+    if (sliceText(api, ctx.text, sig.name) === "[JsonFieldNames]") {
+      return null;
+    }
     return {
       name: sig.name?.Text,
       type: sig.Type ? canonicalizeType(sig.Type, ctx) : { t: "kw", kw: "any" },

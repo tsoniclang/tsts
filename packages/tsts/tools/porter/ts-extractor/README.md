@@ -13,8 +13,8 @@ npm run porter:sig-check
 
 `--id <glob>` scopes to matching unit ids; `--json` prints the full machine
 report; `--no-gate` exits 0 regardless (local exploration). Without `--no-gate`
-the command exits non-zero when mismatches remain. (It is **not** wired into
-`porter verify` until the tree reaches zero un-overridden mismatches.)
+the command exits non-zero when mismatches remain. `porter verify` always runs
+the same signature check as a hard gate.
 
 ## How it works
 
@@ -56,14 +56,15 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
     ],
     "structural": {
       "acceptNullable": false,        // T | undefined  ==  T
-      "unwrapPtrFunc": true,          // GoPtr<(..)=>R>  ==  (..)=>R
-      "anyMapKey": true,              // GoMap<K,V> key compared as wildcard
+      "unwrapPtrFunc": false,         // GoPtr<(..)=>R>  ==  (..)=>R
+      "anyMapKey": false,             // GoMap<K,V> key types must match
       "ptrValueEquivStruct": false,   // GoPtr<X> == X
-      "acceptErasedConstraints": true // a recognized Go constraint == an erased TS <T>
+      "acceptErasedConstraints": false // non-trivial Go constraints must be preserved in TS
     }
   },
 
-  // Per-unit acceptances (also settable inline via the @tsgo-unit `sigOverride` field):
+  // Per-unit acceptances must list explicit mismatch aspects and a reason.
+  // There is no accept-all override.
   "overrides": [ { "match": "*::method::*.foo", "ignore": ["param-type"], "reason": "…" } ]
 }
 ```

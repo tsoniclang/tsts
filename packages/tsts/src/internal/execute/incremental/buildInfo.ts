@@ -868,7 +868,7 @@ export function BuildInfoEmitSignature_noEmitSignature(receiver: GoPtr<BuildInfo
  * 	}
  * }
  */
-export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfoEmitSignature>, path: Path, emitSignatures: GoPtr<SyncMap>): GoPtr<emitSignature> {
+export function BuildInfoEmitSignature_toEmitSignature(receiver: GoPtr<BuildInfoEmitSignature>, path: Path, emitSignatures: GoPtr<SyncMap<Path, GoPtr<emitSignature>>>): GoPtr<emitSignature> {
   let signature = "";
   let signatureWithDifferentOptions: GoSlice<string> | undefined;
   if (receiver!.DiffersOnlyInDtsMap) {
@@ -1132,7 +1132,7 @@ export interface BuildInfo {
   FileNames: GoSlice<string>;
   FileInfos: GoSlice<GoPtr<BuildInfoFileInfo>>;
   FileIdsList: GoSlice<GoSlice<BuildInfoFileId>>;
-  Options: GoPtr<OrderedMap>;
+  Options: GoPtr<OrderedMap<string, unknown>>;
   ReferencedMap: GoSlice<GoPtr<BuildInfoReferenceMapEntry>>;
   SemanticDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoSemanticDiagnostic>>;
   EmitDiagnosticsPerFile: GoSlice<GoPtr<BuildInfoDiagnosticsOfFile>>;
@@ -1357,7 +1357,7 @@ export function BuildInfo_GetBuildInfoRootInfoReader(receiver: GoPtr<BuildInfo>,
  */
 export interface BuildInfoRootInfoReader {
   resolvedRootFileInfos: GoMap<Path, GoPtr<BuildInfoFileInfo>>;
-  rootToResolved: GoPtr<OrderedMap>;
+  rootToResolved: GoPtr<OrderedMap<Path, Path>>;
 }
 
 /**

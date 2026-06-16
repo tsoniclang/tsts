@@ -79,10 +79,9 @@ test("compareValue: value-annotation-missing and value-type", () => {
   assert.equal(compareSignatures(exp, { kind: "value", decls: [{ name: "c", type: ref("core::int") }] }, null).length, 0);
 });
 
-test("overrides: ignore aspect and accept-all", () => {
+test("overrides: ignore aspect only", () => {
   const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
   const wrong = { kind: "func", typeParams: [], ret: kw("number"), params: [{ type: ref("m::B") }] };
-  assert.equal(compareSignatures(exp, wrong, { all: true }).length, 0);
   const ms = compareSignatures(exp, wrong, { ignore: new Set(["return-type"]) });
   assert.ok(!kinds(ms).has("return-type"));
   assert.ok(kinds(ms).has("param-type"));
@@ -97,15 +96,38 @@ test("conventions: acceptNullable strips | undefined", () => {
   assert.ok(!typesEqual(normalizeDescriptor(exp, noConv), normalizeDescriptor(nullable, noConv)));
 });
 
-test("conventions: equivalences are scoped — numeric collapses ONLY in constraint context", () => {
-  const conv = loadConventions({ equivalences: [{ as: "numeric", scope: "constraint", match: [{ kw: "number" }, { rawIncludes: "~uint" }] }] });
-  const goConstraint = { t: "raw", text: "~uint32" };
-  const tsNumber = kw("number");
-  // In constraint context the two collapse to the same token...
-  assert.ok(typesEqual(normalizeDescriptor(goConstraint, conv, "constraint"), normalizeDescriptor(tsNumber, conv, "constraint")));
-  // ...but in ordinary type context a param `x: int`-ish must NOT equal `x: number`.
-  const goInt = ref("core::int");
-  assert.ok(!typesEqual(normalizeDescriptor(goInt, conv, "type"), normalizeDescriptor(tsNumber, conv, "type")));
+test("conventions: equivalences are scoped to constraint context", () => {
+  const conv = loadConventions({ equivalences: [{ as: "comparable", scope: "constraint", match: [{ name: "comparable" }, { refName: "GoComparable" }] }] });
+  const goComparable = ref("name::comparable");
+  const tsComparable = ref("packages/tsts/src/go/compat.ts::GoComparable");
+  assert.ok(typesEqual(normalizeDescriptor(goComparable, conv, "constraint"), normalizeDescriptor(tsComparable, conv, "constraint")));
+  assert.ok(!typesEqual(normalizeDescriptor(goComparable, conv, "type"), normalizeDescriptor(tsComparable, conv, "type")));
+});
+
+test("compareTypeParams: non-trivial constraints cannot be erased", () => {
+  const exp = { kind: "func", typeParams: [{ constraint: ref("name::comparable") }], ret: kw("void"), params: [] };
+  const actual = { kind: "func", typeParams: [{ constraint: null }], ret: kw("void"), params: [] };
+  assert.ok(kinds(compareSignatures(exp, actual, null, (x) => x, noConv)).has("type-param-constraint"));
+});
+
+test("compareTypeParams: exact GoConstraint marker preserves raw tilde constraints", () => {
+  const conv = loadConventions({});
+  const exp = { kind: "func", typeParams: [{ constraint: { t: "raw", text: "~int32 | ~uint32" } }], ret: kw("void"), params: [] };
+  const actual = {
+    kind: "func",
+    typeParams: [{
+      constraint: {
+        t: "intersect",
+        members: [
+          ref("packages/tsts/src/go/compat.ts::GoConstraint", { t: "lit", text: JSON.stringify("~int32 | ~uint32") }),
+          kw("number"),
+        ],
+      },
+    }],
+    ret: kw("void"),
+    params: [],
+  };
+  assert.equal(compareSignatures(exp, actual, null, (x) => x, conv).length, 0);
 });
 
 test("compareInterface: unsupported member shapes are reported, not dropped", () => {
@@ -120,6 +142,27 @@ test("gate: unresolved type identity is surfaced", () => {
   assert.ok(kinds(compareSignatures(exp, act, null)).has("unresolved-ref"));
 });
 
+test("gate: allowed ambient globals do not produce unresolved-ref", () => {
+  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] };
+  const act = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("global::Uint8Array") }] };
+  assert.equal(compareSignatures(exp, act, null, (x) => x, noConv, ["Uint8Array"]).length, 0);
+});
+
+test("typesEqual: object descriptors compare structurally", () => {
+  const left = { t: "object", members: [{ name: "flag", type: ref("m::TypeFlags") }, { name: "name", type: kw("string") }] };
+  const right = { t: "object", members: [{ name: "name", type: kw("string") }, { name: "flag", type: ref("m::TypeFlags") }] };
+  assert.ok(typesEqual(left, right));
+  assert.ok(!typesEqual(left, { t: "object", members: [{ name: "name", type: kw("string") }] }));
+});
+
+test("typesEqual: nested unions are associative", () => {
+  const a = ref("m::A");
+  const b = ref("m::B");
+  const c = ref("m::C");
+  assert.ok(typesEqual({ t: "union", members: [a, { t: "union", members: [b, c] }] }, { t: "union", members: [c, a, b] }));
+  assert.ok(typesEqual({ t: "intersect", members: [a, { t: "intersect", members: [b, c] }] }, { t: "intersect", members: [b, c, a] }));
+});
+
 test("conventions: anyMapKey makes the map key a wildcard", () => {
   const conv = loadConventions({ structural: { anyMapKey: true } });
   const a = ref("c::GoMap", ref("m::StructKey"), kw("string"));
@@ -132,6 +175,28 @@ test("conventions: unwrapPtrFunc treats GoPtr<fn> as fn", () => {
   const fn = { t: "fn", params: [], ret: kw("void") };
   const ptrFn = ref("c::GoPtr", fn);
   assert.ok(typesEqual(normalizeDescriptor(ptrFn, conv), normalizeDescriptor(fn, conv)));
+});
+
+test("conventions: nilable Go carriers accept only carrier/interface undefined forms", () => {
+  const conv = loadConventions({
+    structural: {
+      acceptNilableGoTypes: true,
+      nilableRefs: ["m::Iface"],
+    },
+  });
+  const slice = ref("c::GoSlice", kw("string"));
+  const ptrSlice = ref("c::GoPtr", slice);
+  const nullableSlice = { t: "union", members: [kw("undefined"), slice] };
+  assert.ok(typesEqual(normalizeDescriptor(ptrSlice, conv), normalizeDescriptor(slice, conv)));
+  assert.ok(typesEqual(normalizeDescriptor(nullableSlice, conv), normalizeDescriptor(slice, conv)));
+
+  const iface = ref("m::Iface");
+  assert.ok(typesEqual(normalizeDescriptor(ref("c::GoPtr", iface), conv), normalizeDescriptor(iface, conv)));
+  assert.ok(typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), iface] }, conv), normalizeDescriptor(iface, conv)));
+
+  const intType = ref("core::int");
+  assert.ok(!typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), intType] }, conv), normalizeDescriptor(intType, conv)));
+  assert.ok(!typesEqual(normalizeDescriptor(ref("c::GoPtr", ref("m::Struct")), conv), normalizeDescriptor(ref("m::Struct"), conv)));
 });
 
 test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)", () => {
@@ -164,4 +229,91 @@ test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)"
     index,
   );
   assert.equal(canonicalKey(sel.params[0].type), "R:src/rt/time.ts::Duration");
+});
+
+test("expected-from-go: inline struct value types are structural descriptors", () => {
+  const config = {
+    goModulePath: "example.com/proj",
+    signatureCheck: {
+      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
+      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
+      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
+      stdlibTypes: {},
+      facadeTemplate: "src/rt/{importPath}.ts",
+    },
+  };
+  const profile = loadProfile(config);
+  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
+  const unit = {
+    kind: "varGroup",
+    file: { importPath: "example.com/proj/pkg", imports: [] },
+    valueSpecs: [{
+      names: ["table"],
+      inferredValueTypes: [{
+        kind: "array",
+        length: "...",
+        element: {
+          kind: "struct",
+          members: [
+            { kind: "field", name: "flag", typeExpr: { kind: "ident", name: "int" } },
+            { kind: "field", name: "name", typeExpr: { kind: "ident", name: "string" } },
+          ],
+        },
+      }],
+    }],
+  };
+  const desc = goUnitDescriptor(unit, index);
+  assert.equal(canonicalKey(desc.decls[0].type), "R:src/rt/bridge.ts::Arr<O:{flag:R:@acme/prim::i32;name:K:string},L:\"...\">");
+});
+
+test("expected-from-go: embedded receiver methods do not override direct fields", () => {
+  const config = {
+    goModulePath: "example.com/proj",
+    signatureCheck: {
+      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
+      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
+      primitives: { keyword: { string: "string" }, core: {}, compat: {} },
+      stdlibTypes: {},
+      facadeTemplate: "src/rt/{importPath}.ts",
+    },
+  };
+  const baseType = {
+    id: "example.com/proj::pkg/base.go::type::Base",
+    kind: "type",
+    name: "Base",
+    typeKind: "struct",
+    members: [],
+    typeParameterDetails: [],
+  };
+  const baseMethod = {
+    id: "example.com/proj::pkg/base.go::method::Base.Signature",
+    kind: "method",
+    name: "Signature",
+    receiverType: { kind: "pointer", element: { kind: "ident", name: "Base" } },
+    parameters: [],
+    results: [{ type: { kind: "ident", name: "string" } }],
+    typeParameterDetails: [],
+  };
+  const childType = {
+    id: "example.com/proj::pkg/child.go::type::Child",
+    kind: "type",
+    name: "Child",
+    typeKind: "struct",
+    members: [
+      { kind: "embeddedField", typeExpr: { kind: "ident", name: "Base" } },
+      { kind: "field", name: "Signature", typeExpr: { kind: "ident", name: "string" } },
+    ],
+    typeParameterDetails: [],
+  };
+  const file = { importPath: "example.com/proj/pkg", imports: [], units: [baseType, baseMethod, childType] };
+  const profile = loadProfile(config);
+  const tsById = new Map([
+    [baseType.id, { path: "pkg/base.ts" }],
+    [childType.id, { path: "pkg/child.ts" }],
+  ]);
+  const index = buildExpectedIndex(config, { files: [file] }, tsById, profile);
+  const desc = goUnitDescriptor({ ...childType, file }, index);
+  const signatureMembers = desc.members.filter((member) => member.name === "Signature");
+  assert.equal(signatureMembers.length, 1);
+  assert.equal(canonicalKey(signatureMembers[0].type), "K:string");
 });

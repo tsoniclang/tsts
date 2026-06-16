@@ -2244,7 +2244,7 @@ export interface orderedSet<T extends GoComparable = unknown> {
  * 	return ok
  * }
  */
-export function orderedSet_contains<T>(receiver: GoPtr<orderedSet<T>>, value: T): bool {
+export function orderedSet_contains<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T): bool {
   if (receiver!.valuesByKey === undefined) {
     return slices.Contains(receiver!.values, value);
   }
@@ -2271,7 +2271,7 @@ export function orderedSet_contains<T>(receiver: GoPtr<orderedSet<T>>, value: T)
  * 	s.valuesByKey[value] = struct{}{}
  * }
  */
-export function orderedSet_add<T>(receiver: GoPtr<orderedSet<T>>, value: T): void {
+export function orderedSet_add<T extends GoComparable>(receiver: GoPtr<orderedSet<T>>, value: T): void {
   receiver!.values = [...receiver!.values, value];
   // Small sets are served by a linear scan over values; only materialize the map once the set
   // grows large enough for hashing to win.
@@ -3335,6 +3335,8 @@ export interface FeatureMapEntry {
   props: GoSlice<string>;
 }
 
+let featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> | undefined;
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::varGroup::getFeatureMap","kind":"varGroup","status":"implemented","sigHash":"91d7ad405cbb9f158b0e038918e57e5a622b254e3ce64301f4ab9869573decd5","bodyHash":"8798a4060347aaeb280d75e0077067a092b3df12b5e70469a4cdb9b68fdb818a"}
  *
@@ -3601,7 +3603,7 @@ export interface FeatureMapEntry {
  * 	}
  * })
  */
-const featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> = new Map<string, GoSlice<FeatureMapEntry>>([
+export const getFeatureMap: () => GoMap<string, GoSlice<FeatureMapEntry>> = (): GoMap<string, GoSlice<FeatureMapEntry>> => (featureMapValue ??= new Map<string, GoSlice<FeatureMapEntry>>([
   ["Array", [
     { lib: "es2015", props: ["find", "findIndex", "fill", "copyWithin", "entries", "keys", "values"] },
     { lib: "es2016", props: ["includes"] },
@@ -3812,9 +3814,7 @@ const featureMapValue: GoMap<string, GoSlice<FeatureMapEntry>> = new Map<string,
   ["Date", [
     { lib: "esnext", props: ["toTemporalInstant"] },
   ]],
-]);
-
-export const getFeatureMap = (): GoMap<string, GoSlice<FeatureMapEntry>> => featureMapValue;
+]));
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/utilities.go::func::rangeOfTypeParameters","kind":"func","status":"implemented","sigHash":"3b96c6d77a3011eff67caed0c5370d8d0c0e881c217e70234a2ce374030685d1","bodyHash":"d2c5ff22c84983fb52406c10b321a8873d61b10e82b9480d194c80956ad0734a"}

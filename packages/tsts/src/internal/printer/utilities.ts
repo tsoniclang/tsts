@@ -1483,9 +1483,7 @@ export function originalNodesHaveSameParent(emitContext: GoPtr<EmitContext>, nod
  * 	return 0, false
  * }
  */
-type EndCarrier = GoPtr<Node> | GoPtr<NodeList> | TextRange | { End: () => int };
-
-export function tryGetEnd(node: EndCarrier | undefined): [int, bool] {
+export function tryGetEnd(node: { End: () => int }): [int, bool] {
   if (node === undefined) {
     return [0 as int, false];
   }
@@ -1494,13 +1492,13 @@ export function tryGetEnd(node: EndCarrier | undefined): [int, bool] {
     return [(node as { End: () => int }).End(), true];
   }
   if (value["Kind"] !== undefined) {
-    return [Node_End(node as GoPtr<Node>), true];
+    return [Node_End(node as unknown as GoPtr<Node>), true];
   }
   if (value["Nodes"] !== undefined) {
-    return [NodeList_End(node as GoPtr<NodeList>), true];
+    return [NodeList_End(node as unknown as GoPtr<NodeList>), true];
   }
   if (value["end"] !== undefined) {
-    return [TextRange_End(node as TextRange), true];
+    return [TextRange_End(node as unknown as TextRange), true];
   }
   throw new globalThis.Error(`unhandled type in tryGetEnd`);
 }
@@ -1519,9 +1517,9 @@ export function tryGetEnd(node: EndCarrier | undefined): [int, bool] {
  * 	return end
  * }
  */
-export function greatestEnd(end: int, ...nodes: Array<EndCarrier | undefined>): int {
+export function greatestEnd(end: int, ...nodes: Array<{ End: () => int }>): int {
   for (let i = nodes.length - 1; i >= 0; i--) {
-    const node = nodes[i];
+    const node = nodes[i]!;
     const [nodeEnd, ok] = tryGetEnd(node);
     if (ok && (end as number) < (nodeEnd as number)) {
       end = nodeEnd;

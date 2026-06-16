@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import type { Kind } from "../ast/generated/kinds.js";
 import { KindClassDeclaration, KindEnumDeclaration, KindInterfaceDeclaration, KindModuleDeclaration } from "../ast/generated/kinds.js";
@@ -164,7 +165,7 @@ export function NodeBuilder_enterContext(receiver: GoPtr<NodeBuilder>, enclosing
     enclosingFile: GetSourceFileOfNode(enclosingDeclaration),
     inferTypeParameters: [],
     visitedTypes: { M: new globalThis.Map() },
-    symbolDepth: new globalThis.Map(),
+    symbolDepth: NewGoStructMap(),
     trackedSymbols: [],
     mapper: undefined,
     reverseMappedStack: [],

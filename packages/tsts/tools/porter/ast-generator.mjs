@@ -299,6 +299,15 @@ export function emitKinds(schema) {
     }
   }
 
+  const aliases = Object.keys(schema.ast.kinds?.aliases ?? {}).sort();
+  if (aliases.length > 0) {
+    lines.push("");
+    lines.push("// Kind aliases. Go: type X = Kind.");
+    for (const alias of aliases) {
+      lines.push(`export type ${alias} = Kind;`);
+    }
+  }
+
   // Faithful analogue of the Go stringer: returns the constant name, or
   // `Kind(n)` for out-of-range values.
   lines.push("");

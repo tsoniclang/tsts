@@ -213,7 +213,7 @@ export function DependencyFields_RangeDependencies(receiver: GoPtr<DependencyFie
  * 	return names
  * }
  */
-export function DependencyFields_GetRuntimeDependencyNames(receiver: GoPtr<DependencyFields>): GoPtr<Set> {
+export function DependencyFields_GetRuntimeDependencyNames(receiver: GoPtr<DependencyFields>): GoPtr<Set<string>> {
   const [deps, depsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.Dependencies);
   const [peerDeps, peerDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.PeerDependencies);
   const [optDeps, optDepsOk] = Expected_GetValue<GoMap<string, string>>(receiver!.OptionalDependencies);

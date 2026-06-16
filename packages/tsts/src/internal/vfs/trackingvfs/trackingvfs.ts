@@ -16,7 +16,7 @@ import type { Entries, FileInfo, FS as FS_2329d319, WalkDirFunc } from "../vfs.j
  */
 export interface FS {
   Inner: FS_2329d319;
-  SeenFiles: SyncSet;
+  SeenFiles: SyncSet<string>;
 }
 
 /**

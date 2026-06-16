@@ -1,5 +1,5 @@
 import type { bool, int } from "@tsonic/core/types.js";
-import type { GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoConstraint, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Diagnostic } from "../ast/diagnostic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import {
@@ -145,7 +145,7 @@ export function ParseStringArray(value: unknown): GoSlice<string> {
  * 	return nil
  * }
  */
-export function parseStringMap(value: unknown): GoPtr<OrderedMap> {
+export function parseStringMap(value: unknown): GoPtr<OrderedMap<string, GoSlice<string>>> {
   const m = asOrderedMap(value);
   if (m !== undefined) {
     const result = NewOrderedMapWithSizeHint<string, GoSlice<string>>(OrderedMap_Size(m));
@@ -153,7 +153,7 @@ export function parseStringMap(value: unknown): GoPtr<OrderedMap> {
       OrderedMap_Set(result, k, ParseStringArray(v));
       return true;
     });
-    return result as GoPtr<OrderedMap>;
+    return result;
   }
   return undefined;
 }
@@ -286,7 +286,7 @@ export function parseProjectReference(json: unknown): GoSlice<GoPtr<ProjectRefer
  * 	return result
  * }
  */
-export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap> {
+export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap<string, unknown>> {
   const result = NewOrderedMapWithSizeHint<string, unknown>(6 as int);
   const m = asOrderedMap(json) as GoPtr<OrderedMap<string, unknown>>;
   if (m !== undefined) {
@@ -343,7 +343,7 @@ export function parseJsonToStringKey(json: unknown): GoPtr<OrderedMap> {
       }
     }
   }
-  return result as GoPtr<OrderedMap>;
+  return result;
 }
 
 /**
@@ -1056,7 +1056,7 @@ export function parseCompilerOptions(key: string, value: unknown, allOptions: Go
  * 	return T(value.(float64))
  * }
  */
-export function floatOrInt32ToFlag<T>(value: unknown): T {
+export function floatOrInt32ToFlag<T extends GoConstraint<"~int32"> & number>(value: unknown): T {
   // The flag types (JsxEmit, ModuleKind, ...) are all int32-backed; a number
   // value either already is the flag (`value.(T)`) or is a float64 to convert.
   // In both branches the dynamic value is the same number cast to the flag type.
@@ -1375,7 +1375,7 @@ function compilerOptionFieldNameToJsonKey(fieldName: string): string {
  * 	return optionsBase
  * }
  */
-export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap>, optionMap: CommandLineOptionNameMap, cwd: string): GoPtr<OrderedMap> {
+export function convertToOptionsWithAbsolutePaths(optionsBase: GoPtr<OrderedMap<string, unknown>>, optionMap: CommandLineOptionNameMap, cwd: string): GoPtr<OrderedMap<string, unknown>> {
   // !!! convert to options with absolute paths was previously done with `CompilerOptions` object, but for ease of implementation, we do it pre-conversion.
   // !!! Revisit this choice if/when refactoring when conversion is done in tsconfig parsing
   if (optionsBase === undefined) {

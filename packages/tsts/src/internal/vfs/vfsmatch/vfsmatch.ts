@@ -1223,7 +1223,7 @@ export interface globVisitor {
   directoryMatcher: GoPtr<globMatcher>;
   extensions: GoSlice<string>;
   useCaseSensitiveFileNames: bool;
-  visited: Set;
+  visited: Set<string>;
   results: GoSlice<GoSlice<string>>;
 }
 

@@ -149,7 +149,7 @@ export interface Orchestrator {
   opts: Options;
   comparePathsOptions: ComparePathsOptions;
   host: GoPtr<host>;
-  tasks: GoPtr<SyncMap>;
+  tasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>;
   order: GoSlice<string>;
   errors: GoSlice<GoPtr<Diagnostic>>;
   errorSummaryReporter: DiagnosticsReporter | undefined;
@@ -299,7 +299,7 @@ export function Orchestrator_getTask(receiver: GoPtr<Orchestrator>, path: Path):
  * 	}
  * }
  */
-export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap>, configs: GoSlice<string>, wg: WorkGroup): void {
+export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>, configs: GoSlice<string>, wg: WorkGroup): void {
   for (const config of configs) {
     wg.Queue((): void => {
       const path = Orchestrator_toPath(receiver, config);
@@ -406,7 +406,7 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
  * 	return task
  * }
  */
-export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, configName: string, downStream: GoPtr<BuildTask>, inCircularContext: bool, completed: GoPtr<Set>, analyzing: GoPtr<Set>, circularityStack: GoSlice<string>): GoPtr<BuildTask> {
+export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, configName: string, downStream: GoPtr<BuildTask>, inCircularContext: bool, completed: GoPtr<Set<Path>>, analyzing: GoPtr<Set<Path>>, circularityStack: GoSlice<string>): GoPtr<BuildTask> {
   const path = Orchestrator_toPath(receiver, configName);
   const task = Orchestrator_getTask(receiver, path);
   if (!Set_Has(completed, path)) {
@@ -462,7 +462,7 @@ export function Orchestrator_setupBuildTask(receiver: GoPtr<Orchestrator>, confi
  */
 export function Orchestrator_GenerateGraphReusingOldTasks(receiver: GoPtr<Orchestrator>): void {
   const tasks = receiver!.tasks;
-  receiver!.tasks = {} as SyncMap;
+  receiver!.tasks = newSyncMap<Path, GoPtr<BuildTask>>();
   receiver!.order = [];
   receiver!.errors = [];
   Orchestrator_GenerateGraph(receiver, tasks);
@@ -488,14 +488,14 @@ export function Orchestrator_GenerateGraphReusingOldTasks(receiver: GoPtr<Orches
  * 	}
  * }
  */
-export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap>): void {
+export function Orchestrator_GenerateGraph(receiver: GoPtr<Orchestrator>, oldTasks: GoPtr<SyncMap<Path, GoPtr<BuildTask>>>): void {
   const projects = ParsedBuildCommandLine_ResolvedProjectPaths(receiver!.opts.Command);
   const wg = NewWorkGroup(Tristate_IsTrue(receiver!.opts.Command!.CompilerOptions!.SingleThreaded));
   Orchestrator_createBuildTasks(receiver, oldTasks, projects, wg);
   wg.RunAndWait();
 
-  const completed: Set = {} as Set;
-  const analyzing: Set = {} as Set;
+  const completed: Set<Path> = {} as Set<Path>;
+  const analyzing: Set<Path> = {} as Set<Path>;
   const circularityStack: GoSlice<string> = [];
   for (const project of projects) {
     Orchestrator_setupBuildTask(receiver, project, undefined, false as bool, completed, analyzing, circularityStack);
@@ -919,7 +919,7 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
       UseCaseSensitiveFileNames: opts.Sys.FS().UseCaseSensitiveFileNames(),
     },
     host: undefined,
-    tasks: newSyncMap(),
+    tasks: newSyncMap<Path, GoPtr<BuildTask>>(),
     order: [],
     errors: [],
     errorSummaryReporter: undefined,

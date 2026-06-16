@@ -400,16 +400,21 @@
     "conventions": {
       "equivalences": [
         { "as": "go-comparable", "scope": "constraint", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
-        { "as": "go-ordered", "scope": "constraint", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] },
-        { "as": "go-numeric-constraint", "scope": "constraint", "match": [ { "kw": "number" }, { "rawIncludes": "~int" }, { "rawIncludes": "~uint" }, { "rawIncludes": "~float" }, { "rawIncludes": "~complex" } ] }
+        { "as": "go-ordered", "scope": "constraint", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] }
       ],
       "structural": {
         "acceptNullable": false,
-        "unwrapPtrFunc": true,
-        "anyMapKey": true,
+        "unwrapPtrFunc": false,
+        "anyMapKey": false,
         "ptrValueEquivStruct": false,
-        "acceptErasedConstraints": true,
-        "facadeGenerics": ["Pool", "OnceValue"]
+        "acceptNilableGoTypes": true,
+        "acceptErasedConstraints": false,
+        "facadeGenerics": [],
+        "facadeGenericRefs": [
+          "packages/tsts/src/go/sync.ts::Map",
+          "packages/tsts/src/go/sync.ts::OnceValue",
+          "packages/tsts/src/go/sync.ts::Pool"
+        ]
       }
     },
     "overrides": []

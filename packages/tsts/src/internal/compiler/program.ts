@@ -201,9 +201,9 @@ export function lazyValue_tryReuse<T>(receiver: GoPtr<lazyValue<T>>, from_: GoPt
  * }
  */
 export interface packageNamesInfo {
-  resolved: GoPtr<Set>;
-  unresolved: GoPtr<Set>;
-  deepImportPackages: GoPtr<Set>;
+  resolved: GoPtr<Set<string>>;
+  unresolved: GoPtr<Set<string>>;
+  deepImportPackages: GoPtr<Set<string>>;
 }
 
 /**
@@ -261,12 +261,12 @@ export interface Program {
   usesUriStyleNodeCoreModules: Tristate;
   commonSourceDirectory: string;
   commonSourceDirectoryOnce: Once;
-  declarationDiagnosticCache: SyncMap;
+  declarationDiagnosticCache: SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>;
   programDiagnostics: GoSlice<GoPtr<Diagnostic>>;
-  hasEmitBlockingDiagnostics: Set;
+  hasEmitBlockingDiagnostics: Set<Path>;
   sourceFilesToEmitOnce: Once;
   sourceFilesToEmit: GoSlice<GoPtr<SourceFile>>;
-  unresolvedImports: lazyValue<Set>;
+  unresolvedImports: lazyValue<Set<string>>;
   knownSymlinks: lazyValue<KnownSymlinks>;
   packageNames: lazyValue<packageNamesInfo>;
   hasTSFileOnce: Once;
@@ -605,7 +605,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
     GetEmitSyntaxForUsageLocation: (sourceFile: HasFileName, usageLocation: GoPtr<StringLiteralLike>): ResolutionMode => Program_GetEmitSyntaxForUsageLocation(receiver, sourceFile, usageLocation),
     GetImpliedNodeFormatForEmit: (sourceFile: HasFileName): ModuleKind => Program_GetImpliedNodeFormatForEmit(receiver, sourceFile),
     GetResolvedModule: (currentSourceFile: HasFileName, moduleReference: string, mode: ResolutionMode): GoPtr<ResolvedModule> => Program_GetResolvedModule(receiver, currentSourceFile, moduleReference, mode),
-    GetResolvedModules: (): GoMap<Path, ModeAwareCache> => Program_GetResolvedModules(receiver),
+    GetResolvedModules: (): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>> => Program_GetResolvedModules(receiver),
     GetPackagesMap: (): GoMap<string, bool> => Program_GetPackagesMap(receiver),
     GetSourceFileMetaData: (path: Path): SourceFileMetaData => Program_GetSourceFileMetaData(receiver, path),
     GetJSXRuntimeImportSpecifier: (path: Path): [string, GoPtr<Node>] => Program_GetJSXRuntimeImportSpecifier(receiver, path),
@@ -740,9 +740,9 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
     usesUriStyleNodeCoreModules: TSUnknown,
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() },
+    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>,
     programDiagnostics: [],
-    hasEmitBlockingDiagnostics: { M: new globalThis.Map() },
+    hasEmitBlockingDiagnostics: { M: new globalThis.Map<Path, { readonly __tsgoEmpty?: never }>() },
     sourceFilesToEmitOnce: new Once(),
     sourceFilesToEmit: [],
     unresolvedImports: { value: undefined, once: new Once(), initialized: new Bool() },
@@ -845,7 +845,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
   // Clone processedFiles (embedded struct) since we will modify files and filesByPath
   const pf = receiver!.__tsgoEmbedded0!;
   const resultPf: processedFiles = { ...pf };
-  const resultUnresolvedImports: lazyValue<Set> = { value: undefined, once: new Once(), initialized: new Bool() };
+  const resultUnresolvedImports: lazyValue<Set<string>> = { value: undefined, once: new Once(), initialized: new Bool() };
   const resultKnownSymlinks: lazyValue<KnownSymlinks> = { value: undefined, once: new Once(), initialized: new Bool() };
   const resultPackageNames: lazyValue<packageNamesInfo> = { value: undefined, once: new Once(), initialized: new Bool() };
   const result: Program = {
@@ -857,7 +857,7 @@ export function Program_UpdateProgram(receiver: GoPtr<Program>, changedFilePath:
     usesUriStyleNodeCoreModules: receiver!.usesUriStyleNodeCoreModules,
     commonSourceDirectory: "",
     commonSourceDirectoryOnce: new Once(),
-    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() },
+    declarationDiagnosticCache: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapMap() } as SyncMap<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>,
     programDiagnostics: receiver!.programDiagnostics,
     hasEmitBlockingDiagnostics: receiver!.hasEmitBlockingDiagnostics,
     sourceFilesToEmitOnce: new Once(),
@@ -1120,7 +1120,7 @@ export function Program_GetConfigFileParsingDiagnostics(receiver: GoPtr<Program>
  * 	return p.unresolvedImports.getValue(p.extractUnresolvedImports)
  * }
  */
-export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set> {
+export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   return lazyValue_getValue(receiver!.unresolvedImports, () => Program_extractUnresolvedImports(receiver));
 }
 
@@ -1141,7 +1141,7 @@ export function Program_GetUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Se
  * 	return unresolvedSet
  * }
  */
-export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set> {
+export function Program_extractUnresolvedImports(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   const unresolvedSet: Set<string> = { M: new Map() };
   for (const sourceFile of receiver!.__tsgoEmbedded0!.files) {
     const unresolvedImports = Program_extractUnresolvedImportsFromSourceFile(receiver, sourceFile);
@@ -1349,7 +1349,7 @@ export function Program_GetResolvedModuleFromModuleSpecifier(receiver: GoPtr<Pro
  * 	return p.resolvedModules
  * }
  */
-export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache> {
+export function Program_GetResolvedModules(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache<GoPtr<ResolvedModule>>> {
   return receiver!.__tsgoEmbedded0!.resolvedModules;
 }
 
@@ -4378,7 +4378,7 @@ export function Program_GetResolvedTypeReferenceDirectiveFromTypeReferenceDirect
  * 	return p.typeResolutionsInFile
  * }
  */
-export function Program_GetResolvedTypeReferenceDirectives(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache> {
+export function Program_GetResolvedTypeReferenceDirectives(receiver: GoPtr<Program>): GoMap<Path, ModeAwareCache<GoPtr<ResolvedTypeReferenceDirective>>> {
   return receiver!.__tsgoEmbedded0!.typeResolutionsInFile;
 }
 
@@ -4463,7 +4463,7 @@ export function Program_SourceFileMayBeEmitted(receiver: GoPtr<Program>, sourceF
  * 	return p.collectPackageNames().resolved
  * }
  */
-export function Program_ResolvedPackageNames(receiver: GoPtr<Program>): GoPtr<Set> {
+export function Program_ResolvedPackageNames(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   return Program_collectPackageNames(receiver)!.resolved;
 }
 
@@ -4475,7 +4475,7 @@ export function Program_ResolvedPackageNames(receiver: GoPtr<Program>): GoPtr<Se
  * 	return p.collectPackageNames().unresolved
  * }
  */
-export function Program_UnresolvedPackageNames(receiver: GoPtr<Program>): GoPtr<Set> {
+export function Program_UnresolvedPackageNames(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   return Program_collectPackageNames(receiver)!.unresolved;
 }
 
@@ -4487,7 +4487,7 @@ export function Program_UnresolvedPackageNames(receiver: GoPtr<Program>): GoPtr<
  * 	return p.collectPackageNames().deepImportPackages
  * }
  */
-export function Program_DeepImportPackageNames(receiver: GoPtr<Program>): GoPtr<Set> {
+export function Program_DeepImportPackageNames(receiver: GoPtr<Program>): GoPtr<Set<string>> {
   return Program_collectPackageNames(receiver)!.deepImportPackages;
 }
 
@@ -4847,28 +4847,28 @@ export function Program_ForEachResolvedTypeReferenceDirective(receiver: GoPtr<Pr
  * 	}
  * }
  */
-const emptyResolutionCache: GoMap<Path, ModeAwareCache> = new globalThis.Map<Path, ModeAwareCache>();
-const emptyModeAwareCache: ModeAwareCache = NewGoStructMap<ModeAwareCacheKey, unknown>();
+const emptyResolutionCache: GoMap<Path, ModeAwareCache<unknown>> = new globalThis.Map<Path, ModeAwareCache<unknown>>();
+const emptyModeAwareCache: ModeAwareCache<unknown> = NewGoStructMap<ModeAwareCacheKey, unknown>();
 
 const goMapEntries = <K, V>(map: GoMap<K, V> | undefined, empty: GoMap<K, V>): Iterable<[K, V]> =>
   map !== undefined ? map : empty;
 
-const resolutionCacheEntries = (resolutionCache: GoMap<Path, ModeAwareCache> | undefined): Iterable<[Path, ModeAwareCache]> =>
-  goMapEntries(resolutionCache, emptyResolutionCache);
+const resolutionCacheEntries = <T>(resolutionCache: GoMap<Path, ModeAwareCache<T>> | undefined): Iterable<[Path, ModeAwareCache<T>]> =>
+  goMapEntries(resolutionCache, emptyResolutionCache as GoMap<Path, ModeAwareCache<T>>);
 
-const modeAwareCacheEntries = (modeAwareCache: ModeAwareCache | undefined): Iterable<[ModeAwareCacheKey, unknown]> =>
-  goMapEntries(modeAwareCache, emptyModeAwareCache);
+const modeAwareCacheEntries = <T>(modeAwareCache: ModeAwareCache<T> | undefined): Iterable<[ModeAwareCacheKey, T]> =>
+  goMapEntries(modeAwareCache, emptyModeAwareCache as ModeAwareCache<T>);
 
-export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
+export function forEachResolution<T>(resolutionCache: GoMap<Path, ModeAwareCache<T>>, callback: (resolution: T, moduleName: string, mode: ResolutionMode, filePath: Path) => void, file: GoPtr<SourceFile>): void {
   if (file !== undefined) {
     const resolutions = resolutionCache.get(SourceFile_Path(file));
     for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
-      callback(resolution as T, key.Name, key.Mode, SourceFile_Path(file));
+      callback(resolution, key.Name, key.Mode, SourceFile_Path(file));
     }
   } else {
     for (const [filePath, resolutions] of resolutionCacheEntries(resolutionCache)) {
       for (const [key, resolution] of modeAwareCacheEntries(resolutions)) {
-        callback(resolution as T, key.Name, key.Mode, filePath);
+        callback(resolution, key.Name, key.Mode, filePath);
       }
     }
   }
