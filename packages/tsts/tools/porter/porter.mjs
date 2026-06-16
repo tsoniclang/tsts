@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { computeSignatureReport } from "./sig-check.mjs";
 
 import {
   buildAstGeneratedArtifactStatus,
@@ -32,10 +33,15 @@ export const repoRoot = findRepoRoot(process.cwd());
 export const configPath = path.join(repoRoot, "packages/tsts/porter.config.json");
 export const activePortCategories = new Set(["literal-port", "manual-required", "host-native"]);
 
-export function main() {
+export async function main() {
   const [command = "status", ...args] = process.argv.slice(2);
   const options = parseArgs(args);
   const config = loadConfig();
+
+  if (command === "sig-check") {
+    await runSigCheck(config, options);
+    return;
+  }
 
   if (command === "scan") {
     const snapshot = runScan(config);
@@ -156,7 +162,48 @@ export function main() {
     return;
   }
 
-  fail(`unknown command '${command}'. Expected scan, status, verify, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+  fail(`unknown command '${command}'. Expected scan, status, verify, sig-check, scaffold, facades, large-files, ast, diagnostics, or skeleton-check.`);
+}
+
+// Signature/type-equivalence check (standalone command). Compares each ported
+// @tsgo-unit's actual TS signature against the signature derived from Go.
+// NOT yet part of `verify` — that hard gate is wired only once the tree reaches
+// zero un-overridden mismatches. `--id <glob>` scopes; `--json` raw; `--no-gate`
+// exits 0 regardless (local exploration).
+async function runSigCheck(config, options) {
+  const snapshot = runScan(config);
+  const tsUnits = scanTsUnits(resolveRepo(config.tsRoot));
+  const tsById = new Map(tsUnits.units.map((u) => [u.id, u]));
+  const tsFiles = tsUnits.files.filter((file) => file.metadataCount > 0);
+  const report = await computeSignatureReport(
+    { config, snapshot, repoRoot, tsFiles, tsById },
+    { idFilter: typeof options.id === "string" ? options.id : undefined },
+  );
+  if (options.json === true) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    printSigReport(report);
+  }
+  if (report.mismatches.length > 0 && options["no-gate"] !== true) {
+    process.exit(1);
+  }
+}
+
+function printSigReport(report) {
+  const byKind = new Map();
+  for (const m of report.mismatches) byKind.set(m.kind, (byKind.get(m.kind) ?? 0) + 1);
+  console.log(`porter sig-check: ${report.checked} units checked, ${report.overriddenUnits} overridden, ${report.mismatches.length} mismatches`);
+  for (const [kind, n] of [...byKind.entries()].sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${String(n).padStart(5)}  ${kind}`);
+  }
+  for (const m of report.mismatches.slice(0, 50)) {
+    const unit = m.id.split("::").slice(2).join("::");
+    console.log(`\n[${m.kind}] ${unit}\n  ${m.file}\n  ${m.detail}`);
+    if (m.expected !== undefined || m.actual !== undefined) {
+      console.log(`  expected: ${m.expected}\n  actual:   ${m.actual}`);
+    }
+  }
+  if (report.mismatches.length > 50) console.log(`\n… and ${report.mismatches.length - 50} more (use --json for the full list).`);
 }
 
 export function runScan(config) {
@@ -3005,9 +3052,7 @@ export function fail(message) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try {
-    main();
-  } catch (error) {
-    fail(error?.message ?? String(error));
-  }
+  Promise.resolve()
+    .then(() => main())
+    .catch((error) => fail(error?.message ?? String(error)));
 }
