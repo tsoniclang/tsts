@@ -149,6 +149,9 @@ npm/tsonic/runtime/*.dll
 # Plan-blue baselines
 .plan-blue-baselines/
 
+# Profiling: local corpus has machine-specific paths (commit corpus.example.json instead)
+packages/tsts/tools/profiling/corpus.json
+
 # .NET build artifacts
 **/bin/
 **/obj/
