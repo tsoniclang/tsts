@@ -15,7 +15,10 @@ function isInternal(importPath, goModule) {
   return importPath === goModule || importPath.startsWith(goModule + "/");
 }
 
-export function buildExpectedIndex(config, snapshot, tsById, profile) {
+// tsDecls: Map<typeName, Set<moduleId>> of every exported type declaration in TS
+// (incl. generated, non-@tsgo-unit types), so a Go type that exists in TS but
+// isn't unit-tracked still resolves to its real defining module.
+export function buildExpectedIndex(config, snapshot, tsById, profile, tsDecls = new Map()) {
   const goModule = config.goModulePath;
   // (packageImportPath::TypeName) -> actual TS module path (where its @tsgo-unit lives)
   const pkgType = new Map();
@@ -32,6 +35,7 @@ export function buildExpectedIndex(config, snapshot, tsById, profile) {
   }
   return {
     goModule,
+    tsRoot: config.tsRoot,
     core: profile.modules.core,
     compat: profile.modules.compat,
     bridge: profile.bridge,
@@ -42,10 +46,30 @@ export function buildExpectedIndex(config, snapshot, tsById, profile) {
     facadeTemplate: profile.facadeTemplate,
     pkgType,
     typeParams,
+    tsDecls,
   };
 }
 
 const ref = (id, args = []) => ({ t: "ref", id, args });
+
+// The TS source directory for a Go import path (strip the module prefix, map
+// under tsRoot): github.com/…/internal/ast -> packages/tsts/src/internal/ast.
+function tsDirForPackage(index, importPath) {
+  if (importPath === index.goModule) return index.tsRoot;
+  if (!importPath.startsWith(index.goModule + "/")) return undefined;
+  return `${index.tsRoot}/${importPath.slice(index.goModule.length + 1)}`;
+}
+
+// Resolve a Go type to a TS module by its actual declaration location, preferring
+// a declaration under the package's TS directory (handles generated/aliased types).
+function resolveTsDecl(index, importPath, name) {
+  const mods = index.tsDecls.get(name);
+  if (!mods) return undefined;
+  const tsDir = tsDirForPackage(index, importPath);
+  if (!tsDir) return undefined;
+  const candidates = [...mods].filter((m) => m === tsDir || m.startsWith(`${tsDir}/`)).sort();
+  return candidates[0];
+}
 
 // Resolve a bare named type used inside package `importPath`.
 function resolveNamed(name, ctx) {
@@ -56,7 +80,9 @@ function resolveNamed(name, ctx) {
   if (name in i.primCompat) return ref(`${i.compat}::${i.primCompat[name]}`);
   const tsPath = i.pkgType.get(`${ctx.importPath}::${name}`);
   if (tsPath) return ref(`${tsPath}::${name}`);
-  return ref(`name::${name}`); // unresolved (untracked) -> compared by terminal name
+  const decl = resolveTsDecl(i, ctx.importPath, name); // generated/untracked TS type
+  if (decl) return ref(`${decl}::${name}`);
+  return ref(`name::${name}`); // genuinely unresolved -> surfaced as unresolved-ref
 }
 
 // Resolve a qualified `pkg.Name`.
@@ -71,6 +97,8 @@ function resolveSelector(pkg, name, ctx) {
   if (isInternal(importPath, i.goModule)) {
     const tsPath = i.pkgType.get(`${importPath}::${name}`);
     if (tsPath) return ref(`${tsPath}::${name}`);
+    const decl = resolveTsDecl(i, importPath, name);
+    if (decl) return ref(`${decl}::${name}`);
     return ref(`name::${name}`);
   }
   // Stdlib / runtime package -> facade module (template, e.g. sync/atomic ->

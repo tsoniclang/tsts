@@ -8,9 +8,9 @@
 // where a hand-edited TS signature can drift while the Go hash, tsc build, and
 // conformance baselines all stay green.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadParser, canonicalKey, typesEqual, parseSource, extractReexports, isSoftId } from "./ts-extractor/ast-signatures.mjs";
+import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
 import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
@@ -63,7 +63,9 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
   const push = (kind, detail, exp, act) => {
     if (!ignore.has(kind)) out.push({ kind, detail, expected: exp, actual: act });
   };
-  const eq = (x, y) => typesEqual(normalizeDescriptor(x, conv), normalizeDescriptor(y, conv), canon);
+  // Ordinary positions use the "type" context; type-param bounds use "constraint".
+  const eq = (x, y) => typesEqual(normalizeDescriptor(x, conv, "type"), normalizeDescriptor(y, conv, "type"), canon);
+  const eqConstraint = (x, y) => typesEqual(normalizeDescriptor(x, conv, "constraint"), normalizeDescriptor(y, conv, "constraint"), canon);
 
   if (!actual) {
     push("actual-missing", "no TS declaration found for this @tsgo-unit");
@@ -75,14 +77,54 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
   }
 
   if (actual.kind === "func" || actual.kind === "interface" || actual.kind === "alias") {
-    compareTypeParams(expected, actual, push, eq, conv);
+    compareTypeParams(expected, actual, push, eqConstraint, conv);
   }
   if (actual.kind === "func") compareFunc(expected, actual, push, eq);
-  else if (actual.kind === "interface") compareInterface(expected, actual, push, eq, conv);
+  else if (actual.kind === "interface") compareInterface(expected, actual, push, eq);
   else if (actual.kind === "alias") {
     if (!eq(expected.type, actual.type)) push("alias-type", "alias type differs", keyOf(expected.type), keyOf(actual.type));
   } else if (actual.kind === "value") compareValue(expected, actual, push, eq);
+
+  // Gate unresolved refs: surface (don't silently name-match) any type whose
+  // identity could not be resolved to a real module on either side — after
+  // convention normalization, so convention-handled constraints aren't flagged.
+  const soft = [...new Set([...unitSoftIds(expected, conv), ...unitSoftIds(actual, conv)])];
+  if (soft.length > 0) {
+    push("unresolved-ref", `unresolved type identity: ${soft.slice(0, 6).join(", ")}`, undefined, undefined);
+  }
   return out;
+}
+
+// All type descriptors referenced in a unit descriptor, tagged with the context
+// they appear in ("constraint" for type-param bounds, else "type").
+function unitTypeNodes(desc) {
+  if (!desc) return [];
+  const out = [];
+  for (const p of desc.params ?? []) out.push(["type", p.type]);
+  if (desc.ret) out.push(["type", desc.ret]);
+  for (const tp of desc.typeParams ?? []) if (tp.constraint) out.push(["constraint", tp.constraint]);
+  for (const m of desc.members ?? []) if (m.type) out.push(["type", m.type]);
+  for (const d of desc.decls ?? []) if (d.type) out.push(["type", d.type]);
+  if (desc.type) out.push(["type", desc.type]);
+  return out;
+}
+
+function softIdsIn(d, acc) {
+  if (!d || typeof d !== "object") return acc;
+  if (d.t === "ref") {
+    if (isSoftId(d.id)) acc.add(d.id);
+    for (const a of d.args) softIdsIn(a, acc);
+  } else if (d.t === "array") softIdsIn(d.element, acc);
+  else if (d.t === "tuple") for (const e of d.elements) softIdsIn(e, acc);
+  else if (d.t === "union" || d.t === "intersect") for (const m of d.members) softIdsIn(m, acc);
+  else if (d.t === "fn") { for (const p of d.params) softIdsIn(p.type, acc); softIdsIn(d.ret, acc); }
+  return acc;
+}
+
+function unitSoftIds(desc, conv) {
+  const acc = new Set();
+  for (const [context, t] of unitTypeNodes(desc)) softIdsIn(normalizeDescriptor(t, conv, context), acc);
+  return [...acc];
 }
 
 function compareTypeParams(expected, actual, push, eq, conv) {
@@ -102,7 +144,7 @@ function compareTypeParams(expected, actual, push, eq, conv) {
     } else if (ec || ac) {
       // One side erased a non-trivial constraint. Accept when the present one is
       // a recognized convention (normalizes to a conv token) and the toggle is on.
-      const present = normalizeDescriptor(ec ?? ac, conv);
+      const present = normalizeDescriptor(ec ?? ac, conv, "constraint");
       const erasable = conv.structural?.acceptErasedConstraints && present.t === "conv";
       if (!erasable) push("type-param-constraint", `type param #${i} constraint differs`, ec ? keyOf(ec) : "-", ac ? keyOf(ac) : "-");
     }
@@ -136,17 +178,19 @@ function memberMap(desc) {
   return m;
 }
 
-function compareInterface(expected, actual, push, eq, conv) {
+function compareInterface(expected, actual, push, eq) {
   const em = memberMap(expected);
   const am = memberMap(actual);
   for (const [name, mem] of em) {
     if (!am.has(name)) { push("missing-member", `member '${name}' present in Go but missing in TS`, name); continue; }
-    if (!eq(mem.type, am.get(name).type)) push("member-type", `member '${name}' type differs`, keyOf(mem.type), keyOf(am.get(name).type));
+    const got = am.get(name);
+    if (got.unsupported) { push("unsupported-member", `member '${name}' is an unsupported shape (${got.unsupported})`, name); continue; }
+    if (!eq(mem.type, got.type)) push("member-type", `member '${name}' type differs`, keyOf(mem.type), keyOf(got.type));
   }
-  if (!conv?.structural?.allowExtraMembers) {
-    for (const name of am.keys()) {
-      if (!em.has(name)) push("extra-member", `member '${name}' present in TS but not in Go`, name);
-    }
+  for (const [name, mem] of am) {
+    if (em.has(name)) continue;
+    if (mem.unsupported) push("unsupported-member", `member '${name}' is an unsupported shape (${mem.unsupported})`, name);
+    else push("extra-member", `member '${name}' present in TS but not in Go`, name);
   }
 }
 
@@ -197,6 +241,65 @@ function makeCanon(namedReexport, starReexport, definedAt) {
   return (id) => (isSoftId(id) || !id.includes("::") ? id : resolve(id, new Set()));
 }
 
+// One fast regex scan over EVERY .ts under tsRoot (incl. generated/untracked
+// barrels that `deps.tsFiles` excludes) building both the type-declaration index
+// and the re-export graph. Avoids parsing thousands of files. Returns
+// { tsDecls: Map<name,Set<module>>, namedReexport: Map<"mod::local","src::name">,
+//   starReexport: Map<mod,[srcMod]> }.
+const TYPE_DECL_RE = /^export\s+(?:declare\s+)?(?:abstract\s+)?(?:interface|type|class|enum|const enum)\s+([A-Za-z_$][\w$]*)/gm;
+const NAMED_REEXPORT_RE = /^export\s+(?:type\s+)?\{([\s\S]*?)\}\s+from\s+["']([^"']+)["']/gm;
+const STAR_REEXPORT_RE = /^export\s+\*\s+from\s+["']([^"']+)["']/gm;
+
+function scanTsModules(repoRoot, tsRootRel) {
+  const tsDecls = new Map();
+  const namedReexport = new Map();
+  const starReexport = new Map();
+  const rootAbs = join(repoRoot, tsRootRel);
+  const stack = [rootAbs];
+  while (stack.length > 0) {
+    const dir = stack.pop();
+    let entries;
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+    for (const e of entries) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) { stack.push(p); continue; }
+      if (!e.name.endsWith(".ts")) continue;
+      let text;
+      try { text = readFileSync(p, "utf8"); } catch { continue; }
+      const moduleId = `${tsRootRel}/${p.slice(rootAbs.length + 1)}`;
+      for (const re of [TYPE_DECL_RE]) {
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(text)) !== null) {
+          if (!tsDecls.has(m[1])) tsDecls.set(m[1], new Set());
+          tsDecls.get(m[1]).add(moduleId);
+        }
+      }
+      NAMED_REEXPORT_RE.lastIndex = 0;
+      let nm;
+      while ((nm = NAMED_REEXPORT_RE.exec(text)) !== null) {
+        const src = resolveModuleId(nm[2], moduleId);
+        for (const spec of nm[1].split(",")) {
+          const t = spec.trim();
+          if (!t) continue;
+          const as = t.split(/\s+as\s+/);
+          const srcName = as[0].trim();
+          const local = (as[1] ?? as[0]).trim();
+          if (local) namedReexport.set(`${moduleId}::${local}`, `${src}::${srcName}`);
+        }
+      }
+      STAR_REEXPORT_RE.lastIndex = 0;
+      let sm;
+      while ((sm = STAR_REEXPORT_RE.exec(text)) !== null) {
+        const src = resolveModuleId(sm[1], moduleId);
+        if (!starReexport.has(moduleId)) starReexport.set(moduleId, []);
+        starReexport.get(moduleId).push(src);
+      }
+    }
+  }
+  return { tsDecls, namedReexport, starReexport };
+}
+
 // deps: { config, snapshot, repoRoot, tsFiles:[{path}], tsById:Map<id,{path,metadata}> }
 // options: { idFilter?: glob }
 export async function computeSignatureReport(deps, options = {}) {
@@ -205,7 +308,6 @@ export async function computeSignatureReport(deps, options = {}) {
     distRoot: join(deps.repoRoot, profile.parser.distRoot),
     freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((d) => join(deps.repoRoot, d)),
   });
-  const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile);
   const conv = loadConventions(profile.conventions ?? {});
   const overrides = profile.overrides ?? [];
 
@@ -224,19 +326,14 @@ export async function computeSignatureReport(deps, options = {}) {
     if (ts?.path && name) definedAt.add(`${ts.path}::${name}`);
   }
 
-  // Pre-pass: build the global re-export graph and cache file texts.
-  const namedReexport = new Map();
-  const starReexport = new Map();
-  const textByFile = new Map();
-  for (const file of deps.tsFiles) {
-    let text;
-    try { text = readFileSync(`${deps.repoRoot}/${file.path}`, "utf8"); } catch { continue; }
-    textByFile.set(file.path, text);
-    const { named, star } = extractReexports(api, parseSource(api, file.path, text), file.path);
-    for (const [local, target] of named) namedReexport.set(`${file.path}::${local}`, target);
-    if (star.length) starReexport.set(file.path, star);
-  }
+  // One regex scan over ALL .ts (incl. generated/untracked barrels) for the type
+  // declaration index + the re-export graph.
+  const { tsDecls, namedReexport, starReexport } = scanTsModules(deps.repoRoot, deps.config.tsRoot);
+  // A type's actual declaring module is its canonical definition, so re-exports
+  // (e.g. the generated barrel) resolve to the same module the expected side picks.
+  for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
   const canon = makeCanon(namedReexport, starReexport, definedAt);
+  const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, tsDecls);
 
   const idRe = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];
@@ -244,8 +341,8 @@ export async function computeSignatureReport(deps, options = {}) {
   let overriddenUnits = 0;
 
   for (const file of deps.tsFiles) {
-    const text = textByFile.get(file.path);
-    if (text === undefined) continue;
+    let text;
+    try { text = readFileSync(`${deps.repoRoot}/${file.path}`, "utf8"); } catch { continue; }
     for (const u of extractFileDescriptors(api, file.path, text, profile.annotation)) {
       if (idRe && !idRe.test(u.id)) continue;
       const go = goById.get(u.id);

@@ -368,11 +368,11 @@ export function typesEqual(a, b, canon = (x) => x) {
   }
 }
 
-// Whether a resolved descriptor references any unresolved (global::/unresolved::) id.
+// Whether a descriptor references any unresolved (global::/name::/unresolved::) id.
 export function hasUnresolved(d) {
   switch (d.t) {
     case "ref":
-      return d.id.startsWith("global::") || d.id.startsWith("unresolved::") || d.args.some(hasUnresolved);
+      return isSoftId(d.id) || d.args.some(hasUnresolved);
     case "array":
       return hasUnresolved(d.element);
     case "tuple":
@@ -489,7 +489,10 @@ function memberDescriptor(api, m, ctx) {
       optional: !!sig.PostfixToken || undefined,
     };
   }
-  return null; // index signatures, call signatures: ignore for now (rare in ports)
+  // Call / index / construct signatures and other member shapes are not modeled;
+  // surface them (keyed by kind) rather than silently dropping them.
+  const kindName = ctx.api.kindName.get(m.Kind) ?? `kind${m.Kind}`;
+  return { name: `<${kindName}>`, unsupported: kindName };
 }
 
 // Extract re-export edges from a parsed file:
@@ -518,6 +521,23 @@ export function extractReexports(api, sourceFile, moduleId) {
     }
   }
   return { named, star };
+}
+
+// Exported type-producing declaration names in a parsed file (interface / type
+// alias / class / enum). Used to resolve types that exist in TS (e.g. generated
+// AST types) but are not @tsgo-unit-tracked, to their real defining module.
+export function extractTypeDecls(api, sourceFile) {
+  const K = api.Kinds;
+  const names = [];
+  for (const st of sourceFile.Statements?.Nodes ?? []) {
+    if (
+      st.Kind === K.KindInterfaceDeclaration || st.Kind === K.KindTypeAliasDeclaration ||
+      st.Kind === K.KindClassDeclaration || st.Kind === K.KindEnumDeclaration
+    ) {
+      if (st.name?.Text) names.push(st.name.Text);
+    }
+  }
+  return names;
 }
 
 export { sliceText, identText, isExported, keywordOf, resolveModuleId, isSoftId, terminalName };

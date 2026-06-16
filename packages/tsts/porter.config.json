@@ -399,17 +399,16 @@
     "_doc": "Project profile for `porter sig-check`. The Go->TS mapping (modules/bridge/primitives/stdlibTypes/facadeTemplate/annotation/parser) defaults to the tsts profile in ts-extractor/profile.mjs and can be overridden here for other projects. `conventions` are editable a=>b porting-convention rules; `overrides` are per-unit acceptances.",
     "conventions": {
       "equivalences": [
-        { "as": "go-comparable", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
-        { "as": "go-ordered", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] },
-        { "as": "go-numeric-constraint", "match": [ { "kw": "number" }, { "rawIncludes": "~int" }, { "rawIncludes": "~uint" }, { "rawIncludes": "~float" }, { "rawIncludes": "~complex" } ] }
+        { "as": "go-comparable", "scope": "constraint", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
+        { "as": "go-ordered", "scope": "constraint", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] },
+        { "as": "go-numeric-constraint", "scope": "constraint", "match": [ { "kw": "number" }, { "rawIncludes": "~int" }, { "rawIncludes": "~uint" }, { "rawIncludes": "~float" }, { "rawIncludes": "~complex" } ] }
       ],
       "structural": {
         "acceptNullable": false,
         "unwrapPtrFunc": true,
         "anyMapKey": true,
         "ptrValueEquivStruct": false,
-        "acceptErasedConstraints": true,
-        "allowExtraMembers": true
+        "acceptErasedConstraints": true
       }
     },
     "overrides": []

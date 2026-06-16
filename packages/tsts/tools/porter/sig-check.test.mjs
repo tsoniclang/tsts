@@ -97,11 +97,27 @@ test("conventions: acceptNullable strips | undefined", () => {
   assert.ok(!typesEqual(normalizeDescriptor(exp, noConv), normalizeDescriptor(nullable, noConv)));
 });
 
-test("conventions: equivalences collapse matching forms to a shared token", () => {
-  const conv = loadConventions({ equivalences: [{ as: "numeric", match: [{ kw: "number" }, { rawIncludes: "~uint" }] }] });
+test("conventions: equivalences are scoped — numeric collapses ONLY in constraint context", () => {
+  const conv = loadConventions({ equivalences: [{ as: "numeric", scope: "constraint", match: [{ kw: "number" }, { rawIncludes: "~uint" }] }] });
   const goConstraint = { t: "raw", text: "~uint32" };
   const tsNumber = kw("number");
-  assert.ok(typesEqual(normalizeDescriptor(goConstraint, conv), normalizeDescriptor(tsNumber, conv)));
+  // In constraint context the two collapse to the same token...
+  assert.ok(typesEqual(normalizeDescriptor(goConstraint, conv, "constraint"), normalizeDescriptor(tsNumber, conv, "constraint")));
+  // ...but in ordinary type context a param `x: int`-ish must NOT equal `x: number`.
+  const goInt = ref("core::int");
+  assert.ok(!typesEqual(normalizeDescriptor(goInt, conv, "type"), normalizeDescriptor(tsNumber, conv, "type")));
+});
+
+test("compareInterface: unsupported member shapes are reported, not dropped", () => {
+  const exp = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }] };
+  const actual = { kind: "interface", typeParams: [], members: [{ name: "x", type: kw("string") }, { name: "<IndexSignature>", unsupported: "IndexSignature" }] };
+  assert.ok(kinds(compareSignatures(exp, actual, null)).has("unsupported-member"));
+});
+
+test("gate: unresolved type identity is surfaced", () => {
+  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] };
+  const act = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("name::Untracked") }] };
+  assert.ok(kinds(compareSignatures(exp, act, null)).has("unresolved-ref"));
 });
 
 test("conventions: anyMapKey makes the map key a wildcard", () => {
