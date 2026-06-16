@@ -372,7 +372,7 @@ export interface classInfo {
   classThis: GoPtr<IdentifierNode>;
   classSuper: GoPtr<IdentifierNode>;
   metadataReference: GoPtr<IdentifierNode>;
-  memberInfos: OrderedMap;
+  memberInfos: OrderedMap<GoPtr<Node>, GoPtr<memberInfo>>;
   instanceMethodExtraInitializersName: GoPtr<IdentifierNode>;
   staticMethodExtraInitializersName: GoPtr<IdentifierNode>;
   staticNonFieldDecorationStatements: GoSlice<GoPtr<Statement>>;

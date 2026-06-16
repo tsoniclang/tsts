@@ -112,11 +112,11 @@ export type FileInfo = FileInfo_d0619f84;
  * 	ErrClosed     = fs.ErrClosed     // "file already closed"
  * )
  */
-export const ErrInvalid = fs_ErrInvalid;
-export const ErrPermission = fs_ErrPermission;
-export const ErrExist = fs_ErrExist;
-export const ErrNotExist = fs_ErrNotExist;
-export const ErrClosed = fs_ErrClosed;
+export const ErrInvalid: GoError = fs_ErrInvalid;
+export const ErrPermission: GoError = fs_ErrPermission;
+export const ErrExist: GoError = fs_ErrExist;
+export const ErrNotExist: GoError = fs_ErrNotExist;
+export const ErrClosed: GoError = fs_ErrClosed;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/vfs/vfs.go::type::WalkDirFunc","kind":"type","status":"implemented","sigHash":"ca37042359f26a00fc83e50feccf63f10e2500b876459905c74a9bda2c1cfec2","bodyHash":"301672f78484847fa673dfaecd15ffeff4359409ae960949fe1be7b744fa8046"}
@@ -138,5 +138,5 @@ export type WalkDirFunc = WalkDirFunc_40040532;
  * 	SkipDir = fs.SkipDir //nolint:errname
  * )
  */
-export const SkipAll = fs_SkipAll;
-export const SkipDir = fs_SkipDir;
+export const SkipAll: GoError = fs_SkipAll;
+export const SkipDir: GoError = fs_SkipDir;

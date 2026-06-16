@@ -401,10 +401,10 @@ export function decodeBytes(s: string): [string, bool] {
     const bom0 = bytes[0]!;
     const bom1 = bytes[1]!;
     if (bom0 === 0xFF && bom1 === 0xFE) {
-      return [decodeUtf16(bytes.subarray(2), LittleEndian as unknown as ByteOrder), true];
+      return [decodeUtf16(s.slice(2), LittleEndian as unknown as ByteOrder), true];
     }
     if (bom0 === 0xFE && bom1 === 0xFF) {
-      return [decodeUtf16(bytes.subarray(2), BigEndian as unknown as ByteOrder), true];
+      return [decodeUtf16(s.slice(2), BigEndian as unknown as ByteOrder), true];
     }
   }
   if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
@@ -426,7 +426,8 @@ export function decodeBytes(s: string): [string, bool] {
  * 	return string(utf16.Decode(ints))
  * }
  */
-export function decodeUtf16(bytes: Uint8Array, order: ByteOrder): string {
+export function decodeUtf16(s: string, order: ByteOrder): string {
+  const bytes = binaryStringToBytes(s);
   const codeUnits: number[] = [];
   for (let offset = 0; offset + 1 < bytes.length; offset += 2) {
     codeUnits.push(order.Uint16([bytes[offset]!, bytes[offset + 1]!] as GoSlice<number>) as number);

@@ -1,5 +1,6 @@
 import type { bool, byte, int, uint } from "@tsonic/core/types.js";
 import type { GoConstraint, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";
 import { Node_Name } from "../ast/spine.js";
 import { Node_ModifierFlags } from "../ast/ast.js";
@@ -399,7 +400,7 @@ export interface RecursionId {
  * 	return RecursionId{value: value}
  * }
  */
-export function asRecursionId<T>(value: T): RecursionId {
+export function asRecursionId<T extends GoPtr<Node> | GoPtr<Symbol> | GoPtr<Type>>(value: T): RecursionId {
   return { value };
 }
 
@@ -443,7 +444,7 @@ export function Relation_get(receiver: GoPtr<Relation>, key: CacheHashKey): Rela
  */
 export function Relation_set(receiver: GoPtr<Relation>, key: CacheHashKey, result: RelationComparisonResult): void {
   if (receiver!.results === undefined) {
-    receiver!.results = new globalThis.Map<CacheHashKey, RelationComparisonResult>();
+    receiver!.results = NewGoStructMap<CacheHashKey, RelationComparisonResult>();
   }
   receiver!.results.set(key, result);
 }
@@ -2365,7 +2366,7 @@ export function Checker_getUnmatchedPropertiesWorker(receiver: GoPtr<Checker>, s
  * 	return properties
  * }
  */
-export function excludeProperties(properties: GoPtr<GoSlice<GoPtr<Symbol>>>, excludedProperties: Set): GoSlice<GoPtr<Symbol>> {
+export function excludeProperties(properties: GoPtr<GoSlice<GoPtr<Symbol>>>, excludedProperties: Set<string>): GoSlice<GoPtr<Symbol>> {
   const sourceProperties = properties ?? [];
   if (Set_Len(excludedProperties) === 0 || sourceProperties.length === 0) {
     return sourceProperties;
@@ -5577,7 +5578,7 @@ export interface Relater {
   errorChain: GoPtr<ErrorChain>;
   relatedInfo: GoSlice<GoPtr<Diagnostic>>;
   maybeKeys: GoSlice<CacheHashKey>;
-  maybeKeysSet: Set;
+  maybeKeysSet: Set<CacheHashKey>;
   sourceStack: GoSlice<GoPtr<Type>>;
   targetStack: GoSlice<GoPtr<Type>>;
   maybeCount: int;
@@ -5612,7 +5613,7 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
       errorChain: undefined,
       relatedInfo: [],
       maybeKeys: [],
-      maybeKeysSet: NewSetWithSizeHint<CacheHashKey>(0 as int)!,
+      maybeKeysSet: newCacheHashKeySet(),
       sourceStack: [],
       targetStack: [],
       maybeCount: 0 as int,
@@ -5626,6 +5627,12 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
   }
   receiver!.freeRelater = r!.next;
   return r;
+}
+
+function newCacheHashKeySet(): Set<CacheHashKey> {
+  return {
+    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(),
+  };
 }
 
 /**
@@ -6798,17 +6805,17 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
     return TernaryFalse;
   }
   const maybeStart = receiver!.maybeKeys.length;
-  receiver!.maybeKeys = [...receiver!.maybeKeys, id];
+  receiver!.maybeKeys.push(id);
   Set_Add(receiver!.maybeKeysSet, id);
   const saveExpandingFlags = receiver!.expandingFlags;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = [...receiver!.sourceStack, source];
+    receiver!.sourceStack.push(source);
     if ((receiver!.expandingFlags & ExpandingFlagsSource) === 0 && Checker_isDeeplyNestedType(receiver!.c, source, receiver!.sourceStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsSource) as ExpandingFlags;
     }
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = [...receiver!.targetStack, target];
+    receiver!.targetStack.push(target);
     if ((receiver!.expandingFlags & ExpandingFlagsTarget) === 0 && Checker_isDeeplyNestedType(receiver!.c, target, receiver!.targetStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsTarget) as ExpandingFlags;
     }
@@ -6824,10 +6831,10 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   const propagatingVarianceFlags = receiver!.c!.reliabilityFlags;
   receiver!.c!.reliabilityFlags = (receiver!.c!.reliabilityFlags | saveReliabilityFlags) as RelationComparisonResult;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = receiver!.sourceStack.slice(0, receiver!.sourceStack.length - 1);
+    receiver!.sourceStack.pop();
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = receiver!.targetStack.slice(0, receiver!.targetStack.length - 1);
+    receiver!.targetStack.pop();
   }
   receiver!.expandingFlags = saveExpandingFlags;
   if (result !== TernaryFalse) {
@@ -6869,7 +6876,7 @@ export function Relater_resetMaybeStack(receiver: GoPtr<Relater>, maybeStart: in
       receiver!.relationCount--;
     }
   }
-  receiver!.maybeKeys = receiver!.maybeKeys.slice(0, maybeStart);
+  receiver!.maybeKeys.length = maybeStart;
 }
 
 /**
@@ -8772,7 +8779,7 @@ export function Relater_typeRelatedToDiscriminatedType(receiver: GoPtr<Relater>,
  * 	return result
  * }
  */
-export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool, excludedProperties: Set, optionalsOnly: bool, intersectionState: IntersectionState): Ternary {
+export function Relater_propertiesRelatedTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, reportErrors: bool, excludedProperties: Set<string>, optionalsOnly: bool, intersectionState: IntersectionState): Ternary {
   if (receiver!.relation === receiver!.c!.identityRelation) {
     return Relater_propertiesIdenticalTo(receiver, source, target, excludedProperties);
   }
@@ -9300,7 +9307,7 @@ export function Relater_tryElaborateErrorsForPrimitivesAndObjects(receiver: GoPt
  * 	return result
  * }
  */
-export function Relater_propertiesIdenticalTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, excludedProperties: Set): Ternary {
+export function Relater_propertiesIdenticalTo(receiver: GoPtr<Relater>, source: GoPtr<Type>, target: GoPtr<Type>, excludedProperties: Set<string>): Ternary {
   if ((source!.flags & TypeFlagsObject) === 0 || (target!.flags & TypeFlagsObject) === 0) {
     return TernaryFalse;
   }

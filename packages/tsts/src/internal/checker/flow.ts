@@ -1,6 +1,7 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import { AppendIfUnique, Every, FindIndex, IfElse, Map as core_Map, Coalesce, OrElse, SameMap, Some } from "../core/core.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { Node_FlowNodeData, Node_ForEachChild, Node_Name, Node_Pos, Node_End, NodeList_Pos } from "../ast/spine.js";
 import { Node_Arguments, Node_AsFlowReduceLabelData, Node_AsFlowSwitchClauseData, Node_Elements, Node_Expression, Node_Initializer, Node_Parameters, Node_PropertyNameOrName, Node_StatementList, Node_Text, Node_Type } from "../ast/ast.js";
@@ -129,17 +130,20 @@ export function FlowType_isNil(receiver: GoPtr<FlowType>): bool {
   return receiver?.t === undefined;
 }
 
-const flowLoopNodeKeys = new WeakMap<FlowNode, int>();
-let nextFlowLoopNodeKey = 1 as int;
+const flowLoopKeys = new WeakMap<FlowNode, globalThis.Map<CacheHashKey, FlowLoopKey>>();
 
 function getFlowLoopKey(flow: GoPtr<FlowNode>, refKey: CacheHashKey): FlowLoopKey {
-  let flowKey = flowLoopNodeKeys.get(flow!);
-  if (flowKey === undefined) {
-    flowKey = nextFlowLoopNodeKey;
-    nextFlowLoopNodeKey = (nextFlowLoopNodeKey + 1) as int;
-    flowLoopNodeKeys.set(flow!, flowKey);
+  let byRefKey = flowLoopKeys.get(flow!);
+  if (byRefKey === undefined) {
+    byRefKey = NewGoStructMap<CacheHashKey, FlowLoopKey>();
+    flowLoopKeys.set(flow!, byRefKey);
   }
-  return `${flowKey}:${refKey}` as unknown as FlowLoopKey;
+  let key = byRefKey.get(refKey);
+  if (key === undefined) {
+    key = { flowNode: flow, refKey };
+    byRefKey.set(refKey, key);
+  }
+  return key;
 }
 
 /**
@@ -3613,7 +3617,7 @@ export function Checker_isMatchingReference(receiver: GoPtr<Checker>, source: Go
  * Go source:
  * var nonDottedNameCacheKey = CacheHashKey(xxh3.HashString128("?"))
  */
-export const nonDottedNameCacheKey: CacheHashKey = HashString128("?").String();
+export const nonDottedNameCacheKey: CacheHashKey = HashString128("?");
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/flow.go::method::Checker.getFlowReferenceKey","kind":"method","status":"implemented","sigHash":"7f9c86a333fc3319345e1d2e40cd94e84184cc42804dbda3e0deebe4b4fa8c87","bodyHash":"8bcfb16a0b81f307700c2d8c04c39c9d3419508117866e6fecd4abfdf9d6257b"}

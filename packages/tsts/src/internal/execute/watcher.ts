@@ -181,7 +181,7 @@ export interface cachedSourceFile {
  */
 export interface watchCompilerHost {
   readonly __tsgoEmbedded0?: CompilerHost;
-  cache: GoPtr<SyncMap>;
+  cache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
 }
 
 /**
@@ -278,7 +278,7 @@ export interface Watcher {
   configFileName: string;
   config: GoPtr<ParsedCommandLine>;
   compilerOptionsFromCommandLine: GoPtr<CompilerOptions>;
-  commandLineRaw: GoPtr<OrderedMap>;
+  commandLineRaw: GoPtr<OrderedMap<string, unknown>>;
   reportDiagnostic: DiagnosticReporter;
   reportErrorSummary: DiagnosticsReporter;
   reportWatchStatus: DiagnosticReporter;
@@ -288,7 +288,7 @@ export interface Watcher {
   configModified: bool;
   configHasErrors: bool;
   configFilePaths: GoSlice<string>;
-  sourceFileCache: GoPtr<SyncMap>;
+  sourceFileCache: GoPtr<SyncMap<Path, GoPtr<cachedSourceFile>>>;
   backend: WatchBackend | undefined;
   watchedDirs: GoMap<string, GoPtr<watchedDir>>;
   seenFiles: GoPtr<Set<Path>>;
@@ -357,7 +357,7 @@ function newSyncSet<T>(): SyncSet<T> {
  * 	return w
  * }
  */
-export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
+export function createWatcher(sys: System, configParseResult: GoPtr<ParsedCommandLine>, compilerOptionsFromCommandLine: GoPtr<CompilerOptions>, commandLineRaw: GoPtr<OrderedMap<string, unknown>>, reportDiagnostic: DiagnosticReporter, reportErrorSummary: DiagnosticsReporter, testing: CommandLineTesting | undefined): GoPtr<Watcher> {
   const sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   const w: Watcher = {
     mu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as Watcher["mu"],
@@ -375,7 +375,7 @@ export function createWatcher(sys: System, configParseResult: GoPtr<ParsedComman
     configModified: false,
     configHasErrors: false,
     configFilePaths: [],
-    sourceFileCache: sourceFileCache as unknown as SyncMap,
+    sourceFileCache: sourceFileCache,
     backend: undefined,
     watchedDirs: new Map<string, GoPtr<watchedDir>>(),
     seenFiles: undefined,
@@ -1221,7 +1221,7 @@ export function Watcher_DoCycle(receiver: GoPtr<Watcher>): void {
     }
   } else if (overflow) {
     // Overflow: evict the entire source file cache to force re-build
-    receiver!.sourceFileCache = newSyncMap() as unknown as SyncMap;
+    receiver!.sourceFileCache = newSyncMap<Path, GoPtr<cachedSourceFile>>();
   } else if (!hasEvents && !receiver!.configModified) {
     // No events and no config change
     if (receiver!.debugLog !== undefined) {

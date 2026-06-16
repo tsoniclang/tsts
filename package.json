@@ -22,6 +22,7 @@
     "porter:ast": "node packages/tsts/tools/porter/porter.mjs ast",
     "porter:diagnostics": "node packages/tsts/tools/porter/porter.mjs diagnostics",
     "porter:skeleton-check": "node packages/tsts/tools/porter/porter.mjs skeleton-check",
+    "porter:sig-check": "node packages/tsts/tools/porter/porter.mjs sig-check",
     "porter:test": "node --test packages/tsts/tools/porter/*.test.mjs",
     "source:test": "node packages/tsts/tools/source-tests/run.mjs",
     "tsgo-suite": "node packages/tsts/tools/tsgo-suite/run.mjs",

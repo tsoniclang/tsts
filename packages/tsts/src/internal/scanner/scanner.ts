@@ -1,5 +1,5 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
-import type { GoComparable, GoMap, GoPtr, GoRune, GoSeq, GoSlice } from "../../go/compat.js";
+import type { GoArray, GoComparable, GoConstraint, GoMap, GoPtr, GoRune, GoSeq, GoSlice } from "../../go/compat.js";
 import * as fmt from "../../go/fmt.js";
 import * as strconv from "../../go/strconv.js";
 import * as strings from "../../go/strings.js";
@@ -816,11 +816,11 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
  * 	return m
  * }
  */
-export function cleared<K extends GoComparable, V, M extends GoMap<K, V> | undefined>(m: M): M {
-  // Go's clear(nil) is a no-op; mirror that by guarding against the nil map.
-  if (m !== undefined) {
-    m.clear();
+export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(m: M): M {
+  if (m === undefined) {
+    return undefined as unknown as M;
   }
+  m.clear();
   return m;
 }
 
@@ -5418,12 +5418,12 @@ export function IsIdentifierPartEx(ch: GoRune, languageVariant: LanguageVariant)
 // by the ported kinds module, so we mirror the same total kind->string mapping as a
 // GoMap (the identical representation already used for textToToken/textToKeyword);
 // TokenToString supplies the "" default for unmapped kinds, matching the array.
-export const tokenToText: GoMap<Kind, string> = ((): GoMap<Kind, string> => {
-  const result = new globalThis.Map<Kind, string>();
+export const tokenToText: GoArray<string, "ast.KindCount"> = ((): GoArray<string, "ast.KindCount"> => {
+  const result: Array<string> = [];
   for (const [text, kind] of textToToken) {
-    result.set(kind, text);
+    result[kind as number] = text;
   }
-  return result;
+  return result as GoArray<string, "ast.KindCount">;
 })();
 
 /**
@@ -5437,7 +5437,7 @@ export const tokenToText: GoMap<Kind, string> = ((): GoMap<Kind, string> => {
 export function TokenToString(token: Kind): string {
   // tokenToText is a total kind->string map; unmapped kinds hold the array zero
   // value "", which the `?? ""` reproduces.
-  return tokenToText.get(token) ?? "";
+  return tokenToText[token as number] ?? "";
 }
 
 /**

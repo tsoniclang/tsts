@@ -1,5 +1,5 @@
 import type { bool, byte, double, int, uint, ulong } from "@tsonic/core/types.js";
-import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import type { GoArray, GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import { Errorf, Sprintf } from "../../go/fmt.js";
 import { SortFunc } from "../../go/slices.js";
@@ -8,7 +8,7 @@ import { Itoa } from "../../go/strconv.js";
 import { Mutex } from "../../go/sync.js";
 import { Bool } from "../../go/sync/atomic.js";
 import * as xxh3 from "../../go/github.com/zeebo/xxh3.js";
-import type { Time } from "../../go/time.js";
+import type { Duration, Time } from "../../go/time.js";
 import { SourceFile_ECMALineMap, SourceFile_FileName, SourceFile_Text } from "../ast/ast.js";
 import type { SourceFile, SourceFileLike } from "../ast/ast.js";
 import { EscapeAllInternalSymbolNames } from "../ast/symbol.js";
@@ -170,7 +170,7 @@ export interface traceEvent {
  */
 // 10 * time.Millisecond expressed in nanoseconds (Go time.Duration unit).
 // Push uses sampleInterval / 1000.0 to convert to microseconds for comparison.
-export const sampleInterval: int = 10_000_000 as int;
+export const sampleInterval: Duration = 10_000_000 as Duration;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::constGroup::traceFileName","kind":"constGroup","status":"implemented","sigHash":"5ce6bcd3404ffeb42b22630f2857b4ab142cfc3b645f64ab3fde0715b125adb1","bodyHash":"5e409ad7ec15a4441743658e2084dfb54340ea5f500b8faa5633c6b04dce2adb"}
@@ -629,7 +629,7 @@ export const fileThreadIDHashRange: int = 1_000_000_000 as int;
  * Go source:
  * var traceThreadArgKeys = [...]string{"path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"}
  */
-export const traceThreadArgKeys: GoSlice<string> = ["path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"];
+export const traceThreadArgKeys: GoArray<string, "..."> = ["path", "fileName", "containingFileName", "jsFilePath", "declarationFilePath"];
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/tracing/tracing.go::type::traceThreadKind","kind":"type","status":"implemented","sigHash":"7f8971828713d04c4545433a652f30e223fd2b57b824058221a9c6b3a1311886","bodyHash":"cd398ca0b7b5f53734837bb31f3eedcfcb7ab2026b5ce5c04fb978e4bf50fa60"}

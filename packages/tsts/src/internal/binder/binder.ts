@@ -596,7 +596,6 @@ export interface Binder {
   file: GoPtr<SourceFile>;
   bindFunc: (arg0: GoPtr<Node>) => bool;
   unreachableFlow: GoPtr<FlowNode>;
-  parent: GoPtr<Node>;
   container: GoPtr<Node>;
   thisContainer: GoPtr<Node>;
   blockScopeContainer: GoPtr<Node>;
@@ -697,7 +696,7 @@ export function BindSourceFile(file: GoPtr<SourceFile>): void {
  * 	},
  * }
  */
-export const binderPool = new Pool<Binder>();
+export const binderPool: Pool<Binder> = new Pool<Binder>();
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/binder/binder.go::func::getBinder","kind":"func","status":"implemented","sigHash":"b5ed04b8e537a472bfe5943403514f3a2337328c3df347af7978c671e52c0fa2","bodyHash":"459fb11735c11ea9e06babc9f1dab3e1df80aca8b93fcd595671fbd375fceddb"}
@@ -1878,9 +1877,6 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
   if (node === undefined) {
     return false;
   }
-  node!.Parent = receiver!.parent;
-  const saveParent = receiver!.parent;
-  receiver!.parent = node;
   // First bind declaration nodes to a symbol if possible.
   switch (node!.Kind) {
     case KindIdentifier:
@@ -2076,7 +2072,6 @@ export function Binder_bind(receiver: GoPtr<Binder>, node: GoPtr<Node>): bool {
     node!.Flags = (node!.Flags | NodeFlagsThisNodeOrAnySubNodesHasError) as NodeFlags;
     receiver!.seenParseError = true;
   }
-  receiver!.parent = saveParent;
   return false;
 }
 
@@ -5418,13 +5413,10 @@ function Binder_bindNonLogicalBinaryExpressionFlow(receiver: GoPtr<Binder>, node
     Binder_bindBinaryExpressionNode(receiver, binaryChain[index]);
   }
 
-  receiver!.parent = binaryChain[binaryChain.length - 1];
   Binder_bind(receiver, leftEdge);
   for (let index = binaryChain.length - 1; index >= 0; index--) {
-    receiver!.parent = binaryChain[index];
     Binder_bindNonLogicalBinaryExpressionTail(receiver, binaryChain[index]);
   }
-  receiver!.parent = node;
 }
 
 function isIterativelyBindableNonLogicalBinaryExpression(node: GoPtr<Node>): bool {

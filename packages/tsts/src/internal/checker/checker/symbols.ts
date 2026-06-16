@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
 import { isShorthandAmbientModuleSymbol } from "../utilities.js";
@@ -15262,7 +15263,7 @@ export function Checker_getDeclaredTypeOfTypeAlias(receiver: GoPtr<Checker>, sym
       const typeParameters = Checker_getLocalTypeParametersOfClassOrInterfaceOrTypeAlias(receiver, symbol_);
       if (typeParameters.length !== 0) {
         links!.typeParameters = typeParameters;
-        links!.instantiations = new globalThis.Map();
+        links!.instantiations = NewGoStructMap();
         links!.instantiations.set(getTypeListKey(typeParameters), t);
       }
       if (t === receiver!.intrinsicMarkerType && symbol_!.Name === "BuiltinIteratorReturn") {

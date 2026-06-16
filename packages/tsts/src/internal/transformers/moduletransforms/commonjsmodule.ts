@@ -1214,7 +1214,7 @@ export function CommonJSModuleTransformer_appendExportsOfClassOrFunctionDeclarat
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<Declaration>, seen: GoPtr<Set>, liveBinding: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, decl: GoPtr<Declaration>, seen: GoPtr<Set<string>>, liveBinding: bool): GoSlice<GoPtr<Statement>> {
   if (receiver!.currentModuleInfo!.exportEquals !== undefined) {
     return statements;
   }
@@ -1254,7 +1254,7 @@ export function CommonJSModuleTransformer_appendExportsOfDeclaration(receiver: G
  * 	return statements
  * }
  */
-export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, seen: GoPtr<Set>, exportName: GoPtr<ModuleExportName>, expression: GoPtr<Expression>, location: GoPtr<TextRange>, allowComments: bool, liveBinding: bool): GoSlice<GoPtr<Statement>> {
+export function CommonJSModuleTransformer_appendExportStatement(receiver: GoPtr<CommonJSModuleTransformer>, statements: GoSlice<GoPtr<Statement>>, seen: GoPtr<Set<string>>, exportName: GoPtr<ModuleExportName>, expression: GoPtr<Expression>, location: GoPtr<TextRange>, allowComments: bool, liveBinding: bool): GoSlice<GoPtr<Statement>> {
   if (exportName!.Kind !== KindStringLiteral) {
     if (Set_Has(seen, Node_Text(exportName))) {
       return statements;

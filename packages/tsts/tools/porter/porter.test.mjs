@@ -1588,3 +1588,12 @@ test("collectVerifyFailures fails when schemaSourceSync has mismatches", () => {
   const failures = collectVerifyFailures(status, {});
   assert.equal(failures.some((f) => /schema\/source sync/.test(f)), true);
 });
+
+test("collectVerifyFailures hard-gates signature mismatches", () => {
+  const status = {
+    counts: { parseErrors: 0, duplicateGoIDs: 0, duplicateTsIDs: 0, orphan: 0, forbiddenTsFiles: 0, untrackedTsFiles: 0, stale: 0, missing: 0 },
+    signatureCheck: { checked: 2, overriddenUnits: 0, mismatches: 2, byKind: { "param-type": 1, "alias-type": 1 } },
+    rows: [],
+  };
+  assert.deepEqual(collectVerifyFailures(status, {}), ["2 signature/type mismatches (param-type=1, alias-type=1)"]);
+});

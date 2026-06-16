@@ -114,7 +114,7 @@ export interface CommandLineResult {
  * }
  */
 export interface CommandLineTesting {
-  OnEmittedFiles(result: GoPtr<EmitResult>, mTimesCache: GoPtr<SyncMap>): void;
+  OnEmittedFiles(result: GoPtr<EmitResult>, mTimesCache: GoPtr<SyncMap<Path, Time>>): void;
   OnListFilesStart(w: Writer): void;
   OnListFilesEnd(w: Writer): void;
   OnStatisticsStart(w: Writer): void;

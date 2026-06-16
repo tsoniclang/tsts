@@ -1,5 +1,5 @@
 import type { bool } from "@tsonic/core/types.js";
-import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoError, GoPtr, GoRef, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";
 import { Bool } from "../../../go/sync/atomic.js";
@@ -88,11 +88,11 @@ export interface emitFilesHandler {
   ctx: Context;
   program: GoPtr<Program>;
   isForDtsErrors: bool;
-  signatures: SyncMap;
-  emitSignatures: SyncMap;
-  latestChangedDtsFiles: SyncMap;
-  deletedPendingKinds: Set;
-  emitUpdates: SyncMap;
+  signatures: SyncMap<Path, string>;
+  emitSignatures: SyncMap<Path, GoPtr<emitSignature>>;
+  latestChangedDtsFiles: SyncMap<Path, string>;
+  deletedPendingKinds: Set<Path>;
+  emitUpdates: SyncMap<Path, GoPtr<emitUpdate>>;
   hasEmitDiagnostics: Bool;
 }
 
@@ -499,7 +499,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
     TargetSourceFile: options.TargetSourceFile,
     EmitOnly: options.EmitOnly,
     WriteFile: (fileName: string, text: string, data: GoPtr<WriteFileData>): GoError => {
-      const differsOnlyInMapBox = { v: false as bool };
+      const differsOnlyInMapBox: GoRef<bool> = { v: false as bool };
       if (IsDeclarationFileName(fileName)) {
         if (canUseIncrementalState) {
           let emitSig = "";
@@ -578,7 +578,7 @@ export function emitFilesHandler_getEmitOptions(receiver: GoPtr<emitFilesHandler
  * 	return false
  * }
  */
-export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFilesHandler>, file: GoPtr<SourceFile>, outputFileName: string, text: string, data: GoPtr<WriteFileData>, newSignature: string, differsOnlyInMap: { v: bool }): bool {
+export function emitFilesHandler_skipDtsOutputOfComposite(receiver: GoPtr<emitFilesHandler>, file: GoPtr<SourceFile>, outputFileName: string, text: string, data: GoPtr<WriteFileData>, newSignature: string, differsOnlyInMap: GoRef<bool>): bool {
   if (!Tristate_IsTrue(receiver!.program!.snapshot!.options!.Composite)) {
     return false as bool;
   }
@@ -786,11 +786,11 @@ export function emitFiles(ctx: Context, program: GoPtr<Program>, options: EmitOp
     ctx: ctx,
     program: program,
     isForDtsErrors: isForDtsErrors,
-    signatures: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap,
-    emitSignatures: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap,
-    latestChangedDtsFiles: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap,
-    deletedPendingKinds: { M: new Map() } as Set,
-    emitUpdates: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap,
+    signatures: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, string>,
+    emitSignatures: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, GoPtr<emitSignature>>,
+    latestChangedDtsFiles: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, string>,
+    deletedPendingKinds: { M: new Map() } as Set<Path>,
+    emitUpdates: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncMapImpl() } as SyncMap<Path, GoPtr<emitUpdate>>,
     hasEmitDiagnostics: new Bool(),
   };
 

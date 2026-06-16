@@ -267,8 +267,8 @@ export function PackageJson_GetVersionPaths(receiver: GoPtr<PackageJson>, trace:
  */
 export interface VersionPaths {
   Version: string;
-  pathsJSON: GoPtr<OrderedMap>;
-  paths: GoPtr<OrderedMap>;
+  pathsJSON: GoPtr<OrderedMap<string, JSONValue>>;
+  paths: GoPtr<OrderedMap<string, GoSlice<string>>>;
 }
 
 /**
@@ -312,7 +312,7 @@ export function VersionPaths_Exists(receiver: GoPtr<VersionPaths>): bool {
  * 	return v.paths
  * }
  */
-export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<OrderedMap> {
+export function VersionPaths_GetPaths(receiver: GoPtr<VersionPaths>): GoPtr<OrderedMap<string, GoSlice<string>>> {
   if (!VersionPaths_Exists(receiver)) {
     return undefined;
   }
@@ -453,7 +453,7 @@ export function InfoCacheEntry_GetDirectory(receiver: GoPtr<InfoCacheEntry>): st
  * }
  */
 export interface InfoCache {
-  cache: SyncMap;
+  cache: SyncMap<Path, GoPtr<InfoCacheEntry>>;
   currentDirectory: string;
   useCaseSensitiveFileNames: bool;
 }

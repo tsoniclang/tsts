@@ -3325,7 +3325,7 @@ export function GetRootDeclaration(node: GoPtr<Node>): GoPtr<Node> {
  * 	return flags
  * }
  */
-export function getCombinedFlags<T extends number>(node: GoPtr<Node>, getFlags: (arg0: GoPtr<Node>) => T): T {
+export function getCombinedFlags<T extends GoConstraint<"~uint32"> & number>(node: GoPtr<Node>, getFlags: (arg0: GoPtr<Node>) => T): T {
   const root = GetRootDeclaration(node);
   const flags0 = getFlags(root);
   const n1 = root!.Kind === KindVariableDeclaration ? root!.Parent : root;

@@ -428,7 +428,7 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
   }
   try {
     if (Tristate_IsTrue(ParsedCommandLine_CompilerOptions(commandLine)!.Init)) {
-      WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap>);
+      WriteConfigFile(sys, locale, reportDiagnostic, commandLine!.Raw as GoPtr<OrderedMap<string, unknown>>);
       return { Status: ExitStatusSuccess, Watcher: undefined };
     }
 
@@ -492,12 +492,12 @@ export function tscCompilation(ctx: Context, sys: System, commandLine: GoPtr<Par
     let configForCompilation = commandLine;
     const extendedConfigCache: ExtendedConfigCache = { m: { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<string, GoPtr<extendedConfigCacheEntry>> };
     const compileTimes: import("./tsc/compile.js").CompileTimes = { ConfigTime: 0, ParseTime: 0, bindTime: 0, checkTime: 0, totalTime: 0, emitTime: 0, BuildInfoReadTime: 0, ChangesComputeTime: 0 };
-    let commandLineRaw: GoPtr<OrderedMap> = undefined;
+    let commandLineRaw: GoPtr<OrderedMap<string, unknown>> = undefined;
     if (configFileName !== "") {
       const configStart = sys.Now();
       const raw = commandLine!.Raw;
       if (raw !== undefined && raw !== null) {
-        const rawMap = raw as OrderedMap;
+        const rawMap = raw as OrderedMap<string, unknown>;
         if (rawMap.keys !== undefined) {
           // Wrap command line options in a "compilerOptions" key to match tsconfig.json structure
           const wrapped = NewOrderedMapWithSizeHint<string, unknown>(0);

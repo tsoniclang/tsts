@@ -7,4 +7,4 @@ import type { bool } from "@tsonic/core/types.js";
  * var isReparsePoint func(path string) bool
  */
 // Only Windows has reparse points; leave this nil (undefined) for other OSes.
-export const isReparsePoint: ((path: string) => bool) | undefined = undefined;
+export let isReparsePoint: (path: string) => bool;

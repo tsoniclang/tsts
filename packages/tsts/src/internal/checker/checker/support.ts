@@ -1439,9 +1439,7 @@ export function Checker_canHaveSyntheticDefault(receiver: GoPtr<Checker>, file: 
  * }
  */
 export function CacheHashKey_IsZero(receiver: CacheHashKey): bool {
-  // Go zero value of CacheHashKey (xxh3.Uint128{}); the string port's zero
-  // value is the empty/unset string. Real hashes are always 32 hex chars.
-  return receiver === undefined || receiver === "";
+  return receiver === undefined || receiver.IsZero();
 }
 
 /**

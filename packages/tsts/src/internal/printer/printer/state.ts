@@ -185,13 +185,13 @@ export interface Printer {
   containerPos: int;
   containerEnd: int;
   declarationListContainerEnd: int;
-  detachedCommentsInfo: Stack;
+  detachedCommentsInfo: Stack<detachedCommentsInfo>;
   commentsDisabled: bool;
   inExtends: bool;
   nameGenerator: NameGenerator;
   makeFileLevelOptimisticUniqueName: (arg0: string) => string;
-  commentStateArena: Arena;
-  sourceMapStateArena: Arena;
+  commentStateArena: Arena<commentState>;
+  sourceMapStateArena: Arena<sourceMapState>;
   IdToSymbol: GoPtr<GoMap<GoPtr<IdentifierNode>, GoPtr<Symbol>>>;
 }
 

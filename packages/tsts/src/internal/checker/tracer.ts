@@ -208,7 +208,7 @@ export interface tracedTypeAdapter {
  * Go source:
  * var _ tracing.TracedType = (*tracedTypeAdapter)(nil)
  */
-export const __88a6f671_0: (t: GoPtr<Type>) => TracedType = wrapType;
+export const __88a6f671_0: TracedType = wrapType(undefined);
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/tracer.go::method::tracedTypeAdapter.Id","kind":"method","status":"implemented","sigHash":"1b5527e62eddf3209bac5d770df27dc9fd21a153ab2cf9a0163fbeb8ec218011","bodyHash":"243119c609768300ad153d96a1858edd0c54b28fb824be1cf41a626d1a2eedb5"}

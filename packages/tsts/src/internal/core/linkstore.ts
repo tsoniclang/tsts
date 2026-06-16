@@ -34,7 +34,7 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * 	return value
  * }
  */
-export function LinkStore_Get<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
+export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
   const s: GoPtr<LinkStore<K, V>> = receiver;
   s!.entries ??= new Map<K, GoPtr<V>>();
   let value = s!.entries.get(key);
@@ -55,7 +55,7 @@ export function LinkStore_Get<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): G
  * 	return ok
  * }
  */
-export function LinkStore_Has<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): bool {
+export function LinkStore_Has<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): bool {
   const ok = receiver!.entries?.has(key) ?? false;
   return ok;
 }
@@ -68,6 +68,6 @@ export function LinkStore_Has<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): b
  * 	return s.entries[key]
  * }
  */
-export function LinkStore_TryGet<K, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
+export function LinkStore_TryGet<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
   return receiver!.entries?.get(key);
 }

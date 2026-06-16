@@ -37,7 +37,7 @@ export function wrapFS(fs: FS): FS {
  * 	return tspath.GetDirectoryPath(exe)
  * })
  */
-export const executableDir = (() => {
+export const executableDir: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     value ??= GetDirectoryPath(OSFS().Realpath(NormalizeSlashes(process.execPath)));
@@ -63,7 +63,7 @@ export const executableDir = (() => {
  * 	return dir
  * })
  */
-export const libPath = (() => {
+export const libPath: () => string = (() => {
   let value: string | undefined;
   return (): string => {
     if (value === undefined) {

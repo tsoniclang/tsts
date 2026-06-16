@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
+import { NewGoStructMap } from "../../../go/compat.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import { MaxInt } from "../../../go/math.js";
@@ -43,7 +44,7 @@ import type { Number } from "../../jsnum/jsnum.js";
 import { Number_IsNaN } from "../../jsnum/jsnum.js";
 import { CombineSurrogatePairs } from "../../stringutil/util.js";
 import type { PseudoBigInt } from "../../jsnum/pseudobigint.js";
-import { ParseValidBigInt, PseudoBigInt_String } from "../../jsnum/pseudobigint.js";
+import { ParseValidBigInt } from "../../jsnum/pseudobigint.js";
 import { AnyToString } from "../../evaluator/evaluator.js";
 import type { ResolvedModule } from "../../module/types.js";
 import { IsExternalModuleNameRelative } from "../../tspath/path.js";
@@ -4502,7 +4503,7 @@ export function Checker_getDeclaredTypeOfClassOrInterface(receiver: GoPtr<Checke
       d.outerTypeParameterCount = outerTypeParameters.length;
       const typeReference = Type_AsTypeReference(t)!;
       typeReference.resolvedTypeArguments = InterfaceType_TypeParameters(d);
-      Type_AsObjectType(t)!.instantiations = new Map();
+      Type_AsObjectType(t)!.instantiations = NewGoStructMap();
       Type_AsObjectType(t)!.instantiations.set(getTypeListKey(typeReference.resolvedTypeArguments), t);
       Type_AsObjectType(t)!.target = t;
     }
@@ -9247,7 +9248,7 @@ export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>,
             Checker_isTypeParameterPossiblyReferenced(receiver, typeParameter, node),
           );
     const root: ConditionalRoot = {
-      node,
+      node: conditionalTypeNode,
       checkType,
       extendsType: Checker_getTypeFromTypeNode(receiver, conditionalTypeNode.ExtendsType),
       isDistributive: (checkType!.flags & TypeFlagsTypeParameter) !== 0,
@@ -9258,7 +9259,7 @@ export function Checker_getTypeFromConditionalTypeNode(receiver: GoPtr<Checker>,
     };
     links!.resolvedType = Checker_getConditionalType(receiver, root, undefined, false, undefined);
     if (outerTypeParameters.length !== 0) {
-      root.instantiations = new Map();
+      root.instantiations = NewGoStructMap();
       root.instantiations.set(getConditionalTypeKey(outerTypeParameters, undefined, false), links!.resolvedType);
     }
   }
@@ -9872,7 +9873,7 @@ export function Checker_createTupleTargetType(receiver: GoPtr<Checker>, elementI
   Type_AsTypeParameter(interfaceType.thisType)!.isThisType = true;
   Type_AsTypeParameter(interfaceType.thisType)!.constraint = t;
   interfaceType.allTypeParameters = [...typeParameters, interfaceType.thisType];
-  objectType.instantiations = new Map();
+  objectType.instantiations = NewGoStructMap();
   objectType.instantiations.set(getTypeListKey(InterfaceType_TypeParameters(interfaceType)), t);
   objectType.target = t;
   typeReference.resolvedTypeArguments = InterfaceType_TypeParameters(interfaceType);
@@ -10691,11 +10692,10 @@ export function Checker_getNumberLiteralType(receiver: GoPtr<Checker>, value: Nu
  * }
  */
 export function Checker_getBigIntLiteralType(receiver: GoPtr<Checker>, value: PseudoBigInt): GoPtr<Type> {
-  const key = PseudoBigInt_String(value);
-  let t = receiver!.bigintLiteralTypes.get(key);
+  let t = receiver!.bigintLiteralTypes.get(value);
   if (t === undefined) {
     t = Checker_newLiteralType(receiver, TypeFlagsBigIntLiteral, value, undefined);
-    receiver!.bigintLiteralTypes.set(key, t);
+    receiver!.bigintLiteralTypes.set(value, t);
   }
   return t;
 }

@@ -2216,7 +2216,7 @@ export interface specPair {
  * 	return ""
  * }
  */
-export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPtr<OrderedMap>, allowedEndings: GoSlice<ModuleSpecifierEnding>, baseDirectory: string, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>): string {
+export function tryGetModuleNameFromPaths(relativeToBaseUrl: string, paths: GoPtr<OrderedMap<string, GoSlice<string>>>, allowedEndings: GoSlice<ModuleSpecifierEnding>, baseDirectory: string, host: ModuleSpecifierGenerationHost, compilerOptions: GoPtr<CompilerOptions>): string {
   const caseSensitive = host.UseCaseSensitiveFileNames();
   let finalResult = "";
   OrderedMap_Entries(paths as GoPtr<OrderedMap<string, GoSlice<string>>>)((key, values) => {
@@ -2648,14 +2648,14 @@ export function UpdateModuleSpecifier(compilerOptions: GoPtr<CompilerOptions>, h
 export function getModuleSpecifierWithPreferences(compilerOptions: GoPtr<CompilerOptions>, host: ModuleSpecifierGenerationHost, importingSourceFile: GoPtr<SourceFile>, importingSourceFileName: string, oldImportSpecifier: string, toFileName: string, userPreferences: UserPreferences, options: ModuleSpecifierOptions): string {
   const info = getInfo(importingSourceFileName, host);
   const modulePaths = getAllModulePaths(info, toFileName, host, compilerOptions, userPreferences, options);
-  const preferences = getModuleSpecifierPreferences(userPreferences, host, compilerOptions, importingSourceFile as unknown as SourceFileForSpecifierGeneration, oldImportSpecifier);
+  const preferences = getModuleSpecifierPreferences(userPreferences, host, compilerOptions, importingSourceFile!, oldImportSpecifier);
 
   const resolutionMode = options.OverrideImportMode === ResolutionModeNone
-    ? host.GetDefaultResolutionModeForFile(importingSourceFile as unknown as HasFileName)
+    ? host.GetDefaultResolutionModeForFile(importingSourceFile!)
     : options.OverrideImportMode;
 
   for (const modulePath of modulePaths) {
-    const firstDefined = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile as unknown as SourceFileForSpecifierGeneration, host, compilerOptions, userPreferences, false, options.OverrideImportMode);
+    const firstDefined = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile!, host, compilerOptions, userPreferences, false, options.OverrideImportMode);
     if (firstDefined.length > 0) {
       return firstDefined;
     }

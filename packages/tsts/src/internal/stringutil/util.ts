@@ -679,7 +679,7 @@ export function TruncateByRunes(str: string, maxLength: int): string {
  * 	SurrogateLowStart = 0xDC00
  * )
  */
-export const SurrogateLowStart: GoRune = 0xdc00;
+export const SurrogateLowStart: int = 0xdc00 as int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::IsHighSurrogate","kind":"func","status":"implemented","sigHash":"0e49ff666758f777cb54d06bfba2a9d26a64fd478143494b8b0e161d2c4e83a7","bodyHash":"dbae06aa207c6bbab1c0e6d3f7fdb932c8c71519020fcb14b37c8d739949c1da"}

@@ -111,7 +111,7 @@ import type { Checker, TupleNormalizer } from "./checker/state.js";
  * Go source:
  * const maxSerializationLevel = 2
  */
-export const maxSerializationLevel = 2;
+export const maxSerializationLevel: int = 2;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.mergeGlobalSymbol","kind":"method","status":"implemented","sigHash":"b82155f00b9e944fa6046f8522635dcde3d4d3c4fb7db381a91d7c6ea6ea67b0","bodyHash":"40a4475948a3fd12369dbf2342c776b42e91b7c2a76f36f6f0fdf0007bb96407"}

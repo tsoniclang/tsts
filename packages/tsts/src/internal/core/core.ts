@@ -1029,7 +1029,7 @@ function isGoZeroValue(value: unknown): bool {
  * 	}
  * }
  */
-export function Coalesce<T, U>(a: T, b: T): T {
+export function Coalesce<T extends GoPtr<U>, U>(a: T, b: T): T {
   // T is a pointer type *U in Go, so the zero value tested against nil is undefined.
   if (a === (undefined as T)) {
     return b;
@@ -1804,7 +1804,7 @@ export function DiffMapsFunc<K extends GoComparable, V1, V2>(m1: GoMap<K, V1>, m
  * 	return dst
  * }
  */
-export function CopyMapInto<M1 extends GoMap<K, V>, M2 extends GoMap<K, V>, K extends GoComparable, V>(dst: M1, src: M2): GoMap<K, V> {
+export function CopyMapInto<M1 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, M2 extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(dst: M1, src: M2): GoMap<K, V> {
   if (dst === undefined) {
     return maps.Clone(src)!;
   }

@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
+import { NewGoStructMap } from "../../../go/compat.js";
 import { Node_Name, NodeList_Pos, NodeList_End } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
 import { Node_Elements, Node_Expression, Node_Members, Node_TypeArgumentList, SourceFile_Text } from "../../ast/ast.js";
@@ -895,7 +896,7 @@ export function Checker_createInstantiatedSymbolTable(receiver: GoPtr<Checker>, 
 export function Checker_pushActiveMapper(receiver: GoPtr<Checker>, mapper: GoPtr<TypeMapper>): void {
   receiver!.activeMappers.push(mapper);
   // In TypeScript arrays have no separate cap concept; always push a new map.
-  receiver!.activeTypeMappersCaches.push(new globalThis.Map<CacheHashKey, GoPtr<Type>>());
+  receiver!.activeTypeMappersCaches.push(NewGoStructMap<CacheHashKey, GoPtr<Type>>());
 }
 
 /**
@@ -1100,7 +1101,7 @@ export function Checker_getObjectTypeInstantiation(receiver: GoPtr<Checker>, t: 
   const data = Type_AsObjectType(target);
   const key = getTypeInstantiationKey(typeArguments, newAlias, (t!.objectFlags & ObjectFlagsSingleSignatureType) !== 0);
   if (data!.instantiations === undefined) {
-    data!.instantiations = new globalThis.Map<CacheHashKey, GoPtr<Type>>();
+    data!.instantiations = NewGoStructMap<CacheHashKey, GoPtr<Type>>();
     data!.instantiations.set(getTypeInstantiationKey(typeParameters, target!.alias, false), target);
   }
   let result = data!.instantiations.get(key);

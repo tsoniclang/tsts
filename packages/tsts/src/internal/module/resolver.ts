@@ -475,8 +475,6 @@ export interface Resolver {
   compilerOptions: GoPtr<CompilerOptions>;
   typingsLocation: string;
   projectName: string;
-  parsedPatternsForPathsOnce: Once;
-  parsedPatternsForPaths: GoPtr<ParsedPatterns>;
 }
 
 /**
@@ -518,8 +516,6 @@ export function NewResolver(host: ResolutionHost, options: GoPtr<CompilerOptions
     compilerOptions: options,
     typingsLocation: typingsLocation ?? "",
     projectName: projectName ?? "",
-    parsedPatternsForPathsOnce: new Once(),
-    parsedPatternsForPaths: undefined,
   };
 }
 
@@ -567,8 +563,6 @@ export function NewResolverWithOptions(host: ResolutionHost, compilerOptions: Go
     compilerOptions: compilerOptions,
     typingsLocation: typingsLocation ?? "",
     projectName: projectName ?? "",
-    parsedPatternsForPathsOnce: new Once(),
-    parsedPatternsForPaths: undefined,
   };
 }
 
@@ -1667,8 +1661,8 @@ export function resolutionState_loadModuleFromExports(receiver: GoPtr<resolution
  * 	return continueSearching()
  * }
  */
-export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, lookupTableRaw: GoPtr<OrderedMap>, scope: GoPtr<InfoCacheEntry>, isImports: bool): GoPtr<resolved> {
-  const lookupTable = lookupTableRaw as GoPtr<OrderedMap<string, ExportsOrImports>>;
+export function resolutionState_loadModuleFromExportsOrImports(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, lookupTableRaw: GoPtr<OrderedMap<string, ExportsOrImports>>, scope: GoPtr<InfoCacheEntry>, isImports: bool): GoPtr<resolved> {
+  const lookupTable = lookupTableRaw;
   if (!strings.HasSuffix(moduleName, "/") && !strings.Contains(moduleName, "*")) {
     const [target, targetOk] = OrderedMap_Get<string, ExportsOrImports>(lookupTable, moduleName);
     if (targetOk) {
@@ -2852,7 +2846,7 @@ export function resolutionState_tryLoadModuleUsingPathsIfEligible(receiver: GoPt
  * 	return continueSearching()
  * }
  */
-export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, containingDirectory: string, paths: GoPtr<OrderedMap>, pathPatterns: GoPtr<ParsedPatterns>, loader: resolutionKindSpecificLoader): GoPtr<resolved> {
+export function resolutionState_tryLoadModuleUsingPaths(receiver: GoPtr<resolutionState>, extensions: extensions, moduleName: string, containingDirectory: string, paths: GoPtr<OrderedMap<string, GoSlice<string>>>, pathPatterns: GoPtr<ParsedPatterns>, loader: resolutionKindSpecificLoader): GoPtr<resolved> {
   const matchedPattern = MatchPatternOrExact(pathPatterns, moduleName);
   if (Pattern_IsValid(matchedPattern)) {
     const matchedStar = Pattern_MatchedText(matchedPattern, moduleName);
@@ -3998,7 +3992,7 @@ export function resolutionState_getPackageId(receiver: GoPtr<resolutionState>, r
  */
 export function resolutionState_readPackageJsonPeerDependencies(receiver: GoPtr<resolutionState>, packageJsonInfo: GoPtr<InfoCacheEntry>): string {
   const peerDependencies = packageJsonDependencyMapField(packageJsonInfo!.Contents, "PeerDependencies");
-  const ok = resolutionState_validatePackageJSONField(receiver, "peerDependencies", peerDependencies);
+  const ok = resolutionState_validatePackageJSONField(receiver, "peerDependencies", Expected_as_TypeValidatedField(peerDependencies));
   if (!ok || !Expected_IsValid(peerDependencies) || (peerDependencies.Value?.size ?? 0) === 0) {
     return "";
   }
@@ -4072,13 +4066,22 @@ export function resolutionState_realPath(receiver: GoPtr<resolutionState>, path:
  * 	return false
  * }
  */
-export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolutionState>, fieldName: string, field: Expected<unknown>): bool {
-  if (Expected_IsPresent(field)) {
-    if (Expected_IsValid(field)) {
+function Expected_as_TypeValidatedField<T>(field: GoPtr<Expected<T>>): TypeValidatedField {
+  return {
+    IsPresent: (): bool => Expected_IsPresent(field),
+    IsValid: (): bool => Expected_IsValid(field),
+    ExpectedJSONType: (): string => Expected_ExpectedJSONType(field),
+    ActualJSONType: (): string => Expected_ActualJSONType(field),
+  };
+}
+
+export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolutionState>, fieldName: string, field: TypeValidatedField): bool {
+  if (field.IsPresent()) {
+    if (field.IsValid()) {
       return true as bool;
     }
     if (receiver!.tracer !== undefined) {
-      tracer_write(receiver!.tracer, diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2, fieldName, Expected_ExpectedJSONType(field), Expected_ActualJSONType(field));
+      tracer_write(receiver!.tracer, diagnostics.Expected_type_of_0_field_in_package_json_to_be_1_got_2, fieldName, field.ExpectedJSONType(), field.ActualJSONType());
     }
   }
   if (receiver!.tracer !== undefined) {
@@ -4109,7 +4112,7 @@ export function resolutionState_validatePackageJSONField(receiver: GoPtr<resolut
  * }
  */
 export function resolutionState_getPackageJSONPathField(receiver: GoPtr<resolutionState>, fieldName: string, field: GoPtr<Expected<string>>, directory: string): [string, bool] {
-  if (!resolutionState_validatePackageJSONField(receiver, fieldName, field!)) {
+  if (!resolutionState_validatePackageJSONField(receiver, fieldName, Expected_as_TypeValidatedField(field))) {
     return ["", false as bool];
   }
   if (field!.Value === "") {
@@ -4307,7 +4310,7 @@ export function moveToNextDirectorySeparatorIfAvailable(path: string, prevSepara
  * }
  */
 export interface ParsedPatterns {
-  matchableStringSet: Set;
+  matchableStringSet: Set<string>;
   patterns: GoSlice<Pattern>;
 }
 
@@ -4323,10 +4326,10 @@ export interface ParsedPatterns {
  * }
  */
 export function Resolver_getParsedPatternsForPaths(receiver: GoPtr<Resolver>): GoPtr<ParsedPatterns> {
-  receiver!.parsedPatternsForPathsOnce.Do(() => {
-    receiver!.parsedPatternsForPaths = TryParsePatterns(receiver!.compilerOptions!.Paths);
+  receiver!.__tsgoEmbedded0!.parsedPatternsForPathsOnce.Do(() => {
+    receiver!.__tsgoEmbedded0!.parsedPatternsForPaths = TryParsePatterns(receiver!.compilerOptions!.Paths);
   });
-  return receiver!.parsedPatternsForPaths;
+  return receiver!.__tsgoEmbedded0!.parsedPatternsForPaths;
 }
 
 /**
@@ -4368,7 +4371,7 @@ export function Resolver_getParsedPatternsForPaths(receiver: GoPtr<Resolver>): G
  * 	}
  * }
  */
-export function TryParsePatterns(pathMappings: GoPtr<OrderedMap>): GoPtr<ParsedPatterns> {
+export function TryParsePatterns(pathMappings: GoPtr<OrderedMap<string, GoSlice<string>>>): GoPtr<ParsedPatterns> {
   if (pathMappings === undefined) {
     return { matchableStringSet: NewSetWithSizeHint<string>(0)!, patterns: [] };
   }
@@ -4663,8 +4666,8 @@ export interface ResolvedEntrypoint {
   ResolvedFileName: string;
   ModuleSpecifier: string;
   Ending: Ending;
-  IncludeConditions: GoPtr<Set>;
-  ExcludeConditions: GoPtr<Set>;
+  IncludeConditions: GoPtr<Set<string>>;
+  ExcludeConditions: GoPtr<Set<string>>;
 }
 
 /**
@@ -4847,7 +4850,7 @@ export function Resolver_GetEntrypointsFromPackageJsonInfo(receiver: GoPtr<Resol
  * 	}
  * }
  */
-export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr<Resolver>, fileName: string, moduleSpecifier: string, includeConditions: GoPtr<Set>, excludeConditions: GoPtr<Set>, ending: Ending): GoPtr<ResolvedEntrypoint> {
+export function Resolver_createResolvedEntrypointHandlingSymlink(receiver: GoPtr<Resolver>, fileName: string, moduleSpecifier: string, includeConditions: GoPtr<Set<string>>, excludeConditions: GoPtr<Set<string>>, ending: Ending): GoPtr<ResolvedEntrypoint> {
   let originalFileName = "";
   let resolvedFileName = fileName;
   const realPath = receiver!.host.FS().Realpath(fileName);

@@ -275,8 +275,8 @@ export type Encoder = Encoder_517f1597;
  * 	EndArray    = jsontext.EndArray
  * )
  */
-export const BeginObject: unknown = BeginObject_jsontext;
-export const EndObject: unknown = EndObject_jsontext;
-export const Null: unknown = Null_jsontext;
-export const BeginArray: unknown = BeginArray_jsontext;
-export const EndArray: unknown = EndArray_jsontext;
+export const BeginObject: Kind_c0fe0b38 = BeginObject_jsontext;
+export const EndObject: Kind_c0fe0b38 = EndObject_jsontext;
+export const Null: Kind_c0fe0b38 = Null_jsontext;
+export const BeginArray: Kind_c0fe0b38 = BeginArray_jsontext;
+export const EndArray: Kind_c0fe0b38 = EndArray_jsontext;

@@ -864,7 +864,7 @@ export type symbolTableID = ulong;
  * Go source:
  * const stKindShift = 61
  */
-export const stKindShift = 61;
+export const stKindShift: int = 61;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/symbolaccessibility.go::constGroup::stKindLocals+stKindExports+stKindMembers+stKindGlobals+stKindResolvedExports+stKindMask","kind":"constGroup","status":"implemented","sigHash":"a4f80520523042c056f35ae1b40810f46b1c772d8257f6dea77920ec3ab6d3f2","bodyHash":"5d50e110b85907399cfad621ca87cb2c39781c4a01fc700114a27d0b5bc32443"}

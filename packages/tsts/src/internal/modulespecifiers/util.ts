@@ -13,6 +13,7 @@ import { EndingChangeable, EndingFixed } from "../module/resolver.js";
 import type { ResolvedEntrypoint } from "../module/resolver.js";
 import { TryGetJSExtensionForFile } from "../module/util.js";
 import type { ExportsOrImports } from "../packagejson/exportsorimports.js";
+import type { SourceFile } from "../ast/ast.js";
 import { GetSupportedExtensions } from "../tsoptions/tsconfigparsing.js";
 import type { FileExtensionInfo } from "../tsoptions/tsconfigparsing.js";
 import { ScriptKindExternal, ScriptKindJSON } from "../core/scriptkind.js";
@@ -734,11 +735,11 @@ export function GetNodeModulePathParts(fullPath: string): GoPtr<NodeModulePathPa
  * 	return ""
  * }
  */
-export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: SourceFileForSpecifierGeneration, nodeModulesFileName: string, host: ModuleSpecifierGenerationHost, preferences: UserPreferences, options: ModuleSpecifierOptions): string {
-  const info = getInfo(importingSourceFile.FileName(), host);
+export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions>, importingSourceFile: GoPtr<SourceFile>, nodeModulesFileName: string, host: ModuleSpecifierGenerationHost, preferences: UserPreferences, options: ModuleSpecifierOptions): string {
+  const info = getInfo(importingSourceFile!.FileName(), host);
   const modulePaths = getAllModulePaths(info, nodeModulesFileName, host, compilerOptions, preferences, options);
   for (const modulePath of modulePaths) {
-    const result = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile, host, compilerOptions, preferences, true /*packageNameOnly*/, options.OverrideImportMode);
+    const result = tryGetModuleNameAsNodeModule(modulePath, info, importingSourceFile!, host, compilerOptions, preferences, true /*packageNameOnly*/, options.OverrideImportMode);
     if (result.length > 0) {
       return result;
     }
@@ -759,7 +760,7 @@ export function GetNodeModulesPackageName(compilerOptions: GoPtr<CompilerOptions
  * 	return true
  * }
  */
-export function allKeysStartWithDot(obj: GoPtr<OrderedMap>): bool {
+export function allKeysStartWithDot(obj: GoPtr<OrderedMap<string, ExportsOrImports>>): bool {
   const keys = obj!.keys as string[];
   for (const k of keys) {
     if (!strings.HasPrefix(k, ".")) {

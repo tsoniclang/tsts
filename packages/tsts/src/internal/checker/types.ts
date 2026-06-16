@@ -2,7 +2,8 @@ import type { bool, byte, int, sbyte, uint } from "@tsonic/core/types.js";
 import type { GoArray, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import type { GoInterfaceValue, Node } from "../ast/spine.js";
 import { goReceiverKey } from "../ast/spine.js";
-import type { ConditionalTypeNodeNode, EntityName, MappedTypeNodeNode } from "../ast/generated/unions.js";
+import type { EntityName } from "../ast/generated/unions.js";
+import type { ConditionalTypeNode, MappedTypeNode } from "../ast/generated/data.js";
 import type { SymbolFlags } from "../ast/generated/flags.js";
 import type { NodeId } from "../ast/ids.js";
 import type { Symbol as Symbol_62f2f8bf, SymbolTable } from "../ast/symbol.js";
@@ -329,7 +330,7 @@ export const ExternalEmitHelpersAsyncDelegatorIncludes: int =
  * Go source:
  * const externalHelpersModuleNameText = "tslib"
  */
-export const externalHelpersModuleNameText = "tslib";
+export const externalHelpersModuleNameText: string = "tslib";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/types.go::type::TypeId","kind":"type","status":"implemented","sigHash":"d668dd6b5968591e5c5613cca2d2be3143ae2409565fe3e7511b04dc47b31a91","bodyHash":"c917c67ee6facc506c65f8fca44f5f54a27d38c4388b43560967f8add59893e5"}
@@ -2760,7 +2761,7 @@ export interface InstantiationExpressionType {
  */
 export interface MappedType {
   readonly __tsgoEmbedded0?: ObjectType;
-  declaration: GoPtr<MappedTypeNodeNode>;
+  declaration: GoPtr<MappedTypeNode>;
   typeParameter: GoPtr<Type>;
   constraintType: GoPtr<Type>;
   nameType: GoPtr<Type>;
@@ -3116,7 +3117,7 @@ export function SubstitutionType_SubstConstraint(receiver: GoPtr<SubstitutionTyp
  * }
  */
 export interface ConditionalRoot {
-  node: GoPtr<ConditionalTypeNodeNode>;
+  node: GoPtr<ConditionalTypeNode>;
   checkType: GoPtr<Type>;
   extendsType: GoPtr<Type>;
   isDistributive: bool;

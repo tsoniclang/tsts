@@ -1,5 +1,6 @@
 import type { bool, byte, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
+import { NewGoStructMap } from "../../go/compat.js";
 import type { Uint128 } from "../../go/github.com/zeebo/xxh3.js";
 import { Mutex, Once, RWMutex } from "../../go/sync.js";
 import { Bool, Uint32 } from "../../go/sync/atomic.js";
@@ -5186,17 +5187,8 @@ export interface TokenCacheKey {
   loc: TextRange;
 }
 
-const tokenCacheParentIds = new WeakMap<Node, int>();
-let nextTokenCacheParentId: int = 1 as int;
-
-function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): string {
-  let parentId = tokenCacheParentIds.get(parent!);
-  if (parentId === undefined) {
-    parentId = nextTokenCacheParentId;
-    nextTokenCacheParentId = (nextTokenCacheParentId + 1) as int;
-    tokenCacheParentIds.set(parent!, parentId);
-  }
-  return `${parentId}:${loc.pos}:${loc.end}`;
+function tokenCacheKey(parent: GoPtr<Node>, loc: TextRange): TokenCacheKey {
+  return { parent, loc };
 }
 
 /**
@@ -5287,6 +5279,8 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   Path(): Path_79c49227;
   Text(): string;
   ECMALineMap(): GoSlice<TextPos>;
+  Imports(): GoSlice<GoPtr<LiteralLikeNode>>;
+  IsJS(): bool;
   fileName: string;
   parseOptions: SourceFileParseOptions;
   text: string;
@@ -5325,7 +5319,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   BindSuggestionDiagnostics: GoSlice<GoPtr<Diagnostic>>;
   EndFlowNode: GoPtr<FlowNode>;
   SymbolCount: int;
-  ClassifiableNames: Set;
+  ClassifiableNames: Set<string>;
   PatternAmbientModules: GoSlice<GoPtr<PatternAmbientModule>>;
   NestedCJSExports: GoSlice<GoPtr<Node>>;
   GlobalExports: SymbolTable;
@@ -5333,7 +5327,7 @@ export interface SourceFile extends NodeBase, DeclarationBase, LocalsContainerBa
   ecmaLineMap: GoSlice<TextPos>;
   Hash: Uint128;
   tokenCacheMu: Mutex;
-  tokenCache: GoMap<string, GoPtr<Node>>;
+  tokenCache: GoMap<TokenCacheKey, GoPtr<Node>>;
   tokenFactory: GoPtr<NodeFactory>;
   declarationMapMu: Mutex;
   declarationMap: GoMap<string, GoSlice<GoPtr<Node>>>;
@@ -5414,6 +5408,8 @@ export function NodeFactory_NewSourceFile(receiver: GoPtr<NodeFactory>, opts: So
   data.Path = (): Path_79c49227 => SourceFile_Path(data);
   data.Text = (): string => SourceFile_Text(data);
   data.ECMALineMap = (): GoSlice<TextPos> => SourceFile_ECMALineMap(data);
+  data.Imports = (): GoSlice<GoPtr<LiteralLikeNode>> => SourceFile_Imports(data);
+  data.IsJS = (): bool => SourceFile_IsJS(data);
   data.text = text;
   data.Statements = statements;
   data.EndOfFileToken = endOfFileToken;
@@ -6042,7 +6038,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
       throw new globalThis.Error(`Cannot create token from reparsed node of kind ${KindString(parent!.Kind)}`);
     }
     if (receiver!.tokenCache === undefined) {
-      receiver!.tokenCache = new Map<string, GoPtr<Node>>();
+      receiver!.tokenCache = NewGoStructMap<TokenCacheKey, GoPtr<Node>>();
     }
     const token = createToken(kind, receiver, pos, end, flags);
     token!.Loc = loc;

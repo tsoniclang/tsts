@@ -52,7 +52,7 @@ test("ParseCommandLine preserves explicit null command-line overrides through co
   const [parsed, errors] = GetParsedCommandLineOfConfigFile(
     "/project/tsconfig.json",
     commandLine.ParsedConfig!.CompilerOptions,
-    wrappedRaw as OrderedMap,
+    wrappedRaw,
     host,
     undefined,
   );
