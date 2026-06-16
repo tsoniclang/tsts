@@ -168,27 +168,26 @@ export class Map<K = unknown, V = unknown> {
   }
 }
 
-// Pool is a set of temporary objects that may be individually saved and retrieved.
-// Single-threaded: Get always produces a fresh value via New (nothing is retained),
-// and Put discards. This preserves correctness because pooled objects are always
-// reset by the caller before reuse.
 export class Pool<T = unknown> {
-  // New optionally specifies a function to generate a value when Get would
-  // otherwise return nil.
   New?: () => T;
+  private readonly items: T[] = [];
 
-  // Get selects an arbitrary item from the Pool, removing it. Single-threaded, the
-  // pool is always empty, so this returns a freshly constructed value (or undefined
-  // if New is not set, matching Go where Get returns nil with no New func).
   Get(): T | undefined {
+    const item = this.items.pop();
+    if (item !== undefined) {
+      return item;
+    }
     if (this.New !== undefined) {
       return this.New();
     }
     return undefined;
   }
 
-  // Put adds x to the pool. No-op in the single-threaded model.
-  Put(_x: T): void {}
+  Put(x: T): void {
+    if (x !== undefined && x !== null) {
+      this.items.push(x);
+    }
+  }
 }
 
 // Cond implements a condition variable. Single-threaded, no other goroutine can

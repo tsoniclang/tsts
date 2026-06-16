@@ -126,7 +126,7 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
   assert.equal(any, false);
 });
 
-test("sync.Pool Get uses New; Put discards", () => {
+test("sync.Pool reuses values and falls back to New", () => {
   let constructed = 0;
   const p = new Pool<{ id: number }>();
   p.New = () => {
@@ -138,6 +138,7 @@ test("sync.Pool Get uses New; Put discards", () => {
   assert.deepEqual(a, { id: 1 });
   assert.deepEqual(b, { id: 2 });
   p.Put(a as { id: number });
+  assert.equal(p.Get(), a);
 
   // Without New, Get returns undefined (Go: nil).
   const empty = new Pool<number>();

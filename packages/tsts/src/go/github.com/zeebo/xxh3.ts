@@ -43,8 +43,8 @@ class uint128 implements Uint128 {
 // scope. (An earlier revision interned every distinct hash in a module-level
 // Map so plain-Map consumers could key by object identity; with millions of
 // unique cache keys per full-lib check the table grew without bound and
-// eventually exhausted the heap. Checker cache keys are now primitive strings
-// — see CacheHashKey — so no interning is needed for value semantics.)
+// eventually exhausted the heap. Consumers that need Go value-key semantics use
+// GoStructMap instead.)
 class hasher implements Hasher {
   private hi = offset64 ^ secondSeed;
   private lo = offset64;

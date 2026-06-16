@@ -5613,7 +5613,7 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
       errorChain: undefined,
       relatedInfo: [],
       maybeKeys: [],
-      maybeKeysSet: NewSetWithSizeHint<CacheHashKey>(0 as int)!,
+      maybeKeysSet: newCacheHashKeySet(),
       sourceStack: [],
       targetStack: [],
       maybeCount: 0 as int,
@@ -5627,6 +5627,12 @@ export function Checker_getRelater(receiver: GoPtr<Checker>): GoPtr<Relater> {
   }
   receiver!.freeRelater = r!.next;
   return r;
+}
+
+function newCacheHashKeySet(): Set<CacheHashKey> {
+  return {
+    M: NewGoStructMap<CacheHashKey, { readonly __tsgoEmpty?: never }>(),
+  };
 }
 
 /**
@@ -6799,17 +6805,17 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
     return TernaryFalse;
   }
   const maybeStart = receiver!.maybeKeys.length;
-  receiver!.maybeKeys = [...receiver!.maybeKeys, id];
+  receiver!.maybeKeys.push(id);
   Set_Add(receiver!.maybeKeysSet, id);
   const saveExpandingFlags = receiver!.expandingFlags;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = [...receiver!.sourceStack, source];
+    receiver!.sourceStack.push(source);
     if ((receiver!.expandingFlags & ExpandingFlagsSource) === 0 && Checker_isDeeplyNestedType(receiver!.c, source, receiver!.sourceStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsSource) as ExpandingFlags;
     }
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = [...receiver!.targetStack, target];
+    receiver!.targetStack.push(target);
     if ((receiver!.expandingFlags & ExpandingFlagsTarget) === 0 && Checker_isDeeplyNestedType(receiver!.c, target, receiver!.targetStack, 3)) {
       receiver!.expandingFlags = (receiver!.expandingFlags | ExpandingFlagsTarget) as ExpandingFlags;
     }
@@ -6825,10 +6831,10 @@ export function Relater_recursiveTypeRelatedTo(receiver: GoPtr<Relater>, source:
   const propagatingVarianceFlags = receiver!.c!.reliabilityFlags;
   receiver!.c!.reliabilityFlags = (receiver!.c!.reliabilityFlags | saveReliabilityFlags) as RelationComparisonResult;
   if ((recursionFlags & RecursionFlagsSource) !== 0) {
-    receiver!.sourceStack = receiver!.sourceStack.slice(0, receiver!.sourceStack.length - 1);
+    receiver!.sourceStack.pop();
   }
   if ((recursionFlags & RecursionFlagsTarget) !== 0) {
-    receiver!.targetStack = receiver!.targetStack.slice(0, receiver!.targetStack.length - 1);
+    receiver!.targetStack.pop();
   }
   receiver!.expandingFlags = saveExpandingFlags;
   if (result !== TernaryFalse) {
@@ -6870,7 +6876,7 @@ export function Relater_resetMaybeStack(receiver: GoPtr<Relater>, maybeStart: in
       receiver!.relationCount--;
     }
   }
-  receiver!.maybeKeys = receiver!.maybeKeys.slice(0, maybeStart);
+  receiver!.maybeKeys.length = maybeStart;
 }
 
 /**

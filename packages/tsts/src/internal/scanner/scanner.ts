@@ -817,6 +817,9 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
  * }
  */
 export function cleared<M extends GoConstraint<"~map[K]V"> & GoMap<K, V>, K extends GoComparable, V>(m: M): M {
+  if (m === undefined) {
+    return undefined as unknown as M;
+  }
   m.clear();
   return m;
 }
