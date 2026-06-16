@@ -34,6 +34,9 @@ export function loadConventions(c = {}) {
       // A recognized Go constraint (one that normalizes to an `equivalences`
       // token) is acceptable even when the TS type param erases it (`<T>`).
       acceptErasedConstraints: c.structural?.acceptErasedConstraints === true,
+      // The TS port may additively expose members the Go type lacks (accessor
+      // aliases, computed fields). When set, extra TS members are not flagged.
+      allowExtraMembers: c.structural?.allowExtraMembers === true,
     },
   };
 }

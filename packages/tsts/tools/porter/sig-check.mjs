@@ -75,7 +75,7 @@ export function compareSignatures(expected, actual, override, canon = (x) => x, 
     compareTypeParams(expected, actual, push, eq, conv);
   }
   if (actual.kind === "func") compareFunc(expected, actual, push, eq);
-  else if (actual.kind === "interface") compareInterface(expected, actual, push, eq);
+  else if (actual.kind === "interface") compareInterface(expected, actual, push, eq, conv);
   else if (actual.kind === "alias") {
     if (!eq(expected.type, actual.type)) push("alias-type", "alias type differs", keyOf(expected.type), keyOf(actual.type));
   } else if (actual.kind === "value") compareValue(expected, actual, push, eq);
@@ -130,15 +130,17 @@ function memberMap(desc) {
   return m;
 }
 
-function compareInterface(expected, actual, push, eq) {
+function compareInterface(expected, actual, push, eq, conv) {
   const em = memberMap(expected);
   const am = memberMap(actual);
   for (const [name, mem] of em) {
     if (!am.has(name)) { push("missing-member", `member '${name}' present in Go but missing in TS`, name); continue; }
     if (!eq(mem.type, am.get(name).type)) push("member-type", `member '${name}' type differs`, keyOf(mem.type), keyOf(am.get(name).type));
   }
-  for (const name of am.keys()) {
-    if (!em.has(name)) push("extra-member", `member '${name}' present in TS but not in Go`, name);
+  if (!conv?.structural?.allowExtraMembers) {
+    for (const name of am.keys()) {
+      if (!em.has(name)) push("extra-member", `member '${name}' present in TS but not in Go`, name);
+    }
   }
 }
 
