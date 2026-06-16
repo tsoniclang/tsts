@@ -22,8 +22,8 @@
 
 import { terminalName } from "./ast-signatures.mjs";
 
-export function loadConventions(config) {
-  const c = config.signatureConventions ?? {};
+// `c` is the conventions config object (profile.conventions).
+export function loadConventions(c = {}) {
   return {
     equivalences: (c.equivalences ?? []).map((r) => ({ as: r.as, match: r.match ?? [] })),
     structural: {

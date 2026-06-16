@@ -9,7 +9,9 @@ import {
   loadParser, parseSource, buildImportMap, buildLocalTypeNames, declarationDescriptor,
 } from "./ast-signatures.mjs";
 
-const ANNOTATION_RE = /@tsgo-unit\s+({[^\n\r]+})/g;
+const DEFAULT_ANNOTATION = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const annotationRegExp = (tag) => new RegExp(`${escapeRe(tag)}\\s+({[^\\n\\r]+})`, "g");
 
 // The position of a declaration's NAME — the stable anchor for associating a
 // @tsgo-unit annotation with the declaration it introduces. A declaration's
@@ -32,14 +34,16 @@ function declName(st) {
 // The TS declaration name a unit's @tsgo-unit metadata maps to, so the annotation
 // binds to the right declaration even when non-tracked helper functions are
 // interleaved between the JSDoc and the real declaration.
-function expectedTsName(meta) {
-  const qn = String(meta.id ?? "").split("::").pop() ?? "";
-  if (meta.kind === "method") return qn.replace(".", "_"); // Receiver.method -> Receiver_method
+function expectedTsName(meta, annotation) {
+  const parts = String(meta.id ?? "").split(annotation.idSeparator);
+  const qn = parts[parts.length - 1] ?? "";
+  if (meta.kind === "method") return qn.replace(".", annotation.methodNameJoin); // Receiver.method -> Receiver_method
   return qn; // func / type use the Go name verbatim
 }
 
 // moduleId: repo-relative posix path of the file (used for module identity).
-export function extractFileDescriptors(api, moduleId, text) {
+// annotation: { tag, idSeparator, methodNameJoin } from the project profile.
+export function extractFileDescriptors(api, moduleId, text, annotation = DEFAULT_ANNOTATION) {
   const sf = parseSource(api, "/" + moduleId, text);
   const base = {
     api,
@@ -53,9 +57,9 @@ export function extractFileDescriptors(api, moduleId, text) {
     .map((st) => ({ st, anchor: declAnchor(api, st) }))
     .sort((a, b) => a.anchor - b.anchor);
   const out = [];
-  ANNOTATION_RE.lastIndex = 0;
+  const re = annotationRegExp(annotation.tag);
   let m;
-  while ((m = ANNOTATION_RE.exec(text)) !== null) {
+  while ((m = re.exec(text)) !== null) {
     let meta;
     try {
       meta = JSON.parse(m[1]);
@@ -68,7 +72,7 @@ export function extractFileDescriptors(api, moduleId, text) {
     // declaration after the annotation for value groups and reserved-word renames.
     const after = statements.filter((s) => s.anchor > off);
     const isValueGroup = meta.kind === "constGroup" || meta.kind === "varGroup";
-    const want = expectedTsName(meta);
+    const want = expectedTsName(meta, annotation);
     const owner = isValueGroup
       ? after.find((s) => s.st.Kind === api.Kinds.KindVariableStatement) ?? after[0]
       : after.find((s) => declName(s.st) === want) ?? after[0];

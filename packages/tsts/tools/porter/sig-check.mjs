@@ -9,10 +9,12 @@
 // conformance baselines all stay green.
 
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { loadParser, canonicalKey, typesEqual, parseSource, extractReexports, isSoftId } from "./ts-extractor/ast-signatures.mjs";
 import { extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
+import { loadProfile } from "./ts-extractor/profile.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
 
@@ -23,12 +25,13 @@ function globToRegExp(glob) {
   return new RegExp(`^${escaped}$`);
 }
 
-// Resolve config + inline overrides for a unit. Returns { all, ignore:Set, reason }.
-function resolveOverride(config, id, metadata) {
+// Resolve config + inline overrides for a unit. `overrides` is profile.overrides.
+// Returns { all, ignore:Set, reason }.
+function resolveOverride(overrides, id, metadata) {
   const ignore = new Set();
   let all = false;
   const reasons = [];
-  for (const o of config.signatureOverrides ?? []) {
+  for (const o of overrides ?? []) {
     const matches = (o.id && o.id === id) || (o.match && globToRegExp(o.match).test(id));
     if (!matches) continue;
     if (o.ignore) for (const a of o.ignore) ignore.add(a);
@@ -189,9 +192,14 @@ function makeCanon(namedReexport, starReexport, definedAt) {
 // deps: { config, snapshot, repoRoot, tsFiles:[{path}], tsById:Map<id,{path,metadata}> }
 // options: { idFilter?: glob }
 export async function computeSignatureReport(deps, options = {}) {
-  const api = await loadParser();
-  const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById);
-  const conv = loadConventions(deps.config);
+  const profile = loadProfile(deps.config);
+  const api = await loadParser({
+    distRoot: join(deps.repoRoot, profile.parser.distRoot),
+    freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((d) => join(deps.repoRoot, d)),
+  });
+  const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile);
+  const conv = loadConventions(profile.conventions ?? {});
+  const overrides = profile.overrides ?? [];
 
   // Go units keyed by id, carrying minimal file info for descriptor resolution.
   const goById = new Map();
@@ -230,12 +238,12 @@ export async function computeSignatureReport(deps, options = {}) {
   for (const file of deps.tsFiles) {
     const text = textByFile.get(file.path);
     if (text === undefined) continue;
-    for (const u of extractFileDescriptors(api, file.path, text)) {
+    for (const u of extractFileDescriptors(api, file.path, text, profile.annotation)) {
       if (idRe && !idRe.test(u.id)) continue;
       const go = goById.get(u.id);
       if (!go || !RENDERABLE.has(go.kind)) continue;
       checked++;
-      const override = resolveOverride(deps.config, u.id, u.metadata);
+      const override = resolveOverride(overrides, u.id, u.metadata);
       if (override.all) { overriddenUnits++; continue; }
       const expected = goUnitDescriptor(go, index);
       const ms = compareSignatures(expected, u.descriptor, override, canon, conv);

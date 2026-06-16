@@ -8,32 +8,14 @@
 // which is exactly what the actual file imports. This preserves strict
 // import-identity (core.Node != ast.Node) while eliminating the isolation noise.
 
-// Go primitive -> canonical descriptor, mirroring the renderer's primitive table.
-// "kw" = TS keyword; "core" = @tsonic/core import; "compat" = go/compat import.
-const PRIM_KW = { string: "string", any: "unknown" };
-const PRIM_CORE = {
-  bool: "bool", byte: "byte", int: "int", int8: "sbyte", int16: "short",
-  int32: "int", int64: "long", uint: "uint", uint8: "byte", uint16: "ushort",
-  uint32: "uint", uint64: "ulong", uintptr: "nuint", float32: "float", float64: "double",
-};
-const PRIM_COMPAT = {
-  rune: "GoRune", error: "GoError", complex64: "GoComplex64", complex128: "GoComplex128",
-};
-// Stdlib generic/constraint types that the port maps to compat helpers (matching
-// the renderer's selector table) rather than to a go/<pkg>.ts facade.
-const STDLIB_COMPAT = {
-  "iter.Seq": "GoSeq", "iter.Seq2": "GoSeq2",
-  "cmp.Ordered": "GoOrdered", "constraints.Ordered": "GoOrdered",
-  "unsafe.Pointer": "GoUnsafePointer",
-};
+// All Go->TS mapping knowledge comes from the project `profile` (see profile.mjs);
+// nothing tsts-specific is hardcoded here.
 
-// Stdlib / go-runtime packages are ported to ${tsRoot}/go/<pkg>.ts facades.
 function isInternal(importPath, goModule) {
   return importPath === goModule || importPath.startsWith(goModule + "/");
 }
 
-export function buildExpectedIndex(config, snapshot, tsById) {
-  const tsRoot = config.tsRoot; // e.g. "packages/tsts/src"
+export function buildExpectedIndex(config, snapshot, tsById, profile) {
   const goModule = config.goModulePath;
   // (packageImportPath::TypeName) -> actual TS module path (where its @tsgo-unit lives)
   const pkgType = new Map();
@@ -49,10 +31,15 @@ export function buildExpectedIndex(config, snapshot, tsById) {
     }
   }
   return {
-    tsRoot,
     goModule,
-    core: "@tsonic/core/types.ts",
-    compat: `${tsRoot}/go/compat.ts`,
+    core: profile.modules.core,
+    compat: profile.modules.compat,
+    bridge: profile.bridge,
+    primKeyword: profile.primitives.keyword,
+    primCore: profile.primitives.core,
+    primCompat: profile.primitives.compat,
+    stdlibTypes: profile.stdlibTypes,
+    facadeTemplate: profile.facadeTemplate,
     pkgType,
     typeParams,
   };
@@ -63,30 +50,32 @@ const ref = (id, args = []) => ({ t: "ref", id, args });
 // Resolve a bare named type used inside package `importPath`.
 function resolveNamed(name, ctx) {
   if (ctx.typeParamIndex.has(name)) return { t: "tp", i: ctx.typeParamIndex.get(name) };
-  if (name in PRIM_KW) return { t: "kw", kw: PRIM_KW[name] };
-  if (name in PRIM_CORE) return ref(`${ctx.index.core}::${PRIM_CORE[name]}`);
-  if (name in PRIM_COMPAT) return ref(`${ctx.index.compat}::${PRIM_COMPAT[name]}`);
-  const tsPath = ctx.index.pkgType.get(`${ctx.importPath}::${name}`);
+  const i = ctx.index;
+  if (name in i.primKeyword) return { t: "kw", kw: i.primKeyword[name] };
+  if (name in i.primCore) return ref(`${i.core}::${i.primCore[name]}`);
+  if (name in i.primCompat) return ref(`${i.compat}::${i.primCompat[name]}`);
+  const tsPath = i.pkgType.get(`${ctx.importPath}::${name}`);
   if (tsPath) return ref(`${tsPath}::${name}`);
   return ref(`name::${name}`); // unresolved (untracked) -> compared by terminal name
 }
 
 // Resolve a qualified `pkg.Name`.
 function resolveSelector(pkg, name, ctx) {
-  if (name in PRIM_COMPAT) return ref(`${ctx.index.compat}::${PRIM_COMPAT[name]}`);
-  const compatName = STDLIB_COMPAT[`${pkg}.${name}`];
-  if (compatName) return ref(`${ctx.index.compat}::${compatName}`);
+  const i = ctx.index;
+  if (name in i.primCompat) return ref(`${i.compat}::${i.primCompat[name]}`);
+  const compatName = i.stdlibTypes[`${pkg}.${name}`];
+  if (compatName) return ref(`${i.compat}::${compatName}`);
   // Find the Go import whose package name (last path segment) matches `pkg`.
-  const imp = (ctx.fileImports ?? []).find((i) => i.path === pkg || i.path.split("/").pop() === pkg);
+  const imp = (ctx.fileImports ?? []).find((x) => x.path === pkg || x.path.split("/").pop() === pkg);
   const importPath = imp?.path ?? pkg;
-  if (isInternal(importPath, ctx.index.goModule)) {
-    const tsPath = ctx.index.pkgType.get(`${importPath}::${name}`);
+  if (isInternal(importPath, i.goModule)) {
+    const tsPath = i.pkgType.get(`${importPath}::${name}`);
     if (tsPath) return ref(`${tsPath}::${name}`);
     return ref(`name::${name}`);
   }
-  // Stdlib / runtime package -> go/<full/import/path>.ts facade (matches the
-  // actual import, e.g. sync/atomic -> go/sync/atomic.ts, not go/atomic.ts).
-  return ref(`${ctx.index.tsRoot}/go/${importPath}.ts::${name}`);
+  // Stdlib / runtime package -> facade module (template, e.g. sync/atomic ->
+  // go/sync/atomic.ts) matching the actual import.
+  return ref(`${i.facadeTemplate.replace("{importPath}", importPath)}::${name}`);
 }
 
 // Map a Go TypeExprReport to a canonical descriptor.
@@ -100,23 +89,23 @@ export function goTypeToDescriptor(expr, ctx) {
     case "paren":
       return goTypeToDescriptor(expr.element, ctx);
     case "pointer":
-      return ref(`${ctx.index.compat}::GoPtr`, [goTypeToDescriptor(expr.element, ctx)]);
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.pointer}`, [goTypeToDescriptor(expr.element, ctx)]);
     case "slice":
-      return ref(`${ctx.index.compat}::GoSlice`, [goTypeToDescriptor(expr.element, ctx)]);
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.slice}`, [goTypeToDescriptor(expr.element, ctx)]);
     case "ellipsis":
-      return ref(`${ctx.index.compat}::GoSlice`, [goTypeToDescriptor(expr.element, ctx)]);
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.slice}`, [goTypeToDescriptor(expr.element, ctx)]);
     case "array":
-      return ref(`${ctx.index.compat}::GoArray`, [
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.array}`, [
         goTypeToDescriptor(expr.element, ctx),
         { t: "lit", text: JSON.stringify(expr.length ?? "") },
       ]);
     case "map":
-      return ref(`${ctx.index.compat}::GoMap`, [
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.map}`, [
         goTypeToDescriptor(expr.key, ctx),
         goTypeToDescriptor(expr.value, ctx),
       ]);
     case "channel":
-      return ref(`${ctx.index.compat}::GoChan`, [
+      return ref(`${ctx.index.compat}::${ctx.index.bridge.chan}`, [
         goTypeToDescriptor(expr.element, ctx),
         { t: "lit", text: JSON.stringify(expr.direction ?? "bidirectional") },
       ]);

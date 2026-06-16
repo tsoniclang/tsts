@@ -53,16 +53,17 @@ function newestMtimeMs(dir, exts) {
 // Asserts dist is present and not stale relative to src. Throws a clear,
 // actionable error otherwise. mtime is used as a bootstrap freshness guard
 // (deterministic enough for "did sources change after the build artifact").
-export function assertDistFresh() {
-  if (!existsSync(parserEntry)) {
+// `distRoot`/`srcDirs` are absolute; default to the in-repo tsts layout.
+export function assertDistFresh(distRoot = distInternal, srcDirs) {
+  const entry = join(distRoot, "parser/parser/statements-declarations.js");
+  if (!existsSync(entry)) {
     throw new Error(
-      `TSTS dist not built (missing ${parserEntry}).\n` +
-        `Build it first, e.g.: npm run -w @tsonic/tsts build  (or the package build).`,
+      `TS parser dist not built (missing ${entry}).\n` +
+        `Build the parser package first (e.g. npm run build).`,
     );
   }
-  const distMtime = statSync(parserEntry).mtimeMs;
-  // Only the compiler subsystems whose AST/parse output this tool consumes.
-  const watched = ["parser", "ast", "scanner", "core"].map((d) => join(srcInternal, d));
+  const distMtime = statSync(entry).mtimeMs;
+  const watched = srcDirs ?? ["parser", "ast", "scanner", "core"].map((d) => join(srcInternal, d));
   let newestSrc = 0;
   for (const w of watched) {
     const m = newestMtimeMs(w, [".ts"]);
@@ -70,7 +71,7 @@ export function assertDistFresh() {
   }
   if (newestSrc > distMtime) {
     throw new Error(
-      `TSTS dist is stale: parser/ast/scanner/core sources changed after the build artifact.\n` +
+      `TS parser dist is stale: parser/ast/scanner/core sources changed after the build artifact.\n` +
         `Rebuild dist before running the signature checker (npm run build).`,
     );
   }
@@ -80,14 +81,17 @@ export function assertDistFresh() {
 
 let cachedApi;
 
-export async function loadParser() {
+// opts (optional): { distRoot, freshnessSrcDirs } absolute paths from the project
+// profile; defaults to the in-repo tsts dist layout.
+export async function loadParser(opts = {}) {
   if (cachedApi) return cachedApi;
-  assertDistFresh();
-  const Kinds = await import(join(distInternal, "ast/generated/kinds.js"));
-  const Casts = await import(join(distInternal, "ast/generated/casts.js"));
-  const { ParseSourceFile } = await import(join(distInternal, "parser/parser/statements-declarations.js"));
-  const { ScriptKindTS } = await import(join(distInternal, "core/scriptkind.js"));
-  const { Node_Pos, Node_End } = await import(join(distInternal, "ast/spine.js"));
+  const distRoot = opts.distRoot ?? distInternal;
+  assertDistFresh(distRoot, opts.freshnessSrcDirs);
+  const Kinds = await import(join(distRoot, "ast/generated/kinds.js"));
+  const Casts = await import(join(distRoot, "ast/generated/casts.js"));
+  const { ParseSourceFile } = await import(join(distRoot, "parser/parser/statements-declarations.js"));
+  const { ScriptKindTS } = await import(join(distRoot, "core/scriptkind.js"));
+  const { Node_Pos, Node_End } = await import(join(distRoot, "ast/spine.js"));
 
   // numeric Kind -> "KindXxx" name, and the reverse for the kinds we branch on.
   const kindName = new Map();

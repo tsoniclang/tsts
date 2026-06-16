@@ -4,6 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
+import { loadProfile } from "./ts-extractor/profile.mjs";
+import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { compareSignatures } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
@@ -87,7 +89,7 @@ test("overrides: ignore aspect and accept-all", () => {
 });
 
 test("conventions: acceptNullable strips | undefined", () => {
-  const conv = loadConventions({ signatureConventions: { structural: { acceptNullable: true } } });
+  const conv = loadConventions({ structural: { acceptNullable: true } });
   const exp = ref("m::T");
   const nullable = { t: "union", members: [kw("undefined"), ref("m::T")] };
   assert.ok(typesEqual(normalizeDescriptor(exp, conv), normalizeDescriptor(nullable, conv)));
@@ -96,24 +98,54 @@ test("conventions: acceptNullable strips | undefined", () => {
 });
 
 test("conventions: equivalences collapse matching forms to a shared token", () => {
-  const conv = loadConventions({
-    signatureConventions: { equivalences: [{ as: "numeric", match: [{ kw: "number" }, { rawIncludes: "~uint" }] }] },
-  });
+  const conv = loadConventions({ equivalences: [{ as: "numeric", match: [{ kw: "number" }, { rawIncludes: "~uint" }] }] });
   const goConstraint = { t: "raw", text: "~uint32" };
   const tsNumber = kw("number");
   assert.ok(typesEqual(normalizeDescriptor(goConstraint, conv), normalizeDescriptor(tsNumber, conv)));
 });
 
 test("conventions: anyMapKey makes the map key a wildcard", () => {
-  const conv = loadConventions({ signatureConventions: { structural: { anyMapKey: true } } });
+  const conv = loadConventions({ structural: { anyMapKey: true } });
   const a = ref("c::GoMap", ref("m::StructKey"), kw("string"));
   const b = ref("c::GoMap", kw("string"), kw("string"));
   assert.ok(typesEqual(normalizeDescriptor(a, conv), normalizeDescriptor(b, conv)));
 });
 
 test("conventions: unwrapPtrFunc treats GoPtr<fn> as fn", () => {
-  const conv = loadConventions({ signatureConventions: { structural: { unwrapPtrFunc: true } } });
+  const conv = loadConventions({ structural: { unwrapPtrFunc: true } });
   const fn = { t: "fn", params: [], ret: kw("void") };
   const ptrFn = ref("c::GoPtr", fn);
   assert.ok(typesEqual(normalizeDescriptor(ptrFn, conv), normalizeDescriptor(fn, conv)));
+});
+
+test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)", () => {
+  // A completely different project profile: different bridge/module/primitive names.
+  const config = {
+    goModulePath: "example.com/proj",
+    signatureCheck: {
+      modules: { core: "@acme/prim", compat: "src/rt/bridge.ts" },
+      bridge: { pointer: "Ptr", slice: "Slc", array: "Arr", map: "Dict", chan: "Ch" },
+      primitives: { keyword: { string: "string" }, core: { int: "i32" }, compat: {} },
+      stdlibTypes: {},
+      facadeTemplate: "src/rt/{importPath}.ts",
+    },
+  };
+  const profile = loadProfile(config);
+  const index = buildExpectedIndex(config, { files: [] }, new Map(), profile);
+  // func f(a *int) — pointer-to-int.
+  const unit = {
+    kind: "func",
+    file: { importPath: "example.com/proj/pkg", imports: [] },
+    parameters: [{ names: ["a"], type: { kind: "pointer", element: { kind: "ident", name: "int" } } }],
+    results: [],
+    typeParameterDetails: [],
+  };
+  const desc = goUnitDescriptor(unit, index);
+  assert.equal(canonicalKey(desc.params[0].type), "R:src/rt/bridge.ts::Ptr<R:@acme/prim::i32>");
+  // selector to a stdlib facade uses the configured template.
+  const sel = goUnitDescriptor(
+    { kind: "func", file: { importPath: "example.com/proj/pkg", imports: [{ path: "time" }] }, parameters: [{ names: ["t"], type: { kind: "selector", package: "time", name: "Duration" } }], results: [], typeParameterDetails: [] },
+    index,
+  );
+  assert.equal(canonicalKey(sel.params[0].type), "R:src/rt/time.ts::Duration");
 });
