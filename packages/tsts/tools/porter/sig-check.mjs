@@ -51,6 +51,9 @@ function resolveOverride(overrides, id, metadata) {
 
 const keyOf = (d) => (d ? canonicalKey(d) : "<none>");
 
+// The TS top type: a `<T extends unknown>` constraint is equivalent to none.
+const isTopConstraint = (c) => !!c && c.t === "kw" && (c.kw === "unknown" || c.kw === "any");
+
 // Returns an array of mismatch objects: { kind, detail, expected?, actual? }.
 // `canon` resolves ref ids through TS re-exports to their definition module.
 export function compareSignatures(expected, actual, override, canon = (x) => x, conv = { equivalences: [], structural: {} }) {
@@ -90,12 +93,15 @@ function compareTypeParams(expected, actual, push, eq, conv) {
     return;
   }
   for (let i = 0; i < e.length; i++) {
-    const ec = e[i].constraint, ac = a[i].constraint;
+    // `unknown`/`any` is TS's top type: `<T extends unknown>` ≡ `<T>`. So a
+    // trivial constraint (Go `[T any]`) is universally equivalent to none.
+    const ec = isTopConstraint(e[i].constraint) ? undefined : e[i].constraint;
+    const ac = isTopConstraint(a[i].constraint) ? undefined : a[i].constraint;
     if (ec && ac) {
       if (!eq(ec, ac)) push("type-param-constraint", `type param #${i} constraint differs`, keyOf(ec), keyOf(ac));
     } else if (ec || ac) {
-      // One side erased the constraint. Accept when the present one is a
-      // recognized convention (normalizes to a conv token) and the toggle is on.
+      // One side erased a non-trivial constraint. Accept when the present one is
+      // a recognized convention (normalizes to a conv token) and the toggle is on.
       const present = normalizeDescriptor(ec ?? ac, conv);
       const erasable = conv.structural?.acceptErasedConstraints && present.t === "conv";
       if (!erasable) push("type-param-constraint", `type param #${i} constraint differs`, ec ? keyOf(ec) : "-", ac ? keyOf(ac) : "-");

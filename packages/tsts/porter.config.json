@@ -401,8 +401,7 @@
       "equivalences": [
         { "as": "go-comparable", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
         { "as": "go-ordered", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] },
-        { "as": "go-numeric-constraint", "match": [ { "kw": "number" }, { "rawIncludes": "~int" }, { "rawIncludes": "~uint" }, { "rawIncludes": "~float" }, { "rawIncludes": "~complex" } ] },
-        { "as": "go-any-constraint", "match": [ { "kw": "unknown" }, { "kw": "any" } ] }
+        { "as": "go-numeric-constraint", "match": [ { "kw": "number" }, { "rawIncludes": "~int" }, { "rawIncludes": "~uint" }, { "rawIncludes": "~float" }, { "rawIncludes": "~complex" } ] }
       ],
       "structural": {
         "acceptNullable": false,
