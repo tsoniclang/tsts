@@ -216,7 +216,7 @@ function compareValue(expected, actual, push, eq) {
 // following TS re-exports (named + star), so a type referenced via a re-export
 // module matches the same type at its definition. core.Node != ast.Node holds
 // because they resolve to different definitions.
-function makeCanon(namedReexport, starReexport, definedAt) {
+function makeCanon(namedReexport, starReexport, definedAt, canonicalTypes = {}) {
   const cache = new Map();
   const split = (id) => { const i = id.lastIndexOf("::"); return [id.slice(0, i), id.slice(i + 2)]; };
   const resolve = (id, seen) => {
@@ -238,7 +238,13 @@ function makeCanon(namedReexport, starReexport, definedAt) {
     cache.set(id, result);
     return result;
   };
-  return (id) => (isSoftId(id) || !id.includes("::") ? id : resolve(id, new Set()));
+  return (id) => {
+    if (isSoftId(id) || !id.includes("::")) return id;
+    // A globally-unique duplicated type collapses to its one canonical module.
+    const name = id.slice(id.lastIndexOf("::") + 2);
+    if (canonicalTypes[name]) return `${canonicalTypes[name]}::${name}`;
+    return resolve(id, new Set());
+  };
 }
 
 // One fast regex scan over EVERY .ts under tsRoot (incl. generated/untracked
@@ -332,7 +338,7 @@ export async function computeSignatureReport(deps, options = {}) {
   // A type's actual declaring module is its canonical definition, so re-exports
   // (e.g. the generated barrel) resolve to the same module the expected side picks.
   for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
-  const canon = makeCanon(namedReexport, starReexport, definedAt);
+  const canon = makeCanon(namedReexport, starReexport, definedAt, profile.canonicalTypes ?? {});
   const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, tsDecls);
 
   const idRe = options.idFilter ? globToRegExp(options.idFilter) : undefined;

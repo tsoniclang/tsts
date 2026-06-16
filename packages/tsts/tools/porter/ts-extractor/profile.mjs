@@ -41,6 +41,18 @@ export const TSTS_PROFILE = {
   // Stdlib/runtime package -> facade module path. {importPath} is the full Go
   // import path (e.g. sync/atomic -> packages/tsts/src/go/sync/atomic.ts).
   facadeTemplate: "packages/tsts/src/go/{importPath}.ts",
+  // One canonical module per GLOBALLY-UNIQUE type name that is declared in more
+  // than one TS module (a generated copy + a hand-ported copy, or a brand +
+  // full interface). Both declarations are the same logical (same Go-origin)
+  // type; the checker collapses every reference to the canonical module. Narrow
+  // and named — NOT broad module-path equivalence. Only add names that are
+  // unique across the tree.
+  canonicalTypes: {
+    "SymbolFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
+    "NodeFlags": "packages/tsts/src/internal/ast/generated/flags.ts",
+    "NodeVisitor": "packages/tsts/src/internal/ast/spine.ts",
+    "ExtendedConfigCache": "packages/tsts/src/internal/execute/tsc/extendedconfigcache.ts",
+  },
 };
 
 function isPlainObject(v) {
