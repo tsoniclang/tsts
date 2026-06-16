@@ -408,7 +408,8 @@
         "unwrapPtrFunc": true,
         "anyMapKey": true,
         "ptrValueEquivStruct": false,
-        "acceptErasedConstraints": true
+        "acceptErasedConstraints": true,
+        "facadeGenerics": ["Pool", "OnceValue"]
       }
     },
     "overrides": []

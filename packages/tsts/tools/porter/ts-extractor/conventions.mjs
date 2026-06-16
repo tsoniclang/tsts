@@ -38,6 +38,10 @@ export function loadConventions(c = {}) {
       // A recognized Go constraint (one that normalizes to an `equivalences`
       // token) is acceptable even when the TS type param erases it (`<T>`).
       acceptErasedConstraints: c.structural?.acceptErasedConstraints === true,
+      // NAMED facade types the TS port intentionally genericizes from an untyped
+      // Go facade (e.g. Go `sync.Pool` -> TS `Pool<T>`): their type args are not
+      // compared. Targeted by name — NOT a global "ignore generic args".
+      facadeGenerics: new Set(c.structural?.facadeGenerics ?? []),
     },
   };
 }
@@ -105,6 +109,9 @@ export function normalizeDescriptor(d, conv, context = "type") {
     }
     if (s.anyMapKey && isGoMap(n)) {
       n = { t: "ref", id: n.id, args: [{ t: "conv", token: "mapkey" }, n.args[1]] };
+    }
+    if (n.t === "ref" && n.args.length > 0 && s.facadeGenerics?.has(terminalName(n.id))) {
+      n = { t: "ref", id: n.id, args: [] };
     }
   }
 
