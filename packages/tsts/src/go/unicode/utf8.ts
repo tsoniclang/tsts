@@ -22,6 +22,7 @@ export const UTFMax: int = 4;
 
 const encoder: TextEncoder = new globalThis.TextEncoder();
 const decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+const nonASCII = /[^\x00-\x7F]/;
 
 const encode = (s: string): Uint8Array => encoder.encode(s);
 export type StringByteView = { ascii: boolean; bytes?: Uint8Array };
@@ -35,13 +36,7 @@ export function GetStringByteView(s: string): StringByteView {
   if (cached !== undefined) {
     return cached;
   }
-  let ascii = true;
-  for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) >= RuneSelf) {
-      ascii = false;
-      break;
-    }
-  }
+  const ascii = !nonASCII.test(s);
   const view: StringByteView = ascii ? asciiStringByteView : { ascii, bytes: encode(s) };
   if (s.length >= 4096) {
     const cost = ascii ? s.length : view.bytes!.length;
