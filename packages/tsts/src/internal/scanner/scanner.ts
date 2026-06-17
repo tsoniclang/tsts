@@ -5293,6 +5293,7 @@ export function Scanner_scanInvalidCharacter(receiver: GoPtr<Scanner>): void {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetIdentifierToken","kind":"func","status":"implemented","sigHash":"a5e7f979cfd8a669e6b4be3494c2953ad7fbec7fd2e111b3f38f2ee61f5282c7","bodyHash":"dc7293fe327a8e8093c2e5907803c5adb9f824f233ad6b49fc63e45e6ef5d0b6"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Keyword spellings are ASCII-only, so JS/.NET UTF-16 length and first code unit are sufficient to decide whether a textToKeyword probe can succeed; non-ASCII identifiers cannot equal a keyword and do not need UTF-8 byte-view materialization."}
  *
  * Go source:
  * func GetIdentifierToken(str string) ast.Kind {
@@ -5306,7 +5307,7 @@ export function Scanner_scanInvalidCharacter(receiver: GoPtr<Scanner>): void {
  * }
  */
 export function GetIdentifierToken(str: string): Kind {
-  if (byteLen(str) >= 2 && byteLen(str) <= 12 && byteAt(str, 0) >= "a".charCodeAt(0) && byteAt(str, 0) <= "z".charCodeAt(0)) {
+  if (str.length >= 2 && str.length <= 12 && str.charCodeAt(0) >= "a".charCodeAt(0) && str.charCodeAt(0) <= "z".charCodeAt(0)) {
     const keyword = textToKeyword.get(str);
     if (keyword !== undefined && keyword !== KindUnknown) {
       return keyword;
