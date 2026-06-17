@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { TrimLeft, TrimRightFunc } from "../../go/strings.js";
-import { byteLen, byteSlice, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
+import { byteLen, hasAsciiPrefixAt, isJSDocLikeTextAt, lastNewlineBefore } from "./utilities.js";
 import { Node_End, Node_Name, Node_Pos } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
 import { SetParseJSDocForNode, Node_TagName, Node_Text, Node_Type } from "../ast/ast.js";
@@ -111,7 +111,7 @@ import {
   Scanner_ResetPos,
   Scanner_ReScanHashToken,
   Scanner_SetSkipJSDocLeadingAsterisks,
-  Scanner_SetText,
+  Scanner_SetTextEnd,
   Scanner_TokenEnd,
   Scanner_TokenFullStart,
   Scanner_TokenStart,
@@ -510,6 +510,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   const saveContextFlags = receiver!.contextFlags;
   const saveParsingContexts = receiver!.parsingContexts;
   const saveScannerState: ScannerState = Scanner_Mark(receiver!.scanner);
+  const saveScannerEnd = receiver!.scanner!.end;
   const saveDiagnosticsLength = receiver!.diagnostics.length;
   const saveHasParseError = receiver!.hasParseError;
   const saveHasAwaitIdentifier = receiver!.statementHasAwaitIdentifier;
@@ -518,9 +519,10 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   // + 1 because \n is one character before the first character in the line and,
   // if there is no \n before start, -1 is one index before the first character in the string
   const initialIndent = start + 4 - (lastNewlineBefore(receiver!.sourceText, start) + 1);
-  // -2 for trailing `*/`
-  receiver!.sourceText = byteSlice(receiver!.sourceText, 0, end - 2);
-  Scanner_SetText(receiver!.scanner, receiver!.sourceText);
+  // -2 for trailing `*/`. Keep the original source string/view and narrow only
+  // the scanner's active byte end; this mirrors p.sourceText[:end-2] without
+  // materializing a prefix string or rebuilding the UTF-8 byte view per JSDoc.
+  Scanner_SetTextEnd(receiver!.scanner, receiver!.sourceText, end - 2);
   // +3 for leading `/**`
   Scanner_ResetPos(receiver!.scanner, start + 3);
   Parser_setContextFlags(receiver, NodeFlagsJSDoc, true);
@@ -534,7 +536,7 @@ export function Parser_parseJSDocComment(receiver: GoPtr<Parser>, parent: GoPtr<
   receiver!.diagnostics = receiver!.diagnostics.slice(0, saveDiagnosticsLength);
 
   receiver!.sourceText = saveSourceText;
-  Scanner_SetText(receiver!.scanner, receiver!.sourceText);
+  Scanner_SetTextEnd(receiver!.scanner, receiver!.sourceText, saveScannerEnd);
   receiver!.parsingContexts = saveParsingContexts;
   receiver!.contextFlags = saveContextFlags;
   Scanner_Rewind(receiver!.scanner, saveScannerState);

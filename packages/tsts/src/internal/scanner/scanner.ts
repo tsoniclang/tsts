@@ -223,8 +223,7 @@ const decodeRuneInStringAt = utf8.DecodeRuneInStringAt;
 const decodeLastRuneInStringBefore = utf8.DecodeLastRuneInStringBefore;
 
 function scannerByteLen(s: Scanner): int {
-  const view = s.sourceByteView;
-  return view.ascii ? s.text.length : view.bytes!.length;
+  return s.end;
 }
 
 function scannerByteAt(s: Scanner, pos: int): int {
@@ -1251,6 +1250,15 @@ export function Scanner_SetText(receiver: GoPtr<Scanner>, text: string): void {
   s.sourceByteView = view;
   s.end = utf8.StringByteViewLen(text, view);
   // s.ScannerState = ScannerState{}: reset the embedded state to its zero value.
+  s.__tsgoEmbedded0 = newScannerState();
+}
+
+export function Scanner_SetTextEnd(receiver: GoPtr<Scanner>, text: string, end: int): void {
+  const s = receiver!;
+  const view = s.text === text ? s.sourceByteView : utf8.GetStringByteView(text);
+  s.text = text;
+  s.sourceByteView = view;
+  s.end = end;
   s.__tsgoEmbedded0 = newScannerState();
 }
 
