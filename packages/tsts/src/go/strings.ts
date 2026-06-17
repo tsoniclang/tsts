@@ -915,10 +915,11 @@ export function ToValidUTF8(s: string, replacement: string): string {
 
 const makeCutset = (cutset: string): Set<GoRune> => {
   const set = new Set<GoRune>();
-  const cb = encode(cutset);
+  const view = utf8.GetStringByteView(cutset);
+  const length = utf8.StringByteViewLen(cutset, view);
   let i = 0;
-  while (i < cb.length) {
-    const [r, size] = decodeRune(cb, i);
+  while (i < length) {
+    const [r, size] = utf8.DecodeRuneInStringViewAt(cutset, view, i);
     set.add(r);
     i += size === 0 ? 1 : size;
   }
@@ -944,16 +945,17 @@ export function TrimLeft(s: string, cutset: string): string {
 
 // TrimLeftFunc returns s with all leading runes satisfying f removed.
 export function TrimLeftFunc(s: string, f: (r: GoRune) => bool): string {
-  const bytes = encode(s);
+  const view = utf8.GetStringByteView(s);
+  const length = utf8.StringByteViewLen(s, view);
   let i = 0;
-  while (i < bytes.length) {
-    const [r, size] = decodeRune(bytes, i);
+  while (i < length) {
+    const [r, size] = utf8.DecodeRuneInStringViewAt(s, view, i);
     if (!f(r)) {
       break;
     }
     i += size === 0 ? 1 : size;
   }
-  return decode(bytes.subarray(i));
+  return utf8.StringByteViewSlice(s, view, i);
 }
 
 // TrimPrefix returns s without the provided leading prefix string.
@@ -972,24 +974,19 @@ export function TrimRight(s: string, cutset: string): string {
 
 // TrimRightFunc returns s with all trailing runes satisfying f removed.
 export function TrimRightFunc(s: string, f: (r: GoRune) => bool): string {
-  const bytes = encode(s);
-  let end = bytes.length;
+  const view = utf8.GetStringByteView(s);
+  let end = utf8.StringByteViewLen(s, view);
   while (end > 0) {
-    // find the start of the last rune before `end`
-    let start = end - 1;
-    while (start > 0 && (bytes[start]! & 0xc0) === 0x80) {
-      start--;
-    }
-    const [r, size] = decodeRune(bytes, start);
+    const [r, size] = utf8.DecodeLastRuneInStringViewBefore(s, view, end);
     if (size === 0) {
       break;
     }
     if (!f(r)) {
       break;
     }
-    end = start;
+    end -= size;
   }
-  return decode(bytes.subarray(0, end));
+  return utf8.StringByteViewSlice(s, view, 0, end);
 }
 
 // TrimSpace returns s with all leading and trailing whitespace removed.
