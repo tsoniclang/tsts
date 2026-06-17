@@ -42,6 +42,7 @@ import {
   buildDiagnosticsGeneratedArtifactStatus,
   buildDiagnosticsGeneratedFiles,
   collectDiagnosticsArtifactFailures,
+  emitLocalizedMessages,
   emitMessages,
   parseCatalog,
   writeDiagnosticsGenerated,
@@ -1457,6 +1458,19 @@ test("diagnostics-generator: emitMessages renders faithful Message constants + k
   assert.match(body, /export function keyToMessage\(key: Key\): Message \| undefined \{/);
   assert.match(body, /case "Unterminated_string_literal_1002":\s*\n\s*return Unterminated_string_literal;/);
   assert.match(body, /default:\s*\n\s*return undefined;/);
+});
+
+test("diagnostics-generator: emitLocalizedMessages lazy-loads locale assets from files", () => {
+  const body = emitLocalizedMessages([], {});
+  assert.ok(body.includes('import { existsSync, readFileSync } from "node:fs";'));
+  assert.ok(body.includes('import { dirname, join, resolve } from "node:path";'));
+  assert.ok(body.includes('const candidates: string[] = [join(moduleDir, "loc")];'));
+  assert.ok(body.includes('"_vendor/typescript-go/internal/diagnostics/loc"'));
+  assert.ok(body.includes('"packages/tsts/_vendor/typescript-go/internal/diagnostics/loc"'));
+  assert.ok(body.includes("readFileSync(join(localeRoot(), fileName))"));
+  assert.ok(body.includes('once(() => loadLocaleData("de-DE.json.gz"))'));
+  assert.ok(!body.includes("Buffer.from"));
+  assert.ok(!body.includes("base64"));
 });
 
 test("diagnostics-generator: buildDiagnosticsGeneratedFiles embeds deterministic generated metadata", () => {
