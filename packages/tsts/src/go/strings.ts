@@ -8,6 +8,7 @@
 
 import type { bool, int, byte } from "@tsonic/core/types.js";
 import type { GoRune, GoSlice } from "./compat.js";
+import * as utf8 from "./unicode/utf8.js";
 
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
@@ -485,14 +486,9 @@ export function IndexAny(s: string, chars: string): int {
 
 // IndexByte returns the byte index of the first instance of byte c in s, or -1.
 export function IndexByte(s: string, c: byte): int {
-  const bytes = encode(s);
+  const view = utf8.GetStringByteView(s);
   const target = c & 0xff;
-  for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i] === target) {
-      return i;
-    }
-  }
-  return -1;
+  return utf8.StringByteViewIndexByte(s, view, 0, target as byte);
 }
 
 // IndexFunc returns the byte index of the first rune satisfying f, or -1.
@@ -537,8 +533,12 @@ export function LastIndex(s: string, substr: string): int {
 }
 
 export function LastIndexByte(s: string, c: byte): int {
-  const bytes = encode(s);
+  const view = utf8.GetStringByteView(s);
   const target = c & 0xff;
+  if (view.ascii) {
+    return s.lastIndexOf(globalThis.String.fromCharCode(target)) as int;
+  }
+  const bytes = view.bytes!;
   for (let i = bytes.length - 1; i >= 0; i--) {
     if (bytes[i] === target) {
       return i;
