@@ -17,6 +17,25 @@ import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
+const SIGNATURE_MISMATCH_KINDS = new Set([
+  "actual-missing",
+  "value-type-unresolved",
+  "type-param-count",
+  "type-param-constraint",
+  "arity",
+  "param-order",
+  "param-type",
+  "variadic-position",
+  "return-type",
+  "missing-member",
+  "unsupported-member",
+  "member-type",
+  "extra-member",
+  "alias-type",
+  "value-annotation-missing",
+  "value-type",
+  "unresolved-ref",
+]);
 
 // --- override resolution ------------------------------------------------------
 
@@ -25,29 +44,88 @@ function globToRegExp(glob) {
   return new RegExp(`^${escaped}$`);
 }
 
-// Resolve config + inline overrides for a unit. Overrides are deliberately
-// aspect-scoped only; there is no "accept all" path because that would hide
-// drift in unrelated parts of the same signature.
-function resolveOverride(overrides, id, metadata) {
+function resolveOverride(localOverride, id, expected, actual, canon, overrideIssues) {
   const ignore = new Set();
-  const reasons = [];
-  for (const o of overrides ?? []) {
-    const matches = (o.id && o.id === id) || (o.match && globToRegExp(o.match).test(id));
-    if (!matches) continue;
-    if (!Array.isArray(o.ignore) || o.ignore.length === 0) {
-      throw new Error(`signature override for ${id} must list explicit mismatch aspects in 'ignore'`);
-    }
-    for (const a of o.ignore) ignore.add(a);
-    if (o.reason) reasons.push(o.reason);
+  if (!localOverride?.allow?.includes?.("signature")) {
+    return { ignore, reason: "" };
   }
-  if (metadata?.sigOverride) {
-    if (!Array.isArray(metadata.sigOverride.ignore) || metadata.sigOverride.ignore.length === 0) {
-      throw new Error(`inline signature override for ${id} must list explicit mismatch aspects in 'ignore'`);
-    }
-    for (const a of metadata.sigOverride.ignore) ignore.add(a);
-    if (metadata.sigOverride.reason) reasons.push(metadata.sigOverride.reason);
+  const expectedSnapshot = unitSignatureSnapshot(expected, canon);
+  const actualSnapshot = unitSignatureSnapshot(actual, canon);
+  const issues = [];
+  if (localOverride.goSignature !== expectedSnapshot) {
+    issues.push(`goSignature snapshot drifted: metadata=${localOverride.goSignature ?? "<missing>"} current=${expectedSnapshot}`);
   }
-  return { ignore, reason: reasons.join("; ") };
+  if (localOverride.tsSignature !== actualSnapshot) {
+    issues.push(`tsSignature snapshot drifted: metadata=${localOverride.tsSignature ?? "<missing>"} current=${actualSnapshot}`);
+  }
+  if (issues.length > 0) {
+    overrideIssues.push({ id, reason: issues.join("; ") });
+    return { ignore, reason: localOverride.reason ?? "" };
+  }
+  for (const kind of SIGNATURE_MISMATCH_KINDS) ignore.add(kind);
+  return { ignore, reason: localOverride.reason ?? "" };
+}
+
+function typeSnapshot(d, canon = (x) => x) {
+  if (!d) return "<none>";
+  switch (d.t) {
+    case "ref": {
+      const id = canon(d.id);
+      return d.args.length ? `${id}<${d.args.map((a) => typeSnapshot(a, canon)).join(",")}>` : id;
+    }
+    case "array":
+      return `${typeSnapshot(d.element, canon)}[]`;
+    case "tuple":
+      return `[${d.elements.map((e) => typeSnapshot(e, canon)).join(",")}]`;
+    case "union":
+      return d.members.map((m) => typeSnapshot(m, canon)).sort().join("|");
+    case "intersect":
+      return d.members.map((m) => typeSnapshot(m, canon)).sort().join("&");
+    case "fn":
+      return `(${d.params.map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${typeSnapshot(p.type, canon)}`).join(",")})=>${typeSnapshot(d.ret, canon)}`;
+    case "object":
+      return `{${d.members.map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`).sort().join(";")}}`;
+    case "kw":
+      return d.kw;
+    case "tp":
+      return `T${d.i}`;
+    case "lit":
+      return d.text;
+    case "raw":
+      return `raw(${d.text})`;
+    case "conv":
+      return `conv(${d.token})`;
+    default:
+      return canonicalKey(d);
+  }
+}
+
+export function unitSignatureSnapshot(desc, canon = (x) => x) {
+  if (!desc) return "<missing>";
+  const typeParams = (desc.typeParams ?? [])
+    .map((tp, index) => `T${index}${tp.constraint ? ` extends ${typeSnapshot(tp.constraint, canon)}` : ""}`)
+    .join(",");
+  const generic = typeParams ? `<${typeParams}>` : "";
+  if (desc.kind === "func") {
+    const params = (desc.params ?? [])
+      .map((p) => `${p.rest ? "..." : ""}${p.optional ? "?" : ""}${typeSnapshot(p.type, canon)}`)
+      .join(",");
+    return `func${generic}(${params})=>${typeSnapshot(desc.ret, canon)}`;
+  }
+  if (desc.kind === "interface") {
+    const members = (desc.members ?? [])
+      .map((m) => `${m.name}${m.optional ? "?" : ""}:${m.unsupported ? `unsupported(${m.unsupported})` : typeSnapshot(m.type, canon)}`)
+      .sort()
+      .join(";");
+    return `interface${generic}{${members}}`;
+  }
+  if (desc.kind === "alias") {
+    return `type${generic}=${typeSnapshot(desc.type, canon)}`;
+  }
+  if (desc.kind === "value") {
+    return `value{${(desc.decls ?? []).map((d) => `${d.name}:${d.missing ? "<missing>" : typeSnapshot(d.type, canon)}`).join(";")}}`;
+  }
+  return `${desc.kind ?? "unknown"}:${JSON.stringify(desc)}`;
 }
 
 // --- comparison ---------------------------------------------------------------
@@ -335,7 +413,14 @@ export async function computeSignatureReport(deps, options = {}) {
     freshnessSrcDirs: profile.parser.freshnessSrcDirs.map((d) => join(deps.repoRoot, d)),
   });
   const conv = loadConventions(profile.conventions ?? {});
-  const overrides = profile.overrides ?? [];
+  const centralOverrides = profile.overrides ?? [];
+  const overrideIssues = [];
+  if (centralOverrides.length > 0) {
+    overrideIssues.push({
+      id: "",
+      reason: "signatureCheck.overrides is banned; use local @tsgo-override metadata with goSignature and tsSignature snapshots",
+    });
+  }
 
   // Go units keyed by id, carrying minimal file info for descriptor resolution.
   const goById = new Map();
@@ -377,14 +462,15 @@ export async function computeSignatureReport(deps, options = {}) {
       const go = goById.get(u.id);
       if (!go || !RENDERABLE.has(go.kind)) continue;
       checked++;
-      const override = resolveOverride(overrides, u.id, u.metadata);
-      if (override.ignore.size > 0) overriddenUnits++;
       const expected = goUnitDescriptor(go, index);
+      const localOverride = deps.tsById.get(u.id)?.override;
+      const override = resolveOverride(localOverride, u.id, expected, u.descriptor, canon, overrideIssues);
+      if (override.ignore.size > 0) overriddenUnits++;
       const ms = compareSignatures(expected, u.descriptor, override, canon, conv, profile.allowedGlobals);
       for (const m of ms) mismatches.push({ id: u.id, file: file.path, ...m });
     }
   }
-  return { mismatches, checked, overriddenUnits };
+  return { mismatches, checked, overriddenUnits, overrideIssues };
 }
 
 export { resolveOverride };

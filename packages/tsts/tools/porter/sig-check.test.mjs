@@ -6,7 +6,7 @@ import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { compareSignatures } from "./sig-check.mjs";
+import { compareSignatures, resolveOverride, unitSignatureSnapshot } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
@@ -85,6 +85,46 @@ test("overrides: ignore aspect only", () => {
   const ms = compareSignatures(exp, wrong, { ignore: new Set(["return-type"]) });
   assert.ok(!kinds(ms).has("return-type"));
   assert.ok(kinds(ms).has("param-type"));
+});
+
+test("local signature override captures go and ts snapshots", () => {
+  const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
+  const actual = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] };
+  const issues = [];
+  const override = resolveOverride(
+    {
+      category: "runtime-performance",
+      allow: ["signature"],
+      reason: "Target-native carrier.",
+      goSignature: unitSignatureSnapshot(exp),
+      tsSignature: unitSignatureSnapshot(actual),
+    },
+    "id",
+    exp,
+    actual,
+    (x) => x,
+    issues,
+  );
+  assert.equal(issues.length, 0);
+  assert.equal(compareSignatures(exp, actual, override).length, 0);
+
+  const staleIssues = [];
+  const stale = resolveOverride(
+    {
+      category: "runtime-performance",
+      allow: ["signature"],
+      reason: "Target-native carrier.",
+      goSignature: "stale",
+      tsSignature: unitSignatureSnapshot(actual),
+    },
+    "id",
+    exp,
+    actual,
+    (x) => x,
+    staleIssues,
+  );
+  assert.equal(stale.ignore.size, 0);
+  assert.equal(staleIssues.length, 1);
 });
 
 test("conventions: acceptNullable strips | undefined", () => {

@@ -97,3 +97,19 @@ Cases include repeated byte-length queries, rune decoding by byte offset,
 `SplitLines`, `UTF16Len`, and case-insensitive comparison. This is a stable
 micro-regression gate for the JS/.NET-compatible UTF-16 source-text direction;
 whole-project cost still belongs to `profile:bench --profile`.
+
+## `scanner-bench.mjs` — scanner hot-path benchmark
+
+Measures the built scanner directly on large ASCII, mixed-Unicode, and JSX
+source strings:
+
+```bash
+npx tsc -p packages/tsts/tsconfig.json
+npm run profile:scanner
+```
+
+This is the focused gate for scanner-local source-text cache changes. It checks
+token count and checksum stability across runs, then reports median scan time
+and tokens/ms. Whole-program validation still belongs to `profile:self`; this
+microbenchmark exists so a scanner-only optimization is not justified solely by
+helper-level UTF-8 timings.

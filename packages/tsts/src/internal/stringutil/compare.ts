@@ -80,7 +80,7 @@ export const ComparisonGreaterThan: Comparison = 1;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/compare.go::func::CompareStringsCaseInsensitive","kind":"func","status":"implemented","sigHash":"ac591ad324210bd22e25893f024961237ad3030219a6084cb964a51e7cc883b6","bodyHash":"6f0bb123594b125f6c64e7cdc6b7ebc1ba6acd4d34888dea5f61d26a3fe93a43"}
- * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Walk cached UTF-8 byte views by offset instead of repeatedly materializing suffix strings; comparison order and byte-sized rune advances remain TS-Go exact."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Walk cached UTF-8 byte views by offset instead of repeatedly materializing suffix strings; comparison order and byte-sized rune advances remain TS-Go exact."}
  *
  * Go source:
  * func CompareStringsCaseInsensitive(a string, b string) Comparison {

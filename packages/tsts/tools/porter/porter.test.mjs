@@ -7,13 +7,13 @@ import test from "node:test";
 import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
-  buildImplementationOverrideStatus,
+  buildLocalOverrideStatus,
   buildExternalFacadeMap,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
   buildStatus,
   collectSchemaSourceSyncFailures,
-  collectImplementationOverrideFailures,
+  collectLocalOverrideFailures,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -552,12 +552,26 @@ test("scanTsUnits records files with and without metadata", () => {
     mkdirSync(path.join(root, "internal/debug"), { recursive: true });
     writeFileSync(
       path.join(root, "internal/debug/debug.ts"),
-      '/** @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"stub","sigHash":"s","bodyHash":"b"} */\nexport {}\n',
+      `/**
+ * @tsgo-unit {"id":"m::internal/debug/debug.go::func::Fail","kind":"func","status":"stub","sigHash":"s","bodyHash":"b"}
+ * @tsgo-override {
+ *   "category": "runtime-performance",
+ *   "allow": ["body"],
+ *   "reason": "test multiline metadata parsing"
+ * }
+ */
+export {}
+`,
     );
     writeFileSync(path.join(root, "internal/debug/helper.ts"), "export const helper = true;\n");
     const result = scanTsUnits(root);
     assert.equal(result.fileCount, 2);
     assert.equal(result.units.length, 1);
+    assert.deepEqual(result.units[0].override, {
+      category: "runtime-performance",
+      allow: ["body"],
+      reason: "test multiline metadata parsing",
+    });
     assert.equal(result.files.find((file) => file.path.endsWith("debug.ts")).metadataCount, 1);
     assert.equal(result.files.find((file) => file.path.endsWith("helper.ts")).metadataCount, 0);
   } finally {
@@ -1600,13 +1614,13 @@ test("collectVerifyFailures hard-gates signature mismatches", () => {
   assert.deepEqual(collectVerifyFailures(status, {}), ["2 signature/type mismatches (param-type=1, alias-type=1)"]);
 });
 
-test("buildImplementationOverrideStatus requires central and inline markers to agree", () => {
+test("buildLocalOverrideStatus accepts local body overrides", () => {
   const tsUnits = {
     units: [
       {
         id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
         path: "packages/tsts/src/internal/scanner/scanner.ts",
-        implementationOverride: {
+        override: {
           category: "runtime-performance",
           allow: ["body"],
           reason: "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract.",
@@ -1614,60 +1628,42 @@ test("buildImplementationOverrideStatus requires central and inline markers to a
       },
     ],
   };
-  const status = buildImplementationOverrideStatus(
-    {
-      implementationOverrides: [
-        {
-          id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
-          category: "runtime-performance",
-          allow: ["body"],
-          reason: "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract.",
-        },
-      ],
-    },
-    tsUnits,
-  );
-  assert.equal(status.configured, 1);
+  const status = buildLocalOverrideStatus({}, tsUnits);
   assert.equal(status.inline, 1);
-  assert.equal(status.matchedUnits, 1);
-  assert.deepEqual(collectImplementationOverrideFailures(status), []);
+  assert.equal(status.byAllow.body, 1);
+  assert.equal(status.byCategory["runtime-performance"], 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
-test("buildImplementationOverrideStatus flags unconfigured inline overrides", () => {
-  const status = buildImplementationOverrideStatus(
-    { implementationOverrides: [] },
+test("buildLocalOverrideStatus accepts local signature overrides with snapshots", () => {
+  const status = buildLocalOverrideStatus(
+    {},
     {
       units: [
         {
           id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
           path: "packages/tsts/src/internal/scanner/scanner.ts",
-          implementationOverride: {
+          override: {
             category: "runtime-performance",
-            allow: ["body"],
+            allow: ["body", "signature"],
             reason: "Use a target-native source-text model.",
+            goSignature: "func(K:string)=>K:void",
+            tsSignature: "func(K:string)=>K:void",
           },
         },
       ],
     },
   );
-  assert.equal(status.unconfiguredInline.length, 1);
-  assert.deepEqual(collectImplementationOverrideFailures(status), [
-    "1 unconfigured inline implementation overrides",
-  ]);
+  assert.equal(status.inline, 1);
+  assert.equal(status.byAllow.body, 1);
+  assert.equal(status.byAllow.signature, 1);
+  assert.equal(status.signatureUnits.length, 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), []);
 });
 
-test("buildImplementationOverrideStatus flags config entries without inline markers", () => {
-  const status = buildImplementationOverrideStatus(
-    {
-      implementationOverrides: [
-        {
-          match: "github.com/microsoft/typescript-go::internal/scanner/**",
-          category: "runtime-performance",
-          allow: ["body"],
-          reason: "Use a target-native source-text model.",
-        },
-      ],
-    },
+test("buildLocalOverrideStatus rejects central implementationOverrides", () => {
+  const status = buildLocalOverrideStatus(
+    { implementationOverrides: [{ match: "github.com/microsoft/typescript-go::internal/scanner/**" }] },
     {
       units: [
         {
@@ -1677,26 +1673,32 @@ test("buildImplementationOverrideStatus flags config entries without inline mark
       ],
     },
   );
-  assert.equal(status.missingInline.length, 1);
-  assert.deepEqual(collectImplementationOverrideFailures(status), [
-    "1 implementation overrides missing inline markers",
+  assert.equal(status.failureCount, 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), [
+    "1 invalid local @tsgo-override entries",
   ]);
 });
 
-test("buildImplementationOverrideStatus flags malformed and unmatched override config", () => {
-  const status = buildImplementationOverrideStatus(
+test("buildLocalOverrideStatus flags malformed local overrides", () => {
+  const status = buildLocalOverrideStatus(
+    {},
     {
-      implementationOverrides: [
-        { match: "github.com/microsoft/typescript-go::internal/scanner/**", category: "runtime-performance", allow: ["signature"], reason: "bad allow" },
-        { id: "github.com/microsoft/typescript-go::internal/missing/missing.go::func::Missing", category: "runtime-performance", allow: ["body"], reason: "missing" },
+      units: [
+        {
+          id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+          path: "packages/tsts/src/internal/scanner/scanner.ts",
+          override: {
+            category: "",
+            allow: ["signature"],
+            reason: "",
+            goSignature: "",
+          },
+        },
       ],
     },
-    { units: [] },
   );
-  assert.equal(status.invalidConfig.length, 1);
-  assert.equal(status.unmatchedConfig.length, 1);
-  assert.deepEqual(collectImplementationOverrideFailures(status), [
-    "1 invalid implementation override config entries",
-    "1 unmatched implementation override config entries",
+  assert.equal(status.invalidInline.length, 1);
+  assert.deepEqual(collectLocalOverrideFailures(status), [
+    "1 invalid local @tsgo-override entries",
   ]);
 });

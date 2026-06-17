@@ -142,7 +142,7 @@ import {
   TokenFlagsUnterminated,
 } from "../ast/tokenflags.js";
 import type { TokenFlags as TokenFlags_4c7e9c27 } from "../ast/tokenflags.js";
-import { IfElse, UTF16Len } from "../core/core.js";
+import { IfElse } from "../core/core.js";
 import type { UTF16Offset } from "../core/core.js";
 import { ScriptTargetLatest, ScriptTargetNone } from "../core/compileroptions.js";
 import type { ScriptTarget } from "../core/compileroptions.js";
@@ -221,6 +221,36 @@ const byteAt = utf8.StringByteAt;
 const byteLen = utf8.StringByteLen;
 const decodeRuneInStringAt = utf8.DecodeRuneInStringAt;
 const decodeLastRuneInStringBefore = utf8.DecodeLastRuneInStringBefore;
+
+function scannerByteLen(s: Scanner): int {
+  const view = s.sourceByteView;
+  return view.ascii ? s.text.length : view.bytes!.length;
+}
+
+function scannerByteAt(s: Scanner, pos: int): int {
+  const view = s.sourceByteView;
+  return view.ascii ? s.text.charCodeAt(pos) : view.bytes![pos]!;
+}
+
+function scannerByteSlice(s: Scanner, start: int, end?: int): string {
+  const view = s.sourceByteView;
+  return utf8.StringByteViewSlice(s.text, view, start, end);
+}
+
+function scannerHasPrefixAt(s: Scanner, start: int, prefix: string): bool {
+  const view = s.sourceByteView;
+  return utf8.StringByteViewHasPrefix(s.text, view, start, prefix) as bool;
+}
+
+function scannerDecodeRuneInStringAt(s: Scanner, pos: int): [GoRune, int] {
+  const view = s.sourceByteView;
+  return utf8.DecodeRuneInStringViewAt(s.text, view, pos);
+}
+
+function scannerDecodeLastRuneInStringBefore(s: Scanner, end: int): [GoRune, int] {
+  const view = s.sourceByteView;
+  return utf8.DecodeLastRuneInStringViewBefore(s.text, view, end);
+}
 
 // stringFromRune reproduces Go's `string(rune)`: the rune is UTF-8 encoded.
 const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r);
@@ -617,6 +647,13 @@ export interface ScannerState {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::type::Scanner","kind":"type","status":"implemented","sigHash":"9f0b7073bc0be77a5365f2b16cac66b6b860e1e1c00db26a05eef18bc7028a1b","bodyHash":"fa2395147c39a85112b471d4e2826f03161db93c99a6f2e9bef286b7184e4a9d"}
+ * @tsgo-override {
+ *   "category": "runtime-performance",
+ *   "allow": ["signature"],
+ *   "reason": "Carry one scanner-local source byte view as a runtime cache; this is not TS-Go semantic state and keeps public scanner behavior unchanged.",
+ *   "goSignature": "interface{CanFollowJSDocAt?:()=>@tsonic/core/types.ts::bool;CommentDirectives?:()=>packages/tsts/src/go/compat.ts::GoSlice<packages/tsts/src/internal/ast/ast.ts::CommentDirective>;ContainsNonASCII?:()=>@tsonic/core/types.ts::bool;HasExtendedUnicodeEscape?:()=>@tsonic/core/types.ts::bool;HasPrecedingJSDocComment?:()=>@tsonic/core/types.ts::bool;HasPrecedingJSDocLeadingAsterisks?:()=>@tsonic/core/types.ts::bool;HasPrecedingJSDocWithDeprecatedTag?:()=>@tsonic/core/types.ts::bool;HasPrecedingJSDocWithSeeOrLink?:()=>@tsonic/core/types.ts::bool;HasPrecedingLineBreak?:()=>@tsonic/core/types.ts::bool;HasUnicodeEscape?:()=>@tsonic/core/types.ts::bool;Mark?:()=>packages/tsts/src/internal/scanner/scanner.ts::ScannerState;ReScanAsteriskEqualsToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanGreaterThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanHashToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanJsxToken?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanLessThanToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanQuestionToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanSlashToken?:(...@tsonic/core/types.ts::bool[])=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ReScanTemplateToken?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;Reset?:()=>void;ResetPos?:(@tsonic/core/types.ts::int)=>void;ResetTokenState?:(@tsonic/core/types.ts::int)=>void;Rewind?:(packages/tsts/src/internal/scanner/scanner.ts::ScannerState)=>void;Scan?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocCommentTextToken?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJSDocToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxAttributeValue?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxIdentifier?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxToken?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;ScanJsxTokenEx?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;SetLanguageVariant?:(packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant)=>void;SetOnError?:(packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback)=>void;SetScriptTarget?:(packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget)=>void;SetSkipJSDocLeadingAsterisks?:(@tsonic/core/types.ts::bool)=>void;SetSkipTrivia?:(@tsonic/core/types.ts::bool)=>void;SetText?:(string)=>void;Text?:()=>string;Token?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;TokenEnd?:()=>@tsonic/core/types.ts::int;TokenFlags?:()=>packages/tsts/src/internal/ast/tokenflags.ts::TokenFlags;TokenFullStart?:()=>@tsonic/core/types.ts::int;TokenRange?:()=>packages/tsts/src/internal/core/text.ts::TextRange;TokenStart?:()=>@tsonic/core/types.ts::int;TokenText?:()=>string;TokenValue?:()=>string;__tsgoEmbedded0?:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;char?:()=>packages/tsts/src/go/compat.ts::GoRune;charAndSize?:()=>[packages/tsts/src/go/compat.ts::GoRune,@tsonic/core/types.ts::int];charAt?:(@tsonic/core/types.ts::int)=>packages/tsts/src/go/compat.ts::GoRune;checkRegularExpressionFlagAvailability?:(packages/tsts/src/internal/scanner/regexp.ts::regularExpressionFlags,@tsonic/core/types.ts::int,@tsonic/core/types.ts::int)=>void;containsNonASCII:@tsonic/core/types.ts::bool;end:@tsonic/core/types.ts::int;error?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>)=>void;errorAt?:(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/diagnostics/diagnostics.ts::Message>,@tsonic/core/types.ts::int,@tsonic/core/types.ts::int,...unknown[])=>void;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;languageVersion?:()=>packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;peekUnicodeEscape?:()=>packages/tsts/src/go/compat.ts::GoRune;processCommentDirective?:(@tsonic/core/types.ts::int,@tsonic/core/types.ts::int,@tsonic/core/types.ts::bool)=>void;reScanGreaterThanTokenInner?:()=>void;scanASCIIWhile?:((@tsonic/core/types.ts::byte)=>@tsonic/core/types.ts::bool)=>void;scanBigIntSuffix?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanBinaryOrOctalDigits?:(@tsonic/core/types.ts::int)=>string;scanDigits?:()=>[string,@tsonic/core/types.ts::bool];scanEscapeSequence?:(packages/tsts/src/internal/scanner/scanner.ts::EscapeSequenceScanningFlags)=>string;scanHexDigits?:(@tsonic/core/types.ts::int,@tsonic/core/types.ts::bool,@tsonic/core/types.ts::bool)=>string;scanIdentifier?:(@tsonic/core/types.ts::int)=>@tsonic/core/types.ts::bool;scanIdentifierParts?:()=>string;scanInvalidCharacter?:()=>void;scanJSDocCommentForTags?:(string)=>void;scanLowSurrogateEscape?:(packages/tsts/src/go/compat.ts::GoRune)=>[packages/tsts/src/go/compat.ts::GoRune,@tsonic/core/types.ts::bool];scanNumber?:()=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanNumberFragment?:()=>string;scanString?:(@tsonic/core/types.ts::bool)=>string;scanTemplateAndSetTokenValue?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/internal/ast/generated/kinds.ts::Kind;scanUnicodeEscape?:(@tsonic/core/types.ts::bool)=>packages/tsts/src/go/compat.ts::GoRune;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:@tsonic/core/types.ts::bool;text:string}",
+ *   "tsSignature": "interface{__tsgoEmbedded0:packages/tsts/src/internal/scanner/scanner.ts::ScannerState;containsNonASCII:@tsonic/core/types.ts::bool;end:@tsonic/core/types.ts::int;hexDigitCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;hexNumberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;languageVariant:packages/tsts/src/internal/core/languagevariant.ts::LanguageVariant;numberCache:packages/tsts/src/go/compat.ts::GoMap<string,string>;onError:packages/tsts/src/internal/scanner/scanner.ts::ErrorCallback;scriptTarget:packages/tsts/src/internal/core/compileroptions.ts::ScriptTarget;skipTrivia:@tsonic/core/types.ts::bool;sourceByteView:packages/tsts/src/go/unicode/utf8.ts::StringByteView;text:string}"
+ * }
  *
  * Go source:
  * Scanner struct {
@@ -646,6 +683,7 @@ export interface Scanner {
   numberCache: GoMap<string, string>;
   hexNumberCache: GoMap<string, string>;
   hexDigitCache: GoMap<string, string>;
+  sourceByteView: utf8.StringByteView;
 }
 
 /**
@@ -675,6 +713,7 @@ export function defaultScanner(): Scanner {
     numberCache: undefined as unknown as GoMap<string, string>,
     hexNumberCache: undefined as unknown as GoMap<string, string>,
     hexDigitCache: undefined as unknown as GoMap<string, string>,
+    sourceByteView: utf8.GetStringByteView(""),
   };
 }
 
@@ -708,6 +747,7 @@ export function NewScanner(): GoPtr<Scanner> {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.Reset","kind":"method","status":"implemented","sigHash":"81860126af7e9c4c3c1d20c1029c54c99c301e87d978c5bec8e14b1fe7606692","bodyHash":"8c3d03f7f94175f228f39c4a2cb37fff21f92508e0316b2e73711854e57deaa6"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Clear the scanner-local source byte-view cache when the scanner text is reset; the observable Scanner state remains TS-Go exact."}
  *
  * Go source:
  * func (s *Scanner) Reset() {
@@ -730,6 +770,7 @@ export function Scanner_Reset(receiver: GoPtr<Scanner>): void {
   const d = defaultScanner();
   s.text = d.text;
   s.end = d.end;
+  s.sourceByteView = d.sourceByteView;
   s.languageVariant = d.languageVariant;
   s.scriptTarget = d.scriptTarget;
   s.onError = d.onError;
@@ -840,7 +881,7 @@ export function Scanner_TokenEnd(receiver: GoPtr<Scanner>): int {
  */
 export function Scanner_TokenText(receiver: GoPtr<Scanner>): string {
   const s = receiver!;
-  return byteSlice(s.text, s.__tsgoEmbedded0.tokenStart, s.__tsgoEmbedded0.pos);
+  return scannerByteSlice(s, s.__tsgoEmbedded0.tokenStart, s.__tsgoEmbedded0.pos);
 }
 
 /**
@@ -1194,6 +1235,7 @@ export function hasJSDocTag(text: string, ...tags: Array<string>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.SetText","kind":"method","status":"implemented","sigHash":"82064155a55a75a9b3e24e3a8f91ca17729da58c43eff21848500a222365a84d","bodyHash":"030d02a7218ce8c7b38b60179e3e24b52733498c775852828ae24d4d467da653"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Pin one UTF-8 byte view per scanner source text so byte-offset scanning does not repeatedly reclassify the same JS/.NET UTF-16 string."}
  *
  * Go source:
  * func (s *Scanner) SetText(text string) {
@@ -1205,7 +1247,9 @@ export function hasJSDocTag(text: string, ...tags: Array<string>): bool {
 export function Scanner_SetText(receiver: GoPtr<Scanner>, text: string): void {
   const s = receiver!;
   s.text = text;
-  s.end = byteLen(text);
+  const view = utf8.GetStringByteView(text);
+  s.sourceByteView = view;
+  s.end = utf8.StringByteViewLen(text, view);
   // s.ScannerState = ScannerState{}: reset the embedded state to its zero value.
   s.__tsgoEmbedded0 = newScannerState();
 }
@@ -1297,6 +1341,7 @@ export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Mess
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.char","kind":"method","status":"implemented","sigHash":"83b9f5c499d55cb42ecff92a9698b5d07b83e98bfc19ce7e8d9464bd49aed11a","bodyHash":"04dd1c9c3c4cc4876bb9b349ade0eb577fc352a2d398cf992b1021424fdbdd3c"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every byte access."}
  *
  * Go source:
  * func (s *Scanner) char() rune {
@@ -1309,13 +1354,14 @@ export function Scanner_errorAt(receiver: GoPtr<Scanner>, diagnostic: GoPtr<Mess
 export function Scanner_char(receiver: GoPtr<Scanner>): GoRune {
   const s = receiver!;
   if (s.__tsgoEmbedded0.pos < s.end) {
-    return byteAt(s.text, s.__tsgoEmbedded0.pos);
+    return scannerByteAt(s, s.__tsgoEmbedded0.pos);
   }
   return -1;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAt","kind":"method","status":"implemented","sigHash":"da7fb8267c9d51bb48b7ab642034a5e6b9ba11614d5be412238c0917f439a26f","bodyHash":"8899ba70b7386f7e6861ef2dc2af29fb0f6af0ab77b551e389197d02b078966f"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Read from the scanner-local source byte view instead of recomputing a string byte view on every offset probe."}
  *
  * Go source:
  * func (s *Scanner) charAt(offset int) rune {
@@ -1328,13 +1374,14 @@ export function Scanner_char(receiver: GoPtr<Scanner>): GoRune {
 export function Scanner_charAt(receiver: GoPtr<Scanner>, offset: int): GoRune {
   const s = receiver!;
   if (s.__tsgoEmbedded0.pos + offset < s.end) {
-    return byteAt(s.text, s.__tsgoEmbedded0.pos + offset);
+    return scannerByteAt(s, s.__tsgoEmbedded0.pos + offset);
   }
   return -1;
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.charAndSize","kind":"method","status":"implemented","sigHash":"8d18d5c2ed40b33c06f101da083e5d47474d596fca8274aeebe218283733a06e","bodyHash":"53999882a6597734c93b240d0823bd51399ff1732381f6aa94eaff838eee7084"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode from the scanner-local source byte view while preserving TS-Go byte-offset rune size semantics."}
  *
  * Go source:
  * func (s *Scanner) charAndSize() (rune, int) {
@@ -1359,12 +1406,12 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
   // ASCII; handling them here avoids constructing a string slice header and
   // calling the non-inlined utf8.DecodeRuneInString on every byte.
   if (s.__tsgoEmbedded0.pos < s.end) {
-    const b = byteAt(s.text, s.__tsgoEmbedded0.pos);
+    const b = scannerByteAt(s, s.__tsgoEmbedded0.pos);
     if (b < utf8.RuneSelf) {
       return [b, 1 as int];
     }
   }
-  const [r, size] = decodeRuneInStringAt(s.text, s.__tsgoEmbedded0.pos);
+  const [r, size] = scannerDecodeRuneInStringAt(s, s.__tsgoEmbedded0.pos);
   if (size > 1) {
     s.containsNonASCII = true;
   }
@@ -1373,6 +1420,7 @@ export function Scanner_charAndSize(receiver: GoPtr<Scanner>): [GoRune, int] {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanASCIIWhile","kind":"method","status":"implemented","sigHash":"43b4e929d6def6f9ba2bd93f8ceb888db4e5dffbbc6a805e447a79074d942f12","bodyHash":"b98fd457d9e43cde7e81a876f1b69058c8e0c77a94321c20ef8a6df042cc8c3e"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan directly over the scanner-local source byte view instead of materializing Go-style string slices; byte advancement remains TS-Go exact."}
  *
  * Go source:
  * // scanASCIIWhile advances s.pos over the longest run of ASCII bytes for which
@@ -1395,17 +1443,30 @@ export function Scanner_scanASCIIWhile(receiver: GoPtr<Scanner>, pred: (b: byte)
   const s = receiver!;
   // Scan in place over s.text rather than materializing s.text[pos:end] each call. The byte-string
   // slice is O(rest-of-file) (decode/copy) per call, which is O(n^2) over a large source such as the
-  // bundled lib (TS-Go's Go slice is O(1)). byteAt(s.text, pos) reuses the cached Utf8ByteInfo for
+  // bundled lib (TS-Go's Go slice is O(1)). scannerByteAt(s, pos) reuses the cached byte view for
   // s.text, so this stays O(run). Semantics are identical to the Go: advance over the longest run of
   // ASCII bytes for which pred holds, stopping at end, the first non-ASCII byte, or the first !pred.
   const end = s.end;
   let pos = s.__tsgoEmbedded0.pos;
-  while (pos < end) {
-    const b = byteAt(s.text, pos) as byte;
-    if (b >= utf8.RuneSelf || !pred(b)) {
-      break;
+  const view = s.sourceByteView;
+  if (view.ascii) {
+    const text = s.text;
+    while (pos < end) {
+      const b = text.charCodeAt(pos) as byte;
+      if (b >= utf8.RuneSelf || !pred(b)) {
+        break;
+      }
+      pos++;
     }
-    pos++;
+  } else {
+    const bytes = view.bytes!;
+    while (pos < end) {
+      const b = bytes[pos]! as byte;
+      if (b >= utf8.RuneSelf || !pred(b)) {
+        break;
+      }
+      pos++;
+    }
   }
   s.__tsgoEmbedded0.pos = pos;
 }
@@ -2156,7 +2217,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
 
           if (isJSDoc) {
             st.tokenFlags |= TokenFlagsPrecedingJSDocComment;
-            Scanner_scanJSDocCommentForTags(s, byteSlice(s.text, st.tokenStart, st.pos));
+            Scanner_scanJSDocCommentForTags(s, scannerByteSlice(s, st.tokenStart, st.pos));
           }
 
           Scanner_processCommentDirective(s, lastLineStart, st.pos, true);
@@ -2200,7 +2261,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
           if (cachedValue !== undefined) {
             st.tokenValue = cachedValue;
           } else {
-            const rawText = byteSlice(s.text, start, st.pos);
+            const rawText = scannerByteSlice(s, start, st.pos);
             if (strings.HasPrefix(rawText, "0x") && byteSlice(rawText, 2) === digits) {
               st.tokenValue = rawText;
             } else {
@@ -2471,7 +2532,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
         const [ch2, size] = Scanner_charAndSize(s);
         if (ch2 === utf8.RuneError) {
           Scanner_errorAt(s, File_appears_to_be_binary, 0, 0);
-          st.pos = byteLen(s.text);
+          st.pos = scannerByteLen(s);
           st.token = KindNonTextFileMarkerTrivia;
           break;
         }
@@ -2559,34 +2620,34 @@ export function Scanner_processCommentDirective(receiver: GoPtr<Scanner>, start:
   let pos = start;
   if (multiline) {
     // Skip whitespace
-    while (pos < end && (byteAt(s.text, pos) === " ".charCodeAt(0) || byteAt(s.text, pos) === "\t".charCodeAt(0))) {
+    while (pos < end && (scannerByteAt(s, pos) === " ".charCodeAt(0) || scannerByteAt(s, pos) === "\t".charCodeAt(0))) {
       pos++;
     }
     // Skip combinations of / and *
-    while (pos < end && (byteAt(s.text, pos) === "/".charCodeAt(0) || byteAt(s.text, pos) === "*".charCodeAt(0))) {
+    while (pos < end && (scannerByteAt(s, pos) === "/".charCodeAt(0) || scannerByteAt(s, pos) === "*".charCodeAt(0))) {
       pos++;
     }
   } else {
     // Skip opening //
     pos += 2;
     // Skip another / if present
-    while (pos < end && byteAt(s.text, pos) === "/".charCodeAt(0)) {
+    while (pos < end && scannerByteAt(s, pos) === "/".charCodeAt(0)) {
       pos++;
     }
   }
   // Skip whitespace
-  while (pos < end && (byteAt(s.text, pos) === " ".charCodeAt(0) || byteAt(s.text, pos) === "\t".charCodeAt(0))) {
+  while (pos < end && (scannerByteAt(s, pos) === " ".charCodeAt(0) || scannerByteAt(s, pos) === "\t".charCodeAt(0))) {
     pos++;
   }
   // Directive must start with '@'
-  if (!(pos < end && byteAt(s.text, pos) === "@".charCodeAt(0))) {
+  if (!(pos < end && scannerByteAt(s, pos) === "@".charCodeAt(0))) {
     return;
   }
   pos++;
   let kind: CommentDirectiveKind;
-  if (strings.HasPrefix(byteSlice(s.text, pos), "ts-expect-error")) {
+  if (scannerHasPrefixAt(s, pos, "ts-expect-error")) {
     kind = CommentDirectiveKindExpectError;
-  } else if (strings.HasPrefix(byteSlice(s.text, pos), "ts-ignore")) {
+  } else if (scannerHasPrefixAt(s, pos, "ts-ignore")) {
     kind = CommentDirectiveKindIgnore;
   } else {
     return;
@@ -2921,7 +2982,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
         st.tokenFlags |= TokenFlagsUnterminated;
         break;
       }
-      const ch = byteAt(s.text, p);
+      const ch = scannerByteAt(s, p);
       if (IsLineBreak(ch)) {
         st.tokenFlags |= TokenFlagsUnterminated;
         break;
@@ -2943,10 +3004,10 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
         !inCharacterClass &&
         ch === "(".charCodeAt(0) &&
         p + 1 < s.end &&
-        byteAt(s.text, p + 1) === "?".charCodeAt(0) &&
+        scannerByteAt(s, p + 1) === "?".charCodeAt(0) &&
         p + 2 < s.end &&
-        byteAt(s.text, p + 2) === "<".charCodeAt(0) &&
-        (p + 3 >= s.end || (byteAt(s.text, p + 3) !== "=".charCodeAt(0) && byteAt(s.text, p + 3) !== "!".charCodeAt(0)))
+        scannerByteAt(s, p + 2) === "<".charCodeAt(0) &&
+        (p + 3 >= s.end || (scannerByteAt(s, p + 3) !== "=".charCodeAt(0) && scannerByteAt(s, p + 3) !== "!".charCodeAt(0)))
       ) {
         namedCaptureGroups = true;
       }
@@ -2963,7 +3024,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
       let inDecimalQuantifier = false;
       let groupDepth = 0;
       while (p < endOfRegExpBody) {
-        const ch = byteAt(s.text, p);
+        const ch = scannerByteAt(s, p);
         if (inEscape) {
           inEscape = false;
         } else if (ch === "\\".charCodeAt(0)) {
@@ -2992,7 +3053,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
       }
       // Whitespaces and semicolons at the end are not likely to be part of the regex
       while (p > startOfRegExpBody) {
-        const [ch, size] = decodeLastRuneInStringBefore(s.text, p);
+        const [ch, size] = scannerDecodeLastRuneInStringBefore(s, p);
         if (IsWhiteSpaceLike(ch) || ch === ";".charCodeAt(0)) {
           p -= size;
         } else {
@@ -3005,7 +3066,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
       p++;
       let regExpFlags: regularExpressionFlags = 0;
       while (p < s.end) {
-        const [ch, size] = decodeRuneInStringAt(s.text, p);
+        const [ch, size] = scannerDecodeRuneInStringAt(s, p);
         if (ch === utf8.RuneError || !IsIdentifierPart(ch)) {
           break;
         }
@@ -3058,7 +3119,7 @@ export function Scanner_ReScanSlashToken(receiver: GoPtr<Scanner>, ...reportErro
     }
 
     st.pos = p;
-    st.tokenValue = byteSlice(s.text, st.tokenStart, st.pos);
+    st.tokenValue = scannerByteSlice(s, st.tokenStart, st.pos);
     st.token = KindRegularExpressionLiteral;
   }
   return st.token;
@@ -3272,7 +3333,7 @@ export function Scanner_ScanJsxTokenEx(receiver: GoPtr<Scanner>, allowMultilineJ
       }
       st.pos += size;
     }
-    st.tokenValue = byteSlice(s.text, st.fullStartPos, st.pos);
+    st.tokenValue = scannerByteSlice(s, st.fullStartPos, st.pos);
     st.token = KindJsxText;
     if (firstNonWhitespace === -1) {
       st.token = KindJsxTextAllWhiteSpaces;
@@ -3446,14 +3507,14 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
   const st = s.__tsgoEmbedded0;
   st.fullStartPos = st.pos;
   st.tokenFlags = TokenFlagsNone;
-  if (st.pos >= byteLen(s.text)) {
+  if (st.pos >= scannerByteLen(s)) {
     st.token = KindEndOfFile;
     return st.token;
   }
   st.tokenStart = st.pos;
   for (
     let [ch, size] = Scanner_charAndSize(s);
-    st.pos < byteLen(s.text) && !IsLineBreak(ch) && ch !== "`".charCodeAt(0);
+    st.pos < scannerByteLen(s) && !IsLineBreak(ch) && ch !== "`".charCodeAt(0);
     [ch, size] = Scanner_charAndSize(s)
   ) {
     if (!inBackticks) {
@@ -3461,9 +3522,9 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
         break;
       } else if (ch === "@".charCodeAt(0) && st.pos >= 0) {
         // @ doesn't start a new tag inside ``, and elsewhere, only after whitespace and before identifier
-        const [previous] = decodeLastRuneInStringBefore(s.text, st.pos);
+        const [previous] = scannerDecodeLastRuneInStringBefore(s, st.pos);
         if (IsWhiteSpaceSingleLine(previous)) {
-          const [next] = decodeRuneInStringAt(s.text, st.pos + size);
+          const [next] = scannerDecodeRuneInStringAt(s, st.pos + size);
           if (IsIdentifierStart(next)) {
             break;
           }
@@ -3475,7 +3536,7 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
   if (st.pos === st.tokenStart) {
     return Scanner_ScanJSDocToken(s);
   }
-  st.tokenValue = byteSlice(s.text, st.tokenStart, st.pos);
+  st.tokenValue = scannerByteSlice(s, st.tokenStart, st.pos);
   st.token = KindJSDocCommentTextToken;
   return st.token;
 }
@@ -3495,10 +3556,10 @@ export function Scanner_ScanJSDocCommentTextToken(receiver: GoPtr<Scanner>, inBa
 export function Scanner_CanFollowJSDocAt(receiver: GoPtr<Scanner>): bool {
   const s = receiver!;
   const st = s.__tsgoEmbedded0;
-  if (st.pos >= byteLen(s.text)) {
+  if (st.pos >= scannerByteLen(s)) {
     return true;
   }
-  const [ch] = decodeRuneInStringAt(s.text, st.pos);
+  const [ch] = scannerDecodeRuneInStringAt(s, st.pos);
   return IsIdentifierStart(ch) || IsWhiteSpaceSingleLine(ch) || IsLineBreak(ch);
 }
 
@@ -3620,7 +3681,7 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
   const st = s.__tsgoEmbedded0;
   st.fullStartPos = st.pos;
   st.tokenFlags = TokenFlagsNone;
-  if (st.pos >= byteLen(s.text)) {
+  if (st.pos >= scannerByteLen(s)) {
     st.token = KindEndOfFile;
     return st.token;
   }
@@ -3714,7 +3775,7 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
   if (IsIdentifierStart(ch)) {
     let char = ch;
     for (;;) {
-      if (st.pos >= byteLen(s.text)) {
+      if (st.pos >= scannerByteLen(s)) {
         break;
       }
       [char, size] = Scanner_charAndSize(s);
@@ -3723,7 +3784,7 @@ export function Scanner_ScanJSDocToken(receiver: GoPtr<Scanner>): Kind {
       }
       st.pos += size;
     }
-    st.tokenValue = byteSlice(s.text, st.tokenStart, st.pos);
+    st.tokenValue = scannerByteSlice(s, st.tokenStart, st.pos);
     if (char === "\\".charCodeAt(0)) {
       st.tokenValue += Scanner_scanIdentifierParts(s);
     }
@@ -3788,7 +3849,7 @@ export function Scanner_scanIdentifier(receiver: GoPtr<Scanner>, prefixLength: i
     });
     ch = Scanner_char(s);
     if (ch < utf8.RuneSelf && ch !== "\\".charCodeAt(0)) {
-      st.tokenValue = byteSlice(s.text, start, st.pos);
+      st.tokenValue = scannerByteSlice(s, start, st.pos);
       return true;
     }
     st.pos = start + prefixLength;
@@ -3803,7 +3864,7 @@ export function Scanner_scanIdentifier(receiver: GoPtr<Scanner>, prefixLength: i
         break;
       }
     }
-    st.tokenValue = byteSlice(s.text, start, st.pos);
+    st.tokenValue = scannerByteSlice(s, start, st.pos);
     if (ch === "\\".charCodeAt(0)) {
       st.tokenValue += Scanner_scanIdentifierParts(s);
     }
@@ -3854,7 +3915,7 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
     if (ch === "\\".charCodeAt(0)) {
       const escaped = Scanner_peekUnicodeEscape(s);
       if (escaped >= 0 && IsIdentifierPart(escaped)) {
-        sb.WriteString(byteSlice(s.text, start, st.pos));
+        sb.WriteString(scannerByteSlice(s, start, st.pos));
         sb.WriteRune(Scanner_scanUnicodeEscape(s, true));
         start = st.pos;
         continue;
@@ -3862,12 +3923,13 @@ export function Scanner_scanIdentifierParts(receiver: GoPtr<Scanner>): string {
     }
     break;
   }
-  sb.WriteString(byteSlice(s.text, start, st.pos));
+  sb.WriteString(scannerByteSlice(s, start, st.pos));
   return sb.String();
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanString","kind":"method","status":"implemented","sigHash":"4bd87ff6951a51fbdfe3e56c4f24684dec346fba5ba02c9830f4be9c6ba11379","bodyHash":"bb449bb53dae2ba8d795d9e8e7189db93174c6e4dec732213aa8d523afef69af"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the simple-string fast path over the scanner byte view before materializing token text; Go string slices are O(1), but JS/.NET text slices allocate."}
  *
  * Go source:
  * func (s *Scanner) scanString(jsxAttributeString bool) string {
@@ -3931,13 +3993,14 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
   }
   st.pos++;
   // Fast path for simple strings without escape sequences.
-  const strLen = strings.IndexByte(byteSlice(s.text, st.pos), quote as byte);
+  const strEnd = utf8.StringByteViewIndexByte(s.text, s.sourceByteView, st.pos, quote as byte);
+  const strLen = strEnd < 0 ? -1 : strEnd - st.pos;
   if (strLen === 0) {
     st.pos++;
     return "";
   }
   if (strLen > 0) {
-    const str = byteSlice(s.text, st.pos, st.pos + strLen);
+    const str = scannerByteSlice(s, st.pos, st.pos + strLen);
     if (
       jsxAttributeString ||
       ((strings.IndexByte(str, "\\".charCodeAt(0) as byte) < 0 && strings.IndexByte(str, "\r".charCodeAt(0) as byte) < 0 && strings.IndexByte(str, "\n".charCodeAt(0) as byte) < 0) as bool)
@@ -3951,24 +4014,24 @@ export function Scanner_scanString(receiver: GoPtr<Scanner>, jsxAttributeString:
   for (;;) {
     const ch = Scanner_char(s);
     if (ch < 0) {
-      sb.WriteString(byteSlice(s.text, start, st.pos));
+      sb.WriteString(scannerByteSlice(s, start, st.pos));
       st.tokenFlags |= TokenFlagsUnterminated;
       Scanner_error(s, Unterminated_string_literal);
       break;
     }
     if (ch === quote) {
-      sb.WriteString(byteSlice(s.text, start, st.pos));
+      sb.WriteString(scannerByteSlice(s, start, st.pos));
       st.pos++;
       break;
     }
     if (ch === "\\".charCodeAt(0) && !jsxAttributeString) {
-      sb.WriteString(byteSlice(s.text, start, st.pos));
+      sb.WriteString(scannerByteSlice(s, start, st.pos));
       sb.WriteString(Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | EscapeSequenceScanningFlagsReportErrors));
       start = st.pos;
       continue;
     }
     if ((ch === "\n".charCodeAt(0) || ch === "\r".charCodeAt(0)) && !jsxAttributeString) {
-      sb.WriteString(byteSlice(s.text, start, st.pos));
+      sb.WriteString(scannerByteSlice(s, start, st.pos));
       st.tokenFlags |= TokenFlagsUnterminated;
       Scanner_error(s, Unterminated_string_literal);
       break;
@@ -4048,7 +4111,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
     });
     const ch = Scanner_char(s);
     if (ch < 0 || ch === "`".charCodeAt(0)) {
-      parts.push(byteSlice(s.text, start, st.pos));
+      parts.push(scannerByteSlice(s, start, st.pos));
       if (ch === "`".charCodeAt(0)) {
         st.pos++;
       } else {
@@ -4059,13 +4122,13 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
       break;
     }
     if (ch === "$".charCodeAt(0) && Scanner_charAt(s, 1) === "{".charCodeAt(0)) {
-      parts.push(byteSlice(s.text, start, st.pos));
+      parts.push(scannerByteSlice(s, start, st.pos));
       st.pos += 2;
       token = IfElse(startedWithBacktick, KindTemplateHead, KindTemplateMiddle);
       break;
     }
     if (ch === "\\".charCodeAt(0)) {
-      parts.push(byteSlice(s.text, start, st.pos));
+      parts.push(scannerByteSlice(s, start, st.pos));
       parts.push(Scanner_scanEscapeSequence(s, EscapeSequenceScanningFlagsString | IfElse(shouldEmitInvalidEscapeError, EscapeSequenceScanningFlagsReportErrors, 0)));
       start = st.pos;
       continue;
@@ -4073,7 +4136,7 @@ export function Scanner_scanTemplateAndSetTokenValue(receiver: GoPtr<Scanner>, s
     // Speculated ECMAScript 6 Spec 11.8.6.1:
     // <CR><LF> and <CR> LineTerminatorSequences are normalized to <LF> for Template Values
     if (ch === "\r".charCodeAt(0)) {
-      parts.push(byteSlice(s.text, start, st.pos));
+      parts.push(scannerByteSlice(s, start, st.pos));
       st.pos++;
       if (Scanner_char(s) === "\n".charCodeAt(0)) {
         st.pos++;
@@ -4280,7 +4343,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
     // '\47'
     st.tokenFlags |= TokenFlagsContainsInvalidEscape;
     if ((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors) !== 0) {
-      const [code] = strconv.ParseInt(byteSlice(s.text, start + 1, st.pos), 8, 32);
+      const [code] = strconv.ParseInt(scannerByteSlice(s, start + 1, st.pos), 8, 32);
       if ((flags & EscapeSequenceScanningFlagsRegularExpression) !== 0 && (flags & EscapeSequenceScanningFlagsAtomEscape) === 0 && ch !== "0".charCodeAt(0)) {
         Scanner_errorAt(s, Octal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class_If_this_was_intended_as_an_escape_sequence_use_the_syntax_0_instead, start, st.pos - start, fmt.Sprintf("\\x%02x", code));
       } else {
@@ -4288,7 +4351,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
       }
       return stringFromRune(code);
     }
-    return byteSlice(s.text, start, st.pos);
+    return scannerByteSlice(s, start, st.pos);
   };
   switch (ch) {
     case "0".charCodeAt(0): {
@@ -4329,11 +4392,11 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
         if ((flags & EscapeSequenceScanningFlagsRegularExpression) !== 0 && (flags & EscapeSequenceScanningFlagsAtomEscape) === 0) {
           Scanner_errorAt(s, Decimal_escape_sequences_and_backreferences_are_not_allowed_in_a_character_class, start, st.pos - start);
         } else {
-          Scanner_errorAt(s, Escape_sequence_0_is_not_allowed, start, st.pos - start, byteSlice(s.text, start, st.pos));
+          Scanner_errorAt(s, Escape_sequence_0_is_not_allowed, start, st.pos - start, scannerByteSlice(s, start, st.pos));
         }
         return stringFromRune(ch);
       }
-      return byteSlice(s.text, start, st.pos);
+      return scannerByteSlice(s, start, st.pos);
     }
     case "b".charCodeAt(0):
       return "\b";
@@ -4364,7 +4427,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
           }
         }
         if (codePoint < 0) {
-          return byteSlice(s.text, start, st.pos);
+          return scannerByteSlice(s, start, st.pos);
         }
         // In string literals, a high surrogate \u{...} followed by a low
         // surrogate escape forms a single code point, exactly as adjacent
@@ -4378,7 +4441,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
         return EncodeJSStringRune(codePoint);
       }
       if (codePoint < 0) {
-        return byteSlice(s.text, start, st.pos);
+        return scannerByteSlice(s, start, st.pos);
       } else if (IsHighSurrogate(codePoint)) {
         if ((flags & EscapeSequenceScanningFlagsRegularExpression) === 0) {
           // Combine \uHigh followed by any low surrogate escape (\uLow or
@@ -4412,11 +4475,11 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
           if ((flags & EscapeSequenceScanningFlagsReportInvalidEscapeErrors) !== 0) {
             Scanner_error(s, Hexadecimal_digit_expected);
           }
-          return byteSlice(s.text, start, st.pos);
+          return scannerByteSlice(s, start, st.pos);
         }
       }
       st.tokenFlags |= TokenFlagsHexEscape;
-      const [escapedValue] = strconv.ParseInt(byteSlice(s.text, start + 2, st.pos), 16, 32);
+      const [escapedValue] = strconv.ParseInt(scannerByteSlice(s, start + 2, st.pos), 16, 32);
       return stringFromRune(escapedValue);
     }
     case "\r".charCodeAt(0): {
@@ -4437,7 +4500,7 @@ export function Scanner_scanEscapeSequence(receiver: GoPtr<Scanner>, flags: Esca
       let chDefault = ch;
       if (chDefault >= utf8.RuneSelf) {
         st.pos--; // back up past the single-byte advance
-        const [decoded, size] = decodeRuneInStringAt(s.text, st.pos);
+        const [decoded, size] = scannerDecodeRuneInStringAt(s, st.pos);
         chDefault = decoded;
         st.pos += size;
         s.containsNonASCII = true;
@@ -4801,7 +4864,7 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
     if (exponentPart === "") {
       Scanner_error(s, Digit_expected);
     } else {
-      exponentPreamble = byteSlice(s.text, end, startNumericPart);
+      exponentPreamble = scannerByteSlice(s, end, startNumericPart);
       end = st.pos;
     }
   }
@@ -4814,7 +4877,7 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
       st.tokenValue += exponentPreamble + exponentPart;
     }
   } else {
-    st.tokenValue = byteSlice(s.text, start, end);
+    st.tokenValue = scannerByteSlice(s, start, end);
   }
   if ((st.tokenFlags & TokenFlagsContainsLeadingZero) !== 0) {
     Scanner_errorAt(s, Decimals_with_leading_zeros_are_not_allowed, start, st.pos - start);
@@ -4832,7 +4895,7 @@ export function Scanner_scanNumber(receiver: GoPtr<Scanner>): Kind {
   if (IsIdentifierStart(ch)) {
     const idStart = st.pos;
     const id = Scanner_scanIdentifierParts(s);
-    if (result !== KindBigIntLiteral && byteLen(id) === 1 && byteAt(s.text, idStart) === "n".charCodeAt(0)) {
+    if (result !== KindBigIntLiteral && byteLen(id) === 1 && scannerByteAt(s, idStart) === "n".charCodeAt(0)) {
       if ((st.tokenFlags & TokenFlagsScientific) !== 0) {
         Scanner_errorAt(s, A_bigint_literal_cannot_use_exponential_notation, start, st.pos - start);
         return result;
@@ -4919,7 +4982,7 @@ export function Scanner_scanNumberFragment(receiver: GoPtr<Scanner>): string {
       if (allowSeparator) {
         allowSeparator = false;
         isPreviousTokenSeparator = true;
-        result.WriteString(byteSlice(s.text, start, s.__tsgoEmbedded0.pos));
+        result.WriteString(scannerByteSlice(s, start, s.__tsgoEmbedded0.pos));
       } else {
         s.__tsgoEmbedded0.tokenFlags |= TokenFlagsContainsInvalidSeparator;
         if (isPreviousTokenSeparator) {
@@ -4939,9 +5002,9 @@ export function Scanner_scanNumberFragment(receiver: GoPtr<Scanner>): string {
     Scanner_errorAt(s, Numeric_separators_are_not_allowed_here, s.__tsgoEmbedded0.pos - 1, 1);
   }
   if (result.Len() === 0) {
-    return byteSlice(s.text, start, s.__tsgoEmbedded0.pos);
+    return scannerByteSlice(s, start, s.__tsgoEmbedded0.pos);
   }
-  result.WriteString(byteSlice(s.text, start, s.__tsgoEmbedded0.pos));
+  result.WriteString(scannerByteSlice(s, start, s.__tsgoEmbedded0.pos));
   return result.String();
 }
 
@@ -4971,7 +5034,7 @@ export function Scanner_scanDigits(receiver: GoPtr<Scanner>): [string, bool] {
     }
     s.__tsgoEmbedded0.pos++;
   }
-  return [byteSlice(s.text, start, s.__tsgoEmbedded0.pos), isOctal];
+  return [scannerByteSlice(s, start, s.__tsgoEmbedded0.pos), isOctal];
 }
 
 /**
@@ -5060,7 +5123,7 @@ export function Scanner_scanHexDigits(receiver: GoPtr<Scanner>, minCount: int, s
   if (digitCount < minCount) {
     return "";
   }
-  let digits = byteSlice(s.text, start, s.__tsgoEmbedded0.pos);
+  let digits = scannerByteSlice(s, start, s.__tsgoEmbedded0.pos);
   if (s.hexDigitCache === (undefined as unknown as GoMap<string, string>)) {
     s.hexDigitCache = new globalThis.Map<string, string>();
   }
@@ -5246,6 +5309,7 @@ export function GetIdentifierToken(str: string): Kind {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::IsValidIdentifier","kind":"func","status":"implemented","sigHash":"6f2f2e0fa3f0726fd3acac525f61e6739551580772c0110f3bd049ad7184f931","bodyHash":"1f4836c7935e22c71a33ca860a69db1ea8df3d4edde0f6f1d0c30e22989fdee7"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode identifier text by byte offset over one UTF-8 byte view; Go's s[i:] slice is O(1), but JS substring/decode would allocate each iteration."}
  *
  * Go source:
  * func IsValidIdentifier(s string) bool {
@@ -5261,17 +5325,15 @@ export function GetIdentifierToken(str: string): Kind {
  * }
  */
 export function IsValidIdentifier(s: string): bool {
-  if (byteLen(s) === 0) {
+  const view = utf8.GetStringByteView(s);
+  const length = utf8.StringByteViewLen(s, view);
+  if (length === 0) {
     return false;
   }
   // `for i, ch := range s` iterates Unicode code points with their byte index.
   let i = 0;
-  for (;;) {
-    const rest = byteSlice(s, i);
-    if (byteLen(rest) === 0) {
-      break;
-    }
-    const [ch, size] = utf8.DecodeRuneInString(rest);
+  while (i < length) {
+    const [ch, size] = utf8.DecodeRuneInStringViewAt(s, view, i);
     if ((i === 0 && !IsIdentifierStart(ch)) || (i !== 0 && !IsIdentifierPart(ch))) {
       return false;
     }
@@ -5938,6 +6000,7 @@ export function GetShebang(text: string): string {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetScannerForSourceFile","kind":"func","status":"implemented","sigHash":"720bc4aa046156e241c1cc279919d890b8d4aab6a56c0fd5ec1af0aa9b3b8865","bodyHash":"79c2d6bc1c53a79f5b5e9f483ec10e0c80925451b7647df913bf3740b36200dd"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Route source-file scanner initialization through SetText so the scanner-local source byte-view cache is refreshed with the new text."}
  *
  * Go source:
  * func GetScannerForSourceFile(sourceFile *ast.SourceFile, pos int) *Scanner {
@@ -5952,9 +6015,8 @@ export function GetShebang(text: string): string {
  */
 export function GetScannerForSourceFile(sourceFile: GoPtr<SourceFile>, pos: int): GoPtr<Scanner> {
   const s = NewScanner();
-  s!.text = SourceFile_Text(sourceFile);
+  Scanner_SetText(s, SourceFile_Text(sourceFile));
   s!.__tsgoEmbedded0.pos = pos;
-  s!.end = byteLen(s!.text);
   s!.languageVariant = sourceFile!.LanguageVariant;
   Scanner_Scan(s);
   return s;
@@ -6378,6 +6440,7 @@ export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::GetECMALineAndUTF16CharacterOfPosition","kind":"func","status":"implemented","sigHash":"3053c689ece6d87b64937f35b03ebebae053b2951b4d2af6800fa0daf5c7dead","bodyHash":"b473bc8093a3b6dc2f0ce2e3e5a9180336e485fc25ba5f5b9167002d895587dd"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Compute UTF-16 length for a byte range over the source byte view instead of allocating sourceFile.Text()[lineStart:pos]."}
  *
  * Go source:
  * func GetECMALineAndUTF16CharacterOfPosition(sourceFile ast.SourceFileLike, pos int) (line int, character core.UTF16Offset) {
@@ -6390,7 +6453,9 @@ export function GetECMALineOfPosition(sourceFile: SourceFileLike, pos: int): int
 export function GetECMALineAndUTF16CharacterOfPosition(sourceFile: SourceFileLike, pos: int): [int, UTF16Offset] {
   const lineMap = GetECMALineStarts(sourceFile);
   const line = ComputeLineOfPosition(lineMap, pos);
-  const character = UTF16Len(byteSlice(sourceFile.Text(), lineMap[line]!, pos));
+  const text = sourceFile.Text();
+  const textView = utf8.GetStringByteView(text);
+  const character = utf8.StringByteViewUTF16Len(text, textView, lineMap[line]!, pos);
   return [line, character];
 }
 
@@ -6629,6 +6694,7 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::iterateCommentRanges","kind":"func","status":"implemented","sigHash":"950d4c94afbed592bb044975542a6dc636ee1a5bc0c42042a973550e0ba2d3ec","bodyHash":"f132c9ea9991faeac70e2d456bd494f5c398097f236bb1040bb7b1fbe7b6ab24"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Search comment terminators and test bounds against a cached byte view instead of materializing text[pos:] slices; comment ranges remain TS-Go byte-offset exact."}
  *
  * Go source:
  * func iterateCommentRanges(f *ast.NodeFactory, text string, pos int, trailing bool) iter.Seq[ast.CommentRange] {
@@ -6739,6 +6805,8 @@ export function GetTrailingCommentRanges(f: GoPtr<NodeFactory>, text: string, po
  */
 export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: int, trailing: bool): GoSeq<CommentRange> {
   return (yield_: (value: CommentRange) => bool): void => {
+    const textView = utf8.GetStringByteView(text);
+    const textLen = utf8.StringByteViewLen(text, textView);
     let pendingPos = 0;
     let pendingEnd = 0;
     let pendingKind: Kind = KindUnknown;
@@ -6751,13 +6819,13 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
         pos = scanShebangTrivia(text, pos);
       }
     }
-    scan: for (; pos >= 0 && pos < byteLen(text); ) {
-      const [ch, size] = decodeRuneInStringAt(text, pos);
+    scan: for (; pos >= 0 && pos < textLen; ) {
+      const [ch, size] = utf8.DecodeRuneInStringViewAt(text, textView, pos);
       switch (ch) {
         case "\r".charCodeAt(0):
         case "\n".charCodeAt(0): {
           if (ch === "\r".charCodeAt(0)) {
-            if (pos + 1 < byteLen(text) && byteAt(text, pos + 1) === "\n".charCodeAt(0)) {
+            if (pos + 1 < textLen && utf8.StringByteViewAt(text, textView, pos + 1) === "\n".charCodeAt(0)) {
               pos++;
             }
             // fallthrough to '\n'
@@ -6782,8 +6850,8 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
           continue;
         case "/".charCodeAt(0): {
           let nextChar: byte = 0 as byte;
-          if (pos + 1 < byteLen(text)) {
-            nextChar = byteAt(text, pos + 1) as byte;
+          if (pos + 1 < textLen) {
+            nextChar = utf8.StringByteViewAt(text, textView, pos + 1) as byte;
           }
           let hasTrailingNewLine = false;
           if (nextChar === "/".charCodeAt(0) || nextChar === "*".charCodeAt(0)) {
@@ -6797,8 +6865,8 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
             const startPos = pos;
             pos += 2;
             if (nextChar === "/".charCodeAt(0)) {
-              while (pos < byteLen(text)) {
-                const [c, sz] = decodeRuneInStringAt(text, pos);
+              while (pos < textLen) {
+                const [c, sz] = utf8.DecodeRuneInStringViewAt(text, textView, pos);
                 if (IsLineBreak(c)) {
                   hasTrailingNewLine = true;
                   break;
@@ -6806,11 +6874,11 @@ export function iterateCommentRanges(f: GoPtr<NodeFactory>, text: string, pos: i
                 pos += sz;
               }
             } else {
-              const i = strings.Index(byteSlice(text, pos), "*/");
+              const i = utf8.StringByteViewIndex(text, textView, pos, "*/");
               if (i >= 0) {
-                pos += i + 2;
+                pos = i + 2;
               } else {
-                pos = byteLen(text);
+                pos = textLen;
               }
             }
 

@@ -1165,7 +1165,7 @@ export type UTF16Offset = int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len","kind":"func","status":"implemented","sigHash":"08a30f04fbc495b785be284545417ab70df1fd4079f69a0b09fc73ce87fb4254","bodyHash":"6117f4167e836bcb53d144ac39dec841ae2f4513c8cb13fa1b3db29e9651bb20"}
- * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Use the native JS/.NET UTF-16 code-unit length directly; it is the value this TS-Go helper computes after decoding valid source text."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Use the native JS/.NET UTF-16 code-unit length directly; it is the value this TS-Go helper computes after decoding valid source text."}
  *
  * Go source:
  * func UTF16Len(s string) UTF16Offset {

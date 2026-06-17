@@ -61,13 +61,14 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
       "ptrValueEquivStruct": false,   // GoPtr<X> == X
       "acceptErasedConstraints": false // non-trivial Go constraints must be preserved in TS
     }
-  },
-
-  // Per-unit acceptances must list explicit mismatch aspects and a reason.
-  // There is no accept-all override.
-  "overrides": [ { "match": "*::method::*.foo", "ignore": ["param-type"], "reason": "…" } ]
+  }
 }
 ```
+
+Per-unit signature acceptances are intentionally not configured here. They live
+next to the declaration as local `@tsgo-override` metadata with full
+`goSignature` and `tsSignature` snapshots. The verifier fails if either snapshot
+drifts.
 
 ## Using it outside tsts
 
