@@ -963,7 +963,7 @@ test("bundled-generator catches missing, stale, orphan, untracked, and invalid g
 
     writeFileSync(
       path.join(root, "src/internal/bundled/embed_generated.ts"),
-      expected.get(`${tsRoot}/internal/bundled/embed_generated.ts`).replace("declare const one: 1;", "declare const one: 2;"),
+      expected.get(`${tsRoot}/internal/bundled/embed_generated.ts`).replace(/\["libs\/lib\.one\.d\.ts", \d+\]/, '["libs/lib.one.d.ts", 999]'),
     );
     const stale = buildBundledGeneratedArtifactStatus(config, "rev");
     assert.equal(stale.stale.length, 1);
