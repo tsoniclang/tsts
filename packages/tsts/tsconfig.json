@@ -22,6 +22,8 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "src/**/*.test.ts",
+    "src/internal/bundled/libs"
   ]
 }
