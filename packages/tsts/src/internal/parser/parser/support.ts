@@ -225,15 +225,9 @@ import {
 import { Parser_jsErrorAtRange, Parser_parseErrorAt, Parser_parseErrorAtRange, Parser_scanError } from "./errors-recovery.js";
 import { parserPool, viableKeywordSuggestions } from "./state.js";
 
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteAt = (s: string, i: int): int => utf8Encoder.encode(s)[i]!;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
+const byteLen = utf8.StringByteLen;
+const byteAt = utf8.StringByteAt;
+const byteSlice = utf8.StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/parser.go::func::newParser","kind":"func","status":"implemented","sigHash":"e8799413d77acc7643df3b0c789d3524ab29dc535207b91246362c4eacd2aeb8","bodyHash":"b4fa9b078df3485406fee29b38d0132dedfa4b1351c81b1d99b15963d5fdf489"}
@@ -2135,7 +2129,7 @@ export function skipTo(text: string, pos: int, s: string): int {
 export function lineEndPos(text: string, pos: int): int {
   let p = pos;
   while (p < byteLen(text)) {
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(text, p));
+    const [ch, size] = utf8.DecodeRuneInStringAt(text, p);
     if (IsLineBreak(ch)) {
       return p;
     }

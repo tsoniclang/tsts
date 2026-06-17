@@ -24,6 +24,62 @@ const encoder: TextEncoder = new globalThis.TextEncoder();
 const decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 
 const encode = (s: string): Uint8Array => encoder.encode(s);
+export type StringByteView = { ascii: boolean; bytes?: Uint8Array };
+const stringByteViewCache = new globalThis.Map<string, StringByteView>();
+const stringByteViewCacheBudget = 64 * 1024 * 1024;
+const stringByteViewCacheState = { bytes: 0 };
+
+export function GetStringByteView(s: string): StringByteView {
+  const cached = stringByteViewCache.get(s);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let ascii = true;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) >= RuneSelf) {
+      ascii = false;
+      break;
+    }
+  }
+  const view: StringByteView = ascii ? { ascii } : { ascii, bytes: encode(s) };
+  if (s.length >= 4096) {
+    const cost = ascii ? s.length : view.bytes!.length;
+    if (stringByteViewCacheState.bytes + cost > stringByteViewCacheBudget) {
+      stringByteViewCache.clear();
+      stringByteViewCacheState.bytes = 0;
+    }
+    stringByteViewCache.set(s, view);
+    stringByteViewCacheState.bytes += cost;
+  }
+  return view;
+}
+
+export function StringByteLen(s: string): int {
+  const view = GetStringByteView(s);
+  return view.ascii ? s.length : view.bytes!.length;
+}
+
+export function StringByteAt(s: string, i: int): int {
+  const view = GetStringByteView(s);
+  return view.ascii ? s.charCodeAt(i) : view.bytes![i]!;
+}
+
+export function StringByteSlice(s: string, start: int, end?: int): string {
+  const view = GetStringByteView(s);
+  return view.ascii ? s.slice(start, end) : decoder.decode(view.bytes!.subarray(start, end));
+}
+
+export function StringUtf8Bytes(s: string): Uint8Array {
+  const view = GetStringByteView(s);
+  if (!view.ascii) {
+    return view.bytes!;
+  }
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) {
+    bytes[i] = s.charCodeAt(i);
+  }
+  return bytes;
+}
 
 // decodeRuneBytes decodes the rune at byte offset i within bytes, returning
 // [rune, sizeInBytes]. Matches utf8.DecodeRune semantics for invalid input.
@@ -121,24 +177,35 @@ export function DecodeLastRuneInBytesBefore(bytes: Uint8Array, end: int): [GoRun
 // and its width in bytes. For an empty string returns [RuneError, 0]; for an
 // invalid encoding returns [RuneError, 1].
 export function DecodeRuneInString(s: string): [GoRune, int] {
-  if (s.length === 0) {
-    return [RuneError, 0];
+  return DecodeRuneInStringAt(s, 0);
+}
+
+export function DecodeRuneInStringAt(s: string, i: int): [GoRune, int] {
+  const view = GetStringByteView(s);
+  if (view.ascii) {
+    return i >= s.length ? [RuneError, 0] : [s.charCodeAt(i), 1];
   }
-  const bytes = encode(s);
-  return decodeRuneBytes(bytes, 0);
+  return decodeRuneBytes(view.bytes!, i);
 }
 
 // DecodeLastRuneInString unpacks the last UTF-8 encoding in s and returns the
 // rune and its width in bytes.
 export function DecodeLastRuneInString(s: string): [GoRune, int] {
-  const bytes = encode(s);
-  return DecodeLastRuneInBytesBefore(bytes, bytes.length);
+  return DecodeLastRuneInStringBefore(s, StringByteLen(s));
+}
+
+export function DecodeLastRuneInStringBefore(s: string, end: int): [GoRune, int] {
+  const view = GetStringByteView(s);
+  if (view.ascii) {
+    return end <= 0 ? [RuneError, 0] : [s.charCodeAt(end - 1), 1];
+  }
+  return DecodeLastRuneInBytesBefore(view.bytes!, end);
 }
 
 // RuneCountInString returns the number of runes in s. Erroneous and short
 // encodings are treated as single runes of width 1 byte.
 export function RuneCountInString(s: string): int {
-  const bytes = encode(s);
+  const bytes = StringUtf8Bytes(s);
   let count = 0;
   let i = 0;
   while (i < bytes.length) {

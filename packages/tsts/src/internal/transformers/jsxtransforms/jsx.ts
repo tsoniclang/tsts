@@ -3,7 +3,7 @@ import type { GoMap, GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
 import type { GoError } from "../../../go/compat.js";
 import { Builder, IndexByte } from "../../../go/strings.js";
 import { FormatInt, ParseInt } from "../../../go/strconv.js";
-import { DecodeRuneInString } from "../../../go/unicode/utf8.js";
+import { DecodeRuneInStringAt, StringByteAt, StringByteLen, StringByteSlice } from "../../../go/unicode/utf8.js";
 import type { Node, NodeList } from "../../ast/spine.js";
 import { Node_AsNode, Node_End, Node_Name, Node_Pos, Node_SubtreeFacts } from "../../ast/spine.js";
 import type { SourceFile } from "../../ast/ast.js";
@@ -52,14 +52,9 @@ import { Transformer_EmitContext, Transformer_Factory, Transformer_NewTransforme
 // standard-library facades (strings/strconv/utf8) follow that contract, so we
 // mirror it here by operating over the UTF-8 byte view and converting back to a
 // JS string at the boundaries.
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteAt = (s: string, i: int): int => utf8Encoder.encode(s)[i]!;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
+const byteLen = StringByteLen;
+const byteAt = StringByteAt;
+const byteSlice = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/transformers/jsxtransforms/jsx.go::type::JSXTransformer","kind":"type","status":"implemented","sigHash":"f4d543aef50805c0daf1acbda906f9cd8582889e57dcbb274d9f2ec3142daf12","bodyHash":"24ca0c04864e6acfd1ba4c73accb3e3aa06410a4ba673b1275c2b2a13b39311c"}
@@ -1938,7 +1933,7 @@ export function fixupWhitespaceAndDecodeEntities(text: string): string {
   // but lastNonWhitespaceEnd = -1 as a special flag to indicate that we *don't* include the line if it's all whitespace.
   const textLen = byteLen(text);
   for (let i = 0; i < textLen; i++) {
-    const [c, size] = DecodeRuneInString(byteSlice(text, i));
+    const [c, size] = DecodeRuneInStringAt(text, i);
     if (IsLineBreak(c)) {
       // If we've seen any non-whitespace characters on this line, add the 'trim' of the line.
       // (lastNonWhitespaceEnd === -1 is a special flag to detect whether the first line is all whitespace.)
@@ -2164,7 +2159,7 @@ export function decodeEntity(entity: string): [GoRune, bool] {
 
     const restLen = byteLen(rest);
     for (let j = 0; j < restLen; ) {
-      const [c, size] = DecodeRuneInString(byteSlice(rest, j));
+      const [c, size] = DecodeRuneInStringAt(rest, j);
       if (base === 16 && !IsHexDigit(c)) {
         return [0, false];
       }

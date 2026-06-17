@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr } from "../../go/compat.js";
 import { Builder, ContainsRune, TrimRightFunc } from "../../go/strings.js";
-import { DecodeRuneInString } from "../../go/unicode/utf8.js";
+import { DecodeRuneInString, DecodeRuneInStringAt, StringByteAt, StringByteLen, StringByteSlice } from "../../go/unicode/utf8.js";
 import { IsSpace } from "../../go/unicode.js";
 import { Node_End, Node_KindString, Node_Pos } from "../ast/spine.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -23,41 +23,8 @@ import { IsIdentifierPartEx, IsIdentifierStart, SkipTrivia, textToKeyword } from
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `name[i:]` operate on byte offsets. We mirror that contract by
 // operating over the UTF-8 byte view of the JS string.
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
-const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
-
-const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
-  const cached = utf8ByteInfoCache.get(s);
-  if (cached !== undefined) {
-    return cached;
-  }
-  let ascii = true;
-  for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) >= 0x80) {
-      ascii = false;
-      break;
-    }
-  }
-  const info: Utf8ByteInfo = {
-    ascii,
-    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
-  };
-  if (s.length >= 4096) {
-    utf8ByteInfoCache.set(s, info);
-  }
-  return info;
-};
-
-const byteLen = (s: string): int => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.length : info.bytes.length;
-};
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
-};
+const byteLen = StringByteLen;
+const byteSlice = StringByteSlice;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/utilities.go::func::tokenIsIdentifierOrKeyword","kind":"func","status":"implemented","sigHash":"538026bcddd56581a52c2d4c5ae6b1f36ef3386ee89dd8f7605ba57f9f21df7d","bodyHash":"b09ca2afbed17046efb355bbc5fa534f58fc7cb9b3b212c37a3ba8428a1b3726"}
@@ -255,7 +222,7 @@ export function IsIdentifierText(name: string, languageVariant: LanguageVariant)
   }
   const loop = (i: int): bool => {
     if (i >= byteLen(name)) return true;
-    const [ch2, sz] = DecodeRuneInString(byteSlice(name, i));
+    const [ch2, sz] = DecodeRuneInStringAt(name, i);
     if (!IsIdentifierPartEx(ch2, languageVariant)) return false;
     return loop((i + sz) as int);
   };
@@ -271,7 +238,7 @@ export function IsIdentifierText(name: string, languageVariant: LanguageVariant)
  * }
  */
 export function IsIntrinsicJsxName(name: string): bool {
-  const nameBytes = utf8Encoder.encode(name);
-  const b0: int = nameBytes.length !== 0 ? nameBytes[0]! : 0;
-  return nameBytes.length !== 0 && ((b0 >= 0x61 && b0 <= 0x7a) || ContainsRune(name, 0x2d));
+  const nameLen = byteLen(name);
+  const b0: int = nameLen !== 0 ? StringByteAt(name, 0) : 0;
+  return nameLen !== 0 && ((b0 >= 0x61 && b0 <= 0x7a) || ContainsRune(name, 0x2d));
 }

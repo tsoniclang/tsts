@@ -82,20 +82,9 @@ import { CodePointToSurrogatePair, DecodeJSStringRune, EncodeJSStringRune } from
 
 // Go strings are UTF-8 byte sequences; the regexp parser tracks byte offsets
 // (p.pos()). These helpers reproduce Go's byte-indexed string operations.
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
-
-const byteAt = (s: string, i: int): int => {
-  const bytes = utf8Encoder.encode(s);
-  return bytes[i]!;
-};
-
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
+const byteSlice = utf8.StringByteSlice;
+const byteAt = utf8.StringByteAt;
+const byteLen = utf8.StringByteLen;
 
 // stringFromRune reproduces Go's `string(rune)`: the rune is UTF-8 encoded.
 // String.fromCodePoint yields the JS string whose UTF-8 byte view matches.
@@ -867,7 +856,7 @@ export function regExpParser_scanAlternative(receiver: GoPtr<regExpParser>, isIn
 export function regExpParser_scanPatternModifiers(receiver: GoPtr<regExpParser>, currFlags: regularExpressionFlags): regularExpressionFlags {
   let currFlagsLocal: regularExpressionFlags = currFlags;
   while (regExpParser_pos(receiver) < receiver!.end) {
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(regExpParser_text(receiver), regExpParser_pos(receiver)));
+    const [ch, size] = utf8.DecodeRuneInStringAt(regExpParser_text(receiver), regExpParser_pos(receiver));
     if (ch === utf8.RuneError || !IsIdentifierPart(ch)) {
       break;
     }
@@ -2329,13 +2318,13 @@ export function regExpParser_scanSourceCharacter(receiver: GoPtr<regExpParser>):
     if (receiver!.pendingLowSurrogate !== 0) {
       // Second of two surrogate code units for the same non-BMP character.
       // Now advance past the full UTF-8 sequence (the high surrogate call did not advance).
-      const [, size] = utf8.DecodeRuneInString(byteSlice(regExpParser_text(receiver), regExpParser_pos(receiver)));
+      const [, size] = utf8.DecodeRuneInStringAt(regExpParser_text(receiver), regExpParser_pos(receiver));
       regExpParser_incPos(receiver, size);
       const low = receiver!.pendingLowSurrogate;
       receiver!.pendingLowSurrogate = 0;
       return EncodeJSStringRune(low);
     }
-    const [ch, size] = utf8.DecodeRuneInString(byteSlice(regExpParser_text(receiver), regExpParser_pos(receiver)));
+    const [ch, size] = utf8.DecodeRuneInStringAt(regExpParser_text(receiver), regExpParser_pos(receiver));
     if (ch === utf8.RuneError || size === 0) {
       // Not a valid rune; consume one raw byte.
       regExpParser_incPos(receiver, 1);
@@ -2351,7 +2340,7 @@ export function regExpParser_scanSourceCharacter(receiver: GoPtr<regExpParser>):
     regExpParser_incPos(receiver, size);
     return stringFromRune(ch);
   }
-  const [ch, size] = utf8.DecodeRuneInString(byteSlice(regExpParser_text(receiver), regExpParser_pos(receiver)));
+  const [ch, size] = utf8.DecodeRuneInStringAt(regExpParser_text(receiver), regExpParser_pos(receiver));
   if (size === 0) {
     return "";
   }

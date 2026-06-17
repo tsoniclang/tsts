@@ -5,28 +5,24 @@ import { New as errors_New, Is as errors_Is } from "../../go/errors.js";
 import { FormatInt, ParseFloat, ParseInt, ErrRange } from "../../go/strconv.js";
 import { Builder, Cut, CutPrefix, HasPrefix, HasSuffix, IndexAny, TrimFunc, TrimLeft, TrimRight } from "../../go/strings.js";
 import { Is as unicode_Is, Zs } from "../../go/unicode.js";
-import { DecodeRuneInString } from "../../go/unicode/utf8.js";
+import { DecodeRuneInBytesAt, DecodeRuneInString, DecodeRuneInStringAt, StringByteLen, StringByteSlice, StringUtf8Bytes } from "../../go/unicode/utf8.js";
 import { Marshal } from "../json/json.js";
 import { IsDigit, IsHexDigit, IsOctalDigit } from "../stringutil/util.js";
 import { Inf, MaxSafeInteger, MinSafeInteger, NaN, Number_IsInf, Number_IsNaN } from "./jsnum.js";
 import type { Number } from "./jsnum.js";
 
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
+const byteLen = StringByteLen;
+const byteSlice = StringByteSlice;
 // `string([]byte)` reinterprets the byte slice as a UTF-8 string.
 const BytesToString = (b: ReadonlyArray<byte>): string => utf8Decoder.decode(globalThis.Uint8Array.from(b));
 // `for _, r := range s` iterates the UTF-8 byte view, decoding one rune per
 // step and advancing by the rune's byte size, mirroring Go's range-over-string.
 function* rangeRunes(s: string): Generator<GoRune> {
-  const bytes = utf8Encoder.encode(s);
+  const bytes = StringUtf8Bytes(s);
   let i = 0;
   while (i < bytes.length) {
-    const [r, size] = DecodeRuneInString(byteSlice(s, i));
+    const [r, size] = DecodeRuneInBytesAt(bytes, i);
     yield r;
     i += size === 0 ? 1 : size;
   }
@@ -558,9 +554,8 @@ export function cutAny(s: string, cutset: string): [string, string, bool] {
   const i = IndexAny(s, cutset);
   if (i >= 0) {
     const before = byteSlice(s, 0, i);
-    const afterAndFound = byteSlice(s, i);
-    const [, size] = DecodeRuneInString(afterAndFound);
-    const after = byteSlice(afterAndFound, size);
+    const [, size] = DecodeRuneInStringAt(s, i);
+    const after = byteSlice(s, i + size);
     return [before, after, true];
   }
   return [s, "", false];

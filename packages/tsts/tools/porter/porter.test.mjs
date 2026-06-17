@@ -7,11 +7,13 @@ import test from "node:test";
 import {
   authoredFacadePathSet,
   buildGeneratedArtifactStatus,
+  buildImplementationOverrideStatus,
   buildExternalFacadeMap,
   buildLargeFileSplitStatus,
   buildSchemaSourceSyncStatus,
   buildStatus,
   collectSchemaSourceSyncFailures,
+  collectImplementationOverrideFailures,
   collectVerifyFailures,
   expectedTsPath,
   matchGlob,
@@ -1596,4 +1598,105 @@ test("collectVerifyFailures hard-gates signature mismatches", () => {
     rows: [],
   };
   assert.deepEqual(collectVerifyFailures(status, {}), ["2 signature/type mismatches (param-type=1, alias-type=1)"]);
+});
+
+test("buildImplementationOverrideStatus requires central and inline markers to agree", () => {
+  const tsUnits = {
+    units: [
+      {
+        id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+        path: "packages/tsts/src/internal/scanner/scanner.ts",
+        implementationOverride: {
+          category: "runtime-performance",
+          allow: ["body"],
+          reason: "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract.",
+        },
+      },
+    ],
+  };
+  const status = buildImplementationOverrideStatus(
+    {
+      implementationOverrides: [
+        {
+          id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+          category: "runtime-performance",
+          allow: ["body"],
+          reason: "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract.",
+        },
+      ],
+    },
+    tsUnits,
+  );
+  assert.equal(status.configured, 1);
+  assert.equal(status.inline, 1);
+  assert.equal(status.matchedUnits, 1);
+  assert.deepEqual(collectImplementationOverrideFailures(status), []);
+});
+
+test("buildImplementationOverrideStatus flags unconfigured inline overrides", () => {
+  const status = buildImplementationOverrideStatus(
+    { implementationOverrides: [] },
+    {
+      units: [
+        {
+          id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+          path: "packages/tsts/src/internal/scanner/scanner.ts",
+          implementationOverride: {
+            category: "runtime-performance",
+            allow: ["body"],
+            reason: "Use a target-native source-text model.",
+          },
+        },
+      ],
+    },
+  );
+  assert.equal(status.unconfiguredInline.length, 1);
+  assert.deepEqual(collectImplementationOverrideFailures(status), [
+    "1 unconfigured inline implementation overrides",
+  ]);
+});
+
+test("buildImplementationOverrideStatus flags config entries without inline markers", () => {
+  const status = buildImplementationOverrideStatus(
+    {
+      implementationOverrides: [
+        {
+          match: "github.com/microsoft/typescript-go::internal/scanner/**",
+          category: "runtime-performance",
+          allow: ["body"],
+          reason: "Use a target-native source-text model.",
+        },
+      ],
+    },
+    {
+      units: [
+        {
+          id: "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+          path: "packages/tsts/src/internal/scanner/scanner.ts",
+        },
+      ],
+    },
+  );
+  assert.equal(status.missingInline.length, 1);
+  assert.deepEqual(collectImplementationOverrideFailures(status), [
+    "1 implementation overrides missing inline markers",
+  ]);
+});
+
+test("buildImplementationOverrideStatus flags malformed and unmatched override config", () => {
+  const status = buildImplementationOverrideStatus(
+    {
+      implementationOverrides: [
+        { match: "github.com/microsoft/typescript-go::internal/scanner/**", category: "runtime-performance", allow: ["signature"], reason: "bad allow" },
+        { id: "github.com/microsoft/typescript-go::internal/missing/missing.go::func::Missing", category: "runtime-performance", allow: ["body"], reason: "missing" },
+      ],
+    },
+    { units: [] },
+  );
+  assert.equal(status.invalidConfig.length, 1);
+  assert.equal(status.unmatchedConfig.length, 1);
+  assert.deepEqual(collectImplementationOverrideFailures(status), [
+    "1 invalid implementation override config entries",
+    "1 unmatched implementation override config entries",
+  ]);
 });

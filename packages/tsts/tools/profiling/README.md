@@ -34,6 +34,21 @@ from `runtime.MemStats`). Populating them from `process.memoryUsage()` is a
 deliberate host divergence from the Go port and is left for maintainer approval;
 maxRSS gives the comparison in the meantime.
 
+## `self-compile-bench.mjs` — mandatory whole-program benchmark
+
+Runs the built TSTS compiler and official `tsc` against TSTS itself:
+
+```bash
+npx tsc -p packages/tsts/tsconfig.json
+npm run profile:self
+```
+
+The command compiles `packages/tsts/tsconfig.json --noEmit` with
+`--extendedDiagnostics`, drops the cold first run, and reports warm-run median
+phase time, wall time, and maxRSS. This is the mandatory whole-program benchmark
+for changes to compiler hot paths. Popular-project corpus runs remain useful,
+but they depend on machine-local checkout paths and belong in `profile:bench`.
+
 ## `attribute.mjs` — cost-category attribution
 
 Aggregates a V8 CPU profile (`.cpuprofile`, self-time) and/or heap profile
@@ -65,3 +80,20 @@ allocation *sites* (`ast-build`, arena, tuples) in the heap profile.
 
 Outputs go to `.tests/profiling/` (gitignored). `corpus.json` is gitignored
 (machine paths); commit changes to `corpus.example.json` instead.
+
+## `utf8-bench.mjs` — focused source-text benchmark
+
+Measures the exact UTF-8/UTF-16 bridge optimized in the source-text hot path.
+It compares the current built TSTS helpers against legacy-equivalent
+`TextEncoder`/`TextDecoder` implementations on large ASCII and mixed-Unicode
+source strings:
+
+```bash
+npx tsc -p packages/tsts/tsconfig.json
+npm run profile:utf8
+```
+
+Cases include repeated byte-length queries, rune decoding by byte offset,
+`SplitLines`, `UTF16Len`, and case-insensitive comparison. This is a stable
+micro-regression gate for the JS/.NET-compatible UTF-16 source-text direction;
+whole-project cost still belongs to `profile:bench --profile`.

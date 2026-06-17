@@ -141,7 +141,8 @@ export async function main() {
     const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
     const unicodeGeneratedArtifacts = buildUnicodeGeneratedArtifactStatus(config);
     const schemaSourceSync = buildSchemaSourceSyncStatus(config);
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync);
+    const implementationOverrides = buildImplementationOverrideStatus(config, tsUnits);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync, implementationOverrides);
     if (command === "verify") {
       const signatureReport = await computeSignatureReport(
         {
@@ -301,6 +302,7 @@ export function buildStatus(
   bundledGeneratedArtifacts = emptyBundledGeneratedArtifactStatus(),
   unicodeGeneratedArtifacts = emptyUnicodeGeneratedArtifactStatus(),
   schemaSourceSync = emptySchemaSourceSyncStatus(),
+  implementationOverrides = emptyImplementationOverrideStatus(),
 ) {
   const primaryKinds = new Set(config.primaryUnitKinds);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
@@ -496,6 +498,7 @@ export function buildStatus(
       invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
+      implementationOverrideIssues: implementationOverrides.failureCount,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
@@ -514,6 +517,7 @@ export function buildStatus(
     bundledGeneratedArtifacts,
     unicodeGeneratedArtifacts,
     schemaSourceSync,
+    implementationOverrides,
     largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
@@ -546,6 +550,19 @@ export function scanTsUnits(root) {
           path: path.relative(repoRoot, file).split(path.sep).join("/"),
           metadata,
         });
+        const overrideDocStart = text.lastIndexOf("/**", match.index);
+        const overrideDocEnd = text.indexOf("*/", regex.lastIndex);
+        if (overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex) {
+          const doc = text.slice(overrideDocStart, overrideDocEnd);
+          const overrideMatch = /@tsgo-implementation-override\s+({[^\n\r]+})/.exec(doc);
+          if (overrideMatch) {
+            try {
+              units[units.length - 1].implementationOverride = JSON.parse(overrideMatch[1]);
+            } catch (error) {
+              fail(`invalid @tsgo-implementation-override JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
+            }
+          }
+        }
         // Check if the first TS export after the JSDoc block throws TSGO_UNIMPLEMENTED.
         // We skip the JSDoc body (Go source) and only inspect the first export declaration's body.
         const afterPos = regex.lastIndex;
@@ -579,6 +596,113 @@ export function scanTsUnits(root) {
     });
   }
   return { fileCount: files.length, files: fileReports, units };
+}
+
+export function emptyImplementationOverrideStatus() {
+  return {
+    configured: 0,
+    inline: 0,
+    matchedUnits: 0,
+    failureCount: 0,
+    invalidConfig: [],
+    invalidInline: [],
+    unmatchedConfig: [],
+    missingInline: [],
+    unconfiguredInline: [],
+  };
+}
+
+export function buildImplementationOverrideStatus(config, tsUnits) {
+  const entries = config.implementationOverrides ?? [];
+  const units = tsUnits.units ?? [];
+  const byId = new Map(units.map((unit) => [unit.id, unit]));
+  const configuredIds = new Set();
+  const invalidConfig = [];
+  const invalidInline = [];
+  const unmatchedConfig = [];
+
+  for (const [index, entry] of entries.entries()) {
+    const entryIssues = validateImplementationOverrideShape(entry);
+    if (!entry.id && !entry.match) entryIssues.push("requires either id or match");
+    if (entry.id && entry.match) entryIssues.push("use id or match, not both");
+    if (entryIssues.length > 0) {
+      invalidConfig.push({
+        index,
+        id: entry.id ?? "",
+        match: entry.match ?? "",
+        reason: entryIssues.join("; "),
+      });
+      continue;
+    }
+    const matched = units.filter((unit) => implementationOverrideEntryMatches(entry, unit));
+    if (matched.length === 0) {
+      unmatchedConfig.push({
+        index,
+        id: entry.id ?? "",
+        match: entry.match ?? "",
+        reason: "override entry matched no @tsgo-unit metadata",
+      });
+      continue;
+    }
+    for (const unit of matched) configuredIds.add(unit.id);
+  }
+
+  const inlineUnits = units.filter((unit) => unit.implementationOverride !== undefined);
+  const inlineIds = new Set(inlineUnits.map((unit) => unit.id));
+  for (const unit of inlineUnits) {
+    const issues = validateImplementationOverrideShape(unit.implementationOverride);
+    if (issues.length > 0) {
+      invalidInline.push({
+        id: unit.id,
+        path: unit.path,
+        reason: issues.join("; "),
+      });
+    }
+  }
+
+  const missingInline = [...configuredIds]
+    .filter((id) => !inlineIds.has(id))
+    .map((id) => {
+      const unit = byId.get(id);
+      return { id, path: unit?.path ?? "", reason: "config implementation override requires matching inline @tsgo-implementation-override" };
+    });
+  const unconfiguredInline = inlineUnits
+    .filter((unit) => !configuredIds.has(unit.id))
+    .map((unit) => ({ id: unit.id, path: unit.path, reason: "inline override is not configured centrally" }));
+  const failureCount = invalidConfig.length + invalidInline.length + unmatchedConfig.length + missingInline.length + unconfiguredInline.length;
+  return {
+    configured: entries.length,
+    inline: inlineUnits.length,
+    matchedUnits: configuredIds.size,
+    failureCount,
+    invalidConfig,
+    invalidInline,
+    unmatchedConfig,
+    missingInline,
+    unconfiguredInline,
+  };
+}
+
+function implementationOverrideEntryMatches(entry, unit) {
+  if (entry.id) return entry.id === unit.id;
+  return matchGlob(entry.match, unit.id);
+}
+
+function validateImplementationOverrideShape(value) {
+  const issues = [];
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return ["override must be an object"];
+  }
+  if (typeof value.category !== "string" || value.category.trim() === "") {
+    issues.push("category is required");
+  }
+  if (typeof value.reason !== "string" || value.reason.trim() === "") {
+    issues.push("reason is required");
+  }
+  if (!Array.isArray(value.allow) || value.allow.length === 0 || value.allow.some((item) => item !== "body")) {
+    issues.push("allow must be a non-empty array containing only 'body'");
+  }
+  return issues;
 }
 
 export function authoredFacadePathSet(config) {
@@ -2666,6 +2790,7 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   failures.push(...collectBundledArtifactFailures(status.bundledGeneratedArtifacts ?? emptyBundledGeneratedArtifactStatus()));
   failures.push(...collectUnicodeArtifactFailures(status.unicodeGeneratedArtifacts ?? emptyUnicodeGeneratedArtifactStatus()));
+  failures.push(...collectImplementationOverrideFailures(status.implementationOverrides ?? emptyImplementationOverrideStatus()));
   if ((status.signatureCheck?.mismatches ?? 0) > 0) {
     const byKind = Object.entries(status.signatureCheck.byKind ?? {})
       .sort((a, b) => b[1] - a[1])
@@ -2687,6 +2812,16 @@ export function collectVerifyFailures(status, options) {
       failures.push(`${stubsWithoutThrow.length} stub func/method units missing TSGO_UNIMPLEMENTED throw: ${stubsWithoutThrow.slice(0,3).map(r=>r.id.split('::').pop()).join(', ')}`);
     }
   }
+  return failures;
+}
+
+export function collectImplementationOverrideFailures(status) {
+  const failures = [];
+  if (status.invalidConfig.length > 0) failures.push(`${status.invalidConfig.length} invalid implementation override config entries`);
+  if (status.unmatchedConfig.length > 0) failures.push(`${status.unmatchedConfig.length} unmatched implementation override config entries`);
+  if (status.missingInline.length > 0) failures.push(`${status.missingInline.length} implementation overrides missing inline markers`);
+  if (status.unconfiguredInline.length > 0) failures.push(`${status.unconfiguredInline.length} unconfigured inline implementation overrides`);
+  if (status.invalidInline.length > 0) failures.push(`${status.invalidInline.length} invalid inline implementation overrides`);
   return failures;
 }
 
@@ -2734,6 +2869,8 @@ export function printStatus(config, status) {
   console.log(`Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   console.log(`Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  const implementationOverrides = status.implementationOverrides ?? emptyImplementationOverrideStatus();
+  console.log(`Implementation overrides configured/inline/issues: ${implementationOverrides.configured}/${implementationOverrides.inline}/${implementationOverrides.failureCount}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -2766,6 +2903,8 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   lines.push(`- Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
+  const implementationOverrides = status.implementationOverrides ?? emptyImplementationOverrideStatus();
+  lines.push(`- Implementation overrides configured/inline/issues: ${implementationOverrides.configured}/${implementationOverrides.inline}/${implementationOverrides.failureCount}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
   lines.push("");
@@ -2823,6 +2962,20 @@ export function renderStatusMarkdown(status) {
     lines.push("|---|---|---|---|---|");
     for (const issue of status.largeFileSplits.issues.slice(0, 100)) {
       lines.push(`| ${issue.file} | ${issue.kind} | ${escapeMd(issue.declaration ?? "")} | ${escapeMd(issue.target ?? "")} | ${escapeMd(issue.message)} |`);
+    }
+  }
+  if (status.implementationOverrides?.failureCount > 0) {
+    lines.push("");
+    lines.push("## Implementation Override Issues");
+    lines.push("");
+    for (const issue of [
+      ...status.implementationOverrides.invalidConfig,
+      ...status.implementationOverrides.unmatchedConfig,
+      ...status.implementationOverrides.missingInline,
+      ...status.implementationOverrides.unconfiguredInline,
+      ...status.implementationOverrides.invalidInline,
+    ].slice(0, 100)) {
+      lines.push(`- ${issue.id || issue.match || `config[${issue.index}]`} ${issue.path ? `(${issue.path}) ` : ""}- ${issue.reason}`);
     }
   }
   if (status.unitlessGoFiles.length > 0) {

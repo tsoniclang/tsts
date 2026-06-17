@@ -28,6 +28,8 @@
     "tsgo-suite": "node packages/tsts/tools/tsgo-suite/run.mjs",
     "tsgo-suite:test": "node --test packages/tsts/tools/tsgo-suite/*.test.mjs",
     "profile:bench": "node packages/tsts/tools/profiling/bench.mjs",
+    "profile:self": "node packages/tsts/tools/profiling/self-compile-bench.mjs",
+    "profile:utf8": "node packages/tsts/tools/profiling/utf8-bench.mjs",
     "profile:attribute": "node packages/tsts/tools/profiling/attribute.mjs",
     "bundled:generate": "node packages/tsts/tools/bundled/generate-bundled.mjs --write",
     "bundled:check": "node packages/tsts/tools/bundled/generate-bundled.mjs --check",

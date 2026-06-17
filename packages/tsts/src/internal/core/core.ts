@@ -15,7 +15,6 @@ import { Atoi } from "../../go/strconv.js";
 import { SetMaxStack } from "../../go/runtime/debug.js";
 import * as sort from "../../go/sort.js";
 import * as unicode from "../../go/unicode.js";
-import * as utf16 from "../../go/unicode/utf16.js";
 import * as utf8 from "../../go/unicode/utf8.js";
 import type { CompilerOptions } from "./compileroptions.js";
 import { ScriptKindJS, ScriptKindJSON, ScriptKindJSX, ScriptKindTS, ScriptKindTSX, ScriptKindUnknown } from "./scriptkind.js";
@@ -27,13 +26,9 @@ import { Tristate_IsTrue } from "./tristate.js";
 // byte indexing `s[i]` and slicing `s[i:j]` operate on byte offsets. We mirror
 // that contract by operating over the UTF-8 byte view and converting back to a
 // JS string at the boundaries.
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteSliceFrom = (s: string, start: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start));
-};
+const byteLen = utf8.StringByteLen;
+const byteSliceFrom = (s: string, start: int): string => utf8.StringByteSlice(s, start);
 // []rune(s): decode the string into Unicode code points (runes).
 const stringToRunes = (s: string): GoSlice<GoRune> => {
   const runes: GoSlice<GoRune> = [];
@@ -1103,7 +1098,7 @@ export function ComputeECMALineStarts(text: string): ECMALineStarts {
 export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
   return (yield_: (value: TextPos) => bool): void => {
     // Go strings index bytes; operate over the UTF-8 byte view.
-    const bytes = utf8Encoder.encode(text);
+    const bytes = utf8.StringUtf8Bytes(text);
     const textLen: TextPos = bytes.length;
     let pos: TextPos = 0;
     let lineStart: TextPos = 0;
@@ -1125,7 +1120,7 @@ export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
             break;
         }
       } else {
-        const [ch, size] = utf8.DecodeRuneInString(utf8Decoder.decode(bytes.subarray(pos)));
+        const [ch, size] = utf8.DecodeRuneInBytesAt(bytes, pos);
         pos += size;
         if (IsLineBreak(ch)) {
           if (!yield_(lineStart)) {
@@ -1170,6 +1165,7 @@ export type UTF16Offset = int;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len","kind":"func","status":"implemented","sigHash":"08a30f04fbc495b785be284545417ab70df1fd4079f69a0b09fc73ce87fb4254","bodyHash":"6117f4167e836bcb53d144ac39dec841ae2f4513c8cb13fa1b3db29e9651bb20"}
+ * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Use the native JS/.NET UTF-16 code-unit length directly; it is the value this TS-Go helper computes after decoding valid source text."}
  *
  * Go source:
  * func UTF16Len(s string) UTF16Offset {
@@ -1189,23 +1185,7 @@ export type UTF16Offset = int;
  * }
  */
 export function UTF16Len(s: string): UTF16Offset {
-  // Go strings index bytes; operate over the UTF-8 byte view.
-  const bytes = utf8Encoder.encode(s);
-  // Fast path: scan for non-ASCII bytes. For ASCII-only strings,
-  // each byte is one UTF-16 code unit, so we can return len(s) directly.
-  for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i]! >= utf8.RuneSelf) {
-      // Found non-ASCII; count the ASCII prefix, then decode the rest.
-      let n: UTF16Offset = i;
-      const rest = utf8Decoder.decode(bytes.subarray(i));
-      for (const ch of rest) {
-        const r: GoRune = ch.codePointAt(0)!;
-        n += utf16.RuneLen(r);
-      }
-      return n;
-    }
-  }
-  return bytes.length;
+  return s.length;
 }
 
 /**

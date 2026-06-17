@@ -276,6 +276,32 @@
       "reason": "File-watch bindings must be implemented through the TypeScript host layer."
     }
   ],
+  "implementationOverrides": [
+    {
+      "id": "github.com/microsoft/typescript-go::internal/core/core.go::func::UTF16Len",
+      "category": "runtime-performance",
+      "allow": ["body"],
+      "reason": "Use the native JS/.NET UTF-16 code-unit length directly; it is the value this TS-Go helper computes after decoding valid source text."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/stringutil/util.go::func::SplitLines",
+      "category": "runtime-performance",
+      "allow": ["body"],
+      "reason": "Scan line breaks with JS/.NET UTF-16 code units because CR/LF separators are ASCII and the returned substrings are identical to TS-Go byte-sliced lines."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeURI",
+      "category": "runtime-performance",
+      "allow": ["body"],
+      "reason": "Avoid full-string UTF-8 materialization for ASCII-heavy URI text; emit the same UTF-8 percent bytes only for non-ASCII code points."
+    },
+    {
+      "id": "github.com/microsoft/typescript-go::internal/stringutil/compare.go::func::CompareStringsCaseInsensitive",
+      "category": "runtime-performance",
+      "allow": ["body"],
+      "reason": "Walk cached UTF-8 byte views by offset instead of repeatedly materializing suffix strings; comparison order and byte-sized rune advances remain TS-Go exact."
+    }
+  ],
   "policies": [
     {
       "match": "**/*_test.go",
