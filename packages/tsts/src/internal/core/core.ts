@@ -2,7 +2,6 @@ import type { bool, byte, double, int } from "@tsonic/core/types.js";
 import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";
-import { IsLineBreak } from "../stringutil/util.js";
 import { ExtensionCjs, ExtensionCts, ExtensionJs, ExtensionJson, ExtensionJsx, ExtensionMjs, ExtensionMts, ExtensionTs, ExtensionTsx, HasTSFileExtension, IsDeclarationFileName } from "../tspath/extension.js";
 import { PathIsRelative } from "../tspath/path.js";
 import * as maps from "../../go/maps.js";
@@ -1057,6 +1056,7 @@ export function ComputeECMALineStarts(text: string): ECMALineStarts {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/core.go::func::ComputeECMALineStartsSeq","kind":"func","status":"implemented","sigHash":"911fb066c24cc7312e67a544bedd9232d274063c961ddc2bacdafd2fc1a900f1","bodyHash":"884c51f4ef304850f9e39c3cf3a2dac6dd8989655699793d01756eec8d80b956"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Walk the native JS/.NET UTF-16 source text while maintaining TS-Go UTF-8 byte offsets, avoiding a full UTF-8 byte-view allocation for every line-map computation."}
  *
  * Go source:
  * func ComputeECMALineStartsSeq(text string) iter.Seq[TextPos] {
@@ -1097,36 +1097,46 @@ export function ComputeECMALineStarts(text: string): ECMALineStarts {
  */
 export function ComputeECMALineStartsSeq(text: string): GoSeq<TextPos> {
   return (yield_: (value: TextPos) => bool): void => {
-    // Go strings index bytes; operate over the UTF-8 byte view.
-    const bytes = utf8.StringUtf8Bytes(text);
-    const textLen: TextPos = bytes.length;
-    let pos: TextPos = 0;
+    const textLen: int = text.length;
+    let index: int = 0;
+    let bytePos: TextPos = 0;
     let lineStart: TextPos = 0;
-    while (pos < textLen) {
-      const b = bytes[pos]!;
-      if (b < utf8.RuneSelf) {
-        pos++;
-        switch (b) {
+    while (index < textLen) {
+      const ch = text.charCodeAt(index);
+      index++;
+      if (ch < utf8.RuneSelf) {
+        bytePos++;
+        switch (ch) {
           case 0x0d /* '\r' */:
-            if (pos < textLen && bytes[pos]! === 0x0a /* '\n' */) {
-              pos++;
+            if (index < textLen && text.charCodeAt(index) === 0x0a /* '\n' */) {
+              index++;
+              bytePos++;
             }
           // fallthrough
           case 0x0a /* '\n' */:
             if (!yield_(lineStart)) {
               return;
             }
-            lineStart = pos;
+            lineStart = bytePos;
             break;
         }
+      } else if (ch < 0x0800) {
+        bytePos += 2;
+      } else if (ch >= 0xd800 && ch <= 0xdbff && index < textLen) {
+        const low = text.charCodeAt(index);
+        if (low >= 0xdc00 && low <= 0xdfff) {
+          index++;
+          bytePos += 4;
+        } else {
+          bytePos += 3;
+        }
       } else {
-        const [ch, size] = utf8.DecodeRuneInBytesAt(bytes, pos);
-        pos += size;
-        if (IsLineBreak(ch)) {
+        bytePos += 3;
+        if (ch === 0x2028 || ch === 0x2029) {
           if (!yield_(lineStart)) {
             return;
           }
-          lineStart = pos;
+          lineStart = bytePos;
         }
       }
     }
