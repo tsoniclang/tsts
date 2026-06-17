@@ -1,7 +1,6 @@
 import type { bool } from "@tsonic/core/types.js";
 import type { GoComparable, GoMap, GoPtr } from "../../go/compat.js";
 import type { Arena } from "./arena.js";
-import { Arena_New } from "./arena.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/core/linkstore.go::type::LinkStore","kind":"type","status":"implemented","sigHash":"96af231f81cab3ea96808ae94d0dd1d2f72fe89e0cdb4c2d385abf3ee3542b3d","bodyHash":"4819b5299d93f83bc94613116fe6aa9f531f2e6c747b99539f472a65af9c96fb"}
@@ -33,16 +32,21 @@ export interface LinkStore<K extends GoComparable = unknown, V = unknown> {
  * 	s.entries[key] = value
  * 	return value
  * }
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"JS object references are already stable when stored in the LinkStore map, so link objects do not need duplicate retention through the Go arena slice; this preserves LinkStore observable semantics while avoiding hot checker arena indirection."}
  */
 export function LinkStore_Get<K extends GoComparable, V>(receiver: GoPtr<LinkStore<K, V>>, key: K): GoPtr<V> {
   const s: GoPtr<LinkStore<K, V>> = receiver;
-  s!.entries ??= new Map<K, GoPtr<V>>();
-  let value = s!.entries.get(key);
+  let entries = s!.entries;
+  if (entries === undefined) {
+    entries = new Map<K, GoPtr<V>>();
+    s!.entries = entries;
+  }
+  let value = entries.get(key);
   if (value !== undefined) {
     return value;
   }
-  value = Arena_New<V>(s!.arena);
-  s!.entries.set(key, value);
+  value = {} as V;
+  entries.set(key, value);
   return value;
 }
 
