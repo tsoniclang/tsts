@@ -1969,7 +1969,7 @@ function newArena<T>(): Arena<T> {
 
 function newLinkStore<K extends GoComparable, V>(): LinkStore<K, V> {
   return {
-    entries: undefined as unknown as GoMap<K, GoPtr<V>>,
+    entries: new globalThis.Map<K, GoPtr<V>>(),
     arena: newArena<V>(),
   };
 }
