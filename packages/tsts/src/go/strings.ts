@@ -11,9 +11,11 @@ import type { GoRune, GoSlice } from "./compat.js";
 
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
 const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+const nonASCII = /[^\x00-\x7F]/;
 
 const encode = (s: string): Uint8Array => utf8Encoder.encode(s);
 const decode = (bytes: Uint8Array): string => utf8Decoder.decode(bytes);
+const isASCIIString = (s: string): bool => !nonASCII.test(s);
 
 // RuneError mirrors unicode/utf8.RuneError (U+FFFD, the replacement char).
 const RuneErrorValue: GoRune = 0xfffd;
@@ -695,6 +697,29 @@ export function Repeat(s: string, count: int): string {
 // old replaced by replacement. n < 0 replaces all. Faithful port of Go's
 // strings.Replace.
 export function Replace(s: string, oldStr: string, newStr: string, n: int): string {
+  if (oldStr === newStr || n === 0) {
+    return s;
+  }
+  if (oldStr.length !== 0 && isASCIIString(oldStr) && isASCIIString(newStr)) {
+    const first = s.indexOf(oldStr);
+    if (first < 0) {
+      return s;
+    }
+    let result = s.slice(0, first) + newStr;
+    let start = first + oldStr.length;
+    let remaining = n < 0 ? Number.MAX_SAFE_INTEGER : n - 1;
+    while (remaining !== 0) {
+      const index = s.indexOf(oldStr, start);
+      if (index < 0) {
+        return result + s.slice(start);
+      }
+      result += s.slice(start, index) + newStr;
+      start = index + oldStr.length;
+      remaining--;
+    }
+    return result + s.slice(start);
+  }
+
   const sb = encode(s);
   const ob = encode(oldStr);
   const nb = encode(newStr);
