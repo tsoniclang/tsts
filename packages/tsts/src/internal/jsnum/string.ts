@@ -5,7 +5,7 @@ import { New as errors_New, Is as errors_Is } from "../../go/errors.js";
 import { FormatInt, ParseFloat, ParseInt, ErrRange } from "../../go/strconv.js";
 import { Builder, Cut, CutPrefix, HasPrefix, HasSuffix, IndexAny, TrimFunc, TrimLeft, TrimRight } from "../../go/strings.js";
 import { Is as unicode_Is, Zs } from "../../go/unicode.js";
-import { DecodeRuneInBytesAt, DecodeRuneInString, DecodeRuneInStringAt, StringByteLen, StringByteSlice, StringUtf8Bytes } from "../../go/unicode/utf8.js";
+import { DecodeRuneInString, DecodeRuneInStringAt, DecodeRuneInStringViewAt, GetStringByteView, StringByteLen, StringByteSlice, StringByteViewLen } from "../../go/unicode/utf8.js";
 import { Marshal } from "../json/json.js";
 import { IsDigit, IsHexDigit, IsOctalDigit } from "../stringutil/util.js";
 import { Inf, MaxSafeInteger, MinSafeInteger, NaN, Number_IsInf, Number_IsNaN } from "./jsnum.js";
@@ -19,10 +19,11 @@ const BytesToString = (b: ReadonlyArray<byte>): string => utf8Decoder.decode(glo
 // `for _, r := range s` iterates the UTF-8 byte view, decoding one rune per
 // step and advancing by the rune's byte size, mirroring Go's range-over-string.
 function* rangeRunes(s: string): Generator<GoRune> {
-  const bytes = StringUtf8Bytes(s);
+  const view = GetStringByteView(s);
+  const length = StringByteViewLen(s, view);
   let i = 0;
-  while (i < bytes.length) {
-    const [r, size] = DecodeRuneInBytesAt(bytes, i);
+  while (i < length) {
+    const [r, size] = DecodeRuneInStringViewAt(s, view, i);
     yield r;
     i += size === 0 ? 1 : size;
   }
