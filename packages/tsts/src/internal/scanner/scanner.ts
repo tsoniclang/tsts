@@ -1138,6 +1138,7 @@ export function Scanner_HasPrecedingJSDocWithSeeOrLink(receiver: GoPtr<Scanner>)
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::method::Scanner.scanJSDocCommentForTags","kind":"method","status":"implemented","sigHash":"6bdaeea7925c4dc0dd4e55cc5c1b1b46e28041eb30226cbdde9795967bb0aecc","bodyHash":"7870ae49e2dc423db3a1be445482732ce20feeaebf8021e8f0ea5a585f6bf827"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan the existing UTF-8 byte view by range instead of repeatedly slicing and re-encoding JSDoc comment text; tag detection and TS-Go byte-offset semantics are unchanged."}
  *
  * Go source:
  * func (s *Scanner) scanJSDocCommentForTags(commentText string) {
@@ -1161,22 +1162,28 @@ export function Scanner_HasPrecedingJSDocWithSeeOrLink(receiver: GoPtr<Scanner>)
  * }
  */
 export function Scanner_scanJSDocCommentForTags(receiver: GoPtr<Scanner>, commentText: string): void {
+  const view = utf8.GetStringByteView(commentText);
+  Scanner_scanJSDocCommentRangeForTags(receiver, commentText, view, 0, utf8.StringByteViewLen(commentText, view));
+}
+
+function Scanner_scanJSDocCommentRangeForTags(receiver: GoPtr<Scanner>, text: string, view: utf8.StringByteView, start: int, end: int): void {
   const s = receiver!;
+  let pos = start;
   for (;;) {
-    const i = strings.IndexByte(commentText, "@".charCodeAt(0) as byte);
+    const i = stringByteViewIndexByteInRange(text, view, pos, end, "@".charCodeAt(0));
     if (i < 0) {
       return;
     }
-    commentText = byteSlice(commentText, i + 1);
+    pos = (i + 1) as int;
     if (
       (s.__tsgoEmbedded0.tokenFlags & TokenFlagsPrecedingJSDocWithDeprecated) === 0 &&
-      hasJSDocTag(commentText, "deprecated")
+      hasJSDocTagAt(text, view, pos, end, "deprecated")
     ) {
       s.__tsgoEmbedded0.tokenFlags |= TokenFlagsPrecedingJSDocWithDeprecated;
     }
     if (
       (s.__tsgoEmbedded0.tokenFlags & TokenFlagsPrecedingJSDocWithSeeOrLink) === 0 &&
-      hasJSDocTag(commentText, "see", "link", "linkcode", "linkplain")
+      hasJSDocTagAt(text, view, pos, end, "see", "link", "linkcode", "linkplain")
     ) {
       s.__tsgoEmbedded0.tokenFlags |= TokenFlagsPrecedingJSDocWithSeeOrLink;
     }
@@ -1189,8 +1196,23 @@ export function Scanner_scanJSDocCommentForTags(receiver: GoPtr<Scanner>, commen
   }
 }
 
+function stringByteViewIndexByteInRange(text: string, view: utf8.StringByteView, start: int, end: int, b: int): int {
+  if (view.ascii) {
+    const index = text.indexOf(globalThis.String.fromCharCode(b), start);
+    return index >= 0 && index < end ? index as int : -1 as int;
+  }
+  const bytes = view.bytes!;
+  for (let i = start; i < end; i++) {
+    if (bytes[i] === b) {
+      return i as int;
+    }
+  }
+  return -1 as int;
+}
+
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::hasJSDocTag","kind":"func","status":"implemented","sigHash":"f361aaea4875a620ff76aa9e159099efa0daae87a2b07cf5f788d1bd3193644f","bodyHash":"a50eb36fef5eb098eed434da4e02ef6301ad7e75a778885cfa3a4617b8dd5f8c"}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Share the UTF-8 byte-view prefix check used by scanner JSDoc range scanning, avoiding temporary substring views while preserving TS-Go tag-boundary behavior."}
  *
  * Go source:
  * func hasJSDocTag(text string, tags ...string) bool {
@@ -1210,14 +1232,20 @@ export function Scanner_scanJSDocCommentForTags(receiver: GoPtr<Scanner>, commen
  * }
  */
 export function hasJSDocTag(text: string, ...tags: Array<string>): bool {
+  const view = utf8.GetStringByteView(text);
+  return hasJSDocTagAt(text, view, 0, utf8.StringByteViewLen(text, view), ...tags);
+}
+
+function hasJSDocTagAt(text: string, view: utf8.StringByteView, start: int, end: int, ...tags: Array<string>): bool {
   for (const tag of tags) {
-    if (!strings.HasPrefix(text, tag)) {
+    const tagLength = byteLen(tag);
+    if (start + tagLength > end || !utf8.StringByteViewHasPrefix(text, view, start, tag)) {
       continue;
     }
-    if (byteLen(text) === byteLen(tag)) {
+    if (start + tagLength === end) {
       return true;
     }
-    const ch = byteAt(text, byteLen(tag));
+    const ch = utf8.StringByteViewAt(text, view, start + tagLength);
     if (
       ch === " ".charCodeAt(0) ||
       ch === "\t".charCodeAt(0) ||
@@ -2225,7 +2253,7 @@ export function Scanner_Scan(receiver: GoPtr<Scanner>): Kind {
 
           if (isJSDoc) {
             st.tokenFlags |= TokenFlagsPrecedingJSDocComment;
-            Scanner_scanJSDocCommentForTags(s, scannerByteSlice(s, st.tokenStart, st.pos));
+            Scanner_scanJSDocCommentRangeForTags(s, s.text, s.sourceByteView, st.tokenStart, st.pos);
           }
 
           Scanner_processCommentDirective(s, lastLineStart, st.pos, true);
