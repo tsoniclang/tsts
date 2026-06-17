@@ -126,6 +126,14 @@ test("sync.Map Load/Store/LoadOrStore/Delete/Range", () => {
   assert.equal(any, false);
 });
 
+test("sync.Map keeps Go NaN key lookup semantics", () => {
+  const m = new SyncMap<number, string>();
+  const key = globalThis.Number.NaN;
+  m.Store(key, "value");
+  assert.deepEqual(m.Load(key), [undefined, false]);
+  assert.deepEqual(m.LoadAndDelete(key), [undefined, false]);
+});
+
 test("sync.Pool reuses values and falls back to New", () => {
   let constructed = 0;
   const p = new Pool<{ id: number }>();
