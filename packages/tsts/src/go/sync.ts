@@ -1,5 +1,5 @@
 import type { int, bool } from "@tsonic/core/types.js";
-import { NewGoStructMap } from "./compat.js";
+import { GoStructMap, NewGoStructMap } from "./compat.js";
 
 // Go: package sync
 //
@@ -108,14 +108,11 @@ export function OnceValues<T1, T2>(f: () => [T1, T2]): () => [T1, T2] {
 // Map is like a Go sync.Map: a concurrent map of any/any. Single-threaded, it is
 // a thin wrapper over a plain Map preserving the (value, ok) and Range contracts.
 export class Map<K = unknown, V = unknown> {
-  private readonly m: globalThis.Map<K, V> = NewGoStructMap<K, V>();
+  private readonly m: GoStructMap<K, V> = NewGoStructMap<K, V>();
 
   // Load returns the value stored for key, and whether it was present.
   Load(key: K): [V | undefined, bool] {
-    if (this.m.has(key)) {
-      return [this.m.get(key), true];
-    }
-    return [undefined, false];
+    return this.m.load(key);
   }
 
   // Store sets the value for a key.
@@ -126,21 +123,12 @@ export class Map<K = unknown, V = unknown> {
   // LoadOrStore returns the existing value if present; otherwise stores and returns
   // the given value. loaded is true if the value was already present.
   LoadOrStore(key: K, value: V): [V, bool] {
-    if (this.m.has(key)) {
-      return [this.m.get(key) as V, true];
-    }
-    this.m.set(key, value);
-    return [value, false];
+    return this.m.loadOrStore(key, value);
   }
 
   // LoadAndDelete deletes the value for a key, returning the previous value if any.
   LoadAndDelete(key: K): [V | undefined, bool] {
-    if (this.m.has(key)) {
-      const value = this.m.get(key);
-      this.m.delete(key);
-      return [value, true];
-    }
-    return [undefined, false];
+    return this.m.loadAndDelete(key);
   }
 
   // Delete deletes the value for a key.
