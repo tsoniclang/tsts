@@ -214,79 +214,13 @@ import type { regExpParser, regularExpressionFlags } from "./regexp.js";
 import { tokenIsIdentifierOrKeyword } from "./utilities.js";
 
 // Go strings are UTF-8 byte sequences; the scanner tracks byte offsets (s.pos).
-// These helpers reproduce Go's byte-indexed string operations so positions and
-// sizes returned by utf8.* / strings.* match the byte-offset slicing semantics.
-// The encoded-view cache is byte-budgeted: unbounded caching retains a full
-// byte copy of every distinct large non-ASCII string a long-lived process
-// touches (multiple GB on an in-process full-lib check).
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
-const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
-const utf8ByteInfoCacheBudget = 64 * 1024 * 1024; // total cached bytes
-const utf8ByteInfoCacheState = { bytes: 0 };
-
-const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
-  const cached = utf8ByteInfoCache.get(s);
-  if (cached !== undefined) {
-    return cached;
-  }
-  let ascii = true;
-  for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) >= utf8.RuneSelf) {
-      ascii = false;
-      break;
-    }
-  }
-  const info: Utf8ByteInfo = {
-    ascii,
-    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
-  };
-  if (s.length >= 4096) {
-    const cost = ascii ? s.length : info.bytes.length;
-    if (utf8ByteInfoCacheState.bytes + cost > utf8ByteInfoCacheBudget) {
-      utf8ByteInfoCache.clear();
-      utf8ByteInfoCacheState.bytes = 0;
-    }
-    utf8ByteInfoCache.set(s, info);
-    utf8ByteInfoCacheState.bytes += cost;
-  }
-  return info;
-};
-
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const info = getUtf8ByteInfo(s);
-  if (info.ascii) {
-    return s.slice(start, end);
-  }
-  return utf8Decoder.decode(info.bytes.subarray(start, end));
-};
-
-const byteAt = (s: string, i: int): int => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.charCodeAt(i) : info.bytes[i]!;
-};
-
-const byteLen = (s: string): int => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.length : info.bytes.length;
-};
-
-const decodeRuneInStringAt = (s: string, pos: int): [GoRune, int] => {
-  const info = getUtf8ByteInfo(s);
-  if (info.ascii) {
-    return pos >= s.length ? [utf8.RuneError, 0] : [s.charCodeAt(pos), 1 as int];
-  }
-  return utf8.DecodeRuneInBytesAt(info.bytes, pos);
-};
-
-const decodeLastRuneInStringBefore = (s: string, end: int): [GoRune, int] => {
-  const info = getUtf8ByteInfo(s);
-  if (info.ascii) {
-    return end <= 0 ? [utf8.RuneError, 0] : [s.charCodeAt(end - 1), 1 as int];
-  }
-  return utf8.DecodeLastRuneInBytesBefore(info.bytes, end);
-};
+// The shared utf8 string-byte view keeps those byte semantics while avoiding
+// repeated TextEncoder/TextDecoder work on hot scanner paths.
+const byteSlice = utf8.StringByteSlice;
+const byteAt = utf8.StringByteAt;
+const byteLen = utf8.StringByteLen;
+const decodeRuneInStringAt = utf8.DecodeRuneInStringAt;
+const decodeLastRuneInStringBefore = utf8.DecodeLastRuneInStringBefore;
 
 // stringFromRune reproduces Go's `string(rune)`: the rune is UTF-8 encoded.
 const stringFromRune = (r: GoRune): string => globalThis.String.fromCodePoint(r);

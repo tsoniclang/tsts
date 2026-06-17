@@ -40,6 +40,43 @@ The ID already contains the Go module, Go file path, artifact kind, and qualifie
 
 Generated, test, host-native, out-of-scope, and manual-required categories are explicit policy classifications in `porter.config.json`; they are not silent omissions. Production scaffold coverage is active only for `literal-port`, `manual-required`, and `host-native` units. Generated code is checked through generated-artifact gates, and test parity belongs to the test harness rather than production source scaffolding.
 
+## Implementation Overrides
+
+The porter intentionally hashes the upstream Go unit, not the TypeScript body.
+That makes TS-Go baseline updates safe: if upstream changes, the existing
+`@tsgo-unit` becomes `stale` even when the TypeScript body is hand-optimized.
+The complementary risk is that a deliberate TypeScript body divergence can be
+invisible when its public signature still matches. These divergences must be
+tracked explicitly.
+
+Every deliberate non-literal body implementation must have both records:
+
+```ts
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"...","bodyHash":"..."}
+ * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract."}
+ */
+```
+
+```json
+{
+  "implementationOverrides": [
+    {
+      "id": "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
+      "category": "runtime-performance",
+      "allow": ["body"],
+      "reason": "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract."
+    }
+  ]
+}
+```
+
+`porter:verify` fails on malformed override metadata, central entries that match
+no unit, central entries missing inline markers, and inline markers with no
+central entry. `allow` currently accepts only `"body"`; signature/type differences
+must go through the stricter `signatureCheck.overrides` path with exact mismatch
+kinds.
+
 ## Out-of-Scope Language-Service Surface
 
 The standalone compiler porter excludes the language-service/editor surface completely:

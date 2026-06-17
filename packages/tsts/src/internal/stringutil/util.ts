@@ -3,7 +3,16 @@ import type { GoRune, GoSlice } from "../../go/compat.js";
 import * as regexp from "../../go/regexp.js";
 import { Builder, Count } from "../../go/strings.js";
 import { ToLower } from "../../go/unicode.js";
-import { DecodeLastRuneInString, DecodeRuneInString } from "../../go/unicode/utf8.js";
+import {
+  DecodeLastRuneInString,
+  DecodeRuneInBytesAt,
+  DecodeRuneInString,
+  DecodeRuneInStringAt,
+  StringByteAt,
+  StringByteLen,
+  StringByteSlice,
+  StringUtf8Bytes,
+} from "../../go/unicode/utf8.js";
 import * as utf16 from "../../go/unicode/utf16.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
@@ -11,14 +20,9 @@ import * as utf16 from "../../go/unicode/utf16.js";
 // standard-library facades (strings/utf8) follow that contract, so we mirror it
 // here by operating over the UTF-8 byte view and converting back to a JS string
 // at the boundaries.
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteAt = (s: string, i: int): byte => utf8Encoder.encode(s)[i]!;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
+const byteLen = StringByteLen;
+const byteAt = (s: string, i: int): byte => StringByteAt(s, i) as byte;
+const byteSlice = StringByteSlice;
 // runeToString encodes a single rune to its UTF-8 JS string form, mirroring
 // Go's `string(rune)` conversion.
 const runeToString = (r: GoRune): string => {
@@ -206,6 +210,7 @@ export function IsASCIILetter(ch: GoRune): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::SplitLines","kind":"func","status":"implemented","sigHash":"d56e738370434e6c604089f889beb63cc7395ec39e67af5a8075569b7f3d52b8","bodyHash":"2e5cfdf6862c30209da32c47cee13303ff11e8d07f07b4f5361c734d08db90d4"}
+ * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Scan line breaks with JS/.NET UTF-16 code units because CR/LF separators are ASCII and the returned substrings are identical to TS-Go byte-sliced lines."}
  *
  * Go source:
  * func SplitLines(text string) []string {
@@ -237,8 +242,6 @@ export function IsASCIILetter(ch: GoRune): bool {
  * }
  */
 export function SplitLines(text: string): GoSlice<string> {
-  const textBytes = utf8Encoder.encode(text);
-  const textLen = textBytes.length;
   // make([]string, 0, strings.Count(text, "\n")+1) // preallocate. Go reserves
   // capacity here; the hint has no observable effect on a JS array, but the
   // pure Count call is preserved for fidelity.
@@ -246,23 +249,24 @@ export function SplitLines(text: string): GoSlice<string> {
   const lines: GoSlice<string> = [];
   let start = 0;
   let pos = 0;
+  const textLen = text.length;
   while (pos < textLen) {
-    switch (textBytes[pos]!) {
+    switch (text.charCodeAt(pos)) {
       case 0x0d /* '\r' */: {
-        if (pos + 1 < textLen && textBytes[pos + 1]! === 0x0a) {
-          lines.push(byteSlice(text, start, pos));
+        if (pos + 1 < textLen && text.charCodeAt(pos + 1) === 0x0a) {
+          lines.push(text.slice(start, pos));
           pos += 2;
           start = pos;
           continue;
         }
         // fallthrough
-        lines.push(byteSlice(text, start, pos));
+        lines.push(text.slice(start, pos));
         pos++;
         start = pos;
         continue;
       }
       case 0x0a /* '\n' */: {
-        lines.push(byteSlice(text, start, pos));
+        lines.push(text.slice(start, pos));
         pos++;
         start = pos;
         continue;
@@ -270,8 +274,8 @@ export function SplitLines(text: string): GoSlice<string> {
     }
     pos++;
   }
-  if (start < textLen) {
-    lines.push(byteSlice(text, start));
+  if (start < text.length) {
+    lines.push(text.slice(start));
   }
   return lines;
 }
@@ -317,7 +321,7 @@ export function GuessIndentation(lines: GoSlice<string>): int {
     }
     let i = 0;
     while (i < byteLen(line) && i < indentation) {
-      const [ch, size] = DecodeRuneInString(byteSlice(line, i));
+      const [ch, size] = DecodeRuneInStringAt(line, i);
       if (!IsWhiteSpaceLike(ch)) {
         break;
       }
@@ -338,6 +342,7 @@ export function GuessIndentation(lines: GoSlice<string>): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeURI","kind":"func","status":"implemented","sigHash":"7c3effdc96b020dc9f6246a3d5d575a4f1f8baf3a4df376b8a9653693febb6fc","bodyHash":"dffd309aec6c60affcc908eccc71408afc0f22662886a8b1c00cdd708178b457"}
+ * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Avoid full-string UTF-8 materialization for ASCII-heavy URI text; emit the same UTF-8 percent bytes only for non-ASCII code points."}
  *
  * Go source:
  * func EncodeURI(s string) string {
@@ -359,12 +364,24 @@ export function GuessIndentation(lines: GoSlice<string>): int {
  * }
  */
 export function EncodeURI(s: string): string {
-  const sBytes = utf8Encoder.encode(s);
   const builder = new Builder();
-  for (let i = 0; i < sBytes.length; i++) {
-    const b = sBytes[i]!;
+  for (let i = 0; i < s.length; i++) {
+    const b = s.charCodeAt(i);
     if (!shouldEscapeForEncodeURI(b)) {
       builder.WriteByte(b);
+      continue;
+    }
+    if (b >= 0x80) {
+      const cp = s.codePointAt(i)!;
+      const ch = cp > 0xffff ? s.slice(i, i + 2) : s.charAt(i);
+      for (const escaped of StringUtf8Bytes(ch)) {
+        builder.WriteByte(0x25 /* '%' */);
+        builder.WriteByte(byteAt(upperhex, escaped >> 4));
+        builder.WriteByte(byteAt(upperhex, escaped & 0x0f));
+      }
+      if (cp > 0xffff) {
+        i++;
+      }
       continue;
     }
 
@@ -472,7 +489,7 @@ export function shouldEscapeForEncodeURI(b: byte): bool {
  * }
  */
 export function getByteOrderMarkLength(text: string): int {
-  const textBytes = utf8Encoder.encode(text);
+  const textBytes = StringUtf8Bytes(text);
   if (textBytes.length >= 1) {
     const ch0 = textBytes[0]!;
     if (ch0 === 0xfe) {
@@ -655,14 +672,14 @@ export function TruncateByRunes(str: string, maxLength: int): string {
   }
   let runeCount = 0;
   // `for i := range str` iterates over the byte offset of each rune start.
-  const strBytes = utf8Encoder.encode(str);
+  const strBytes = StringUtf8Bytes(str);
   let i = 0;
   while (i < strBytes.length) {
     runeCount++;
     if (runeCount > maxLength) {
       return byteSlice(str, 0, i);
     }
-    const [, size] = DecodeRuneInString(byteSlice(str, i));
+    const [, size] = DecodeRuneInBytesAt(strBytes, i);
     i += size === 0 ? 1 : size;
   }
   return str;

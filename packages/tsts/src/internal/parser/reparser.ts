@@ -179,7 +179,7 @@ import { Identifier_expected } from "../diagnostics/generated/messages.js";
 import { Parser_parseErrorAtRange } from "./parser/errors-recovery.js";
 import { Builder } from "../../go/strings.js";
 import { Itoa } from "../../go/strconv.js";
-import * as utf8 from "../../go/unicode/utf8.js";
+import { DecodeRuneInStringAt, StringByteLen } from "../../go/unicode/utf8.js";
 import type { GoRune } from "../../go/compat.js";
 import { Parser_newNodeList, Parser_newModifierList } from "./parser/lists.js";
 import { Parser_finishNodeWithEnd } from "./parser/statements-declarations.js";
@@ -188,13 +188,7 @@ import { PCObjectLiteralMembers } from "./parser/state.js";
 // Byte-string helpers mirroring Go's `s[i:]` / `len(s)` semantics over UTF-8 bytes,
 // used to faithfully port the `for i, ch := range s` rune iteration in
 // reparseJSDocSignature (matches the convention used in scanner.ts/support.ts).
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-const byteLen = (s: string): int => utf8Encoder.encode(s).length;
-const byteSlice = (s: string, start: int, end?: int): string => {
-  const bytes = utf8Encoder.encode(s);
-  return utf8Decoder.decode(bytes.subarray(start, end));
-};
+const byteLen = StringByteLen;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/parser/reparser.go::method::Parser.finishReparsedNode","kind":"method","status":"implemented","sigHash":"9746fe8b20ebd2539697c4040b2a128334306a1a0d090567ea8bdba97f6a5691","bodyHash":"3dd5f736e3ddbd9486e0f32fbca391f7d4819aaa1565b658123015f0cb4fcd3f"}
@@ -651,11 +645,10 @@ export function Parser_reparseJSDocSignature(receiver: GoPtr<Parser>, jsSignatur
         const nameText = AsIdentifier(name)!.Text;
         let i = 0;
         for (;;) {
-          const rest = byteSlice(nameText, i);
-          if (byteLen(rest) === 0) {
+          if (i >= byteLen(nameText)) {
             break;
           }
-          const [ch, size] = utf8.DecodeRuneInString(rest);
+          const [ch, size] = DecodeRuneInStringAt(nameText, i);
           if (i === 0) {
             if (!IsIdentifierStart(ch)) {
               result.WriteRune("_".charCodeAt(0) as GoRune);

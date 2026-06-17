@@ -62,3 +62,14 @@ test("RuneLen", () => {
   assert.equal(utf8.RuneLen(-1), -1);
   assert.equal(utf8.RuneLen(0xd800), -1);
 });
+
+test("String byte-view helpers preserve Go byte offsets", () => {
+  const text = "aé𝄞z";
+  assert.equal(utf8.StringByteLen(text), 8);
+  assert.equal(utf8.StringByteAt(text, 0), "a".charCodeAt(0));
+  assert.equal(utf8.StringByteAt(text, 1), 0xc3);
+  assert.equal(utf8.StringByteSlice(text, 1, 3), "é");
+  assert.equal(utf8.StringByteSlice(text, 3, 7), "𝄞");
+  assert.deepEqual(utf8.DecodeRuneInStringAt(text, 3), [0x1d11e, 4]);
+  assert.deepEqual(utf8.DecodeLastRuneInStringBefore(text, 7), [0x1d11e, 4]);
+});
