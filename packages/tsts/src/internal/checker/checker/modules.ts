@@ -26,7 +26,7 @@ import { A_declaration_file_cannot_be_imported_without_import_type_Did_you_mean_
 import { Cannot_augment_module_0_because_it_resolves_to_a_non_module_entity, Invalid_module_name_in_augmentation_module_0_cannot_be_found } from "../../diagnostics/generated/messages.js";
 import type { ResolvedModule } from "../../module/types.js";
 import { GetResolutionDiagnostic } from "../../module/util.js";
-import { ResolvedModule_IsResolved } from "../../module/types.js";
+import { ResolvedModule_IsProviderVirtual, ResolvedModule_IsResolved } from "../../module/types.js";
 import { ParsedCommandLine_CommonSourceDirectory, ParsedCommandLine_CompilerOptions } from "../../tsoptions/parsedcommandline.js";
 import { CreateModuleNotFoundChain, isShorthandAmbientModuleSymbol, isSideEffectImport, NewDiagnosticChainForNode, NewDiagnosticForNode } from "../utilities.js";
 import { Checker_grammarErrorOnFirstToken } from "../grammarchecks.js";
@@ -785,7 +785,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
     const sourceFileSymbol = Node_Symbol(sourceFile as GoPtr<Node>);
     if (sourceFileSymbol !== undefined) {
       if (errorNode !== undefined) {
-        if (resolvedModule!.IsExternalLibraryImport && !resolutionExtensionIsTSOrJson(resolvedModule!.Extension)) {
+        if (resolvedModule!.IsExternalLibraryImport && !ResolvedModule_IsProviderVirtual(resolvedModule) && !resolutionExtensionIsTSOrJson(resolvedModule!.Extension)) {
           Checker_errorOnImplicitAnyModule(receiver, false, errorNode, mode, resolvedModule, moduleReference);
         }
         if (receiver!.moduleKind === ModuleKindNode16 || receiver!.moduleKind === ModuleKindNode18) {
@@ -848,7 +848,7 @@ export function Checker_resolveExternalModule(receiver: GoPtr<Checker>, location
     return undefined;
   }
 
-  if ((ResolvedModule_IsResolved(resolvedModule) && !resolutionExtensionIsTSOrJson(resolvedModule!.Extension) && resolutionDiagnostic === undefined) ||
+  if ((ResolvedModule_IsResolved(resolvedModule) && !ResolvedModule_IsProviderVirtual(resolvedModule) && !resolutionExtensionIsTSOrJson(resolvedModule!.Extension) && resolutionDiagnostic === undefined) ||
     resolutionDiagnostic === Could_not_find_a_declaration_file_for_module_0_1_implicitly_has_an_any_type) {
     if (isForAugmentation) {
       Checker_error(

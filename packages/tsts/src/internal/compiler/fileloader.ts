@@ -87,7 +87,7 @@ import type { DiagAndArgs, Resolver } from "../module/resolver.js";
 import { GetResolutionDiagnostic, InferredTypesContainingFile } from "../module/util.js";
 import type { ModeAwareCacheKey } from "../module/types.js";
 import type { ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
-import { ResolvedModule_IsResolved, ResolvedTypeReferenceDirective_IsResolved } from "../module/types.js";
+import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsResolved, ResolvedTypeReferenceDirective_IsResolved } from "../module/types.js";
 import { InfoCacheEntry_Exists } from "../packagejson/cache.js";
 import { Expected_GetValue } from "../packagejson/expected.js";
 import {
@@ -290,7 +290,7 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     ResolutionDiagnostics: [],
     ResolvedFileName: result.module.resolution.virtualFileName,
     OriginalPath: "",
-    Extension: ".d.ts",
+    Extension: ResolvedModuleExtensionProviderVirtual,
     ResolvedUsingTsExtension: false,
     PackageId: {
       Name: result.module.resolution.packageName ?? "",
@@ -300,6 +300,12 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     },
     IsExternalLibraryImport: true,
     AlternateResult: "",
+    ProviderVirtual: {
+      ProviderId: result.module.provider.identity.id,
+      ProviderTarget: result.module.provider.identity.target,
+      ProviderModuleId: result.module.resolution.providerModuleId,
+      ModuleSpecifier: result.module.resolution.moduleSpecifier,
+    },
   };
 }
 

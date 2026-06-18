@@ -41,7 +41,7 @@ import * as diagnostics from "../diagnostics/generated/messages.js";
 import type { Locale } from "../locale/locale.js";
 import type { ModeAwareCache } from "../module/cache.js";
 import type { ModeAwareCacheKey, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
-import { ResolvedModule_IsResolved } from "../module/types.js";
+import { ResolvedModule_IsProviderVirtual, ResolvedModule_IsResolved } from "../module/types.js";
 import { GetCompilerOptionsWithRedirect, Resolver_GetPackageScopeForPath, Resolver_ResolveModuleName, Resolver_ResolvePackageDirectory } from "../module/resolver.js";
 import type { Resolver } from "../module/resolver.js";
 import { GetPackageNameFromTypesPackageName, GetTypesPackageName, ParsePackageName } from "../module/util.js";
@@ -1187,7 +1187,7 @@ export function Program_extractUnresolvedImportsFromSourceFile(receiver: GoPtr<P
     for (const [cacheKey, resolution_] of resolvedModules) {
       const resolution = resolution_ as GoPtr<ResolvedModule>;
       const resolved = ResolvedModule_IsResolved(resolution);
-      if ((!resolved || !ExtensionIsOneOf(resolution!.Extension, SupportedTSExtensionsWithJsonFlat as GoSlice<string>)) &&
+      if ((!resolved || (!ResolvedModule_IsProviderVirtual(resolution) && !ExtensionIsOneOf(resolution!.Extension, SupportedTSExtensionsWithJsonFlat as GoSlice<string>))) &&
           !IsExternalModuleNameRelative(cacheKey.Name)) {
         unresolvedImports.push(cacheKey.Name);
       }
@@ -1388,7 +1388,7 @@ export function Program_GetPackagesMap(receiver: GoPtr<Program>): GoMap<string, 
     for (const [, resolvedModulesInFile] of receiver!.__tsgoEmbedded0!.resolvedModules ?? []) {
       for (const [, mod] of resolvedModulesInFile ?? []) {
         const m = mod as GoPtr<ResolvedModule>;
-        if (m !== undefined && m!.PackageId !== undefined && m!.PackageId.Name !== "") {
+        if (m !== undefined && !ResolvedModule_IsProviderVirtual(m) && m!.PackageId !== undefined && m!.PackageId.Name !== "") {
           receiver!.packagesMap.set(
             m!.PackageId.Name,
             (receiver!.packagesMap.get(m!.PackageId.Name) || (m!.Extension === ".d.ts")) as bool,

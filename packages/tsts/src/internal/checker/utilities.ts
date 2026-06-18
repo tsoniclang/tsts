@@ -202,6 +202,7 @@ import { TokenFlagsContainsSeparator } from "../ast/tokenflags.js";
 import { EscapeString, QuoteCharDoubleQuote } from "../printer/utilities.js";
 import { GetTypesPackageName, MangleScopedPackageName } from "../module/util.js";
 import type { ResolvedModule } from "../module/types.js";
+import { ResolvedModule_IsProviderVirtual } from "../module/types.js";
 import { ExtensionDts, ExtensionJs, ExtensionMjs, ExtensionMts, ExtensionTs, TryGetExtensionFromPath } from "../tspath/extension.js";
 import { CombinePaths } from "../tspath/path.js";
 import { ScriptKindJS, ScriptKindJSX } from "../core/scriptkind.js";
@@ -4110,7 +4111,7 @@ export function Checker_getPackagesMap(receiver: GoPtr<Checker>): GoMap<string, 
     for (const [, resolvedModulesInFile] of resolvedModules) {
       for (const [, module_] of resolvedModulesInFile) {
         const module = module_ as GoPtr<ResolvedModule>;
-        if (module !== undefined && module!.PackageId.Name !== "") {
+        if (module !== undefined && !ResolvedModule_IsProviderVirtual(module) && module!.PackageId.Name !== "") {
           receiver!.packagesMap.set(
             module!.PackageId.Name,
             (receiver!.packagesMap.get(module!.PackageId.Name) || module!.Extension === ExtensionDts) as bool,
