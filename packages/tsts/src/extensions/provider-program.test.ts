@@ -9,7 +9,7 @@ import { Node_Arguments, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Pos } from "../internal/ast/spine.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -196,6 +196,48 @@ test("checker records provider-owned generic inference facts on selected calls",
   assert.equal(selectedCall?.member.id, "System.Convert.ChangeType<T>(System.Int32)");
   assert.equal(selectedCall?.typeArguments?.[0], argument);
   assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
+});
+
+test("checker records provider-owned contextual target facts without changing TS contextual type", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      const callback: (value: number) => number = value => value;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [semanticOnlyExtension("dotnet-contextual-extension", contextualSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const arrow = findFirstNodeByKind(index, KindArrowFunction);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const contextualFact = consumer.getContextualTargetTypeFact(arrow);
+  assert.equal(contextualFact?.targetType?.kind, "target-named");
+  assert.equal(contextualFact?.targetType?.id, "System.Func`2");
 });
 
 test("checker records provider-owned parameter mode facts from selected target signatures", () => {
@@ -905,6 +947,29 @@ function genericInferenceSemanticProvider(): TargetSemanticProvider {
     inferTypeArguments: (request) => acceptDecision({
       typeArguments: request.arguments,
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+    }),
+  };
+}
+
+function contextualSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "dotnet-contextual-semantic-provider",
+      version: "1.0.0",
+      target: "dotnet",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    getContextualType: (request) => acceptDecision({
+      type: request.context,
+      targetType: {
+        kind: "target-named",
+        id: "System.Func`2",
+        typeArguments: [
+          { kind: "source-primitive", name: "int32" },
+          { kind: "source-primitive", name: "int32" },
+        ],
+      },
     }),
   };
 }

@@ -1,5 +1,6 @@
 import {
   argumentPassingFactKey,
+  contextualTargetTypeFactKey,
   functionPointerFactKey,
   providerVirtualDeclarationFactKey,
   pointerFactKey,
@@ -12,6 +13,7 @@ import {
 } from "./facts.js";
 import type {
   ArgumentPassingFact,
+  ContextualTargetTypeFact,
   FunctionPointerFact,
   PointerFact,
   ProviderVirtualDeclarationFact,
@@ -71,6 +73,14 @@ export class ExtensionConsumerQueries {
 
   requireSelectedTargetCall(subject: ExtensionFactSubject, purpose?: string): SelectedTargetSignatureFact | undefined {
     return this.requireFact(subject, selectedTargetSignatureFactKey, purpose);
+  }
+
+  getContextualTargetTypeFact(subject: ExtensionFactSubject): ContextualTargetTypeFact | undefined {
+    return this.getFact(subject, contextualTargetTypeFactKey);
+  }
+
+  requireContextualTargetTypeFact(subject: ExtensionFactSubject, purpose?: string): ContextualTargetTypeFact | undefined {
+    return this.requireFact(subject, contextualTargetTypeFactKey, purpose);
   }
 
   getSelectedTargetProperty(subject: ExtensionFactSubject): SurfaceOperationFact | undefined {

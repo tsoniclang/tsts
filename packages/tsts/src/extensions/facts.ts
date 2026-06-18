@@ -172,6 +172,11 @@ export interface SelectedTargetSignatureFact {
   readonly argumentConversions?: readonly TargetTypeRef[];
 }
 
+export interface ContextualTargetTypeFact {
+  readonly type: ExtensionFactSubject;
+  readonly targetType?: TargetTypeRef;
+}
+
 export interface SurfaceOperationFact {
   readonly operationId: string;
   readonly sourceOperation: "property" | "method" | "indexer" | "operator" | "constructor";
@@ -282,6 +287,12 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
     && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions),
+});
+
+export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
+  extensionId: "tsts.target-bindings",
+  name: "contextualTargetType",
+  equals: (left, right) => left.type === right.type && optionalTargetTypeRefEquals(left.targetType, right.targetType),
 });
 
 export const surfaceOperationFactKey = defineExtensionFactKey<SurfaceOperationFact>({
