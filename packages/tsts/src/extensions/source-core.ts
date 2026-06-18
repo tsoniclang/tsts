@@ -7,8 +7,10 @@ import {
   Node_Expression,
   Node_Elements,
   Node_ImportClause,
+  Node_Initializer,
   Node_ModuleSpecifier,
   Node_PropertyName,
+  Node_Properties,
   Node_Statements,
   Node_Symbol,
   Node_Text,
@@ -23,36 +25,49 @@ import {
   KindNamedImports,
   KindNamedExports,
   KindNamespaceImport,
+  KindObjectLiteralExpression,
   KindPropertyAccessExpression,
+  KindPropertyAssignment,
+  KindPropertyDeclaration,
   KindQualifiedName,
   KindTypeKeyword,
   KindTypeReference,
   KindTupleType,
+  KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
 import { IsLeftHandSideExpression } from "../internal/ast/utilities.js";
 import {
   argumentPassingFactKey,
+  attributeFactKey,
   canonicalIdentityFactKey,
+  defaultValueFactKey,
+  fieldFactKey,
   flowStateFactKey,
   functionPointerFactKey,
   pointerFactKey,
   sourcePrimitiveFactKey,
+  structFactKey,
 } from "./facts.js";
 import type {
   ArgumentPassingFact,
+  AttributeFact,
+  DefaultValueFact,
   ExtensionCanonicalIdentity,
   ExtensionImportKind,
+  FieldFact,
   FlowStateFact,
   FunctionPointerFact,
   PointerFact,
   SourcePrimitiveFact,
   SourcePrimitiveKind,
+  StructFact,
 } from "./facts.js";
 import { ExtensionLifecycleEvent } from "./host.js";
 import type {
   CompilerExtension,
   ExtensionDiagnosticStore,
   ExtensionEvidence,
+  ExtensionFactKey,
   ExtensionFactResolverContext,
   ExtensionFactSubject,
   ExtensionFactStore,
@@ -80,7 +95,19 @@ export interface SourcePrimitiveDeclaration extends SourcePrimitiveFact {
   readonly exportName: string;
 }
 
-export type SourceCallMarkerKind = "out" | "ref" | "inref" | "borrow" | "borrowMut" | "move";
+export type SourceCallMarkerKind =
+  | "out"
+  | "ref"
+  | "inref"
+  | "borrow"
+  | "borrowMut"
+  | "move"
+  | "struct"
+  | "field"
+  | "attribute"
+  | "defaultof";
+
+type ArgumentPassingMarkerKind = Extract<SourceCallMarkerKind, "out" | "ref" | "inref">;
 
 export interface SourceCallMarkerDeclaration {
   readonly exportName: string;
@@ -149,6 +176,10 @@ const defaultSourceCallMarkers: readonly SourceCallMarkerDeclaration[] = [
   { exportName: "borrow", kind: "borrow" },
   { exportName: "borrowMut", kind: "borrowMut" },
   { exportName: "move", kind: "move" },
+  { exportName: "struct", kind: "struct" },
+  { exportName: "field", kind: "field" },
+  { exportName: "attribute", kind: "attribute" },
+  { exportName: "defaultof", kind: "defaultof" },
 ];
 
 const defaultSourceTypeMarkers: readonly SourceTypeMarkerDeclaration[] = [
@@ -171,7 +202,15 @@ export function createSourceCoreExtension(options: SourceCoreExtensionOptions = 
       kind: "source",
     },
     capabilities: {
-      provides: ["source-core.primitives", "source-core.argument-passing", "source-core.pointer-types", "source-core.flow-markers"],
+      provides: [
+        "source-core.primitives",
+        "source-core.argument-passing",
+        "source-core.pointer-types",
+        "source-core.flow-markers",
+        "source-core.structs",
+        "source-core.attributes",
+        "source-core.defaults",
+      ],
     },
     initialize(context): void {
       context.factResolver.register(sourcePrimitiveFactKey, (subject, resolverContext) =>
@@ -306,7 +345,7 @@ function recordSourceCoreCallMarkers(
   callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
   markerImportIndex: SourceCoreMarkerImportIndex,
 ): void {
-  visitSourceCoreNode(sourceFile, (node) => {
+  visitSourceCoreNodePost(sourceFile, (node) => {
     if (node?.Kind !== KindCallExpression) {
       return;
     }
@@ -324,25 +363,53 @@ function recordSourceCoreCallMarker(
   callExpression: GoPtr<Node>,
   marker: SourceCallMarkerDeclaration,
 ): void {
-  const argument = (Node_Arguments(callExpression) ?? [])[0];
-  if (argument === undefined) {
-    return;
-  }
   const evidence = createMarkerEvidence(marker.exportName);
   switch (marker.kind) {
     case "out":
     case "ref":
-    case "inref":
+    case "inref": {
+      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      if (argument === undefined) {
+        return;
+      }
       recordArgumentPassingMarker(facts, diagnostics, callExpression, argument, marker, evidence);
       return;
-    case "borrow":
+    }
+    case "borrow": {
+      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      if (argument === undefined) {
+        return;
+      }
       recordFlowMarker(facts, callExpression, argument, { state: "borrowed-shared" }, evidence);
       return;
-    case "borrowMut":
+    }
+    case "borrowMut": {
+      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      if (argument === undefined) {
+        return;
+      }
       recordFlowMarker(facts, callExpression, argument, { state: "borrowed-mut" }, evidence);
       return;
-    case "move":
+    }
+    case "move": {
+      const argument = (Node_Arguments(callExpression) ?? [])[0];
+      if (argument === undefined) {
+        return;
+      }
       recordFlowMarker(facts, callExpression, argument, { state: "moved" }, evidence);
+      return;
+    }
+    case "field":
+      recordFieldMarker(facts, callExpression, evidence);
+      return;
+    case "struct":
+      recordStructMarker(facts, callExpression, evidence);
+      return;
+    case "attribute":
+      recordAttributeMarker(facts, callExpression, evidence);
+      return;
+    case "defaultof":
+      recordDefaultValueMarker(facts, callExpression, evidence);
       return;
   }
 }
@@ -356,7 +423,7 @@ function recordArgumentPassingMarker(
   evidence: readonly ExtensionEvidence[],
 ): void {
   const fact = {
-    mode: getArgumentPassingMode(marker.kind),
+    mode: getArgumentPassingMode(marker.kind as ArgumentPassingMarkerKind),
     targetExpression: target,
   } satisfies ArgumentPassingFact;
   facts.set(callExpression, argumentPassingFactKey, fact, evidence);
@@ -377,7 +444,7 @@ function recordArgumentPassingMarker(
   });
 }
 
-function getArgumentPassingMode(kind: SourceCallMarkerKind): ArgumentPassingFact["mode"] {
+function getArgumentPassingMode(kind: ArgumentPassingMarkerKind): ArgumentPassingFact["mode"] {
   switch (kind) {
     case "out":
       return "byref-writeonly-must-init";
@@ -385,13 +452,112 @@ function getArgumentPassingMode(kind: SourceCallMarkerKind): ArgumentPassingFact
       return "byref-readwrite";
     case "inref":
       return "byref-readonly";
-    case "borrow":
-      return "borrow-shared";
-    case "borrowMut":
-      return "borrow-mut";
-    case "move":
-      return "move";
   }
+}
+
+function recordFieldMarker(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const fieldType = (Node_TypeArguments(callExpression) ?? [])[0];
+  if (fieldType === undefined) {
+    return;
+  }
+  const propertyAssignment = callExpression?.Parent?.Kind === KindPropertyAssignment ? callExpression.Parent : undefined;
+  const nameNode = propertyAssignment === undefined ? undefined : (Node_Name(propertyAssignment) ?? Node_PropertyName(propertyAssignment));
+  const name = Node_Text(nameNode);
+  const fact = {
+    name,
+    type: fieldType,
+  } satisfies FieldFact;
+  facts.set(callExpression, fieldFactKey, fact, evidence);
+  if (propertyAssignment !== undefined) {
+    facts.set(propertyAssignment, fieldFactKey, fact, evidence);
+    if (nameNode !== undefined) {
+      facts.set(nameNode, fieldFactKey, fact, evidence);
+    }
+  }
+}
+
+function recordStructMarker(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const shape = (Node_Arguments(callExpression) ?? [])[0];
+  const fields: FieldFact[] = [];
+  if (shape?.Kind === KindObjectLiteralExpression) {
+    for (const property of Node_Properties(shape) ?? []) {
+      if (property?.Kind !== KindPropertyAssignment) {
+        continue;
+      }
+      const field = facts.get(property, fieldFactKey) ?? facts.get(Node_Initializer(property), fieldFactKey);
+      if (field !== undefined) {
+        fields.push(field);
+      }
+    }
+  }
+  const fact = {
+    valueType: true,
+    fields,
+  } satisfies StructFact;
+  facts.set(callExpression, structFactKey, fact, evidence);
+  recordInitializerOwnerFact(facts, callExpression, structFactKey, fact, evidence);
+}
+
+function recordAttributeMarker(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const target = (Node_TypeArguments(callExpression) ?? [])[0];
+  if (target === undefined) {
+    return;
+  }
+  const fact = {
+    target,
+    attributeName: getTypeReferenceNameText(target),
+    arguments: Node_Arguments(callExpression) ?? [],
+  } satisfies AttributeFact;
+  facts.set(callExpression, attributeFactKey, fact, evidence);
+  recordInitializerOwnerFact(facts, callExpression, attributeFactKey, fact, evidence);
+}
+
+function recordDefaultValueMarker(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const type = (Node_TypeArguments(callExpression) ?? [])[0];
+  if (type === undefined) {
+    return;
+  }
+  const fact = { type } satisfies DefaultValueFact;
+  facts.set(callExpression, defaultValueFactKey, fact, evidence);
+  recordInitializerOwnerFact(facts, callExpression, defaultValueFactKey, fact, evidence);
+}
+
+function recordInitializerOwnerFact<TFact>(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  key: ExtensionFactKey<TFact>,
+  fact: TFact,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const parent = callExpression?.Parent;
+  if (parent === undefined || !isInitializerOwner(parent) || Node_Initializer(parent) !== callExpression) {
+    return;
+  }
+  facts.set(parent, key, fact, evidence);
+  const symbol = Node_Symbol(parent);
+  if (symbol !== undefined) {
+    facts.set(symbol, key, fact, evidence);
+  }
+}
+
+function isInitializerOwner(node: GoPtr<Node>): boolean {
+  return node?.Kind === KindVariableDeclaration || node?.Kind === KindPropertyDeclaration || node?.Kind === KindPropertyAssignment;
 }
 
 function recordFlowMarker(
@@ -793,6 +959,17 @@ function visitSourceCoreNode(node: GoPtr<Node>, visit: (node: GoPtr<Node>) => vo
   });
 }
 
+function visitSourceCoreNodePost(node: GoPtr<Node>, visit: (node: GoPtr<Node>) => void): void {
+  if (node === undefined) {
+    return;
+  }
+  Node_ForEachChild(node, (child: GoPtr<Node>) => {
+    visitSourceCoreNodePost(child, visit);
+    return false as bool;
+  });
+  visit(node);
+}
+
 function recordNamespaceImportIdentity(
   facts: ExtensionFactStore,
   namespaceImport: GoPtr<Node>,
@@ -899,6 +1076,19 @@ function createMarkerEvidence(exportName: string): readonly ExtensionEvidence[] 
     message: "source core marker",
     details: { exportName },
   }];
+}
+
+function getTypeReferenceNameText(node: GoPtr<Node>): string {
+  if (node?.Kind === KindTypeReference) {
+    return getTypeReferenceNameText(AsTypeReferenceNode(node)?.TypeName);
+  }
+  if (node?.Kind === KindQualifiedName) {
+    const qualifiedName = AsQualifiedName(node);
+    const left = getTypeReferenceNameText(qualifiedName?.Left);
+    const right = getTypeReferenceNameText(qualifiedName?.Right);
+    return left === "" ? right : `${left}.${right}`;
+  }
+  return Node_Text(node);
 }
 
 function moduleSupports(moduleIdentity: SourceCoreModuleIdentity, capability: SourceCoreModuleCapability): boolean {

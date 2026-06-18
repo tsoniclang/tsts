@@ -29,6 +29,7 @@ import {
   KindQualifiedName,
   KindTypeAliasDeclaration,
   KindTypeReference,
+  KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -48,14 +49,18 @@ import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import {
   attachExtensionHost,
   argumentPassingFactKey,
+  attributeFactKey,
   canonicalIdentityFactKey,
   createExtensionConsumerQueries,
   createSourceCoreExtension,
+  defaultValueFactKey,
+  fieldFactKey,
   finalizeExtensionSemantics,
   flowStateFactKey,
   functionPointerFactKey,
   pointerFactKey,
   sourcePrimitiveFactKey,
+  structFactKey,
 } from "./index.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import type { ExtendedProgram } from "./index.js";
@@ -288,6 +293,80 @@ test("source-core records ptr and fnptr type facts from canonical type marker im
   assert.equal(consumer.getFunctionPointerFact(functionPointerReference)?.parameters.length, 1);
 });
 
+test("source-core records struct field attribute and default facts from canonical imports only", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int } from "@tsonic/core/types.js";
+    import { attribute, defaultof, field, struct } from "@tsonic/core/lang.js";
+    import { attribute as localAttribute, defaultof as localDefaultof, field as localField, struct as localStruct } from "./local.js";
+
+    type RouteAttribute = { route: string };
+    const Point = struct({
+      x: field<int>(),
+      y: field<int>(),
+    });
+    const route = attribute<RouteAttribute>("/users");
+    const zero = defaultof<int>();
+    const Fake = localStruct({
+      x: localField<int>(),
+    });
+    const fakeRoute = localAttribute<RouteAttribute>("/fake");
+    const fakeDefault = localDefaultof<int>();
+  `, new Map([
+    ["/src/local.ts", [
+      "export function struct<T>(shape: T): T { return shape; }",
+      "export function field<T>(): T { throw new Error('local'); }",
+      "export function attribute<T>(value?: unknown): unknown { return value; }",
+      "export function defaultof<T>(): T { throw new Error('local'); }",
+    ].join("\n")],
+  ]));
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const pointDeclaration = getVariableDeclaration(index, "Point");
+  const pointSymbol = Node_Symbol(pointDeclaration);
+  assert.ok(pointSymbol !== undefined);
+  const structCall = getCallExpression(index, "struct", 0);
+  const structFact = extended.extensionHost.facts.get(structCall, structFactKey);
+  assert.equal(structFact?.valueType, true);
+  assert.deepEqual(structFact?.fields?.map((field) => field.name), ["x", "y"]);
+  assert.equal(extended.extensionHost.facts.get(pointDeclaration, structFactKey)?.fields?.length, 2);
+  assert.equal(extended.extensionHost.facts.get(pointSymbol, structFactKey)?.fields?.length, 2);
+
+  const xFieldCall = getCallExpression(index, "field", 0);
+  const xFieldFact = extended.extensionHost.facts.get(xFieldCall, fieldFactKey);
+  assert.equal(xFieldFact?.name, "x");
+  assert.equal(extended.extensionHost.facts.get(xFieldFact?.type, sourcePrimitiveFactKey)?.kind, "int32");
+
+  const routeDeclaration = getVariableDeclaration(index, "route");
+  const routeSymbol = Node_Symbol(routeDeclaration);
+  assert.ok(routeSymbol !== undefined);
+  const attributeCall = getCallExpression(index, "attribute", 0);
+  assert.equal(extended.extensionHost.facts.get(attributeCall, attributeFactKey)?.attributeName, "RouteAttribute");
+  assert.equal(extended.extensionHost.facts.get(attributeCall, attributeFactKey)?.arguments?.length, 1);
+  assert.equal(extended.extensionHost.facts.get(routeSymbol, attributeFactKey)?.attributeName, "RouteAttribute");
+
+  const zeroDeclaration = getVariableDeclaration(index, "zero");
+  const zeroSymbol = Node_Symbol(zeroDeclaration);
+  assert.ok(zeroSymbol !== undefined);
+  const defaultCall = getCallExpression(index, "defaultof", 0);
+  const defaultValueFact = extended.extensionHost.facts.get(defaultCall, defaultValueFactKey);
+  assert.equal(extended.extensionHost.facts.get(defaultValueFact?.type, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.facts.get(zeroSymbol, defaultValueFactKey)?.type, defaultValueFact?.type);
+
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "localStruct", 0), structFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "localField", 0), fieldFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "localAttribute", 0), attributeFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "localDefaultof", 0), defaultValueFactKey), undefined);
+
+  assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getStructFact(pointSymbol)?.fields?.length, 2);
+  assert.equal(consumer.getFieldFact(xFieldCall)?.name, "x");
+  assert.equal(consumer.getAttributeFact(routeSymbol)?.attributeName, "RouteAttribute");
+  assert.equal(consumer.getDefaultValueFact(zeroSymbol)?.type, defaultValueFact?.type);
+});
+
 function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string> = new Map()): {
   readonly extended: ExtendedProgram<ProgramOptions>;
   readonly program: GoPtr<Program>;
@@ -327,6 +406,10 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
       "export declare function borrow<T>(value: T): T;",
       "export declare function borrowMut<T>(value: T): T;",
       "export declare function move<T>(value: T): T;",
+      "export declare function struct<T>(shape: T): T;",
+      "export declare function field<T>(): T;",
+      "export declare function attribute<T>(value?: unknown): unknown;",
+      "export declare function defaultof<T>(): T;",
     ].join("\n")],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
@@ -408,6 +491,12 @@ function getTopLevelDeclaration(sourceFile: GoPtr<SourceFile>, kind: number, nam
     }
   }
   assert.fail(`Missing top-level declaration '${name}'.`);
+}
+
+function getVariableDeclaration(sourceFile: GoPtr<SourceFile>, name: string): GoPtr<Node> {
+  const declaration = findNode(sourceFile, (node) => node?.Kind === KindVariableDeclaration && Node_Text(Node_Name(node)) === name);
+  assert.ok(declaration !== undefined, `Missing variable declaration '${name}'.`);
+  return declaration;
 }
 
 function getTypeAliasType(sourceFile: GoPtr<SourceFile>, name: string): GoPtr<Node> {
