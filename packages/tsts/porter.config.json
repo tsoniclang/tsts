@@ -209,6 +209,11 @@
       "reason": "TypeScript-compatible public service APIs for embedding TSTS; additive host surface with no upstream Go unit."
     },
     {
+      "match": "packages/tsts/src/extensions/**",
+      "category": "public-api",
+      "reason": "Additive compiler extension host public API; target-neutral infrastructure with no upstream Go unit."
+    },
+    {
       "match": "packages/tsts/src/internal/ast/generated/**",
       "category": "ast-generated",
       "reason": "Generated AST infrastructure emitted by porter:ast from packages/tsts/schema/tsgo/*; carries @tsgo-generated metadata, not @tsgo-unit."
