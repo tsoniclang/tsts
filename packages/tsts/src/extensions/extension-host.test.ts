@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  DynamicProviderExtensionContractVersion,
   ExtensionHost,
   ExtensionHostDiagnosticCode,
   ExtensionLifecycleEvent,
@@ -242,6 +243,18 @@ test("provider registry requires explicit provider identity and rejects duplicat
   assert.equal(host.diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.invalidProvider);
 });
 
+test("provider registry rejects unsupported extension contract versions", () => {
+  const host = new ExtensionHost({});
+  const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js", {
+    extensionContractVersion: "legacy.metadata-bridge.0",
+  });
+
+  assert.equal(host.providers.registerTargetBindingProvider(provider), false);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerContractMismatch);
+  assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/);
+  assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/System.Buffers.js").kind, "unowned");
+});
+
 test("extensions register binding and semantic providers through initialization context", () => {
   const bindingProvider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js");
   const semanticProvider: TargetSemanticProvider = {
@@ -249,7 +262,7 @@ test("extensions register binding and semantic providers through initialization 
       id: "dotnet-semantic",
       version: "1.0.0",
       target: "csharp",
-      extensionContractVersion: "1.0.0",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
       providerKind: "semantic",
     },
     getParameterMode: () => acceptDecision({
@@ -299,7 +312,7 @@ test("semantic provider methods own typed decisions without hook boilerplate", (
               id: "dotnet-semantic",
               version: "1.0.0",
               target: "csharp",
-              extensionContractVersion: "1.0.0",
+              extensionContractVersion: DynamicProviderExtensionContractVersion,
               providerKind: "semantic",
             },
             satisfiesConstraint: () => acceptDecision(true),
@@ -464,6 +477,10 @@ test("target binding providers own and resolve virtual modules without file-back
   assert.equal(result.module.declarationModel.exports[0]?.name, "SearchValues");
   assert.match(result.module.virtualSourceText, /export declare class SearchValues<T extends unknown>/);
   assert.match(result.module.virtualSourceText, /Contains\(value: T\): boolean;/);
+  assert.equal(result.module.virtualDocument.uri, "tsts-provider://dotnet/System.Buffers");
+  assert.equal(result.module.virtualDocument.readOnly, true);
+  assert.equal(result.module.virtualDocument.provider.id, "dotnet");
+  assert.match(result.module.virtualDocument.sourceText, /export declare class SearchValues/);
   const cached = host.providers.resolveVirtualModule(specifier, context);
   assert.equal(cached.kind, "resolved");
   if (cached.kind === "resolved") {
@@ -475,6 +492,31 @@ test("target binding providers own and resolve virtual modules without file-back
   })?.id, "System.Buffers.SearchValues`1");
 
   assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/Unknown.js").kind, "unowned");
+});
+
+test("virtual declaration documents are stable consumer-readable compiler state", () => {
+  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
+
+  const result = host.providers.resolveVirtualModule(specifier, { activeTarget: "csharp" });
+  assert.equal(result.kind, "resolved");
+  if (result.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(host.providers.getVirtualDeclarationDocuments().length, 1);
+  assert.equal(host.providers.getVirtualDeclarationDocument(result.module.resolution.virtualFileName), result.module.virtualDocument);
+
+  const consumer = createExtensionConsumerQueries(host, "future-lsp");
+  assert.equal(consumer.getVirtualDeclarationDocument(result.module.resolution.virtualFileName), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
+
+  host.finalizeSemantics();
+  const document = consumer.getVirtualDeclarationDocument(result.module.resolution.virtualFileName);
+  assert.equal(document, result.module.virtualDocument);
+  assert.equal(document?.moduleSpecifier, specifier);
+  assert.match(document?.sourceText ?? "", /Contains\(value: T\): boolean;/);
 });
 
 test("provider ownership conflicts and invalid declaration models are diagnostics", () => {
@@ -980,6 +1022,7 @@ function dotnetBindingProvider(
   options: {
     readonly id?: string;
     readonly providerKind?: TargetBindingProvider["identity"]["providerKind"];
+    readonly extensionContractVersion?: string;
     readonly declarationModel?: (resolution: ProviderModuleResolution) => ProviderDeclarationModel;
   } = {},
 ): TargetBindingProvider {
@@ -994,7 +1037,7 @@ function dotnetBindingProvider(
       id: options.id ?? "dotnet",
       version: "1.0.0",
       target: "csharp",
-      extensionContractVersion: "1.0.0",
+      extensionContractVersion: options.extensionContractVersion ?? DynamicProviderExtensionContractVersion,
       providerKind: options.providerKind ?? "binding",
     },
     ownsModule: (specifier) => specifier === ownedSpecifier

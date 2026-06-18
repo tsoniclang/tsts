@@ -68,7 +68,10 @@ export const ExtensionHostDiagnosticCode = {
   invalidProviderDeclaration: 9000018,
   lifecycleHookFailed: 9000019,
   requiredFactMissing: 9000020,
+  providerContractMismatch: 9000021,
 } as const;
+
+export const DynamicProviderExtensionContractVersion = "new-hope.dynamic-provider.1";
 
 export interface CompilerExtensionIdentity {
   readonly id: string;
@@ -282,7 +285,20 @@ export interface ProviderResolvedModule {
   readonly resolution: ProviderModuleResolution;
   readonly declarationModel: ProviderDeclarationModel;
   readonly virtualSourceText: string;
+  readonly virtualDocument: ProviderVirtualDeclarationDocument;
   readonly cacheKey: string;
+}
+
+export interface ProviderVirtualDeclarationDocument {
+  readonly uri: string;
+  readonly fileName: string;
+  readonly moduleSpecifier: string;
+  readonly providerModuleId: string;
+  readonly provider: ProviderIdentity;
+  readonly declarationModel: ProviderDeclarationModel;
+  readonly sourceText: string;
+  readonly readOnly: true;
+  readonly evidence?: readonly ExtensionEvidence[];
 }
 
 export const ExtensionLifecycleEvent = {
@@ -547,6 +563,7 @@ export class ProviderRegistry {
   readonly #semanticProviders = new Map<string, TargetSemanticProvider>();
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
   readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
+  readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
 
   constructor(diagnostics: ExtensionDiagnosticStore) {
     this.#diagnostics = diagnostics;
@@ -668,20 +685,44 @@ export class ProviderRegistry {
       return { kind: "rejected", diagnostic };
     }
 
+    const virtualSourceText = renderProviderDeclarationModel(declarationModel);
+    const virtualDocument: ProviderVirtualDeclarationDocument = {
+      uri: resolution.virtualFileName,
+      fileName: resolution.virtualFileName,
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      provider: owner.provider.identity,
+      declarationModel,
+      sourceText: virtualSourceText,
+      readOnly: true,
+      ...(resolution.evidence !== undefined || declarationModel.evidence !== undefined
+        ? { evidence: [...(resolution.evidence ?? []), ...(declarationModel.evidence ?? [])] }
+        : {}),
+    };
     const module = {
       provider: owner.provider,
       resolution,
       declarationModel,
-      virtualSourceText: renderProviderDeclarationModel(declarationModel),
+      virtualSourceText,
+      virtualDocument,
       cacheKey,
     };
     this.#virtualModules.set(cacheKey, module);
     this.#virtualModulesByFileName.set(resolution.virtualFileName, module);
+    this.#virtualDocumentsByUri.set(virtualDocument.uri, virtualDocument);
     return { kind: "resolved", module };
   }
 
   getVirtualModuleByFileName(fileName: string): ProviderResolvedModule | undefined {
     return this.#virtualModulesByFileName.get(fileName);
+  }
+
+  getVirtualDeclarationDocument(uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined {
+    return this.#virtualDocumentsByUri.get(uriOrFileName);
+  }
+
+  getVirtualDeclarationDocuments(): readonly ProviderVirtualDeclarationDocument[] {
+    return Array.from(this.#virtualDocumentsByUri.values());
   }
 
   #collectModuleOwners(specifier: string, context: ProviderModuleContext): { readonly kind: "unowned" } | { readonly kind: "owned"; readonly provider: TargetBindingProvider } | { readonly kind: "rejected"; readonly diagnostic: ExtensionDiagnostic } | { readonly kind: "conflict"; readonly providers: readonly TargetBindingProvider[] } {
@@ -994,6 +1035,13 @@ export class ExtensionHost {
       return [];
     }
     return this.facts.entries(subject);
+  }
+
+  getVirtualDeclarationDocumentForConsumer(consumer: string, uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined {
+    if (!this.assertFinalizedForConsumer(consumer)) {
+      return undefined;
+    }
+    return this.providers.getVirtualDeclarationDocument(uriOrFileName);
   }
 
   #getConsumerSubjectIdentity(subject: ExtensionFactSubject): string {
@@ -1417,7 +1465,16 @@ function validateProviderIdentity(identity: ProviderIdentity, expectedKind: "bin
     invalidFields.push("providerKind");
   }
   if (invalidFields.length === 0) {
-    return undefined;
+    if (identity.extensionContractVersion === DynamicProviderExtensionContractVersion) {
+      return undefined;
+    }
+    return createHostDiagnostic({
+      extensionCode: "PROVIDER_CONTRACT_MISMATCH",
+      numericCode: ExtensionHostDiagnosticCode.providerContractMismatch,
+      message: `Provider '${identity.id}' uses unsupported extension contract '${identity.extensionContractVersion}'. Expected '${DynamicProviderExtensionContractVersion}'.`,
+      evidence: [{ message: "Provider identity", details: identity }],
+      identity: `provider-contract-mismatch:${expectedKind}:${identity.id}:${identity.extensionContractVersion}`,
+    });
   }
   return createHostDiagnostic({
     extensionCode: "INVALID_PROVIDER_IDENTITY",

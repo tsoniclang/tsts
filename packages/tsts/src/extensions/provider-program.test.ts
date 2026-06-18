@@ -20,7 +20,7 @@ import type { ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { attachExtensionHost, createExtensionConsumerQueries, finalizeExtensionSemantics } from "./index.js";
+import { DynamicProviderExtensionContractVersion, attachExtensionHost, createExtensionConsumerQueries, finalizeExtensionSemantics } from "./index.js";
 import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, TargetBindingProvider, TargetIdentity } from "./index.js";
 
@@ -149,7 +149,7 @@ function dotnetProvider(specifier: string, reject: boolean): TargetBindingProvid
       id: "dotnet-provider",
       version: "1.0.0",
       target: "dotnet",
-      extensionContractVersion: "new-hope.dynamic-provider.1",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
       providerKind: "binding",
     },
     ownsModule(moduleSpecifier) {

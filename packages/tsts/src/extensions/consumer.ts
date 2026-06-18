@@ -16,7 +16,7 @@ import type {
   SurfaceOperationFact,
   TargetBindingFact,
 } from "./facts.js";
-import type { ExtensionFactEntry, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
+import type { ExtensionFactEntry, ExtensionFactKey, ExtensionFactSubject, ExtensionHost, ProviderVirtualDeclarationDocument } from "./host.js";
 
 export class ExtensionConsumerQueries {
   readonly #host: ExtensionHost;
@@ -37,6 +37,10 @@ export class ExtensionConsumerQueries {
 
   getFacts(subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
     return this.#host.getFactsForConsumer(this.#consumer, subject);
+  }
+
+  getVirtualDeclarationDocument(uriOrFileName: string): ProviderVirtualDeclarationDocument | undefined {
+    return this.#host.getVirtualDeclarationDocumentForConsumer(this.#consumer, uriOrFileName);
   }
 
   getSourcePrimitiveFact(subject: ExtensionFactSubject): SourcePrimitiveFact | undefined {

@@ -1,4 +1,5 @@
 export {
+  DynamicProviderExtensionContractVersion,
   ExtensionLifecycleEvent,
   ExtensionDiagnosticStore,
   ExtensionFactResolver,
@@ -76,6 +77,7 @@ export type {
   ProviderOwnership,
   ProviderParameterDeclaration,
   ProviderResolvedModule,
+  ProviderVirtualDeclarationDocument,
   ProviderSignatureDeclaration,
   ProviderSymbolIdentity,
   ProviderTypeParameterDeclaration,
