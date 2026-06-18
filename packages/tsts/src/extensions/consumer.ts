@@ -7,6 +7,7 @@ import {
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   surfaceOperationFactKey,
+  targetConversionFactKey,
   targetBindingFactKey,
 } from "./facts.js";
 import type {
@@ -18,6 +19,7 @@ import type {
   SelectedTargetSignatureFact,
   SourcePrimitiveFact,
   SurfaceOperationFact,
+  TargetConversionFact,
   TargetBindingFact,
 } from "./facts.js";
 import type { ExtensionFactEntry, ExtensionFactKey, ExtensionFactSubject, ExtensionHost, ProviderVirtualDeclarationDocument } from "./host.js";
@@ -101,6 +103,14 @@ export class ExtensionConsumerQueries {
 
   requireRuntimeCarrierFact(subject: ExtensionFactSubject, purpose?: string): RuntimeCarrierFact | undefined {
     return this.requireFact(subject, runtimeCarrierFactKey, purpose);
+  }
+
+  getTargetConversionFact(subject: ExtensionFactSubject): TargetConversionFact | undefined {
+    return this.getFact(subject, targetConversionFactKey);
+  }
+
+  requireTargetConversionFact(subject: ExtensionFactSubject, purpose?: string): TargetConversionFact | undefined {
+    return this.requireFact(subject, targetConversionFactKey, purpose);
   }
 
   getArgumentPassingFact(subject: ExtensionFactSubject): ArgumentPassingFact | undefined {

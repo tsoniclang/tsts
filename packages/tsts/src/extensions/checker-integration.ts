@@ -5,10 +5,11 @@ import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
+import type { Type } from "../internal/checker/types.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, SatisfiesConstraintRequest } from "./decisions.js";
-import { argumentPassingFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./facts.js";
-import type { ExtensionHost } from "./host.js";
+import type { ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest } from "./decisions.js";
+import { argumentPassingFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
+import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 
 interface CheckerWithProgram {
@@ -50,6 +51,7 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
 
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, result.value.selectedSignature, result.evidence ?? []);
   recordExtensionCallParameterModes(extensionHost, callExpression, result.value, Node_Arguments(callExpression) ?? []);
+  recordExtensionCallArgumentConversions(extensionHost, result.value, Node_Arguments(callExpression) ?? []);
 }
 
 export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
@@ -203,6 +205,45 @@ export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<C
   return valid;
 }
 
+export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, type: GoPtr<Type>, symbol: GoPtr<Symbol>): void {
+  if (checker === undefined || type === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getRuntimeCarrier) === undefined) {
+    return;
+  }
+
+  if (!hasExtensionOwnedSubject(extensionHost, type) && !hasExtensionOwnedSubject(extensionHost, typeReference) && !hasExtensionOwnedSubject(extensionHost, symbol) && !hasExtensionOwnedSubject(extensionHost, type.symbol)) {
+    return;
+  }
+
+  const result = extensionHost.runDecision<RuntimeCarrierRequest, RuntimeCarrierResult>(
+    ExtensionDecisionQuestion.getRuntimeCarrier,
+    {
+      type,
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned runtime carrier resolution unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+  if (result.kind !== "accept") {
+    return;
+  }
+
+  const fact = {
+    carrier: result.value.carrier,
+    ...(result.value.requiresAllocation !== undefined ? { requiresAllocation: result.value.requiresAllocation } : {}),
+  };
+  extensionHost.facts.set(type, runtimeCarrierFactKey, fact, result.evidence ?? []);
+  setFactOnOptionalSubject(extensionHost, typeReference, runtimeCarrierFactKey, fact, result.evidence ?? []);
+  setFactOnOptionalSubject(extensionHost, symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
+  setFactOnOptionalSubject(extensionHost, type.symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
+}
+
 function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
   if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getParameterMode) === undefined) {
     return;
@@ -231,5 +272,55 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExp
     }
     extensionHost.facts.set(argument, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
     extensionHost.facts.set(callExpression, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
+  }
+}
+
+function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
+  if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveConversion) === undefined) {
+    return;
+  }
+  const parameters = callResult.selectedSignature.member.parameters;
+  for (let index = 0; index < parameters.length; index++) {
+    const parameter = parameters[index];
+    const argument = arguments_[index];
+    if (parameter === undefined || argument === undefined) {
+      continue;
+    }
+    const result = extensionHost.runDecision<ResolveConversionRequest, ResolveConversionResult>(
+      ExtensionDecisionQuestion.resolveConversion,
+      {
+        expression: argument,
+        source: argument,
+        target: parameter.type,
+        ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
+      },
+      () => {
+        throw new Error("Extension-owned conversion resolution unexpectedly reached core fallback.");
+      },
+      { requireOwner: true },
+    );
+    if (result.kind !== "accept" || (result.value.convertedType === undefined && result.value.operation === undefined)) {
+      continue;
+    }
+    extensionHost.facts.set(argument, targetConversionFactKey, {
+      ...(result.value.convertedType !== undefined ? { convertedType: result.value.convertedType } : {}),
+      ...(result.value.operation !== undefined ? { operation: result.value.operation } : {}),
+    }, result.evidence ?? []);
+  }
+}
+
+function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: ExtensionFactSubject): boolean {
+  if (subject === undefined || subject === null) {
+    return false;
+  }
+  return extensionHost.facts.get(subject, targetBindingFactKey) !== undefined
+    || extensionHost.facts.get(subject, providerVirtualDeclarationFactKey) !== undefined
+    || extensionHost.facts.get(subject, sourcePrimitiveFactKey) !== undefined
+    || extensionHost.facts.get(subject, runtimeCarrierFactKey) !== undefined;
+}
+
+function setFactOnOptionalSubject<T>(extensionHost: ExtensionHost, subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[]): void {
+  if (subject !== undefined && subject !== null) {
+    extensionHost.facts.set(subject, key, value, evidence);
   }
 }

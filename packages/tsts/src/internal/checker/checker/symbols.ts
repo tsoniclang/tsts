@@ -1,6 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { recordExtensionElementAccessResolution, recordExtensionPropertyAccessResolution, recordExtensionTypeArgumentConstraintResolution } from "../../../extensions/checker-integration.js";
+import { recordExtensionElementAccessResolution, recordExtensionPropertyAccessResolution, recordExtensionRuntimeCarrierResolution, recordExtensionTypeArgumentConstraintResolution } from "../../../extensions/checker-integration.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -1485,7 +1485,7 @@ export function Checker_checkAccessorDeclaration(receiver: GoPtr<Checker>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkTypeReferenceOrImport","kind":"method","status":"implemented","sigHash":"04b368dc482ffe366538f2c25eef6b3d9e8871a15205960541f052fc94c89c38","bodyHash":"c8ef9a8ebce1492de9507cb93fd09697981c0215a4c611277a70ed7c1fd8fa57"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go type-reference checking, extension-enabled programs may ask the registered provider to validate target-only generic constraints carried by provider virtual modules; no-extension programs and unowned types remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go type-reference checking, extension-enabled programs may ask the registered provider to validate target-only generic constraints and record runtime carrier facts carried by provider virtual modules; no-extension programs and unowned types remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkTypeReferenceOrImport(node *ast.Node) {
@@ -1518,6 +1518,7 @@ export function Checker_checkTypeReferenceOrImport(receiver: GoPtr<Checker>, nod
     const symbol_ = Checker_getResolvedSymbolOrNil(receiver, node);
     if (symbol_ !== undefined) {
       recordExtensionTypeArgumentConstraintResolution(receiver, node, symbol_);
+      recordExtensionRuntimeCarrierResolution(receiver, node, t, symbol_);
       if (Some(symbol_!.Declarations as GoSlice<GoPtr<Node>>, (d) => (IsTypeDeclaration(d) && Checker_IsDeprecatedDeclaration(receiver, d)) as boolean)) {
         Checker_addDeprecatedSuggestion(receiver, Checker_getDeprecatedSuggestionNode(receiver, node), symbol_!.Declarations as GoSlice<GoPtr<Node>>, symbol_!.Name);
       }

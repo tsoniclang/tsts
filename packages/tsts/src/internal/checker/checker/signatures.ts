@@ -2278,7 +2278,7 @@ export function Checker_checkImportCallExpression(receiver: GoPtr<Checker>, node
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkCallExpression","kind":"method","status":"implemented","sigHash":"c7077a9359a5dabbb7b33b07409cf7ae319dc8d4ee9862f71076afb9296c19cc","bodyHash":"8d143d4d304de3843b2932373cebb5a3e5a974a05b6bbf1f1e0ea960bebc8d4e"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go call resolution, extension-enabled programs may record provider-selected target call facts for consumers; no-extension programs and unowned calls remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go call resolution, extension-enabled programs may record provider-selected target call, parameter mode, and argument conversion facts for consumers; no-extension programs and unowned calls remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type {

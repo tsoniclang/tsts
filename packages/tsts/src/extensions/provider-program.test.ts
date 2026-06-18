@@ -26,7 +26,7 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, sourcePrimitiveFactKey } from "./index.js";
+import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, runtimeCarrierFactKey, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, ExtensionDecisionContext, ExtensionFactSubject, ResolveCallRequest, SatisfiesConstraintRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
@@ -200,6 +200,61 @@ test("checker records provider-owned parameter mode facts from selected target s
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
+});
+
+test("checker records provider-owned runtime carrier and argument conversion facts", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import type { SearchValues } from "@tsonic/dotnet/System.Buffers.js";
+
+      declare let values: SearchValues<number>;
+      declare function toByte(value: number): number;
+      values;
+      toByte(300);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Buffers.js", false, carrierConversionSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const searchValuesTypeReference = findFirstNodeByKind(index, KindTypeReference);
+  const runtimeCarrier = extended.extensionHost.facts.get(searchValuesTypeReference, runtimeCarrierFactKey)?.carrier;
+  assert.equal(runtimeCarrier?.kind, "target-named");
+  assert.equal(runtimeCarrier?.kind === "target-named" ? runtimeCarrier.id : undefined, "System.Buffers.SearchValues`1");
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  const argument = getFirstCallArgument(call);
+  assert.equal(extended.extensionHost.facts.get(argument, targetConversionFactKey)?.convertedType?.kind, "target-named");
+  assert.equal(extended.extensionHost.facts.get(argument, targetConversionFactKey)?.operation?.operationId, "System.Convert.ToByte");
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier.kind, "target-named");
+  assert.equal(consumer.getTargetConversionFact(argument)?.operation?.targetOperation, "System.Convert.ToByte");
 });
 
 test("checker validates provider-owned target constraints through standard semantic diagnostics", () => {
@@ -563,6 +618,26 @@ function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatur
   };
 }
 
+function carrierConversionSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-carrier-conversion-semantic-provider"),
+    resolveCall: () => acceptDecision({
+      selectedSignature: {
+        member: byteConversionTargetMember(),
+      },
+      returnType: "number",
+    }),
+    resolveConversion: () => acceptDecision({
+      convertedType: { kind: "target-named", id: "System.Byte" },
+      operation: surfaceOperation("System.Convert.ToByte", "method", "number"),
+    }),
+    getRuntimeCarrier: () => acceptDecision({
+      carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
+      requiresAllocation: false,
+    }),
+  };
+}
+
 function surfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-surface-semantic-provider"),
@@ -794,6 +869,22 @@ function findFirstNodeByKindWorker(root: GoPtr<Node>, kind: number): GoPtr<Node>
 function selectedSearchValuesContainsSignature(): SelectedTargetSignatureFact {
   return {
     member: searchValuesContainsTargetMember(),
+  };
+}
+
+function byteConversionTargetMember(): TargetMember {
+  return {
+    id: "ToByte(System.Int32)",
+    sourceName: "toByte",
+    targetName: "ToByte",
+    kind: "method",
+    parameters: [{
+      name: "value",
+      type: { kind: "target-named", id: "System.Byte" },
+      passingMode: "by-value",
+    }],
+    returnType: { kind: "target-named", id: "System.Byte" },
+    overloadGroup: "ToByte",
   };
 }
 

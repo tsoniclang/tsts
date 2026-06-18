@@ -43,6 +43,7 @@ export {
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   surfaceOperationFactKey,
+  targetConversionFactKey,
   targetBindingFactKey,
 } from "./facts.js";
 
@@ -150,6 +151,7 @@ export type {
   SurfaceOperationFact,
   TargetBindingFact,
   TargetConstraint,
+  TargetConversionFact,
   TargetMember,
   TargetParameter,
   TargetTypeParameter,

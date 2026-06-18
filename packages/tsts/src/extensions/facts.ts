@@ -190,6 +190,11 @@ export interface RuntimeCarrierFact {
   readonly requiresAllocation?: boolean;
 }
 
+export interface TargetConversionFact {
+  readonly convertedType?: TargetTypeRef;
+  readonly operation?: SurfaceOperationFact;
+}
+
 export interface ProviderVirtualDeclarationFact {
   readonly providerId: string;
   readonly providerVersion: string;
@@ -290,6 +295,12 @@ export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>(
   extensionId: "tsts.target-bindings",
   name: "runtimeCarrier",
   equals: (left, right) => targetTypeRefEquals(left.carrier, right.carrier) && left.requiresAllocation === right.requiresAllocation,
+});
+
+export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
+  extensionId: "tsts.target-bindings",
+  name: "targetConversion",
+  equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && left.operation?.operationId === right.operation?.operationId,
 });
 
 export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
