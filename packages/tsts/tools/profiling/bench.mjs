@@ -81,6 +81,9 @@ function parseTimeV(stderr) {
   // The label contains colons ("(h:mm:ss or m:ss)"), so match greedily to the last
   // ": <value>" on the line.
   const wall = /Elapsed \(wall clock\) time[^\n]*:\s+([\d:.]+)/.exec(stderr);
+  const user = /User time \(seconds\):\s+([\d.]+)/.exec(stderr);
+  const system = /System time \(seconds\):\s+([\d.]+)/.exec(stderr);
+  const cpuPercent = /Percent of CPU this job got:\s+(\d+)%/.exec(stderr);
   const rss = /Maximum resident set size \(kbytes\):\s+(\d+)/.exec(stderr);
   let wallSecs;
   if (wall) {
@@ -88,7 +91,17 @@ function parseTimeV(stderr) {
     wallSecs = parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2]
       : parts.length === 2 ? parts[0] * 60 + parts[1] : parts[0];
   }
-  return { wallSecs, maxRssKB: rss ? Number(rss[1]) : undefined };
+  const userSecs = user ? Number(user[1]) : undefined;
+  const systemSecs = system ? Number(system[1]) : undefined;
+  const cpuSecs = userSecs !== undefined && systemSecs !== undefined ? userSecs + systemSecs : undefined;
+  return {
+    wallSecs,
+    userSecs,
+    systemSecs,
+    cpuSecs,
+    cpuPercent: cpuPercent ? Number(cpuPercent[1]) : undefined,
+    maxRssKB: rss ? Number(rss[1]) : undefined,
+  };
 }
 
 function median(xs) {
@@ -116,7 +129,7 @@ function benchProject(project, runs) {
     // Drop the cold first run; aggregate the rest by median.
     const warm = samples.slice(1);
     const agg = {};
-    for (const k of [...PHASES, "wallSecs", "maxRssKB", "MemReportedKB", "Files", "Lines"]) {
+    for (const k of [...PHASES, "wallSecs", "userSecs", "systemSecs", "cpuSecs", "cpuPercent", "maxRssKB", "MemReportedKB", "Files", "Lines"]) {
       agg[k] = median(warm.map((s) => s[k]));
     }
     result.byCompiler[c.id] = agg;
@@ -145,6 +158,8 @@ function report(results) {
       console.log(`| ${phase} | ${fmt(t.tsgo?.[phase], "s")} | ${fmt(t.tsc?.[phase], "s")} | ${fmt(t.tsts?.[phase], "s")} | ${ratio(t.tsts?.[phase], t.tsgo?.[phase])} | ${ratio(t.tsts?.[phase], t.tsc?.[phase])} |`);
     }
     console.log(`| **wall** | ${fmt(t.tsgo?.wallSecs, "s")} | ${fmt(t.tsc?.wallSecs, "s")} | ${fmt(t.tsts?.wallSecs, "s")} | ${ratio(t.tsts?.wallSecs, t.tsgo?.wallSecs)} | ${ratio(t.tsts?.wallSecs, t.tsc?.wallSecs)} |`);
+    console.log(`| CPU time | ${fmt(t.tsgo?.cpuSecs, "s")} | ${fmt(t.tsc?.cpuSecs, "s")} | ${fmt(t.tsts?.cpuSecs, "s")} | ${ratio(t.tsts?.cpuSecs, t.tsgo?.cpuSecs)} | ${ratio(t.tsts?.cpuSecs, t.tsc?.cpuSecs)} |`);
+    console.log(`| CPU utilization | ${fmt(t.tsgo?.cpuPercent, "%", 0)} | ${fmt(t.tsc?.cpuPercent, "%", 0)} | ${fmt(t.tsts?.cpuPercent, "%", 0)} | ${ratio(t.tsts?.cpuPercent, t.tsgo?.cpuPercent)} | ${ratio(t.tsts?.cpuPercent, t.tsc?.cpuPercent)} |`);
     console.log(`| maxRSS (MB) | ${fmt(t.tsgo?.maxRssKB / 1024)} | ${fmt(t.tsc?.maxRssKB / 1024)} | ${fmt(t.tsts?.maxRssKB / 1024)} | ${ratio(t.tsts?.maxRssKB, t.tsgo?.maxRssKB)} | ${ratio(t.tsts?.maxRssKB, t.tsc?.maxRssKB)} |`);
     console.log();
   }
