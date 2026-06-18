@@ -41,6 +41,9 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
 
   const valueSymbol = queries.getSymbolAtLocation(narrowedValue);
   assert.equal(valueSymbol?.Name, "value");
+  const resolvedValueSymbol = queries.getResolvedSymbol(narrowedValue);
+  assert.equal(resolvedValueSymbol?.Name, "value");
+  assert.equal(queries.getResolvedSymbolOrNil(narrowedValue), resolvedValueSymbol);
   assert.ok(queries.getTypeOfSymbol(valueSymbol) !== undefined);
   assert.ok(queries.getDeclaredTypeOfSymbol(valueSymbol) !== undefined);
 

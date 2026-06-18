@@ -9,7 +9,7 @@ import type { Program } from "../internal/compiler/program.js";
 import { Checker_getResolvedSignature } from "../internal/checker/checker/signatures.js";
 import { CheckModeNormal } from "../internal/checker/checker/state.js";
 import type { Checker } from "../internal/checker/checker/state.js";
-import { Checker_GetSymbolAtLocation, Checker_getDeclaredTypeOfSymbol, Checker_getTypeOfSymbol } from "../internal/checker/checker/symbols.js";
+import { Checker_GetSymbolAtLocation, Checker_getDeclaredTypeOfSymbol, Checker_getResolvedSymbol, Checker_getResolvedSymbolOrNil, Checker_getTypeOfSymbol } from "../internal/checker/checker/symbols.js";
 import { Checker_getContextualType, Checker_GetTypeAtLocation } from "../internal/checker/checker/types.js";
 import type { ContextFlags, Signature, Type } from "../internal/checker/types.js";
 import { ContextFlagsNone } from "../internal/checker/types.js";
@@ -23,6 +23,8 @@ export interface TypeCheckerQueries {
   readonly getTypeAtLocation: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getContextualType: (node: GoPtr<Node>, contextFlags?: ContextFlags, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getSymbolAtLocation: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
+  readonly getResolvedSymbol: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
+  readonly getResolvedSymbolOrNil: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getDeclaredTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getResolvedSignature: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Signature>;
@@ -36,6 +38,10 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getContextualType(checker, node, contextFlags)),
     getSymbolAtLocation: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetSymbolAtLocation(checker, node)),
+    getResolvedSymbol: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSymbol(checker, node)),
+    getResolvedSymbolOrNil: (node, options = {}) =>
+      withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSymbolOrNil(checker, node)),
     getTypeOfSymbol: (symbol, options = {}) =>
       withCheckerForSymbol(program, symbol, defaultOptions, options, (checker) => Checker_getTypeOfSymbol(checker, symbol)),
     getDeclaredTypeOfSymbol: (symbol, options = {}) =>
