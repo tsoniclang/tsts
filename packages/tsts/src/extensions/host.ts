@@ -7,6 +7,7 @@ import type {
   ContextualTypeRequest,
   ContextualTypeResult,
   ExtensionDecision,
+  ExtensionDecisionContext,
   ExtensionDecisionHook,
   ExtensionDecisionResult,
   ExtensionDecisionRunOptions,
@@ -346,18 +347,18 @@ export interface TargetBindingProvider {
 
 export interface TargetSemanticProvider {
   readonly identity: ProviderIdentity;
-  satisfiesConstraint?: (request: SatisfiesConstraintRequest) => ExtensionDecision<boolean>;
-  isAssignableTo?: (request: AssignabilityRequest) => ExtensionDecision<boolean>;
-  resolveCall?: (request: ResolveCallRequest) => ExtensionDecision<ResolveCallResult>;
-  inferTypeArguments?: (request: InferTypeArgumentsRequest) => ExtensionDecision<InferTypeArgumentsResult>;
-  resolvePropertyAccess?: (request: ResolvePropertyAccessRequest) => ExtensionDecision<ResolveOperationResult>;
-  resolveElementAccess?: (request: ResolveElementAccessRequest) => ExtensionDecision<ResolveOperationResult>;
-  resolveOperator?: (request: ResolveOperatorRequest) => ExtensionDecision<ResolveOperationResult>;
-  getContextualType?: (request: ContextualTypeRequest) => ExtensionDecision<ContextualTypeResult>;
-  resolveConversion?: (request: ResolveConversionRequest) => ExtensionDecision<ResolveConversionResult>;
-  getParameterMode?: (request: ParameterModeRequest) => ExtensionDecision<ParameterModeResult>;
-  getRuntimeCarrier?: (request: RuntimeCarrierRequest) => ExtensionDecision<RuntimeCarrierResult>;
-  validateFlowUse?: (request: ValidateFlowUseRequest) => ExtensionDecision<ValidateFlowUseResult>;
+  satisfiesConstraint?: (request: SatisfiesConstraintRequest, context: ExtensionDecisionContext) => ExtensionDecision<boolean>;
+  isAssignableTo?: (request: AssignabilityRequest, context: ExtensionDecisionContext) => ExtensionDecision<boolean>;
+  resolveCall?: (request: ResolveCallRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveCallResult>;
+  inferTypeArguments?: (request: InferTypeArgumentsRequest, context: ExtensionDecisionContext) => ExtensionDecision<InferTypeArgumentsResult>;
+  resolvePropertyAccess?: (request: ResolvePropertyAccessRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
+  resolveElementAccess?: (request: ResolveElementAccessRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
+  resolveOperator?: (request: ResolveOperatorRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
+  getContextualType?: (request: ContextualTypeRequest, context: ExtensionDecisionContext) => ExtensionDecision<ContextualTypeResult>;
+  resolveConversion?: (request: ResolveConversionRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveConversionResult>;
+  getParameterMode?: (request: ParameterModeRequest, context: ExtensionDecisionContext) => ExtensionDecision<ParameterModeResult>;
+  getRuntimeCarrier?: (request: RuntimeCarrierRequest, context: ExtensionDecisionContext) => ExtensionDecision<RuntimeCarrierResult>;
+  validateFlowUse?: (request: ValidateFlowUseRequest, context: ExtensionDecisionContext) => ExtensionDecision<ValidateFlowUseResult>;
 }
 
 interface RegisteredDecisionHook {
@@ -909,6 +910,10 @@ export class ExtensionHost {
       const decision = registered.hook(request, {
         question,
         extensionId: registered.extensionId,
+        host: this,
+        facts: this.facts,
+        factResolver: this.factResolver,
+        diagnostics: this.diagnostics,
       }) as ExtensionDecision<TResult>;
       if (decision.kind === "defer") {
         continue;
@@ -1123,13 +1128,13 @@ function registerProviderDecisionHook<TRequest, TResult>(
   host: ExtensionHost,
   extensionId: string,
   question: string,
-  handler: ((request: TRequest) => ExtensionDecision<TResult>) | undefined,
+  handler: ((request: TRequest, context: ExtensionDecisionContext) => ExtensionDecision<TResult>) | undefined,
 ): void {
   if (handler === undefined) {
     return;
   }
   host.registerDecisionOwner(question, extensionId);
-  host.registerDecisionHook<TRequest, TResult>(question, extensionId, (request) => handler(request));
+  host.registerDecisionHook<TRequest, TResult>(question, extensionId, (request, context) => handler(request, context));
 }
 
 const attachedExtensionHosts = new WeakMap<object, ExtensionHost>();

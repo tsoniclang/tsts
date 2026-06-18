@@ -8,7 +8,8 @@ import { SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_Symbol } from "../internal/ast/ast.js";
 import { Node_ForEachChild } from "../internal/ast/spine.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
-import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
+import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
+import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -25,9 +26,9 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, attachExtensionHost, createExtensionConsumerQueries, deferDecision, finalizeExtensionSemantics, getExtensionHost } from "./index.js";
+import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, sourcePrimitiveFactKey } from "./index.js";
 import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { CompilerExtension, ResolveCallRequest, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { CompilerExtension, ExtensionDecisionContext, ExtensionFactSubject, ResolveCallRequest, SatisfiesConstraintRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
   let fs = FromMap(new Map<string, string>([
@@ -150,6 +151,69 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
+});
+
+test("checker validates provider-owned target constraints through standard semantic diagnostics", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import type { int } from "@tsonic/core/types.js";
+      import type { SearchValues } from "@tsonic/dotnet/System.Buffers.js";
+
+      type Good = SearchValues<int>;
+      type Bad = SearchValues<number>;
+    `],
+    ["/src/node_modules/@tsonic/core/package.json", JSON.stringify({
+      name: "@tsonic/core",
+      version: "1.0.0",
+      type: "module",
+      exports: {
+        "./types.js": {
+          types: "./types.d.ts",
+          default: "./types.js",
+        },
+      },
+    })],
+    ["/src/node_modules/@tsonic/core/types.d.ts", "export type int = number;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [
+      createSourceCoreExtension(),
+      providerExtension("@tsonic/dotnet/System.Buffers.js", false, constraintSemanticProvider()),
+    ],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9910201);
+  assert.match(Diagnostic_String(diagnostics[0]), /DOTNET0201/);
+  assert.match(Diagnostic_String(diagnostics[0]), /must implement System\.IEquatable`1/);
+
+  const targetDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "DOTNET_CONSTRAINT");
+  assert.equal(targetDiagnostics.length, 1);
+  assert.equal((targetDiagnostics[0]?.nodeOrSpan as GoPtr<Node>)?.Kind, KindTypeReference);
 });
 
 test("checker-owned target call seam reports deferred providers without fallback facts", () => {
@@ -479,6 +543,61 @@ function rejectingCallSemanticProvider(): TargetSemanticProvider {
       },
     }),
   };
+}
+
+function constraintSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-constraint-semantic-provider"),
+    satisfiesConstraint: (request, context) => {
+      const primitive = getSourcePrimitiveForConstraintArgument(request.source, context);
+      if (request.constraint.kind === "implements" && request.constraint.contract === "System.IEquatable`1" && primitive?.kind === "int32") {
+        return acceptDecision(true, [{ message: "Source primitive int32 maps to System.Int32, which implements System.IEquatable<System.Int32>." }]);
+      }
+      return rejectTargetConstraint(request, context);
+    },
+  };
+}
+
+function rejectTargetConstraint(request: SatisfiesConstraintRequest, context: ExtensionDecisionContext) {
+  return {
+    kind: "reject" as const,
+    diagnostic: {
+      extensionId: context.extensionId,
+      extensionCode: "DOTNET_CONSTRAINT",
+      numericCode: 9910201,
+      publicCode: "DOTNET0201",
+      category: "error" as const,
+      message: "Target type argument must implement System.IEquatable`1.",
+      nodeOrSpan: request.source,
+      evidence: [{ message: "Provider target constraint", details: request.constraint }],
+      identity: getConstraintDiagnosticIdentity(request.source),
+    },
+  };
+}
+
+function getConstraintDiagnosticIdentity(source: ExtensionFactSubject): string {
+  if (source !== null && source !== undefined && typeof source === "object") {
+    const node = source as GoPtr<Node>;
+    return `dotnet-constraint:${String(node?.id ?? "unknown")}`;
+  }
+  return `dotnet-constraint:${typeof source}:${String(source)}`;
+}
+
+function getSourcePrimitiveForConstraintArgument(source: ExtensionFactSubject, context: ExtensionDecisionContext): SourcePrimitiveFact | undefined {
+  if (source === null || source === undefined || typeof source !== "object") {
+    return undefined;
+  }
+  const node = source as GoPtr<Node>;
+  if (node === undefined) {
+    return undefined;
+  }
+  const direct = context.facts.get(node, sourcePrimitiveFactKey);
+  if (direct !== undefined) {
+    return direct;
+  }
+  const typeName = node.Kind === KindTypeReference ? AsTypeReferenceNode(node)?.TypeName : node;
+  const symbol = Node_Symbol(typeName);
+  return symbol === undefined ? undefined : context.facts.get(symbol, sourcePrimitiveFactKey);
 }
 
 function semanticProviderIdentity(id: string) {

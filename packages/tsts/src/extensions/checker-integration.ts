@@ -1,12 +1,13 @@
 import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Expression, Node_Text } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
+import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { ResolveCallRequest, ResolveCallResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest } from "./decisions.js";
-import { selectedTargetSignatureFactKey, surfaceOperationFactKey } from "./facts.js";
+import type { ResolveCallRequest, ResolveCallResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, SatisfiesConstraintRequest } from "./decisions.js";
+import { selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./facts.js";
 import { getExtensionHost } from "./host.js";
 
 interface CheckerWithProgram {
@@ -153,4 +154,49 @@ export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProg
   }
 
   extensionHost.facts.set(expression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+}
+
+export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
+  if (checker === undefined || typeReference === undefined || symbol === undefined) {
+    return true;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.satisfiesConstraint) === undefined) {
+    return true;
+  }
+
+  const targetBinding = extensionHost.facts.get(symbol, targetBindingFactKey);
+  const typeParameters = targetBinding?.typeParameters ?? [];
+  const typeArguments = Node_TypeArguments(typeReference) ?? [];
+  if (targetBinding === undefined || typeParameters.length === 0 || typeArguments.length === 0) {
+    return true;
+  }
+
+  let valid = true;
+  for (let parameterIndex = 0; parameterIndex < typeParameters.length; parameterIndex++) {
+    const parameter = typeParameters[parameterIndex];
+    const argument = typeArguments[parameterIndex];
+    if (parameter === undefined || argument === undefined) {
+      continue;
+    }
+    for (const constraint of parameter.constraints ?? []) {
+      const result = extensionHost.runDecision<SatisfiesConstraintRequest, boolean>(
+        ExtensionDecisionQuestion.satisfiesConstraint,
+        {
+          source: argument,
+          constraint,
+          target: extensionHost.activeTarget ?? targetBinding.target,
+        },
+        () => {
+          throw new Error("Extension-owned target constraint checking unexpectedly reached core fallback.");
+        },
+        { requireOwner: true },
+      );
+      if (result.kind !== "accept" || !result.value) {
+        valid = false;
+      }
+    }
+  }
+  return valid;
 }

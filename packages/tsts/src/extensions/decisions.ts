@@ -6,7 +6,7 @@ import type {
   TargetConstraint,
   TargetTypeRef,
 } from "./facts.js";
-import type { ExtensionDiagnostic, ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+import type { ExtensionDiagnostic, ExtensionDiagnosticStore, ExtensionEvidence, ExtensionFactResolver, ExtensionFactStore, ExtensionFactSubject, ExtensionHost } from "./host.js";
 
 export type ExtensionDecision<T> =
   | { readonly kind: "defer" }
@@ -24,6 +24,10 @@ export type ExtensionDecisionResult<T> =
 export interface ExtensionDecisionContext {
   readonly question: string;
   readonly extensionId: string;
+  readonly host: ExtensionHost;
+  readonly facts: ExtensionFactStore;
+  readonly factResolver: ExtensionFactResolver;
+  readonly diagnostics: ExtensionDiagnosticStore;
 }
 
 export type ExtensionDecisionHook<TRequest, TResult> = (request: TRequest, context: ExtensionDecisionContext) => ExtensionDecision<TResult>;
