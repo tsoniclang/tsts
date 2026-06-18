@@ -5,7 +5,7 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
-import { Node_Symbol } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Symbol } from "../internal/ast/ast.js";
 import { Node_ForEachChild } from "../internal/ast/spine.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
@@ -26,7 +26,7 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, sourcePrimitiveFactKey } from "./index.js";
+import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, sourcePrimitiveFactKey } from "./index.js";
 import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, ExtensionDecisionContext, ExtensionFactSubject, ResolveCallRequest, SatisfiesConstraintRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
@@ -151,6 +151,55 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
+});
+
+test("checker records provider-owned parameter mode facts from selected target signatures", () => {
+  const selectedSignature = {
+    member: searchValuesContainsTargetMember("byref-readonly"),
+  } satisfies SelectedTargetSignatureFact;
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function contains(value: number): boolean;
+      declare let value: number;
+      contains(value);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, parameterModeSemanticProvider(selectedSignature))],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  const argument = getFirstCallArgument(call);
+  assert.equal(extended.extensionHost.facts.get(argument, argumentPassingFactKey)?.mode, "byref-readonly");
+  assert.equal(extended.extensionHost.facts.get(call, argumentPassingFactKey)?.targetExpression, argument);
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
 });
 
 test("checker validates provider-owned target constraints through standard semantic diagnostics", () => {
@@ -498,6 +547,22 @@ function deferredSemanticProvider(): TargetSemanticProvider {
   };
 }
 
+function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-parameter-mode-semantic-provider"),
+    resolveCall: () => acceptDecision({
+      selectedSignature,
+      returnType: "bool",
+    }),
+    getParameterMode: (request) => acceptDecision({
+      passing: {
+        mode: "byref-readonly",
+        targetExpression: request.argument,
+      },
+    }),
+  };
+}
+
 function surfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-surface-semantic-provider"),
@@ -705,6 +770,12 @@ function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
   return found;
 }
 
+function getFirstCallArgument(callExpression: GoPtr<Node>): GoPtr<Node> {
+  const argument = (Node_Arguments(callExpression) ?? [])[0];
+  assert.ok(argument !== undefined);
+  return argument;
+}
+
 function findFirstNodeByKindWorker(root: GoPtr<Node>, kind: number): GoPtr<Node> {
   if (root === undefined) {
     return undefined;
@@ -726,7 +797,7 @@ function selectedSearchValuesContainsSignature(): SelectedTargetSignatureFact {
   };
 }
 
-function searchValuesContainsTargetMember(): TargetMember {
+function searchValuesContainsTargetMember(passingMode: TargetMember["parameters"][number]["passingMode"] = "by-value"): TargetMember {
   return {
     id: "Contains(T)",
     sourceName: "Contains",
@@ -735,7 +806,7 @@ function searchValuesContainsTargetMember(): TargetMember {
     parameters: [{
       name: "value",
       type: { kind: "type-parameter", name: "T" },
-      passingMode: "by-value",
+      passingMode,
     }],
     returnType: { kind: "source-primitive", name: "bool" },
     overloadGroup: "Contains",
