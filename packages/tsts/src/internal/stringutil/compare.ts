@@ -1,7 +1,7 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import { Compare, EqualFold, HasPrefix as stringsHasPrefix, HasSuffix as stringsHasSuffix, ToLower } from "../../go/strings.js";
 import { ToLower as unicodeToLower } from "../../go/unicode.js";
-import { DecodeRuneInStringAt, StringByteLen, StringByteSlice } from "../../go/unicode/utf8.js";
+import { DecodeRuneInStringViewAt, GetStringByteView, StringByteLen, StringByteSlice } from "../../go/unicode/utf8.js";
 
 // Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length and
 // slices like `s[i:j]` operate on byte offsets. The standard-library facades
@@ -116,11 +116,13 @@ export function CompareStringsCaseInsensitive(a: string, b: string): Comparison 
   if (a === b) {
     return ComparisonEqual;
   }
+  const aView = GetStringByteView(a);
+  const bView = GetStringByteView(b);
   let aPos = 0;
   let bPos = 0;
   for (;;) {
-    const [ca, sa] = DecodeRuneInStringAt(a, aPos);
-    const [cb, sb] = DecodeRuneInStringAt(b, bPos);
+    const [ca, sa] = DecodeRuneInStringViewAt(a, aView, aPos);
+    const [cb, sb] = DecodeRuneInStringViewAt(b, bView, bPos);
     if (sa === 0) {
       if (sb === 0) {
         return ComparisonEqual;

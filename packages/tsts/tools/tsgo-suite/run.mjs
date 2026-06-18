@@ -1866,10 +1866,10 @@ async function materializeCase(testCase, runRoot) {
   const existingConfig = writtenFiles.find((file) => /(^|\/)tsconfig\.json$/i.test(file));
   if (existingConfig !== undefined) {
     const merged = await mergeFileBasedOptionsIntoProjectConfig(join(caseDir, existingConfig), testCase.configuration);
-    const compilerOptions = merged.compilerOptions ?? {};
+    const compilerOptions = merged.config?.compilerOptions ?? {};
     // SkipUnsupportedCompilerOptions runs on the EFFECTIVE options, so follow the
     // config's `extends` chain (parents merged under the child) for the skip decision.
-    const inheritedOptions = await inheritedConfigCompilerOptions(join(caseDir, existingConfig), merged);
+    const inheritedOptions = merged.config === undefined ? {} : await inheritedConfigCompilerOptions(join(caseDir, existingConfig), merged.config);
     const skipReason = getSkipReasonFromCompilerOptions(testCase.sourceBaseName, { ...inheritedOptions, ...compilerOptions });
     return {
       caseDir,
@@ -1886,7 +1886,7 @@ async function materializeCase(testCase, runRoot) {
       contentRewrites: dedupedContentRewrites(contentRewrites),
       writtenFiles,
       writtenFileSet: normalizedWrittenFileSet(writtenFiles),
-      expectedErrors: caseExpectedErrors(testCase, compilerOptions),
+      expectedErrors: merged.parsedByTypescript ? caseExpectedErrors(testCase, compilerOptions) : false,
       skipReason,
     };
   }
@@ -2185,11 +2185,11 @@ async function mergeFileBasedOptionsIntoProjectConfig(configPath, settings) {
   const configText = await readSourceText(configPath);
   const parsed = ts.parseConfigFileTextToJson(configPath, configText);
   if (parsed.error !== undefined) {
-    throw new Error(`Failed to parse embedded tsconfig '${configPath}': ${parsed.error.messageText}`);
+    return { config: undefined, parsedByTypescript: false };
   }
   const merged = compilerOptionsForExistingProjectConfig(parsed.config ?? {}, settings);
   await writeFile(configPath, `${JSON.stringify(merged, null, 2)}\n`);
-  return merged;
+  return { config: merged, parsedByTypescript: true };
 }
 
 export function hasRootPackageJson(writtenFiles) {
@@ -2763,11 +2763,12 @@ async function runCase(testCase, runRoot, options) {
   if (isHarnessCase && options.verifyOnDisk !== true) {
     const exactBaseline = await evaluateExactBaselines(testCase, materialized, "");
     const actualErrors = exactBaseline.actualErrors === true;
-    const statusMatches = actualErrors === materialized.expectedErrors && exactBaseline.status === "pass";
+    const expectedErrors = exactBaseline.expectedDiagnosticsPresent;
+    const statusMatches = actualErrors === expectedErrors && exactBaseline.status === "pass";
     return {
       ...testCase,
       caseDir: materialized.caseDir,
-      expectedErrors: materialized.expectedErrors,
+      expectedErrors,
       actualErrors,
       exitCode: actualErrors ? 1 : 0,
       signal: null,
@@ -2782,16 +2783,17 @@ async function runCase(testCase, runRoot, options) {
   const result = await runTsts(materialized.invocation);
   const actualErrors = result.exitCode !== 0;
   const exactBaseline = await evaluateExactBaselines(testCase, materialized, `${result.stdout}${result.stderr}`);
+  const expectedErrors = exactBaseline !== undefined ? exactBaseline.expectedDiagnosticsPresent : materialized.expectedErrors;
   const onDiskDivergences = isHarnessCase && options.verifyOnDisk === true
     ? await verifyOnDiskMatchesHarness(materialized, result, exactBaseline)
     : [];
-  const statusMatches = actualErrors === materialized.expectedErrors
+  const statusMatches = actualErrors === expectedErrors
     && (exactBaseline === undefined || exactBaseline.status === "pass")
     && onDiskDivergences.length === 0;
   return {
     ...testCase,
     caseDir: materialized.caseDir,
-    expectedErrors: materialized.expectedErrors,
+    expectedErrors,
     actualErrors,
     exitCode: result.exitCode,
     signal: result.signal,

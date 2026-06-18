@@ -10,12 +10,10 @@ import type { bool, int, byte } from "@tsonic/core/types.js";
 import type { GoRune, GoSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 const nonASCII = /[^\x00-\x7F]/;
 
-const encode = (s: string): Uint8Array => utf8Encoder.encode(s);
-const decode = (bytes: Uint8Array): string => utf8Decoder.decode(bytes);
+const encode = utf8.StringUtf8Bytes;
+const decode = utf8.StringFromUtf8Bytes;
 const isASCIIString = (s: string): bool => !nonASCII.test(s);
 
 // RuneError mirrors unicode/utf8.RuneError (U+FFFD, the replacement char).

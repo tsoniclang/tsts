@@ -20,12 +20,70 @@ export const MaxRune: GoRune = 0x10ffff;
 // UTFMax is the maximum number of bytes of a UTF-8 encoded Unicode character.
 export const UTFMax: int = 4;
 
-const encoder: TextEncoder = new globalThis.TextEncoder();
 const decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
 const nonASCII = /[^\x00-\x7F]/;
+const surrogate = /[\uD800-\uDFFF]/;
 
-const encode = (s: string): Uint8Array => encoder.encode(s);
-export type StringByteView = { ascii: boolean; bytes?: Uint8Array };
+const encodeScalar = (bytes: Array<number>, codePoint: number): void => {
+  if (codePoint < 0x80) {
+    bytes.push(codePoint);
+  } else if (codePoint < 0x800) {
+    bytes.push(0xc0 | (codePoint >> 6), 0x80 | (codePoint & 0x3f));
+  } else if (codePoint < 0x10000) {
+    bytes.push(0xe0 | (codePoint >> 12), 0x80 | ((codePoint >> 6) & 0x3f), 0x80 | (codePoint & 0x3f));
+  } else {
+    bytes.push(
+      0xf0 | (codePoint >> 18),
+      0x80 | ((codePoint >> 12) & 0x3f),
+      0x80 | ((codePoint >> 6) & 0x3f),
+      0x80 | (codePoint & 0x3f),
+    );
+  }
+};
+
+const encode = (s: string): Uint8Array => {
+  const bytes: Array<number> = [];
+  for (let i = 0; i < s.length; i++) {
+    const first = s.charCodeAt(i);
+    if (first >= 0xd800 && first <= 0xdbff) {
+      const second = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+      if (second >= 0xdc00 && second <= 0xdfff) {
+        encodeScalar(bytes, 0x10000 + ((first - 0xd800) << 10) + (second - 0xdc00));
+        i++;
+        continue;
+      }
+    }
+    encodeScalar(bytes, first);
+  }
+  return globalThis.Uint8Array.from(bytes);
+};
+
+const decodeBytesToString = (bytes: Uint8Array): string => {
+  let result = "";
+  let i = 0;
+  while (i < bytes.length) {
+    const [r, size] = decodeRuneBytes(bytes, i);
+    if (size === 0) {
+      break;
+    }
+    if (r !== RuneError || bytes[i] === 0xef && i + 2 < bytes.length && bytes[i + 1] === 0xbf && bytes[i + 2] === 0xbd) {
+      result += globalThis.String.fromCodePoint(r);
+      i += size;
+      continue;
+    }
+    if (i + 2 < bytes.length && bytes[i] === 0xed && bytes[i + 1]! >= 0xa0 && bytes[i + 1]! <= 0xbf && bytes[i + 2]! >= 0x80 && bytes[i + 2]! <= 0xbf) {
+      const ch = 0xd000 | ((bytes[i + 1]! & 0x3f) << 6) | (bytes[i + 2]! & 0x3f);
+      result += globalThis.String.fromCharCode(ch);
+      i += 3;
+      continue;
+    }
+    result += "\ufffd";
+    i += size;
+  }
+  return result;
+};
+
+export type StringByteView = { ascii: boolean; bytes?: Uint8Array; hasSurrogate?: boolean };
 const asciiStringByteView: StringByteView = { ascii: true };
 const stringByteViewCache = new globalThis.Map<string, StringByteView>();
 const stringByteViewCacheBudget = 64 * 1024 * 1024;
@@ -37,7 +95,8 @@ export function GetStringByteView(s: string): StringByteView {
     return cached;
   }
   const ascii = !nonASCII.test(s);
-  const view: StringByteView = ascii ? asciiStringByteView : { ascii, bytes: encode(s) };
+  const hasSurrogate = !ascii && surrogate.test(s);
+  const view: StringByteView = ascii ? asciiStringByteView : { ascii, bytes: encode(s), hasSurrogate };
   if (s.length >= 4096) {
     const cost = ascii ? s.length : view.bytes!.length;
     if (stringByteViewCacheState.bytes + cost > stringByteViewCacheBudget) {
@@ -74,7 +133,11 @@ export function StringByteSlice(s: string, start: int, end?: int): string {
 }
 
 export function StringByteViewSlice(s: string, view: StringByteView, start: int, end?: int): string {
-  return view.ascii ? s.slice(start, end) : decoder.decode(view.bytes!.subarray(start, end));
+  if (view.ascii) {
+    return s.slice(start, end);
+  }
+  const bytes = view.bytes!.subarray(start, end);
+  return view.hasSurrogate ? decodeBytesToString(bytes) : decoder.decode(bytes);
 }
 
 export function StringByteViewHasPrefix(s: string, view: StringByteView, start: int, prefix: string): boolean {
@@ -156,6 +219,10 @@ export function StringUtf8Bytes(s: string): Uint8Array {
     bytes[i] = s.charCodeAt(i);
   }
   return bytes;
+}
+
+export function StringFromUtf8Bytes(bytes: Uint8Array): string {
+  return decodeBytesToString(bytes);
 }
 
 // decodeRuneBytes decodes the rune at byte offset i within bytes, returning

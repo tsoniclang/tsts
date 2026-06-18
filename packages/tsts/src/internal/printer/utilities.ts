@@ -2,7 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoMap, GoPtr, GoRune, GoSlice } from "../../go/compat.js";
 import { FormatUint } from "../../go/strconv.js";
 import { Builder, ToUpper } from "../../go/strings.js";
-import { DecodeRuneInBytesAt, DecodeRuneInString, RuneError } from "../../go/unicode/utf8.js";
+import { DecodeRuneInString, DecodeRuneInStringAt, RuneError, StringByteLen, StringByteSlice, StringUtf8Bytes } from "../../go/unicode/utf8.js";
 import type { CommentRange, SourceFile, SourceFileLike } from "../ast/ast.js";
 import { SourceFile_Text, SourceFile_ECMALineMap, AsSourceFile } from "../ast/ast.js";
 import type { Node, NodeList } from "../ast/spine.js";
@@ -120,65 +120,9 @@ import { EmitContext_MostOriginal } from "./emitcontext.js";
 import { GetDefaultIndentSize } from "./textwriter.js";
 import { TokenFlagsIsInvalid, TokenFlagsContainsSeparator, TokenFlagsSingleQuote } from "../ast/tokenflags.js";
 
-// Go strings are immutable UTF-8 byte sequences; `len(s)` is a byte length,
-// `s[i]` is a byte, and slices like `s[i:j]` operate on byte offsets. The
-// standard-library facades (strings/utf8) follow that contract, so we mirror it
-// here by operating over the UTF-8 byte view and converting back to a JS string
-// at the boundaries.
-// The encoded-view cache is byte-budgeted: unbounded caching retains a full
-// byte copy of every distinct large non-ASCII string a long-lived process
-// touches (multiple GB on an in-process full-lib check).
-const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
-type Utf8ByteInfo = { ascii: bool; bytes: Uint8Array };
-const utf8ByteInfoCache = new globalThis.Map<string, Utf8ByteInfo>();
-const utf8ByteInfoCacheBudget = 64 * 1024 * 1024; // total cached bytes
-const utf8ByteInfoCacheState = { bytes: 0 };
-
-const getUtf8ByteInfo = (s: string): Utf8ByteInfo => {
-  const cached = utf8ByteInfoCache.get(s);
-  if (cached !== undefined) {
-    return cached;
-  }
-  let ascii = true;
-  for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) >= 0x80) {
-      ascii = false;
-      break;
-    }
-  }
-  const info: Utf8ByteInfo = {
-    ascii,
-    bytes: ascii ? undefined as unknown as Uint8Array : utf8Encoder.encode(s),
-  };
-  if (s.length >= 4096) {
-    const cost = ascii ? s.length : info.bytes.length;
-    if (utf8ByteInfoCacheState.bytes + cost > utf8ByteInfoCacheBudget) {
-      utf8ByteInfoCache.clear();
-      utf8ByteInfoCacheState.bytes = 0;
-    }
-    utf8ByteInfoCache.set(s, info);
-    utf8ByteInfoCacheState.bytes += cost;
-  }
-  return info;
-};
-
-export const byteLen = (s: string): int => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.length : info.bytes.length;
-};
-export const byteSlice = (s: string, start: int, end?: int): string => {
-  const info = getUtf8ByteInfo(s);
-  return info.ascii ? s.slice(start, end) : utf8Decoder.decode(info.bytes.subarray(start, end));
-};
-
-const decodeRuneInStringAt = (s: string, pos: int): [GoRune, int] => {
-  const info = getUtf8ByteInfo(s);
-  if (info.ascii) {
-    return pos >= s.length ? [0xfffd as GoRune, 0 as int] : [s.charCodeAt(pos), 1 as int];
-  }
-  return DecodeRuneInBytesAt(info.bytes, pos);
-};
+export const byteLen = StringByteLen;
+export const byteSlice = StringByteSlice;
+const decodeRuneInStringAt = DecodeRuneInStringAt;
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/printer/utilities.go::type::getLiteralTextFlags","kind":"type","status":"implemented","sigHash":"dd5ef391e67032e911741fa2b5a893b18cdeda34ef28edcdc7be3ee3f98a83ee","bodyHash":"fd241e9091d827869df9118dcbbf9c87f924afcc23e8bb011f1f273eadc26aa7"}
@@ -426,7 +370,7 @@ export function encodeUtf16EscapeSequence(b: GoPtr<Builder>, charCode: GoRune): 
  * }
  */
 export function escapeStringWorker(s: string, quoteChar: QuoteChar, flags: getLiteralTextFlags, b: GoPtr<Builder>): void {
-  const sBytes = utf8Encoder.encode(s);
+  const sBytes = StringUtf8Bytes(s);
   const sLen = sBytes.length;
   let pos = 0;
   let i = 0;
@@ -871,7 +815,8 @@ export function getLiteralText(node: GoPtr<LiteralLikeNode>, sourceFile: GoPtr<S
       if ((flags & getLiteralTextFlagsTerminateUnterminatedLiterals) !== 0 && IsUnterminatedLiteral(node)) {
         const b = new Builder();
         const text = Node_Text(node);
-        if (byteLen(text) > 0 && utf8Encoder.encode(text)[byteLen(text) - 1] === 0x5c /* '\\' */) {
+        const textBytes = StringUtf8Bytes(text);
+        if (byteLen(text) > 0 && textBytes[byteLen(text) - 1] === 0x5c /* '\\' */) {
           b.Grow(2 + byteLen(text));
           b.WriteString(text);
           b.WriteString(" /");
@@ -1100,7 +1045,7 @@ export function getLinesBetweenPositionAndNextNonWhitespaceCharacter(pos: int, s
  */
 export function getPreviousNonWhitespacePosition(pos: int, stopPos: int, sourceFile: GoPtr<SourceFileNode>): int {
   const text = SourceFile_Text(AsSourceFile(sourceFile)!);
-  const textBytes = utf8Encoder.encode(text);
+  const textBytes = StringUtf8Bytes(text);
   for (let p = pos; p >= stopPos; p--) {
     if (!IsWhiteSpaceLike(textBytes[p]!)) {
       return p as int;
@@ -1647,7 +1592,7 @@ export function IsFileLevelUniqueName(sourceFile: GoPtr<SourceFileNode>, name: s
  * }
  */
 export function hasLeadingHash(text: string): bool {
-  const bytes = utf8Encoder.encode(text);
+  const bytes = StringUtf8Bytes(text);
   return bytes.length > 0 && bytes[0] === 0x23 /* '#' */;
 }
 
@@ -1753,7 +1698,7 @@ export function isASCIIWordCharacter(ch: GoRune): bool {
  */
 export function makeIdentifierFromModuleName(moduleName: string): string {
   moduleName = GetBaseFileName(moduleName);
-  const moduleNameBytes = utf8Encoder.encode(moduleName);
+  const moduleNameBytes = StringUtf8Bytes(moduleName);
   const builder = new Builder();
   let start = 0;
   let pos = 0;
@@ -2048,7 +1993,7 @@ export function matchQuotedString(text: string, pos: GoPtr<int>): bool {
  * }
  */
 export function IsRecognizedTripleSlashComment(text: string, commentRange: CommentRange): bool {
-  const textBytes = utf8Encoder.encode(text);
+  const textBytes = StringUtf8Bytes(text);
   if (
     commentRange.Kind === KindSingleLineCommentTrivia &&
     (TextRange_End(commentRange) - TextRange_Pos(commentRange)) > 2 &&
@@ -2121,7 +2066,7 @@ export function IsRecognizedTripleSlashComment(text: string, commentRange: Comme
  * }
  */
 export function isJSDocLikeText(text: string, comment: CommentRange): bool {
-  const textBytes = utf8Encoder.encode(text);
+  const textBytes = StringUtf8Bytes(text);
   return comment.Kind === KindMultiLineCommentTrivia &&
     (TextRange_End(comment) - TextRange_Pos(comment)) >= 5 &&
     textBytes[TextRange_Pos(comment) + 2] === 0x2a /* '*' */ &&
@@ -2139,7 +2084,7 @@ export function isJSDocLikeText(text: string, comment: CommentRange): bool {
  * }
  */
 export function IsPinnedComment(text: string, comment: CommentRange): bool {
-  const textBytes = utf8Encoder.encode(text);
+  const textBytes = StringUtf8Bytes(text);
   return comment.Kind === KindMultiLineCommentTrivia &&
     (TextRange_End(comment) - TextRange_Pos(comment)) > 5 &&
     textBytes[TextRange_Pos(comment) + 2] === 0x21 /* '!' */;
