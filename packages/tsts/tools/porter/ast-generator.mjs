@@ -1230,6 +1230,10 @@ function emitAdapter(schema, node, lines) {
   lines.push(`  return globalThis.Object.setPrototypeOf(receiver!, ${node}_nodeDataPrototype) as nodeData;`);
   lines.push(`}`);
   lines.push("");
+  lines.push(`export function create${node}Data(): ${node} & nodeData {`);
+  lines.push(`  return globalThis.Object.create(${node}_nodeDataPrototype) as ${node} & nodeData;`);
+  lines.push(`}`);
+  lines.push("");
 }
 
 function adapterSlot(node, method, t) {
@@ -1276,7 +1280,7 @@ function emitFactory(schema) {
   lines.push(`import {`);
   for (const node of schema.nodeNames()) {
     if (schema.definitions[node].handWritten) continue;
-    lines.push(`  ${node}_as_nodeData,`);
+    lines.push(`  create${node}Data,`);
   }
   lines.push(`} from "./data.js";`);
   lines.push(`import type {`);
@@ -1407,7 +1411,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   const params = members.map((m) => `${m.goParamName()}: ${m.tsReference()}`);
   const paramList = ["receiver: GoPtr<NodeFactory>", ...params].join(", ");
   lines.push(`export function ${funcName}(${paramList}): GoPtr<Node> {`);
-  lines.push(`  const data: ${node} = {} as ${node};`);
+  lines.push(`  const data = create${node}Data();`);
   for (const m of members) {
     if (m.isKindParam()) continue;
     if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") continue;
@@ -1427,7 +1431,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   }
   const kindArg = kindMember ? kindMember.goParamName() : `Kind${kindName}`;
   if (nodeFlagsMembers.length > 0) {
-    lines.push(`  const node = NodeFactory_newNode(receiver, ${kindArg}, ${node}_as_nodeData(data));`);
+    lines.push(`  const node = NodeFactory_newNode(receiver, ${kindArg}, data);`);
     for (const m of nodeFlagsMembers) {
       const p = m.goParamName();
       if (m.bitmask) lines.push(`  node!.Flags = (node!.Flags | (${p} & ${m.bitmask})) >>> 0;`);
@@ -1435,7 +1439,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
     }
     lines.push(`  return node;`);
   } else {
-    lines.push(`  return NodeFactory_newNode(receiver, ${kindArg}, ${node}_as_nodeData(data));`);
+    lines.push(`  return NodeFactory_newNode(receiver, ${kindArg}, data);`);
   }
   lines.push(`}`);
   lines.push("");

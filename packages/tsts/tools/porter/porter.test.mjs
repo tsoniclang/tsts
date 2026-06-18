@@ -1324,6 +1324,7 @@ test("ast-generator: Identifier_as_nodeData resolves FlowNodeData via promotion,
   // The brand carries the concrete receiver.
   assert.match(data, /get \[goReceiverKey\]\(\): GoPtr<Identifier> \{ return this; \},/);
   assert.match(data, /export function Identifier_as_nodeData\(receiver: GoPtr<Identifier>\): nodeData \{\s*return globalThis\.Object\.setPrototypeOf\(receiver!, Identifier_nodeDataPrototype\) as nodeData;\s*\}/);
+  assert.match(data, /export function createIdentifierData\(\): Identifier & nodeData \{\s*return globalThis\.Object\.create\(Identifier_nodeDataPrototype\) as Identifier & nodeData;\s*\}/);
 });
 
 test("ast-generator: named concrete nodes expose their generated Name override", () => {
@@ -1339,7 +1340,7 @@ test("ast-generator: NewIdentifier and AsIdentifier emit the faithful factory/ca
   assert.match(factory, /export interface NodeFactory \{[\s\S]*?AsNodeFactory\(\): GoPtr<NodeFactory>;/);
   assert.match(
     factory,
-    /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, Identifier_as_nodeData\(data\)\);/,
+    /export function NewIdentifier\(receiver: GoPtr<NodeFactory>, text: string\): GoPtr<Node> \{[\s\S]*?const data = createIdentifierData\(\);[\s\S]*?return NodeFactory_newNode\(receiver, KindIdentifier, data\);/,
   );
   const casts = files.get("internal/ast/generated/casts.ts");
   assert.match(casts, /export function AsIdentifier\(n: GoPtr<Node>\): GoPtr<Identifier> \{\s*return n!\.data\[goReceiverKey\] as GoPtr<Identifier>;/);
