@@ -127,23 +127,31 @@ test("runsAfter orders only when the predecessor is present", () => {
 });
 
 test("missing dependencies, duplicate ids, and cycles are deterministic diagnostics", () => {
+  const initialized: string[] = [];
   const duplicateHost = new ExtensionHost({}, {
     extensions: [extension("source"), extension("source")],
   });
   assert.equal(duplicateHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.duplicateExtension);
 
   const missingHost = new ExtensionHost({}, {
-    extensions: [extension("target", { dependsOn: ["source"] })],
+    extensions: [
+      extension("target", { dependsOn: ["source"], initialize: () => initialized.push("target") }),
+      extension("surface", { dependsOn: ["target"], initialize: () => initialized.push("surface") }),
+    ],
   });
   assert.equal(missingHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.missingDependency);
+  assert.deepEqual(missingHost.extensions.map((item) => item.identity.id), []);
+  assert.equal(initialized.length, 0);
 
   const cycleHost = new ExtensionHost({}, {
     extensions: [
-      extension("a", { dependsOn: ["b"] }),
-      extension("b", { dependsOn: ["a"] }),
+      extension("a", { dependsOn: ["b"], initialize: () => initialized.push("a") }),
+      extension("b", { dependsOn: ["a"], initialize: () => initialized.push("b") }),
     ],
   });
   assert.equal(cycleHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.dependencyCycle);
+  assert.deepEqual(cycleHost.extensions.map((item) => item.identity.id), []);
+  assert.equal(initialized.length, 0);
 });
 
 test("decision owners are required and conflicts are reported", () => {
@@ -173,6 +181,20 @@ test("fact store supports insert, idempotent writes, conflicts, and primitive su
 
   assert.equal(host.facts.set("canonical:@tsonic/core/types.js::int", primitiveFactKey, "int32"), "inserted");
   assert.equal(host.facts.get("canonical:@tsonic/core/types.js::int", primitiveFactKey), "int32");
+});
+
+test("fact conflict diagnostics are keyed per object subject", () => {
+  const host = new ExtensionHost({});
+  const firstSubject = {};
+  const secondSubject = {};
+
+  host.facts.set(firstSubject, primitiveFactKey, "int32");
+  host.facts.set(firstSubject, primitiveFactKey, "int64");
+  host.facts.set(secondSubject, primitiveFactKey, "int32");
+  host.facts.set(secondSubject, primitiveFactKey, "int64");
+
+  const conflicts = host.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.factConflict);
+  assert.equal(conflicts.length, 2);
 });
 
 test("fact resolver computes lazily and caches through the fact store", () => {

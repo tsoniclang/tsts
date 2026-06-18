@@ -169,8 +169,10 @@ export class ExtensionDiagnosticStore {
 
 export class ExtensionFactStore {
   readonly #objectFacts = new WeakMap<object, Map<string, ExtensionFactEntry<unknown>>>();
+  readonly #objectSubjectIds = new WeakMap<object, number>();
   readonly #primitiveFacts = new Map<Exclude<ExtensionFactSubject, object>, Map<string, ExtensionFactEntry<unknown>>>();
   readonly #diagnostics: ExtensionDiagnosticStore;
+  #nextObjectSubjectId = 1;
   #sealed = false;
 
   constructor(diagnostics: ExtensionDiagnosticStore) {
@@ -207,7 +209,7 @@ export class ExtensionFactStore {
         { message: "Existing fact", details: existing.value },
         { message: "Incoming fact", details: value },
       ],
-      identity: `fact-conflict:${key.id}:${getSubjectIdentity(subject)}`,
+      identity: `fact-conflict:${key.id}:${this.#getSubjectIdentity(subject)}`,
     }));
     return "conflict";
   }
@@ -257,6 +259,20 @@ export class ExtensionFactStore {
       this.#primitiveFacts.set(subject as Exclude<ExtensionFactSubject, object>, created);
     }
     return created;
+  }
+
+  #getSubjectIdentity(subject: ExtensionFactSubject): string {
+    if (typeof subject !== "object" || subject === null) {
+      return `${typeof subject}:${String(subject)}`;
+    }
+    const existing = this.#objectSubjectIds.get(subject);
+    if (existing !== undefined) {
+      return `object:${existing}`;
+    }
+    const created = this.#nextObjectSubjectId;
+    this.#nextObjectSubjectId += 1;
+    this.#objectSubjectIds.set(subject, created);
+    return `object:${created}`;
   }
 }
 
@@ -589,6 +605,7 @@ export function hasExtensionHost(program: object): boolean {
 
 function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: ExtensionDiagnosticStore): readonly CompilerExtension[] {
   const extensionsById = new Map<string, CompilerExtension>();
+  const invalidExtensionIds = new Set<string>();
   for (const extension of extensions) {
     const id = extension.identity.id;
     if (extensionsById.has(id)) {
@@ -620,6 +637,7 @@ function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: 
           message: `Extension '${extensionId}' requires missing dependency '${dependencyId}'.`,
           identity: `missing-dependency:${extensionId}:${dependencyId}`,
         }));
+        invalidExtensionIds.add(extensionId);
         continue;
       }
       addOrderingEdge(outgoingEdges, incomingCounts, dependencyId, extensionId);
@@ -657,21 +675,20 @@ function orderExtensions(extensions: readonly CompilerExtension[], diagnostics: 
     const cycleIds = Array.from(extensionsById.keys())
       .filter((id) => !ordered.some((extension) => extension.identity.id === id))
       .sort();
+    for (const id of cycleIds) {
+      invalidExtensionIds.add(id);
+    }
     diagnostics.append(createHostDiagnostic({
       extensionCode: "EXTENSION_DEPENDENCY_CYCLE",
       numericCode: ExtensionHostDiagnosticCode.dependencyCycle,
       message: `Extension dependency cycle detected: ${cycleIds.join(", ")}.`,
       identity: `dependency-cycle:${cycleIds.join(",")}`,
     }));
-    for (const id of cycleIds) {
-      const extension = extensionsById.get(id);
-      if (extension !== undefined) {
-        ordered.push(extension);
-      }
-    }
   }
 
-  return ordered;
+  propagateInvalidDependencies(extensionsById, invalidExtensionIds);
+
+  return ordered.filter((extension) => !invalidExtensionIds.has(extension.identity.id));
 }
 
 function addOrderingEdge(outgoingEdges: Map<string, Set<string>>, incomingCounts: Map<string, number>, from: string, to: string): void {
@@ -681,6 +698,22 @@ function addOrderingEdge(outgoingEdges: Map<string, Set<string>>, incomingCounts
   }
   dependents.add(to);
   incomingCounts.set(to, (incomingCounts.get(to) ?? 0) + 1);
+}
+
+function propagateInvalidDependencies(extensionsById: ReadonlyMap<string, CompilerExtension>, invalidExtensionIds: Set<string>): void {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const extension of extensionsById.values()) {
+      if (invalidExtensionIds.has(extension.identity.id)) {
+        continue;
+      }
+      if ((extension.dependencies?.dependsOn ?? []).some((dependencyId) => invalidExtensionIds.has(dependencyId))) {
+        invalidExtensionIds.add(extension.identity.id);
+        changed = true;
+      }
+    }
+  }
 }
 
 function createHostDiagnostic(input: {
@@ -714,11 +747,4 @@ function getDiagnosticIdentity(diagnostic: ExtensionDiagnostic): string {
 
 function getMetadataIdentity(header: TargetBindingMetadataHeader): string {
   return `${header.schema}:${header.target}:${header.packageName}:${header.packageVersion}`;
-}
-
-function getSubjectIdentity(subject: ExtensionFactSubject): string {
-  if (typeof subject === "object") {
-    return subject === null ? "null" : "object";
-  }
-  return `${typeof subject}:${String(subject)}`;
 }
