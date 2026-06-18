@@ -22,6 +22,25 @@ const prime64: bigint = 1099511628211n;
 const mask64: bigint = (1n << 64n) - 1n;
 const secondSeed: bigint = 0x9e3779b97f4a7c15n;
 const encoder = new TextEncoder();
+const uint32Base = 0x100000000;
+const prime64Low = Number(prime64 & 0xffffffffn);
+const prime64High = Number((prime64 >> 32n) & 0xffffffffn);
+const offset64Low = Number(offset64 & 0xffffffffn);
+const offset64High = Number((offset64 >> 32n) & 0xffffffffn);
+const secondSeedLow = Number(secondSeed & 0xffffffffn);
+const secondSeedHigh = Number((secondSeed >> 32n) & 0xffffffffn);
+
+function multiplyPrime64(low: number, high: number): [number, number] {
+  const lowProduct = low * prime64Low;
+  const nextLow = lowProduct >>> 0;
+  const carry = Math.floor(lowProduct / uint32Base);
+  const nextHigh = (high * prime64Low + low * prime64High + carry) >>> 0;
+  return [nextLow, nextHigh];
+}
+
+function uint64FromParts(high: number, low: number): bigint {
+  return (BigInt(high >>> 0) << 32n) | BigInt(low >>> 0);
+}
 
 class uint128 implements Uint128 {
   constructor(readonly Hi: bigint, readonly Lo: bigint) {}
@@ -46,15 +65,21 @@ class uint128 implements Uint128 {
 // eventually exhausted the heap. Consumers that need Go value-key semantics use
 // GoStructMap instead.)
 class hasher implements Hasher {
-  private hi = offset64 ^ secondSeed;
-  private lo = offset64;
+  private highHigh = (offset64High ^ secondSeedHigh) >>> 0;
+  private highLow = (offset64Low ^ secondSeedLow) >>> 0;
+  private lowHigh = offset64High;
+  private lowLow = offset64Low;
 
   private writeByte(value: number): void {
-    const byteValue = BigInt(value & 0xff);
-    this.lo ^= byteValue;
-    this.lo = (this.lo * prime64) & mask64;
-    this.hi ^= byteValue + secondSeed;
-    this.hi = (this.hi * prime64) & mask64;
+    const byteValue = value & 0xff;
+    this.lowLow = (this.lowLow ^ byteValue) >>> 0;
+    [this.lowLow, this.lowHigh] = multiplyPrime64(this.lowLow, this.lowHigh);
+
+    const seedLow = (secondSeedLow + byteValue) >>> 0;
+    const seedHigh = (secondSeedHigh + (secondSeedLow + byteValue >= uint32Base ? 1 : 0)) >>> 0;
+    this.highLow = (this.highLow ^ seedLow) >>> 0;
+    this.highHigh = (this.highHigh ^ seedHigh) >>> 0;
+    [this.highLow, this.highHigh] = multiplyPrime64(this.highLow, this.highHigh);
   }
 
   Write(p: GoSlice<byte>): [int, GoError] {
@@ -91,16 +116,18 @@ class hasher implements Hasher {
   }
 
   Sum128(): Uint128 {
-    return new uint128(this.hi, this.lo);
+    return new uint128(uint64FromParts(this.highHigh, this.highLow), uint64FromParts(this.lowHigh, this.lowLow));
   }
 
   Sum64(): bigint {
-    return this.lo;
+    return uint64FromParts(this.lowHigh, this.lowLow);
   }
 
   Reset(): void {
-    this.hi = offset64 ^ secondSeed;
-    this.lo = offset64;
+    this.highHigh = (offset64High ^ secondSeedHigh) >>> 0;
+    this.highLow = (offset64Low ^ secondSeedLow) >>> 0;
+    this.lowHigh = offset64High;
+    this.lowLow = offset64Low;
   }
 }
 
