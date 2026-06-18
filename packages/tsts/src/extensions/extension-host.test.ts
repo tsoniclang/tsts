@@ -9,6 +9,7 @@ import {
   acceptDecision,
   attachExtensionHost,
   associatedTypeFactKey,
+  canonicalIdentityFactKey,
   constGenericFactKey,
   defineExtensionFactKey,
   deferDecision,
@@ -48,6 +49,7 @@ const primitiveFactKey = defineExtensionFactKey({
 function extension(id: string, options: {
   readonly dependsOn?: readonly string[];
   readonly runsAfter?: readonly string[];
+  readonly composition?: CompilerExtension["composition"];
   readonly decisionOwners?: readonly string[];
   readonly initialize?: CompilerExtension["initialize"];
 } = {}): CompilerExtension {
@@ -64,6 +66,7 @@ function extension(id: string, options: {
       capabilityNamespace: id,
     },
     ...(dependencies !== undefined ? { dependencies } : {}),
+    ...(options.composition !== undefined ? { composition: options.composition } : {}),
     ...(options.decisionOwners !== undefined ? { decisionOwners: options.decisionOwners } : {}),
     ...(options.initialize !== undefined ? { initialize: options.initialize } : {}),
   };
@@ -167,6 +170,9 @@ test("decision owners are required and conflicts are reported", () => {
 
   assert.equal(host.requireDecisionOwner("target-binding:csharp"), undefined);
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerMissing);
+
+  host.registerDecisionOwner("unknown-question", "missing-extension");
+  assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.unknownDecisionOwner);
 });
 
 test("fact store supports insert, idempotent writes, conflicts, and primitive subjects", () => {
@@ -234,6 +240,12 @@ test("metadata registry requires schema and producer identity", () => {
 
   assert.equal(registry.registerTargetMetadata(metadata({ packageName: "" })), false);
   assert.equal(diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.invalidMetadata);
+
+  assert.equal(registry.registerTargetMetadata(metadata({ schemaVersion: "2.0.0" })), false);
+  assert.equal(diagnostics.all()[2]?.extensionCode, "UNSUPPORTED_METADATA_SCHEMA_VERSION");
+
+  assert.equal(registry.registerTargetMetadata(metadata({ extensionContractVersion: "2.0.0" })), false);
+  assert.equal(diagnostics.all()[3]?.extensionCode, "UNSUPPORTED_EXTENSION_CONTRACT_VERSION");
 });
 
 test("semantic finalization seals facts and gates consumer reads", () => {
@@ -247,9 +259,29 @@ test("semantic finalization seals facts and gates consumer reads", () => {
   host.finalizeSemantics();
   assert.equal(host.finalized, true);
   assert.equal(host.getFactForConsumer("emitter", subject, primitiveFactKey), "int32");
+  assert.equal(host.getFactsForConsumer("emitter", subject).length, 1);
 
   assert.equal(host.facts.set({}, primitiveFactKey, "int64"), "sealed");
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.factStoreSealed);
+});
+
+test("canonical identity facts are consumer-queryable after finalization", () => {
+  const host = new ExtensionHost({});
+  const localAlias = {};
+
+  host.facts.set(localAlias, canonicalIdentityFactKey, {
+    kind: "export",
+    id: "@tsonic/core/types.js::int",
+    packageName: "@tsonic/core",
+    packageVersion: "1.0.0",
+    subpath: "types.js",
+    exportName: "int",
+    importKind: "type",
+    canonicalSymbolId: "@tsonic/core/types.js::int",
+  });
+  host.finalizeSemantics();
+
+  assert.equal(host.getFactForConsumer("emitter", localAlias, canonicalIdentityFactKey)?.exportName, "int");
 });
 
 test("diagnostics are deduplicated by stable identity", () => {
@@ -368,6 +400,45 @@ test("unowned multiple extension decisions produce deterministic conflict", () =
   const result = host.runDecision("demo.question", {}, () => "core");
   assert.equal(result.kind, "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionConflict);
+});
+
+test("owned multiple non-deferred decisions produce deterministic conflict", () => {
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("owner", {
+        decisionOwners: ["demo.question"],
+        initialize: (context) => {
+          context.registerDecisionHook("demo.question", () => acceptDecision("first"));
+          context.registerDecisionHook("demo.question", () => acceptDecision("second"));
+        },
+      }),
+    ],
+  });
+
+  const result = host.runDecision("demo.question", {}, () => "core", { requireOwner: true });
+  assert.equal(result.kind, "conflict");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionConflict);
+});
+
+test("target extension composition requires explicit multi-target mode", () => {
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("csharp", { composition: { kind: "target", target: "csharp" } }),
+      extension("rust", { composition: { kind: "target", target: "rust" } }),
+    ],
+  });
+
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.multipleTargetExtensions);
+
+  const multiTargetHost = new ExtensionHost({}, {
+    allowMultipleTargets: true,
+    extensions: [
+      extension("csharp", { composition: { kind: "target", target: "csharp" } }),
+      extension("rust", { composition: { kind: "target", target: "rust" } }),
+    ],
+  });
+
+  assert.equal(multiTargetHost.diagnostics.hasErrors(), false);
 });
 
 test("call resolution records selected target signature facts", () => {

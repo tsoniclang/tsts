@@ -19,6 +19,7 @@ export {
 export {
   argumentPassingFactKey,
   associatedTypeFactKey,
+  canonicalIdentityFactKey,
   constGenericFactKey,
   flowStateFactKey,
   instantiatedTargetTypeFactKey,
@@ -30,9 +31,11 @@ export {
 
 export type {
   CompilerExtension,
+  CompilerExtensionKind,
   CompilerExtensionIdentity,
   ExtendedProgram,
   ExtensionCapabilitySpec,
+  ExtensionCompositionSpec,
   ExtensionDependencySpec,
   ExtensionDiagnostic,
   ExtensionDiagnosticCategory,
@@ -47,6 +50,7 @@ export type {
   ExtensionFactWriteResult,
   ExtensionHostOptions,
   ExtensionInitializeContext,
+  ExtensionMetadataRegistryOptions,
   TargetBindingMetadataHeader,
 } from "./host.js";
 export type {
@@ -75,6 +79,9 @@ export type {
   ArgumentPassingMode,
   AssociatedTypeFact,
   AttributeFact,
+  ExtensionCanonicalIdentity,
+  ExtensionCanonicalIdentityKind,
+  ExtensionImportKind,
   ConstGenericFact,
   FieldFact,
   FlowStateFact,

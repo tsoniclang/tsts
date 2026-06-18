@@ -34,6 +34,8 @@ export const ExtensionHostDiagnosticCode = {
   invalidMetadata: 9000010,
   decisionOwnerDeferred: 9000011,
   decisionConflict: 9000012,
+  unknownDecisionOwner: 9000013,
+  multipleTargetExtensions: 9000014,
 } as const;
 
 export interface CompilerExtensionIdentity {
@@ -52,10 +54,19 @@ export interface ExtensionCapabilitySpec {
   readonly requires?: readonly string[];
 }
 
+export type CompilerExtensionKind = "source" | "target" | "surface" | "consumer" | "tooling";
+
+export interface ExtensionCompositionSpec {
+  readonly kind: CompilerExtensionKind;
+  readonly target?: string;
+  readonly surface?: string;
+}
+
 export interface CompilerExtension {
   readonly identity: CompilerExtensionIdentity;
   readonly dependencies?: ExtensionDependencySpec;
   readonly capabilities?: ExtensionCapabilitySpec;
+  readonly composition?: ExtensionCompositionSpec;
   readonly decisionOwners?: readonly string[];
   readonly initialize?: (context: ExtensionInitializeContext) => void;
 }
@@ -117,6 +128,17 @@ export interface TargetBindingMetadataHeader {
 export interface ExtensionHostOptions {
   readonly extensions?: readonly CompilerExtension[];
   readonly supportedMetadataSchemas?: readonly string[];
+  readonly supportedMetadataSchemaVersions?: readonly string[];
+  readonly supportedMetadataExtensionContractVersions?: readonly string[];
+  readonly activeTarget?: string;
+  readonly activeSurface?: string;
+  readonly allowMultipleTargets?: boolean;
+}
+
+export interface ExtensionMetadataRegistryOptions {
+  readonly supportedSchemas?: readonly string[];
+  readonly supportedSchemaVersions?: readonly string[];
+  readonly supportedExtensionContractVersions?: readonly string[];
 }
 
 interface RegisteredDecisionHook {
@@ -320,11 +342,15 @@ export class ExtensionFactResolver {
 export class ExtensionMetadataRegistry {
   readonly #diagnostics: ExtensionDiagnosticStore;
   readonly #supportedSchemas: ReadonlySet<string>;
+  readonly #supportedSchemaVersions: ReadonlySet<string>;
+  readonly #supportedExtensionContractVersions: ReadonlySet<string>;
   readonly #metadata = new Map<string, TargetBindingMetadataHeader>();
 
-  constructor(diagnostics: ExtensionDiagnosticStore, supportedSchemas: readonly string[] = ["tsts.target-bindings"]) {
+  constructor(diagnostics: ExtensionDiagnosticStore, options: ExtensionMetadataRegistryOptions = {}) {
     this.#diagnostics = diagnostics;
-    this.#supportedSchemas = new Set(supportedSchemas);
+    this.#supportedSchemas = new Set(options.supportedSchemas ?? ["tsts.target-bindings"]);
+    this.#supportedSchemaVersions = new Set(options.supportedSchemaVersions ?? ["1.0.0"]);
+    this.#supportedExtensionContractVersions = new Set(options.supportedExtensionContractVersions ?? ["1.0.0"]);
   }
 
   registerTargetMetadata(header: TargetBindingMetadataHeader): boolean {
@@ -372,6 +398,24 @@ export class ExtensionMetadataRegistry {
       });
     }
 
+    if (!this.#supportedSchemaVersions.has(header.schemaVersion)) {
+      return createHostDiagnostic({
+        extensionCode: "UNSUPPORTED_METADATA_SCHEMA_VERSION",
+        numericCode: ExtensionHostDiagnosticCode.invalidMetadata,
+        message: `Unsupported target binding metadata schema version '${header.schemaVersion}'.`,
+        identity: `metadata-schema-version:${header.schema}:${header.schemaVersion}`,
+      });
+    }
+
+    if (!this.#supportedExtensionContractVersions.has(header.extensionContractVersion)) {
+      return createHostDiagnostic({
+        extensionCode: "UNSUPPORTED_EXTENSION_CONTRACT_VERSION",
+        numericCode: ExtensionHostDiagnosticCode.invalidMetadata,
+        message: `Unsupported extension contract version '${header.extensionContractVersion}'.`,
+        identity: `metadata-extension-contract-version:${header.extensionContractVersion}`,
+      });
+    }
+
     return undefined;
   }
 }
@@ -393,7 +437,11 @@ export class ExtensionHost {
     this.diagnostics = new ExtensionDiagnosticStore();
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
-    this.metadata = new ExtensionMetadataRegistry(this.diagnostics, options.supportedMetadataSchemas);
+    this.metadata = new ExtensionMetadataRegistry(this.diagnostics, {
+      ...(options.supportedMetadataSchemas !== undefined ? { supportedSchemas: options.supportedMetadataSchemas } : {}),
+      ...(options.supportedMetadataSchemaVersions !== undefined ? { supportedSchemaVersions: options.supportedMetadataSchemaVersions } : {}),
+      ...(options.supportedMetadataExtensionContractVersions !== undefined ? { supportedExtensionContractVersions: options.supportedMetadataExtensionContractVersions } : {}),
+    });
     this.extensions = orderExtensions(options.extensions ?? [], this.diagnostics);
     for (const extension of this.extensions) {
       this.#extensionsById.set(extension.identity.id, extension);
@@ -401,10 +449,20 @@ export class ExtensionHost {
         this.registerDecisionOwner(question, extension.identity.id);
       }
     }
+    this.#validateComposition(options);
     this.#initializeExtensions();
   }
 
   registerDecisionOwner(question: string, extensionId: string): void {
+    if (!this.#extensionsById.has(extensionId)) {
+      this.diagnostics.append(createHostDiagnostic({
+        extensionCode: "UNKNOWN_DECISION_OWNER",
+        numericCode: ExtensionHostDiagnosticCode.unknownDecisionOwner,
+        message: `Semantic question '${question}' was assigned to unknown extension '${extensionId}'.`,
+        identity: `unknown-decision-owner:${question}:${extensionId}`,
+      }));
+      return;
+    }
     const existingOwner = this.#decisionOwners.get(question);
     if (existingOwner === undefined) {
       this.#decisionOwners.set(question, extensionId);
@@ -516,13 +574,15 @@ export class ExtensionHost {
       return { kind: "core", value: core() };
     }
 
-    if (owner === undefined && nonDeferred.length > 1) {
+    if (nonDeferred.length > 1) {
       this.diagnostics.append(createHostDiagnostic({
         extensionCode: "DECISION_CONFLICT",
         numericCode: ExtensionHostDiagnosticCode.decisionConflict,
-        message: `Multiple extensions answered semantic question '${question}' without a registered owner.`,
+        message: owner === undefined
+          ? `Multiple extensions answered semantic question '${question}' without a registered owner.`
+          : `Extension '${owner.identity.id}' returned multiple non-deferred answers for semantic question '${question}'.`,
         evidence: nonDeferred.map((decision) => ({ message: `Decision kind: ${decision.kind}`, details: decision })),
-        identity: `decision-conflict:${question}`,
+        identity: `decision-conflict:${question}:${owner?.identity.id ?? "unowned"}`,
       }));
       return { kind: "conflict", question };
     }
@@ -562,6 +622,13 @@ export class ExtensionHost {
     return this.factResolver.resolve(subject, key);
   }
 
+  getFactsForConsumer(consumer: string, subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
+    if (!this.assertFinalizedForConsumer(consumer)) {
+      return [];
+    }
+    return this.facts.entries(subject);
+  }
+
   #initializeExtensions(): void {
     for (const extension of this.extensions) {
       try {
@@ -583,6 +650,18 @@ export class ExtensionHost {
           identity: `extension-initialize-failed:${extension.identity.id}`,
         }));
       }
+    }
+  }
+
+  #validateComposition(options: ExtensionHostOptions): void {
+    const targetExtensions = this.extensions.filter((extension) => extension.composition?.kind === "target");
+    if (options.allowMultipleTargets !== true && targetExtensions.length > 1) {
+      this.diagnostics.append(createHostDiagnostic({
+        extensionCode: "MULTIPLE_TARGET_EXTENSIONS",
+        numericCode: ExtensionHostDiagnosticCode.multipleTargetExtensions,
+        message: `Multiple target extensions are loaded without explicit multi-target mode: ${targetExtensions.map((extension) => extension.identity.id).join(", ")}.`,
+        identity: `multiple-target-extensions:${targetExtensions.map((extension) => extension.identity.id).sort().join(",")}`,
+      }));
     }
   }
 }

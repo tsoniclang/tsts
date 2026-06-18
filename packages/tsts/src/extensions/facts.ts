@@ -1,6 +1,18 @@
 import { defineExtensionFactKey } from "./host.js";
 import type { ExtensionEvidence, ExtensionFactSubject } from "./host.js";
 
+export type ExtensionCanonicalIdentityKind =
+  | "module"
+  | "package"
+  | "export"
+  | "local-alias"
+  | "symbol"
+  | "type"
+  | "signature"
+  | "instantiated-type";
+
+export type ExtensionImportKind = "type" | "value" | "namespace" | "unknown";
+
 export type SourcePrimitiveKind =
   | "bool"
   | "char"
@@ -20,6 +32,17 @@ export type SourcePrimitiveKind =
   | "decimal"
   | "int128"
   | "uint128";
+
+export interface ExtensionCanonicalIdentity {
+  readonly kind: ExtensionCanonicalIdentityKind;
+  readonly id: string;
+  readonly packageName?: string;
+  readonly packageVersion?: string;
+  readonly subpath?: string;
+  readonly exportName?: string;
+  readonly importKind?: ExtensionImportKind;
+  readonly canonicalSymbolId?: string;
+}
 
 export type ArgumentPassingMode =
   | "by-value"
@@ -172,6 +195,20 @@ export interface ConstGenericFact {
   readonly name: string;
   readonly value: string | number | bigint | boolean;
 }
+
+export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonicalIdentity>({
+  extensionId: "tsts.identity",
+  name: "canonicalIdentity",
+  equals: (left, right) =>
+    left.kind === right.kind
+    && left.id === right.id
+    && left.packageName === right.packageName
+    && left.packageVersion === right.packageVersion
+    && left.subpath === right.subpath
+    && left.exportName === right.exportName
+    && left.importKind === right.importKind
+    && left.canonicalSymbolId === right.canonicalSymbolId,
+});
 
 export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact>({
   extensionId: "tsts.source-core",
