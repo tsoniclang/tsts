@@ -6,8 +6,8 @@ import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
-import { Node_ForEachChild } from "../internal/ast/spine.js";
-import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
+import { Node_End, Node_ForEachChild, Node_Pos } from "../internal/ast/spine.js";
+import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
@@ -685,16 +685,67 @@ test("unsupported native surface operations are diagnostics, not fallback calls"
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
+  const call = findFirstNodeByKind(index, KindCallExpression);
 
   const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
   assert.equal(diagnostics.length, 1);
   assert.equal(Diagnostic_Code(diagnostics[0]), 9910301);
+  assert.ok(Diagnostic_Pos(diagnostics[0]) >= Node_Pos(call));
+  assert.ok(Diagnostic_End(diagnostics[0]) <= Node_End(call));
   assert.match(Diagnostic_String(diagnostics[0]), /DOTNET0301/);
   assert.match(Diagnostic_String(diagnostics[0]), /native-array surface does not support push/);
 
-  const call = findFirstNodeByKind(index, KindCallExpression);
+  const nativeSurfaceDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "DOTNET_NATIVE_ARRAY_PUSH");
+  assert.equal(nativeSurfaceDiagnostics.length, 1);
+  assert.equal(nativeSurfaceDiagnostics[0]?.extensionId, "dotnet-native-array-surface-provider");
+  assert.match(nativeSurfaceDiagnostics[0]?.evidence?.[0]?.message ?? "", /Surface capability/);
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
   assert.equal(extended.extensionHost.facts.get(call, surfaceOperationFactKey), undefined);
+});
+
+test("rust owned Vec surface records provider call facts without JS array fallback", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare const values: { push(value: number): void };
+      values.push(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "rust",
+    activeSurface: "owned-vec",
+    extensions: [semanticOnlyExtension("rust-vec-surface-extension", rustVecSurfaceProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(selectedCall?.member.id, "alloc.vec.Vec.push(i32)");
+  assert.equal(selectedCall?.member.targetName, "push");
+  assert.equal(selectedCall?.member.parameters[0]?.passingMode, "move");
 });
 
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {
@@ -946,6 +997,35 @@ function rejectingNativeArrayPushProvider(): TargetSemanticProvider {
       nodeOrSpan: request.call,
       evidence: [{ message: "Surface capability", details: "native arrays expose fixed-size element access, not mutable push." }],
       identity: "dotnet-native-array-push:/src/index.ts",
+    }),
+  };
+}
+
+function rustVecSurfaceProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "rust-vec-surface-provider",
+      version: "1.0.0",
+      target: "rust",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    resolveCall: () => acceptDecision({
+      selectedSignature: {
+        member: {
+          id: "alloc.vec.Vec.push(i32)",
+          sourceName: "push",
+          targetName: "push",
+          kind: "method",
+          parameters: [{
+            name: "value",
+            type: { kind: "source-primitive", name: "int32" },
+            passingMode: "move",
+          }],
+          overloadGroup: "Vec.push",
+        },
+      },
+      returnType: "void",
     }),
   };
 }
