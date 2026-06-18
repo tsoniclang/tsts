@@ -1,5 +1,6 @@
 import type { bool, int } from "@tsonic/core/types.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
+import { recordExtensionOperatorResolution } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -2760,6 +2761,7 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkBinaryExpression","kind":"method","status":"implemented","sigHash":"7789a2bf27bb77f18361e12bbc4e9dd02304e6f162df1c874f94945d2d4b1bcf","bodyHash":"9faf599e69844635f35db6e35e11439ef3ffa75966c09b3c8e952309b3251d42"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binary expression checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkBinaryExpression(node *ast.Node, checkMode CheckMode) *Type {
@@ -2768,11 +2770,15 @@ export function Checker_checkThisExpression(receiver: GoPtr<Checker>, node: GoPt
  * }
  */
 export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {
-  if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
-    return Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
-  }
   const binary = AsBinaryExpression(node);
-  return Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
+  if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
+    const result = Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
+    recordExtensionOperatorResolution(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
+    return result;
+  }
+  const result = Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
+  recordExtensionOperatorResolution(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
+  return result;
 }
 
 function Checker_checkNonLogicalBinaryExpressionIterative(receiver: GoPtr<Checker>, node: GoPtr<Node>, checkMode: CheckMode): GoPtr<Type> {

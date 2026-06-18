@@ -54,6 +54,7 @@ export type {
   ExtensionDependencySpec,
   ExtensionDiagnostic,
   ExtensionDiagnosticCategory,
+  ExtensionDiagnosticSourceSpan,
   ExtensionEvidence,
   ExtensionFactEntry,
   ExtensionFactKey,

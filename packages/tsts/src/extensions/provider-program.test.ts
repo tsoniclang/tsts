@@ -7,7 +7,8 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_Symbol } from "../internal/ast/ast.js";
 import { Node_ForEachChild } from "../internal/ast/spine.js";
-import { KindCallExpression } from "../internal/ast/generated/kinds.js";
+import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
+import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -25,8 +26,8 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, attachExtensionHost, createExtensionConsumerQueries, deferDecision, finalizeExtensionSemantics, getExtensionHost } from "./index.js";
-import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetBindingFactKey } from "./index.js";
-import type { CompilerExtension, SelectedTargetSignatureFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
+import type { CompilerExtension, ResolveCallRequest, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
   let fs = FromMap(new Map<string, string>([
@@ -200,6 +201,157 @@ test("checker-owned target call seam reports deferred providers without fallback
   assert.equal(consumer.getSelectedTargetCall(call), undefined);
 });
 
+test("checker records provider-owned member element and operator facts for consumers", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare const text: { length: number };
+      declare const values: { [index: number]: number };
+      declare const left: number;
+      declare const right: number;
+
+      text.length;
+      values[0];
+      left + right;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, surfaceSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const propertyAccess = findFirstNodeByKind(index, KindPropertyAccessExpression);
+  const elementAccess = findFirstNodeByKind(index, KindElementAccessExpression);
+  const binaryExpression = findFirstNodeByKind(index, KindBinaryExpression);
+
+  assert.equal(extended.extensionHost.facts.get(propertyAccess, surfaceOperationFactKey)?.operationId, "System.String.Length");
+  assert.equal(extended.extensionHost.facts.get(elementAccess, surfaceOperationFactKey)?.operationId, "System.ReadOnlySpan.GetItem");
+  assert.equal(extended.extensionHost.facts.get(binaryExpression, surfaceOperationFactKey)?.operationId, "System.Int32.op_Addition");
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getSelectedTargetProperty(propertyAccess)?.targetOperation, "System.String.Length");
+  assert.equal(consumer.getSelectedTargetElementAccess(elementAccess)?.targetOperation, "System.ReadOnlySpan.GetItem");
+  assert.equal(consumer.getSelectedTargetOperator(binaryExpression)?.targetOperation, "System.Int32.op_Addition");
+});
+
+test("checker-owned member element and operator seams report deferred providers without fallback facts", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare const text: { length: number };
+      declare const values: { [index: number]: number };
+      declare const left: number;
+      declare const right: number;
+
+      text.length;
+      values[0];
+      left + right;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, deferredSurfaceSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+
+  const propertyAccess = findFirstNodeByKind(index, KindPropertyAccessExpression);
+  const elementAccess = findFirstNodeByKind(index, KindElementAccessExpression);
+  const binaryExpression = findFirstNodeByKind(index, KindBinaryExpression);
+
+  assert.equal(extended.extensionHost.facts.get(propertyAccess, surfaceOperationFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(elementAccess, surfaceOperationFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(binaryExpression, surfaceOperationFactKey), undefined);
+  assert.ok(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.decisionOwnerDeferred).length >= 3);
+});
+
+test("extension-owned semantic rejections surface through standard diagnostics with source location", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function toByte(value: number): number;
+      toByte(300);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, rejectingCallSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9910125);
+  assert.match(Diagnostic_String(diagnostics[0]), /DOTNET0125/);
+  assert.match(Diagnostic_String(diagnostics[0]), /does not fit in System.Byte/);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
+});
+
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `import { SearchValues } from "@tsonic/dotnet/System.Buffers.js";`],
@@ -279,6 +431,72 @@ function deferredSemanticProvider(): TargetSemanticProvider {
       providerKind: "semantic",
     },
     resolveCall: () => deferDecision,
+  };
+}
+
+function surfaceSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-surface-semantic-provider"),
+    resolvePropertyAccess: () => acceptDecision({
+      operation: surfaceOperation("System.String.Length", "property", "int32"),
+      resultType: "int32",
+    }),
+    resolveElementAccess: () => acceptDecision({
+      operation: surfaceOperation("System.ReadOnlySpan.GetItem", "indexer", "char"),
+      resultType: "char",
+    }),
+    resolveOperator: () => acceptDecision({
+      operation: surfaceOperation("System.Int32.op_Addition", "operator", "int32"),
+      resultType: "int32",
+    }),
+  };
+}
+
+function deferredSurfaceSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-deferred-surface-semantic-provider"),
+    resolvePropertyAccess: () => deferDecision,
+    resolveElementAccess: () => deferDecision,
+    resolveOperator: () => deferDecision,
+  };
+}
+
+function rejectingCallSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-rejecting-call-semantic-provider"),
+    resolveCall: (request: ResolveCallRequest) => ({
+      kind: "reject",
+      diagnostic: {
+        extensionId: "dotnet-rejecting-call-semantic-provider",
+        extensionCode: "DOTNET_BYTE_RANGE",
+        numericCode: 9910125,
+        publicCode: "DOTNET0125",
+        category: "error",
+        message: "Numeric literal 300 does not fit in System.Byte.",
+        nodeOrSpan: request.call,
+        evidence: [{ message: "Target range", details: "System.Byte accepts 0..255." }],
+        identity: "dotnet-byte-range:/src/index.ts:toByte",
+      },
+    }),
+  };
+}
+
+function semanticProviderIdentity(id: string) {
+  return {
+    id,
+    version: "1.0.0",
+    target: "dotnet",
+    extensionContractVersion: DynamicProviderExtensionContractVersion,
+    providerKind: "semantic" as const,
+  };
+}
+
+function surfaceOperation(operationId: string, sourceOperation: SurfaceOperationFact["sourceOperation"], resultType: SurfaceOperationFact["resultType"]): SurfaceOperationFact {
+  return {
+    operationId,
+    sourceOperation,
+    targetOperation: operationId,
+    ...(resultType !== undefined ? { resultType } : {}),
   };
 }
 

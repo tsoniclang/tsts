@@ -1,9 +1,12 @@
 import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Expression } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Expression, Node_Text } from "../internal/ast/ast.js";
+import { Node_Name } from "../internal/ast/spine.js";
+import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
+import { TokenToString } from "../internal/scanner/scanner.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { ResolveCallRequest, ResolveCallResult } from "./decisions.js";
-import { selectedTargetSignatureFactKey } from "./facts.js";
+import type { ResolveCallRequest, ResolveCallResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest } from "./decisions.js";
+import { selectedTargetSignatureFactKey, surfaceOperationFactKey } from "./facts.js";
 import { getExtensionHost } from "./host.js";
 
 interface CheckerWithProgram {
@@ -44,4 +47,110 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
   }
 
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, result.value.selectedSignature, result.evidence ?? []);
+}
+
+export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
+  if (checker === undefined || propertyAccessExpression === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolvePropertyAccess) === undefined) {
+    return;
+  }
+
+  const receiver = Node_Expression(propertyAccessExpression);
+  const propertyName = Node_Text(Node_Name(propertyAccessExpression));
+  if (receiver === undefined || propertyName === "") {
+    return;
+  }
+
+  const result = extensionHost.runDecision<ResolvePropertyAccessRequest, ResolveOperationResult>(
+    ExtensionDecisionQuestion.resolvePropertyAccess,
+    {
+      expression: propertyAccessExpression,
+      receiver,
+      propertyName,
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned property access resolution unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+
+  if (result.kind !== "accept") {
+    return;
+  }
+
+  extensionHost.facts.set(propertyAccessExpression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+}
+
+export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWithProgram>, elementAccessExpression: GoPtr<Node>): void {
+  if (checker === undefined || elementAccessExpression === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveElementAccess) === undefined) {
+    return;
+  }
+
+  const receiver = Node_Expression(elementAccessExpression);
+  const argument = AsElementAccessExpression(elementAccessExpression)?.ArgumentExpression;
+  if (receiver === undefined || argument === undefined) {
+    return;
+  }
+
+  const result = extensionHost.runDecision<ResolveElementAccessRequest, ResolveOperationResult>(
+    ExtensionDecisionQuestion.resolveElementAccess,
+    {
+      expression: elementAccessExpression,
+      receiver,
+      argument,
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned element access resolution unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+
+  if (result.kind !== "accept") {
+    return;
+  }
+
+  extensionHost.facts.set(elementAccessExpression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+}
+
+export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
+  if (checker === undefined || expression === undefined || operatorToken === undefined || left === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveOperator) === undefined) {
+    return;
+  }
+
+  const result = extensionHost.runDecision<ResolveOperatorRequest, ResolveOperationResult>(
+    ExtensionDecisionQuestion.resolveOperator,
+    {
+      expression,
+      operator: TokenToString(operatorToken.Kind),
+      left,
+      ...(right !== undefined ? { right } : {}),
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned operator resolution unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+
+  if (result.kind !== "accept") {
+    return;
+  }
+
+  extensionHost.facts.set(expression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
 }

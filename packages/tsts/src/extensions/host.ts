@@ -47,6 +47,12 @@ export interface ExtensionDiagnostic {
   readonly identity?: string;
 }
 
+export interface ExtensionDiagnosticSourceSpan {
+  readonly sourceFile: object;
+  readonly pos: number;
+  readonly end: number;
+}
+
 export const ExtensionHostDiagnosticCode = {
   factConflict: 9000001,
   duplicateExtension: 9000002,

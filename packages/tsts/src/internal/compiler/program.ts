@@ -94,6 +94,7 @@ import type { includeProcessor } from "./includeprocessor.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
 import { recordBoundSourceFileExtensionFacts } from "../../extensions/compiler-integration.js";
+import { collectExtensionDiagnosticsForSourceFile } from "../../extensions/diagnostics.js";
 import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 /**
@@ -1635,6 +1636,7 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnostics","kind":"method","status":"implemented","sigHash":"bcc981c426c3f57d04542f3263562ddee4d27f91f7f301bdb982d72820e92c2a","bodyHash":"0b0cd7dfbd0c07892569d7456156b81b17ea53d19683a187b810ba8cd57e8718"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended to the normal TSTS semantic diagnostic channel after TS-Go checking; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1642,11 +1644,17 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
  * }
  */
 export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  return Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver));
+  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver)) ?? [];
+  const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, sourceFile);
+  if (extensionDiagnostics.length === 0) {
+    return diagnostics;
+  }
+  return SortAndDeduplicateDiagnostics([...diagnostics, ...extensionDiagnostics]);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnosticsWithoutNoEmitFiltering","kind":"method","status":"implemented","sigHash":"d3d9c2f85f878717309d4b733bc00728a9022c33d1c199c86ccdf25566f1b67a","bodyHash":"214d5d450b18e7c7c4643d91816182a617d3eb3c8732e5e57212cbce0dc32ee1"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended per source file before final sort/deduplication; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnosticsWithoutNoEmitFiltering(ctx context.Context, sourceFiles []*ast.SourceFile) map[*ast.SourceFile][]*ast.Diagnostic {
@@ -1662,7 +1670,8 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
-    result.set(sourceFiles[i], SortAndDeduplicateDiagnostics(allDiags[i] ?? []));
+    const file = sourceFiles[i];
+    result.set(file, SortAndDeduplicateDiagnostics([...(allDiags[i] ?? []), ...collectExtensionDiagnosticsForSourceFile(receiver!, file)]));
   }
   return result;
 }
