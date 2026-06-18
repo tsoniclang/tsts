@@ -24,10 +24,12 @@ import type {
   AssignabilityRequest,
   CompilerExtension,
   ExtensionDiagnostic,
+  InferTypeArgumentsResult,
   ProviderDeclarationModel,
   ProviderModuleResolution,
   ResolveCallRequest,
   ResolveCallResult,
+  ResolveConversionResult,
   ResolveElementAccessRequest,
   ResolveOperationResult,
   ResolveOperatorRequest,
@@ -245,6 +247,9 @@ test("extensions register binding and semantic providers through initialization 
       extensionContractVersion: "1.0.0",
       providerKind: "semantic",
     },
+    getParameterMode: () => acceptDecision({
+      passing: { mode: "byref-writeonly-must-init" },
+    }),
   };
   const host = new ExtensionHost({}, {
     extensions: [
@@ -260,6 +265,177 @@ test("extensions register binding and semantic providers through initialization 
   assert.equal(host.providers.getTargetBindingProvider("dotnet"), bindingProvider);
   assert.equal(host.providers.getTargetSemanticProvider("dotnet-semantic"), semanticProvider);
   assert.equal(host.diagnostics.hasErrors(), false);
+
+  const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
+    parameter: "System.Console.TryParse.result",
+    argument: "result",
+    target: "csharp",
+  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
+
+  assert.equal(parameterMode.kind, "accept");
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-writeonly-must-init");
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.extensionId : undefined, "dotnet");
+});
+
+test("semantic provider methods own typed decisions without hook boilerplate", () => {
+  const expression = {};
+  const convertedExpression = {};
+  const propertyAccess = {};
+  const elementAccess = {};
+  const operatorExpression = {};
+  const lambda = {};
+  const flowUse = {};
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("csharp-target", {
+        initialize: (context) => {
+          assert.equal(context.registerTargetSemanticProvider({
+            identity: {
+              id: "dotnet-semantic",
+              version: "1.0.0",
+              target: "csharp",
+              extensionContractVersion: "1.0.0",
+              providerKind: "semantic",
+            },
+            satisfiesConstraint: () => acceptDecision(true),
+            isAssignableTo: () => acceptDecision(true),
+            resolveCall: () => acceptDecision({
+              selectedSignature: selectedSignature("System.Console.WriteLine(System.Int32)"),
+              returnType: "void",
+            }),
+            inferTypeArguments: () => acceptDecision({
+              typeArguments: ["int32"],
+              targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+            }),
+            resolvePropertyAccess: () => acceptDecision({
+              operation: surfaceOperation("System.String.Length", "property"),
+              resultType: "int32",
+            }),
+            resolveElementAccess: () => acceptDecision({
+              operation: surfaceOperation("System.Span.GetItem", "indexer"),
+              resultType: "char",
+            }),
+            resolveOperator: () => acceptDecision({
+              operation: surfaceOperation("System.Int32.op_Addition", "operator"),
+              resultType: "int32",
+            }),
+            getContextualType: () => acceptDecision({
+              type: "System.Func<System.Int32,System.Int32>",
+              targetType: { kind: "target-named", id: "System.Func`2" },
+            }),
+            resolveConversion: () => acceptDecision({
+              convertedType: { kind: "source-primitive", name: "int32" },
+              operation: surfaceOperation("System.Convert.ToInt32", "method"),
+            }),
+            getParameterMode: () => acceptDecision({
+              passing: { mode: "byref-readwrite" },
+            }),
+            getRuntimeCarrier: () => acceptDecision({
+              carrier: { kind: "target-named", id: "System.Int32" },
+              requiresAllocation: false,
+            }),
+            validateFlowUse: () => acceptDecision({
+              valid: true,
+              targetCompilerValidationRequired: false,
+            }),
+          }), true);
+        },
+      }),
+    ],
+  });
+
+  const constraint = host.runDecision(ExtensionDecisionQuestion.satisfiesConstraint, {
+    source: "int32",
+    constraint: { kind: "implements", contract: "System.IEquatable`1" },
+    target: "csharp",
+  }, () => false, { requireOwner: true });
+  assert.equal(constraint.kind === "accept" ? constraint.value : false, true);
+
+  const assignable = host.runDecision(ExtensionDecisionQuestion.isAssignableTo, {
+    source: "int32",
+    target: "long",
+    relation: "assignment",
+  }, () => false, { requireOwner: true });
+  assert.equal(assignable.kind === "accept" ? assignable.value : false, true);
+
+  const call = host.runDecision(ExtensionDecisionQuestion.resolveCall, {
+    call: expression,
+    callee: "Console.WriteLine",
+    arguments: [123],
+    target: "csharp",
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "System.Console.WriteLine(System.Int32)");
+
+  const noInferredTypeArguments: InferTypeArgumentsResult = { typeArguments: [] };
+  const inferred = host.runDecision(ExtensionDecisionQuestion.inferTypeArguments, {
+    declaration: "List<T>.Add",
+    arguments: ["value"],
+    contextualType: "List<int32>",
+  }, () => noInferredTypeArguments, { requireOwner: true });
+  assert.deepEqual(inferred.kind === "accept" ? inferred.value.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
+
+  const property = host.runDecision(ExtensionDecisionQuestion.resolvePropertyAccess, {
+    expression: propertyAccess,
+    receiver: "text",
+    propertyName: "length",
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "property") }), { requireOwner: true });
+  assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "System.String.Length");
+
+  const element = host.runDecision(ExtensionDecisionQuestion.resolveElementAccess, {
+    expression: elementAccess,
+    receiver: "span",
+    argument: 0,
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "indexer") }), { requireOwner: true });
+  assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "System.Span.GetItem");
+
+  const operator = host.runDecision(ExtensionDecisionQuestion.resolveOperator, {
+    expression: operatorExpression,
+    operator: "+",
+    left: "left",
+    right: "right",
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "operator") }), { requireOwner: true });
+  assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "System.Int32.op_Addition");
+
+  const contextual = host.runDecision(ExtensionDecisionQuestion.getContextualType, {
+    expression: lambda,
+    context: "delegate",
+    target: "csharp",
+  }, () => ({ type: "core" }), { requireOwner: true });
+  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, "System.Func<System.Int32,System.Int32>");
+
+  const noConversion: ResolveConversionResult = {};
+  const conversion = host.runDecision(ExtensionDecisionQuestion.resolveConversion, {
+    expression: convertedExpression,
+    source: "byte",
+    target: "int",
+    targetPlatform: "csharp",
+  }, () => noConversion, { requireOwner: true });
+  assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "System.Convert.ToInt32");
+
+  const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
+    parameter: "TryParse.result",
+    argument: "result",
+    target: "csharp",
+  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-readwrite");
+
+  const carrier = host.runDecision(ExtensionDecisionQuestion.getRuntimeCarrier, {
+    type: "int32",
+    target: "csharp",
+  }, () => ({ carrier: { kind: "opaque", id: "core" } }), { requireOwner: true });
+  assert.equal(carrier.kind === "accept" ? carrier.value.carrier.kind : undefined, "target-named");
+
+  const flow = host.runDecision(ExtensionDecisionQuestion.validateFlowUse, {
+    useSite: flowUse,
+    symbol: "value",
+    mode: "read",
+    target: "csharp",
+  }, () => ({ valid: false }), { requireOwner: true });
+  assert.equal(flow.kind === "accept" ? flow.value.valid : false, true);
+  assert.equal(flow.kind === "accept" ? flow.extensionId : undefined, "csharp-target");
 });
 
 test("target binding providers own and resolve virtual modules without file-backed side data", () => {

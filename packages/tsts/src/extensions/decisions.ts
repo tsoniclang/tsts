@@ -1,4 +1,5 @@
 import type {
+  ArgumentPassingFact,
   ArgumentPassingMode,
   SelectedTargetSignatureFact,
   SurfaceOperationFact,
@@ -40,6 +41,9 @@ export const ExtensionDecisionQuestion = {
   resolveElementAccess: "member.resolveElementAccess",
   resolveOperator: "member.resolveOperator",
   getContextualType: "type.getContextualType",
+  resolveConversion: "type.resolveConversion",
+  getParameterMode: "signature.getParameterMode",
+  getRuntimeCarrier: "type.getRuntimeCarrier",
   validateFlowUse: "flow.validateUse",
 } as const;
 
@@ -103,6 +107,38 @@ export interface ResolveOperatorRequest {
 export interface ResolveOperationResult {
   readonly operation: SurfaceOperationFact;
   readonly resultType?: ExtensionFactSubject;
+}
+
+export interface ResolveConversionRequest {
+  readonly expression: ExtensionFactSubject;
+  readonly source: ExtensionFactSubject;
+  readonly target: ExtensionFactSubject;
+  readonly targetPlatform?: string;
+}
+
+export interface ResolveConversionResult {
+  readonly convertedType?: TargetTypeRef;
+  readonly operation?: SurfaceOperationFact;
+}
+
+export interface ParameterModeRequest {
+  readonly parameter: ExtensionFactSubject;
+  readonly argument?: ExtensionFactSubject;
+  readonly target?: string;
+}
+
+export interface ParameterModeResult {
+  readonly passing: ArgumentPassingFact;
+}
+
+export interface RuntimeCarrierRequest {
+  readonly type: ExtensionFactSubject;
+  readonly target?: string;
+}
+
+export interface RuntimeCarrierResult {
+  readonly carrier: TargetTypeRef;
+  readonly requiresAllocation?: boolean;
 }
 
 export interface ContextualTypeRequest {

@@ -2,7 +2,33 @@ export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 
 export type ExtensionFactSubject = object | string | number | bigint | boolean | symbol | null | undefined;
 
-import type { ExtensionDecision, ExtensionDecisionHook, ExtensionDecisionResult, ExtensionDecisionRunOptions } from "./decisions.js";
+import type {
+  AssignabilityRequest,
+  ContextualTypeRequest,
+  ContextualTypeResult,
+  ExtensionDecision,
+  ExtensionDecisionHook,
+  ExtensionDecisionResult,
+  ExtensionDecisionRunOptions,
+  InferTypeArgumentsRequest,
+  InferTypeArgumentsResult,
+  ParameterModeRequest,
+  ParameterModeResult,
+  ResolveCallRequest,
+  ResolveCallResult,
+  ResolveConversionRequest,
+  ResolveConversionResult,
+  ResolveElementAccessRequest,
+  ResolveOperationResult,
+  ResolveOperatorRequest,
+  ResolvePropertyAccessRequest,
+  RuntimeCarrierRequest,
+  RuntimeCarrierResult,
+  SatisfiesConstraintRequest,
+  ValidateFlowUseRequest,
+  ValidateFlowUseResult,
+} from "./decisions.js";
+import { ExtensionDecisionQuestion } from "./decisions.js";
 
 export interface ExtensionEvidence {
   readonly message: string;
@@ -272,6 +298,18 @@ export interface TargetBindingProvider {
 
 export interface TargetSemanticProvider {
   readonly identity: ProviderIdentity;
+  satisfiesConstraint?: (request: SatisfiesConstraintRequest) => ExtensionDecision<boolean>;
+  isAssignableTo?: (request: AssignabilityRequest) => ExtensionDecision<boolean>;
+  resolveCall?: (request: ResolveCallRequest) => ExtensionDecision<ResolveCallResult>;
+  inferTypeArguments?: (request: InferTypeArgumentsRequest) => ExtensionDecision<InferTypeArgumentsResult>;
+  resolvePropertyAccess?: (request: ResolvePropertyAccessRequest) => ExtensionDecision<ResolveOperationResult>;
+  resolveElementAccess?: (request: ResolveElementAccessRequest) => ExtensionDecision<ResolveOperationResult>;
+  resolveOperator?: (request: ResolveOperatorRequest) => ExtensionDecision<ResolveOperationResult>;
+  getContextualType?: (request: ContextualTypeRequest) => ExtensionDecision<ContextualTypeResult>;
+  resolveConversion?: (request: ResolveConversionRequest) => ExtensionDecision<ResolveConversionResult>;
+  getParameterMode?: (request: ParameterModeRequest) => ExtensionDecision<ParameterModeResult>;
+  getRuntimeCarrier?: (request: RuntimeCarrierRequest) => ExtensionDecision<RuntimeCarrierResult>;
+  validateFlowUse?: (request: ValidateFlowUseRequest) => ExtensionDecision<ValidateFlowUseResult>;
 }
 
 interface RegisteredDecisionHook {
@@ -735,6 +773,15 @@ export class ExtensionHost {
     hooks.push(registered);
   }
 
+  registerTargetSemanticProvider(extensionId: string, provider: TargetSemanticProvider): boolean {
+    const registered = this.providers.registerTargetSemanticProvider(provider);
+    if (!registered) {
+      return false;
+    }
+    this.#registerTargetSemanticProviderDecisionHooks(extensionId, provider);
+    return true;
+  }
+
   runDecision<TRequest, TResult>(
     question: string,
     request: TRequest,
@@ -865,7 +912,7 @@ export class ExtensionHost {
           registerDecisionOwner: (question, extensionId) => this.registerDecisionOwner(question, extensionId),
           registerDecisionHook: (question, hook) => this.registerDecisionHook(question, extension.identity.id, hook),
           registerTargetBindingProvider: (provider) => this.providers.registerTargetBindingProvider(provider),
-          registerTargetSemanticProvider: (provider) => this.providers.registerTargetSemanticProvider(provider),
+          registerTargetSemanticProvider: (provider) => this.registerTargetSemanticProvider(extension.identity.id, provider),
         });
       } catch (error) {
         this.diagnostics.append(createHostDiagnostic({
@@ -890,6 +937,34 @@ export class ExtensionHost {
       }));
     }
   }
+
+  #registerTargetSemanticProviderDecisionHooks(extensionId: string, provider: TargetSemanticProvider): void {
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.satisfiesConstraint, provider.satisfiesConstraint);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.isAssignableTo, provider.isAssignableTo);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.resolveCall, provider.resolveCall);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.inferTypeArguments, provider.inferTypeArguments);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.resolvePropertyAccess, provider.resolvePropertyAccess);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.resolveElementAccess, provider.resolveElementAccess);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.resolveOperator, provider.resolveOperator);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.getContextualType, provider.getContextualType);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.resolveConversion, provider.resolveConversion);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.getParameterMode, provider.getParameterMode);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.getRuntimeCarrier, provider.getRuntimeCarrier);
+    registerProviderDecisionHook(this, extensionId, ExtensionDecisionQuestion.validateFlowUse, provider.validateFlowUse);
+  }
+}
+
+function registerProviderDecisionHook<TRequest, TResult>(
+  host: ExtensionHost,
+  extensionId: string,
+  question: string,
+  handler: ((request: TRequest) => ExtensionDecision<TResult>) | undefined,
+): void {
+  if (handler === undefined) {
+    return;
+  }
+  host.registerDecisionOwner(question, extensionId);
+  host.registerDecisionHook<TRequest, TResult>(question, extensionId, (request) => handler(request));
 }
 
 const attachedExtensionHosts = new WeakMap<object, ExtensionHost>();
