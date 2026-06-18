@@ -83,6 +83,7 @@ export type {
   ProviderOwnership,
   ProviderParameterDeclaration,
   ProviderResolvedModule,
+  RequiredProviderModuleSpec,
   ProviderVirtualDeclarationDocument,
   ProviderSignatureDeclaration,
   ProviderSymbolIdentity,

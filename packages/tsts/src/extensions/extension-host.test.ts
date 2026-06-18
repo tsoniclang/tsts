@@ -32,6 +32,7 @@ import type {
   ExtensionDiagnostic,
   InferTypeArgumentsResult,
   ProviderDeclarationModel,
+  ProviderMemberDeclaration,
   ProviderModuleResolution,
   ResolveCallRequest,
   ResolveCallResult,
@@ -553,6 +554,121 @@ test("provider ownership conflicts and invalid declaration models are diagnostic
 
   assert.equal(invalidHost.providers.resolveVirtualModule(specifier).kind, "rejected");
   assert.equal(invalidHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider declaration models render the supported export member and type matrix", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "resolved");
+  if (resolved.kind !== "resolved") {
+    return;
+  }
+
+  const source = resolved.module.virtualSourceText;
+  assert.match(source, /export declare class Box<T extends number>/);
+  assert.match(source, /constructor\(value: T\);/);
+  assert.match(source, /value: T;/);
+  assert.match(source, /static Count: number;/);
+  assert.match(source, /\[index: number\]: string;/);
+  assert.match(source, /export interface Writer/);
+  assert.match(source, /write\(text\?: string, \.\.\.chunks: string\[\]\): number;/);
+  assert.match(source, /export declare function tryParse<T extends number>\(text\?: string, \.\.\.values: number\[\]\): boolean;/);
+  assert.match(source, /export type Pair = \[number, string\];/);
+  assert.match(source, /export declare const DefaultSize: number;/);
+  assert.match(source, /export declare namespace Buffers/);
+  assert.match(source, /export declare enum Color/);
+  assert.match(source, /Red,/);
+  assert.match(source, /export declare const NativeHandle: unique symbol;/);
+
+  assert.equal(resolved.module.declarationModel.exports.length, 8);
+  assert.equal(resolved.module.virtualDocument.sourceText, source);
+});
+
+test("provider declaration models reject member kinds that cannot be represented as virtual TypeScript", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
+    members: [{
+      id: "Changed",
+      name: "Changed",
+      kind: "event",
+      type: { kind: "function", parameters: [], returnType: { kind: "void" } },
+    }],
+  }));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider virtual module cache is separated by provider identity and resolution context", () => {
+  const specifier = "@target/cache.js";
+  let resolveCount = 0;
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: {
+      id: "cache-provider",
+      version: "1.0.0",
+      target: "demo",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "binding",
+      configHash: "config-a",
+    },
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      resolveCount += 1;
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://cache/${context.activeSurface ?? "default"}`,
+        providerModuleId: `cache:${context.activeSurface ?? "default"}`,
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{ id: "Value", name: "Value", kind: "value", type: { kind: "number" } }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "array" });
+  const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "array" });
+  const third = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "span" });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(second.kind, "resolved");
+  assert.equal(third.kind, "resolved");
+  if (first.kind !== "resolved" || second.kind !== "resolved" || third.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(first.module, second.module);
+  assert.notEqual(first.module, third.module);
+  assert.notEqual(first.module.cacheKey, third.module.cacheKey);
+  assert.equal(resolveCount, 2);
+});
+
+test("required provider module patterns diagnose missing providers without hardcoded target names", () => {
+  const host = new ExtensionHost({}, {
+    activeTarget: "demo",
+    requiredProviderModules: [{
+      specifierPrefix: "@target/",
+      target: "demo",
+      message: "The demo target provider is required for @target/* imports.",
+    }],
+  });
+
+  const missing = host.providers.resolveVirtualModule("@target/runtime.js", { activeTarget: "demo" });
+  const unrelated = host.providers.resolveVirtualModule("@other/runtime.js", { activeTarget: "demo" });
+
+  assert.equal(missing.kind, "rejected");
+  assert.equal(unrelated.kind, "unowned");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerMissing);
+  assert.equal(host.diagnostics.all()[0]?.extensionCode, "REQUIRED_PROVIDER_MISSING");
 });
 
 test("semantic finalization seals facts and gates consumer reads", () => {
@@ -1092,6 +1208,143 @@ function dotnetBindingProvider(
     getTargetIdentity: (symbol) => symbol.moduleSpecifier === ownedSpecifier && symbol.exportName === "SearchValues"
       ? targetIdentity
       : undefined,
+  };
+}
+
+function matrixBindingProvider(
+  ownedSpecifier: string,
+  options: {
+    readonly members?: readonly ProviderMemberDeclaration[];
+  } = {},
+): TargetBindingProvider {
+  return {
+    identity: {
+      id: "matrix-provider",
+      version: "1.0.0",
+      target: "demo",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "binding",
+    },
+    ownsModule: (specifier) => specifier === ownedSpecifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (specifier) => ({
+      kind: "virtual",
+      moduleSpecifier: specifier,
+      virtualFileName: "tsts-provider://matrix/runtime",
+      providerModuleId: "matrix.runtime",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Box",
+        name: "Box",
+        kind: "class",
+        targetIdentity: { target: "demo", id: "Demo.Box`1" },
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "source-primitive", name: "int" }],
+        }],
+        members: options.members ?? [{
+          id: "ctor",
+          name: "constructor",
+          kind: "constructor",
+          signatures: [{
+            id: "new(T)",
+            parameters: [{ name: "value", type: { kind: "type-parameter", name: "T" } }],
+          }],
+        }, {
+          id: "value",
+          name: "value",
+          kind: "property",
+          type: { kind: "type-parameter", name: "T" },
+        }, {
+          id: "Count",
+          name: "Count",
+          kind: "field",
+          static: true,
+          type: { kind: "number" },
+        }, {
+          id: "item",
+          name: "item",
+          kind: "indexer",
+          signatures: [{
+            id: "item(number)",
+            parameters: [{ name: "index", type: { kind: "number" } }],
+            returnType: { kind: "string" },
+          }],
+        }],
+      }, {
+        id: "Writer",
+        name: "Writer",
+        kind: "interface",
+        members: [{
+          id: "write",
+          name: "write",
+          kind: "method",
+          signatures: [{
+            id: "write",
+            parameters: [
+              { name: "text", type: { kind: "string" }, optional: true },
+              { name: "chunks", type: { kind: "array", elementType: { kind: "string" } }, rest: true },
+            ],
+            returnType: { kind: "number" },
+          }],
+        }],
+      }, {
+        id: "tryParse",
+        name: "tryParse",
+        kind: "function",
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "source-primitive", name: "int" }],
+        }],
+        signatures: [{
+          id: "tryParse",
+          typeParameters: [{
+            name: "T",
+            constraints: [{ kind: "source-primitive", name: "int" }],
+          }],
+          parameters: [
+            { name: "text", type: { kind: "string" }, optional: true },
+            { name: "values", type: { kind: "array", elementType: { kind: "number" } }, rest: true },
+          ],
+          returnType: { kind: "boolean" },
+        }],
+      }, {
+        id: "Pair",
+        name: "Pair",
+        kind: "type",
+        type: { kind: "tuple", elementTypes: [{ kind: "number" }, { kind: "string" }] },
+      }, {
+        id: "DefaultSize",
+        name: "DefaultSize",
+        kind: "value",
+        type: { kind: "number" },
+      }, {
+        id: "Buffers",
+        name: "Buffers",
+        kind: "namespace",
+        members: [{
+          id: "Capacity",
+          name: "Capacity",
+          kind: "field",
+          type: { kind: "number" },
+        }],
+      }, {
+        id: "Color",
+        name: "Color",
+        kind: "enum",
+        members: [
+          { id: "Red", name: "Red", kind: "field" },
+          { id: "Blue", name: "Blue", kind: "field" },
+        ],
+      }, {
+        id: "NativeHandle",
+        name: "NativeHandle",
+        kind: "opaque",
+      }],
+    }),
+    getTargetIdentity: () => undefined,
   };
 }
 

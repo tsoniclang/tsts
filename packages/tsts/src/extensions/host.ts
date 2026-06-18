@@ -76,6 +76,7 @@ export const ExtensionHostDiagnosticCode = {
   lifecycleHookFailed: 9000019,
   requiredFactMissing: 9000020,
   providerContractMismatch: 9000021,
+  providerMissing: 9000022,
 } as const;
 
 export const DynamicProviderExtensionContractVersion = "new-hope.dynamic-provider.1";
@@ -174,6 +175,14 @@ export interface ExtensionHostOptions {
   readonly activeTarget?: string;
   readonly activeSurface?: string;
   readonly allowMultipleTargets?: boolean;
+  readonly requiredProviderModules?: readonly RequiredProviderModuleSpec[];
+}
+
+export interface RequiredProviderModuleSpec {
+  readonly specifierPrefix: string;
+  readonly providerId?: string;
+  readonly target?: string;
+  readonly message?: string;
 }
 
 export interface ProviderModuleContext {
@@ -566,14 +575,16 @@ export class ExtensionFactResolver {
 
 export class ProviderRegistry {
   readonly #diagnostics: ExtensionDiagnosticStore;
+  readonly #requiredProviderModules: readonly RequiredProviderModuleSpec[];
   readonly #bindingProviders = new Map<string, TargetBindingProvider>();
   readonly #semanticProviders = new Map<string, TargetSemanticProvider>();
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
   readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
   readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
 
-  constructor(diagnostics: ExtensionDiagnosticStore) {
+  constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
     this.#diagnostics = diagnostics;
+    this.#requiredProviderModules = requiredProviderModules;
   }
 
   registerTargetBindingProvider(provider: TargetBindingProvider): boolean {
@@ -624,6 +635,12 @@ export class ProviderRegistry {
     return Array.from(this.#semanticProviders.values());
   }
 
+  requiresProviderForModule(specifier: string, context: ProviderModuleContext = {}): RequiredProviderModuleSpec | undefined {
+    return this.#requiredProviderModules.find((required) =>
+      specifier.startsWith(required.specifierPrefix)
+      && (required.target === undefined || context.activeTarget === undefined || required.target === context.activeTarget));
+  }
+
   getTargetBindingProvider(id: string): TargetBindingProvider | undefined {
     return this.#bindingProviders.get(id);
   }
@@ -643,6 +660,18 @@ export class ProviderRegistry {
   resolveVirtualModule(specifier: string, context: ProviderModuleContext = {}): ProviderModuleResolveResult {
     const owner = this.#collectModuleOwners(specifier, context);
     if (owner.kind === "unowned") {
+      const required = this.requiresProviderForModule(specifier, context);
+      if (required !== undefined) {
+        const diagnostic = createHostDiagnostic({
+          extensionCode: "REQUIRED_PROVIDER_MISSING",
+          numericCode: ExtensionHostDiagnosticCode.providerMissing,
+          message: required.message ?? `No target binding provider is installed for provider-owned module '${specifier}'.`,
+          evidence: [{ message: "Required provider module pattern", details: required }],
+          identity: `required-provider-missing:${specifier}:${required.specifierPrefix}:${required.providerId ?? ""}:${required.target ?? ""}`,
+        });
+        this.#diagnostics.append(diagnostic);
+        return { kind: "rejected", diagnostic };
+      }
       return { kind: "unowned" };
     }
     if (owner.kind === "rejected") {
@@ -783,7 +812,7 @@ export class ExtensionHost {
     this.diagnostics = new ExtensionDiagnosticStore();
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
-    this.providers = new ProviderRegistry(this.diagnostics);
+    this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
     this.activeTarget = options.activeTarget;
     this.activeSurface = options.activeSurface;
     this.extensions = orderExtensions(options.extensions ?? [], this.diagnostics);
@@ -1343,7 +1372,7 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration)
       return `export interface ${declaration.name}${typeParameters} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
     case "function":
       return renderProviderSignatures(declaration.name, declaration.signatures ?? [createProviderFallbackSignature(declaration)])
-        .map((signature) => `export declare ${signature}`)
+        .map((signature) => `export declare function ${signature}`)
         .join("\n");
     case "type":
       return `export type ${declaration.name}${typeParameters} = ${renderProviderTypeExpression(declaration.type ?? { kind: "unknown" })};`;

@@ -258,7 +258,7 @@ function fileLoader_getProviderVirtualModule(receiver: GoPtr<fileLoader>, fileNa
 }
 
 function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, extensionHost: ExtensionHost | undefined, moduleName: string, containingFile: string, mode: ResolutionMode): GoPtr<ResolvedModule> | undefined {
-  if (extensionHost === undefined || extensionHost.providers.bindingProviders.length === 0) {
+  if (extensionHost === undefined) {
     return undefined;
   }
   const context = {
@@ -267,6 +267,9 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     ...(extensionHost.activeTarget !== undefined ? { activeTarget: extensionHost.activeTarget } : {}),
     ...(extensionHost.activeSurface !== undefined ? { activeSurface: extensionHost.activeSurface } : {}),
   };
+  if (extensionHost.providers.bindingProviders.length === 0 && extensionHost.providers.requiresProviderForModule(moduleName, context) === undefined) {
+    return undefined;
+  }
   const result = extensionHost.providers.resolveVirtualModule(moduleName, context);
   if (result.kind === "unowned") {
     return undefined;

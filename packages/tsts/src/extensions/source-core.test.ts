@@ -137,7 +137,7 @@ test("source-core records namespace import identity without manufacturing primit
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, sourcePrimitiveFactKey), undefined);
 });
 
-test("source-core does not guess type-reference use-site facts before checker identity is available", () => {
+test("source-core records primitive facts on type references from explicit source-core imports", () => {
   const { extended, program, index } = createProgram(`
     import type { int as i32 } from "@tsonic/core/types.js";
     import type * as core from "@tsonic/core/types.js";
@@ -151,16 +151,33 @@ test("source-core does not guess type-reference use-site facts before checker id
 
   const directReference = getTypeAliasType(index, "Direct");
   assert.equal(directReference?.Kind, KindTypeReference);
-  assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey), undefined);
-  assert.equal(extended.extensionHost.facts.get(AsTypeReferenceNode(directReference)!.TypeName, canonicalIdentityFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.facts.get(AsTypeReferenceNode(directReference)!.TypeName, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::int");
 
   const namespacedReference = getTypeAliasType(index, "Namespaced");
   assert.equal(namespacedReference?.Kind, KindTypeReference);
   const namespacedTypeName = AsTypeReferenceNode(namespacedReference)!.TypeName;
   assert.equal(namespacedTypeName?.Kind, KindQualifiedName);
-  assert.equal(extended.extensionHost.facts.get(namespacedReference, sourcePrimitiveFactKey), undefined);
-  assert.equal(extended.extensionHost.facts.get(namespacedTypeName, canonicalIdentityFactKey), undefined);
-  assert.equal(extended.extensionHost.facts.get(AsQualifiedName(namespacedTypeName)!.Right, sourcePrimitiveFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(namespacedReference, sourcePrimitiveFactKey)?.kind, "uint32");
+  assert.equal(extended.extensionHost.facts.get(namespacedTypeName, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::uint");
+  assert.equal(extended.extensionHost.facts.get(AsQualifiedName(namespacedTypeName)!.Right, sourcePrimitiveFactKey)?.kind, "uint32");
+});
+
+test("source-core fact resolver returns primitive type-reference facts from canonical imports", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int } from "@tsonic/core/types.js";
+
+    type Direct = int;
+  `);
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const directReference = getTypeAliasType(index, "Direct");
+  assert.equal(directReference?.Kind, KindTypeReference);
+  assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.factResolver.resolve(directReference, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey)?.runtimeBase, "number");
 });
 
 test("source-core records primitive facts on canonical named re-exports", () => {

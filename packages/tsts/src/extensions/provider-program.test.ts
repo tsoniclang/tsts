@@ -7,9 +7,10 @@ import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Pos } from "../internal/ast/spine.js";
+import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -102,6 +103,91 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(consumer.getVirtualDeclaration(searchValuesSymbol)?.exportName, "SearchValues");
   assert.equal(consumer.getTargetBindingFact(searchValuesSymbol)?.id, "System.Buffers.SearchValues`1");
   assert.equal(consumer.getSelectedTargetCall(call), undefined);
+});
+
+test("provider-backed virtual modules support alias and namespace import forms", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import type { SearchValues as SearchValuesAlias } from "@tsonic/dotnet/System.Buffers.js";
+      import type * as Buffers from "@tsonic/dotnet/System.Buffers.js";
+
+      declare const aliased: SearchValuesAlias<number>;
+      declare const namespaced: Buffers.SearchValues<number>;
+      aliased;
+      namespaced;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Buffers.js")],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://dotnet/System.Buffers");
+  assert.ok(virtualFile !== undefined);
+  const searchValuesSymbol = Node_Symbol(virtualFile as never)?.Exports?.get("SearchValues");
+  assert.ok(searchValuesSymbol !== undefined);
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
+});
+
+test("programs without an extension host stay on the direct TS-Go path", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { value } from "./local.js";
+      value.toString();
+    `],
+    ["/src/local.ts", "export const value = 1;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const program = NewProgram(options);
+  assert.ok(program !== undefined);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+
+  assert.equal(getExtensionHost(program), undefined);
+  assert.ok(!Program_GetSourceFiles(program).some((file) => SourceFile_FileName(file).startsWith("tsts-provider://")));
+  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
 });
 
 test("checker records provider-owned target call facts for consumers", () => {
@@ -535,7 +621,74 @@ test("checker validates provider-owned target constraints through standard seman
 
   const targetDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "DOTNET_CONSTRAINT");
   assert.equal(targetDiagnostics.length, 1);
-  assert.equal((targetDiagnostics[0]?.nodeOrSpan as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((targetDiagnostics[0]?.nodeOrSpan as GoPtr<Node>)?.Kind, KindNumberKeyword);
+});
+
+test("provider extensions can drive a realistic emitter-facing fact chain", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import type { int } from "@tsonic/core/types.js";
+      import type { SearchValues } from "@tsonic/dotnet/System.Buffers.js";
+
+      declare const values: SearchValues<int>;
+      declare let value: int;
+      values.Contains(value);
+    `],
+    ["/src/node_modules/@tsonic/core/package.json", JSON.stringify({
+      name: "@tsonic/core",
+      version: "1.0.0",
+      type: "module",
+      exports: {
+        "./types.js": {
+          types: "./types.d.ts",
+          default: "./types.js",
+        },
+      },
+    })],
+    ["/src/node_modules/@tsonic/core/types.d.ts", "export type int = number;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [
+      createSourceCoreExtension(),
+      providerExtension("@tsonic/dotnet/System.Buffers.js", false, compositeDotnetProvider()),
+    ],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  const argument = getFirstCallArgument(call);
+  const searchValuesTypeReference = findTypeReferenceByName(index, "SearchValues");
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
+  assert.deepEqual(consumer.getSelectedTargetCall(call)?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
+  assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
+  assert.equal(consumer.getTargetConversionFact(argument)?.convertedType?.kind, "target-named");
+  assert.equal(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier.kind, "target-named");
 });
 
 test("checker-owned target call seam reports deferred providers without fallback facts", () => {
@@ -738,6 +891,49 @@ test("extension-owned semantic rejections surface through standard diagnostics w
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
 });
 
+test("extension diagnostics can use explicit source spans through the standard semantic channel", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function pin(value: number): number;
+      pin(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, sourceSpanRejectingCallProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  const call = findFirstNodeByKind(index, KindCallExpression);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9910126);
+  assert.equal(Diagnostic_Pos(diagnostics[0]), Node_Pos(call));
+  assert.equal(Diagnostic_End(diagnostics[0]), Node_End(call));
+  assert.match(Diagnostic_String(diagnostics[0]), /DOTNET0126/);
+});
+
 test("unsupported native surface operations are diagnostics, not fallback calls", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -870,6 +1066,47 @@ test("provider-owned rejected modules do not fall back to file-system resolution
   assert.equal(extended.extensionHost.diagnostics.all().length, 1);
   assert.equal(extended.extensionHost.diagnostics.all()[0]?.extensionCode, "PROVIDER_REJECTED_MODULE");
   assert.ok(!sourceFileNames.includes("/src/node_modules/@tsonic/dotnet/System.Buffers.js"));
+});
+
+test("configured provider-owned imports diagnose missing providers and do not fall back to files", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `import { SearchValues } from "@target/runtime.js";`],
+    ["/src/node_modules/@target/runtime.js", "export const SearchValues = 1;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        allowJs: true,
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "demo",
+    requiredProviderModules: [{
+      specifierPrefix: "@target/",
+      target: "demo",
+      message: "The demo target provider is required for @target/* imports.",
+    }],
+  });
+
+  const program = NewProgram(options);
+  const sourceFileNames = Program_GetSourceFiles(program).map((file) => SourceFile_FileName(file));
+
+  assert.equal(extended.extensionHost.diagnostics.all().length, 1);
+  assert.equal(extended.extensionHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerMissing);
+  assert.ok(!sourceFileNames.includes("/src/node_modules/@target/runtime.js"));
 });
 
 function providerExtension(specifier: string, reject = false, provider?: TargetSemanticProvider): CompilerExtension {
@@ -1023,6 +1260,35 @@ function carrierConversionSemanticProvider(): TargetSemanticProvider {
   };
 }
 
+function compositeDotnetProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-composite-semantic-provider"),
+    satisfiesConstraint: (request, context) => constraintSemanticProvider().satisfiesConstraint!(request, context),
+    resolveCall: () => acceptDecision({
+      selectedSignature: selectedSearchValuesContainsSignature(),
+      returnType: "bool",
+    }),
+    inferTypeArguments: (request) => acceptDecision({
+      typeArguments: request.arguments,
+      targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+    }),
+    getParameterMode: (request) => acceptDecision({
+      passing: {
+        mode: "byref-readonly",
+        targetExpression: request.argument,
+      },
+    }),
+    resolveConversion: () => acceptDecision({
+      convertedType: { kind: "target-named", id: "System.Int32" },
+      operation: surfaceOperation("System.Int32.Identity", "method", "int32"),
+    }),
+    getRuntimeCarrier: () => acceptDecision({
+      carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
+      requiresAllocation: false,
+    }),
+  };
+}
+
 function rustFlowSemanticProvider(): TargetSemanticProvider {
   return {
     identity: {
@@ -1128,6 +1394,30 @@ function rejectingCallSemanticProvider(): TargetSemanticProvider {
   };
 }
 
+function sourceSpanRejectingCallProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-source-span-rejecting-call-provider"),
+    resolveCall: (request: ResolveCallRequest) => {
+      const call = request.call as GoPtr<Node>;
+      return rejectDecision({
+        extensionId: "dotnet-source-span-rejecting-call-provider",
+        extensionCode: "DOTNET_PIN_REQUIRES_FIXED",
+        numericCode: 9910126,
+        publicCode: "DOTNET0126",
+        category: "error",
+        message: "The target pin operation requires a fixed storage location.",
+        nodeOrSpan: {
+          sourceFile: GetSourceFileOfNode(call),
+          pos: Node_Pos(call),
+          end: Node_End(call),
+        },
+        evidence: [{ message: "Target rule", details: "pin(value) must be proven fixed before lowering." }],
+        identity: "dotnet-pin-requires-fixed:/src/index.ts",
+      });
+    },
+  };
+}
+
 function rejectingNativeArrayPushProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-native-array-surface-provider"),
@@ -1220,13 +1510,13 @@ function getSourcePrimitiveForConstraintArgument(source: ExtensionFactSubject, c
   if (node === undefined) {
     return undefined;
   }
-  const direct = context.facts.get(node, sourcePrimitiveFactKey);
+  const direct = context.factResolver.resolve(node, sourcePrimitiveFactKey);
   if (direct !== undefined) {
     return direct;
   }
   const typeName = node.Kind === KindTypeReference ? AsTypeReferenceNode(node)?.TypeName : node;
   const symbol = Node_Symbol(typeName);
-  return symbol === undefined ? undefined : context.facts.get(symbol, sourcePrimitiveFactKey);
+  return symbol === undefined ? undefined : context.factResolver.resolve(symbol, sourcePrimitiveFactKey);
 }
 
 function semanticProviderIdentity(id: string) {
@@ -1323,9 +1613,12 @@ function dotnetProvider(specifier: string, reject: boolean): TargetBindingProvid
 }
 
 function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
-  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
-  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
-  assert.equal(Program_GetSemanticDiagnostics(program, Background(), sourceFile).length, 0);
+  const programDiagnostics = Program_GetProgramDiagnostics(program);
+  const syntacticDiagnostics = Program_GetSyntacticDiagnostics(program, Background(), sourceFile);
+  const semanticDiagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
+  assert.equal(programDiagnostics.length, 0, programDiagnostics.map(Diagnostic_String).join("\n"));
+  assert.equal(syntacticDiagnostics.length, 0, syntacticDiagnostics.map(Diagnostic_String).join("\n"));
+  assert.equal(semanticDiagnostics.length, 0, semanticDiagnostics.map(Diagnostic_String).join("\n"));
 }
 
 function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
@@ -1338,6 +1631,21 @@ function getFirstCallArgument(callExpression: GoPtr<Node>): GoPtr<Node> {
   const argument = (Node_Arguments(callExpression) ?? [])[0];
   assert.ok(argument !== undefined);
   return argument;
+}
+
+function findTypeReferenceByName(root: GoPtr<Node>, name: string): GoPtr<Node> {
+  let found: GoPtr<Node>;
+  visitNodes(root, (node) => {
+    if (found !== undefined || node?.Kind !== KindTypeReference) {
+      return;
+    }
+    const typeName = AsTypeReferenceNode(node)?.TypeName;
+    if (Node_Text(typeName) === name) {
+      found = node;
+    }
+  });
+  assert.ok(found !== undefined);
+  return found;
 }
 
 function findLastIdentifierByText(root: GoPtr<Node>, text: string): GoPtr<Node> {
