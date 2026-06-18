@@ -23,6 +23,7 @@ test("EscapeString", () => {
     { s: 'ab"c', quoteChar: QuoteCharSingleQuote, expected: 'ab"c' },
     { s: "ab`c", quoteChar: QuoteCharBacktick, expected: "ab\\`c" },
     { s: "", quoteChar: QuoteCharBacktick, expected: "\\u001F" },
+    { s: "\t\v\f \u00A0\uFEFF", quoteChar: QuoteCharDoubleQuote, expected: "\\t\\v\\f \u00A0\uFEFF" },
   ];
   for (let i = 0; i < data.length; i++) {
     const rec = data[i]!;
@@ -43,6 +44,7 @@ test("EscapeNonAsciiString", () => {
     { s: "ab`c", quoteChar: QuoteCharBacktick, expected: "ab\\`c" },
     { s: "abc", quoteChar: QuoteCharDoubleQuote, expected: "ab\\u008Fc" },
     { s: "𝟘𝟙", quoteChar: QuoteCharDoubleQuote, expected: "\\uD835\\uDFD8\\uD835\\uDFD9" },
+    { s: "\uFEFF", quoteChar: QuoteCharDoubleQuote, expected: "\\uFEFF" },
   ];
   for (let i = 0; i < data.length; i++) {
     const rec = data[i]!;

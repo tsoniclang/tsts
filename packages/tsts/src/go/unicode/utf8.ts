@@ -20,7 +20,7 @@ export const MaxRune: GoRune = 0x10ffff;
 // UTFMax is the maximum number of bytes of a UTF-8 encoded Unicode character.
 export const UTFMax: int = 4;
 
-const decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+const decoder: TextDecoder = new globalThis.TextDecoder("utf-8", { ignoreBOM: true });
 const nonASCII = /[^\x00-\x7F]/;
 const surrogate = /[\uD800-\uDFFF]/;
 

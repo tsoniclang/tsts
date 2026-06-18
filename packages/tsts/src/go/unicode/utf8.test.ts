@@ -74,6 +74,14 @@ test("String byte-view helpers preserve Go byte offsets", () => {
   assert.deepEqual(utf8.DecodeLastRuneInStringBefore(text, 7), [0x1d11e, 4]);
 });
 
+test("String byte-view slicing preserves BOM code points", () => {
+  const text = "a\uFEFFb";
+  assert.equal(utf8.StringByteLen(text), 5);
+  assert.equal(utf8.StringByteSlice(text, 1, 4), "\uFEFF");
+  assert.equal(utf8.StringByteSlice(text, 1), "\uFEFFb");
+  assert.deepEqual(utf8.DecodeRuneInStringAt(text, 1), [0xfeff, 3]);
+});
+
 test("String byte-view helpers preserve lone surrogate sentinel bytes", () => {
   const text = "a\uD800x\uDE03z";
   assert.equal(utf8.StringByteLen(text), 9);

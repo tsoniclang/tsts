@@ -2389,7 +2389,7 @@ export function CommonJSModuleTransformer_visitTopLevelVariableStatement(receive
     commitPendingVariables();
     commitPendingExpressions();
     statements = CommonJSModuleTransformer_appendExportsOfVariableStatement(receiver, statements, node);
-    return SingleOrMany(statements, pf);
+    return SingleOrMany(statements.length === 0 ? undefined : statements, pf);
   }
   return CommonJSModuleTransformer_visitTopLevelNestedVariableStatement(receiver, node);
 }

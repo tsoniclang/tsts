@@ -1076,6 +1076,13 @@ test("diagnosticHeadlineText compares the command-line diagnostic contract", () 
   );
 });
 
+test("diagnosticHeadlineText accepts TS-Go message headlines", () => {
+  assert.equal(
+    diagnosticHeadlineText(`file.ts(1,1): message TS1450: First.\r\nfile.ts(2,1): message TS1451: Second.\r\n\r\n==== file.ts (2 errors) ====\r\n    source\r\n`),
+    "file.ts(1,1): message TS1450: First.\nfile.ts(2,1): message TS1451: Second.",
+  );
+});
+
 test("sortDiagnosticsForBaseline orders diagnostics by source position", () => {
   const diagnostics = [
     { file: { fileName: "/b.ts" }, loc: { pos: 2, end: 3 }, code: 2000 },

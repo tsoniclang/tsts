@@ -1048,13 +1048,15 @@ export function baselineHasErrors(testCase) {
   return false;
 }
 
+const diagnosticHeadlinePattern = /\b(?:error|message) TS\d+:/;
+
 function projectBaselineHasErrors(testCase) {
   const moduleFolder = testCase.moduleKind === "amd" ? "amd" : "node";
   const errorsPath = join(typeScriptSubmoduleBaselineRoot, "project", testCase.caseName, moduleFolder, `${testCase.caseName}.errors.txt`);
   if (!existsSync(errorsPath)) {
     return false;
   }
-  return /\berror TS\d+:/.test(stripAnsiEscapes(readFileSync(errorsPath, "utf8")));
+  return diagnosticHeadlinePattern.test(stripAnsiEscapes(readFileSync(errorsPath, "utf8")));
 }
 
 function baselineDirectoryHasErrors(baselineDir, testCase) {
@@ -1087,7 +1089,7 @@ export function errorDiffNewSideHasErrors(diffPath) {
     if (line === "+<no content>") {
       return false;
     }
-    if ((line.startsWith("+") || line.startsWith(" ")) && /\berror TS\d+:/.test(line)) {
+    if ((line.startsWith("+") || line.startsWith(" ")) && diagnosticHeadlinePattern.test(line)) {
       return true;
     }
   }
@@ -1695,7 +1697,7 @@ export function diagnosticHeadlineText(text) {
       }
       continue;
     }
-    if (/\berror TS\d+:/.test(line)) {
+    if (diagnosticHeadlinePattern.test(line)) {
       headlines.push(line);
     }
   }
