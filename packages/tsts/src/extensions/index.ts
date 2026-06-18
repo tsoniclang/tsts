@@ -35,7 +35,9 @@ export {
   canonicalIdentityFactKey,
   constGenericFactKey,
   flowStateFactKey,
+  functionPointerFactKey,
   instantiatedTargetTypeFactKey,
+  pointerFactKey,
   providerVirtualDeclarationFactKey,
   runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
@@ -92,8 +94,10 @@ export type {
 } from "./host.js";
 export type {
   SourceCoreExtensionOptions,
+  SourceCallMarkerDeclaration,
   SourceCoreModuleIdentity,
   SourcePrimitiveDeclaration,
+  SourceTypeMarkerDeclaration,
 } from "./source-core.js";
 export type {
   AssignabilityRequest,

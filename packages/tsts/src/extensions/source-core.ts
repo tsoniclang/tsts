@@ -3,6 +3,8 @@ import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import {
+  Node_Arguments,
+  Node_Expression,
   Node_Elements,
   Node_ImportClause,
   Node_ModuleSpecifier,
@@ -10,32 +12,46 @@ import {
   Node_Statements,
   Node_Symbol,
   Node_Text,
+  Node_TypeArguments,
 } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
-import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
+import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsPropertyAccessExpression, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
+  KindCallExpression,
   KindExportDeclaration,
   KindImportDeclaration,
   KindNamedImports,
   KindNamedExports,
   KindNamespaceImport,
+  KindPropertyAccessExpression,
   KindQualifiedName,
   KindTypeKeyword,
   KindTypeReference,
+  KindTupleType,
 } from "../internal/ast/generated/kinds.js";
+import { IsLeftHandSideExpression } from "../internal/ast/utilities.js";
 import {
+  argumentPassingFactKey,
   canonicalIdentityFactKey,
+  flowStateFactKey,
+  functionPointerFactKey,
+  pointerFactKey,
   sourcePrimitiveFactKey,
 } from "./facts.js";
 import type {
+  ArgumentPassingFact,
   ExtensionCanonicalIdentity,
   ExtensionImportKind,
+  FlowStateFact,
+  FunctionPointerFact,
+  PointerFact,
   SourcePrimitiveFact,
   SourcePrimitiveKind,
 } from "./facts.js";
 import { ExtensionLifecycleEvent } from "./host.js";
 import type {
   CompilerExtension,
+  ExtensionDiagnosticStore,
   ExtensionEvidence,
   ExtensionFactStore,
   SourceFileBoundLifecycleRequest,
@@ -44,17 +60,42 @@ import type {
 export interface SourceCoreExtensionOptions {
   readonly modules?: readonly SourceCoreModuleIdentity[];
   readonly primitives?: readonly SourcePrimitiveDeclaration[];
+  readonly callMarkers?: readonly SourceCallMarkerDeclaration[];
+  readonly typeMarkers?: readonly SourceTypeMarkerDeclaration[];
 }
+
+export type SourceCoreModuleCapability = "primitive" | "call-marker" | "type-marker";
 
 export interface SourceCoreModuleIdentity {
   readonly moduleSpecifier: string;
   readonly packageName?: string;
   readonly packageVersion?: string;
   readonly subpath?: string;
+  readonly capabilities?: readonly SourceCoreModuleCapability[];
 }
 
 export interface SourcePrimitiveDeclaration extends SourcePrimitiveFact {
   readonly exportName: string;
+}
+
+export type SourceCallMarkerKind = "out" | "ref" | "inref" | "borrow" | "borrowMut" | "move";
+
+export interface SourceCallMarkerDeclaration {
+  readonly exportName: string;
+  readonly kind: SourceCallMarkerKind;
+}
+
+export type SourceTypeMarkerKind = "ptr" | "fnptr";
+
+export interface SourceTypeMarkerDeclaration {
+  readonly exportName: string;
+  readonly kind: SourceTypeMarkerKind;
+}
+
+interface SourceCoreMarkerImportIndex {
+  readonly callMarkersByLocalName: ReadonlyMap<string, SourceCallMarkerDeclaration>;
+  readonly typeMarkersByLocalName: ReadonlyMap<string, SourceTypeMarkerDeclaration>;
+  readonly namespacesByLocalName: ReadonlyMap<string, SourceCoreModuleIdentity>;
 }
 
 const sourceCoreExtensionId = "tsts.source-core";
@@ -63,6 +104,12 @@ const defaultSourceCoreModules: readonly SourceCoreModuleIdentity[] = [{
   moduleSpecifier: "@tsonic/core/types.js",
   packageName: "@tsonic/core",
   subpath: "types.js",
+  capabilities: ["primitive", "type-marker"],
+}, {
+  moduleSpecifier: "@tsonic/core/lang.js",
+  packageName: "@tsonic/core",
+  subpath: "lang.js",
+  capabilities: ["call-marker"],
 }];
 
 const defaultSourcePrimitives: readonly SourcePrimitiveDeclaration[] = [
@@ -86,9 +133,25 @@ const defaultSourcePrimitives: readonly SourcePrimitiveDeclaration[] = [
   primitive("uint128", "uint128", "bigint", false, 128),
 ];
 
+const defaultSourceCallMarkers: readonly SourceCallMarkerDeclaration[] = [
+  { exportName: "out", kind: "out" },
+  { exportName: "ref", kind: "ref" },
+  { exportName: "inref", kind: "inref" },
+  { exportName: "borrow", kind: "borrow" },
+  { exportName: "borrowMut", kind: "borrowMut" },
+  { exportName: "move", kind: "move" },
+];
+
+const defaultSourceTypeMarkers: readonly SourceTypeMarkerDeclaration[] = [
+  { exportName: "ptr", kind: "ptr" },
+  { exportName: "fnptr", kind: "fnptr" },
+];
+
 export function createSourceCoreExtension(options: SourceCoreExtensionOptions = {}): CompilerExtension {
   const modules = options.modules ?? defaultSourceCoreModules;
   const primitivesByExportName = new Map((options.primitives ?? defaultSourcePrimitives).map((entry) => [entry.exportName, entry]));
+  const callMarkersByExportName = new Map((options.callMarkers ?? defaultSourceCallMarkers).map((entry) => [entry.exportName, entry]));
+  const typeMarkersByExportName = new Map((options.typeMarkers ?? defaultSourceTypeMarkers).map((entry) => [entry.exportName, entry]));
   return {
     identity: {
       id: sourceCoreExtensionId,
@@ -99,21 +162,24 @@ export function createSourceCoreExtension(options: SourceCoreExtensionOptions = 
       kind: "source",
     },
     capabilities: {
-      provides: ["source-core.primitives"],
+      provides: ["source-core.primitives", "source-core.argument-passing", "source-core.pointer-types", "source-core.flow-markers"],
     },
     initialize(context): void {
       context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
-        recordSourceCoreImports(request, context.facts, modules, primitivesByExportName);
+        recordSourceCoreFacts(request, context.facts, context.diagnostics, modules, primitivesByExportName, callMarkersByExportName, typeMarkersByExportName);
       });
     },
   };
 }
 
-function recordSourceCoreImports(
+function recordSourceCoreFacts(
   request: SourceFileBoundLifecycleRequest,
   facts: ExtensionFactStore,
+  diagnostics: ExtensionDiagnosticStore,
   modules: readonly SourceCoreModuleIdentity[],
   primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+  callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  typeMarkersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
 ): void {
   const sourceFile = getLifecycleSourceFile(request);
   if (sourceFile === undefined) {
@@ -124,18 +190,20 @@ function recordSourceCoreImports(
     if (statement?.Kind === KindImportDeclaration) {
       const moduleIdentity = getSourceCoreModuleIdentity(statement, modules);
       if (moduleIdentity !== undefined) {
-        recordSourceCoreImportClause(facts, statement, moduleIdentity, primitivesByExportName);
+        recordSourceCoreImportClause(facts, statement, moduleIdentity, primitivesByExportName, callMarkersByExportName, typeMarkersByExportName);
       }
       continue;
     }
     if (statement?.Kind === KindExportDeclaration) {
       const moduleIdentity = getSourceCoreModuleIdentity(statement, modules);
       if (moduleIdentity !== undefined) {
-        recordSourceCoreExportClause(facts, statement, moduleIdentity, primitivesByExportName);
+        recordSourceCoreExportClause(facts, statement, moduleIdentity, primitivesByExportName, callMarkersByExportName, typeMarkersByExportName);
       }
     }
   }
-  recordSourceCoreTypeReferences(facts, sourceFile, modules, primitivesByExportName);
+  const markerImportIndex = createSourceCoreMarkerImportIndex(sourceFile, modules, callMarkersByExportName, typeMarkersByExportName);
+  recordSourceCoreCallMarkers(facts, diagnostics, sourceFile, modules, callMarkersByExportName, markerImportIndex);
+  recordSourceCoreTypeReferences(facts, sourceFile, modules, primitivesByExportName, typeMarkersByExportName, markerImportIndex);
 }
 
 function recordSourceCoreImportClause(
@@ -143,6 +211,8 @@ function recordSourceCoreImportClause(
   importDeclaration: GoPtr<Node>,
   moduleIdentity: SourceCoreModuleIdentity,
   primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+  callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  typeMarkersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
 ): void {
   const importClause = Node_ImportClause(importDeclaration);
   if (importClause === undefined) {
@@ -167,10 +237,17 @@ function recordSourceCoreImportClause(
     }
     const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? localName);
     const primitiveFact = primitivesByExportName.get(exportName);
-    if (primitiveFact === undefined) {
+    if (primitiveFact !== undefined && moduleSupports(moduleIdentity, "primitive")) {
+      recordSourcePrimitiveImport(facts, importSpecifier, moduleIdentity, exportName, primitiveFact, typedImport);
       continue;
     }
-    recordSourcePrimitiveImport(facts, importSpecifier, moduleIdentity, exportName, primitiveFact, typedImport);
+    if (callMarkersByExportName.has(exportName) && moduleSupports(moduleIdentity, "call-marker")) {
+      recordSourceCoreSymbolImport(facts, importSpecifier, moduleIdentity, exportName, typedImport ? "type" : "value");
+      continue;
+    }
+    if (typeMarkersByExportName.has(exportName) && moduleSupports(moduleIdentity, "type-marker")) {
+      recordSourceCoreSymbolImport(facts, importSpecifier, moduleIdentity, exportName, typedImport ? "type" : "value");
+    }
   }
 }
 
@@ -179,6 +256,8 @@ function recordSourceCoreExportClause(
   exportDeclaration: GoPtr<Node>,
   moduleIdentity: SourceCoreModuleIdentity,
   primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+  callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  typeMarkersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
 ): void {
   const exportClause = AsExportDeclaration(exportDeclaration)!.ExportClause;
   if (exportClause === undefined || exportClause.Kind !== KindNamedExports) {
@@ -192,12 +271,127 @@ function recordSourceCoreExportClause(
     }
     const sourceName = Node_Text(Node_PropertyName(exportSpecifier) ?? exportedName);
     const primitiveFact = primitivesByExportName.get(sourceName);
-    if (primitiveFact === undefined) {
+    if (primitiveFact !== undefined && moduleSupports(moduleIdentity, "primitive")) {
+      const specifierIsTypeOnly = AsExportSpecifier(exportSpecifier)!.IsTypeOnly;
+      recordSourcePrimitiveImport(facts, exportSpecifier, moduleIdentity, sourceName, primitiveFact, declarationIsTypeOnly || specifierIsTypeOnly);
       continue;
     }
     const specifierIsTypeOnly = AsExportSpecifier(exportSpecifier)!.IsTypeOnly;
-    recordSourcePrimitiveImport(facts, exportSpecifier, moduleIdentity, sourceName, primitiveFact, declarationIsTypeOnly || specifierIsTypeOnly);
+    if (callMarkersByExportName.has(sourceName) && moduleSupports(moduleIdentity, "call-marker")) {
+      recordSourceCoreSymbolImport(facts, exportSpecifier, moduleIdentity, sourceName, declarationIsTypeOnly || specifierIsTypeOnly ? "type" : "value");
+      continue;
+    }
+    if (typeMarkersByExportName.has(sourceName) && moduleSupports(moduleIdentity, "type-marker")) {
+      recordSourceCoreSymbolImport(facts, exportSpecifier, moduleIdentity, sourceName, declarationIsTypeOnly || specifierIsTypeOnly ? "type" : "value");
+    }
   }
+}
+
+function recordSourceCoreCallMarkers(
+  facts: ExtensionFactStore,
+  diagnostics: ExtensionDiagnosticStore,
+  sourceFile: GoPtr<SourceFile>,
+  modules: readonly SourceCoreModuleIdentity[],
+  callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  markerImportIndex: SourceCoreMarkerImportIndex,
+): void {
+  visitSourceCoreNode(sourceFile, (node) => {
+    if (node?.Kind !== KindCallExpression) {
+      return;
+    }
+    const marker = resolveSourceCoreCallMarkerReference(facts, Node_Expression(node), modules, callMarkersByExportName, markerImportIndex);
+    if (marker === undefined) {
+      return;
+    }
+    recordSourceCoreCallMarker(facts, diagnostics, node, marker);
+  });
+}
+
+function recordSourceCoreCallMarker(
+  facts: ExtensionFactStore,
+  diagnostics: ExtensionDiagnosticStore,
+  callExpression: GoPtr<Node>,
+  marker: SourceCallMarkerDeclaration,
+): void {
+  const argument = (Node_Arguments(callExpression) ?? [])[0];
+  if (argument === undefined) {
+    return;
+  }
+  const evidence = createMarkerEvidence(marker.exportName);
+  switch (marker.kind) {
+    case "out":
+    case "ref":
+    case "inref":
+      recordArgumentPassingMarker(facts, diagnostics, callExpression, argument, marker, evidence);
+      return;
+    case "borrow":
+      recordFlowMarker(facts, callExpression, argument, { state: "borrowed-shared" }, evidence);
+      return;
+    case "borrowMut":
+      recordFlowMarker(facts, callExpression, argument, { state: "borrowed-mut" }, evidence);
+      return;
+    case "move":
+      recordFlowMarker(facts, callExpression, argument, { state: "moved" }, evidence);
+      return;
+  }
+}
+
+function recordArgumentPassingMarker(
+  facts: ExtensionFactStore,
+  diagnostics: ExtensionDiagnosticStore,
+  callExpression: GoPtr<Node>,
+  target: GoPtr<Node>,
+  marker: SourceCallMarkerDeclaration,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const fact = {
+    mode: getArgumentPassingMode(marker.kind),
+    targetExpression: target,
+  } satisfies ArgumentPassingFact;
+  facts.set(callExpression, argumentPassingFactKey, fact, evidence);
+  if (IsLeftHandSideExpression(target)) {
+    facts.set(target, argumentPassingFactKey, fact, evidence);
+    return;
+  }
+  diagnostics.append({
+    extensionId: sourceCoreExtensionId,
+    extensionCode: "SOURCE_CORE_NON_STORAGE_ARGUMENT",
+    numericCode: 9901101,
+    publicCode: "TSTS_SOURCE_CORE_0001",
+    category: "error",
+    message: `${marker.exportName}(...) requires a storage expression.`,
+    nodeOrSpan: target,
+    evidence,
+    identity: `source-core-non-storage:${marker.exportName}:${String(target?.id ?? "unknown")}`,
+  });
+}
+
+function getArgumentPassingMode(kind: SourceCallMarkerKind): ArgumentPassingFact["mode"] {
+  switch (kind) {
+    case "out":
+      return "byref-writeonly-must-init";
+    case "ref":
+      return "byref-readwrite";
+    case "inref":
+      return "byref-readonly";
+    case "borrow":
+      return "borrow-shared";
+    case "borrowMut":
+      return "borrow-mut";
+    case "move":
+      return "move";
+  }
+}
+
+function recordFlowMarker(
+  facts: ExtensionFactStore,
+  callExpression: GoPtr<Node>,
+  target: GoPtr<Node>,
+  fact: FlowStateFact,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  facts.set(callExpression, flowStateFactKey, fact, evidence);
+  facts.set(target, flowStateFactKey, fact, evidence);
 }
 
 function recordSourceCoreTypeReferences(
@@ -205,6 +399,8 @@ function recordSourceCoreTypeReferences(
   sourceFile: GoPtr<SourceFile>,
   modules: readonly SourceCoreModuleIdentity[],
   primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+  typeMarkersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
+  markerImportIndex: SourceCoreMarkerImportIndex,
 ): void {
   visitSourceCoreNode(sourceFile, (node) => {
     if (node?.Kind !== KindTypeReference) {
@@ -213,6 +409,10 @@ function recordSourceCoreTypeReferences(
     const typeName = AsTypeReferenceNode(node)!.TypeName;
     if (typeName === undefined) {
       return;
+    }
+    const marker = resolveSourceCoreTypeMarkerReference(facts, typeName, modules, typeMarkersByExportName, markerImportIndex);
+    if (marker !== undefined) {
+      recordSourceCoreTypeMarker(facts, node, typeName, marker);
     }
     const primitive = resolvePrimitiveTypeReference(facts, typeName, modules, primitivesByExportName);
     if (primitive === undefined) {
@@ -229,6 +429,196 @@ function recordSourceCoreTypeReferences(
       facts.set(right, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
     }
   });
+}
+
+function recordSourceCoreTypeMarker(
+  facts: ExtensionFactStore,
+  typeReference: GoPtr<Node>,
+  typeName: GoPtr<Node>,
+  marker: SourceTypeMarkerDeclaration,
+): void {
+  const typeArguments = Node_TypeArguments(typeReference) ?? [];
+  const evidence = createMarkerEvidence(marker.exportName);
+  if (marker.kind === "ptr") {
+    const pointee = typeArguments[0];
+    if (pointee === undefined) {
+      return;
+    }
+    const fact = {
+      pointee,
+      mutability: "target-defined",
+      unsafeRequired: true,
+    } satisfies PointerFact;
+    facts.set(typeReference, pointerFactKey, fact, evidence);
+    facts.set(typeName, pointerFactKey, fact, evidence);
+    return;
+  }
+  const result = typeArguments[1];
+  if (result === undefined) {
+    return;
+  }
+  const parameters = getFunctionPointerParameters(typeArguments[0]);
+  const fact = {
+    parameters,
+    result,
+    abi: ["target-default"],
+  } satisfies FunctionPointerFact;
+  facts.set(typeReference, functionPointerFactKey, fact, evidence);
+  facts.set(typeName, functionPointerFactKey, fact, evidence);
+}
+
+function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly GoPtr<Node>[] {
+  if (parameterList === undefined) {
+    return [];
+  }
+  if (parameterList.Kind === KindTupleType) {
+    return Node_Elements(parameterList) ?? [];
+  }
+  return [parameterList];
+}
+
+function resolveSourceCoreCallMarkerReference(
+  facts: ExtensionFactStore,
+  node: GoPtr<Node>,
+  modules: readonly SourceCoreModuleIdentity[],
+  markersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  markerImportIndex: SourceCoreMarkerImportIndex,
+): SourceCallMarkerDeclaration | undefined {
+  return resolveSourceCoreMarkerFromImportIndex(node, markerImportIndex.callMarkersByLocalName, markerImportIndex.namespacesByLocalName, markersByExportName, "call-marker")
+    ?? resolveSourceCoreMarkerReference(facts, node, modules, markersByExportName, "call-marker");
+}
+
+function resolveSourceCoreTypeMarkerReference(
+  facts: ExtensionFactStore,
+  node: GoPtr<Node>,
+  modules: readonly SourceCoreModuleIdentity[],
+  markersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
+  markerImportIndex: SourceCoreMarkerImportIndex,
+): SourceTypeMarkerDeclaration | undefined {
+  return resolveSourceCoreMarkerFromImportIndex(node, markerImportIndex.typeMarkersByLocalName, markerImportIndex.namespacesByLocalName, markersByExportName, "type-marker")
+    ?? resolveSourceCoreMarkerReference(facts, node, modules, markersByExportName, "type-marker");
+}
+
+function resolveSourceCoreMarkerFromImportIndex<TMarker extends { readonly exportName: string }>(
+  node: GoPtr<Node>,
+  markersByLocalName: ReadonlyMap<string, TMarker>,
+  namespacesByLocalName: ReadonlyMap<string, SourceCoreModuleIdentity>,
+  markersByExportName: ReadonlyMap<string, TMarker>,
+  capability: SourceCoreModuleCapability,
+): TMarker | undefined {
+  if (node === undefined) {
+    return undefined;
+  }
+  if (node.Kind === KindPropertyAccessExpression) {
+    const receiverName = Node_Text(AsPropertyAccessExpression(node)?.Expression);
+    const namespaceModule = namespacesByLocalName.get(receiverName);
+    const propertyName = Node_Text(Node_Name(node));
+    const marker = markersByExportName.get(propertyName);
+    return namespaceModule !== undefined && marker !== undefined && moduleSupports(namespaceModule, capability) ? marker : undefined;
+  }
+  if (node.Kind === KindQualifiedName) {
+    const qualifiedName = AsQualifiedName(node);
+    const namespaceModule = namespacesByLocalName.get(Node_Text(qualifiedName?.Left));
+    const marker = markersByExportName.get(Node_Text(qualifiedName?.Right));
+    return namespaceModule !== undefined && marker !== undefined && moduleSupports(namespaceModule, capability) ? marker : undefined;
+  }
+  return markersByLocalName.get(Node_Text(node));
+}
+
+function resolveSourceCoreMarkerReference<TMarker extends { readonly exportName: string }>(
+  facts: ExtensionFactStore,
+  node: GoPtr<Node>,
+  modules: readonly SourceCoreModuleIdentity[],
+  markersByExportName: ReadonlyMap<string, TMarker>,
+  capability: SourceCoreModuleCapability,
+): TMarker | undefined {
+  if (node === undefined) {
+    return undefined;
+  }
+  if (node.Kind === KindPropertyAccessExpression) {
+    const propertyName = Node_Text(Node_Name(node));
+    const marker = markersByExportName.get(propertyName);
+    if (marker === undefined) {
+      return undefined;
+    }
+    const receiverSymbol = Node_Symbol(AsPropertyAccessExpression(node)?.Expression);
+    const receiverIdentity = receiverSymbol === undefined ? undefined : facts.get(receiverSymbol, canonicalIdentityFactKey);
+    if (receiverIdentity?.kind !== "module") {
+      return undefined;
+    }
+    return modules.some((candidate) => candidate.moduleSpecifier === receiverIdentity.id && moduleSupports(candidate, capability)) ? marker : undefined;
+  }
+  if (node.Kind === KindQualifiedName) {
+    const qualifiedName = AsQualifiedName(node);
+    const exportName = Node_Text(qualifiedName?.Right);
+    const marker = markersByExportName.get(exportName);
+    if (marker === undefined) {
+      return undefined;
+    }
+    const leftSymbol = Node_Symbol(qualifiedName?.Left);
+    const leftIdentity = leftSymbol === undefined ? undefined : facts.get(leftSymbol, canonicalIdentityFactKey);
+    if (leftIdentity?.kind !== "module") {
+      return undefined;
+    }
+    return modules.some((candidate) => candidate.moduleSpecifier === leftIdentity.id && moduleSupports(candidate, capability)) ? marker : undefined;
+  }
+  const symbol = Node_Symbol(node);
+  const identity = symbol === undefined ? undefined : facts.get(symbol, canonicalIdentityFactKey);
+  if (identity?.exportName === undefined) {
+    return undefined;
+  }
+  const marker = markersByExportName.get(identity.exportName);
+  if (marker === undefined) {
+    return undefined;
+  }
+  return modules.some((candidate) => moduleSupports(candidate, capability) && identity.id === `${candidate.moduleSpecifier}::${identity.exportName}`) ? marker : undefined;
+}
+
+function createSourceCoreMarkerImportIndex(
+  sourceFile: GoPtr<SourceFile>,
+  modules: readonly SourceCoreModuleIdentity[],
+  callMarkersByExportName: ReadonlyMap<string, SourceCallMarkerDeclaration>,
+  typeMarkersByExportName: ReadonlyMap<string, SourceTypeMarkerDeclaration>,
+): SourceCoreMarkerImportIndex {
+  const callMarkersByLocalName = new Map<string, SourceCallMarkerDeclaration>();
+  const typeMarkersByLocalName = new Map<string, SourceTypeMarkerDeclaration>();
+  const namespacesByLocalName = new Map<string, SourceCoreModuleIdentity>();
+  for (const statement of Node_Statements(sourceFile) ?? []) {
+    if (statement?.Kind !== KindImportDeclaration) {
+      continue;
+    }
+    const moduleIdentity = getSourceCoreModuleIdentity(statement, modules);
+    if (moduleIdentity === undefined) {
+      continue;
+    }
+    const namedBindings = AsImportClause(Node_ImportClause(statement))?.NamedBindings;
+    if (namedBindings === undefined) {
+      continue;
+    }
+    if (namedBindings.Kind === KindNamespaceImport) {
+      const namespaceName = Node_Text(Node_Name(namedBindings));
+      if (namespaceName !== "") {
+        namespacesByLocalName.set(namespaceName, moduleIdentity);
+      }
+      continue;
+    }
+    if (namedBindings.Kind !== KindNamedImports) {
+      continue;
+    }
+    for (const importSpecifier of Node_Elements(namedBindings) ?? []) {
+      const localName = Node_Text(Node_Name(importSpecifier));
+      const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? Node_Name(importSpecifier));
+      const callMarker = callMarkersByExportName.get(exportName);
+      if (callMarker !== undefined && moduleSupports(moduleIdentity, "call-marker")) {
+        callMarkersByLocalName.set(localName, callMarker);
+      }
+      const typeMarker = typeMarkersByExportName.get(exportName);
+      if (typeMarker !== undefined && moduleSupports(moduleIdentity, "type-marker")) {
+        typeMarkersByLocalName.set(localName, typeMarker);
+      }
+    }
+  }
+  return { callMarkersByLocalName, typeMarkersByLocalName, namespacesByLocalName };
 }
 
 function resolvePrimitiveTypeReference(
@@ -346,6 +736,22 @@ function recordSourcePrimitiveImport(
   facts.set(localSymbol, sourcePrimitiveFactKey, stripExportName(primitiveFact), evidence);
 }
 
+function recordSourceCoreSymbolImport(
+  facts: ExtensionFactStore,
+  importSpecifier: GoPtr<Node>,
+  moduleIdentity: SourceCoreModuleIdentity,
+  exportName: string,
+  importKind: ExtensionImportKind,
+): void {
+  const localSymbol = Node_Symbol(importSpecifier);
+  if (localSymbol === undefined) {
+    return;
+  }
+  const identity = createExportIdentity(moduleIdentity, exportName, importKind, getSymbolFactId(localSymbol));
+  facts.set(importSpecifier, canonicalIdentityFactKey, identity, createModuleEvidence(moduleIdentity));
+  facts.set(localSymbol, canonicalIdentityFactKey, identity, createModuleEvidence(moduleIdentity));
+}
+
 function createModuleIdentity(moduleIdentity: SourceCoreModuleIdentity, importKind: ExtensionImportKind, canonicalSymbolId: string): ExtensionCanonicalIdentity {
   return {
     kind: "module",
@@ -388,6 +794,17 @@ function createModuleEvidence(moduleIdentity: SourceCoreModuleIdentity): readonl
       moduleSpecifier: moduleIdentity.moduleSpecifier,
     },
   }];
+}
+
+function createMarkerEvidence(exportName: string): readonly ExtensionEvidence[] {
+  return [{
+    message: "source core marker",
+    details: { exportName },
+  }];
+}
+
+function moduleSupports(moduleIdentity: SourceCoreModuleIdentity, capability: SourceCoreModuleCapability): boolean {
+  return moduleIdentity.capabilities?.includes(capability) ?? true;
 }
 
 function stripExportName(declaration: SourcePrimitiveDeclaration): SourcePrimitiveFact {

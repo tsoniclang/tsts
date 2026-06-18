@@ -239,6 +239,23 @@ export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact
   equals: (left, right) => left.mode === right.mode && left.targetExpression === right.targetExpression,
 });
 
+export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
+  extensionId: "tsts.source-core",
+  name: "functionPointer",
+  equals: (left, right) =>
+    left.result === right.result
+    && left.parameters.length === right.parameters.length
+    && left.parameters.every((parameter, index) => parameter === right.parameters[index])
+    && left.abi.length === right.abi.length
+    && left.abi.every((abi, index) => abi === right.abi[index]),
+});
+
+export const pointerFactKey = defineExtensionFactKey<PointerFact>({
+  extensionId: "tsts.source-core",
+  name: "pointer",
+  equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
+});
+
 export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
   extensionId: "tsts.target-bindings",
   name: "targetBinding",

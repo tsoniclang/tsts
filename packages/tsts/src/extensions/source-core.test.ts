@@ -5,7 +5,9 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import {
+  Node_Arguments,
   Node_Elements,
+  Node_Expression,
   Node_ImportClause,
   Node_ModuleSpecifier,
   Node_PropertyName,
@@ -15,10 +17,11 @@ import {
   Node_Type,
   SourceFile_FileName,
 } from "../internal/ast/ast.js";
-import { Node_Name } from "../internal/ast/spine.js";
+import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { AsExportDeclaration, AsImportClause, AsNamespaceImport, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
   KindExportDeclaration,
+  KindCallExpression,
   KindImportDeclaration,
   KindNamedImports,
   KindNamedExports,
@@ -44,12 +47,17 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import {
   attachExtensionHost,
+  argumentPassingFactKey,
   canonicalIdentityFactKey,
   createExtensionConsumerQueries,
   createSourceCoreExtension,
   finalizeExtensionSemantics,
+  flowStateFactKey,
+  functionPointerFactKey,
+  pointerFactKey,
   sourcePrimitiveFactKey,
 } from "./index.js";
+import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import type { ExtendedProgram } from "./index.js";
 
 test("source-core records primitive facts from canonical named imports", () => {
@@ -177,6 +185,92 @@ test("source-core records primitive facts on canonical named re-exports", () => 
   assert.equal(extended.extensionHost.facts.get(uintSymbol, canonicalIdentityFactKey)?.exportName, "uint");
 });
 
+test("source-core records out ref inref borrow move call-site facts without name guessing", () => {
+  const { extended, program, index } = createProgram(`
+    import { out, ref as refArg, inref, borrow, borrowMut, move } from "@tsonic/core/lang.js";
+    import { out as localOut } from "./local.js";
+
+    let value!: number;
+    out(value);
+    refArg(value);
+    inref(value);
+    borrow(value);
+    borrowMut(value);
+    move(value);
+    out(value + 1);
+    localOut(value);
+  `, new Map([
+    ["/src/local.ts", "export function out<T>(value: T): T { return value; }"],
+  ]));
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9901101);
+  assert.match(Diagnostic_String(diagnostics[0]), /out\(\.\.\.\) requires a storage expression/);
+  Program_BindSourceFiles(program);
+
+  const outCall = getCallExpression(index, "out", 0);
+  const refCall = getCallExpression(index, "refArg", 0);
+  const inrefCall = getCallExpression(index, "inref", 0);
+  const borrowCall = getCallExpression(index, "borrow", 0);
+  const borrowMutCall = getCallExpression(index, "borrowMut", 0);
+  const moveCall = getCallExpression(index, "move", 0);
+  const invalidOutCall = getCallExpression(index, "out", 1);
+  const localOutCall = getCallExpression(index, "localOut", 0);
+
+  assert.equal(extended.extensionHost.facts.get(outCall, argumentPassingFactKey)?.mode, "byref-writeonly-must-init");
+  assert.equal(extended.extensionHost.facts.get(refCall, argumentPassingFactKey)?.mode, "byref-readwrite");
+  assert.equal(extended.extensionHost.facts.get(inrefCall, argumentPassingFactKey)?.mode, "byref-readonly");
+  assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(outCall), argumentPassingFactKey)?.mode, "byref-writeonly-must-init");
+  assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(invalidOutCall), argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(localOutCall, argumentPassingFactKey), undefined);
+
+  assert.equal(extended.extensionHost.facts.get(borrowCall, flowStateFactKey)?.state, "borrowed-shared");
+  assert.equal(extended.extensionHost.facts.get(borrowMutCall, flowStateFactKey)?.state, "borrowed-mut");
+  assert.equal(extended.extensionHost.facts.get(moveCall, flowStateFactKey)?.state, "moved");
+  assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(moveCall), flowStateFactKey)?.state, "moved");
+
+  assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getArgumentPassingFact(outCall)?.mode, "byref-writeonly-must-init");
+  assert.equal(consumer.getFact(moveCall, flowStateFactKey)?.state, "moved");
+});
+
+test("source-core records ptr and fnptr type facts from canonical type marker imports", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int, ptr, fnptr } from "@tsonic/core/types.js";
+    import type { ptr as localPtr } from "./local.js";
+
+    type Pointer = ptr<int>;
+    type FunctionPointer = fnptr<[int], int>;
+    type LocalPointer = localPtr<int>;
+  `, new Map([
+    ["/src/local.ts", "export type ptr<T> = T;"],
+  ]));
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const pointerReference = getTypeAliasType(index, "Pointer");
+  const functionPointerReference = getTypeAliasType(index, "FunctionPointer");
+  const localPointerReference = getTypeAliasType(index, "LocalPointer");
+
+  assert.equal(pointerReference?.Kind, KindTypeReference);
+  assert.equal(functionPointerReference?.Kind, KindTypeReference);
+  assert.equal(extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.mutability, "target-defined");
+  assert.equal(extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.unsafeRequired, true);
+  assert.equal((extended.extensionHost.facts.get(pointerReference, pointerFactKey)?.pointee as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal(extended.extensionHost.facts.get(functionPointerReference, functionPointerFactKey)?.parameters.length, 1);
+  assert.equal((extended.extensionHost.facts.get(functionPointerReference, functionPointerFactKey)?.parameters[0] as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal((extended.extensionHost.facts.get(functionPointerReference, functionPointerFactKey)?.result as GoPtr<Node>)?.Kind, KindTypeReference);
+  assert.equal(extended.extensionHost.facts.get(localPointerReference, pointerFactKey), undefined);
+
+  assert.equal(finalizeExtensionSemantics(extended.program), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
+  assert.equal(consumer.getPointerFact(pointerReference)?.unsafeRequired, true);
+  assert.equal(consumer.getFunctionPointerFact(functionPointerReference)?.parameters.length, 1);
+});
+
 function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string> = new Map()): {
   readonly extended: ExtendedProgram<ProgramOptions>;
   readonly program: GoPtr<Program>;
@@ -193,6 +287,10 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
           types: "./types.d.ts",
           default: "./types.js",
         },
+        "./lang.js": {
+          types: "./lang.d.ts",
+          default: "./lang.js",
+        },
       },
     })],
     ["/src/node_modules/@tsonic/core/types.d.ts", [
@@ -202,6 +300,16 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
       "export type uint = number;",
       "export type long = bigint;",
       "export type ulong = bigint;",
+      "export type ptr<T> = T;",
+      "export type fnptr<Args, Result> = unknown;",
+    ].join("\n")],
+    ["/src/node_modules/@tsonic/core/lang.d.ts", [
+      "export declare function out<T>(value: T): T;",
+      "export declare function ref<T>(value: T): T;",
+      "export declare function inref<T>(value: T): T;",
+      "export declare function borrow<T>(value: T): T;",
+      "export declare function borrowMut<T>(value: T): T;",
+      "export declare function move<T>(value: T): T;",
     ].join("\n")],
     ["/src/tsconfig.json", JSON.stringify({
       compilerOptions: {
@@ -305,4 +413,45 @@ function getNamedExportSpecifier(sourceFile: GoPtr<SourceFile>, exportedName: st
     }
   }
   assert.fail(`Missing named export '${exportedName}'.`);
+}
+
+function getCallExpression(sourceFile: GoPtr<SourceFile>, calleeText: string, occurrence: number): GoPtr<Node> {
+  let seen = 0;
+  const found = findNode(sourceFile, (node) => {
+    if (node?.Kind !== KindCallExpression) {
+      return false;
+    }
+    const callee = Node_Expression(node);
+    if (Node_Text(Node_Name(callee) ?? callee) !== calleeText) {
+      return false;
+    }
+    if (seen === occurrence) {
+      return true;
+    }
+    seen += 1;
+    return false;
+  });
+  assert.ok(found !== undefined, `Missing call '${calleeText}' occurrence ${occurrence}.`);
+  return found;
+}
+
+function getFirstCallArgument(callExpression: GoPtr<Node>): GoPtr<Node> {
+  const argument = (Node_Arguments(callExpression) ?? [])[0];
+  assert.ok(argument !== undefined);
+  return argument;
+}
+
+function findNode(root: GoPtr<Node>, predicate: (node: GoPtr<Node>) => boolean): GoPtr<Node> {
+  if (root === undefined) {
+    return undefined;
+  }
+  if (predicate(root)) {
+    return root;
+  }
+  let found: GoPtr<Node>;
+  Node_ForEachChild(root, (child) => {
+    found = findNode(child, predicate);
+    return (found !== undefined) as bool;
+  });
+  return found;
 }

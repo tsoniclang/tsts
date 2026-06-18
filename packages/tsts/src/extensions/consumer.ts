@@ -1,6 +1,8 @@
 import {
   argumentPassingFactKey,
+  functionPointerFactKey,
   providerVirtualDeclarationFactKey,
+  pointerFactKey,
   runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
@@ -9,6 +11,8 @@ import {
 } from "./facts.js";
 import type {
   ArgumentPassingFact,
+  FunctionPointerFact,
+  PointerFact,
   ProviderVirtualDeclarationFact,
   RuntimeCarrierFact,
   SelectedTargetSignatureFact,
@@ -105,6 +109,22 @@ export class ExtensionConsumerQueries {
 
   requireArgumentPassingFact(subject: ExtensionFactSubject, purpose?: string): ArgumentPassingFact | undefined {
     return this.requireFact(subject, argumentPassingFactKey, purpose);
+  }
+
+  getFunctionPointerFact(subject: ExtensionFactSubject): FunctionPointerFact | undefined {
+    return this.getFact(subject, functionPointerFactKey);
+  }
+
+  requireFunctionPointerFact(subject: ExtensionFactSubject, purpose?: string): FunctionPointerFact | undefined {
+    return this.requireFact(subject, functionPointerFactKey, purpose);
+  }
+
+  getPointerFact(subject: ExtensionFactSubject): PointerFact | undefined {
+    return this.getFact(subject, pointerFactKey);
+  }
+
+  requirePointerFact(subject: ExtensionFactSubject, purpose?: string): PointerFact | undefined {
+    return this.requireFact(subject, pointerFactKey, purpose);
   }
 
   getVirtualDeclaration(subject: ExtensionFactSubject): ProviderVirtualDeclarationFact | undefined {
