@@ -80,6 +80,12 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(extended.extensionHost.facts.get(virtualFile, providerVirtualDeclarationFactKey)?.providerId, "dotnet-provider");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, canonicalIdentityFactKey)?.exportName, "SearchValues");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0]?.kind, "implements");
+  const constraint = extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0];
+  assert.equal(constraint?.kind === "implements" ? constraint.contract : undefined, "System.IEquatable`1");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.id, "Contains(T)");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.parameters[0]?.type.kind, "type-parameter");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.returnType?.kind, "source-primitive");
 
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
@@ -185,9 +191,14 @@ function dotnetProvider(specifier: string, reject: boolean): TargetBindingProvid
           kind: "class",
           targetIdentity,
           typeParameters: [{
-            name: "T",
-            constraints: [{ kind: "unknown" }],
+          name: "T",
+          constraints: [{
+            kind: "target-named",
+            target: "dotnet",
+            id: "System.IEquatable`1",
+            typeArguments: [{ kind: "type-parameter", name: "T" }],
           }],
+        }],
           members: [{
             id: "Contains",
             name: "Contains",
