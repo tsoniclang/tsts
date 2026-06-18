@@ -392,6 +392,10 @@ function recordFlowMarker(
 ): void {
   facts.set(callExpression, flowStateFactKey, fact, evidence);
   facts.set(target, flowStateFactKey, fact, evidence);
+  const symbol = Node_Symbol(target);
+  if (symbol !== undefined) {
+    facts.set(symbol, flowStateFactKey, fact, evidence);
+  }
 }
 
 function recordSourceCoreTypeReferences(

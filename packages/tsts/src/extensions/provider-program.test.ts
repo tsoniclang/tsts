@@ -5,11 +5,11 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Symbol } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
 import { Node_ForEachChild } from "../internal/ast/spine.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
+import { KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -26,8 +26,8 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, runtimeCarrierFactKey, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
-import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
+import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceCoreExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, rejectDecision, runtimeCarrierFactKey, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
+import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, surfaceOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, ExtensionDecisionContext, ExtensionFactSubject, ResolveCallRequest, SatisfiesConstraintRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, SurfaceOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
@@ -255,6 +255,71 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getRuntimeCarrierFact(searchValuesTypeReference)?.carrier.kind, "target-named");
   assert.equal(consumer.getTargetConversionFact(argument)?.operation?.targetOperation, "System.Convert.ToByte");
+});
+
+test("checker validates provider-owned flow use diagnostics from source-core marker facts", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { move } from "@tsonic/core/lang.js";
+
+      declare let value: number;
+      move(value);
+      value;
+    `],
+    ["/src/node_modules/@tsonic/core/package.json", JSON.stringify({
+      name: "@tsonic/core",
+      version: "1.0.0",
+      type: "module",
+      exports: {
+        "./lang.js": {
+          types: "./lang.d.ts",
+          default: "./lang.js",
+        },
+      },
+    })],
+    ["/src/node_modules/@tsonic/core/lang.d.ts", "export declare function move<T>(value: T): T;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "rust",
+    extensions: [
+      createSourceCoreExtension(),
+      semanticOnlyExtension("rust-flow-extension", rustFlowSemanticProvider()),
+    ],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9920301);
+  assert.match(Diagnostic_String(diagnostics[0]), /RUST0301/);
+  assert.match(Diagnostic_String(diagnostics[0]), /value was moved/);
+
+  const movedUse = findLastIdentifierByText(index, "value");
+  const flowDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "RUST_MOVED_VALUE");
+  assert.equal(flowDiagnostics.length, 1);
+  assert.equal(flowDiagnostics[0]?.nodeOrSpan, movedUse);
+  assert.equal(extended.extensionHost.facts.get(movedUse, flowStateFactKey), undefined);
 });
 
 test("checker validates provider-owned target constraints through standard semantic diagnostics", () => {
@@ -573,6 +638,19 @@ function providerExtension(specifier: string, reject = false, provider?: TargetS
   };
 }
 
+function semanticOnlyExtension(id: string, provider: TargetSemanticProvider): CompilerExtension {
+  return {
+    identity: {
+      id,
+      version: "1.0.0",
+      capabilityNamespace: id,
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetSemanticProvider(provider), true);
+    },
+  };
+}
+
 function semanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
   return {
     identity: {
@@ -635,6 +713,35 @@ function carrierConversionSemanticProvider(): TargetSemanticProvider {
       carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
       requiresAllocation: false,
     }),
+  };
+}
+
+function rustFlowSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "rust-flow-semantic-provider",
+      version: "1.0.0",
+      target: "rust",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    validateFlowUse: (request, context) => {
+      const state = context.facts.get(request.symbol, flowStateFactKey);
+      if (state?.state !== "moved") {
+        return acceptDecision({ valid: true });
+      }
+      return rejectDecision({
+        extensionId: context.extensionId,
+        extensionCode: "RUST_MOVED_VALUE",
+        numericCode: 9920301,
+        publicCode: "RUST0301",
+        category: "error",
+        message: "The value was moved and cannot be used here.",
+        nodeOrSpan: request.useSite,
+        evidence: [{ message: "Source-core move marker", details: state }],
+        identity: `rust-moved-value:${String((request.useSite as GoPtr<Node>)?.id ?? "unknown")}`,
+      });
+    },
   };
 }
 
@@ -851,6 +958,17 @@ function getFirstCallArgument(callExpression: GoPtr<Node>): GoPtr<Node> {
   return argument;
 }
 
+function findLastIdentifierByText(root: GoPtr<Node>, text: string): GoPtr<Node> {
+  let found: GoPtr<Node>;
+  visitNodes(root, (node) => {
+    if (node?.Kind === KindIdentifier && Node_Text(node) === text) {
+      found = node;
+    }
+  });
+  assert.ok(found !== undefined);
+  return found;
+}
+
 function findFirstNodeByKindWorker(root: GoPtr<Node>, kind: number): GoPtr<Node> {
   if (root === undefined) {
     return undefined;
@@ -864,6 +982,17 @@ function findFirstNodeByKindWorker(root: GoPtr<Node>, kind: number): GoPtr<Node>
     return (found !== undefined) as bool;
   });
   return found;
+}
+
+function visitNodes(root: GoPtr<Node>, visit: (node: GoPtr<Node>) => void): void {
+  if (root === undefined) {
+    return;
+  }
+  visit(root);
+  Node_ForEachChild(root, (child) => {
+    visitNodes(child, visit);
+    return false as bool;
+  });
 }
 
 function selectedSearchValuesContainsSignature(): SelectedTargetSignatureFact {

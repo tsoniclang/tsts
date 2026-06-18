@@ -7,8 +7,8 @@ import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Type } from "../internal/checker/types.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest } from "./decisions.js";
-import { argumentPassingFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
+import type { ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
+import { argumentPassingFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 
@@ -242,6 +242,50 @@ export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWi
   setFactOnOptionalSubject(extensionHost, typeReference, runtimeCarrierFactKey, fact, result.evidence ?? []);
   setFactOnOptionalSubject(extensionHost, symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
   setFactOnOptionalSubject(extensionHost, type.symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
+}
+
+export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgram>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {
+  if (checker === undefined || useSite === undefined || symbol === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.validateFlowUse) === undefined) {
+    return;
+  }
+
+  const useSiteFlowState = extensionHost.facts.getEntry(useSite, flowStateFactKey);
+  if (useSiteFlowState !== undefined) {
+    extensionHost.facts.set(symbol, flowStateFactKey, useSiteFlowState.value, useSiteFlowState.evidence);
+    return;
+  }
+  const symbolFlowState = extensionHost.facts.get(symbol, flowStateFactKey);
+  if (symbolFlowState === undefined) {
+    return;
+  }
+
+  const result = extensionHost.runDecision<ValidateFlowUseRequest, ValidateFlowUseResult>(
+    ExtensionDecisionQuestion.validateFlowUse,
+    {
+      useSite,
+      symbol,
+      mode: "read",
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned flow validation unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+  if (result.kind !== "accept") {
+    return;
+  }
+  if (result.value.targetCompilerValidationRequired === true) {
+    extensionHost.facts.set(useSite, flowStateFactKey, {
+      state: "target-validation-required",
+      ...(result.value.targetCompiler !== undefined ? { targetCompiler: result.value.targetCompiler } : {}),
+    }, result.evidence ?? []);
+  }
 }
 
 function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
