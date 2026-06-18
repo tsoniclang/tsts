@@ -4,7 +4,7 @@ import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { SourceFile_FileName } from "../internal/ast/ast.js";
+import { SourceFile_FileName, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Pos } from "../internal/ast/spine.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
@@ -13,16 +13,19 @@ import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
+import { ResolutionModeESM } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
   Program_BindSourceFiles,
   Program_GetProgramDiagnostics,
+  Program_GetResolvedModule,
   Program_GetSemanticDiagnostics,
   Program_GetSourceFile,
   Program_GetSourceFiles,
   Program_GetSyntacticDiagnostics,
 } from "../internal/compiler/program.js";
+import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsProviderVirtual } from "../internal/module/types.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
@@ -75,6 +78,13 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(Program_GetProgramDiagnostics(program).length, 0);
   assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
   assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+  const resolvedProviderModule = Program_GetResolvedModule(program, SourceFile_as_ast_HasFileName(index), "@tsonic/dotnet/System.Buffers.js", ResolutionModeESM);
+  assert.equal(ResolvedModule_IsProviderVirtual(resolvedProviderModule), true);
+  assert.equal(resolvedProviderModule?.Extension, ResolvedModuleExtensionProviderVirtual);
+  assert.equal(resolvedProviderModule?.ProviderVirtual?.ProviderId, "dotnet-provider");
+  assert.equal(resolvedProviderModule?.ProviderVirtual?.ProviderTarget, "dotnet");
+  assert.equal(resolvedProviderModule?.ProviderVirtual?.ProviderModuleId, "System.Buffers");
+  assert.equal(resolvedProviderModule?.ProviderVirtual?.ModuleSpecifier, "@tsonic/dotnet/System.Buffers.js");
 
   Program_BindSourceFiles(program);
   const virtualFile = Program_GetSourceFile(program, "tsts-provider://dotnet/System.Buffers");

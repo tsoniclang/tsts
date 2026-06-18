@@ -11,3 +11,8 @@ export type { ParsedBuildCommandLine } from "./internal/tsoptions/parsedbuildcom
 export type { ParsedCommandLine } from "./internal/tsoptions/parsedcommandline.js";
 export { barebonesLibContent, formatDiagnostics, transpile, transpileDeclaration, transpileModule } from "./services/transpile.js";
 export type { TranspileCompilerOptions, TranspileCompilerOptionValue, TranspileOptions, TranspileOutput } from "./services/transpile.js";
+export { createTypeCheckerQueries } from "./services/type-checker.js";
+export type { TypeCheckerQueries, TypeCheckerQueryOptions } from "./services/type-checker.js";
+export type { Node, SourceFile } from "./internal/ast/ast.js";
+export type { Symbol } from "./internal/ast/symbol.js";
+export type { ContextFlags, Signature, Type } from "./internal/checker/types.js";
