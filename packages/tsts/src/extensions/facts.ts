@@ -168,7 +168,13 @@ export interface InstantiatedTargetTypeFact {
 export interface SelectedTargetSignatureFact {
   readonly member: TargetMember;
   readonly typeArguments?: readonly ExtensionFactSubject[];
+  readonly targetTypeArguments?: readonly TargetTypeRef[];
   readonly argumentConversions?: readonly TargetTypeRef[];
+}
+
+export interface ContextualTargetTypeFact {
+  readonly type: ExtensionFactSubject;
+  readonly targetType?: TargetTypeRef;
 }
 
 export interface SurfaceOperationFact {
@@ -183,6 +189,28 @@ export interface FlowStateFact {
   readonly state: "moved" | "borrowed-shared" | "borrowed-mut" | "initialized" | "uninitialized" | "target-validation-required";
   readonly targetCompiler?: string;
   readonly evidence?: readonly ExtensionEvidence[];
+}
+
+export interface RuntimeCarrierFact {
+  readonly carrier: TargetTypeRef;
+  readonly requiresAllocation?: boolean;
+}
+
+export interface TargetConversionFact {
+  readonly convertedType?: TargetTypeRef;
+  readonly operation?: SurfaceOperationFact;
+}
+
+export interface ProviderVirtualDeclarationFact {
+  readonly providerId: string;
+  readonly providerVersion: string;
+  readonly providerModuleId: string;
+  readonly moduleSpecifier: string;
+  readonly virtualFileName: string;
+  readonly exportName?: string;
+  readonly memberName?: string;
+  readonly signatureId?: string;
+  readonly targetIdentity?: TargetTypeRef;
 }
 
 export interface AssociatedTypeFact {
@@ -222,6 +250,23 @@ export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact
   equals: (left, right) => left.mode === right.mode && left.targetExpression === right.targetExpression,
 });
 
+export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
+  extensionId: "tsts.source-core",
+  name: "functionPointer",
+  equals: (left, right) =>
+    left.result === right.result
+    && left.parameters.length === right.parameters.length
+    && left.parameters.every((parameter, index) => parameter === right.parameters[index])
+    && left.abi.length === right.abi.length
+    && left.abi.every((abi, index) => abi === right.abi[index]),
+});
+
+export const pointerFactKey = defineExtensionFactKey<PointerFact>({
+  extensionId: "tsts.source-core",
+  name: "pointer",
+  equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
+});
+
 export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
   extensionId: "tsts.target-bindings",
   name: "targetBinding",
@@ -237,7 +282,17 @@ export const instantiatedTargetTypeFactKey = defineExtensionFactKey<Instantiated
 export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
   extensionId: "tsts.target-bindings",
   name: "selectedTargetSignature",
-  equals: (left, right) => left.member.id === right.member.id,
+  equals: (left, right) =>
+    left.member.id === right.member.id
+    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
+    && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
+    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions),
+});
+
+export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
+  extensionId: "tsts.target-bindings",
+  name: "contextualTargetType",
+  equals: (left, right) => left.type === right.type && optionalTargetTypeRefEquals(left.targetType, right.targetType),
 });
 
 export const surfaceOperationFactKey = defineExtensionFactKey<SurfaceOperationFact>({
@@ -252,6 +307,33 @@ export const flowStateFactKey = defineExtensionFactKey<FlowStateFact>({
   equals: (left, right) => left.state === right.state && left.targetCompiler === right.targetCompiler,
 });
 
+export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>({
+  extensionId: "tsts.target-bindings",
+  name: "runtimeCarrier",
+  equals: (left, right) => targetTypeRefEquals(left.carrier, right.carrier) && left.requiresAllocation === right.requiresAllocation,
+});
+
+export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
+  extensionId: "tsts.target-bindings",
+  name: "targetConversion",
+  equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && left.operation?.operationId === right.operation?.operationId,
+});
+
+export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
+  extensionId: "tsts.provider",
+  name: "virtualDeclaration",
+  equals: (left, right) =>
+    left.providerId === right.providerId
+    && left.providerVersion === right.providerVersion
+    && left.providerModuleId === right.providerModuleId
+    && left.moduleSpecifier === right.moduleSpecifier
+    && left.virtualFileName === right.virtualFileName
+    && left.exportName === right.exportName
+    && left.memberName === right.memberName
+    && left.signatureId === right.signatureId
+    && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
+});
+
 export const associatedTypeFactKey = defineExtensionFactKey<AssociatedTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "associatedType",
@@ -263,3 +345,67 @@ export const constGenericFactKey = defineExtensionFactKey<ConstGenericFact>({
   name: "constGeneric",
   equals: (left, right) => left.name === right.name && left.value === right.value,
 });
+
+function optionalTargetTypeRefEquals(left: TargetTypeRef | undefined, right: TargetTypeRef | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return targetTypeRefEquals(left, right);
+}
+
+function factSubjectArrayEquals(left: readonly ExtensionFactSubject[] | undefined, right: readonly ExtensionFactSubject[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function targetTypeRefArrayEquals(left: readonly TargetTypeRef[] | undefined, right: readonly TargetTypeRef[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => targetTypeRefEquals(value, right[index]!));
+}
+
+function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  switch (left.kind) {
+    case "source-primitive":
+      return right.kind === "source-primitive" && left.name === right.name;
+    case "target-named":
+      return right.kind === "target-named"
+        && left.id === right.id
+        && targetTypeRefListEquals(left.typeArguments ?? [], right.typeArguments ?? []);
+    case "type-parameter":
+      return right.kind === "type-parameter" && left.name === right.name;
+    case "array":
+      return right.kind === "array" && left.rank === right.rank && targetTypeRefEquals(left.element, right.element);
+    case "tuple":
+      return right.kind === "tuple" && targetTypeRefListEquals(left.elements, right.elements);
+    case "pointer":
+      return right.kind === "pointer" && left.mutability === right.mutability && targetTypeRefEquals(left.pointee, right.pointee);
+    case "function-pointer":
+      return right.kind === "function-pointer"
+        && targetTypeRefListEquals(left.args, right.args)
+        && targetTypeRefEquals(left.result, right.result)
+        && stringListEquals(left.abi ?? [], right.abi ?? []);
+    case "opaque":
+      return right.kind === "opaque" && left.id === right.id;
+    case "associated-type":
+      return right.kind === "associated-type" && left.name === right.name && targetTypeRefEquals(left.owner, right.owner);
+    case "lifetime":
+      return right.kind === "lifetime" && left.name === right.name;
+    case "target-specific":
+      return right.kind === "target-specific" && left.target === right.target && left.name === right.name && Object.is(left.value, right.value);
+  }
+}
+
+function targetTypeRefListEquals(left: readonly TargetTypeRef[], right: readonly TargetTypeRef[]): boolean {
+  return left.length === right.length && left.every((item, index) => targetTypeRefEquals(item, right[index]!));
+}
+
+function stringListEquals(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index]);
+}

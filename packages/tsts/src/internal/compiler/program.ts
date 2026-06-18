@@ -93,6 +93,9 @@ import { projectReferenceFileMapper_getProjectReferenceFromSource, projectRefere
 import type { includeProcessor } from "./includeprocessor.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
+import { recordBoundSourceFileExtensionFacts } from "../../extensions/compiler-integration.js";
+import { collectExtensionDiagnosticsForSourceFile } from "../../extensions/diagnostics.js";
+import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f","bodyHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
@@ -580,7 +583,7 @@ export function Program_as_checker_Host(receiver: GoPtr<Program>): CheckerHost {
 }
 
 export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e32ad451 {
-  return {
+  const adapter: Program_e32ad451 = {
     __tsgoEmbedded0: Program_as_checker_Host(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
@@ -615,6 +618,10 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
     GetProjectReferenceFromOutputDts: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromOutputDts(receiver, path),
     GetRedirectForResolution: (file: HasFileName): GoPtr<ParsedCommandLine> => Program_GetRedirectForResolution(receiver, file),
   };
+  if (receiver !== undefined) {
+    attachExtensionHostToProgram(receiver, adapter);
+  }
+  return adapter;
 }
 
 /**
@@ -710,6 +717,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"a124c4f6a47008ca4e3457fd95247b6cb4c9c33b70716c69b709067d1bb2518e","bodyHash":"4326c0257817239b27d2abe91f2f64d5fad21b33e7fd92f4d0de4b45eaf741b5"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-enabled ProgramOptions attach their ExtensionHost to the constructed Program so checker and consumer seams are program-scoped; no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func NewProgram(opts ProgramOptions) *Program {
@@ -753,6 +761,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
     packagesMapOnce: new Once(),
     packagesMap: new globalThis.Map<string, bool>(),
   };
+  attachExtensionHostToProgram(opts, p);
   Program_initCheckerPool(p);
   Program_verifyCompilerOptions(p);
   if (popTrace !== undefined) {
@@ -1201,6 +1210,7 @@ export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.BindSourceFiles","kind":"method","status":"implemented","sigHash":"adbb681ce817a1474ae6c753e2045b27ef0b0ead57fdc141f8e63bb8642fd42f","bodyHash":"a081f0a968bb98f7febda2f9fbca79e39349341857a100b2765475a5f6784907"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binding, provider virtual modules publish canonical identity and target binding facts for consumers; programs without an attached extension host remain on the direct TS-Go path."}
  *
  * Go source:
  * func (p *Program) BindSourceFiles() {
@@ -1222,6 +1232,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
   for (const file of receiver!.__tsgoEmbedded0!.files) {
     if (!SourceFile_IsBound(file)) {
       BindSourceFile(file);
+      recordBoundSourceFileExtensionFacts(receiver!.opts, file);
     }
   }
 }
@@ -1597,6 +1608,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetBindDiagnostics","kind":"method","status":"implemented","sigHash":"095da506f9a3fd3269680f3ea12f04dfced3daec560c8cc8df2fe01d23a70933","bodyHash":"f6c8852b40bcb61a165361ac7131698cf8e257dfab659607bb4ce1d8b48bd30c"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Single-file binding also records provider virtual module facts after normal TS-Go binding; no-extension programs remain unchanged."}
  *
  * Go source:
  * func (p *Program) GetBindDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1613,6 +1625,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     BindSourceFile(sourceFile);
+    recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
   } else {
     Program_BindSourceFiles(receiver);
   }
@@ -1623,6 +1636,7 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnostics","kind":"method","status":"implemented","sigHash":"bcc981c426c3f57d04542f3263562ddee4d27f91f7f301bdb982d72820e92c2a","bodyHash":"0b0cd7dfbd0c07892569d7456156b81b17ea53d19683a187b810ba8cd57e8718"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended to the normal TSTS semantic diagnostic channel after TS-Go checking; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1630,11 +1644,17 @@ export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Contex
  * }
  */
 export function Program_GetSemanticDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
-  return Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver));
+  const diagnostics = Program_collectCheckerDiagnostics(receiver, ctx, sourceFile, Program_getSemanticDiagnosticsWithChecker.bind(undefined, receiver)) ?? [];
+  const extensionDiagnostics = collectExtensionDiagnosticsForSourceFile(receiver!, sourceFile);
+  if (extensionDiagnostics.length === 0) {
+    return diagnostics;
+  }
+  return SortAndDeduplicateDiagnostics([...diagnostics, ...extensionDiagnostics]);
 }
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetSemanticDiagnosticsWithoutNoEmitFiltering","kind":"method","status":"implemented","sigHash":"d3d9c2f85f878717309d4b733bc00728a9022c33d1c199c86ccdf25566f1b67a","bodyHash":"214d5d450b18e7c7c4643d91816182a617d3eb3c8732e5e57212cbce0dc32ee1"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-owned semantic diagnostics are appended per source file before final sort/deduplication; no-extension programs return the exact TS-Go result."}
  *
  * Go source:
  * func (p *Program) GetSemanticDiagnosticsWithoutNoEmitFiltering(ctx context.Context, sourceFiles []*ast.SourceFile) map[*ast.SourceFile][]*ast.Diagnostic {
@@ -1650,7 +1670,8 @@ export function Program_GetSemanticDiagnosticsWithoutNoEmitFiltering(receiver: G
   const allDiags = Program_collectCheckerDiagnosticsFromFiles(receiver, ctx, sourceFiles, Program_getBindAndCheckDiagnosticsWithChecker.bind(undefined, receiver));
   const result = new globalThis.Map<GoPtr<SourceFile>, GoSlice<GoPtr<Diagnostic>>>();
   for (let i = 0; i < allDiags.length; i++) {
-    result.set(sourceFiles[i], SortAndDeduplicateDiagnostics(allDiags[i] ?? []));
+    const file = sourceFiles[i];
+    result.set(file, SortAndDeduplicateDiagnostics([...(allDiags[i] ?? []), ...collectExtensionDiagnosticsForSourceFile(receiver!, file)]));
   }
   return result;
 }
@@ -3009,6 +3030,7 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"58024f4d99ada564df7a23698f4cc8b6567aebe9250892ed517fdaae0f7ab8be","bodyHash":"c692dec725a0f679b5f3c530607a70c1efda4dbcf2b03c2aeb6de6c86e56976e"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Checker diagnostics force binding in TS-Go; extension-enabled programs must also publish bound-source lifecycle facts before checker hooks consume them. No-extension programs return immediately through the existing extension integration guard."}
  *
  * Go source:
  * func (p *Program) getBindAndCheckDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3051,6 +3073,7 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
     return undefined!;
   }
 
+  recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
   let diags: GoPtr<Diagnostic>[] = slices.Clip(SourceFile_BindDiagnostics(sourceFile)) ?? [];
   diags = [...diags, ...(Checker_GetDiagnostics(fileChecker, ctx, sourceFile) ?? [])];
 

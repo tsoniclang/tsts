@@ -1,22 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  DynamicProviderExtensionContractVersion,
   ExtensionHost,
   ExtensionHostDiagnosticCode,
-  ExtensionDiagnosticStore,
-  ExtensionMetadataRegistry,
+  ExtensionLifecycleEvent,
   ExtensionDecisionQuestion,
   acceptDecision,
+  argumentPassingFactKey,
   attachExtensionHost,
+  attachExtensionHostToProgram,
   associatedTypeFactKey,
   canonicalIdentityFactKey,
   constGenericFactKey,
+  createExtensionConsumerQueries,
   defineExtensionFactKey,
   deferDecision,
   flowStateFactKey,
   getExtensionHost,
   hasExtensionHost,
   rejectDecision,
+  runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   surfaceOperationFactKey,
@@ -26,17 +30,25 @@ import type {
   AssignabilityRequest,
   CompilerExtension,
   ExtensionDiagnostic,
+  InferTypeArgumentsResult,
+  ProviderDeclarationModel,
+  ProviderMemberDeclaration,
+  ProviderModuleResolution,
   ResolveCallRequest,
   ResolveCallResult,
+  ResolveConversionResult,
   ResolveElementAccessRequest,
   ResolveOperationResult,
   ResolveOperatorRequest,
   ResolvePropertyAccessRequest,
   SatisfiesConstraintRequest,
   SelectedTargetSignatureFact,
+  SourceFileBoundLifecycleRequest,
   SurfaceOperationFact,
   TargetBindingFact,
-  TargetBindingMetadataHeader,
+  TargetBindingProvider,
+  TargetIdentity,
+  TargetSemanticProvider,
   ValidateFlowUseRequest,
   ValidateFlowUseResult,
 } from "./index.js";
@@ -72,20 +84,6 @@ function extension(id: string, options: {
   };
 }
 
-function metadata(overrides: Partial<TargetBindingMetadataHeader> = {}): TargetBindingMetadataHeader {
-  return {
-    schema: "tsts.target-bindings",
-    schemaVersion: "1.0.0",
-    producer: "@example/bindgen",
-    producerVersion: "1.0.0",
-    target: "csharp",
-    packageName: "@example/dotnet",
-    packageVersion: "1.0.0",
-    extensionContractVersion: "1.0.0",
-    ...overrides,
-  };
-}
-
 test("extension host is sidecar state, not ambient program mutation", () => {
   const program = {};
 
@@ -100,6 +98,19 @@ test("extension host is sidecar state, not ambient program mutation", () => {
   assert.equal(getExtensionHost(program), extended.extensionHost);
   assert.equal(hasExtensionHost(program), true);
   assert.deepEqual(extended.extensionHost.extensions.map((item) => item.identity.id), ["source-primitives"]);
+});
+
+test("extension host attaches from creation options to constructed program", () => {
+  const options = {};
+  const program = {};
+
+  const extendedOptions = attachExtensionHost(options);
+  const extendedProgram = attachExtensionHostToProgram(options, program);
+
+  assert.equal(extendedProgram?.program, program);
+  assert.equal(extendedProgram?.extensionHost, extendedOptions.extensionHost);
+  assert.equal(getExtensionHost(program), extendedOptions.extensionHost);
+  assert.equal(Object.prototype.hasOwnProperty.call(program, "__extensionHost"), false);
 });
 
 test("extension ordering is deterministic and honors dependencies", () => {
@@ -228,24 +239,436 @@ test("fact resolver computes lazily and caches through the fact store", () => {
   assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "alias resolved to canonical primitive");
 });
 
-test("metadata registry requires schema and producer identity", () => {
-  const diagnostics = new ExtensionDiagnosticStore();
-  const registry = new ExtensionMetadataRegistry(diagnostics);
+test("provider registry requires explicit provider identity and rejects duplicates", () => {
+  const host = new ExtensionHost({});
+  const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js");
 
-  assert.equal(registry.registerTargetMetadata(metadata()), true);
-  assert.equal(registry.getTargetMetadata("csharp", "@example/dotnet", "1.0.0")?.producer, "@example/bindgen");
+  assert.equal(host.providers.registerTargetBindingProvider(provider), true);
+  assert.equal(host.providers.getTargetBindingProvider("dotnet")?.identity.target, "csharp");
+  assert.equal(host.providers.registerTargetBindingProvider(provider), true);
 
-  assert.equal(registry.registerTargetMetadata(metadata({ schema: "unknown.schema" })), false);
-  assert.equal(diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidMetadata);
+  assert.equal(host.providers.registerTargetBindingProvider(dotnetBindingProvider("@tsonic/dotnet/System.Text.js")), false);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.duplicateProvider);
 
-  assert.equal(registry.registerTargetMetadata(metadata({ packageName: "" })), false);
-  assert.equal(diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.invalidMetadata);
+  const invalidProvider = dotnetBindingProvider("@tsonic/dotnet/Invalid.js", {
+    id: "",
+    providerKind: "semantic",
+  });
+  assert.equal(host.providers.registerTargetBindingProvider(invalidProvider), false);
+  assert.equal(host.diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.invalidProvider);
+});
 
-  assert.equal(registry.registerTargetMetadata(metadata({ schemaVersion: "2.0.0" })), false);
-  assert.equal(diagnostics.all()[2]?.extensionCode, "UNSUPPORTED_METADATA_SCHEMA_VERSION");
+test("provider registry rejects unsupported extension contract versions", () => {
+  const host = new ExtensionHost({});
+  const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js", {
+    extensionContractVersion: "legacy.metadata-bridge.0",
+  });
 
-  assert.equal(registry.registerTargetMetadata(metadata({ extensionContractVersion: "2.0.0" })), false);
-  assert.equal(diagnostics.all()[3]?.extensionCode, "UNSUPPORTED_EXTENSION_CONTRACT_VERSION");
+  assert.equal(host.providers.registerTargetBindingProvider(provider), false);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerContractMismatch);
+  assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/);
+  assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/System.Buffers.js").kind, "unowned");
+});
+
+test("extensions register binding and semantic providers through initialization context", () => {
+  const bindingProvider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js");
+  const semanticProvider: TargetSemanticProvider = {
+    identity: {
+      id: "dotnet-semantic",
+      version: "1.0.0",
+      target: "csharp",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    getParameterMode: () => acceptDecision({
+      passing: { mode: "byref-writeonly-must-init" },
+    }),
+  };
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("dotnet", {
+        initialize: (context) => {
+          assert.equal(context.registerTargetBindingProvider(bindingProvider), true);
+          assert.equal(context.registerTargetSemanticProvider(semanticProvider), true);
+        },
+      }),
+    ],
+  });
+
+  assert.equal(host.providers.getTargetBindingProvider("dotnet"), bindingProvider);
+  assert.equal(host.providers.getTargetSemanticProvider("dotnet-semantic"), semanticProvider);
+  assert.equal(host.diagnostics.hasErrors(), false);
+
+  const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
+    parameter: "System.Console.TryParse.result",
+    argument: "result",
+    target: "csharp",
+  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
+
+  assert.equal(parameterMode.kind, "accept");
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-writeonly-must-init");
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.extensionId : undefined, "dotnet");
+});
+
+test("semantic provider methods own typed decisions without hook boilerplate", () => {
+  const expression = {};
+  const convertedExpression = {};
+  const propertyAccess = {};
+  const elementAccess = {};
+  const operatorExpression = {};
+  const lambda = {};
+  const flowUse = {};
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("csharp-target", {
+        initialize: (context) => {
+          assert.equal(context.registerTargetSemanticProvider({
+            identity: {
+              id: "dotnet-semantic",
+              version: "1.0.0",
+              target: "csharp",
+              extensionContractVersion: DynamicProviderExtensionContractVersion,
+              providerKind: "semantic",
+            },
+            satisfiesConstraint: () => acceptDecision(true),
+            isAssignableTo: () => acceptDecision(true),
+            resolveCall: () => acceptDecision({
+              selectedSignature: selectedSignature("System.Console.WriteLine(System.Int32)"),
+              returnType: "void",
+            }),
+            inferTypeArguments: () => acceptDecision({
+              typeArguments: ["int32"],
+              targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+            }),
+            resolvePropertyAccess: () => acceptDecision({
+              operation: surfaceOperation("System.String.Length", "property"),
+              resultType: "int32",
+            }),
+            resolveElementAccess: () => acceptDecision({
+              operation: surfaceOperation("System.Span.GetItem", "indexer"),
+              resultType: "char",
+            }),
+            resolveOperator: () => acceptDecision({
+              operation: surfaceOperation("System.Int32.op_Addition", "operator"),
+              resultType: "int32",
+            }),
+            getContextualType: () => acceptDecision({
+              type: "System.Func<System.Int32,System.Int32>",
+              targetType: { kind: "target-named", id: "System.Func`2" },
+            }),
+            resolveConversion: () => acceptDecision({
+              convertedType: { kind: "source-primitive", name: "int32" },
+              operation: surfaceOperation("System.Convert.ToInt32", "method"),
+            }),
+            getParameterMode: () => acceptDecision({
+              passing: { mode: "byref-readwrite" },
+            }),
+            getRuntimeCarrier: () => acceptDecision({
+              carrier: { kind: "target-named", id: "System.Int32" },
+              requiresAllocation: false,
+            }),
+            validateFlowUse: () => acceptDecision({
+              valid: true,
+              targetCompilerValidationRequired: false,
+            }),
+          }), true);
+        },
+      }),
+    ],
+  });
+
+  const constraint = host.runDecision(ExtensionDecisionQuestion.satisfiesConstraint, {
+    source: "int32",
+    constraint: { kind: "implements", contract: "System.IEquatable`1" },
+    target: "csharp",
+  }, () => false, { requireOwner: true });
+  assert.equal(constraint.kind === "accept" ? constraint.value : false, true);
+
+  const assignable = host.runDecision(ExtensionDecisionQuestion.isAssignableTo, {
+    source: "int32",
+    target: "long",
+    relation: "assignment",
+  }, () => false, { requireOwner: true });
+  assert.equal(assignable.kind === "accept" ? assignable.value : false, true);
+
+  const call = host.runDecision(ExtensionDecisionQuestion.resolveCall, {
+    call: expression,
+    callee: "Console.WriteLine",
+    arguments: [123],
+    target: "csharp",
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+  assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "System.Console.WriteLine(System.Int32)");
+
+  const noInferredTypeArguments: InferTypeArgumentsResult = { typeArguments: [] };
+  const inferred = host.runDecision(ExtensionDecisionQuestion.inferTypeArguments, {
+    declaration: "List<T>.Add",
+    arguments: ["value"],
+    contextualType: "List<int32>",
+  }, () => noInferredTypeArguments, { requireOwner: true });
+  assert.deepEqual(inferred.kind === "accept" ? inferred.value.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
+
+  const property = host.runDecision(ExtensionDecisionQuestion.resolvePropertyAccess, {
+    expression: propertyAccess,
+    receiver: "text",
+    propertyName: "length",
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "property") }), { requireOwner: true });
+  assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "System.String.Length");
+
+  const element = host.runDecision(ExtensionDecisionQuestion.resolveElementAccess, {
+    expression: elementAccess,
+    receiver: "span",
+    argument: 0,
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "indexer") }), { requireOwner: true });
+  assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "System.Span.GetItem");
+
+  const operator = host.runDecision(ExtensionDecisionQuestion.resolveOperator, {
+    expression: operatorExpression,
+    operator: "+",
+    left: "left",
+    right: "right",
+    target: "csharp",
+  }, () => ({ operation: surfaceOperation("core", "operator") }), { requireOwner: true });
+  assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "System.Int32.op_Addition");
+
+  const contextual = host.runDecision(ExtensionDecisionQuestion.getContextualType, {
+    expression: lambda,
+    context: "delegate",
+    target: "csharp",
+  }, () => ({ type: "core" }), { requireOwner: true });
+  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, "System.Func<System.Int32,System.Int32>");
+
+  const noConversion: ResolveConversionResult = {};
+  const conversion = host.runDecision(ExtensionDecisionQuestion.resolveConversion, {
+    expression: convertedExpression,
+    source: "byte",
+    target: "int",
+    targetPlatform: "csharp",
+  }, () => noConversion, { requireOwner: true });
+  assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "System.Convert.ToInt32");
+
+  const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
+    parameter: "TryParse.result",
+    argument: "result",
+    target: "csharp",
+  }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-readwrite");
+
+  const carrier = host.runDecision(ExtensionDecisionQuestion.getRuntimeCarrier, {
+    type: "int32",
+    target: "csharp",
+  }, () => ({ carrier: { kind: "opaque", id: "core" } }), { requireOwner: true });
+  assert.equal(carrier.kind === "accept" ? carrier.value.carrier.kind : undefined, "target-named");
+
+  const flow = host.runDecision(ExtensionDecisionQuestion.validateFlowUse, {
+    useSite: flowUse,
+    symbol: "value",
+    mode: "read",
+    target: "csharp",
+  }, () => ({ valid: false }), { requireOwner: true });
+  assert.equal(flow.kind === "accept" ? flow.value.valid : false, true);
+  assert.equal(flow.kind === "accept" ? flow.extensionId : undefined, "csharp-target");
+});
+
+test("target binding providers own and resolve virtual modules without file-backed side data", () => {
+  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
+
+  assert.equal(host.providers.getModuleOwner("@tsonic/core/types.js"), undefined);
+
+  const context = {
+    containingFile: "/src/example.ts",
+    activeTarget: "csharp",
+  };
+  const result = host.providers.resolveVirtualModule(specifier, context);
+  assert.equal(result.kind, "resolved");
+  if (result.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(result.module.resolution.virtualFileName, "tsts-provider://dotnet/System.Buffers");
+  assert.equal(result.module.declarationModel.exports[0]?.name, "SearchValues");
+  assert.match(result.module.virtualSourceText, /export declare class SearchValues<T extends unknown>/);
+  assert.match(result.module.virtualSourceText, /Contains\(value: T\): boolean;/);
+  assert.equal(result.module.virtualDocument.uri, "tsts-provider://dotnet/System.Buffers");
+  assert.equal(result.module.virtualDocument.readOnly, true);
+  assert.equal(result.module.virtualDocument.provider.id, "dotnet");
+  assert.match(result.module.virtualDocument.sourceText, /export declare class SearchValues/);
+  const cached = host.providers.resolveVirtualModule(specifier, context);
+  assert.equal(cached.kind, "resolved");
+  if (cached.kind === "resolved") {
+    assert.equal(cached.module, result.module);
+  }
+  assert.equal(result.module.provider.getTargetIdentity({
+    moduleSpecifier: specifier,
+    exportName: "SearchValues",
+  })?.id, "System.Buffers.SearchValues`1");
+
+  assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/Unknown.js").kind, "unowned");
+});
+
+test("virtual declaration documents are stable consumer-readable compiler state", () => {
+  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
+
+  const result = host.providers.resolveVirtualModule(specifier, { activeTarget: "csharp" });
+  assert.equal(result.kind, "resolved");
+  if (result.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(host.providers.getVirtualDeclarationDocuments().length, 1);
+  assert.equal(host.providers.getVirtualDeclarationDocument(result.module.resolution.virtualFileName), result.module.virtualDocument);
+
+  const consumer = createExtensionConsumerQueries(host, "future-lsp");
+  assert.equal(consumer.getVirtualDeclarationDocument(result.module.resolution.virtualFileName), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
+
+  host.finalizeSemantics();
+  const document = consumer.getVirtualDeclarationDocument(result.module.resolution.virtualFileName);
+  assert.equal(document, result.module.virtualDocument);
+  assert.equal(document?.moduleSpecifier, specifier);
+  assert.match(document?.sourceText ?? "", /Contains\(value: T\): boolean;/);
+});
+
+test("provider ownership conflicts and invalid declaration models are diagnostics", () => {
+  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const conflictHost = new ExtensionHost({});
+  conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "first" }));
+  conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "second" }));
+
+  assert.equal(conflictHost.providers.resolveVirtualModule(specifier).kind, "conflict");
+  assert.equal(conflictHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerOwnershipConflict);
+
+  const invalidHost = new ExtensionHost({});
+  invalidHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, {
+    declarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: "wrong-provider-module-id",
+      exports: [],
+    }),
+  }));
+
+  assert.equal(invalidHost.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(invalidHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider declaration models render the supported export member and type matrix", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "resolved");
+  if (resolved.kind !== "resolved") {
+    return;
+  }
+
+  const source = resolved.module.virtualSourceText;
+  assert.match(source, /export declare class Box<T extends number>/);
+  assert.match(source, /constructor\(value: T\);/);
+  assert.match(source, /value: T;/);
+  assert.match(source, /static Count: number;/);
+  assert.match(source, /\[index: number\]: string;/);
+  assert.match(source, /export interface Writer/);
+  assert.match(source, /write\(text\?: string, \.\.\.chunks: string\[\]\): number;/);
+  assert.match(source, /export declare function tryParse<T extends number>\(text\?: string, \.\.\.values: number\[\]\): boolean;/);
+  assert.match(source, /export type Pair = \[number, string\];/);
+  assert.match(source, /export declare const DefaultSize: number;/);
+  assert.match(source, /export declare namespace Buffers/);
+  assert.match(source, /export declare enum Color/);
+  assert.match(source, /Red,/);
+  assert.match(source, /export declare const NativeHandle: unique symbol;/);
+
+  assert.equal(resolved.module.declarationModel.exports.length, 8);
+  assert.equal(resolved.module.virtualDocument.sourceText, source);
+});
+
+test("provider declaration models reject member kinds that cannot be represented as virtual TypeScript", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
+    members: [{
+      id: "Changed",
+      name: "Changed",
+      kind: "event",
+      type: { kind: "function", parameters: [], returnType: { kind: "void" } },
+    }],
+  }));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider virtual module cache is separated by provider identity and resolution context", () => {
+  const specifier = "@target/cache.js";
+  let resolveCount = 0;
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: {
+      id: "cache-provider",
+      version: "1.0.0",
+      target: "demo",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "binding",
+      configHash: "config-a",
+    },
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      resolveCount += 1;
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://cache/${context.activeSurface ?? "default"}`,
+        providerModuleId: `cache:${context.activeSurface ?? "default"}`,
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{ id: "Value", name: "Value", kind: "value", type: { kind: "number" } }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "array" });
+  const second = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "array" });
+  const third = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo", activeSurface: "span" });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(second.kind, "resolved");
+  assert.equal(third.kind, "resolved");
+  if (first.kind !== "resolved" || second.kind !== "resolved" || third.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(first.module, second.module);
+  assert.notEqual(first.module, third.module);
+  assert.notEqual(first.module.cacheKey, third.module.cacheKey);
+  assert.equal(resolveCount, 2);
+});
+
+test("required provider module patterns diagnose missing providers without hardcoded target names", () => {
+  const host = new ExtensionHost({}, {
+    activeTarget: "demo",
+    requiredProviderModules: [{
+      specifierPrefix: "@target/",
+      target: "demo",
+      message: "The demo target provider is required for @target/* imports.",
+    }],
+  });
+
+  const missing = host.providers.resolveVirtualModule("@target/runtime.js", { activeTarget: "demo" });
+  const unrelated = host.providers.resolveVirtualModule("@other/runtime.js", { activeTarget: "demo" });
+
+  assert.equal(missing.kind, "rejected");
+  assert.equal(unrelated.kind, "unowned");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerMissing);
+  assert.equal(host.diagnostics.all()[0]?.extensionCode, "REQUIRED_PROVIDER_MISSING");
 });
 
 test("semantic finalization seals facts and gates consumer reads", () => {
@@ -265,6 +688,36 @@ test("semantic finalization seals facts and gates consumer reads", () => {
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.factStoreSealed);
 });
 
+test("lifecycle hooks run before semantic finalization seals facts", () => {
+  const sourceFile = {};
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("source-core", {
+        initialize: (context) => {
+          context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
+            if (request.sourceFile === sourceFile && request.fileName === "/src/index.ts") {
+              context.facts.set(request.sourceFile, primitiveFactKey, "int32");
+            }
+          });
+          context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, () => {
+            context.facts.set("finalization-marker", primitiveFactKey, "int64");
+          });
+        },
+      }),
+    ],
+  });
+
+  host.runLifecycle(ExtensionLifecycleEvent.afterSourceFileBound, {
+    sourceFile,
+    fileName: "/src/index.ts",
+  });
+  assert.equal(host.facts.get(sourceFile, primitiveFactKey), "int32");
+
+  host.finalizeSemantics();
+  assert.equal(host.facts.get("finalization-marker", primitiveFactKey), "int64");
+  assert.equal(host.facts.set("after-finalize", primitiveFactKey, "uint32"), "sealed");
+});
+
 test("canonical identity facts are consumer-queryable after finalization", () => {
   const host = new ExtensionHost({});
   const localAlias = {};
@@ -282,6 +735,73 @@ test("canonical identity facts are consumer-queryable after finalization", () =>
   host.finalizeSemantics();
 
   assert.equal(host.getFactForConsumer("emitter", localAlias, canonicalIdentityFactKey)?.exportName, "int");
+});
+
+test("consumer query facade exposes finalized target facts without fallback inference", () => {
+  const call = {};
+  const propertyAccess = {};
+  const argument = {};
+  const runtimeType = {};
+  const host = new ExtensionHost({});
+
+  host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
+  host.facts.set(propertyAccess, surfaceOperationFactKey, surfaceOperation("System.String.Length", "property"));
+  host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
+  host.facts.set(runtimeType, runtimeCarrierFactKey, {
+    carrier: { kind: "target-named", id: "System.Int32" },
+    requiresAllocation: false,
+  });
+
+  const consumer = createExtensionConsumerQueries(host, "emitter");
+  assert.equal(consumer.getSelectedTargetCall(call), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
+
+  host.finalizeSemantics();
+  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "System.Console.WriteLine(System.Int32)");
+  assert.equal(consumer.getSelectedTargetProperty(propertyAccess)?.operationId, "System.String.Length");
+  assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
+  assert.equal(consumer.getRuntimeCarrierFact(runtimeType)?.carrier.kind, "target-named");
+});
+
+test("required consumer facts report diagnostics instead of allowing fallback inference", () => {
+  const call = {};
+  const type = {};
+  const host = new ExtensionHost({});
+  const consumer = createExtensionConsumerQueries(host, "emitter");
+
+  host.finalizeSemantics();
+  assert.equal(consumer.requireSelectedTargetCall(call, "emitting provider-owned call"), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+  assert.equal(host.diagnostics.all()[0]?.extensionCode, "REQUIRED_FACT_MISSING");
+
+  assert.equal(consumer.requireSelectedTargetCall(call, "emitting provider-owned call"), undefined);
+  assert.equal(host.diagnostics.all().length, 1);
+
+  host.facts.get(type, sourcePrimitiveFactKey);
+  assert.equal(consumer.requireSourcePrimitiveFact(type, "emitting source primitive"), undefined);
+  assert.equal(host.diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+});
+
+test("lifecycle hook failures are diagnostics with extension identity", () => {
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("bad-extension", {
+        initialize: (context) => {
+          context.registerLifecycleHook(ExtensionLifecycleEvent.afterSourceFileBound, () => {
+            throw new Error("boom");
+          });
+        },
+      }),
+    ],
+  });
+
+  host.runLifecycle(ExtensionLifecycleEvent.afterSourceFileBound, {
+    sourceFile: {},
+    fileName: "/src/index.ts",
+  });
+
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.lifecycleHookFailed);
+  assert.equal(host.diagnostics.all()[0]?.extensionId, "tsts.extension-host");
 });
 
 test("diagnostics are deduplicated by stable identity", () => {
@@ -604,7 +1124,7 @@ test("advanced associated-type and const-generic facts are first-class", () => {
   assert.equal(host.facts.get(fixedBytesType, constGenericFactKey)?.value, 32);
 });
 
-test("target binding facts preserve metadata identity and constraints", () => {
+test("target binding facts preserve provider identity and constraints", () => {
   const searchValues = {};
   const fact: TargetBindingFact = {
     id: "System.Buffers.SearchValues`1",
@@ -626,6 +1146,207 @@ test("target binding facts preserve metadata identity and constraints", () => {
   assert.equal(host.facts.set(searchValues, targetBindingFactKey, fact), "inserted");
   assert.equal(host.facts.get(searchValues, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0]?.kind, "implements");
 });
+
+function dotnetBindingProvider(
+  ownedSpecifier: string,
+  options: {
+    readonly id?: string;
+    readonly providerKind?: TargetBindingProvider["identity"]["providerKind"];
+    readonly extensionContractVersion?: string;
+    readonly declarationModel?: (resolution: ProviderModuleResolution) => ProviderDeclarationModel;
+  } = {},
+): TargetBindingProvider {
+  const moduleId = "dotnet:System.Buffers";
+  const targetIdentity: TargetIdentity = {
+    target: "csharp",
+    id: "System.Buffers.SearchValues`1",
+    displayName: "System.Buffers.SearchValues<T>",
+  };
+  return {
+    identity: {
+      id: options.id ?? "dotnet",
+      version: "1.0.0",
+      target: "csharp",
+      extensionContractVersion: options.extensionContractVersion ?? DynamicProviderExtensionContractVersion,
+      providerKind: options.providerKind ?? "binding",
+    },
+    ownsModule: (specifier) => specifier === ownedSpecifier
+      ? { kind: "owned", evidence: [{ message: "owned by the .NET target binding provider" }] }
+      : { kind: "unowned" },
+    resolveModule: (specifier) => ({
+      kind: "virtual",
+      moduleSpecifier: specifier,
+      virtualFileName: "tsts-provider://dotnet/System.Buffers",
+      providerModuleId: moduleId,
+      packageName: "@tsonic/dotnet",
+      packageVersion: "1.0.0",
+    }),
+    getDeclarationModel: options.declarationModel ?? ((resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "SearchValues",
+        name: "SearchValues",
+        kind: "class",
+        targetIdentity,
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "unknown" }],
+        }],
+        members: [{
+          id: "Contains",
+          name: "Contains",
+          kind: "method",
+          signatures: [{
+            id: "Contains(T)",
+            parameters: [{ name: "value", type: { kind: "type-parameter", name: "T" } }],
+            returnType: { kind: "source-primitive", name: "boolean" },
+          }],
+        }],
+      }],
+    })),
+    getTargetIdentity: (symbol) => symbol.moduleSpecifier === ownedSpecifier && symbol.exportName === "SearchValues"
+      ? targetIdentity
+      : undefined,
+  };
+}
+
+function matrixBindingProvider(
+  ownedSpecifier: string,
+  options: {
+    readonly members?: readonly ProviderMemberDeclaration[];
+  } = {},
+): TargetBindingProvider {
+  return {
+    identity: {
+      id: "matrix-provider",
+      version: "1.0.0",
+      target: "demo",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "binding",
+    },
+    ownsModule: (specifier) => specifier === ownedSpecifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (specifier) => ({
+      kind: "virtual",
+      moduleSpecifier: specifier,
+      virtualFileName: "tsts-provider://matrix/runtime",
+      providerModuleId: "matrix.runtime",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Box",
+        name: "Box",
+        kind: "class",
+        targetIdentity: { target: "demo", id: "Demo.Box`1" },
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "source-primitive", name: "int" }],
+        }],
+        members: options.members ?? [{
+          id: "ctor",
+          name: "constructor",
+          kind: "constructor",
+          signatures: [{
+            id: "new(T)",
+            parameters: [{ name: "value", type: { kind: "type-parameter", name: "T" } }],
+          }],
+        }, {
+          id: "value",
+          name: "value",
+          kind: "property",
+          type: { kind: "type-parameter", name: "T" },
+        }, {
+          id: "Count",
+          name: "Count",
+          kind: "field",
+          static: true,
+          type: { kind: "number" },
+        }, {
+          id: "item",
+          name: "item",
+          kind: "indexer",
+          signatures: [{
+            id: "item(number)",
+            parameters: [{ name: "index", type: { kind: "number" } }],
+            returnType: { kind: "string" },
+          }],
+        }],
+      }, {
+        id: "Writer",
+        name: "Writer",
+        kind: "interface",
+        members: [{
+          id: "write",
+          name: "write",
+          kind: "method",
+          signatures: [{
+            id: "write",
+            parameters: [
+              { name: "text", type: { kind: "string" }, optional: true },
+              { name: "chunks", type: { kind: "array", elementType: { kind: "string" } }, rest: true },
+            ],
+            returnType: { kind: "number" },
+          }],
+        }],
+      }, {
+        id: "tryParse",
+        name: "tryParse",
+        kind: "function",
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "source-primitive", name: "int" }],
+        }],
+        signatures: [{
+          id: "tryParse",
+          typeParameters: [{
+            name: "T",
+            constraints: [{ kind: "source-primitive", name: "int" }],
+          }],
+          parameters: [
+            { name: "text", type: { kind: "string" }, optional: true },
+            { name: "values", type: { kind: "array", elementType: { kind: "number" } }, rest: true },
+          ],
+          returnType: { kind: "boolean" },
+        }],
+      }, {
+        id: "Pair",
+        name: "Pair",
+        kind: "type",
+        type: { kind: "tuple", elementTypes: [{ kind: "number" }, { kind: "string" }] },
+      }, {
+        id: "DefaultSize",
+        name: "DefaultSize",
+        kind: "value",
+        type: { kind: "number" },
+      }, {
+        id: "Buffers",
+        name: "Buffers",
+        kind: "namespace",
+        members: [{
+          id: "Capacity",
+          name: "Capacity",
+          kind: "field",
+          type: { kind: "number" },
+        }],
+      }, {
+        id: "Color",
+        name: "Color",
+        kind: "enum",
+        members: [
+          { id: "Red", name: "Red", kind: "field" },
+          { id: "Blue", name: "Blue", kind: "field" },
+        ],
+      }, {
+        id: "NativeHandle",
+        name: "NativeHandle",
+        kind: "opaque",
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  };
+}
 
 function diagnostic(extensionId: string, extensionCode: string, numericCode: number, message: string): ExtensionDiagnostic {
   return {

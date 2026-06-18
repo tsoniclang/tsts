@@ -1,11 +1,12 @@
 import type {
+  ArgumentPassingFact,
   ArgumentPassingMode,
   SelectedTargetSignatureFact,
   SurfaceOperationFact,
   TargetConstraint,
   TargetTypeRef,
 } from "./facts.js";
-import type { ExtensionDiagnostic, ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+import type { ExtensionDiagnostic, ExtensionDiagnosticStore, ExtensionEvidence, ExtensionFactResolver, ExtensionFactStore, ExtensionFactSubject, ExtensionHost } from "./host.js";
 
 export type ExtensionDecision<T> =
   | { readonly kind: "defer" }
@@ -23,6 +24,10 @@ export type ExtensionDecisionResult<T> =
 export interface ExtensionDecisionContext {
   readonly question: string;
   readonly extensionId: string;
+  readonly host: ExtensionHost;
+  readonly facts: ExtensionFactStore;
+  readonly factResolver: ExtensionFactResolver;
+  readonly diagnostics: ExtensionDiagnosticStore;
 }
 
 export type ExtensionDecisionHook<TRequest, TResult> = (request: TRequest, context: ExtensionDecisionContext) => ExtensionDecision<TResult>;
@@ -40,6 +45,9 @@ export const ExtensionDecisionQuestion = {
   resolveElementAccess: "member.resolveElementAccess",
   resolveOperator: "member.resolveOperator",
   getContextualType: "type.getContextualType",
+  resolveConversion: "type.resolveConversion",
+  getParameterMode: "signature.getParameterMode",
+  getRuntimeCarrier: "type.getRuntimeCarrier",
   validateFlowUse: "flow.validateUse",
 } as const;
 
@@ -53,6 +61,9 @@ export interface AssignabilityRequest {
   readonly source: ExtensionFactSubject;
   readonly target: ExtensionFactSubject;
   readonly relation?: "assignment" | "constraint" | "return" | "argument";
+  readonly errorNode?: ExtensionFactSubject;
+  readonly expression?: ExtensionFactSubject;
+  readonly targetPlatform?: string;
 }
 
 export interface ResolveCallRequest {
@@ -103,6 +114,38 @@ export interface ResolveOperatorRequest {
 export interface ResolveOperationResult {
   readonly operation: SurfaceOperationFact;
   readonly resultType?: ExtensionFactSubject;
+}
+
+export interface ResolveConversionRequest {
+  readonly expression: ExtensionFactSubject;
+  readonly source: ExtensionFactSubject;
+  readonly target: ExtensionFactSubject;
+  readonly targetPlatform?: string;
+}
+
+export interface ResolveConversionResult {
+  readonly convertedType?: TargetTypeRef;
+  readonly operation?: SurfaceOperationFact;
+}
+
+export interface ParameterModeRequest {
+  readonly parameter: ExtensionFactSubject;
+  readonly argument?: ExtensionFactSubject;
+  readonly target?: string;
+}
+
+export interface ParameterModeResult {
+  readonly passing: ArgumentPassingFact;
+}
+
+export interface RuntimeCarrierRequest {
+  readonly type: ExtensionFactSubject;
+  readonly target?: string;
+}
+
+export interface RuntimeCarrierResult {
+  readonly carrier: TargetTypeRef;
+  readonly requiresAllocation?: boolean;
 }
 
 export interface ContextualTypeRequest {

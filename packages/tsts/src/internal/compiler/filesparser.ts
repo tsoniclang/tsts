@@ -59,6 +59,7 @@ import {
   includeProcessor_addProcessingDiagnosticsForFileCasing,
 } from "./includeprocessor.js";
 import * as strings from "../../go/strings.js";
+import { getExtensionHost } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::type::parseTask","kind":"type","status":"implemented","sigHash":"b84c8bb585614968edfb61e882ab726f44a17b5de567af8dfc0e7ce09ac3dab5","bodyHash":"9037201e00d4b8ede35c542bf33697833860bf8d7e56f1f769452cde2fc18c1f"}
@@ -147,6 +148,7 @@ export function parseTask_Path(receiver: GoPtr<parseTask>): Path_65a900c3 {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/filesparser.go::method::parseTask.load","kind":"method","status":"implemented","sigHash":"af7c55efe5242848312d3c1b0508d2b9ec9c78063b2547aea4383cb82d2555ac","bodyHash":"07b7219142d8ecc72292b82bd9f7692c5b2b7aee8f66b4283d2100e4795ebb9e"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"New Hope provider virtual modules are compiler-owned in-memory source files; when no extension host owns the path this remains the direct TS-Go load path."}
  *
  * Go source:
  * func (t *parseTask) load(loader *fileLoader) {
@@ -270,7 +272,8 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
     return;
   }
 
-  if (HasExtension(receiver!.normalizedFilePath)) {
+  const providerVirtualModule = getExtensionHost(loader!.opts)?.providers.getVirtualModuleByFileName(receiver!.normalizedFilePath);
+  if (providerVirtualModule === undefined && HasExtension(receiver!.normalizedFilePath)) {
     const compilerOptions = ParsedCommandLine_CompilerOptions(loader!.opts.Config);
     const allowNonTsExtensions = Tristate_IsTrue(compilerOptions!.AllowNonTsExtensions);
     if (!allowNonTsExtensions) {
@@ -304,6 +307,8 @@ export function parseTask_load(receiver: GoPtr<parseTask>, loader: GoPtr<fileLoa
   if (receiver!.libFile !== undefined) {
     loader!.libFileCount.Add(1);
     // Default lib files are all scripts; skip looking up their package.json
+    receiver!.metadata = { ImpliedNodeFormat: ResolutionModeCommonJS, PackageJsonType: "", PackageJsonDirectory: "" };
+  } else if (providerVirtualModule !== undefined) {
     receiver!.metadata = { ImpliedNodeFormat: ResolutionModeCommonJS, PackageJsonType: "", PackageJsonDirectory: "" };
   } else {
     receiver!.metadata = fileLoader_loadSourceFileMetaData(loader, receiver!.normalizedFilePath);

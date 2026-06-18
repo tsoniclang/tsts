@@ -63,13 +63,14 @@ import {
   ModuleKind_IsNonNodeESM,
   ModuleResolutionKindNode16,
   ModuleResolutionKindNodeNext,
+  ResolutionModeCommonJS,
   ResolutionModeNone,
 } from "../core/compileroptions.js";
 import type { CompilerOptions, ResolutionMode } from "../core/compileroptions.js";
 import { Tristate_IsFalseOrUnknown, Tristate_IsTrue } from "../core/tristate.js";
 import { IfElse, Flatten } from "../core/core.js";
 import { NewWorkGroup } from "../core/workgroup.js";
-import { ScriptKindJSX, ScriptKindTSX } from "../core/scriptkind.js";
+import { ScriptKindJSX, ScriptKindTS, ScriptKindTSX } from "../core/scriptkind.js";
 import type { ScriptKind } from "../core/scriptkind.js";
 import type { Message } from "../diagnostics/diagnostics.js";
 import * as diagnostics from "../diagnostics/generated/messages.js";
@@ -151,6 +152,9 @@ import {
 } from "./projectreferenceparser.js";
 import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
+import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
+import { getExtensionHost } from "../../extensions/host.js";
+import type { ExtensionHost, ProviderResolvedModule } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b","bodyHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -243,6 +247,60 @@ export interface fileLoader {
   dtsDirectories: Set<Path_9073472b>;
   pathForLibFileCache: SyncMap<string, GoPtr<LibFile>>;
   pathForLibFileResolutions: SyncMap<Path_9073472b, GoPtr<libResolution>>;
+}
+
+function fileLoader_getExtensionHost(receiver: GoPtr<fileLoader>): ExtensionHost | undefined {
+  return getExtensionHost(receiver!.opts);
+}
+
+function fileLoader_getProviderVirtualModule(receiver: GoPtr<fileLoader>, fileName: string): ProviderResolvedModule | undefined {
+  return fileLoader_getExtensionHost(receiver)?.providers.getVirtualModuleByFileName(fileName);
+}
+
+function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, extensionHost: ExtensionHost | undefined, moduleName: string, containingFile: string, mode: ResolutionMode): GoPtr<ResolvedModule> | undefined {
+  if (extensionHost === undefined) {
+    return undefined;
+  }
+  const context = {
+    containingFile,
+    resolutionMode: mode,
+    ...(extensionHost.activeTarget !== undefined ? { activeTarget: extensionHost.activeTarget } : {}),
+    ...(extensionHost.activeSurface !== undefined ? { activeSurface: extensionHost.activeSurface } : {}),
+  };
+  if (extensionHost.providers.bindingProviders.length === 0 && extensionHost.providers.requiresProviderForModule(moduleName, context) === undefined) {
+    return undefined;
+  }
+  const result = extensionHost.providers.resolveVirtualModule(moduleName, context);
+  if (result.kind === "unowned") {
+    return undefined;
+  }
+  if (result.kind !== "resolved") {
+    return {
+      ResolutionDiagnostics: [],
+      ResolvedFileName: "",
+      OriginalPath: "",
+      Extension: "",
+      ResolvedUsingTsExtension: false,
+      PackageId: { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" },
+      IsExternalLibraryImport: false,
+      AlternateResult: "",
+    };
+  }
+  return {
+    ResolutionDiagnostics: [],
+    ResolvedFileName: result.module.resolution.virtualFileName,
+    OriginalPath: "",
+    Extension: ".d.ts",
+    ResolvedUsingTsExtension: false,
+    PackageId: {
+      Name: result.module.resolution.packageName ?? "",
+      SubModuleName: "",
+      Version: result.module.resolution.packageVersion ?? "",
+      PeerDependencies: "",
+    },
+    IsExternalLibraryImport: true,
+    AlternateResult: "",
+  };
 }
 
 /**
@@ -973,6 +1031,7 @@ export function fileLoader_getDefaultLibFilePriority(receiver: GoPtr<fileLoader>
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.loadSourceFileMetaData","kind":"method","status":"implemented","sigHash":"52b29481881acea04f31c6031f028ef2d8dd0bb77e94245bbfa6d3738f7b12a2","bodyHash":"0b67c7e4d0c687b4e8b65171f738960dc56d8b732b97620160aaeac15581a66c"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider virtual modules have no package.json scope; physical files still use the exact TS-Go metadata path."}
  *
  * Go source:
  * func (p *fileLoader) loadSourceFileMetaData(fileName string) ast.SourceFileMetaData {
@@ -999,6 +1058,13 @@ export function fileLoader_getDefaultLibFilePriority(receiver: GoPtr<fileLoader>
  * }
  */
 export function fileLoader_loadSourceFileMetaData(receiver: GoPtr<fileLoader>, fileName: string): SourceFileMetaData {
+  if (fileLoader_getProviderVirtualModule(receiver, fileName) !== undefined) {
+    return {
+      PackageJsonType: "",
+      PackageJsonDirectory: "",
+      ImpliedNodeFormat: ResolutionModeCommonJS,
+    };
+  }
   const packageJsonScope = Resolver_GetPackageScopeForPath(receiver!.resolver, GetDirectoryPath(fileName));
   const moduleResolutionKind = CompilerOptions_GetModuleResolutionKind(ParsedCommandLine_CompilerOptions(receiver!.opts.Config));
   let packageJsonType = "";
@@ -1025,6 +1091,7 @@ export function fileLoader_loadSourceFileMetaData(receiver: GoPtr<fileLoader>, f
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.parseSourceFile","kind":"method","status":"implemented","sigHash":"45c6977d82282b19c08f6059d643aa2034209ab4ddf126043c0fffae9e981589","bodyHash":"28b5a6e09da0f3ba3f68069ea7ec09c3a3d7c56c72dd2aad6b19746d4dd8ed8c"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider virtual modules are parsed from structured provider source text instead of the host filesystem; physical files still call Host.GetSourceFile exactly as TS-Go does."}
  *
  * Go source:
  * func (p *fileLoader) parseSourceFile(t *parseTask) *ast.SourceFile {
@@ -1049,6 +1116,14 @@ export function fileLoader_parseSourceFile(receiver: GoPtr<fileLoader>, t: GoPtr
   try {
     const path = fileLoader_toPath(receiver, t!.normalizedFilePath);
     const options = projectReferenceFileMapper_getCompilerOptionsForFile(receiver!.projectReferenceFileMapper, NewHasFileName(t!.normalizedFilePath, path));
+    const providerVirtualModule = fileLoader_getProviderVirtualModule(receiver, t!.normalizedFilePath);
+    if (providerVirtualModule !== undefined) {
+      return ParseSourceFile({
+        FileName: t!.normalizedFilePath,
+        Path: path,
+        ExternalModuleIndicatorOptions: GetExternalModuleIndicatorOptions(t!.normalizedFilePath, options, t!.metadata),
+      }, providerVirtualModule.virtualSourceText, ScriptKindTS);
+    }
     const sourceFile = receiver!.opts.Host.GetSourceFile({
       FileName: t!.normalizedFilePath,
       Path: path,
@@ -1381,6 +1456,7 @@ export const externalHelpersModuleNameText: string = "tslib";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::method::fileLoader.resolveImportsAndModuleAugmentations","kind":"method","status":"implemented","sigHash":"30cd1cfb29885870bb53f7e50b9173e5bd146206f9dd8a020faf33710e3f44dc","bodyHash":"4171ca82fab8e6403e0310bc745bd8eb0680c1c25558125fe9ff409afeaecafd"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Provider-owned module specifiers resolve through TargetBindingProvider before physical module resolution; unowned modules and no-extension programs remain on the exact TS-Go path, and owned rejection does not fall back to files."}
  *
  * Go source:
  * func (p *fileLoader) resolveImportsAndModuleAugmentations(t *parseTask) {
@@ -1544,6 +1620,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
     if (moduleNames.length !== 0) {
       const resolutionsInFile = NewGoStructMap<ModeAwareCacheKey, GoPtr<ResolvedModule>>();
       let resolutionsTrace: GoSlice<DiagAndArgs> = [];
+      const extensionHost = fileLoader_getExtensionHost(receiver);
 
       for (let index = 0; index < moduleNames.length; index++) {
         const entry = moduleNames[index]!;
@@ -1554,7 +1631,11 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
         const mode = getModeForUsageLocation(SourceFile_FileName(file), meta, entry as unknown as GoPtr<StringLiteralLike>, optionsForFile);
         const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
-        const [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
+        let trace: GoSlice<DiagAndArgs> = [];
+        let resolvedModule = fileLoader_resolveProviderVirtualModule(receiver, extensionHost, moduleName, fileName, mode);
+        if (resolvedModule === undefined) {
+          [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
+        }
         resolutionsInFile.set({ Name: moduleName, Mode: mode }, resolvedModule);
         resolutionsTrace = [...resolutionsTrace, ...trace];
 
@@ -1564,8 +1645,9 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
 
         const resolvedFileName = resolvedModule!.ResolvedFileName;
         const isFromNodeModulesSearch = resolvedModule!.IsExternalLibraryImport;
+        const isProviderVirtualFile = fileLoader_getProviderVirtualModule(receiver, resolvedFileName) !== undefined;
         // Don't treat redirected files as JS files.
-        const isJsFile = !FileExtensionIsOneOf(resolvedFileName, SupportedTSExtensionsWithJsonFlat as GoSlice<string>) && projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(resolvedFileName, fileLoader_toPath(receiver, resolvedFileName))) === undefined;
+        const isJsFile = !isProviderVirtualFile && !FileExtensionIsOneOf(resolvedFileName, SupportedTSExtensionsWithJsonFlat as GoSlice<string>) && projectReferenceFileMapper_getRedirectParsedCommandLineForResolution(receiver!.projectReferenceFileMapper, NewHasFileName(resolvedFileName, fileLoader_toPath(receiver, resolvedFileName))) === undefined;
         const isJsFileFromNodeModules = isFromNodeModulesSearch && isJsFile && strings.Contains(resolvedFileName, "/node_modules/");
 
         // add file to program only if:
