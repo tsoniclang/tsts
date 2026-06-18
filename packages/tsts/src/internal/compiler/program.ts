@@ -93,7 +93,7 @@ import { projectReferenceFileMapper_getProjectReferenceFromSource, projectRefere
 import type { includeProcessor } from "./includeprocessor.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
-import { recordProviderVirtualModuleFacts } from "../../extensions/compiler-integration.js";
+import { recordBoundSourceFileExtensionFacts } from "../../extensions/compiler-integration.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f","bodyHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
@@ -1224,7 +1224,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
   for (const file of receiver!.__tsgoEmbedded0!.files) {
     if (!SourceFile_IsBound(file)) {
       BindSourceFile(file);
-      recordProviderVirtualModuleFacts(receiver!.opts, file);
+      recordBoundSourceFileExtensionFacts(receiver!.opts, file);
     }
   }
 }
@@ -1617,7 +1617,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     BindSourceFile(sourceFile);
-    recordProviderVirtualModuleFacts(receiver!.opts, sourceFile);
+    recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
   } else {
     Program_BindSourceFiles(receiver);
   }

@@ -4,23 +4,41 @@ import { Node_Symbol, SourceFile_FileName } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import {
   canonicalIdentityFactKey,
+  providerVirtualDeclarationFactKey,
   targetBindingFactKey,
 } from "./facts.js";
-import type { TargetBindingFact } from "./facts.js";
-import { getExtensionHost } from "./host.js";
-import type { ExtensionEvidence, ProviderExportDeclaration, ProviderResolvedModule } from "./host.js";
+import type { ProviderVirtualDeclarationFact, TargetBindingFact, TargetTypeRef } from "./facts.js";
+import { ExtensionLifecycleEvent, getExtensionHost } from "./host.js";
+import type { ExtensionEvidence, ExtensionHost, ProviderExportDeclaration, ProviderResolvedModule } from "./host.js";
 
-export function recordProviderVirtualModuleFacts(program: object, file: GoPtr<SourceFile>): void {
+export function recordBoundSourceFileExtensionFacts(program: object, file: GoPtr<SourceFile>): void {
   const extensionHost = getExtensionHost(program);
   if (extensionHost === undefined || file === undefined) {
     return;
   }
 
-  const virtualModule = extensionHost.providers.getVirtualModuleByFileName(SourceFile_FileName(file));
-  if (virtualModule === undefined) {
-    return;
+  const fileName = SourceFile_FileName(file);
+  const virtualModule = extensionHost.providers.getVirtualModuleByFileName(fileName);
+  if (virtualModule !== undefined) {
+    recordProviderVirtualModuleFacts(extensionHost, file, virtualModule);
   }
+  extensionHost.runLifecycle(ExtensionLifecycleEvent.afterSourceFileBound, {
+    sourceFile: file,
+    fileName,
+    ...(virtualModule !== undefined ? { providerVirtualModule: virtualModule } : {}),
+  });
+}
 
+export function finalizeExtensionSemantics(program: object): ExtensionHost | undefined {
+  const extensionHost = getExtensionHost(program);
+  if (extensionHost === undefined) {
+    return undefined;
+  }
+  extensionHost.finalizeSemantics();
+  return extensionHost;
+}
+
+function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: GoPtr<SourceFile>, virtualModule: ProviderResolvedModule): void {
   const evidence = getProviderVirtualModuleEvidence(virtualModule);
   extensionHost.facts.set(file, canonicalIdentityFactKey, {
     kind: "module",
@@ -29,6 +47,7 @@ export function recordProviderVirtualModuleFacts(program: object, file: GoPtr<So
     ...(virtualModule.resolution.packageVersion !== undefined ? { packageVersion: virtualModule.resolution.packageVersion } : {}),
     subpath: virtualModule.resolution.moduleSpecifier,
   }, evidence);
+  extensionHost.facts.set(file, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
   const fileSymbol = Node_Symbol(file as unknown as GoPtr<Node>);
   if (fileSymbol === undefined) {
@@ -43,6 +62,7 @@ export function recordProviderVirtualModuleFacts(program: object, file: GoPtr<So
     subpath: virtualModule.resolution.moduleSpecifier,
     canonicalSymbolId: getSymbolFactId(fileSymbol),
   }, evidence);
+  extensionHost.facts.set(fileSymbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
   for (const declaration of virtualModule.declarationModel.exports) {
     const symbol = fileSymbol.Exports?.get(declaration.name);
@@ -58,6 +78,7 @@ export function recordProviderVirtualModuleFacts(program: object, file: GoPtr<So
       exportName: declaration.name,
       canonicalSymbolId: getSymbolFactId(symbol),
     }, evidence);
+    extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule, declaration), evidence);
 
     const targetBinding = getTargetBindingFact(virtualModule, declaration);
     if (targetBinding !== undefined) {
@@ -98,6 +119,25 @@ function getTargetBindingFact(virtualModule: ProviderResolvedModule, declaration
           name: parameter.name,
           ...(parameter.variance !== undefined ? { variance: parameter.variance } : {}),
         })),
+      }
+      : {}),
+  };
+}
+
+function getProviderVirtualDeclarationFact(virtualModule: ProviderResolvedModule, declaration?: ProviderExportDeclaration): ProviderVirtualDeclarationFact {
+  return {
+    providerId: virtualModule.provider.identity.id,
+    providerVersion: virtualModule.provider.identity.version,
+    providerModuleId: virtualModule.resolution.providerModuleId,
+    moduleSpecifier: virtualModule.resolution.moduleSpecifier,
+    virtualFileName: virtualModule.resolution.virtualFileName,
+    ...(declaration !== undefined ? { exportName: declaration.name } : {}),
+    ...(declaration?.targetIdentity !== undefined
+      ? {
+        targetIdentity: {
+          kind: "target-named",
+          id: declaration.targetIdentity.id,
+        } satisfies TargetTypeRef,
       }
       : {}),
   };

@@ -66,6 +66,7 @@ export const ExtensionHostDiagnosticCode = {
   providerOwnershipConflict: 9000016,
   providerResolutionFailed: 9000017,
   invalidProviderDeclaration: 9000018,
+  lifecycleHookFailed: 9000019,
 } as const;
 
 export interface CompilerExtensionIdentity {
@@ -109,6 +110,7 @@ export interface ExtensionInitializeContext {
   readonly providers: ProviderRegistry;
   readonly registerDecisionOwner: (question: string, extensionId: string) => void;
   readonly registerDecisionHook: <TRequest, TResult>(question: string, hook: ExtensionDecisionHook<TRequest, TResult>) => void;
+  readonly registerLifecycleHook: <TRequest>(event: string, hook: ExtensionLifecycleHook<TRequest>) => void;
   readonly registerTargetBindingProvider: (provider: TargetBindingProvider) => boolean;
   readonly registerTargetSemanticProvider: (provider: TargetSemanticProvider) => boolean;
 }
@@ -282,6 +284,29 @@ export interface ProviderResolvedModule {
   readonly cacheKey: string;
 }
 
+export const ExtensionLifecycleEvent = {
+  afterSourceFileBound: "binder.afterSourceFileBound",
+  beforeSemanticsFinalized: "semantics.beforeFinalized",
+} as const;
+
+export interface ExtensionLifecycleContext {
+  readonly event: string;
+  readonly extensionId: string;
+  readonly host: ExtensionHost;
+}
+
+export type ExtensionLifecycleHook<TRequest> = (request: TRequest, context: ExtensionLifecycleContext) => void;
+
+export interface SourceFileBoundLifecycleRequest {
+  readonly sourceFile: ExtensionFactSubject;
+  readonly fileName: string;
+  readonly providerVirtualModule?: ProviderResolvedModule;
+}
+
+export interface BeforeSemanticsFinalizedLifecycleRequest {
+  readonly host: ExtensionHost;
+}
+
 export type ProviderModuleResolveResult =
   | { readonly kind: "unowned" }
   | { readonly kind: "resolved"; readonly module: ProviderResolvedModule }
@@ -315,6 +340,11 @@ export interface TargetSemanticProvider {
 interface RegisteredDecisionHook {
   readonly extensionId: string;
   readonly hook: ExtensionDecisionHook<unknown, unknown>;
+}
+
+interface RegisteredLifecycleHook {
+  readonly extensionId: string;
+  readonly hook: ExtensionLifecycleHook<unknown>;
 }
 
 export interface ExtendedProgram<TProgram extends object = object> {
@@ -694,6 +724,7 @@ export class ExtensionHost {
   readonly #extensionsById = new Map<string, CompilerExtension>();
   readonly #decisionOwners = new Map<string, string>();
   readonly #decisionHooks = new Map<string, RegisteredDecisionHook[]>();
+  readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
   #finalized = false;
 
   constructor(program: object, options: ExtensionHostOptions = {}) {
@@ -768,6 +799,19 @@ export class ExtensionHost {
     };
     if (hooks === undefined) {
       this.#decisionHooks.set(question, [registered]);
+      return;
+    }
+    hooks.push(registered);
+  }
+
+  registerLifecycleHook<TRequest>(event: string, extensionId: string, hook: ExtensionLifecycleHook<TRequest>): void {
+    const hooks = this.#lifecycleHooks.get(event);
+    const registered: RegisteredLifecycleHook = {
+      extensionId,
+      hook: hook as ExtensionLifecycleHook<unknown>,
+    };
+    if (hooks === undefined) {
+      this.#lifecycleHooks.set(event, [registered]);
       return;
     }
     hooks.push(registered);
@@ -861,10 +905,35 @@ export class ExtensionHost {
     return nonDeferred[0]!;
   }
 
+  runLifecycle<TRequest>(event: string, request: TRequest): void {
+    const hooks = this.#lifecycleHooks.get(event);
+    if (hooks === undefined) {
+      return;
+    }
+    for (const registered of hooks) {
+      try {
+        registered.hook(request, {
+          event,
+          extensionId: registered.extensionId,
+          host: this,
+        });
+      } catch (error) {
+        this.diagnostics.append(createHostDiagnostic({
+          extensionCode: "LIFECYCLE_HOOK_FAILED",
+          numericCode: ExtensionHostDiagnosticCode.lifecycleHookFailed,
+          message: `Extension '${registered.extensionId}' failed during lifecycle event '${event}'.`,
+          evidence: [{ message: "Thrown value", details: error }],
+          identity: `lifecycle-hook-failed:${event}:${registered.extensionId}`,
+        }));
+      }
+    }
+  }
+
   finalizeSemantics(): void {
     if (this.#finalized) {
       return;
     }
+    this.runLifecycle<BeforeSemanticsFinalizedLifecycleRequest>(ExtensionLifecycleEvent.beforeSemanticsFinalized, { host: this });
     this.facts.seal();
     this.#finalized = true;
   }
@@ -911,6 +980,7 @@ export class ExtensionHost {
           providers: this.providers,
           registerDecisionOwner: (question, extensionId) => this.registerDecisionOwner(question, extensionId),
           registerDecisionHook: (question, hook) => this.registerDecisionHook(question, extension.identity.id, hook),
+          registerLifecycleHook: (event, hook) => this.registerLifecycleHook(event, extension.identity.id, hook),
           registerTargetBindingProvider: (provider) => this.providers.registerTargetBindingProvider(provider),
           registerTargetSemanticProvider: (provider) => this.registerTargetSemanticProvider(extension.identity.id, provider),
         });

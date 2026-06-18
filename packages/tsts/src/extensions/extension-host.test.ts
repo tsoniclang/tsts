@@ -3,18 +3,22 @@ import assert from "node:assert/strict";
 import {
   ExtensionHost,
   ExtensionHostDiagnosticCode,
+  ExtensionLifecycleEvent,
   ExtensionDecisionQuestion,
   acceptDecision,
+  argumentPassingFactKey,
   attachExtensionHost,
   associatedTypeFactKey,
   canonicalIdentityFactKey,
   constGenericFactKey,
+  createExtensionConsumerQueries,
   defineExtensionFactKey,
   deferDecision,
   flowStateFactKey,
   getExtensionHost,
   hasExtensionHost,
   rejectDecision,
+  runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   surfaceOperationFactKey,
@@ -36,6 +40,7 @@ import type {
   ResolvePropertyAccessRequest,
   SatisfiesConstraintRequest,
   SelectedTargetSignatureFact,
+  SourceFileBoundLifecycleRequest,
   SurfaceOperationFact,
   TargetBindingFact,
   TargetBindingProvider,
@@ -511,6 +516,36 @@ test("semantic finalization seals facts and gates consumer reads", () => {
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.factStoreSealed);
 });
 
+test("lifecycle hooks run before semantic finalization seals facts", () => {
+  const sourceFile = {};
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("source-core", {
+        initialize: (context) => {
+          context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
+            if (request.sourceFile === sourceFile && request.fileName === "/src/index.ts") {
+              context.facts.set(request.sourceFile, primitiveFactKey, "int32");
+            }
+          });
+          context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, () => {
+            context.facts.set("finalization-marker", primitiveFactKey, "int64");
+          });
+        },
+      }),
+    ],
+  });
+
+  host.runLifecycle(ExtensionLifecycleEvent.afterSourceFileBound, {
+    sourceFile,
+    fileName: "/src/index.ts",
+  });
+  assert.equal(host.facts.get(sourceFile, primitiveFactKey), "int32");
+
+  host.finalizeSemantics();
+  assert.equal(host.facts.get("finalization-marker", primitiveFactKey), "int64");
+  assert.equal(host.facts.set("after-finalize", primitiveFactKey, "uint32"), "sealed");
+});
+
 test("canonical identity facts are consumer-queryable after finalization", () => {
   const host = new ExtensionHost({});
   const localAlias = {};
@@ -528,6 +563,54 @@ test("canonical identity facts are consumer-queryable after finalization", () =>
   host.finalizeSemantics();
 
   assert.equal(host.getFactForConsumer("emitter", localAlias, canonicalIdentityFactKey)?.exportName, "int");
+});
+
+test("consumer query facade exposes finalized target facts without fallback inference", () => {
+  const call = {};
+  const propertyAccess = {};
+  const argument = {};
+  const runtimeType = {};
+  const host = new ExtensionHost({});
+
+  host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
+  host.facts.set(propertyAccess, surfaceOperationFactKey, surfaceOperation("System.String.Length", "property"));
+  host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
+  host.facts.set(runtimeType, runtimeCarrierFactKey, {
+    carrier: { kind: "target-named", id: "System.Int32" },
+    requiresAllocation: false,
+  });
+
+  const consumer = createExtensionConsumerQueries(host, "emitter");
+  assert.equal(consumer.getSelectedTargetCall(call), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
+
+  host.finalizeSemantics();
+  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "System.Console.WriteLine(System.Int32)");
+  assert.equal(consumer.getSelectedTargetProperty(propertyAccess)?.operationId, "System.String.Length");
+  assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
+  assert.equal(consumer.getRuntimeCarrierFact(runtimeType)?.carrier.kind, "target-named");
+});
+
+test("lifecycle hook failures are diagnostics with extension identity", () => {
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("bad-extension", {
+        initialize: (context) => {
+          context.registerLifecycleHook(ExtensionLifecycleEvent.afterSourceFileBound, () => {
+            throw new Error("boom");
+          });
+        },
+      }),
+    ],
+  });
+
+  host.runLifecycle(ExtensionLifecycleEvent.afterSourceFileBound, {
+    sourceFile: {},
+    fileName: "/src/index.ts",
+  });
+
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.lifecycleHookFailed);
+  assert.equal(host.diagnostics.all()[0]?.extensionId, "tsts.extension-host");
 });
 
 test("diagnostics are deduplicated by stable identity", () => {

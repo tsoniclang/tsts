@@ -20,8 +20,8 @@ import type { ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { attachExtensionHost } from "./index.js";
-import { canonicalIdentityFactKey, targetBindingFactKey } from "./index.js";
+import { attachExtensionHost, createExtensionConsumerQueries, finalizeExtensionSemantics } from "./index.js";
+import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, TargetBindingProvider, TargetIdentity } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
@@ -77,8 +77,15 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.ok(searchValuesSymbol !== undefined);
 
   assert.equal(extended.extensionHost.facts.get(virtualFile, canonicalIdentityFactKey)?.id, "System.Buffers");
+  assert.equal(extended.extensionHost.facts.get(virtualFile, providerVirtualDeclarationFactKey)?.providerId, "dotnet-provider");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, canonicalIdentityFactKey)?.exportName, "SearchValues");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getVirtualDeclaration(virtualFile)?.providerModuleId, "System.Buffers");
+  assert.equal(consumer.getVirtualDeclaration(searchValuesSymbol)?.exportName, "SearchValues");
+  assert.equal(consumer.getTargetBindingFact(searchValuesSymbol)?.id, "System.Buffers.SearchValues`1");
 });
 
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {

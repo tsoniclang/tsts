@@ -1,4 +1,5 @@
 export {
+  ExtensionLifecycleEvent,
   ExtensionDiagnosticStore,
   ExtensionFactResolver,
   ExtensionFactStore,
@@ -10,6 +11,13 @@ export {
   getExtensionHost,
   hasExtensionHost,
 } from "./host.js";
+export {
+  ExtensionConsumerQueries,
+  createExtensionConsumerQueries,
+} from "./consumer.js";
+export {
+  finalizeExtensionSemantics,
+} from "./compiler-integration.js";
 export {
   ExtensionDecisionQuestion,
   acceptDecision,
@@ -23,6 +31,8 @@ export {
   constGenericFactKey,
   flowStateFactKey,
   instantiatedTargetTypeFactKey,
+  providerVirtualDeclarationFactKey,
+  runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   surfaceOperationFactKey,
@@ -50,6 +60,8 @@ export type {
   ExtensionFactWriteResult,
   ExtensionHostOptions,
   ExtensionInitializeContext,
+  ExtensionLifecycleContext,
+  ExtensionLifecycleHook,
   ProviderDeclarationKind,
   ProviderDeclarationModel,
   ProviderExportDeclaration,
@@ -65,9 +77,11 @@ export type {
   ProviderSymbolIdentity,
   ProviderTypeParameterDeclaration,
   ProviderTypeExpression,
+  SourceFileBoundLifecycleRequest,
   TargetBindingProvider,
   TargetIdentity,
   TargetSemanticProvider,
+  BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
 export type {
   AssignabilityRequest,
@@ -110,6 +124,8 @@ export type {
   FunctionPointerFact,
   InstantiatedTargetTypeFact,
   PointerFact,
+  ProviderVirtualDeclarationFact,
+  RuntimeCarrierFact,
   SelectedTargetSignatureFact,
   SourcePointerMutability,
   SourcePrimitiveFact,
