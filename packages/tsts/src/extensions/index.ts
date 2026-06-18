@@ -16,6 +16,9 @@ export {
   createExtensionConsumerQueries,
 } from "./consumer.js";
 export {
+  createSourceCoreExtension,
+} from "./source-core.js";
+export {
   finalizeExtensionSemantics,
 } from "./compiler-integration.js";
 export {
@@ -83,6 +86,11 @@ export type {
   TargetSemanticProvider,
   BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
+export type {
+  SourceCoreExtensionOptions,
+  SourceCoreModuleIdentity,
+  SourcePrimitiveDeclaration,
+} from "./source-core.js";
 export type {
   AssignabilityRequest,
   ContextualTypeRequest,
