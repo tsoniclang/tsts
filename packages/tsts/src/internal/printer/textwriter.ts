@@ -14,7 +14,7 @@ import type { EmitTextWriter } from "./emittextwriter.js";
 // byte slicing `s[i:]` operates on byte offsets. We mirror that contract by
 // operating over the UTF-8 byte view and converting back at the boundaries.
 const utf8Encoder: TextEncoder = new globalThis.TextEncoder();
-const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+const utf8Decoder: TextDecoder = new globalThis.TextDecoder("utf-8", { ignoreBOM: true });
 const byteLen = (s: string): int => utf8Encoder.encode(s).length;
 const byteSliceFrom = (s: string, start: int): string => {
   const bytes = utf8Encoder.encode(s);

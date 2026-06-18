@@ -780,7 +780,7 @@ function emitData(schema) {
   lines.push(`  propagateObjectBindingElementSubtreeFacts,`);
   lines.push(`  propagateSubtreeFacts,`);
   lines.push(`} from "../subtreefacts.js";`);
-  lines.push(`import type * as Kinds from "./kinds.js";`);
+  lines.push(`import * as Kinds from "./kinds.js";`);
   lines.push(`import * as Factory from "./factory.js";`);
   lines.push(`import * as AstManual from "../ast.js";`);
   // base interfaces and node-unions referenced by concrete fields / extends
@@ -1037,7 +1037,11 @@ function emitGeneratedVisitHelpers(lines) {
   lines.push(`  if (node === undefined || receiver!.Visit === undefined) {`);
   lines.push(`    return node;`);
   lines.push(`  }`);
-  lines.push(`  return generatedLiftToBlock(v, receiver!.Visit(node));`);
+  lines.push(`  const visited = receiver!.Visit(node);`);
+  lines.push(`  if (visited === undefined) {`);
+  lines.push(`    return undefined;`);
+  lines.push(`  }`);
+  lines.push(`  return generatedLiftToBlock(v, visited);`);
   lines.push(`}`);
   lines.push("");
   lines.push(`function generatedVisitEmbeddedStatement(v: GoPtr<NodeVisitor>, node: GoPtr<Statement>): GoPtr<Statement> {`);
@@ -1136,7 +1140,21 @@ function cloneArgList(schema, node) {
 function emitCloneFreeFn(schema, node, lines) {
   const args = cloneArgList(schema, node).join(", ");
   lines.push(`export function ${node}_Clone(receiver: GoPtr<${node}>, f: NodeFactoryCoercible): GoPtr<Node> {`);
-  lines.push(`  return cloneNode(Factory.New${node}(f.AsNodeFactory()!, ${args}), receiver, f.AsNodeFactory()!.hooks);`);
+  const aliases = schema.kindAliasesOf(node);
+  if (aliases.length === 0) {
+    lines.push(`  return cloneNode(Factory.New${node}(f.AsNodeFactory()!, ${args}), receiver, f.AsNodeFactory()!.hooks);`);
+  } else {
+    lines.push(`  switch (NodeDefault_AsNode(receiver)!.Kind) {`);
+    lines.push(`    case Kinds.Kind${schema.syntaxKindName(node)}:`);
+    lines.push(`      return cloneNode(Factory.New${node}(f.AsNodeFactory()!, ${args}), receiver, f.AsNodeFactory()!.hooks);`);
+    for (const alias of aliases) {
+      lines.push(`    case Kinds.Kind${alias}:`);
+      lines.push(`      return cloneNode(Factory.New${alias}(f.AsNodeFactory()!, ${args}), receiver, f.AsNodeFactory()!.hooks);`);
+    }
+    lines.push(`    default:`);
+    lines.push(`      throw new globalThis.Error("unexpected kind in ${node}_Clone: " + NodeDefault_AsNode(receiver)!.Kind);`);
+    lines.push(`  }`);
+  }
   lines.push(`}`);
   lines.push("");
 }
@@ -1454,7 +1472,21 @@ function emitUpdateFactory(schema, node, lines) {
   const comparisons = updateMembers.map((m) => `${m.goParamName()} !== ${updateCompareAccess(m)}`);
   lines.push(`  if (${comparisons.join(" || ")}) {`);
   const newArgs = members.map((m) => (m.isKindParam() ? "node!.Kind" : m.goParamName())).join(", ");
-  lines.push(`    return updateNode(New${node}(receiver, ${newArgs}), NodeDefault_AsNode(node), receiver!.hooks);`);
+  const aliases = schema.kindAliasesOf(node);
+  if (aliases.length === 0) {
+    lines.push(`    return updateNode(New${node}(receiver, ${newArgs}), NodeDefault_AsNode(node), receiver!.hooks);`);
+  } else {
+    lines.push(`    switch (NodeDefault_AsNode(node)!.Kind) {`);
+    lines.push(`      case Kind${schema.syntaxKindName(node)}:`);
+    lines.push(`        return updateNode(New${node}(receiver, ${newArgs}), NodeDefault_AsNode(node), receiver!.hooks);`);
+    for (const alias of aliases) {
+      lines.push(`      case Kind${alias}:`);
+      lines.push(`        return updateNode(New${alias}(receiver, ${newArgs}), NodeDefault_AsNode(node), receiver!.hooks);`);
+    }
+    lines.push(`      default:`);
+    lines.push(`        throw new globalThis.Error("unexpected kind in NodeFactory_Update${node}: " + NodeDefault_AsNode(node)!.Kind);`);
+    lines.push(`    }`);
+  }
   lines.push(`  }`);
   lines.push(`  return NodeDefault_AsNode(node);`);
   lines.push(`}`);
