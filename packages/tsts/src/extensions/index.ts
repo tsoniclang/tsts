@@ -10,6 +10,23 @@ export {
   getExtensionHost,
   hasExtensionHost,
 } from "./host.js";
+export {
+  ExtensionDecisionQuestion,
+  acceptDecision,
+  deferDecision,
+  rejectDecision,
+} from "./decisions.js";
+export {
+  argumentPassingFactKey,
+  associatedTypeFactKey,
+  constGenericFactKey,
+  flowStateFactKey,
+  instantiatedTargetTypeFactKey,
+  selectedTargetSignatureFactKey,
+  sourcePrimitiveFactKey,
+  surfaceOperationFactKey,
+  targetBindingFactKey,
+} from "./facts.js";
 
 export type {
   CompilerExtension,
@@ -32,3 +49,48 @@ export type {
   ExtensionInitializeContext,
   TargetBindingMetadataHeader,
 } from "./host.js";
+export type {
+  AssignabilityRequest,
+  ContextualTypeRequest,
+  ContextualTypeResult,
+  ExtensionDecision,
+  ExtensionDecisionContext,
+  ExtensionDecisionHook,
+  ExtensionDecisionResult,
+  ExtensionDecisionRunOptions,
+  InferTypeArgumentsRequest,
+  InferTypeArgumentsResult,
+  ResolveCallRequest,
+  ResolveCallResult,
+  ResolveElementAccessRequest,
+  ResolveOperationResult,
+  ResolveOperatorRequest,
+  ResolvePropertyAccessRequest,
+  SatisfiesConstraintRequest,
+  ValidateFlowUseRequest,
+  ValidateFlowUseResult,
+} from "./decisions.js";
+export type {
+  ArgumentPassingFact,
+  ArgumentPassingMode,
+  AssociatedTypeFact,
+  AttributeFact,
+  ConstGenericFact,
+  FieldFact,
+  FlowStateFact,
+  FunctionPointerFact,
+  InstantiatedTargetTypeFact,
+  PointerFact,
+  SelectedTargetSignatureFact,
+  SourcePointerMutability,
+  SourcePrimitiveFact,
+  SourcePrimitiveKind,
+  StructFact,
+  SurfaceOperationFact,
+  TargetBindingFact,
+  TargetConstraint,
+  TargetMember,
+  TargetParameter,
+  TargetTypeParameter,
+  TargetTypeRef,
+} from "./facts.js";

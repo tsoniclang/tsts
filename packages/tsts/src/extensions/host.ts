@@ -2,6 +2,8 @@ export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 
 export type ExtensionFactSubject = object | string | number | bigint | boolean | symbol | null | undefined;
 
+import type { ExtensionDecision, ExtensionDecisionHook, ExtensionDecisionResult, ExtensionDecisionRunOptions } from "./decisions.js";
+
 export interface ExtensionEvidence {
   readonly message: string;
   readonly details?: unknown;
@@ -30,6 +32,8 @@ export const ExtensionHostDiagnosticCode = {
   factStoreSealed: 9000008,
   consumerBeforeFinalization: 9000009,
   invalidMetadata: 9000010,
+  decisionOwnerDeferred: 9000011,
+  decisionConflict: 9000012,
 } as const;
 
 export interface CompilerExtensionIdentity {
@@ -63,6 +67,7 @@ export interface ExtensionInitializeContext {
   readonly diagnostics: ExtensionDiagnosticStore;
   readonly metadata: ExtensionMetadataRegistry;
   readonly registerDecisionOwner: (question: string, extensionId: string) => void;
+  readonly registerDecisionHook: <TRequest, TResult>(question: string, hook: ExtensionDecisionHook<TRequest, TResult>) => void;
 }
 
 export interface ExtensionFactKey<T> {
@@ -112,6 +117,11 @@ export interface TargetBindingMetadataHeader {
 export interface ExtensionHostOptions {
   readonly extensions?: readonly CompilerExtension[];
   readonly supportedMetadataSchemas?: readonly string[];
+}
+
+interface RegisteredDecisionHook {
+  readonly extensionId: string;
+  readonly hook: ExtensionDecisionHook<unknown, unknown>;
 }
 
 export interface ExtendedProgram<TProgram extends object = object> {
@@ -359,6 +369,7 @@ export class ExtensionHost {
   readonly extensions: readonly CompilerExtension[];
   readonly #extensionsById = new Map<string, CompilerExtension>();
   readonly #decisionOwners = new Map<string, string>();
+  readonly #decisionHooks = new Map<string, RegisteredDecisionHook[]>();
   #finalized = false;
 
   constructor(program: object, options: ExtensionHostOptions = {}) {
@@ -413,6 +424,96 @@ export class ExtensionHost {
     return undefined;
   }
 
+  registerDecisionHook<TRequest, TResult>(question: string, extensionId: string, hook: ExtensionDecisionHook<TRequest, TResult>): void {
+    const hooks = this.#decisionHooks.get(question);
+    const registered: RegisteredDecisionHook = {
+      extensionId,
+      hook: hook as ExtensionDecisionHook<unknown, unknown>,
+    };
+    if (hooks === undefined) {
+      this.#decisionHooks.set(question, [registered]);
+      return;
+    }
+    hooks.push(registered);
+  }
+
+  runDecision<TRequest, TResult>(
+    question: string,
+    request: TRequest,
+    core: () => TResult,
+    options: ExtensionDecisionRunOptions = {},
+  ): ExtensionDecisionResult<TResult> {
+    const owner = this.getDecisionOwner(question);
+    if (owner === undefined && options.requireOwner === true) {
+      this.requireDecisionOwner(question);
+      return { kind: "missing-owner", question };
+    }
+
+    const hooks = this.#decisionHooks.get(question) ?? [];
+    const selectedHooks = owner === undefined ? hooks : hooks.filter((hook) => hook.extensionId === owner.identity.id);
+
+    if (selectedHooks.length === 0) {
+      if (owner !== undefined && options.requireOwner === true) {
+        this.diagnostics.append(createHostDiagnostic({
+          extensionCode: "DECISION_OWNER_DEFERRED",
+          numericCode: ExtensionHostDiagnosticCode.decisionOwnerDeferred,
+          message: `Extension '${owner.identity.id}' owns semantic question '${question}' but registered no decision hook.`,
+          identity: `decision-owner-no-hook:${question}:${owner.identity.id}`,
+        }));
+        return { kind: "owner-deferred", question, extensionId: owner.identity.id };
+      }
+      return { kind: "core", value: core() };
+    }
+
+    const nonDeferred: Array<ExtensionDecisionResult<TResult>> = [];
+    for (const registered of selectedHooks) {
+      const decision = registered.hook(request, {
+        question,
+        extensionId: registered.extensionId,
+      }) as ExtensionDecision<TResult>;
+      if (decision.kind === "defer") {
+        continue;
+      }
+      if (decision.kind === "reject") {
+        this.diagnostics.append(decision.diagnostic);
+        nonDeferred.push({ kind: "reject", diagnostic: decision.diagnostic, extensionId: registered.extensionId });
+        continue;
+      }
+      nonDeferred.push({
+        kind: "accept",
+        value: decision.value,
+        extensionId: registered.extensionId,
+        ...(decision.evidence !== undefined ? { evidence: decision.evidence } : {}),
+      });
+    }
+
+    if (nonDeferred.length === 0) {
+      if (owner !== undefined && options.requireOwner === true) {
+        this.diagnostics.append(createHostDiagnostic({
+          extensionCode: "DECISION_OWNER_DEFERRED",
+          numericCode: ExtensionHostDiagnosticCode.decisionOwnerDeferred,
+          message: `Extension '${owner.identity.id}' owns semantic question '${question}' but deferred the decision.`,
+          identity: `decision-owner-deferred:${question}:${owner.identity.id}`,
+        }));
+        return { kind: "owner-deferred", question, extensionId: owner.identity.id };
+      }
+      return { kind: "core", value: core() };
+    }
+
+    if (owner === undefined && nonDeferred.length > 1) {
+      this.diagnostics.append(createHostDiagnostic({
+        extensionCode: "DECISION_CONFLICT",
+        numericCode: ExtensionHostDiagnosticCode.decisionConflict,
+        message: `Multiple extensions answered semantic question '${question}' without a registered owner.`,
+        evidence: nonDeferred.map((decision) => ({ message: `Decision kind: ${decision.kind}`, details: decision })),
+        identity: `decision-conflict:${question}`,
+      }));
+      return { kind: "conflict", question };
+    }
+
+    return nonDeferred[0]!;
+  }
+
   finalizeSemantics(): void {
     if (this.#finalized) {
       return;
@@ -455,6 +556,7 @@ export class ExtensionHost {
           diagnostics: this.diagnostics,
           metadata: this.metadata,
           registerDecisionOwner: (question, extensionId) => this.registerDecisionOwner(question, extensionId),
+          registerDecisionHook: (question, hook) => this.registerDecisionHook(question, extension.identity.id, hook),
         });
       } catch (error) {
         this.diagnostics.append(createHostDiagnostic({
