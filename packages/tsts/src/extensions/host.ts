@@ -477,6 +477,7 @@ export class ProviderRegistry {
   readonly #bindingProviders = new Map<string, TargetBindingProvider>();
   readonly #semanticProviders = new Map<string, TargetSemanticProvider>();
   readonly #virtualModules = new Map<string, ProviderResolvedModule>();
+  readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
 
   constructor(diagnostics: ExtensionDiagnosticStore) {
     this.#diagnostics = diagnostics;
@@ -606,7 +607,12 @@ export class ProviderRegistry {
       cacheKey,
     };
     this.#virtualModules.set(cacheKey, module);
+    this.#virtualModulesByFileName.set(resolution.virtualFileName, module);
     return { kind: "resolved", module };
+  }
+
+  getVirtualModuleByFileName(fileName: string): ProviderResolvedModule | undefined {
+    return this.#virtualModulesByFileName.get(fileName);
   }
 
   #collectModuleOwners(specifier: string, context: ProviderModuleContext): { readonly kind: "unowned" } | { readonly kind: "owned"; readonly provider: TargetBindingProvider } | { readonly kind: "rejected"; readonly diagnostic: ExtensionDiagnostic } | { readonly kind: "conflict"; readonly providers: readonly TargetBindingProvider[] } {
@@ -645,6 +651,8 @@ export class ExtensionHost {
   readonly factResolver: ExtensionFactResolver;
   readonly providers: ProviderRegistry;
   readonly extensions: readonly CompilerExtension[];
+  readonly activeTarget: string | undefined;
+  readonly activeSurface: string | undefined;
   readonly #extensionsById = new Map<string, CompilerExtension>();
   readonly #decisionOwners = new Map<string, string>();
   readonly #decisionHooks = new Map<string, RegisteredDecisionHook[]>();
@@ -656,6 +664,8 @@ export class ExtensionHost {
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
     this.providers = new ProviderRegistry(this.diagnostics);
+    this.activeTarget = options.activeTarget;
+    this.activeSurface = options.activeSurface;
     this.extensions = orderExtensions(options.extensions ?? [], this.diagnostics);
     for (const extension of this.extensions) {
       this.#extensionsById.set(extension.identity.id, extension);
