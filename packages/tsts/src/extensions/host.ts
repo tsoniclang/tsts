@@ -67,6 +67,7 @@ export const ExtensionHostDiagnosticCode = {
   providerResolutionFailed: 9000017,
   invalidProviderDeclaration: 9000018,
   lifecycleHookFailed: 9000019,
+  requiredFactMissing: 9000020,
 } as const;
 
 export interface CompilerExtensionIdentity {
@@ -725,6 +726,8 @@ export class ExtensionHost {
   readonly #decisionOwners = new Map<string, string>();
   readonly #decisionHooks = new Map<string, RegisteredDecisionHook[]>();
   readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
+  readonly #consumerSubjectIds = new WeakMap<object, number>();
+  #nextConsumerSubjectId = 1;
   #finalized = false;
 
   constructor(program: object, options: ExtensionHostOptions = {}) {
@@ -962,11 +965,49 @@ export class ExtensionHost {
     return this.factResolver.resolve(subject, key);
   }
 
+  requireFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject, key: ExtensionFactKey<T>, purpose?: string): T | undefined {
+    if (!this.assertFinalizedForConsumer(consumer)) {
+      return undefined;
+    }
+    const value = this.factResolver.resolve(subject, key);
+    if (value !== undefined) {
+      return value;
+    }
+    this.diagnostics.append(createHostDiagnostic({
+      extensionCode: "REQUIRED_FACT_MISSING",
+      numericCode: ExtensionHostDiagnosticCode.requiredFactMissing,
+      message: purpose === undefined
+        ? `Consumer '${consumer}' requires extension fact '${key.id}', but no finalized fact exists for the subject.`
+        : `Consumer '${consumer}' requires extension fact '${key.id}' for ${purpose}, but no finalized fact exists for the subject.`,
+      evidence: [
+        { message: "Consumer", details: consumer },
+        { message: "Fact key", details: key.id },
+        { message: "Subject", details: this.#getConsumerSubjectIdentity(subject) },
+      ],
+      identity: `required-fact-missing:${consumer}:${key.id}:${this.#getConsumerSubjectIdentity(subject)}:${purpose ?? ""}`,
+    }));
+    return undefined;
+  }
+
   getFactsForConsumer(consumer: string, subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
     if (!this.assertFinalizedForConsumer(consumer)) {
       return [];
     }
     return this.facts.entries(subject);
+  }
+
+  #getConsumerSubjectIdentity(subject: ExtensionFactSubject): string {
+    if (typeof subject !== "object" || subject === null) {
+      return `${typeof subject}:${String(subject)}`;
+    }
+    const existing = this.#consumerSubjectIds.get(subject);
+    if (existing !== undefined) {
+      return `object:${existing}`;
+    }
+    const created = this.#nextConsumerSubjectId;
+    this.#nextConsumerSubjectId += 1;
+    this.#consumerSubjectIds.set(subject, created);
+    return `object:${created}`;
   }
 
   #initializeExtensions(): void {

@@ -591,6 +591,25 @@ test("consumer query facade exposes finalized target facts without fallback infe
   assert.equal(consumer.getRuntimeCarrierFact(runtimeType)?.carrier.kind, "target-named");
 });
 
+test("required consumer facts report diagnostics instead of allowing fallback inference", () => {
+  const call = {};
+  const type = {};
+  const host = new ExtensionHost({});
+  const consumer = createExtensionConsumerQueries(host, "emitter");
+
+  host.finalizeSemantics();
+  assert.equal(consumer.requireSelectedTargetCall(call, "emitting provider-owned call"), undefined);
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+  assert.equal(host.diagnostics.all()[0]?.extensionCode, "REQUIRED_FACT_MISSING");
+
+  assert.equal(consumer.requireSelectedTargetCall(call, "emitting provider-owned call"), undefined);
+  assert.equal(host.diagnostics.all().length, 1);
+
+  host.facts.get(type, sourcePrimitiveFactKey);
+  assert.equal(consumer.requireSourcePrimitiveFact(type, "emitting source primitive"), undefined);
+  assert.equal(host.diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+});
+
 test("lifecycle hook failures are diagnostics with extension identity", () => {
   const host = new ExtensionHost({}, {
     extensions: [
