@@ -322,6 +322,72 @@ test("checker validates provider-owned flow use diagnostics from source-core mar
   assert.equal(extended.extensionHost.facts.get(movedUse, flowStateFactKey), undefined);
 });
 
+test("checker validates provider-owned assignability after normal TS compatibility", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { move } from "@tsonic/core/lang.js";
+
+      declare let source: number;
+      declare let target: number;
+      target = move(source);
+    `],
+    ["/src/node_modules/@tsonic/core/package.json", JSON.stringify({
+      name: "@tsonic/core",
+      version: "1.0.0",
+      type: "module",
+      exports: {
+        "./lang.js": {
+          types: "./lang.d.ts",
+          default: "./lang.js",
+        },
+      },
+    })],
+    ["/src/node_modules/@tsonic/core/lang.d.ts", "export declare function move<T>(value: T): T;"],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "rust",
+    extensions: [
+      createSourceCoreExtension(),
+      semanticOnlyExtension("rust-assignability-extension", rustAssignabilityProvider()),
+    ],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  Program_BindSourceFiles(program);
+  const moveCall = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(extended.extensionHost.facts.get(moveCall, flowStateFactKey)?.state, "moved");
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9920401);
+  assert.match(Diagnostic_String(diagnostics[0]), /RUST0401/);
+  assert.match(Diagnostic_String(diagnostics[0]), /moved expression cannot be assigned/);
+
+  const assignabilityDiagnostics = extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "RUST_MOVED_ASSIGNMENT");
+  assert.equal(assignabilityDiagnostics.length, 1);
+  assert.equal(assignabilityDiagnostics[0]?.nodeOrSpan, moveCall);
+});
+
 test("checker validates provider-owned target constraints through standard semantic diagnostics", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -585,6 +651,52 @@ test("extension-owned semantic rejections surface through standard diagnostics w
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
 });
 
+test("unsupported native surface operations are diagnostics, not fallback calls", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare const values: { push(value: number): number };
+      values.push(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    activeSurface: "native-array",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, rejectingNativeArrayPushProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  assert.equal(diagnostics.length, 1);
+  assert.equal(Diagnostic_Code(diagnostics[0]), 9910301);
+  assert.match(Diagnostic_String(diagnostics[0]), /DOTNET0301/);
+  assert.match(Diagnostic_String(diagnostics[0]), /native-array surface does not support push/);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(call, surfaceOperationFactKey), undefined);
+});
+
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `import { SearchValues } from "@tsonic/dotnet/System.Buffers.js";`],
@@ -745,6 +857,35 @@ function rustFlowSemanticProvider(): TargetSemanticProvider {
   };
 }
 
+function rustAssignabilityProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "rust-assignability-semantic-provider",
+      version: "1.0.0",
+      target: "rust",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    isAssignableTo: (request, context) => {
+      const state = context.facts.get(request.expression, flowStateFactKey);
+      if (state?.state !== "moved") {
+        return acceptDecision(true);
+      }
+      return rejectDecision({
+        extensionId: context.extensionId,
+        extensionCode: "RUST_MOVED_ASSIGNMENT",
+        numericCode: 9920401,
+        publicCode: "RUST0401",
+        category: "error",
+        message: "A moved expression cannot be assigned into target storage without target validation.",
+        nodeOrSpan: request.expression,
+        evidence: [{ message: "Source-core move marker", details: state }],
+        identity: `rust-moved-assignment:${String((request.expression as GoPtr<Node>)?.id ?? "unknown")}`,
+      });
+    },
+  };
+}
+
 function surfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-surface-semantic-provider"),
@@ -788,6 +929,23 @@ function rejectingCallSemanticProvider(): TargetSemanticProvider {
         evidence: [{ message: "Target range", details: "System.Byte accepts 0..255." }],
         identity: "dotnet-byte-range:/src/index.ts:toByte",
       },
+    }),
+  };
+}
+
+function rejectingNativeArrayPushProvider(): TargetSemanticProvider {
+  return {
+    identity: semanticProviderIdentity("dotnet-native-array-surface-provider"),
+    resolveCall: (request: ResolveCallRequest) => rejectDecision({
+      extensionId: "dotnet-native-array-surface-provider",
+      extensionCode: "DOTNET_NATIVE_ARRAY_PUSH",
+      numericCode: 9910301,
+      publicCode: "DOTNET0301",
+      category: "error",
+      message: "The active native-array surface does not support push; use a provider-supported collection surface.",
+      nodeOrSpan: request.call,
+      evidence: [{ message: "Surface capability", details: "native arrays expose fixed-size element access, not mutable push." }],
+      identity: "dotnet-native-array-push:/src/index.ts",
     }),
   };
 }

@@ -1,3 +1,4 @@
+import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../go/compat.js";
 import type { Node } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Expression, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
@@ -7,7 +8,7 @@ import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Type } from "../internal/checker/types.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
+import type { AssignabilityRequest, ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
 import { argumentPassingFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
@@ -244,6 +245,46 @@ export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWi
   setFactOnOptionalSubject(extensionHost, type.symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
 }
 
+export function recordExtensionAssignabilityValidation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: AssignabilityRequest["relation"]): bool {
+  if (checker === undefined) {
+    return true as bool;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.isAssignableTo) === undefined) {
+    return true as bool;
+  }
+
+  if (
+    !hasExtensionOwnedSubject(extensionHost, source)
+    && !hasExtensionOwnedSubject(extensionHost, target)
+    && !hasExtensionOwnedSubject(extensionHost, source?.symbol)
+    && !hasExtensionOwnedSubject(extensionHost, target?.symbol)
+    && !hasExtensionOwnedSubject(extensionHost, errorNode)
+    && !hasExtensionOwnedSubject(extensionHost, expression)
+  ) {
+    return true as bool;
+  }
+
+  const result = extensionHost.runDecision<AssignabilityRequest, boolean>(
+    ExtensionDecisionQuestion.isAssignableTo,
+    {
+      source,
+      target,
+      ...(relation !== undefined ? { relation } : {}),
+      ...(errorNode !== undefined ? { errorNode } : {}),
+      ...(expression !== undefined ? { expression } : {}),
+      ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
+    },
+    () => true,
+    { requireOwner: true },
+  );
+  if (result.kind !== "accept") {
+    return false as bool;
+  }
+  return result.value as bool;
+}
+
 export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgram>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {
   if (checker === undefined || useSite === undefined || symbol === undefined) {
     return;
@@ -360,6 +401,8 @@ function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: Extensi
   return extensionHost.facts.get(subject, targetBindingFactKey) !== undefined
     || extensionHost.facts.get(subject, providerVirtualDeclarationFactKey) !== undefined
     || extensionHost.facts.get(subject, sourcePrimitiveFactKey) !== undefined
+    || extensionHost.facts.get(subject, argumentPassingFactKey) !== undefined
+    || extensionHost.facts.get(subject, flowStateFactKey) !== undefined
     || extensionHost.facts.get(subject, runtimeCarrierFactKey) !== undefined;
 }
 

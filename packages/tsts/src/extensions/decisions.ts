@@ -61,6 +61,9 @@ export interface AssignabilityRequest {
   readonly source: ExtensionFactSubject;
   readonly target: ExtensionFactSubject;
   readonly relation?: "assignment" | "constraint" | "return" | "argument";
+  readonly errorNode?: ExtensionFactSubject;
+  readonly expression?: ExtensionFactSubject;
+  readonly targetPlatform?: string;
 }
 
 export interface ResolveCallRequest {

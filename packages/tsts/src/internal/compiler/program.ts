@@ -3030,6 +3030,7 @@ export function Program_getSemanticDiagnosticsWithChecker(receiver: GoPtr<Progra
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.getBindAndCheckDiagnosticsWithChecker","kind":"method","status":"implemented","sigHash":"58024f4d99ada564df7a23698f4cc8b6567aebe9250892ed517fdaae0f7ab8be","bodyHash":"c692dec725a0f679b5f3c530607a70c1efda4dbcf2b03c2aeb6de6c86e56976e"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Checker diagnostics force binding in TS-Go; extension-enabled programs must also publish bound-source lifecycle facts before checker hooks consume them. No-extension programs return immediately through the existing extension integration guard."}
  *
  * Go source:
  * func (p *Program) getBindAndCheckDiagnosticsWithChecker(ctx context.Context, fileChecker *checker.Checker, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -3072,6 +3073,7 @@ export function Program_getBindAndCheckDiagnosticsWithChecker(receiver: GoPtr<Pr
     return undefined!;
   }
 
+  recordBoundSourceFileExtensionFacts(receiver!.opts, sourceFile);
   let diags: GoPtr<Diagnostic>[] = slices.Clip(SourceFile_BindDiagnostics(sourceFile)) ?? [];
   diags = [...diags, ...(Checker_GetDiagnostics(fileChecker, ctx, sourceFile) ?? [])];
 
