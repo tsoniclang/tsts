@@ -2,7 +2,7 @@ import type { bool, int } from "@tsonic/core/types.js";
 import type { GoError, GoPtr, GoSlice } from "../../../go/compat.js";
 import { BigEndian, LittleEndian } from "../../../go/encoding/binary.js";
 import type { ByteOrder } from "../../../go/encoding/binary.js";
-import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFile as fs_ReadFile, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
+import { FileMode_IsDir, FileMode_IsRegular, ModeIrregular, ModeSymlink, ReadDir as fs_ReadDir, ReadFileBytes as fs_ReadFileBytes, Stat as fs_Stat, WalkDir as fs_WalkDir } from "../../../go/io/fs.js";
 import type { FileMode, FS, WalkDirFunc } from "../../../go/io/fs.js";
 import { GetEncodedRootLength, NormalizePath, RemoveTrailingDirectorySeparator } from "../../tspath/path.js";
 import type { DirEntry, Entries, FileInfo } from "../vfs.js";
@@ -350,6 +350,7 @@ export function Common_WalkDir(receiver: GoPtr<Common>, root: string, walkFn: Wa
  *
  * 	return decodeBytes(s)
  * }
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Decode bytes returned by the JS FS helper directly instead of materializing Go's unsafe.String intermediate as a binary JS string; observable BOM and UTF-8/UTF-16 decoding semantics remain TS-Go exact."}
  */
 export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string, bool] {
   const [fsys, , rest] = Common_RootAndPath(receiver, path);
@@ -357,20 +358,18 @@ export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string,
     return ["", false];
   }
 
-  const [b, err] = fs_ReadFile(fsys, rest) as [string, GoError];
+  const [b, err] = fs_ReadFileBytes(fsys, rest);
   if (err !== undefined) {
     return ["", false];
   }
 
   // In the Go source, len(b) == 0 check on the byte slice
-  if (b.length === 0) {
+  if (b.byteLength === 0) {
     return ["", true];
   }
 
   // Go: s := unsafe.String(&b[0], len(b)) -- bytes-to-string conversion
-  const s = b;
-
-  return decodeBytes(s);
+  return decodeBytesFromBytes(b);
 }
 
 /**
@@ -396,15 +395,18 @@ export function Common_ReadFile(receiver: GoPtr<Common>, path: string): [string,
  * }
  */
 export function decodeBytes(s: string): [string, bool] {
-  let bytes = binaryStringToBytes(s);
+  return decodeBytesFromBytes(binaryStringToBytes(s));
+}
+
+function decodeBytesFromBytes(bytes: Uint8Array): [string, bool] {
   if (bytes.length >= 2) {
     const bom0 = bytes[0]!;
     const bom1 = bytes[1]!;
     if (bom0 === 0xFF && bom1 === 0xFE) {
-      return [decodeUtf16(s.slice(2), LittleEndian as unknown as ByteOrder), true];
+      return [decodeUtf16Bytes(bytes.subarray(2), LittleEndian as unknown as ByteOrder), true];
     }
     if (bom0 === 0xFE && bom1 === 0xFF) {
-      return [decodeUtf16(s.slice(2), BigEndian as unknown as ByteOrder), true];
+      return [decodeUtf16Bytes(bytes.subarray(2), BigEndian as unknown as ByteOrder), true];
     }
   }
   if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
@@ -427,7 +429,10 @@ export function decodeBytes(s: string): [string, bool] {
  * }
  */
 export function decodeUtf16(s: string, order: ByteOrder): string {
-  const bytes = binaryStringToBytes(s);
+  return decodeUtf16Bytes(binaryStringToBytes(s), order);
+}
+
+function decodeUtf16Bytes(bytes: Uint8Array, order: ByteOrder): string {
   const codeUnits: number[] = [];
   for (let offset = 0; offset + 1 < bytes.length; offset += 2) {
     codeUnits.push(order.Uint16([bytes[offset]!, bytes[offset + 1]!] as GoSlice<number>) as number);

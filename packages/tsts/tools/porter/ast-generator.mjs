@@ -1217,45 +1217,52 @@ function emitComputeSubtreeFactsFreeFn(schema, node, lines) {
 }
 
 function emitAdapter(schema, node, lines) {
-  lines.push(`export function ${node}_as_nodeData(receiver: GoPtr<${node}>): nodeData {`);
-  lines.push(`  return {`);
-  lines.push(`    [goReceiverKey]: receiver,`);
+  lines.push(`const ${node}_nodeDataPrototype: nodeData & ThisType<GoPtr<${node}>> = {`);
+  lines.push(`  get [goReceiverKey](): GoPtr<${node}> { return this; },`);
   for (const method of NODE_DATA_METHODS) {
     const t = resolveAdapterTarget(schema, node, method);
-    const slot = adapterSlot(method, t);
-    lines.push(`    ${slot}`);
+    const slot = adapterSlot(node, method, t);
+    lines.push(`  ${slot}`);
   }
-  lines.push(`  };`);
+  lines.push(`};`);
+  lines.push("");
+  lines.push(`export function ${node}_as_nodeData(receiver: GoPtr<${node}>): nodeData {`);
+  lines.push(`  return globalThis.Object.setPrototypeOf(receiver!, ${node}_nodeDataPrototype) as nodeData;`);
+  lines.push(`}`);
+  lines.push("");
+  lines.push(`export function create${node}Data(): ${node} & nodeData {`);
+  lines.push(`  return globalThis.Object.create(${node}_nodeDataPrototype) as ${node} & nodeData;`);
   lines.push(`}`);
   lines.push("");
 }
 
-function adapterSlot(method, t) {
+function adapterSlot(node, method, t) {
+  const receiver = `this`;
   if (method === "Clone") {
-    return `Clone: (f: NodeFactoryCoercible): GoPtr<Node> => ${t.fn}(receiver, f),`;
+    return `Clone(f: NodeFactoryCoercible): GoPtr<Node> { return ${t.fn}(${receiver}, f); },`;
   }
   if (method === "ForEachChild") {
-    return `ForEachChild: (v: Visitor): bool => ${t.fn}(receiver, v),`;
+    return `ForEachChild(v: Visitor): bool { return ${t.fn}(${receiver}, v); },`;
   }
   if (method === "VisitEachChild") {
     if (t.takesConcreteNodeVisitor) {
-      return `VisitEachChild: (v) => ${t.fn}(receiver, v as GoPtr<ConcreteNodeVisitor>),`;
+      return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v as GoPtr<ConcreteNodeVisitor>); },`;
     }
-    return `VisitEachChild: (v) => ${t.fn}(receiver, v),`;
+    return `VisitEachChild(v: GoPtr<NodeVisitor>): GoPtr<Node> { return ${t.fn}(${receiver}, v); },`;
   }
   if (method === "IterChildren") {
-    return `IterChildren: (): NodeIter => NodeDefault_IterChildren(receiver),`;
+    return `IterChildren(): NodeIter { return NodeDefault_IterChildren(${receiver}); },`;
   }
   if (method === "setModifiers") {
-    return `setModifiers: (modifiers): void => ${t.fn}(receiver, modifiers),`;
+    return `setModifiers(modifiers: GoPtr<ModifierList>): void { ${t.fn}(${receiver}, modifiers); },`;
   }
   if (method === "subtreeFactsWorker") {
-    return `subtreeFactsWorker: (self): SubtreeFacts => ${t.fn}(receiver, self),`;
+    return `subtreeFactsWorker(self: nodeData): SubtreeFacts { return ${t.fn}(${receiver}, self); },`;
   }
   if (method === "AsNode") {
-    return `AsNode: (): GoPtr<Node> => ${t.fn}(receiver),`;
+    return `AsNode(): GoPtr<Node> { return ${t.fn}(${receiver}); },`;
   }
-  return `${method}: () => ${t.fn}(receiver),`;
+  return `${method}() { return ${t.fn}(${receiver}); },`;
 }
 
 // ── factory.ts (NodeFactory struct + New/Clone factories) ────────────────────
@@ -1273,7 +1280,7 @@ function emitFactory(schema) {
   lines.push(`import {`);
   for (const node of schema.nodeNames()) {
     if (schema.definitions[node].handWritten) continue;
-    lines.push(`  ${node}_as_nodeData,`);
+    lines.push(`  create${node}Data,`);
   }
   lines.push(`} from "./data.js";`);
   lines.push(`import type {`);
@@ -1404,7 +1411,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   const params = members.map((m) => `${m.goParamName()}: ${m.tsReference()}`);
   const paramList = ["receiver: GoPtr<NodeFactory>", ...params].join(", ");
   lines.push(`export function ${funcName}(${paramList}): GoPtr<Node> {`);
-  lines.push(`  const data: ${node} = {} as ${node};`);
+  lines.push(`  const data = create${node}Data();`);
   for (const m of members) {
     if (m.isKindParam()) continue;
     if (!Array.isArray(m.rawType) && m.rawType === "NodeFlags") continue;
@@ -1424,7 +1431,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
   }
   const kindArg = kindMember ? kindMember.goParamName() : `Kind${kindName}`;
   if (nodeFlagsMembers.length > 0) {
-    lines.push(`  const node = NodeFactory_newNode(receiver, ${kindArg}, ${node}_as_nodeData(data));`);
+    lines.push(`  const node = NodeFactory_newNode(receiver, ${kindArg}, data);`);
     for (const m of nodeFlagsMembers) {
       const p = m.goParamName();
       if (m.bitmask) lines.push(`  node!.Flags = (node!.Flags | (${p} & ${m.bitmask})) >>> 0;`);
@@ -1432,7 +1439,7 @@ function emitNewFactory(schema, funcName, kindName, node, members, kindMember, n
     }
     lines.push(`  return node;`);
   } else {
-    lines.push(`  return NodeFactory_newNode(receiver, ${kindArg}, ${node}_as_nodeData(data));`);
+    lines.push(`  return NodeFactory_newNode(receiver, ${kindArg}, data);`);
   }
   lines.push(`}`);
   lines.push("");

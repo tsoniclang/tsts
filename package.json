@@ -27,9 +27,13 @@
     "source:test": "node packages/tsts/tools/source-tests/run.mjs",
     "tsgo-suite": "node packages/tsts/tools/tsgo-suite/run.mjs",
     "tsgo-suite:test": "node --test packages/tsts/tools/tsgo-suite/*.test.mjs",
+    "corpus:setup": "node packages/tsts/tools/corpus/ast-parity.mjs setup",
+    "corpus:ast": "node packages/tsts/tools/corpus/ast-parity.mjs ast",
+    "corpus:list": "node packages/tsts/tools/corpus/ast-parity.mjs list",
     "profile:bench": "node packages/tsts/tools/profiling/bench.mjs",
     "profile:self": "node packages/tsts/tools/profiling/self-compile-bench.mjs",
     "profile:utf8": "node packages/tsts/tools/profiling/utf8-bench.mjs",
+    "profile:scanner": "node packages/tsts/tools/profiling/scanner-bench.mjs",
     "profile:attribute": "node packages/tsts/tools/profiling/attribute.mjs",
     "bundled:generate": "node packages/tsts/tools/bundled/generate-bundled.mjs --write",
     "bundled:check": "node packages/tsts/tools/bundled/generate-bundled.mjs --check",
@@ -38,10 +42,10 @@
     "status": "git status --short --branch"
   },
   "devDependencies": {
-    "@tsonic/core": "file:../core/versions/10",
+    "@tsonic/core": "file:../core",
     "@tsonic/dotnet": "file:../dotnet/versions/10",
-    "@tsonic/js": "file:../js/versions/10",
-    "@tsonic/nodejs": "file:../nodejs/versions/10",
+    "@tsonic/js": "file:../js",
+    "@tsonic/nodejs": "file:../nodejs",
     "@types/node": "latest",
     "@unicode/unicode-15.1.0": "^1.6.16",
     "typescript": "^6.0.3"

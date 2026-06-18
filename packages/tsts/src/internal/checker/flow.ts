@@ -248,7 +248,8 @@ export function Checker_getFlowState(receiver: GoPtr<Checker>): GoPtr<FlowState>
  * }
  */
 export function Checker_putFlowState(receiver: GoPtr<Checker>, f: GoPtr<FlowState>): void {
-  const reduceLabels = f!.reduceLabels;
+  const reduceLabels = f!.reduceLabels ?? [];
+  reduceLabels.length = 0;
   f!.reference = undefined;
   f!.declaredType = undefined;
   f!.initialType = undefined;
@@ -256,7 +257,7 @@ export function Checker_putFlowState(receiver: GoPtr<Checker>, f: GoPtr<FlowStat
   f!.refKey = undefined as unknown as CacheHashKey;
   f!.depth = 0;
   f!.sharedFlowStart = 0;
-  f!.reduceLabels = reduceLabels ? reduceLabels.slice(0, 0) : [];
+  f!.reduceLabels = reduceLabels;
   f!.next = receiver!.freeFlowState;
   receiver!.freeFlowState = f;
 }
@@ -352,7 +353,7 @@ export function Checker_getFlowTypeOfReferenceEx(receiver: GoPtr<Checker>, refer
   f!.sharedFlowStart = receiver!.sharedFlows.length;
   receiver!.flowInvocationCount++;
   const evolvedType = Checker_getTypeAtFlowNode(receiver, f, resolvedFlowNode).t;
-  receiver!.sharedFlows = receiver!.sharedFlows.slice(0, f!.sharedFlowStart);
+  receiver!.sharedFlows.length = f!.sharedFlowStart;
   Checker_putFlowState(receiver, f);
   let resultType: GoPtr<Type>;
   if ((evolvedType!.objectFlags & ObjectFlagsEvolvingArray) !== 0 && Checker_isEvolvingArrayOperationTarget(receiver, reference)) {
@@ -527,9 +528,10 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
         continue;
       }
     } else if ((flags & FlowFlagsReduceLabel) !== 0) {
-      f!.reduceLabels = [...(f!.reduceLabels ?? []), Node_AsFlowReduceLabelData(currentFlow!.Node)];
+      f!.reduceLabels ??= [];
+      f!.reduceLabels.push(Node_AsFlowReduceLabelData(currentFlow!.Node));
       t = Checker_getTypeAtFlowNode(receiver, f, currentFlow!.Antecedent);
-      f!.reduceLabels = f!.reduceLabels.slice(0, f!.reduceLabels.length - 1);
+      f!.reduceLabels.pop();
     } else if ((flags & FlowFlagsStart) !== 0) {
       const container = currentFlow!.Node;
       if (
@@ -547,7 +549,7 @@ export function Checker_getTypeAtFlowNode(receiver: GoPtr<Checker>, f: GoPtr<Flo
       t = { t: Checker_convertAutoToAny(receiver, f!.declaredType), incomplete: false };
     }
     if (sharedFlow !== undefined) {
-      receiver!.sharedFlows = [...receiver!.sharedFlows, { flow: sharedFlow, flowType: t }];
+      receiver!.sharedFlows.push({ flow: sharedFlow, flowType: t });
     }
     f!.depth--;
     return t;

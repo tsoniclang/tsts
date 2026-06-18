@@ -20,11 +20,71 @@ export const MaxRune: GoRune = 0x10ffff;
 // UTFMax is the maximum number of bytes of a UTF-8 encoded Unicode character.
 export const UTFMax: int = 4;
 
-const encoder: TextEncoder = new globalThis.TextEncoder();
 const decoder: TextDecoder = new globalThis.TextDecoder("utf-8");
+const nonASCII = /[^\x00-\x7F]/;
+const surrogate = /[\uD800-\uDFFF]/;
 
-const encode = (s: string): Uint8Array => encoder.encode(s);
-export type StringByteView = { ascii: boolean; bytes?: Uint8Array };
+const encodeScalar = (bytes: Array<number>, codePoint: number): void => {
+  if (codePoint < 0x80) {
+    bytes.push(codePoint);
+  } else if (codePoint < 0x800) {
+    bytes.push(0xc0 | (codePoint >> 6), 0x80 | (codePoint & 0x3f));
+  } else if (codePoint < 0x10000) {
+    bytes.push(0xe0 | (codePoint >> 12), 0x80 | ((codePoint >> 6) & 0x3f), 0x80 | (codePoint & 0x3f));
+  } else {
+    bytes.push(
+      0xf0 | (codePoint >> 18),
+      0x80 | ((codePoint >> 12) & 0x3f),
+      0x80 | ((codePoint >> 6) & 0x3f),
+      0x80 | (codePoint & 0x3f),
+    );
+  }
+};
+
+const encode = (s: string): Uint8Array => {
+  const bytes: Array<number> = [];
+  for (let i = 0; i < s.length; i++) {
+    const first = s.charCodeAt(i);
+    if (first >= 0xd800 && first <= 0xdbff) {
+      const second = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+      if (second >= 0xdc00 && second <= 0xdfff) {
+        encodeScalar(bytes, 0x10000 + ((first - 0xd800) << 10) + (second - 0xdc00));
+        i++;
+        continue;
+      }
+    }
+    encodeScalar(bytes, first);
+  }
+  return globalThis.Uint8Array.from(bytes);
+};
+
+const decodeBytesToString = (bytes: Uint8Array): string => {
+  let result = "";
+  let i = 0;
+  while (i < bytes.length) {
+    const [r, size] = decodeRuneBytes(bytes, i);
+    if (size === 0) {
+      break;
+    }
+    if (r !== RuneError || bytes[i] === 0xef && i + 2 < bytes.length && bytes[i + 1] === 0xbf && bytes[i + 2] === 0xbd) {
+      result += globalThis.String.fromCodePoint(r);
+      i += size;
+      continue;
+    }
+    if (i + 2 < bytes.length && bytes[i] === 0xed && bytes[i + 1]! >= 0xa0 && bytes[i + 1]! <= 0xbf && bytes[i + 2]! >= 0x80 && bytes[i + 2]! <= 0xbf) {
+      const ch = 0xd000 | ((bytes[i + 1]! & 0x3f) << 6) | (bytes[i + 2]! & 0x3f);
+      result += globalThis.String.fromCharCode(ch);
+      i += 3;
+      continue;
+    }
+    result += "\ufffd";
+    i += size;
+  }
+  return result;
+};
+
+export type StringByteView = { ascii: boolean; bytes?: Uint8Array; hasSurrogate?: boolean };
+const asciiStringByteView: StringByteView = { ascii: true };
 const stringByteViewCache = new globalThis.Map<string, StringByteView>();
 const stringByteViewCacheBudget = 64 * 1024 * 1024;
 const stringByteViewCacheState = { bytes: 0 };
@@ -34,14 +94,9 @@ export function GetStringByteView(s: string): StringByteView {
   if (cached !== undefined) {
     return cached;
   }
-  let ascii = true;
-  for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) >= RuneSelf) {
-      ascii = false;
-      break;
-    }
-  }
-  const view: StringByteView = ascii ? { ascii } : { ascii, bytes: encode(s) };
+  const ascii = !nonASCII.test(s);
+  const hasSurrogate = !ascii && surrogate.test(s);
+  const view: StringByteView = ascii ? asciiStringByteView : { ascii, bytes: encode(s), hasSurrogate };
   if (s.length >= 4096) {
     const cost = ascii ? s.length : view.bytes!.length;
     if (stringByteViewCacheState.bytes + cost > stringByteViewCacheBudget) {
@@ -56,17 +111,102 @@ export function GetStringByteView(s: string): StringByteView {
 
 export function StringByteLen(s: string): int {
   const view = GetStringByteView(s);
+  return StringByteViewLen(s, view);
+}
+
+export function StringByteViewLen(s: string, view: StringByteView): int {
   return view.ascii ? s.length : view.bytes!.length;
 }
 
 export function StringByteAt(s: string, i: int): int {
   const view = GetStringByteView(s);
+  return StringByteViewAt(s, view, i);
+}
+
+export function StringByteViewAt(s: string, view: StringByteView, i: int): int {
   return view.ascii ? s.charCodeAt(i) : view.bytes![i]!;
 }
 
 export function StringByteSlice(s: string, start: int, end?: int): string {
   const view = GetStringByteView(s);
-  return view.ascii ? s.slice(start, end) : decoder.decode(view.bytes!.subarray(start, end));
+  return StringByteViewSlice(s, view, start, end);
+}
+
+export function StringByteViewSlice(s: string, view: StringByteView, start: int, end?: int): string {
+  if (view.ascii) {
+    return s.slice(start, end);
+  }
+  const bytes = view.bytes!.subarray(start, end);
+  return view.hasSurrogate ? decodeBytesToString(bytes) : decoder.decode(bytes);
+}
+
+export function StringByteViewHasPrefix(s: string, view: StringByteView, start: int, prefix: string): boolean {
+  const prefixView = GetStringByteView(prefix);
+  const prefixLength = StringByteViewLen(prefix, prefixView);
+  if (start + prefixLength > StringByteViewLen(s, view)) {
+    return false;
+  }
+  for (let i = 0; i < prefixLength; i++) {
+    if (StringByteViewAt(s, view, start + i) !== StringByteViewAt(prefix, prefixView, i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function StringByteViewIndexByte(s: string, view: StringByteView, start: int, b: int): int {
+  if (view.ascii) {
+    return s.indexOf(globalThis.String.fromCharCode(b), start) as int;
+  }
+  const bytes = view.bytes!;
+  for (let i = start; i < bytes.length; i++) {
+    if (bytes[i] === b) {
+      return i as int;
+    }
+  }
+  return -1 as int;
+}
+
+export function StringByteViewIndex(s: string, view: StringByteView, start: int, needle: string): int {
+  const needleView = GetStringByteView(needle);
+  const needleLength = StringByteViewLen(needle, needleView);
+  if (needleLength === 0) {
+    return start;
+  }
+  if (view.ascii && needleView.ascii) {
+    return s.indexOf(needle, start) as int;
+  }
+  const end = StringByteViewLen(s, view) - needleLength;
+  for (let i = start; i <= end; i++) {
+    let matched = true;
+    for (let j = 0; j < needleLength; j++) {
+      if (StringByteViewAt(s, view, i + j) !== StringByteViewAt(needle, needleView, j)) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) {
+      return i as int;
+    }
+  }
+  return -1 as int;
+}
+
+export function StringByteViewUTF16Len(s: string, view: StringByteView, start: int, end: int): int {
+  if (view.ascii) {
+    return (end - start) as int;
+  }
+  let length: int = 0;
+  let pos = start;
+  while (pos < end) {
+    const [r, size] = DecodeRuneInStringViewAt(s, view, pos);
+    if (size === 0) {
+      break;
+    }
+    length += r >= 0x10000 ? 2 : 1;
+    pos += size;
+  }
+  return length;
 }
 
 export function StringUtf8Bytes(s: string): Uint8Array {
@@ -79,6 +219,10 @@ export function StringUtf8Bytes(s: string): Uint8Array {
     bytes[i] = s.charCodeAt(i);
   }
   return bytes;
+}
+
+export function StringFromUtf8Bytes(bytes: Uint8Array): string {
+  return decodeBytesToString(bytes);
 }
 
 // decodeRuneBytes decodes the rune at byte offset i within bytes, returning
@@ -182,6 +326,10 @@ export function DecodeRuneInString(s: string): [GoRune, int] {
 
 export function DecodeRuneInStringAt(s: string, i: int): [GoRune, int] {
   const view = GetStringByteView(s);
+  return DecodeRuneInStringViewAt(s, view, i);
+}
+
+export function DecodeRuneInStringViewAt(s: string, view: StringByteView, i: int): [GoRune, int] {
   if (view.ascii) {
     return i >= s.length ? [RuneError, 0] : [s.charCodeAt(i), 1];
   }
@@ -196,6 +344,10 @@ export function DecodeLastRuneInString(s: string): [GoRune, int] {
 
 export function DecodeLastRuneInStringBefore(s: string, end: int): [GoRune, int] {
   const view = GetStringByteView(s);
+  return DecodeLastRuneInStringViewBefore(s, view, end);
+}
+
+export function DecodeLastRuneInStringViewBefore(s: string, view: StringByteView, end: int): [GoRune, int] {
   if (view.ascii) {
     return end <= 0 ? [RuneError, 0] : [s.charCodeAt(end - 1), 1];
   }

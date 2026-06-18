@@ -44,6 +44,9 @@ function parsePhases(stdout) {
 
 function parseTime(stderr) {
   const wall = /Elapsed \(wall clock\) time[^\n]*:\s+([\d:.]+)/.exec(stderr);
+  const user = /User time \(seconds\):\s+([\d.]+)/.exec(stderr);
+  const system = /System time \(seconds\):\s+([\d.]+)/.exec(stderr);
+  const cpuPercent = /Percent of CPU this job got:\s+(\d+)%/.exec(stderr);
   const rss = /Maximum resident set size \(kbytes\):\s+(\d+)/.exec(stderr);
   let wallSecs;
   if (wall) {
@@ -52,7 +55,17 @@ function parseTime(stderr) {
       : parts.length === 2 ? parts[0] * 60 + parts[1]
         : parts[0];
   }
-  return { wallSecs, maxRssKB: rss ? Number(rss[1]) : undefined };
+  const userSecs = user ? Number(user[1]) : undefined;
+  const systemSecs = system ? Number(system[1]) : undefined;
+  const cpuSecs = userSecs !== undefined && systemSecs !== undefined ? userSecs + systemSecs : undefined;
+  return {
+    wallSecs,
+    userSecs,
+    systemSecs,
+    cpuSecs,
+    cpuPercent: cpuPercent ? Number(cpuPercent[1]) : undefined,
+    maxRssKB: rss ? Number(rss[1]) : undefined,
+  };
 }
 
 function median(values) {
@@ -93,7 +106,7 @@ function bench(compiler, runs) {
   }
   const warm = samples.slice(1);
   const aggregate = {};
-  for (const metric of [...phases, "Total", "wallSecs", "maxRssKB", "Files", "Lines"]) {
+  for (const metric of [...phases, "Total", "wallSecs", "userSecs", "systemSecs", "cpuSecs", "cpuPercent", "maxRssKB", "Files", "Lines"]) {
     aggregate[metric] = median(warm.map((sample) => sample[metric]));
   }
   return { samples, aggregate };
@@ -135,5 +148,7 @@ if (options.json) {
   }
   console.log(`| Total diagnostics | ${fmt(tsc?.Total, "s")} | ${fmt(tsts.Total, "s")} | ${ratio(tsts.Total, tsc?.Total)} |`);
   console.log(`| wall | ${fmt(tsc?.wallSecs, "s")} | ${fmt(tsts.wallSecs, "s")} | ${ratio(tsts.wallSecs, tsc?.wallSecs)} |`);
+  console.log(`| CPU time | ${fmt(tsc?.cpuSecs, "s")} | ${fmt(tsts.cpuSecs, "s")} | ${ratio(tsts.cpuSecs, tsc?.cpuSecs)} |`);
+  console.log(`| CPU utilization | ${fmt(tsc?.cpuPercent, "%", 0)} | ${fmt(tsts.cpuPercent, "%", 0)} | ${ratio(tsts.cpuPercent, tsc?.cpuPercent)} |`);
   console.log(`| maxRSS MB | ${fmt(tsc?.maxRssKB === undefined ? undefined : tsc.maxRssKB / 1024)} | ${fmt(tsts.maxRssKB === undefined ? undefined : tsts.maxRssKB / 1024)} | ${ratio(tsts.maxRssKB, tsc?.maxRssKB)} |`);
 }

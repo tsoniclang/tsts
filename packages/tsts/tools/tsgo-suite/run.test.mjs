@@ -1217,7 +1217,7 @@ test("errorDiffNewSideHasErrors detects newly added diagnostics in baseline diff
 });
 
 test("errorDiffNewSideHasErrors treats accepted removed diagnostics as clean", () => {
-  const diff = new URL("../../_vendor/typescript-go/testdata/baselines/reference/submoduleAccepted/compiler/classFieldSuperAccessibleJs1.errors.txt.diff", import.meta.url);
+  const diff = new URL("../../_vendor/typescript-go/testdata/baselines/reference/submoduleAccepted/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.errors.txt.diff", import.meta.url);
   assert.equal(errorDiffNewSideHasErrors(diff.pathname), false);
 });
 
@@ -1344,7 +1344,7 @@ test("caseExpectedErrors treats TS-Go removed option diagnostics as expected err
 
 test("buildTestUniverseInventory tracks full compiler scope and excludes language service scope", async () => {
   const inventory = await buildTestUniverseInventory();
-  assert.equal(inventory.currentHarness.inScope, 166);
+  assert.equal(inventory.currentHarness.inScope, 302);
   assert.ok(inventory.typeScriptCases.entries.compiler > inventory.currentHarness.entries.compiler);
   assert.ok(inventory.typeScriptCases.entries.conformance > inventory.currentHarness.entries.conformance);
   assert.equal(inventory.typeScriptCases.entries.project, 316);

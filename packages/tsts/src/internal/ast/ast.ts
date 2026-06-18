@@ -15,6 +15,7 @@ import { NewTextRange, UndefinedTextRange } from "../core/text.js";
 import type { TextPos, TextRange } from "../core/text.js";
 import type { Tristate } from "../core/tristate.js";
 import * as strings from "../../go/strings.js";
+import { StringByteSlice } from "../../go/unicode/utf8.js";
 import type { Path as Path_79c49227 } from "../tspath/path.js";
 import { GetEncodedRootLength, NormalizePath } from "../tspath/path.js";
 import type { AccessorDeclarationBase, ArrayLiteralExpression, ArrowFunction, AsExpression, AwaitExpression, BigIntLiteral, BinaryExpression, BindingElement, BindingPattern, Block, CallExpression, CaseOrDefaultClause, CatchClause, ClassDeclaration, ClassExpression, ClassStaticBlockDeclaration, CompositeBase, ConditionalExpression, ComputedPropertyName, ConstructorDeclaration, ConstructorTypeNode, Declaration, DeclarationBase, Decorator, DoStatement, ElementAccessExpression, EnumDeclaration, EnumMember, ExportAssignment, ExportDeclaration, ExportSpecifier, Expression as Expression_9ab73856, ExpressionStatement, ExpressionWithTypeArguments, ForInOrOfStatement, ForStatement, FunctionDeclaration, FunctionExpression, FunctionOrConstructorTypeNodeBase, GetAccessorDeclaration, HeritageClause, IfStatement, Identifier, ImportAttributesNode, ImportClause as ImportClause_58d51725, ImportDeclaration, ImportEqualsDeclaration, ImportSpecifier, IndexSignatureDeclaration, InterfaceDeclaration, JSDocParameterOrPropertyTag, JsxAttribute, JsxAttributes, JsxClosingElement, JsxClosingFragment, JsxElement, JsxExpression, JsxFragment, JsxNamespacedName, JsxOpeningElement, JsxOpeningFragment, JsxSelfClosingElement, JsxSpreadAttribute, JsxText, KeywordExpression, LabeledStatement, LiteralLikeNode, LocalsContainerBase, MetaProperty, MethodDeclaration, MethodSignatureDeclaration, ModuleDeclaration, ModuleName, NamedExports, NamedImports, NewExpression, NodeFactory, NonNullExpression, NoSubstitutionTemplateLiteral, ObjectLiteralExpression, ParameterDeclaration, ParameterDeclarationNode, ParameterList as ParameterList_5701af3c, ParenthesizedExpression, PartiallyEmittedExpression, PostfixUnaryExpression, PrefixUnaryExpression, PrivateIdentifier, PropertyAccessExpression, PropertyAssignment, PropertyDeclaration, PropertySignatureDeclaration, ReturnStatement, SatisfiesExpression, SetAccessorDeclaration, ShorthandPropertyAssignment, SpreadAssignment, SpreadElement, Statement as Statement_98c7cd47, StatementList as StatementList_3cde134f, SwitchStatement, TaggedTemplateExpression, TemplateHead, TemplateMiddle, TemplateTail, Token, TokenNode, TryStatement, TypeAliasDeclaration, TypeAssertion, TypeParameterDeclaration, TypeSyntaxBase, VariableDeclaration, VariableDeclarationList, VariableStatement, WhileStatement, WithStatement, YieldExpression } from "./generated/index.js";
@@ -6052,6 +6053,7 @@ export function SourceFile_GetOrCreateToken(receiver: GoPtr<SourceFile>, kind: K
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/ast.go::func::createToken","kind":"func","status":"implemented","sigHash":"5de2094d9a107a1a3508ac0414666f642fa8ab577f11758b31a281c3f1bcc510","bodyHash":"efea1dfb31a5771292db456584f36dde8b05960c979705f9a431409df5b2fcdf"}
+ * @tsgo-override {"category":"runtime-correctness-performance","allow":["body"],"reason":"Use TS-Go byte-offset slicing over JS/.NET UTF-16 source storage; direct JS slice would mis-handle non-ASCII positions and bypass the shared byte-view cache."}
  *
  * Go source:
  * func createToken(kind Kind, file *SourceFile, pos, end int, flags TokenFlags) *Node {
@@ -6091,7 +6093,7 @@ export function createToken(kind: Kind, file: GoPtr<SourceFile>, pos: int, end: 
   if (file!.tokenFactory === undefined) {
     file!.tokenFactory = NewNodeFactory({} as NodeFactoryHooks);
   }
-  const text = file!.text.slice(pos, end);
+  const text = StringByteSlice(file!.text, pos, end);
   switch (kind) {
     case KindNumericLiteral:
       return NodeFactory_NewNumericLiteral(file!.tokenFactory, text, flags);

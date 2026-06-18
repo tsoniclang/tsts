@@ -455,11 +455,19 @@ const compilerOptionTristateFields = [
   "Quiet",
 ] as const;
 
+const normalizedCompilerOptionsMarker: unique symbol = Symbol("tsts.normalizedCompilerOptions");
+type NormalizedCompilerOptions = CompilerOptions & Record<string, unknown> & {
+  [normalizedCompilerOptionsMarker]?: true;
+};
+
 export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr<CompilerOptions> {
   if (options === undefined) {
     return undefined;
   }
-  const target = options as CompilerOptions & Record<string, unknown>;
+  const target = options as NormalizedCompilerOptions;
+  if (target[normalizedCompilerOptionsMarker] === true) {
+    return options;
+  }
   target.__tsgoBlank0 ??= {};
   for (const key of compilerOptionStringFields) {
     target[key] ??= "";
@@ -473,6 +481,7 @@ export function NormalizeCompilerOptions(options: GoPtr<CompilerOptions>): GoPtr
   target.ModuleDetection ??= 0 as ModuleDetectionKind;
   target.NewLine ??= 0 as NewLineKind;
   target.Target ??= 0 as ScriptTarget;
+  target[normalizedCompilerOptionsMarker] = true;
   return options;
 }
 

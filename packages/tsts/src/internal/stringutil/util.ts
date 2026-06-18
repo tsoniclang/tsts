@@ -210,7 +210,7 @@ export function IsASCIILetter(ch: GoRune): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::SplitLines","kind":"func","status":"implemented","sigHash":"d56e738370434e6c604089f889beb63cc7395ec39e67af5a8075569b7f3d52b8","bodyHash":"2e5cfdf6862c30209da32c47cee13303ff11e8d07f07b4f5361c734d08db90d4"}
- * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Scan line breaks with JS/.NET UTF-16 code units because CR/LF separators are ASCII and the returned substrings are identical to TS-Go byte-sliced lines."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Scan line breaks with JS/.NET UTF-16 code units because CR/LF separators are ASCII and the returned substrings are identical to TS-Go byte-sliced lines."}
  *
  * Go source:
  * func SplitLines(text string) []string {
@@ -342,7 +342,7 @@ export function GuessIndentation(lines: GoSlice<string>): int {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/stringutil/util.go::func::EncodeURI","kind":"func","status":"implemented","sigHash":"7c3effdc96b020dc9f6246a3d5d575a4f1f8baf3a4df376b8a9653693febb6fc","bodyHash":"dffd309aec6c60affcc908eccc71408afc0f22662886a8b1c00cdd708178b457"}
- * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Avoid full-string UTF-8 materialization for ASCII-heavy URI text; emit the same UTF-8 percent bytes only for non-ASCII code points."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Avoid full-string UTF-8 materialization for ASCII-heavy URI text; emit the same UTF-8 percent bytes only for non-ASCII code points."}
  *
  * Go source:
  * func EncodeURI(s string) string {

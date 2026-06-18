@@ -141,8 +141,8 @@ export async function main() {
     const bundledGeneratedArtifacts = buildBundledGeneratedArtifactStatus(config, snapshot.gitRevision);
     const unicodeGeneratedArtifacts = buildUnicodeGeneratedArtifactStatus(config);
     const schemaSourceSync = buildSchemaSourceSyncStatus(config);
-    const implementationOverrides = buildImplementationOverrideStatus(config, tsUnits);
-    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync, implementationOverrides);
+    const localOverrides = buildLocalOverrideStatus(config, tsUnits);
+    const status = buildStatus(config, snapshot, tsUnits, generatedArtifacts, astGeneratedArtifacts, diagnosticsGeneratedArtifacts, bundledGeneratedArtifacts, unicodeGeneratedArtifacts, schemaSourceSync, localOverrides);
     if (command === "verify") {
       const signatureReport = await computeSignatureReport(
         {
@@ -196,7 +196,7 @@ async function runSigCheck(config, options) {
   } else {
     printSigReport(report);
   }
-  if (report.mismatches.length > 0 && options["no-gate"] !== true) {
+  if ((report.mismatches.length > 0 || (report.overrideIssues?.length ?? 0) > 0) && options["no-gate"] !== true) {
     process.exit(1);
   }
 }
@@ -208,6 +208,7 @@ function summarizeSignatureReport(report) {
     checked: report.checked,
     overriddenUnits: report.overriddenUnits,
     mismatches: report.mismatches.length,
+    overrideIssues: report.overrideIssues?.length ?? 0,
     byKind,
   };
 }
@@ -215,7 +216,10 @@ function summarizeSignatureReport(report) {
 function printSigReport(report) {
   const byKind = new Map();
   for (const m of report.mismatches) byKind.set(m.kind, (byKind.get(m.kind) ?? 0) + 1);
-  console.log(`porter sig-check: ${report.checked} units checked, ${report.overriddenUnits} overridden, ${report.mismatches.length} mismatches`);
+  console.log(`porter sig-check: ${report.checked} units checked, ${report.overriddenUnits} overridden, ${report.mismatches.length} mismatches, ${report.overrideIssues?.length ?? 0} override metadata issues`);
+  for (const issue of report.overrideIssues ?? []) {
+    console.log(`\n[override-metadata] ${issue.id || "<config>"}\n  ${issue.reason}`);
+  }
   for (const [kind, n] of [...byKind.entries()].sort((a, b) => b[1] - a[1])) {
     console.log(`  ${String(n).padStart(5)}  ${kind}`);
   }
@@ -302,7 +306,7 @@ export function buildStatus(
   bundledGeneratedArtifacts = emptyBundledGeneratedArtifactStatus(),
   unicodeGeneratedArtifacts = emptyUnicodeGeneratedArtifactStatus(),
   schemaSourceSync = emptySchemaSourceSyncStatus(),
-  implementationOverrides = emptyImplementationOverrideStatus(),
+  localOverrides = emptyLocalOverrideStatus(),
 ) {
   const primaryKinds = new Set(config.primaryUnitKinds);
   const largeFileSplits = buildLargeFileSplitStatus(config, snapshot);
@@ -498,7 +502,7 @@ export function buildStatus(
       invalidUnicodeArtifacts: unicodeGeneratedArtifacts.invalid.length,
       largeFileSplitFailures: largeFileSplits.failureCount,
       schemaSourceMismatches: schemaSourceSync.mismatches.length,
-      implementationOverrideIssues: implementationOverrides.failureCount,
+      localOverrideIssues: localOverrides.failureCount,
     },
     categories: Object.fromEntries([...categoryCounts.entries()].sort()),
     modules: Object.fromEntries([...moduleCounts.entries()].sort()),
@@ -517,7 +521,7 @@ export function buildStatus(
     bundledGeneratedArtifacts,
     unicodeGeneratedArtifacts,
     schemaSourceSync,
-    implementationOverrides,
+    localOverrides,
     largeFileSplits,
     missing: missing.slice(0, 500),
     stale: stale.slice(0, 500),
@@ -554,12 +558,12 @@ export function scanTsUnits(root) {
         const overrideDocEnd = text.indexOf("*/", regex.lastIndex);
         if (overrideDocStart >= 0 && overrideDocEnd >= regex.lastIndex) {
           const doc = text.slice(overrideDocStart, overrideDocEnd);
-          const overrideMatch = /@tsgo-implementation-override\s+({[^\n\r]+})/.exec(doc);
-          if (overrideMatch) {
+          const overrideJson = extractTsgoOverrideJson(doc);
+          if (overrideJson !== undefined) {
             try {
-              units[units.length - 1].implementationOverride = JSON.parse(overrideMatch[1]);
+              units[units.length - 1].override = JSON.parse(overrideJson);
             } catch (error) {
-              fail(`invalid @tsgo-implementation-override JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
+              fail(`invalid @tsgo-override JSON in ${path.relative(repoRoot, file)}: ${error.message}`);
             }
           }
         }
@@ -598,97 +602,109 @@ export function scanTsUnits(root) {
   return { fileCount: files.length, files: fileReports, units };
 }
 
-export function emptyImplementationOverrideStatus() {
+function extractTsgoOverrideJson(doc) {
+  const marker = "@tsgo-override";
+  const markerIndex = doc.indexOf(marker);
+  if (markerIndex < 0) return undefined;
+
+  const raw = doc.slice(markerIndex + marker.length);
+  const cleaned = raw
+    .split(/\r?\n/)
+    .map((line, index) => (index === 0 ? line : line.replace(/^\s*\*\s?/, "")))
+    .join("\n")
+    .trimStart();
+  const start = cleaned.indexOf("{");
+  if (start < 0) return undefined;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < cleaned.length; index++) {
+    const ch = cleaned[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") {
+      depth++;
+      continue;
+    }
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return cleaned.slice(start, index + 1);
+      }
+    }
+  }
+  return cleaned.slice(start);
+}
+
+export function emptyLocalOverrideStatus() {
   return {
-    configured: 0,
     inline: 0,
-    matchedUnits: 0,
     failureCount: 0,
-    invalidConfig: [],
     invalidInline: [],
-    unmatchedConfig: [],
-    missingInline: [],
-    unconfiguredInline: [],
+    byCategory: {},
+    byAllow: {},
+    signatureUnits: [],
   };
 }
 
-export function buildImplementationOverrideStatus(config, tsUnits) {
-  const entries = config.implementationOverrides ?? [];
-  const units = tsUnits.units ?? [];
-  const byId = new Map(units.map((unit) => [unit.id, unit]));
-  const configuredIds = new Set();
-  const invalidConfig = [];
-  const invalidInline = [];
-  const unmatchedConfig = [];
-
-  for (const [index, entry] of entries.entries()) {
-    const entryIssues = validateImplementationOverrideShape(entry);
-    if (!entry.id && !entry.match) entryIssues.push("requires either id or match");
-    if (entry.id && entry.match) entryIssues.push("use id or match, not both");
-    if (entryIssues.length > 0) {
-      invalidConfig.push({
-        index,
+export function buildLocalOverrideStatus(config, tsUnits) {
+  if ((config.implementationOverrides ?? []).length > 0) {
+    return {
+      ...emptyLocalOverrideStatus(),
+      failureCount: config.implementationOverrides.length,
+      invalidInline: config.implementationOverrides.map((entry, index) => ({
         id: entry.id ?? "",
-        match: entry.match ?? "",
-        reason: entryIssues.join("; "),
-      });
-      continue;
-    }
-    const matched = units.filter((unit) => implementationOverrideEntryMatches(entry, unit));
-    if (matched.length === 0) {
-      unmatchedConfig.push({
-        index,
-        id: entry.id ?? "",
-        match: entry.match ?? "",
-        reason: "override entry matched no @tsgo-unit metadata",
-      });
-      continue;
-    }
-    for (const unit of matched) configuredIds.add(unit.id);
+        path: "",
+        reason: `central implementationOverrides[${index}] is banned; move the full metadata to local @tsgo-override`,
+      })),
+    };
   }
-
-  const inlineUnits = units.filter((unit) => unit.implementationOverride !== undefined);
-  const inlineIds = new Set(inlineUnits.map((unit) => unit.id));
+  const units = tsUnits.units ?? [];
+  const invalidInline = [];
+  const byCategory = new Map();
+  const byAllow = new Map();
+  const signatureUnits = [];
+  const inlineUnits = units.filter((unit) => unit.override !== undefined);
   for (const unit of inlineUnits) {
-    const issues = validateImplementationOverrideShape(unit.implementationOverride);
+    const issues = validateOverrideShape(unit.override);
     if (issues.length > 0) {
       invalidInline.push({
         id: unit.id,
         path: unit.path,
         reason: issues.join("; "),
       });
+      continue;
+    }
+    increment(byCategory, unit.override.category);
+    for (const allow of unit.override.allow) increment(byAllow, allow);
+    if (unit.override.allow.includes("signature")) {
+      signatureUnits.push({ id: unit.id, path: unit.path, category: unit.override.category, reason: unit.override.reason });
     }
   }
-
-  const missingInline = [...configuredIds]
-    .filter((id) => !inlineIds.has(id))
-    .map((id) => {
-      const unit = byId.get(id);
-      return { id, path: unit?.path ?? "", reason: "config implementation override requires matching inline @tsgo-implementation-override" };
-    });
-  const unconfiguredInline = inlineUnits
-    .filter((unit) => !configuredIds.has(unit.id))
-    .map((unit) => ({ id: unit.id, path: unit.path, reason: "inline override is not configured centrally" }));
-  const failureCount = invalidConfig.length + invalidInline.length + unmatchedConfig.length + missingInline.length + unconfiguredInline.length;
   return {
-    configured: entries.length,
     inline: inlineUnits.length,
-    matchedUnits: configuredIds.size,
-    failureCount,
-    invalidConfig,
+    failureCount: invalidInline.length,
     invalidInline,
-    unmatchedConfig,
-    missingInline,
-    unconfiguredInline,
+    byCategory: Object.fromEntries([...byCategory.entries()].sort()),
+    byAllow: Object.fromEntries([...byAllow.entries()].sort()),
+    signatureUnits,
   };
 }
 
-function implementationOverrideEntryMatches(entry, unit) {
-  if (entry.id) return entry.id === unit.id;
-  return matchGlob(entry.match, unit.id);
-}
-
-function validateImplementationOverrideShape(value) {
+function validateOverrideShape(value) {
   const issues = [];
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return ["override must be an object"];
@@ -699,8 +715,17 @@ function validateImplementationOverrideShape(value) {
   if (typeof value.reason !== "string" || value.reason.trim() === "") {
     issues.push("reason is required");
   }
-  if (!Array.isArray(value.allow) || value.allow.length === 0 || value.allow.some((item) => item !== "body")) {
-    issues.push("allow must be a non-empty array containing only 'body'");
+  const allowed = new Set(["body", "signature"]);
+  if (!Array.isArray(value.allow) || value.allow.length === 0 || value.allow.some((item) => !allowed.has(item))) {
+    issues.push("allow must be a non-empty array containing only 'body' or 'signature'");
+  }
+  if (Array.isArray(value.allow) && value.allow.includes("signature")) {
+    if (typeof value.goSignature !== "string" || value.goSignature.trim() === "") {
+      issues.push("signature overrides require goSignature");
+    }
+    if (typeof value.tsSignature !== "string" || value.tsSignature.trim() === "") {
+      issues.push("signature overrides require tsSignature");
+    }
   }
   return issues;
 }
@@ -2510,21 +2535,23 @@ export class GoStructMap<K, V> implements Map<K, V> {
   }
 
   getOrInsert(key: K, value: V): V {
-    const existing = this.get(key);
-    if (existing !== undefined || this.has(key)) {
-      return existing as V;
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return existing.value;
     }
-    this.set(key, value);
+    this.entriesByKey.set(keyText, { key, value });
     return value;
   }
 
   getOrInsertComputed(key: K, callbackfn: (key: K) => V): V {
-    const existing = this.get(key);
-    if (existing !== undefined || this.has(key)) {
-      return existing as V;
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return existing.value;
     }
     const value = callbackfn(key);
-    this.set(key, value);
+    this.entriesByKey.set(keyText, { key, value });
     return value;
   }
 
@@ -2535,6 +2562,34 @@ export class GoStructMap<K, V> implements Map<K, V> {
   set(key: K, value: V): this {
     this.entriesByKey.set(goStructMapKey(key), { key, value });
     return this;
+  }
+
+  load(key: K): [V | undefined, boolean] {
+    const entry = this.entriesByKey.get(goStructMapKey(key));
+    if (entry === undefined) {
+      return [undefined, false];
+    }
+    return [entry.value, true];
+  }
+
+  loadOrStore(key: K, value: V): [V, boolean] {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing !== undefined) {
+      return [existing.value, true];
+    }
+    this.entriesByKey.set(keyText, { key, value });
+    return [value, false];
+  }
+
+  loadAndDelete(key: K): [V | undefined, boolean] {
+    const keyText = goStructMapKey(key);
+    const existing = this.entriesByKey.get(keyText);
+    if (existing === undefined) {
+      return [undefined, false];
+    }
+    this.entriesByKey.delete(keyText);
+    return [existing.value, true];
   }
 
   *entries(): MapIterator<[K, V]> {
@@ -2560,8 +2615,8 @@ export class GoStructMap<K, V> implements Map<K, V> {
   }
 }
 
-export function NewGoStructMap<K, V>(): GoMap<K, V> {
-  return new GoStructMap<K, V>() as unknown as GoMap<K, V>;
+export function NewGoStructMap<K, V>(): GoStructMap<K, V> {
+  return new GoStructMap<K, V>();
 }
 
 export function GoAppend<T>(slice: GoPtr<GoSlice<T>>, ...items: GoSlice<T>): GoSlice<T> {
@@ -2608,10 +2663,25 @@ function goValueKey(value: unknown, topLevelStruct: boolean): string {
 
 function goStructFieldsKey(value: Record<PropertyKey, unknown>): string {
   if (globalThis.Array.isArray(value)) {
-    return \`array:[\${value.map((item) => goValueKey(item, false)).join(",")}]\`;
+    let result = "array:[";
+    for (let index = 0; index < value.length; index++) {
+      if (index > 0) {
+        result += ",";
+      }
+      result += goValueKey(value[index], false);
+    }
+    return result + "]";
   }
   const keys = globalThis.Object.keys(value).sort();
-  return \`struct:{\${keys.map((key) => \`\${key}=\${goValueKey(value[key], false)}\`).join(",")}}\`;
+  let result = "struct:{";
+  for (let index = 0; index < keys.length; index++) {
+    if (index > 0) {
+      result += ",";
+    }
+    const key = keys[index]!;
+    result += \`\${key}=\${goValueKey(value[key], false)}\`;
+  }
+  return result + "}";
 }
 
 function isUint128Like(value: Record<PropertyKey, unknown>): boolean {
@@ -2790,7 +2860,10 @@ export function collectVerifyFailures(status, options) {
   failures.push(...collectDiagnosticsArtifactFailures(status.diagnosticsGeneratedArtifacts ?? emptyDiagnosticsGeneratedArtifactStatus()));
   failures.push(...collectBundledArtifactFailures(status.bundledGeneratedArtifacts ?? emptyBundledGeneratedArtifactStatus()));
   failures.push(...collectUnicodeArtifactFailures(status.unicodeGeneratedArtifacts ?? emptyUnicodeGeneratedArtifactStatus()));
-  failures.push(...collectImplementationOverrideFailures(status.implementationOverrides ?? emptyImplementationOverrideStatus()));
+  failures.push(...collectLocalOverrideFailures(status.localOverrides ?? emptyLocalOverrideStatus()));
+  if ((status.signatureCheck?.overrideIssues ?? 0) > 0) {
+    failures.push(`${status.signatureCheck.overrideIssues} signature override metadata issues`);
+  }
   if ((status.signatureCheck?.mismatches ?? 0) > 0) {
     const byKind = Object.entries(status.signatureCheck.byKind ?? {})
       .sort((a, b) => b[1] - a[1])
@@ -2815,13 +2888,9 @@ export function collectVerifyFailures(status, options) {
   return failures;
 }
 
-export function collectImplementationOverrideFailures(status) {
+export function collectLocalOverrideFailures(status) {
   const failures = [];
-  if (status.invalidConfig.length > 0) failures.push(`${status.invalidConfig.length} invalid implementation override config entries`);
-  if (status.unmatchedConfig.length > 0) failures.push(`${status.unmatchedConfig.length} unmatched implementation override config entries`);
-  if (status.missingInline.length > 0) failures.push(`${status.missingInline.length} implementation overrides missing inline markers`);
-  if (status.unconfiguredInline.length > 0) failures.push(`${status.unconfiguredInline.length} unconfigured inline implementation overrides`);
-  if (status.invalidInline.length > 0) failures.push(`${status.invalidInline.length} invalid inline implementation overrides`);
+  if (status.invalidInline.length > 0) failures.push(`${status.invalidInline.length} invalid local @tsgo-override entries`);
   return failures;
 }
 
@@ -2869,8 +2938,8 @@ export function printStatus(config, status) {
   console.log(`Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   console.log(`Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   console.log(`Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
-  const implementationOverrides = status.implementationOverrides ?? emptyImplementationOverrideStatus();
-  console.log(`Implementation overrides configured/inline/issues: ${implementationOverrides.configured}/${implementationOverrides.inline}/${implementationOverrides.failureCount}`);
+  const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
+  console.log(`Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   console.log(`Schema/source sync mismatches: ${status.counts.schemaSourceMismatches ?? 0}`);
   console.log(`Go parse errors: ${status.counts.parseErrors}`);
   console.log(`Unitless Go files: ${status.counts.unitlessGoFiles}`);
@@ -2903,8 +2972,8 @@ export function renderStatusMarkdown(status) {
   lines.push(`- Bundled generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingBundledArtifacts}/${status.counts.staleBundledArtifacts}/${status.counts.orphanBundledArtifacts}/${status.counts.untrackedBundledArtifacts}/${status.counts.invalidBundledArtifacts}`);
   lines.push(`- Unicode generated artifacts missing/stale/orphan/untracked/invalid: ${status.counts.missingUnicodeArtifacts}/${status.counts.staleUnicodeArtifacts}/${status.counts.orphanUnicodeArtifacts}/${status.counts.untrackedUnicodeArtifacts}/${status.counts.invalidUnicodeArtifacts}`);
   lines.push(`- Large-file split plan failures: ${status.counts.largeFileSplitFailures}`);
-  const implementationOverrides = status.implementationOverrides ?? emptyImplementationOverrideStatus();
-  lines.push(`- Implementation overrides configured/inline/issues: ${implementationOverrides.configured}/${implementationOverrides.inline}/${implementationOverrides.failureCount}`);
+  const localOverrides = status.localOverrides ?? emptyLocalOverrideStatus();
+  lines.push(`- Local overrides inline/body/signature/issues: ${localOverrides.inline}/${localOverrides.byAllow.body ?? 0}/${localOverrides.byAllow.signature ?? 0}/${localOverrides.failureCount}`);
   lines.push(`- Go parse errors: ${status.counts.parseErrors}`);
   lines.push(`- Unitless Go files: ${status.counts.unitlessGoFiles}`);
   lines.push("");
@@ -2964,17 +3033,11 @@ export function renderStatusMarkdown(status) {
       lines.push(`| ${issue.file} | ${issue.kind} | ${escapeMd(issue.declaration ?? "")} | ${escapeMd(issue.target ?? "")} | ${escapeMd(issue.message)} |`);
     }
   }
-  if (status.implementationOverrides?.failureCount > 0) {
+  if (status.localOverrides?.failureCount > 0) {
     lines.push("");
-    lines.push("## Implementation Override Issues");
+    lines.push("## Local Override Issues");
     lines.push("");
-    for (const issue of [
-      ...status.implementationOverrides.invalidConfig,
-      ...status.implementationOverrides.unmatchedConfig,
-      ...status.implementationOverrides.missingInline,
-      ...status.implementationOverrides.unconfiguredInline,
-      ...status.implementationOverrides.invalidInline,
-    ].slice(0, 100)) {
+    for (const issue of status.localOverrides.invalidInline.slice(0, 100)) {
       lines.push(`- ${issue.id || issue.match || `config[${issue.index}]`} ${issue.path ? `(${issue.path}) ` : ""}- ${issue.reason}`);
     }
   }

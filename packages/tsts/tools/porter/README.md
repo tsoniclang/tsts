@@ -54,28 +54,32 @@ Every deliberate non-literal body implementation must have both records:
 ```ts
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"...","bodyHash":"..."}
- * @tsgo-implementation-override {"category":"runtime-performance","allow":["body"],"reason":"Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body"],"reason":"Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract."}
  */
 ```
 
-```json
-{
-  "implementationOverrides": [
-    {
-      "id": "github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan",
-      "category": "runtime-performance",
-      "allow": ["body"],
-      "reason": "Use the JS/.NET UTF-16 source-text model in the scanner hot path while preserving the TS-Go public contract."
-    }
-  ]
-}
+Override metadata is local-only. Do not add per-unit override ledgers to
+`porter.config.json`.
+
+`allow` accepts:
+
+- `"body"`: the TypeScript implementation intentionally differs from the Go body
+  while preserving the public signature.
+- `"signature"`: the TypeScript declaration intentionally differs from the
+  Go-derived signature.
+
+Signature overrides must capture both current snapshots locally:
+
+```ts
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/scanner/scanner.go::func::Scan","kind":"func","status":"implemented","sigHash":"...","bodyHash":"..."}
+ * @tsgo-override {"category":"runtime-performance","allow":["body","signature"],"reason":"Use a target-native source text carrier.","goSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,string)=>void","tsSignature":"func(packages/tsts/src/go/compat.ts::GoPtr<packages/tsts/src/internal/scanner/scanner.ts::Scanner>,packages/tsts/src/internal/core/source_text.ts::SourceText)=>void"}
+ */
 ```
 
-`porter:verify` fails on malformed override metadata, central entries that match
-no unit, central entries missing inline markers, and inline markers with no
-central entry. `allow` currently accepts only `"body"`; signature/type differences
-must go through the stricter `signatureCheck.overrides` path with exact mismatch
-kinds.
+The signature checker recomputes these snapshots from the pinned Go source and
+the actual TypeScript declaration. Any upstream Go drift or local TS signature
+drift invalidates the override and fails `porter:verify`.
 
 ## Out-of-Scope Language-Service Surface
 
