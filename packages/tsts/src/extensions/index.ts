@@ -8,6 +8,7 @@ export {
   ExtensionHostDiagnosticCode,
   ProviderRegistry,
   attachExtensionHost,
+  attachExtensionHostToProgram,
   defineExtensionFactKey,
   getExtensionHost,
   hasExtensionHost,

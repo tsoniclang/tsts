@@ -1134,6 +1134,19 @@ export function attachExtensionHost<TProgram extends object>(program: TProgram, 
   return Object.freeze({ program, extensionHost: host });
 }
 
+export function attachExtensionHostToProgram<TProgram extends object>(hostOwner: object, program: TProgram): ExtendedProgram<TProgram> | undefined {
+  const host = attachedExtensionHosts.get(hostOwner);
+  if (host === undefined) {
+    return undefined;
+  }
+  const existing = attachedExtensionHosts.get(program);
+  if (existing !== undefined && existing !== host) {
+    throw new Error("Program already has a different ExtensionHost.");
+  }
+  attachedExtensionHosts.set(program, host);
+  return Object.freeze({ program, extensionHost: host });
+}
+
 export function getExtensionHost(program: object): ExtensionHost | undefined {
   return attachedExtensionHosts.get(program);
 }

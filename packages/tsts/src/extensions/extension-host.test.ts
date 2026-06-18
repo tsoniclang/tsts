@@ -9,6 +9,7 @@ import {
   acceptDecision,
   argumentPassingFactKey,
   attachExtensionHost,
+  attachExtensionHostToProgram,
   associatedTypeFactKey,
   canonicalIdentityFactKey,
   constGenericFactKey,
@@ -96,6 +97,19 @@ test("extension host is sidecar state, not ambient program mutation", () => {
   assert.equal(getExtensionHost(program), extended.extensionHost);
   assert.equal(hasExtensionHost(program), true);
   assert.deepEqual(extended.extensionHost.extensions.map((item) => item.identity.id), ["source-primitives"]);
+});
+
+test("extension host attaches from creation options to constructed program", () => {
+  const options = {};
+  const program = {};
+
+  const extendedOptions = attachExtensionHost(options);
+  const extendedProgram = attachExtensionHostToProgram(options, program);
+
+  assert.equal(extendedProgram?.program, program);
+  assert.equal(extendedProgram?.extensionHost, extendedOptions.extensionHost);
+  assert.equal(getExtensionHost(program), extendedOptions.extensionHost);
+  assert.equal(Object.prototype.hasOwnProperty.call(program, "__extensionHost"), false);
 });
 
 test("extension ordering is deterministic and honors dependencies", () => {

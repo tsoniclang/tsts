@@ -94,6 +94,7 @@ import type { includeProcessor } from "./includeprocessor.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
 import { recordBoundSourceFileExtensionFacts } from "../../extensions/compiler-integration.js";
+import { attachExtensionHostToProgram } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f","bodyHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
@@ -581,7 +582,7 @@ export function Program_as_checker_Host(receiver: GoPtr<Program>): CheckerHost {
 }
 
 export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e32ad451 {
-  return {
+  const adapter: Program_e32ad451 = {
     __tsgoEmbedded0: Program_as_checker_Host(receiver),
     GetSymlinkCache: (): GoPtr<KnownSymlinks> => Program_GetSymlinkCache(receiver),
     CommonSourceDirectory: (): string => Program_CommonSourceDirectory(receiver),
@@ -616,6 +617,10 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
     GetProjectReferenceFromOutputDts: (path: Path): GoPtr<SourceOutputAndProjectReference> => Program_GetProjectReferenceFromOutputDts(receiver, path),
     GetRedirectForResolution: (file: HasFileName): GoPtr<ParsedCommandLine> => Program_GetRedirectForResolution(receiver, file),
   };
+  if (receiver !== undefined) {
+    attachExtensionHostToProgram(receiver, adapter);
+  }
+  return adapter;
 }
 
 /**
@@ -711,6 +716,7 @@ export function Program_GetSourceFileFromReference(receiver: GoPtr<Program>, ori
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::func::NewProgram","kind":"func","status":"implemented","sigHash":"a124c4f6a47008ca4e3457fd95247b6cb4c9c33b70716c69b709067d1bb2518e","bodyHash":"4326c0257817239b27d2abe91f2f64d5fad21b33e7fd92f4d0de4b45eaf741b5"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Extension-enabled ProgramOptions attach their ExtensionHost to the constructed Program so checker and consumer seams are program-scoped; no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func NewProgram(opts ProgramOptions) *Program {
@@ -754,6 +760,7 @@ export function NewProgram(opts: ProgramOptions): GoPtr<Program> {
     packagesMapOnce: new Once(),
     packagesMap: new globalThis.Map<string, bool>(),
   };
+  attachExtensionHostToProgram(opts, p);
   Program_initCheckerPool(p);
   Program_verifyCompilerOptions(p);
   if (popTrace !== undefined) {

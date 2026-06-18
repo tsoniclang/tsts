@@ -1,9 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { bool } from "@tsonic/core/types.js";
+import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
+import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
 import { Node_Symbol } from "../internal/ast/ast.js";
+import { Node_ForEachChild } from "../internal/ast/spine.js";
+import { KindCallExpression } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
@@ -16,13 +20,13 @@ import {
   Program_GetSourceFiles,
   Program_GetSyntacticDiagnostics,
 } from "../internal/compiler/program.js";
-import type { ProgramOptions } from "../internal/compiler/program.js";
+import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { DynamicProviderExtensionContractVersion, attachExtensionHost, createExtensionConsumerQueries, finalizeExtensionSemantics } from "./index.js";
-import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, targetBindingFactKey } from "./index.js";
-import type { CompilerExtension, TargetBindingProvider, TargetIdentity } from "./index.js";
+import { DynamicProviderExtensionContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, attachExtensionHost, createExtensionConsumerQueries, deferDecision, finalizeExtensionSemantics, getExtensionHost } from "./index.js";
+import { canonicalIdentityFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetBindingFactKey } from "./index.js";
+import type { CompilerExtension, SelectedTargetSignatureFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
   let fs = FromMap(new Map<string, string>([
@@ -87,11 +91,113 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.parameters[0]?.type.kind, "type-parameter");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.members?.[0]?.returnType?.kind, "source-primitive");
 
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
+
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   assert.equal(consumer.getVirtualDeclaration(virtualFile)?.providerModuleId, "System.Buffers");
   assert.equal(consumer.getVirtualDeclaration(searchValuesSymbol)?.exportName, "SearchValues");
   assert.equal(consumer.getTargetBindingFact(searchValuesSymbol)?.id, "System.Buffers.SearchValues`1");
+  assert.equal(consumer.getSelectedTargetCall(call), undefined);
+});
+
+test("checker records provider-owned target call facts for consumers", () => {
+  const selectedSignature = selectedSearchValuesContainsSignature();
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function contains(value: number): boolean;
+      contains(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, semanticProvider(selectedSignature))],
+  });
+
+  const program = NewProgram(options);
+  assert.ok(program !== undefined);
+  assert.equal(getExtensionHost(program), extended.extensionHost);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  const selected = extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey);
+  assert.equal(selected?.member.id, "Contains(T)");
+  assert.equal(selected?.member.parameters[0]?.type.kind, "type-parameter");
+  assert.equal(selected?.member.returnType?.kind, "source-primitive");
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
+});
+
+test("checker-owned target call seam reports deferred providers without fallback facts", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function contains(value: number): boolean;
+      contains(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [providerExtension("@tsonic/dotnet/System.Console.js", false, deferredSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  assert.ok(program !== undefined);
+  assert.equal(getExtensionHost(program), extended.extensionHost);
+  assert.equal(extended.extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveCall)?.identity.id, "dotnet-provider-extension");
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
+  assert.equal(extended.extensionHost.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerDeferred);
+
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getSelectedTargetCall(call), undefined);
 });
 
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {
@@ -131,7 +237,7 @@ test("provider-owned rejected modules do not fall back to file-system resolution
   assert.ok(!sourceFileNames.includes("/src/node_modules/@tsonic/dotnet/System.Buffers.js"));
 });
 
-function providerExtension(specifier: string, reject = false): CompilerExtension {
+function providerExtension(specifier: string, reject = false, provider?: TargetSemanticProvider): CompilerExtension {
   return {
     identity: {
       id: "dotnet-provider-extension",
@@ -140,7 +246,39 @@ function providerExtension(specifier: string, reject = false): CompilerExtension
     },
     initialize(context): void {
       context.registerTargetBindingProvider(dotnetProvider(specifier, reject));
+      if (provider !== undefined) {
+        assert.equal(context.registerTargetSemanticProvider(provider), true);
+      }
     },
+  };
+}
+
+function semanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "dotnet-semantic-provider",
+      version: "1.0.0",
+      target: "dotnet",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    resolveCall: () => acceptDecision({
+      selectedSignature,
+      returnType: "bool",
+    }),
+  };
+}
+
+function deferredSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "dotnet-deferred-semantic-provider",
+      version: "1.0.0",
+      target: "dotnet",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    resolveCall: () => deferDecision,
   };
 }
 
@@ -215,5 +353,54 @@ function dotnetProvider(specifier: string, reject: boolean): TargetBindingProvid
     getTargetIdentity(symbol) {
       return symbol.moduleSpecifier === specifier && symbol.exportName === "SearchValues" ? targetIdentity : undefined;
     },
+  };
+}
+
+function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFile>): void {
+  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
+  assert.equal(Program_GetSemanticDiagnostics(program, Background(), sourceFile).length, 0);
+}
+
+function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
+  const found = findFirstNodeByKindWorker(root, kind);
+  assert.ok(found !== undefined);
+  return found;
+}
+
+function findFirstNodeByKindWorker(root: GoPtr<Node>, kind: number): GoPtr<Node> {
+  if (root === undefined) {
+    return undefined;
+  }
+  if (root.Kind === kind) {
+    return root;
+  }
+  let found: GoPtr<Node>;
+  Node_ForEachChild(root, (child) => {
+    found = findFirstNodeByKindWorker(child, kind);
+    return (found !== undefined) as bool;
+  });
+  return found;
+}
+
+function selectedSearchValuesContainsSignature(): SelectedTargetSignatureFact {
+  return {
+    member: searchValuesContainsTargetMember(),
+  };
+}
+
+function searchValuesContainsTargetMember(): TargetMember {
+  return {
+    id: "Contains(T)",
+    sourceName: "Contains",
+    targetName: "Contains",
+    kind: "method",
+    parameters: [{
+      name: "value",
+      type: { kind: "type-parameter", name: "T" },
+      passingMode: "by-value",
+    }],
+    returnType: { kind: "source-primitive", name: "bool" },
+    overloadGroup: "Contains",
   };
 }
