@@ -5,15 +5,15 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import { Node_Text } from "../internal/ast/ast.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { Node_ForEachChild } from "../internal/ast/spine.js";
+import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { Diagnostic_String } from "../internal/ast/diagnostic.js";
-import { KindArrowFunction, KindCallExpression, KindExpressionStatement, KindIdentifier } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindCallExpression, KindExpressionStatement, KindIdentifier, KindPropertyAccessExpression } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import { NewProgram, Program_GetSemanticDiagnostics, Program_GetSourceFile } from "../internal/compiler/program.js";
 import type { Program, ProgramOptions } from "../internal/compiler/program.js";
-import { TypeFlagsString } from "../internal/checker/types.js";
+import { TypeFlagsNumber, TypeFlagsString } from "../internal/checker/types.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
@@ -53,6 +53,48 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
 
   const arrow = findFirstNodeByKind(index, KindArrowFunction);
   assert.ok(queries.getContextualType(arrow) !== undefined);
+});
+
+test("public type-checker queries expose instantiated generic member types", () => {
+  const { program, index } = createProgram(`
+    type int = number;
+    class Box<T> { value!: T; }
+    declare const nested: Box<Box<int>>;
+
+    nested.value.value;
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+
+  const queries = createTypeCheckerQueries(program);
+  const finalValueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
+  const finalValueType = queries.getTypeAtLocation(finalValueAccess);
+  assert.equal((finalValueType?.flags ?? 0) & TypeFlagsNumber, TypeFlagsNumber);
+
+  const finalValueSymbol = queries.getSymbolAtLocation(Node_Name(finalValueAccess));
+  assert.equal(finalValueSymbol?.Name, "value");
+});
+
+test("public type-checker queries expose flow-narrowed receiver member access", () => {
+  const { program, index } = createProgram(`
+    class PageValue { value!: string; }
+    declare let current: PageValue | number;
+
+    if (current instanceof PageValue) {
+      current;
+      current.value;
+    }
+  `);
+  assertCleanSemanticDiagnostics(program, index);
+
+  const queries = createTypeCheckerQueries(program);
+  const narrowedCurrent = findIdentifierByText(index, "current", (node) => node?.Parent?.Kind === KindExpressionStatement);
+  const narrowedCurrentType = queries.getTypeAtLocation(narrowedCurrent);
+  assert.equal(narrowedCurrentType?.symbol?.Name, "PageValue");
+
+  const valueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
+  const valueType = queries.getTypeAtLocation(valueAccess);
+  assert.equal((valueType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
+  assert.equal(queries.getSymbolAtLocation(Node_Name(valueAccess))?.Name, "value");
 });
 
 function createProgram(sourceText: string): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {
@@ -104,6 +146,17 @@ function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
   let found: GoPtr<Node>;
   visitNodes(root, (node) => {
     if (found === undefined && node?.Kind === kind) {
+      found = node;
+    }
+  });
+  assert.ok(found !== undefined);
+  return found;
+}
+
+function findPropertyAccessByName(root: GoPtr<Node>, name: string, predicate: (node: GoPtr<Node>) => boolean): GoPtr<Node> {
+  let found: GoPtr<Node>;
+  visitNodes(root, (node) => {
+    if (found === undefined && node?.Kind === KindPropertyAccessExpression && Node_Text(Node_Name(node)) === name && predicate(node)) {
       found = node;
     }
   });

@@ -1,25 +1,39 @@
 import {
   argumentPassingFactKey,
+  associatedTypeFactKey,
+  attributeFactKey,
   contextualTargetTypeFactKey,
+  constGenericFactKey,
+  defaultValueFactKey,
+  fieldFactKey,
   functionPointerFactKey,
+  instantiatedTargetTypeFactKey,
   providerVirtualDeclarationFactKey,
   pointerFactKey,
   runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
+  structFactKey,
   surfaceOperationFactKey,
   targetConversionFactKey,
   targetBindingFactKey,
 } from "./facts.js";
 import type {
   ArgumentPassingFact,
+  AssociatedTypeFact,
+  AttributeFact,
   ContextualTargetTypeFact,
+  ConstGenericFact,
+  DefaultValueFact,
+  FieldFact,
   FunctionPointerFact,
+  InstantiatedTargetTypeFact,
   PointerFact,
   ProviderVirtualDeclarationFact,
   RuntimeCarrierFact,
   SelectedTargetSignatureFact,
   SourcePrimitiveFact,
+  StructFact,
   SurfaceOperationFact,
   TargetConversionFact,
   TargetBindingFact,
@@ -145,6 +159,62 @@ export class ExtensionConsumerQueries {
 
   requirePointerFact(subject: ExtensionFactSubject, purpose?: string): PointerFact | undefined {
     return this.requireFact(subject, pointerFactKey, purpose);
+  }
+
+  getStructFact(subject: ExtensionFactSubject): StructFact | undefined {
+    return this.getFact(subject, structFactKey);
+  }
+
+  requireStructFact(subject: ExtensionFactSubject, purpose?: string): StructFact | undefined {
+    return this.requireFact(subject, structFactKey, purpose);
+  }
+
+  getFieldFact(subject: ExtensionFactSubject): FieldFact | undefined {
+    return this.getFact(subject, fieldFactKey);
+  }
+
+  requireFieldFact(subject: ExtensionFactSubject, purpose?: string): FieldFact | undefined {
+    return this.requireFact(subject, fieldFactKey, purpose);
+  }
+
+  getAttributeFact(subject: ExtensionFactSubject): AttributeFact | undefined {
+    return this.getFact(subject, attributeFactKey);
+  }
+
+  requireAttributeFact(subject: ExtensionFactSubject, purpose?: string): AttributeFact | undefined {
+    return this.requireFact(subject, attributeFactKey, purpose);
+  }
+
+  getDefaultValueFact(subject: ExtensionFactSubject): DefaultValueFact | undefined {
+    return this.getFact(subject, defaultValueFactKey);
+  }
+
+  requireDefaultValueFact(subject: ExtensionFactSubject, purpose?: string): DefaultValueFact | undefined {
+    return this.requireFact(subject, defaultValueFactKey, purpose);
+  }
+
+  getInstantiatedTargetTypeFact(subject: ExtensionFactSubject): InstantiatedTargetTypeFact | undefined {
+    return this.getFact(subject, instantiatedTargetTypeFactKey);
+  }
+
+  requireInstantiatedTargetTypeFact(subject: ExtensionFactSubject, purpose?: string): InstantiatedTargetTypeFact | undefined {
+    return this.requireFact(subject, instantiatedTargetTypeFactKey, purpose);
+  }
+
+  getAssociatedTypeFact(subject: ExtensionFactSubject): AssociatedTypeFact | undefined {
+    return this.getFact(subject, associatedTypeFactKey);
+  }
+
+  requireAssociatedTypeFact(subject: ExtensionFactSubject, purpose?: string): AssociatedTypeFact | undefined {
+    return this.requireFact(subject, associatedTypeFactKey, purpose);
+  }
+
+  getConstGenericFact(subject: ExtensionFactSubject): ConstGenericFact | undefined {
+    return this.getFact(subject, constGenericFactKey);
+  }
+
+  requireConstGenericFact(subject: ExtensionFactSubject, purpose?: string): ConstGenericFact | undefined {
+    return this.requireFact(subject, constGenericFactKey, purpose);
   }
 
   getVirtualDeclaration(subject: ExtensionFactSubject): ProviderVirtualDeclarationFact | undefined {

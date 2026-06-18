@@ -96,6 +96,10 @@ export interface AttributeFact {
   readonly arguments?: readonly ExtensionFactSubject[];
 }
 
+export interface DefaultValueFact {
+  readonly type: ExtensionFactSubject;
+}
+
 export type TargetTypeRef =
   | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
   | { readonly kind: "target-named"; readonly id: string; readonly typeArguments?: readonly TargetTypeRef[] }
@@ -265,6 +269,35 @@ export const pointerFactKey = defineExtensionFactKey<PointerFact>({
   extensionId: "tsts.source-core",
   name: "pointer",
   equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
+});
+
+export const structFactKey = defineExtensionFactKey<StructFact>({
+  extensionId: "tsts.source-core",
+  name: "struct",
+  equals: (left, right) =>
+    left.valueType === right.valueType
+    && factSubjectArrayEquals(left.fields, right.fields),
+});
+
+export const fieldFactKey = defineExtensionFactKey<FieldFact>({
+  extensionId: "tsts.source-core",
+  name: "field",
+  equals: (left, right) => left.name === right.name && left.type === right.type && left.readonly === right.readonly,
+});
+
+export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
+  extensionId: "tsts.source-core",
+  name: "attribute",
+  equals: (left, right) =>
+    left.target === right.target
+    && left.attributeName === right.attributeName
+    && factSubjectArrayEquals(left.arguments, right.arguments),
+});
+
+export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
+  extensionId: "tsts.source-core",
+  name: "defaultValue",
+  equals: (left, right) => left.type === right.type,
 });
 
 export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({

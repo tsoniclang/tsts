@@ -261,7 +261,7 @@ test("provider registry requires explicit provider identity and rejects duplicat
 test("provider registry rejects unsupported extension contract versions", () => {
   const host = new ExtensionHost({});
   const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js", {
-    extensionContractVersion: "legacy.metadata-bridge.0",
+    extensionContractVersion: "unsupported.contract.0",
   });
 
   assert.equal(host.providers.registerTargetBindingProvider(provider), false);
