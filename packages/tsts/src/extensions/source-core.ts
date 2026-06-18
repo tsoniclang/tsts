@@ -1,3 +1,4 @@
+import type { bool } from "@tsonic/core/types.js";
 import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
@@ -10,13 +11,17 @@ import {
   Node_Symbol,
   Node_Text,
 } from "../internal/ast/ast.js";
-import { Node_Name } from "../internal/ast/spine.js";
-import { AsImportClause, AsNamespaceImport } from "../internal/ast/generated/casts.js";
+import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
+import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
+  KindExportDeclaration,
   KindImportDeclaration,
   KindNamedImports,
+  KindNamedExports,
   KindNamespaceImport,
+  KindQualifiedName,
   KindTypeKeyword,
+  KindTypeReference,
 } from "../internal/ast/generated/kinds.js";
 import {
   canonicalIdentityFactKey,
@@ -116,19 +121,21 @@ function recordSourceCoreImports(
   }
 
   for (const statement of Node_Statements(sourceFile) ?? []) {
-    if (statement?.Kind !== KindImportDeclaration) {
+    if (statement?.Kind === KindImportDeclaration) {
+      const moduleIdentity = getSourceCoreModuleIdentity(statement, modules);
+      if (moduleIdentity !== undefined) {
+        recordSourceCoreImportClause(facts, statement, moduleIdentity, primitivesByExportName);
+      }
       continue;
     }
-    const moduleSpecifier = Node_ModuleSpecifier(statement);
-    if (moduleSpecifier === undefined) {
-      continue;
+    if (statement?.Kind === KindExportDeclaration) {
+      const moduleIdentity = getSourceCoreModuleIdentity(statement, modules);
+      if (moduleIdentity !== undefined) {
+        recordSourceCoreExportClause(facts, statement, moduleIdentity, primitivesByExportName);
+      }
     }
-    const moduleIdentity = modules.find((candidate) => candidate.moduleSpecifier === Node_Text(moduleSpecifier));
-    if (moduleIdentity === undefined) {
-      continue;
-    }
-    recordSourceCoreImportClause(facts, statement, moduleIdentity, primitivesByExportName);
   }
+  recordSourceCoreTypeReferences(facts, sourceFile, modules, primitivesByExportName);
 }
 
 function recordSourceCoreImportClause(
@@ -167,6 +174,137 @@ function recordSourceCoreImportClause(
   }
 }
 
+function recordSourceCoreExportClause(
+  facts: ExtensionFactStore,
+  exportDeclaration: GoPtr<Node>,
+  moduleIdentity: SourceCoreModuleIdentity,
+  primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+): void {
+  const exportClause = AsExportDeclaration(exportDeclaration)!.ExportClause;
+  if (exportClause === undefined || exportClause.Kind !== KindNamedExports) {
+    return;
+  }
+  const declarationIsTypeOnly = AsExportDeclaration(exportDeclaration)!.IsTypeOnly;
+  for (const exportSpecifier of Node_Elements(exportClause) ?? []) {
+    const exportedName = Node_Name(exportSpecifier);
+    if (exportedName === undefined) {
+      continue;
+    }
+    const sourceName = Node_Text(Node_PropertyName(exportSpecifier) ?? exportedName);
+    const primitiveFact = primitivesByExportName.get(sourceName);
+    if (primitiveFact === undefined) {
+      continue;
+    }
+    const specifierIsTypeOnly = AsExportSpecifier(exportSpecifier)!.IsTypeOnly;
+    recordSourcePrimitiveImport(facts, exportSpecifier, moduleIdentity, sourceName, primitiveFact, declarationIsTypeOnly || specifierIsTypeOnly);
+  }
+}
+
+function recordSourceCoreTypeReferences(
+  facts: ExtensionFactStore,
+  sourceFile: GoPtr<SourceFile>,
+  modules: readonly SourceCoreModuleIdentity[],
+  primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+): void {
+  visitSourceCoreNode(sourceFile, (node) => {
+    if (node?.Kind !== KindTypeReference) {
+      return;
+    }
+    const typeName = AsTypeReferenceNode(node)!.TypeName;
+    if (typeName === undefined) {
+      return;
+    }
+    const primitive = resolvePrimitiveTypeReference(facts, typeName, modules, primitivesByExportName);
+    if (primitive === undefined) {
+      return;
+    }
+    const evidence = createPrimitiveEvidence(primitive.moduleIdentity, primitive.exportName);
+    facts.set(node, canonicalIdentityFactKey, primitive.identity, evidence);
+    facts.set(node, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
+    facts.set(typeName, canonicalIdentityFactKey, primitive.identity, evidence);
+    facts.set(typeName, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
+    if (typeName.Kind === KindQualifiedName) {
+      const right = AsQualifiedName(typeName)!.Right;
+      facts.set(right, canonicalIdentityFactKey, primitive.identity, evidence);
+      facts.set(right, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
+    }
+  });
+}
+
+function resolvePrimitiveTypeReference(
+  facts: ExtensionFactStore,
+  typeName: GoPtr<Node>,
+  modules: readonly SourceCoreModuleIdentity[],
+  primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+): { readonly moduleIdentity: SourceCoreModuleIdentity; readonly exportName: string; readonly primitiveFact: SourcePrimitiveDeclaration; readonly identity: ExtensionCanonicalIdentity } | undefined {
+  if (typeName === undefined) {
+    return undefined;
+  }
+  if (typeName.Kind === KindQualifiedName) {
+    return resolveQualifiedPrimitiveReference(facts, typeName, modules, primitivesByExportName);
+  }
+
+  const typeNameSymbol = Node_Symbol(typeName);
+  if (typeNameSymbol === undefined) {
+    return undefined;
+  }
+  const primitiveFact = facts.get(typeNameSymbol, sourcePrimitiveFactKey);
+  const identity = facts.get(typeNameSymbol, canonicalIdentityFactKey);
+  if (primitiveFact === undefined || identity === undefined || identity.exportName === undefined) {
+    return undefined;
+  }
+  const moduleIdentity = modules.find((candidate) => identity.id === `${candidate.moduleSpecifier}::${identity.exportName}`);
+  if (moduleIdentity === undefined) {
+    return undefined;
+  }
+  const declaration = primitivesByExportName.get(identity.exportName);
+  if (declaration === undefined) {
+    return undefined;
+  }
+  return { moduleIdentity, exportName: identity.exportName, primitiveFact: declaration, identity };
+}
+
+function resolveQualifiedPrimitiveReference(
+  facts: ExtensionFactStore,
+  typeName: GoPtr<Node>,
+  modules: readonly SourceCoreModuleIdentity[],
+  primitivesByExportName: ReadonlyMap<string, SourcePrimitiveDeclaration>,
+): { readonly moduleIdentity: SourceCoreModuleIdentity; readonly exportName: string; readonly primitiveFact: SourcePrimitiveDeclaration; readonly identity: ExtensionCanonicalIdentity } | undefined {
+  const qualifiedName = AsQualifiedName(typeName);
+  const leftSymbol = Node_Symbol(qualifiedName?.Left);
+  if (leftSymbol === undefined) {
+    return undefined;
+  }
+  const moduleIdentityFact = facts.get(leftSymbol, canonicalIdentityFactKey);
+  if (moduleIdentityFact?.kind !== "module") {
+    return undefined;
+  }
+  const moduleIdentity = modules.find((candidate) => candidate.moduleSpecifier === moduleIdentityFact.id);
+  if (moduleIdentity === undefined) {
+    return undefined;
+  }
+  const right = qualifiedName!.Right;
+  const exportName = Node_Text(right);
+  const primitiveFact = primitivesByExportName.get(exportName);
+  if (primitiveFact === undefined) {
+    return undefined;
+  }
+  const rightSymbol = Node_Symbol(right);
+  const identity = createExportIdentity(moduleIdentity, exportName, "type", rightSymbol === undefined ? `${moduleIdentity.moduleSpecifier}::${exportName}` : getSymbolFactId(rightSymbol));
+  return { moduleIdentity, exportName, primitiveFact, identity };
+}
+
+function visitSourceCoreNode(node: GoPtr<Node>, visit: (node: GoPtr<Node>) => void): void {
+  if (node === undefined) {
+    return;
+  }
+  visit(node);
+  Node_ForEachChild(node, (child: GoPtr<Node>) => {
+    visitSourceCoreNode(child, visit);
+    return false as bool;
+  });
+}
+
 function recordNamespaceImportIdentity(
   facts: ExtensionFactStore,
   namespaceImport: GoPtr<Node>,
@@ -179,6 +317,13 @@ function recordNamespaceImportIdentity(
   }
   facts.set(namespaceImport, canonicalIdentityFactKey, createModuleIdentity(moduleIdentity, "namespace", getSymbolFactId(namespaceSymbol)), createModuleEvidence(moduleIdentity));
   facts.set(namespaceSymbol, canonicalIdentityFactKey, createModuleIdentity(moduleIdentity, typedImport ? "type" : "namespace", getSymbolFactId(namespaceSymbol)), createModuleEvidence(moduleIdentity));
+}
+
+function getSourceCoreModuleIdentity(node: GoPtr<Node>, modules: readonly SourceCoreModuleIdentity[]): SourceCoreModuleIdentity | undefined {
+  const moduleSpecifier = Node_ModuleSpecifier(node);
+  return moduleSpecifier === undefined
+    ? undefined
+    : modules.find((candidate) => candidate.moduleSpecifier === Node_Text(moduleSpecifier));
 }
 
 function recordSourcePrimitiveImport(

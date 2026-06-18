@@ -12,15 +12,20 @@ import {
   Node_Statements,
   Node_Symbol,
   Node_Text,
+  Node_Type,
   SourceFile_FileName,
 } from "../internal/ast/ast.js";
 import { Node_Name } from "../internal/ast/spine.js";
-import { AsImportClause, AsNamespaceImport } from "../internal/ast/generated/casts.js";
+import { AsExportDeclaration, AsImportClause, AsNamespaceImport, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import {
+  KindExportDeclaration,
   KindImportDeclaration,
   KindNamedImports,
+  KindNamedExports,
   KindNamespaceImport,
+  KindQualifiedName,
   KindTypeAliasDeclaration,
+  KindTypeReference,
 } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -122,6 +127,54 @@ test("source-core records namespace import identity without manufacturing primit
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, canonicalIdentityFactKey)?.kind, "module");
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js");
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, sourcePrimitiveFactKey), undefined);
+});
+
+test("source-core does not guess type-reference use-site facts before checker identity is available", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int as i32 } from "@tsonic/core/types.js";
+    import type * as core from "@tsonic/core/types.js";
+
+    type Direct = i32;
+    type Namespaced = core.uint;
+  `);
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const directReference = getTypeAliasType(index, "Direct");
+  assert.equal(directReference?.Kind, KindTypeReference);
+  assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(AsTypeReferenceNode(directReference)!.TypeName, canonicalIdentityFactKey), undefined);
+
+  const namespacedReference = getTypeAliasType(index, "Namespaced");
+  assert.equal(namespacedReference?.Kind, KindTypeReference);
+  const namespacedTypeName = AsTypeReferenceNode(namespacedReference)!.TypeName;
+  assert.equal(namespacedTypeName?.Kind, KindQualifiedName);
+  assert.equal(extended.extensionHost.facts.get(namespacedReference, sourcePrimitiveFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(namespacedTypeName, canonicalIdentityFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(AsQualifiedName(namespacedTypeName)!.Right, sourcePrimitiveFactKey), undefined);
+});
+
+test("source-core records primitive facts on canonical named re-exports", () => {
+  const { extended, program, index } = createProgram(`
+    export type { int as i32, uint } from "@tsonic/core/types.js";
+  `);
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const i32Specifier = getNamedExportSpecifier(index, "i32");
+  const i32Symbol = Node_Symbol(i32Specifier);
+  assert.ok(i32Symbol !== undefined);
+  assert.equal(extended.extensionHost.facts.get(i32Specifier, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.facts.get(i32Symbol, sourcePrimitiveFactKey)?.kind, "int32");
+  assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::int");
+
+  const uintSpecifier = getNamedExportSpecifier(index, "uint");
+  const uintSymbol = Node_Symbol(uintSpecifier);
+  assert.ok(uintSymbol !== undefined);
+  assert.equal(extended.extensionHost.facts.get(uintSymbol, sourcePrimitiveFactKey)?.kind, "uint32");
+  assert.equal(extended.extensionHost.facts.get(uintSymbol, canonicalIdentityFactKey)?.exportName, "uint");
 });
 
 function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string> = new Map()): {
@@ -230,4 +283,26 @@ function getTopLevelDeclaration(sourceFile: GoPtr<SourceFile>, kind: number, nam
     }
   }
   assert.fail(`Missing top-level declaration '${name}'.`);
+}
+
+function getTypeAliasType(sourceFile: GoPtr<SourceFile>, name: string): GoPtr<Node> {
+  return Node_Type(getTopLevelDeclaration(sourceFile, KindTypeAliasDeclaration, name));
+}
+
+function getNamedExportSpecifier(sourceFile: GoPtr<SourceFile>, exportedName: string): GoPtr<Node> {
+  for (const statement of Node_Statements(sourceFile) ?? []) {
+    if (statement?.Kind !== KindExportDeclaration) {
+      continue;
+    }
+    const exportClause = AsExportDeclaration(statement)!.ExportClause;
+    if (exportClause?.Kind !== KindNamedExports) {
+      continue;
+    }
+    for (const exportSpecifier of Node_Elements(exportClause) ?? []) {
+      if (Node_Text(Node_Name(exportSpecifier)) === exportedName) {
+        return exportSpecifier;
+      }
+    }
+  }
+  assert.fail(`Missing named export '${exportedName}'.`);
 }
