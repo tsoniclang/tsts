@@ -168,6 +168,7 @@ export interface InstantiatedTargetTypeFact {
 export interface SelectedTargetSignatureFact {
   readonly member: TargetMember;
   readonly typeArguments?: readonly ExtensionFactSubject[];
+  readonly targetTypeArguments?: readonly TargetTypeRef[];
   readonly argumentConversions?: readonly TargetTypeRef[];
 }
 
@@ -276,7 +277,11 @@ export const instantiatedTargetTypeFactKey = defineExtensionFactKey<Instantiated
 export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
   extensionId: "tsts.target-bindings",
   name: "selectedTargetSignature",
-  equals: (left, right) => left.member.id === right.member.id,
+  equals: (left, right) =>
+    left.member.id === right.member.id
+    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
+    && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
+    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions),
 });
 
 export const surfaceOperationFactKey = defineExtensionFactKey<SurfaceOperationFact>({
@@ -335,6 +340,20 @@ function optionalTargetTypeRefEquals(left: TargetTypeRef | undefined, right: Tar
     return left === right;
   }
   return targetTypeRefEquals(left, right);
+}
+
+function factSubjectArrayEquals(left: readonly ExtensionFactSubject[] | undefined, right: readonly ExtensionFactSubject[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function targetTypeRefArrayEquals(left: readonly TargetTypeRef[] | undefined, right: readonly TargetTypeRef[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => targetTypeRefEquals(value, right[index]!));
 }
 
 function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {

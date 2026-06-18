@@ -153,6 +153,51 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
 });
 
+test("checker records provider-owned generic inference facts on selected calls", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare function convert<T>(value: number): T;
+      const result = convert(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "dotnet",
+    extensions: [semanticOnlyExtension("dotnet-generic-inference-extension", genericInferenceSemanticProvider())],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  const argument = getFirstCallArgument(call);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(selectedCall?.member.id, "System.Convert.ChangeType<T>(System.Int32)");
+  assert.equal(selectedCall?.typeArguments?.[0], argument);
+  assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
+});
+
 test("checker records provider-owned parameter mode facts from selected target signatures", () => {
   const selectedSignature = {
     member: searchValuesContainsTargetMember("byref-readonly"),
@@ -826,6 +871,40 @@ function semanticProvider(selectedSignature: SelectedTargetSignatureFact): Targe
     resolveCall: () => acceptDecision({
       selectedSignature,
       returnType: "bool",
+    }),
+  };
+}
+
+function genericInferenceSemanticProvider(): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "dotnet-generic-inference-semantic-provider",
+      version: "1.0.0",
+      target: "dotnet",
+      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      providerKind: "semantic",
+    },
+    resolveCall: () => acceptDecision({
+      selectedSignature: {
+        member: {
+          id: "System.Convert.ChangeType<T>(System.Int32)",
+          sourceName: "convert",
+          targetName: "ChangeType",
+          kind: "method",
+          parameters: [{
+            name: "value",
+            type: { kind: "source-primitive", name: "int32" },
+            passingMode: "by-value",
+          }],
+          typeParameters: [{ name: "T" }],
+          overloadGroup: "System.Convert.ChangeType",
+        },
+      },
+      returnType: "T",
+    }),
+    inferTypeArguments: (request) => acceptDecision({
+      typeArguments: request.arguments,
+      targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
     }),
   };
 }

@@ -8,7 +8,7 @@ import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Type } from "../internal/checker/types.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { AssignabilityRequest, ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
+import type { AssignabilityRequest, InferTypeArgumentsRequest, InferTypeArgumentsResult, ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
 import { argumentPassingFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
@@ -50,9 +50,11 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
     return;
   }
 
-  extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, result.value.selectedSignature, result.evidence ?? []);
-  recordExtensionCallParameterModes(extensionHost, callExpression, result.value, Node_Arguments(callExpression) ?? []);
-  recordExtensionCallArgumentConversions(extensionHost, result.value, Node_Arguments(callExpression) ?? []);
+  const arguments_ = Node_Arguments(callExpression) ?? [];
+  const selectedSignature = recordExtensionCallTypeArgumentInference(extensionHost, callExpression, callee, result.value, arguments_);
+  extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, selectedSignature, result.evidence ?? []);
+  recordExtensionCallParameterModes(extensionHost, callExpression, { ...result.value, selectedSignature }, arguments_);
+  recordExtensionCallArgumentConversions(extensionHost, { ...result.value, selectedSignature }, arguments_);
 }
 
 export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
@@ -358,6 +360,33 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExp
     extensionHost.facts.set(argument, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
     extensionHost.facts.set(callExpression, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
   }
+}
+
+function recordExtensionCallTypeArgumentInference(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callee: GoPtr<Node>, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): ResolveCallResult["selectedSignature"] {
+  if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.inferTypeArguments) === undefined) {
+    return callResult.selectedSignature;
+  }
+
+  const result = extensionHost.runDecision<InferTypeArgumentsRequest, InferTypeArgumentsResult>(
+    ExtensionDecisionQuestion.inferTypeArguments,
+    {
+      declaration: callee,
+      arguments: arguments_,
+      ...(callResult.returnType !== undefined ? { contextualType: callResult.returnType } : {}),
+    },
+    () => ({
+      typeArguments: [],
+    }),
+    { requireOwner: true },
+  );
+  if (result.kind !== "accept") {
+    return callResult.selectedSignature;
+  }
+  return {
+    ...callResult.selectedSignature,
+    typeArguments: result.value.typeArguments,
+    ...(result.value.targetTypeArguments !== undefined ? { targetTypeArguments: result.value.targetTypeArguments } : {}),
+  };
 }
 
 function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
