@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import type { bool } from "@tsonic/core/types.js";
 import { Background } from "../go/context.js";
 import { SourceFile_FileName } from "../internal/ast/ast.js";
+import { Node_Symbol } from "../internal/ast/ast.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { NewCompilerHost } from "../internal/compiler/host.js";
 import {
   NewProgram,
+  Program_BindSourceFiles,
   Program_GetProgramDiagnostics,
   Program_GetSemanticDiagnostics,
   Program_GetSourceFile,
@@ -19,6 +21,7 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { attachExtensionHost } from "./index.js";
+import { canonicalIdentityFactKey, targetBindingFactKey } from "./index.js";
 import type { CompilerExtension, TargetBindingProvider, TargetIdentity } from "./index.js";
 
 test("provider-backed virtual modules participate in normal program binding", () => {
@@ -65,6 +68,17 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(Program_GetProgramDiagnostics(program).length, 0);
   assert.equal(Program_GetSyntacticDiagnostics(program, Background(), index).length, 0);
   assert.equal(Program_GetSemanticDiagnostics(program, Background(), index).length, 0);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://dotnet/System.Buffers");
+  assert.ok(virtualFile !== undefined);
+  const virtualModuleSymbol = Node_Symbol(virtualFile as never);
+  const searchValuesSymbol = virtualModuleSymbol?.Exports?.get("SearchValues");
+  assert.ok(searchValuesSymbol !== undefined);
+
+  assert.equal(extended.extensionHost.facts.get(virtualFile, canonicalIdentityFactKey)?.id, "System.Buffers");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, canonicalIdentityFactKey)?.exportName, "SearchValues");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
 });
 
 test("provider-owned rejected modules do not fall back to file-system resolution", () => {

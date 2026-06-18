@@ -93,6 +93,7 @@ import { projectReferenceFileMapper_getProjectReferenceFromSource, projectRefere
 import type { includeProcessor } from "./includeprocessor.js";
 import type { OrderedMap } from "../collections/ordered_map.js";
 import { OrderedMap_Entries } from "../collections/ordered_map.js";
+import { recordProviderVirtualModuleFacts } from "../../extensions/compiler-integration.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::type::ProgramOptions","kind":"type","status":"implemented","sigHash":"9eb7d18f0dae3f15940de7ca327de6159681203c5eb38cedc77879444adaee3f","bodyHash":"fd2579730de2d43c0ed258754b40e4b212195c5b2a367c70b29872aca609e055"}
@@ -1201,6 +1202,7 @@ export function Program_SingleThreaded(receiver: GoPtr<Program>): bool {
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.BindSourceFiles","kind":"method","status":"implemented","sigHash":"adbb681ce817a1474ae6c753e2045b27ef0b0ead57fdc141f8e63bb8642fd42f","bodyHash":"a081f0a968bb98f7febda2f9fbca79e39349341857a100b2765475a5f6784907"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go binding, provider virtual modules publish canonical identity and target binding facts for consumers; programs without an attached extension host remain on the direct TS-Go path."}
  *
  * Go source:
  * func (p *Program) BindSourceFiles() {
@@ -1222,6 +1224,7 @@ export function Program_BindSourceFiles(receiver: GoPtr<Program>): void {
   for (const file of receiver!.__tsgoEmbedded0!.files) {
     if (!SourceFile_IsBound(file)) {
       BindSourceFile(file);
+      recordProviderVirtualModuleFacts(receiver!.opts, file);
     }
   }
 }
@@ -1597,6 +1600,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/program.go::method::Program.GetBindDiagnostics","kind":"method","status":"implemented","sigHash":"095da506f9a3fd3269680f3ea12f04dfced3daec560c8cc8df2fe01d23a70933","bodyHash":"f6c8852b40bcb61a165361ac7131698cf8e257dfab659607bb4ce1d8b48bd30c"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"Single-file binding also records provider virtual module facts after normal TS-Go binding; no-extension programs remain unchanged."}
  *
  * Go source:
  * func (p *Program) GetBindDiagnostics(ctx context.Context, sourceFile *ast.SourceFile) []*ast.Diagnostic {
@@ -1613,6 +1617,7 @@ export function getAdditionalJSSyntacticDiagnostics(file: GoPtr<SourceFile>, opt
 export function Program_GetBindDiagnostics(receiver: GoPtr<Program>, ctx: Context, sourceFile: GoPtr<SourceFile>): GoSlice<GoPtr<Diagnostic>> {
   if (sourceFile !== undefined) {
     BindSourceFile(sourceFile);
+    recordProviderVirtualModuleFacts(receiver!.opts, sourceFile);
   } else {
     Program_BindSourceFiles(receiver);
   }
