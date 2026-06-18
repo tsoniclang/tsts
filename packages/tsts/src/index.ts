@@ -4,6 +4,8 @@ export { NewCachedFSCompilerHost, NewCompilerHost } from "./internal/compiler/ho
 export type { CompilerHost } from "./internal/compiler/host.js";
 export { NewProgram } from "./internal/compiler/program.js";
 export type { Program, ProgramLike, ProgramOptions } from "./internal/compiler/program.js";
+export { ExtensionDiagnosticStore, ExtensionFactResolver, ExtensionFactStore, ExtensionHost, ExtensionHostDiagnosticCode, ExtensionMetadataRegistry, attachExtensionHost, defineExtensionFactKey, getExtensionHost, hasExtensionHost } from "./extensions/index.js";
+export type { CompilerExtension, CompilerExtensionIdentity, ExtendedProgram, ExtensionCapabilitySpec, ExtensionDependencySpec, ExtensionDiagnostic, ExtensionDiagnosticCategory, ExtensionEvidence, ExtensionFactEntry, ExtensionFactKey, ExtensionFactKeyOptions, ExtensionFactResolution, ExtensionFactResolverCallback, ExtensionFactResolverContext, ExtensionFactSubject, ExtensionFactWriteResult, ExtensionHostOptions, ExtensionInitializeContext, TargetBindingMetadataHeader } from "./extensions/index.js";
 export { ParseBuildCommandLine, ParseCommandLine } from "./internal/tsoptions/commandlineparser.js";
 export type { ParsedBuildCommandLine } from "./internal/tsoptions/parsedbuildcommandline.js";
 export type { ParsedCommandLine } from "./internal/tsoptions/parsedcommandline.js";
