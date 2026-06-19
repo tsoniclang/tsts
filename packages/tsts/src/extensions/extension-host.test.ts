@@ -196,8 +196,8 @@ test("fact store supports insert, idempotent writes, conflicts, and primitive su
   assert.equal(host.facts.set(subject, primitiveFactKey, "int64"), "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.factConflict);
 
-  assert.equal(host.facts.set("canonical:@tsonic/core/types.js::int", primitiveFactKey, "int32"), "inserted");
-  assert.equal(host.facts.get("canonical:@tsonic/core/types.js::int", primitiveFactKey), "int32");
+  assert.equal(host.facts.set("canonical:@example/native/types.js::int", primitiveFactKey, "int32"), "inserted");
+  assert.equal(host.facts.get("canonical:@example/native/types.js::int", primitiveFactKey), "int32");
 });
 
 test("fact conflict diagnostics are keyed per object subject", () => {
@@ -241,16 +241,16 @@ test("fact resolver computes lazily and caches through the fact store", () => {
 
 test("provider registry requires explicit provider identity and rejects duplicates", () => {
   const host = new ExtensionHost({});
-  const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js");
+  const provider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
 
   assert.equal(host.providers.registerTargetBindingProvider(provider), true);
   assert.equal(host.providers.getTargetBindingProvider("dotnet")?.identity.target, "csharp");
   assert.equal(host.providers.registerTargetBindingProvider(provider), true);
 
-  assert.equal(host.providers.registerTargetBindingProvider(dotnetBindingProvider("@tsonic/dotnet/System.Text.js")), false);
+  assert.equal(host.providers.registerTargetBindingProvider(dotnetBindingProvider("@example/dotnet/System.Text.js")), false);
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.duplicateProvider);
 
-  const invalidProvider = dotnetBindingProvider("@tsonic/dotnet/Invalid.js", {
+  const invalidProvider = dotnetBindingProvider("@example/dotnet/Invalid.js", {
     id: "",
     providerKind: "semantic",
   });
@@ -260,18 +260,18 @@ test("provider registry requires explicit provider identity and rejects duplicat
 
 test("provider registry rejects unsupported extension contract versions", () => {
   const host = new ExtensionHost({});
-  const provider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js", {
+  const provider = dotnetBindingProvider("@example/dotnet/System.Buffers.js", {
     extensionContractVersion: "unsupported.contract.0",
   });
 
   assert.equal(host.providers.registerTargetBindingProvider(provider), false);
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerContractMismatch);
   assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/);
-  assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/System.Buffers.js").kind, "unowned");
+  assert.equal(host.providers.resolveVirtualModule("@example/dotnet/System.Buffers.js").kind, "unowned");
 });
 
 test("extensions register binding and semantic providers through initialization context", () => {
-  const bindingProvider = dotnetBindingProvider("@tsonic/dotnet/System.Buffers.js");
+  const bindingProvider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
   const semanticProvider: TargetSemanticProvider = {
     identity: {
       id: "dotnet-semantic",
@@ -472,11 +472,11 @@ test("semantic provider methods own typed decisions without hook boilerplate", (
 });
 
 test("target binding providers own and resolve virtual modules without file-backed side data", () => {
-  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const specifier = "@example/dotnet/System.Buffers.js";
   const host = new ExtensionHost({});
   host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
 
-  assert.equal(host.providers.getModuleOwner("@tsonic/core/types.js"), undefined);
+  assert.equal(host.providers.getModuleOwner("@example/native/types.js"), undefined);
 
   const context = {
     containingFile: "/src/example.ts",
@@ -492,6 +492,7 @@ test("target binding providers own and resolve virtual modules without file-back
   assert.equal(result.module.declarationModel.exports[0]?.name, "SearchValues");
   assert.match(result.module.virtualSourceText, /export declare class SearchValues<T extends unknown>/);
   assert.match(result.module.virtualSourceText, /Contains\(value: T\): boolean;/);
+  assert.match(result.module.virtualSourceText, /export type Token = number;/);
   assert.equal(result.module.virtualDocument.uri, "tsts-provider://dotnet/System.Buffers");
   assert.equal(result.module.virtualDocument.readOnly, true);
   assert.equal(result.module.virtualDocument.provider.id, "dotnet");
@@ -506,11 +507,11 @@ test("target binding providers own and resolve virtual modules without file-back
     exportName: "SearchValues",
   })?.id, "System.Buffers.SearchValues`1");
 
-  assert.equal(host.providers.resolveVirtualModule("@tsonic/dotnet/Unknown.js").kind, "unowned");
+  assert.equal(host.providers.resolveVirtualModule("@example/dotnet/Unknown.js").kind, "unowned");
 });
 
 test("virtual declaration documents are stable consumer-readable compiler state", () => {
-  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const specifier = "@example/dotnet/System.Buffers.js";
   const host = new ExtensionHost({});
   host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
 
@@ -535,7 +536,7 @@ test("virtual declaration documents are stable consumer-readable compiler state"
 });
 
 test("provider ownership conflicts and invalid declaration models are diagnostics", () => {
-  const specifier = "@tsonic/dotnet/System.Buffers.js";
+  const specifier = "@example/dotnet/System.Buffers.js";
   const conflictHost = new ExtensionHost({});
   conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "first" }));
   conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "second" }));
@@ -692,7 +693,7 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
   const sourceFile = {};
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("source-core", {
+      extension("source-semantics", {
         initialize: (context) => {
           context.registerLifecycleHook<SourceFileBoundLifecycleRequest>(ExtensionLifecycleEvent.afterSourceFileBound, (request) => {
             if (request.sourceFile === sourceFile && request.fileName === "/src/index.ts") {
@@ -724,13 +725,13 @@ test("canonical identity facts are consumer-queryable after finalization", () =>
 
   host.facts.set(localAlias, canonicalIdentityFactKey, {
     kind: "export",
-    id: "@tsonic/core/types.js::int",
-    packageName: "@tsonic/core",
+    id: "@example/native/types.js::int",
+    packageName: "@example/native",
     packageVersion: "1.0.0",
     subpath: "types.js",
     exportName: "int",
     importKind: "type",
-    canonicalSymbolId: "@tsonic/core/types.js::int",
+    canonicalSymbolId: "@example/native/types.js::int",
   });
   host.finalizeSemantics();
 
@@ -780,6 +781,24 @@ test("required consumer facts report diagnostics instead of allowing fallback in
   host.facts.get(type, sourcePrimitiveFactKey);
   assert.equal(consumer.requireSourcePrimitiveFact(type, "emitting source primitive"), undefined);
   assert.equal(host.diagnostics.all()[1]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+});
+
+test("strict consumer facts report diagnostics and fail closed", () => {
+  const call = {};
+  const host = new ExtensionHost({});
+  const consumer = createExtensionConsumerQueries(host, "emitter");
+
+  host.finalizeSemantics();
+  assert.throws(
+    () => consumer.mustSelectedTargetCall(call, "emitting provider-owned call"),
+    /requires extension fact 'tsts\.target-bindings:selectedTargetSignature'/,
+  );
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
+
+  const satisfiedHost = new ExtensionHost({});
+  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
+  satisfiedHost.finalizeSemantics();
+  assert.equal(createExtensionConsumerQueries(satisfiedHost, "emitter").mustSelectedTargetCall(call).member.id, "System.Console.WriteLine(System.Int32)");
 });
 
 test("lifecycle hook failures are diagnostics with extension identity", () => {
@@ -1178,7 +1197,7 @@ function dotnetBindingProvider(
       moduleSpecifier: specifier,
       virtualFileName: "tsts-provider://dotnet/System.Buffers",
       providerModuleId: moduleId,
-      packageName: "@tsonic/dotnet",
+      packageName: "@example/dotnet",
       packageVersion: "1.0.0",
     }),
     getDeclarationModel: options.declarationModel ?? ((resolution) => ({
@@ -1203,6 +1222,21 @@ function dotnetBindingProvider(
             returnType: { kind: "source-primitive", name: "boolean" },
           }],
         }],
+      }, {
+        id: "Token",
+        name: "Token",
+        kind: "type",
+        targetIdentity: {
+          target: "csharp",
+          id: "System.Int32",
+          displayName: "System.Int32",
+        },
+        type: {
+          kind: "target-named",
+          target: "csharp",
+          id: "System.Int32",
+          sourceShape: { kind: "number" },
+        },
       }],
     })),
     getTargetIdentity: (symbol) => symbol.moduleSpecifier === ownedSpecifier && symbol.exportName === "SearchValues"

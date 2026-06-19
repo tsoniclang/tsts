@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../go/scalars.js";
 import { DeleteFunc } from "../../go/slices.js";
 import type { GoPtr, GoSlice } from "../../go/compat.js";
 import type { CommentRange } from "../ast/ast.js";

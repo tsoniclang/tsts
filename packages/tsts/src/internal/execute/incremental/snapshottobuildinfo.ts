@@ -39,7 +39,7 @@ import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
 import { ParsedCommandLine_FileNames } from "../../tsoptions/parsedcommandline.js";
 import type { ComparePathsOptions, Path } from "../../tspath/path.js";
 import { ToPath, GetDirectoryPath, GetRelativePathFromDirectory, EnsurePathIsNonModuleName } from "../../tspath/path.js";
-import type { int } from "@tsonic/core/types.js";
+import type { int } from "../../../go/scalars.js";
 import type { Value } from "../../../go/reflect.js";
 import type { BuildInfo, BuildInfoDiagnostic, BuildInfoDiagnosticsOfFile, BuildInfoFileId, BuildInfoFileIdListId, BuildInfoRepopulateInfo } from "./buildInfo.js";
 import type { BuildInfoEmitSignature, BuildInfoFilePendingEmit, BuildInfoResolvedRoot, BuildInfoRoot, BuildInfoSemanticDiagnostic, BuildInfoReferenceMapEntry } from "./buildInfo.js";

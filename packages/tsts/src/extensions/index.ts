@@ -18,8 +18,9 @@ export {
   createExtensionConsumerQueries,
 } from "./consumer.js";
 export {
-  createSourceCoreExtension,
-} from "./source-core.js";
+  createSourceSemanticsExtension,
+  sourcePrimitive,
+} from "./source-semantics.js";
 export {
   finalizeExtensionSemantics,
 } from "./compiler-integration.js";
@@ -100,12 +101,14 @@ export type {
   BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
 export type {
-  SourceCoreExtensionOptions,
+  SourceSemanticsExtensionOptions,
   SourceCallMarkerDeclaration,
-  SourceCoreModuleIdentity,
+  SourceSemanticsExportDeclaration,
+  SourceSemanticsModule,
+  SourceSemanticsModuleIdentity,
   SourcePrimitiveDeclaration,
   SourceTypeMarkerDeclaration,
-} from "./source-core.js";
+} from "./source-semantics.js";
 export type {
   AssignabilityRequest,
   ContextualTypeRequest,

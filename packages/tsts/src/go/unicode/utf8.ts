@@ -5,7 +5,7 @@
 // byte sizes. We decode the UTF-8 byte view of the JS string so the returned
 // sizes are consistent with byte-offset slicing in the ported Go code.
 
-import type { int } from "@tsonic/core/types.js";
+import type { int } from "../scalars.js";
 import type { GoRune } from "../compat.js";
 
 // RuneError is the "error" Rune or "Unicode replacement character" (U+FFFD).

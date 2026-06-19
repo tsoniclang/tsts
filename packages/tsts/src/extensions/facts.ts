@@ -243,19 +243,19 @@ export const canonicalIdentityFactKey = defineExtensionFactKey<ExtensionCanonica
 });
 
 export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "sourcePrimitive",
   equals: (left, right) => left.kind === right.kind && left.width === right.width && left.signed === right.signed && left.runtimeBase === right.runtimeBase,
 });
 
 export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "argumentPassing",
   equals: (left, right) => left.mode === right.mode && left.targetExpression === right.targetExpression,
 });
 
 export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "functionPointer",
   equals: (left, right) =>
     left.result === right.result
@@ -266,13 +266,13 @@ export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact
 });
 
 export const pointerFactKey = defineExtensionFactKey<PointerFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "pointer",
   equals: (left, right) => left.pointee === right.pointee && left.mutability === right.mutability && left.unsafeRequired === right.unsafeRequired,
 });
 
 export const structFactKey = defineExtensionFactKey<StructFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "struct",
   equals: (left, right) =>
     left.valueType === right.valueType
@@ -280,13 +280,13 @@ export const structFactKey = defineExtensionFactKey<StructFact>({
 });
 
 export const fieldFactKey = defineExtensionFactKey<FieldFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "field",
   equals: (left, right) => left.name === right.name && left.type === right.type && left.readonly === right.readonly,
 });
 
 export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "attribute",
   equals: (left, right) =>
     left.target === right.target
@@ -295,7 +295,7 @@ export const attributeFactKey = defineExtensionFactKey<AttributeFact>({
 });
 
 export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
-  extensionId: "tsts.source-core",
+  extensionId: "tsts.source-semantics",
   name: "defaultValue",
   equals: (left, right) => left.type === right.type,
 });

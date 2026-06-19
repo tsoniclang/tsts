@@ -1,4 +1,4 @@
-import type { int } from "@tsonic/core/types.js";
+import type { int } from "../../go/scalars.js";
 import { Args, Exit, Stderr } from "../../go/os.js";
 import { Fprintln } from "../../go/fmt.js";
 import type { Writer } from "../../go/io.js";

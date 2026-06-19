@@ -1,4 +1,4 @@
-import type { bool, int, sbyte } from "@tsonic/core/types.js";
+import type { bool, int, sbyte } from "../../../go/scalars.js";
 import type { GoPtr, GoRune, GoSlice } from "../../../go/compat.js";
 import { MaxInt } from "../../../go/math.js";
 import { SortStableFunc } from "../../../go/slices.js";

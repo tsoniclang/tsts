@@ -1,4 +1,4 @@
-import type { bool, byte, int } from "@tsonic/core/types.js";
+import type { bool, byte, int } from "../../go/scalars.js";
 import { CutPrefix, TrimLeft, TrimSuffix } from "../../go/strings.js";
 import { Sprintf } from "../../go/fmt.js";
 import { StringByteAt, StringByteLen } from "../../go/unicode/utf8.js";

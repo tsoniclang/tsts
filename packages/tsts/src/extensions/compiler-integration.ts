@@ -192,7 +192,7 @@ function getTargetParameter(parameter: ProviderParameterDeclaration): TargetPara
 }
 
 function getArgumentPassingMode(parameter: ProviderParameterDeclaration): ArgumentPassingMode {
-  return parameter.rest === true ? "byref-readonly" : "by-value";
+  return "by-value";
 }
 
 function getTargetConstraint(type: ProviderTypeExpression): readonly TargetConstraint[] {

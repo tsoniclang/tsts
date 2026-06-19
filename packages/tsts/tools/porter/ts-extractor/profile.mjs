@@ -18,7 +18,7 @@ export const TSTS_PROFILE = {
     ],
   },
   modules: {
-    core: "@tsonic/core/types.ts",
+    core: "packages/tsts/src/go/scalars.ts",
     compat: "packages/tsts/src/go/compat.ts",
   },
   // Go composite kinds -> bridge generic name (resolved in `modules.compat`).
@@ -74,10 +74,10 @@ export const TSTS_PROFILE = {
   externalInterfaceMembers: {
     "io/fs.FileInfo": [
       { name: "Name", type: { t: "fn", params: [], ret: { t: "kw", kw: "string" } } },
-      { name: "Size", type: { t: "fn", params: [], ret: { t: "ref", id: "@tsonic/core/types.ts::int", args: [] } } },
+      { name: "Size", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::int", args: [] } } },
       { name: "Mode", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/io/fs.ts::FileMode", args: [] } } },
       { name: "ModTime", type: { t: "fn", params: [], ret: { t: "ref", id: "global::Date", args: [] } } },
-      { name: "IsDir", type: { t: "fn", params: [], ret: { t: "ref", id: "@tsonic/core/types.ts::bool", args: [] } } },
+      { name: "IsDir", type: { t: "fn", params: [], ret: { t: "ref", id: "packages/tsts/src/go/scalars.ts::bool", args: [] } } },
       { name: "Sys", type: { t: "fn", params: [], ret: { t: "kw", kw: "unknown" } } }
     ]
   },
@@ -102,7 +102,7 @@ export const TSTS_PROFILE = {
     "jsontext.EndArray": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
     "jsontext.EndObject": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
     "jsontext.Null": { module: "packages/tsts/src/go/github.com/go-json-experiment/json/jsontext.ts", name: "Kind" },
-    "math.MaxInt": { module: "@tsonic/core/types.ts", name: "int" },
+    "math.MaxInt": { module: "packages/tsts/src/go/scalars.ts", name: "int" },
     "time.Millisecond": { module: "packages/tsts/src/go/time.ts", name: "Duration" },
   },
 };

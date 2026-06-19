@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 // CommentRange, FileReference, SourceFile are hand-written AST struct types that are
 // not yet ported into the spine/generated split; they live in the canonical ../../ast/ast.js

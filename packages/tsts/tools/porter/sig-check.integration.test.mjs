@@ -19,7 +19,7 @@ const ANNO = { tag: "@tsgo-unit", idSeparator: "::", methodNameJoin: "_" };
 test("integration: extract a function signature (rest + generics + import-resolved types)", async (t) => {
   const api = await tryLoad();
   if (!api) return t.skip("TSTS dist not built/fresh");
-  const src = `import { GoPtr } from "@tsonic/core/types.js";
+  const src = `import { GoPtr } from "./compat.js";
 import { Node } from "./node.js";
 /** @tsgo-unit {"id":"m::f.go::func::f","kind":"func"} */
 export function f<T extends Node>(a: string, ...rest: number[]): GoPtr<Node> { throw 0; }
@@ -33,8 +33,8 @@ export function f<T extends Node>(a: string, ...rest: number[]): GoPtr<Node> { t
   assert.ok(d.params[1].rest);
   assert.equal(canonicalKey(d.params[1].type), "A:[K:number]");
   assert.equal(d.typeParams.length, 1);
-  // GoPtr resolves to its import (@tsonic/core), Node to ./node.js — both imported.
-  assert.equal(canonicalKey(d.ret), "R:@tsonic/core/types.ts::GoPtr<R:pkg/node.ts::Node>");
+  // GoPtr resolves to its import, Node to ./node.js — both imported.
+  assert.equal(canonicalKey(d.ret), "R:pkg/compat.ts::GoPtr<R:pkg/node.ts::Node>");
 });
 
 test("integration: association survives an interleaved non-tracked helper", async (t) => {
@@ -68,7 +68,7 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   const api = await tryLoad();
   if (!api) return t.skip("TSTS dist not built/fresh");
   // Self-consistent profile: GoPtr lives in the same module the fixture imports it from.
-  const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "@tsonic/core/types.ts", compat: "@tsonic/core/types.ts" } } };
+  const config = { goModulePath: "m", tsRoot: "pkg", signatureCheck: { modules: { core: "pkg/scalars.ts", compat: "pkg/compat.ts" } } };
   const profile = loadProfile(config);
   const index = buildExpectedIndex(config, { files: [] }, new Map(), profile, new Map());
   // Go: func f(a string, b *int) — expected [string, GoPtr<int>].
@@ -85,7 +85,8 @@ test("integration: end-to-end expected(Go-model) vs actual — match and drift",
   const expected = goUnitDescriptor(goUnit, index);
 
   // Matching actual.
-  const okSrc = `import { GoPtr, int } from "@tsonic/core/types.js";
+  const okSrc = `import { GoPtr } from "./compat.js";
+import { int } from "./scalars.js";
 /** @tsgo-unit {"id":"x","kind":"func"} */
 export function f(a: string, b: GoPtr<int>): void {}
 `;
@@ -93,7 +94,7 @@ export function f(a: string, b: GoPtr<int>): void {}
   assert.equal(compareSignatures(expected, okActual, null).length, 0);
 
   // Drifted actual: second param type wrong (int instead of GoPtr<int>).
-  const badSrc = `import { int } from "@tsonic/core/types.js";
+  const badSrc = `import { int } from "./scalars.js";
 /** @tsgo-unit {"id":"x","kind":"func"} */
 export function f(a: string, b: int): void {}
 `;

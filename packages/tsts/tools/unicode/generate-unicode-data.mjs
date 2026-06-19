@@ -157,7 +157,7 @@ function renderCaseBody(entries, casedTable, caseIgnorableTable) {
 // data when in context. unicode.ToLower handles the simple one-rune mappings, so those
 // are omitted here.
 
-import type { uint } from "@tsonic/core/types.js";
+import type { uint } from "../../../go/scalars.js";
 import type { GoRune } from "../../../go/compat.js";
 import type { RangeTable } from "../../../go/unicode.js";
 

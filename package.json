@@ -42,10 +42,6 @@
     "status": "git status --short --branch"
   },
   "devDependencies": {
-    "@tsonic/core": "file:../core",
-    "@tsonic/dotnet": "file:../dotnet/versions/10",
-    "@tsonic/js": "file:../js",
-    "@tsonic/nodejs": "file:../nodejs",
     "@types/node": "latest",
     "@unicode/unicode-15.1.0": "^1.6.16",
     "typescript": "^6.0.3"

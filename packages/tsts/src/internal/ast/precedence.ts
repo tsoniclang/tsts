@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../go/scalars.js";
 import * as fmt from "../../go/fmt.js";
 import type { GoPtr } from "../../go/compat.js";
 import { Node_ArgumentList, Node_Expression } from "./ast.js";

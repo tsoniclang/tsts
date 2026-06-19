@@ -41,7 +41,7 @@ All Go→TS mapping knowledge is config, defaulting to the tsts profile in
 ```jsonc
 "signatureCheck": {
   // Go->TS mapping (defaults shown in profile.mjs; override per project):
-  "modules":   { "core": "@tsonic/core/types.ts", "compat": "packages/tsts/src/go/compat.ts" },
+  "modules":   { "core": "packages/tsts/src/go/scalars.ts", "compat": "packages/tsts/src/go/compat.ts" },
   "bridge":    { "pointer": "GoPtr", "slice": "GoSlice", "array": "GoArray", "map": "GoMap", "chan": "GoChan" },
   "primitives":{ "keyword": { "string": "string", "any": "unknown" }, "core": { "int": "int", "uint64": "ulong" }, "compat": { "error": "GoError" } },
   "stdlibTypes": { "iter.Seq": "GoSeq" },

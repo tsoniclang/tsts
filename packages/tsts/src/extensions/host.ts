@@ -227,14 +227,14 @@ export type ProviderTypeExpression =
   | { readonly kind: "object" }
   | { readonly kind: "source-primitive"; readonly name: string }
   | { readonly kind: "type-parameter"; readonly name: string }
-  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
+  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[]; readonly sourceShape?: ProviderTypeExpression }
   | { readonly kind: "array"; readonly elementType: ProviderTypeExpression }
   | { readonly kind: "tuple"; readonly elementTypes: readonly ProviderTypeExpression[] }
   | { readonly kind: "union"; readonly types: readonly ProviderTypeExpression[] }
   | { readonly kind: "intersection"; readonly types: readonly ProviderTypeExpression[] }
   | { readonly kind: "function"; readonly parameters: readonly ProviderParameterDeclaration[]; readonly returnType: ProviderTypeExpression; readonly typeParameters?: readonly ProviderTypeParameterDeclaration[] }
   | { readonly kind: "literal"; readonly value: string | number | boolean | null }
-  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string };
+  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string; readonly sourceShape?: ProviderTypeExpression };
 
 export interface ProviderParameterDeclaration {
   readonly name: string;
@@ -1466,7 +1466,7 @@ function renderProviderTypeExpression(type: ProviderTypeExpression): string {
       return type.name;
     case "target-named":
     case "opaque":
-      return "unknown";
+      return type.sourceShape === undefined ? "unknown" : renderProviderTypeExpression(type.sourceShape);
     case "array":
       return `${renderProviderTypeExpression(type.elementType)}[]`;
     case "tuple":
@@ -1613,7 +1613,10 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
     case "type-parameter":
       return isIdentifierText(value.name);
     case "target-named":
-      return value.target.length > 0 && value.id.length > 0 && (value.typeArguments ?? []).every(isValidProviderTypeExpression);
+      return value.target.length > 0
+        && value.id.length > 0
+        && (value.typeArguments ?? []).every(isValidProviderTypeExpression)
+        && (value.sourceShape === undefined || isValidProviderTypeExpression(value.sourceShape));
     case "array":
       return isValidProviderTypeExpression(value.elementType);
     case "tuple":
@@ -1628,7 +1631,7 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
     case "literal":
       return true;
     case "opaque":
-      return value.id.length > 0;
+      return value.id.length > 0 && (value.sourceShape === undefined || isValidProviderTypeExpression(value.sourceShape));
   }
 }
 

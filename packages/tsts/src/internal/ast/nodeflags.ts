@@ -1,4 +1,4 @@
-import type { int, uint } from "@tsonic/core/types.js";
+import type { int, uint } from "../../go/scalars.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/ast/nodeflags.go::type::NodeFlags","kind":"type","status":"implemented","sigHash":"1ab8cedf51e53d4d4a76535f180fa467201a4ee1d08d7a155aaeb2a90ab16ad7","bodyHash":"5197d1ac139ca86c7af2d2cefe73128e846310afb8e0533c210c8308c6d55e12"}

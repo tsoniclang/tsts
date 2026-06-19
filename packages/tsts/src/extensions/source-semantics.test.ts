@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { bool } from "@tsonic/core/types.js";
+import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
@@ -52,22 +52,66 @@ import {
   attributeFactKey,
   canonicalIdentityFactKey,
   createExtensionConsumerQueries,
-  createSourceCoreExtension,
+  createSourceSemanticsExtension,
   defaultValueFactKey,
   fieldFactKey,
   finalizeExtensionSemantics,
   flowStateFactKey,
   functionPointerFactKey,
   pointerFactKey,
+  sourcePrimitive,
   sourcePrimitiveFactKey,
   structFactKey,
 } from "./index.js";
 import { Diagnostic_Code, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import type { ExtendedProgram } from "./index.js";
 
-test("source-core records primitive facts from canonical named imports", () => {
+const exampleTypesModule = "@example/native/types.js";
+const exampleLangModule = "@example/native/lang.js";
+
+function createExampleSourceSemanticsExtension() {
+  return createSourceSemanticsExtension({
+    identity: {
+      id: "example.source-semantics",
+      version: "1.0.0",
+      capabilityNamespace: "example-source-semantics",
+    },
+    modules: [{
+      moduleSpecifier: exampleTypesModule,
+      packageName: "@example/native",
+      subpath: "types.js",
+      exports: [
+        sourcePrimitive("bool", "bool", "boolean"),
+        sourcePrimitive("char", "char", "string", false, 16),
+        sourcePrimitive("int", "int32", "number", true, 32),
+        sourcePrimitive("uint", "uint32", "number", false, 32),
+        sourcePrimitive("long", "int64", "bigint", true, 64),
+        { kind: "type-marker", exportName: "ptr", marker: "ptr" },
+        { kind: "type-marker", exportName: "fnptr", marker: "fnptr" },
+      ],
+    }, {
+      moduleSpecifier: exampleLangModule,
+      packageName: "@example/native",
+      subpath: "lang.js",
+      exports: [
+        { kind: "call-marker", exportName: "out", marker: "out" },
+        { kind: "call-marker", exportName: "ref", marker: "ref" },
+        { kind: "call-marker", exportName: "inref", marker: "inref" },
+        { kind: "call-marker", exportName: "borrow", marker: "borrow" },
+        { kind: "call-marker", exportName: "borrowMut", marker: "borrowMut" },
+        { kind: "call-marker", exportName: "move", marker: "move" },
+        { kind: "call-marker", exportName: "struct", marker: "struct" },
+        { kind: "call-marker", exportName: "field", marker: "field" },
+        { kind: "call-marker", exportName: "attribute", marker: "attribute" },
+        { kind: "call-marker", exportName: "defaultof", marker: "defaultof" },
+      ],
+    }],
+  });
+}
+
+test("source-semantics records configured primitive facts from canonical named imports", () => {
   const { extended, program, index } = createProgram(`
-    import type { int as i32, long } from "@tsonic/core/types.js";
+    import type { int as i32, long } from "@example/native/types.js";
 
     let left!: i32;
     let right!: long;
@@ -84,7 +128,7 @@ test("source-core records primitive facts from canonical named imports", () => {
   assert.equal(extended.extensionHost.facts.get(i32Specifier, sourcePrimitiveFactKey)?.width, 32);
   assert.equal(extended.extensionHost.facts.get(i32Symbol, sourcePrimitiveFactKey)?.runtimeBase, "number");
   assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.exportName, "int");
-  assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::int");
+  assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::int`);
 
   const longSpecifier = getNamedImportSpecifier(index, "long");
   const longSymbol = Node_Symbol(longSpecifier);
@@ -98,7 +142,7 @@ test("source-core records primitive facts from canonical named imports", () => {
   assert.equal(consumer.getSourcePrimitiveFact(longSymbol)?.kind, "int64");
 });
 
-test("source-core does not guess primitives from local names or unrelated modules", () => {
+test("source-semantics does not guess primitives from local names or unrelated modules", () => {
   const { extended, program, index } = createProgram(`
     import type { int } from "./local.js";
 
@@ -123,9 +167,9 @@ test("source-core does not guess primitives from local names or unrelated module
   assert.equal(extended.extensionHost.facts.get(localUintSymbol, sourcePrimitiveFactKey), undefined);
 });
 
-test("source-core records namespace import identity without manufacturing primitive facts", () => {
+test("source-semantics records namespace import identity without manufacturing primitive facts", () => {
   const { extended, program, index } = createProgram(`
-    import type * as core from "@tsonic/core/types.js";
+    import type * as core from "@example/native/types.js";
 
     let value!: core.int;
   `);
@@ -133,19 +177,19 @@ test("source-core records namespace import identity without manufacturing primit
   assertCleanProgram(program, index);
   Program_BindSourceFiles(program);
 
-  const namespaceImport = getNamespaceImport(index, "@tsonic/core/types.js");
+  const namespaceImport = getNamespaceImport(index, exampleTypesModule);
   const namespaceSymbol = Node_Symbol(namespaceImport);
   assert.ok(namespaceSymbol !== undefined);
 
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, canonicalIdentityFactKey)?.kind, "module");
-  assert.equal(extended.extensionHost.facts.get(namespaceSymbol, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js");
+  assert.equal(extended.extensionHost.facts.get(namespaceSymbol, canonicalIdentityFactKey)?.id, exampleTypesModule);
   assert.equal(extended.extensionHost.facts.get(namespaceSymbol, sourcePrimitiveFactKey), undefined);
 });
 
-test("source-core records primitive facts on type references from explicit source-core imports", () => {
+test("source-semantics records primitive facts on type references from explicit source-semantics imports", () => {
   const { extended, program, index } = createProgram(`
-    import type { int as i32 } from "@tsonic/core/types.js";
-    import type * as core from "@tsonic/core/types.js";
+    import type { int as i32 } from "@example/native/types.js";
+    import type * as core from "@example/native/types.js";
 
     type Direct = i32;
     type Namespaced = core.uint;
@@ -157,20 +201,20 @@ test("source-core records primitive facts on type references from explicit sourc
   const directReference = getTypeAliasType(index, "Direct");
   assert.equal(directReference?.Kind, KindTypeReference);
   assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey)?.kind, "int32");
-  assert.equal(extended.extensionHost.facts.get(AsTypeReferenceNode(directReference)!.TypeName, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::int");
+  assert.equal(extended.extensionHost.facts.get(AsTypeReferenceNode(directReference)!.TypeName, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::int`);
 
   const namespacedReference = getTypeAliasType(index, "Namespaced");
   assert.equal(namespacedReference?.Kind, KindTypeReference);
   const namespacedTypeName = AsTypeReferenceNode(namespacedReference)!.TypeName;
   assert.equal(namespacedTypeName?.Kind, KindQualifiedName);
   assert.equal(extended.extensionHost.facts.get(namespacedReference, sourcePrimitiveFactKey)?.kind, "uint32");
-  assert.equal(extended.extensionHost.facts.get(namespacedTypeName, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::uint");
+  assert.equal(extended.extensionHost.facts.get(namespacedTypeName, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::uint`);
   assert.equal(extended.extensionHost.facts.get(AsQualifiedName(namespacedTypeName)!.Right, sourcePrimitiveFactKey)?.kind, "uint32");
 });
 
-test("source-core fact resolver returns primitive type-reference facts from canonical imports", () => {
+test("source-semantics fact resolver returns primitive type-reference facts from canonical imports", () => {
   const { extended, program, index } = createProgram(`
-    import type { int } from "@tsonic/core/types.js";
+    import type { int } from "@example/native/types.js";
 
     type Direct = int;
   `);
@@ -185,9 +229,9 @@ test("source-core fact resolver returns primitive type-reference facts from cano
   assert.equal(extended.extensionHost.facts.get(directReference, sourcePrimitiveFactKey)?.runtimeBase, "number");
 });
 
-test("source-core records primitive facts on canonical named re-exports", () => {
+test("source-semantics records primitive facts on canonical named re-exports", () => {
   const { extended, program, index } = createProgram(`
-    export type { int as i32, uint } from "@tsonic/core/types.js";
+    export type { int as i32, uint } from "@example/native/types.js";
   `);
 
   assertCleanProgram(program, index);
@@ -198,7 +242,7 @@ test("source-core records primitive facts on canonical named re-exports", () => 
   assert.ok(i32Symbol !== undefined);
   assert.equal(extended.extensionHost.facts.get(i32Specifier, sourcePrimitiveFactKey)?.kind, "int32");
   assert.equal(extended.extensionHost.facts.get(i32Symbol, sourcePrimitiveFactKey)?.kind, "int32");
-  assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, "@tsonic/core/types.js::int");
+  assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::int`);
 
   const uintSpecifier = getNamedExportSpecifier(index, "uint");
   const uintSymbol = Node_Symbol(uintSpecifier);
@@ -207,9 +251,9 @@ test("source-core records primitive facts on canonical named re-exports", () => 
   assert.equal(extended.extensionHost.facts.get(uintSymbol, canonicalIdentityFactKey)?.exportName, "uint");
 });
 
-test("source-core records out ref inref borrow move call-site facts without name guessing", () => {
+test("source-semantics records out ref inref borrow move call-site facts without name guessing", () => {
   const { extended, program, index } = createProgram(`
-    import { out, ref as refArg, inref, borrow, borrowMut, move } from "@tsonic/core/lang.js";
+    import { out, ref as refArg, inref, borrow, borrowMut, move } from "@example/native/lang.js";
     import { out as localOut } from "./local.js";
 
     let value!: number;
@@ -258,9 +302,9 @@ test("source-core records out ref inref borrow move call-site facts without name
   assert.equal(consumer.getFact(moveCall, flowStateFactKey)?.state, "moved");
 });
 
-test("source-core records ptr and fnptr type facts from canonical type marker imports", () => {
+test("source-semantics records ptr and fnptr type facts from canonical type marker imports", () => {
   const { extended, program, index } = createProgram(`
-    import type { int, ptr, fnptr } from "@tsonic/core/types.js";
+    import type { int, ptr, fnptr } from "@example/native/types.js";
     import type { ptr as localPtr } from "./local.js";
 
     type Pointer = ptr<int>;
@@ -293,10 +337,10 @@ test("source-core records ptr and fnptr type facts from canonical type marker im
   assert.equal(consumer.getFunctionPointerFact(functionPointerReference)?.parameters.length, 1);
 });
 
-test("source-core records struct field attribute and default facts from canonical imports only", () => {
+test("source-semantics records struct field attribute and default facts from canonical imports only", () => {
   const { extended, program, index } = createProgram(`
-    import type { int } from "@tsonic/core/types.js";
-    import { attribute, defaultof, field, struct } from "@tsonic/core/lang.js";
+    import type { int } from "@example/native/types.js";
+    import { attribute, defaultof, field, struct } from "@example/native/lang.js";
     import { attribute as localAttribute, defaultof as localDefaultof, field as localField, struct as localStruct } from "./local.js";
 
     type RouteAttribute = { route: string };
@@ -374,8 +418,8 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
 } {
   const files = new Map<string, string>([
     ["/src/index.ts", indexText],
-    ["/src/node_modules/@tsonic/core/package.json", JSON.stringify({
-      name: "@tsonic/core",
+    ["/src/node_modules/@example/native/package.json", JSON.stringify({
+      name: "@example/native",
       version: "1.0.0",
       type: "module",
       exports: {
@@ -389,7 +433,7 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
         },
       },
     })],
-    ["/src/node_modules/@tsonic/core/types.d.ts", [
+    ["/src/node_modules/@example/native/types.d.ts", [
       "export type bool = boolean;",
       "export type char = string;",
       "export type int = number;",
@@ -399,7 +443,7 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
       "export type ptr<T> = T;",
       "export type fnptr<Args, Result> = unknown;",
     ].join("\n")],
-    ["/src/node_modules/@tsonic/core/lang.d.ts", [
+    ["/src/node_modules/@example/native/lang.d.ts", [
       "export declare function out<T>(value: T): T;",
       "export declare function ref<T>(value: T): T;",
       "export declare function inref<T>(value: T): T;",
@@ -433,7 +477,7 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
     Host: host,
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
-    extensions: [createSourceCoreExtension()],
+    extensions: [createExampleSourceSemanticsExtension()],
   });
   const program = NewProgram(options);
   const index = Program_GetSourceFile(program, "/src/index.ts");

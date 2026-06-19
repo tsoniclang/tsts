@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../../go/scalars.js";
 import type { GoError } from "../../../go/compat.js";
 import { EvalSymlinks } from "../../../go/path/filepath.js";
 import { Itoa } from "../../../go/strconv.js";

@@ -1,4 +1,4 @@
-import type { bool, byte, int } from "@tsonic/core/types.js";
+import type { bool, byte, int } from "../../scalars.js";
 import type { GoError, GoSlice } from "../../compat.js";
 
 export interface Hasher {

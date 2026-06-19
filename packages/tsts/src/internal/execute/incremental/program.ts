@@ -1,4 +1,4 @@
-import type { bool, byte } from "@tsonic/core/types.js";
+import type { bool, byte } from "../../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import { Map as SyncMapImpl } from "../../../go/sync.js";

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from "node:child_process";
-import { cpSync } from "node:fs";
+import { cpSync, rmSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,8 @@ const repoRoot = join(dirname(scriptPath), "../../../..");
 const testRoot = join(repoRoot, ".temp/source-tests/dist/src");
 const testConfig = "packages/tsts/tsconfig.source-tests.json";
 const tscPath = join(repoRoot, "node_modules/typescript/bin/tsc");
+
+rmSync(join(repoRoot, ".temp/source-tests"), { recursive: true, force: true });
 
 const build = spawnSync(process.execPath, [tscPath, "-p", testConfig, "--pretty", "false"], {
   cwd: repoRoot,

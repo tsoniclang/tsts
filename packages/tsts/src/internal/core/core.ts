@@ -1,4 +1,4 @@
-import type { bool, byte, double, int } from "@tsonic/core/types.js";
+import type { bool, byte, double, int } from "../../go/scalars.js";
 import type { GoComparable, GoConstraint, GoError, GoMap, GoPtr, GoRune, GoSeq, GoSeq2, GoSlice } from "../../go/compat.js";
 import { Assert } from "../debug/debug.js";
 import { MarshalIndent } from "../json/json.js";

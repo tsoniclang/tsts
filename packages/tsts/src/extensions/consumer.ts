@@ -57,6 +57,16 @@ export class ExtensionConsumerQueries {
     return this.#host.requireFactForConsumer(this.#consumer, subject, key, purpose);
   }
 
+  mustFact<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, purpose?: string): T {
+    const value = this.requireFact(subject, key, purpose);
+    if (value !== undefined) {
+      return value;
+    }
+    throw new Error(purpose === undefined
+      ? `Consumer '${this.#consumer}' requires extension fact '${key.id}'.`
+      : `Consumer '${this.#consumer}' requires extension fact '${key.id}' for ${purpose}.`);
+  }
+
   getFacts(subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
     return this.#host.getFactsForConsumer(this.#consumer, subject);
   }
@@ -73,6 +83,10 @@ export class ExtensionConsumerQueries {
     return this.requireFact(subject, sourcePrimitiveFactKey, purpose);
   }
 
+  mustSourcePrimitiveFact(subject: ExtensionFactSubject, purpose?: string): SourcePrimitiveFact {
+    return this.mustFact(subject, sourcePrimitiveFactKey, purpose);
+  }
+
   getTargetBindingFact(subject: ExtensionFactSubject): TargetBindingFact | undefined {
     return this.getFact(subject, targetBindingFactKey);
   }
@@ -81,12 +95,20 @@ export class ExtensionConsumerQueries {
     return this.requireFact(subject, targetBindingFactKey, purpose);
   }
 
+  mustTargetBindingFact(subject: ExtensionFactSubject, purpose?: string): TargetBindingFact {
+    return this.mustFact(subject, targetBindingFactKey, purpose);
+  }
+
   getSelectedTargetCall(subject: ExtensionFactSubject): SelectedTargetSignatureFact | undefined {
     return this.getFact(subject, selectedTargetSignatureFactKey);
   }
 
   requireSelectedTargetCall(subject: ExtensionFactSubject, purpose?: string): SelectedTargetSignatureFact | undefined {
     return this.requireFact(subject, selectedTargetSignatureFactKey, purpose);
+  }
+
+  mustSelectedTargetCall(subject: ExtensionFactSubject, purpose?: string): SelectedTargetSignatureFact {
+    return this.mustFact(subject, selectedTargetSignatureFactKey, purpose);
   }
 
   getContextualTargetTypeFact(subject: ExtensionFactSubject): ContextualTargetTypeFact | undefined {
@@ -129,6 +151,10 @@ export class ExtensionConsumerQueries {
     return this.requireFact(subject, runtimeCarrierFactKey, purpose);
   }
 
+  mustRuntimeCarrierFact(subject: ExtensionFactSubject, purpose?: string): RuntimeCarrierFact {
+    return this.mustFact(subject, runtimeCarrierFactKey, purpose);
+  }
+
   getTargetConversionFact(subject: ExtensionFactSubject): TargetConversionFact | undefined {
     return this.getFact(subject, targetConversionFactKey);
   }
@@ -137,12 +163,20 @@ export class ExtensionConsumerQueries {
     return this.requireFact(subject, targetConversionFactKey, purpose);
   }
 
+  mustTargetConversionFact(subject: ExtensionFactSubject, purpose?: string): TargetConversionFact {
+    return this.mustFact(subject, targetConversionFactKey, purpose);
+  }
+
   getArgumentPassingFact(subject: ExtensionFactSubject): ArgumentPassingFact | undefined {
     return this.getFact(subject, argumentPassingFactKey);
   }
 
   requireArgumentPassingFact(subject: ExtensionFactSubject, purpose?: string): ArgumentPassingFact | undefined {
     return this.requireFact(subject, argumentPassingFactKey, purpose);
+  }
+
+  mustArgumentPassingFact(subject: ExtensionFactSubject, purpose?: string): ArgumentPassingFact {
+    return this.mustFact(subject, argumentPassingFactKey, purpose);
   }
 
   getFunctionPointerFact(subject: ExtensionFactSubject): FunctionPointerFact | undefined {
@@ -223,6 +257,10 @@ export class ExtensionConsumerQueries {
 
   requireVirtualDeclaration(subject: ExtensionFactSubject, purpose?: string): ProviderVirtualDeclarationFact | undefined {
     return this.requireFact(subject, providerVirtualDeclarationFactKey, purpose);
+  }
+
+  mustVirtualDeclaration(subject: ExtensionFactSubject, purpose?: string): ProviderVirtualDeclarationFact {
+    return this.mustFact(subject, providerVirtualDeclarationFactKey, purpose);
   }
 }
 
