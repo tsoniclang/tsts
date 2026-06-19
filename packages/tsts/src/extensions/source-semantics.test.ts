@@ -84,6 +84,9 @@ function createExampleSourceSemanticsExtension() {
         sourcePrimitive("bool", "bool", "boolean"),
         sourcePrimitive("char", "char", "string", false, 16),
         sourcePrimitive("int", "int32", "number", true, 32),
+        sourcePrimitive("INT", "int32", "number", true, 32),
+        sourcePrimitive("I32", "int32", "number", true, 32),
+        sourcePrimitive("SystemInt32", "int32", "number", true, 32),
         sourcePrimitive("uint", "uint32", "number", false, 32),
         sourcePrimitive("long", "int64", "bigint", true, 64),
         { kind: "type-marker", exportName: "ptr", marker: "ptr" },
@@ -140,6 +143,29 @@ test("source-semantics records configured primitive facts from canonical named i
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "test-consumer");
   assert.equal(consumer.getSourcePrimitiveFact(i32Symbol)?.kind, "int32");
   assert.equal(consumer.getSourcePrimitiveFact(longSymbol)?.kind, "int64");
+});
+
+test("source-semantics primitive spelling is entirely consumer configured", () => {
+  const { extended, program, index } = createProgram(`
+    import type { INT, I32, SystemInt32 } from "@example/native/types.js";
+
+    let first!: INT;
+    let second!: I32;
+    let third!: SystemInt32;
+  `);
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  for (const exportName of ["INT", "I32", "SystemInt32"]) {
+    const importSpecifier = getNamedImportSpecifier(index, exportName);
+    const importSymbol = Node_Symbol(importSpecifier);
+    assert.ok(importSymbol !== undefined);
+    assert.equal(extended.extensionHost.facts.get(importSpecifier, sourcePrimitiveFactKey)?.kind, "int32");
+    assert.equal(extended.extensionHost.facts.get(importSymbol, sourcePrimitiveFactKey)?.kind, "int32");
+    assert.equal(extended.extensionHost.facts.get(importSymbol, canonicalIdentityFactKey)?.exportName, exportName);
+    assert.equal(extended.extensionHost.facts.get(importSymbol, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::${exportName}`);
+  }
 });
 
 test("source-semantics does not guess primitives from local names or unrelated modules", () => {
@@ -437,6 +463,9 @@ function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string
       "export type bool = boolean;",
       "export type char = string;",
       "export type int = number;",
+      "export type INT = number;",
+      "export type I32 = number;",
+      "export type SystemInt32 = number;",
       "export type uint = number;",
       "export type long = bigint;",
       "export type ulong = bigint;",
