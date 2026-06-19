@@ -181,9 +181,9 @@ export interface ContextualTargetTypeFact {
   readonly targetType?: TargetTypeRef;
 }
 
-export interface SurfaceOperationFact {
+export interface TargetOperationFact {
   readonly operationId: string;
-  readonly sourceOperation: "property" | "method" | "indexer" | "operator" | "constructor";
+  readonly operationKind: "property" | "method" | "indexer" | "operator" | "constructor";
   readonly targetOperation: string;
   readonly resultType?: ExtensionFactSubject;
   readonly evidence?: readonly ExtensionEvidence[];
@@ -202,7 +202,7 @@ export interface RuntimeCarrierFact {
 
 export interface TargetConversionFact {
   readonly convertedType?: TargetTypeRef;
-  readonly operation?: SurfaceOperationFact;
+  readonly operation?: TargetOperationFact;
 }
 
 export interface ProviderVirtualDeclarationFact {
@@ -276,7 +276,7 @@ export const structFactKey = defineExtensionFactKey<StructFact>({
   name: "struct",
   equals: (left, right) =>
     left.valueType === right.valueType
-    && factSubjectArrayEquals(left.fields, right.fields),
+    && fieldFactArrayEquals(left.fields, right.fields),
 });
 
 export const fieldFactKey = defineExtensionFactKey<FieldFact>({
@@ -303,20 +303,23 @@ export const defaultValueFactKey = defineExtensionFactKey<DefaultValueFact>({
 export const targetBindingFactKey = defineExtensionFactKey<TargetBindingFact>({
   extensionId: "tsts.target-bindings",
   name: "targetBinding",
-  equals: (left, right) => left.id === right.id && left.target === right.target,
+  equals: targetBindingFactEquals,
 });
 
 export const instantiatedTargetTypeFactKey = defineExtensionFactKey<InstantiatedTargetTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "instantiatedTargetType",
-  equals: (left, right) => left.targetType.id === right.targetType.id && left.typeArguments.length === right.typeArguments.length && left.typeArguments.every((argument, index) => argument === right.typeArguments[index]),
+  equals: (left, right) =>
+    targetBindingFactEquals(left.targetType, right.targetType)
+    && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
+    && targetTypeRefArrayEquals(left.resolvedTypeArguments, right.resolvedTypeArguments),
 });
 
 export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTargetSignatureFact>({
   extensionId: "tsts.target-bindings",
   name: "selectedTargetSignature",
   equals: (left, right) =>
-    left.member.id === right.member.id
+    targetMemberEquals(left.member, right.member)
     && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions),
@@ -328,10 +331,10 @@ export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTarg
   equals: (left, right) => left.type === right.type && optionalTargetTypeRefEquals(left.targetType, right.targetType),
 });
 
-export const surfaceOperationFactKey = defineExtensionFactKey<SurfaceOperationFact>({
-  extensionId: "tsts.surface",
-  name: "surfaceOperation",
-  equals: (left, right) => left.operationId === right.operationId && left.targetOperation === right.targetOperation,
+export const targetOperationFactKey = defineExtensionFactKey<TargetOperationFact>({
+  extensionId: "tsts.target-bindings",
+  name: "targetOperation",
+  equals: targetOperationFactEquals,
 });
 
 export const flowStateFactKey = defineExtensionFactKey<FlowStateFact>({
@@ -349,7 +352,7 @@ export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>(
 export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
   extensionId: "tsts.target-bindings",
   name: "targetConversion",
-  equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && left.operation?.operationId === right.operation?.operationId,
+  equals: (left, right) => optionalTargetTypeRefEquals(left.convertedType, right.convertedType) && optionalTargetOperationFactEquals(left.operation, right.operation),
 });
 
 export const providerVirtualDeclarationFactKey = defineExtensionFactKey<ProviderVirtualDeclarationFact>({
@@ -393,11 +396,123 @@ function factSubjectArrayEquals(left: readonly ExtensionFactSubject[] | undefine
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+function fieldFactArrayEquals(left: readonly FieldFact[] | undefined, right: readonly FieldFact[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => fieldFactEquals(value, right[index]!));
+}
+
+function fieldFactEquals(left: FieldFact, right: FieldFact): boolean {
+  return left.name === right.name && left.type === right.type && left.readonly === right.readonly;
+}
+
 function targetTypeRefArrayEquals(left: readonly TargetTypeRef[] | undefined, right: readonly TargetTypeRef[] | undefined): boolean {
   if (left === undefined || right === undefined) {
     return left === right;
   }
   return left.length === right.length && left.every((value, index) => targetTypeRefEquals(value, right[index]!));
+}
+
+function targetBindingFactEquals(left: TargetBindingFact, right: TargetBindingFact): boolean {
+  return left.id === right.id
+    && left.sourceName === right.sourceName
+    && left.targetName === right.targetName
+    && left.target === right.target
+    && left.kind === right.kind
+    && targetTypeParameterArrayEquals(left.typeParameters, right.typeParameters)
+    && targetMemberArrayEquals(left.members, right.members)
+    && targetConstraintArrayEquals(left.implementedContracts, right.implementedContracts);
+}
+
+function targetMemberArrayEquals(left: readonly TargetMember[] | undefined, right: readonly TargetMember[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => targetMemberEquals(value, right[index]!));
+}
+
+function targetMemberEquals(left: TargetMember, right: TargetMember): boolean {
+  return left.id === right.id
+    && left.sourceName === right.sourceName
+    && left.targetName === right.targetName
+    && left.kind === right.kind
+    && left.static === right.static
+    && targetParameterArrayEquals(left.parameters, right.parameters)
+    && optionalTargetTypeRefEquals(left.returnType, right.returnType)
+    && targetTypeParameterArrayEquals(left.typeParameters, right.typeParameters)
+    && left.overloadGroup === right.overloadGroup;
+}
+
+function targetParameterArrayEquals(left: readonly TargetParameter[], right: readonly TargetParameter[]): boolean {
+  return left.length === right.length && left.every((value, index) => targetParameterEquals(value, right[index]!));
+}
+
+function targetParameterEquals(left: TargetParameter, right: TargetParameter): boolean {
+  return left.name === right.name
+    && targetTypeRefEquals(left.type, right.type)
+    && left.passingMode === right.passingMode
+    && left.optional === right.optional
+    && left.paramsArray === right.paramsArray;
+}
+
+function targetTypeParameterArrayEquals(left: readonly TargetTypeParameter[] | undefined, right: readonly TargetTypeParameter[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => targetTypeParameterEquals(value, right[index]!));
+}
+
+function targetTypeParameterEquals(left: TargetTypeParameter, right: TargetTypeParameter): boolean {
+  return left.name === right.name
+    && left.variance === right.variance
+    && targetConstraintArrayEquals(left.constraints, right.constraints);
+}
+
+function targetConstraintArrayEquals(left: readonly TargetConstraint[] | undefined, right: readonly TargetConstraint[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.length === right.length && left.every((value, index) => targetConstraintEquals(value, right[index]!));
+}
+
+function targetConstraintEquals(left: TargetConstraint, right: TargetConstraint): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+  switch (left.kind) {
+    case "implements":
+      return right.kind === "implements"
+        && left.contract === right.contract
+        && targetTypeRefArrayEquals(left.typeArguments, right.typeArguments);
+    case "lifetime":
+      return right.kind === "lifetime" && left.name === right.name;
+    case "target-specific":
+      return right.kind === "target-specific" && left.target === right.target && left.name === right.name && Object.is(left.value, right.value);
+    case "value-type":
+    case "reference-type":
+    case "constructible":
+    case "unmanaged":
+    case "copy":
+    case "clone":
+    case "default":
+    case "sized":
+      return true;
+  }
+}
+
+function optionalTargetOperationFactEquals(left: TargetOperationFact | undefined, right: TargetOperationFact | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return targetOperationFactEquals(left, right);
+}
+
+function targetOperationFactEquals(left: TargetOperationFact, right: TargetOperationFact): boolean {
+  return left.operationId === right.operationId
+    && left.operationKind === right.operationKind
+    && left.targetOperation === right.targetOperation
+    && left.resultType === right.resultType;
 }
 
 function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {

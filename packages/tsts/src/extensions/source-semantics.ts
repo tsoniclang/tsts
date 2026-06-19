@@ -175,6 +175,7 @@ function createSourceSemanticsModules(modules: readonly SourceSemanticsModule[])
       ...(module.packageName !== undefined ? { packageName: module.packageName } : {}),
       ...(module.packageVersion !== undefined ? { packageVersion: module.packageVersion } : {}),
       ...(module.subpath !== undefined ? { subpath: module.subpath } : {}),
+      ...(module.capabilities !== undefined ? { capabilities: module.capabilities } : {}),
       primitivesByExportName,
       callMarkersByExportName,
       typeMarkersByExportName,
@@ -264,6 +265,9 @@ function recordSourceSemanticsImportClause(
     return;
   }
   for (const importSpecifier of Node_Elements(namedBindings) ?? []) {
+    if (importSpecifier === undefined) {
+      continue;
+    }
     const localName = Node_Name(importSpecifier);
     if (localName === undefined) {
       continue;
@@ -295,6 +299,9 @@ function recordSourceSemanticsExportClause(
   }
   const declarationIsTypeOnly = AsExportDeclaration(exportDeclaration)!.IsTypeOnly;
   for (const exportSpecifier of Node_Elements(exportClause) ?? []) {
+    if (exportSpecifier === undefined) {
+      continue;
+    }
     const exportedName = Node_Name(exportSpecifier);
     if (exportedName === undefined) {
       continue;
@@ -341,7 +348,7 @@ function recordSourceSemanticsCallMarker(
   facts: ExtensionFactStore,
   diagnostics: ExtensionDiagnosticStore,
   extensionId: string,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   marker: SourceCallMarkerDeclaration,
 ): void {
   const evidence = createMarkerEvidence(marker.exportName);
@@ -399,8 +406,8 @@ function recordArgumentPassingMarker(
   facts: ExtensionFactStore,
   diagnostics: ExtensionDiagnosticStore,
   extensionId: string,
-  callExpression: GoPtr<Node>,
-  target: GoPtr<Node>,
+  callExpression: Node,
+  target: Node,
   marker: SourceCallMarkerDeclaration,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -439,7 +446,7 @@ function getArgumentPassingMode(kind: ArgumentPassingMarkerKind): ArgumentPassin
 
 function recordFieldMarker(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
   const fieldType = (Node_TypeArguments(callExpression) ?? [])[0];
@@ -464,7 +471,7 @@ function recordFieldMarker(
 
 function recordStructMarker(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
   const shape = (Node_Arguments(callExpression) ?? [])[0];
@@ -474,7 +481,8 @@ function recordStructMarker(
       if (property?.Kind !== KindPropertyAssignment) {
         continue;
       }
-      const field = facts.get(property, fieldFactKey) ?? facts.get(Node_Initializer(property), fieldFactKey);
+      const initializer = Node_Initializer(property);
+      const field = facts.get(property, fieldFactKey) ?? (initializer === undefined ? undefined : facts.get(initializer, fieldFactKey));
       if (field !== undefined) {
         fields.push(field);
       }
@@ -490,7 +498,7 @@ function recordStructMarker(
 
 function recordAttributeMarker(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
   const target = (Node_TypeArguments(callExpression) ?? [])[0];
@@ -500,7 +508,7 @@ function recordAttributeMarker(
   const fact = {
     target,
     attributeName: getTypeReferenceNameText(target),
-    arguments: Node_Arguments(callExpression) ?? [],
+    arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
   } satisfies AttributeFact;
   facts.set(callExpression, attributeFactKey, fact, evidence);
   recordInitializerOwnerFact(facts, callExpression, attributeFactKey, fact, evidence);
@@ -508,7 +516,7 @@ function recordAttributeMarker(
 
 function recordDefaultValueMarker(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   evidence: readonly ExtensionEvidence[],
 ): void {
   const type = (Node_TypeArguments(callExpression) ?? [])[0];
@@ -522,7 +530,7 @@ function recordDefaultValueMarker(
 
 function recordInitializerOwnerFact<TFact>(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
+  callExpression: Node,
   key: ExtensionFactKey<TFact>,
   fact: TFact,
   evidence: readonly ExtensionEvidence[],
@@ -544,8 +552,8 @@ function isInitializerOwner(node: GoPtr<Node>): boolean {
 
 function recordFlowMarker(
   facts: ExtensionFactStore,
-  callExpression: GoPtr<Node>,
-  target: GoPtr<Node>,
+  callExpression: Node,
+  target: Node,
   fact: FlowStateFact,
   evidence: readonly ExtensionEvidence[],
 ): void {
@@ -609,6 +617,9 @@ function recordSourceSemanticsTypeReferences(
     facts.set(typeName, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
     if (typeName.Kind === KindQualifiedName) {
       const right = AsQualifiedName(typeName)!.Right;
+      if (right === undefined) {
+        return;
+      }
       facts.set(right, canonicalIdentityFactKey, primitive.identity, evidence);
       facts.set(right, sourcePrimitiveFactKey, stripExportName(primitive.primitiveFact), evidence);
     }
@@ -617,8 +628,8 @@ function recordSourceSemanticsTypeReferences(
 
 function recordSourceSemanticsTypeMarker(
   facts: ExtensionFactStore,
-  typeReference: GoPtr<Node>,
-  typeName: GoPtr<Node>,
+  typeReference: Node,
+  typeName: Node,
   marker: SourceTypeMarkerDeclaration,
 ): void {
   const typeArguments = Node_TypeArguments(typeReference) ?? [];
@@ -651,12 +662,12 @@ function recordSourceSemanticsTypeMarker(
   facts.set(typeName, functionPointerFactKey, fact, evidence);
 }
 
-function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly GoPtr<Node>[] {
+function getFunctionPointerParameters(parameterList: GoPtr<Node>): readonly ExtensionFactSubject[] {
   if (parameterList === undefined) {
     return [];
   }
   if (parameterList.Kind === KindTupleType) {
-    return Node_Elements(parameterList) ?? [];
+    return definedFactSubjects(Node_Elements(parameterList) ?? []);
   }
   return [parameterList];
 }
@@ -930,9 +941,13 @@ function visitSourceSemanticsNodePost(node: GoPtr<Node>, visit: (node: GoPtr<Nod
   visit(node);
 }
 
+function definedFactSubjects<T extends object>(subjects: readonly (T | undefined)[]): readonly ExtensionFactSubject[] {
+  return subjects.filter((subject): subject is T => subject !== undefined);
+}
+
 function recordNamespaceImportIdentity(
   facts: ExtensionFactStore,
-  namespaceImport: GoPtr<Node>,
+  namespaceImport: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   typedImport: boolean,
 ): void {
@@ -953,7 +968,7 @@ function getSourceSemanticsModuleIdentity(node: GoPtr<Node>, modules: readonly S
 
 function recordSourcePrimitiveImport(
   facts: ExtensionFactStore,
-  importSpecifier: GoPtr<Node>,
+  importSpecifier: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   exportName: string,
   primitiveFact: SourcePrimitiveDeclaration,
@@ -973,7 +988,7 @@ function recordSourcePrimitiveImport(
 
 function recordSourceSemanticsSymbolImport(
   facts: ExtensionFactStore,
-  importSpecifier: GoPtr<Node>,
+  importSpecifier: Node,
   moduleIdentity: SourceSemanticsModuleIdentity,
   exportName: string,
   importKind: ExtensionImportKind,

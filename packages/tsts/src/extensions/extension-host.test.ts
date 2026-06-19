@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  DynamicProviderExtensionContractVersion,
   ExtensionHost,
   ExtensionHostDiagnosticCode,
   ExtensionLifecycleEvent,
   ExtensionDecisionQuestion,
+  TstsProviderContractVersion,
   acceptDecision,
   argumentPassingFactKey,
   attachExtensionHost,
@@ -23,8 +23,8 @@ import {
   runtimeCarrierFactKey,
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
-  surfaceOperationFactKey,
   targetBindingFactKey,
+  targetOperationFactKey,
 } from "./index.js";
 import type {
   AssignabilityRequest,
@@ -44,10 +44,10 @@ import type {
   SatisfiesConstraintRequest,
   SelectedTargetSignatureFact,
   SourceFileBoundLifecycleRequest,
-  SurfaceOperationFact,
   TargetBindingFact,
   TargetBindingProvider,
   TargetIdentity,
+  TargetOperationFact,
   TargetSemanticProvider,
   ValidateFlowUseRequest,
   ValidateFlowUseResult,
@@ -62,7 +62,8 @@ function extension(id: string, options: {
   readonly dependsOn?: readonly string[];
   readonly runsAfter?: readonly string[];
   readonly composition?: CompilerExtension["composition"];
-  readonly decisionOwners?: readonly string[];
+  readonly decisionOwners?: CompilerExtension["decisionOwners"];
+  readonly diagnosticRange?: CompilerExtension["identity"]["diagnosticRange"];
   readonly initialize?: CompilerExtension["initialize"];
 } = {}): CompilerExtension {
   const dependencies = options.dependsOn !== undefined || options.runsAfter !== undefined
@@ -76,6 +77,7 @@ function extension(id: string, options: {
       id,
       version: "1.0.0",
       capabilityNamespace: id,
+      ...(options.diagnosticRange !== undefined ? { diagnosticRange: options.diagnosticRange } : {}),
     },
     ...(dependencies !== undefined ? { dependencies } : {}),
     ...(options.composition !== undefined ? { composition: options.composition } : {}),
@@ -171,24 +173,25 @@ test("missing dependencies, duplicate ids, and cycles are deterministic diagnost
 test("decision owners are required and conflicts are reported", () => {
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("source", { decisionOwners: ["source-primitive:int"] }),
-      extension("other", { decisionOwners: ["source-primitive:int"] }),
+      extension("source", { decisionOwners: [ExtensionDecisionQuestion.satisfiesConstraint] }),
+      extension("other", { decisionOwners: [ExtensionDecisionQuestion.satisfiesConstraint] }),
     ],
   });
 
-  assert.equal(host.getDecisionOwner("source-primitive:int")?.identity.id, "other");
+  assert.equal(host.getDecisionOwner(ExtensionDecisionQuestion.satisfiesConstraint)?.identity.id, "other");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerConflict);
 
-  assert.equal(host.requireDecisionOwner("target-binding:csharp"), undefined);
+  assert.equal(host.requireDecisionOwner(ExtensionDecisionQuestion.resolveCall), undefined);
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerMissing);
 
-  host.registerDecisionOwner("unknown-question", "missing-extension");
+  host.registerDecisionOwner(ExtensionDecisionQuestion.resolveCall, "missing-extension");
   assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.unknownDecisionOwner);
 });
 
-test("fact store supports insert, idempotent writes, conflicts, and primitive subjects", () => {
+test("fact store supports insert, idempotent writes, conflicts, and object subjects only", () => {
   const host = new ExtensionHost({});
   const subject = {};
+  const canonicalSubject = {};
 
   assert.equal(host.facts.set(subject, primitiveFactKey, "int32"), "inserted");
   assert.equal(host.facts.set(subject, primitiveFactKey, "int32"), "idempotent");
@@ -196,8 +199,11 @@ test("fact store supports insert, idempotent writes, conflicts, and primitive su
   assert.equal(host.facts.set(subject, primitiveFactKey, "int64"), "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.factConflict);
 
-  assert.equal(host.facts.set("canonical:@example/native/types.js::int", primitiveFactKey, "int32"), "inserted");
-  assert.equal(host.facts.get("canonical:@example/native/types.js::int", primitiveFactKey), "int32");
+  assert.equal(host.facts.set(canonicalSubject, primitiveFactKey, "int32"), "inserted");
+  assert.equal(host.facts.get(canonicalSubject, primitiveFactKey), "int32");
+
+  assert.equal(Reflect.apply(host.facts.set, host.facts, [null, primitiveFactKey, "int32"]), "invalid-subject");
+  assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.invalidFactSubject);
 });
 
 test("fact conflict diagnostics are keyed per object subject", () => {
@@ -239,6 +245,29 @@ test("fact resolver computes lazily and caches through the fact store", () => {
   assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "alias resolved to canonical primitive");
 });
 
+test("fact resolver can lazily cache finalized facts without sealed-store diagnostics", () => {
+  const host = new ExtensionHost({});
+  const canonical = {};
+  const alias = {};
+
+  host.facts.set(canonical, primitiveFactKey, "int32");
+  host.factResolver.register(primitiveFactKey, (subject, context) => {
+    if (subject !== alias) {
+      return undefined;
+    }
+    const value = context.facts.get(canonical, primitiveFactKey);
+    return value === undefined ? undefined : {
+      value,
+      evidence: [{ message: "post-finalization alias resolved to canonical primitive" }],
+    };
+  });
+
+  host.finalizeSemantics();
+  assert.equal(host.getFactForConsumer("emitter", alias, primitiveFactKey), "int32");
+  assert.equal(host.facts.getEntry(alias, primitiveFactKey)?.evidence[0]?.message, "post-finalization alias resolved to canonical primitive");
+  assert.equal(host.diagnostics.all().some((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.factStoreSealed), false);
+});
+
 test("provider registry requires explicit provider identity and rejects duplicates", () => {
   const host = new ExtensionHost({});
   const provider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
@@ -270,14 +299,41 @@ test("provider registry rejects unsupported extension contract versions", () => 
   assert.equal(host.providers.resolveVirtualModule("@example/dotnet/System.Buffers.js").kind, "unowned");
 });
 
+test("registered diagnostic ranges reject unstable extension codes", () => {
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("a-range-checked-extension", {
+        diagnosticRange: { start: 9101000, end: 9101999 },
+        initialize: (context) => {
+          context.diagnostics.append(diagnostic("a-range-checked-extension", "IN_RANGE", 9101001, "accepted diagnostic"));
+          context.diagnostics.append(diagnostic("a-range-checked-extension", "OUT_OF_RANGE", 9200001, "rejected diagnostic"));
+        },
+      }),
+      extension("bad-range-extension", {
+        diagnosticRange: { start: 9300002, end: 9300001 },
+      }),
+      extension("z-overlapping-range-extension", {
+        diagnosticRange: { start: 9101500, end: 9102500 },
+      }),
+    ],
+  });
+
+  assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "IN_RANGE"), true);
+  assert.equal(host.diagnostics.all().some((item) => item.extensionCode === "OUT_OF_RANGE"), false);
+  assert.equal(host.diagnostics.all().some((item) => item.numericCode === ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange), true);
+  assert.equal(host.diagnostics.all().filter((item) => item.numericCode === ExtensionHostDiagnosticCode.diagnosticRangeInvalid).length, 2);
+});
+
 test("extensions register binding and semantic providers through initialization context", () => {
   const bindingProvider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
+  const parameter = {};
+  const argument = {};
   const semanticProvider: TargetSemanticProvider = {
     identity: {
       id: "dotnet-semantic",
       version: "1.0.0",
       target: "csharp",
-      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
     getParameterMode: () => acceptDecision({
@@ -300,8 +356,8 @@ test("extensions register binding and semantic providers through initialization 
   assert.equal(host.diagnostics.hasErrors(), false);
 
   const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
-    parameter: "System.Console.TryParse.result",
-    argument: "result",
+    parameter,
+    argument,
     target: "csharp",
   }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
 
@@ -318,6 +374,23 @@ test("semantic provider methods own typed decisions without hook boilerplate", (
   const operatorExpression = {};
   const lambda = {};
   const flowUse = {};
+  const voidType = {};
+  const int32Type = {};
+  const longType = {};
+  const byteType = {};
+  const charType = {};
+  const stringType = {};
+  const delegateType = {};
+  const listAdd = {};
+  const listInt32 = {};
+  const consoleWriteLine = {};
+  const callArgument = {};
+  const spanArgument = {};
+  const leftOperand = {};
+  const rightOperand = {};
+  const tryParseParameter = {};
+  const tryParseArgument = {};
+  const symbol = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("csharp-target", {
@@ -327,38 +400,38 @@ test("semantic provider methods own typed decisions without hook boilerplate", (
               id: "dotnet-semantic",
               version: "1.0.0",
               target: "csharp",
-              extensionContractVersion: DynamicProviderExtensionContractVersion,
+              extensionContractVersion: TstsProviderContractVersion,
               providerKind: "semantic",
             },
             satisfiesConstraint: () => acceptDecision(true),
             isAssignableTo: () => acceptDecision(true),
             resolveCall: () => acceptDecision({
               selectedSignature: selectedSignature("System.Console.WriteLine(System.Int32)"),
-              returnType: "void",
+              returnType: voidType,
             }),
             inferTypeArguments: () => acceptDecision({
-              typeArguments: ["int32"],
+              typeArguments: [int32Type],
               targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
             }),
             resolvePropertyAccess: () => acceptDecision({
-              operation: surfaceOperation("System.String.Length", "property"),
-              resultType: "int32",
+              operation: targetOperation("System.String.Length", "property"),
+              resultType: int32Type,
             }),
             resolveElementAccess: () => acceptDecision({
-              operation: surfaceOperation("System.Span.GetItem", "indexer"),
-              resultType: "char",
+              operation: targetOperation("System.Span.GetItem", "indexer"),
+              resultType: charType,
             }),
             resolveOperator: () => acceptDecision({
-              operation: surfaceOperation("System.Int32.op_Addition", "operator"),
-              resultType: "int32",
+              operation: targetOperation("System.Int32.op_Addition", "operator"),
+              resultType: int32Type,
             }),
             getContextualType: () => acceptDecision({
-              type: "System.Func<System.Int32,System.Int32>",
+              type: delegateType,
               targetType: { kind: "target-named", id: "System.Func`2" },
             }),
             resolveConversion: () => acceptDecision({
               convertedType: { kind: "source-primitive", name: "int32" },
-              operation: surfaceOperation("System.Convert.ToInt32", "method"),
+              operation: targetOperation("System.Convert.ToInt32", "method"),
             }),
             getParameterMode: () => acceptDecision({
               passing: { mode: "byref-readwrite" },
@@ -378,92 +451,92 @@ test("semantic provider methods own typed decisions without hook boilerplate", (
   });
 
   const constraint = host.runDecision(ExtensionDecisionQuestion.satisfiesConstraint, {
-    source: "int32",
+    source: int32Type,
     constraint: { kind: "implements", contract: "System.IEquatable`1" },
     target: "csharp",
   }, () => false, { requireOwner: true });
   assert.equal(constraint.kind === "accept" ? constraint.value : false, true);
 
   const assignable = host.runDecision(ExtensionDecisionQuestion.isAssignableTo, {
-    source: "int32",
-    target: "long",
+    source: int32Type,
+    target: longType,
     relation: "assignment",
   }, () => false, { requireOwner: true });
   assert.equal(assignable.kind === "accept" ? assignable.value : false, true);
 
   const call = host.runDecision(ExtensionDecisionQuestion.resolveCall, {
     call: expression,
-    callee: "Console.WriteLine",
-    arguments: [123],
+    callee: consoleWriteLine,
+    arguments: [callArgument],
     target: "csharp",
   }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
   assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "System.Console.WriteLine(System.Int32)");
 
   const noInferredTypeArguments: InferTypeArgumentsResult = { typeArguments: [] };
   const inferred = host.runDecision(ExtensionDecisionQuestion.inferTypeArguments, {
-    declaration: "List<T>.Add",
-    arguments: ["value"],
-    contextualType: "List<int32>",
+    declaration: listAdd,
+    arguments: [callArgument],
+    contextualType: listInt32,
   }, () => noInferredTypeArguments, { requireOwner: true });
   assert.deepEqual(inferred.kind === "accept" ? inferred.value.targetTypeArguments : [], [{ kind: "source-primitive", name: "int32" }]);
 
   const property = host.runDecision(ExtensionDecisionQuestion.resolvePropertyAccess, {
     expression: propertyAccess,
-    receiver: "text",
+    receiver: stringType,
     propertyName: "length",
     target: "csharp",
-  }, () => ({ operation: surfaceOperation("core", "property") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "property") }), { requireOwner: true });
   assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "System.String.Length");
 
   const element = host.runDecision(ExtensionDecisionQuestion.resolveElementAccess, {
     expression: elementAccess,
-    receiver: "span",
-    argument: 0,
+    receiver: stringType,
+    argument: spanArgument,
     target: "csharp",
-  }, () => ({ operation: surfaceOperation("core", "indexer") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true });
   assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "System.Span.GetItem");
 
   const operator = host.runDecision(ExtensionDecisionQuestion.resolveOperator, {
     expression: operatorExpression,
     operator: "+",
-    left: "left",
-    right: "right",
+    left: leftOperand,
+    right: rightOperand,
     target: "csharp",
-  }, () => ({ operation: surfaceOperation("core", "operator") }), { requireOwner: true });
+  }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true });
   assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "System.Int32.op_Addition");
 
   const contextual = host.runDecision(ExtensionDecisionQuestion.getContextualType, {
     expression: lambda,
-    context: "delegate",
+    context: delegateType,
     target: "csharp",
-  }, () => ({ type: "core" }), { requireOwner: true });
-  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, "System.Func<System.Int32,System.Int32>");
+  }, () => ({ type: int32Type }), { requireOwner: true });
+  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, delegateType);
 
   const noConversion: ResolveConversionResult = {};
   const conversion = host.runDecision(ExtensionDecisionQuestion.resolveConversion, {
     expression: convertedExpression,
-    source: "byte",
-    target: "int",
+    source: byteType,
+    target: int32Type,
     targetPlatform: "csharp",
   }, () => noConversion, { requireOwner: true });
   assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "System.Convert.ToInt32");
 
   const parameterMode = host.runDecision(ExtensionDecisionQuestion.getParameterMode, {
-    parameter: "TryParse.result",
-    argument: "result",
+    parameter: tryParseParameter,
+    argument: tryParseArgument,
     target: "csharp",
   }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
   assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-readwrite");
 
   const carrier = host.runDecision(ExtensionDecisionQuestion.getRuntimeCarrier, {
-    type: "int32",
+    type: int32Type,
     target: "csharp",
   }, () => ({ carrier: { kind: "opaque", id: "core" } }), { requireOwner: true });
   assert.equal(carrier.kind === "accept" ? carrier.value.carrier.kind : undefined, "target-named");
 
   const flow = host.runDecision(ExtensionDecisionQuestion.validateFlowUse, {
     useSite: flowUse,
-    symbol: "value",
+    symbol,
     mode: "read",
     target: "csharp",
   }, () => ({ valid: false }), { requireOwner: true });
@@ -557,6 +630,62 @@ test("provider ownership conflicts and invalid declaration models are diagnostic
   assert.equal(invalidHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
 });
 
+test("provider callback failures are diagnostics and never fall back to files", () => {
+  const specifier = "@target/failing.js";
+  const ownershipHost = new ExtensionHost({});
+  ownershipHost.providers.registerTargetBindingProvider({
+    identity: providerIdentity("throwing-ownership-provider", "demo", "binding"),
+    ownsModule: () => {
+      throw new Error("ownership failed");
+    },
+    resolveModule: () => {
+      throw new Error("must not resolve");
+    },
+    getDeclarationModel: () => {
+      throw new Error("must not declare");
+    },
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(ownershipHost.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(ownershipHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerOwnershipFailed);
+
+  const resolutionHost = new ExtensionHost({});
+  resolutionHost.providers.registerTargetBindingProvider({
+    identity: providerIdentity("throwing-resolution-provider", "demo", "binding"),
+    ownsModule: () => ({ kind: "owned" }),
+    resolveModule: () => {
+      throw new Error("resolution failed");
+    },
+    getDeclarationModel: () => {
+      throw new Error("must not declare");
+    },
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(resolutionHost.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(resolutionHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerResolveFailed);
+
+  const declarationHost = new ExtensionHost({});
+  declarationHost.providers.registerTargetBindingProvider({
+    identity: providerIdentity("throwing-declaration-provider", "demo", "binding"),
+    ownsModule: () => ({ kind: "owned" }),
+    resolveModule: (moduleSpecifier) => ({
+      kind: "virtual",
+      moduleSpecifier,
+      virtualFileName: "tsts-provider://throwing/declaration",
+      providerModuleId: "throwing.declaration",
+    }),
+    getDeclarationModel: () => {
+      throw new Error("declaration failed");
+    },
+    getTargetIdentity: () => undefined,
+  });
+
+  assert.equal(declarationHost.providers.resolveVirtualModule(specifier).kind, "rejected");
+  assert.equal(declarationHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerDeclarationFailed);
+});
+
 test("provider declaration models render the supported export member and type matrix", () => {
   const specifier = "@target/runtime.js";
   const host = new ExtensionHost({});
@@ -588,16 +717,31 @@ test("provider declaration models render the supported export member and type ma
   assert.equal(resolved.module.virtualDocument.sourceText, source);
 });
 
-test("provider declaration models reject member kinds that cannot be represented as virtual TypeScript", () => {
+test("provider declaration models reject incomplete member declarations instead of rendering implicit unknown", () => {
   const specifier = "@target/runtime.js";
   const host = new ExtensionHost({});
   host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
     members: [{
       id: "Changed",
       name: "Changed",
-      kind: "event",
-      type: { kind: "function", parameters: [], returnType: { kind: "void" } },
+      kind: "property",
     }],
+  }));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider declaration models reject target types without explicit source shape", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
+    valueType: {
+      kind: "target-named",
+      target: "demo",
+      id: "Demo.NativeInt",
+    },
   }));
 
   const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
@@ -614,7 +758,7 @@ test("provider virtual module cache is separated by provider identity and resolu
       id: "cache-provider",
       version: "1.0.0",
       target: "demo",
-      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      extensionContractVersion: TstsProviderContractVersion,
       providerKind: "binding",
       configHash: "config-a",
     },
@@ -691,6 +835,8 @@ test("semantic finalization seals facts and gates consumer reads", () => {
 
 test("lifecycle hooks run before semantic finalization seals facts", () => {
   const sourceFile = {};
+  const finalizationMarker = {};
+  const afterFinalize = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("source-semantics", {
@@ -701,7 +847,7 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
             }
           });
           context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, () => {
-            context.facts.set("finalization-marker", primitiveFactKey, "int64");
+            context.facts.set(finalizationMarker, primitiveFactKey, "int64");
           });
         },
       }),
@@ -715,8 +861,8 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
   assert.equal(host.facts.get(sourceFile, primitiveFactKey), "int32");
 
   host.finalizeSemantics();
-  assert.equal(host.facts.get("finalization-marker", primitiveFactKey), "int64");
-  assert.equal(host.facts.set("after-finalize", primitiveFactKey, "uint32"), "sealed");
+  assert.equal(host.facts.get(finalizationMarker, primitiveFactKey), "int64");
+  assert.equal(host.facts.set(afterFinalize, primitiveFactKey, "uint32"), "sealed");
 });
 
 test("canonical identity facts are consumer-queryable after finalization", () => {
@@ -746,7 +892,7 @@ test("consumer query facade exposes finalized target facts without fallback infe
   const host = new ExtensionHost({});
 
   host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
-  host.facts.set(propertyAccess, surfaceOperationFactKey, surfaceOperation("System.String.Length", "property"));
+  host.facts.set(propertyAccess, targetOperationFactKey, targetOperation("System.String.Length", "property"));
   host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
   host.facts.set(runtimeType, runtimeCarrierFactKey, {
     carrier: { kind: "target-named", id: "System.Int32" },
@@ -823,11 +969,38 @@ test("lifecycle hook failures are diagnostics with extension identity", () => {
   assert.equal(host.diagnostics.all()[0]?.extensionId, "tsts.extension-host");
 });
 
+test("decision hook failures are diagnostics and do not crash the compiler host", () => {
+  const call = {};
+  const callee = {};
+  const host = new ExtensionHost({}, {
+    extensions: [
+      extension("bad-decision-extension", {
+        decisionOwners: [ExtensionDecisionQuestion.resolveCall],
+        initialize: (context) => {
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, () => {
+            throw new Error("boom");
+          });
+        },
+      }),
+    ],
+  });
+
+  const result = host.runDecision(ExtensionDecisionQuestion.resolveCall, {
+    call,
+    callee,
+    arguments: [],
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+
+  assert.equal(result.kind, "reject");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionHookFailed);
+  assert.equal(host.diagnostics.all()[0]?.extensionId, "tsts.extension-host");
+});
+
 test("diagnostics are deduplicated by stable identity", () => {
   const host = new ExtensionHost({});
 
-  host.requireDecisionOwner("target-binding:csharp");
-  host.requireDecisionOwner("target-binding:csharp");
+  host.requireDecisionOwner(ExtensionDecisionQuestion.resolveCall);
+  host.requireDecisionOwner(ExtensionDecisionQuestion.resolveCall);
 
   const ownerMissingDiagnostics = host.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.decisionOwnerMissing);
   assert.equal(ownerMissingDiagnostics.length, 1);
@@ -835,6 +1008,8 @@ test("diagnostics are deduplicated by stable identity", () => {
 
 test("constraint and assignability decisions use owner hooks instead of core fallback", () => {
   const intType = {};
+  const longType = {};
+  const stringType = {};
   const searchValuesConstraint = { kind: "implements", contract: "System.IEquatable`1" } as const;
   let coreCalled = false;
   const host = new ExtensionHost({}, {
@@ -853,14 +1028,14 @@ test("constraint and assignability decisions use owner hooks instead of core fal
         dependsOn: ["source"],
         decisionOwners: [ExtensionDecisionQuestion.satisfiesConstraint, ExtensionDecisionQuestion.isAssignableTo],
         initialize: (context) => {
-          context.registerDecisionHook<SatisfiesConstraintRequest, boolean>(ExtensionDecisionQuestion.satisfiesConstraint, (request) => {
+          context.registerDecisionHook(ExtensionDecisionQuestion.satisfiesConstraint, (request) => {
             if (request.source === intType && request.constraint === searchValuesConstraint) {
               return acceptDecision(true, [{ message: "int32 maps to System.Int32 and implements IEquatable<System.Int32>" }]);
             }
             return deferDecision;
           });
-          context.registerDecisionHook<AssignabilityRequest, boolean>(ExtensionDecisionQuestion.isAssignableTo, (request) => {
-            if (request.source === intType && request.target === "long") {
+          context.registerDecisionHook(ExtensionDecisionQuestion.isAssignableTo, (request) => {
+            if (request.source === intType && request.target === longType) {
               return acceptDecision(true);
             }
             return rejectDecision<boolean>(diagnostic("csharp", "ASSIGNABILITY_REJECTED", 9100001, "source type is not assignable to target type"));
@@ -885,7 +1060,7 @@ test("constraint and assignability decisions use owner hooks instead of core fal
 
   const assignabilityResult = host.runDecision(ExtensionDecisionQuestion.isAssignableTo, {
     source: intType,
-    target: "string",
+    target: stringType,
     relation: "assignment",
   }, () => true, { requireOwner: true });
 
@@ -895,11 +1070,14 @@ test("constraint and assignability decisions use owner hooks instead of core fal
 
 test("required extension-owned questions cannot fall back when owner is absent or deferred", () => {
   const missingOwnerHost = new ExtensionHost({});
+  const call = {};
+  const callee = {};
+  const argument = {};
   const missing = missingOwnerHost.runDecision(ExtensionDecisionQuestion.resolveCall, {
-    call: {},
-    callee: "Console.WriteLine",
-    arguments: [123],
-  }, () => "core", { requireOwner: true });
+    call,
+    callee,
+    arguments: [argument],
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
 
   assert.equal(missing.kind, "missing-owner");
   assert.equal(missingOwnerHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerMissing);
@@ -915,46 +1093,50 @@ test("required extension-owned questions cannot fall back when owner is absent o
     ],
   });
   const deferred = deferredOwnerHost.runDecision(ExtensionDecisionQuestion.resolveCall, {
-    call: {},
-    callee: "Console.WriteLine",
-    arguments: [123],
-  }, () => "core", { requireOwner: true });
+    call,
+    callee,
+    arguments: [argument],
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
 
   assert.equal(deferred.kind, "owner-deferred");
   assert.equal(deferredOwnerHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerDeferred);
 });
 
 test("unowned multiple extension decisions produce deterministic conflict", () => {
+  const call = {};
+  const callee = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("a", {
-        initialize: (context) => context.registerDecisionHook("demo.question", () => acceptDecision("a")),
+        initialize: (context) => context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, () => acceptDecision({ selectedSignature: selectedSignature("a") })),
       }),
       extension("b", {
-        initialize: (context) => context.registerDecisionHook("demo.question", () => acceptDecision("b")),
+        initialize: (context) => context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, () => acceptDecision({ selectedSignature: selectedSignature("b") })),
       }),
     ],
   });
 
-  const result = host.runDecision("demo.question", {}, () => "core");
+  const result = host.runDecision(ExtensionDecisionQuestion.resolveCall, { call, callee, arguments: [] }, () => ({ selectedSignature: selectedSignature("core") }));
   assert.equal(result.kind, "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionConflict);
 });
 
 test("owned multiple non-deferred decisions produce deterministic conflict", () => {
+  const call = {};
+  const callee = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("owner", {
-        decisionOwners: ["demo.question"],
+        decisionOwners: [ExtensionDecisionQuestion.resolveCall],
         initialize: (context) => {
-          context.registerDecisionHook("demo.question", () => acceptDecision("first"));
-          context.registerDecisionHook("demo.question", () => acceptDecision("second"));
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, () => acceptDecision({ selectedSignature: selectedSignature("first") }));
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, () => acceptDecision({ selectedSignature: selectedSignature("second") }));
         },
       }),
     ],
   });
 
-  const result = host.runDecision("demo.question", {}, () => "core", { requireOwner: true });
+  const result = host.runDecision(ExtensionDecisionQuestion.resolveCall, { call, callee, arguments: [] }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
   assert.equal(result.kind, "conflict");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.decisionConflict);
 });
@@ -982,18 +1164,21 @@ test("target extension composition requires explicit multi-target mode", () => {
 
 test("call resolution records selected target signature facts", () => {
   const call = {};
+  const callee = {};
+  const argument = {};
+  const voidType = {};
   const writeLineInt = selectedSignature("System.Console.WriteLine(System.Int32)");
   const host = new ExtensionHost({}, {
     extensions: [
       extension("csharp", {
         decisionOwners: [ExtensionDecisionQuestion.resolveCall],
         initialize: (context) => {
-          context.registerDecisionHook<ResolveCallRequest, ResolveCallResult>(ExtensionDecisionQuestion.resolveCall, (request) => {
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveCall, (request) => {
             if (request.call === call) {
               context.facts.set(request.call, selectedTargetSignatureFactKey, writeLineInt);
               return acceptDecision({
                 selectedSignature: writeLineInt,
-                returnType: "void",
+                returnType: voidType,
               });
             }
             return deferDecision;
@@ -1005,8 +1190,8 @@ test("call resolution records selected target signature facts", () => {
 
   const result = host.runDecision(ExtensionDecisionQuestion.resolveCall, {
     call,
-    callee: "Console.WriteLine",
-    arguments: [123],
+    callee,
+    arguments: [argument],
     target: "csharp",
   }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
 
@@ -1014,10 +1199,16 @@ test("call resolution records selected target signature facts", () => {
   assert.equal(host.facts.get(call, selectedTargetSignatureFactKey)?.member.id, "System.Console.WriteLine(System.Int32)");
 });
 
-test("property, element, and operator decisions expose surface operations", () => {
+test("property, element, and operator decisions expose target operations", () => {
   const lengthExpression = {};
   const indexExpression = {};
   const addExpression = {};
+  const arrayType = {};
+  const indexArgument = {};
+  const leftOperand = {};
+  const rightOperand = {};
+  const int32Type = {};
+  const elementType = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("surface", {
@@ -1027,49 +1218,53 @@ test("property, element, and operator decisions expose surface operations", () =
           ExtensionDecisionQuestion.resolveOperator,
         ],
         initialize: (context) => {
-          context.registerDecisionHook<ResolvePropertyAccessRequest, ResolveOperationResult>(ExtensionDecisionQuestion.resolvePropertyAccess, (request) => {
-            const operation = surfaceOperation("System.Array.Length", "property");
-            context.facts.set(request.expression, surfaceOperationFactKey, operation);
-            return acceptDecision({ operation, resultType: "int32" });
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolvePropertyAccess, (request) => {
+            const operation = targetOperation("System.Array.Length", "property");
+            context.facts.set(request.expression, targetOperationFactKey, operation);
+            return acceptDecision({ operation, resultType: int32Type });
           });
-          context.registerDecisionHook<ResolveElementAccessRequest, ResolveOperationResult>(ExtensionDecisionQuestion.resolveElementAccess, (request) => {
-            const operation = surfaceOperation("System.Array.Get", "indexer");
-            context.facts.set(request.expression, surfaceOperationFactKey, operation);
-            return acceptDecision({ operation, resultType: "element" });
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveElementAccess, (request) => {
+            const operation = targetOperation("System.Array.Get", "indexer");
+            context.facts.set(request.expression, targetOperationFactKey, operation);
+            return acceptDecision({ operation, resultType: elementType });
           });
-          context.registerDecisionHook<ResolveOperatorRequest, ResolveOperationResult>(ExtensionDecisionQuestion.resolveOperator, (request) => {
-            const operation = surfaceOperation("System.Int32.op_Addition", "operator");
-            context.facts.set(request.expression, surfaceOperationFactKey, operation);
-            return acceptDecision({ operation, resultType: "int32" });
+          context.registerDecisionHook(ExtensionDecisionQuestion.resolveOperator, (request) => {
+            const operation = targetOperation("System.Int32.op_Addition", "operator");
+            context.facts.set(request.expression, targetOperationFactKey, operation);
+            return acceptDecision({ operation, resultType: int32Type });
           });
         },
       }),
     ],
   });
 
-  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolvePropertyAccess, { expression: lengthExpression, receiver: "array", propertyName: "Length" }, () => undefined, { requireOwner: true }).kind, "accept");
-  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolveElementAccess, { expression: indexExpression, receiver: "array", argument: 0 }, () => undefined, { requireOwner: true }).kind, "accept");
-  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolveOperator, { expression: addExpression, operator: "+", left: "a", right: "b" }, () => undefined, { requireOwner: true }).kind, "accept");
+  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolvePropertyAccess, { expression: lengthExpression, receiver: arrayType, propertyName: "Length" }, () => ({ operation: targetOperation("core", "property") }), { requireOwner: true }).kind, "accept");
+  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolveElementAccess, { expression: indexExpression, receiver: arrayType, argument: indexArgument }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true }).kind, "accept");
+  assert.equal(host.runDecision(ExtensionDecisionQuestion.resolveOperator, { expression: addExpression, operator: "+", left: leftOperand, right: rightOperand }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true }).kind, "accept");
 
-  assert.equal(host.facts.get(lengthExpression, surfaceOperationFactKey)?.operationId, "System.Array.Length");
-  assert.equal(host.facts.get(indexExpression, surfaceOperationFactKey)?.operationId, "System.Array.Get");
-  assert.equal(host.facts.get(addExpression, surfaceOperationFactKey)?.operationId, "System.Int32.op_Addition");
+  assert.equal(host.facts.get(lengthExpression, targetOperationFactKey)?.operationId, "System.Array.Length");
+  assert.equal(host.facts.get(indexExpression, targetOperationFactKey)?.operationId, "System.Array.Get");
+  assert.equal(host.facts.get(addExpression, targetOperationFactKey)?.operationId, "System.Int32.op_Addition");
 });
 
 test("contextual typing and generic inference decisions preserve target facts", () => {
   const lambda = {};
   const listGetItem = {};
+  const delegateType = {};
+  const coreType = {};
+  const int32Type = {};
+  const argument = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("target", {
         decisionOwners: [ExtensionDecisionQuestion.getContextualType, ExtensionDecisionQuestion.inferTypeArguments],
         initialize: (context) => {
           context.registerDecisionHook(ExtensionDecisionQuestion.getContextualType, (request) => acceptDecision({
-            type: "Func<int32,int32>",
+            type: delegateType,
             targetType: { kind: "target-named", id: "System.Func`2" },
           }));
           context.registerDecisionHook(ExtensionDecisionQuestion.inferTypeArguments, () => acceptDecision({
-            typeArguments: ["int32"],
+            typeArguments: [int32Type],
             targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
           }));
         },
@@ -1077,22 +1272,24 @@ test("contextual typing and generic inference decisions preserve target facts", 
     ],
   });
 
-  const contextual = host.runDecision(ExtensionDecisionQuestion.getContextualType, { expression: lambda, context: "delegate" }, () => ({ type: "core" }), { requireOwner: true });
-  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, "Func<int32,int32>");
+  const contextual = host.runDecision(ExtensionDecisionQuestion.getContextualType, { expression: lambda, context: delegateType }, () => ({ type: coreType }), { requireOwner: true });
+  assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, delegateType);
 
-  const inferred = host.runDecision(ExtensionDecisionQuestion.inferTypeArguments, { declaration: listGetItem, arguments: [0] }, () => ({ typeArguments: [] }), { requireOwner: true });
-  assert.deepEqual(inferred.kind === "accept" ? inferred.value.typeArguments : [], ["int32"]);
+  const inferred = host.runDecision(ExtensionDecisionQuestion.inferTypeArguments, { declaration: listGetItem, arguments: [argument] }, () => ({ typeArguments: [] }), { requireOwner: true });
+  assert.deepEqual(inferred.kind === "accept" ? inferred.value.typeArguments : [], [int32Type]);
 });
 
 test("flow validation supports local rejection and target compiler validation facts", () => {
   const movedUse = {};
   const returnedBorrow = {};
+  const movedSymbol = {};
+  const borrowSymbol = {};
   const host = new ExtensionHost({}, {
     extensions: [
       extension("rust", {
         decisionOwners: [ExtensionDecisionQuestion.validateFlowUse],
         initialize: (context) => {
-          context.registerDecisionHook<ValidateFlowUseRequest, ValidateFlowUseResult>(ExtensionDecisionQuestion.validateFlowUse, (request) => {
+          context.registerDecisionHook(ExtensionDecisionQuestion.validateFlowUse, (request) => {
             if (request.useSite === movedUse) {
               context.facts.set(request.useSite, flowStateFactKey, { state: "moved" });
               return rejectDecision(diagnostic("rust", "VALUE_WAS_MOVED", 9100101, "value was moved and cannot be used here"));
@@ -1115,31 +1312,32 @@ test("flow validation supports local rejection and target compiler validation fa
     ],
   });
 
-  const rejected = host.runDecision<ValidateFlowUseRequest, ValidateFlowUseResult>(ExtensionDecisionQuestion.validateFlowUse, { useSite: movedUse, symbol: "value", mode: "read", target: "rust" }, () => ({ valid: true }), { requireOwner: true });
+  const rejected = host.runDecision(ExtensionDecisionQuestion.validateFlowUse, { useSite: movedUse, symbol: movedSymbol, mode: "read", target: "rust" }, () => ({ valid: true }), { requireOwner: true });
   assert.equal(rejected.kind, "reject");
   assert.equal(host.facts.get(movedUse, flowStateFactKey)?.state, "moved");
 
-  const accepted = host.runDecision<ValidateFlowUseRequest, ValidateFlowUseResult>(ExtensionDecisionQuestion.validateFlowUse, { useSite: returnedBorrow, symbol: "view", mode: "read", target: "rust" }, () => ({ valid: false }), { requireOwner: true });
+  const accepted = host.runDecision(ExtensionDecisionQuestion.validateFlowUse, { useSite: returnedBorrow, symbol: borrowSymbol, mode: "read", target: "rust" }, () => ({ valid: false }), { requireOwner: true });
   assert.equal(accepted.kind === "accept" ? accepted.value.targetCompiler : undefined, "rustc");
   assert.equal(host.facts.get(returnedBorrow, flowStateFactKey)?.targetCompiler, "rustc");
 });
 
 test("advanced associated-type and const-generic facts are first-class", () => {
   const iteratorType = {};
+  const itemType = {};
   const fixedBytesType = {};
   const host = new ExtensionHost({});
 
   assert.equal(host.facts.set(iteratorType, associatedTypeFactKey, {
     owner: iteratorType,
     name: "Item",
-    value: "int32",
+    value: itemType,
   }), "inserted");
   assert.equal(host.facts.set(fixedBytesType, constGenericFactKey, {
     name: "N",
     value: 32,
   }), "inserted");
 
-  assert.equal(host.facts.get(iteratorType, associatedTypeFactKey)?.value, "int32");
+  assert.equal(host.facts.get(iteratorType, associatedTypeFactKey)?.value, itemType);
   assert.equal(host.facts.get(fixedBytesType, constGenericFactKey)?.value, 32);
 });
 
@@ -1186,7 +1384,7 @@ function dotnetBindingProvider(
       id: options.id ?? "dotnet",
       version: "1.0.0",
       target: "csharp",
-      extensionContractVersion: options.extensionContractVersion ?? DynamicProviderExtensionContractVersion,
+      extensionContractVersion: options.extensionContractVersion ?? TstsProviderContractVersion,
       providerKind: options.providerKind ?? "binding",
     },
     ownsModule: (specifier) => specifier === ownedSpecifier
@@ -1219,7 +1417,7 @@ function dotnetBindingProvider(
           signatures: [{
             id: "Contains(T)",
             parameters: [{ name: "value", type: { kind: "type-parameter", name: "T" } }],
-            returnType: { kind: "source-primitive", name: "boolean" },
+            returnType: { kind: "source-primitive", name: "bool" },
           }],
         }],
       }, {
@@ -1249,6 +1447,7 @@ function matrixBindingProvider(
   ownedSpecifier: string,
   options: {
     readonly members?: readonly ProviderMemberDeclaration[];
+    readonly valueType?: ProviderDeclarationModel["exports"][number]["type"];
   } = {},
 ): TargetBindingProvider {
   return {
@@ -1256,7 +1455,7 @@ function matrixBindingProvider(
       id: "matrix-provider",
       version: "1.0.0",
       target: "demo",
-      extensionContractVersion: DynamicProviderExtensionContractVersion,
+      extensionContractVersion: TstsProviderContractVersion,
       providerKind: "binding",
     },
     ownsModule: (specifier) => specifier === ownedSpecifier ? { kind: "owned" } : { kind: "unowned" },
@@ -1276,7 +1475,7 @@ function matrixBindingProvider(
         targetIdentity: { target: "demo", id: "Demo.Box`1" },
         typeParameters: [{
           name: "T",
-          constraints: [{ kind: "source-primitive", name: "int" }],
+          constraints: [{ kind: "source-primitive", name: "int32" }],
         }],
         members: options.members ?? [{
           id: "ctor",
@@ -1330,13 +1529,13 @@ function matrixBindingProvider(
         kind: "function",
         typeParameters: [{
           name: "T",
-          constraints: [{ kind: "source-primitive", name: "int" }],
+          constraints: [{ kind: "source-primitive", name: "int32" }],
         }],
         signatures: [{
           id: "tryParse",
           typeParameters: [{
             name: "T",
-            constraints: [{ kind: "source-primitive", name: "int" }],
+            constraints: [{ kind: "source-primitive", name: "int32" }],
           }],
           parameters: [
             { name: "text", type: { kind: "string" }, optional: true },
@@ -1353,7 +1552,7 @@ function matrixBindingProvider(
         id: "DefaultSize",
         name: "DefaultSize",
         kind: "value",
-        type: { kind: "number" },
+        type: options.valueType ?? { kind: "number" },
       }, {
         id: "Buffers",
         name: "Buffers",
@@ -1379,6 +1578,16 @@ function matrixBindingProvider(
       }],
     }),
     getTargetIdentity: () => undefined,
+  };
+}
+
+function providerIdentity(id: string, target: string, providerKind: NonNullable<TargetBindingProvider["identity"]["providerKind"]>) {
+  return {
+    id,
+    version: "1.0.0",
+    target,
+    extensionContractVersion: TstsProviderContractVersion,
+    providerKind,
   };
 }
 
@@ -1409,10 +1618,10 @@ function selectedSignature(id: string): SelectedTargetSignatureFact {
   };
 }
 
-function surfaceOperation(operationId: string, sourceOperation: SurfaceOperationFact["sourceOperation"]): SurfaceOperationFact {
+function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"]): TargetOperationFact {
   return {
     operationId,
-    sourceOperation,
+    operationKind,
     targetOperation: operationId,
   };
 }

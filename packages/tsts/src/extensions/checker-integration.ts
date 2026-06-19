@@ -9,7 +9,7 @@ import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Type } from "../internal/checker/types.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
 import type { AssignabilityRequest, ContextualTypeRequest, ContextualTypeResult, InferTypeArgumentsRequest, InferTypeArgumentsResult, ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
-import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, surfaceOperationFactKey, targetBindingFactKey, targetConversionFactKey } from "./facts.js";
+import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 
@@ -32,12 +32,12 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
     return;
   }
 
-  const result = extensionHost.runDecision<ResolveCallRequest, ResolveCallResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.resolveCall,
     {
       call: callExpression,
       callee,
-      arguments: Node_Arguments(callExpression) ?? [],
+      arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -51,9 +51,9 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
   }
 
   const arguments_ = Node_Arguments(callExpression) ?? [];
-  const selectedSignature = recordExtensionCallTypeArgumentInference(extensionHost, callExpression, callee, result.value, arguments_);
+  const selectedSignature = recordExtensionCallTypeArgumentInference(extensionHost, callee, result.value, arguments_);
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, selectedSignature, result.evidence ?? []);
-  recordExtensionCallParameterModes(extensionHost, callExpression, { ...result.value, selectedSignature }, arguments_);
+  recordExtensionCallParameterModes(extensionHost, { ...result.value, selectedSignature }, arguments_);
   recordExtensionCallArgumentConversions(extensionHost, { ...result.value, selectedSignature }, arguments_);
 }
 
@@ -73,7 +73,7 @@ export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  const result = extensionHost.runDecision<ResolvePropertyAccessRequest, ResolveOperationResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.resolvePropertyAccess,
     {
       expression: propertyAccessExpression,
@@ -91,7 +91,7 @@ export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  extensionHost.facts.set(propertyAccessExpression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+  extensionHost.facts.set(propertyAccessExpression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
 export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWithProgram>, elementAccessExpression: GoPtr<Node>): void {
@@ -110,7 +110,7 @@ export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWit
     return;
   }
 
-  const result = extensionHost.runDecision<ResolveElementAccessRequest, ResolveOperationResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.resolveElementAccess,
     {
       expression: elementAccessExpression,
@@ -128,7 +128,7 @@ export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWit
     return;
   }
 
-  extensionHost.facts.set(elementAccessExpression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+  extensionHost.facts.set(elementAccessExpression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
 export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
@@ -141,7 +141,7 @@ export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProg
     return;
   }
 
-  const result = extensionHost.runDecision<ResolveOperatorRequest, ResolveOperationResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.resolveOperator,
     {
       expression,
@@ -160,7 +160,7 @@ export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProg
     return;
   }
 
-  extensionHost.facts.set(expression, surfaceOperationFactKey, result.value.operation, result.evidence ?? []);
+  extensionHost.facts.set(expression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
 export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
@@ -188,7 +188,7 @@ export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<C
       continue;
     }
     for (const constraint of parameter.constraints ?? []) {
-      const result = extensionHost.runDecision<SatisfiesConstraintRequest, boolean>(
+      const result = extensionHost.runDecision(
         ExtensionDecisionQuestion.satisfiesConstraint,
         {
           source: argument,
@@ -222,7 +222,7 @@ export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  const result = extensionHost.runDecision<RuntimeCarrierRequest, RuntimeCarrierResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.getRuntimeCarrier,
     {
       type,
@@ -257,7 +257,7 @@ export function recordExtensionContextualTypeResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  const result = extensionHost.runDecision<ContextualTypeRequest, ContextualTypeResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.getContextualType,
     {
       expression,
@@ -280,7 +280,7 @@ export function recordExtensionContextualTypeResolution(checker: GoPtr<CheckerWi
 }
 
 export function recordExtensionAssignabilityValidation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: AssignabilityRequest["relation"]): bool {
-  if (checker === undefined) {
+  if (checker === undefined || source === undefined || target === undefined) {
     return true as bool;
   }
 
@@ -300,7 +300,7 @@ export function recordExtensionAssignabilityValidation(checker: GoPtr<CheckerWit
     return true as bool;
   }
 
-  const result = extensionHost.runDecision<AssignabilityRequest, boolean>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.isAssignableTo,
     {
       source,
@@ -339,7 +339,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgr
     return;
   }
 
-  const result = extensionHost.runDecision<ValidateFlowUseRequest, ValidateFlowUseResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.validateFlowUse,
     {
       useSite,
@@ -363,7 +363,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgr
   }
 }
 
-function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
+function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
   if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getParameterMode) === undefined) {
     return;
   }
@@ -374,7 +374,7 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExp
     if (parameter === undefined || argument === undefined) {
       continue;
     }
-    const result = extensionHost.runDecision<ParameterModeRequest, ParameterModeResult>(
+    const result = extensionHost.runDecision(
       ExtensionDecisionQuestion.getParameterMode,
       {
         parameter,
@@ -390,20 +390,19 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExp
       continue;
     }
     extensionHost.facts.set(argument, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
-    extensionHost.facts.set(callExpression, argumentPassingFactKey, result.value.passing, result.evidence ?? []);
   }
 }
 
-function recordExtensionCallTypeArgumentInference(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callee: GoPtr<Node>, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): ResolveCallResult["selectedSignature"] {
+function recordExtensionCallTypeArgumentInference(extensionHost: ExtensionHost, callee: Node, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): ResolveCallResult["selectedSignature"] {
   if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.inferTypeArguments) === undefined) {
     return callResult.selectedSignature;
   }
 
-  const result = extensionHost.runDecision<InferTypeArgumentsRequest, InferTypeArgumentsResult>(
+  const result = extensionHost.runDecision(
     ExtensionDecisionQuestion.inferTypeArguments,
     {
       declaration: callee,
-      arguments: arguments_,
+      arguments: definedFactSubjects(arguments_),
       ...(callResult.returnType !== undefined ? { contextualType: callResult.returnType } : {}),
     },
     () => ({
@@ -432,7 +431,7 @@ function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, ca
     if (parameter === undefined || argument === undefined) {
       continue;
     }
-    const result = extensionHost.runDecision<ResolveConversionRequest, ResolveConversionResult>(
+    const result = extensionHost.runDecision(
       ExtensionDecisionQuestion.resolveConversion,
       {
         expression: argument,
@@ -455,8 +454,12 @@ function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, ca
   }
 }
 
-function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: ExtensionFactSubject): boolean {
-  if (subject === undefined || subject === null) {
+function definedFactSubjects<T extends object>(subjects: readonly (T | undefined)[]): readonly ExtensionFactSubject[] {
+  return subjects.filter((subject): subject is T => subject !== undefined);
+}
+
+function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: ExtensionFactSubject | undefined): boolean {
+  if (subject === undefined) {
     return false;
   }
   return extensionHost.facts.get(subject, targetBindingFactKey) !== undefined
@@ -467,8 +470,8 @@ function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: Extensi
     || extensionHost.facts.get(subject, runtimeCarrierFactKey) !== undefined;
 }
 
-function setFactOnOptionalSubject<T>(extensionHost: ExtensionHost, subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[]): void {
-  if (subject !== undefined && subject !== null) {
+function setFactOnOptionalSubject<T>(extensionHost: ExtensionHost, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[]): void {
+  if (subject !== undefined) {
     extensionHost.facts.set(subject, key, value, evidence);
   }
 }
