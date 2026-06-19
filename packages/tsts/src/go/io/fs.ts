@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../scalars.js";
 import type { GoError, GoPtr, GoSlice } from "../compat.js";
 import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";

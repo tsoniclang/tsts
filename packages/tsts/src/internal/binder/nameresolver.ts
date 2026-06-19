@@ -1,4 +1,4 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool } from "../../go/scalars.js";
 import type { GoPtr } from "../../go/compat.js";
 import { Node_Locals, Node_Body, Node_Type, Node_Parameters, Node_Expression, Node_Symbol, Node_LocalSymbol, AsSourceFile, Node_ModuleSpecifier, Node_Text } from "../ast/ast.js";
 import { Node_Name, Node_BodyData, Node_ForEachChild, Node_Pos, Node_End } from "../ast/spine.js";

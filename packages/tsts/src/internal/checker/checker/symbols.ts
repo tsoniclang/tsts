@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { recordExtensionElementAccessResolution, recordExtensionFlowUseValidation, recordExtensionPropertyAccessResolution, recordExtensionRuntimeCarrierResolution, recordExtensionTypeArgumentConstraintResolution } from "../../../extensions/checker-integration.js";
 import { NewGoStructMap } from "../../../go/compat.js";
@@ -6090,7 +6090,7 @@ export function Checker_checkMetaPropertyKeyword(receiver: GoPtr<Checker>, node:
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkIdentifier","kind":"method","status":"implemented","sigHash":"e9a0175eaea65200220166cc3e50540931a8a88829684e8eeacf1be5a4eaeba7","bodyHash":"6ba6f3033cf51bb621524af70f6dc4d76f82fc1d415f1b812cdea626e961305f"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go identifier symbol resolution, extension-enabled programs may validate provider-owned flow/ownership facts attached by source-core markers; no-extension programs and unmarked symbols remain on the exact TS-Go path."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go identifier symbol resolution, extension-enabled programs may validate provider-owned flow/ownership facts attached by source-semantics markers; no-extension programs and unmarked symbols remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkIdentifier(node *ast.Node, checkMode CheckMode) *Type {

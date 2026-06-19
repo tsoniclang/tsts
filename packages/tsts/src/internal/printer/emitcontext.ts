@@ -1,4 +1,4 @@
-import type { bool, int, uint } from "@tsonic/core/types.js";
+import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Pool } from "../../go/sync.js";
 import { Uint32 } from "../../go/sync/atomic.js";

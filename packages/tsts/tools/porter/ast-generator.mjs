@@ -260,7 +260,7 @@ export function emitKinds(schema) {
   const elements = schema.ast.kinds?.elements ?? [];
   const markers = schema.ast.kinds?.markers ?? [];
   const lines = [];
-  lines.push(`import type { short } from "@tsonic/core/types.js";`);
+  lines.push(`import type { short } from "../../../go/scalars.js";`);
   lines.push("");
   lines.push("// SyntaxKind constants. Go: type Kind int16 (iota-sequential).");
   lines.push("export type Kind = short;");
@@ -330,7 +330,7 @@ function emitFlags(schema) {
   const nodeFlags = parseGoFlagFile(schema.nodeFlagsSource, "NodeFlags");
   const symbolFlags = parseGoFlagFile(schema.symbolFlagsSource, "SymbolFlags");
   const lines = [];
-  lines.push(`import type { uint } from "@tsonic/core/types.js";`);
+  lines.push(`import type { uint } from "../../../go/scalars.js";`);
   lines.push("");
   emitFlagGroup(lines, "NodeFlags", "Go: type NodeFlags uint32", nodeFlags);
   lines.push("");
@@ -662,7 +662,7 @@ function emitUnions(schema) {
 
 function emitNode(schema) {
   const lines = [];
-  lines.push(`import type { bool, int } from "@tsonic/core/types.js";`);
+  lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
   lines.push(`import { Uint32 } from "../../../go/sync/atomic.js";`);
   lines.push(`import type { ModifierList, Node, NodeBase, NodeList } from "../spine.js";`);
@@ -740,7 +740,7 @@ function addRefsFromTsType(tsRef, out) {
 
 function emitData(schema) {
   const lines = [];
-  lines.push(`import type { bool, int } from "@tsonic/core/types.js";`);
+  lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
   lines.push(`import type { ModifierFlags } from "../modifierflags.js";`);
   lines.push(`import type { NodeFlags } from "./flags.js";`);
@@ -1287,7 +1287,7 @@ function adapterSlot(node, method, t) {
 
 function emitFactory(schema) {
   const lines = [];
-  lines.push(`import type { bool, int } from "@tsonic/core/types.js";`);
+  lines.push(`import type { bool, int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
   lines.push(`import type { Arena } from "../../core/arena.js";`);
   lines.push(`import { NodeDefault_AsNode, NodeFactory_newNode, updateNode } from "../spine.js";`);
@@ -1502,7 +1502,7 @@ function updateCompareAccess(m) {
 
 function emitPredicates(schema) {
   const lines = [];
-  lines.push(`import type { bool } from "@tsonic/core/types.js";`);
+  lines.push(`import type { bool } from "../../../go/scalars.js";`);
   lines.push(`import type { GoPtr, GoSlice } from "../../../go/compat.js";`);
   lines.push(`import type { Node } from "../spine.js";`);
   lines.push(`import type { Kind } from "./kinds.js";`);

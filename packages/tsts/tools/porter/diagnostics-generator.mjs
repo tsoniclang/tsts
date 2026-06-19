@@ -191,7 +191,7 @@ export function emitLocalizedMessages(_records, config) {
   lines.push(`import { dirname, join, resolve } from "node:path";`);
   lines.push(`import { fileURLToPath } from "node:url";`);
   lines.push(`import { gunzipSync } from "node:zlib";`);
-  lines.push(`import type { int } from "@tsonic/core/types.js";`);
+  lines.push(`import type { int } from "../../../go/scalars.js";`);
   lines.push(`import type { GoMap } from "../../../go/compat.js";`);
   lines.push(`import type { Tag } from "../../../go/golang.org/x/text/language.js";`);
   lines.push(`import { English, Low, MustParse, NewMatcher } from "../../../go/golang.org/x/text/language.js";`);

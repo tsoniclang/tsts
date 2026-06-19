@@ -1908,7 +1908,7 @@ function importTypeName(context, targetPath, exportName, unit) {
 function renderImports(context) {
   const lines = [];
   if (context.coreImports.size > 0) {
-    lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "@tsonic/core/types.js";`);
+    lines.push(`import type { ${[...context.coreImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/scalars.ts`)}";`);
   }
   if (context.compatImports.size > 0) {
     lines.push(`import type { ${[...context.compatImports].sort().join(", ")} } from "${relativeImportPath(context.relativeTargetPath, `${context.config.tsRoot}/go/compat.ts`)}";`);
@@ -2091,6 +2091,11 @@ function writeExternalFacades(config, snapshot, options) {
 export function renderExpectedGeneratedArtifacts(config, snapshot) {
   const artifacts = new Map();
   const sourceRootPrefix = config.tsRoot.replace(/\/$/, "");
+  const scalarsBody = renderGoScalarsModule();
+  artifacts.set(
+    `${sourceRootPrefix}/go/scalars.ts`,
+    renderGeneratedArtifact(snapshot, "go/scalars.ts", "go-scalars", scalarsBody),
+  );
   const compatBody = renderGoCompatModule();
   artifacts.set(
     `${sourceRootPrefix}/go/compat.ts`,
@@ -2481,8 +2486,25 @@ function knownExternalFacadePolicies() {
   ];
 }
 
+function renderGoScalarsModule() {
+  return `export type bool = boolean;
+export type byte = number;
+export type double = number;
+export type float = number;
+export type int = number;
+export type long = number;
+export type nint = number;
+export type nuint = number;
+export type sbyte = number;
+export type short = number;
+export type uint = number;
+export type ulong = number;
+export type ushort = number;
+`;
+}
+
 function renderGoCompatModule() {
-  return `import type { bool, int } from "@tsonic/core/types.js";
+  return `import type { bool, int } from "./scalars.js";
 
 declare const __goBrand: unique symbol;
 

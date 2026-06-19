@@ -58,7 +58,7 @@ export function finalizeExtensionSemantics(program: object): ExtensionHost | und
   return extensionHost;
 }
 
-function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: GoPtr<SourceFile>, virtualModule: ProviderResolvedModule): void {
+function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: SourceFile, virtualModule: ProviderResolvedModule): void {
   const evidence = getProviderVirtualModuleEvidence(virtualModule);
   extensionHost.facts.set(file, canonicalIdentityFactKey, {
     kind: "module",
@@ -69,7 +69,7 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: Go
   }, evidence);
   extensionHost.facts.set(file, providerVirtualDeclarationFactKey, getProviderVirtualDeclarationFact(virtualModule), evidence);
 
-  const fileSymbol = Node_Symbol(file as unknown as GoPtr<Node>);
+  const fileSymbol = Node_Symbol(file as GoPtr<Node>);
   if (fileSymbol === undefined) {
     return;
   }
@@ -192,7 +192,7 @@ function getTargetParameter(parameter: ProviderParameterDeclaration): TargetPara
 }
 
 function getArgumentPassingMode(parameter: ProviderParameterDeclaration): ArgumentPassingMode {
-  return parameter.rest === true ? "byref-readonly" : "by-value";
+  return "by-value";
 }
 
 function getTargetConstraint(type: ProviderTypeExpression): readonly TargetConstraint[] {

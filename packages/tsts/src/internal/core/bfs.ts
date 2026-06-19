@@ -1,4 +1,4 @@
-import type { bool, int, long } from "@tsonic/core/types.js";
+import type { bool, int, long } from "../../go/scalars.js";
 import type { GoComparable, GoPtr, GoSlice } from "../../go/compat.js";
 import type { Int64 } from "../../go/sync/atomic.js";
 import type { OrderedMap } from "../collections/ordered_map.js";

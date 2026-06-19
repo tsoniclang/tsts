@@ -6,7 +6,7 @@
 // separately by the porter:diagnostics generator into ./generated/messages.ts,
 // mirroring how diagnostics_generated.go is produced by generate.go.
 
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { Sprintf } from "../../go/fmt.js";
 import * as regexp from "../../go/regexp.js";

@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../go/scalars.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::cmd/tsgo/isprocessalive_other.go::constGroup::processAliveSupported","kind":"constGroup","status":"implemented","sigHash":"cb51e9ea32c184706a4d2cd1cbcad16927646693ac9daad79dd8eb56c7420775","bodyHash":"ebacb25a7545c4613440e40dcccf6d56eb491b3bbb2f2f25846047238f0dd6af"}

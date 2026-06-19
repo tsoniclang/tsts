@@ -140,7 +140,7 @@ Body-only facade members intentionally start as skeletons when the Go AST alone 
 The skeleton renderer emits compilable TypeScript for every portable Go unit:
 
 - Function and method parameters/results are derived from Go AST signatures.
-- Go primitives map to `@tsonic/core` numeric/source types where available.
+- Go primitives map to TSTS internal scalar aliases where the port needs fixed-width source-level meaning.
 - Multiple Go return values become TypeScript tuples.
 - Go generic type declarations receive `unknown` defaults so partially specialized Go uses compile as skeletons.
 - Untyped values use syntactic inference for literals, `make(...)`, `new(...)`, function literals, composite literals, `errors.New(...)`, and same-package aliases.
@@ -265,4 +265,4 @@ These policies are explicit debt categories. A unit is never silently excluded f
 
 ## Future Translator Rules
 
-The scaffolder is intentionally conservative: it emits traceable stubs, not guessed translations. The future translator must preserve Go unit IDs and should map Go numeric primitives to `@tsonic/core` types (`int`, `uint`, `int32`, `uint64`, etc.) where the TypeScript port needs fixed-width source-level meaning.
+The scaffolder is intentionally conservative: it emits traceable stubs, not guessed translations. The future translator must preserve Go unit IDs and should map Go numeric primitives to TSTS internal scalar aliases (`int`, `uint`, `long`, `ulong`, etc.) where the TypeScript port needs fixed-width source-level meaning.

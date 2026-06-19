@@ -1,5 +1,4 @@
 export {
-  DynamicProviderExtensionContractVersion,
   ExtensionLifecycleEvent,
   ExtensionDiagnosticStore,
   ExtensionFactResolver,
@@ -7,6 +6,7 @@ export {
   ExtensionHost,
   ExtensionHostDiagnosticCode,
   ProviderRegistry,
+  TstsProviderContractVersion,
   attachExtensionHost,
   attachExtensionHostToProgram,
   defineExtensionFactKey,
@@ -18,8 +18,9 @@ export {
   createExtensionConsumerQueries,
 } from "./consumer.js";
 export {
-  createSourceCoreExtension,
-} from "./source-core.js";
+  createSourceSemanticsExtension,
+  sourcePrimitive,
+} from "./source-semantics.js";
 export {
   finalizeExtensionSemantics,
 } from "./compiler-integration.js";
@@ -47,9 +48,9 @@ export {
   selectedTargetSignatureFactKey,
   sourcePrimitiveFactKey,
   structFactKey,
-  surfaceOperationFactKey,
   targetConversionFactKey,
   targetBindingFactKey,
+  targetOperationFactKey,
 } from "./facts.js";
 
 export type {
@@ -62,6 +63,7 @@ export type {
   ExtensionDependencySpec,
   ExtensionDiagnostic,
   ExtensionDiagnosticCategory,
+  ExtensionDiagnosticRange,
   ExtensionDiagnosticSourceSpan,
   ExtensionEvidence,
   ExtensionFactEntry,
@@ -100,12 +102,14 @@ export type {
   BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
 export type {
-  SourceCoreExtensionOptions,
+  SourceSemanticsExtensionOptions,
   SourceCallMarkerDeclaration,
-  SourceCoreModuleIdentity,
+  SourceSemanticsExportDeclaration,
+  SourceSemanticsModule,
+  SourceSemanticsModuleIdentity,
   SourcePrimitiveDeclaration,
   SourceTypeMarkerDeclaration,
-} from "./source-core.js";
+} from "./source-semantics.js";
 export type {
   AssignabilityRequest,
   ContextualTypeRequest,
@@ -113,7 +117,11 @@ export type {
   ExtensionDecision,
   ExtensionDecisionContext,
   ExtensionDecisionHook,
+  ExtensionDecisionMap,
+  ExtensionDecisionQuestionName,
+  ExtensionDecisionRequest,
   ExtensionDecisionResult,
+  ExtensionDecisionResponse,
   ExtensionDecisionRunOptions,
   InferTypeArgumentsRequest,
   InferTypeArgumentsResult,
@@ -156,11 +164,11 @@ export type {
   SourcePrimitiveFact,
   SourcePrimitiveKind,
   StructFact,
-  SurfaceOperationFact,
   TargetBindingFact,
   TargetConstraint,
   TargetConversionFact,
   TargetMember,
+  TargetOperationFact,
   TargetParameter,
   TargetTypeParameter,
   TargetTypeRef,

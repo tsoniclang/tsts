@@ -1,4 +1,4 @@
-import type { bool, int, ulong } from "@tsonic/core/types.js";
+import type { bool, int, ulong } from "../../go/scalars.js";
 import type { GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewGoStructMap } from "../../go/compat.js";
 import type { Node } from "../ast/spine.js";

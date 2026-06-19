@@ -1,4 +1,4 @@
-import type { bool, byte, int, nuint } from "@tsonic/core/types.js";
+import type { bool, byte, int, nuint } from "../../../go/scalars.js";
 import type { GoArray, GoError, GoPtr } from "../../../go/compat.js";
 import { EvalSymlinks } from "../../../go/path/filepath.js";
 import { OnceValue } from "../../../go/sync.js";

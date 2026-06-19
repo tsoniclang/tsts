@@ -1,5 +1,5 @@
 import type { GoPtr } from "../../../go/compat.js";
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../../go/scalars.js";
 import type { Node } from "../../ast/spine.js";
 import { NodeDefault_AsNode, Node_End, Node_Modifiers, Node_Name, Node_Pos, NodeList_End } from "../../ast/spine.js";
 import type { ArrayTypeNode, ConditionalTypeNode, ConstructorTypeNode, ExpressionWithTypeArguments, FunctionTypeNode, HeritageClause, ImportAttributes, ImportTypeNode, IndexedAccessTypeNode, InferTypeNode, IntersectionTypeNode, JSDocNonNullableType, JSDocNullableType, JSDocOptionalType, JSDocVariadicType, KeywordTypeNode, LiteralTypeNode, MappedTypeNode, NamedTupleMember, NotEmittedTypeElement, OptionalTypeNode, ParenthesizedTypeNode, PropertyAccessExpression, RestTypeNode, TemplateLiteralTypeNode, TemplateLiteralTypeSpan, ThisTypeNode, TupleTypeNode, TypeAliasDeclaration, TypeAssertion, TypeLiteralNode, TypeOfExpression, TypeOperatorNode, TypeParameterDeclaration, TypePredicateNode, TypeQueryNode, TypeReferenceNode, UnionTypeNode } from "../../ast/generated/data.js";

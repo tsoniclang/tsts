@@ -1,4 +1,4 @@
-import type { bool, byte, int } from "@tsonic/core/types.js";
+import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { recordExtensionContextualTypeResolution } from "../../../extensions/checker-integration.js";

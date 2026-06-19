@@ -1,4 +1,4 @@
-import type { bool, byte } from "@tsonic/core/types.js";
+import type { bool, byte } from "../../go/scalars.js";
 import type { GoError, GoMap, GoPtr, GoSlice } from "../../go/compat.js";
 import { NewOrderedMapWithSizeHint, OrderedMap_Set } from "../collections/ordered_map.js";
 import type { OrderedMap } from "../collections/ordered_map.js";

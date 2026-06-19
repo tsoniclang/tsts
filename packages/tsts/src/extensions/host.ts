@@ -1,35 +1,19 @@
 export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 
-export type ExtensionFactSubject = object | string | number | bigint | boolean | symbol | null | undefined;
+export type ExtensionFactSubject = object;
 
 import type {
-  AssignabilityRequest,
-  ContextualTypeRequest,
-  ContextualTypeResult,
   ExtensionDecision,
   ExtensionDecisionContext,
   ExtensionDecisionHook,
+  ExtensionDecisionQuestionName,
+  ExtensionDecisionRequest,
+  ExtensionDecisionResponse,
   ExtensionDecisionResult,
   ExtensionDecisionRunOptions,
-  InferTypeArgumentsRequest,
-  InferTypeArgumentsResult,
-  ParameterModeRequest,
-  ParameterModeResult,
-  ResolveCallRequest,
-  ResolveCallResult,
-  ResolveConversionRequest,
-  ResolveConversionResult,
-  ResolveElementAccessRequest,
-  ResolveOperationResult,
-  ResolveOperatorRequest,
-  ResolvePropertyAccessRequest,
-  RuntimeCarrierRequest,
-  RuntimeCarrierResult,
-  SatisfiesConstraintRequest,
-  ValidateFlowUseRequest,
-  ValidateFlowUseResult,
 } from "./decisions.js";
 import { ExtensionDecisionQuestion } from "./decisions.js";
+import type { SourcePrimitiveKind } from "./facts.js";
 
 export interface ExtensionEvidence {
   readonly message: string;
@@ -51,6 +35,11 @@ export interface ExtensionDiagnostic {
 export interface ExtensionDiagnosticSourceSpan {
   readonly sourceFile: object;
   readonly pos: number;
+  readonly end: number;
+}
+
+export interface ExtensionDiagnosticRange {
+  readonly start: number;
   readonly end: number;
 }
 
@@ -77,14 +66,22 @@ export const ExtensionHostDiagnosticCode = {
   requiredFactMissing: 9000020,
   providerContractMismatch: 9000021,
   providerMissing: 9000022,
+  providerOwnershipFailed: 9000023,
+  providerResolveFailed: 9000024,
+  providerDeclarationFailed: 9000025,
+  decisionHookFailed: 9000026,
+  diagnosticRangeInvalid: 9000027,
+  diagnosticCodeOutOfRange: 9000028,
+  invalidFactSubject: 9000029,
 } as const;
 
-export const DynamicProviderExtensionContractVersion = "new-hope.dynamic-provider.1";
+export const TstsProviderContractVersion = "tsts.provider.1";
 
 export interface CompilerExtensionIdentity {
   readonly id: string;
   readonly version: string;
   readonly capabilityNamespace: string;
+  readonly diagnosticRange?: ExtensionDiagnosticRange;
 }
 
 export interface ExtensionDependencySpec {
@@ -110,7 +107,7 @@ export interface CompilerExtension {
   readonly dependencies?: ExtensionDependencySpec;
   readonly capabilities?: ExtensionCapabilitySpec;
   readonly composition?: ExtensionCompositionSpec;
-  readonly decisionOwners?: readonly string[];
+  readonly decisionOwners?: readonly ExtensionDecisionQuestionName[];
   readonly initialize?: (context: ExtensionInitializeContext) => void;
 }
 
@@ -120,8 +117,8 @@ export interface ExtensionInitializeContext {
   readonly factResolver: ExtensionFactResolver;
   readonly diagnostics: ExtensionDiagnosticStore;
   readonly providers: ProviderRegistry;
-  readonly registerDecisionOwner: (question: string, extensionId: string) => void;
-  readonly registerDecisionHook: <TRequest, TResult>(question: string, hook: ExtensionDecisionHook<TRequest, TResult>) => void;
+  readonly registerDecisionOwner: (question: ExtensionDecisionQuestionName, extensionId: string) => void;
+  readonly registerDecisionHook: <TQuestion extends ExtensionDecisionQuestionName>(question: TQuestion, hook: ExtensionDecisionHook<TQuestion>) => void;
   readonly registerLifecycleHook: <TRequest>(event: string, hook: ExtensionLifecycleHook<TRequest>) => void;
   readonly registerTargetBindingProvider: (provider: TargetBindingProvider) => boolean;
   readonly registerTargetSemanticProvider: (provider: TargetSemanticProvider) => boolean;
@@ -146,7 +143,7 @@ export interface ExtensionFactEntry<T> {
   readonly evidence: readonly ExtensionEvidence[];
 }
 
-export type ExtensionFactWriteResult = "inserted" | "idempotent" | "conflict" | "sealed";
+export type ExtensionFactWriteResult = "inserted" | "idempotent" | "conflict" | "sealed" | "invalid-subject";
 
 export interface ExtensionFactResolution<T> {
   readonly value: T;
@@ -166,6 +163,7 @@ export interface ProviderIdentity {
   readonly target: string;
   readonly extensionContractVersion: string;
   readonly providerKind?: "binding" | "semantic" | "combined";
+  readonly diagnosticRange?: ExtensionDiagnosticRange;
   readonly configHash?: string;
   readonly displayName?: string;
 }
@@ -225,16 +223,16 @@ export type ProviderTypeExpression =
   | { readonly kind: "number" }
   | { readonly kind: "bigint" }
   | { readonly kind: "object" }
-  | { readonly kind: "source-primitive"; readonly name: string }
+  | { readonly kind: "source-primitive"; readonly name: SourcePrimitiveKind }
   | { readonly kind: "type-parameter"; readonly name: string }
-  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
+  | { readonly kind: "target-named"; readonly target: string; readonly id: string; readonly displayName?: string; readonly typeArguments?: readonly ProviderTypeExpression[]; readonly sourceShape?: ProviderTypeExpression }
   | { readonly kind: "array"; readonly elementType: ProviderTypeExpression }
   | { readonly kind: "tuple"; readonly elementTypes: readonly ProviderTypeExpression[] }
   | { readonly kind: "union"; readonly types: readonly ProviderTypeExpression[] }
   | { readonly kind: "intersection"; readonly types: readonly ProviderTypeExpression[] }
   | { readonly kind: "function"; readonly parameters: readonly ProviderParameterDeclaration[]; readonly returnType: ProviderTypeExpression; readonly typeParameters?: readonly ProviderTypeParameterDeclaration[] }
   | { readonly kind: "literal"; readonly value: string | number | boolean | null }
-  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string };
+  | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string; readonly sourceShape?: ProviderTypeExpression };
 
 export interface ProviderParameterDeclaration {
   readonly name: string;
@@ -255,7 +253,7 @@ export interface ProviderSignatureDeclaration {
 export interface ProviderMemberDeclaration {
   readonly id: string;
   readonly name: string;
-  readonly kind: "method" | "constructor" | "property" | "field" | "indexer" | "event" | "operator";
+  readonly kind: "method" | "constructor" | "property" | "field" | "indexer";
   readonly static?: boolean;
   readonly type?: ProviderTypeExpression;
   readonly signatures?: readonly ProviderSignatureDeclaration[];
@@ -356,23 +354,23 @@ export interface TargetBindingProvider {
 
 export interface TargetSemanticProvider {
   readonly identity: ProviderIdentity;
-  satisfiesConstraint?: (request: SatisfiesConstraintRequest, context: ExtensionDecisionContext) => ExtensionDecision<boolean>;
-  isAssignableTo?: (request: AssignabilityRequest, context: ExtensionDecisionContext) => ExtensionDecision<boolean>;
-  resolveCall?: (request: ResolveCallRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveCallResult>;
-  inferTypeArguments?: (request: InferTypeArgumentsRequest, context: ExtensionDecisionContext) => ExtensionDecision<InferTypeArgumentsResult>;
-  resolvePropertyAccess?: (request: ResolvePropertyAccessRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
-  resolveElementAccess?: (request: ResolveElementAccessRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
-  resolveOperator?: (request: ResolveOperatorRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveOperationResult>;
-  getContextualType?: (request: ContextualTypeRequest, context: ExtensionDecisionContext) => ExtensionDecision<ContextualTypeResult>;
-  resolveConversion?: (request: ResolveConversionRequest, context: ExtensionDecisionContext) => ExtensionDecision<ResolveConversionResult>;
-  getParameterMode?: (request: ParameterModeRequest, context: ExtensionDecisionContext) => ExtensionDecision<ParameterModeResult>;
-  getRuntimeCarrier?: (request: RuntimeCarrierRequest, context: ExtensionDecisionContext) => ExtensionDecision<RuntimeCarrierResult>;
-  validateFlowUse?: (request: ValidateFlowUseRequest, context: ExtensionDecisionContext) => ExtensionDecision<ValidateFlowUseResult>;
+  satisfiesConstraint?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.satisfiesConstraint>;
+  isAssignableTo?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.isAssignableTo>;
+  resolveCall?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.resolveCall>;
+  inferTypeArguments?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.inferTypeArguments>;
+  resolvePropertyAccess?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.resolvePropertyAccess>;
+  resolveElementAccess?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.resolveElementAccess>;
+  resolveOperator?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.resolveOperator>;
+  getContextualType?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.getContextualType>;
+  resolveConversion?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.resolveConversion>;
+  getParameterMode?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.getParameterMode>;
+  getRuntimeCarrier?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.getRuntimeCarrier>;
+  validateFlowUse?: ExtensionDecisionHook<typeof ExtensionDecisionQuestion.validateFlowUse>;
 }
 
 interface RegisteredDecisionHook {
   readonly extensionId: string;
-  readonly hook: ExtensionDecisionHook<unknown, unknown>;
+  readonly hook: (request: unknown, context: ExtensionDecisionContext) => ExtensionDecision<unknown>;
 }
 
 interface RegisteredLifecycleHook {
@@ -403,8 +401,76 @@ export function defineExtensionFactKey<T>(options: ExtensionFactKeyOptions<T>): 
 export class ExtensionDiagnosticStore {
   readonly #diagnostics: ExtensionDiagnostic[] = [];
   readonly #identities = new Set<string>();
+  readonly #diagnosticRanges = new Map<string, ExtensionDiagnosticRange>();
+
+  registerDiagnosticRange(extensionId: string, range: ExtensionDiagnosticRange | undefined): boolean {
+    if (range === undefined) {
+      return true;
+    }
+    if (!isValidDiagnosticRange(range)) {
+      this.#appendUnchecked(createHostDiagnostic({
+        extensionCode: "DIAGNOSTIC_RANGE_INVALID",
+        numericCode: ExtensionHostDiagnosticCode.diagnosticRangeInvalid,
+        message: `Extension '${extensionId}' registered an invalid diagnostic range.`,
+        evidence: [{ message: "Diagnostic range", details: range }],
+        identity: `diagnostic-range-invalid:${extensionId}:${range.start}:${range.end}`,
+      }));
+      return false;
+    }
+    const existing = this.#diagnosticRanges.get(extensionId);
+    if (existing !== undefined && (existing.start !== range.start || existing.end !== range.end)) {
+      this.#appendUnchecked(createHostDiagnostic({
+        extensionCode: "DIAGNOSTIC_RANGE_INVALID",
+        numericCode: ExtensionHostDiagnosticCode.diagnosticRangeInvalid,
+        message: `Extension '${extensionId}' registered conflicting diagnostic ranges.`,
+        evidence: [
+          { message: "Existing diagnostic range", details: existing },
+          { message: "Incoming diagnostic range", details: range },
+        ],
+        identity: `diagnostic-range-conflict:${extensionId}:${existing.start}:${existing.end}:${range.start}:${range.end}`,
+      }));
+      return false;
+    }
+    for (const [existingExtensionId, existingRange] of this.#diagnosticRanges) {
+      if (existingExtensionId === extensionId) {
+        continue;
+      }
+      if (diagnosticRangesOverlap(existingRange, range)) {
+        this.#appendUnchecked(createHostDiagnostic({
+          extensionCode: "DIAGNOSTIC_RANGE_INVALID",
+          numericCode: ExtensionHostDiagnosticCode.diagnosticRangeInvalid,
+          message: `Extension '${extensionId}' registered a diagnostic range that overlaps '${existingExtensionId}'.`,
+          evidence: [
+            { message: "Existing extension diagnostic range", details: { extensionId: existingExtensionId, range: existingRange } },
+            { message: "Incoming extension diagnostic range", details: { extensionId, range } },
+          ],
+          identity: `diagnostic-range-overlap:${extensionId}:${range.start}:${range.end}:${existingExtensionId}:${existingRange.start}:${existingRange.end}`,
+        }));
+        return false;
+      }
+    }
+    this.#diagnosticRanges.set(extensionId, range);
+    return true;
+  }
 
   append(diagnostic: ExtensionDiagnostic): boolean {
+    const range = this.#diagnosticRanges.get(diagnostic.extensionId);
+    if (range !== undefined && !isDiagnosticCodeInRange(diagnostic.numericCode, range)) {
+      return this.#appendUnchecked(createHostDiagnostic({
+        extensionCode: "DIAGNOSTIC_CODE_OUT_OF_RANGE",
+        numericCode: ExtensionHostDiagnosticCode.diagnosticCodeOutOfRange,
+        message: `Extension '${diagnostic.extensionId}' emitted diagnostic code ${diagnostic.numericCode}, outside its registered range ${range.start}-${range.end}.`,
+        evidence: [
+          { message: "Registered diagnostic range", details: range },
+          { message: "Rejected diagnostic", details: diagnostic },
+        ],
+        identity: `diagnostic-code-out-of-range:${diagnostic.extensionId}:${diagnostic.numericCode}:${range.start}:${range.end}`,
+      }));
+    }
+    return this.#appendUnchecked(diagnostic);
+  }
+
+  #appendUnchecked(diagnostic: ExtensionDiagnostic): boolean {
     const identity = getDiagnosticIdentity(diagnostic);
     if (this.#identities.has(identity)) {
       return false;
@@ -426,7 +492,6 @@ export class ExtensionDiagnosticStore {
 export class ExtensionFactStore {
   readonly #objectFacts = new WeakMap<object, Map<string, ExtensionFactEntry<unknown>>>();
   readonly #objectSubjectIds = new WeakMap<object, number>();
-  readonly #primitiveFacts = new Map<Exclude<ExtensionFactSubject, object>, Map<string, ExtensionFactEntry<unknown>>>();
   readonly #diagnostics: ExtensionDiagnosticStore;
   #nextObjectSubjectId = 1;
   #sealed = false;
@@ -436,7 +501,25 @@ export class ExtensionFactStore {
   }
 
   set<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[] = []): ExtensionFactWriteResult {
-    if (this.#sealed) {
+    return this.#set(subject, key, value, evidence, false);
+  }
+
+  setResolved<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[] = []): ExtensionFactWriteResult {
+    return this.#set(subject, key, value, evidence, true);
+  }
+
+  #set<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>, value: T, evidence: readonly ExtensionEvidence[], allowSealedResolverCacheWrite: boolean): ExtensionFactWriteResult {
+    if (!isExtensionFactSubject(subject)) {
+      this.#diagnostics.append(createHostDiagnostic({
+        extensionCode: "INVALID_FACT_SUBJECT",
+        numericCode: ExtensionHostDiagnosticCode.invalidFactSubject,
+        message: `Extension fact '${key.id}' must be written to an object subject.`,
+        evidence: [{ message: "Rejected subject", details: subject }],
+        identity: `invalid-fact-subject:${key.id}:${String(subject)}`,
+      }));
+      return "invalid-subject";
+    }
+    if (this.#sealed && !allowSealedResolverCacheWrite) {
       this.#diagnostics.append(createHostDiagnostic({
         extensionCode: "FACT_STORE_SEALED",
         numericCode: ExtensionHostDiagnosticCode.factStoreSealed,
@@ -470,20 +553,26 @@ export class ExtensionFactStore {
     return "conflict";
   }
 
-  get<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>): T | undefined {
+  get<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined {
     return this.getEntry(subject, key)?.value;
   }
 
-  getEntry<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>): ExtensionFactEntry<T> | undefined {
+  getEntry<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): ExtensionFactEntry<T> | undefined {
+    if (subject === undefined) {
+      return undefined;
+    }
     const subjectFacts = this.#getSubjectFacts(subject);
     return subjectFacts?.get(key.id) as ExtensionFactEntry<T> | undefined;
   }
 
-  has<T>(subject: ExtensionFactSubject, key: ExtensionFactKey<T>): boolean {
+  has<T>(subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): boolean {
     return this.getEntry(subject, key) !== undefined;
   }
 
-  entries(subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
+  entries(subject: ExtensionFactSubject | undefined): readonly ExtensionFactEntry<unknown>[] {
+    if (subject === undefined) {
+      return [];
+    }
     return Array.from(this.#getSubjectFacts(subject)?.values() ?? []);
   }
 
@@ -496,10 +585,7 @@ export class ExtensionFactStore {
   }
 
   #getSubjectFacts(subject: ExtensionFactSubject): Map<string, ExtensionFactEntry<unknown>> | undefined {
-    if (typeof subject === "object" && subject !== null) {
-      return this.#objectFacts.get(subject);
-    }
-    return this.#primitiveFacts.get(subject as Exclude<ExtensionFactSubject, object>);
+    return this.#objectFacts.get(subject);
   }
 
   #getOrCreateSubjectFacts(subject: ExtensionFactSubject): Map<string, ExtensionFactEntry<unknown>> {
@@ -509,18 +595,11 @@ export class ExtensionFactStore {
     }
 
     const created = new Map<string, ExtensionFactEntry<unknown>>();
-    if (typeof subject === "object" && subject !== null) {
-      this.#objectFacts.set(subject, created);
-    } else {
-      this.#primitiveFacts.set(subject as Exclude<ExtensionFactSubject, object>, created);
-    }
+    this.#objectFacts.set(subject, created);
     return created;
   }
 
   #getSubjectIdentity(subject: ExtensionFactSubject): string {
-    if (typeof subject !== "object" || subject === null) {
-      return `${typeof subject}:${String(subject)}`;
-    }
     const existing = this.#objectSubjectIds.get(subject);
     if (existing !== undefined) {
       return `object:${existing}`;
@@ -565,7 +644,7 @@ export class ExtensionFactResolver {
     for (const resolver of resolvers) {
       const resolved = resolver(subject, { facts: this.#facts, diagnostics: this.#diagnostics }) as ExtensionFactResolution<T> | undefined;
       if (resolved !== undefined) {
-        this.#facts.set(subject, key, resolved.value, resolved.evidence ?? []);
+        this.#facts.setResolved(subject, key, resolved.value, resolved.evidence ?? []);
         return resolved.value;
       }
     }
@@ -593,6 +672,9 @@ export class ProviderRegistry {
       this.#diagnostics.append(diagnostic);
       return false;
     }
+    if (!this.#diagnostics.registerDiagnosticRange(provider.identity.id, provider.identity.diagnosticRange)) {
+      return false;
+    }
     const existing = this.#bindingProviders.get(provider.identity.id);
     if (existing !== undefined && existing !== provider) {
       this.#diagnostics.append(createHostDiagnostic({
@@ -611,6 +693,9 @@ export class ProviderRegistry {
     const diagnostic = validateProviderIdentity(provider.identity, "semantic");
     if (diagnostic !== undefined) {
       this.#diagnostics.append(diagnostic);
+      return false;
+    }
+    if (!this.#diagnostics.registerDiagnosticRange(provider.identity.id, provider.identity.diagnosticRange)) {
       return false;
     }
     const existing = this.#semanticProviders.get(provider.identity.id);
@@ -687,7 +772,16 @@ export class ProviderRegistry {
       return { kind: "resolved", module: cached };
     }
 
-    const resolution = owner.provider.resolveModule(specifier, context);
+    const resolution = callProvider<ProviderModuleResolution | ExtensionDiagnostic>(
+      this.#diagnostics,
+      owner.provider.identity,
+      "resolveModule",
+      specifier,
+      () => owner.provider.resolveModule(specifier, context),
+    );
+    if (resolution === undefined) {
+      return { kind: "rejected", diagnostic: this.#diagnostics.all().at(-1)! };
+    }
     if (isExtensionDiagnostic(resolution)) {
       this.#diagnostics.append(resolution);
       return { kind: "rejected", diagnostic: resolution };
@@ -704,7 +798,16 @@ export class ProviderRegistry {
       return { kind: "rejected", diagnostic };
     }
 
-    const declarationModel = owner.provider.getDeclarationModel(resolution);
+    const declarationModel = callProvider<ProviderDeclarationModel | ExtensionDiagnostic>(
+      this.#diagnostics,
+      owner.provider.identity,
+      "getDeclarationModel",
+      specifier,
+      () => owner.provider.getDeclarationModel(resolution),
+    );
+    if (declarationModel === undefined) {
+      return { kind: "rejected", diagnostic: this.#diagnostics.all().at(-1)! };
+    }
     if (isExtensionDiagnostic(declarationModel)) {
       this.#diagnostics.append(declarationModel);
       return { kind: "rejected", diagnostic: declarationModel };
@@ -764,7 +867,16 @@ export class ProviderRegistry {
   #collectModuleOwners(specifier: string, context: ProviderModuleContext): { readonly kind: "unowned" } | { readonly kind: "owned"; readonly provider: TargetBindingProvider } | { readonly kind: "rejected"; readonly diagnostic: ExtensionDiagnostic } | { readonly kind: "conflict"; readonly providers: readonly TargetBindingProvider[] } {
     const owners: TargetBindingProvider[] = [];
     for (const provider of this.#bindingProviders.values()) {
-      const ownership = provider.ownsModule(specifier, context);
+      const ownership = callProvider<ProviderOwnership>(
+        this.#diagnostics,
+        provider.identity,
+        "ownsModule",
+        specifier,
+        () => provider.ownsModule(specifier, context),
+      );
+      if (ownership === undefined) {
+        return { kind: "rejected", diagnostic: this.#diagnostics.all().at(-1)! };
+      }
       if (ownership.kind === "reject") {
         this.#diagnostics.append(ownership.diagnostic);
         return { kind: "rejected", diagnostic: ownership.diagnostic };
@@ -800,8 +912,8 @@ export class ExtensionHost {
   readonly activeTarget: string | undefined;
   readonly activeSurface: string | undefined;
   readonly #extensionsById = new Map<string, CompilerExtension>();
-  readonly #decisionOwners = new Map<string, string>();
-  readonly #decisionHooks = new Map<string, RegisteredDecisionHook[]>();
+  readonly #decisionOwners = new Map<ExtensionDecisionQuestionName, string>();
+  readonly #decisionHooks = new Map<ExtensionDecisionQuestionName, RegisteredDecisionHook[]>();
   readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
   readonly #consumerSubjectIds = new WeakMap<object, number>();
   #nextConsumerSubjectId = 1;
@@ -815,18 +927,24 @@ export class ExtensionHost {
     this.providers = new ProviderRegistry(this.diagnostics, options.requiredProviderModules ?? []);
     this.activeTarget = options.activeTarget;
     this.activeSurface = options.activeSurface;
-    this.extensions = orderExtensions(options.extensions ?? [], this.diagnostics);
-    for (const extension of this.extensions) {
+    const orderedExtensions = orderExtensions(options.extensions ?? [], this.diagnostics);
+    const validExtensions: CompilerExtension[] = [];
+    for (const extension of orderedExtensions) {
+      if (!this.diagnostics.registerDiagnosticRange(extension.identity.id, extension.identity.diagnosticRange)) {
+        continue;
+      }
       this.#extensionsById.set(extension.identity.id, extension);
+      validExtensions.push(extension);
       for (const question of extension.decisionOwners ?? []) {
         this.registerDecisionOwner(question, extension.identity.id);
       }
     }
+    this.extensions = validExtensions;
     this.#validateComposition(options);
     this.#initializeExtensions();
   }
 
-  registerDecisionOwner(question: string, extensionId: string): void {
+  registerDecisionOwner(question: ExtensionDecisionQuestionName, extensionId: string): void {
     if (!this.#extensionsById.has(extensionId)) {
       this.diagnostics.append(createHostDiagnostic({
         extensionCode: "UNKNOWN_DECISION_OWNER",
@@ -852,12 +970,12 @@ export class ExtensionHost {
     }));
   }
 
-  getDecisionOwner(question: string): CompilerExtension | undefined {
+  getDecisionOwner(question: ExtensionDecisionQuestionName): CompilerExtension | undefined {
     const ownerId = this.#decisionOwners.get(question);
     return ownerId === undefined ? undefined : this.#extensionsById.get(ownerId);
   }
 
-  requireDecisionOwner(question: string): CompilerExtension | undefined {
+  requireDecisionOwner(question: ExtensionDecisionQuestionName): CompilerExtension | undefined {
     const owner = this.getDecisionOwner(question);
     if (owner !== undefined) {
       return owner;
@@ -871,11 +989,11 @@ export class ExtensionHost {
     return undefined;
   }
 
-  registerDecisionHook<TRequest, TResult>(question: string, extensionId: string, hook: ExtensionDecisionHook<TRequest, TResult>): void {
+  registerDecisionHook<TQuestion extends ExtensionDecisionQuestionName>(question: TQuestion, extensionId: string, hook: ExtensionDecisionHook<TQuestion>): void {
     const hooks = this.#decisionHooks.get(question);
     const registered: RegisteredDecisionHook = {
       extensionId,
-      hook: hook as ExtensionDecisionHook<unknown, unknown>,
+      hook: hook as (request: unknown, context: ExtensionDecisionContext) => ExtensionDecision<unknown>,
     };
     if (hooks === undefined) {
       this.#decisionHooks.set(question, [registered]);
@@ -906,12 +1024,12 @@ export class ExtensionHost {
     return true;
   }
 
-  runDecision<TRequest, TResult>(
-    question: string,
-    request: TRequest,
-    core: () => TResult,
+  runDecision<TQuestion extends ExtensionDecisionQuestionName>(
+    question: TQuestion,
+    request: ExtensionDecisionRequest<TQuestion>,
+    core: () => ExtensionDecisionResponse<TQuestion>,
     options: ExtensionDecisionRunOptions = {},
-  ): ExtensionDecisionResult<TResult> {
+  ): ExtensionDecisionResult<ExtensionDecisionResponse<TQuestion>> {
     const owner = this.getDecisionOwner(question);
     if (owner === undefined && options.requireOwner === true) {
       this.requireDecisionOwner(question);
@@ -934,16 +1052,30 @@ export class ExtensionHost {
       return { kind: "core", value: core() };
     }
 
-    const nonDeferred: Array<ExtensionDecisionResult<TResult>> = [];
+    const nonDeferred: Array<ExtensionDecisionResult<ExtensionDecisionResponse<TQuestion>>> = [];
     for (const registered of selectedHooks) {
-      const decision = registered.hook(request, {
-        question,
-        extensionId: registered.extensionId,
-        host: this,
-        facts: this.facts,
-        factResolver: this.factResolver,
-        diagnostics: this.diagnostics,
-      }) as ExtensionDecision<TResult>;
+      let decision: ExtensionDecision<ExtensionDecisionResponse<TQuestion>>;
+      try {
+        decision = registered.hook(request, {
+          question,
+          extensionId: registered.extensionId,
+          host: this,
+          facts: this.facts,
+          factResolver: this.factResolver,
+          diagnostics: this.diagnostics,
+        }) as ExtensionDecision<ExtensionDecisionResponse<TQuestion>>;
+      } catch (error) {
+        const diagnostic = createHostDiagnostic({
+          extensionCode: "DECISION_HOOK_FAILED",
+          numericCode: ExtensionHostDiagnosticCode.decisionHookFailed,
+          message: `Extension '${registered.extensionId}' failed while answering semantic question '${question}'.`,
+          evidence: [{ message: "Thrown value", details: error }],
+          identity: `decision-hook-failed:${question}:${registered.extensionId}`,
+        });
+        this.diagnostics.append(diagnostic);
+        nonDeferred.push({ kind: "reject", diagnostic, extensionId: registered.extensionId });
+        continue;
+      }
       if (decision.kind === "defer") {
         continue;
       }
@@ -1039,18 +1171,21 @@ export class ExtensionHost {
     return false;
   }
 
-  getFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject, key: ExtensionFactKey<T>): T | undefined {
+  getFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>): T | undefined {
     if (!this.assertFinalizedForConsumer(consumer)) {
+      return undefined;
+    }
+    if (subject === undefined) {
       return undefined;
     }
     return this.factResolver.resolve(subject, key);
   }
 
-  requireFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject, key: ExtensionFactKey<T>, purpose?: string): T | undefined {
+  requireFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T | undefined {
     if (!this.assertFinalizedForConsumer(consumer)) {
       return undefined;
     }
-    const value = this.factResolver.resolve(subject, key);
+    const value = subject === undefined ? undefined : this.factResolver.resolve(subject, key);
     if (value !== undefined) {
       return value;
     }
@@ -1070,7 +1205,17 @@ export class ExtensionHost {
     return undefined;
   }
 
-  getFactsForConsumer(consumer: string, subject: ExtensionFactSubject): readonly ExtensionFactEntry<unknown>[] {
+  mustFactForConsumer<T>(consumer: string, subject: ExtensionFactSubject | undefined, key: ExtensionFactKey<T>, purpose?: string): T {
+    const value = this.requireFactForConsumer(consumer, subject, key, purpose);
+    if (value !== undefined) {
+      return value;
+    }
+    throw new Error(purpose === undefined
+      ? `Consumer '${consumer}' requires extension fact '${key.id}'.`
+      : `Consumer '${consumer}' requires extension fact '${key.id}' for ${purpose}.`);
+  }
+
+  getFactsForConsumer(consumer: string, subject: ExtensionFactSubject | undefined): readonly ExtensionFactEntry<unknown>[] {
     if (!this.assertFinalizedForConsumer(consumer)) {
       return [];
     }
@@ -1084,9 +1229,9 @@ export class ExtensionHost {
     return this.providers.getVirtualDeclarationDocument(uriOrFileName);
   }
 
-  #getConsumerSubjectIdentity(subject: ExtensionFactSubject): string {
-    if (typeof subject !== "object" || subject === null) {
-      return `${typeof subject}:${String(subject)}`;
+  #getConsumerSubjectIdentity(subject: ExtensionFactSubject | undefined): string {
+    if (subject === undefined) {
+      return "undefined";
     }
     const existing = this.#consumerSubjectIds.get(subject);
     if (existing !== undefined) {
@@ -1153,17 +1298,17 @@ export class ExtensionHost {
   }
 }
 
-function registerProviderDecisionHook<TRequest, TResult>(
+function registerProviderDecisionHook<TQuestion extends ExtensionDecisionQuestionName>(
   host: ExtensionHost,
   extensionId: string,
-  question: string,
-  handler: ((request: TRequest, context: ExtensionDecisionContext) => ExtensionDecision<TResult>) | undefined,
+  question: TQuestion,
+  handler: ((request: ExtensionDecisionRequest<TQuestion>, context: ExtensionDecisionContext<TQuestion>) => ExtensionDecision<ExtensionDecisionResponse<TQuestion>>) | undefined,
 ): void {
   if (handler === undefined) {
     return;
   }
   host.registerDecisionOwner(question, extensionId);
-  host.registerDecisionHook<TRequest, TResult>(question, extensionId, (request, context) => handler(request, context));
+  host.registerDecisionHook(question, extensionId, (request, context) => handler(request, context));
 }
 
 const attachedExtensionHosts = new WeakMap<object, ExtensionHost>();
@@ -1308,6 +1453,39 @@ function propagateInvalidDependencies(extensionsById: ReadonlyMap<string, Compil
   }
 }
 
+function callProvider<T>(
+  diagnostics: ExtensionDiagnosticStore,
+  identity: ProviderIdentity,
+  operation: "ownsModule" | "resolveModule" | "getDeclarationModel",
+  specifier: string,
+  callback: () => T,
+): T | undefined {
+  try {
+    return callback();
+  } catch (error) {
+    const numericCode = operation === "ownsModule"
+      ? ExtensionHostDiagnosticCode.providerOwnershipFailed
+      : operation === "resolveModule"
+        ? ExtensionHostDiagnosticCode.providerResolveFailed
+        : ExtensionHostDiagnosticCode.providerDeclarationFailed;
+    diagnostics.append(createHostDiagnostic({
+      extensionCode: operation === "ownsModule"
+        ? "PROVIDER_OWNERSHIP_FAILED"
+        : operation === "resolveModule"
+          ? "PROVIDER_RESOLVE_FAILED"
+          : "PROVIDER_DECLARATION_FAILED",
+      numericCode,
+      message: `Provider '${identity.id}' failed during ${operation} for '${specifier}'.`,
+      evidence: [
+        { message: "Provider identity", details: identity },
+        { message: "Thrown value", details: error },
+      ],
+      identity: `provider-call-failed:${operation}:${identity.id}:${specifier}`,
+    }));
+    return undefined;
+  }
+}
+
 function createHostDiagnostic(input: {
   readonly extensionCode: string;
   readonly numericCode: number;
@@ -1335,6 +1513,25 @@ function getDiagnosticIdentity(diagnostic: ExtensionDiagnostic): string {
     diagnostic.category,
     diagnostic.message,
   ].join(":");
+}
+
+function isValidDiagnosticRange(range: ExtensionDiagnosticRange): boolean {
+  return Number.isSafeInteger(range.start)
+    && Number.isSafeInteger(range.end)
+    && range.start > 0
+    && range.start <= range.end;
+}
+
+function isDiagnosticCodeInRange(code: number, range: ExtensionDiagnosticRange): boolean {
+  return Number.isSafeInteger(code) && code >= range.start && code <= range.end;
+}
+
+function isExtensionFactSubject(subject: unknown): subject is ExtensionFactSubject {
+  return (typeof subject === "object" && subject !== null) || typeof subject === "function";
+}
+
+function diagnosticRangesOverlap(left: ExtensionDiagnosticRange, right: ExtensionDiagnosticRange): boolean {
+  return left.start <= right.end && right.start <= left.end;
 }
 
 function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: string, context: ProviderModuleContext): string {
@@ -1371,13 +1568,13 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration)
     case "interface":
       return `export interface ${declaration.name}${typeParameters} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
     case "function":
-      return renderProviderSignatures(declaration.name, declaration.signatures ?? [createProviderFallbackSignature(declaration)])
+      return renderProviderSignatures(declaration.name, declaration.signatures ?? [])
         .map((signature) => `export declare function ${signature}`)
         .join("\n");
     case "type":
-      return `export type ${declaration.name}${typeParameters} = ${renderProviderTypeExpression(declaration.type ?? { kind: "unknown" })};`;
+      return `export type ${declaration.name}${typeParameters} = ${renderProviderTypeExpression(declaration.type!)};`;
     case "value":
-      return `export declare const ${declaration.name}: ${renderProviderTypeExpression(declaration.type ?? { kind: "unknown" })};`;
+      return `export declare const ${declaration.name}: ${renderProviderTypeExpression(declaration.type!)};`;
     case "namespace":
       return `export declare namespace ${declaration.name} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
     case "enum":
@@ -1385,15 +1582,6 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration)
     case "opaque":
       return `export declare const ${declaration.name}: unique symbol;`;
   }
-}
-
-function createProviderFallbackSignature(declaration: ProviderExportDeclaration): ProviderSignatureDeclaration {
-  return {
-    id: declaration.id,
-    parameters: [],
-    returnType: declaration.type ?? { kind: "unknown" },
-    ...(declaration.typeParameters !== undefined ? { typeParameters: declaration.typeParameters } : {}),
-  };
 }
 
 function renderProviderMembers(members: readonly ProviderMemberDeclaration[]): string {
@@ -1406,18 +1594,15 @@ function renderProviderMember(member: ProviderMemberDeclaration): string {
     case "constructor":
       return renderProviderSignatures("constructor", member.signatures ?? [{ id: member.id, parameters: [] }]).join("\n  ");
     case "method":
-      return renderProviderSignatures(member.name, member.signatures ?? [{ id: member.id, parameters: [], returnType: member.type ?? { kind: "void" } }]).map((signature) => `${staticPrefix}${signature}`).join("\n  ");
+      return renderProviderSignatures(member.name, member.signatures ?? []).map((signature) => `${staticPrefix}${signature}`).join("\n  ");
     case "property":
     case "field":
-      return `${staticPrefix}${member.name}: ${renderProviderTypeExpression(member.type ?? { kind: "unknown" })};`;
+      return `${staticPrefix}${member.name}: ${renderProviderTypeExpression(member.type!)};`;
     case "indexer": {
-      const signature = member.signatures?.[0];
-      const parameter = signature?.parameters[0] ?? { name: "key", type: { kind: "string" } satisfies ProviderTypeExpression };
-      return `[${renderProviderParameter(parameter)}]: ${renderProviderTypeExpression(signature?.returnType ?? member.type ?? { kind: "unknown" })};`;
+      const signature = member.signatures![0]!;
+      const parameter = signature.parameters[0]!;
+      return `[${renderProviderParameter(parameter)}]: ${renderProviderTypeExpression(signature.returnType!)};`;
     }
-    case "event":
-    case "operator":
-      throw new Error(`Provider member kind '${member.kind}' is not directly renderable as TypeScript source.`);
   }
 }
 
@@ -1466,7 +1651,7 @@ function renderProviderTypeExpression(type: ProviderTypeExpression): string {
       return type.name;
     case "target-named":
     case "opaque":
-      return "unknown";
+      return renderProviderTypeExpression(type.sourceShape!);
     case "array":
       return `${renderProviderTypeExpression(type.elementType)}[]`;
     case "tuple":
@@ -1482,20 +1667,13 @@ function renderProviderTypeExpression(type: ProviderTypeExpression): string {
   }
 }
 
-function renderSourcePrimitiveType(name: string): string {
+function renderSourcePrimitiveType(name: SourcePrimitiveKind): string {
   switch (name) {
     case "bool":
-    case "boolean":
       return "boolean";
-    case "string":
     case "char":
       return "string";
-    case "bigint":
-      return "bigint";
     default:
-      if (!isKnownSourcePrimitive(name)) {
-        throw new Error(`Unknown source primitive '${name}'.`);
-      }
       return "number";
   }
 }
@@ -1518,13 +1696,13 @@ function validateProviderIdentity(identity: ProviderIdentity, expectedKind: "bin
     invalidFields.push("providerKind");
   }
   if (invalidFields.length === 0) {
-    if (identity.extensionContractVersion === DynamicProviderExtensionContractVersion) {
+    if (identity.extensionContractVersion === TstsProviderContractVersion) {
       return undefined;
     }
     return createHostDiagnostic({
       extensionCode: "PROVIDER_CONTRACT_MISMATCH",
       numericCode: ExtensionHostDiagnosticCode.providerContractMismatch,
-      message: `Provider '${identity.id}' uses unsupported extension contract '${identity.extensionContractVersion}'. Expected '${DynamicProviderExtensionContractVersion}'.`,
+      message: `Provider '${identity.id}' uses unsupported extension contract '${identity.extensionContractVersion}'. Expected '${TstsProviderContractVersion}'.`,
       evidence: [{ message: "Provider identity", details: identity }],
       identity: `provider-contract-mismatch:${expectedKind}:${identity.id}:${identity.extensionContractVersion}`,
     });
@@ -1564,20 +1742,61 @@ function isValidProviderDeclarationModel(value: ProviderDeclarationModel, resolu
 function isValidProviderExportDeclaration(value: ProviderExportDeclaration): boolean {
   return value.id.length > 0
     && isIdentifierText(value.name)
+    && hasRequiredProviderExportShape(value)
     && (value.type === undefined || isValidProviderTypeExpression(value.type))
     && (value.typeParameters ?? []).every(isValidProviderTypeParameterDeclaration)
     && (value.signatures ?? []).every(isValidProviderSignatureDeclaration)
-    && (value.members ?? []).every(isValidProviderMemberDeclaration);
+    && (value.kind === "enum"
+      ? (value.members ?? []).every(isValidProviderEnumMemberDeclaration)
+      : (value.members ?? []).every(isValidProviderMemberDeclaration));
+}
+
+function hasRequiredProviderExportShape(value: ProviderExportDeclaration): boolean {
+  switch (value.kind) {
+    case "function":
+      return value.signatures !== undefined
+        && value.signatures.length > 0
+        && value.signatures.every((signature) => signature.returnType !== undefined);
+    case "type":
+    case "value":
+      return value.type !== undefined;
+    case "class":
+    case "interface":
+    case "namespace":
+    case "enum":
+    case "opaque":
+      return true;
+  }
 }
 
 function isValidProviderMemberDeclaration(value: ProviderMemberDeclaration): boolean {
-  if (value.kind === "event" || value.kind === "operator") {
-    return false;
-  }
   return value.id.length > 0
     && (value.kind === "constructor" || isIdentifierText(value.name))
+    && hasRequiredProviderMemberShape(value)
     && (value.type === undefined || isValidProviderTypeExpression(value.type))
     && (value.signatures ?? []).every(isValidProviderSignatureDeclaration);
+}
+
+function isValidProviderEnumMemberDeclaration(value: ProviderMemberDeclaration): boolean {
+  return value.id.length > 0 && isIdentifierText(value.name);
+}
+
+function hasRequiredProviderMemberShape(value: ProviderMemberDeclaration): boolean {
+  switch (value.kind) {
+    case "method":
+      return value.signatures !== undefined
+        && value.signatures.length > 0
+        && value.signatures.every((signature) => signature.returnType !== undefined);
+    case "property":
+    case "field":
+      return value.type !== undefined;
+    case "indexer":
+      return value.signatures !== undefined
+        && value.signatures.length > 0
+        && value.signatures.every((signature) => signature.parameters.length === 1 && signature.returnType !== undefined);
+    case "constructor":
+      return value.signatures !== undefined && value.signatures.length > 0;
+  }
 }
 
 function isValidProviderSignatureDeclaration(value: ProviderSignatureDeclaration): boolean {
@@ -1613,7 +1832,11 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
     case "type-parameter":
       return isIdentifierText(value.name);
     case "target-named":
-      return value.target.length > 0 && value.id.length > 0 && (value.typeArguments ?? []).every(isValidProviderTypeExpression);
+      return value.target.length > 0
+        && value.id.length > 0
+        && (value.typeArguments ?? []).every(isValidProviderTypeExpression)
+        && value.sourceShape !== undefined
+        && isValidProviderTypeExpression(value.sourceShape);
     case "array":
       return isValidProviderTypeExpression(value.elementType);
     case "tuple":
@@ -1628,7 +1851,9 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
     case "literal":
       return true;
     case "opaque":
-      return value.id.length > 0;
+      return value.id.length > 0
+        && value.sourceShape !== undefined
+        && isValidProviderTypeExpression(value.sourceShape);
   }
 }
 
@@ -1636,35 +1861,26 @@ function isIdentifierText(text: string): boolean {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(text);
 }
 
-function isKnownSourcePrimitive(name: string): boolean {
+function isKnownSourcePrimitive(name: SourcePrimitiveKind): boolean {
   switch (name) {
     case "bool":
-    case "boolean":
-    case "byte":
-    case "sbyte":
-    case "short":
-    case "ushort":
-    case "int":
-    case "uint":
-    case "long":
-    case "ulong":
-    case "nint":
-    case "nuint":
+    case "int8":
+    case "uint8":
+    case "int16":
+    case "uint16":
     case "int32":
     case "uint32":
     case "int64":
     case "uint64":
+    case "native-int":
+    case "native-uint":
     case "int128":
     case "uint128":
-    case "float":
+    case "float16":
     case "float32":
-    case "double":
     case "float64":
-    case "half":
     case "decimal":
     case "char":
-    case "string":
-    case "bigint":
       return true;
     default:
       return false;

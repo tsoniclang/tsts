@@ -1,4 +1,4 @@
-import type { bool, int, uint } from "@tsonic/core/types.js";
+import type { bool, int, uint } from "../../../go/scalars.js";
 import type { GoChan, GoError, GoPtr, GoSlice } from "../../../go/compat.js";
 import type { Writer } from "../../../go/io.js";
 import { Builder } from "../../../go/strings.js";

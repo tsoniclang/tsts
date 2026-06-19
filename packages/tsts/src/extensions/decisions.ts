@@ -2,9 +2,9 @@ import type {
   ArgumentPassingFact,
   ArgumentPassingMode,
   SelectedTargetSignatureFact,
-  SurfaceOperationFact,
   TargetConstraint,
   TargetTypeRef,
+  TargetOperationFact,
 } from "./facts.js";
 import type { ExtensionDiagnostic, ExtensionDiagnosticStore, ExtensionEvidence, ExtensionFactResolver, ExtensionFactStore, ExtensionFactSubject, ExtensionHost } from "./host.js";
 
@@ -17,23 +17,17 @@ export type ExtensionDecisionResult<T> =
   | { readonly kind: "core"; readonly value: T }
   | { readonly kind: "accept"; readonly value: T; readonly extensionId: string; readonly evidence?: readonly ExtensionEvidence[] }
   | { readonly kind: "reject"; readonly diagnostic: ExtensionDiagnostic; readonly extensionId: string }
-  | { readonly kind: "missing-owner"; readonly question: string }
-  | { readonly kind: "owner-deferred"; readonly question: string; readonly extensionId: string }
-  | { readonly kind: "conflict"; readonly question: string };
+  | { readonly kind: "missing-owner"; readonly question: ExtensionDecisionQuestionName }
+  | { readonly kind: "owner-deferred"; readonly question: ExtensionDecisionQuestionName; readonly extensionId: string }
+  | { readonly kind: "conflict"; readonly question: ExtensionDecisionQuestionName };
 
-export interface ExtensionDecisionContext {
-  readonly question: string;
+export interface ExtensionDecisionContext<TQuestion extends ExtensionDecisionQuestionName = ExtensionDecisionQuestionName> {
+  readonly question: TQuestion;
   readonly extensionId: string;
   readonly host: ExtensionHost;
   readonly facts: ExtensionFactStore;
   readonly factResolver: ExtensionFactResolver;
   readonly diagnostics: ExtensionDiagnosticStore;
-}
-
-export type ExtensionDecisionHook<TRequest, TResult> = (request: TRequest, context: ExtensionDecisionContext) => ExtensionDecision<TResult>;
-
-export interface ExtensionDecisionRunOptions {
-  readonly requireOwner?: boolean;
 }
 
 export const ExtensionDecisionQuestion = {
@@ -50,6 +44,12 @@ export const ExtensionDecisionQuestion = {
   getRuntimeCarrier: "type.getRuntimeCarrier",
   validateFlowUse: "flow.validateUse",
 } as const;
+
+export type ExtensionDecisionQuestionName = typeof ExtensionDecisionQuestion[keyof typeof ExtensionDecisionQuestion];
+
+export interface ExtensionDecisionRunOptions {
+  readonly requireOwner?: boolean;
+}
 
 export interface SatisfiesConstraintRequest {
   readonly source: ExtensionFactSubject;
@@ -112,7 +112,7 @@ export interface ResolveOperatorRequest {
 }
 
 export interface ResolveOperationResult {
-  readonly operation: SurfaceOperationFact;
+  readonly operation: TargetOperationFact;
   readonly resultType?: ExtensionFactSubject;
 }
 
@@ -125,7 +125,7 @@ export interface ResolveConversionRequest {
 
 export interface ResolveConversionResult {
   readonly convertedType?: TargetTypeRef;
-  readonly operation?: SurfaceOperationFact;
+  readonly operation?: TargetOperationFact;
 }
 
 export interface ParameterModeRequest {
@@ -171,6 +171,64 @@ export interface ValidateFlowUseResult {
   readonly targetCompilerValidationRequired?: boolean;
   readonly targetCompiler?: string;
 }
+
+export interface ExtensionDecisionMap {
+  readonly [ExtensionDecisionQuestion.satisfiesConstraint]: {
+    readonly request: SatisfiesConstraintRequest;
+    readonly result: boolean;
+  };
+  readonly [ExtensionDecisionQuestion.isAssignableTo]: {
+    readonly request: AssignabilityRequest;
+    readonly result: boolean;
+  };
+  readonly [ExtensionDecisionQuestion.resolveCall]: {
+    readonly request: ResolveCallRequest;
+    readonly result: ResolveCallResult;
+  };
+  readonly [ExtensionDecisionQuestion.inferTypeArguments]: {
+    readonly request: InferTypeArgumentsRequest;
+    readonly result: InferTypeArgumentsResult;
+  };
+  readonly [ExtensionDecisionQuestion.resolvePropertyAccess]: {
+    readonly request: ResolvePropertyAccessRequest;
+    readonly result: ResolveOperationResult;
+  };
+  readonly [ExtensionDecisionQuestion.resolveElementAccess]: {
+    readonly request: ResolveElementAccessRequest;
+    readonly result: ResolveOperationResult;
+  };
+  readonly [ExtensionDecisionQuestion.resolveOperator]: {
+    readonly request: ResolveOperatorRequest;
+    readonly result: ResolveOperationResult;
+  };
+  readonly [ExtensionDecisionQuestion.getContextualType]: {
+    readonly request: ContextualTypeRequest;
+    readonly result: ContextualTypeResult;
+  };
+  readonly [ExtensionDecisionQuestion.resolveConversion]: {
+    readonly request: ResolveConversionRequest;
+    readonly result: ResolveConversionResult;
+  };
+  readonly [ExtensionDecisionQuestion.getParameterMode]: {
+    readonly request: ParameterModeRequest;
+    readonly result: ParameterModeResult;
+  };
+  readonly [ExtensionDecisionQuestion.getRuntimeCarrier]: {
+    readonly request: RuntimeCarrierRequest;
+    readonly result: RuntimeCarrierResult;
+  };
+  readonly [ExtensionDecisionQuestion.validateFlowUse]: {
+    readonly request: ValidateFlowUseRequest;
+    readonly result: ValidateFlowUseResult;
+  };
+}
+
+export type ExtensionDecisionRequest<TQuestion extends ExtensionDecisionQuestionName> = ExtensionDecisionMap[TQuestion]["request"];
+export type ExtensionDecisionResponse<TQuestion extends ExtensionDecisionQuestionName> = ExtensionDecisionMap[TQuestion]["result"];
+export type ExtensionDecisionHook<TQuestion extends ExtensionDecisionQuestionName> = (
+  request: ExtensionDecisionRequest<TQuestion>,
+  context: ExtensionDecisionContext<TQuestion>,
+) => ExtensionDecision<ExtensionDecisionResponse<TQuestion>>;
 
 export const deferDecision: ExtensionDecision<never> = Object.freeze({ kind: "defer" });
 

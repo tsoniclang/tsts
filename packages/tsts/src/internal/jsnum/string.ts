@@ -1,4 +1,4 @@
-import type { bool, byte, double, int, long } from "@tsonic/core/types.js";
+import type { bool, byte, double, int, long } from "../../go/scalars.js";
 import type { GoError, GoRune } from "../../go/compat.js";
 import * as math from "../../go/math.js";
 import { New as errors_New, Is as errors_Is } from "../../go/errors.js";

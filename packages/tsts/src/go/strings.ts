@@ -6,7 +6,7 @@
 // contract self-consistent we operate over the UTF-8 byte view of the string
 // and convert back to a JavaScript string at the boundaries.
 
-import type { bool, int, byte } from "@tsonic/core/types.js";
+import type { bool, int, byte } from "./scalars.js";
 import type { GoRune, GoSlice } from "./compat.js";
 import * as utf8 from "./unicode/utf8.js";
 

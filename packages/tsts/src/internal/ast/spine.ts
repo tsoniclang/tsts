@@ -1,4 +1,4 @@
-import type { bool, int, short } from "@tsonic/core/types.js";
+import type { bool, int, short } from "../../go/scalars.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Uint32, Uint64 } from "../../go/sync/atomic.js";
 import { TextRange_End, TextRange_Pos, UndefinedTextRange } from "../core/text.js";

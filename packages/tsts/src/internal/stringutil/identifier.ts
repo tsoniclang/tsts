@@ -1,4 +1,4 @@
-import type { bool } from "@tsonic/core/types.js";
+import type { bool } from "../../go/scalars.js";
 import type { GoRune } from "../../go/compat.js";
 import { Is } from "../../go/unicode.js";
 import { unicodeESNextIdentifierPart, unicodeESNextIdentifierStart } from "./generated/identifier_parts_generated.js";

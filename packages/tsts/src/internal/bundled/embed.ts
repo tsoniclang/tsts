@@ -1,4 +1,4 @@
-import type { bool, int, long } from "@tsonic/core/types.js";
+import type { bool, int, long } from "../../go/scalars.js";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

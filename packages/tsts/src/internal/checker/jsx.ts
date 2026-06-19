@@ -1,4 +1,4 @@
-import type { bool, int, uint } from "@tsonic/core/types.js";
+import type { bool, int, uint } from "../../go/scalars.js";
 import type { GoPtr, GoSeq, GoSlice } from "../../go/compat.js";
 import { Values as SliceValues } from "../../go/slices.js";
 import { Node_DeclarationData, Node_ForEachChild, Node_Name } from "../ast/spine.js";

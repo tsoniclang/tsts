@@ -3,7 +3,7 @@
 // TestIsRecognizedTripleSlashComment).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { bool } from "@tsonic/core/types.js";
+import type { bool } from "../../go/scalars.js";
 import type { CommentRange } from "../ast/ast.js";
 import { KindMultiLineCommentTrivia, KindSingleLineCommentTrivia, KindUnknown } from "../ast/generated/kinds.js";
 import type { Kind } from "../ast/generated/kinds.js";

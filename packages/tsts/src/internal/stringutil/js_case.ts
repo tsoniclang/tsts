@@ -1,4 +1,4 @@
-import type { bool, int } from "@tsonic/core/types.js";
+import type { bool, int } from "../../go/scalars.js";
 import type { GoRune } from "../../go/compat.js";
 import { Is, ToLower, ToUpper } from "../../go/unicode.js";
 import { EncodeJSStringRune, IsSurrogate, SurrogatePairToCodePoint } from "./util.js";
