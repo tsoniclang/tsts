@@ -822,6 +822,31 @@ import "./b";`, "a.ts");
   assert.equal(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["a.ts"]).module, undefined);
 });
 
+test("compilerOptionsForMaterializedCase preserves TS-Go harness emit directives for on-disk verification", () => {
+  const parsed = parseFileBasedTest(`// @declaration: true
+// @declarationMap: true
+// @sourceMap: true
+// @inlineSources: true
+// @stripInternal: true
+// @outDir: dist
+
+/** @internal */
+export const hidden = 1;
+export const visible = 2;`, "emitDirectives.ts");
+  assert.deepEqual(compilerOptionsForMaterializedCase(parsed.globalOptions, parsed, ["emitDirectives.ts"]), {
+    newLine: "crlf",
+    noErrorTruncation: true,
+    skipDefaultLibCheck: true,
+    target: "ES2024",
+    declaration: true,
+    declarationMap: true,
+    inlineSources: true,
+    outDir: "dist",
+    sourceMap: true,
+    stripInternal: true,
+  });
+});
+
 test("compilerOptionsForMaterializedCase prevents JavaScript emit overwrite when harness suppresses output-path checks", () => {
   const parsed = parseFileBasedTest(`// @allowJS: true
 // @suppressOutputPathCheck: true
