@@ -112,6 +112,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     ["pretty", "true"],
     ["rewriterelativeimportextensions", "true"],
     ["sourcemap", "true"],
+    ["sourceroot", "local"],
     ["strictpropertyinitialization", "false"],
     ["useunknownincatchvariables", "false"],
   ]);
@@ -151,6 +152,7 @@ test("compilerOptionsFromSettings maps supported TS-Go directives", () => {
     pretty: true,
     rewriteRelativeImportExtensions: true,
     sourceMap: true,
+    sourceRoot: "local",
     strictPropertyInitialization: false,
     useUnknownInCatchVariables: false,
   });
@@ -286,6 +288,8 @@ test("compilerOptionsFromSettings maps virtual path options into the materialize
   assert.equal(normalizeHarnessOptionPath("A:/"), "A:/");
   assert.equal(normalizeHarnessOptionPath("A:/", { useCaseSensitiveFileNames: false }), "a:/");
   assert.equal(normalizeHarnessOptionPath("/out"), "out");
+  assert.equal(normalizeHarnessOptionPath("../"), ".virtual-root");
+  assert.equal(normalizeHarnessOptionPath("../out"), ".virtual-root/out");
 });
 
 test("compilerOptionsFromSettings maps virtual typeRoots into the materialized case", () => {
@@ -826,6 +830,8 @@ test("compilerOptionsForMaterializedCase preserves TS-Go harness emit directives
   const parsed = parseFileBasedTest(`// @declaration: true
 // @declarationMap: true
 // @sourceMap: true
+// @sourceRoot: local
+// @emitBOM: true
 // @inlineSources: true
 // @stripInternal: true
 // @outDir: dist
@@ -840,9 +846,11 @@ export const visible = 2;`, "emitDirectives.ts");
     target: "ES2024",
     declaration: true,
     declarationMap: true,
+    emitBOM: true,
     inlineSources: true,
     outDir: "dist",
     sourceMap: true,
+    sourceRoot: "local",
     stripInternal: true,
   });
 });
