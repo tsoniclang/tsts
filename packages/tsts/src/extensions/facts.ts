@@ -183,7 +183,7 @@ export interface ContextualTargetTypeFact {
 
 export interface TargetOperationFact {
   readonly operationId: string;
-  readonly operationKind: "property" | "method" | "indexer" | "operator" | "constructor";
+  readonly operationKind: "property" | "method" | "indexer" | "operator" | "constructor" | "iteration";
   readonly targetOperation: string;
   readonly resultType?: ExtensionFactSubject;
   readonly evidence?: readonly ExtensionEvidence[];

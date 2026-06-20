@@ -153,6 +153,18 @@ export class ExtensionConsumerQueries {
     return this.mustFact(subject, targetOperationFactKey, purpose);
   }
 
+  getSelectedTargetIteration(subject: ExtensionFactSubject | undefined): TargetOperationFact | undefined {
+    return this.getFact(subject, targetOperationFactKey);
+  }
+
+  requireSelectedTargetIteration(subject: ExtensionFactSubject, purpose?: string): TargetOperationFact | undefined {
+    return this.requireFact(subject, targetOperationFactKey, purpose);
+  }
+
+  mustSelectedTargetIteration(subject: ExtensionFactSubject, purpose?: string): TargetOperationFact {
+    return this.mustFact(subject, targetOperationFactKey, purpose);
+  }
+
   getRuntimeCarrierFact(subject: ExtensionFactSubject | undefined): RuntimeCarrierFact | undefined {
     return this.getFact(subject, runtimeCarrierFactKey);
   }

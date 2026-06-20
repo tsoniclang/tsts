@@ -361,6 +361,7 @@ export interface TargetSemanticProvider {
   mapCheckedPropertyAccess?: ExtensionObservationHook<typeof ExtensionObservationPoint.mapCheckedPropertyAccess>;
   mapCheckedElementAccess?: ExtensionObservationHook<typeof ExtensionObservationPoint.mapCheckedElementAccess>;
   mapCheckedOperator?: ExtensionObservationHook<typeof ExtensionObservationPoint.mapCheckedOperator>;
+  mapCheckedIteration?: ExtensionObservationHook<typeof ExtensionObservationPoint.mapCheckedIteration>;
   recordContextualTargetType?: ExtensionObservationHook<typeof ExtensionObservationPoint.recordContextualTargetType>;
   mapCheckedConversion?: ExtensionObservationHook<typeof ExtensionObservationPoint.mapCheckedConversion>;
   resolveParameterPassing?: ExtensionObservationHook<typeof ExtensionObservationPoint.resolveParameterPassing>;
@@ -1290,6 +1291,7 @@ export class ExtensionHost {
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.mapCheckedPropertyAccess, provider.mapCheckedPropertyAccess);
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.mapCheckedElementAccess, provider.mapCheckedElementAccess);
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.mapCheckedOperator, provider.mapCheckedOperator);
+    registerProviderObservation(this, extensionId, ExtensionObservationPoint.mapCheckedIteration, provider.mapCheckedIteration);
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.recordContextualTargetType, provider.recordContextualTargetType);
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.mapCheckedConversion, provider.mapCheckedConversion);
     registerProviderObservation(this, extensionId, ExtensionObservationPoint.resolveParameterPassing, provider.resolveParameterPassing);
