@@ -1,7 +1,7 @@
 import type { bool, byte, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import { NewGoStructMap } from "../../../go/compat.js";
-import { recordExtensionContextualTypeResolution } from "../../../extensions/checker-integration.js";
+import { recordExtensionContextualTargetTypeFact } from "../../../extensions/checker-integration.js";
 import * as core from "../../core/core.js";
 import * as slices from "../../../go/slices.js";
 import { MaxInt } from "../../../go/math.js";
@@ -13927,7 +13927,7 @@ export function Checker_getContextualType(receiver: GoPtr<Checker>, node: GoPtr<
     return undefined;
   }
   const record = (contextualType: GoPtr<Type>): GoPtr<Type> => {
-    recordExtensionContextualTypeResolution(receiver, node, contextualType);
+    recordExtensionContextualTargetTypeFact(receiver, node, contextualType);
     return contextualType;
   };
   const index = Checker_findContextualNode(receiver, node, contextFlags === ContextFlagsNone);

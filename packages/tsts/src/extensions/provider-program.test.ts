@@ -30,9 +30,9 @@ import type { Program, ProgramOptions } from "../internal/compiler/program.js";
 import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
-import { TstsProviderContractVersion, ExtensionDecisionQuestion, ExtensionHostDiagnosticCode, acceptDecision, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferDecision, finalizeExtensionSemantics, getExtensionHost, rejectDecision, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
+import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { CompilerExtension, ExtensionDecisionContext, ExtensionFactSubject, ResolveCallRequest, SatisfiesConstraintRequest, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -274,7 +274,7 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Contains(T)");
 });
 
-test("checker records provider-owned generic inference facts on selected calls", () => {
+test("checker records provider-owned target type argument facts on selected calls", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       declare function convert<T>(value: number): T;
@@ -310,12 +310,11 @@ test("checker records provider-owned generic inference facts on selected calls",
   assertCleanProgram(program, index);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
-  const argument = getFirstCallArgument(call);
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   const selectedCall = consumer.getSelectedTargetCall(call);
   assert.equal(selectedCall?.member.id, "System.Convert.ChangeType<T>(System.Int32)");
-  assert.equal(selectedCall?.typeArguments?.[0], argument);
+  assert.equal(selectedCall?.typeArguments, undefined);
   assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
 });
 
@@ -811,7 +810,7 @@ test("checker-owned target call seam reports deferred providers without fallback
   const program = NewProgram(options);
   assert.ok(program !== undefined);
   assert.equal(getExtensionHost(program), extended.extensionHost);
-  assert.equal(extended.extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveCall)?.identity.id, "dotnet-provider-extension");
+  assert.equal(extended.extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedCall)?.identity.id, "dotnet-provider-extension");
   const index = Program_GetSourceFile(program, "/src/index.ts");
   assert.ok(index !== undefined);
   assert.equal(Program_GetProgramDiagnostics(program).length, 0);
@@ -820,7 +819,7 @@ test("checker-owned target call seam reports deferred providers without fallback
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   assert.equal(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey), undefined);
-  assert.equal(extended.extensionHost.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.decisionOwnerDeferred);
+  assert.equal(extended.extensionHost.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.observationOwnerDeferred);
 
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
@@ -931,7 +930,7 @@ test("checker-owned member element and operator seams report deferred providers 
   assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey), undefined);
   assert.equal(extended.extensionHost.facts.get(elementAccess, targetOperationFactKey), undefined);
   assert.equal(extended.extensionHost.facts.get(binaryExpression, targetOperationFactKey), undefined);
-  assert.ok(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.decisionOwnerDeferred).length >= 3);
+  assert.ok(extended.extensionHost.diagnostics.all().filter((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.observationOwnerDeferred).length >= 3);
 });
 
 test("extension-owned semantic rejections surface through standard diagnostics with source location", () => {
@@ -1234,7 +1233,7 @@ function semanticProvider(selectedSignature: SelectedTargetSignatureFact): Targe
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature,
       returnType: semanticSubject("bool"),
     }),
@@ -1250,7 +1249,7 @@ function genericInferenceSemanticProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature: {
         member: {
           id: "System.Convert.ChangeType<T>(System.Int32)",
@@ -1268,8 +1267,7 @@ function genericInferenceSemanticProvider(): TargetSemanticProvider {
       },
       returnType: semanticSubject("T"),
     }),
-    inferTypeArguments: (request) => acceptDecision({
-      typeArguments: request.arguments,
+    mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
     }),
   };
@@ -1284,7 +1282,7 @@ function contextualSemanticProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    getContextualType: (request) => acceptDecision({
+    recordContextualTargetType: (request) => acceptObservation({
       type: request.context,
       targetType: {
         kind: "target-named",
@@ -1307,18 +1305,18 @@ function deferredSemanticProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    resolveCall: () => deferDecision,
+    mapCheckedCall: () => deferObservation,
   };
 }
 
 function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-parameter-mode-semantic-provider"),
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature,
       returnType: semanticSubject("bool"),
     }),
-    getParameterMode: (request) => acceptDecision({
+    resolveParameterPassing: (request) => acceptObservation({
       passing: {
         mode: "byref-readonly",
         ...(request.argument !== undefined ? { targetExpression: request.argument } : {}),
@@ -1331,14 +1329,14 @@ function parameterModeSequenceSemanticProvider(selectedSignature: SelectedTarget
   let parameterIndex = 0;
   return {
     identity: semanticProviderIdentity("dotnet-parameter-mode-sequence-semantic-provider"),
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature,
       returnType: semanticSubject("void"),
     }),
-    getParameterMode: (request) => {
+    resolveParameterPassing: (request) => {
       const mode = parameterIndex === 0 ? "by-value" : "byref-readonly";
       parameterIndex += 1;
-      return acceptDecision({
+      return acceptObservation({
         passing: {
           mode,
           ...(request.argument !== undefined ? { targetExpression: request.argument } : {}),
@@ -1351,17 +1349,17 @@ function parameterModeSequenceSemanticProvider(selectedSignature: SelectedTarget
 function carrierConversionSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-carrier-conversion-semantic-provider"),
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature: {
         member: byteConversionTargetMember(),
       },
       returnType: semanticSubject("number"),
     }),
-    resolveConversion: () => acceptDecision({
+    mapCheckedConversion: () => acceptObservation({
       convertedType: { kind: "target-named", id: "System.Byte" },
       operation: targetOperation("System.Convert.ToByte", "method", "number"),
     }),
-    getRuntimeCarrier: () => acceptDecision({
+    resolveRuntimeCarrier: () => acceptObservation({
       carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
       requiresAllocation: false,
     }),
@@ -1371,26 +1369,25 @@ function carrierConversionSemanticProvider(): TargetSemanticProvider {
 function compositeDotnetProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-composite-semantic-provider"),
-    satisfiesConstraint: (request, context) => constraintSemanticProvider().satisfiesConstraint!(request, context),
-    resolveCall: () => acceptDecision({
+    validateTargetConstraint: (request, context) => constraintSemanticProvider().validateTargetConstraint!(request, context),
+    mapCheckedCall: () => acceptObservation({
       selectedSignature: selectedSearchValuesContainsSignature(),
       returnType: semanticSubject("bool"),
     }),
-    inferTypeArguments: (request) => acceptDecision({
-      typeArguments: request.arguments,
+    mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
     }),
-    getParameterMode: (request) => acceptDecision({
+    resolveParameterPassing: (request) => acceptObservation({
       passing: {
         mode: "byref-readonly",
         ...(request.argument !== undefined ? { targetExpression: request.argument } : {}),
       },
     }),
-    resolveConversion: () => acceptDecision({
+    mapCheckedConversion: () => acceptObservation({
       convertedType: { kind: "target-named", id: "System.Int32" },
       operation: targetOperation("System.Int32.Identity", "method", "int32"),
     }),
-    getRuntimeCarrier: () => acceptDecision({
+    resolveRuntimeCarrier: () => acceptObservation({
       carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
       requiresAllocation: false,
     }),
@@ -1406,12 +1403,12 @@ function rustFlowSemanticProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    validateFlowUse: (request, context) => {
+    validateExtensionFlowUse: (request, context) => {
       const state = context.facts.get(request.symbol, flowStateFactKey);
       if (state?.state !== "moved") {
-        return acceptDecision({ valid: true });
+        return acceptObservation({ valid: true });
       }
-      return rejectDecision({
+      return rejectObservation({
         extensionId: context.extensionId,
         extensionCode: "RUST_MOVED_VALUE",
         numericCode: 9920301,
@@ -1435,12 +1432,12 @@ function rustAssignabilityProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    isAssignableTo: (request, context) => {
+    validatePostCheckAssignability: (request, context) => {
       const state = context.facts.get(request.expression, flowStateFactKey);
       if (state?.state !== "moved") {
-        return acceptDecision(true);
+        return acceptObservation(true);
       }
-      return rejectDecision({
+      return rejectObservation({
         extensionId: context.extensionId,
         extensionCode: "RUST_MOVED_ASSIGNMENT",
         numericCode: 9920401,
@@ -1458,15 +1455,15 @@ function rustAssignabilityProvider(): TargetSemanticProvider {
 function surfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-surface-semantic-provider"),
-    resolvePropertyAccess: () => acceptDecision({
+    mapCheckedPropertyAccess: () => acceptObservation({
       operation: targetOperation("System.String.Length", "property", "int32"),
       resultType: semanticSubject("int32"),
     }),
-    resolveElementAccess: () => acceptDecision({
+    mapCheckedElementAccess: () => acceptObservation({
       operation: targetOperation("System.ReadOnlySpan.GetItem", "indexer", "char"),
       resultType: semanticSubject("char"),
     }),
-    resolveOperator: () => acceptDecision({
+    mapCheckedOperator: () => acceptObservation({
       operation: targetOperation("System.Int32.op_Addition", "operator", "int32"),
       resultType: semanticSubject("int32"),
     }),
@@ -1476,16 +1473,16 @@ function surfaceSemanticProvider(): TargetSemanticProvider {
 function deferredSurfaceSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-deferred-surface-semantic-provider"),
-    resolvePropertyAccess: () => deferDecision,
-    resolveElementAccess: () => deferDecision,
-    resolveOperator: () => deferDecision,
+    mapCheckedPropertyAccess: () => deferObservation,
+    mapCheckedElementAccess: () => deferObservation,
+    mapCheckedOperator: () => deferObservation,
   };
 }
 
 function rejectingCallSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-rejecting-call-semantic-provider"),
-    resolveCall: (request: ResolveCallRequest) => ({
+    mapCheckedCall: (request: CheckedCallMappingRequest) => ({
       kind: "reject",
       diagnostic: {
         extensionId: "dotnet-rejecting-call-semantic-provider",
@@ -1505,9 +1502,9 @@ function rejectingCallSemanticProvider(): TargetSemanticProvider {
 function sourceSpanRejectingCallProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-source-span-rejecting-call-provider"),
-    resolveCall: (request: ResolveCallRequest) => {
+    mapCheckedCall: (request: CheckedCallMappingRequest) => {
       const call = request.call as GoPtr<Node>;
-      return rejectDecision({
+      return rejectObservation({
         extensionId: "dotnet-source-span-rejecting-call-provider",
         extensionCode: "DOTNET_PIN_REQUIRES_FIXED",
         numericCode: 9910126,
@@ -1529,7 +1526,7 @@ function sourceSpanRejectingCallProvider(): TargetSemanticProvider {
 function rejectingNativeArrayPushProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-native-array-surface-provider"),
-    resolveCall: (request: ResolveCallRequest) => rejectDecision({
+    mapCheckedCall: (request: CheckedCallMappingRequest) => rejectObservation({
       extensionId: "dotnet-native-array-surface-provider",
       extensionCode: "DOTNET_NATIVE_ARRAY_PUSH",
       numericCode: 9910301,
@@ -1552,7 +1549,7 @@ function rustVecSurfaceProvider(): TargetSemanticProvider {
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
-    resolveCall: () => acceptDecision({
+    mapCheckedCall: () => acceptObservation({
       selectedSignature: {
         member: {
           id: "alloc.vec.Vec.push(i32)",
@@ -1575,17 +1572,17 @@ function rustVecSurfaceProvider(): TargetSemanticProvider {
 function constraintSemanticProvider(): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("dotnet-constraint-semantic-provider"),
-    satisfiesConstraint: (request, context) => {
+    validateTargetConstraint: (request, context) => {
       const primitive = getSourcePrimitiveForConstraintArgument(request.source, context);
       if (request.constraint.kind === "implements" && request.constraint.contract === "System.IEquatable`1" && primitive?.kind === "int32") {
-        return acceptDecision(true, [{ message: "Source primitive int32 maps to System.Int32, which implements System.IEquatable<System.Int32>." }]);
+        return acceptObservation(true, [{ message: "Source primitive int32 maps to System.Int32, which implements System.IEquatable<System.Int32>." }]);
       }
       return rejectTargetConstraint(request, context);
     },
   };
 }
 
-function rejectTargetConstraint(request: SatisfiesConstraintRequest, context: ExtensionDecisionContext) {
+function rejectTargetConstraint(request: TargetConstraintValidationRequest, context: ExtensionObservationContext) {
   return {
     kind: "reject" as const,
     diagnostic: {
@@ -1610,7 +1607,7 @@ function getConstraintDiagnosticIdentity(source: ExtensionFactSubject): string {
   return `dotnet-constraint:${typeof source}:${String(source)}`;
 }
 
-function getSourcePrimitiveForConstraintArgument(source: ExtensionFactSubject, context: ExtensionDecisionContext): SourcePrimitiveFact | undefined {
+function getSourcePrimitiveForConstraintArgument(source: ExtensionFactSubject, context: ExtensionObservationContext): SourcePrimitiveFact | undefined {
   if (source === null || source === undefined || typeof source !== "object") {
     return undefined;
   }
