@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
-import { recordExtensionElementAccessResolution, recordExtensionFlowUseValidation, recordExtensionPropertyAccessResolution, recordExtensionRuntimeCarrierResolution, recordExtensionTypeArgumentConstraintResolution } from "../../../extensions/checker-integration.js";
+import { recordExtensionCheckedElementAccessMapping, recordExtensionCheckedPropertyAccessMapping, recordExtensionFlowUseValidation, recordExtensionRuntimeCarrierFact, recordExtensionTargetConstraintValidation } from "../../../extensions/checker-integration.js";
 import { NewGoStructMap } from "../../../go/compat.js";
 import { GetNamespaceDeclarationNode, IsImportCall, IsImportOrExportSpecifier } from "../../ast/utilities.js";
 import { Named_imports_from_a_JSON_file_into_an_ECMAScript_module_are_not_allowed_when_module_is_set_to_0 } from "../../diagnostics/generated/messages.js";
@@ -1517,8 +1517,8 @@ export function Checker_checkTypeReferenceOrImport(receiver: GoPtr<Checker>, nod
     }
     const symbol_ = Checker_getResolvedSymbolOrNil(receiver, node);
     if (symbol_ !== undefined) {
-      recordExtensionTypeArgumentConstraintResolution(receiver, node, symbol_);
-      recordExtensionRuntimeCarrierResolution(receiver, node, t, symbol_);
+      recordExtensionTargetConstraintValidation(receiver, node, symbol_);
+      recordExtensionRuntimeCarrierFact(receiver, node, t, symbol_);
       if (Some(symbol_!.Declarations as GoSlice<GoPtr<Node>>, (d) => (IsTypeDeclaration(d) && Checker_IsDeprecatedDeclaration(receiver, d)) as boolean)) {
         Checker_addDeprecatedSuggestion(receiver, Checker_getDeprecatedSuggestionNode(receiver, node), symbol_!.Declarations as GoSlice<GoPtr<Node>>, symbol_!.Name);
       }
@@ -5459,7 +5459,7 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
   const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
-  recordExtensionElementAccessResolution(receiver, node);
+  recordExtensionCheckedElementAccessMapping(receiver, node);
   return result;
 }
 
@@ -6450,7 +6450,7 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
   }
   const expr = Node_Expression(node);
   const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, Checker_checkNonNullExpression(receiver, expr), AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
-  recordExtensionPropertyAccessResolution(receiver, node);
+  recordExtensionCheckedPropertyAccessMapping(receiver, node);
   return result;
 }
 

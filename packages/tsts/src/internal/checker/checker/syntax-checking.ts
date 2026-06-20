@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import { recordExtensionOperatorResolution } from "../../../extensions/checker-integration.js";
+import { recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -2773,11 +2773,11 @@ export function Checker_checkBinaryExpression(receiver: GoPtr<Checker>, node: Go
   const binary = AsBinaryExpression(node);
   if (isIterativelyCheckableNonLogicalBinaryExpression(node)) {
     const result = Checker_checkNonLogicalBinaryExpressionIterative(receiver, node, checkMode);
-    recordExtensionOperatorResolution(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
+    recordExtensionCheckedOperatorMapping(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
     return result;
   }
   const result = Checker_checkBinaryLikeExpression(receiver, binary!.Left, binary!.OperatorToken, binary!.Right, checkMode, node);
-  recordExtensionOperatorResolution(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
+  recordExtensionCheckedOperatorMapping(receiver, node, binary!.OperatorToken, binary!.Left, binary!.Right);
   return result;
 }
 

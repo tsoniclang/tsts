@@ -6,9 +6,9 @@ import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
-import type { Type } from "../internal/checker/types.js";
-import { ExtensionDecisionQuestion } from "./decisions.js";
-import type { AssignabilityRequest, ContextualTypeRequest, ContextualTypeResult, InferTypeArgumentsRequest, InferTypeArgumentsResult, ParameterModeRequest, ParameterModeResult, ResolveCallRequest, ResolveCallResult, ResolveConversionRequest, ResolveConversionResult, ResolveElementAccessRequest, ResolveOperationResult, ResolveOperatorRequest, ResolvePropertyAccessRequest, RuntimeCarrierRequest, RuntimeCarrierResult, SatisfiesConstraintRequest, ValidateFlowUseRequest, ValidateFlowUseResult } from "./decisions.js";
+import type { Signature, Type } from "../internal/checker/types.js";
+import { ExtensionObservationPoint } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedOperationMappingResult, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ContextualTargetTypeRequest, ContextualTargetTypeResult, ExtensionFlowUseValidationRequest, ExtensionFlowUseValidationResult, ParameterPassingRequest, ParameterPassingResult, PostCheckAssignabilityValidationRequest, RuntimeCarrierFactRequest, RuntimeCarrierFactResult, TargetConstraintValidationRequest, TargetTypeArgumentMappingRequest, TargetTypeArgumentMappingResult } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
@@ -17,13 +17,13 @@ interface CheckerWithProgram {
   readonly program: object;
 }
 
-export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>, callExpression: GoPtr<Node>): void {
+export function recordExtensionCheckedCallMapping(checker: GoPtr<CheckerWithProgram>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>): void {
   if (checker === undefined || callExpression === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveCall) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedCall) === undefined) {
     return;
   }
 
@@ -32,16 +32,17 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.resolveCall,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedCall,
     {
       call: callExpression,
       callee,
       arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
+      ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
-      throw new Error("Extension-owned call resolution unexpectedly reached core fallback.");
+      throw new Error("Extension-owned checked call mapping unexpectedly reached core fallback.");
     },
     { requireOwner: true },
   );
@@ -51,19 +52,19 @@ export function recordExtensionCallResolution(checker: GoPtr<CheckerWithProgram>
   }
 
   const arguments_ = Node_Arguments(callExpression) ?? [];
-  const selectedSignature = recordExtensionCallTypeArgumentInference(extensionHost, callee, result.value, arguments_);
+  const selectedSignature = recordExtensionTargetTypeArgumentMapping(extensionHost, callee, sourceSelectedSignature, result.value, arguments_);
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, selectedSignature, result.evidence ?? []);
   recordExtensionCallParameterModes(extensionHost, { ...result.value, selectedSignature }, arguments_);
   recordExtensionCallArgumentConversions(extensionHost, { ...result.value, selectedSignature }, arguments_);
 }
 
-export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
+export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
   if (checker === undefined || propertyAccessExpression === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolvePropertyAccess) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedPropertyAccess) === undefined) {
     return;
   }
 
@@ -73,8 +74,8 @@ export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.resolvePropertyAccess,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedPropertyAccess,
     {
       expression: propertyAccessExpression,
       receiver,
@@ -82,7 +83,7 @@ export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWi
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
-      throw new Error("Extension-owned property access resolution unexpectedly reached core fallback.");
+      throw new Error("Extension-owned checked property access mapping unexpectedly reached core fallback.");
     },
     { requireOwner: true },
   );
@@ -94,13 +95,13 @@ export function recordExtensionPropertyAccessResolution(checker: GoPtr<CheckerWi
   extensionHost.facts.set(propertyAccessExpression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
-export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWithProgram>, elementAccessExpression: GoPtr<Node>): void {
+export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<CheckerWithProgram>, elementAccessExpression: GoPtr<Node>): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveElementAccess) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedElementAccess) === undefined) {
     return;
   }
 
@@ -110,8 +111,8 @@ export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWit
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.resolveElementAccess,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedElementAccess,
     {
       expression: elementAccessExpression,
       receiver,
@@ -119,7 +120,7 @@ export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWit
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
-      throw new Error("Extension-owned element access resolution unexpectedly reached core fallback.");
+      throw new Error("Extension-owned checked element access mapping unexpectedly reached core fallback.");
     },
     { requireOwner: true },
   );
@@ -131,18 +132,18 @@ export function recordExtensionElementAccessResolution(checker: GoPtr<CheckerWit
   extensionHost.facts.set(elementAccessExpression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
-export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
+export function recordExtensionCheckedOperatorMapping(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
   if (checker === undefined || expression === undefined || operatorToken === undefined || left === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveOperator) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedOperator) === undefined) {
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.resolveOperator,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedOperator,
     {
       expression,
       operator: TokenToString(operatorToken.Kind),
@@ -151,7 +152,7 @@ export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProg
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
-      throw new Error("Extension-owned operator resolution unexpectedly reached core fallback.");
+      throw new Error("Extension-owned checked operator mapping unexpectedly reached core fallback.");
     },
     { requireOwner: true },
   );
@@ -163,13 +164,13 @@ export function recordExtensionOperatorResolution(checker: GoPtr<CheckerWithProg
   extensionHost.facts.set(expression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
-export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
+export function recordExtensionTargetConstraintValidation(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
   if (checker === undefined || typeReference === undefined || symbol === undefined) {
     return true;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.satisfiesConstraint) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validateTargetConstraint) === undefined) {
     return true;
   }
 
@@ -188,8 +189,8 @@ export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<C
       continue;
     }
     for (const constraint of parameter.constraints ?? []) {
-      const result = extensionHost.runDecision(
-        ExtensionDecisionQuestion.satisfiesConstraint,
+      const result = extensionHost.runObservation(
+        ExtensionObservationPoint.validateTargetConstraint,
         {
           source: argument,
           constraint,
@@ -208,13 +209,13 @@ export function recordExtensionTypeArgumentConstraintResolution(checker: GoPtr<C
   return valid;
 }
 
-export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, type: GoPtr<Type>, symbol: GoPtr<Symbol>): void {
+export function recordExtensionRuntimeCarrierFact(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, type: GoPtr<Type>, symbol: GoPtr<Symbol>): void {
   if (checker === undefined || type === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getRuntimeCarrier) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.resolveRuntimeCarrier) === undefined) {
     return;
   }
 
@@ -222,8 +223,8 @@ export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWi
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.getRuntimeCarrier,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.resolveRuntimeCarrier,
     {
       type,
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
@@ -247,18 +248,18 @@ export function recordExtensionRuntimeCarrierResolution(checker: GoPtr<CheckerWi
   setFactOnOptionalSubject(extensionHost, type.symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
 }
 
-export function recordExtensionContextualTypeResolution(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, contextualType: GoPtr<Type>): void {
+export function recordExtensionContextualTargetTypeFact(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, contextualType: GoPtr<Type>): void {
   if (checker === undefined || expression === undefined || contextualType === undefined) {
     return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getContextualType) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.recordContextualTargetType) === undefined) {
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.getContextualType,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.recordContextualTargetType,
     {
       expression,
       context: contextualType,
@@ -279,13 +280,13 @@ export function recordExtensionContextualTypeResolution(checker: GoPtr<CheckerWi
   }, result.evidence ?? []);
 }
 
-export function recordExtensionAssignabilityValidation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: AssignabilityRequest["relation"]): bool {
+export function recordExtensionPostCheckAssignabilityValidation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: PostCheckAssignabilityValidationRequest["relation"]): bool {
   if (checker === undefined || source === undefined || target === undefined) {
     return true as bool;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.isAssignableTo) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validatePostCheckAssignability) === undefined) {
     return true as bool;
   }
 
@@ -300,8 +301,8 @@ export function recordExtensionAssignabilityValidation(checker: GoPtr<CheckerWit
     return true as bool;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.isAssignableTo,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.validatePostCheckAssignability,
     {
       source,
       target,
@@ -325,7 +326,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgr
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getDecisionOwner(ExtensionDecisionQuestion.validateFlowUse) === undefined) {
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validateExtensionFlowUse) === undefined) {
     return;
   }
 
@@ -339,8 +340,8 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgr
     return;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.validateFlowUse,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.validateExtensionFlowUse,
     {
       useSite,
       symbol,
@@ -363,8 +364,8 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgr
   }
 }
 
-function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
-  if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.getParameterMode) === undefined) {
+function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
+  if (extensionHost.getObservationOwner(ExtensionObservationPoint.resolveParameterPassing) === undefined) {
     return;
   }
   const parameters = callResult.selectedSignature.member.parameters;
@@ -374,8 +375,8 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callRes
     if (parameter === undefined || argument === undefined) {
       continue;
     }
-    const result = extensionHost.runDecision(
-      ExtensionDecisionQuestion.getParameterMode,
+    const result = extensionHost.runObservation(
+      ExtensionObservationPoint.resolveParameterPassing,
       {
         parameter,
         argument,
@@ -393,20 +394,21 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callRes
   }
 }
 
-function recordExtensionCallTypeArgumentInference(extensionHost: ExtensionHost, callee: Node, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): ResolveCallResult["selectedSignature"] {
-  if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.inferTypeArguments) === undefined) {
+function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, callee: Node, sourceSelectedSignature: GoPtr<Signature> | undefined, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): CheckedCallMappingResult["selectedSignature"] {
+  if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget) === undefined) {
     return callResult.selectedSignature;
   }
 
-  const result = extensionHost.runDecision(
-    ExtensionDecisionQuestion.inferTypeArguments,
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget,
     {
       declaration: callee,
       arguments: definedFactSubjects(arguments_),
+      ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
       ...(callResult.returnType !== undefined ? { contextualType: callResult.returnType } : {}),
     },
     () => ({
-      typeArguments: [],
+      targetTypeArguments: [],
     }),
     { requireOwner: true },
   );
@@ -415,13 +417,12 @@ function recordExtensionCallTypeArgumentInference(extensionHost: ExtensionHost, 
   }
   return {
     ...callResult.selectedSignature,
-    typeArguments: result.value.typeArguments,
-    ...(result.value.targetTypeArguments !== undefined ? { targetTypeArguments: result.value.targetTypeArguments } : {}),
+    targetTypeArguments: result.value.targetTypeArguments,
   };
 }
 
-function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callResult: ResolveCallResult, arguments_: readonly GoPtr<Node>[]): void {
-  if (extensionHost.getDecisionOwner(ExtensionDecisionQuestion.resolveConversion) === undefined) {
+function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
+  if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedConversion) === undefined) {
     return;
   }
   const parameters = callResult.selectedSignature.member.parameters;
@@ -431,8 +432,8 @@ function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, ca
     if (parameter === undefined || argument === undefined) {
       continue;
     }
-    const result = extensionHost.runDecision(
-      ExtensionDecisionQuestion.resolveConversion,
+    const result = extensionHost.runObservation(
+      ExtensionObservationPoint.mapCheckedConversion,
       {
         expression: argument,
         source: argument,
