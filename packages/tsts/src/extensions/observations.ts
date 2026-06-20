@@ -38,6 +38,7 @@ export const ExtensionObservationPoint = {
   mapCheckedPropertyAccess: "operation.mapCheckedPropertyAccess",
   mapCheckedElementAccess: "operation.mapCheckedElementAccess",
   mapCheckedOperator: "operation.mapCheckedOperator",
+  mapCheckedIteration: "operation.mapCheckedIteration",
   recordContextualTargetType: "type.recordContextualTargetType",
   mapCheckedConversion: "operation.mapCheckedConversion",
   resolveParameterPassing: "parameter.resolvePassing",
@@ -110,6 +111,17 @@ export interface CheckedOperatorMappingRequest {
   readonly operator: string;
   readonly left: ExtensionFactSubject;
   readonly right?: ExtensionFactSubject;
+  readonly target?: string;
+}
+
+export type CheckedIterationKind = "for-in" | "for-of" | "for-await-of";
+
+export interface CheckedIterationMappingRequest {
+  readonly statement: ExtensionFactSubject;
+  readonly expression: ExtensionFactSubject;
+  readonly initializer?: ExtensionFactSubject;
+  readonly kind: CheckedIterationKind;
+  readonly sourceElementType?: ExtensionFactSubject;
   readonly target?: string;
 }
 
@@ -201,6 +213,10 @@ export interface ExtensionObservationMap {
   };
   readonly [ExtensionObservationPoint.mapCheckedOperator]: {
     readonly request: CheckedOperatorMappingRequest;
+    readonly result: CheckedOperationMappingResult;
+  };
+  readonly [ExtensionObservationPoint.mapCheckedIteration]: {
+    readonly request: CheckedIterationMappingRequest;
     readonly result: CheckedOperationMappingResult;
   };
   readonly [ExtensionObservationPoint.recordContextualTargetType]: {

@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import { recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
+import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -685,6 +685,7 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
   if (rightType === receiver!.neverType || !Checker_isTypeAssignableToKind(receiver, rightType, (TypeFlagsNonPrimitive | TypeFlagsInstantiableNonPrimitive) as int)) {
     Checker_error(receiver, data!.Expression, The_right_hand_side_of_a_for_in_statement_must_be_of_type_any_an_object_type_or_a_type_parameter_but_here_has_type_0, Checker_TypeToString(receiver, rightType));
   }
+  recordExtensionCheckedIterationMapping(receiver, node, "for-in", Checker_getIndexTypeOrString(receiver, rightType));
   Checker_checkSourceElement(receiver, data!.Statement);
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);
@@ -758,11 +759,12 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
       }
     }
   }
+  let iteratedType: GoPtr<Type> = undefined;
   if (IsVariableDeclarationList(data!.Initializer)) {
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
   } else {
     const varExpr = data!.Initializer;
-    const iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
+    iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
     if (IsArrayLiteralExpression(varExpr) || IsObjectLiteralExpression(varExpr)) {
       Checker_checkDestructuringAssignment(receiver, varExpr, OrElse(iteratedType, receiver!.errorType), CheckModeNormal, false as bool);
     } else {
@@ -773,6 +775,7 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
       }
     }
   }
+  recordExtensionCheckedIterationMapping(receiver, node, data!.AwaitModifier !== undefined ? "for-await-of" : "for-of", iteratedType);
   Checker_checkSourceElement(receiver, data!.Statement);
   if ((Node_Locals(node)?.size ?? 0) !== 0) {
     Checker_registerForUnusedIdentifiersCheck(receiver, node);

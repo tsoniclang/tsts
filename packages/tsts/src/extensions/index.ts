@@ -116,6 +116,8 @@ export type {
   CheckedConversionMappingRequest,
   CheckedConversionMappingResult,
   CheckedElementAccessMappingRequest,
+  CheckedIterationKind,
+  CheckedIterationMappingRequest,
   CheckedOperationMappingResult,
   CheckedOperatorMappingRequest,
   CheckedPropertyAccessMappingRequest,

@@ -4,11 +4,11 @@ import type { Node } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Expression, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
-import { AsElementAccessExpression } from "../internal/ast/generated/casts.js";
+import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedOperationMappingResult, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ContextualTargetTypeRequest, ContextualTargetTypeResult, ExtensionFlowUseValidationRequest, ExtensionFlowUseValidationResult, ParameterPassingRequest, ParameterPassingResult, PostCheckAssignabilityValidationRequest, RuntimeCarrierFactRequest, RuntimeCarrierFactResult, TargetConstraintValidationRequest, TargetTypeArgumentMappingRequest, TargetTypeArgumentMappingResult } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedConversionMappingRequest, CheckedConversionMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperationMappingResult, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, ContextualTargetTypeRequest, ContextualTargetTypeResult, ExtensionFlowUseValidationRequest, ExtensionFlowUseValidationResult, ParameterPassingRequest, ParameterPassingResult, PostCheckAssignabilityValidationRequest, RuntimeCarrierFactRequest, RuntimeCarrierFactResult, TargetConstraintValidationRequest, TargetTypeArgumentMappingRequest, TargetTypeArgumentMappingResult } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
@@ -162,6 +162,44 @@ export function recordExtensionCheckedOperatorMapping(checker: GoPtr<CheckerWith
   }
 
   extensionHost.facts.set(expression, targetOperationFactKey, result.value.operation, result.evidence ?? []);
+}
+
+export function recordExtensionCheckedIterationMapping(checker: GoPtr<CheckerWithProgram>, statement: GoPtr<Node>, kind: CheckedIterationKind, sourceElementType?: GoPtr<Type>): void {
+  if (checker === undefined || statement === undefined) {
+    return;
+  }
+
+  const extensionHost = getExtensionHost(checker.program);
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedIteration) === undefined) {
+    return;
+  }
+  const data = AsForInOrOfStatement(statement);
+  const expression = data?.Expression;
+  if (expression === undefined) {
+    return;
+  }
+
+  const result = extensionHost.runObservation(
+    ExtensionObservationPoint.mapCheckedIteration,
+    {
+      statement,
+      expression,
+      ...(data?.Initializer !== undefined ? { initializer: data.Initializer } : {}),
+      kind,
+      ...(sourceElementType !== undefined ? { sourceElementType } : {}),
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
+    },
+    () => {
+      throw new Error("Extension-owned checked iteration mapping unexpectedly reached core fallback.");
+    },
+    { requireOwner: true },
+  );
+
+  if (result.kind !== "accept") {
+    return;
+  }
+
+  extensionHost.facts.set(statement, targetOperationFactKey, result.value.operation, result.evidence ?? []);
 }
 
 export function recordExtensionTargetConstraintValidation(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
