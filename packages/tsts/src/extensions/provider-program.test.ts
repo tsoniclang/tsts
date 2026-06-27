@@ -117,10 +117,20 @@ test("provider-backed virtual modules participate in normal program binding", ()
   const virtualModuleSymbol = Node_Symbol(virtualFile as never);
   const searchValuesSymbol = virtualModuleSymbol?.Exports?.get("SearchValues");
   assert.ok(searchValuesSymbol !== undefined);
+  const containsSymbol = searchValuesSymbol.Members?.get("Contains");
+  assert.ok(containsSymbol !== undefined);
 
   assert.equal(extended.extensionHost.facts.get(virtualFile, canonicalIdentityFactKey)?.id, "System.Buffers");
   assert.equal(extended.extensionHost.facts.get(virtualFile, providerVirtualDeclarationFactKey)?.providerId, "dotnet-provider");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, canonicalIdentityFactKey)?.exportName, "SearchValues");
+  assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, providerVirtualDeclarationFactKey)?.exportName, "SearchValues");
+  assert.equal(extended.extensionHost.facts.get(containsSymbol, providerVirtualDeclarationFactKey)?.memberName, "Contains");
+  const containsDeclaration = containsSymbol.Declarations?.[0];
+  assert.ok(containsDeclaration !== undefined);
+  assert.equal(
+    extended.extensionHost.facts.get(containsDeclaration, providerVirtualDeclarationFactKey)?.signatureId,
+    "Contains(T)",
+  );
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0]?.kind, "implements");
   const constraint = extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0];
