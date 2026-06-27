@@ -104,6 +104,43 @@ function recordProviderVirtualModuleFacts(extensionHost: ExtensionHost, file: So
     if (targetBinding !== undefined) {
       extensionHost.facts.set(symbol, targetBindingFactKey, targetBinding, evidence);
     }
+
+    if (declaration.signatures !== undefined && declaration.signatures.length > 0) {
+      recordProviderVirtualSignatureFacts(
+        extensionHost,
+        symbol,
+        virtualModule,
+        declaration,
+        declaration.signatures,
+        evidence,
+      );
+    }
+
+    if (declaration.members !== undefined) {
+      for (const member of declaration.members) {
+        const memberSymbol = symbol.Members?.get(member.name);
+        if (memberSymbol === undefined) {
+          continue;
+        }
+        extensionHost.facts.set(
+          memberSymbol,
+          providerVirtualDeclarationFactKey,
+          getProviderVirtualDeclarationFact(virtualModule, declaration, member),
+          evidence,
+        );
+        if (member.signatures !== undefined && member.signatures.length > 0) {
+          recordProviderVirtualSignatureFacts(
+            extensionHost,
+            memberSymbol,
+            virtualModule,
+            declaration,
+            member.signatures,
+            evidence,
+            member,
+          );
+        }
+      }
+    }
   }
 }
 
@@ -117,6 +154,33 @@ function getProviderVirtualModuleEvidence(virtualModule: ProviderResolvedModule)
       virtualFileName: virtualModule.resolution.virtualFileName,
     },
   }];
+}
+
+function recordProviderVirtualSignatureFacts(
+  extensionHost: ExtensionHost,
+  symbol: Symbol,
+  virtualModule: ProviderResolvedModule,
+  declaration: ProviderExportDeclaration,
+  signatures: readonly ProviderSignatureDeclaration[],
+  evidence: readonly ExtensionEvidence[],
+  member?: ProviderMemberDeclaration,
+): void {
+  if (signatures.length === 0 || symbol.Declarations === undefined) {
+    return;
+  }
+
+  for (let index = 0; index < signatures.length; index++) {
+    const signatureDeclaration = symbol.Declarations[index];
+    if (signatureDeclaration === undefined) {
+      continue;
+    }
+    extensionHost.facts.set(
+      signatureDeclaration,
+      providerVirtualDeclarationFactKey,
+      getProviderVirtualDeclarationFact(virtualModule, declaration, member, signatures[index]),
+      evidence,
+    );
+  }
 }
 
 function getSymbolFactId(symbol: Symbol): string {
@@ -307,7 +371,12 @@ function getSourcePrimitiveKind(name: string): SourcePrimitiveKind {
   }
 }
 
-function getProviderVirtualDeclarationFact(virtualModule: ProviderResolvedModule, declaration?: ProviderExportDeclaration): ProviderVirtualDeclarationFact {
+function getProviderVirtualDeclarationFact(
+  virtualModule: ProviderResolvedModule,
+  declaration?: ProviderExportDeclaration,
+  member?: ProviderMemberDeclaration,
+  signature?: ProviderSignatureDeclaration,
+): ProviderVirtualDeclarationFact {
   return {
     providerId: virtualModule.provider.identity.id,
     providerVersion: virtualModule.provider.identity.version,
@@ -315,6 +384,8 @@ function getProviderVirtualDeclarationFact(virtualModule: ProviderResolvedModule
     moduleSpecifier: virtualModule.resolution.moduleSpecifier,
     virtualFileName: virtualModule.resolution.virtualFileName,
     ...(declaration !== undefined ? { exportName: declaration.name } : {}),
+    ...(member !== undefined ? { memberName: member.name } : {}),
+    ...(signature !== undefined ? { signatureId: signature.id } : {}),
     ...(declaration?.targetIdentity !== undefined
       ? {
         targetIdentity: {
