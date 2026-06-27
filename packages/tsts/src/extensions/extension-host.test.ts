@@ -542,6 +542,37 @@ test("semantic provider methods own typed observations without hook boilerplate"
   assert.equal(flow.kind === "accept" ? flow.extensionId : undefined, "csharp-target");
 });
 
+test("observation hooks receive a read-only compiler query context", () => {
+  const program = {};
+  const call = {};
+  const callee = {};
+  let observedProgram: object | undefined;
+  const host = new ExtensionHost(program, {
+    extensions: [
+      extension("acme-target", {
+        observationOwners: [ExtensionObservationPoint.mapCheckedCall],
+        initialize: (context) => {
+          context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (_request, observationContext) => {
+            observedProgram = observationContext.compiler.program;
+            return acceptObservation({
+              selectedSignature: selectedSignature("acme.Native.call(i32)"),
+            });
+          });
+        },
+      }),
+    ],
+  });
+
+  const result = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
+    call,
+    callee,
+    arguments: [],
+  }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
+
+  assert.equal(result.kind, "accept");
+  assert.equal(observedProgram, program);
+});
+
 test("target binding providers own and resolve virtual modules without file-backed side data", () => {
   const specifier = "@example/dotnet/System.Buffers.js";
   const host = new ExtensionHost({});
@@ -713,6 +744,35 @@ test("provider declaration models render the supported export member and type ma
 
   assert.equal(resolved.module.declarationModel.exports.length, 8);
   assert.equal(resolved.module.virtualDocument.sourceText, source);
+});
+
+test("provider declaration models render imports heritage defaults readonly optionals and provider refs", () => {
+  const specifier = "@acme/native/rich.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(richBindingProvider(specifier));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, {
+    activeTarget: "acme-native",
+    importSlice: {
+      moduleSpecifier: specifier,
+      kind: "named",
+      requestedExports: [{ exportedName: "Derived", kind: "type" }],
+      typeOnly: true,
+    },
+  });
+  assert.equal(resolved.kind, "resolved");
+  if (resolved.kind !== "resolved") {
+    return;
+  }
+
+  const source = resolved.module.virtualSourceText;
+  assert.match(source, /import type \{ BaseShape \} from "@acme\/native\/base.js";/);
+  assert.match(source, /export interface Derived<T extends number = number> extends BaseShape/);
+  assert.match(source, /readonly id: number;/);
+  assert.match(source, /optionalName\?: string;/);
+  assert.match(source, /make\(value\?: BaseShape\): T;/);
+  assert.equal(resolved.module.context.importSlice?.requestedExports?.[0]?.exportedName, "Derived");
+  assert.equal(resolved.module.virtualDocument.context.importSlice?.kind, "named");
 });
 
 test("provider declaration models reject incomplete member declarations instead of rendering implicit unknown", () => {
@@ -1572,6 +1632,69 @@ function matrixBindingProvider(
         id: "NativeHandle",
         name: "NativeHandle",
         kind: "opaque",
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  };
+}
+
+function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {
+  return {
+    identity: providerIdentity("acme-rich-provider", "acme-native", "binding"),
+    ownsModule: (specifier) => specifier === ownedSpecifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (specifier) => ({
+      kind: "virtual",
+      moduleSpecifier: specifier,
+      virtualFileName: "tsts-provider://acme/rich",
+      providerModuleId: "acme.rich",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      imports: [{
+        moduleSpecifier: "@acme/native/base.js",
+        namedImports: [{ exportedName: "BaseShape" }],
+        typeOnly: true,
+      }],
+      exports: [{
+        id: "Derived",
+        name: "Derived",
+        kind: "interface",
+        typeParameters: [{
+          name: "T",
+          constraints: [{ kind: "number" }],
+          defaultType: { kind: "number" },
+        }],
+        heritage: [{
+          kind: "extends",
+          type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape" },
+        }],
+        members: [{
+          id: "id",
+          name: "id",
+          kind: "property",
+          readonly: true,
+          type: { kind: "number" },
+        }, {
+          id: "optionalName",
+          name: "optionalName",
+          kind: "property",
+          optional: true,
+          type: { kind: "string" },
+        }, {
+          id: "make",
+          name: "make",
+          kind: "method",
+          signatures: [{
+            id: "make(BaseShape)",
+            parameters: [{
+              name: "value",
+              type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape" },
+              optional: true,
+            }],
+            returnType: { kind: "type-parameter", name: "T" },
+          }],
+        }],
       }],
     }),
     getTargetIdentity: () => undefined,

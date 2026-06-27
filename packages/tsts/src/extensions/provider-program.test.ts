@@ -32,7 +32,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -198,6 +198,77 @@ test("provider-backed virtual modules support alias and namespace import forms",
   assert.equal(extended.extensionHost.facts.get(searchValuesSymbol, targetBindingFactKey)?.id, "System.Buffers.SearchValues`1");
 });
 
+test("provider-backed resolution receives import slices without target-specific defaults", () => {
+  const observedSlices = new Map<string, ProviderImportSlice | undefined>();
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Foo as LocalFoo, type Bar } from "@acme/provider/named.js";
+      import type * as AcmeNs from "@acme/provider/namespace.js";
+      import "@acme/provider/bare.js";
+      export { Foo as ReFoo } from "@acme/provider/reexport.js";
+
+      declare const localFoo: LocalFoo;
+      declare const bar: Bar;
+      declare const nsFoo: AcmeNs.Foo;
+      localFoo;
+      bar;
+      nsFoo;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme-native",
+    extensions: [acmeProviderExtension(observedSlices)],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const named = observedSlices.get("@acme/provider/named.js");
+  assert.equal(named?.kind, "named");
+  assert.equal(named?.typeOnly, undefined);
+  assert.deepEqual(named?.requestedExports, [
+    { exportedName: "Foo", localName: "LocalFoo", kind: "value" },
+    { exportedName: "Bar", localName: "Bar", kind: "type" },
+  ]);
+
+  const namespace = observedSlices.get("@acme/provider/namespace.js");
+  assert.equal(namespace?.kind, "namespace");
+  assert.equal(namespace?.typeOnly, true);
+  assert.equal(namespace?.broadImport, true);
+
+  const bare = observedSlices.get("@acme/provider/bare.js");
+  assert.equal(bare?.kind, "bare");
+  assert.equal(bare?.broadImport, true);
+
+  const reexport = observedSlices.get("@acme/provider/reexport.js");
+  assert.equal(reexport?.kind, "reexport");
+  assert.deepEqual(reexport?.requestedExports, [
+    { exportedName: "Foo", localName: "ReFoo", kind: "value" },
+  ]);
+
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
 test("programs without an extension host stay on the direct TS-Go path", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -278,6 +349,8 @@ test("checker records provider-owned target call facts for consumers", () => {
   assert.equal(selected?.member.id, "Contains(T)");
   assert.equal(selected?.member.parameters[0]?.type.kind, "type-parameter");
   assert.equal(selected?.member.returnType?.kind, "source-primitive");
+  assert.ok(selected?.sourceSignature !== undefined);
+  assert.ok(selected?.sourceDeclaration !== undefined);
 
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
@@ -371,8 +444,12 @@ test("checker records provider-owned contextual target facts without changing TS
 });
 
 test("checker records provider-owned parameter mode facts from selected target signatures", () => {
+  const providerDeclaration = providerDeclarationIdentity("acme-provider", "acme-native", "acme.runtime", "Contains", "Contains(T)");
   const selectedSignature = {
-    member: searchValuesContainsTargetMember("byref-readonly"),
+    member: {
+      ...searchValuesContainsTargetMember("byref-readonly"),
+      providerDeclaration,
+    },
   } satisfies SelectedTargetSignatureFact;
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -411,7 +488,12 @@ test("checker records provider-owned parameter mode facts from selected target s
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
-  assert.equal(extended.extensionHost.facts.get(argument, argumentPassingFactKey)?.mode, "byref-readonly");
+  const argumentPassing = extended.extensionHost.facts.get(argument, argumentPassingFactKey);
+  assert.equal(argumentPassing?.mode, "byref-readonly");
+  assert.equal(argumentPassing?.parameterIndex, 0);
+  assert.equal(argumentPassing?.targetParameter?.name, "value");
+  assert.deepEqual(argumentPassing?.selectedSignature, providerDeclaration);
+  assert.deepEqual(extended.extensionHost.facts.get(call, selectedTargetSignatureFactKey)?.providerDeclaration, providerDeclaration);
   assert.equal(extended.extensionHost.facts.get(call, argumentPassingFactKey), undefined);
 
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
@@ -511,9 +593,13 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   assertCleanProgram(program, index);
 
   const searchValuesTypeReference = findFirstNodeByKind(index, KindTypeReference);
-  const runtimeCarrier = extended.extensionHost.facts.get(searchValuesTypeReference, runtimeCarrierFactKey)?.carrier;
+  const runtimeCarrierFact = extended.extensionHost.facts.get(searchValuesTypeReference, runtimeCarrierFactKey);
+  const runtimeCarrier = runtimeCarrierFact?.carrier;
   assert.equal(runtimeCarrier?.kind, "target-named");
   assert.equal(runtimeCarrier?.kind === "target-named" ? runtimeCarrier.id : undefined, "System.Buffers.SearchValues`1");
+  assert.equal(runtimeCarrierFact?.provenance?.sourceTypeReference, searchValuesTypeReference);
+  assert.ok(runtimeCarrierFact?.provenance?.sourceType !== undefined);
+  assert.equal(runtimeCarrierFact?.provenance?.providerDeclaration?.providerId, "acme-carrier-provider");
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
@@ -884,6 +970,9 @@ test("checker records provider-owned member element and operator facts for consu
   assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.operationId, "System.String.Length");
   assert.equal(extended.extensionHost.facts.get(elementAccess, targetOperationFactKey)?.operationId, "System.ReadOnlySpan.GetItem");
   assert.equal(extended.extensionHost.facts.get(binaryExpression, targetOperationFactKey)?.operationId, "System.Int32.op_Addition");
+  assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.sourceExpression, propertyAccess);
+  assert.ok(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.sourceReceiver !== undefined);
+  assert.equal(extended.extensionHost.facts.get(propertyAccess, targetOperationFactKey)?.provenance?.providerDeclaration?.providerId, "acme-property-provider");
 
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
@@ -1234,6 +1323,63 @@ function semanticOnlyExtension(id: string, provider: TargetSemanticProvider): Co
   };
 }
 
+function acmeProviderExtension(observedSlices: Map<string, ProviderImportSlice | undefined>): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider(acmeBindingProvider(observedSlices)), true);
+    },
+  };
+}
+
+function acmeBindingProvider(observedSlices: Map<string, ProviderImportSlice | undefined>): TargetBindingProvider {
+  return {
+    identity: {
+      id: "acme-provider",
+      version: "1.0.0",
+      target: "acme-native",
+      extensionContractVersion: TstsProviderContractVersion,
+      providerKind: "binding",
+    },
+    ownsModule: (moduleSpecifier) => moduleSpecifier.startsWith("@acme/provider/") ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      observedSlices.set(moduleSpecifier, context.importSlice);
+      const moduleId = moduleSpecifier.slice("@acme/provider/".length).replace(/\.js$/, "");
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: `tsts-provider://acme/${moduleId}`,
+        providerModuleId: `acme.${moduleId}`,
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: "Foo",
+        name: "Foo",
+        kind: "class",
+        members: [],
+      }, {
+        id: "Bar",
+        name: "Bar",
+        kind: "interface",
+        members: [],
+      }, {
+        id: "SideEffect",
+        name: "SideEffect",
+        kind: "value",
+        type: { kind: "number" },
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  };
+}
+
 function semanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
   return {
     identity: {
@@ -1372,6 +1518,9 @@ function carrierConversionSemanticProvider(): TargetSemanticProvider {
     resolveRuntimeCarrier: () => acceptObservation({
       carrier: { kind: "target-named", id: "System.Buffers.SearchValues`1" },
       requiresAllocation: false,
+      provenance: {
+        providerDeclaration: providerDeclarationIdentity("acme-carrier-provider", "acme-native", "acme.runtime", "SearchValues"),
+      },
     }),
   };
 }
@@ -1468,6 +1617,9 @@ function surfaceSemanticProvider(): TargetSemanticProvider {
     mapCheckedPropertyAccess: () => acceptObservation({
       operation: targetOperation("System.String.Length", "property", "int32"),
       resultType: semanticSubject("int32"),
+      provenance: {
+        providerDeclaration: providerDeclarationIdentity("acme-property-provider", "acme-native", "acme.string", "length"),
+      },
     }),
     mapCheckedElementAccess: () => acceptObservation({
       operation: targetOperation("System.ReadOnlySpan.GetItem", "indexer", "char"),
@@ -1655,6 +1807,16 @@ function semanticSubject(name: string): object {
 }
 
 const semanticSubjects = new Map<string, object>();
+
+function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {
+  return {
+    providerId,
+    providerModuleId,
+    moduleSpecifier: `@acme/provider/${providerModuleId}.js`,
+    exportName,
+    ...(signatureId !== undefined ? { signatureId } : {}),
+  };
+}
 
 function targetOperation(operationId: string, operationKind: TargetOperationFact["operationKind"], resultType: string | TargetOperationFact["resultType"]): TargetOperationFact {
   return {

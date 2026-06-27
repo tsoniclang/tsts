@@ -9,6 +9,7 @@ import {
 } from "./facts.js";
 import type {
   ArgumentPassingMode,
+  ProviderDeclarationIdentity,
   ProviderVirtualDeclarationFact,
   SourcePrimitiveKind,
   TargetBindingFact,
@@ -202,7 +203,7 @@ function getTargetBindingFact(virtualModule: ProviderResolvedModule, declaration
         typeParameters: declaration.typeParameters.map(getTargetTypeParameter),
       }
       : {}),
-    ...(declaration.members !== undefined ? { members: declaration.members.flatMap(getTargetMembers) } : {}),
+    ...(declaration.members !== undefined ? { members: declaration.members.flatMap((member) => getTargetMembers(virtualModule, declaration, member)) } : {}),
   };
 }
 
@@ -215,9 +216,9 @@ function getTargetTypeParameter(parameter: ProviderTypeParameterDeclaration): Ta
   };
 }
 
-function getTargetMembers(member: ProviderMemberDeclaration): readonly TargetMember[] {
+function getTargetMembers(virtualModule: ProviderResolvedModule, declaration: ProviderExportDeclaration, member: ProviderMemberDeclaration): readonly TargetMember[] {
   if (member.signatures !== undefined && member.signatures.length > 0) {
-    return member.signatures.map((signature) => getTargetMemberFromSignature(member.name, member.kind, signature, member));
+    return member.signatures.map((signature) => getTargetMemberFromSignature(member.name, member.kind, signature, virtualModule, declaration, member));
   }
   return [{
     id: member.id,
@@ -227,10 +228,11 @@ function getTargetMembers(member: ProviderMemberDeclaration): readonly TargetMem
     parameters: [],
     ...(member.static !== undefined ? { static: member.static } : {}),
     ...(member.type !== undefined ? { returnType: getTargetTypeRef(member.type) } : {}),
+    providerDeclaration: getProviderDeclarationIdentity(virtualModule, declaration, member),
   }];
 }
 
-function getTargetMemberFromSignature(sourceName: string, kind: TargetMember["kind"], signature: ProviderSignatureDeclaration, member?: ProviderMemberDeclaration): TargetMember {
+function getTargetMemberFromSignature(sourceName: string, kind: TargetMember["kind"], signature: ProviderSignatureDeclaration, virtualModule: ProviderResolvedModule, declaration: ProviderExportDeclaration, member?: ProviderMemberDeclaration): TargetMember {
   const typeParameters = (signature.typeParameters ?? []).map(getTargetTypeParameter);
   return {
     id: signature.id,
@@ -242,6 +244,7 @@ function getTargetMemberFromSignature(sourceName: string, kind: TargetMember["ki
     ...(signature.returnType !== undefined ? { returnType: getTargetTypeRef(signature.returnType) } : {}),
     ...(typeParameters.length > 0 ? { typeParameters } : {}),
     overloadGroup: member?.id ?? sourceName,
+    providerDeclaration: getProviderDeclarationIdentity(virtualModule, declaration, member, signature),
   };
 }
 
@@ -300,6 +303,8 @@ function getTargetTypeRef(type: ProviderTypeExpression): TargetTypeRef {
       };
     case "opaque":
       return { kind: "opaque", id: type.id };
+    case "provider-ref":
+      return { kind: "opaque", id: `${type.moduleSpecifier}::${type.exportName}` };
     case "string":
     case "number":
     case "any":
@@ -384,7 +389,9 @@ function getProviderVirtualDeclarationFact(
     moduleSpecifier: virtualModule.resolution.moduleSpecifier,
     virtualFileName: virtualModule.resolution.virtualFileName,
     ...(declaration !== undefined ? { exportName: declaration.name } : {}),
+    ...(declaration !== undefined ? { exportId: declaration.id } : {}),
     ...(member !== undefined ? { memberName: member.name } : {}),
+    ...(member !== undefined ? { memberId: member.id } : {}),
     ...(signature !== undefined ? { signatureId: signature.id } : {}),
     ...(declaration?.targetIdentity !== undefined
       ? {
@@ -395,6 +402,15 @@ function getProviderVirtualDeclarationFact(
       }
       : {}),
   };
+}
+
+function getProviderDeclarationIdentity(
+  virtualModule: ProviderResolvedModule,
+  declaration: ProviderExportDeclaration,
+  member?: ProviderMemberDeclaration,
+  signature?: ProviderSignatureDeclaration,
+): ProviderDeclarationIdentity {
+  return getProviderVirtualDeclarationFact(virtualModule, declaration, member, signature);
 }
 
 function getTargetBindingKind(kind: ProviderExportDeclaration["kind"]): TargetBindingFact["kind"] {

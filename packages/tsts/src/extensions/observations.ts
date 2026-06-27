@@ -1,8 +1,10 @@
 import type {
   ArgumentPassingFact,
   ArgumentPassingMode,
+  RuntimeCarrierProvenance,
   SelectedTargetSignatureFact,
   TargetConstraint,
+  TargetOperationProvenance,
   TargetOperationFact,
   TargetTypeRef,
 } from "./facts.js";
@@ -24,10 +26,15 @@ export type ExtensionObservationResult<T> =
 export interface ExtensionObservationContext<TObservation extends ExtensionObservationPointName = ExtensionObservationPointName> {
   readonly observation: TObservation;
   readonly extensionId: string;
+  readonly compiler: ExtensionCompilerQueryContext;
   readonly host: ExtensionHost;
   readonly facts: ExtensionFactStore;
   readonly factResolver: ExtensionFactResolver;
   readonly diagnostics: ExtensionDiagnosticStore;
+}
+
+export interface ExtensionCompilerQueryContext {
+  readonly program: object;
 }
 
 export const ExtensionObservationPoint = {
@@ -72,6 +79,8 @@ export interface CheckedCallMappingRequest {
   readonly callee: ExtensionFactSubject;
   readonly arguments: readonly ExtensionFactSubject[];
   readonly sourceSelectedSignature?: ExtensionFactSubject;
+  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
+  readonly sourceCalleeSymbol?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
   readonly target?: string;
 }
@@ -96,6 +105,7 @@ export interface CheckedPropertyAccessMappingRequest {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly propertyName: string;
+  readonly sourceSelectedSymbol?: ExtensionFactSubject;
   readonly target?: string;
 }
 
@@ -103,6 +113,7 @@ export interface CheckedElementAccessMappingRequest {
   readonly expression: ExtensionFactSubject;
   readonly receiver: ExtensionFactSubject;
   readonly argument: ExtensionFactSubject;
+  readonly sourceSelectedSymbol?: ExtensionFactSubject;
   readonly target?: string;
 }
 
@@ -128,6 +139,7 @@ export interface CheckedIterationMappingRequest {
 export interface CheckedOperationMappingResult {
   readonly operation: TargetOperationFact;
   readonly resultType?: ExtensionFactSubject;
+  readonly provenance?: TargetOperationProvenance;
 }
 
 export interface CheckedConversionMappingRequest {
@@ -145,6 +157,10 @@ export interface CheckedConversionMappingResult {
 export interface ParameterPassingRequest {
   readonly parameter: ExtensionFactSubject;
   readonly argument?: ExtensionFactSubject;
+  readonly parameterIndex?: number;
+  readonly call?: ExtensionFactSubject;
+  readonly sourceSelectedSignature?: ExtensionFactSubject;
+  readonly selectedSignature?: SelectedTargetSignatureFact;
   readonly target?: string;
 }
 
@@ -160,6 +176,7 @@ export interface RuntimeCarrierFactRequest {
 export interface RuntimeCarrierFactResult {
   readonly carrier: TargetTypeRef;
   readonly requiresAllocation?: boolean;
+  readonly provenance?: RuntimeCarrierProvenance;
 }
 
 export interface ContextualTargetTypeRequest {
