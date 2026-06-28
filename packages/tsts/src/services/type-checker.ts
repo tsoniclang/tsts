@@ -30,8 +30,8 @@ import {
 import { Checker_getContextualType, Checker_GetTypeAtLocation } from "../internal/checker/checker/types.js";
 import { Checker_GetConstantValue, Checker_GetExportsOfModule } from "../internal/checker/services.js";
 import { Checker_TypeToString } from "../internal/checker/printer.js";
-import type { ContextFlags, Signature, SignatureKind, Type } from "../internal/checker/types.js";
-import { ContextFlagsNone } from "../internal/checker/types.js";
+import type { ContextFlags, Signature, Type } from "../internal/checker/types.js";
+import { ContextFlagsNone, SignatureKindCall, SignatureKindConstruct } from "../internal/checker/types.js";
 
 export interface TypeCheckerQueryOptions {
   readonly context?: Context;
@@ -50,7 +50,8 @@ export interface TypeCheckerQueries {
   readonly getDeclaredTypeOfSymbol: (symbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getResolvedSignature: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Signature>;
   readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
-  readonly getSignaturesOfType: (type: GoPtr<Type>, kind: SignatureKind, options?: TypeCheckerQueryOptions) => readonly GoPtr<Signature>[];
+  readonly getCallSignaturesOfType: (type: GoPtr<Type>, options?: TypeCheckerQueryOptions) => readonly GoPtr<Signature>[];
+  readonly getConstructSignaturesOfType: (type: GoPtr<Type>, options?: TypeCheckerQueryOptions) => readonly GoPtr<Signature>[];
   readonly getPropertyOfType: (type: GoPtr<Type>, name: string, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getTypeOfPropertyOfType: (type: GoPtr<Type>, name: string, options?: TypeCheckerQueryOptions) => GoPtr<Type>;
   readonly getConstantValue: (node: GoPtr<Node>, options?: TypeCheckerQueryOptions) => unknown;
@@ -58,6 +59,16 @@ export interface TypeCheckerQueries {
   readonly getModuleSymbolFromSpecifier: (moduleSpecifier: GoPtr<Node>, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getResolvedExternalModuleSymbol: (moduleSymbol: GoPtr<Symbol>, dontResolveAlias?: boolean, options?: TypeCheckerQueryOptions) => GoPtr<Symbol>;
   readonly getExportsOfModule: (moduleSymbol: GoPtr<Symbol>, options?: TypeCheckerQueryOptions) => readonly GoPtr<Symbol>[];
+  readonly getSymbolName: (symbol: GoPtr<Symbol>) => string;
+  readonly getSymbolDeclarations: (symbol: GoPtr<Symbol>) => readonly GoPtr<Node>[];
+  readonly getSymbolValueDeclaration: (symbol: GoPtr<Symbol>) => GoPtr<Node>;
+  readonly getPrimarySymbolDeclaration: (symbol: GoPtr<Symbol>) => GoPtr<Node>;
+  readonly getSymbolSourceFile: (symbol: GoPtr<Symbol>) => GoPtr<SourceFile>;
+  readonly getTypeSymbol: (type: GoPtr<Type>) => GoPtr<Symbol>;
+  readonly getTypeAliasSymbol: (type: GoPtr<Type>) => GoPtr<Symbol>;
+  readonly getSignatureDeclaration: (signature: GoPtr<Signature>) => GoPtr<Node>;
+  readonly getSignatureParameters: (signature: GoPtr<Signature>) => readonly GoPtr<Symbol>[];
+  readonly getSignatureThisParameter: (signature: GoPtr<Signature>) => GoPtr<Symbol>;
 }
 
 export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions: TypeCheckerQueryOptions = {}): TypeCheckerQueries {
@@ -84,8 +95,10 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSignature(checker, node, undefined, CheckModeNormal)),
     getReturnTypeOfSignature: (signature, options = {}) =>
       withCheckerForSubject(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
-    getSignaturesOfType: (type, kind, options = {}) =>
-      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, kind)) ?? [],
+    getCallSignaturesOfType: (type, options = {}) =>
+      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
+    getConstructSignaturesOfType: (type, options = {}) =>
+      withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
     getPropertyOfType: (type, name, options = {}) =>
       withCheckerForSubject(program, type, defaultOptions, options, (checker) => Checker_GetPropertyOfType(checker, type, name)),
     getTypeOfPropertyOfType: (type, name, options = {}) =>
@@ -100,6 +113,16 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
       withCheckerForSymbol(program, moduleSymbol, defaultOptions, options, (checker) => Checker_resolveExternalModuleSymbol(checker, moduleSymbol, dontResolveAlias as bool)),
     getExportsOfModule: (moduleSymbol, options = {}) =>
       withCheckerForSymbol(program, moduleSymbol, defaultOptions, options, (checker) => Checker_GetExportsOfModule(checker, moduleSymbol)) ?? [],
+    getSymbolName: (symbol) => symbol?.Name ?? "",
+    getSymbolDeclarations: (symbol) => symbol?.Declarations ?? [],
+    getSymbolValueDeclaration: (symbol) => symbol?.ValueDeclaration,
+    getPrimarySymbolDeclaration: (symbol) => getPrimarySymbolDeclaration(symbol),
+    getSymbolSourceFile: (symbol) => getSymbolSourceFile(symbol),
+    getTypeSymbol: (type) => type?.symbol,
+    getTypeAliasSymbol: (type) => type?.alias?.symbol,
+    getSignatureDeclaration: (signature) => signature?.declaration,
+    getSignatureParameters: (signature) => signature?.parameters ?? [],
+    getSignatureThisParameter: (signature) => signature?.thisParameter,
   };
 }
 
@@ -162,8 +185,12 @@ function withChecker<T>(
 }
 
 function getSymbolSourceFile(symbol: GoPtr<Symbol>): GoPtr<SourceFile> {
-  const declaration = symbol?.ValueDeclaration ?? symbol?.Declarations?.find((candidate) => candidate !== undefined);
+  const declaration = getPrimarySymbolDeclaration(symbol);
   return GetSourceFileOfNode(declaration);
+}
+
+function getPrimarySymbolDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {
+  return symbol?.ValueDeclaration ?? symbol?.Declarations?.find((candidate) => candidate !== undefined);
 }
 
 function isNode(subject: object | undefined): subject is Node {

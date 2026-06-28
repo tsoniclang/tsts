@@ -23,8 +23,36 @@ import type { Kind } from "../internal/ast/generated/kinds.js";
 import { KindString } from "../internal/ast/generated/kinds.js";
 import * as casts from "../internal/ast/generated/casts.js";
 import * as predicates from "../internal/ast/generated/predicates.js";
-import type { ModifierFlags } from "../internal/ast/modifierflags.js";
-import { GetSourceFileOfNode, HasModifier } from "../internal/ast/utilities.js";
+import {
+  ModifierFlagsAbstract,
+  ModifierFlagsAmbient,
+  ModifierFlagsAsync,
+  ModifierFlagsConst,
+  ModifierFlagsDefault,
+  ModifierFlagsExport,
+  ModifierFlagsOverride,
+  ModifierFlagsPrivate,
+  ModifierFlagsProtected,
+  ModifierFlagsPublic,
+  ModifierFlagsReadonly,
+  ModifierFlagsStatic,
+} from "../internal/ast/modifierflags.js";
+import { GetHeritageElements, GetSourceFileOfNode, HasModifier, IsTypeOnlyImportDeclaration, IsTypeOnlyImportOrExportDeclaration } from "../internal/ast/utilities.js";
+import { KindExtendsKeyword, KindImplementsKeyword } from "../internal/ast/generated/kinds.js";
+
+export type AstModifierKind =
+  | "public"
+  | "private"
+  | "protected"
+  | "readonly"
+  | "override"
+  | "export"
+  | "abstract"
+  | "ambient"
+  | "static"
+  | "async"
+  | "default"
+  | "const";
 
 export interface AstReader {
   readonly kind: (node: GoPtr<Node>) => Kind | undefined;
@@ -44,8 +72,14 @@ export interface AstReader {
   readonly elements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly properties: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
   readonly modifiers: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
-  readonly modifierFlags: (node: GoPtr<Node>) => ModifierFlags;
-  readonly hasModifier: (node: GoPtr<Node>, flags: ModifierFlags) => boolean;
+  readonly modifierFlags: (node: GoPtr<Node>) => number;
+  readonly hasModifier: (node: GoPtr<Node>, flags: number) => boolean;
+  readonly hasModifierKind: (node: GoPtr<Node>, kind: AstModifierKind) => boolean;
+  readonly heritageElements: (node: GoPtr<Node>, kind: "extends" | "implements") => readonly GoPtr<Node>[];
+  readonly extendsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
+  readonly implementsHeritageElements: (node: GoPtr<Node>) => readonly GoPtr<Node>[];
+  readonly isTypeOnlyImportDeclaration: (node: GoPtr<Node>) => boolean;
+  readonly isTypeOnlyImportOrExportDeclaration: (node: GoPtr<Node>) => boolean;
   readonly pos: (node: GoPtr<Node>) => number;
   readonly end: (node: GoPtr<Node>) => number;
   readonly getSourceFile: (node: GoPtr<Node>) => GoPtr<SourceFile>;
@@ -85,6 +119,24 @@ export function createAstReader(): AstReader {
     modifiers: (node) => Node_ModifierNodes(node) ?? [],
     modifierFlags: (node) => node === undefined ? 0 : Node_ModifierFlags(node),
     hasModifier: (node, flags) => node !== undefined && HasModifier(node, flags) === true,
+    hasModifierKind: (node, kind) => node !== undefined && HasModifier(node, modifierFlagForKind(kind)) === true,
+    heritageElements: (node, kind) => GetHeritageElements(node, kind === "extends" ? KindExtendsKeyword : KindImplementsKeyword) ?? [],
+    extendsHeritageElements: (node) => GetHeritageElements(node, KindExtendsKeyword) ?? [],
+    implementsHeritageElements: (node) => GetHeritageElements(node, KindImplementsKeyword) ?? [],
+    isTypeOnlyImportDeclaration: (node) => {
+      if (node === undefined) {
+        return false;
+      }
+      const importClause = casts.AsImportDeclaration(node)?.ImportClause;
+      return IsTypeOnlyImportDeclaration(importClause ?? node) === true;
+    },
+    isTypeOnlyImportOrExportDeclaration: (node) => {
+      if (node === undefined) {
+        return false;
+      }
+      const importClause = casts.AsImportDeclaration(node)?.ImportClause;
+      return IsTypeOnlyImportOrExportDeclaration(importClause ?? node) === true;
+    },
     pos: (node) => node === undefined ? -1 : Node_Pos(node),
     end: (node) => node === undefined ? -1 : Node_End(node),
     getSourceFile: (node) => GetSourceFileOfNode(node),
@@ -94,6 +146,35 @@ export function createAstReader(): AstReader {
     is: predicates,
     as: casts,
   };
+}
+
+function modifierFlagForKind(kind: AstModifierKind): number {
+  switch (kind) {
+    case "public":
+      return ModifierFlagsPublic;
+    case "private":
+      return ModifierFlagsPrivate;
+    case "protected":
+      return ModifierFlagsProtected;
+    case "readonly":
+      return ModifierFlagsReadonly;
+    case "override":
+      return ModifierFlagsOverride;
+    case "export":
+      return ModifierFlagsExport;
+    case "abstract":
+      return ModifierFlagsAbstract;
+    case "ambient":
+      return ModifierFlagsAmbient;
+    case "static":
+      return ModifierFlagsStatic;
+    case "async":
+      return ModifierFlagsAsync;
+    case "default":
+      return ModifierFlagsDefault;
+    case "const":
+      return ModifierFlagsConst;
+  }
 }
 
 function collectChildren(node: GoPtr<Node>): readonly GoPtr<Node>[] {

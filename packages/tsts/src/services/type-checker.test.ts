@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
-import { Node_Text } from "../internal/ast/ast.js";
+import { Node_Expression, Node_Text } from "../internal/ast/ast.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { Diagnostic_String } from "../internal/ast/diagnostic.js";
@@ -40,19 +40,27 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   assert.equal((narrowedType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
 
   const valueSymbol = queries.getSymbolAtLocation(narrowedValue);
-  assert.equal(valueSymbol?.Name, "value");
+  assert.equal(queries.getSymbolName(valueSymbol), "value");
   const resolvedValueSymbol = queries.getResolvedSymbol(narrowedValue);
   assert.equal(resolvedValueSymbol?.Name, "value");
   assert.equal(queries.getResolvedSymbolOrNil(narrowedValue), resolvedValueSymbol);
   assert.ok(queries.getTypeOfSymbol(valueSymbol) !== undefined);
   assert.ok(queries.getDeclaredTypeOfSymbol(valueSymbol) !== undefined);
+  assert.equal(queries.getSymbolDeclarations(valueSymbol).length, 1);
+  assert.equal(queries.getSymbolValueDeclaration(valueSymbol), queries.getPrimarySymbolDeclaration(valueSymbol));
+  assert.equal(queries.getSymbolSourceFile(valueSymbol), index);
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const signature = queries.getResolvedSignature(call);
-  assert.equal(signature?.parameters[0]?.Name, "x");
+  assert.equal(queries.getSignatureParameters(signature)[0]?.Name, "x");
+  assert.equal(queries.getSignatureDeclaration(signature)?.Kind, call === undefined ? undefined : queries.getPrimarySymbolDeclaration(queries.getResolvedSymbol(Node_Expression(call)))?.Kind);
 
   const arrow = findFirstNodeByKind(index, KindArrowFunction);
   assert.ok(queries.getContextualType(arrow) !== undefined);
+  const idIdentifier = findIdentifierByText(index, "id", (node) => node?.Parent?.Kind === KindCallExpression);
+  const idType = queries.getTypeAtLocation(idIdentifier);
+  assert.equal(queries.getCallSignaturesOfType(idType).length, 1);
+  assert.equal(queries.getConstructSignaturesOfType(idType).length, 0);
 });
 
 test("public type-checker queries expose instantiated generic member types", () => {
@@ -89,7 +97,7 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   const queries = createTypeCheckerQueries(program);
   const narrowedCurrent = findIdentifierByText(index, "current", (node) => node?.Parent?.Kind === KindExpressionStatement);
   const narrowedCurrentType = queries.getTypeAtLocation(narrowedCurrent);
-  assert.equal(narrowedCurrentType?.symbol?.Name, "PageValue");
+  assert.equal(queries.getSymbolName(queries.getTypeSymbol(narrowedCurrentType)), "PageValue");
 
   const valueAccess = findPropertyAccessByName(index, "value", (node) => node?.Parent?.Kind === KindExpressionStatement);
   const valueType = queries.getTypeAtLocation(valueAccess);

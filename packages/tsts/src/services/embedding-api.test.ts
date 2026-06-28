@@ -97,7 +97,8 @@ test("public embedding API drives a provider-backed program without internal imp
 
     type Pair = [INT, string];
     type Maybe = string | INT[];
-    class Box<T> { value!: T; }
+    class Box<T> { static create(): void {} value!: T; }
+    class DerivedBox<T> extends Box<T> {}
 
     declare const values: INT[];
     declare const boxed: Box<INT>;
@@ -126,6 +127,19 @@ test("public embedding API drives a provider-backed program without internal imp
   const resolvedModuleSymbol = session.checker.getResolvedExternalModuleSymbol(moduleSymbol);
   assert.ok(resolvedModuleSymbol !== undefined);
   assert.ok(session.checker.getExportsOfModule(resolvedModuleSymbol).some((symbol) => symbol?.Name === "consume"));
+
+  const typeImport = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsImportDeclaration(node)
+    && ast.text(ast.as.AsImportDeclaration(node)?.ModuleSpecifier) === "@acme/native/types.js");
+  assert.equal(session.ast.isTypeOnlyImportDeclaration(typeImport), true);
+
+  const derivedBox = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsClassDeclaration(node) && ast.text(ast.name(node)) === "DerivedBox");
+  assert.equal(session.ast.extendsHeritageElements(derivedBox).length, 1);
+
+  const createMethod = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsMethodDeclaration(node) && ast.text(ast.name(node)) === "create");
+  assert.equal(session.ast.hasModifierKind(createMethod, "static"), true);
 
   const consumeIdentifier = findNode(sourceFile, session.ast, (node, ast) => ast.is.IsIdentifier(node) && ast.text(node) === "consume");
   const consumeAlias = session.checker.getSymbolAtLocation(consumeIdentifier);
