@@ -204,6 +204,7 @@ test("provider virtual named exports use declaration name when exportName is omi
   assert.ok(sourceFile !== undefined);
   const diagnostics = session.getDiagnostics("all", sourceFile);
   assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+  assertNoExtensionFactConflicts(session);
 
   const importDeclaration = findNode(sourceFile, session.ast, (node, ast) =>
     ast.is.IsImportDeclaration(node)
@@ -221,9 +222,10 @@ test("provider virtual subpaths with the same package name keep independent expo
     files: {
       "/src/index.ts": `
         import type { INT } from "@acme/native/types.js";
-        import { out } from "@acme/native/lang.js";
+        import { field, out } from "@acme/native/lang.js";
         let value!: INT;
-        out(value);
+        const x = field<INT>();
+        out(x);
       `,
     },
     rootFiles: ["/src/index.ts"],
@@ -243,6 +245,7 @@ test("provider virtual subpaths with the same package name keep independent expo
   assert.ok(sourceFile !== undefined);
   const diagnostics = session.getDiagnostics("all", sourceFile);
   assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+  assertNoExtensionFactConflicts(session);
 
   const virtualFileNames = session.getSourceFiles()
     .map((file) => session.ast.getFileName(file))
@@ -489,17 +492,30 @@ function createSharedPackageVirtualModulesBindingProvider(): TargetBindingProvid
       return {
         moduleSpecifier: resolution.moduleSpecifier,
         providerModuleId: resolution.providerModuleId,
-        exports: [{
-          id: "out",
-          name: "out",
-          kind: "function",
-          targetIdentity: outIdentity,
-          signatures: [{
-            id: "out(number)",
-            parameters: [{ name: "value", type: { kind: "number" } }],
-            returnType: { kind: "void" },
-          }],
-        }],
+        exports: [
+          {
+            id: "field",
+            name: "field",
+            kind: "function",
+            signatures: [{
+              id: "field<T>()",
+              typeParameters: [{ name: "T" }],
+              parameters: [],
+              returnType: { kind: "type-parameter", name: "T" },
+            }],
+          },
+          {
+            id: "out",
+            name: "out",
+            kind: "function",
+            targetIdentity: outIdentity,
+            signatures: [{
+              id: "out(number)",
+              parameters: [{ name: "value", type: { kind: "number" } }],
+              returnType: { kind: "void" },
+            }],
+          },
+        ],
       };
     },
     getTargetIdentity(symbol) {
@@ -592,6 +608,10 @@ function targetOperation(operationId: string, targetOperation: string): TargetOp
     operationKind: "iteration",
     targetOperation,
   };
+}
+
+function assertNoExtensionFactConflicts(session: CompilerSession): void {
+  assert.equal(session.extensionHost?.diagnostics.all().filter((diagnostic) => diagnostic.extensionCode === "FACT_CONFLICT").length, 0);
 }
 
 function findTypeAliasType(sourceFile: SourceFile | undefined, ast: AstReader, name: string): Node {
