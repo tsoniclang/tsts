@@ -508,6 +508,50 @@ test("checker records provider-owned contextual target facts without changing TS
   assert.equal(contextualFact?.targetType?.id, "Acme.Func`2");
 });
 
+test("checker allows provider contextual target observers to defer without diagnostics", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      const callback: (value: number) => number = value => value;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-deferred-contextual-extension", {
+      identity: semanticProviderIdentity("acme-deferred-contextual-provider"),
+      recordContextualTargetType: () => deferObservation,
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const arrow = findFirstNodeByKind(index, KindArrowFunction);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  assert.equal(consumer.getContextualTargetTypeFact(arrow), undefined);
+  assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.numericCode === ExtensionHostDiagnosticCode.observationOwnerDeferred), false);
+});
+
 test("checker records provider-owned parameter mode facts from selected target signatures", () => {
   const providerDeclaration = providerDeclarationIdentity("acme-provider", "acme-native", "acme.runtime", "Contains", "Contains(T)");
   const selectedSignature = {

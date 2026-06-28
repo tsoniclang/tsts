@@ -329,6 +329,57 @@ test("source-semantics records out ref inref borrow move call-site facts without
   assert.equal(consumer.getFact(moveCall, flowStateFactKey)?.state, "moved");
 });
 
+test("source-semantics does not record marker facts for invalid marker arity", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int, ptr, fnptr } from "@example/native/types.js";
+    import { borrow, borrowMut, defaultof, field, move, out, struct } from "@example/native/lang.js";
+
+    let value!: number;
+    out();
+    out(value, value);
+    borrow();
+    borrow(value, value);
+    borrowMut();
+    borrowMut(value, value);
+    move();
+    move(value, value);
+    const missingStruct = struct();
+    const extraStruct = struct({}, {});
+    const fieldWithArgument = struct({ x: field<int>(value) });
+    const defaultWithArgument = defaultof<int>(value);
+    type MissingPointer = ptr;
+    type ExtraPointer = ptr<int, int>;
+    type MissingFunctionPointer = fnptr<[int]>;
+    type ExtraFunctionPointer = fnptr<[int], int, int>;
+  `);
+
+  const diagnostics = Program_GetSemanticDiagnostics(program, Background(), index);
+  const diagnosticText = diagnostics.map(Diagnostic_String).join("\n");
+  assert.match(diagnosticText, /Expected 1 arguments?, but got 0/);
+  assert.match(diagnosticText, /Expected 1 arguments?, but got 2/);
+  assert.match(diagnosticText, /Expected 0 arguments?, but got 1/);
+  assert.match(diagnosticText, /Generic type 'ptr' requires 1 type argument/);
+  assert.match(diagnosticText, /Generic type 'fnptr' requires 2 type argument/);
+  Program_BindSourceFiles(program);
+
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "out", 0), argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "out", 1), argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "borrow", 0), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "borrow", 1), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "borrowMut", 0), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "borrowMut", 1), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "move", 0), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "move", 1), flowStateFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "struct", 0), structFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "struct", 1), structFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "field", 0), fieldFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getCallExpression(index, "defaultof", 0), defaultValueFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getTypeAliasType(index, "MissingPointer"), pointerFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getTypeAliasType(index, "ExtraPointer"), pointerFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getTypeAliasType(index, "MissingFunctionPointer"), functionPointerFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getTypeAliasType(index, "ExtraFunctionPointer"), functionPointerFactKey), undefined);
+});
+
 test("source-semantics marker imports are alias and shadow safe", () => {
   const { extended, program, index } = createProgram(`
     import { out } from "@example/native/lang.js";
