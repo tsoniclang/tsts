@@ -8,6 +8,11 @@ import type {
   TargetOperationFact,
   TargetTypeRef,
 } from "./facts.js";
+import type { GoPtr } from "../go/compat.js";
+import type { SourceFile } from "../internal/ast/ast.js";
+import type { AstReader } from "../services/ast-reader.js";
+import type { TypeCheckerQueries } from "../services/type-checker.js";
+import type { TypeShapeQueries } from "../services/type-shape.js";
 import type { ExtensionDiagnostic, ExtensionDiagnosticStore, ExtensionEvidence, ExtensionFactResolver, ExtensionFactStore, ExtensionFactSubject, ExtensionHost } from "./host.js";
 
 export type ExtensionObservation<T> =
@@ -35,6 +40,11 @@ export interface ExtensionObservationContext<TObservation extends ExtensionObser
 
 export interface ExtensionCompilerQueryContext {
   readonly program: object;
+  readonly ast: AstReader;
+  readonly checker: TypeCheckerQueries;
+  readonly typeShape: TypeShapeQueries;
+  readonly getSourceFiles: () => readonly GoPtr<SourceFile>[];
+  readonly getSourceFile: (fileName: string) => GoPtr<SourceFile>;
 }
 
 export const ExtensionObservationPoint = {

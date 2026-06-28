@@ -54,6 +54,7 @@ export {
 } from "./facts.js";
 
 export type {
+  AttachExtensionHostToProgramOptions,
   CompilerExtension,
   CompilerExtensionKind,
   CompilerExtensionIdentity,

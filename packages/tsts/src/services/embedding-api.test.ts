@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  ExtensionLifecycleEvent,
   ExtensionObservationPoint,
   TstsProviderContractVersion,
   acceptObservation,
@@ -119,6 +120,57 @@ test("post-check iteration observations cannot make invalid TypeScript valid", (
   assert.ok(diagnostics.length > 0);
 
   assert.ok(session.finalizeExtensions() !== undefined);
+});
+
+test("lifecycle hooks receive public read-only compiler queries before fact finalization", () => {
+  let observedFileCount = 0;
+  let observedTypeName = "";
+  let observedNumberShape = false;
+  let observedProgram: object | undefined;
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    files: {
+      "/src/index.ts": "const value = 1; value;",
+    },
+    compilerOptions: {
+      module: "esnext",
+      moduleResolution: "bundler",
+      strict: true,
+      target: "es2022",
+    },
+    extensionHostOptions: {
+      activeTarget: "acme-native",
+      extensions: [{
+        identity: {
+          id: "acme.lifecycle-reader",
+          version: "1.0.0",
+          capabilityNamespace: "acme-lifecycle-reader",
+        },
+        initialize(context): void {
+          context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
+            observedProgram = lifecycleContext.compiler.program;
+            observedFileCount = lifecycleContext.compiler.getSourceFiles().length;
+            const sourceFile = lifecycleContext.compiler.getSourceFile("/src/index.ts");
+            const valueUse = findNode(sourceFile, lifecycleContext.compiler.ast, (node, ast) =>
+              ast.is.IsIdentifier(node) && ast.text(node) === "value");
+            const valueType = lifecycleContext.compiler.checker.getTypeAtLocation(valueUse);
+            observedTypeName = lifecycleContext.compiler.checker.typeToString(valueType);
+            observedNumberShape = lifecycleContext.compiler.typeShape.isNumberLike(valueType);
+          });
+        },
+      }],
+    },
+  });
+
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  const diagnostics = session.getDiagnostics("semantic", sourceFile);
+  assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+  assert.ok(session.finalizeExtensions() !== undefined);
+  assert.equal(observedProgram, session.program);
+  assert.ok(observedFileCount > 0);
+  assert.equal(observedTypeName, "1");
+  assert.equal(observedNumberShape, true);
 });
 
 function createEmbeddingSession(sourceText: string): CompilerSession {
