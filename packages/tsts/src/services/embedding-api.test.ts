@@ -215,6 +215,45 @@ test("provider virtual named exports use declaration name when exportName is omi
   assert.ok(session.checker.getExportsOfModule(resolvedModuleSymbol).some((symbol) => symbol?.Name === "out"));
 });
 
+test("provider virtual subpaths with the same package name keep independent exports", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    files: {
+      "/src/index.ts": `
+        import type { INT } from "@acme/native/types.js";
+        import { out } from "@acme/native/lang.js";
+        let value!: INT;
+        out(value);
+      `,
+    },
+    rootFiles: ["/src/index.ts"],
+    compilerOptions: {
+      module: "esnext",
+      moduleResolution: "bundler",
+      strict: true,
+      target: "es2022",
+    },
+    extensionHostOptions: {
+      activeTarget: "acme-native",
+      extensions: [createSharedPackageVirtualModulesExtension()],
+    },
+  });
+
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  const diagnostics = session.getDiagnostics("all", sourceFile);
+  assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+
+  const virtualFileNames = session.getSourceFiles()
+    .map((file) => session.ast.getFileName(file))
+    .filter((fileName) => fileName.startsWith("tsts-provider://acme/native-"))
+    .sort();
+  assert.deepEqual(virtualFileNames, [
+    "tsts-provider://acme/native-lang",
+    "tsts-provider://acme/native-types",
+  ]);
+});
+
 test("post-check iteration observations cannot make invalid TypeScript valid", () => {
   const session = createEmbeddingSession(`
     declare const notIterable: number;
@@ -354,6 +393,19 @@ function createNameFallbackRuntimeExtension(): CompilerExtension {
   };
 }
 
+function createSharedPackageVirtualModulesExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme.shared-package-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-shared-package",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider(createSharedPackageVirtualModulesBindingProvider()), true);
+    },
+  };
+}
+
 function createAcmeRuntimeBindingProvider(): TargetBindingProvider {
   const consumeIdentity: TargetIdentity = {
     target: "acme-native",
@@ -394,6 +446,64 @@ function createAcmeRuntimeBindingProvider(): TargetBindingProvider {
     },
     getTargetIdentity(symbol) {
       return symbol.moduleSpecifier === "@acme/runtime.js" && symbol.exportName === "consume" ? consumeIdentity : undefined;
+    },
+  };
+}
+
+function createSharedPackageVirtualModulesBindingProvider(): TargetBindingProvider {
+  const outIdentity: TargetIdentity = {
+    target: "acme-native",
+    id: "Acme.Native.out",
+    displayName: "Acme.Native.out",
+  };
+  return {
+    identity: providerIdentity("acme.shared-package-binding", "binding"),
+    ownsModule(specifier) {
+      return specifier === "@acme/native/types.js" || specifier === "@acme/native/lang.js"
+        ? { kind: "owned" }
+        : { kind: "unowned" };
+    },
+    resolveModule(specifier) {
+      return {
+        kind: "virtual",
+        moduleSpecifier: specifier,
+        virtualFileName: specifier.endsWith("/types.js") ? "tsts-provider://acme/native-types" : "tsts-provider://acme/native-lang",
+        providerModuleId: specifier.endsWith("/types.js") ? "acme-native-types" : "acme-native-lang",
+        packageName: "@acme/native",
+        packageVersion: "1.0.0",
+      };
+    },
+    getDeclarationModel(resolution: ProviderModuleResolution): ProviderDeclarationModel {
+      if (resolution.moduleSpecifier === "@acme/native/types.js") {
+        return {
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "INT",
+            name: "INT",
+            kind: "type",
+            type: { kind: "number" },
+          }],
+        };
+      }
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: [{
+          id: "out",
+          name: "out",
+          kind: "function",
+          targetIdentity: outIdentity,
+          signatures: [{
+            id: "out(number)",
+            parameters: [{ name: "value", type: { kind: "number" } }],
+            returnType: { kind: "void" },
+          }],
+        }],
+      };
+    },
+    getTargetIdentity(symbol) {
+      return symbol.moduleSpecifier === "@acme/native/lang.js" && symbol.exportName === "out" ? outIdentity : undefined;
     },
   };
 }
