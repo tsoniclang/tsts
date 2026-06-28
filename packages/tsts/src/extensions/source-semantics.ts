@@ -23,15 +23,18 @@ import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImpo
 import {
   KindCallExpression,
   KindExportDeclaration,
+  KindIdentifier,
   KindImportDeclaration,
   KindNamedImports,
   KindNamedExports,
   KindNamespaceImport,
+  KindNumericLiteral,
   KindObjectLiteralExpression,
   KindPropertyAccessExpression,
   KindPropertyAssignment,
   KindPropertyDeclaration,
   KindQualifiedName,
+  KindStringLiteral,
   KindTypeKeyword,
   KindTypeReference,
   KindTupleType,
@@ -467,8 +470,14 @@ function recordFieldMarker(
     return;
   }
   const propertyAssignment = callExpression?.Parent?.Kind === KindPropertyAssignment ? callExpression.Parent : undefined;
-  const nameNode = propertyAssignment === undefined ? undefined : (Node_Name(propertyAssignment) ?? Node_PropertyName(propertyAssignment));
-  const name = Node_Text(nameNode);
+  if (propertyAssignment === undefined) {
+    return;
+  }
+  const nameNode = Node_Name(propertyAssignment) ?? Node_PropertyName(propertyAssignment);
+  const name = getStaticSourceSemanticsNameText(nameNode);
+  if (name === undefined) {
+    return;
+  }
   const fact = {
     name,
     type: fieldType,
@@ -716,26 +725,42 @@ function resolveSourceSemanticsMarkerFromImportIndex<TMarker extends { readonly 
   }
   if (node.Kind === KindPropertyAccessExpression) {
     const receiver = AsPropertyAccessExpression(node)?.Expression;
-    const receiverName = Node_Text(receiver);
+    const receiverName = getIdentifierText(receiver);
+    if (receiverName === undefined) {
+      return undefined;
+    }
     const namespaceBinding = namespacesByLocalName.get(receiverName);
     if (namespaceBinding === undefined || isImportBindingShadowed(receiver, receiverName)) {
       return undefined;
     }
-    const propertyName = Node_Text(Node_Name(node));
+    const propertyName = getStaticSourceSemanticsNameText(Node_Name(node));
+    if (propertyName === undefined) {
+      return undefined;
+    }
     const marker = getModuleMarker(namespaceBinding.moduleIdentity, capability, propertyName);
     return marker as TMarker | undefined;
   }
   if (node.Kind === KindQualifiedName) {
     const qualifiedName = AsQualifiedName(node);
-    const leftName = Node_Text(qualifiedName?.Left);
+    const leftName = getIdentifierText(qualifiedName?.Left);
+    if (leftName === undefined) {
+      return undefined;
+    }
     const namespaceBinding = namespacesByLocalName.get(leftName);
     if (namespaceBinding === undefined || isImportBindingShadowed(qualifiedName?.Left, leftName)) {
       return undefined;
     }
-    const marker = getModuleMarker(namespaceBinding.moduleIdentity, capability, Node_Text(qualifiedName?.Right));
+    const exportName = getIdentifierText(qualifiedName?.Right);
+    if (exportName === undefined) {
+      return undefined;
+    }
+    const marker = getModuleMarker(namespaceBinding.moduleIdentity, capability, exportName);
     return marker as TMarker | undefined;
   }
-  const localName = Node_Text(node);
+  const localName = getIdentifierText(node);
+  if (localName === undefined) {
+    return undefined;
+  }
   const binding = markersByLocalName.get(localName);
   return binding !== undefined && !isImportBindingShadowed(node, localName) ? binding.marker : undefined;
 }
@@ -948,6 +973,21 @@ function isImportBindingShadowed(node: GoPtr<Node>, localName: string): boolean 
 
 function declarationListContainsName(declarations: readonly GoPtr<Node>[], localName: string): boolean {
   return declarations.some((declaration) => Node_Text(Node_Name(declaration)) === localName);
+}
+
+function getIdentifierText(node: GoPtr<Node>): string | undefined {
+  return node?.Kind === KindIdentifier ? Node_Text(node) : undefined;
+}
+
+function getStaticSourceSemanticsNameText(node: GoPtr<Node>): string | undefined {
+  switch (node?.Kind) {
+    case KindIdentifier:
+    case KindStringLiteral:
+    case KindNumericLiteral:
+      return Node_Text(node);
+    default:
+      return undefined;
+  }
 }
 
 function resolveQualifiedPrimitiveReference(
