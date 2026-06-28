@@ -5,11 +5,15 @@ import {
   ExtensionObservationPoint,
   TstsProviderContractVersion,
   acceptObservation,
+  attributeFactKey,
   createCompilerSessionFromFiles,
   createExtensionConsumerQueries,
   createSourceSemanticsExtension,
+  defaultValueFactKey,
+  fieldFactKey,
   formatDiagnostics,
   sourcePrimitive,
+  structFactKey,
 } from "../index.js";
 import type {
   AstReader,
@@ -25,6 +29,13 @@ import type {
   TargetOperationFact,
   TargetSemanticProvider,
 } from "../index.js";
+
+test("public root exports source metadata fact keys", () => {
+  assert.equal(attributeFactKey.name, "attribute");
+  assert.equal(defaultValueFactKey.name, "defaultValue");
+  assert.equal(fieldFactKey.name, "field");
+  assert.equal(structFactKey.name, "struct");
+});
 
 test("public embedding API drives a provider-backed program without internal imports", () => {
   const session = createEmbeddingSession(`
