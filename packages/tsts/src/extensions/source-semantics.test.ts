@@ -15,6 +15,7 @@ import {
   Node_Symbol,
   Node_Text,
   Node_Type,
+  Node_TypeArguments,
   SourceFile_FileName,
 } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
@@ -462,6 +463,36 @@ test("source-semantics records struct field attribute and default facts from can
   assert.equal(consumer.getFieldFact(xFieldCall)?.name, "x");
   assert.equal(consumer.getAttributeFact(routeSymbol)?.attributeName, "RouteAttribute");
   assert.equal(consumer.getDefaultValueFact(zeroSymbol)?.type, defaultValueFact?.type);
+});
+
+test("source-semantics ignores non-field marker positions without lifecycle failures", () => {
+  const { extended, program, index } = createProgram(`
+    import type { int } from "@example/native/types.js";
+    import { attribute, field } from "@example/native/lang.js";
+
+    class RouteAttribute {}
+    type User = { id: int };
+    const value = field<int>();
+    const route = attribute<User>().add(RouteAttribute);
+  `, new Map([
+    ["/src/node_modules/@example/native/lang.d.ts", [
+      "export declare function field<T>(): T;",
+      "export declare function attribute<T>(value?: unknown): { add(value: unknown): unknown };",
+    ].join("\n")],
+  ]));
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  assert.equal(extended.extensionHost.diagnostics.all().some((diagnostic) => diagnostic.extensionCode === "LIFECYCLE_HOOK_FAILED"), false);
+
+  const fieldCall = getCallExpression(index, "field", 0);
+  const fieldType = (Node_TypeArguments(fieldCall) ?? [])[0];
+  assert.equal(extended.extensionHost.facts.get(fieldCall, fieldFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(fieldType, sourcePrimitiveFactKey)?.kind, "int32");
+
+  const attributeCall = getCallExpression(index, "attribute", 0);
+  assert.equal(extended.extensionHost.facts.get(attributeCall, attributeFactKey)?.attributeName, "User");
 });
 
 function createProgram(indexText: string, extraFiles: ReadonlyMap<string, string> = new Map()): {
