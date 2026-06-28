@@ -110,8 +110,15 @@ test("extension host attaches from creation options to constructed program", () 
 
   assert.equal(extendedProgram?.program, program);
   assert.equal(extendedProgram?.extensionHost, extendedOptions.extensionHost);
+  assert.equal(extendedOptions.extensionHost.program, program);
   assert.equal(getExtensionHost(program), extendedOptions.extensionHost);
   assert.equal(Object.prototype.hasOwnProperty.call(program, "__extensionHost"), false);
+
+  const checkerProgramAdapter = {};
+  const adapterAttachment = attachExtensionHostToProgram(program, checkerProgramAdapter, { bindCompilerProgram: false });
+  assert.equal(adapterAttachment?.extensionHost, extendedOptions.extensionHost);
+  assert.equal(getExtensionHost(checkerProgramAdapter), extendedOptions.extensionHost);
+  assert.equal(extendedOptions.extensionHost.program, program);
 });
 
 test("extension ordering is deterministic and honors dependencies", () => {
@@ -547,6 +554,7 @@ test("observation hooks receive a read-only compiler query context", () => {
   const call = {};
   const callee = {};
   let observedProgram: object | undefined;
+  let observedQueryFacade = false;
   const host = new ExtensionHost(program, {
     extensions: [
       extension("acme-target", {
@@ -554,6 +562,10 @@ test("observation hooks receive a read-only compiler query context", () => {
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (_request, observationContext) => {
             observedProgram = observationContext.compiler.program;
+            observedQueryFacade = typeof observationContext.compiler.ast.kindName === "function"
+              && typeof observationContext.compiler.checker.getTypeAtLocation === "function"
+              && typeof observationContext.compiler.typeShape.typeToString === "function"
+              && typeof observationContext.compiler.getSourceFiles === "function";
             return acceptObservation({
               selectedSignature: selectedSignature("acme.Native.call(i32)"),
             });
@@ -571,6 +583,7 @@ test("observation hooks receive a read-only compiler query context", () => {
 
   assert.equal(result.kind, "accept");
   assert.equal(observedProgram, program);
+  assert.equal(observedQueryFacade, true);
 });
 
 test("target binding providers own and resolve virtual modules without file-backed side data", () => {
@@ -895,6 +908,8 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
   const sourceFile = {};
   const finalizationMarker = {};
   const afterFinalize = {};
+  let lifecycleCompilerProgram: object | undefined;
+  let lifecycleQueryFacade = false;
   const host = new ExtensionHost({}, {
     extensions: [
       extension("source-semantics", {
@@ -904,7 +919,12 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
               context.facts.set(request.sourceFile, primitiveFactKey, "int32");
             }
           });
-          context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, () => {
+          context.registerLifecycleHook(ExtensionLifecycleEvent.beforeSemanticsFinalized, (_request, lifecycleContext) => {
+            lifecycleCompilerProgram = lifecycleContext.compiler.program;
+            lifecycleQueryFacade = typeof lifecycleContext.compiler.ast.kindName === "function"
+              && typeof lifecycleContext.compiler.checker.getTypeAtLocation === "function"
+              && typeof lifecycleContext.compiler.typeShape.typeToString === "function"
+              && typeof lifecycleContext.compiler.getSourceFile === "function";
             context.facts.set(finalizationMarker, primitiveFactKey, "int64");
           });
         },
@@ -920,6 +940,8 @@ test("lifecycle hooks run before semantic finalization seals facts", () => {
 
   host.finalizeSemantics();
   assert.equal(host.facts.get(finalizationMarker, primitiveFactKey), "int64");
+  assert.equal(lifecycleCompilerProgram, host.program);
+  assert.equal(lifecycleQueryFacade, true);
   assert.equal(host.facts.set(afterFinalize, primitiveFactKey, "uint32"), "sealed");
 });
 

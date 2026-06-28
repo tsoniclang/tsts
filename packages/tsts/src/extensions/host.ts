@@ -2,7 +2,14 @@ export type ExtensionDiagnosticCategory = "error" | "warning" | "suggestion";
 
 export type ExtensionFactSubject = object;
 
+import type { GoPtr } from "../go/compat.js";
+import type { Program } from "../internal/compiler/program.js";
+import { Program_GetSourceFile, Program_GetSourceFiles } from "../internal/compiler/program.js";
+import { createAstReader } from "../services/ast-reader.js";
+import { createTypeCheckerQueries } from "../services/type-checker.js";
+import { createTypeShapeQueries } from "../services/type-shape.js";
 import type {
+  ExtensionCompilerQueryContext,
   ExtensionObservation,
   ExtensionObservationContext,
   ExtensionObservationHook,
@@ -363,6 +370,7 @@ export const ExtensionLifecycleEvent = {
 export interface ExtensionLifecycleContext {
   readonly event: string;
   readonly extensionId: string;
+  readonly compiler: ExtensionCompilerQueryContext;
   readonly host: ExtensionHost;
 }
 
@@ -422,6 +430,10 @@ interface RegisteredLifecycleHook {
 export interface ExtendedProgram<TProgram extends object = object> {
   readonly program: TProgram;
   readonly extensionHost: ExtensionHost;
+}
+
+export interface AttachExtensionHostToProgramOptions {
+  readonly bindCompilerProgram?: boolean;
 }
 
 export function defineExtensionFactKey<T>(options: ExtensionFactKeyOptions<T>): ExtensionFactKey<T> {
@@ -946,7 +958,6 @@ export class ProviderRegistry {
 }
 
 export class ExtensionHost {
-  readonly program: object;
   readonly diagnostics: ExtensionDiagnosticStore;
   readonly facts: ExtensionFactStore;
   readonly factResolver: ExtensionFactResolver;
@@ -959,11 +970,13 @@ export class ExtensionHost {
   readonly #observationHooks = new Map<ExtensionObservationPointName, RegisteredObservationHook[]>();
   readonly #lifecycleHooks = new Map<string, RegisteredLifecycleHook[]>();
   readonly #consumerSubjectIds = new WeakMap<object, number>();
+  #program: object;
+  #compilerContext: ExtensionCompilerQueryContext | undefined;
   #nextConsumerSubjectId = 1;
   #finalized = false;
 
   constructor(program: object, options: ExtensionHostOptions = {}) {
-    this.program = program;
+    this.#program = program;
     this.diagnostics = new ExtensionDiagnosticStore();
     this.facts = new ExtensionFactStore(this.diagnostics);
     this.factResolver = new ExtensionFactResolver(this.facts, this.diagnostics);
@@ -985,6 +998,18 @@ export class ExtensionHost {
     this.extensions = validExtensions;
     this.#validateComposition(options);
     this.#initializeExtensions();
+  }
+
+  get program(): object {
+    return this.#program;
+  }
+
+  bindCompilerProgram(program: object): void {
+    if (this.#program === program) {
+      return;
+    }
+    this.#program = program;
+    this.#compilerContext = undefined;
   }
 
   registerObservationOwner(observation: ExtensionObservationPointName, extensionId: string): void {
@@ -1102,9 +1127,7 @@ export class ExtensionHost {
         observationResult = registered.hook(request, {
           observation,
           extensionId: registered.extensionId,
-          compiler: {
-            program: this.program,
-          },
+          compiler: this.getCompilerQueryContext(),
           host: this,
           facts: this.facts,
           factResolver: this.factResolver,
@@ -1177,6 +1200,7 @@ export class ExtensionHost {
         registered.hook(request, {
           event,
           extensionId: registered.extensionId,
+          compiler: this.getCompilerQueryContext(),
           host: this,
         });
       } catch (error) {
@@ -1202,6 +1226,21 @@ export class ExtensionHost {
 
   get finalized(): boolean {
     return this.#finalized;
+  }
+
+  getCompilerQueryContext(): ExtensionCompilerQueryContext {
+    if (this.#compilerContext === undefined) {
+      const program = this.program as GoPtr<Program>;
+      this.#compilerContext = {
+        program: this.program,
+        ast: createAstReader(),
+        checker: createTypeCheckerQueries(program),
+        typeShape: createTypeShapeQueries(program),
+        getSourceFiles: () => Program_GetSourceFiles(program) ?? [],
+        getSourceFile: (fileName) => Program_GetSourceFile(program, fileName),
+      };
+    }
+    return this.#compilerContext;
   }
 
   assertFinalizedForConsumer(consumer: string): boolean {
@@ -1366,7 +1405,7 @@ export function attachExtensionHost<TProgram extends object>(program: TProgram, 
   return Object.freeze({ program, extensionHost: host });
 }
 
-export function attachExtensionHostToProgram<TProgram extends object>(hostOwner: object, program: TProgram): ExtendedProgram<TProgram> | undefined {
+export function attachExtensionHostToProgram<TProgram extends object>(hostOwner: object, program: TProgram, options: AttachExtensionHostToProgramOptions = {}): ExtendedProgram<TProgram> | undefined {
   const host = attachedExtensionHosts.get(hostOwner);
   if (host === undefined) {
     return undefined;
@@ -1374,6 +1413,9 @@ export function attachExtensionHostToProgram<TProgram extends object>(hostOwner:
   const existing = attachedExtensionHosts.get(program);
   if (existing !== undefined && existing !== host) {
     throw new Error("Program already has a different ExtensionHost.");
+  }
+  if (options.bindCompilerProgram !== false) {
+    host.bindCompilerProgram(program);
   }
   attachedExtensionHosts.set(program, host);
   return Object.freeze({ program, extensionHost: host });

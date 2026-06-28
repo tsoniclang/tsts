@@ -619,7 +619,7 @@ export function Program_as_checker_Program(receiver: GoPtr<Program>): Program_e3
     GetRedirectForResolution: (file: HasFileName): GoPtr<ParsedCommandLine> => Program_GetRedirectForResolution(receiver, file),
   };
   if (receiver !== undefined) {
-    attachExtensionHostToProgram(receiver, adapter);
+    attachExtensionHostToProgram(receiver, adapter, { bindCompilerProgram: false });
   }
   return adapter;
 }
