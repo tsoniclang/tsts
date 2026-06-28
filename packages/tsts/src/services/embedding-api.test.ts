@@ -177,6 +177,44 @@ test("public embedding API drives a provider-backed program without internal imp
   assert.throws(() => consumer.mustSelectedTargetIteration(boxedValue, "emitting non-iteration"), /requires extension fact/);
 });
 
+test("provider virtual named exports use declaration name when exportName is omitted", () => {
+  const session = createCompilerSessionFromFiles({
+    currentDirectory: "/src",
+    files: {
+      "/src/index.ts": `
+        import { out } from "@acme/native/lang.js";
+        let value = 1;
+        out(value);
+      `,
+    },
+    rootFiles: ["/src/index.ts"],
+    compilerOptions: {
+      module: "esnext",
+      moduleResolution: "bundler",
+      strict: true,
+      target: "es2022",
+    },
+    extensionHostOptions: {
+      activeTarget: "acme-native",
+      extensions: [createNameFallbackRuntimeExtension()],
+    },
+  });
+
+  const sourceFile = session.getSourceFile("/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  const diagnostics = session.getDiagnostics("all", sourceFile);
+  assert.equal(diagnostics.length, 0, formatDiagnostics(diagnostics.filter((diagnostic) => diagnostic !== undefined), "/src"));
+
+  const importDeclaration = findNode(sourceFile, session.ast, (node, ast) =>
+    ast.is.IsImportDeclaration(node)
+    && ast.text(ast.as.AsImportDeclaration(node)?.ModuleSpecifier) === "@acme/native/lang.js");
+  const moduleSpecifier = session.ast.as.AsImportDeclaration(importDeclaration)?.ModuleSpecifier;
+  const moduleSymbol = session.checker.getModuleSymbolFromSpecifier(moduleSpecifier);
+  const resolvedModuleSymbol = session.checker.getResolvedExternalModuleSymbol(moduleSymbol);
+  assert.ok(resolvedModuleSymbol !== undefined);
+  assert.ok(session.checker.getExportsOfModule(resolvedModuleSymbol).some((symbol) => symbol?.Name === "out"));
+});
+
 test("post-check iteration observations cannot make invalid TypeScript valid", () => {
   const session = createEmbeddingSession(`
     declare const notIterable: number;
@@ -303,6 +341,19 @@ function createAcmeRuntimeExtension(): CompilerExtension {
   };
 }
 
+function createNameFallbackRuntimeExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme.name-fallback-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-name-fallback",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider(createNameFallbackRuntimeBindingProvider()), true);
+    },
+  };
+}
+
 function createAcmeRuntimeBindingProvider(): TargetBindingProvider {
   const consumeIdentity: TargetIdentity = {
     target: "acme-native",
@@ -343,6 +394,50 @@ function createAcmeRuntimeBindingProvider(): TargetBindingProvider {
     },
     getTargetIdentity(symbol) {
       return symbol.moduleSpecifier === "@acme/runtime.js" && symbol.exportName === "consume" ? consumeIdentity : undefined;
+    },
+  };
+}
+
+function createNameFallbackRuntimeBindingProvider(): TargetBindingProvider {
+  const outIdentity: TargetIdentity = {
+    target: "acme-native",
+    id: "Acme.Native.out",
+    displayName: "Acme.Native.out",
+  };
+  return {
+    identity: providerIdentity("acme.name-fallback-binding", "binding"),
+    ownsModule(specifier) {
+      return specifier === "@acme/native/lang.js" ? { kind: "owned" } : { kind: "unowned" };
+    },
+    resolveModule(specifier) {
+      return {
+        kind: "virtual",
+        moduleSpecifier: specifier,
+        virtualFileName: "tsts-provider://acme/native-lang",
+        providerModuleId: "acme-native-lang",
+        packageName: "@acme/native",
+        packageVersion: "1.0.0",
+      };
+    },
+    getDeclarationModel(resolution: ProviderModuleResolution): ProviderDeclarationModel {
+      return {
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: [{
+          id: "out",
+          name: "out",
+          kind: "function",
+          targetIdentity: outIdentity,
+          signatures: [{
+            id: "out(number)",
+            parameters: [{ name: "value", type: { kind: "number" } }],
+            returnType: { kind: "void" },
+          }],
+        }],
+      };
+    },
+    getTargetIdentity(symbol) {
+      return symbol.moduleSpecifier === "@acme/native/lang.js" && symbol.exportName === "out" ? outIdentity : undefined;
     },
   };
 }
