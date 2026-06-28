@@ -11,7 +11,9 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "build": "npm --workspace @tsonic/tsts run build",
     "clean": "rm -rf .temp .tests .tsonic packages/tsts/.tests packages/tsts/generated packages/tsts/generated-test",
+    "package:check": "npm --workspace @tsonic/tsts run package:check",
     "porter:scan": "node packages/tsts/tools/porter/porter.mjs scan",
     "porter:status": "node packages/tsts/tools/porter/porter.mjs status",
     "porter:verify": "node packages/tsts/tools/porter/porter.mjs verify --strict-port",
