@@ -5,6 +5,7 @@ import {
   ExtensionObservationPoint,
   TstsProviderContractVersion,
   acceptObservation,
+  attachExtensionHostToProgram,
   attributeFactKey,
   createCompilerSessionFromFiles,
   createExtensionConsumerQueries,
@@ -19,12 +20,20 @@ import type {
   AstReader,
   CompilerExtension,
   CompilerSession,
+  DefaultValueFact,
+  ExtensionDiagnosticSourceSpan,
   ExtensionFactSubject,
   Node,
   ProviderDeclarationModel,
   ProviderModuleResolution,
+  ProviderVirtualDeclarationDocument,
+  RequiredProviderModuleSpec,
+  SourceCallMarkerKind,
   SourceFile,
+  SourceSemanticsModuleCapability,
+  SourceTypeMarkerKind,
   TargetBindingProvider,
+  TargetConversionFact,
   TargetIdentity,
   TargetOperationFact,
   TargetSemanticProvider,
@@ -35,6 +44,45 @@ test("public root exports source metadata fact keys", () => {
   assert.equal(defaultValueFactKey.name, "defaultValue");
   assert.equal(fieldFactKey.name, "field");
   assert.equal(structFactKey.name, "struct");
+});
+
+test("public root exposes generic extension host contracts", () => {
+  const capability: SourceSemanticsModuleCapability = "primitive";
+  const callMarker: SourceCallMarkerKind = "defaultof";
+  const typeMarker: SourceTypeMarkerKind = "ptr";
+  const subject = {};
+  const sourceSpan = { sourceFile: subject, pos: 1, end: 2 } satisfies ExtensionDiagnosticSourceSpan;
+  const requiredModule = { specifierPrefix: "@acme/native/" } satisfies RequiredProviderModuleSpec;
+  const defaultValue = { type: subject } satisfies DefaultValueFact;
+  const conversion = { convertedType: { kind: "source-primitive", name: "int32" } } satisfies TargetConversionFact;
+  const virtualDocument = {
+    uri: "tsts-provider://acme/native",
+    fileName: "tsts-provider://acme/native/index.ts",
+    moduleSpecifier: "@acme/native/index.js",
+    providerModuleId: "acme.native",
+    provider: {
+      id: "acme.provider",
+      version: "1",
+      target: "acme-target",
+      extensionContractVersion: TstsProviderContractVersion,
+    },
+    context: {},
+    declarationModel: {
+      moduleSpecifier: "@acme/native/index.js",
+      providerModuleId: "acme.native",
+      exports: [],
+    },
+    sourceText: "",
+    readOnly: true,
+  } satisfies ProviderVirtualDeclarationDocument;
+
+  assert.equal(typeof attachExtensionHostToProgram, "function");
+  assert.deepEqual([capability, callMarker, typeMarker], ["primitive", "defaultof", "ptr"]);
+  assert.equal(sourceSpan.sourceFile, subject);
+  assert.equal(requiredModule.specifierPrefix, "@acme/native/");
+  assert.equal(defaultValue.type, subject);
+  assert.equal(conversion.convertedType?.kind, "source-primitive");
+  assert.equal(virtualDocument.provider.extensionContractVersion, TstsProviderContractVersion);
 });
 
 test("public embedding API drives a provider-backed program without internal imports", () => {

@@ -109,12 +109,15 @@ export type {
   BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
 export type {
+  SourceCallMarkerKind,
   SourceSemanticsExtensionOptions,
   SourceCallMarkerDeclaration,
   SourceSemanticsExportDeclaration,
+  SourceSemanticsModuleCapability,
   SourceSemanticsModule,
   SourceSemanticsModuleIdentity,
   SourcePrimitiveDeclaration,
+  SourceTypeMarkerKind,
   SourceTypeMarkerDeclaration,
 } from "./source-semantics.js";
 export type {
