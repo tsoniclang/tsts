@@ -328,6 +328,33 @@ test("source-semantics records out ref inref borrow move call-site facts without
   assert.equal(consumer.getFact(moveCall, flowStateFactKey)?.state, "moved");
 });
 
+test("source-semantics marker imports are alias and shadow safe", () => {
+  const { extended, program, index } = createProgram(`
+    import { out } from "@example/native/lang.js";
+    import * as lang from "@example/native/lang.js";
+
+    function callShadow(out: (value: number) => number) {
+      let value!: number;
+      out(value);
+    }
+
+    function namespaceShadow(lang: { out(value: number): number }) {
+      let value!: number;
+      lang.out(value);
+    }
+  `);
+
+  assertCleanProgram(program, index);
+  Program_BindSourceFiles(program);
+
+  const shadowedOutCall = getCallExpression(index, "out", 0);
+  const shadowedNamespaceCall = getCallExpression(index, "out", 1);
+  assert.equal(extended.extensionHost.facts.get(shadowedOutCall, argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(shadowedOutCall), argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(shadowedNamespaceCall, argumentPassingFactKey), undefined);
+  assert.equal(extended.extensionHost.facts.get(getFirstCallArgument(shadowedNamespaceCall), argumentPassingFactKey), undefined);
+});
+
 test("source-semantics records ptr and fnptr type facts from canonical type marker imports", () => {
   const { extended, program, index } = createProgram(`
     import type { int, ptr, fnptr } from "@example/native/types.js";

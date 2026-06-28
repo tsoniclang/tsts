@@ -188,6 +188,25 @@ export interface ProviderModuleContext {
   readonly resolutionMode?: unknown;
   readonly activeTarget?: string;
   readonly activeSurface?: string;
+  readonly importSlice?: ProviderImportSlice;
+}
+
+export type ProviderImportSliceKind = "bare" | "default" | "named" | "namespace" | "mixed" | "reexport" | "dynamic" | "synthetic" | "unknown";
+
+export type ProviderImportRequestKind = "type" | "value" | "unknown";
+
+export interface ProviderRequestedExport {
+  readonly exportedName: string;
+  readonly localName?: string;
+  readonly kind?: ProviderImportRequestKind;
+}
+
+export interface ProviderImportSlice {
+  readonly moduleSpecifier: string;
+  readonly kind: ProviderImportSliceKind;
+  readonly requestedExports?: readonly ProviderRequestedExport[];
+  readonly broadImport?: boolean;
+  readonly typeOnly?: boolean;
 }
 
 export type ProviderOwnership =
@@ -210,6 +229,7 @@ export type ProviderDeclarationKind = "type" | "value" | "namespace" | "function
 export interface ProviderTypeParameterDeclaration {
   readonly name: string;
   readonly constraints?: readonly ProviderTypeExpression[];
+  readonly defaultType?: ProviderTypeExpression;
   readonly variance?: "in" | "out" | "invariant" | "target-defined";
 }
 
@@ -232,6 +252,7 @@ export type ProviderTypeExpression =
   | { readonly kind: "intersection"; readonly types: readonly ProviderTypeExpression[] }
   | { readonly kind: "function"; readonly parameters: readonly ProviderParameterDeclaration[]; readonly returnType: ProviderTypeExpression; readonly typeParameters?: readonly ProviderTypeParameterDeclaration[] }
   | { readonly kind: "literal"; readonly value: string | number | boolean | null }
+  | { readonly kind: "provider-ref"; readonly moduleSpecifier: string; readonly exportName: string; readonly typeArguments?: readonly ProviderTypeExpression[] }
   | { readonly kind: "opaque"; readonly id: string; readonly displayName?: string; readonly sourceShape?: ProviderTypeExpression };
 
 export interface ProviderParameterDeclaration {
@@ -239,6 +260,7 @@ export interface ProviderParameterDeclaration {
   readonly type: ProviderTypeExpression;
   readonly optional?: boolean;
   readonly rest?: boolean;
+  readonly defaultType?: ProviderTypeExpression;
 }
 
 export interface ProviderSignatureDeclaration {
@@ -255,6 +277,8 @@ export interface ProviderMemberDeclaration {
   readonly name: string;
   readonly kind: "method" | "constructor" | "property" | "field" | "indexer";
   readonly static?: boolean;
+  readonly readonly?: boolean;
+  readonly optional?: boolean;
   readonly type?: ProviderTypeExpression;
   readonly signatures?: readonly ProviderSignatureDeclaration[];
   readonly documentation?: string;
@@ -267,14 +291,28 @@ export interface ProviderExportDeclaration {
   readonly targetIdentity?: TargetIdentity;
   readonly type?: ProviderTypeExpression;
   readonly typeParameters?: readonly ProviderTypeParameterDeclaration[];
+  readonly heritage?: readonly ProviderHeritageDeclaration[];
   readonly members?: readonly ProviderMemberDeclaration[];
   readonly signatures?: readonly ProviderSignatureDeclaration[];
   readonly documentation?: string;
 }
 
+export interface ProviderImportDeclaration {
+  readonly moduleSpecifier: string;
+  readonly namedImports?: readonly ProviderRequestedExport[];
+  readonly namespaceImport?: string;
+  readonly typeOnly?: boolean;
+}
+
+export interface ProviderHeritageDeclaration {
+  readonly kind: "extends" | "implements";
+  readonly type: ProviderTypeExpression;
+}
+
 export interface ProviderDeclarationModel {
   readonly moduleSpecifier: string;
   readonly providerModuleId: string;
+  readonly imports?: readonly ProviderImportDeclaration[];
   readonly exports: readonly ProviderExportDeclaration[];
   readonly evidence?: readonly ExtensionEvidence[];
 }
@@ -298,6 +336,7 @@ export interface ProviderResolvedModule {
   readonly provider: TargetBindingProvider;
   readonly resolution: ProviderModuleResolution;
   readonly declarationModel: ProviderDeclarationModel;
+  readonly context: ProviderModuleContext;
   readonly virtualSourceText: string;
   readonly virtualDocument: ProviderVirtualDeclarationDocument;
   readonly cacheKey: string;
@@ -309,6 +348,7 @@ export interface ProviderVirtualDeclarationDocument {
   readonly moduleSpecifier: string;
   readonly providerModuleId: string;
   readonly provider: ProviderIdentity;
+  readonly context: ProviderModuleContext;
   readonly declarationModel: ProviderDeclarationModel;
   readonly sourceText: string;
   readonly readOnly: true;
@@ -832,6 +872,7 @@ export class ProviderRegistry {
       moduleSpecifier: resolution.moduleSpecifier,
       providerModuleId: resolution.providerModuleId,
       provider: owner.provider.identity,
+      context,
       declarationModel,
       sourceText: virtualSourceText,
       readOnly: true,
@@ -843,6 +884,7 @@ export class ProviderRegistry {
       provider: owner.provider,
       resolution,
       declarationModel,
+      context,
       virtualSourceText,
       virtualDocument,
       cacheKey,
@@ -1060,6 +1102,9 @@ export class ExtensionHost {
         observationResult = registered.hook(request, {
           observation,
           extensionId: registered.extensionId,
+          compiler: {
+            program: this.program,
+          },
           host: this,
           facts: this.facts,
           factResolver: this.factResolver,
@@ -1537,6 +1582,7 @@ function diagnosticRangesOverlap(left: ExtensionDiagnosticRange, right: Extensio
 }
 
 function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: string, context: ProviderModuleContext): string {
+  const importSlice = context.importSlice;
   return [
     identity.id,
     identity.version,
@@ -1548,6 +1594,10 @@ function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: strin
     String(context.resolutionMode ?? ""),
     context.activeTarget ?? "",
     context.activeSurface ?? "",
+    importSlice?.kind ?? "",
+    importSlice?.typeOnly === true ? "type" : "",
+    importSlice?.broadImport === true ? "broad" : "",
+    ...(importSlice?.requestedExports ?? []).map((request) => `${request.exportedName}:${request.localName ?? ""}:${request.kind ?? ""}`).sort(),
   ].join("\0");
 }
 
@@ -1556,19 +1606,34 @@ function renderProviderDeclarationModel(model: ProviderDeclarationModel): string
     `// @tsts-provider-module ${model.providerModuleId}`,
     `// @tsts-provider-specifier ${JSON.stringify(model.moduleSpecifier)}`,
   ];
+  for (const importDeclaration of model.imports ?? []) {
+    lines.push(renderProviderImportDeclaration(importDeclaration));
+  }
   for (const exportDeclaration of model.exports) {
     lines.push(renderProviderExportDeclaration(exportDeclaration));
   }
   return `${lines.join("\n")}\n`;
 }
 
+function renderProviderImportDeclaration(declaration: ProviderImportDeclaration): string {
+  const typePrefix = declaration.typeOnly === true ? "type " : "";
+  if (declaration.namespaceImport !== undefined) {
+    return `import ${typePrefix}* as ${declaration.namespaceImport} from ${JSON.stringify(declaration.moduleSpecifier)};`;
+  }
+  const namedImports = declaration.namedImports ?? [];
+  const names = namedImports.map((request) => request.localName !== undefined && request.localName !== request.exportedName
+    ? `${request.exportedName} as ${request.localName}`
+    : request.exportedName).join(", ");
+  return `import ${typePrefix}{ ${names} } from ${JSON.stringify(declaration.moduleSpecifier)};`;
+}
+
 function renderProviderExportDeclaration(declaration: ProviderExportDeclaration): string {
   const typeParameters = renderProviderTypeParameters(declaration.typeParameters ?? []);
   switch (declaration.kind) {
     case "class":
-      return `export declare class ${declaration.name}${typeParameters} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
+      return `export declare class ${declaration.name}${typeParameters}${renderProviderHeritage(declaration.heritage ?? [], "class")} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
     case "interface":
-      return `export interface ${declaration.name}${typeParameters} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
+      return `export interface ${declaration.name}${typeParameters}${renderProviderHeritage(declaration.heritage ?? [], "interface")} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
     case "function":
       return renderProviderSignatures(declaration.name, declaration.signatures ?? [])
         .map((signature) => `export declare function ${signature}`)
@@ -1586,12 +1651,25 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration)
   }
 }
 
+function renderProviderHeritage(heritage: readonly ProviderHeritageDeclaration[], declarationKind: "class" | "interface"): string {
+  const extendsTypes = heritage.filter((clause) => clause.kind === "extends").map((clause) => renderProviderTypeExpression(clause.type));
+  const implementsTypes = declarationKind === "class"
+    ? heritage.filter((clause) => clause.kind === "implements").map((clause) => renderProviderTypeExpression(clause.type))
+    : [];
+  return [
+    extendsTypes.length > 0 ? ` extends ${extendsTypes.join(", ")}` : "",
+    implementsTypes.length > 0 ? ` implements ${implementsTypes.join(", ")}` : "",
+  ].join("");
+}
+
 function renderProviderMembers(members: readonly ProviderMemberDeclaration[]): string {
   return members.map((member) => `  ${renderProviderMember(member)}`).join("\n");
 }
 
 function renderProviderMember(member: ProviderMemberDeclaration): string {
   const staticPrefix = member.static === true ? "static " : "";
+  const readonlyPrefix = member.readonly === true ? "readonly " : "";
+  const optionalSuffix = member.optional === true ? "?" : "";
   switch (member.kind) {
     case "constructor":
       return renderProviderSignatures("constructor", member.signatures ?? [{ id: member.id, parameters: [] }]).join("\n  ");
@@ -1599,7 +1677,7 @@ function renderProviderMember(member: ProviderMemberDeclaration): string {
       return renderProviderSignatures(member.name, member.signatures ?? []).map((signature) => `${staticPrefix}${signature}`).join("\n  ");
     case "property":
     case "field":
-      return `${staticPrefix}${member.name}: ${renderProviderTypeExpression(member.type!)};`;
+      return `${staticPrefix}${readonlyPrefix}${member.name}${optionalSuffix}: ${renderProviderTypeExpression(member.type!)};`;
     case "indexer": {
       const signature = member.signatures![0]!;
       const parameter = signature.parameters[0]!;
@@ -1623,9 +1701,9 @@ function renderProviderTypeParameters(typeParameters: readonly ProviderTypeParam
   }
   return `<${typeParameters.map((parameter) => {
     const constraints = parameter.constraints ?? [];
-    return constraints.length === 0
-      ? parameter.name
-      : `${parameter.name} extends ${constraints.map(renderProviderTypeExpression).join(" & ")}`;
+    const constraintText = constraints.length === 0 ? "" : ` extends ${constraints.map(renderProviderTypeExpression).join(" & ")}`;
+    const defaultText = parameter.defaultType === undefined ? "" : ` = ${renderProviderTypeExpression(parameter.defaultType)}`;
+    return `${parameter.name}${constraintText}${defaultText}`;
   }).join(", ")}>`;
 }
 
@@ -1666,6 +1744,10 @@ function renderProviderTypeExpression(type: ProviderTypeExpression): string {
       return `${renderProviderTypeParameters(type.typeParameters ?? [])}(${type.parameters.map(renderProviderParameter).join(", ")}) => ${renderProviderTypeExpression(type.returnType)}`;
     case "literal":
       return type.value === null ? "null" : JSON.stringify(type.value);
+    case "provider-ref":
+      return type.typeArguments === undefined || type.typeArguments.length === 0
+        ? type.exportName
+        : `${type.exportName}<${type.typeArguments.map(renderProviderTypeExpression).join(", ")}>`;
   }
 }
 
@@ -1737,8 +1819,25 @@ function isValidProviderModuleResolution(value: ProviderModuleResolution, specif
 function isValidProviderDeclarationModel(value: ProviderDeclarationModel, resolution: ProviderModuleResolution): boolean {
   return value.moduleSpecifier === resolution.moduleSpecifier
     && value.providerModuleId === resolution.providerModuleId
+    && (value.imports ?? []).every(isValidProviderImportDeclaration)
     && Array.isArray(value.exports)
     && value.exports.every(isValidProviderExportDeclaration);
+}
+
+function isValidProviderImportDeclaration(value: ProviderImportDeclaration): boolean {
+  const hasNamespace = value.namespaceImport !== undefined;
+  const namedImports = value.namedImports ?? [];
+  return value.moduleSpecifier.length > 0
+    && (value.namespaceImport === undefined || isIdentifierText(value.namespaceImport))
+    && namedImports.every(isValidProviderRequestedExport)
+    && (hasNamespace || namedImports.length > 0)
+    && !(hasNamespace && namedImports.length > 0);
+}
+
+function isValidProviderRequestedExport(value: ProviderRequestedExport): boolean {
+  return isIdentifierText(value.exportedName)
+    && (value.localName === undefined || isIdentifierText(value.localName))
+    && (value.kind === undefined || value.kind === "type" || value.kind === "value" || value.kind === "unknown");
 }
 
 function isValidProviderExportDeclaration(value: ProviderExportDeclaration): boolean {
@@ -1747,10 +1846,16 @@ function isValidProviderExportDeclaration(value: ProviderExportDeclaration): boo
     && hasRequiredProviderExportShape(value)
     && (value.type === undefined || isValidProviderTypeExpression(value.type))
     && (value.typeParameters ?? []).every(isValidProviderTypeParameterDeclaration)
+    && (value.heritage ?? []).every(isValidProviderHeritageDeclaration)
     && (value.signatures ?? []).every(isValidProviderSignatureDeclaration)
     && (value.kind === "enum"
       ? (value.members ?? []).every(isValidProviderEnumMemberDeclaration)
       : (value.members ?? []).every(isValidProviderMemberDeclaration));
+}
+
+function isValidProviderHeritageDeclaration(value: ProviderHeritageDeclaration): boolean {
+  return (value.kind === "extends" || value.kind === "implements")
+    && isValidProviderTypeExpression(value.type);
 }
 
 function hasRequiredProviderExportShape(value: ProviderExportDeclaration): boolean {
@@ -1810,11 +1915,15 @@ function isValidProviderSignatureDeclaration(value: ProviderSignatureDeclaration
 }
 
 function isValidProviderParameterDeclaration(value: ProviderParameterDeclaration): boolean {
-  return isIdentifierText(value.name) && isValidProviderTypeExpression(value.type);
+  return isIdentifierText(value.name)
+    && isValidProviderTypeExpression(value.type)
+    && (value.defaultType === undefined || isValidProviderTypeExpression(value.defaultType));
 }
 
 function isValidProviderTypeParameterDeclaration(value: ProviderTypeParameterDeclaration): boolean {
-  return isIdentifierText(value.name) && (value.constraints ?? []).every(isValidProviderTypeExpression);
+  return isIdentifierText(value.name)
+    && (value.constraints ?? []).every(isValidProviderTypeExpression)
+    && (value.defaultType === undefined || isValidProviderTypeExpression(value.defaultType));
 }
 
 function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
@@ -1852,6 +1961,10 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
         && (value.typeParameters ?? []).every(isValidProviderTypeParameterDeclaration);
     case "literal":
       return true;
+    case "provider-ref":
+      return value.moduleSpecifier.length > 0
+        && isIdentifierText(value.exportName)
+        && (value.typeArguments ?? []).every(isValidProviderTypeExpression);
     case "opaque":
       return value.id.length > 0
         && value.sourceShape !== undefined

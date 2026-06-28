@@ -65,6 +65,9 @@ export interface SourcePrimitiveFact {
 export interface ArgumentPassingFact {
   readonly mode: ArgumentPassingMode;
   readonly targetExpression?: ExtensionFactSubject;
+  readonly parameterIndex?: number;
+  readonly targetParameter?: TargetParameter;
+  readonly selectedSignature?: ProviderDeclarationIdentity;
 }
 
 export interface FunctionPointerFact {
@@ -98,6 +101,20 @@ export interface AttributeFact {
 
 export interface DefaultValueFact {
   readonly type: ExtensionFactSubject;
+}
+
+export interface ProviderDeclarationIdentity {
+  readonly providerId: string;
+  readonly providerVersion?: string;
+  readonly providerModuleId: string;
+  readonly moduleSpecifier: string;
+  readonly virtualFileName?: string;
+  readonly exportName?: string;
+  readonly exportId?: string;
+  readonly memberName?: string;
+  readonly memberId?: string;
+  readonly signatureId?: string;
+  readonly targetIdentity?: TargetTypeRef;
 }
 
 export type TargetTypeRef =
@@ -150,6 +167,7 @@ export interface TargetMember {
   readonly returnType?: TargetTypeRef;
   readonly typeParameters?: readonly TargetTypeParameter[];
   readonly overloadGroup?: string;
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
 export interface TargetBindingFact {
@@ -174,6 +192,9 @@ export interface SelectedTargetSignatureFact {
   readonly typeArguments?: readonly ExtensionFactSubject[];
   readonly targetTypeArguments?: readonly TargetTypeRef[];
   readonly argumentConversions?: readonly TargetTypeRef[];
+  readonly sourceSignature?: ExtensionFactSubject;
+  readonly sourceDeclaration?: ExtensionFactSubject;
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
 export interface ContextualTargetTypeFact {
@@ -187,6 +208,16 @@ export interface TargetOperationFact {
   readonly targetOperation: string;
   readonly resultType?: ExtensionFactSubject;
   readonly evidence?: readonly ExtensionEvidence[];
+  readonly provenance?: TargetOperationProvenance;
+}
+
+export interface TargetOperationProvenance {
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
+  readonly sourceExpression?: ExtensionFactSubject;
+  readonly sourceReceiver?: ExtensionFactSubject;
+  readonly sourceCallee?: ExtensionFactSubject;
+  readonly sourceSelectedSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedSignature?: ExtensionFactSubject;
 }
 
 export interface FlowStateFact {
@@ -198,6 +229,14 @@ export interface FlowStateFact {
 export interface RuntimeCarrierFact {
   readonly carrier: TargetTypeRef;
   readonly requiresAllocation?: boolean;
+  readonly provenance?: RuntimeCarrierProvenance;
+}
+
+export interface RuntimeCarrierProvenance {
+  readonly sourceType?: ExtensionFactSubject;
+  readonly sourceTypeReference?: ExtensionFactSubject;
+  readonly sourceSymbol?: ExtensionFactSubject;
+  readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
 export interface TargetConversionFact {
@@ -212,7 +251,9 @@ export interface ProviderVirtualDeclarationFact {
   readonly moduleSpecifier: string;
   readonly virtualFileName: string;
   readonly exportName?: string;
+  readonly exportId?: string;
   readonly memberName?: string;
+  readonly memberId?: string;
   readonly signatureId?: string;
   readonly targetIdentity?: TargetTypeRef;
 }
@@ -251,7 +292,12 @@ export const sourcePrimitiveFactKey = defineExtensionFactKey<SourcePrimitiveFact
 export const argumentPassingFactKey = defineExtensionFactKey<ArgumentPassingFact>({
   extensionId: "tsts.source-semantics",
   name: "argumentPassing",
-  equals: (left, right) => left.mode === right.mode && left.targetExpression === right.targetExpression,
+  equals: (left, right) =>
+    left.mode === right.mode
+    && left.targetExpression === right.targetExpression
+    && left.parameterIndex === right.parameterIndex
+    && optionalTargetParameterEquals(left.targetParameter, right.targetParameter)
+    && optionalProviderDeclarationIdentityEquals(left.selectedSignature, right.selectedSignature),
 });
 
 export const functionPointerFactKey = defineExtensionFactKey<FunctionPointerFact>({
@@ -322,7 +368,10 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
     targetMemberEquals(left.member, right.member)
     && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
-    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions),
+    && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
+    && left.sourceSignature === right.sourceSignature
+    && left.sourceDeclaration === right.sourceDeclaration
+    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
 });
 
 export const contextualTargetTypeFactKey = defineExtensionFactKey<ContextualTargetTypeFact>({
@@ -346,7 +395,10 @@ export const flowStateFactKey = defineExtensionFactKey<FlowStateFact>({
 export const runtimeCarrierFactKey = defineExtensionFactKey<RuntimeCarrierFact>({
   extensionId: "tsts.target-bindings",
   name: "runtimeCarrier",
-  equals: (left, right) => targetTypeRefEquals(left.carrier, right.carrier) && left.requiresAllocation === right.requiresAllocation,
+  equals: (left, right) =>
+    targetTypeRefEquals(left.carrier, right.carrier)
+    && left.requiresAllocation === right.requiresAllocation
+    && optionalRuntimeCarrierProvenanceEquals(left.provenance, right.provenance),
 });
 
 export const targetConversionFactKey = defineExtensionFactKey<TargetConversionFact>({
@@ -365,7 +417,9 @@ export const providerVirtualDeclarationFactKey = defineExtensionFactKey<Provider
     && left.moduleSpecifier === right.moduleSpecifier
     && left.virtualFileName === right.virtualFileName
     && left.exportName === right.exportName
+    && left.exportId === right.exportId
     && left.memberName === right.memberName
+    && left.memberId === right.memberId
     && left.signatureId === right.signatureId
     && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
 });
@@ -387,6 +441,27 @@ function optionalTargetTypeRefEquals(left: TargetTypeRef | undefined, right: Tar
     return left === right;
   }
   return targetTypeRefEquals(left, right);
+}
+
+function optionalProviderDeclarationIdentityEquals(left: ProviderDeclarationIdentity | undefined, right: ProviderDeclarationIdentity | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return providerDeclarationIdentityEquals(left, right);
+}
+
+function providerDeclarationIdentityEquals(left: ProviderDeclarationIdentity, right: ProviderDeclarationIdentity): boolean {
+  return left.providerId === right.providerId
+    && left.providerVersion === right.providerVersion
+    && left.providerModuleId === right.providerModuleId
+    && left.moduleSpecifier === right.moduleSpecifier
+    && left.virtualFileName === right.virtualFileName
+    && left.exportName === right.exportName
+    && left.exportId === right.exportId
+    && left.memberName === right.memberName
+    && left.memberId === right.memberId
+    && left.signatureId === right.signatureId
+    && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity);
 }
 
 function factSubjectArrayEquals(left: readonly ExtensionFactSubject[] | undefined, right: readonly ExtensionFactSubject[] | undefined): boolean {
@@ -441,7 +516,15 @@ function targetMemberEquals(left: TargetMember, right: TargetMember): boolean {
     && targetParameterArrayEquals(left.parameters, right.parameters)
     && optionalTargetTypeRefEquals(left.returnType, right.returnType)
     && targetTypeParameterArrayEquals(left.typeParameters, right.typeParameters)
-    && left.overloadGroup === right.overloadGroup;
+    && left.overloadGroup === right.overloadGroup
+    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
+}
+
+function optionalTargetParameterEquals(left: TargetParameter | undefined, right: TargetParameter | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return targetParameterEquals(left, right);
 }
 
 function targetParameterArrayEquals(left: readonly TargetParameter[], right: readonly TargetParameter[]): boolean {
@@ -512,7 +595,30 @@ function targetOperationFactEquals(left: TargetOperationFact, right: TargetOpera
   return left.operationId === right.operationId
     && left.operationKind === right.operationKind
     && left.targetOperation === right.targetOperation
-    && left.resultType === right.resultType;
+    && left.resultType === right.resultType
+    && optionalTargetOperationProvenanceEquals(left.provenance, right.provenance);
+}
+
+function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance | undefined, right: TargetOperationProvenance | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration)
+    && left.sourceExpression === right.sourceExpression
+    && left.sourceReceiver === right.sourceReceiver
+    && left.sourceCallee === right.sourceCallee
+    && left.sourceSelectedSymbol === right.sourceSelectedSymbol
+    && left.sourceSelectedSignature === right.sourceSelectedSignature;
+}
+
+function optionalRuntimeCarrierProvenanceEquals(left: RuntimeCarrierProvenance | undefined, right: RuntimeCarrierProvenance | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return left.sourceType === right.sourceType
+    && left.sourceTypeReference === right.sourceTypeReference
+    && left.sourceSymbol === right.sourceSymbol
+    && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration);
 }
 
 function targetTypeRefEquals(left: TargetTypeRef, right: TargetTypeRef): boolean {

@@ -38,7 +38,7 @@ import {
 import { NewNodeFactory, NodeDefault_AsNode } from "../ast/spine.js";
 import * as casts from "../ast/generated/casts.js";
 import { IsExportDeclaration, IsImportDeclaration, IsImportEqualsDeclaration, IsExternalModuleReference, IsJSDocImportTag, IsLiteralTypeNode, IsImportTypeNode } from "../ast/generated/predicates.js";
-import { KindStringLiteral, KindJSImportDeclaration } from "../ast/generated/kinds.js";
+import { KindExportDeclaration, KindImportDeclaration, KindJSImportDeclaration, KindNamedExports, KindNamedImports, KindNamespaceImport, KindStringLiteral, KindTypeKeyword } from "../ast/generated/kinds.js";
 import { NodeFlagsJSDoc } from "../ast/generated/flags.js";
 import { GetExternalModuleIndicatorOptions } from "../ast/parseoptions.js";
 import type { SourceFileParseOptions } from "../ast/parseoptions.js";
@@ -154,7 +154,7 @@ import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
-import type { ExtensionHost, ProviderResolvedModule } from "../../extensions/host.js";
+import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b","bodyHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -257,7 +257,7 @@ function fileLoader_getProviderVirtualModule(receiver: GoPtr<fileLoader>, fileNa
   return fileLoader_getExtensionHost(receiver)?.providers.getVirtualModuleByFileName(fileName);
 }
 
-function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, extensionHost: ExtensionHost | undefined, moduleName: string, containingFile: string, mode: ResolutionMode): GoPtr<ResolvedModule> | undefined {
+function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, extensionHost: ExtensionHost | undefined, moduleName: string, containingFile: string, mode: ResolutionMode, importSite: GoPtr<Node>): GoPtr<ResolvedModule> | undefined {
   if (extensionHost === undefined) {
     return undefined;
   }
@@ -266,6 +266,7 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     resolutionMode: mode,
     ...(extensionHost.activeTarget !== undefined ? { activeTarget: extensionHost.activeTarget } : {}),
     ...(extensionHost.activeSurface !== undefined ? { activeSurface: extensionHost.activeSurface } : {}),
+    importSlice: fileLoader_getProviderImportSlice(moduleName, importSite),
   };
   if (extensionHost.providers.bindingProviders.length === 0 && extensionHost.providers.requiresProviderForModule(moduleName, context) === undefined) {
     return undefined;
@@ -307,6 +308,117 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
       ModuleSpecifier: result.module.resolution.moduleSpecifier,
     },
   };
+}
+
+function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {
+  if (importSite === undefined) {
+    return {
+      moduleSpecifier,
+      kind: "unknown",
+      broadImport: true,
+    };
+  }
+
+  const parent = importSite.Parent;
+  if (parent === undefined) {
+    return {
+      moduleSpecifier,
+      kind: "synthetic",
+      broadImport: true,
+    };
+  }
+
+  if (parent.Kind === KindImportDeclaration || parent.Kind === KindJSImportDeclaration) {
+    const importClause = casts.AsImportDeclaration(parent)?.ImportClause;
+    if (importClause === undefined) {
+      return {
+        moduleSpecifier,
+        kind: "bare",
+        broadImport: true,
+      };
+    }
+
+    const importClauseData = casts.AsImportClause(importClause);
+    const typeOnly = importClauseData?.PhaseModifier === KindTypeKeyword;
+    const requestedExports: ProviderRequestedExport[] = [];
+    if (importClauseData?.name !== undefined) {
+      requestedExports.push({
+        exportedName: "default",
+        localName: Node_Text(importClauseData.name),
+        kind: getProviderImportRequestKind(typeOnly),
+      });
+    }
+
+    const namedBindings = importClauseData?.NamedBindings;
+    if (namedBindings?.Kind === KindNamespaceImport) {
+      return {
+        moduleSpecifier,
+        kind: requestedExports.length > 0 ? "mixed" : "namespace",
+        ...(requestedExports.length > 0 ? { requestedExports } : {}),
+        broadImport: true,
+        ...(typeOnly ? { typeOnly } : {}),
+      };
+    }
+
+    if (namedBindings?.Kind === KindNamedImports) {
+      const namedImports = casts.AsNamedImports(namedBindings);
+      for (const specifier of namedImports?.Elements?.Nodes ?? []) {
+        const importSpecifier = casts.AsImportSpecifier(specifier);
+        if (importSpecifier === undefined || importSpecifier.name === undefined) {
+          continue;
+        }
+        requestedExports.push({
+          exportedName: Node_Text(importSpecifier.PropertyName ?? importSpecifier.name),
+          localName: Node_Text(importSpecifier.name),
+          kind: getProviderImportRequestKind(typeOnly || importSpecifier.IsTypeOnly),
+        });
+      }
+    }
+
+    return {
+      moduleSpecifier,
+      kind: requestedExports.length === 0 ? "unknown" : requestedExports.some((request) => request.exportedName === "default") && requestedExports.length > 1 ? "mixed" : requestedExports[0]?.exportedName === "default" ? "default" : "named",
+      ...(requestedExports.length > 0 ? { requestedExports } : { broadImport: true }),
+      ...(typeOnly ? { typeOnly } : {}),
+    };
+  }
+
+  if (parent.Kind === KindExportDeclaration) {
+    const exportDeclaration = casts.AsExportDeclaration(parent);
+    const typeOnly = exportDeclaration?.IsTypeOnly === true;
+    const requestedExports: ProviderRequestedExport[] = [];
+    const exportClause = exportDeclaration?.ExportClause;
+    if (exportClause?.Kind === KindNamedExports) {
+      const namedExports = casts.AsNamedExports(exportClause);
+      for (const specifier of namedExports?.Elements?.Nodes ?? []) {
+        const exportSpecifier = casts.AsExportSpecifier(specifier);
+        if (exportSpecifier === undefined || exportSpecifier.name === undefined) {
+          continue;
+        }
+        requestedExports.push({
+          exportedName: Node_Text(exportSpecifier.PropertyName ?? exportSpecifier.name),
+          localName: Node_Text(exportSpecifier.name),
+          kind: getProviderImportRequestKind(typeOnly || exportSpecifier.IsTypeOnly),
+        });
+      }
+    }
+    return {
+      moduleSpecifier,
+      kind: "reexport",
+      ...(requestedExports.length > 0 ? { requestedExports } : { broadImport: true }),
+      ...(typeOnly ? { typeOnly } : {}),
+    };
+  }
+
+  return {
+    moduleSpecifier,
+    kind: "unknown",
+    broadImport: true,
+  };
+}
+
+function getProviderImportRequestKind(typeOnly: boolean): ProviderImportRequestKind {
+  return typeOnly ? "type" : "value";
 }
 
 /**
@@ -1638,7 +1750,7 @@ export function fileLoader_resolveImportsAndModuleAugmentations(receiver: GoPtr<
         const mode = getModeForUsageLocation(SourceFile_FileName(file), meta, entry as unknown as GoPtr<StringLiteralLike>, optionsForFile);
         const redirectedReference = redirect !== undefined ? ParsedCommandLine_as_ResolvedProjectReference(redirect) : undefined;
         let trace: GoSlice<DiagAndArgs> = [];
-        let resolvedModule = fileLoader_resolveProviderVirtualModule(receiver, extensionHost, moduleName, fileName, mode);
+        let resolvedModule = fileLoader_resolveProviderVirtualModule(receiver, extensionHost, moduleName, fileName, mode, entry);
         if (resolvedModule === undefined) {
           [resolvedModule, trace] = Resolver_ResolveModuleName(receiver!.resolver, moduleName, fileName, mode, redirectedReference);
         }

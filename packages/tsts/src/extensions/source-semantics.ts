@@ -9,12 +9,14 @@ import {
   Node_ImportClause,
   Node_Initializer,
   Node_ModuleSpecifier,
+  Node_Parameters,
   Node_PropertyName,
   Node_Properties,
   Node_Statements,
   Node_Symbol,
   Node_Text,
   Node_TypeArguments,
+  Node_TypeParameters,
 } from "../internal/ast/ast.js";
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import { AsExportDeclaration, AsExportSpecifier, AsImportClause, AsNamespaceImport, AsPropertyAccessExpression, AsQualifiedName, AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
@@ -35,7 +37,7 @@ import {
   KindTupleType,
   KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
-import { IsLeftHandSideExpression } from "../internal/ast/utilities.js";
+import { IsFunctionLike, IsLeftHandSideExpression } from "../internal/ast/utilities.js";
 import {
   argumentPassingFactKey,
   attributeFactKey,
@@ -135,15 +137,26 @@ export interface SourceTypeMarkerDeclaration {
 
 interface SourceSemanticsMarkerImportIndex {
   readonly primitivesByLocalName: ReadonlyMap<string, SourcePrimitiveImportBinding>;
-  readonly callMarkersByLocalName: ReadonlyMap<string, SourceCallMarkerDeclaration>;
-  readonly typeMarkersByLocalName: ReadonlyMap<string, SourceTypeMarkerDeclaration>;
-  readonly namespacesByLocalName: ReadonlyMap<string, SourceSemanticsModuleRuntime>;
+  readonly callMarkersByLocalName: ReadonlyMap<string, SourceMarkerImportBinding<SourceCallMarkerDeclaration>>;
+  readonly typeMarkersByLocalName: ReadonlyMap<string, SourceMarkerImportBinding<SourceTypeMarkerDeclaration>>;
+  readonly namespacesByLocalName: ReadonlyMap<string, SourceNamespaceImportBinding>;
 }
 
 interface SourcePrimitiveImportBinding {
   readonly moduleIdentity: SourceSemanticsModuleRuntime;
+  readonly localName: string;
   readonly exportName: string;
   readonly primitiveFact: SourcePrimitiveDeclaration;
+}
+
+interface SourceMarkerImportBinding<TMarker> {
+  readonly localName: string;
+  readonly marker: TMarker;
+}
+
+interface SourceNamespaceImportBinding {
+  readonly localName: string;
+  readonly moduleIdentity: SourceSemanticsModuleRuntime;
 }
 
 interface SourceSemanticsModuleRuntime extends SourceSemanticsModuleIdentity {
@@ -694,27 +707,37 @@ function resolveSourceSemanticsTypeMarkerReference(
 
 function resolveSourceSemanticsMarkerFromImportIndex<TMarker extends { readonly exportName: string }>(
   node: GoPtr<Node>,
-  markersByLocalName: ReadonlyMap<string, TMarker>,
-  namespacesByLocalName: ReadonlyMap<string, SourceSemanticsModuleRuntime>,
+  markersByLocalName: ReadonlyMap<string, SourceMarkerImportBinding<TMarker>>,
+  namespacesByLocalName: ReadonlyMap<string, SourceNamespaceImportBinding>,
   capability: SourceSemanticsModuleCapability,
 ): TMarker | undefined {
   if (node === undefined) {
     return undefined;
   }
   if (node.Kind === KindPropertyAccessExpression) {
-    const receiverName = Node_Text(AsPropertyAccessExpression(node)?.Expression);
-    const namespaceModule = namespacesByLocalName.get(receiverName);
+    const receiver = AsPropertyAccessExpression(node)?.Expression;
+    const receiverName = Node_Text(receiver);
+    const namespaceBinding = namespacesByLocalName.get(receiverName);
+    if (namespaceBinding === undefined || isImportBindingShadowed(receiver, receiverName)) {
+      return undefined;
+    }
     const propertyName = Node_Text(Node_Name(node));
-    const marker = getModuleMarker(namespaceModule, capability, propertyName);
+    const marker = getModuleMarker(namespaceBinding.moduleIdentity, capability, propertyName);
     return marker as TMarker | undefined;
   }
   if (node.Kind === KindQualifiedName) {
     const qualifiedName = AsQualifiedName(node);
-    const namespaceModule = namespacesByLocalName.get(Node_Text(qualifiedName?.Left));
-    const marker = getModuleMarker(namespaceModule, capability, Node_Text(qualifiedName?.Right));
+    const leftName = Node_Text(qualifiedName?.Left);
+    const namespaceBinding = namespacesByLocalName.get(leftName);
+    if (namespaceBinding === undefined || isImportBindingShadowed(qualifiedName?.Left, leftName)) {
+      return undefined;
+    }
+    const marker = getModuleMarker(namespaceBinding.moduleIdentity, capability, Node_Text(qualifiedName?.Right));
     return marker as TMarker | undefined;
   }
-  return markersByLocalName.get(Node_Text(node));
+  const localName = Node_Text(node);
+  const binding = markersByLocalName.get(localName);
+  return binding !== undefined && !isImportBindingShadowed(node, localName) ? binding.marker : undefined;
 }
 
 function resolveSourceSemanticsMarkerReference<TMarker extends { readonly exportName: string }>(
@@ -761,9 +784,9 @@ function createSourceSemanticsMarkerImportIndex(
   modules: readonly SourceSemanticsModuleRuntime[],
 ): SourceSemanticsMarkerImportIndex {
   const primitivesByLocalName = new Map<string, SourcePrimitiveImportBinding>();
-  const callMarkersByLocalName = new Map<string, SourceCallMarkerDeclaration>();
-  const typeMarkersByLocalName = new Map<string, SourceTypeMarkerDeclaration>();
-  const namespacesByLocalName = new Map<string, SourceSemanticsModuleRuntime>();
+  const callMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceCallMarkerDeclaration>>();
+  const typeMarkersByLocalName = new Map<string, SourceMarkerImportBinding<SourceTypeMarkerDeclaration>>();
+  const namespacesByLocalName = new Map<string, SourceNamespaceImportBinding>();
   for (const statement of Node_Statements(sourceFile) ?? []) {
     if (statement?.Kind !== KindImportDeclaration) {
       continue;
@@ -777,9 +800,13 @@ function createSourceSemanticsMarkerImportIndex(
       continue;
     }
     if (namedBindings.Kind === KindNamespaceImport) {
-      const namespaceName = Node_Text(Node_Name(namedBindings));
+      const namespaceNameNode = Node_Name(namedBindings);
+      const namespaceName = Node_Text(namespaceNameNode);
       if (namespaceName !== "") {
-        namespacesByLocalName.set(namespaceName, moduleIdentity);
+        namespacesByLocalName.set(namespaceName, {
+          localName: namespaceName,
+          moduleIdentity,
+        });
       }
       continue;
     }
@@ -787,19 +814,31 @@ function createSourceSemanticsMarkerImportIndex(
       continue;
     }
     for (const importSpecifier of Node_Elements(namedBindings) ?? []) {
-      const localName = Node_Text(Node_Name(importSpecifier));
-      const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? Node_Name(importSpecifier));
+      const localNameNode = Node_Name(importSpecifier);
+      const localName = Node_Text(localNameNode);
+      const exportName = Node_Text(Node_PropertyName(importSpecifier) ?? localNameNode);
       const primitive = moduleIdentity.primitivesByExportName.get(exportName);
       if (primitive !== undefined) {
-        primitivesByLocalName.set(localName, { moduleIdentity, exportName, primitiveFact: primitive });
+        primitivesByLocalName.set(localName, {
+          moduleIdentity,
+          localName,
+          exportName,
+          primitiveFact: primitive,
+        });
       }
       const callMarker = moduleIdentity.callMarkersByExportName.get(exportName);
       if (callMarker !== undefined) {
-        callMarkersByLocalName.set(localName, callMarker);
+        callMarkersByLocalName.set(localName, {
+          localName,
+          marker: callMarker,
+        });
       }
       const typeMarker = moduleIdentity.typeMarkersByExportName.get(exportName);
       if (typeMarker !== undefined) {
-        typeMarkersByLocalName.set(localName, typeMarker);
+        typeMarkersByLocalName.set(localName, {
+          localName,
+          marker: typeMarker,
+        });
       }
     }
   }
@@ -853,7 +892,7 @@ function resolvePrimitiveFromImportIndex(
     return undefined;
   }
   const binding = importIndex.primitivesByLocalName.get(Node_Text(typeName));
-  if (binding === undefined) {
+  if (binding === undefined || isImportBindingShadowed(typeName, binding.localName)) {
     return undefined;
   }
   const symbol = Node_Symbol(typeName);
@@ -871,23 +910,44 @@ function resolveQualifiedPrimitiveFromImportIndex(
     return undefined;
   }
   const qualifiedName = AsQualifiedName(typeName);
-  const moduleIdentity = importIndex.namespacesByLocalName.get(Node_Text(qualifiedName?.Left));
-  if (moduleIdentity === undefined) {
+  const leftName = Node_Text(qualifiedName?.Left);
+  const namespaceBinding = importIndex.namespacesByLocalName.get(leftName);
+  if (namespaceBinding === undefined || isImportBindingShadowed(qualifiedName?.Left, leftName)) {
     return undefined;
   }
   const right = qualifiedName!.Right;
   const exportName = Node_Text(right);
-  const primitiveFact = moduleIdentity.primitivesByExportName.get(exportName);
+  const primitiveFact = namespaceBinding.moduleIdentity.primitivesByExportName.get(exportName);
   if (primitiveFact === undefined) {
     return undefined;
   }
   const symbol = Node_Symbol(right);
   return {
-    moduleIdentity,
+    moduleIdentity: namespaceBinding.moduleIdentity,
     exportName,
     primitiveFact,
-    identity: createExportIdentity(moduleIdentity, exportName, "type", symbol === undefined ? `${moduleIdentity.moduleSpecifier}::${exportName}` : getSymbolFactId(symbol)),
+    identity: createExportIdentity(namespaceBinding.moduleIdentity, exportName, "type", symbol === undefined ? `${namespaceBinding.moduleIdentity.moduleSpecifier}::${exportName}` : getSymbolFactId(symbol)),
   };
+}
+
+function isImportBindingShadowed(node: GoPtr<Node>, localName: string): boolean {
+  if (node === undefined || localName === "") {
+    return false;
+  }
+  let current = node.Parent;
+  while (current !== undefined) {
+    if (IsFunctionLike(current)) {
+      if (declarationListContainsName(Node_Parameters(current), localName) || declarationListContainsName(Node_TypeParameters(current) ?? [], localName)) {
+        return true;
+      }
+    }
+    current = current.Parent;
+  }
+  return false;
+}
+
+function declarationListContainsName(declarations: readonly GoPtr<Node>[], localName: string): boolean {
+  return declarations.some((declaration) => Node_Text(Node_Name(declaration)) === localName);
 }
 
 function resolveQualifiedPrimitiveReference(

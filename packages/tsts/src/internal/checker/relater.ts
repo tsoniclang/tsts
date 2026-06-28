@@ -1138,7 +1138,7 @@ export function Checker_reportDiagnostic(receiver: GoPtr<Checker>, diagnostic: G
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/relater.go::method::Checker.checkTypeAssignableToAndOptionallyElaborate","kind":"method","status":"implemented","sigHash":"4db0d4f43f485c39b2d35b65a4917cac04a7a21a814eb64d706729c064060d66","bodyHash":"3fb2c8d80a6974d273442b269e10c7b48eced38a44e1af479b3b9f4ad18c96c5"}
- * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go confirms assignment compatibility, extension-enabled programs may impose stricter provider-owned target/surface assignability rules; no-extension programs and unowned assignments remain on the exact TS-Go path, and extensions cannot make a TS-Go-incompatible assignment valid."}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After TS-Go computes assignment compatibility, extension-enabled programs may observe provider-owned target/surface assignability and report extension diagnostics; the returned TS assignability result remains the exact TS-Go result."}
  *
  * Go source:
  * func (c *Checker) checkTypeAssignableToAndOptionallyElaborate(source *Type, target *Type, errorNode *ast.Node, expr *ast.Node, headMessage *diagnostics.Message, diagnosticOutput *[]*ast.Diagnostic) bool {
