@@ -86,7 +86,7 @@ import {
 import type { DiagAndArgs, Resolver } from "../module/resolver.js";
 import { GetResolutionDiagnostic, InferredTypesContainingFile } from "../module/util.js";
 import type { ModeAwareCacheKey } from "../module/types.js";
-import type { ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
+import type { PackageId, ResolvedModule, ResolvedTypeReferenceDirective } from "../module/types.js";
 import { ResolvedModuleExtensionProviderVirtual, ResolvedModule_IsResolved, ResolvedTypeReferenceDirective_IsResolved } from "../module/types.js";
 import { InfoCacheEntry_Exists } from "../packagejson/cache.js";
 import { Expected_GetValue } from "../packagejson/expected.js";
@@ -154,7 +154,7 @@ import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
-import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
+import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b","bodyHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -293,12 +293,7 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
     OriginalPath: "",
     Extension: ResolvedModuleExtensionProviderVirtual,
     ResolvedUsingTsExtension: false,
-    PackageId: {
-      Name: result.module.resolution.packageName ?? "",
-      SubModuleName: "",
-      Version: result.module.resolution.packageVersion ?? "",
-      PeerDependencies: "",
-    },
+    PackageId: fileLoader_getProviderVirtualPackageId(result.module.resolution),
     IsExternalLibraryImport: true,
     AlternateResult: "",
     ProviderVirtual: {
@@ -308,6 +303,30 @@ function fileLoader_resolveProviderVirtualModule(receiver: GoPtr<fileLoader>, ex
       ModuleSpecifier: result.module.resolution.moduleSpecifier,
     },
   };
+}
+
+function fileLoader_getProviderVirtualPackageId(resolution: ProviderModuleResolution): PackageId {
+  const packageName = resolution.packageName ?? "";
+  if (packageName === "") {
+    return { Name: "", SubModuleName: "", Version: "", PeerDependencies: "" };
+  }
+  return {
+    Name: packageName,
+    SubModuleName: fileLoader_getProviderVirtualSubModuleName(packageName, resolution.moduleSpecifier),
+    Version: resolution.packageVersion ?? "",
+    PeerDependencies: "",
+  };
+}
+
+function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleSpecifier: string): string {
+  if (moduleSpecifier === packageName) {
+    return "";
+  }
+  const packagePrefix = `${packageName}/`;
+  if (strings.HasPrefix(moduleSpecifier, packagePrefix)) {
+    return moduleSpecifier.slice(packagePrefix.length);
+  }
+  return moduleSpecifier;
 }
 
 function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {
