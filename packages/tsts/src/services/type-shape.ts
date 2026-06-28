@@ -44,7 +44,16 @@ import {
   Type_Target,
   Type_Types,
 } from "../internal/checker/types.js";
-import type { IndexInfo, Signature, Type } from "../internal/checker/types.js";
+import type { Signature, Type } from "../internal/checker/types.js";
+
+export interface TypeIndexInfo {
+  readonly keyType: GoPtr<Type>;
+  readonly valueType: GoPtr<Type>;
+  readonly readonly: boolean;
+  readonly declaration: GoPtr<Node>;
+  readonly symbol: GoPtr<Symbol>;
+  readonly components: readonly GoPtr<Node>[];
+}
 
 export interface TypeShapeQueryOptions {
   readonly context?: Context;
@@ -79,7 +88,7 @@ export interface TypeShapeQueries {
   readonly getCallSignatures: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Signature>[];
   readonly getConstructSignatures: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<Signature>[];
   readonly getReturnTypeOfSignature: (signature: GoPtr<Signature>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
-  readonly getIndexInfos: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly GoPtr<IndexInfo>[];
+  readonly getIndexInfos: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => readonly TypeIndexInfo[];
   readonly getApparentType: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
   readonly getWidenedType: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
   readonly removeMissingOrUndefined: (type: GoPtr<Type>, options?: TypeShapeQueryOptions) => GoPtr<Type>;
@@ -119,7 +128,15 @@ export function createTypeShapeQueries(program: GoPtr<Program>, defaultOptions: 
     getCallSignatures: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindCall)) ?? [],
     getConstructSignatures: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetSignaturesOfType(checker, type, SignatureKindConstruct)) ?? [],
     getReturnTypeOfSignature: (signature, options = {}) => withChecker(program, signature, defaultOptions, options, (checker) => Checker_GetReturnTypeOfSignature(checker, signature)),
-    getIndexInfos: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetIndexInfosOfType(checker, type)) ?? [],
+    getIndexInfos: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) =>
+      (Checker_GetIndexInfosOfType(checker, type) ?? []).map((info) => ({
+        keyType: info?.keyType,
+        valueType: info?.valueType,
+        readonly: info?.isReadonly === true,
+        declaration: info?.declaration,
+        symbol: info?.indexSymbol,
+        components: info?.components ?? [],
+      } satisfies TypeIndexInfo))) ?? [],
     getApparentType: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetApparentType(checker, type)),
     getWidenedType: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_GetWidenedType(checker, type)),
     removeMissingOrUndefined: (type, options = {}) => withChecker(program, type, defaultOptions, options, (checker) => Checker_RemoveMissingOrUndefinedType(checker, type)),

@@ -8,7 +8,7 @@ import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { ExtensionObservationPoint } from "./observations.js";
-import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityValidationRequest } from "./observations.js";
+import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ArgumentPassingFact, SelectedTargetSignatureFact, TargetOperationFact, TargetOperationProvenance, TargetParameter } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
@@ -360,14 +360,14 @@ export function recordExtensionContextualTargetTypeFact(checker: GoPtr<CheckerWi
   }, result.evidence ?? []);
 }
 
-export function recordExtensionPostCheckAssignabilityValidation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: PostCheckAssignabilityValidationRequest["relation"]): bool {
+export function recordExtensionPostCheckAssignabilityObservation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: PostCheckAssignabilityObservationRequest["relation"]): void {
   if (checker === undefined || source === undefined || target === undefined) {
-    return true as bool;
+    return;
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.validatePostCheckAssignability) === undefined) {
-    return true as bool;
+  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.observePostCheckAssignability) === undefined) {
+    return;
   }
 
   if (
@@ -378,11 +378,11 @@ export function recordExtensionPostCheckAssignabilityValidation(checker: GoPtr<C
     && !hasExtensionOwnedSubject(extensionHost, errorNode)
     && !hasExtensionOwnedSubject(extensionHost, expression)
   ) {
-    return true as bool;
+    return;
   }
 
-  const result = extensionHost.runObservation(
-    ExtensionObservationPoint.validatePostCheckAssignability,
+  extensionHost.runObservation(
+    ExtensionObservationPoint.observePostCheckAssignability,
     {
       source,
       target,
@@ -391,13 +391,9 @@ export function recordExtensionPostCheckAssignabilityValidation(checker: GoPtr<C
       ...(expression !== undefined ? { expression } : {}),
       ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
     },
-    () => true,
+    () => undefined,
     { requireOwner: true },
   );
-  if (result.kind !== "accept") {
-    return true as bool;
-  }
-  return true as bool;
 }
 
 export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgram>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {

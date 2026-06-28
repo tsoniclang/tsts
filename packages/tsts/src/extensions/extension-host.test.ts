@@ -276,16 +276,16 @@ test("fact resolver can lazily cache finalized facts without sealed-store diagno
 
 test("provider registry requires explicit provider identity and rejects duplicates", () => {
   const host = new ExtensionHost({});
-  const provider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
+  const provider = acmeBindingProvider("@example/target/Acme.Buffers.js");
 
   assert.equal(host.providers.registerTargetBindingProvider(provider), true);
-  assert.equal(host.providers.getTargetBindingProvider("dotnet")?.identity.target, "csharp");
+  assert.equal(host.providers.getTargetBindingProvider("acme")?.identity.target, "acme");
   assert.equal(host.providers.registerTargetBindingProvider(provider), true);
 
-  assert.equal(host.providers.registerTargetBindingProvider(dotnetBindingProvider("@example/dotnet/System.Text.js")), false);
+  assert.equal(host.providers.registerTargetBindingProvider(acmeBindingProvider("@example/target/Acme.Text.js")), false);
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.duplicateProvider);
 
-  const invalidProvider = dotnetBindingProvider("@example/dotnet/Invalid.js", {
+  const invalidProvider = acmeBindingProvider("@example/target/Invalid.js", {
     id: "",
     providerKind: "semantic",
   });
@@ -295,14 +295,14 @@ test("provider registry requires explicit provider identity and rejects duplicat
 
 test("provider registry rejects unsupported extension contract versions", () => {
   const host = new ExtensionHost({});
-  const provider = dotnetBindingProvider("@example/dotnet/System.Buffers.js", {
+  const provider = acmeBindingProvider("@example/target/Acme.Buffers.js", {
     extensionContractVersion: "unsupported.contract.0",
   });
 
   assert.equal(host.providers.registerTargetBindingProvider(provider), false);
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerContractMismatch);
   assert.match(host.diagnostics.all()[0]?.message ?? "", /unsupported extension contract/);
-  assert.equal(host.providers.resolveVirtualModule("@example/dotnet/System.Buffers.js").kind, "unowned");
+  assert.equal(host.providers.resolveVirtualModule("@example/target/Acme.Buffers.js").kind, "unowned");
 });
 
 test("registered diagnostic ranges reject unstable extension codes", () => {
@@ -331,14 +331,14 @@ test("registered diagnostic ranges reject unstable extension codes", () => {
 });
 
 test("extensions register binding and semantic providers through initialization context", () => {
-  const bindingProvider = dotnetBindingProvider("@example/dotnet/System.Buffers.js");
+  const bindingProvider = acmeBindingProvider("@example/target/Acme.Buffers.js");
   const parameter = {};
   const argument = {};
   const semanticProvider: TargetSemanticProvider = {
     identity: {
-      id: "dotnet-semantic",
+      id: "acme-semantic",
       version: "1.0.0",
-      target: "csharp",
+      target: "acme",
       extensionContractVersion: TstsProviderContractVersion,
       providerKind: "semantic",
     },
@@ -348,7 +348,7 @@ test("extensions register binding and semantic providers through initialization 
   };
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("dotnet", {
+      extension("acme", {
         initialize: (context) => {
           assert.equal(context.registerTargetBindingProvider(bindingProvider), true);
           assert.equal(context.registerTargetSemanticProvider(semanticProvider), true);
@@ -357,19 +357,19 @@ test("extensions register binding and semantic providers through initialization 
     ],
   });
 
-  assert.equal(host.providers.getTargetBindingProvider("dotnet"), bindingProvider);
-  assert.equal(host.providers.getTargetSemanticProvider("dotnet-semantic"), semanticProvider);
+  assert.equal(host.providers.getTargetBindingProvider("acme"), bindingProvider);
+  assert.equal(host.providers.getTargetSemanticProvider("acme-semantic"), semanticProvider);
   assert.equal(host.diagnostics.hasErrors(), false);
 
   const parameterMode = host.runObservation(ExtensionObservationPoint.resolveParameterPassing, {
     parameter,
     argument,
-    target: "csharp",
+    target: "acme",
   }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
 
   assert.equal(parameterMode.kind, "accept");
   assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-writeonly-must-init");
-  assert.equal(parameterMode.kind === "accept" ? parameterMode.extensionId : undefined, "dotnet");
+  assert.equal(parameterMode.kind === "accept" ? parameterMode.extensionId : undefined, "acme");
 });
 
 test("semantic provider methods own typed observations without hook boilerplate", () => {
@@ -399,50 +399,50 @@ test("semantic provider methods own typed observations without hook boilerplate"
   const symbol = {};
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("csharp-target", {
+      extension("acme-target", {
         initialize: (context) => {
           assert.equal(context.registerTargetSemanticProvider({
             identity: {
-              id: "dotnet-semantic",
+              id: "acme-semantic",
               version: "1.0.0",
-              target: "csharp",
+              target: "acme",
               extensionContractVersion: TstsProviderContractVersion,
               providerKind: "semantic",
             },
             validateTargetConstraint: () => acceptObservation(true),
-            validatePostCheckAssignability: () => acceptObservation(true),
+            observePostCheckAssignability: () => acceptObservation(undefined),
             mapCheckedCall: () => acceptObservation({
-              selectedSignature: selectedSignature("System.Console.WriteLine(System.Int32)"),
+              selectedSignature: selectedSignature("Acme.Console.WriteLine(Acme.Int32)"),
               returnType: voidType,
             }),
             mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
               targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
             }),
             mapCheckedPropertyAccess: () => acceptObservation({
-              operation: targetOperation("System.String.Length", "property"),
+              operation: targetOperation("Acme.String.Length", "property"),
               resultType: int32Type,
             }),
             mapCheckedElementAccess: () => acceptObservation({
-              operation: targetOperation("System.Span.GetItem", "indexer"),
+              operation: targetOperation("Acme.Span.GetItem", "indexer"),
               resultType: charType,
             }),
             mapCheckedOperator: () => acceptObservation({
-              operation: targetOperation("System.Int32.op_Addition", "operator"),
+              operation: targetOperation("Acme.Int32.op_Addition", "operator"),
               resultType: int32Type,
             }),
             recordContextualTargetType: () => acceptObservation({
               type: delegateType,
-              targetType: { kind: "target-named", id: "System.Func`2" },
+              targetType: { kind: "target-named", id: "Acme.Func`2" },
             }),
             mapCheckedConversion: () => acceptObservation({
               convertedType: { kind: "source-primitive", name: "int32" },
-              operation: targetOperation("System.Convert.ToInt32", "method"),
+              operation: targetOperation("Acme.Convert.ToInt32", "method"),
             }),
             resolveParameterPassing: () => acceptObservation({
               passing: { mode: "byref-readwrite" },
             }),
             resolveRuntimeCarrier: () => acceptObservation({
-              carrier: { kind: "target-named", id: "System.Int32" },
+              carrier: { kind: "target-named", id: "Acme.Int32" },
               requiresAllocation: false,
             }),
             validateExtensionFlowUse: () => acceptObservation({
@@ -457,25 +457,25 @@ test("semantic provider methods own typed observations without hook boilerplate"
 
   const constraint = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
     source: int32Type,
-    constraint: { kind: "implements", contract: "System.IEquatable`1" },
-    target: "csharp",
+    constraint: { kind: "implements", contract: "Acme.IEquatable`1" },
+    target: "acme",
   }, () => false, { requireOwner: true });
   assert.equal(constraint.kind === "accept" ? constraint.value : false, true);
 
-  const assignable = host.runObservation(ExtensionObservationPoint.validatePostCheckAssignability, {
+  const assignable = host.runObservation(ExtensionObservationPoint.observePostCheckAssignability, {
     source: int32Type,
     target: longType,
     relation: "assignment",
-  }, () => false, { requireOwner: true });
-  assert.equal(assignable.kind === "accept" ? assignable.value : false, true);
+  }, () => undefined, { requireOwner: true });
+  assert.equal(assignable.kind, "accept");
 
   const call = host.runObservation(ExtensionObservationPoint.mapCheckedCall, {
     call: expression,
     callee: consoleWriteLine,
     arguments: [callArgument],
-    target: "csharp",
+    target: "acme",
   }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
-  assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "System.Console.WriteLine(System.Int32)");
+  assert.equal(call.kind === "accept" ? call.value.selectedSignature.member.id : undefined, "Acme.Console.WriteLine(Acme.Int32)");
 
   const noInferredTypeArguments: TargetTypeArgumentMappingResult = { targetTypeArguments: [] };
   const inferred = host.runObservation(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget, {
@@ -489,31 +489,31 @@ test("semantic provider methods own typed observations without hook boilerplate"
     expression: propertyAccess,
     receiver: stringType,
     propertyName: "length",
-    target: "csharp",
+    target: "acme",
   }, () => ({ operation: targetOperation("core", "property") }), { requireOwner: true });
-  assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "System.String.Length");
+  assert.equal(property.kind === "accept" ? property.value.operation.operationId : undefined, "Acme.String.Length");
 
   const element = host.runObservation(ExtensionObservationPoint.mapCheckedElementAccess, {
     expression: elementAccess,
     receiver: stringType,
     argument: spanArgument,
-    target: "csharp",
+    target: "acme",
   }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true });
-  assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "System.Span.GetItem");
+  assert.equal(element.kind === "accept" ? element.value.operation.operationId : undefined, "Acme.Span.GetItem");
 
   const operator = host.runObservation(ExtensionObservationPoint.mapCheckedOperator, {
     expression: operatorExpression,
     operator: "+",
     left: leftOperand,
     right: rightOperand,
-    target: "csharp",
+    target: "acme",
   }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true });
-  assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "System.Int32.op_Addition");
+  assert.equal(operator.kind === "accept" ? operator.value.operation.operationId : undefined, "Acme.Int32.op_Addition");
 
   const contextual = host.runObservation(ExtensionObservationPoint.recordContextualTargetType, {
     expression: lambda,
     context: delegateType,
-    target: "csharp",
+    target: "acme",
   }, () => ({ type: int32Type }), { requireOwner: true });
   assert.equal(contextual.kind === "accept" ? contextual.value.type : undefined, delegateType);
 
@@ -522,20 +522,20 @@ test("semantic provider methods own typed observations without hook boilerplate"
     expression: convertedExpression,
     source: byteType,
     target: int32Type,
-    targetPlatform: "csharp",
+    targetPlatform: "acme",
   }, () => noConversion, { requireOwner: true });
-  assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "System.Convert.ToInt32");
+  assert.equal(conversion.kind === "accept" ? conversion.value.operation?.operationId : undefined, "Acme.Convert.ToInt32");
 
   const parameterMode = host.runObservation(ExtensionObservationPoint.resolveParameterPassing, {
     parameter: tryParseParameter,
     argument: tryParseArgument,
-    target: "csharp",
+    target: "acme",
   }, () => ({ passing: { mode: "by-value" } }), { requireOwner: true });
   assert.equal(parameterMode.kind === "accept" ? parameterMode.value.passing.mode : undefined, "byref-readwrite");
 
   const carrier = host.runObservation(ExtensionObservationPoint.resolveRuntimeCarrier, {
     type: int32Type,
-    target: "csharp",
+    target: "acme",
   }, () => ({ carrier: { kind: "opaque", id: "core" } }), { requireOwner: true });
   assert.equal(carrier.kind === "accept" ? carrier.value.carrier.kind : undefined, "target-named");
 
@@ -543,10 +543,10 @@ test("semantic provider methods own typed observations without hook boilerplate"
     useSite: flowUse,
     symbol,
     mode: "read",
-    target: "csharp",
+    target: "acme",
   }, () => ({ valid: false }), { requireOwner: true });
   assert.equal(flow.kind === "accept" ? flow.value.valid : false, true);
-  assert.equal(flow.kind === "accept" ? flow.extensionId : undefined, "csharp-target");
+  assert.equal(flow.kind === "accept" ? flow.extensionId : undefined, "acme-target");
 });
 
 test("observation hooks receive a read-only compiler query context", () => {
@@ -587,15 +587,15 @@ test("observation hooks receive a read-only compiler query context", () => {
 });
 
 test("target binding providers own and resolve virtual modules without file-backed side data", () => {
-  const specifier = "@example/dotnet/System.Buffers.js";
+  const specifier = "@example/target/Acme.Buffers.js";
   const host = new ExtensionHost({});
-  host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
+  host.providers.registerTargetBindingProvider(acmeBindingProvider(specifier));
 
   assert.equal(host.providers.getModuleOwner("@example/native/types.js"), undefined);
 
   const context = {
     containingFile: "/src/example.ts",
-    activeTarget: "csharp",
+    activeTarget: "acme",
   };
   const result = host.providers.resolveVirtualModule(specifier, context);
   assert.equal(result.kind, "resolved");
@@ -603,14 +603,14 @@ test("target binding providers own and resolve virtual modules without file-back
     return;
   }
 
-  assert.equal(result.module.resolution.virtualFileName, "tsts-provider://dotnet/System.Buffers");
+  assert.equal(result.module.resolution.virtualFileName, "tsts-provider://acme/Acme.Buffers");
   assert.equal(result.module.declarationModel.exports[0]?.name, "SearchValues");
   assert.match(result.module.virtualSourceText, /export declare class SearchValues<T extends unknown>/);
   assert.match(result.module.virtualSourceText, /Contains\(value: T\): boolean;/);
   assert.match(result.module.virtualSourceText, /export type Token = number;/);
-  assert.equal(result.module.virtualDocument.uri, "tsts-provider://dotnet/System.Buffers");
+  assert.equal(result.module.virtualDocument.uri, "tsts-provider://acme/Acme.Buffers");
   assert.equal(result.module.virtualDocument.readOnly, true);
-  assert.equal(result.module.virtualDocument.provider.id, "dotnet");
+  assert.equal(result.module.virtualDocument.provider.id, "acme");
   assert.match(result.module.virtualDocument.sourceText, /export declare class SearchValues/);
   const cached = host.providers.resolveVirtualModule(specifier, context);
   assert.equal(cached.kind, "resolved");
@@ -620,17 +620,17 @@ test("target binding providers own and resolve virtual modules without file-back
   assert.equal(result.module.provider.getTargetIdentity({
     moduleSpecifier: specifier,
     exportName: "SearchValues",
-  })?.id, "System.Buffers.SearchValues`1");
+  })?.id, "Acme.Buffers.SearchValues`1");
 
-  assert.equal(host.providers.resolveVirtualModule("@example/dotnet/Unknown.js").kind, "unowned");
+  assert.equal(host.providers.resolveVirtualModule("@example/target/Unknown.js").kind, "unowned");
 });
 
 test("virtual declaration documents are stable consumer-readable compiler state", () => {
-  const specifier = "@example/dotnet/System.Buffers.js";
+  const specifier = "@example/target/Acme.Buffers.js";
   const host = new ExtensionHost({});
-  host.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier));
+  host.providers.registerTargetBindingProvider(acmeBindingProvider(specifier));
 
-  const result = host.providers.resolveVirtualModule(specifier, { activeTarget: "csharp" });
+  const result = host.providers.resolveVirtualModule(specifier, { activeTarget: "acme" });
   assert.equal(result.kind, "resolved");
   if (result.kind !== "resolved") {
     return;
@@ -651,16 +651,16 @@ test("virtual declaration documents are stable consumer-readable compiler state"
 });
 
 test("provider ownership conflicts and invalid declaration models are diagnostics", () => {
-  const specifier = "@example/dotnet/System.Buffers.js";
+  const specifier = "@example/target/Acme.Buffers.js";
   const conflictHost = new ExtensionHost({});
-  conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "first" }));
-  conflictHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, { id: "second" }));
+  conflictHost.providers.registerTargetBindingProvider(acmeBindingProvider(specifier, { id: "first" }));
+  conflictHost.providers.registerTargetBindingProvider(acmeBindingProvider(specifier, { id: "second" }));
 
   assert.equal(conflictHost.providers.resolveVirtualModule(specifier).kind, "conflict");
   assert.equal(conflictHost.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.providerOwnershipConflict);
 
   const invalidHost = new ExtensionHost({});
-  invalidHost.providers.registerTargetBindingProvider(dotnetBindingProvider(specifier, {
+  invalidHost.providers.registerTargetBindingProvider(acmeBindingProvider(specifier, {
     declarationModel: (resolution) => ({
       moduleSpecifier: resolution.moduleSpecifier,
       providerModuleId: "wrong-provider-module-id",
@@ -779,11 +779,16 @@ test("provider declaration models render imports heritage defaults readonly opti
   }
 
   const source = resolved.module.virtualSourceText;
-  assert.match(source, /import type \{ BaseShape \} from "@acme\/native\/base.js";/);
-  assert.match(source, /export interface Derived<T extends number = number> extends BaseShape/);
+  assert.match(source, /import type \{ BaseShape as ImportedBaseShape \} from "@acme\/native\/base.js";/);
+  assert.match(source, /import type DefaultShape, \{ IteratorShape \} from "@acme\/native\/defaults.js";/);
+  assert.match(source, /export interface Derived<T extends number = number> extends ImportedBaseShape/);
   assert.match(source, /readonly id: number;/);
   assert.match(source, /optionalName\?: string;/);
-  assert.match(source, /make\(value\?: BaseShape\): T;/);
+  assert.match(source, /defaultShape: DefaultShape;/);
+  assert.match(source, /make\(value\?: ImportedBaseShape\): T;/);
+  assert.match(source, /"not-valid-identifier": number;/);
+  assert.match(source, /\[Symbol.iterator\]\(\): IteratorShape;/);
+  assert.match(source, /export default class DefaultBox/);
   assert.equal(resolved.module.context.importSlice?.requestedExports?.[0]?.exportedName, "Derived");
   assert.equal(resolved.module.virtualDocument.context.importSlice?.kind, "named");
 });
@@ -971,11 +976,11 @@ test("consumer query facade exposes finalized target facts without fallback infe
   const runtimeType = {};
   const host = new ExtensionHost({});
 
-  host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
-  host.facts.set(propertyAccess, targetOperationFactKey, targetOperation("System.String.Length", "property"));
+  host.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("Acme.Console.WriteLine(Acme.Int32)"));
+  host.facts.set(propertyAccess, targetOperationFactKey, targetOperation("Acme.String.Length", "property"));
   host.facts.set(argument, argumentPassingFactKey, { mode: "byref-readonly" });
   host.facts.set(runtimeType, runtimeCarrierFactKey, {
-    carrier: { kind: "target-named", id: "System.Int32" },
+    carrier: { kind: "target-named", id: "Acme.Int32" },
     requiresAllocation: false,
   });
 
@@ -984,8 +989,8 @@ test("consumer query facade exposes finalized target facts without fallback infe
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.consumerBeforeFinalization);
 
   host.finalizeSemantics();
-  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "System.Console.WriteLine(System.Int32)");
-  assert.equal(consumer.getSelectedTargetProperty(propertyAccess)?.operationId, "System.String.Length");
+  assert.equal(consumer.getSelectedTargetCall(call)?.member.id, "Acme.Console.WriteLine(Acme.Int32)");
+  assert.equal(consumer.getSelectedTargetProperty(propertyAccess)?.operationId, "Acme.String.Length");
   assert.equal(consumer.getArgumentPassingFact(argument)?.mode, "byref-readonly");
   assert.equal(consumer.getRuntimeCarrierFact(runtimeType)?.carrier.kind, "target-named");
 });
@@ -1022,9 +1027,9 @@ test("strict consumer facts report diagnostics and fail closed", () => {
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.requiredFactMissing);
 
   const satisfiedHost = new ExtensionHost({});
-  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("System.Console.WriteLine(System.Int32)"));
+  satisfiedHost.facts.set(call, selectedTargetSignatureFactKey, selectedSignature("Acme.Console.WriteLine(Acme.Int32)"));
   satisfiedHost.finalizeSemantics();
-  assert.equal(createExtensionConsumerQueries(satisfiedHost, "emitter").mustSelectedTargetCall(call).member.id, "System.Console.WriteLine(System.Int32)");
+  assert.equal(createExtensionConsumerQueries(satisfiedHost, "emitter").mustSelectedTargetCall(call).member.id, "Acme.Console.WriteLine(Acme.Int32)");
 });
 
 test("lifecycle hook failures are diagnostics with extension identity", () => {
@@ -1090,7 +1095,7 @@ test("target constraint and post-check assignability observations use owner hook
   const intType = {};
   const longType = {};
   const stringType = {};
-  const searchValuesConstraint = { kind: "implements", contract: "System.IEquatable`1" } as const;
+  const searchValuesConstraint = { kind: "implements", contract: "Acme.IEquatable`1" } as const;
   let coreCalled = false;
   const host = new ExtensionHost({}, {
     extensions: [
@@ -1104,21 +1109,21 @@ test("target constraint and post-check assignability observations use owner hook
           });
         },
       }),
-      extension("csharp", {
+      extension("acme", {
         dependsOn: ["source"],
-        observationOwners: [ExtensionObservationPoint.validateTargetConstraint, ExtensionObservationPoint.validatePostCheckAssignability],
+        observationOwners: [ExtensionObservationPoint.validateTargetConstraint, ExtensionObservationPoint.observePostCheckAssignability],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.validateTargetConstraint, (request) => {
             if (request.source === intType && request.constraint === searchValuesConstraint) {
-              return acceptObservation(true, [{ message: "int32 maps to System.Int32 and implements IEquatable<System.Int32>" }]);
+              return acceptObservation(true, [{ message: "int32 maps to Acme.Int32 and implements IEquatable<Acme.Int32>" }]);
             }
             return deferObservation;
           });
-          context.registerObservation(ExtensionObservationPoint.validatePostCheckAssignability, (request) => {
+          context.registerObservation(ExtensionObservationPoint.observePostCheckAssignability, (request) => {
             if (request.source === intType && request.target === longType) {
-              return acceptObservation(true);
+              return acceptObservation(undefined);
             }
-            return rejectObservation<boolean>(diagnostic("csharp", "ASSIGNABILITY_REJECTED", 9100001, "source type is not assignable to target type"));
+            return rejectObservation<void>(diagnostic("acme", "ASSIGNABILITY_REJECTED", 9100001, "source type is not assignable to target type"));
           });
         },
       }),
@@ -1128,7 +1133,7 @@ test("target constraint and post-check assignability observations use owner hook
   const constraintResult = host.runObservation(ExtensionObservationPoint.validateTargetConstraint, {
     source: intType,
     constraint: searchValuesConstraint,
-    target: "csharp",
+    target: "acme",
   }, () => {
     coreCalled = true;
     return false;
@@ -1138,11 +1143,11 @@ test("target constraint and post-check assignability observations use owner hook
   assert.equal(constraintResult.kind === "accept" ? constraintResult.value : false, true);
   assert.equal(coreCalled, false);
 
-  const assignabilityResult = host.runObservation(ExtensionObservationPoint.validatePostCheckAssignability, {
+  const assignabilityResult = host.runObservation(ExtensionObservationPoint.observePostCheckAssignability, {
     source: intType,
     target: stringType,
     relation: "assignment",
-  }, () => true, { requireOwner: true });
+  }, () => undefined, { requireOwner: true });
 
   assert.equal(assignabilityResult.kind, "reject");
   assert.equal(host.diagnostics.all().at(-1)?.extensionCode, "ASSIGNABILITY_REJECTED");
@@ -1164,7 +1169,7 @@ test("required extension-owned observations cannot fall back when owner is absen
 
   const deferredOwnerHost = new ExtensionHost({}, {
     extensions: [
-      extension("csharp", {
+      extension("acme", {
         observationOwners: [ExtensionObservationPoint.mapCheckedCall],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedCall, () => deferObservation);
@@ -1224,8 +1229,8 @@ test("owned multiple non-deferred observations produce deterministic conflict", 
 test("target extension composition requires explicit multi-target mode", () => {
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("csharp", { composition: { kind: "target", target: "csharp" } }),
-      extension("rust", { composition: { kind: "target", target: "rust" } }),
+      extension("acme", { composition: { kind: "target", target: "acme" } }),
+      extension("borrow", { composition: { kind: "target", target: "borrow" } }),
     ],
   });
 
@@ -1234,8 +1239,8 @@ test("target extension composition requires explicit multi-target mode", () => {
   const multiTargetHost = new ExtensionHost({}, {
     allowMultipleTargets: true,
     extensions: [
-      extension("csharp", { composition: { kind: "target", target: "csharp" } }),
-      extension("rust", { composition: { kind: "target", target: "rust" } }),
+      extension("acme", { composition: { kind: "target", target: "acme" } }),
+      extension("borrow", { composition: { kind: "target", target: "borrow" } }),
     ],
   });
 
@@ -1247,10 +1252,10 @@ test("checked call mapping records selected target signature facts", () => {
   const callee = {};
   const argument = {};
   const voidType = {};
-  const writeLineInt = selectedSignature("System.Console.WriteLine(System.Int32)");
+  const writeLineInt = selectedSignature("Acme.Console.WriteLine(Acme.Int32)");
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("csharp", {
+      extension("acme", {
         observationOwners: [ExtensionObservationPoint.mapCheckedCall],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedCall, (request) => {
@@ -1272,11 +1277,11 @@ test("checked call mapping records selected target signature facts", () => {
     call,
     callee,
     arguments: [argument],
-    target: "csharp",
+    target: "acme",
   }, () => ({ selectedSignature: selectedSignature("core") }), { requireOwner: true });
 
   assert.equal(result.kind, "accept");
-  assert.equal(host.facts.get(call, selectedTargetSignatureFactKey)?.member.id, "System.Console.WriteLine(System.Int32)");
+  assert.equal(host.facts.get(call, selectedTargetSignatureFactKey)?.member.id, "Acme.Console.WriteLine(Acme.Int32)");
 });
 
 test("property, element, and operator observations expose target operations", () => {
@@ -1299,17 +1304,17 @@ test("property, element, and operator observations expose target operations", ()
         ],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.mapCheckedPropertyAccess, (request) => {
-            const operation = targetOperation("System.Array.Length", "property");
+            const operation = targetOperation("Acme.Array.Length", "property");
             context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: int32Type });
           });
           context.registerObservation(ExtensionObservationPoint.mapCheckedElementAccess, (request) => {
-            const operation = targetOperation("System.Array.Get", "indexer");
+            const operation = targetOperation("Acme.Array.Get", "indexer");
             context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: elementType });
           });
           context.registerObservation(ExtensionObservationPoint.mapCheckedOperator, (request) => {
-            const operation = targetOperation("System.Int32.op_Addition", "operator");
+            const operation = targetOperation("Acme.Int32.op_Addition", "operator");
             context.facts.set(request.expression, targetOperationFactKey, operation);
             return acceptObservation({ operation, resultType: int32Type });
           });
@@ -1322,9 +1327,9 @@ test("property, element, and operator observations expose target operations", ()
   assert.equal(host.runObservation(ExtensionObservationPoint.mapCheckedElementAccess, { expression: indexExpression, receiver: arrayType, argument: indexArgument }, () => ({ operation: targetOperation("core", "indexer") }), { requireOwner: true }).kind, "accept");
   assert.equal(host.runObservation(ExtensionObservationPoint.mapCheckedOperator, { expression: addExpression, operator: "+", left: leftOperand, right: rightOperand }, () => ({ operation: targetOperation("core", "operator") }), { requireOwner: true }).kind, "accept");
 
-  assert.equal(host.facts.get(lengthExpression, targetOperationFactKey)?.operationId, "System.Array.Length");
-  assert.equal(host.facts.get(indexExpression, targetOperationFactKey)?.operationId, "System.Array.Get");
-  assert.equal(host.facts.get(addExpression, targetOperationFactKey)?.operationId, "System.Int32.op_Addition");
+  assert.equal(host.facts.get(lengthExpression, targetOperationFactKey)?.operationId, "Acme.Array.Length");
+  assert.equal(host.facts.get(indexExpression, targetOperationFactKey)?.operationId, "Acme.Array.Get");
+  assert.equal(host.facts.get(addExpression, targetOperationFactKey)?.operationId, "Acme.Int32.op_Addition");
 });
 
 test("contextual target type and target type argument observations preserve target facts", () => {
@@ -1341,7 +1346,7 @@ test("contextual target type and target type argument observations preserve targ
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.recordContextualTargetType, (request) => acceptObservation({
             type: delegateType,
-            targetType: { kind: "target-named", id: "System.Func`2" },
+            targetType: { kind: "target-named", id: "Acme.Func`2" },
           }));
           context.registerObservation(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget, () => acceptObservation({
             targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
@@ -1365,23 +1370,23 @@ test("flow validation supports local rejection and target compiler validation fa
   const borrowSymbol = {};
   const host = new ExtensionHost({}, {
     extensions: [
-      extension("rust", {
+      extension("borrow", {
         observationOwners: [ExtensionObservationPoint.validateExtensionFlowUse],
         initialize: (context) => {
           context.registerObservation(ExtensionObservationPoint.validateExtensionFlowUse, (request) => {
             if (request.useSite === movedUse) {
               context.facts.set(request.useSite, flowStateFactKey, { state: "moved" });
-              return rejectObservation(diagnostic("rust", "VALUE_WAS_MOVED", 9100101, "value was moved and cannot be used here"));
+              return rejectObservation(diagnostic("borrow", "VALUE_WAS_MOVED", 9100101, "value was moved and cannot be used here"));
             }
             if (request.useSite === returnedBorrow) {
               context.facts.set(request.useSite, flowStateFactKey, {
                 state: "target-validation-required",
-                targetCompiler: "rustc",
+                targetCompiler: "acme-checker",
               });
               return acceptObservation({
                 valid: true,
                 targetCompilerValidationRequired: true,
-                targetCompiler: "rustc",
+                targetCompiler: "acme-checker",
               });
             }
             return deferObservation;
@@ -1391,13 +1396,13 @@ test("flow validation supports local rejection and target compiler validation fa
     ],
   });
 
-  const rejected = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: movedUse, symbol: movedSymbol, mode: "read", target: "rust" }, () => ({ valid: true }), { requireOwner: true });
+  const rejected = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: movedUse, symbol: movedSymbol, mode: "read", target: "borrow" }, () => ({ valid: true }), { requireOwner: true });
   assert.equal(rejected.kind, "reject");
   assert.equal(host.facts.get(movedUse, flowStateFactKey)?.state, "moved");
 
-  const accepted = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: returnedBorrow, symbol: borrowSymbol, mode: "read", target: "rust" }, () => ({ valid: false }), { requireOwner: true });
-  assert.equal(accepted.kind === "accept" ? accepted.value.targetCompiler : undefined, "rustc");
-  assert.equal(host.facts.get(returnedBorrow, flowStateFactKey)?.targetCompiler, "rustc");
+  const accepted = host.runObservation(ExtensionObservationPoint.validateExtensionFlowUse, { useSite: returnedBorrow, symbol: borrowSymbol, mode: "read", target: "borrow" }, () => ({ valid: false }), { requireOwner: true });
+  assert.equal(accepted.kind === "accept" ? accepted.value.targetCompiler : undefined, "acme-checker");
+  assert.equal(host.facts.get(returnedBorrow, flowStateFactKey)?.targetCompiler, "acme-checker");
 });
 
 test("advanced associated-type and const-generic facts are first-class", () => {
@@ -1423,16 +1428,16 @@ test("advanced associated-type and const-generic facts are first-class", () => {
 test("target binding facts preserve provider identity and constraints", () => {
   const searchValues = {};
   const fact: TargetBindingFact = {
-    id: "System.Buffers.SearchValues`1",
+    id: "Acme.Buffers.SearchValues`1",
     sourceName: "SearchValues",
-    targetName: "System.Buffers.SearchValues`1",
-    target: "csharp",
+    targetName: "Acme.Buffers.SearchValues`1",
+    target: "acme",
     kind: "struct",
     typeParameters: [{
       name: "T",
       constraints: [{
         kind: "implements",
-        contract: "System.IEquatable`1",
+        contract: "Acme.IEquatable`1",
         typeArguments: [{ kind: "type-parameter", name: "T" }],
       }],
     }],
@@ -1443,7 +1448,7 @@ test("target binding facts preserve provider identity and constraints", () => {
   assert.equal(host.facts.get(searchValues, targetBindingFactKey)?.typeParameters?.[0]?.constraints?.[0]?.kind, "implements");
 });
 
-function dotnetBindingProvider(
+function acmeBindingProvider(
   ownedSpecifier: string,
   options: {
     readonly id?: string;
@@ -1452,17 +1457,17 @@ function dotnetBindingProvider(
     readonly declarationModel?: (resolution: ProviderModuleResolution) => ProviderDeclarationModel;
   } = {},
 ): TargetBindingProvider {
-  const moduleId = "dotnet:System.Buffers";
+  const moduleId = "acme:Acme.Buffers";
   const targetIdentity: TargetIdentity = {
-    target: "csharp",
-    id: "System.Buffers.SearchValues`1",
-    displayName: "System.Buffers.SearchValues<T>",
+    target: "acme",
+    id: "Acme.Buffers.SearchValues`1",
+    displayName: "Acme.Buffers.SearchValues<T>",
   };
   return {
     identity: {
-      id: options.id ?? "dotnet",
+      id: options.id ?? "acme",
       version: "1.0.0",
-      target: "csharp",
+      target: "acme",
       extensionContractVersion: options.extensionContractVersion ?? TstsProviderContractVersion,
       providerKind: options.providerKind ?? "binding",
     },
@@ -1472,9 +1477,9 @@ function dotnetBindingProvider(
     resolveModule: (specifier) => ({
       kind: "virtual",
       moduleSpecifier: specifier,
-      virtualFileName: "tsts-provider://dotnet/System.Buffers",
+      virtualFileName: "tsts-provider://acme/Acme.Buffers",
       providerModuleId: moduleId,
-      packageName: "@example/dotnet",
+      packageName: "@example/target",
       packageVersion: "1.0.0",
     }),
     getDeclarationModel: options.declarationModel ?? ((resolution) => ({
@@ -1504,14 +1509,14 @@ function dotnetBindingProvider(
         name: "Token",
         kind: "type",
         targetIdentity: {
-          target: "csharp",
-          id: "System.Int32",
-          displayName: "System.Int32",
+          target: "acme",
+          id: "Acme.Int32",
+          displayName: "Acme.Int32",
         },
         type: {
           kind: "target-named",
-          target: "csharp",
-          id: "System.Int32",
+          target: "acme",
+          id: "Acme.Int32",
           sourceShape: { kind: "number" },
         },
       }],
@@ -1675,7 +1680,12 @@ function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {
       providerModuleId: resolution.providerModuleId,
       imports: [{
         moduleSpecifier: "@acme/native/base.js",
-        namedImports: [{ exportedName: "BaseShape" }],
+        namedImports: [{ exportedName: "BaseShape", localName: "ImportedBaseShape" }],
+        typeOnly: true,
+      }, {
+        moduleSpecifier: "@acme/native/defaults.js",
+        defaultImport: "DefaultShape",
+        namedImports: [{ exportedName: "IteratorShape" }],
         typeOnly: true,
       }],
       exports: [{
@@ -1689,7 +1699,7 @@ function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {
         }],
         heritage: [{
           kind: "extends",
-          type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape" },
+          type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape", localName: "ImportedBaseShape" },
         }],
         members: [{
           id: "id",
@@ -1704,6 +1714,25 @@ function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {
           optional: true,
           type: { kind: "string" },
         }, {
+          id: "defaultShape",
+          name: "defaultShape",
+          kind: "property",
+          type: { kind: "provider-ref", moduleSpecifier: "@acme/native/defaults.js", exportName: "default", localName: "DefaultShape" },
+        }, {
+          id: "quoted",
+          name: { kind: "string-literal", text: "not-valid-identifier" },
+          kind: "property",
+          type: { kind: "number" },
+        }, {
+          id: "iterator",
+          name: { kind: "well-known-symbol", name: "iterator" },
+          kind: "method",
+          signatures: [{
+            id: "iterator()",
+            parameters: [],
+            returnType: { kind: "provider-ref", moduleSpecifier: "@acme/native/defaults.js", exportName: "IteratorShape" },
+          }],
+        }, {
           id: "make",
           name: "make",
           kind: "method",
@@ -1711,12 +1740,18 @@ function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {
             id: "make(BaseShape)",
             parameters: [{
               name: "value",
-              type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape" },
+              type: { kind: "provider-ref", moduleSpecifier: "@acme/native/base.js", exportName: "BaseShape", localName: "ImportedBaseShape" },
               optional: true,
             }],
             returnType: { kind: "type-parameter", name: "T" },
           }],
         }],
+      }, {
+        id: "DefaultBox",
+        name: "DefaultBox",
+        exportKind: "default",
+        kind: "class",
+        members: [],
       }],
     }),
     getTargetIdentity: () => undefined,

@@ -81,6 +81,7 @@ export type {
   ExtensionLifecycleHook,
   ProviderDeclarationKind,
   ProviderDeclarationModel,
+  ProviderExportKind,
   ProviderExportDeclaration,
   ProviderHeritageDeclaration,
   ProviderIdentity,
@@ -94,6 +95,7 @@ export type {
   ProviderModuleResolveResult,
   ProviderOwnership,
   ProviderParameterDeclaration,
+  ProviderPropertyName,
   ProviderRequestedExport,
   ProviderResolvedModule,
   RequiredProviderModuleSpec,
@@ -106,6 +108,7 @@ export type {
   TargetBindingProvider,
   TargetIdentity,
   TargetSemanticProvider,
+  ProviderWellKnownSymbolName,
   BeforeSemanticsFinalizedLifecycleRequest,
 } from "./host.js";
 export type {
@@ -147,7 +150,7 @@ export type {
   ExtensionObservationRunOptions,
   ParameterPassingRequest,
   ParameterPassingResult,
-  PostCheckAssignabilityValidationRequest,
+  PostCheckAssignabilityObservationRequest,
   RuntimeCarrierFactRequest,
   RuntimeCarrierFactResult,
   TargetConstraintValidationRequest,
