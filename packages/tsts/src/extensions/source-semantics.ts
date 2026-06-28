@@ -483,11 +483,9 @@ function recordFieldMarker(
     type: fieldType,
   } satisfies FieldFact;
   facts.set(callExpression, fieldFactKey, fact, evidence);
-  if (propertyAssignment !== undefined) {
-    facts.set(propertyAssignment, fieldFactKey, fact, evidence);
-    if (nameNode !== undefined) {
-      facts.set(nameNode, fieldFactKey, fact, evidence);
-    }
+  facts.set(propertyAssignment, fieldFactKey, fact, evidence);
+  if (nameNode !== undefined) {
+    facts.set(nameNode, fieldFactKey, fact, evidence);
   }
 }
 
