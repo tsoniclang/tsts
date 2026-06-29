@@ -372,6 +372,9 @@ function recordSourceSemanticsCallMarker(
     case "out":
     case "ref":
     case "inref": {
+      if (!hasMarkerArgumentCount(callExpression, 1)) {
+        return;
+      }
       const argument = (Node_Arguments(callExpression) ?? [])[0];
       if (argument === undefined) {
         return;
@@ -380,6 +383,9 @@ function recordSourceSemanticsCallMarker(
       return;
     }
     case "borrow": {
+      if (!hasMarkerArgumentCount(callExpression, 1)) {
+        return;
+      }
       const argument = (Node_Arguments(callExpression) ?? [])[0];
       if (argument === undefined) {
         return;
@@ -388,6 +394,9 @@ function recordSourceSemanticsCallMarker(
       return;
     }
     case "borrowMut": {
+      if (!hasMarkerArgumentCount(callExpression, 1)) {
+        return;
+      }
       const argument = (Node_Arguments(callExpression) ?? [])[0];
       if (argument === undefined) {
         return;
@@ -396,6 +405,9 @@ function recordSourceSemanticsCallMarker(
       return;
     }
     case "move": {
+      if (!hasMarkerArgumentCount(callExpression, 1)) {
+        return;
+      }
       const argument = (Node_Arguments(callExpression) ?? [])[0];
       if (argument === undefined) {
         return;
@@ -404,18 +416,38 @@ function recordSourceSemanticsCallMarker(
       return;
     }
     case "field":
+      if (!hasMarkerArgumentCount(callExpression, 0) || !hasMarkerTypeArgumentCount(callExpression, 1)) {
+        return;
+      }
       recordFieldMarker(facts, callExpression, evidence);
       return;
     case "struct":
+      if (!hasMarkerArgumentCount(callExpression, 1)) {
+        return;
+      }
       recordStructMarker(facts, callExpression, evidence);
       return;
     case "attribute":
+      if (!hasMarkerTypeArgumentCount(callExpression, 1)) {
+        return;
+      }
       recordAttributeMarker(facts, callExpression, evidence);
       return;
     case "defaultof":
+      if (!hasMarkerArgumentCount(callExpression, 0) || !hasMarkerTypeArgumentCount(callExpression, 1)) {
+        return;
+      }
       recordDefaultValueMarker(facts, callExpression, evidence);
       return;
   }
+}
+
+function hasMarkerArgumentCount(callExpression: Node, count: number): boolean {
+  return (Node_Arguments(callExpression) ?? []).length === count;
+}
+
+function hasMarkerTypeArgumentCount(callExpression: Node, count: number): boolean {
+  return (Node_TypeArguments(callExpression) ?? []).length === count;
 }
 
 function recordArgumentPassingMarker(
@@ -655,6 +687,9 @@ function recordSourceSemanticsTypeMarker(
   const typeArguments = Node_TypeArguments(typeReference) ?? [];
   const evidence = createMarkerEvidence(marker.exportName);
   if (marker.marker === "ptr") {
+    if (typeArguments.length !== 1) {
+      return;
+    }
     const pointee = typeArguments[0];
     if (pointee === undefined) {
       return;
@@ -666,6 +701,9 @@ function recordSourceSemanticsTypeMarker(
     } satisfies PointerFact;
     facts.set(typeReference, pointerFactKey, fact, evidence);
     facts.set(typeName, pointerFactKey, fact, evidence);
+    return;
+  }
+  if (typeArguments.length !== 2) {
     return;
   }
   const result = typeArguments[1];

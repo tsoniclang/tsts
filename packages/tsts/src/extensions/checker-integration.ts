@@ -348,7 +348,6 @@ export function recordExtensionContextualTargetTypeFact(checker: GoPtr<CheckerWi
     () => ({
       type: contextualType,
     }),
-    { requireOwner: true },
   );
   if (result.kind !== "accept") {
     return;
