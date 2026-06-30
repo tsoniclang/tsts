@@ -20,6 +20,8 @@ import type {
   ExtensionObservationRunOptions,
 } from "./observations.js";
 import { ExtensionObservationPoint } from "./observations.js";
+import type { ArgumentPassingMode } from "./argument-passing.js";
+import { isArgumentPassingMode } from "./argument-passing.js";
 import type { SourcePrimitiveKind } from "./facts.js";
 
 export interface ExtensionEvidence {
@@ -289,6 +291,7 @@ export type ProviderTypeExpression =
 export interface ProviderParameterDeclaration {
   readonly name: string;
   readonly type: ProviderTypeExpression;
+  readonly passingMode?: ArgumentPassingMode;
   readonly optional?: boolean;
   readonly rest?: boolean;
   readonly defaultType?: ProviderTypeExpression;
@@ -2111,6 +2114,7 @@ function isValidProviderSignatureDeclaration(value: ProviderSignatureDeclaration
 function isValidProviderParameterDeclaration(value: ProviderParameterDeclaration): boolean {
   return isIdentifierText(value.name)
     && isValidProviderTypeExpression(value.type)
+    && (value.passingMode === undefined || isArgumentPassingMode(value.passingMode))
     && (value.defaultType === undefined || isValidProviderTypeExpression(value.defaultType));
 }
 
