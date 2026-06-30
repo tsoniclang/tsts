@@ -11,7 +11,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { ResolutionModeESM } from "../internal/core/compileroptions.js";
@@ -320,6 +320,64 @@ test("provider virtual declaration facts include enum members", () => {
   assert.equal(symbolFact?.memberName, "memberA");
   assert.equal(symbolFact?.memberId, "Acme.NativeEnum.memberA");
   assert.deepEqual(declarationFact, symbolFact);
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual declaration facts include namespace value and function members", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { NativeNamespace } from "@acme/native/namespace.js";
+
+      const value = NativeNamespace.value;
+      const computed = NativeNamespace.compute();
+      value;
+      computed;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [namespaceProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/Native.Namespace");
+  assert.ok(virtualFile !== undefined);
+  const nativeNamespaceSymbol = Node_Symbol(virtualFile as never)?.Exports?.get("NativeNamespace");
+  assert.ok(nativeNamespaceSymbol !== undefined);
+  const valueSymbol = nativeNamespaceSymbol.Exports?.get("value");
+  const computeSymbol = nativeNamespaceSymbol.Exports?.get("compute");
+  assert.ok(valueSymbol !== undefined);
+  assert.ok(computeSymbol !== undefined);
+
+  const valueDeclaration = findNamedNodeByKind(virtualFile as GoPtr<Node>, KindVariableDeclaration, "value");
+  const computeDeclaration = findNamedNodeByKind(virtualFile as GoPtr<Node>, KindFunctionDeclaration, "compute");
+  assert.equal(extended.extensionHost.facts.get(valueSymbol, providerVirtualDeclarationFactKey)?.memberId, "Acme.NativeNamespace.value");
+  assert.equal(extended.extensionHost.facts.get(valueDeclaration, providerVirtualDeclarationFactKey)?.memberId, "Acme.NativeNamespace.value");
+  assert.equal(extended.extensionHost.facts.get(computeSymbol, providerVirtualDeclarationFactKey)?.memberId, "Acme.NativeNamespace.compute");
+  assert.equal(extended.extensionHost.facts.get(computeDeclaration, providerVirtualDeclarationFactKey)?.signatureId, "Acme.NativeNamespace.compute()");
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
@@ -1625,6 +1683,59 @@ function enumProviderExtension(): CompilerExtension {
   };
 }
 
+function namespaceProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-namespace-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-namespace-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-namespace-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/namespace.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/Native.Namespace",
+          providerModuleId: "acme.native.namespace",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "NativeNamespace",
+            name: "NativeNamespace",
+            kind: "namespace",
+            members: [{
+              id: "Acme.NativeNamespace.value",
+              name: "value",
+              kind: "field",
+              type: { kind: "number" },
+            }, {
+              id: "Acme.NativeNamespace.compute",
+              name: "compute",
+              kind: "method",
+              signatures: [{
+                id: "Acme.NativeNamespace.compute()",
+                parameters: [],
+                returnType: { kind: "number" },
+              }],
+            }],
+          }],
+        }),
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
 function acmeProviderExtension(observedSlices: Map<string, ProviderImportSlice | undefined>): CompilerExtension {
   return {
     identity: {
@@ -2215,6 +2326,17 @@ function assertCleanProgram(program: GoPtr<Program>, sourceFile: GoPtr<SourceFil
 
 function findFirstNodeByKind(root: GoPtr<Node>, kind: number): GoPtr<Node> {
   const found = findFirstNodeByKindWorker(root, kind);
+  assert.ok(found !== undefined);
+  return found;
+}
+
+function findNamedNodeByKind(root: GoPtr<Node>, kind: number, name: string): GoPtr<Node> {
+  let found: GoPtr<Node>;
+  visitNodes(root, (node) => {
+    if (found === undefined && node?.Kind === kind && Node_Text(Node_Name(node)) === name) {
+      found = node;
+    }
+  });
   assert.ok(found !== undefined);
   return found;
 }
