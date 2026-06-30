@@ -7,6 +7,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import {
   KindConstructSignature,
   KindConstructor,
+  KindEnumMember,
   KindIndexSignature,
   KindMethodDeclaration,
   KindMethodSignature,
@@ -216,7 +217,8 @@ function findProviderMemberSymbol(exportSymbol: Symbol, member: ProviderMemberDe
       return symbol;
     }
   }
-  return exportSymbol.Members?.get(getProviderPropertyNameText(member.name));
+  const memberName = getProviderPropertyNameText(member.name);
+  return exportSymbol.Members?.get(memberName) ?? exportSymbol.Exports?.get(memberName);
 }
 
 function providerMemberMatchesNode(member: ProviderMemberDeclaration, node: Node): boolean {
@@ -240,7 +242,7 @@ function providerMemberKindMatchesNode(member: ProviderMemberDeclaration, node: 
       return node.Kind === KindMethodDeclaration || node.Kind === KindMethodSignature;
     case "property":
     case "field":
-      return node.Kind === KindPropertyDeclaration || node.Kind === KindPropertySignature;
+      return node.Kind === KindPropertyDeclaration || node.Kind === KindPropertySignature || node.Kind === KindEnumMember;
     case "indexer":
       return node.Kind === KindIndexSignature;
   }
