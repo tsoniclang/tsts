@@ -11,7 +11,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference } from "../internal/ast/generated/kinds.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { ResolutionModeESM } from "../internal/core/compileroptions.js";
@@ -260,6 +260,66 @@ test("provider virtual declaration facts distinguish static instance constructor
   assert.equal(extended.extensionHost.facts.get(instanceCompare, providerVirtualDeclarationFactKey)?.signatureId, "Buffer.prototype.compare(Buffer)");
   assert.equal(extended.extensionHost.facts.get(constructor, providerVirtualDeclarationFactKey)?.signatureId, "Buffer.constructor()");
   assert.equal(extended.extensionHost.facts.get(indexer, providerVirtualDeclarationFactKey)?.signatureId, "Buffer[index]");
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual declaration facts include enum members", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { NativeEnum } from "@acme/native/enums.js";
+
+      const value = NativeEnum.memberA;
+      value;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [enumProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/Native.Enums");
+  assert.ok(virtualFile !== undefined);
+  const nativeEnumSymbol = Node_Symbol(virtualFile as never)?.Exports?.get("NativeEnum");
+  assert.ok(nativeEnumSymbol !== undefined);
+  const memberSymbol = nativeEnumSymbol.Exports?.get("memberA");
+  assert.ok(memberSymbol !== undefined);
+  const memberDeclaration = findFirstNodeByKind(virtualFile as GoPtr<Node>, KindEnumMember);
+
+  const symbolFact = extended.extensionHost.facts.get(memberSymbol, providerVirtualDeclarationFactKey);
+  const declarationFact = extended.extensionHost.facts.get(memberDeclaration, providerVirtualDeclarationFactKey);
+  assert.equal(symbolFact?.providerId, "acme-enum-provider");
+  assert.equal(symbolFact?.providerVersion, "1.0.0");
+  assert.equal(symbolFact?.providerModuleId, "acme.native.enums");
+  assert.equal(symbolFact?.moduleSpecifier, "@acme/native/enums.js");
+  assert.equal(symbolFact?.exportName, "NativeEnum");
+  assert.equal(symbolFact?.exportId, "NativeEnum");
+  assert.equal(symbolFact?.memberName, "memberA");
+  assert.equal(symbolFact?.memberId, "Acme.NativeEnum.memberA");
+  assert.deepEqual(declarationFact, symbolFact);
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
@@ -1504,6 +1564,58 @@ function bufferProviderExtension(): CompilerExtension {
                 parameters: [{ name: "index", type: { kind: "number" } }],
                 returnType: { kind: "number" },
               }],
+            }],
+          }],
+        }),
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function enumProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-enum-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-enum-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-enum-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/enums.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/Native.Enums",
+          providerModuleId: "acme.native.enums",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "NativeEnum",
+            name: "NativeEnum",
+            kind: "enum",
+            targetIdentity: {
+              target: "acme",
+              id: "Acme.NativeEnum",
+              displayName: "Acme.NativeEnum",
+            },
+            members: [{
+              id: "Acme.NativeEnum.memberA",
+              name: "memberA",
+              kind: "field",
+            }, {
+              id: "Acme.NativeEnum.memberB",
+              name: "memberB",
+              kind: "field",
             }],
           }],
         }),
