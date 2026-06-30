@@ -751,6 +751,7 @@ test("provider declaration models render the supported export member and type ma
   assert.match(source, /export type Pair = \[number, string\];/);
   assert.match(source, /export declare const DefaultSize: number;/);
   assert.match(source, /export declare namespace Buffers/);
+  assert.match(source, /export const Capacity: number;/);
   assert.match(source, /export declare enum Color/);
   assert.match(source, /Red,/);
   assert.match(source, /export declare const NativeHandle: unique symbol;/);
@@ -823,6 +824,24 @@ test("provider declaration models reject target types without explicit source sh
   const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
   assert.equal(resolved.kind, "rejected");
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
+test("provider declaration models reject namespace members that cannot render as exports", () => {
+  assertInvalidMatrixNamespaceMembers([{
+    id: "create",
+    name: "constructor",
+    kind: "constructor",
+    signatures: [{
+      id: "create()",
+      parameters: [],
+    }],
+  }]);
+  assertInvalidMatrixNamespaceMembers([{
+    id: "not-valid",
+    name: { kind: "string-literal", text: "not-valid" },
+    kind: "field",
+    type: { kind: "number" },
+  }]);
 });
 
 test("provider virtual module cache is separated by provider identity and resolution context", () => {
@@ -1531,6 +1550,7 @@ function matrixBindingProvider(
   ownedSpecifier: string,
   options: {
     readonly members?: readonly ProviderMemberDeclaration[];
+    readonly namespaceMembers?: readonly ProviderMemberDeclaration[];
     readonly valueType?: ProviderDeclarationModel["exports"][number]["type"];
   } = {},
 ): TargetBindingProvider {
@@ -1641,7 +1661,7 @@ function matrixBindingProvider(
         id: "Buffers",
         name: "Buffers",
         kind: "namespace",
-        members: [{
+        members: options.namespaceMembers ?? [{
           id: "Capacity",
           name: "Capacity",
           kind: "field",
@@ -1663,6 +1683,16 @@ function matrixBindingProvider(
     }),
     getTargetIdentity: () => undefined,
   };
+}
+
+function assertInvalidMatrixNamespaceMembers(namespaceMembers: readonly ProviderMemberDeclaration[]): void {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, { namespaceMembers }));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
 }
 
 function richBindingProvider(ownedSpecifier: string): TargetBindingProvider {

@@ -1735,7 +1735,7 @@ function renderProviderExportDeclaration(declaration: ProviderExportDeclaration)
       rendered = `${declarationPrefix}const ${declaration.name}: ${renderProviderTypeExpression(declaration.type!)};`;
       break;
     case "namespace":
-      rendered = `${declarationPrefix}namespace ${declaration.name} {\n${renderProviderMembers(declaration.members ?? [])}\n}`;
+      rendered = `${declarationPrefix}namespace ${declaration.name} {\n${renderProviderNamespaceMembers(declaration.members ?? [])}\n}`;
       break;
     case "enum":
       rendered = `${declarationPrefix}enum ${declaration.name} {\n${(declaration.members ?? []).map((member) => `  ${renderProviderPropertyName(member.name)},`).join("\n")}\n}`;
@@ -1767,6 +1767,10 @@ function renderProviderMembers(members: readonly ProviderMemberDeclaration[]): s
   return members.map((member) => `  ${renderProviderMember(member)}`).join("\n");
 }
 
+function renderProviderNamespaceMembers(members: readonly ProviderMemberDeclaration[]): string {
+  return members.map((member) => `  ${renderProviderNamespaceMember(member)}`).join("\n");
+}
+
 function renderProviderMember(member: ProviderMemberDeclaration): string {
   const staticPrefix = member.static === true ? "static " : "";
   const readonlyPrefix = member.readonly === true ? "readonly " : "";
@@ -1786,6 +1790,24 @@ function renderProviderMember(member: ProviderMemberDeclaration): string {
       return `[${renderProviderParameter(parameter)}]: ${renderProviderTypeExpression(signature.returnType!)};`;
     }
   }
+}
+
+function renderProviderNamespaceMember(member: ProviderMemberDeclaration): string {
+  const name = renderProviderPropertyName(member.name);
+  switch (member.kind) {
+    case "method":
+      return renderProviderSignatures(name, member.signatures ?? []).map((signature) => `export function ${signature}`).join("\n  ");
+    case "property":
+    case "field":
+      return `export const ${name}: ${renderProviderTypeExpression(member.type!)};`;
+    case "constructor":
+    case "indexer":
+      return failUnsupportedProviderNamespaceMember(member);
+  }
+}
+
+function failUnsupportedProviderNamespaceMember(member: ProviderMemberDeclaration): never {
+  throw new Error(`Unsupported provider namespace member kind '${member.kind}'.`);
 }
 
 function canRenderInlineDefaultProviderExport(kind: ProviderDeclarationKind): boolean {
@@ -1997,7 +2019,9 @@ function isValidProviderExportDeclaration(value: ProviderExportDeclaration): boo
     && (value.signatures ?? []).every(isValidProviderSignatureDeclaration)
     && (value.kind === "enum"
       ? (value.members ?? []).every(isValidProviderEnumMemberDeclaration)
-      : (value.members ?? []).every(isValidProviderMemberDeclaration));
+      : value.kind === "namespace"
+        ? (value.members ?? []).every(isValidProviderNamespaceMemberDeclaration)
+        : (value.members ?? []).every(isValidProviderMemberDeclaration));
 }
 
 function isValidProviderExportName(value: ProviderExportDeclaration): boolean {
@@ -2047,6 +2071,15 @@ function isValidProviderMemberDeclaration(value: ProviderMemberDeclaration): boo
 
 function isValidProviderEnumMemberDeclaration(value: ProviderMemberDeclaration): boolean {
   return value.id.length > 0 && isValidProviderPropertyName(value.name);
+}
+
+function isValidProviderNamespaceMemberDeclaration(value: ProviderMemberDeclaration): boolean {
+  return value.id.length > 0
+    && isValidProviderNamespaceMemberName(value.name)
+    && (value.kind === "method" || value.kind === "property" || value.kind === "field")
+    && hasRequiredProviderMemberShape(value)
+    && (value.type === undefined || isValidProviderTypeExpression(value.type))
+    && (value.signatures ?? []).every(isValidProviderSignatureDeclaration);
 }
 
 function hasRequiredProviderMemberShape(value: ProviderMemberDeclaration): boolean {
@@ -2155,6 +2188,13 @@ function isValidProviderPropertyName(name: ProviderPropertyName): boolean {
     case "well-known-symbol":
       return isProviderWellKnownSymbolName(name.name);
   }
+}
+
+function isValidProviderNamespaceMemberName(name: ProviderPropertyName): boolean {
+  if (typeof name === "string") {
+    return isIdentifierText(name);
+  }
+  return name.kind === "identifier" && isIdentifierText(name.text);
 }
 
 function isProviderWellKnownSymbolName(name: string): name is ProviderWellKnownSymbolName {

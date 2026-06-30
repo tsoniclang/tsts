@@ -1,18 +1,21 @@
 import type { GoPtr } from "../go/compat.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, SourceFile_FileName } from "../internal/ast/ast.js";
-import { Node_Name } from "../internal/ast/spine.js";
+import { Node_Body, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, SourceFile_FileName } from "../internal/ast/ast.js";
+import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import {
   KindConstructSignature,
   KindConstructor,
   KindEnumMember,
+  KindFunctionDeclaration,
   KindIndexSignature,
   KindMethodDeclaration,
   KindMethodSignature,
+  KindModuleDeclaration,
   KindPropertyDeclaration,
   KindPropertySignature,
+  KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
 import {
   canonicalIdentityFactKey,
@@ -168,7 +171,7 @@ function recordProviderVirtualMemberFacts(
   declaration: ProviderExportDeclaration,
   evidence: readonly ExtensionEvidence[],
 ): void {
-  const memberNodes = (exportSymbol.Declarations ?? []).flatMap((exportDeclaration) => Node_Members(exportDeclaration) ?? []);
+  const memberNodes = (exportSymbol.Declarations ?? []).flatMap(getProviderMemberCandidateNodes);
   const usedMemberNodes = new Set<Node>();
   for (const member of declaration.members ?? []) {
     const matchingMemberNodes = memberNodes.filter((node) =>
@@ -239,12 +242,41 @@ function providerMemberKindMatchesNode(member: ProviderMemberDeclaration, node: 
     case "constructor":
       return node.Kind === KindConstructor || node.Kind === KindConstructSignature;
     case "method":
-      return node.Kind === KindMethodDeclaration || node.Kind === KindMethodSignature;
+      return node.Kind === KindMethodDeclaration || node.Kind === KindMethodSignature || node.Kind === KindFunctionDeclaration;
     case "property":
     case "field":
-      return node.Kind === KindPropertyDeclaration || node.Kind === KindPropertySignature || node.Kind === KindEnumMember;
+      return node.Kind === KindPropertyDeclaration || node.Kind === KindPropertySignature || node.Kind === KindEnumMember || node.Kind === KindVariableDeclaration;
     case "indexer":
       return node.Kind === KindIndexSignature;
+  }
+}
+
+function getProviderMemberCandidateNodes(exportDeclaration: GoPtr<Node>): readonly GoPtr<Node>[] {
+  if (exportDeclaration === undefined) {
+    return [];
+  }
+  if (exportDeclaration.Kind !== KindModuleDeclaration) {
+    return Node_Members(exportDeclaration) ?? [];
+  }
+  const candidates: GoPtr<Node>[] = [];
+  collectProviderNamespaceMemberCandidateNodes(Node_Body(exportDeclaration), candidates);
+  return candidates;
+}
+
+function collectProviderNamespaceMemberCandidateNodes(node: GoPtr<Node>, candidates: GoPtr<Node>[]): void {
+  if (node === undefined) {
+    return;
+  }
+  switch (node.Kind) {
+    case KindFunctionDeclaration:
+    case KindVariableDeclaration:
+      candidates.push(node);
+      return;
+    default:
+      Node_ForEachChild(node, (child) => {
+        collectProviderNamespaceMemberCandidateNodes(child, candidates);
+        return false;
+      });
   }
 }
 
