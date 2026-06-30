@@ -1,5 +1,7 @@
 import { defineExtensionFactKey } from "./host.js";
 import type { ExtensionEvidence, ExtensionFactSubject } from "./host.js";
+export type { ArgumentPassingMode } from "./argument-passing.js";
+import type { ArgumentPassingMode } from "./argument-passing.js";
 
 export type ExtensionCanonicalIdentityKind =
   | "module"
@@ -43,15 +45,6 @@ export interface ExtensionCanonicalIdentity {
   readonly importKind?: ExtensionImportKind;
   readonly canonicalSymbolId?: string;
 }
-
-export type ArgumentPassingMode =
-  | "by-value"
-  | "byref-readonly"
-  | "byref-readwrite"
-  | "byref-writeonly-must-init"
-  | "borrow-shared"
-  | "borrow-mut"
-  | "move";
 
 export type SourcePointerMutability = "readonly" | "readwrite" | "target-defined";
 

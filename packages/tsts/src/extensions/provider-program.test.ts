@@ -4,7 +4,7 @@ import type { bool } from "../go/scalars.js";
 import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
-import { SourceFile_FileName, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
+import { SourceFile_FileName, SourceFile_Text, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
@@ -33,7 +33,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -149,6 +149,68 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(consumer.getVirtualDeclaration(searchValuesSymbol)?.exportName, "SearchValues");
   assert.equal(consumer.getTargetBindingFact(searchValuesSymbol)?.id, "Acme.Buffers.SearchValues`1");
   assert.equal(consumer.getSelectedTargetCall(call), undefined);
+});
+
+test("provider declarations preserve parameter passing metadata in target binding facts", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { NativePort } from "@acme/native/calls.js";
+
+      declare const native: NativePort;
+      native.byValue(1);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [passingModeProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/Native.Calls");
+  assert.ok(virtualFile !== undefined);
+  const virtualText = SourceFile_Text(virtualFile);
+  assert.match(virtualText, /byValue\(value: number\): void;/);
+  assert.match(virtualText, /readonlyRef\(value: number\): void;/);
+  assert.equal(virtualText.includes("byref-readonly"), false);
+  assert.equal(virtualText.includes("byref-writeonly-must-init"), false);
+
+  const virtualModuleSymbol = Node_Symbol(virtualFile as never);
+  const nativePortSymbol = virtualModuleSymbol?.Exports?.get("NativePort");
+  assert.ok(nativePortSymbol !== undefined);
+  const binding = extended.extensionHost.facts.get(nativePortSymbol, targetBindingFactKey);
+  const modes = new Map((binding?.members ?? []).map((member) => [member.id, member.parameters[0]?.passingMode]));
+  assert.equal(modes.get("byValue(number)"), "by-value");
+  assert.equal(modes.get("readonlyRef(number)"), "byref-readonly");
+  assert.equal(modes.get("readwriteRef(number)"), "byref-readwrite");
+  assert.equal(modes.get("writeonlyRef(number)"), "byref-writeonly-must-init");
+  assert.equal(modes.get("borrowShared(number)"), "borrow-shared");
+  assert.equal(modes.get("borrowMut(number)"), "borrow-mut");
+  assert.equal(modes.get("move(number)"), "move");
+  assert.equal(modes.get("sameShape.readonly(number)"), "byref-readonly");
+  assert.equal(modes.get("sameShape.move(number)"), "move");
 });
 
 test("provider-backed virtual modules support alias and namespace import forms", () => {
@@ -1546,6 +1608,89 @@ function semanticOnlyExtension(id: string, provider: TargetSemanticProvider): Co
     },
     initialize(context): void {
       assert.equal(context.registerTargetSemanticProvider(provider), true);
+    },
+  };
+}
+
+function passingModeProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-passing-mode-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-passing-mode-provider",
+    },
+    initialize(context): void {
+      const targetIdentity: TargetIdentity = {
+        target: "acme",
+        id: "Acme.NativePort",
+        displayName: "Acme.NativePort",
+      };
+      const method = (id: string, name: string, passingMode?: ArgumentPassingMode) => ({
+        id,
+        name,
+        kind: "method" as const,
+        signatures: [{
+          id: `${id}(number)`,
+          parameters: [{
+            name: "value",
+            type: { kind: "number" as const },
+            ...(passingMode !== undefined ? { passingMode } : {}),
+          }],
+          returnType: { kind: "void" as const },
+        }],
+      });
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-passing-mode-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/calls.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/Native.Calls",
+          providerModuleId: "acme.native.calls",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "NativePort",
+            name: "NativePort",
+            kind: "class",
+            targetIdentity,
+            members: [
+              method("byValue", "byValue"),
+              method("readonlyRef", "readonlyRef", "byref-readonly"),
+              method("readwriteRef", "readwriteRef", "byref-readwrite"),
+              method("writeonlyRef", "writeonlyRef", "byref-writeonly-must-init"),
+              method("borrowShared", "borrowShared", "borrow-shared"),
+              method("borrowMut", "borrowMut", "borrow-mut"),
+              method("move", "move", "move"),
+              {
+                id: "sameShape",
+                name: "sameShape",
+                kind: "method",
+                signatures: [{
+                  id: "sameShape.readonly(number)",
+                  parameters: [{ name: "value", type: { kind: "number" }, passingMode: "byref-readonly" }],
+                  returnType: { kind: "void" },
+                }, {
+                  id: "sameShape.move(number)",
+                  parameters: [{ name: "value", type: { kind: "number" }, passingMode: "move" }],
+                  returnType: { kind: "void" },
+                }],
+              },
+            ],
+          }],
+        }),
+        getTargetIdentity: (symbol) => symbol.moduleSpecifier === "@acme/native/calls.js" && symbol.exportName === "NativePort"
+          ? targetIdentity
+          : undefined,
+      }), true);
     },
   };
 }

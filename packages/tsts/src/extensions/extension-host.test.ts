@@ -826,6 +826,30 @@ test("provider declaration models reject target types without explicit source sh
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
 });
 
+test("provider declaration models reject invalid parameter passing modes", () => {
+  const specifier = "@target/runtime.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider(matrixBindingProvider(specifier, {
+    members: [{
+      id: "write",
+      name: "write",
+      kind: "method",
+      signatures: [{
+        id: "write",
+        parameters: [{
+          name: "value",
+          type: { kind: "number" },
+          passingMode: "sideways" as never,
+        }],
+      }],
+    }],
+  }));
+
+  const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+  assert.equal(resolved.kind, "rejected");
+  assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+});
+
 test("provider declaration models reject namespace members that cannot render as exports", () => {
   assertInvalidMatrixNamespaceMembers([{
     id: "create",
