@@ -106,6 +106,7 @@ export interface ProviderDeclarationIdentity {
   readonly exportId?: string;
   readonly memberName?: string;
   readonly memberId?: string;
+  readonly memberStatic?: boolean;
   readonly signatureId?: string;
   readonly targetIdentity?: TargetTypeRef;
 }
@@ -247,6 +248,7 @@ export interface ProviderVirtualDeclarationFact {
   readonly exportId?: string;
   readonly memberName?: string;
   readonly memberId?: string;
+  readonly memberStatic?: boolean;
   readonly signatureId?: string;
   readonly targetIdentity?: TargetTypeRef;
 }
@@ -413,6 +415,7 @@ export const providerVirtualDeclarationFactKey = defineExtensionFactKey<Provider
     && left.exportId === right.exportId
     && left.memberName === right.memberName
     && left.memberId === right.memberId
+    && left.memberStatic === right.memberStatic
     && left.signatureId === right.signatureId
     && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
 });
@@ -453,6 +456,7 @@ function providerDeclarationIdentityEquals(left: ProviderDeclarationIdentity, ri
     && left.exportId === right.exportId
     && left.memberName === right.memberName
     && left.memberId === right.memberId
+    && left.memberStatic === right.memberStatic
     && left.signatureId === right.signatureId
     && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity);
 }

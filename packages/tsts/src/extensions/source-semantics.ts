@@ -40,7 +40,7 @@ import {
   KindTupleType,
   KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
-import { IsFunctionLike, IsLeftHandSideExpression } from "../internal/ast/utilities.js";
+import { GetSymbolId, IsFunctionLike, IsLeftHandSideExpression } from "../internal/ast/utilities.js";
 import {
   argumentPassingFactKey,
   attributeFactKey,
@@ -1243,7 +1243,7 @@ export function sourcePrimitive(
 }
 
 function getSymbolFactId(symbol: Symbol): string {
-  return `${symbol.Name}:${String(symbol.id)}`;
+  return `${symbol.Name}:${String(GetSymbolId(symbol))}`;
 }
 
 function getLifecycleSourceFile(request: SourceFileBoundLifecycleRequest): GoPtr<SourceFile> {

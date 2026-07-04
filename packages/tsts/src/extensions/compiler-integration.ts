@@ -4,6 +4,7 @@ import { Node_Body, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, So
 import { Node_ForEachChild, Node_Name } from "../internal/ast/spine.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
+import { GetSymbolId } from "../internal/ast/utilities.js";
 import {
   KindConstructSignature,
   KindConstructor,
@@ -179,11 +180,12 @@ function recordProviderVirtualMemberFacts(
       && !usedMemberNodes.has(node)
       && providerMemberMatchesNode(member, node));
     const memberSymbol = findProviderMemberSymbol(exportSymbol, member, matchingMemberNodes);
+    const memberFact = getProviderVirtualDeclarationFact(virtualModule, declaration, member);
     if (memberSymbol !== undefined) {
-      extensionHost.facts.set(
+      setProviderVirtualDeclarationSymbolFact(
+        extensionHost,
         memberSymbol,
-        providerVirtualDeclarationFactKey,
-        getProviderVirtualDeclarationFact(virtualModule, declaration, member),
+        memberFact,
         evidence,
       );
     }
@@ -202,15 +204,28 @@ function recordProviderVirtualMemberFacts(
       );
       const nodeSymbol = Node_Symbol(memberNode);
       if (nodeSymbol !== undefined && nodeSymbol !== memberSymbol) {
-        extensionHost.facts.set(
+        setProviderVirtualDeclarationSymbolFact(
+          extensionHost,
           nodeSymbol,
-          providerVirtualDeclarationFactKey,
-          getProviderVirtualDeclarationFact(virtualModule, declaration, member),
+          memberFact,
           evidence,
         );
       }
     }
   }
+}
+
+function setProviderVirtualDeclarationSymbolFact(
+  extensionHost: ExtensionHost,
+  symbol: Symbol,
+  fact: ProviderVirtualDeclarationFact,
+  evidence: readonly ExtensionEvidence[],
+): void {
+  const existing = extensionHost.facts.get(symbol, providerVirtualDeclarationFactKey);
+  if (existing !== undefined && !providerVirtualDeclarationFactKey.equals(existing, fact)) {
+    return;
+  }
+  extensionHost.facts.set(symbol, providerVirtualDeclarationFactKey, fact, evidence);
 }
 
 function findProviderMemberSymbol(exportSymbol: Symbol, member: ProviderMemberDeclaration, matchingMemberNodes: readonly GoPtr<Node>[]): GoPtr<Symbol> {
@@ -221,6 +236,12 @@ function findProviderMemberSymbol(exportSymbol: Symbol, member: ProviderMemberDe
     }
   }
   const memberName = getProviderPropertyNameText(member.name);
+  if (member.static === true) {
+    return exportSymbol.Exports?.get(memberName);
+  }
+  if (member.static === false) {
+    return exportSymbol.Members?.get(memberName);
+  }
   return exportSymbol.Members?.get(memberName) ?? exportSymbol.Exports?.get(memberName);
 }
 
@@ -308,7 +329,7 @@ function recordProviderVirtualSignatureFacts(
 }
 
 function getSymbolFactId(symbol: Symbol): string {
-  return `${symbol.Name}:${String(symbol.id)}`;
+  return `${symbol.Name}:${String(GetSymbolId(symbol))}`;
 }
 
 function getTargetBindingFact(virtualModule: ProviderResolvedModule, declaration: ProviderExportDeclaration): TargetBindingFact | undefined {
@@ -459,6 +480,7 @@ function getProviderVirtualDeclarationFact(
     ...(declaration !== undefined ? { exportId: declaration.id } : {}),
     ...(member !== undefined ? { memberName: getProviderPropertyNameText(member.name) } : {}),
     ...(member !== undefined ? { memberId: member.id } : {}),
+    ...(member?.static !== undefined ? { memberStatic: member.static } : {}),
     ...(signature !== undefined ? { signatureId: signature.id } : {}),
     ...(declaration?.targetIdentity !== undefined
       ? {
