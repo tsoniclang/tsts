@@ -451,6 +451,69 @@ test("provider virtual module slice identities stay stable across source and pro
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual module dependency slices do not hide later source-requested exports", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/a.ts", `
+      import { Query } from "@acme/sliced/System.Linq.js";
+
+      Query.consume(undefined as never);
+    `],
+    ["/src/b.ts", `
+      import { PublicReader, PublicWriter } from "@acme/sliced/System.IO.js";
+
+      declare const reader: PublicReader;
+      declare const writer: PublicWriter;
+      reader;
+      writer;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["a.ts", "b.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [orderDependentSliceProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const first = Program_GetSourceFile(program, "/src/a.ts");
+  const second = Program_GetSourceFile(program, "/src/b.ts");
+  assert.ok(first !== undefined);
+  assert.ok(second !== undefined);
+  assertCleanProgram(program, first);
+  assertCleanProgram(program, second);
+
+  const runtimeFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/sliced-System.IO"));
+  assert.equal(runtimeFiles.length, 2);
+  assert.ok(runtimeFiles.some((file) => SourceFile_Text(file).includes("DependencyOnly")));
+  assert.ok(runtimeFiles.some((file) => SourceFile_Text(file).includes("PublicReader") && SourceFile_Text(file).includes("PublicWriter")));
+
+  Program_BindSourceFiles(program);
+  for (const file of runtimeFiles) {
+    const fileSymbol = Node_Symbol(file as never);
+    assert.ok(fileSymbol !== undefined);
+    assert.equal(extended.extensionHost.facts.get(fileSymbol, canonicalIdentityFactKey)?.id, "acme.sliced.System.IO");
+    assert.equal(extended.extensionHost.facts.get(fileSymbol, providerVirtualDeclarationFactKey)?.moduleSpecifier, "@acme/sliced/System.IO.js");
+  }
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
 test("provider virtual declaration facts include enum members", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -2057,6 +2120,97 @@ function sliceProviderExtension(): CompilerExtension {
                       moduleSpecifier: "@acme/dotnet/System.js",
                       exportName: "IAsyncEnumerable",
                       typeArguments: [{ kind: "number" }],
+                    },
+                  }],
+                  returnType: { kind: "void" },
+                }],
+              }],
+            }],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function orderDependentSliceProviderExtension(): CompilerExtension {
+  let pendingRuntimeExports: readonly string[] = [];
+  return {
+    identity: {
+      id: "acme-order-dependent-slice-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-order-dependent-slice-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-order-dependent-slice-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier.startsWith("@acme/sliced/") ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          if (moduleSpecifier === "@acme/sliced/System.IO.js") {
+            pendingRuntimeExports = (moduleContext.importSlice?.requestedExports ?? [])
+              .map((request) => request.exportedName)
+              .sort();
+          }
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: moduleSpecifier === "@acme/sliced/System.IO.js"
+              ? "tsts-provider://acme/sliced-System.IO"
+              : "tsts-provider://acme/sliced-System.Linq",
+            providerModuleId: moduleSpecifier === "@acme/sliced/System.IO.js"
+              ? "acme.sliced.System.IO"
+              : "acme.sliced.System.Linq",
+            packageName: "@acme/sliced",
+            packageVersion: "1.0.0",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/sliced/System.IO.js") {
+            const requested = pendingRuntimeExports.length === 0
+              ? ["DependencyOnly", "PublicReader", "PublicWriter"]
+              : pendingRuntimeExports;
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: requested.map((exportName) => ({
+                id: exportName,
+                name: exportName,
+                kind: "interface" as const,
+                members: [],
+              })),
+            };
+          }
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            imports: [{
+              moduleSpecifier: "@acme/sliced/System.IO.js",
+              typeOnly: true,
+              namedImports: [{ exportedName: "DependencyOnly" }],
+            }],
+            exports: [{
+              id: "Query",
+              name: "Query",
+              kind: "namespace",
+              members: [{
+                id: "Query.consume",
+                name: "consume",
+                kind: "method",
+                signatures: [{
+                  id: "Query.consume(DependencyOnly)",
+                  parameters: [{
+                    name: "value",
+                    type: {
+                      kind: "provider-ref",
+                      moduleSpecifier: "@acme/sliced/System.IO.js",
+                      exportName: "DependencyOnly",
                     },
                   }],
                   returnType: { kind: "void" },
