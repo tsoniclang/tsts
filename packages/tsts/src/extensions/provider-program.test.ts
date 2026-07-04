@@ -325,6 +325,132 @@ test("provider virtual declaration facts distinguish static instance constructor
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual declaration facts distinguish static and instance members with identical source names", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { DualMember } from "@acme/native/dual.js";
+
+      declare const value: DualMember;
+      DualMember.Equals(value, value);
+      value.Equals(value);
+      DualMember.GetType("DualMember");
+      value.GetType();
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [dualMemberProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/Dual.Member");
+  assert.ok(virtualFile !== undefined);
+  const dualMemberSymbol = Node_Symbol(virtualFile as never)?.Exports?.get("DualMember");
+  assert.ok(dualMemberSymbol !== undefined);
+  const dualMemberDeclaration = dualMemberSymbol.Declarations?.[0];
+  assert.ok(dualMemberDeclaration !== undefined);
+  const members = Node_Members(dualMemberDeclaration) ?? [];
+
+  const findMember = (name: string, staticMember: boolean): GoPtr<Node> =>
+    members.find((member) => Node_Text(Node_Name(member)) === name && ((Node_ModifierFlags(member) & ModifierFlagsStatic) !== 0) === staticMember);
+
+  assert.equal(extended.extensionHost.facts.get(findMember("Equals", true), providerVirtualDeclarationFactKey)?.memberId, "DualMember.Equals#static");
+  assert.equal(extended.extensionHost.facts.get(findMember("Equals", true), providerVirtualDeclarationFactKey)?.memberStatic, true);
+  assert.equal(extended.extensionHost.facts.get(findMember("Equals", false), providerVirtualDeclarationFactKey)?.memberId, "DualMember.Equals#instance");
+  assert.equal(extended.extensionHost.facts.get(findMember("Equals", false), providerVirtualDeclarationFactKey)?.memberStatic, false);
+  assert.equal(extended.extensionHost.facts.get(findMember("GetType", true), providerVirtualDeclarationFactKey)?.signatureId, "DualMember.GetType#static(string)");
+  assert.equal(extended.extensionHost.facts.get(findMember("GetType", false), providerVirtualDeclarationFactKey)?.signatureId, "DualMember.GetType#instance()");
+  assert.equal(extended.extensionHost.facts.get(dualMemberSymbol.Exports?.get("Equals"), providerVirtualDeclarationFactKey)?.memberId, "DualMember.Equals#static");
+  assert.equal(extended.extensionHost.facts.get(dualMemberSymbol.Members?.get("Equals"), providerVirtualDeclarationFactKey)?.memberId, "DualMember.Equals#instance");
+  assert.equal(extended.extensionHost.facts.get(dualMemberSymbol.Exports?.get("GetType"), providerVirtualDeclarationFactKey)?.memberId, "DualMember.GetType#static");
+  assert.equal(extended.extensionHost.facts.get(dualMemberSymbol.Members?.get("GetType"), providerVirtualDeclarationFactKey)?.memberId, "DualMember.GetType#instance");
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
+test("provider virtual module slice identities stay stable across source and provider imports", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { IAsyncEnumerable } from "@acme/dotnet/System.js";
+      import { Query } from "@acme/dotnet/System.Linq.js";
+
+      declare const seq: IAsyncEnumerable<number>;
+      Query.consume(seq);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [sliceProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  Program_BindSourceFiles(program);
+  const systemFile = Program_GetSourceFile(program, "tsts-provider://acme/slice-IAsyncEnumerable");
+  assert.ok(systemFile !== undefined);
+  const systemSymbol = Node_Symbol(systemFile as never);
+  assert.ok(systemSymbol !== undefined);
+  const moduleIdentity = extended.extensionHost.facts.get(systemSymbol, canonicalIdentityFactKey);
+  assert.equal(moduleIdentity?.id, "acme.slice.System");
+  const moduleCanonicalSymbolId = moduleIdentity?.canonicalSymbolId;
+  assert.ok(moduleCanonicalSymbolId !== undefined);
+  assert.equal(moduleCanonicalSymbolId.includes("[object Object]"), false);
+  assert.equal(moduleCanonicalSymbolId.endsWith(":undefined"), false);
+
+  const asyncEnumerableSymbol = systemSymbol.Exports?.get("IAsyncEnumerable");
+  assert.ok(asyncEnumerableSymbol !== undefined);
+  const exportIdentity = extended.extensionHost.facts.get(asyncEnumerableSymbol, canonicalIdentityFactKey);
+  assert.equal(exportIdentity?.exportName, "IAsyncEnumerable");
+  const exportCanonicalSymbolId = exportIdentity?.canonicalSymbolId;
+  assert.ok(exportCanonicalSymbolId !== undefined);
+  assert.equal(exportCanonicalSymbolId.includes("[object Object]"), false);
+  assert.equal(exportCanonicalSymbolId.endsWith(":undefined"), false);
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
 test("provider virtual declaration facts include enum members", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -1770,6 +1896,175 @@ function bufferProviderExtension(): CompilerExtension {
             }],
           }],
         }),
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function dualMemberProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-dual-member-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-dual-member-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-dual-member-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/dual.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/Dual.Member",
+          providerModuleId: "acme.dual.member",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "DualMember",
+            name: "DualMember",
+            kind: "class",
+            members: [{
+              id: "DualMember.Equals#instance",
+              name: "Equals",
+              kind: "method",
+              static: false,
+              signatures: [{
+                id: "DualMember.Equals#instance(DualMember)",
+                parameters: [
+                  { name: "other", type: { kind: "provider-ref", moduleSpecifier: resolution.moduleSpecifier, exportName: "DualMember" } },
+                ],
+                returnType: { kind: "boolean" },
+              }],
+            }, {
+              id: "DualMember.Equals#static",
+              name: "Equals",
+              kind: "method",
+              static: true,
+              signatures: [{
+                id: "DualMember.Equals#static(DualMember,DualMember)",
+                parameters: [
+                  { name: "left", type: { kind: "provider-ref", moduleSpecifier: resolution.moduleSpecifier, exportName: "DualMember" } },
+                  { name: "right", type: { kind: "provider-ref", moduleSpecifier: resolution.moduleSpecifier, exportName: "DualMember" } },
+                ],
+                returnType: { kind: "boolean" },
+              }],
+            }, {
+              id: "DualMember.GetType#instance",
+              name: "GetType",
+              kind: "method",
+              static: false,
+              signatures: [{
+                id: "DualMember.GetType#instance()",
+                parameters: [],
+                returnType: { kind: "provider-ref", moduleSpecifier: resolution.moduleSpecifier, exportName: "DualType" },
+              }],
+            }, {
+              id: "DualMember.GetType#static",
+              name: "GetType",
+              kind: "method",
+              static: true,
+              signatures: [{
+                id: "DualMember.GetType#static(string)",
+                parameters: [{ name: "typeName", type: { kind: "string" } }],
+                returnType: { kind: "provider-ref", moduleSpecifier: resolution.moduleSpecifier, exportName: "DualType" },
+              }],
+            }],
+          }, {
+            id: "DualType",
+            name: "DualType",
+            kind: "class",
+            members: [],
+          }],
+        }),
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function sliceProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-slice-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-slice-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-slice-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier.startsWith("@acme/dotnet/") ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: moduleSpecifier === "@acme/dotnet/System.js"
+            ? "tsts-provider://acme/slice-IAsyncEnumerable"
+            : "tsts-provider://acme/slice-System.Linq",
+          providerModuleId: moduleSpecifier === "@acme/dotnet/System.js"
+            ? "acme.slice.System"
+            : "acme.slice.System.Linq",
+        }),
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/dotnet/System.js") {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{
+                id: "IAsyncEnumerable",
+                name: "IAsyncEnumerable",
+                kind: "interface",
+                typeParameters: [{ name: "T" }],
+                members: [],
+              }],
+            };
+          }
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            imports: [{
+              moduleSpecifier: "@acme/dotnet/System.js",
+              typeOnly: true,
+              namedImports: [{ exportedName: "IAsyncEnumerable" }],
+            }],
+            exports: [{
+              id: "Query",
+              name: "Query",
+              kind: "namespace",
+              members: [{
+                id: "Query.consume",
+                name: "consume",
+                kind: "method",
+                signatures: [{
+                  id: "Query.consume(IAsyncEnumerable<number>)",
+                  parameters: [{
+                    name: "seq",
+                    type: {
+                      kind: "provider-ref",
+                      moduleSpecifier: "@acme/dotnet/System.js",
+                      exportName: "IAsyncEnumerable",
+                      typeArguments: [{ kind: "number" }],
+                    },
+                  }],
+                  returnType: { kind: "void" },
+                }],
+              }],
+            }],
+          };
+        },
         getTargetIdentity: () => undefined,
       }), true);
     },

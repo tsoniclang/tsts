@@ -133,6 +133,10 @@ test("source-semantics records configured primitive facts from canonical named i
   assert.equal(extended.extensionHost.facts.get(i32Symbol, sourcePrimitiveFactKey)?.runtimeBase, "number");
   assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.exportName, "int");
   assert.equal(extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.id, `${exampleTypesModule}::int`);
+  const canonicalSymbolId = extended.extensionHost.facts.get(i32Symbol, canonicalIdentityFactKey)?.canonicalSymbolId;
+  assert.ok(canonicalSymbolId !== undefined);
+  assert.equal(canonicalSymbolId.includes("[object Object]"), false);
+  assert.equal(canonicalSymbolId.endsWith(":undefined"), false);
 
   const longSpecifier = getNamedImportSpecifier(index, "long");
   const longSymbol = Node_Symbol(longSpecifier);
