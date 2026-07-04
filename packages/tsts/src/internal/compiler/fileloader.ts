@@ -312,21 +312,31 @@ function fileLoader_getProviderVirtualPackageId(resolution: ProviderModuleResolu
   }
   return {
     Name: packageName,
-    SubModuleName: fileLoader_getProviderVirtualSubModuleName(packageName, resolution.moduleSpecifier),
+    SubModuleName: fileLoader_getProviderVirtualSubModuleName(packageName, resolution.moduleSpecifier, resolution.virtualFileName),
     Version: resolution.packageVersion ?? "",
     PeerDependencies: "",
   };
 }
 
-function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleSpecifier: string): string {
-  if (moduleSpecifier === packageName) {
+function fileLoader_getProviderVirtualSubModuleName(packageName: string, moduleSpecifier: string, virtualFileName: string): string {
+  const publicSubModuleName = moduleSpecifier === packageName
+    ? ""
+    : strings.HasPrefix(moduleSpecifier, `${packageName}/`)
+      ? moduleSpecifier.slice(`${packageName}/`.length)
+      : moduleSpecifier;
+  const sliceMarker = getProviderVirtualPackageSliceMarker(virtualFileName);
+  if (sliceMarker !== "") {
+    return `${publicSubModuleName}#${sliceMarker}`;
+  }
+  return publicSubModuleName;
+}
+
+function getProviderVirtualPackageSliceMarker(virtualFileName: string): string {
+  const markerIndex = virtualFileName.indexOf("#tsts-slice-");
+  if (markerIndex < 0) {
     return "";
   }
-  const packagePrefix = `${packageName}/`;
-  if (strings.HasPrefix(moduleSpecifier, packagePrefix)) {
-    return moduleSpecifier.slice(packagePrefix.length);
-  }
-  return moduleSpecifier;
+  return virtualFileName.slice(markerIndex + 1);
 }
 
 function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {

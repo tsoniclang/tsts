@@ -916,6 +916,82 @@ test("provider virtual module cache is separated by provider identity and resolu
   assert.equal(resolveCount, 2);
 });
 
+test("provider virtual module source variants receive distinct internal file identities", () => {
+  const specifier = "@target/sliced.js";
+  const host = new ExtensionHost({});
+  host.providers.registerTargetBindingProvider({
+    identity: {
+      id: "sliced-provider",
+      version: "1.0.0",
+      target: "demo",
+      extensionContractVersion: TstsProviderContractVersion,
+      providerKind: "binding",
+    },
+    ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (moduleSpecifier, context) => {
+      const requestedExports = (context.importSlice?.requestedExports ?? []).map((request) => request.exportedName).sort();
+      const sliceId = requestedExports.length === 0 ? "all" : requestedExports.join(".");
+      return {
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://sliced/runtime",
+        providerModuleId: `sliced.runtime.${sliceId}`,
+        packageName: "@target/sliced",
+        packageVersion: "1.0.0",
+      };
+    },
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      exports: [{
+        id: resolution.moduleSpecifier,
+        name: resolution.providerModuleId.includes(".Second") ? "Second" : "First",
+        kind: "interface",
+        members: [],
+      }],
+    }),
+    getTargetIdentity: () => undefined,
+  });
+
+  const first = host.providers.resolveVirtualModule(specifier, {
+    activeTarget: "demo",
+    importSlice: {
+      moduleSpecifier: specifier,
+      kind: "named",
+      requestedExports: [{ exportedName: "First", localName: "First" }],
+    },
+  });
+  const second = host.providers.resolveVirtualModule(specifier, {
+    activeTarget: "demo",
+    importSlice: {
+      moduleSpecifier: specifier,
+      kind: "named",
+      requestedExports: [{ exportedName: "Second", localName: "Second" }],
+    },
+  });
+  const firstAgain = host.providers.resolveVirtualModule(specifier, {
+    activeTarget: "demo",
+    importSlice: {
+      moduleSpecifier: specifier,
+      kind: "named",
+      requestedExports: [{ exportedName: "First", localName: "RenamedFirst" }],
+    },
+  });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(second.kind, "resolved");
+  assert.equal(firstAgain.kind, "resolved");
+  if (first.kind !== "resolved" || second.kind !== "resolved" || firstAgain.kind !== "resolved") {
+    return;
+  }
+
+  assert.equal(first.module.resolution.virtualFileName, "tsts-provider://sliced/runtime");
+  assert.match(second.module.resolution.virtualFileName, /^tsts-provider:\/\/sliced\/runtime#tsts-slice-/);
+  assert.equal(firstAgain.module.resolution.virtualFileName, first.module.resolution.virtualFileName);
+  assert.equal(host.providers.getVirtualDeclarationDocument(first.module.resolution.virtualFileName)?.sourceText, first.module.virtualSourceText);
+  assert.equal(host.providers.getVirtualDeclarationDocument(second.module.resolution.virtualFileName)?.sourceText, second.module.virtualSourceText);
+});
+
 test("required provider module patterns diagnose missing providers without hardcoded target names", () => {
   const host = new ExtensionHost({}, {
     activeTarget: "demo",
