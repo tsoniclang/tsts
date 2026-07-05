@@ -3,6 +3,7 @@ import type {
   ArgumentPassingMode,
   RuntimeCarrierProvenance,
   SelectedTargetSignatureFact,
+  SourceSelectedMethodTypeArgument,
   TargetConstraint,
   TargetOperationProvenance,
   TargetOperationFact,
@@ -90,6 +91,7 @@ export interface CheckedCallMappingRequest {
   readonly arguments: readonly ExtensionFactSubject[];
   readonly sourceSelectedSignature?: ExtensionFactSubject;
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
+  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly sourceCalleeSymbol?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
   readonly target?: string;
@@ -104,6 +106,7 @@ export interface TargetTypeArgumentMappingRequest {
   readonly declaration: ExtensionFactSubject;
   readonly arguments: readonly ExtensionFactSubject[];
   readonly sourceSelectedSignature?: ExtensionFactSubject;
+  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly contextualType?: ExtensionFactSubject;
 }
 

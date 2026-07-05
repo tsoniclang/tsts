@@ -6,19 +6,16 @@ import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
+import type { Checker } from "../internal/checker/checker/state.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
-import type { ArgumentPassingFact, SelectedTargetSignatureFact, TargetOperationFact, TargetOperationProvenance, TargetParameter } from "./facts.js";
+import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetOperationFact, TargetOperationProvenance, TargetParameter } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
 
-interface CheckerWithProgram {
-  readonly program: object;
-}
-
-export function recordExtensionCheckedCallMapping(checker: GoPtr<CheckerWithProgram>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>): void {
+export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>): void {
   if (checker === undefined || callExpression === undefined) {
     return;
   }
@@ -33,6 +30,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<CheckerWithProg
     return;
   }
   const sourceCalleeSymbol = Node_Symbol(callee);
+  const sourceSelectedMethodTypeArguments = getSourceSelectedMethodTypeArguments(callExpression, sourceSelectedSignature);
 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapCheckedCall,
@@ -42,6 +40,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<CheckerWithProg
       arguments: definedFactSubjects(Node_Arguments(callExpression) ?? []),
       ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
       ...(sourceSelectedSignature?.declaration !== undefined ? { sourceSelectedDeclaration: sourceSelectedSignature.declaration } : {}),
+      ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
       ...(sourceCalleeSymbol !== undefined ? { sourceCalleeSymbol } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
@@ -57,15 +56,16 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<CheckerWithProg
 
   const arguments_ = Node_Arguments(callExpression) ?? [];
   const selectedSignature = withSelectedTargetSignatureProvenance(
-    recordExtensionTargetTypeArgumentMapping(extensionHost, callee, sourceSelectedSignature, result.value, arguments_),
+    recordExtensionTargetTypeArgumentMapping(extensionHost, callee, sourceSelectedSignature, sourceSelectedMethodTypeArguments, result.value, arguments_),
     sourceSelectedSignature,
+    sourceSelectedMethodTypeArguments,
   );
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, selectedSignature, result.evidence ?? []);
   recordExtensionCallParameterModes(extensionHost, { ...result.value, selectedSignature }, arguments_);
   recordExtensionCallArgumentConversions(extensionHost, { ...result.value, selectedSignature }, arguments_);
 }
 
-export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<CheckerWithProgram>, propertyAccessExpression: GoPtr<Node>): void {
+export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Checker>, propertyAccessExpression: GoPtr<Node>): void {
   if (checker === undefined || propertyAccessExpression === undefined) {
     return;
   }
@@ -111,7 +111,7 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<CheckerWithProgram>, elementAccessExpression: GoPtr<Node>): void {
+export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
@@ -157,7 +157,7 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedOperatorMapping(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
+export function recordExtensionCheckedOperatorMapping(checker: GoPtr<Checker>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
   if (checker === undefined || expression === undefined || operatorToken === undefined || left === undefined) {
     return;
   }
@@ -194,7 +194,7 @@ export function recordExtensionCheckedOperatorMapping(checker: GoPtr<CheckerWith
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedIterationMapping(checker: GoPtr<CheckerWithProgram>, statement: GoPtr<Node>, kind: CheckedIterationKind, sourceElementType?: GoPtr<Type>): void {
+export function recordExtensionCheckedIterationMapping(checker: GoPtr<Checker>, statement: GoPtr<Node>, kind: CheckedIterationKind, sourceElementType?: GoPtr<Type>): void {
   if (checker === undefined || statement === undefined) {
     return;
   }
@@ -238,7 +238,7 @@ export function recordExtensionCheckedIterationMapping(checker: GoPtr<CheckerWit
   }), result.evidence ?? []);
 }
 
-export function recordExtensionTargetConstraintValidation(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
+export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker>, typeReference: GoPtr<Node>, symbol: GoPtr<Symbol>): boolean {
   if (checker === undefined || typeReference === undefined || symbol === undefined) {
     return true;
   }
@@ -283,7 +283,7 @@ export function recordExtensionTargetConstraintValidation(checker: GoPtr<Checker
   return valid;
 }
 
-export function recordExtensionRuntimeCarrierFact(checker: GoPtr<CheckerWithProgram>, typeReference: GoPtr<Node>, type: GoPtr<Type>, symbol: GoPtr<Symbol>): void {
+export function recordExtensionRuntimeCarrierFact(checker: GoPtr<Checker>, typeReference: GoPtr<Node>, type: GoPtr<Type>, symbol: GoPtr<Symbol>): void {
   if (checker === undefined || type === undefined) {
     return;
   }
@@ -328,7 +328,7 @@ export function recordExtensionRuntimeCarrierFact(checker: GoPtr<CheckerWithProg
   setFactOnOptionalSubject(extensionHost, type.symbol, runtimeCarrierFactKey, fact, result.evidence ?? []);
 }
 
-export function recordExtensionContextualTargetTypeFact(checker: GoPtr<CheckerWithProgram>, expression: GoPtr<Node>, contextualType: GoPtr<Type>): void {
+export function recordExtensionContextualTargetTypeFact(checker: GoPtr<Checker>, expression: GoPtr<Node>, contextualType: GoPtr<Type>): void {
   if (checker === undefined || expression === undefined || contextualType === undefined) {
     return;
   }
@@ -359,7 +359,7 @@ export function recordExtensionContextualTargetTypeFact(checker: GoPtr<CheckerWi
   }, result.evidence ?? []);
 }
 
-export function recordExtensionPostCheckAssignabilityObservation(checker: GoPtr<CheckerWithProgram>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: PostCheckAssignabilityObservationRequest["relation"]): void {
+export function recordExtensionPostCheckAssignabilityObservation(checker: GoPtr<Checker>, source: GoPtr<Type>, target: GoPtr<Type>, errorNode: GoPtr<Node>, expression: GoPtr<Node>, relation: PostCheckAssignabilityObservationRequest["relation"]): void {
   if (checker === undefined || source === undefined || target === undefined) {
     return;
   }
@@ -395,7 +395,7 @@ export function recordExtensionPostCheckAssignabilityObservation(checker: GoPtr<
   );
 }
 
-export function recordExtensionFlowUseValidation(checker: GoPtr<CheckerWithProgram>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {
+export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSite: GoPtr<Node>, symbol: GoPtr<Symbol>): void {
   if (checker === undefined || useSite === undefined || symbol === undefined) {
     return;
   }
@@ -472,7 +472,7 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callRes
   }
 }
 
-function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, callee: Node, sourceSelectedSignature: GoPtr<Signature> | undefined, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): CheckedCallMappingResult["selectedSignature"] {
+function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, callee: Node, sourceSelectedSignature: GoPtr<Signature> | undefined, sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): CheckedCallMappingResult["selectedSignature"] {
   if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget) === undefined) {
     return callResult.selectedSignature;
   }
@@ -483,6 +483,7 @@ function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, 
       declaration: callee,
       arguments: definedFactSubjects(arguments_),
       ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
+      ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
       ...(callResult.returnType !== undefined ? { contextualType: callResult.returnType } : {}),
     },
     () => ({
@@ -537,13 +538,45 @@ function definedFactSubjects<T extends object>(subjects: readonly (T | undefined
   return subjects.filter((subject): subject is T => subject !== undefined);
 }
 
-function withSelectedTargetSignatureProvenance(signature: SelectedTargetSignatureFact, sourceSelectedSignature: GoPtr<Signature>): SelectedTargetSignatureFact {
+function withSelectedTargetSignatureProvenance(signature: SelectedTargetSignatureFact, sourceSelectedSignature: GoPtr<Signature>, sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined): SelectedTargetSignatureFact {
   return {
     ...signature,
+    ...(signature.sourceSelectedMethodTypeArguments !== undefined || sourceSelectedMethodTypeArguments === undefined ? {} : { sourceSelectedMethodTypeArguments }),
     ...(signature.sourceSignature !== undefined || sourceSelectedSignature === undefined ? {} : { sourceSignature: sourceSelectedSignature }),
     ...(signature.sourceDeclaration !== undefined || sourceSelectedSignature?.declaration === undefined ? {} : { sourceDeclaration: sourceSelectedSignature.declaration }),
     ...(signature.providerDeclaration !== undefined || signature.member.providerDeclaration === undefined ? {} : { providerDeclaration: signature.member.providerDeclaration }),
   };
+}
+
+function getSourceSelectedMethodTypeArguments(callExpression: GoPtr<Node>, sourceSelectedSignature: GoPtr<Signature> | undefined): readonly SourceSelectedMethodTypeArgument[] | undefined {
+  if (sourceSelectedSignature === undefined) {
+    return undefined;
+  }
+  const typeParameters = sourceSelectedSignature.target?.typeParameters ?? sourceSelectedSignature.typeParameters ?? [];
+  if (typeParameters.length === 0) {
+    return undefined;
+  }
+  const explicitTypeNodes = Node_TypeArguments(callExpression) ?? [];
+  const selected: SourceSelectedMethodTypeArgument[] = [];
+  for (let index = 0; index < typeParameters.length; index++) {
+    const typeParameter = typeParameters[index];
+    const typeParameterName = typeParameter?.symbol?.Name ?? "";
+    if (typeParameter === undefined || typeParameterName === "") {
+      return undefined;
+    }
+    const explicitTypeNode = explicitTypeNodes[index];
+    const selectedType = sourceSelectedSignature.mapper?.data.Map(typeParameter);
+    if (selectedType === undefined) {
+      return undefined;
+    }
+    selected.push({
+      typeParameterName,
+      typeParameter,
+      selectedType,
+      ...(explicitTypeNode !== undefined ? { explicitTypeNode } : {}),
+    });
+  }
+  return selected.length === 0 ? undefined : selected;
 }
 
 function withTargetOperationProvenance(operation: TargetOperationFact, provenance: TargetOperationProvenance): TargetOperationFact {

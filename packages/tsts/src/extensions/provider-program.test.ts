@@ -5,13 +5,14 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName, SourceFile_Text, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
 import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
 import { ResolutionModeESM } from "../internal/core/compileroptions.js";
@@ -33,7 +34,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -931,6 +932,178 @@ test("checker records provider-owned target type argument facts on selected call
   assert.equal(selectedCall?.member.id, "Acme.Convert.ChangeType<T>(Acme.Int32)");
   assert.equal(selectedCall?.typeArguments, undefined);
   assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
+});
+
+test("checker exposes explicit selected source method type arguments on checked calls", () => {
+  let observedTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
+  let observedTypeText = "";
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare class Result {}
+      declare function id<T>(value: T): T;
+      declare const value: Result;
+      id<Result>(value);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
+    }))],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(observedTypeArguments?.length, 1);
+  assert.equal(observedTypeArguments?.[0]?.typeParameterName, "T");
+  assert.ok(observedTypeArguments?.[0]?.typeParameter !== undefined);
+  assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
+  assert.equal(observedTypeArguments?.[0]?.explicitTypeNode, (Node_TypeArguments(call) ?? [])[0]);
+  assert.equal(observedTypeText, "Result");
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType, observedTypeArguments?.[0]?.selectedType);
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode, observedTypeArguments?.[0]?.explicitTypeNode);
+});
+
+test("checker exposes inferred selected source method type arguments on checked calls", () => {
+  let observedTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
+  let observedTypeText = "";
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare class Result {}
+      declare function id<T>(value: T): T;
+      declare const value: Result;
+      id(value);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
+    }))],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(observedTypeArguments?.length, 1);
+  assert.equal(observedTypeArguments?.[0]?.typeParameterName, "T");
+  assert.ok(observedTypeArguments?.[0]?.typeParameter !== undefined);
+  assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
+  assert.equal(observedTypeArguments?.[0]?.explicitTypeNode, undefined);
+  assert.equal(observedTypeText, "Result");
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType, observedTypeArguments?.[0]?.selectedType);
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode, undefined);
+});
+
+test("checker exposes explicit selected source method type arguments on callback-shaped generic methods", () => {
+  let observedTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
+  let observedTypeText = "";
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      declare class State {}
+      declare class Task<T> {
+        ContinueWith<TNewResult>(continuation: (task: Task<T>, state: State) => TNewResult, state: State): Task<TNewResult>;
+      }
+      declare const requestTask: Task<string>;
+      declare const nextTask: Task<string>;
+      declare const state: State;
+      requestTask.ContinueWith<Task<string>>((task, currentState) => nextTask, state);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+      observedTypeArguments = request.sourceSelectedMethodTypeArguments;
+      observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
+    }))],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(observedTypeArguments?.length, 1);
+  assert.equal(observedTypeArguments?.[0]?.typeParameterName, "TNewResult");
+  assert.ok(observedTypeArguments?.[0]?.typeParameter !== undefined);
+  assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
+  assert.equal(observedTypeArguments?.[0]?.explicitTypeNode, (Node_TypeArguments(call) ?? [])[0]);
+  assert.equal(observedTypeText, "Task<string>");
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType, observedTypeArguments?.[0]?.selectedType);
+  assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode, observedTypeArguments?.[0]?.explicitTypeNode);
 });
 
 test("checker records provider-owned contextual target facts without changing TS contextual type", () => {
@@ -2644,6 +2817,39 @@ function genericInferenceSemanticProvider(): TargetSemanticProvider {
     mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
       targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
     }),
+  };
+}
+
+function sourceTypeArgumentSemanticProvider(onCall: (request: CheckedCallMappingRequest, context: ExtensionObservationContext<typeof ExtensionObservationPoint.mapCheckedCall>) => void): TargetSemanticProvider {
+  return {
+    identity: {
+      id: "acme-source-type-arguments-semantic-provider",
+      version: "1.0.0",
+      target: "acme",
+      extensionContractVersion: TstsProviderContractVersion,
+      providerKind: "semantic",
+    },
+    mapCheckedCall: (request, context) => {
+      onCall(request, context);
+      return acceptObservation({
+        selectedSignature: {
+          member: {
+            id: "Acme.Generic.Id<T>(T)",
+            sourceName: "id",
+            targetName: "Id",
+            kind: "method",
+            parameters: [{
+              name: "value",
+              type: { kind: "type-parameter", name: "T" },
+              passingMode: "by-value",
+            }],
+            returnType: { kind: "type-parameter", name: "T" },
+            typeParameters: [{ name: "T" }],
+            overloadGroup: "Acme.Generic.Id",
+          },
+        },
+      });
+    },
   };
 }
 
