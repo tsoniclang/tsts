@@ -181,9 +181,17 @@ export interface InstantiatedTargetTypeFact {
   readonly resolvedTypeArguments?: readonly TargetTypeRef[];
 }
 
+export interface SourceSelectedMethodTypeArgument {
+  readonly typeParameterName: string;
+  readonly typeParameter?: ExtensionFactSubject;
+  readonly selectedType: ExtensionFactSubject;
+  readonly explicitTypeNode?: ExtensionFactSubject;
+}
+
 export interface SelectedTargetSignatureFact {
   readonly member: TargetMember;
   readonly typeArguments?: readonly ExtensionFactSubject[];
+  readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly targetTypeArguments?: readonly TargetTypeRef[];
   readonly argumentConversions?: readonly TargetTypeRef[];
   readonly sourceSignature?: ExtensionFactSubject;
@@ -362,6 +370,7 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
   equals: (left, right) =>
     targetMemberEquals(left.member, right.member)
     && factSubjectArrayEquals(left.typeArguments, right.typeArguments)
+    && sourceSelectedMethodTypeArgumentArrayEquals(left.sourceSelectedMethodTypeArguments, right.sourceSelectedMethodTypeArguments)
     && targetTypeRefArrayEquals(left.targetTypeArguments, right.targetTypeArguments)
     && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
     && left.sourceSignature === right.sourceSignature
@@ -606,6 +615,23 @@ function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance
     && left.sourceCallee === right.sourceCallee
     && left.sourceSelectedSymbol === right.sourceSelectedSymbol
     && left.sourceSelectedSignature === right.sourceSelectedSignature;
+}
+
+function sourceSelectedMethodTypeArgumentArrayEquals(left: readonly SourceSelectedMethodTypeArgument[] | undefined, right: readonly SourceSelectedMethodTypeArgument[] | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  if (left.length !== right.length) {
+    return false;
+  }
+  return left.every((argument, index) => sourceSelectedMethodTypeArgumentEquals(argument, right[index]!));
+}
+
+function sourceSelectedMethodTypeArgumentEquals(left: SourceSelectedMethodTypeArgument, right: SourceSelectedMethodTypeArgument): boolean {
+  return left.typeParameterName === right.typeParameterName
+    && left.typeParameter === right.typeParameter
+    && left.selectedType === right.selectedType
+    && left.explicitTypeNode === right.explicitTypeNode;
 }
 
 function optionalRuntimeCarrierProvenanceEquals(left: RuntimeCarrierProvenance | undefined, right: RuntimeCarrierProvenance | undefined): boolean {

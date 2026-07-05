@@ -178,6 +178,7 @@ export type {
   RuntimeCarrierFact,
   RuntimeCarrierProvenance,
   SelectedTargetSignatureFact,
+  SourceSelectedMethodTypeArgument,
   SourcePointerMutability,
   SourcePrimitiveFact,
   SourcePrimitiveKind,
