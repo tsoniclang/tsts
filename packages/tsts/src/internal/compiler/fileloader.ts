@@ -12,6 +12,7 @@ import * as strings from "../../go/strings.js";
 import { Once as OnceImpl } from "../../go/sync.js";
 import {
   ImportAttributesNode_GetResolutionModeOverride,
+  Node_ModuleSpecifier,
   Node_Text,
   SourceFile_FileName,
   SourceFile_Imports,
@@ -25,6 +26,7 @@ import {
   GetImpliedNodeFormatForFile,
   GetJSXImplicitImportBase,
   GetJSXRuntimeImport,
+  GetSourceFileOfNode,
   IsExclusivelyTypeOnlyImportOrExport,
   IsExternalModule,
   IsImportCall,
@@ -154,7 +156,7 @@ import type { projectReferenceParser } from "./projectreferenceparser.js";
 import { PhaseParse, PhaseProgram, Tracing_Push } from "../tracing/tracing.js";
 import { ParseSourceFile } from "../parser/parser/statements-declarations.js";
 import { getExtensionHost } from "../../extensions/host.js";
-import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
+import type { ExtensionHost, ProviderImportRequestKind, ProviderImportSlice, ProviderImportSliceKind, ProviderModuleResolution, ProviderRequestedExport, ProviderResolvedModule } from "../../extensions/host.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/compiler/fileloader.go::type::libResolution","kind":"type","status":"implemented","sigHash":"9c4a426b0d3e59256e9a7dad7aff7add3d3d2f12512bed81cac56f4e53bc747b","bodyHash":"e4d76c1ba9ccfb10d7454bc6476b0b4aba5b90252da267c2a9e78887e7354047"}
@@ -340,6 +342,11 @@ function getProviderVirtualPackageSliceMarker(virtualFileName: string): string {
 }
 
 function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {
+  const directSlice = fileLoader_getDirectProviderImportSlice(moduleSpecifier, importSite);
+  return fileLoader_composeProviderImportSlicesForSourceFile(moduleSpecifier, importSite, directSlice);
+}
+
+function fileLoader_getDirectProviderImportSlice(moduleSpecifier: string, importSite: GoPtr<Node>): ProviderImportSlice {
   if (importSite === undefined) {
     return {
       moduleSpecifier,
@@ -443,6 +450,77 @@ function fileLoader_getProviderImportSlice(moduleSpecifier: string, importSite: 
     moduleSpecifier,
     kind: "unknown",
     broadImport: true,
+  };
+}
+
+function fileLoader_composeProviderImportSlicesForSourceFile(moduleSpecifier: string, importSite: GoPtr<Node>, directSlice: ProviderImportSlice): ProviderImportSlice {
+  if (importSite === undefined || importSite.Parent === undefined) {
+    return directSlice;
+  }
+  const sourceFile = GetSourceFileOfNode(importSite.Parent);
+  const statements = sourceFile?.Statements?.Nodes ?? [];
+  const matchingSlices: ProviderImportSlice[] = [];
+  for (const statement of statements) {
+    const statementImportSite = fileLoader_getProviderStatementImportSite(statement);
+    if (statementImportSite === undefined || Node_Text(statementImportSite) !== moduleSpecifier) {
+      continue;
+    }
+    matchingSlices.push(fileLoader_getDirectProviderImportSlice(moduleSpecifier, statementImportSite));
+  }
+  if (matchingSlices.length <= 1) {
+    return directSlice;
+  }
+  return fileLoader_mergeProviderImportSlices(moduleSpecifier, matchingSlices);
+}
+
+function fileLoader_getProviderStatementImportSite(statement: GoPtr<Node>): GoPtr<Node> {
+  if (statement === undefined || (statement.Kind !== KindImportDeclaration && statement.Kind !== KindJSImportDeclaration && statement.Kind !== KindExportDeclaration)) {
+    return undefined;
+  }
+  const moduleSpecifier = Node_ModuleSpecifier(statement);
+  if (moduleSpecifier?.Kind !== KindStringLiteral) {
+    return undefined;
+  }
+  return moduleSpecifier;
+}
+
+function fileLoader_mergeProviderImportSlices(moduleSpecifier: string, slicesToMerge: readonly ProviderImportSlice[]): ProviderImportSlice {
+  const requestedExportsByKey = new globalThis.Map<string, ProviderRequestedExport>();
+  let hasBroadImport = false;
+  let allTypeOnly = true;
+  let hasDefaultRequest = false;
+  let hasReexportRequest = false;
+  const sliceKinds = new globalThis.Set<ProviderImportSliceKind>();
+
+  for (const slice of slicesToMerge) {
+    sliceKinds.add(slice.kind);
+    hasBroadImport ||= slice.broadImport === true;
+    allTypeOnly &&= slice.typeOnly === true;
+    hasReexportRequest ||= slice.kind === "reexport";
+    for (const requestedExport of slice.requestedExports ?? []) {
+      const key = JSON.stringify([requestedExport.exportedName, requestedExport.localName ?? "", requestedExport.kind ?? "unknown"]);
+      requestedExportsByKey.set(key, requestedExport);
+      hasDefaultRequest ||= requestedExport.exportedName === "default";
+    }
+  }
+
+  const requestedExports = [...requestedExportsByKey.values()];
+  const kind = hasBroadImport
+    ? requestedExports.length > 0 ? "mixed" : "namespace"
+    : sliceKinds.size > 1
+      ? "mixed"
+    : hasReexportRequest
+      ? "reexport"
+      : hasDefaultRequest
+        ? requestedExports.length > 1 ? "mixed" : "default"
+        : requestedExports.length > 0 ? "named" : "unknown";
+
+  return {
+    moduleSpecifier,
+    kind,
+    ...(requestedExports.length > 0 ? { requestedExports } : {}),
+    ...(hasBroadImport || requestedExports.length === 0 ? { broadImport: true } : {}),
+    ...(allTypeOnly ? { typeOnly: true } : {}),
   };
 }
 

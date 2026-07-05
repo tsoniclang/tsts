@@ -514,6 +514,104 @@ test("provider virtual module dependency slices do not hide later source-request
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual module same-file named import slices compose before resolution", () => {
+  const requestedSlices: string[][] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { A } from "@acme/native/mod.js";
+      import { B, C } from "@acme/native/mod.js";
+
+      declare const a: A;
+      declare const b: B;
+      declare const c: C;
+      a;
+      b;
+      c;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [sameModuleSliceProviderExtension(requestedSlices)],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+
+  assert.deepEqual(requestedSlices[0], ["A", "B", "C"]);
+  const runtimeFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/native-mod"));
+  assert.equal(runtimeFiles.length, 1);
+  assert.ok(SourceFile_Text(runtimeFiles[0]).includes("interface A"));
+  assert.ok(SourceFile_Text(runtimeFiles[0]).includes("interface B"));
+  assert.ok(SourceFile_Text(runtimeFiles[0]).includes("interface C"));
+});
+
+test("provider virtual rest parameters preserve array-of-function source shapes", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Parallel } from "@acme/native/parallel.js";
+
+      Parallel.Invoke(
+        () => {},
+        () => {}
+      );
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [restFunctionArrayProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+
+  const virtualFile = Program_GetSourceFiles(program).find((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/native-parallel"));
+  assert.ok(virtualFile !== undefined);
+  assert.ok(SourceFile_Text(virtualFile).includes("...actions: (() => void)[]"));
+  assert.ok(!SourceFile_Text(virtualFile).includes("...actions: () => void[]"));
+});
+
 test("provider virtual declaration facts include enum members", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -2219,6 +2317,119 @@ function orderDependentSliceProviderExtension(): CompilerExtension {
             }],
           };
         },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function sameModuleSliceProviderExtension(requestedSlices: string[][]): CompilerExtension {
+  let pendingExports: readonly string[] = [];
+  return {
+    identity: {
+      id: "acme-same-module-slice-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-same-module-slice-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-same-module-slice-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/mod.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          pendingExports = (moduleContext.importSlice?.requestedExports ?? [])
+            .map((request) => request.exportedName)
+            .sort();
+          requestedSlices.push([...pendingExports]);
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: "tsts-provider://acme/native-mod",
+            providerModuleId: "acme.native.mod",
+            packageName: "@acme/native",
+            packageVersion: "1.0.0",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          const exports = pendingExports.length === 0 ? ["A", "B", "C"] : pendingExports;
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            exports: exports.map((exportName) => ({
+              id: exportName,
+              name: exportName,
+              kind: "interface" as const,
+              members: [],
+            })),
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function restFunctionArrayProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-rest-function-array-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-rest-function-array-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-rest-function-array-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/parallel.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/native-parallel",
+          providerModuleId: "acme.native.parallel",
+          packageName: "@acme/native",
+          packageVersion: "1.0.0",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "Parallel",
+            name: "Parallel",
+            kind: "class",
+            members: [{
+              id: "Parallel.Invoke",
+              name: "Invoke",
+              kind: "method",
+              static: true,
+              signatures: [{
+                id: "Parallel.Invoke(Action[])",
+                parameters: [{
+                  name: "actions",
+                  rest: true,
+                  type: {
+                    kind: "array",
+                    elementType: {
+                      kind: "function",
+                      parameters: [],
+                      returnType: { kind: "void" },
+                    },
+                  },
+                }],
+                returnType: { kind: "void" },
+              }],
+            }],
+          }],
+        }),
         getTargetIdentity: () => undefined,
       }), true);
     },

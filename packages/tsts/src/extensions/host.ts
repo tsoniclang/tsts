@@ -1919,6 +1919,15 @@ function renderProviderParameter(parameter: ProviderParameterDeclaration): strin
 }
 
 function renderProviderTypeExpression(type: ProviderTypeExpression): string {
+  return renderProviderTypeExpressionWorker(type, providerTypePrecedenceNone);
+}
+
+const providerTypePrecedenceNone = 0;
+const providerTypePrecedenceUnion = 1;
+const providerTypePrecedenceIntersection = 2;
+const providerTypePrecedencePostfix = 3;
+
+function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parentPrecedence: number): string {
   switch (type.kind) {
     case "any":
     case "unknown":
@@ -1936,17 +1945,23 @@ function renderProviderTypeExpression(type: ProviderTypeExpression): string {
       return type.name;
     case "target-named":
     case "opaque":
-      return renderProviderTypeExpression(type.sourceShape!);
+      return renderProviderTypeExpressionWorker(type.sourceShape!, parentPrecedence);
     case "array":
-      return `${renderProviderTypeExpression(type.elementType)}[]`;
+      return `${renderProviderTypeExpressionWorker(type.elementType, providerTypePrecedencePostfix)}[]`;
     case "tuple":
       return `[${type.elementTypes.map(renderProviderTypeExpression).join(", ")}]`;
-    case "union":
-      return type.types.map(renderProviderTypeExpression).join(" | ");
-    case "intersection":
-      return type.types.map(renderProviderTypeExpression).join(" & ");
-    case "function":
-      return `${renderProviderTypeParameters(type.typeParameters ?? [])}(${type.parameters.map(renderProviderParameter).join(", ")}) => ${renderProviderTypeExpression(type.returnType)}`;
+    case "union": {
+      const text = type.types.map((unionType) => renderProviderTypeExpressionWorker(unionType, providerTypePrecedenceUnion)).join(" | ");
+      return parentPrecedence > providerTypePrecedenceUnion ? `(${text})` : text;
+    }
+    case "intersection": {
+      const text = type.types.map((intersectionType) => renderProviderTypeExpressionWorker(intersectionType, providerTypePrecedenceIntersection)).join(" & ");
+      return parentPrecedence > providerTypePrecedenceIntersection ? `(${text})` : text;
+    }
+    case "function": {
+      const text = `${renderProviderTypeParameters(type.typeParameters ?? [])}(${type.parameters.map(renderProviderParameter).join(", ")}) => ${renderProviderTypeExpression(type.returnType)}`;
+      return parentPrecedence > providerTypePrecedenceNone ? `(${text})` : text;
+    }
     case "literal":
       return type.value === null ? "null" : JSON.stringify(type.value);
     case "provider-ref":
