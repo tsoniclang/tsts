@@ -6,6 +6,7 @@ import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName, SourceFile_Text, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
 import { Node_Arguments, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
+import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
@@ -34,7 +35,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -1104,6 +1105,137 @@ test("checker exposes explicit selected source method type arguments on callback
   assert.equal(observedTypeText, "Task<string>");
   assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType, observedTypeArguments?.[0]?.selectedType);
   assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode, observedTypeArguments?.[0]?.explicitTypeNode);
+});
+
+test("checker exposes selected source member evidence on checked property access", () => {
+  const observedRequests: CheckedPropertyAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      interface String {
+        Split(separator: String): Array<String>;
+      }
+      interface Array<T> {
+        readonly Length: number;
+      }
+
+      declare const path: String;
+      const parts = path.Split(path);
+      const n = parts.Length;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-property-evidence-extension", {
+      identity: semanticProviderIdentity("acme-selected-property-evidence-provider"),
+      mapCheckedPropertyAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
+          resultType: semanticSubject("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const splitRequest = observedRequests.find((request) => request.propertyName === "Split");
+  const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
+  assertSelectedMemberEvidence(splitRequest, "Split");
+  assertSelectedMemberEvidence(lengthRequest, "Length");
+});
+
+test("checker exposes selected callee member evidence on checked calls", () => {
+  let observedRequest: CheckedCallMappingRequest | undefined;
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      interface String {}
+      interface ConsoleApi {
+        WriteLine(value: String): void;
+      }
+
+      declare const Console: ConsoleApi;
+      declare const message: String;
+      Console.WriteLine(message);
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-callee-evidence-extension", {
+      identity: semanticProviderIdentity("acme-selected-callee-evidence-provider"),
+      mapCheckedCall: (request) => {
+        observedRequest = request;
+        return acceptObservation({
+          selectedSignature: {
+            member: {
+              id: "Acme.Console.WriteLine(String)",
+              sourceName: "WriteLine",
+              targetName: "WriteLine",
+              kind: "method",
+              parameters: [{
+                name: "value",
+                type: { kind: "target-named", id: "Acme.String" },
+                passingMode: "by-value",
+              }],
+              overloadGroup: "Acme.Console.WriteLine",
+            },
+          },
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const selectedSymbol = observedRequest?.sourceCalleeSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = observedRequest?.sourceCalleeDeclaration as GoPtr<Node>;
+  assert.equal(selectedSymbol?.Name, "WriteLine");
+  assert.ok(selectedDeclaration !== undefined);
+  assert.equal(selectedDeclaration, selectedSymbol?.ValueDeclaration);
+  assert.equal(Node_Text(Node_Name(selectedDeclaration)), "WriteLine");
+  assert.equal(observedRequest?.sourceSelectedDeclaration, selectedDeclaration);
 });
 
 test("checker records provider-owned contextual target facts without changing TS contextual type", () => {
@@ -3231,6 +3363,16 @@ function semanticSubject(name: string): object {
 }
 
 const semanticSubjects = new Map<string, object>();
+
+function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingRequest | undefined, name: string): void {
+  assert.ok(request !== undefined);
+  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  assert.equal(selectedSymbol?.Name, name);
+  assert.ok(selectedDeclaration !== undefined);
+  assert.equal(selectedDeclaration, selectedSymbol?.ValueDeclaration);
+  assert.equal(Node_Text(Node_Name(selectedDeclaration)), name);
+}
 
 function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {
   return {

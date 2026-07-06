@@ -5459,7 +5459,7 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
   const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node);
+  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
   return result;
 }
 
@@ -6450,7 +6450,7 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
   }
   const expr = Node_Expression(node);
   const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, Checker_checkNonNullExpression(receiver, expr), AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node);
+  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
   return result;
 }
 

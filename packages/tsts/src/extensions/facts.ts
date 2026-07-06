@@ -219,6 +219,7 @@ export interface TargetOperationProvenance {
   readonly sourceReceiver?: ExtensionFactSubject;
   readonly sourceCallee?: ExtensionFactSubject;
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly sourceSelectedSignature?: ExtensionFactSubject;
 }
 
@@ -614,6 +615,7 @@ function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance
     && left.sourceReceiver === right.sourceReceiver
     && left.sourceCallee === right.sourceCallee
     && left.sourceSelectedSymbol === right.sourceSelectedSymbol
+    && left.sourceSelectedDeclaration === right.sourceSelectedDeclaration
     && left.sourceSelectedSignature === right.sourceSelectedSignature;
 }
 

@@ -93,6 +93,7 @@ export interface CheckedCallMappingRequest {
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly sourceSelectedMethodTypeArguments?: readonly SourceSelectedMethodTypeArgument[];
   readonly sourceCalleeSymbol?: ExtensionFactSubject;
+  readonly sourceCalleeDeclaration?: ExtensionFactSubject;
   readonly sourceReturnType?: ExtensionFactSubject;
   readonly target?: string;
 }
@@ -119,6 +120,7 @@ export interface CheckedPropertyAccessMappingRequest {
   readonly receiver: ExtensionFactSubject;
   readonly propertyName: string;
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly target?: string;
 }
 
@@ -127,6 +129,7 @@ export interface CheckedElementAccessMappingRequest {
   readonly receiver: ExtensionFactSubject;
   readonly argument: ExtensionFactSubject;
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
+  readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly target?: string;
 }
 
