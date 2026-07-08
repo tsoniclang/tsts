@@ -588,6 +588,59 @@ test("provider virtual module dependency slices preserve public export identity 
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual external generic heritage uses value-capable family variants", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { ModelMetadata, ModelPropertyCollection } from "@acme/public/model-binding.js";
+
+      declare const collection: ModelPropertyCollection;
+      declare const metadata: ModelMetadata;
+      const item: ModelMetadata = collection.Item;
+      collection;
+      metadata;
+      item;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [externalGenericHeritageProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+
+  const modelBindingFile = Program_GetSourceFiles(program).find((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-model-binding"));
+  assert.ok(modelBindingFile !== undefined);
+  const modelBindingText = SourceFile_Text(modelBindingFile);
+  assert.match(modelBindingText, /class ModelPropertyCollection extends/);
+  assert.ok(modelBindingText.includes("extends ImportedReadOnlyCollection<ModelMetadata>"));
+  const collectionFile = Program_GetSourceFiles(program).find((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-collections-generic"));
+  assert.ok(collectionFile !== undefined);
+  assert.ok(SourceFile_Text(collectionFile).includes("export declare const ReadOnlyCollection: typeof __TstsProvider_ReadOnlyCollection_1;"));
+});
+
 test("provider virtual generic member chains do not leave stale unresolved property diagnostics", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -798,6 +851,7 @@ test("provider type families select same-name variants by source type-argument a
   assert.match(virtualText, /Duplicate: Task<TResult>;/);
   assert.equal(virtualText.includes("extends Task"), false);
   assert.match(virtualText, /export type Task<TResult = __TstsProviderTypeFamilyDefault> = \[TResult\] extends \[__TstsProviderTypeFamilyDefault\] \? __TstsProvider_Task_0 : __TstsProvider_Task_1<TResult>;/);
+  assert.match(virtualText, /export declare const Task: typeof __TstsProvider_Task_0 & typeof __TstsProvider_Task_1;/);
   assert.equal(virtualText.includes("export { Task_1 as Task }"), false);
 
   const virtualSymbol = Node_Symbol(virtualFile as never);
@@ -3287,6 +3341,111 @@ function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
                 }],
               }] : []),
             ],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function externalGenericHeritageProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-external-generic-heritage-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-external-generic-heritage",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-external-generic-heritage-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/public/collections.js" || moduleSpecifier === "@acme/public/model-binding.js"
+          ? { kind: "owned" }
+          : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: moduleSpecifier === "@acme/public/collections.js"
+            ? "tsts-provider://acme/public-collections-generic"
+            : "tsts-provider://acme/public-model-binding",
+          providerModuleId: moduleSpecifier === "@acme/public/collections.js"
+            ? "acme.public.Collections"
+            : "acme.public.ModelBinding",
+          packageName: "@acme/public",
+          packageVersion: "1.0.0",
+        }),
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/public/collections.js") {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              exports: [{
+                id: "ReadOnlyCollection_1",
+                name: "ReadOnlyCollection_1",
+                kind: "class",
+                sourceTypeFamily: {
+                  exportName: "ReadOnlyCollection",
+                  typeArgumentCount: 1,
+                },
+                typeParameters: [{ name: "T" }],
+                members: [{
+                  id: "ReadOnlyCollection.Item",
+                  name: "Item",
+                  kind: "property",
+                  readonly: true,
+                  type: { kind: "type-parameter", name: "T" },
+                }, {
+                  id: "ReadOnlyCollection.Count",
+                  name: "Count",
+                  kind: "property",
+                  readonly: true,
+                  type: { kind: "number" },
+                }],
+              }],
+            };
+          }
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            imports: [{
+              moduleSpecifier: "@acme/public/collections.js",
+              typeOnly: true,
+              namedImports: [{
+                exportedName: "ReadOnlyCollection",
+                localName: "ImportedReadOnlyCollection",
+              }],
+            }],
+            exports: [{
+              id: "ModelMetadata",
+              name: "ModelMetadata",
+              kind: "class",
+              members: [],
+            }, {
+              id: "ModelPropertyCollection",
+              name: "ModelPropertyCollection",
+              kind: "class",
+              heritage: [{
+                kind: "extends",
+                type: {
+                  kind: "provider-ref",
+                  moduleSpecifier: "@acme/public/collections.js",
+                  exportName: "ReadOnlyCollection",
+                  localName: "ImportedReadOnlyCollection",
+                  typeArguments: [{
+                    kind: "provider-ref",
+                    moduleSpecifier: "@acme/public/model-binding.js",
+                    exportName: "ModelMetadata",
+                  }],
+                },
+              }],
+              members: [],
+            }],
           };
         },
         getTargetIdentity: () => undefined,

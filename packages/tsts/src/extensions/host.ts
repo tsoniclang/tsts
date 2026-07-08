@@ -1941,7 +1941,18 @@ function renderProviderTypeFamilyDeclaration(group: ProviderTypeFamilyRenderGrou
       return `${parameter.name}${constraintText}${defaultText}`;
     }).join(", ")}>`;
   const aliasType = renderProviderTypeFamilyAliasType(variants, maxTypeParameters);
-  return `${variantDeclarations.join("\n")}\nexport type ${group.exportName}${familyTypeParameters} = ${aliasType};`;
+  const valueExport = renderProviderTypeFamilyValueExport(group.exportName, variants);
+  return `${variantDeclarations.join("\n")}\nexport type ${group.exportName}${familyTypeParameters} = ${aliasType};${valueExport}`;
+}
+
+function renderProviderTypeFamilyValueExport(exportName: string, variants: readonly ProviderExportDeclaration[]): string {
+  if (!variants.every((variant) => variant.kind === "class")) {
+    return "";
+  }
+  const valueType = variants
+    .map((variant) => `typeof ${getProviderTypeFamilyVariantLocalName(variant)}`)
+    .join(" & ");
+  return `\nexport declare const ${exportName}: ${valueType};`;
 }
 
 function renderProviderTypeFamilyAliasType(variants: readonly ProviderExportDeclaration[], maxTypeParameters: readonly ProviderTypeParameterDeclaration[]): string {
@@ -2293,6 +2304,7 @@ function isValidProviderDeclarationModel(value: ProviderDeclarationModel, resolu
     && (value.imports ?? []).every(isValidProviderImportDeclaration)
     && Array.isArray(value.exports)
     && value.exports.every(isValidProviderExportDeclaration)
+    && value.exports.every(hasValidProviderExportTypeParameterScope)
     && isValidProviderTypeFamilyDeclarations(value.exports, value.imports ?? []);
 }
 
@@ -2555,6 +2567,125 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
       return value.id.length > 0
         && value.sourceShape !== undefined
         && isValidProviderTypeExpression(value.sourceShape);
+  }
+}
+
+function hasValidProviderExportTypeParameterScope(value: ProviderExportDeclaration): boolean {
+  const exportTypeParameters = value.typeParameters ?? [];
+  if (!hasValidProviderTypeParameterDeclarations(exportTypeParameters, new Set())) {
+    return false;
+  }
+  const exportTypeParameterScope = getProviderTypeParameterScope(new Set(), exportTypeParameters);
+  if (value.type !== undefined && !hasValidProviderTypeExpressionScope(value.type, exportTypeParameterScope)) {
+    return false;
+  }
+  if ((value.heritage ?? []).some((heritage) => !hasValidProviderTypeExpressionScope(heritage.type, exportTypeParameterScope))) {
+    return false;
+  }
+  if ((value.signatures ?? []).some((signature) => !hasValidProviderSignatureTypeParameterScope(signature, new Set()))) {
+    return false;
+  }
+  if (value.kind === "namespace") {
+    return (value.members ?? []).every((member) => hasValidProviderNamespaceMemberTypeParameterScope(member));
+  }
+  if (value.kind === "enum") {
+    return true;
+  }
+  return (value.members ?? []).every((member) => hasValidProviderMemberTypeParameterScope(member, exportTypeParameterScope));
+}
+
+function hasValidProviderMemberTypeParameterScope(member: ProviderMemberDeclaration, parentScope: ReadonlySet<string>): boolean {
+  if (member.type !== undefined && !hasValidProviderTypeExpressionScope(member.type, parentScope)) {
+    return false;
+  }
+  return (member.signatures ?? []).every((signature) => hasValidProviderSignatureTypeParameterScope(signature, parentScope));
+}
+
+function hasValidProviderNamespaceMemberTypeParameterScope(member: ProviderMemberDeclaration): boolean {
+  if (member.type !== undefined && !hasValidProviderTypeExpressionScope(member.type, new Set())) {
+    return false;
+  }
+  return (member.signatures ?? []).every((signature) => hasValidProviderSignatureTypeParameterScope(signature, new Set()));
+}
+
+function hasValidProviderSignatureTypeParameterScope(signature: ProviderSignatureDeclaration, parentScope: ReadonlySet<string>): boolean {
+  const typeParameters = signature.typeParameters ?? [];
+  if (!hasValidProviderTypeParameterDeclarations(typeParameters, parentScope)) {
+    return false;
+  }
+  const scope = getProviderTypeParameterScope(parentScope, typeParameters);
+  return signature.parameters.every((parameter) => hasValidProviderParameterTypeParameterScope(parameter, scope))
+    && (signature.returnType === undefined || hasValidProviderTypeExpressionScope(signature.returnType, scope));
+}
+
+function hasValidProviderParameterTypeParameterScope(parameter: ProviderParameterDeclaration, scope: ReadonlySet<string>): boolean {
+  return hasValidProviderTypeExpressionScope(parameter.type, scope)
+    && (parameter.defaultType === undefined || hasValidProviderTypeExpressionScope(parameter.defaultType, scope));
+}
+
+function hasValidProviderTypeParameterDeclarations(typeParameters: readonly ProviderTypeParameterDeclaration[], parentScope: ReadonlySet<string>): boolean {
+  const names = new Set<string>();
+  for (const parameter of typeParameters) {
+    if (names.has(parameter.name)) {
+      return false;
+    }
+    names.add(parameter.name);
+  }
+  const scope = getProviderTypeParameterScope(parentScope, typeParameters);
+  return typeParameters.every((parameter) =>
+    (parameter.constraints ?? []).every((constraint) => hasValidProviderTypeExpressionScope(constraint, scope))
+      && (parameter.defaultType === undefined || hasValidProviderTypeExpressionScope(parameter.defaultType, scope))
+  );
+}
+
+function getProviderTypeParameterScope(parentScope: ReadonlySet<string>, typeParameters: readonly ProviderTypeParameterDeclaration[]): ReadonlySet<string> {
+  const scope = new Set(parentScope);
+  for (const parameter of typeParameters) {
+    scope.add(parameter.name);
+  }
+  return scope;
+}
+
+function hasValidProviderTypeExpressionScope(type: ProviderTypeExpression, scope: ReadonlySet<string>): boolean {
+  switch (type.kind) {
+    case "any":
+    case "unknown":
+    case "void":
+    case "never":
+    case "boolean":
+    case "string":
+    case "number":
+    case "bigint":
+    case "object":
+    case "source-primitive":
+    case "literal":
+      return true;
+    case "type-parameter":
+      return scope.has(type.name);
+    case "target-named":
+      return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderTypeExpressionScope(typeArgument, scope))
+        && type.sourceShape !== undefined
+        && hasValidProviderTypeExpressionScope(type.sourceShape, scope);
+    case "array":
+      return hasValidProviderTypeExpressionScope(type.elementType, scope);
+    case "tuple":
+      return type.elementTypes.every((elementType) => hasValidProviderTypeExpressionScope(elementType, scope));
+    case "union":
+    case "intersection":
+      return type.types.every((memberType) => hasValidProviderTypeExpressionScope(memberType, scope));
+    case "function": {
+      const typeParameters = type.typeParameters ?? [];
+      if (!hasValidProviderTypeParameterDeclarations(typeParameters, scope)) {
+        return false;
+      }
+      const functionScope = getProviderTypeParameterScope(scope, typeParameters);
+      return type.parameters.every((parameter) => hasValidProviderParameterTypeParameterScope(parameter, functionScope))
+        && hasValidProviderTypeExpressionScope(type.returnType, functionScope);
+    }
+    case "provider-ref":
+      return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderTypeExpressionScope(typeArgument, scope));
+    case "opaque":
+      return type.sourceShape !== undefined && hasValidProviderTypeExpressionScope(type.sourceShape, scope);
   }
 }
 
