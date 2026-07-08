@@ -826,6 +826,47 @@ test("provider declaration models reject target types without explicit source sh
   assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
 });
 
+test("provider declaration models reject type-parameter references outside scope", () => {
+  const specifier = "@target/type-parameter-scope.js";
+  const invalidExportSets: readonly ProviderDeclarationModel["exports"][] = [
+    [{
+      id: "LeakedValue",
+      name: "LeakedValue",
+      kind: "value",
+      type: { kind: "type-parameter", name: "T" },
+    }],
+    [{
+      id: "Box",
+      name: "Box",
+      kind: "class",
+      members: [{
+        id: "value",
+        name: "value",
+        kind: "property",
+        type: { kind: "type-parameter", name: "T" },
+      }],
+    }],
+    [{
+      id: "call",
+      name: "call",
+      kind: "function",
+      signatures: [{
+        id: "call",
+        parameters: [{ name: "value", type: { kind: "type-parameter", name: "T" } }],
+        returnType: { kind: "void" },
+      }],
+    }],
+  ];
+
+  for (const exports of invalidExportSets) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, exports));
+    const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+    assert.equal(resolved.kind, "rejected");
+    assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+  }
+});
+
 test("provider declaration models reject invalid parameter passing modes", () => {
   const specifier = "@target/runtime.js";
   const host = new ExtensionHost({});
