@@ -21,7 +21,6 @@ import {
   Checker_GetAliasedSymbol,
   Checker_GetSymbolAtLocation,
   Checker_getDeclaredTypeOfSymbol,
-  Checker_getResolvedSymbol,
   Checker_getResolvedSymbolOrNil,
   Checker_getTypeOfSymbol,
   Checker_resolveExternalModuleName,
@@ -82,7 +81,7 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
     getSymbolAtLocation: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_GetSymbolAtLocation(checker, node)),
     getResolvedSymbol: (node, options = {}) =>
-      withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSymbol(checker, node)),
+      withCheckerForNode(program, node, defaultOptions, options, (checker) => getDiagnosticFreeResolvedSymbol(checker, node)),
     getResolvedSymbolOrNil: (node, options = {}) =>
       withCheckerForNode(program, node, defaultOptions, options, (checker) => Checker_getResolvedSymbolOrNil(checker, node)),
     getAliasedSymbol: (symbol, options = {}) =>
@@ -124,6 +123,13 @@ export function createTypeCheckerQueries(program: GoPtr<Program>, defaultOptions
     getSignatureParameters: (signature) => signature?.parameters ?? [],
     getSignatureThisParameter: (signature) => signature?.thisParameter,
   };
+}
+
+function getDiagnosticFreeResolvedSymbol(checker: GoPtr<Checker>, node: GoPtr<Node>): GoPtr<Symbol> {
+  const resolved = Checker_getResolvedSymbolOrNil(checker, node);
+  return resolved !== undefined && resolved !== checker?.unknownSymbol
+    ? resolved
+    : Checker_GetSymbolAtLocation(checker, node);
 }
 
 function withCheckerForNode<T>(
