@@ -12,7 +12,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -35,7 +35,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedElementAccessMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -1419,6 +1419,136 @@ test("checker exposes selected source member evidence on checked property access
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
   assertSelectedMemberEvidence(splitRequest, "Split");
   assertSelectedMemberEvidence(lengthRequest, "Length");
+});
+
+test("checker exposes selected source index-signature evidence on checked element access", () => {
+  const observedRequests: CheckedElementAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      interface Text {
+        [index: number]: string;
+      }
+      interface Record<T> {
+        [key: string]: T;
+      }
+
+      export function at(value: Text, index: number): string {
+        return value[index];
+      }
+      export function rec(r: Record<number>, key: string): number {
+        return r[key];
+      }
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-index-evidence-extension", {
+      identity: semanticProviderIdentity("acme-selected-index-evidence-provider"),
+      mapCheckedElementAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation("Acme.Index", "property", "int32"),
+          resultType: semanticSubject("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  assert.equal(observedRequests.length, 2);
+  for (const request of observedRequests) {
+    assertSelectedIndexEvidence(request);
+  }
+});
+
+test("checker exposes selected source member evidence on optional-chain property access", () => {
+  const observedRequests: CheckedPropertyAccessMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      interface String {
+        readonly length: number;
+      }
+
+      class User {
+        name: string = "Ada";
+      }
+      declare const user: User;
+      declare const maybeUser: User | null;
+
+      const direct = user.name.length;
+      const optional = maybeUser?.name.length ?? 0;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        strictNullChecks: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-optional-property-evidence-extension", {
+      identity: semanticProviderIdentity("acme-selected-optional-property-evidence-provider"),
+      mapCheckedPropertyAccess: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation(`Acme.${request.propertyName}`, "property", "int32"),
+          resultType: semanticSubject("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  const nameRequests = observedRequests.filter((request) => request.propertyName === "name");
+  const lengthRequests = observedRequests.filter((request) => request.propertyName === "length");
+  assert.equal(nameRequests.length, 2);
+  assert.equal(lengthRequests.length, 2);
+  for (const request of nameRequests) {
+    assertSelectedMemberEvidence(request, "name");
+  }
+  for (const request of lengthRequests) {
+    assertSelectedMemberEvidence(request, "length");
+  }
 });
 
 test("checker exposes selected callee member evidence on checked calls", () => {
@@ -4058,6 +4188,16 @@ function assertSelectedMemberEvidence(request: CheckedPropertyAccessMappingReque
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration, selectedSymbol?.ValueDeclaration);
   assert.equal(Node_Text(Node_Name(selectedDeclaration)), name);
+}
+
+function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
+  assert.ok(request !== undefined);
+  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  assert.ok(selectedSymbol !== undefined);
+  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
+  assert.ok(selectedDeclaration !== undefined);
+  assert.equal(selectedDeclaration.Kind, KindIndexSignature);
 }
 
 function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {
