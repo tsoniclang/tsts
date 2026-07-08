@@ -660,8 +660,9 @@ test("provider type families select same-name variants by source type-argument a
   assert.ok(virtualFile !== undefined);
   const virtualText = SourceFile_Text(virtualFile);
   assert.match(virtualText, /declare class __TstsProvider_Task_0/);
-  assert.match(virtualText, /declare class __TstsProvider_Task_1<TResult>/);
+  assert.match(virtualText, /declare class __TstsProvider_Task_1<TResult> extends __TstsProvider_Task_0/);
   assert.match(virtualText, /Duplicate: Task<TResult>;/);
+  assert.equal(virtualText.includes("extends Task"), false);
   assert.match(virtualText, /export type Task<TResult = __TstsProviderTypeFamilyDefault> = \[TResult\] extends \[__TstsProviderTypeFamilyDefault\] \? __TstsProvider_Task_0 : __TstsProvider_Task_1<TResult>;/);
   assert.equal(virtualText.includes("export { Task_1 as Task }"), false);
 
@@ -2921,6 +2922,14 @@ function taskTypeFamilyProviderExtension(): CompilerExtension {
               typeArgumentCount: 1,
             },
             typeParameters: [{ name: "TResult" }],
+            heritage: [{
+              kind: "extends",
+              type: {
+                kind: "provider-ref",
+                moduleSpecifier: "@acme/native/tasks.js",
+                exportName: "Task",
+              },
+            }],
             targetIdentity: {
               target: "acme",
               id: "Acme.Threading.Tasks.Task`1",

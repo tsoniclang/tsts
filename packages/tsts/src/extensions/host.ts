@@ -1890,7 +1890,7 @@ function renderProviderTypeFamilyVariantReference(variant: ProviderExportDeclara
 }
 
 function renderProviderHeritage(heritage: readonly ProviderHeritageDeclaration[], declarationKind: "class" | "interface", context: ProviderRenderContext): string {
-  const extendsTypes = heritage.filter((clause) => clause.kind === "extends").map((clause) => renderProviderTypeExpression(clause.type, context));
+  const extendsTypes = heritage.filter((clause) => clause.kind === "extends").map((clause) => renderProviderTypeExpression(clause.type, context, providerTypeExpressionRenderValueHeritage));
   const implementsTypes = declarationKind === "class"
     ? heritage.filter((clause) => clause.kind === "implements").map((clause) => renderProviderTypeExpression(clause.type, context))
     : [];
@@ -2013,8 +2013,20 @@ function renderProviderParameter(parameter: ProviderParameterDeclaration, contex
   return `${restPrefix}${parameter.name}${optionalSuffix}: ${renderProviderTypeExpression(parameter.type, context)}`;
 }
 
-function renderProviderTypeExpression(type: ProviderTypeExpression, context: ProviderRenderContext): string {
-  return renderProviderTypeExpressionWorker(type, providerTypePrecedenceNone, context);
+interface ProviderTypeExpressionRenderOptions {
+  readonly providerRefPosition: "type" | "value-heritage";
+}
+
+const providerTypeExpressionRenderType: ProviderTypeExpressionRenderOptions = {
+  providerRefPosition: "type",
+};
+
+const providerTypeExpressionRenderValueHeritage: ProviderTypeExpressionRenderOptions = {
+  providerRefPosition: "value-heritage",
+};
+
+function renderProviderTypeExpression(type: ProviderTypeExpression, context: ProviderRenderContext, options: ProviderTypeExpressionRenderOptions = providerTypeExpressionRenderType): string {
+  return renderProviderTypeExpressionWorker(type, providerTypePrecedenceNone, context, options);
 }
 
 const providerTypePrecedenceNone = 0;
@@ -2022,7 +2034,7 @@ const providerTypePrecedenceUnion = 1;
 const providerTypePrecedenceIntersection = 2;
 const providerTypePrecedencePostfix = 3;
 
-function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parentPrecedence: number, context: ProviderRenderContext): string {
+function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parentPrecedence: number, context: ProviderRenderContext, options: ProviderTypeExpressionRenderOptions): string {
   switch (type.kind) {
     case "any":
     case "unknown":
@@ -2040,17 +2052,17 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
       return type.name;
     case "target-named":
     case "opaque":
-      return renderProviderTypeExpressionWorker(type.sourceShape!, parentPrecedence, context);
+      return renderProviderTypeExpressionWorker(type.sourceShape!, parentPrecedence, context, options);
     case "array":
-      return `${renderProviderTypeExpressionWorker(type.elementType, providerTypePrecedencePostfix, context)}[]`;
+      return `${renderProviderTypeExpressionWorker(type.elementType, providerTypePrecedencePostfix, context, options)}[]`;
     case "tuple":
       return `[${type.elementTypes.map((elementType) => renderProviderTypeExpression(elementType, context)).join(", ")}]`;
     case "union": {
-      const text = type.types.map((unionType) => renderProviderTypeExpressionWorker(unionType, providerTypePrecedenceUnion, context)).join(" | ");
+      const text = type.types.map((unionType) => renderProviderTypeExpressionWorker(unionType, providerTypePrecedenceUnion, context, options)).join(" | ");
       return parentPrecedence > providerTypePrecedenceUnion ? `(${text})` : text;
     }
     case "intersection": {
-      const text = type.types.map((intersectionType) => renderProviderTypeExpressionWorker(intersectionType, providerTypePrecedenceIntersection, context)).join(" & ");
+      const text = type.types.map((intersectionType) => renderProviderTypeExpressionWorker(intersectionType, providerTypePrecedenceIntersection, context, options)).join(" & ");
       return parentPrecedence > providerTypePrecedenceIntersection ? `(${text})` : text;
     }
     case "function": {
@@ -2064,12 +2076,25 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
       const family = familyVariant?.sourceTypeFamily;
       const typeArgumentCount = type.typeArguments?.length ?? 0;
       const providerRefName = type.namespaceImport === undefined
-        ? type.localName ?? (family !== undefined && family.typeArgumentCount === typeArgumentCount ? family.exportName : type.exportName)
+        ? type.localName ?? renderProviderRefIdentifier(type.exportName, familyVariant, typeArgumentCount, options)
         : `${type.namespaceImport}.${type.exportName}`;
       return type.typeArguments === undefined || type.typeArguments.length === 0
         ? providerRefName
         : `${providerRefName}<${type.typeArguments.map((typeArgument) => renderProviderTypeExpression(typeArgument, context)).join(", ")}>`;
   }
+}
+
+function renderProviderRefIdentifier(exportName: string, familyVariant: ProviderExportDeclaration | undefined, typeArgumentCount: number, options: ProviderTypeExpressionRenderOptions): string {
+  if (familyVariant === undefined) {
+    return exportName;
+  }
+  const family = familyVariant?.sourceTypeFamily;
+  if (family === undefined || family.typeArgumentCount !== typeArgumentCount) {
+    return exportName;
+  }
+  return options.providerRefPosition === "value-heritage"
+    ? getProviderTypeFamilyVariantLocalName(familyVariant)
+    : family.exportName;
 }
 
 function renderSourcePrimitiveType(name: SourcePrimitiveKind): string {
