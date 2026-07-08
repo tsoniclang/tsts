@@ -1,6 +1,6 @@
 import type { bool, int } from "../../../go/scalars.js";
 import type { GoPtr, GoSlice, GoMap } from "../../../go/compat.js";
-import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
+import { recordExtensionCheckedIterationMapping, recordExtensionCheckedOperatorKindMapping, recordExtensionCheckedOperatorMapping } from "../../../extensions/checker-integration.js";
 import type { Context } from "../../../go/context.js";
 import { Node_AsNode, Node_Pos, Node_End, Node_Name, Node_BodyData } from "../../ast/spine.js";
 import type { Node } from "../../ast/spine.js";
@@ -145,6 +145,7 @@ import { OrderedSet_Add, OrderedSet_Values, OrderedSet_Clear } from "../../colle
 import { Set_Clear } from "../../collections/set.js";
 import { LinkStore_Get } from "../../core/linkstore.js";
 import {
+  type Kind,
   KindBlock, KindVariableDeclarationList, KindReturnStatement,
   KindCallExpression, KindNewExpression, KindTaggedTemplateExpression, KindDecorator, KindJsxOpeningElement,
   KindFunctionExpression, KindArrowFunction, KindMethodDeclaration, KindMethodSignature,
@@ -694,6 +695,7 @@ export function Checker_checkForInStatement(receiver: GoPtr<Checker>, node: GoPt
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkForOfStatement","kind":"method","status":"implemented","sigHash":"e566e597fa7d439638d7e79f7f6a58beadd26a29858a11cc0387de04ffb22181","bodyHash":"f6328f542ab5a70b49442a84232412dc6cab6f7c4c95af06a08d922482124273"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go for-of checking, extension-enabled programs record the selected source element type for both declaration and assignment initializers; no-extension programs remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkForOfStatement(node *ast.Node) {
@@ -762,6 +764,9 @@ export function Checker_checkForOfStatement(receiver: GoPtr<Checker>, node: GoPt
   let iteratedType: GoPtr<Type> = undefined;
   if (IsVariableDeclarationList(data!.Initializer)) {
     Checker_checkVariableDeclarationList(receiver, data!.Initializer);
+    const firstDeclaration = AsVariableDeclarationList(data!.Initializer)?.Declarations?.Nodes[0];
+    const firstDeclarationSymbol = firstDeclaration === undefined ? undefined : Checker_getSymbolOfDeclaration(receiver, firstDeclaration);
+    iteratedType = firstDeclarationSymbol === undefined ? undefined : Checker_getTypeOfSymbol(receiver, firstDeclarationSymbol);
   } else {
     const varExpr = data!.Initializer;
     iteratedType = Checker_checkRightHandSideOfForOf(receiver, node);
@@ -2271,6 +2276,7 @@ export function Checker_checkAwaitExpression(receiver: GoPtr<Checker>, node: GoP
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPrefixUnaryExpression","kind":"method","status":"implemented","sigHash":"c610d53b7cece49af9ecbed7367a4ec98979f304bdc5698b85a78a39c58ffbc8","bodyHash":"3d8c2bbc4244b7670327f86361bb2d4913b1fde76eeee15d327eaad7d468dca7"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go prefix unary checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkPrefixUnaryExpression(node *ast.Node) *Type {
@@ -2337,14 +2343,14 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
     case KindNumericLiteral:
       switch (expr.Operator) {
         case KindMinusToken:
-          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, -FromString(Node_Text(expr.Operand)) as Number));
+          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, -FromString(Node_Text(expr.Operand)) as Number)));
         case KindPlusToken:
-          return Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, +FromString(Node_Text(expr.Operand)) as Number));
+          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getFreshTypeOfLiteralType(receiver, Checker_getNumberLiteralType(receiver, +FromString(Node_Text(expr.Operand)) as Number)));
       }
       break;
     case KindBigIntLiteral:
       if (expr.Operator === KindMinusToken) {
-        return Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(expr.Operand)), true)));
+        return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getFreshTypeOfLiteralType(receiver, Checker_getBigIntLiteralType(receiver, NewPseudoBigInt(ParsePseudoBigInt(Node_Text(expr.Operand)), true))));
       }
       break;
   }
@@ -2360,19 +2366,19 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
         if (Checker_maybeTypeOfKindConsideringBaseConstraint(receiver, operandType, TypeFlagsBigIntLike)) {
           Checker_error(receiver, expr.Operand, Operator_0_cannot_be_applied_to_type_1, TokenToString(expr.Operator), Checker_TypeToString(receiver, Checker_getBaseTypeOfLiteralType(receiver, operandType)));
         }
-        return receiver!.numberType;
+        return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, receiver!.numberType);
       }
-      return Checker_getUnaryResultType(receiver, operandType);
+      return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getUnaryResultType(receiver, operandType));
     case KindExclamationToken: {
       Checker_checkTruthinessOfType(receiver, operandType, expr.Operand);
       const facts = Checker_getTypeFacts(receiver, operandType, TypeFactsTruthy | TypeFactsFalsy);
       switch (facts) {
         case TypeFactsTruthy:
-          return receiver!.falseType;
+          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, receiver!.falseType);
         case TypeFactsFalsy:
-          return receiver!.trueType;
+          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, receiver!.trueType);
         default:
-          return receiver!.booleanType;
+          return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, receiver!.booleanType);
       }
     }
     case KindPlusPlusToken:
@@ -2392,7 +2398,7 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
           The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
         );
       }
-      return Checker_getUnaryResultType(receiver, operandType);
+      return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getUnaryResultType(receiver, operandType));
     }
   }
   return receiver!.errorType;
@@ -2400,6 +2406,7 @@ export function Checker_checkPrefixUnaryExpression(receiver: GoPtr<Checker>, nod
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/checker/checker.go::method::Checker.checkPostfixUnaryExpression","kind":"method","status":"implemented","sigHash":"dba67508ee9c8a5bcaa20ee59c4a3f3c5130a2ecd6afbf976d8dd27550468ce4","bodyHash":"7e953c640d76eb0ce4baddcaf974503dba2fed9cf9cde297c24a3ac9abf02029"}
+ * @tsgo-override {"category":"extension-host","allow":["body"],"reason":"After normal TS-Go postfix unary checking, extension-enabled programs may record provider-selected target operator facts for consumers; no-extension programs and unowned operators remain on the exact TS-Go path."}
  *
  * Go source:
  * func (c *Checker) checkPostfixUnaryExpression(node *ast.Node) *Type {
@@ -2437,7 +2444,12 @@ export function Checker_checkPostfixUnaryExpression(receiver: GoPtr<Checker>, no
       The_operand_of_an_increment_or_decrement_operator_may_not_be_an_optional_property_access,
     );
   }
-  return Checker_getUnaryResultType(receiver, operandType);
+  return recordExtensionCheckedUnaryOperatorMapping(receiver, node, expr.Operator, expr.Operand, Checker_getUnaryResultType(receiver, operandType));
+}
+
+function recordExtensionCheckedUnaryOperatorMapping(receiver: GoPtr<Checker>, node: GoPtr<Node>, operator: Kind, operand: GoPtr<Node>, result: GoPtr<Type>): GoPtr<Type> {
+  recordExtensionCheckedOperatorKindMapping(receiver, node, operator, operand);
+  return result;
 }
 
 /**

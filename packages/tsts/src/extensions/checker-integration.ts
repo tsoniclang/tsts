@@ -5,6 +5,7 @@ import { Node_Arguments, Node_Expression, Node_Symbol, Node_Text, Node_TypeArgum
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
+import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import type { Signature, Type } from "../internal/checker/types.js";
@@ -167,7 +168,15 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
 }
 
 export function recordExtensionCheckedOperatorMapping(checker: GoPtr<Checker>, expression: GoPtr<Node>, operatorToken: GoPtr<Node>, left: GoPtr<Node>, right: GoPtr<Node>): void {
-  if (checker === undefined || expression === undefined || operatorToken === undefined || left === undefined) {
+  if (operatorToken === undefined) {
+    return;
+  }
+
+  recordExtensionCheckedOperatorKindMapping(checker, expression, operatorToken.Kind, left, right);
+}
+
+export function recordExtensionCheckedOperatorKindMapping(checker: GoPtr<Checker>, expression: GoPtr<Node>, operator: Kind | undefined, left: GoPtr<Node>, right?: GoPtr<Node>): void {
+  if (checker === undefined || expression === undefined || operator === undefined || left === undefined) {
     return;
   }
 
@@ -180,7 +189,7 @@ export function recordExtensionCheckedOperatorMapping(checker: GoPtr<Checker>, e
     ExtensionObservationPoint.mapCheckedOperator,
     {
       expression,
-      operator: TokenToString(operatorToken.Kind),
+      operator: TokenToString(operator),
       left,
       ...(right !== undefined ? { right } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
