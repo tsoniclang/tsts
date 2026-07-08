@@ -588,6 +588,68 @@ test("provider virtual module dependency slices preserve public export identity 
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual generic member chains do not leave stale unresolved property diagnostics", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { List, Dictionary } from "@acme/public/collections.js";
+
+      interface Todo {
+        readonly title: string;
+      }
+
+      declare const todos: Dictionary<number, Todo>;
+      declare const result: List<Todo>;
+      const values = todos.Values;
+      const enumerator = values.GetEnumerator();
+      const current = enumerator.Current;
+      result.Add(enumerator.Current);
+      current.title;
+    `],
+    ["/src/again.ts", `
+      import { Dictionary_ValueCollection_Enumerator } from "@acme/public/collections.js";
+
+      declare const enumerator: Dictionary_ValueCollection_Enumerator<number, { readonly title: string }>;
+      enumerator.Current.title;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts", "again.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [providerGenericMemberChainExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  const repeatedSourceFile = Program_GetSourceFile(program, "/src/again.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.ok(repeatedSourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+  assertCleanProgram(program, repeatedSourceFile);
+
+  const collectionFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-collections"));
+  assert.equal(collectionFiles.length, 2);
+  assert.ok(collectionFiles.some((file) => SourceFile_Text(file).includes("class Dictionary_ValueCollection_Enumerator")));
+  assert.ok(collectionFiles.some((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Dictionary_ValueCollection_Enumerator as Dictionary_ValueCollection_Enumerator };")));
+});
+
 test("provider virtual module same-file named import slices compose before resolution", () => {
   const requestedSlices: string[][] = [];
   let fs = FromMap(new Map<string, string>([
@@ -2970,6 +3032,172 @@ function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
                 }],
               }] : []),
             ],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function providerGenericMemberChainExtension(): CompilerExtension {
+  let pendingExports: readonly string[] = [];
+  return {
+    identity: {
+      id: "acme-provider-generic-member-chain-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-provider-generic-member-chain",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetSemanticProvider({
+        identity: {
+          id: "acme-provider-generic-member-chain-semantic",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "semantic",
+        },
+        mapCheckedCall: (request, observationContext) => {
+          const compiler = observationContext.compiler;
+          if (compiler !== undefined) {
+            for (const argument of request.arguments) {
+              const node = argument !== null && typeof argument === "object" && "Kind" in argument
+                ? argument as GoPtr<Node>
+                : undefined;
+              if (node !== undefined) {
+                compiler.checker.getTypeAtLocation(node, { sourceFile: compiler.ast.getSourceFile(node) });
+                if (node.Kind === KindPropertyAccessExpression) {
+                  compiler.checker.getResolvedSymbol(Node_Name(node), { sourceFile: compiler.ast.getSourceFile(node) });
+                }
+              }
+            }
+          }
+          return acceptObservation({
+            selectedSignature: {
+              member: {
+                id: "Acme.Generic.Call",
+                sourceName: "call",
+                targetName: "Call",
+                kind: "method",
+                parameters: [],
+              },
+            },
+          });
+        },
+      }), true);
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-provider-generic-member-chain",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/public/collections.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          pendingExports = (moduleContext.importSlice?.requestedExports ?? [])
+            .map((request) => request.exportedName)
+            .sort();
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: "tsts-provider://acme/public-collections",
+            providerModuleId: "acme.public.Collections",
+            packageName: "@acme/public",
+            packageVersion: "1.0.0",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          const exportNames = new Set(pendingExports.length === 0
+            ? ["Dictionary", "Dictionary_ValueCollection", "Dictionary_ValueCollection_Enumerator", "List"]
+            : pendingExports);
+          if (exportNames.has("Dictionary")) {
+            exportNames.add("Dictionary_ValueCollection");
+          }
+          if (exportNames.has("Dictionary") || exportNames.has("Dictionary_ValueCollection")) {
+            exportNames.add("Dictionary_ValueCollection_Enumerator");
+          }
+          const exports = [];
+          if (exportNames.has("List")) {
+            exports.push({
+              id: "List",
+              name: "List",
+              kind: "class" as const,
+              typeParameters: [{ name: "T" }],
+              members: [{
+                id: "List.Add",
+                name: "Add",
+                kind: "method" as const,
+                signatures: [{
+                  id: "List.Add(T)",
+                  parameters: [{ name: "value", type: { kind: "type-parameter" as const, name: "T" } }],
+                  returnType: { kind: "void" as const },
+                }],
+              }],
+            });
+          }
+          if (exportNames.has("Dictionary")) {
+            exports.push({
+              id: "Dictionary",
+              name: "Dictionary",
+              kind: "class" as const,
+              typeParameters: [{ name: "TKey" }, { name: "TValue" }],
+              members: [{
+                id: "Dictionary.Values",
+                name: "Values",
+                kind: "property" as const,
+                readonly: true,
+                type: {
+                  kind: "provider-ref" as const,
+                  moduleSpecifier: resolution.moduleSpecifier,
+                  exportName: "Dictionary_ValueCollection",
+                  typeArguments: [{ kind: "type-parameter" as const, name: "TKey" }, { kind: "type-parameter" as const, name: "TValue" }],
+                },
+              }],
+            });
+          }
+          if (exportNames.has("Dictionary_ValueCollection")) {
+            exports.push({
+              id: "Dictionary_ValueCollection",
+              name: "Dictionary_ValueCollection",
+              kind: "class" as const,
+              typeParameters: [{ name: "TKey" }, { name: "TValue" }],
+              members: [{
+                id: "Dictionary_ValueCollection.GetEnumerator",
+                name: "GetEnumerator",
+                kind: "method" as const,
+                signatures: [{
+                  id: "Dictionary_ValueCollection.GetEnumerator()",
+                  parameters: [],
+                  returnType: {
+                    kind: "provider-ref" as const,
+                    moduleSpecifier: resolution.moduleSpecifier,
+                    exportName: "Dictionary_ValueCollection_Enumerator",
+                    typeArguments: [{ kind: "type-parameter" as const, name: "TKey" }, { kind: "type-parameter" as const, name: "TValue" }],
+                  },
+                }],
+              }],
+            });
+          }
+          if (exportNames.has("Dictionary_ValueCollection_Enumerator")) {
+            exports.push({
+              id: "Dictionary_ValueCollection_Enumerator",
+              name: "Dictionary_ValueCollection_Enumerator",
+              kind: "class" as const,
+              typeParameters: [{ name: "TKey" }, { name: "TValue" }],
+              members: [{
+                id: "Dictionary_ValueCollection_Enumerator.Current",
+                name: "Current",
+                kind: "property" as const,
+                readonly: true,
+                type: { kind: "type-parameter" as const, name: "TValue" },
+              }],
+            });
+          }
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            exports,
           };
         },
         getTargetIdentity: () => undefined,
