@@ -5,7 +5,7 @@ import type { GoPtr } from "../go/compat.js";
 import { Background } from "../go/context.js";
 import type { Node, SourceFile } from "../internal/ast/ast.js";
 import { SourceFile_FileName, SourceFile_Text, SourceFile_as_ast_HasFileName } from "../internal/ast/ast.js";
-import { Node_Arguments, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
+import { Node_Arguments, Node_Locals, Node_Members, Node_ModifierFlags, Node_Symbol, Node_Text, Node_TypeArguments } from "../internal/ast/ast.js";
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_End, Node_ForEachChild, Node_Name, Node_Pos } from "../internal/ast/spine.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
@@ -34,7 +34,7 @@ import type { ParseConfigHost } from "../internal/tsoptions/tsconfigparsing.js";
 import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfigparsing.js";
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
-import { canonicalIdentityFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
+import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
 import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
@@ -612,6 +612,126 @@ test("provider virtual rest parameters preserve array-of-function source shapes"
   assert.ok(virtualFile !== undefined);
   assert.ok(SourceFile_Text(virtualFile).includes("...actions: (() => void)[]"));
   assert.ok(!SourceFile_Text(virtualFile).includes("...actions: () => void[]"));
+});
+
+test("provider type families select same-name variants by source type-argument arity", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Task } from "@acme/native/tasks.js";
+
+      declare const pending: Task;
+      declare const completed: Task<string>;
+
+      pending.Wait();
+      completed.Wait();
+      completed.Result;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [taskTypeFamilyProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+
+  Program_BindSourceFiles(program);
+  const virtualFile = Program_GetSourceFile(program, "tsts-provider://acme/native-tasks");
+  assert.ok(virtualFile !== undefined);
+  const virtualText = SourceFile_Text(virtualFile);
+  assert.match(virtualText, /declare class __TstsProvider_Task_0/);
+  assert.match(virtualText, /declare class __TstsProvider_Task_1<TResult>/);
+  assert.match(virtualText, /Duplicate: Task<TResult>;/);
+  assert.match(virtualText, /export type Task<TResult = __TstsProviderTypeFamilyDefault> = \[TResult\] extends \[__TstsProviderTypeFamilyDefault\] \? __TstsProvider_Task_0 : __TstsProvider_Task_1<TResult>;/);
+  assert.equal(virtualText.includes("export { Task_1 as Task }"), false);
+
+  const virtualSymbol = Node_Symbol(virtualFile as never);
+  const taskFamilySymbol = virtualSymbol?.Exports?.get("Task");
+  assert.ok(taskFamilySymbol !== undefined);
+  const familyFact = extended.extensionHost.facts.get(taskFamilySymbol, providerTypeFamilyFactKey);
+  assert.equal(familyFact?.exportName, "Task");
+  assert.deepEqual(familyFact?.variants.map((variant) => [variant.sourceTypeArgumentCount, variant.declaration.exportId, variant.declaration.targetIdentity?.kind === "target-named" ? variant.declaration.targetIdentity.id : undefined]), [
+    [0, "Task", "Acme.Threading.Tasks.Task"],
+    [1, "Task_1", "Acme.Threading.Tasks.Task`1"],
+  ]);
+
+  const task0Symbol = Node_Locals(virtualFile)?.get("__TstsProvider_Task_0");
+  const task1Symbol = Node_Locals(virtualFile)?.get("__TstsProvider_Task_1");
+  assert.equal(extended.extensionHost.facts.get(task0Symbol, providerVirtualDeclarationFactKey)?.exportName, "Task");
+  assert.equal(extended.extensionHost.facts.get(task0Symbol, providerVirtualDeclarationFactKey)?.exportId, "Task");
+  assert.equal(extended.extensionHost.facts.get(task1Symbol, providerVirtualDeclarationFactKey)?.exportName, "Task");
+  assert.equal(extended.extensionHost.facts.get(task1Symbol, providerVirtualDeclarationFactKey)?.exportId, "Task_1");
+
+  const task0Reference = findTypeReferenceByNameAndArity(sourceFile, "Task", 0);
+  const task1Reference = findTypeReferenceByNameAndArity(sourceFile, "Task", 1);
+  assert.equal(extended.extensionHost.facts.get(task0Reference, providerVirtualDeclarationFactKey)?.exportId, "Task");
+  assert.equal(extended.extensionHost.facts.get(task1Reference, providerVirtualDeclarationFactKey)?.exportId, "Task_1");
+  assert.equal(extended.extensionHost.facts.get(task0Reference, targetBindingFactKey)?.id, "Acme.Threading.Tasks.Task");
+  assert.equal(extended.extensionHost.facts.get(task1Reference, targetBindingFactKey)?.id, "Acme.Threading.Tasks.Task`1");
+  assert.equal(extended.extensionHost.facts.get(task1Reference, instantiatedTargetTypeFactKey)?.typeArguments.length, 1);
+});
+
+test("provider type families keep variant members separate", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Task } from "@acme/native/tasks.js";
+
+      declare const pending: Task;
+      pending.Result;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [taskTypeFamilyProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.equal(Program_GetProgramDiagnostics(program).length, 0);
+  assert.equal(Program_GetSyntacticDiagnostics(program, Background(), sourceFile).length, 0);
+  const semanticDiagnostics = Program_GetSemanticDiagnostics(program, Background(), sourceFile);
+  assert.equal(semanticDiagnostics.length, 1, semanticDiagnostics.map(Diagnostic_String).join("\n"));
+  assert.equal(Diagnostic_Code(semanticDiagnostics[0]), 2339);
+  assert.match(Diagnostic_String(semanticDiagnostics[0]), /Result/);
 });
 
 test("provider virtual declaration facts include enum members", () => {
@@ -2741,6 +2861,106 @@ function restFunctionArrayProviderExtension(): CompilerExtension {
   };
 }
 
+function taskTypeFamilyProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-task-type-family-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-task-type-family-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-task-type-family-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/tasks.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/native-tasks",
+          providerModuleId: "acme.native.tasks",
+          packageName: "@acme/native",
+          packageVersion: "1.0.0",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "Task",
+            name: "Task",
+            kind: "class",
+            sourceTypeFamily: {
+              exportName: "Task",
+              typeArgumentCount: 0,
+            },
+            targetIdentity: {
+              target: "acme",
+              id: "Acme.Threading.Tasks.Task",
+              displayName: "Acme.Threading.Tasks.Task",
+            },
+            members: [{
+              id: "Task.Wait",
+              name: "Wait",
+              kind: "method",
+              signatures: [{
+                id: "Task.Wait()",
+                parameters: [],
+                returnType: { kind: "void" },
+              }],
+            }],
+          }, {
+            id: "Task_1",
+            name: "Task_1",
+            kind: "class",
+            sourceTypeFamily: {
+              exportName: "Task",
+              typeArgumentCount: 1,
+            },
+            typeParameters: [{ name: "TResult" }],
+            targetIdentity: {
+              target: "acme",
+              id: "Acme.Threading.Tasks.Task`1",
+              displayName: "Acme.Threading.Tasks.Task<TResult>",
+            },
+            members: [{
+              id: "Task_1.Result",
+              name: "Result",
+              kind: "property",
+              readonly: true,
+              type: { kind: "type-parameter", name: "TResult" },
+            }, {
+              id: "Task_1.Duplicate",
+              name: "Duplicate",
+              kind: "property",
+              readonly: true,
+              type: {
+                kind: "provider-ref",
+                moduleSpecifier: "@acme/native/tasks.js",
+                exportName: "Task_1",
+                typeArguments: [{ kind: "type-parameter", name: "TResult" }],
+              },
+            }, {
+              id: "Task_1.Wait",
+              name: "Wait",
+              kind: "method",
+              signatures: [{
+                id: "Task_1.Wait()",
+                parameters: [],
+                returnType: { kind: "void" },
+              }],
+            }],
+          }],
+        }),
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
 function enumProviderExtension(): CompilerExtension {
   return {
     identity: {
@@ -3508,6 +3728,21 @@ function findTypeReferenceByName(root: GoPtr<Node>, name: string): GoPtr<Node> {
     }
     const typeName = AsTypeReferenceNode(node)?.TypeName;
     if (Node_Text(typeName) === name) {
+      found = node;
+    }
+  });
+  assert.ok(found !== undefined);
+  return found;
+}
+
+function findTypeReferenceByNameAndArity(root: GoPtr<Node>, name: string, typeArgumentCount: number): GoPtr<Node> {
+  let found: GoPtr<Node>;
+  visitNodes(root, (node) => {
+    if (found !== undefined || node?.Kind !== KindTypeReference) {
+      return;
+    }
+    const typeReference = AsTypeReferenceNode(node);
+    if (Node_Text(typeReference?.TypeName) === name && (Node_TypeArguments(node)?.length ?? 0) === typeArgumentCount) {
       found = node;
     }
   });

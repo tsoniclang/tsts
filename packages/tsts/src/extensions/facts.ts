@@ -262,6 +262,17 @@ export interface ProviderVirtualDeclarationFact {
   readonly targetIdentity?: TargetTypeRef;
 }
 
+export interface ProviderTypeFamilyVariantFact {
+  readonly sourceTypeArgumentCount: number;
+  readonly declaration: ProviderVirtualDeclarationFact;
+  readonly targetBinding?: TargetBindingFact;
+}
+
+export interface ProviderTypeFamilyFact {
+  readonly exportName: string;
+  readonly variants: readonly ProviderTypeFamilyVariantFact[];
+}
+
 export interface AssociatedTypeFact {
   readonly owner: ExtensionFactSubject;
   readonly name: string;
@@ -430,6 +441,14 @@ export const providerVirtualDeclarationFactKey = defineExtensionFactKey<Provider
     && optionalTargetTypeRefEquals(left.targetIdentity, right.targetIdentity),
 });
 
+export const providerTypeFamilyFactKey = defineExtensionFactKey<ProviderTypeFamilyFact>({
+  extensionId: "tsts.provider",
+  name: "typeFamily",
+  equals: (left, right) =>
+    left.exportName === right.exportName
+    && providerTypeFamilyVariantArrayEquals(left.variants, right.variants),
+});
+
 export const associatedTypeFactKey = defineExtensionFactKey<AssociatedTypeFact>({
   extensionId: "tsts.target-bindings",
   name: "associatedType",
@@ -454,6 +473,23 @@ function optionalProviderDeclarationIdentityEquals(left: ProviderDeclarationIden
     return left === right;
   }
   return providerDeclarationIdentityEquals(left, right);
+}
+
+function providerTypeFamilyVariantArrayEquals(left: readonly ProviderTypeFamilyVariantFact[], right: readonly ProviderTypeFamilyVariantFact[]): boolean {
+  return left.length === right.length && left.every((variant, index) => providerTypeFamilyVariantEquals(variant, right[index]!));
+}
+
+function providerTypeFamilyVariantEquals(left: ProviderTypeFamilyVariantFact, right: ProviderTypeFamilyVariantFact): boolean {
+  return left.sourceTypeArgumentCount === right.sourceTypeArgumentCount
+    && providerDeclarationIdentityEquals(left.declaration, right.declaration)
+    && optionalTargetBindingFactEquals(left.targetBinding, right.targetBinding);
+}
+
+function optionalTargetBindingFactEquals(left: TargetBindingFact | undefined, right: TargetBindingFact | undefined): boolean {
+  if (left === undefined || right === undefined) {
+    return left === right;
+  }
+  return targetBindingFactEquals(left, right);
 }
 
 function providerDeclarationIdentityEquals(left: ProviderDeclarationIdentity, right: ProviderDeclarationIdentity): boolean {

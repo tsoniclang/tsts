@@ -10,10 +10,11 @@ import type { Checker } from "../internal/checker/checker/state.js";
 import type { Signature, Type } from "../internal/checker/types.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
-import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
+import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
 import type { ArgumentPassingFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetOperationFact, TargetOperationProvenance, TargetParameter } from "./facts.js";
 import type { ExtensionEvidence, ExtensionFactKey, ExtensionFactSubject, ExtensionHost } from "./host.js";
 import { getExtensionHost } from "./host.js";
+import { recordProviderTypeFamilyReferenceFacts } from "./compiler-integration.js";
 
 export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callExpression: GoPtr<Node>, sourceSelectedSignature?: GoPtr<Signature>, resolvedCalleeSymbol?: GoPtr<Symbol>): void {
   if (checker === undefined || callExpression === undefined) {
@@ -297,7 +298,11 @@ export function recordExtensionRuntimeCarrierFact(checker: GoPtr<Checker>, typeR
   }
 
   const extensionHost = getExtensionHost(checker.program);
-  if (extensionHost === undefined || extensionHost.getObservationOwner(ExtensionObservationPoint.resolveRuntimeCarrier) === undefined) {
+  if (extensionHost === undefined) {
+    return;
+  }
+  recordProviderTypeFamilyReferenceFacts(extensionHost, typeReference, type, symbol);
+  if (extensionHost.getObservationOwner(ExtensionObservationPoint.resolveRuntimeCarrier) === undefined) {
     return;
   }
 
@@ -623,6 +628,7 @@ function hasExtensionOwnedSubject(extensionHost: ExtensionHost, subject: Extensi
     return false;
   }
   return extensionHost.facts.get(subject, targetBindingFactKey) !== undefined
+    || extensionHost.facts.get(subject, providerTypeFamilyFactKey) !== undefined
     || extensionHost.facts.get(subject, providerVirtualDeclarationFactKey) !== undefined
     || extensionHost.facts.get(subject, sourcePrimitiveFactKey) !== undefined
     || extensionHost.facts.get(subject, argumentPassingFactKey) !== undefined
