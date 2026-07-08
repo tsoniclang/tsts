@@ -12,7 +12,7 @@ import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSourceFileOfNode } from "../internal/ast/utilities.js";
 import { Diagnostic_Code, Diagnostic_End, Diagnostic_Pos, Diagnostic_String } from "../internal/ast/diagnostic.js";
 import { AsTypeReferenceNode } from "../internal/ast/generated/casts.js";
-import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
+import { KindArrowFunction, KindBinaryExpression, KindCallExpression, KindElementAccessExpression, KindEnumMember, KindFunctionDeclaration, KindIdentifier, KindIndexSignature, KindMappedType, KindNumberKeyword, KindPropertyAccessExpression, KindTypeReference, KindVariableDeclaration } from "../internal/ast/generated/kinds.js";
 import type { Type } from "../internal/checker/types.js";
 import { LibPath, WrapFS } from "../internal/bundled/bundled.js";
 import type { CompilerOptions } from "../internal/core/compileroptions.js";
@@ -1428,14 +1428,20 @@ test("checker exposes selected source index-signature evidence on checked elemen
       interface Text {
         [index: number]: string;
       }
-      interface Record<T> {
+      interface IndexedRecord<T> {
         [key: string]: T;
       }
+      type Record<K extends string, T> = {
+        [P in K]: T;
+      };
 
       export function at(value: Text, index: number): string {
         return value[index];
       }
-      export function rec(r: Record<number>, key: string): number {
+      export function rec(r: IndexedRecord<number>, key: string): number {
+        return r[key];
+      }
+      export function mapped(r: Record<string, number>, key: string): number {
         return r[key];
       }
     `],
@@ -1477,10 +1483,10 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assert.ok(index !== undefined);
   assertCleanProgram(program, index);
 
-  assert.equal(observedRequests.length, 2);
-  for (const request of observedRequests) {
-    assertSelectedIndexEvidence(request);
-  }
+  assert.equal(observedRequests.length, 3);
+  assertSelectedIndexEvidence(observedRequests[0]);
+  assertSelectedIndexEvidence(observedRequests[1]);
+  assertSelectedMappedIndexEvidence(observedRequests[2]);
 });
 
 test("checker exposes selected source member evidence on optional-chain property access", () => {
@@ -4317,6 +4323,16 @@ function assertSelectedIndexEvidence(request: CheckedElementAccessMappingRequest
   assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
   assert.ok(selectedDeclaration !== undefined);
   assert.equal(selectedDeclaration.Kind, KindIndexSignature);
+}
+
+function assertSelectedMappedIndexEvidence(request: CheckedElementAccessMappingRequest | undefined): void {
+  assert.ok(request !== undefined);
+  const selectedSymbol = request.sourceSelectedSymbol as GoPtr<Symbol>;
+  const selectedDeclaration = request.sourceSelectedDeclaration as GoPtr<Node>;
+  assert.ok(selectedSymbol !== undefined);
+  assert.equal(selectedSymbol?.ValueDeclaration, selectedDeclaration);
+  assert.ok(selectedDeclaration !== undefined);
+  assert.equal(selectedDeclaration.Kind, KindMappedType);
 }
 
 function providerDeclarationIdentity(providerId: string, _providerTarget: string, providerModuleId: string, exportName: string, signatureId?: string) {
