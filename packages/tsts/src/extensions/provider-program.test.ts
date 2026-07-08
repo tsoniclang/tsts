@@ -35,7 +35,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedElementAccessMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -1548,6 +1548,125 @@ test("checker exposes selected source member evidence on optional-chain property
   }
   for (const request of lengthRequests) {
     assertSelectedMemberEvidence(request, "length");
+  }
+});
+
+test("checker exposes source element types on for-of declaration and assignment iterations", () => {
+  const observed: Array<{ request: CheckedIterationMappingRequest; elementType: string | undefined }> = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      const values = [1, 2, 3];
+      for (const value of values) {
+        value;
+      }
+      let existing = 0;
+      for (existing of values) {
+        existing;
+      }
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-iteration-evidence-extension", {
+      identity: semanticProviderIdentity("acme-selected-iteration-evidence-provider"),
+      mapCheckedIteration: (request, context) => {
+        observed.push({
+          request,
+          elementType: request.sourceElementType === undefined ? undefined : context.compiler.checker.typeToString(request.sourceElementType as GoPtr<Type>),
+        });
+        return acceptObservation({
+          operation: targetOperation("Acme.Iterate", "method", "int32"),
+          resultType: semanticSubject("int32"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  assert.equal(observed.length, 2);
+  assert.deepEqual(observed.map((entry) => entry.request.kind), ["for-of", "for-of"]);
+  assert.deepEqual(observed.map((entry) => entry.elementType), ["number", "number"]);
+});
+
+test("checker maps checked unary operators through the operator observation", () => {
+  const observedRequests: CheckedOperatorMappingRequest[] = [];
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      export function invert(value: boolean): boolean {
+        return !value;
+      }
+      export function negate(value: number): number {
+        return -value;
+      }
+      export function bump(value: number): number {
+        return ++value;
+      }
+      export function post(value: number): number {
+        return value--;
+      }
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [semanticOnlyExtension("acme-selected-unary-operator-extension", {
+      identity: semanticProviderIdentity("acme-selected-unary-operator-provider"),
+      mapCheckedOperator: (request) => {
+        observedRequests.push(request);
+        return acceptObservation({
+          operation: targetOperation(`Acme.Operator.${request.operator}`, "operator", request.operator === "!" ? "boolean" : "number"),
+          resultType: semanticSubject(request.operator === "!" ? "boolean" : "number"),
+        });
+      },
+    })],
+  });
+
+  const program = NewProgram(options);
+  const index = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(index !== undefined);
+  assertCleanProgram(program, index);
+
+  assert.deepEqual(observedRequests.map((request) => request.operator), ["!", "-", "++", "--"]);
+  for (const request of observedRequests) {
+    assert.equal(request.right, undefined);
   }
 });
 
