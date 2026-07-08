@@ -868,6 +868,104 @@ test("provider declaration models reject namespace members that cannot render as
   }]);
 });
 
+test("provider declaration models reject invalid type-family declarations", () => {
+  const specifier = "@target/type-family.js";
+  const invalidFamilies: readonly {
+    readonly name: string;
+    readonly imports?: ProviderDeclarationModel["imports"];
+    readonly exports: ProviderDeclarationModel["exports"];
+  }[] = [{
+    name: "duplicate arity",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("TaskDuplicate", 0),
+    ],
+  }, {
+    name: "non-contiguous arity",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_2", 2),
+    ],
+  }, {
+    name: "public export collision",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+      { id: "TaskValue", name: "TaskValue", exportName: "Task", kind: "value", type: { kind: "number" } },
+    ],
+  }, {
+    name: "variant type parameter default",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      {
+        ...typeFamilyVariant("Task_1", 1),
+        typeParameters: [{ name: "T", defaultType: { kind: "unknown" } }],
+      },
+    ],
+  }, {
+    name: "generated local-name collision",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+      { id: "Hidden", name: "__TstsProvider_Task_1", kind: "interface", members: [] },
+    ],
+  }, {
+    name: "sentinel family export collision",
+    exports: [
+      {
+        ...typeFamilyVariant("Task", 0),
+        sourceTypeFamily: {
+          exportName: "__TstsProviderTypeFamilyDefault",
+          typeArgumentCount: 0,
+        },
+      },
+    ],
+  }, {
+    name: "sentinel declaration collision",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      { id: "Sentinel", name: "__tstsProviderTypeFamilyDefault", kind: "interface", members: [] },
+    ],
+  }, {
+    name: "family export import collision",
+    imports: [{
+      moduleSpecifier: "@target/dependency.js",
+      namedImports: [{ exportedName: "ImportedTask", localName: "Task" }],
+    }],
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+    ],
+  }, {
+    name: "sentinel import collision",
+    imports: [{
+      moduleSpecifier: "@target/dependency.js",
+      namedImports: [{ exportedName: "Dependency", localName: "__tstsProviderTypeFamilyDefault" }],
+    }],
+    exports: [
+      typeFamilyVariant("Task", 0),
+    ],
+  }, {
+    name: "generated local-name import collision",
+    imports: [{
+      moduleSpecifier: "@target/dependency.js",
+      namedImports: [{ exportedName: "Dependency", localName: "__TstsProvider_Task_1" }],
+    }],
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+    ],
+  }];
+
+  for (const entry of invalidFamilies) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, entry.exports, entry.imports));
+    const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+    assert.equal(resolved.kind, "rejected", entry.name);
+    assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration, entry.name);
+  }
+});
+
 test("provider virtual module cache is separated by provider identity and resolution context", () => {
   const specifier = "@target/cache.js";
   let resolveCount = 0;
@@ -1780,6 +1878,40 @@ function matrixBindingProvider(
         name: "NativeHandle",
         kind: "opaque",
       }],
+    }),
+    getTargetIdentity: () => undefined,
+  };
+}
+
+function typeFamilyVariant(name: string, typeArgumentCount: number): ProviderDeclarationModel["exports"][number] {
+  return {
+    id: name,
+    name,
+    kind: "class",
+    sourceTypeFamily: {
+      exportName: "Task",
+      typeArgumentCount,
+    },
+    typeParameters: Array.from({ length: typeArgumentCount }, (_, index) => ({ name: `T${index}` })),
+    members: [],
+  };
+}
+
+function typeFamilyBindingProvider(ownedSpecifier: string, exports: ProviderDeclarationModel["exports"], imports?: ProviderDeclarationModel["imports"]): TargetBindingProvider {
+  return {
+    identity: providerIdentity("type-family-provider", "demo", "binding"),
+    ownsModule: (specifier) => specifier === ownedSpecifier ? { kind: "owned" } : { kind: "unowned" },
+    resolveModule: (specifier) => ({
+      kind: "virtual",
+      moduleSpecifier: specifier,
+      virtualFileName: "tsts-provider://matrix/type-family",
+      providerModuleId: "matrix.type-family",
+    }),
+    getDeclarationModel: (resolution) => ({
+      moduleSpecifier: resolution.moduleSpecifier,
+      providerModuleId: resolution.providerModuleId,
+      ...(imports !== undefined ? { imports } : {}),
+      exports,
     }),
     getTargetIdentity: () => undefined,
   };
