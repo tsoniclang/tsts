@@ -516,6 +516,78 @@ test("provider virtual module dependency slices do not hide later source-request
   assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
 });
 
+test("provider virtual module dependency slices preserve public export identity across heritage checks", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { Base } from "@acme/public/core.js";
+      import { Derived, Token } from "@acme/public/reflection.js";
+
+      declare const derived: Derived;
+      declare const token: Token;
+      const base: Base = derived;
+      const made: Token = derived.make();
+      derived.make();
+      derived.makeMany();
+      base.make();
+      base.makeMany();
+      token;
+      made;
+    `],
+    ["/src/again.ts", `
+      import { Token } from "@acme/public/reflection.js";
+
+      declare const token: Token;
+      token;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts", "again.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  const extended = attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [publicProviderSliceIdentityProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  const repeatedSourceFile = Program_GetSourceFile(program, "/src/again.ts");
+  assert.ok(sourceFile !== undefined);
+  assert.ok(repeatedSourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+  assertCleanProgram(program, repeatedSourceFile);
+
+  const reflectionFiles = Program_GetSourceFiles(program).filter((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/public-reflection"));
+  assert.equal(reflectionFiles.length, 2);
+  const fullReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("enum Token") && SourceFile_Text(file).includes("class Derived"));
+  const aliasReflectionFile = reflectionFiles.find((file) => SourceFile_Text(file).includes("export { __TstsProviderCanonical_Token as Token };"));
+  assert.ok(fullReflectionFile !== undefined);
+  assert.ok(aliasReflectionFile !== undefined);
+  assert.equal(SourceFile_Text(aliasReflectionFile).includes("enum Token"), false);
+
+  Program_BindSourceFiles(program);
+  const fullReflectionSymbol = Node_Symbol(fullReflectionFile as never);
+  const aliasReflectionSymbol = Node_Symbol(aliasReflectionFile as never);
+  assert.ok(fullReflectionSymbol?.Exports?.get("Token") !== undefined);
+  assert.ok(aliasReflectionSymbol?.Exports?.get("Token") !== undefined);
+  assert.equal(extended.extensionHost.diagnostics.hasErrors(), false);
+});
+
 test("provider virtual module same-file named import slices compose before resolution", () => {
   const requestedSlices: string[][] = [];
   let fs = FromMap(new Map<string, string>([
@@ -2741,6 +2813,163 @@ function orderDependentSliceProviderExtension(): CompilerExtension {
                 }],
               }],
             }],
+          };
+        },
+        getTargetIdentity: () => undefined,
+      }), true);
+    },
+  };
+}
+
+function publicProviderSliceIdentityProviderExtension(): CompilerExtension {
+  const pendingExportsByModule = new Map<string, readonly string[]>();
+  return {
+    identity: {
+      id: "acme-public-provider-slice-identity-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-public-provider-slice-identity",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-public-provider-slice-identity",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier.startsWith("@acme/public/") ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier, moduleContext) => {
+          pendingExportsByModule.set(moduleSpecifier, (moduleContext.importSlice?.requestedExports ?? [])
+            .map((request) => request.exportedName)
+            .sort());
+          return {
+            kind: "virtual",
+            moduleSpecifier,
+            virtualFileName: moduleSpecifier === "@acme/public/reflection.js"
+              ? "tsts-provider://acme/public-reflection"
+              : "tsts-provider://acme/public-core",
+            providerModuleId: moduleSpecifier === "@acme/public/reflection.js"
+              ? "acme.public.Reflection"
+              : "acme.public.Core",
+            packageName: "@acme/public",
+            packageVersion: "1.0.0",
+          };
+        },
+        getDeclarationModel: (resolution) => {
+          if (resolution.moduleSpecifier === "@acme/public/core.js") {
+            return {
+              moduleSpecifier: resolution.moduleSpecifier,
+              providerModuleId: resolution.providerModuleId,
+              imports: [{
+                moduleSpecifier: "@acme/public/reflection.js",
+                typeOnly: true,
+                namedImports: [{ exportedName: "Token" }],
+              }],
+              exports: [{
+                id: "Base",
+                name: "Base",
+                kind: "class",
+                members: [{
+                  id: "Base.make",
+                  name: "make",
+                  kind: "method",
+                  signatures: [{
+                    id: "Base.make()",
+                    parameters: [],
+                    returnType: {
+                      kind: "provider-ref",
+                      moduleSpecifier: "@acme/public/reflection.js",
+                      exportName: "Token",
+                    },
+                  }],
+                }, {
+                  id: "Base.makeMany",
+                  name: "makeMany",
+                  kind: "method",
+                  signatures: [{
+                    id: "Base.makeMany()",
+                    parameters: [],
+                    returnType: {
+                      kind: "array",
+                      elementType: {
+                        kind: "provider-ref",
+                        moduleSpecifier: "@acme/public/reflection.js",
+                        exportName: "Token",
+                      },
+                    },
+                  }],
+                }],
+              }],
+            };
+          }
+          const requested = pendingExportsByModule.get(resolution.moduleSpecifier) ?? [];
+          const needsDerived = requested.length === 0 || requested.includes("Derived");
+          return {
+            moduleSpecifier: resolution.moduleSpecifier,
+            providerModuleId: resolution.providerModuleId,
+            ...(needsDerived ? {
+              imports: [{
+                moduleSpecifier: "@acme/public/core.js",
+                typeOnly: true,
+                namedImports: [{ exportedName: "Base" }],
+              }],
+            } : {}),
+            exports: [
+              {
+                id: "Token",
+                name: "Token",
+                kind: "enum" as const,
+                members: [{
+                  id: "Token.ready",
+                  name: "ready",
+                  kind: "field" as const,
+                }],
+              },
+              ...(needsDerived ? [{
+                id: "Derived",
+                name: "Derived",
+                kind: "class" as const,
+                heritage: [{
+                  kind: "extends" as const,
+                  type: {
+                    kind: "provider-ref" as const,
+                    moduleSpecifier: "@acme/public/core.js",
+                    exportName: "Base",
+                  },
+                }],
+                members: [{
+                  id: "Derived.make",
+                  name: "make",
+                  kind: "method" as const,
+                  signatures: [{
+                    id: "Derived.make()",
+                    parameters: [],
+                    returnType: {
+                      kind: "provider-ref" as const,
+                      moduleSpecifier: "@acme/public/reflection.js",
+                      exportName: "Token",
+                    },
+                  }],
+                }, {
+                  id: "Derived.makeMany",
+                  name: "makeMany",
+                  kind: "method" as const,
+                  signatures: [{
+                    id: "Derived.makeMany()",
+                    parameters: [],
+                    returnType: {
+                      kind: "array" as const,
+                      elementType: {
+                        kind: "provider-ref" as const,
+                        moduleSpecifier: "@acme/public/reflection.js",
+                        exportName: "Token",
+                      },
+                    },
+                  }],
+                }],
+              }] : []),
+            ],
           };
         },
         getTargetIdentity: () => undefined,

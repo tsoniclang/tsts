@@ -750,6 +750,8 @@ export class ProviderRegistry {
   readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
   readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
   readonly #virtualSourceVariantsByBaseFileName = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
+  readonly #canonicalExportsByBaseFileName = new Map<string, Map<string, string>>();
+  readonly #renderedExportSetsByBaseFileName = new Map<string, Set<string>>();
 
   constructor(diagnostics: ExtensionDiagnosticStore, requiredProviderModules: readonly RequiredProviderModuleSpec[] = []) {
     this.#diagnostics = diagnostics;
@@ -914,8 +916,10 @@ export class ProviderRegistry {
       return { kind: "rejected", diagnostic };
     }
 
-    const virtualSourceText = renderProviderDeclarationModel(declarationModel);
+    const canonicalExports = this.#getCanonicalExportsForRender(resolution.virtualFileName, declarationModel);
+    const virtualSourceText = renderProviderDeclarationModel(declarationModel, { canonicalExports });
     const effectiveVirtualFileName = this.#getEffectiveVirtualFileName(resolution.virtualFileName, virtualSourceText, cacheKey);
+    this.#recordCanonicalExports(resolution.virtualFileName, declarationModel, effectiveVirtualFileName, canonicalExports);
     const effectiveResolution = effectiveVirtualFileName === resolution.virtualFileName
       ? resolution
       : { ...resolution, virtualFileName: effectiveVirtualFileName };
@@ -960,6 +964,40 @@ export class ProviderRegistry {
     variants.push({ sourceText, fileName });
     this.#virtualSourceVariantsByBaseFileName.set(baseFileName, variants);
     return fileName;
+  }
+
+  #getCanonicalExportsForRender(baseFileName: string, declarationModel: ProviderDeclarationModel): ReadonlyMap<string, string> {
+    const canonicalExports = this.#canonicalExportsByBaseFileName.get(baseFileName);
+    if (canonicalExports === undefined || canonicalExports.size === 0) {
+      return new Map();
+    }
+    const exportNames = getProviderDeclarationModelExportNames(declarationModel);
+    if (exportNames.every((exportName) => canonicalExports.has(exportName))
+      && this.#renderedExportSetsByBaseFileName.get(baseFileName)?.has(getProviderExportSetKey(exportNames)) === true) {
+      return new Map();
+    }
+    const exportNameSet = new Set(exportNames);
+    return new Map([...canonicalExports].filter(([exportName]) => exportNameSet.has(exportName)));
+  }
+
+  #recordCanonicalExports(baseFileName: string, declarationModel: ProviderDeclarationModel, effectiveVirtualFileName: string, canonicalizedExports: ReadonlyMap<string, string>): void {
+    let canonicalExports = this.#canonicalExportsByBaseFileName.get(baseFileName);
+    if (canonicalExports === undefined) {
+      canonicalExports = new Map();
+      this.#canonicalExportsByBaseFileName.set(baseFileName, canonicalExports);
+    }
+    const exportNames = getProviderDeclarationModelExportNames(declarationModel);
+    if (canonicalizedExports.size === 0) {
+      const renderedExportSets = this.#renderedExportSetsByBaseFileName.get(baseFileName) ?? new Set<string>();
+      renderedExportSets.add(getProviderExportSetKey(exportNames));
+      this.#renderedExportSetsByBaseFileName.set(baseFileName, renderedExportSets);
+    }
+    for (const declaration of declarationModel.exports) {
+      const exportName = getProviderSourceExportName(declaration);
+      if (!canonicalizedExports.has(exportName) && !canonicalExports.has(exportName)) {
+        canonicalExports.set(exportName, effectiveVirtualFileName);
+      }
+    }
   }
 
   getVirtualModuleByFileName(fileName: string): ProviderResolvedModule | undefined {
@@ -1698,6 +1736,14 @@ function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: strin
   ].join("\0");
 }
 
+function getProviderDeclarationModelExportNames(model: ProviderDeclarationModel): readonly string[] {
+  return [...new Set(model.exports.map(getProviderSourceExportName))].sort();
+}
+
+function getProviderExportSetKey(exportNames: readonly string[]): string {
+  return [...exportNames].sort().join("\0");
+}
+
 function getProviderVirtualSliceFileName(baseFileName: string, cacheKey: string, variants: readonly { readonly fileName: string }[]): string {
   const suffix = getStableProviderVirtualSliceSuffix(cacheKey);
   let candidate = `${baseFileName}#tsts-slice-${suffix}`;
@@ -1718,24 +1764,47 @@ function getStableProviderVirtualSliceSuffix(value: string): string {
   return (hash >>> 0).toString(36);
 }
 
-function renderProviderDeclarationModel(model: ProviderDeclarationModel): string {
+interface ProviderDeclarationRenderOptions {
+  readonly canonicalExports?: ReadonlyMap<string, string>;
+}
+
+function renderProviderDeclarationModel(model: ProviderDeclarationModel, options: ProviderDeclarationRenderOptions = {}): string {
   const lines = [
     `// @tsts-provider-module ${model.providerModuleId}`,
     `// @tsts-provider-specifier ${JSON.stringify(model.moduleSpecifier)}`,
   ];
   const typeFamilyGroups = collectProviderTypeFamilyRenderGroups(model.exports);
+  const canonicalLocalNameByExportName = getProviderCanonicalExportLocalNameMap(options.canonicalExports ?? new Map());
   const renderContext: ProviderRenderContext = {
+    moduleSpecifier: model.moduleSpecifier,
+    canonicalLocalNameByExportName,
     typeFamilyVariantByProviderRefKey: getProviderTypeFamilyVariantExportMap(model.moduleSpecifier, typeFamilyGroups),
   };
   for (const importDeclaration of model.imports ?? []) {
     lines.push(renderProviderImportDeclaration(importDeclaration));
+  }
+  for (const [exportName, localName] of canonicalLocalNameByExportName) {
+    const canonicalFileName = options.canonicalExports?.get(exportName);
+    if (canonicalFileName !== undefined) {
+      lines.push(`import { ${exportName} as ${localName} } from ${JSON.stringify(canonicalFileName)};`);
+    }
   }
   if (typeFamilyGroups.size > 0) {
     lines.push(`declare const ${providerTypeFamilyDefaultValueName}: unique symbol;`);
     lines.push(`type ${providerTypeFamilyDefaultTypeName} = typeof ${providerTypeFamilyDefaultValueName};`);
   }
   const renderedFamilies = new Set<string>();
+  const renderedCanonicalExports = new Set<string>();
   for (const exportDeclaration of model.exports) {
+    const exportName = getProviderSourceExportName(exportDeclaration);
+    const canonicalLocalName = canonicalLocalNameByExportName.get(exportName);
+    if (canonicalLocalName !== undefined) {
+      if (!renderedCanonicalExports.has(exportName)) {
+        lines.push(`export { ${canonicalLocalName} as ${exportName} };`);
+        renderedCanonicalExports.add(exportName);
+      }
+      continue;
+    }
     if (exportDeclaration.sourceTypeFamily !== undefined) {
       const familyName = exportDeclaration.sourceTypeFamily.exportName;
       if (!renderedFamilies.has(familyName)) {
@@ -1771,6 +1840,8 @@ function renderProviderImportDeclaration(declaration: ProviderImportDeclaration)
 }
 
 interface ProviderRenderContext {
+  readonly moduleSpecifier: string;
+  readonly canonicalLocalNameByExportName: ReadonlyMap<string, string>;
   readonly typeFamilyVariantByProviderRefKey: ReadonlyMap<string, ProviderExportDeclaration>;
 }
 
@@ -1786,6 +1857,15 @@ interface ProviderExportRenderOptions {
 
 const providerTypeFamilyDefaultValueName = "__tstsProviderTypeFamilyDefault";
 const providerTypeFamilyDefaultTypeName = "__TstsProviderTypeFamilyDefault";
+
+function getProviderCanonicalExportLocalNameMap(canonicalExports: ReadonlyMap<string, string>): ReadonlyMap<string, string> {
+  return new Map([...canonicalExports.keys()].map((exportName) => [exportName, getProviderCanonicalExportLocalName(exportName)]));
+}
+
+function getProviderCanonicalExportLocalName(exportName: string): string {
+  const identifier = exportName.replace(/[^A-Za-z0-9_$]/g, "_");
+  return `__TstsProviderCanonical_${identifier === "" || /^[0-9]/.test(identifier) ? `_${identifier}` : identifier}`;
+}
 
 function renderProviderExportDeclaration(declaration: ProviderExportDeclaration, context: ProviderRenderContext, options: ProviderExportRenderOptions = {}): string {
   const declarationName = options.localName ?? declaration.name;
@@ -1955,6 +2035,10 @@ function getProviderExportName(declaration: ProviderExportDeclaration): string {
   return declaration.exportKind === "default" ? "default" : declaration.exportName ?? declaration.name;
 }
 
+function getProviderSourceExportName(declaration: ProviderExportDeclaration): string {
+  return declaration.sourceTypeFamily?.exportName ?? getProviderExportName(declaration);
+}
+
 function renderProviderPropertyName(name: ProviderPropertyName): string {
   if (typeof name === "string") {
     return name;
@@ -2075,8 +2159,11 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
       const familyVariant = context.typeFamilyVariantByProviderRefKey.get(getProviderRefKey(type.moduleSpecifier, type.exportName));
       const family = familyVariant?.sourceTypeFamily;
       const typeArgumentCount = type.typeArguments?.length ?? 0;
+      const canonicalLocalName = type.moduleSpecifier === context.moduleSpecifier
+        ? context.canonicalLocalNameByExportName.get(family?.exportName ?? type.exportName)
+        : undefined;
       const providerRefName = type.namespaceImport === undefined
-        ? type.localName ?? renderProviderRefIdentifier(type.exportName, familyVariant, typeArgumentCount, options)
+        ? type.localName ?? canonicalLocalName ?? renderProviderRefIdentifier(type.exportName, familyVariant, typeArgumentCount, options)
         : `${type.namespaceImport}.${type.exportName}`;
       return type.typeArguments === undefined || type.typeArguments.length === 0
         ? providerRefName

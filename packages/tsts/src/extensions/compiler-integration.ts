@@ -7,16 +7,20 @@ import type { Type } from "../internal/checker/types.js";
 import { ModifierFlagsStatic } from "../internal/ast/modifierflags.js";
 import { GetSymbolId } from "../internal/ast/utilities.js";
 import {
+  KindClassDeclaration,
   KindConstructSignature,
   KindConstructor,
+  KindEnumDeclaration,
   KindEnumMember,
   KindFunctionDeclaration,
   KindIndexSignature,
+  KindInterfaceDeclaration,
   KindMethodDeclaration,
   KindMethodSignature,
   KindModuleDeclaration,
   KindPropertyDeclaration,
   KindPropertySignature,
+  KindTypeAliasDeclaration,
   KindVariableDeclaration,
 } from "../internal/ast/generated/kinds.js";
 import {
@@ -333,8 +337,16 @@ function getProviderMemberCandidateNodes(exportDeclaration: GoPtr<Node>): readon
   if (exportDeclaration === undefined) {
     return [];
   }
-  if (exportDeclaration.Kind !== KindModuleDeclaration) {
+  if (exportDeclaration.Kind === KindClassDeclaration
+    || exportDeclaration.Kind === KindInterfaceDeclaration
+    || exportDeclaration.Kind === KindEnumDeclaration
+    || exportDeclaration.Kind === KindTypeAliasDeclaration
+    || exportDeclaration.Kind === KindFunctionDeclaration
+    || exportDeclaration.Kind === KindVariableDeclaration) {
     return Node_Members(exportDeclaration) ?? [];
+  }
+  if (exportDeclaration.Kind !== KindModuleDeclaration) {
+    return [];
   }
   const candidates: GoPtr<Node>[] = [];
   collectProviderNamespaceMemberCandidateNodes(Node_Body(exportDeclaration), candidates);
