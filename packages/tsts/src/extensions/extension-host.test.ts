@@ -747,6 +747,7 @@ test("provider declaration models render the supported export member and type ma
   assert.match(source, /\[index: number\]: string;/);
   assert.match(source, /export interface Writer/);
   assert.match(source, /write\(text\?: string, \.\.\.chunks: string\[\]\): number;/);
+  assert.match(source, /continueWith\(callback: \(\) => object, state: object \| undefined\): object;/);
   assert.match(source, /export declare function tryParse<T extends number>\(text\?: string, \.\.\.values: number\[\]\): boolean;/);
   assert.match(source, /export type Pair = \[number, string\];/);
   assert.match(source, /export declare const DefaultSize: number;/);
@@ -2033,6 +2034,28 @@ function matrixBindingProvider(
           name: "value",
           kind: "property",
           type: { kind: "type-parameter", name: "T" },
+        }, {
+          id: "continueWith",
+          name: "continueWith",
+          kind: "method",
+          signatures: [{
+            id: "continueWith",
+            parameters: [{
+              name: "callback",
+              type: {
+                kind: "function",
+                parameters: [],
+                returnType: { kind: "object" },
+              },
+            }, {
+              name: "state",
+              type: {
+                kind: "union",
+                types: [{ kind: "object" }, { kind: "undefined" }],
+              },
+            }],
+            returnType: { kind: "object" },
+          }],
         }, {
           id: "Count",
           name: "Count",
