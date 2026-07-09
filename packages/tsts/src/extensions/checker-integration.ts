@@ -5,10 +5,12 @@ import { Node_Arguments, Node_Expression, Node_Symbol, Node_Text, Node_TypeArgum
 import type { Symbol } from "../internal/ast/symbol.js";
 import { Node_Name } from "../internal/ast/spine.js";
 import { AsElementAccessExpression, AsForInOrOfStatement } from "../internal/ast/generated/casts.js";
+import { NodeFlagsOptionalChain } from "../internal/ast/generated/flags.js";
 import type { Kind } from "../internal/ast/generated/kinds.js";
 import { TokenToString } from "../internal/scanner/scanner.js";
 import type { Checker } from "../internal/checker/checker/state.js";
 import type { Signature, Type } from "../internal/checker/types.js";
+import { Checker_GetReturnTypeOfSignature } from "../internal/checker/exports.js";
 import { ExtensionObservationPoint } from "./observations.js";
 import type { CheckedCallMappingRequest, CheckedCallMappingResult, CheckedElementAccessMappingRequest, CheckedIterationKind, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, PostCheckAssignabilityObservationRequest } from "./observations.js";
 import { argumentPassingFactKey, contextualTargetTypeFactKey, flowStateFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, runtimeCarrierFactKey, selectedTargetSignatureFactKey, sourcePrimitiveFactKey, targetBindingFactKey, targetConversionFactKey, targetOperationFactKey } from "./facts.js";
@@ -34,6 +36,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
   const sourceCalleeSymbol = selectedSourceSymbol(checker, resolvedCalleeSymbol ?? Node_Symbol(callee));
   const sourceCalleeDeclaration = primarySymbolDeclaration(sourceCalleeSymbol);
   const sourceSelectedMethodTypeArguments = getSourceSelectedMethodTypeArguments(callExpression, sourceSelectedSignature);
+  const sourceReturnType = sourceSelectedSignature === undefined ? undefined : Checker_GetReturnTypeOfSignature(checker, sourceSelectedSignature);
 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapCheckedCall,
@@ -46,6 +49,7 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
       ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
       ...(sourceCalleeSymbol !== undefined ? { sourceCalleeSymbol } : {}),
       ...(sourceCalleeDeclaration !== undefined ? { sourceCalleeDeclaration } : {}),
+      ...(sourceReturnType !== undefined ? { sourceReturnType } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -60,16 +64,21 @@ export function recordExtensionCheckedCallMapping(checker: GoPtr<Checker>, callE
 
   const arguments_ = Node_Arguments(callExpression) ?? [];
   const selectedSignature = withSelectedTargetSignatureProvenance(
-    recordExtensionTargetTypeArgumentMapping(extensionHost, callee, sourceSelectedSignature, sourceSelectedMethodTypeArguments, result.value, arguments_),
-    sourceSelectedSignature,
-    sourceSelectedMethodTypeArguments,
+    recordExtensionTargetTypeArgumentMapping(extensionHost, callExpression, callee, sourceSelectedSignature, sourceSelectedMethodTypeArguments, sourceCalleeSymbol, sourceCalleeDeclaration, sourceReturnType, result.value, arguments_),
+    {
+      sourceSelectedSignature,
+      sourceSelectedMethodTypeArguments,
+      sourceCalleeSymbol,
+      sourceCalleeDeclaration,
+      sourceReturnType,
+    },
   );
   extensionHost.facts.set(callExpression, selectedTargetSignatureFactKey, selectedSignature, result.evidence ?? []);
-  recordExtensionCallParameterModes(extensionHost, { ...result.value, selectedSignature }, arguments_);
-  recordExtensionCallArgumentConversions(extensionHost, { ...result.value, selectedSignature }, arguments_);
+  recordExtensionCallParameterModes(extensionHost, callExpression, { ...result.value, selectedSignature }, arguments_);
+  recordExtensionCallArgumentConversions(extensionHost, callExpression, { ...result.value, selectedSignature }, arguments_);
 }
 
-export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Checker>, propertyAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>): void {
+export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Checker>, propertyAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
   if (checker === undefined || propertyAccessExpression === undefined) {
     return;
   }
@@ -95,6 +104,8 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
       propertyName,
       ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
       ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+      ...(sourceResultType !== undefined ? { sourceResultType } : {}),
+      ...(((propertyAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -107,18 +118,20 @@ export function recordExtensionCheckedPropertyAccessMapping(checker: GoPtr<Check
     return;
   }
 
+  const operationWithResult = withCheckedOperationResultType(result.value.operation, result.value.resultType);
   const operation = result.value.provenance === undefined
-    ? result.value.operation
-    : withTargetOperationProvenance(result.value.operation, result.value.provenance);
+    ? operationWithResult
+    : withTargetOperationProvenance(operationWithResult, result.value.provenance);
   extensionHost.facts.set(propertyAccessExpression, targetOperationFactKey, withTargetOperationProvenance(operation, {
     sourceExpression: propertyAccessExpression,
     sourceReceiver: receiver,
     ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
     ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+    ...(sourceResultType !== undefined ? { sourceResultType } : {}),
   }), result.evidence ?? []);
 }
 
-export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>): void {
+export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checker>, elementAccessExpression: GoPtr<Node>, resolvedSelectedSymbol?: GoPtr<Symbol>, sourceResultType?: GoPtr<Type>): void {
   if (checker === undefined || elementAccessExpression === undefined) {
     return;
   }
@@ -144,6 +157,8 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
       argument,
       ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
       ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+      ...(sourceResultType !== undefined ? { sourceResultType } : {}),
+      ...(((elementAccessExpression.Flags ?? 0) & NodeFlagsOptionalChain) !== 0 ? { optionalChain: true } : {}),
       ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => {
@@ -156,14 +171,16 @@ export function recordExtensionCheckedElementAccessMapping(checker: GoPtr<Checke
     return;
   }
 
+  const operationWithResult = withCheckedOperationResultType(result.value.operation, result.value.resultType);
   const operation = result.value.provenance === undefined
-    ? result.value.operation
-    : withTargetOperationProvenance(result.value.operation, result.value.provenance);
+    ? operationWithResult
+    : withTargetOperationProvenance(operationWithResult, result.value.provenance);
   extensionHost.facts.set(elementAccessExpression, targetOperationFactKey, withTargetOperationProvenance(operation, {
     sourceExpression: elementAccessExpression,
     sourceReceiver: receiver,
     ...(sourceSelectedSymbol !== undefined ? { sourceSelectedSymbol } : {}),
     ...(sourceSelectedDeclaration !== undefined ? { sourceSelectedDeclaration } : {}),
+    ...(sourceResultType !== undefined ? { sourceResultType } : {}),
   }), result.evidence ?? []);
 }
 
@@ -204,9 +221,10 @@ export function recordExtensionCheckedOperatorKindMapping(checker: GoPtr<Checker
     return;
   }
 
+  const operationWithResult = withCheckedOperationResultType(result.value.operation, result.value.resultType);
   const operation = result.value.provenance === undefined
-    ? result.value.operation
-    : withTargetOperationProvenance(result.value.operation, result.value.provenance);
+    ? operationWithResult
+    : withTargetOperationProvenance(operationWithResult, result.value.provenance);
   extensionHost.facts.set(expression, targetOperationFactKey, withTargetOperationProvenance(operation, {
     sourceExpression: expression,
   }), result.evidence ?? []);
@@ -247,9 +265,10 @@ export function recordExtensionCheckedIterationMapping(checker: GoPtr<Checker>, 
     return;
   }
 
+  const operationWithResult = withCheckedOperationResultType(result.value.operation, result.value.resultType);
   const operation = result.value.provenance === undefined
-    ? result.value.operation
-    : withTargetOperationProvenance(result.value.operation, result.value.provenance);
+    ? operationWithResult
+    : withTargetOperationProvenance(operationWithResult, result.value.provenance);
   extensionHost.facts.set(statement, targetOperationFactKey, withTargetOperationProvenance(operation, {
     sourceExpression: statement,
     sourceReceiver: expression,
@@ -461,7 +480,7 @@ export function recordExtensionFlowUseValidation(checker: GoPtr<Checker>, useSit
   }
 }
 
-function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
+function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
   if (extensionHost.getObservationOwner(ExtensionObservationPoint.resolveParameterPassing) === undefined) {
     return;
   }
@@ -478,6 +497,8 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callRes
         parameter,
         argument,
         parameterIndex: index,
+        targetParameter: parameter,
+        ...(callExpression !== undefined ? { call: callExpression } : {}),
         selectedSignature: callResult.selectedSignature,
         ...(callResult.selectedSignature.sourceSignature !== undefined ? { sourceSelectedSignature: callResult.selectedSignature.sourceSignature } : {}),
         ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
@@ -494,7 +515,7 @@ function recordExtensionCallParameterModes(extensionHost: ExtensionHost, callRes
   }
 }
 
-function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, callee: Node, sourceSelectedSignature: GoPtr<Signature> | undefined, sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): CheckedCallMappingResult["selectedSignature"] {
+function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callee: Node, sourceSelectedSignature: GoPtr<Signature> | undefined, sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined, sourceCalleeSymbol: GoPtr<Symbol>, sourceCalleeDeclaration: GoPtr<Node>, sourceReturnType: GoPtr<Type>, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): CheckedCallMappingResult["selectedSignature"] {
   if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget) === undefined) {
     return callResult.selectedSignature;
   }
@@ -502,11 +523,17 @@ function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, 
   const result = extensionHost.runObservation(
     ExtensionObservationPoint.mapInferredSourceTypeArgumentsToTarget,
     {
+      ...(callExpression !== undefined ? { call: callExpression } : {}),
       declaration: callee,
       arguments: definedFactSubjects(arguments_),
       ...(sourceSelectedSignature !== undefined ? { sourceSelectedSignature } : {}),
+      ...(sourceSelectedSignature?.declaration !== undefined ? { sourceSelectedDeclaration: sourceSelectedSignature.declaration } : {}),
       ...(sourceSelectedMethodTypeArguments !== undefined ? { sourceSelectedMethodTypeArguments } : {}),
+      ...(sourceCalleeSymbol !== undefined ? { sourceCalleeSymbol } : {}),
+      ...(sourceCalleeDeclaration !== undefined ? { sourceCalleeDeclaration } : {}),
+      ...(sourceReturnType !== undefined ? { sourceReturnType } : {}),
       ...(callResult.returnType !== undefined ? { contextualType: callResult.returnType } : {}),
+      ...(extensionHost.activeTarget !== undefined ? { target: extensionHost.activeTarget } : {}),
     },
     () => ({
       targetTypeArguments: [],
@@ -522,7 +549,7 @@ function recordExtensionTargetTypeArgumentMapping(extensionHost: ExtensionHost, 
   };
 }
 
-function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
+function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, callExpression: GoPtr<Node>, callResult: CheckedCallMappingResult, arguments_: readonly GoPtr<Node>[]): void {
   if (extensionHost.getObservationOwner(ExtensionObservationPoint.mapCheckedConversion) === undefined) {
     return;
   }
@@ -539,6 +566,11 @@ function recordExtensionCallArgumentConversions(extensionHost: ExtensionHost, ca
         expression: argument,
         source: argument,
         target: parameter.type,
+        ...(callExpression !== undefined ? { call: callExpression } : {}),
+        parameterIndex: index,
+        targetParameter: parameter,
+        ...(callResult.selectedSignature.sourceSignature !== undefined ? { sourceSelectedSignature: callResult.selectedSignature.sourceSignature } : {}),
+        selectedSignature: callResult.selectedSignature,
         ...(extensionHost.activeTarget !== undefined ? { targetPlatform: extensionHost.activeTarget } : {}),
       },
       () => {
@@ -568,12 +600,25 @@ function primarySymbolDeclaration(symbol: GoPtr<Symbol>): GoPtr<Node> {
   return symbol?.ValueDeclaration ?? symbol?.Declarations?.find((candidate) => candidate !== undefined);
 }
 
-function withSelectedTargetSignatureProvenance(signature: SelectedTargetSignatureFact, sourceSelectedSignature: GoPtr<Signature>, sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined): SelectedTargetSignatureFact {
+interface SelectedSourceCallProvenance {
+  readonly sourceSelectedSignature: GoPtr<Signature>;
+  readonly sourceSelectedMethodTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
+  readonly sourceCalleeSymbol: GoPtr<Symbol>;
+  readonly sourceCalleeDeclaration: GoPtr<Node>;
+  readonly sourceReturnType: GoPtr<Type>;
+}
+
+function withSelectedTargetSignatureProvenance(signature: SelectedTargetSignatureFact, provenance: SelectedSourceCallProvenance): SelectedTargetSignatureFact {
+  const sourceSelectedSignature = provenance.sourceSelectedSignature;
+  const sourceSelectedMethodTypeArguments = provenance.sourceSelectedMethodTypeArguments;
   return {
     ...signature,
     ...(signature.sourceSelectedMethodTypeArguments !== undefined || sourceSelectedMethodTypeArguments === undefined ? {} : { sourceSelectedMethodTypeArguments }),
     ...(signature.sourceSignature !== undefined || sourceSelectedSignature === undefined ? {} : { sourceSignature: sourceSelectedSignature }),
     ...(signature.sourceDeclaration !== undefined || sourceSelectedSignature?.declaration === undefined ? {} : { sourceDeclaration: sourceSelectedSignature.declaration }),
+    ...(signature.sourceCalleeSymbol !== undefined || provenance.sourceCalleeSymbol === undefined ? {} : { sourceCalleeSymbol: provenance.sourceCalleeSymbol }),
+    ...(signature.sourceCalleeDeclaration !== undefined || provenance.sourceCalleeDeclaration === undefined ? {} : { sourceCalleeDeclaration: provenance.sourceCalleeDeclaration }),
+    ...(signature.sourceReturnType !== undefined || provenance.sourceReturnType === undefined ? {} : { sourceReturnType: provenance.sourceReturnType }),
     ...(signature.providerDeclaration !== undefined || signature.member.providerDeclaration === undefined ? {} : { providerDeclaration: signature.member.providerDeclaration }),
   };
 }
@@ -616,6 +661,16 @@ function withTargetOperationProvenance(operation: TargetOperationFact, provenanc
       ...(operation.provenance !== undefined ? operation.provenance : {}),
       ...provenance,
     },
+  };
+}
+
+function withCheckedOperationResultType(operation: TargetOperationFact, resultType: ExtensionFactSubject | undefined): TargetOperationFact {
+  if (operation.resultType !== undefined || resultType === undefined) {
+    return operation;
+  }
+  return {
+    ...operation,
+    resultType,
   };
 }
 

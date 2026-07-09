@@ -5459,7 +5459,7 @@ export function Checker_checkIndexedAccess(receiver: GoPtr<Checker>, node: GoPtr
     return Checker_checkElementAccessChain(receiver, node, checkMode);
   }
   const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullExpression(receiver, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
+  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
   return result;
 }
 
@@ -5478,7 +5478,7 @@ export function Checker_checkElementAccessChain(receiver: GoPtr<Checker>, node: 
   const exprType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, exprType, Node_Expression(node));
   const result = Checker_checkElementAccessExpression(receiver, node, Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), checkMode);
-  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
+  recordExtensionCheckedElementAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
   return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== exprType);
 }
 
@@ -6453,7 +6453,7 @@ export function Checker_checkPropertyAccessExpression(receiver: GoPtr<Checker>, 
   }
   const expr = Node_Expression(node);
   const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, expr, Checker_checkNonNullExpression(receiver, expr), AsPropertyAccessExpression(node)!.name, checkMode, writeOnly);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
+  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
   return result;
 }
 
@@ -6472,7 +6472,7 @@ export function Checker_checkPropertyAccessChain(receiver: GoPtr<Checker>, node:
   const leftType = Checker_checkExpression(receiver, Node_Expression(node));
   const nonOptionalType = Checker_getOptionalExpressionType(receiver, leftType, Node_Expression(node));
   const result = Checker_checkPropertyAccessExpressionOrQualifiedName(receiver, node, Node_Expression(node), Checker_checkNonNullType(receiver, nonOptionalType, Node_Expression(node)), Node_Name(node), checkMode, false);
-  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node));
+  recordExtensionCheckedPropertyAccessMapping(receiver, node, Checker_getResolvedSymbolOrNil(receiver, node), result);
   return Checker_propagateOptionalTypeMarker(receiver, result, node, nonOptionalType !== leftType);
 }
 

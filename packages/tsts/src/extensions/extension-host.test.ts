@@ -856,6 +856,58 @@ test("provider declaration models reject type-parameter references outside scope
         returnType: { kind: "void" },
       }],
     }],
+    [{
+      id: "Box",
+      name: "Box",
+      kind: "class",
+      typeParameters: [{ name: "T" }],
+      members: [{
+        id: "create",
+        name: "create",
+        static: true,
+        kind: "method",
+        signatures: [{
+          id: "create()",
+          parameters: [],
+          returnType: { kind: "type-parameter", name: "T" },
+        }],
+      }],
+    }],
+    [{
+      id: "Box",
+      name: "Box",
+      kind: "class",
+      typeParameters: [
+        { name: "T", defaultType: { kind: "type-parameter", name: "U" } },
+        { name: "U" },
+      ],
+    }],
+    [{
+      id: "Box",
+      name: "Box",
+      kind: "class",
+      typeParameters: [
+        { name: "T", defaultType: { kind: "number" } },
+        { name: "U" },
+      ],
+    }],
+    [{
+      id: "Outer",
+      name: "Outer",
+      kind: "class",
+      typeParameters: [{ name: "T" }],
+      members: [{
+        id: "method",
+        name: "method",
+        kind: "method",
+        signatures: [{
+          id: "method()",
+          typeParameters: [{ name: "T" }],
+          parameters: [],
+          returnType: { kind: "void" },
+        }],
+      }],
+    }],
   ];
 
   for (const exports of invalidExportSets) {
@@ -864,6 +916,114 @@ test("provider declaration models reject type-parameter references outside scope
     const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
     assert.equal(resolved.kind, "rejected");
     assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration);
+  }
+});
+
+test("provider declaration models reject unbound provider references before rendering", () => {
+  const specifier = "@target/provider-ref-scope.js";
+  const invalidModels: readonly {
+    readonly name: string;
+    readonly imports?: ProviderDeclarationModel["imports"];
+    readonly exports: ProviderDeclarationModel["exports"];
+  }[] = [{
+    name: "external ref without import",
+    exports: [{
+      id: "Box",
+      name: "Box",
+      kind: "interface",
+      members: [{
+        id: "value",
+        name: "value",
+        kind: "property",
+        type: { kind: "provider-ref", moduleSpecifier: "@target/other.js", exportName: "Other" },
+      }],
+    }],
+  }, {
+    name: "external alias mismatch",
+    imports: [{
+      moduleSpecifier: "@target/other.js",
+      namedImports: [{ exportedName: "Other", localName: "ImportedOther" }],
+    }],
+    exports: [{
+      id: "Box",
+      name: "Box",
+      kind: "interface",
+      members: [{
+        id: "value",
+        name: "value",
+        kind: "property",
+        type: { kind: "provider-ref", moduleSpecifier: "@target/other.js", exportName: "Other" },
+      }],
+    }],
+  }, {
+    name: "same-module missing export",
+    exports: [{
+      id: "Box",
+      name: "Box",
+      kind: "interface",
+      members: [{
+        id: "value",
+        name: "value",
+        kind: "property",
+        type: { kind: "provider-ref", moduleSpecifier: specifier, exportName: "Missing" },
+      }],
+    }],
+  }, {
+    name: "same-module concrete family arity mismatch",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      typeFamilyVariant("Task_1", 1),
+      {
+        id: "Box",
+        name: "Box",
+        kind: "interface",
+        members: [{
+          id: "value",
+          name: "value",
+          kind: "property",
+          type: { kind: "provider-ref", moduleSpecifier: specifier, exportName: "Task_1" },
+        }],
+      },
+    ],
+  }, {
+    name: "class extends non-value type alias",
+    exports: [{
+      id: "Alias",
+      name: "Alias",
+      kind: "type",
+      type: { kind: "object" },
+    }, {
+      id: "Derived",
+      name: "Derived",
+      kind: "class",
+      heritage: [{
+        kind: "extends",
+        type: { kind: "provider-ref", moduleSpecifier: specifier, exportName: "Alias" },
+      }],
+    }],
+  }, {
+    name: "class extends non-class family variant",
+    exports: [{
+      ...typeFamilyVariant("Base", 0),
+      kind: "interface",
+      members: [],
+    }, {
+      id: "Derived",
+      name: "Derived",
+      kind: "class",
+      heritage: [{
+        kind: "extends",
+        type: { kind: "provider-ref", moduleSpecifier: specifier, exportName: "Base" },
+      }],
+    }],
+  }];
+
+  for (const model of invalidModels) {
+    const host = new ExtensionHost({});
+    host.providers.registerTargetBindingProvider(typeFamilyBindingProvider(specifier, model.exports, model.imports));
+    const resolved = host.providers.resolveVirtualModule(specifier, { activeTarget: "demo" });
+    assert.equal(resolved.kind, "rejected", model.name);
+    assert.equal(host.diagnostics.all()[0]?.numericCode, ExtensionHostDiagnosticCode.invalidProviderDeclaration, model.name);
   }
 });
 
@@ -995,6 +1155,12 @@ test("provider declaration models reject invalid type-family declarations", () =
     exports: [
       typeFamilyVariant("Task", 0),
       typeFamilyVariant("Task_1", 1),
+    ],
+  }, {
+    name: "generated canonical local-name declaration collision",
+    exports: [
+      typeFamilyVariant("Task", 0),
+      { id: "Canonical", name: "__TstsProviderCanonical_Task", kind: "interface", members: [] },
     ],
   }];
 
@@ -1129,6 +1295,40 @@ test("provider virtual module source variants receive distinct internal file ide
   assert.equal(firstAgain.module.resolution.virtualFileName, first.module.resolution.virtualFileName);
   assert.equal(host.providers.getVirtualDeclarationDocument(first.module.resolution.virtualFileName)?.sourceText, first.module.virtualSourceText);
   assert.equal(host.providers.getVirtualDeclarationDocument(second.module.resolution.virtualFileName)?.sourceText, second.module.virtualSourceText);
+});
+
+test("provider virtual base file names cannot represent multiple public module identities", () => {
+  const host = new ExtensionHost({});
+  for (const specifier of ["@target/first.js", "@target/second.js"]) {
+    host.providers.registerTargetBindingProvider({
+      identity: providerIdentity(`base-conflict-${specifier}`, "demo", "binding"),
+      ownsModule: (moduleSpecifier) => moduleSpecifier === specifier ? { kind: "owned" } : { kind: "unowned" },
+      resolveModule: (moduleSpecifier) => ({
+        kind: "virtual",
+        moduleSpecifier,
+        virtualFileName: "tsts-provider://conflict/shared",
+        providerModuleId: moduleSpecifier,
+      }),
+      getDeclarationModel: (resolution) => ({
+        moduleSpecifier: resolution.moduleSpecifier,
+        providerModuleId: resolution.providerModuleId,
+        exports: [{
+          id: "Value",
+          name: "Value",
+          kind: "value",
+          type: { kind: "number" },
+        }],
+      }),
+      getTargetIdentity: () => undefined,
+    });
+  }
+
+  const first = host.providers.resolveVirtualModule("@target/first.js", { activeTarget: "demo" });
+  const second = host.providers.resolveVirtualModule("@target/second.js", { activeTarget: "demo" });
+
+  assert.equal(first.kind, "resolved");
+  assert.equal(second.kind, "rejected");
+  assert.equal(host.diagnostics.all().at(-1)?.numericCode, ExtensionHostDiagnosticCode.providerResolutionFailed);
 });
 
 test("required provider module patterns diagnose missing providers without hardcoded target names", () => {

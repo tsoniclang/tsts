@@ -509,8 +509,8 @@ function fileLoader_mergeProviderImportSlices(moduleSpecifier: string, slicesToM
     allTypeOnly &&= slice.typeOnly === true;
     hasReexportRequest ||= slice.kind === "reexport";
     for (const requestedExport of slice.requestedExports ?? []) {
-      const key = JSON.stringify([requestedExport.exportedName, requestedExport.localName ?? "", requestedExport.kind ?? "unknown"]);
-      requestedExportsByKey.set(key, requestedExport);
+      const key = requestedExport.exportedName;
+      requestedExportsByKey.set(key, mergeProviderRequestedExport(requestedExportsByKey.get(key), requestedExport));
       hasDefaultRequest ||= requestedExport.exportedName === "default";
     }
   }
@@ -537,6 +537,29 @@ function fileLoader_mergeProviderImportSlices(moduleSpecifier: string, slicesToM
 
 function getProviderImportRequestKind(typeOnly: boolean): ProviderImportRequestKind {
   return typeOnly ? "type" : "value";
+}
+
+function mergeProviderRequestedExport(existing: ProviderRequestedExport | undefined, incoming: ProviderRequestedExport): ProviderRequestedExport {
+  if (existing === undefined) {
+    return {
+      exportedName: incoming.exportedName,
+      ...(incoming.kind !== undefined ? { kind: incoming.kind } : {}),
+    };
+  }
+  return {
+    exportedName: existing.exportedName,
+    kind: mergeProviderImportRequestKind(existing.kind, incoming.kind),
+  };
+}
+
+function mergeProviderImportRequestKind(left: ProviderImportRequestKind | undefined, right: ProviderImportRequestKind | undefined): ProviderImportRequestKind {
+  if (left === "unknown" || right === "unknown") {
+    return "unknown";
+  }
+  if (left === "value" || right === "value") {
+    return "value";
+  }
+  return "type";
 }
 
 /**
