@@ -1,13 +1,14 @@
 import type { bool, int } from "../../../go/scalars.js";
-import type { GoComparable, GoPtr, GoSlice } from "../../../go/compat.js";
+import type { GoComparable, GoMap, GoPtr, GoSeq, GoSlice } from "../../../go/compat.js";
 import type { Context } from "../../../go/context.js";
 import type { Writer } from "../../../go/io.js";
 import type { Time } from "../../../go/time.js";
+import { Fprintf } from "../../../go/fmt.js";
 import { NewCompilerDiagnostic } from "../../ast/diagnostic.js";
 import type { Diagnostic } from "../../ast/diagnostic.js";
 import { Set_Has, Set_Add, NewSetFromItems } from "../../collections/set.js";
 import type { Set } from "../../collections/set.js";
-import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store, SyncMap_Clone, SyncMap_Range } from "../../collections/syncmap.js";
+import { SyncMap_Load, SyncMap_LoadOrStore, SyncMap_Store, SyncMap_Range } from "../../collections/syncmap.js";
 import type { SyncMap } from "../../collections/syncmap.js";
 import { Map as core_Map, LastOrNil, IfElse } from "../../core/core.js";
 import { Tristate_IsTrue } from "../../core/tristate.js";
@@ -16,9 +17,9 @@ import type { WorkGroup } from "../../core/workgroup.js";
 import * as diagnostics from "../../diagnostics/generated/messages.js";
 import { ParsedBuildCommandLine_ResolvedProjectPaths, ParsedBuildCommandLine_Locale } from "../../tsoptions/parsedbuildcommandline.js";
 import type { ParsedBuildCommandLine } from "../../tsoptions/parsedbuildcommandline.js";
-import { ParsedCommandLine_ResolvedProjectReferencePaths, ParsedCommandLine_ProjectReferences } from "../../tsoptions/parsedcommandline.js";
+import { ParsedCommandLine_ResolvedProjectReferencePaths, ParsedCommandLine_ProjectReferences, ParsedCommandLine_FileNames, ParsedCommandLine_ExtendedSourceFiles, ParsedCommandLine_ReloadFileNamesOfParsedCommandLine, ParsedCommandLine_WildcardDirectories } from "../../tsoptions/parsedcommandline.js";
 import type { ParsedCommandLine } from "../../tsoptions/parsedcommandline.js";
-import { ConvertToRelativePath, ToPath } from "../../tspath/path.js";
+import { CombinePaths, ContainsPath, ConvertToRelativePath, GetBaseFileName, GetDirectoryPath, GetNormalizedAbsolutePath, ToPath } from "../../tspath/path.js";
 import type { ComparePathsOptions, Path } from "../../tspath/path.js";
 import { CreateWatchStatusReporter, CreateReportErrorSummary, CreateBuilderStatusReporter, CreateDiagnosticReporter } from "../tsc/diagnostics.js";
 import type { CommandLineResult, CommandLineTesting, System, Watcher } from "../tsc/compile.js";
@@ -28,11 +29,12 @@ import { Statistics_SetTotalTime, Statistics_Report, Statistics_Aggregate } from
 import type { Statistics } from "../tsc/statistics.js";
 import { NewCachedFSCompilerHost } from "../../compiler/host.js";
 import type { FS } from "../../vfs/vfs.js";
+import { BuildInfo_GetMissingPackageJsons, BuildInfo_GetPackageJsons, IsBuildInfoFileNameDefaultLibrary } from "../incremental/buildInfo.js";
 import { GetTraceWithWriterFromSys } from "../tsc/emit.js";
-import { BuildTask_report, BuildTask_buildProject, BuildTask_cleanProject, BuildTask_updateWatch, BuildTask_resetStatus, BuildTask_resetConfig, BuildTask_hasUpdate, updateKindNone, updateKindConfig } from "./buildtask.js";
+import { BuildTask_report, BuildTask_buildProject, BuildTask_cleanProject, BuildTask_updateWatch, BuildTask_resetStatus, BuildTask_resetConfig } from "./buildtask.js";
 import type { BuildTask } from "./buildtask.js";
-import { host_GetResolvedProjectReference, host_storeMTimeFromOldCache } from "./host.js";
-import { parseCache_reset } from "./parseCache.js";
+import { host_FS as host_FS_fn, host_DefaultLibraryPath, host_GetMTime, host_GetResolvedProjectReference, host_storeMTimeFromOldCache } from "./host.js";
+import { parseCache_reset, parseCache_store } from "./parseCache.js";
 import { FS_ClearCache } from "../../vfs/cachedvfs/cachedvfs.js";
 import type { FS as cachedvfs_FS } from "../../vfs/cachedvfs/cachedvfs.js";
 import type { ExtendedConfigCache } from "../tsc/extendedconfigcache.js";
@@ -42,6 +44,11 @@ import { Map as SyncGoMap } from "../../../go/sync.js";
 import * as strings from "../../../go/strings.js";
 import { Builder } from "../../../go/strings.js";
 import type { parseCache } from "./parseCache.js";
+import * as fswatch from "../../fswatch/fswatch.js";
+import { CanWatchDirectory } from "../watchmanager/watchbackend.js";
+import type { CommandLineTestingWithWatchBackend } from "../watchmanager/watchbackend.js";
+import { IsDirCoveredByWatch, NewWatchManager, WatchManager_DrainEvents, WatchManager_EnsureDefaultBackend, WatchManager_ForceOverflow, WatchManager_IsPathUnderWatch, WatchManager_Lock, WatchManager_ReconcileWatches, WatchManager_ResolveDesiredDirs, WatchManager_RunLoop, WatchManager_SetBackend, WatchManager_Unlock } from "../watchmanager/watchmanager.js";
+import type { WatchManager } from "../watchmanager/watchmanager.js";
 
 /**
  * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Options","kind":"type","status":"implemented","sigHash":"ea173f48959bb5742f1a055b1561015dbc45fb79cf6ff15219753c2abb245e1f","bodyHash":"69628808be0501ab69e7a2e5cf9c349ab1129718bc63d4ddc222553efb32cabf"}
@@ -128,7 +135,7 @@ export function orchestratorResult_report(receiver: GoPtr<orchestratorResult>, o
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"e05f5ba48f3744ecc8508f03d5b85fa7b27841fc13a92d0513c3cdfe66c8b8eb"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::type::Orchestrator","kind":"type","status":"implemented","sigHash":"cc9f01c813767aac83bd2edb634eabe00c8a752fffaf005f38e8353e8a25796e","bodyHash":"af5dd0b93012fee5c6bd2fd91f8256c18f99185feae0343b1d7af612fa41aba1"}
  *
  * Go source:
  * Orchestrator struct {
@@ -154,6 +161,7 @@ export interface Orchestrator {
   errors: GoSlice<GoPtr<Diagnostic>>;
   errorSummaryReporter: DiagnosticsReporter | undefined;
   watchStatusReporter: DiagnosticReporter | undefined;
+  wm: GoPtr<WatchManager>;
 }
 
 /**
@@ -192,6 +200,24 @@ export function Orchestrator_relativeFileName(receiver: GoPtr<Orchestrator>, fil
  */
 export function Orchestrator_toPath(receiver: GoPtr<Orchestrator>, fileName: string): Path {
   return ToPath(fileName, receiver!.comparePathsOptions.CurrentDirectory, receiver!.comparePathsOptions.UseCaseSensitiveFileNames);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.resolveBuildInfoFileName","kind":"method","status":"implemented","sigHash":"5abab9fa0c9a31d8b26a14a2720c6c1041095b0a5c9c1c2cc11414df623de23c","bodyHash":"28bc57b1d197f4cb4a046792eac4001e436848112f5d96e4ee229ecdc5c4a63a"}
+ *
+ * Go source:
+ * func (o *Orchestrator) resolveBuildInfoFileName(fileName string, buildInfoDir string) string {
+ * 	if incremental.IsBuildInfoFileNameDefaultLibrary(fileName) {
+ * 		return tspath.CombinePaths(o.host.DefaultLibraryPath(), fileName)
+ * 	}
+ * 	return tspath.GetNormalizedAbsolutePath(fileName, buildInfoDir)
+ * }
+ */
+export function Orchestrator_resolveBuildInfoFileName(receiver: GoPtr<Orchestrator>, fileName: string, buildInfoDir: string): string {
+  if (IsBuildInfoFileNameDefaultLibrary(fileName)) {
+    return CombinePaths(host_DefaultLibraryPath(receiver!.host), fileName);
+  }
+  return GetNormalizedAbsolutePath(fileName, buildInfoDir);
 }
 
 /**
@@ -328,11 +354,9 @@ export function Orchestrator_createBuildTasks(receiver: GoPtr<Orchestrator>, old
           result: undefined,
           prevReporter: undefined,
           reportDone: {} as BuildTask["reportDone"],
-          configTime: {} as Time,
-          extendedConfigTimes: [],
-          inputFiles: [],
           buildInfoEntry: buildInfo,
           buildInfoEntryMu: { Lock: () => {}, Unlock: () => {}, TryLock: () => true } as BuildTask["buildInfoEntryMu"],
+          packageJsons: [],
           errors: [],
           pending,
           isInitialCycle: oldTasks === undefined,
@@ -533,7 +557,7 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context):
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"3a5d894f9edb920da49f99bb7ba9f2c595d97d3d4fcd5f67246ea84066ad4839","bodyHash":"b50b16f6fc23b9e22cbdf28744e5dd67df3de1c59667fcbde9f7a031f6042df2"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.Watch","kind":"method","status":"implemented","sigHash":"3a5d894f9edb920da49f99bb7ba9f2c595d97d3d4fcd5f67246ea84066ad4839","bodyHash":"3c7bc1f7d4b3ea995b9d2714a5c5699116b0515bc14d3bc0f39e0725b1d91a87"}
  *
  * Go source:
  * func (o *Orchestrator) Watch(ctx context.Context) {
@@ -557,13 +581,25 @@ export function Orchestrator_Start(receiver: GoPtr<Orchestrator>, ctx: Context):
  * }
  */
 export function Orchestrator_Watch(receiver: GoPtr<Orchestrator>, ctx: Context): void {
-  void ctx;
+  WatchManager_Lock(receiver!.wm);
+  if (receiver!.opts.Testing === undefined) {
+    if (receiver!.opts.Sys.GetEnvironmentVariable("TS_WATCH_DEBUG") !== "") {
+      receiver!.wm!.DebugLog = receiver!.opts.Sys.Writer();
+    }
+    WatchManager_EnsureDefaultBackend(receiver!.wm);
+  }
   Orchestrator_updateWatch(receiver);
+  const desiredDirs = Orchestrator_computeDesiredWatches(receiver);
+  const err = WatchManager_ReconcileWatches(receiver!.wm, desiredDirs);
+  if (err !== undefined) {
+    Fprintf(receiver!.opts.Sys.Writer(), "%v\n", err);
+    WatchManager_ForceOverflow(receiver!.wm);
+  }
   Orchestrator_resetCaches(receiver);
-  // In single-threaded TSTS, no goroutine loop; testing mode only
-  if (receiver!.opts.Testing === undefined || receiver!.opts.Testing === null) {
-    // Non-test: the go code would block forever in a ticker/ctx.Done() select
-    // loop calling o.DoCycle() — no-op in single-threaded JS.
+  WatchManager_Unlock(receiver!.wm);
+
+  if (receiver!.opts.Testing === undefined) {
+    WatchManager_RunLoop(receiver!.wm, ctx, (): void => Orchestrator_DoCycle(receiver));
   }
 }
 
@@ -609,7 +645,258 @@ export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.DoCycle","kind":"method","status":"implemented","sigHash":"640ff407c09d9786aebcad8d144723150eab5e178d0af93c3f933d63211b0fc1","bodyHash":"bc85a31c27c89f3120b5e823a12c49dc5bd468a6384f3c77a907db2b214badf3"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.checkTasksForEventChanges","kind":"method","status":"implemented","sigHash":"98d3899517c82e04b947061bc4c4856189d400742c02b9c377d15fb0020a57b7","bodyHash":"ab0d6b12a5f972a62b0a24f10838f6f11fb62af912656802604a2d9b8763d4b0"}
+ *
+ * Go source:
+ * func (o *Orchestrator) checkTasksForEventChanges(changedPaths map[string]fswatch.EventKind, needsConfigUpdate, needsUpdate *atomic.Bool) { ... }
+ */
+export function Orchestrator_checkTasksForEventChanges(receiver: GoPtr<Orchestrator>, changedPaths: GoMap<string, fswatch.EventKind>, needsConfigUpdate: GoPtr<Bool>, needsUpdate: GoPtr<Bool>): void {
+  const normalizedPaths: GoMap<Path, fswatch.EventKind> = new Map<Path, fswatch.EventKind>();
+  for (const [eventPath, kind] of changedPaths) {
+    normalizedPaths.set(Orchestrator_toPath(receiver, eventPath), kind);
+  }
+
+  for (const config of receiver!.order) {
+    const path = Orchestrator_toPath(receiver, config);
+    const task = Orchestrator_getTask(receiver, path);
+
+    const configPath = Orchestrator_toPath(receiver, task!.config);
+    if (normalizedPaths.has(configPath)) {
+      BuildTask_resetConfig(task, receiver, path);
+      needsConfigUpdate!.Store(true as bool);
+      needsUpdate!.Store(true as bool);
+      continue;
+    }
+
+    if (task!.resolved === undefined) {
+      continue;
+    }
+
+    let configChanged = false;
+    for (const file of ParsedCommandLine_ExtendedSourceFiles(task!.resolved)) {
+      if (normalizedPaths.has(Orchestrator_toPath(receiver, file))) {
+        BuildTask_resetConfig(task, receiver, path);
+        needsConfigUpdate!.Store(true as bool);
+        needsUpdate!.Store(true as bool);
+        configChanged = true;
+        break;
+      }
+    }
+    if (configChanged) {
+      continue;
+    }
+
+    let rootChanged = false;
+    const fileNames = ParsedCommandLine_FileNames(task!.resolved);
+    const roots = new Set<Path>();
+    for (const file of fileNames) {
+      const fp = Orchestrator_toPath(receiver, file);
+      roots.add(fp);
+      if (!rootChanged && normalizedPaths.has(fp)) {
+        BuildTask_resetStatus(task);
+        needsUpdate!.Store(true as bool);
+        rootChanged = true;
+      }
+    }
+
+    if (!rootChanged) {
+      const bi = task!.buildInfoEntry;
+      if (bi !== undefined && bi.buildInfo !== undefined) {
+        const buildInfoDir = GetDirectoryPath(String(bi.path));
+        for (const fileName of bi.buildInfo.FileNames ?? []) {
+          const fp = Orchestrator_toPath(receiver, Orchestrator_resolveBuildInfoFileName(receiver, fileName, buildInfoDir));
+          if (roots.has(fp)) {
+            continue;
+          }
+          if (normalizedPaths.has(fp)) {
+            BuildTask_resetStatus(task);
+            needsUpdate!.Store(true as bool);
+            break;
+          }
+        }
+        for (const packageJson of seqToArray(BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir))) {
+          if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
+            BuildTask_resetStatus(task);
+            needsUpdate!.Store(true as bool);
+            break;
+          }
+        }
+        for (const packageJson of seqToArray(BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir))) {
+          if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
+            BuildTask_resetStatus(task);
+            needsUpdate!.Store(true as bool);
+            break;
+          }
+        }
+      }
+      for (const packageJson of task!.packageJsons ?? []) {
+        if (Orchestrator_packageJsonLookupChanged(receiver, packageJson, normalizedPaths)) {
+          BuildTask_resetStatus(task);
+          needsUpdate!.Store(true as bool);
+          break;
+        }
+      }
+    }
+
+    task!.reportDone = {} as BuildTask["reportDone"];
+    task!.done = {} as BuildTask["done"];
+
+    const newConfig = ParsedCommandLine_ReloadFileNamesOfParsedCommandLine(task!.resolved, host_FS_fn(receiver!.host));
+    if (!stringArrayEqual(ParsedCommandLine_FileNames(task!.resolved), ParsedCommandLine_FileNames(newConfig))) {
+      parseCache_store(receiver!.host!.resolvedReferences, path, newConfig);
+      task!.resolved = newConfig;
+      BuildTask_resetStatus(task);
+      needsUpdate!.Store(true as bool);
+    }
+  }
+
+  if (!needsUpdate!.Load()) {
+    const opts = receiver!.comparePathsOptions;
+    for (const eventPath of changedPaths.keys()) {
+      if (host_FS_fn(receiver!.host).DirectoryExists(eventPath)) {
+        if (WatchManager_IsPathUnderWatch(receiver!.wm, eventPath, opts)) {
+          Orchestrator_rangeTask(receiver, (_path: Path, task: GoPtr<BuildTask>): void => {
+            BuildTask_resetStatus(task);
+            task!.reportDone = {} as BuildTask["reportDone"];
+            task!.done = {} as BuildTask["done"];
+          });
+          needsUpdate!.Store(true as bool);
+          break;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.packageJsonLookupChanged","kind":"method","status":"implemented","sigHash":"55bc6ba76be9cb87bd31d15ef63f63312d156a83625e9242b9152ac5f60f59b1","bodyHash":"b1a4472d9e7f760e5d2cbb049750baf167bf69d18150816f264b2bafa2df4971"}
+ */
+export function Orchestrator_packageJsonLookupChanged(receiver: GoPtr<Orchestrator>, packageJson: string, changedPaths: GoMap<Path, fswatch.EventKind>): bool {
+  const packageJsonPath = Orchestrator_toPath(receiver, packageJson);
+  if (changedPaths.has(packageJsonPath)) {
+    return true as bool;
+  }
+  for (const [changedPath, kind] of changedPaths) {
+    if (kind === fswatch.EventDelete && ContainsPath(String(changedPath), String(packageJsonPath), receiver!.comparePathsOptions)) {
+      return true as bool;
+    }
+  }
+  return false as bool;
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.computeDesiredWatches","kind":"method","status":"implemented","sigHash":"56dc5e6d67c26842bf41668082087ec133e79c46916f2e6fc3442a64689574db","bodyHash":"fc3778314bc5394eccca7003e821533eeff269407dfde1300760b38d36c6499e"}
+ */
+export function Orchestrator_computeDesiredWatches(receiver: GoPtr<Orchestrator>): GoMap<string, bool> {
+  const desiredDirs: GoMap<string, bool> = new Map<string, bool>();
+
+  for (const config of receiver!.order) {
+    const path = Orchestrator_toPath(receiver, config);
+    const task = Orchestrator_getTask(receiver, path);
+    const configDir = GetDirectoryPath(task!.config);
+    const realConfigDir = host_FS_fn(receiver!.host).Realpath(configDir);
+    if (!desiredDirs.has(realConfigDir)) {
+      desiredDirs.set(realConfigDir, false as bool);
+    }
+
+    if (task!.resolved === undefined) {
+      continue;
+    }
+
+    for (const cfgPath of ParsedCommandLine_ExtendedSourceFiles(task!.resolved)) {
+      const realPath = host_FS_fn(receiver!.host).Realpath(cfgPath);
+      const dir = GetDirectoryPath(realPath);
+      if (!desiredDirs.has(dir)) {
+        desiredDirs.set(dir, false as bool);
+      }
+    }
+
+    for (const [dir, recursive] of ParsedCommandLine_WildcardDirectories(task!.resolved)) {
+      const realDir = host_FS_fn(receiver!.host).Realpath(dir);
+      if (desiredDirs.has(realDir)) {
+        desiredDirs.set(realDir, (desiredDirs.get(realDir)! || recursive) as bool);
+      } else {
+        desiredDirs.set(realDir, recursive);
+      }
+    }
+
+    for (const fileName of ParsedCommandLine_FileNames(task!.resolved)) {
+      const absPath = GetNormalizedAbsolutePath(fileName, receiver!.opts.Sys.GetCurrentDirectory());
+      const dir = GetDirectoryPath(absPath);
+      Orchestrator_addWatchDir(receiver, desiredDirs, dir);
+    }
+
+    const bi = task!.buildInfoEntry;
+    if (bi !== undefined && bi.buildInfo !== undefined) {
+      const buildInfoDir = GetDirectoryPath(String(bi.path));
+      const roots = new Set<Path>(ParsedCommandLine_FileNames(task!.resolved).map((fileName) => Orchestrator_toPath(receiver, fileName)));
+      for (const fileName of bi.buildInfo.FileNames ?? []) {
+        const absPath = host_FS_fn(receiver!.host).Realpath(Orchestrator_resolveBuildInfoFileName(receiver, fileName, buildInfoDir));
+        const fp = Orchestrator_toPath(receiver, absPath);
+        if (roots.has(fp)) {
+          continue;
+        }
+        Orchestrator_addWatchDir(receiver, desiredDirs, GetDirectoryPath(absPath));
+      }
+      for (const packageJson of seqToArray(BuildInfo_GetPackageJsons(bi.buildInfo, buildInfoDir))) {
+        Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
+      }
+      for (const packageJson of seqToArray(BuildInfo_GetMissingPackageJsons(bi.buildInfo, buildInfoDir))) {
+        Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
+      }
+    }
+    for (const packageJson of task!.packageJsons ?? []) {
+      Orchestrator_addPackageJsonWatchDirs(receiver, desiredDirs, packageJson);
+    }
+  }
+
+  return WatchManager_ResolveDesiredDirs(receiver!.wm, desiredDirs);
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.addWatchDir","kind":"method","status":"implemented","sigHash":"c008f571aac188908968f8498da1d2583b30e2909e4461783df006635dd91c99","bodyHash":"27d8a4a9351bbee0db38e0498af50808b2ac5d2b3c1f814684ea85060c1b9c57"}
+ */
+export function Orchestrator_addWatchDir(receiver: GoPtr<Orchestrator>, desiredDirs: GoMap<string, bool>, dir: string): void {
+  if (!IsDirCoveredByWatch(desiredDirs, dir, receiver!.comparePathsOptions) && CanWatchDirectory(dir)) {
+    desiredDirs.set(dir, false as bool);
+  }
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.addPackageJsonWatchDirs","kind":"method","status":"implemented","sigHash":"a85cb273e52f3f6dee48d8954b8a70b7ec8e73933cb0c13d767fa370e104d966","bodyHash":"d35c0bf34bcc3c0270094472cce299a15edb7de5ae4b769ca0bda14be7fabcd6"}
+ */
+export function Orchestrator_addPackageJsonWatchDirs(receiver: GoPtr<Orchestrator>, desiredDirs: GoMap<string, bool>, packageJson: string): void {
+  const dir = GetDirectoryPath(packageJson);
+  const dirs: GoSlice<string> = [dir];
+  let foundNodeModules = false;
+  for (let current = dir; ;) {
+    const parent = GetDirectoryPath(current);
+    if (parent === "" || parent === current) {
+      break;
+    }
+    dirs.push(parent);
+    if (GetBaseFileName(parent) === "node_modules") {
+      foundNodeModules = true;
+      const grandparent = GetDirectoryPath(parent);
+      if (grandparent !== "" && grandparent !== parent) {
+        dirs.push(grandparent);
+      }
+      break;
+    }
+    current = parent;
+  }
+
+  if (!foundNodeModules) {
+    Orchestrator_addWatchDir(receiver, desiredDirs, dir);
+    return;
+  }
+  for (const watchDir of dirs) {
+    Orchestrator_addWatchDir(receiver, desiredDirs, watchDir);
+  }
+}
+
+/**
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::method::Orchestrator.DoCycle","kind":"method","status":"implemented","sigHash":"640ff407c09d9786aebcad8d144723150eab5e178d0af93c3f933d63211b0fc1","bodyHash":"ace471b829c4197f9541e5fa0833e70ac3e65c12d5d2202690a2f1830287b17c"}
  *
  * Go source:
  * func (o *Orchestrator) DoCycle() {
@@ -643,22 +930,35 @@ export function Orchestrator_resetCaches(receiver: GoPtr<Orchestrator>): void {
  * }
  */
 export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
+  WatchManager_Lock(receiver!.wm);
   const needsConfigUpdate = new Bool();
   const needsUpdate = new Bool();
-  const mTimes = SyncMap_Clone(receiver!.host!.mTimes);
-  Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
-    const kind = BuildTask_hasUpdate(task, receiver, path);
-    if (kind !== updateKindNone) {
-      needsUpdate.Store(true as bool);
-      if (kind === updateKindConfig) {
-        needsConfigUpdate.Store(true as bool);
-      }
+  const [changedPaths, overflow] = WatchManager_DrainEvents(receiver!.wm);
+  const hasEvents = (changedPaths !== undefined && changedPaths.size > 0) || overflow;
+
+  if (!hasEvents) {
+    if (receiver!.wm!.DebugLog !== undefined) {
+      Fprintf(receiver!.wm!.DebugLog, "[watch] DoCycle: no events, skipping\n");
     }
-  });
+    WatchManager_Unlock(receiver!.wm);
+    return;
+  }
+
+  if (overflow) {
+    Orchestrator_rangeTask(receiver, (path: Path, task: GoPtr<BuildTask>): void => {
+      BuildTask_resetConfig(task, receiver, path);
+      task!.reportDone = {} as BuildTask["reportDone"];
+      task!.done = {} as BuildTask["done"];
+    });
+    needsConfigUpdate.Store(true as bool);
+    needsUpdate.Store(true as bool);
+  } else {
+    Orchestrator_checkTasksForEventChanges(receiver, changedPaths!, needsConfigUpdate, needsUpdate);
+  }
 
   if (!needsUpdate.Load()) {
-    receiver!.host!.mTimes = mTimes;
     Orchestrator_resetCaches(receiver);
+    WatchManager_Unlock(receiver!.wm);
     return;
   }
 
@@ -669,7 +969,14 @@ export function Orchestrator_DoCycle(receiver: GoPtr<Orchestrator>): void {
 
   Orchestrator_buildOrClean(receiver);
   Orchestrator_updateWatch(receiver);
+  const desiredDirs = Orchestrator_computeDesiredWatches(receiver);
+  const err = WatchManager_ReconcileWatches(receiver!.wm, desiredDirs);
+  if (err !== undefined) {
+    Fprintf(receiver!.opts.Sys.Writer(), "%v\n", err);
+    WatchManager_ForceOverflow(receiver!.wm);
+  }
   Orchestrator_resetCaches(receiver);
+  WatchManager_Unlock(receiver!.wm);
 }
 
 /**
@@ -872,7 +1179,7 @@ export function Orchestrator_createDiagnosticReporter(receiver: GoPtr<Orchestrat
 }
 
 /**
- * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"7215170db8f3e4e173d2d82f1bc476b230b571c69d88d2452f042b85385c0bd7"}
+ * @tsgo-unit {"id":"github.com/microsoft/typescript-go::internal/execute/build/orchestrator.go::func::NewOrchestrator","kind":"func","status":"implemented","sigHash":"6c0049265dfb54baf9553d2875da47942e66e5689268add560602a85932d4175","bodyHash":"aa61bd0b7acde68d0c282e4b517ba2b2c39528453b80f926dceaba3a3dd53b67"}
  *
  * Go source:
  * func NewOrchestrator(opts Options) *Orchestrator {
@@ -907,11 +1214,25 @@ function newSyncMap<K extends GoComparable = unknown, V = unknown>(): SyncMap<K,
   return { __tsgoBlank0: [], __tsgoBlank1: [], m: new SyncGoMap() } as SyncMap<K, V>;
 }
 
+function seqToArray<T>(seq: GoSeq<T>): GoSlice<T> {
+  const values: GoSlice<T> = [];
+  seq((value: T): bool => {
+    values.push(value);
+    return true as bool;
+  });
+  return values;
+}
+
+function stringArrayEqual(left: GoSlice<string>, right: GoSlice<string>): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
 function newParseCache(): parseCache {
   return { entries: newSyncMap() };
 }
 
 export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
+  const wm = NewWatchManager(opts.Sys.Writer(), (dir: string): bool => opts.Sys.FS().DirectoryExists(dir));
   const orchestrator: Orchestrator = {
     opts,
     comparePathsOptions: {
@@ -924,6 +1245,7 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
     errors: [],
     errorSummaryReporter: undefined,
     watchStatusReporter: undefined,
+    wm,
   };
   const extendedConfigCache: ExtendedConfigCache = { m: newSyncMap() };
   const innerHost: host = {
@@ -944,6 +1266,10 @@ export function NewOrchestrator(opts: Options): GoPtr<Orchestrator> {
   orchestrator.host = innerHost;
   if (Tristate_IsTrue(opts.Command!.CompilerOptions!.Watch)) {
     orchestrator.watchStatusReporter = CreateWatchStatusReporter(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions, opts.Testing);
+    const testingWithWatchBackend = opts.Testing as (CommandLineTestingWithWatchBackend | undefined);
+    if (testingWithWatchBackend?.WatchBackend !== undefined) {
+      WatchManager_SetBackend(wm, testingWithWatchBackend.WatchBackend());
+    }
   } else {
     orchestrator.errorSummaryReporter = CreateReportErrorSummary(opts.Sys, ParsedBuildCommandLine_Locale(opts.Command), opts.Command!.CompilerOptions);
   }
