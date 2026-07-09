@@ -153,6 +153,49 @@ test("provider-backed virtual modules participate in normal program binding", ()
   assert.equal(consumer.getSelectedTargetCall(call), undefined);
 });
 
+test("provider-backed virtual declarations expose undefined as a source type", () => {
+  let fs = FromMap(new Map<string, string>([
+    ["/src/index.ts", `
+      import { continueWith } from "@acme/native/tasks.js";
+
+      const result = continueWith(() => ({}), undefined);
+      result;
+    `],
+    ["/src/tsconfig.json", JSON.stringify({
+      compilerOptions: {
+        noLib: true,
+        module: "esnext",
+        moduleResolution: "bundler",
+      },
+      files: ["index.ts"],
+    })],
+  ]), false as bool);
+  fs = WrapFS(fs);
+
+  const host = NewCompilerHost("/src", fs, LibPath(), undefined, undefined);
+  const [parsed, configErrors] = GetParsedCommandLineOfConfigFile("/src/tsconfig.json", {} as CompilerOptions, undefined, host as ParseConfigHost, undefined);
+  assert.equal((configErrors ?? []).length, 0);
+
+  const options = {
+    Config: parsed,
+    Host: host,
+  } satisfies ProgramOptions;
+  attachExtensionHost(options, {
+    activeTarget: "acme",
+    extensions: [undefinedStateProviderExtension()],
+  });
+
+  const program = NewProgram(options);
+  const sourceFile = Program_GetSourceFile(program, "/src/index.ts");
+  assert.ok(sourceFile !== undefined);
+  assertCleanProgram(program, sourceFile);
+
+  const providerFile = Program_GetSourceFiles(program).find((file) =>
+    SourceFile_FileName(file).startsWith("tsts-provider://acme/Native.Tasks"));
+  assert.ok(providerFile !== undefined);
+  assert.match(SourceFile_Text(providerFile), /state: object \| undefined/);
+});
+
 test("provider declarations preserve parameter passing metadata in target binding facts", () => {
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -2795,6 +2838,62 @@ function providerExtension(specifier: string, reject = false, provider?: TargetS
       if (provider !== undefined) {
         assert.equal(context.registerTargetSemanticProvider(provider), true);
       }
+    },
+  };
+}
+
+function undefinedStateProviderExtension(): CompilerExtension {
+  return {
+    identity: {
+      id: "acme-undefined-state-provider-extension",
+      version: "1.0.0",
+      capabilityNamespace: "acme-undefined-state-provider",
+    },
+    initialize(context): void {
+      assert.equal(context.registerTargetBindingProvider({
+        identity: {
+          id: "acme-undefined-state-provider",
+          version: "1.0.0",
+          target: "acme",
+          extensionContractVersion: TstsProviderContractVersion,
+          providerKind: "binding",
+        },
+        ownsModule: (moduleSpecifier) => moduleSpecifier === "@acme/native/tasks.js" ? { kind: "owned" } : { kind: "unowned" },
+        resolveModule: (moduleSpecifier) => ({
+          kind: "virtual",
+          moduleSpecifier,
+          virtualFileName: "tsts-provider://acme/Native.Tasks",
+          providerModuleId: "acme.native.tasks",
+        }),
+        getDeclarationModel: (resolution) => ({
+          moduleSpecifier: resolution.moduleSpecifier,
+          providerModuleId: resolution.providerModuleId,
+          exports: [{
+            id: "continueWith",
+            name: "continueWith",
+            kind: "function",
+            signatures: [{
+              id: "continueWith(callback,state)",
+              parameters: [{
+                name: "callback",
+                type: {
+                  kind: "function",
+                  parameters: [],
+                  returnType: { kind: "object" },
+                },
+              }, {
+                name: "state",
+                type: {
+                  kind: "union",
+                  types: [{ kind: "object" }, { kind: "undefined" }],
+                },
+              }],
+              returnType: { kind: "object" },
+            }],
+          }],
+        }),
+        getTargetIdentity: () => undefined,
+      }), true);
     },
   };
 }

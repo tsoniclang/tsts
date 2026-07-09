@@ -525,6 +525,7 @@ function getTargetTypeRef(type: ProviderTypeExpression): TargetTypeRef {
     case "unknown":
     case "void":
     case "never":
+    case "undefined":
     case "object":
     case "union":
     case "intersection":

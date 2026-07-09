@@ -276,6 +276,7 @@ export type ProviderTypeExpression =
   | { readonly kind: "unknown" }
   | { readonly kind: "void" }
   | { readonly kind: "never" }
+  | { readonly kind: "undefined" }
   | { readonly kind: "boolean" }
   | { readonly kind: "string" }
   | { readonly kind: "number" }
@@ -2175,6 +2176,7 @@ function renderProviderTypeExpressionWorker(type: ProviderTypeExpression, parent
     case "unknown":
     case "void":
     case "never":
+    case "undefined":
     case "boolean":
     case "string":
     case "number":
@@ -2601,6 +2603,7 @@ function isValidProviderTypeExpression(value: ProviderTypeExpression): boolean {
     case "unknown":
     case "void":
     case "never":
+    case "undefined":
     case "boolean":
     case "string":
     case "number":
@@ -2772,6 +2775,7 @@ function hasValidProviderReferenceBindings(type: ProviderTypeExpression, context
     case "unknown":
     case "void":
     case "never":
+    case "undefined":
     case "boolean":
     case "string":
     case "number":
@@ -2874,6 +2878,7 @@ function hasValidProviderTypeExpressionScope(type: ProviderTypeExpression, scope
     case "unknown":
     case "void":
     case "never":
+    case "undefined":
     case "boolean":
     case "string":
     case "number":
