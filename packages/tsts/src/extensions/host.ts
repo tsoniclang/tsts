@@ -750,6 +750,7 @@ export class ProviderRegistry {
   readonly #virtualModulesByFileName = new Map<string, ProviderResolvedModule>();
   readonly #virtualDocumentsByUri = new Map<string, ProviderVirtualDeclarationDocument>();
   readonly #virtualSourceVariantsByBaseFileName = new Map<string, { readonly sourceText: string; readonly fileName: string }[]>();
+  readonly #virtualBaseFileIdentities = new Map<string, string>();
   readonly #canonicalExportsByBaseFileName = new Map<string, Map<string, string>>();
   readonly #renderedExportSetsByBaseFileName = new Map<string, Set<string>>();
 
@@ -915,6 +916,11 @@ export class ProviderRegistry {
       this.#diagnostics.append(diagnostic);
       return { kind: "rejected", diagnostic };
     }
+    const virtualBaseFileDiagnostic = this.#validateVirtualBaseFileIdentity(owner.provider.identity, resolution, declarationModel);
+    if (virtualBaseFileDiagnostic !== undefined) {
+      this.#diagnostics.append(virtualBaseFileDiagnostic);
+      return { kind: "rejected", diagnostic: virtualBaseFileDiagnostic };
+    }
 
     const canonicalExports = this.#getCanonicalExportsForRender(resolution.virtualFileName, declarationModel);
     const virtualSourceText = renderProviderDeclarationModel(declarationModel, { canonicalExports });
@@ -998,6 +1004,28 @@ export class ProviderRegistry {
         canonicalExports.set(exportName, effectiveVirtualFileName);
       }
     }
+  }
+
+  #validateVirtualBaseFileIdentity(provider: ProviderIdentity, resolution: ProviderModuleResolution, declarationModel: ProviderDeclarationModel): ExtensionDiagnostic | undefined {
+    const identity = getProviderVirtualBaseFileIdentity(provider, resolution, declarationModel);
+    const existing = this.#virtualBaseFileIdentities.get(resolution.virtualFileName);
+    if (existing === undefined) {
+      this.#virtualBaseFileIdentities.set(resolution.virtualFileName, identity);
+      return undefined;
+    }
+    if (existing === identity) {
+      return undefined;
+    }
+    return createHostDiagnostic({
+      extensionCode: "INVALID_PROVIDER_MODULE_RESOLUTION",
+      numericCode: ExtensionHostDiagnosticCode.providerResolutionFailed,
+      message: `Provider virtual base file '${resolution.virtualFileName}' is used for multiple public provider module identities.`,
+      evidence: [
+        { message: "Existing virtual base identity", details: existing },
+        { message: "Incoming virtual base identity", details: identity },
+      ],
+      identity: `provider-virtual-base-conflict:${resolution.virtualFileName}:${existing}:${identity}`,
+    });
   }
 
   getVirtualModuleByFileName(fileName: string): ProviderResolvedModule | undefined {
@@ -1736,6 +1764,18 @@ function getProviderResolveCacheKey(identity: ProviderIdentity, specifier: strin
   ].join("\0");
 }
 
+function getProviderVirtualBaseFileIdentity(provider: ProviderIdentity, resolution: ProviderModuleResolution, declarationModel: ProviderDeclarationModel): string {
+  return [
+    provider.id,
+    provider.version,
+    provider.target,
+    provider.extensionContractVersion,
+    provider.configHash ?? "",
+    resolution.moduleSpecifier,
+    declarationModel.moduleSpecifier,
+  ].join("\0");
+}
+
 function getProviderDeclarationModelExportNames(model: ProviderDeclarationModel): readonly string[] {
   return [...new Set(model.exports.map(getProviderSourceExportName))].sort();
 }
@@ -2298,14 +2338,45 @@ function isValidProviderModuleResolution(value: ProviderModuleResolution, specif
     && value.providerModuleId.length > 0;
 }
 
+interface ProviderDeclarationValidationContext {
+  readonly moduleSpecifier: string;
+  readonly sameModuleProviderRefNames: ReadonlySet<string>;
+  readonly exportsByName: ReadonlyMap<string, ProviderExportDeclaration>;
+  readonly importBindings: readonly ProviderImportDeclaration[];
+}
+
 function isValidProviderDeclarationModel(value: ProviderDeclarationModel, resolution: ProviderModuleResolution): boolean {
+  const context = createProviderDeclarationValidationContext(value);
   return value.moduleSpecifier === resolution.moduleSpecifier
     && value.providerModuleId === resolution.providerModuleId
     && (value.imports ?? []).every(isValidProviderImportDeclaration)
     && Array.isArray(value.exports)
     && value.exports.every(isValidProviderExportDeclaration)
     && value.exports.every(hasValidProviderExportTypeParameterScope)
+    && value.exports.every((declaration) => hasValidProviderReferenceBindingsForExport(declaration, context))
+    && value.exports.every((declaration) => hasValidProviderValueHeritageReferences(declaration, context))
     && isValidProviderTypeFamilyDeclarations(value.exports, value.imports ?? []);
+}
+
+function createProviderDeclarationValidationContext(model: ProviderDeclarationModel): ProviderDeclarationValidationContext {
+  const sameModuleProviderRefNames = new Set<string>();
+  const exportsByName = new Map<string, ProviderExportDeclaration>();
+  for (const declaration of model.exports) {
+    const exportName = getProviderExportName(declaration);
+    const sourceExportName = getProviderSourceExportName(declaration);
+    sameModuleProviderRefNames.add(exportName);
+    sameModuleProviderRefNames.add(sourceExportName);
+    exportsByName.set(exportName, declaration);
+    if (!exportsByName.has(sourceExportName)) {
+      exportsByName.set(sourceExportName, declaration);
+    }
+  }
+  return {
+    moduleSpecifier: model.moduleSpecifier,
+    sameModuleProviderRefNames,
+    exportsByName,
+    importBindings: model.imports ?? [],
+  };
 }
 
 function isValidProviderImportDeclaration(value: ProviderImportDeclaration): boolean {
@@ -2374,6 +2445,7 @@ function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportD
   const publicExports = new Set<string>();
   const familyGroups = new Map<string, ProviderExportDeclaration[]>();
   const localNames = new Set(exports.filter((declaration) => declaration.sourceTypeFamily === undefined).map((declaration) => declaration.name));
+  const generatedCanonicalLocalNames = new Set(exports.map((declaration) => getProviderCanonicalExportLocalName(getProviderSourceExportName(declaration))));
   for (const declaration of exports) {
     if (declaration.sourceTypeFamily === undefined) {
       const exportName = getProviderExportName(declaration);
@@ -2391,7 +2463,10 @@ function isValidProviderTypeFamilyDeclarations(exports: readonly ProviderExportD
     group.push(declaration);
     familyGroups.set(familyName, group);
   }
-  if (familyGroups.size > 0 && [...reservedLocalNames].some((name) => localNames.has(name) || importLocalNames.has(name))) {
+  if (familyGroups.size > 0 && [...reservedLocalNames].some((name) => localNames.has(name) || importLocalNames.has(name) || publicExports.has(name))) {
+    return false;
+  }
+  if ([...generatedCanonicalLocalNames].some((name) => localNames.has(name) || importLocalNames.has(name) || publicExports.has(name) || reservedLocalNames.has(name))) {
     return false;
   }
   for (const [familyName, variants] of familyGroups) {
@@ -2595,10 +2670,11 @@ function hasValidProviderExportTypeParameterScope(value: ProviderExportDeclarati
 }
 
 function hasValidProviderMemberTypeParameterScope(member: ProviderMemberDeclaration, parentScope: ReadonlySet<string>): boolean {
-  if (member.type !== undefined && !hasValidProviderTypeExpressionScope(member.type, parentScope)) {
+  const memberParentScope = member.static === true ? new Set<string>() : parentScope;
+  if (member.type !== undefined && !hasValidProviderTypeExpressionScope(member.type, memberParentScope)) {
     return false;
   }
-  return (member.signatures ?? []).every((signature) => hasValidProviderSignatureTypeParameterScope(signature, parentScope));
+  return (member.signatures ?? []).every((signature) => hasValidProviderSignatureTypeParameterScope(signature, memberParentScope));
 }
 
 function hasValidProviderNamespaceMemberTypeParameterScope(member: ProviderMemberDeclaration): boolean {
@@ -2625,17 +2701,163 @@ function hasValidProviderParameterTypeParameterScope(parameter: ProviderParamete
 
 function hasValidProviderTypeParameterDeclarations(typeParameters: readonly ProviderTypeParameterDeclaration[], parentScope: ReadonlySet<string>): boolean {
   const names = new Set<string>();
+  let hasDefault = false;
   for (const parameter of typeParameters) {
-    if (names.has(parameter.name)) {
+    if (names.has(parameter.name) || parentScope.has(parameter.name)) {
       return false;
+    }
+    if (hasDefault && parameter.defaultType === undefined) {
+      return false;
+    }
+    if (parameter.defaultType !== undefined) {
+      hasDefault = true;
     }
     names.add(parameter.name);
   }
-  const scope = getProviderTypeParameterScope(parentScope, typeParameters);
-  return typeParameters.every((parameter) =>
-    (parameter.constraints ?? []).every((constraint) => hasValidProviderTypeExpressionScope(constraint, scope))
-      && (parameter.defaultType === undefined || hasValidProviderTypeExpressionScope(parameter.defaultType, scope))
-  );
+  const scope = new Set(parentScope);
+  for (const parameter of typeParameters) {
+    const constraintScope = new Set(scope);
+    constraintScope.add(parameter.name);
+    if ((parameter.constraints ?? []).some((constraint) => !hasValidProviderTypeExpressionScope(constraint, constraintScope))) {
+      return false;
+    }
+    if (parameter.defaultType !== undefined && !hasValidProviderTypeExpressionScope(parameter.defaultType, scope)) {
+      return false;
+    }
+    scope.add(parameter.name);
+  }
+  return true;
+}
+
+function hasValidProviderReferenceBindingsForExport(declaration: ProviderExportDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  if (declaration.type !== undefined && !hasValidProviderReferenceBindings(declaration.type, context)) {
+    return false;
+  }
+  if ((declaration.typeParameters ?? []).some((parameter) => !hasValidProviderTypeParameterReferenceBindings(parameter, context))) {
+    return false;
+  }
+  if ((declaration.heritage ?? []).some((heritage) => !hasValidProviderReferenceBindings(heritage.type, context))) {
+    return false;
+  }
+  if ((declaration.signatures ?? []).some((signature) => !hasValidProviderSignatureReferenceBindings(signature, context))) {
+    return false;
+  }
+  return (declaration.members ?? []).every((member) => hasValidProviderMemberReferenceBindings(member, context));
+}
+
+function hasValidProviderTypeParameterReferenceBindings(parameter: ProviderTypeParameterDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  return (parameter.constraints ?? []).every((constraint) => hasValidProviderReferenceBindings(constraint, context))
+    && (parameter.defaultType === undefined || hasValidProviderReferenceBindings(parameter.defaultType, context));
+}
+
+function hasValidProviderSignatureReferenceBindings(signature: ProviderSignatureDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  return (signature.typeParameters ?? []).every((parameter) => hasValidProviderTypeParameterReferenceBindings(parameter, context))
+    && signature.parameters.every((parameter) => hasValidProviderParameterReferenceBindings(parameter, context))
+    && (signature.returnType === undefined || hasValidProviderReferenceBindings(signature.returnType, context));
+}
+
+function hasValidProviderParameterReferenceBindings(parameter: ProviderParameterDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  return hasValidProviderReferenceBindings(parameter.type, context)
+    && (parameter.defaultType === undefined || hasValidProviderReferenceBindings(parameter.defaultType, context));
+}
+
+function hasValidProviderMemberReferenceBindings(member: ProviderMemberDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  return (member.type === undefined || hasValidProviderReferenceBindings(member.type, context))
+    && (member.signatures ?? []).every((signature) => hasValidProviderSignatureReferenceBindings(signature, context));
+}
+
+function hasValidProviderReferenceBindings(type: ProviderTypeExpression, context: ProviderDeclarationValidationContext): boolean {
+  switch (type.kind) {
+    case "any":
+    case "unknown":
+    case "void":
+    case "never":
+    case "boolean":
+    case "string":
+    case "number":
+    case "bigint":
+    case "object":
+    case "source-primitive":
+    case "type-parameter":
+    case "literal":
+      return true;
+    case "target-named":
+      return (type.typeArguments ?? []).every((typeArgument) => hasValidProviderReferenceBindings(typeArgument, context))
+        && type.sourceShape !== undefined
+        && hasValidProviderReferenceBindings(type.sourceShape, context);
+    case "array":
+      return hasValidProviderReferenceBindings(type.elementType, context);
+    case "tuple":
+      return type.elementTypes.every((elementType) => hasValidProviderReferenceBindings(elementType, context));
+    case "union":
+    case "intersection":
+      return type.types.every((memberType) => hasValidProviderReferenceBindings(memberType, context));
+    case "function":
+      return (type.typeParameters ?? []).every((parameter) => hasValidProviderTypeParameterReferenceBindings(parameter, context))
+        && type.parameters.every((parameter) => hasValidProviderParameterReferenceBindings(parameter, context))
+        && hasValidProviderReferenceBindings(type.returnType, context);
+    case "provider-ref":
+      return hasValidProviderRefBinding(type, context)
+        && (type.typeArguments ?? []).every((typeArgument) => hasValidProviderReferenceBindings(typeArgument, context));
+    case "opaque":
+      return type.sourceShape !== undefined && hasValidProviderReferenceBindings(type.sourceShape, context);
+  }
+}
+
+function hasValidProviderRefBinding(type: Extract<ProviderTypeExpression, { readonly kind: "provider-ref" }>, context: ProviderDeclarationValidationContext): boolean {
+  if (type.moduleSpecifier === context.moduleSpecifier) {
+    const declaration = context.exportsByName.get(type.exportName);
+    if (declaration === undefined || !context.sameModuleProviderRefNames.has(type.exportName)) {
+      return false;
+    }
+    if (declaration.sourceTypeFamily === undefined || type.exportName === declaration.sourceTypeFamily.exportName) {
+      return true;
+    }
+    return (type.typeArguments?.length ?? 0) === declaration.sourceTypeFamily.typeArgumentCount;
+  }
+  if (type.namespaceImport !== undefined) {
+    return context.importBindings.some((importDeclaration) =>
+      importDeclaration.moduleSpecifier === type.moduleSpecifier
+      && importDeclaration.namespaceImport === type.namespaceImport);
+  }
+  if (type.exportName === "default") {
+    return type.localName !== undefined
+      && context.importBindings.some((importDeclaration) =>
+        importDeclaration.moduleSpecifier === type.moduleSpecifier
+        && importDeclaration.defaultImport === type.localName);
+  }
+  const renderedLocalName = type.localName ?? type.exportName;
+  return context.importBindings.some((importDeclaration) =>
+    importDeclaration.moduleSpecifier === type.moduleSpecifier
+    && (importDeclaration.namedImports ?? []).some((namedImport) =>
+      namedImport.exportedName === type.exportName
+      && (namedImport.localName ?? namedImport.exportedName) === renderedLocalName));
+}
+
+function hasValidProviderValueHeritageReferences(declaration: ProviderExportDeclaration, context: ProviderDeclarationValidationContext): boolean {
+  if (declaration.kind !== "class") {
+    return true;
+  }
+  return (declaration.heritage ?? []).every((heritage) =>
+    heritage.kind !== "extends" || hasValidProviderValueHeritageReference(heritage.type, context));
+}
+
+function hasValidProviderValueHeritageReference(type: ProviderTypeExpression, context: ProviderDeclarationValidationContext): boolean {
+  if (type.kind !== "provider-ref" || type.moduleSpecifier !== context.moduleSpecifier) {
+    return true;
+  }
+  const declaration = context.exportsByName.get(type.exportName);
+  if (declaration === undefined) {
+    return false;
+  }
+  if (declaration.sourceTypeFamily === undefined) {
+    return declaration.kind === "class";
+  }
+  const sourceTypeArgumentCount = type.typeArguments?.length ?? 0;
+  const selectedVariant = [...context.exportsByName.values()].find((candidate) =>
+    candidate.sourceTypeFamily?.exportName === declaration.sourceTypeFamily?.exportName
+    && candidate.sourceTypeFamily?.typeArgumentCount === sourceTypeArgumentCount);
+  return selectedVariant?.kind === "class";
 }
 
 function getProviderTypeParameterScope(parentScope: ReadonlySet<string>, typeParameters: readonly ProviderTypeParameterDeclaration[]): ReadonlySet<string> {

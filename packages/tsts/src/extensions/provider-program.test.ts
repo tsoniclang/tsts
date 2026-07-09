@@ -35,7 +35,7 @@ import { GetParsedCommandLineOfConfigFile } from "../internal/tsoptions/tsconfig
 import { FromMap } from "../internal/vfs/vfstest/vfstest.js";
 import { TstsProviderContractVersion, ExtensionHostDiagnosticCode, ExtensionObservationPoint, acceptObservation, argumentPassingFactKey, attachExtensionHost, createExtensionConsumerQueries, createSourceSemanticsExtension, deferObservation, finalizeExtensionSemantics, getExtensionHost, rejectObservation, runtimeCarrierFactKey, sourcePrimitive, sourcePrimitiveFactKey, targetConversionFactKey } from "./index.js";
 import { canonicalIdentityFactKey, flowStateFactKey, instantiatedTargetTypeFactKey, providerTypeFamilyFactKey, providerVirtualDeclarationFactKey, selectedTargetSignatureFactKey, targetOperationFactKey, targetBindingFactKey } from "./index.js";
-import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider } from "./index.js";
+import type { ArgumentPassingMode, CheckedCallMappingRequest, CheckedConversionMappingRequest, CheckedElementAccessMappingRequest, CheckedIterationMappingRequest, CheckedOperatorMappingRequest, CheckedPropertyAccessMappingRequest, CompilerExtension, ExtensionFactSubject, ExtensionObservationContext, ParameterPassingRequest, ProviderImportSlice, SourcePrimitiveFact, SelectedTargetSignatureFact, SourceSelectedMethodTypeArgument, TargetConstraintValidationRequest, TargetOperationFact, TargetBindingProvider, TargetIdentity, TargetMember, TargetSemanticProvider, TargetTypeArgumentMappingRequest } from "./index.js";
 
 function createExampleSourceSemanticsExtension(): CompilerExtension {
   return createSourceSemanticsExtension({
@@ -619,7 +619,7 @@ test("provider virtual external generic heritage uses value-capable family varia
     Config: parsed,
     Host: host,
   } satisfies ProgramOptions;
-  attachExtensionHost(options, {
+  const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [externalGenericHeritageProviderExtension()],
   });
@@ -683,7 +683,7 @@ test("provider virtual generic member chains do not leave stale unresolved prope
     Config: parsed,
     Host: host,
   } satisfies ProgramOptions;
-  attachExtensionHost(options, {
+  const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [providerGenericMemberChainExtension()],
   });
@@ -736,7 +736,7 @@ test("provider virtual module same-file named import slices compose before resol
     Config: parsed,
     Host: host,
   } satisfies ProgramOptions;
-  attachExtensionHost(options, {
+  const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [sameModuleSliceProviderExtension(requestedSlices)],
   });
@@ -1201,6 +1201,7 @@ test("checker records provider-owned target call facts for consumers", () => {
 });
 
 test("checker records provider-owned target type argument facts on selected calls", () => {
+  let observedTargetTypeArgumentRequest: TargetTypeArgumentMappingRequest | undefined;
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       declare function convert<T>(value: number): T;
@@ -1227,7 +1228,9 @@ test("checker records provider-owned target type argument facts on selected call
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [semanticOnlyExtension("acme-generic-inference-extension", genericInferenceSemanticProvider())],
+    extensions: [semanticOnlyExtension("acme-generic-inference-extension", genericInferenceSemanticProvider((request) => {
+      observedTargetTypeArgumentRequest = request;
+    }))],
   });
 
   const program = NewProgram(options);
@@ -1239,6 +1242,13 @@ test("checker records provider-owned target type argument facts on selected call
   assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
   const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
   const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(observedTargetTypeArgumentRequest?.call, call);
+  assert.equal(observedTargetTypeArgumentRequest?.target, "acme");
+  assert.ok(observedTargetTypeArgumentRequest?.sourceSelectedSignature !== undefined);
+  assert.ok(observedTargetTypeArgumentRequest?.sourceSelectedDeclaration !== undefined);
+  assert.ok(observedTargetTypeArgumentRequest?.sourceCalleeSymbol !== undefined);
+  assert.ok(observedTargetTypeArgumentRequest?.sourceCalleeDeclaration !== undefined);
+  assert.ok(observedTargetTypeArgumentRequest?.sourceReturnType !== undefined);
   assert.equal(selectedCall?.member.id, "Acme.Convert.ChangeType<T>(Acme.Int32)");
   assert.equal(selectedCall?.typeArguments, undefined);
   assert.deepEqual(selectedCall?.targetTypeArguments, [{ kind: "source-primitive", name: "int32" }]);
@@ -1246,6 +1256,7 @@ test("checker records provider-owned target type argument facts on selected call
 
 test("checker exposes explicit selected source method type arguments on checked calls", () => {
   let observedTypeArguments: readonly SourceSelectedMethodTypeArgument[] | undefined;
+  let observedTypeArgumentRequest: CheckedCallMappingRequest | undefined;
   let observedTypeText = "";
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
@@ -1276,6 +1287,7 @@ test("checker exposes explicit selected source method type arguments on checked 
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-source-type-arguments-extension", sourceTypeArgumentSemanticProvider((request, context) => {
+      observedTypeArgumentRequest = request;
       observedTypeArguments = request.sourceSelectedMethodTypeArguments;
       observedTypeText = context.compiler.checker.typeToString(observedTypeArguments?.[0]?.selectedType as GoPtr<Type>);
     }))],
@@ -1295,9 +1307,14 @@ test("checker exposes explicit selected source method type arguments on checked 
   assert.ok(observedTypeArguments?.[0]?.typeParameter !== undefined);
   assert.ok(observedTypeArguments?.[0]?.selectedType !== undefined);
   assert.equal(observedTypeArguments?.[0]?.explicitTypeNode, (Node_TypeArguments(call) ?? [])[0]);
+  assert.equal(observedTypeArgumentRequest?.call, call);
+  assert.equal(observedTypeArgumentRequest?.sourceReturnType, observedTypeArguments?.[0]?.selectedType);
   assert.equal(observedTypeText, "Result");
   assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.selectedType, observedTypeArguments?.[0]?.selectedType);
   assert.equal(selectedCall?.sourceSelectedMethodTypeArguments?.[0]?.explicitTypeNode, observedTypeArguments?.[0]?.explicitTypeNode);
+  assert.equal(selectedCall?.sourceCalleeSymbol, observedTypeArgumentRequest?.sourceCalleeSymbol);
+  assert.equal(selectedCall?.sourceCalleeDeclaration, observedTypeArgumentRequest?.sourceCalleeDeclaration);
+  assert.equal(selectedCall?.sourceReturnType, observedTypeArgumentRequest?.sourceReturnType);
 });
 
 test("checker exposes inferred selected source method type arguments on checked calls", () => {
@@ -1450,7 +1467,7 @@ test("checker exposes selected source member evidence on checked property access
     Config: parsed,
     Host: host,
   } satisfies ProgramOptions;
-  attachExtensionHost(options, {
+  const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-property-evidence-extension", {
       identity: semanticProviderIdentity("acme-selected-property-evidence-provider"),
@@ -1473,6 +1490,10 @@ test("checker exposes selected source member evidence on checked property access
   const lengthRequest = observedRequests.find((request) => request.propertyName === "Length");
   assertSelectedMemberEvidence(splitRequest, "Split");
   assertSelectedMemberEvidence(lengthRequest, "Length");
+  assert.ok(splitRequest?.sourceResultType !== undefined);
+  assert.ok(lengthRequest?.sourceResultType !== undefined);
+  const lengthAccess = findNamedNodeByKind(index, KindPropertyAccessExpression, "Length");
+  assert.equal(extended.extensionHost.facts.get(lengthAccess, targetOperationFactKey)?.resultType, semanticSubject("int32"));
 });
 
 test("checker exposes selected source index-signature evidence on checked element access", () => {
@@ -1541,6 +1562,7 @@ test("checker exposes selected source index-signature evidence on checked elemen
   assertSelectedIndexEvidence(observedRequests[0]);
   assertSelectedIndexEvidence(observedRequests[1]);
   assertSelectedMappedIndexEvidence(observedRequests[2]);
+  assert.ok(observedRequests.every((request) => request.sourceResultType !== undefined));
 });
 
 test("checker exposes selected source member evidence on optional-chain property access", () => {
@@ -1609,6 +1631,7 @@ test("checker exposes selected source member evidence on optional-chain property
   for (const request of lengthRequests) {
     assertSelectedMemberEvidence(request, "length");
   }
+  assert.equal(nameRequests.some((request) => request.optionalChain === true), true);
 });
 
 test("checker exposes source element types on for-of declaration and assignment iterations", () => {
@@ -1732,6 +1755,7 @@ test("checker maps checked unary operators through the operator observation", ()
 
 test("checker exposes selected callee member evidence on checked calls", () => {
   let observedRequest: CheckedCallMappingRequest | undefined;
+  let observedReturnTypeText = "";
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       interface String {}
@@ -1762,12 +1786,13 @@ test("checker exposes selected callee member evidence on checked calls", () => {
     Config: parsed,
     Host: host,
   } satisfies ProgramOptions;
-  attachExtensionHost(options, {
+  const extended = attachExtensionHost(options, {
     activeTarget: "acme",
     extensions: [semanticOnlyExtension("acme-selected-callee-evidence-extension", {
       identity: semanticProviderIdentity("acme-selected-callee-evidence-provider"),
-      mapCheckedCall: (request) => {
+      mapCheckedCall: (request, context) => {
         observedRequest = request;
+        observedReturnTypeText = context.compiler.checker.typeToString(request.sourceReturnType as GoPtr<Type>);
         return acceptObservation({
           selectedSignature: {
             member: {
@@ -1800,6 +1825,15 @@ test("checker exposes selected callee member evidence on checked calls", () => {
   assert.equal(selectedDeclaration, selectedSymbol?.ValueDeclaration);
   assert.equal(Node_Text(Node_Name(selectedDeclaration)), "WriteLine");
   assert.equal(observedRequest?.sourceSelectedDeclaration, selectedDeclaration);
+  assert.equal(observedReturnTypeText, "void");
+
+  const call = findFirstNodeByKind(index, KindCallExpression);
+  assert.equal(finalizeExtensionSemantics(options), extended.extensionHost);
+  const consumer = createExtensionConsumerQueries(extended.extensionHost, "emitter");
+  const selectedCall = consumer.getSelectedTargetCall(call);
+  assert.equal(selectedCall?.sourceCalleeSymbol, observedRequest?.sourceCalleeSymbol);
+  assert.equal(selectedCall?.sourceCalleeDeclaration, observedRequest?.sourceCalleeDeclaration);
+  assert.equal(selectedCall?.sourceReturnType, observedRequest?.sourceReturnType);
 });
 
 test("checker records provider-owned contextual target facts without changing TS contextual type", () => {
@@ -1896,6 +1930,7 @@ test("checker records provider-owned parameter mode facts from selected target s
       providerDeclaration,
     },
   } satisfies SelectedTargetSignatureFact;
+  const observedParameterRequests: ParameterPassingRequest[] = [];
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       declare function contains(value: number): boolean;
@@ -1923,7 +1958,7 @@ test("checker records provider-owned parameter mode facts from selected target s
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [providerExtension("@example/target/Acme.Console.js", false, parameterModeSemanticProvider(selectedSignature))],
+    extensions: [providerExtension("@example/target/Acme.Console.js", false, parameterModeSemanticProvider(selectedSignature, (request) => observedParameterRequests.push(request)))],
   });
 
   const program = NewProgram(options);
@@ -1933,6 +1968,10 @@ test("checker records provider-owned parameter mode facts from selected target s
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
+  assert.equal(observedParameterRequests[0]?.call, call);
+  assert.equal(observedParameterRequests[0]?.parameterIndex, 0);
+  assert.equal(observedParameterRequests[0]?.targetParameter?.name, "value");
+  assert.equal(observedParameterRequests[0]?.selectedSignature?.member.id, "Contains(T)");
   const argumentPassing = extended.extensionHost.facts.get(argument, argumentPassingFactKey);
   assert.equal(argumentPassing?.mode, "byref-readonly");
   assert.equal(argumentPassing?.parameterIndex, 0);
@@ -1999,6 +2038,7 @@ test("checker records parameter mode facts per argument without collapsing them 
 });
 
 test("checker records provider-owned runtime carrier and argument conversion facts", () => {
+  const observedConversionRequests: CheckedConversionMappingRequest[] = [];
   let fs = FromMap(new Map<string, string>([
     ["/src/index.ts", `
       import type { SearchValues } from "@example/target/Acme.Buffers.js";
@@ -2029,7 +2069,7 @@ test("checker records provider-owned runtime carrier and argument conversion fac
   } satisfies ProgramOptions;
   const extended = attachExtensionHost(options, {
     activeTarget: "acme",
-    extensions: [providerExtension("@example/target/Acme.Buffers.js", false, carrierConversionSemanticProvider())],
+    extensions: [providerExtension("@example/target/Acme.Buffers.js", false, carrierConversionSemanticProvider((request) => observedConversionRequests.push(request)))],
   });
 
   const program = NewProgram(options);
@@ -2048,6 +2088,10 @@ test("checker records provider-owned runtime carrier and argument conversion fac
 
   const call = findFirstNodeByKind(index, KindCallExpression);
   const argument = getFirstCallArgument(call);
+  assert.equal(observedConversionRequests[0]?.call, call);
+  assert.equal(observedConversionRequests[0]?.parameterIndex, 0);
+  assert.equal(observedConversionRequests[0]?.targetParameter?.name, "value");
+  assert.equal(observedConversionRequests[0]?.selectedSignature?.member.id, "ToByte(Acme.Int32)");
   assert.equal(extended.extensionHost.facts.get(argument, targetConversionFactKey)?.convertedType?.kind, "target-named");
   assert.equal(extended.extensionHost.facts.get(argument, targetConversionFactKey)?.operation?.operationId, "Acme.Convert.ToByte");
 
@@ -4019,7 +4063,7 @@ function semanticProvider(selectedSignature: SelectedTargetSignatureFact): Targe
   };
 }
 
-function genericInferenceSemanticProvider(): TargetSemanticProvider {
+function genericInferenceSemanticProvider(onTargetTypeArguments?: (request: TargetTypeArgumentMappingRequest) => void): TargetSemanticProvider {
   return {
     identity: {
       id: "acme-generic-inference-semantic-provider",
@@ -4046,9 +4090,12 @@ function genericInferenceSemanticProvider(): TargetSemanticProvider {
       },
       returnType: semanticSubject("T"),
     }),
-    mapInferredSourceTypeArgumentsToTarget: () => acceptObservation({
-      targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
-    }),
+    mapInferredSourceTypeArgumentsToTarget: (request) => {
+      onTargetTypeArguments?.(request);
+      return acceptObservation({
+        targetTypeArguments: [{ kind: "source-primitive", name: "int32" }],
+      });
+    },
   };
 }
 
@@ -4121,19 +4168,22 @@ function deferredSemanticProvider(): TargetSemanticProvider {
   };
 }
 
-function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatureFact): TargetSemanticProvider {
+function parameterModeSemanticProvider(selectedSignature: SelectedTargetSignatureFact, onParameterPassing?: (request: ParameterPassingRequest) => void): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-parameter-mode-semantic-provider"),
     mapCheckedCall: () => acceptObservation({
       selectedSignature,
       returnType: semanticSubject("bool"),
     }),
-    resolveParameterPassing: (request) => acceptObservation({
-      passing: {
-        mode: "byref-readonly",
-        ...(request.argument !== undefined ? { targetExpression: request.argument } : {}),
-      },
-    }),
+    resolveParameterPassing: (request) => {
+      onParameterPassing?.(request);
+      return acceptObservation({
+        passing: {
+          mode: "byref-readonly",
+          ...(request.argument !== undefined ? { targetExpression: request.argument } : {}),
+        },
+      });
+    },
   };
 }
 
@@ -4158,7 +4208,7 @@ function parameterModeSequenceSemanticProvider(selectedSignature: SelectedTarget
   };
 }
 
-function carrierConversionSemanticProvider(): TargetSemanticProvider {
+function carrierConversionSemanticProvider(onConversion?: (request: CheckedConversionMappingRequest) => void): TargetSemanticProvider {
   return {
     identity: semanticProviderIdentity("acme-carrier-conversion-semantic-provider"),
     mapCheckedCall: () => acceptObservation({
@@ -4167,10 +4217,13 @@ function carrierConversionSemanticProvider(): TargetSemanticProvider {
       },
       returnType: semanticSubject("number"),
     }),
-    mapCheckedConversion: () => acceptObservation({
-      convertedType: { kind: "target-named", id: "Acme.Byte" },
-      operation: targetOperation("Acme.Convert.ToByte", "method", "number"),
-    }),
+    mapCheckedConversion: (request) => {
+      onConversion?.(request);
+      return acceptObservation({
+        convertedType: { kind: "target-named", id: "Acme.Byte" },
+        operation: targetOperation("Acme.Convert.ToByte", "method", "number"),
+      });
+    },
     resolveRuntimeCarrier: () => acceptObservation({
       carrier: { kind: "target-named", id: "Acme.Buffers.SearchValues`1" },
       requiresAllocation: false,

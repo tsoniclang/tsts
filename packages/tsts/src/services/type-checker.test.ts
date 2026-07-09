@@ -61,6 +61,7 @@ test("public type-checker queries expose TS-Go checker facts without emitter re-
   const idType = queries.getTypeAtLocation(idIdentifier);
   assert.equal(queries.getCallSignaturesOfType(idType).length, 1);
   assert.equal(queries.getConstructSignaturesOfType(idType).length, 0);
+  assertCleanSemanticDiagnostics(program, index);
 });
 
 test("public type-checker queries expose instantiated generic member types", () => {
@@ -80,6 +81,7 @@ test("public type-checker queries expose instantiated generic member types", () 
 
   const finalValueSymbol = queries.getSymbolAtLocation(Node_Name(finalValueAccess));
   assert.equal(finalValueSymbol?.Name, "value");
+  assertCleanSemanticDiagnostics(program, index);
 });
 
 test("public type-checker queries expose flow-narrowed receiver member access", () => {
@@ -103,6 +105,7 @@ test("public type-checker queries expose flow-narrowed receiver member access", 
   const valueType = queries.getTypeAtLocation(valueAccess);
   assert.equal((valueType?.flags ?? 0) & TypeFlagsString, TypeFlagsString);
   assert.equal(queries.getSymbolAtLocation(Node_Name(valueAccess))?.Name, "value");
+  assertCleanSemanticDiagnostics(program, index);
 });
 
 function createProgram(sourceText: string): { readonly program: GoPtr<Program>; readonly index: GoPtr<SourceFile> } {

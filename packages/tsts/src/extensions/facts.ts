@@ -196,6 +196,9 @@ export interface SelectedTargetSignatureFact {
   readonly argumentConversions?: readonly TargetTypeRef[];
   readonly sourceSignature?: ExtensionFactSubject;
   readonly sourceDeclaration?: ExtensionFactSubject;
+  readonly sourceCalleeSymbol?: ExtensionFactSubject;
+  readonly sourceCalleeDeclaration?: ExtensionFactSubject;
+  readonly sourceReturnType?: ExtensionFactSubject;
   readonly providerDeclaration?: ProviderDeclarationIdentity;
 }
 
@@ -221,6 +224,7 @@ export interface TargetOperationProvenance {
   readonly sourceSelectedSymbol?: ExtensionFactSubject;
   readonly sourceSelectedDeclaration?: ExtensionFactSubject;
   readonly sourceSelectedSignature?: ExtensionFactSubject;
+  readonly sourceResultType?: ExtensionFactSubject;
 }
 
 export interface FlowStateFact {
@@ -387,6 +391,9 @@ export const selectedTargetSignatureFactKey = defineExtensionFactKey<SelectedTar
     && targetTypeRefArrayEquals(left.argumentConversions, right.argumentConversions)
     && left.sourceSignature === right.sourceSignature
     && left.sourceDeclaration === right.sourceDeclaration
+    && left.sourceCalleeSymbol === right.sourceCalleeSymbol
+    && left.sourceCalleeDeclaration === right.sourceCalleeDeclaration
+    && left.sourceReturnType === right.sourceReturnType
     && optionalProviderDeclarationIdentityEquals(left.providerDeclaration, right.providerDeclaration),
 });
 
@@ -652,7 +659,8 @@ function optionalTargetOperationProvenanceEquals(left: TargetOperationProvenance
     && left.sourceCallee === right.sourceCallee
     && left.sourceSelectedSymbol === right.sourceSelectedSymbol
     && left.sourceSelectedDeclaration === right.sourceSelectedDeclaration
-    && left.sourceSelectedSignature === right.sourceSelectedSignature;
+    && left.sourceSelectedSignature === right.sourceSelectedSignature
+    && left.sourceResultType === right.sourceResultType;
 }
 
 function sourceSelectedMethodTypeArgumentArrayEquals(left: readonly SourceSelectedMethodTypeArgument[] | undefined, right: readonly SourceSelectedMethodTypeArgument[] | undefined): boolean {
