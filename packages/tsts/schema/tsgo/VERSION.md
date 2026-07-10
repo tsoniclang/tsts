@@ -6,12 +6,14 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 | --- | --- |
 | Upstream | `microsoft/typescript-go` |
 | Commit | `d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc` |
+| Git object format | `sha1` |
 | Nested TypeScript commit | `4d4f005c8541e0255a9d8791205fdce326e462bc` |
 | `ast.json` SHA-256 | `8f9117acd1ba332beb8222e4f958346a6846dc0acbcb75d1c20a7bb0eef68689` |
 | `ast.schema.json` SHA-256 | `c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2` |
 | `protocol.ts` SHA-256 | `02662b99b9e40190fc56b7210139175d043e369c59345b61fb5c5533bdd42830` |
 | `nodeflags.go` SHA-256 | `8be5737c5cfe5478fcef3f0b50847d7ca4045157a6d039ffaac658977a181dc2` |
 | `symbolflags.go` SHA-256 | `eb2c56aac8513ac676f48313eb5c3fa65ba90990474b7e873ff9ec6cdb35ebca` |
+| Source `_packages/native-preview/src/api/node/protocol.generated.ts` SHA-256 | `e22fa883d199c0cb11c6bf5961dbae322e36c3bccb3ef9679555e9d1e3d1acc1` |
 
 ## Policy
 
@@ -19,10 +21,12 @@ TSTS vendors the TS-Go AST schema as the exact frontend contract.
 - Schema drift is a hard failure.
 - Updating the schema requires updating this file, regenerating artifacts, and explaining the upstream TS-Go change.
 - The AST schema inputs must not be pinned on a separate track from the source
-  submodule. `porter:verify` inventories every file in this directory, requires
-  exactly one `upstream-copy` or `local-metadata` policy, compares every upstream
-  copy against the checked-out source tree, and fails on classification or
-  byte-level drift.
+  submodule. `source-pin.json` is the machine-readable authority for the source,
+  nested TypeScript checkout, schema paths, byte hashes, and extractor toolchain.
+  `porter:verify` inventories every file in this directory, compares every
+  upstream copy byte-for-byte against the clean pinned source tree, validates this
+  document against the manifest, and fails on any provenance or classification
+  drift.
 
 ## Pin bump — 2026-07-10
 

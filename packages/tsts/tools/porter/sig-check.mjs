@@ -12,13 +12,12 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadParser, canonicalKey, typesEqual, parseSource, resolveModuleId, isSoftId } from "./ts-extractor/ast-signatures.mjs";
 import { buildModuleValueEnvironments, extractFileDescriptors } from "./ts-extractor/extract-signatures.mjs";
-import { buildExpectedIndex, goUnitDescriptor, nilableTypeRefs } from "./ts-extractor/expected-from-go.mjs";
+import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 
 const RENDERABLE = new Set(["func", "method", "type", "constGroup", "varGroup"]);
 const SIGNATURE_MISMATCH_KINDS = new Set([
-  "actual-missing",
   "value-type-unresolved",
   "type-param-count",
   "type-param-constraint",
@@ -35,12 +34,11 @@ const SIGNATURE_MISMATCH_KINDS = new Set([
   "value-annotation-missing",
   "missing-value",
   "extra-value",
-  "value-order",
   "value-type",
-  "value-initializer",
-  "value-initializer-unresolved",
   "unresolved-ref",
 ]);
+const INITIALIZER_MISMATCH_KINDS = new Set(["value-initializer", "value-initializer-unresolved"]);
+const VALUE_ORDER_MISMATCH_KINDS = new Set(["value-order"]);
 
 // --- override resolution ------------------------------------------------------
 
@@ -173,6 +171,19 @@ export function unitSignatureSnapshot(desc, canon = (x) => x) {
   return `${desc.kind ?? "unknown"}:${JSON.stringify(desc)}`;
 }
 
+export function validateOverrideUse(localOverride, mismatches, id, overrideIssues) {
+  if (!Array.isArray(localOverride?.allow)) return;
+  for (const [aspect, kinds] of [
+    ["signature", SIGNATURE_MISMATCH_KINDS],
+    ["initializer", INITIALIZER_MISMATCH_KINDS],
+    ["value-order", VALUE_ORDER_MISMATCH_KINDS],
+  ]) {
+    if (localOverride.allow.includes(aspect) && !mismatches.some((mismatch) => kinds.has(mismatch.kind))) {
+      overrideIssues.push({ id, reason: `unused '${aspect}' override allowance: the current Go and TypeScript contracts have no ${aspect} mismatch` });
+    }
+  }
+}
+
 // --- comparison ---------------------------------------------------------------
 
 const keyOf = (d) => (d ? canonicalKey(d) : "<none>");
@@ -182,7 +193,7 @@ const isTopConstraint = (c) => !!c && c.t === "kw" && (c.kw === "unknown" || c.k
 
 // Returns an array of mismatch objects: { kind, detail, expected?, actual? }.
 // `canon` resolves ref ids through TS re-exports to their definition module.
-export function compareSignatures(expected, actual, override, canon = (x) => x, conv = { equivalences: [], structural: {} }, allowedGlobalNames = []) {
+export function compareSignatures(expected, actual, override, canon = (x) => x, conv = { equivalences: [] }, allowedGlobalNames = []) {
   const ignore = override?.ignore ?? new Set();
   const out = [];
   const push = (kind, detail, exp, act) => {
@@ -269,11 +280,7 @@ function compareTypeParams(expected, actual, push, eq, conv) {
     if (ec && ac) {
       if (!eq(ec, ac)) push("type-param-constraint", `type param #${i} constraint differs`, keyOf(ec), keyOf(ac));
     } else if (ec || ac) {
-      // One side erased a non-trivial constraint. Accept when the present one is
-      // a recognized convention (normalizes to a conv token) and the toggle is on.
-      const present = normalizeDescriptor(ec ?? ac, conv, "constraint");
-      const erasable = conv.structural?.acceptErasedConstraints && present.t === "conv";
-      if (!erasable) push("type-param-constraint", `type param #${i} constraint differs`, ec ? keyOf(ec) : "-", ac ? keyOf(ac) : "-");
+      push("type-param-constraint", `type param #${i} constraint differs`, ec ? keyOf(ec) : "-", ac ? keyOf(ac) : "-");
     }
   }
 }
@@ -427,14 +434,12 @@ function scanTsModules(repoRoot, tsRootRel) {
   const stack = [rootAbs];
   while (stack.length > 0) {
     const dir = stack.pop();
-    let entries;
-    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+    const entries = readdirSync(dir, { withFileTypes: true });
     for (const e of entries) {
       const p = join(dir, e.name);
       if (e.isDirectory()) { stack.push(p); continue; }
       if (!e.name.endsWith(".ts")) continue;
-      let text;
-      try { text = readFileSync(p, "utf8"); } catch { continue; }
+      const text = readFileSync(p, "utf8");
       const moduleId = `${tsRootRel}/${p.slice(rootAbs.length + 1)}`;
       sources.set(moduleId, text);
       for (const re of [TYPE_DECL_RE]) {
@@ -512,32 +517,58 @@ export async function computeSignatureReport(deps, options = {}) {
   for (const [name, mods] of tsDecls) for (const m of mods) definedAt.add(`${m}::${name}`);
   const canon = makeCanon(namedReexport, starReexport, definedAt, profile.canonicalTypes ?? {}, profile.nodeFormAliases);
   const index = buildExpectedIndex(deps.config, deps.snapshot, deps.tsById, profile, tsDecls);
-  if (conv.structural.acceptNilableGoTypes) {
-    conv.structural.nilableRefs = nilableTypeRefs(index);
-  }
-
   const idRe = options.idFilter ? globToRegExp(options.idFilter) : undefined;
   const mismatches = [];
-  let checked = 0;
   let overriddenUnits = 0;
+  const expectedIds = new Set();
+  for (const id of deps.tsById.keys()) {
+    if (idRe && !idRe.test(id)) continue;
+    if (deps.activeIds !== undefined && !deps.activeIds.has(id)) continue;
+    const go = goById.get(id);
+    if (go && RENDERABLE.has(go.kind)) expectedIds.add(id);
+  }
+  const descriptorsById = new Map();
 
   for (const file of deps.tsFiles) {
-    let text;
-    try { text = readFileSync(`${deps.repoRoot}/${file.path}`, "utf8"); } catch { continue; }
+    const text = readFileSync(join(deps.repoRoot, file.path), "utf8");
     for (const u of extractFileDescriptors(api, file.path, text, profile.annotation, valueEnvironments.get(file.path))) {
       if (idRe && !idRe.test(u.id)) continue;
-      const go = goById.get(u.id);
-      if (!go || !RENDERABLE.has(go.kind)) continue;
-      checked++;
-      const expected = goUnitDescriptor(go, index);
-      const localOverride = deps.tsById.get(u.id)?.override;
-      const override = resolveOverride(localOverride, u.id, expected, u.descriptor, canon, overrideIssues);
-      if (override.ignore.size > 0) overriddenUnits++;
-      const ms = compareSignatures(expected, u.descriptor, override, canon, conv, profile.allowedGlobals);
-      for (const m of ms) mismatches.push({ id: u.id, file: file.path, ...m });
+      if (deps.activeIds !== undefined && !deps.activeIds.has(u.id)) continue;
+      const descriptors = descriptorsById.get(u.id) ?? [];
+      descriptors.push({ ...u, file: file.path });
+      descriptorsById.set(u.id, descriptors);
     }
   }
-  return { mismatches, checked, overriddenUnits, overrideIssues };
+
+  mismatches.push(...descriptorInventoryMismatches(expectedIds, descriptorsById));
+
+  for (const id of [...expectedIds].sort()) {
+    const go = goById.get(id);
+    const descriptors = descriptorsById.get(id) ?? [];
+    const actual = descriptors.length === 1 ? descriptors[0].descriptor : undefined;
+    const expected = goUnitDescriptor(go, index);
+    const localOverride = deps.tsById.get(id)?.override;
+    const override = resolveOverride(localOverride, id, expected, actual, canon, overrideIssues);
+    const allMismatches = compareSignatures(expected, actual, { ignore: new Set() }, canon, conv, profile.allowedGlobals);
+    validateOverrideUse(localOverride, allMismatches, id, overrideIssues);
+    const ignoredMismatch = allMismatches.some((mismatch) => override.ignore.has(mismatch.kind));
+    if (ignoredMismatch) overriddenUnits++;
+    const ms = allMismatches.filter((mismatch) => !override.ignore.has(mismatch.kind));
+    for (const m of ms) mismatches.push({ id, file: deps.tsById.get(id)?.path ?? "", ...m });
+  }
+  return { mismatches, checked: expectedIds.size, descriptors: [...descriptorsById.values()].reduce((count, rows) => count + rows.length, 0), overriddenUnits, overrideIssues };
+}
+
+export function descriptorInventoryMismatches(expectedIds, descriptorsById) {
+  const mismatches = [];
+  for (const [id, descriptors] of descriptorsById) {
+    if (!expectedIds.has(id)) {
+      mismatches.push({ id, file: descriptors[0]?.file ?? "", kind: "descriptor-unexpected", detail: "TS descriptor has no active renderable @tsgo-unit contract" });
+    } else if (descriptors.length > 1) {
+      mismatches.push({ id, file: descriptors[0]?.file ?? "", kind: "descriptor-duplicate", detail: `${descriptors.length} TS descriptors were extracted for one @tsgo-unit` });
+    }
+  }
+  return mismatches.sort((left, right) => left.id.localeCompare(right.id) || left.kind.localeCompare(right.kind));
 }
 
 export { resolveOverride };

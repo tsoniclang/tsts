@@ -218,7 +218,7 @@ function stripGeneratedHeader(text) {
 
 function currentSourceRevision(sourceRoot = "packages/tsts/_vendor/typescript-go") {
   const result = spawnSync("git", ["rev-parse", "HEAD"], { cwd: resolveRepo(sourceRoot), encoding: "utf8" });
-  if (result.status !== 0) return "unknown";
+  if (result.status !== 0) throw new Error(`cannot resolve bundled source revision: ${result.stderr || result.error?.message || "git failed"}`);
   return result.stdout.trim();
 }
 
@@ -243,28 +243,7 @@ function walk(dir) {
 }
 
 function main() {
-  const args = new Set(process.argv.slice(2));
-  const check = args.has("--check");
-  const write = args.has("--write") || !check;
-
-  if (args.has("--help")) {
-    console.log("Usage: node packages/tsts/tools/bundled/generate-bundled.mjs [--check|--write]");
-    process.exit(0);
-  }
-
-  if (check) {
-    const status = buildBundledGeneratedArtifactStatus();
-    const failures = collectBundledArtifactFailures(status);
-    if (failures.length > 0) {
-      throw new Error(`bundled generated artifact check failed: ${failures.join(", ")}`);
-    }
-    const bc = bundledConfig();
-    const libCount = readLibNames(resolveRepo(bc.sourceLibDir)).length;
-    console.log(`bundled generated files are current (${libCount} libs)`);
-  } else if (write) {
-    const count = writeBundledGenerated();
-    console.log(`bundled generated files written (${count - 2} libs)`);
-  }
+  throw new Error("Run bundled generation through 'npm run bundled:check' or 'npm run bundled:generate' so source-pin verification cannot be bypassed.");
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

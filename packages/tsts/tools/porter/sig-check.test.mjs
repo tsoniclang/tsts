@@ -6,7 +6,7 @@ import { typesEqual, canonicalKey } from "./ts-extractor/ast-signatures.mjs";
 import { loadConventions, normalizeDescriptor } from "./ts-extractor/conventions.mjs";
 import { loadProfile } from "./ts-extractor/profile.mjs";
 import { buildExpectedIndex, goUnitDescriptor } from "./ts-extractor/expected-from-go.mjs";
-import { compareSignatures, resolveOverride, unitSignatureSnapshot } from "./sig-check.mjs";
+import { compareSignatures, descriptorInventoryMismatches, resolveOverride, unitSignatureSnapshot, validateOverrideUse } from "./sig-check.mjs";
 
 const ref = (id, ...args) => ({ t: "ref", id, args });
 const kw = (k) => ({ t: "kw", kw: k });
@@ -106,6 +106,15 @@ test("overrides: ignore aspect only", () => {
   assert.ok(kinds(ms).has("param-type"));
 });
 
+test("descriptor inventory rejects duplicate and unexpected extracted declarations", () => {
+  const mismatches = descriptorInventoryMismatches(new Set(["expected"]), new Map([
+    ["expected", [{ file: "a.ts" }, { file: "b.ts" }]],
+    ["unexpected", [{ file: "c.ts" }]],
+  ]));
+  assert.deepEqual(mismatches.map((entry) => entry.kind), ["descriptor-duplicate", "descriptor-unexpected"]);
+  assert.ok(kinds(compareSignatures({ kind: "func", typeParams: [], ret: kw("void"), params: [] }, undefined, null)).has("actual-missing"));
+});
+
 test("local signature override captures go and ts snapshots", () => {
   const exp = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::A") }] };
   const actual = { kind: "func", typeParams: [], ret: kw("void"), params: [{ type: ref("m::B") }] };
@@ -144,6 +153,41 @@ test("local signature override captures go and ts snapshots", () => {
   );
   assert.equal(stale.ignore.size, 0);
   assert.equal(staleIssues.length, 1);
+});
+
+test("signature override cannot waive initializer or value-order drift", () => {
+  const expected = {
+    kind: "value",
+    decls: [
+      { name: "first", type: kw("number"), value: { kind: "number", value: "1" } },
+      { name: "second", type: kw("number"), value: { kind: "number", value: "2" } },
+    ],
+  };
+  const actual = {
+    kind: "value",
+    decls: [
+      { name: "second", type: kw("number"), value: { kind: "number", value: "3" } },
+      { name: "first", type: kw("number"), value: { kind: "number", value: "1" } },
+    ],
+  };
+  const issues = [];
+  const override = resolveOverride({
+    category: "runtime-representation",
+    allow: ["signature"],
+    reason: "The declaration uses an explicitly reviewed target representation.",
+    goSignature: unitSignatureSnapshot(expected),
+    tsSignature: unitSignatureSnapshot(actual),
+  }, "id", expected, actual, (value) => value, issues);
+  assert.deepEqual(issues, []);
+  const mismatchKinds = kinds(compareSignatures(expected, actual, override));
+  assert.ok(mismatchKinds.has("value-order"));
+  assert.ok(mismatchKinds.has("value-initializer"));
+});
+
+test("unused exact override allowances are rejected", () => {
+  const issues = [];
+  validateOverrideUse({ allow: ["signature", "initializer", "value-order", "body"] }, [], "id", issues);
+  assert.deepEqual(issues.map((entry) => entry.reason.split(" ")[1]), ["'signature'", "'initializer'", "'value-order'"]);
 });
 
 test("local initializer override ignores only exact snapshotted initializer drift", () => {
@@ -198,13 +242,16 @@ test("local value-order override ignores only exact snapshotted order drift", ()
   assert.equal(staleIssues.length, 1);
 });
 
-test("conventions: acceptNullable strips | undefined", () => {
-  const conv = loadConventions({ structural: { acceptNullable: true } });
-  const exp = ref("m::T");
-  const nullable = { t: "union", members: [kw("undefined"), ref("m::T")] };
-  assert.ok(typesEqual(normalizeDescriptor(exp, conv), normalizeDescriptor(nullable, conv)));
-  // off by default -> not equal
-  assert.ok(!typesEqual(normalizeDescriptor(exp, noConv), normalizeDescriptor(nullable, noConv)));
+test("conventions: global structural waivers are forbidden", () => {
+  for (const structural of [
+    { acceptNullable: true },
+    { anyMapKey: true },
+    { unwrapPtrFunc: true },
+    { acceptNilableGoTypes: true },
+    { facadeGenericRefs: ["go/sync.ts::Pool"] },
+  ]) {
+    assert.throws(() => loadConventions({ structural }), /structural is forbidden/);
+  }
 });
 
 test("conventions: equivalences are scoped to constraint context", () => {
@@ -274,42 +321,6 @@ test("typesEqual: nested unions are associative", () => {
   assert.ok(typesEqual({ t: "intersect", members: [a, { t: "intersect", members: [b, c] }] }, { t: "intersect", members: [b, c, a] }));
 });
 
-test("conventions: anyMapKey makes the map key a wildcard", () => {
-  const conv = loadConventions({ structural: { anyMapKey: true } });
-  const a = ref("c::GoMap", ref("m::StructKey"), kw("string"));
-  const b = ref("c::GoMap", kw("string"), kw("string"));
-  assert.ok(typesEqual(normalizeDescriptor(a, conv), normalizeDescriptor(b, conv)));
-});
-
-test("conventions: unwrapPtrFunc treats GoPtr<fn> as fn", () => {
-  const conv = loadConventions({ structural: { unwrapPtrFunc: true } });
-  const fn = { t: "fn", params: [], ret: kw("void") };
-  const ptrFn = ref("c::GoPtr", fn);
-  assert.ok(typesEqual(normalizeDescriptor(ptrFn, conv), normalizeDescriptor(fn, conv)));
-});
-
-test("conventions: nilable Go carriers accept only carrier/interface undefined forms", () => {
-  const conv = loadConventions({
-    structural: {
-      acceptNilableGoTypes: true,
-      nilableRefs: ["m::Iface"],
-    },
-  });
-  const slice = ref("c::GoSlice", kw("string"));
-  const ptrSlice = ref("c::GoPtr", slice);
-  const nullableSlice = { t: "union", members: [kw("undefined"), slice] };
-  assert.ok(typesEqual(normalizeDescriptor(ptrSlice, conv), normalizeDescriptor(slice, conv)));
-  assert.ok(typesEqual(normalizeDescriptor(nullableSlice, conv), normalizeDescriptor(slice, conv)));
-
-  const iface = ref("m::Iface");
-  assert.ok(typesEqual(normalizeDescriptor(ref("c::GoPtr", iface), conv), normalizeDescriptor(iface, conv)));
-  assert.ok(typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), iface] }, conv), normalizeDescriptor(iface, conv)));
-
-  const intType = ref("core::int");
-  assert.ok(!typesEqual(normalizeDescriptor({ t: "union", members: [kw("undefined"), intType] }, conv), normalizeDescriptor(intType, conv)));
-  assert.ok(!typesEqual(normalizeDescriptor(ref("c::GoPtr", ref("m::Struct")), conv), normalizeDescriptor(ref("m::Struct"), conv)));
-});
-
 test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)", () => {
   // A completely different project profile: different bridge/module/primitive names.
   const config = {
@@ -336,10 +347,22 @@ test("portability: a non-tsts profile drives the Go->TS mapping (no hardcoding)"
   assert.equal(canonicalKey(desc.params[0].type), "R:src/rt/bridge.ts::Ptr<R:@acme/prim::i32>");
   // selector to a stdlib facade uses the configured template.
   const sel = goUnitDescriptor(
-    { kind: "func", file: { importPath: "example.com/proj/pkg", imports: [{ path: "time" }] }, parameters: [{ names: ["t"], type: { kind: "selector", package: "time", name: "Duration" } }], results: [], typeParameterDetails: [] },
+    { kind: "func", file: { importPath: "example.com/proj/pkg", imports: [{ path: "time", packageName: "time" }] }, parameters: [{ names: ["t"], type: { kind: "selector", package: "time", name: "Duration" } }], results: [], typeParameterDetails: [] },
     index,
   );
   assert.equal(canonicalKey(sel.params[0].type), "R:src/rt/time.ts::Duration");
+
+  const versionedImport = goUnitDescriptor(
+    {
+      kind: "func",
+      file: { importPath: "example.com/proj/pkg", imports: [{ path: "math/rand/v2", packageName: "rand" }] },
+      parameters: [{ names: ["source"], type: { kind: "selector", package: "rand", name: "Source" } }],
+      results: [],
+      typeParameterDetails: [],
+    },
+    index,
+  );
+  assert.equal(canonicalKey(versionedImport.params[0].type), "R:src/rt/math/rand/v2.ts::Source");
 });
 
 test("expected-from-go: inline struct value types are structural descriptors", () => {

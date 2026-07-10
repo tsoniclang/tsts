@@ -1,11 +1,20 @@
 {
   "schemaVersion": 1,
   "sourceRoot": "packages/tsts/_vendor/typescript-go",
+  "sourcePinManifest": "packages/tsts/schema/tsgo/source-pin.json",
   "tsRoot": "packages/tsts/src",
   "goModulePath": "github.com/microsoft/typescript-go",
   "snapshotOut": ".temp/porter/tsgo-snapshot.json",
   "statusOut": ".temp/porter/status.json",
   "reportOut": ".temp/porter/status.md",
+  "generatedSourceCoveragePath": "packages/tsts/generated-source-coverage.json",
+  "overrideCategories": [
+    "extension-host",
+    "host-native",
+    "runtime-correctness-performance",
+    "runtime-performance",
+    "runtime-representation"
+  ],
   "largeFileLineThreshold": 5000,
   "largeFileSplitPlanPath": "packages/tsts/porter.large-splits.json",
   "largeFileSplitStatusOut": ".temp/porter/large-file-splits.json",
@@ -18,20 +27,9 @@
     "packages/tsts/schema/tsgo/symbolflags.go"
   ],
   "astGeneratedStatusOut": ".temp/porter/ast-generated.json",
-  "schemaFilePolicies": [
-    { "path": "packages/tsts/schema/tsgo/VERSION.md", "kind": "local-metadata" },
-    { "path": "packages/tsts/schema/tsgo/ast.json", "kind": "upstream-copy", "source": "_scripts/ast.json" },
-    { "path": "packages/tsts/schema/tsgo/ast.schema.json", "kind": "upstream-copy", "source": "_scripts/ast.schema.json" },
-    { "path": "packages/tsts/schema/tsgo/nodeflags.go", "kind": "upstream-copy", "source": "internal/ast/nodeflags.go" },
-    { "path": "packages/tsts/schema/tsgo/protocol.ts", "kind": "upstream-copy", "source": "_packages/native-preview/src/api/node/protocol.ts" },
-    { "path": "packages/tsts/schema/tsgo/symbolflags.go", "kind": "upstream-copy", "source": "internal/ast/symbolflags.go" }
-  ],
   "diagnosticsGeneratedDir": "internal/diagnostics/generated",
   "diagnosticsCatalogInput": "packages/tsts/_vendor/typescript-go/internal/diagnostics/diagnostics_generated.go",
   "diagnosticsGeneratedStatusOut": ".temp/porter/diagnostics-generated.json",
-  "generatedPolicy": {
-    "firstLinePrefix": "// Code generated"
-  },
   "unitPolicies": [
     {
       "id": "github.com/microsoft/typescript-go::cmd/tsgo/api.go::func::runAPI",
@@ -313,9 +311,16 @@
       "reason": "Go test units are ported through the test-parity harness, not production compiler scaffolds."
     },
     {
-      "match": "**/*_generated.go",
-      "category": "generated",
-      "reason": "Generated Go files must be regenerated from their upstream source schema or generator."
+      "match": "internal/bundled/generate.go",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Upstream bundled-file generator source is replaced by the deterministic porter:bundled generator and is not compiler runtime code."
+    },
+    {
+      "match": "internal/diagnostics/generate.go",
+      "category": "out-of-scope",
+      "active": false,
+      "reason": "Upstream diagnostic-catalog generator source is replaced by the deterministic porter:diagnostics generator and is not compiler runtime code."
     },
     {
       "match": "_tools/**",
@@ -435,21 +440,7 @@
       "equivalences": [
         { "as": "go-comparable", "scope": "constraint", "match": [ { "name": "comparable" }, { "refName": "GoComparable" } ] },
         { "as": "go-ordered", "scope": "constraint", "match": [ { "name": "Ordered" }, { "refName": "GoOrdered" } ] }
-      ],
-      "structural": {
-        "acceptNullable": false,
-        "unwrapPtrFunc": false,
-        "anyMapKey": false,
-        "ptrValueEquivStruct": false,
-        "acceptNilableGoTypes": true,
-        "acceptErasedConstraints": false,
-        "facadeGenerics": [],
-        "facadeGenericRefs": [
-          "packages/tsts/src/go/sync.ts::Map",
-          "packages/tsts/src/go/sync.ts::OnceValue",
-          "packages/tsts/src/go/sync.ts::Pool"
-        ]
-      }
+      ]
     }
   }
 }

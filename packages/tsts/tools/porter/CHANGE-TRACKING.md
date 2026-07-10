@@ -1,6 +1,6 @@
 # Porter as a change-tracking tool — findings, approach, and review
 
-Status: landed hardening. Covers (1) how an upstream-delta is computed today, (2) the
+Status: historical review plus the durable upgrade contract. Covers (1) how an upstream delta was originally computed, (2) the
 measured delta from our pin to current `main`, (3) a full review of whether the
 porter is geared to track upstream changes, (4) the one completeness hardening
 shipped on this branch, and (5) the real latent incoherence that hardening
@@ -13,6 +13,11 @@ immediately surfaced and this branch reconciles. Policy lens throughout, per mai
 > constant-evaluation, and exhaustive schema-file policy gates. Current behavior
 > is defined by the checked-in porter code, configuration, and tests—not by the
 > historical capability claims in this report.
+>
+> The current porter now has a first-class `delta` command, deterministic
+> timestamp-free source snapshots, complete-file hashes, explicit generated-source
+> dispositions, and a machine-readable source/nested-source/schema/toolchain pin.
+> Sections describing the old scratch driver are retained only as history.
 
 ---
 
@@ -25,10 +30,10 @@ immediately surfaced and this branch reconciles. Policy lens throughout, per mai
   SHA-256 hashed per unit. Semantic equivalence of their TypeScript translation is
   a separate obligation enforced by signature checks, mechanical-risk checks,
   focused parity tests, corpus tests, and review.
-- It is **not** a bump-*planner*: it has no "delta vs a candidate rev" mode, no
-  per-unit diff, and no stale re-port / re-stamp assist. Those are ergonomic gaps,
-  not completeness gaps — under the policy lens they do not matter and are
-  deliberately **not** built.
+- It is a conservative bump planner: `porter:delta` compares two clean checkouts
+  twice, fails on extraction nondeterminism, and reports complete-file, all-unit,
+  and active-unit changes. It identifies move candidates but never rewrites,
+  re-stamps, or assumes semantic equivalence.
 - The delta to current `main` (285 commits / ~7 weeks) is **~610 real unit-actions**
   out of ~9,200 in-scope (~6.6%), concentrated in the checker — a normal batched
   bump. The scary raw "463 missing / 45 orphan" is >half phantom (a new
@@ -55,9 +60,9 @@ immediately surfaced and this branch reconciles. Policy lens throughout, per mai
   `@tsgo-unit` header with the SHA-256 `sigHash`/`bodyHash` of its Go source at
   port time.
 
-## 2. How an upstream delta is computed today
+## 2. Historical delta workflow (superseded)
 
-The porter has **no dedicated bump/delta command** — but its comparison engine is
+The porter originally had **no dedicated bump/delta command** — but its comparison engine was
 already rev-agnostic. `buildStatus()` simply reconciles "Go units at
 `config.sourceRoot`" against "`@tsgo-unit` hashes in our TS source." Nothing pins
 `sourceRoot` to the current checkout except a config string. So the delta was
@@ -178,11 +183,11 @@ hardening strengthens that validation; no hash ledger alone proves behavior.
 `feat/porter-schema-source-sync-check` (commit `d0934b0a`).
 
 `buildSchemaSourceSyncStatus(config)` initially checked declared `{schema, source}`
-pairs. It now inventories every file in the schema directory and requires exactly
-one `schemaFilePolicies` entry: `upstream-copy` files are byte-identical
-(CRLF-normalised) to their live source under `config.sourceRoot`, while
-`local-metadata` files are explicitly classified. Unclassified, duplicate,
-out-of-directory, missing, and byte-drift cases all fail. Surfaced in
+pairs. The current contract derives this inventory from `source-pin.json`, the
+single machine-readable authority for the source revision, nested source revision,
+schema source paths and hashes, and extractor toolchain. Upstream copies must be
+raw-byte-identical to their clean pinned source. Unclassified, duplicate,
+out-of-directory, missing, dirty-source, revision, toolchain, and byte-drift cases all fail. Surfaced in
 `printStatus` and `collectVerifyFailures`. The same check also gates `porter:ast`
 before check or write mode, so generated AST artifacts cannot be trusted or
 rewritten from a schema directory that disagrees with the checked-out source pin.
@@ -232,9 +237,10 @@ semantics used by the binder.
    delay grows the stale count and baseline drift, and Tsonic-TSTS landing is a
    forcing function to stay near TS 7.0 head. Real surface is ~610 well-localised
    units; budget a few focused days.
-3. **Optional, low priority** (ergonomics only; skip unless a bump proves painful):
-   a `porter delta --against <rev>` wrapper around the existing engine (the
-   `.analysis` driver is a working prototype). Not a completeness need.
+3. **Use the checked-in delta gate for every bump.** Run `porter:delta` against
+   clean old/new checkouts and preserve its evidence under a new `.temp` directory
+   before changing the pin. Never substitute a hand-written inventory or a
+   re-stamped metadata-only diff.
 
 ## Appendix — verification artifacts
 

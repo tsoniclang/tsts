@@ -70,7 +70,6 @@ export const TSTS_PROFILE = {
   allowedGlobals: ["Date", "ReadonlyMap", "Uint8Array"],
   // External Go interface aliases whose zero value is nil and therefore may be
   // represented as GoPtr<Alias> in the TypeScript port.
-  externalNilableTypes: ["io/fs.FS", "io/fs.FileInfo", "io/fs.DirEntry", "io.Writer"],
   externalInterfaceMembers: {
     "io/fs.FileInfo": [
       { name: "Name", type: { t: "fn", params: [], ret: { t: "kw", kw: "string" } } },

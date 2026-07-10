@@ -453,23 +453,7 @@ export function collectUnicodeArtifactFailures(status) {
 }
 
 async function main() {
-  const args = new Set(process.argv.slice(2));
-  if (args.has("--help")) {
-    console.log("Usage: node packages/tsts/tools/unicode/generate-unicode-data.mjs [--check|--write]");
-    process.exit(0);
-  }
-  const check = args.has("--check");
-  if (check) {
-    const status = await buildUnicodeGeneratedArtifactStatusDeep();
-    const failures = collectUnicodeArtifactFailures(status);
-    if (failures.length > 0) {
-      throw new Error(`unicode generated artifact check failed: ${failures.join(", ")}`);
-    }
-    console.log(`unicode generated files are current (Unicode ${UNICODE_VERSION})`);
-  } else {
-    const count = await writeUnicodeGenerated();
-    console.log(`unicode generated files written (${count} files, Unicode ${UNICODE_VERSION})`);
-  }
+  throw new Error("Run Unicode generation through 'npm run unicode:check' or 'npm run unicode:generate' so source-pin verification cannot be bypassed.");
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

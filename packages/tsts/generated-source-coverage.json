@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "d35cc5f485640a41fbbf5a2267e9b11c7a7db4dc",
+  "mechanisms": [
+    {
+      "id": "porter:ast",
+      "mode": "artifact",
+      "statusKey": "astGeneratedArtifacts",
+      "files": [
+        {
+          "path": "internal/ast/ast_generated.go",
+          "sourceHash": "622af8e7017a8927b4909aadd91ea700cc69c875fd160966bd76766e45a566b3",
+          "primaryUnitCount": 1939,
+          "unitCoverageHash": "036eb2981aed4671f093d0432ecba5051e3485f93845239418e645c979a1785a"
+        },
+        {
+          "path": "internal/ast/kind_generated.go",
+          "sourceHash": "71938899d16c732689ba3b650faefbee06615520f315a7aaa84cecfc44deee35",
+          "primaryUnitCount": 36,
+          "unitCoverageHash": "604ecf9b931791bcc878a821f2742c24e65e504c09f9c2e6fca8559be40bf8ed"
+        },
+        {
+          "path": "internal/ast/kind_stringer_generated.go",
+          "sourceHash": "c3cdd3cdc865e44c3f6dbb45295556fb6321e5c555c7dfde7c652b2dbefc0a66",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "f0ad343b94d9effd2945285f34dd5aefb7171ae394f19b8affdb3df1e7b91256"
+        }
+      ],
+      "coverageHash": "d9c0472172d56957b32b02c1af01d81732e802be6999f2687db2ca6623fabdda"
+    },
+    {
+      "id": "porter:bundled",
+      "mode": "artifact",
+      "statusKey": "bundledGeneratedArtifacts",
+      "files": [
+        {
+          "path": "internal/bundled/embed_generated.go",
+          "sourceHash": "05e0b4873feaa5313dae8a3841b94de43b555248a4c0f5c46592a255bb748478",
+          "primaryUnitCount": 3,
+          "unitCoverageHash": "ad0fbd70f267db1da3b9150c3f31773598982ebaea6afde2b4953081e4275e73"
+        },
+        {
+          "path": "internal/bundled/libs_generated.go",
+          "sourceHash": "91e502453d8dfd88b3751d8055e4da5bf969c4b5fe0b16d4a927df041f8e9600",
+          "primaryUnitCount": 1,
+          "unitCoverageHash": "f9e10857d1a6c7b53a7d7dea0f07a69f212d2115de0db08e7f86d79e38f133c8"
+        }
+      ],
+      "coverageHash": "0ebfbb083b0232c4456ca8324458b80f030a2319db2921d6bdb778a14ba33f6c"
+    },
+    {
+      "id": "porter:diagnostics",
+      "mode": "artifact",
+      "statusKey": "diagnosticsGeneratedArtifacts",
+      "files": [
+        {
+          "path": "internal/diagnostics/diagnostics_generated.go",
+          "sourceHash": "6695081f1fb5163c17687f09dc9e7aeda8e8f558bcde8b42b7fb274ff172d9e4",
+          "primaryUnitCount": 2155,
+          "unitCoverageHash": "17da4daf483f95640c8461aa4d98b6a46e23d51deea19324f865d74b230bad59"
+        },
+        {
+          "path": "internal/diagnostics/loc_generated.go",
+          "sourceHash": "f58845f380b78e82f6aadaded4ac915a96f0469ef5046531c394152d56898709",
+          "primaryUnitCount": 29,
+          "unitCoverageHash": "6c5bbee29570210433c4b1a6e44a6eeab7a7a12307fbe8be94e452a0348b4fdc"
+        }
+      ],
+      "coverageHash": "5079cb92673904ab90a84fd51675f22f20d2777a361d4bc1ab3cf9c71cb13f5e"
+    },
+    {
+      "id": "porter:unicode",
+      "mode": "artifact",
+      "statusKey": "unicodeGeneratedArtifacts",
+      "files": [
+        {
+          "path": "internal/stringutil/identifier_parts_generated.go",
+          "sourceHash": "5fac39c9509df8bcd337dcfc9d148c8c94b0f4569a8e4df5022b2ecbcb0ff563",
+          "primaryUnitCount": 2,
+          "unitCoverageHash": "bfa80667f7c7a49231dc915be078c7b588e7972c078e09f571ccc0a08764b858"
+        },
+        {
+          "path": "internal/stringutil/js_case_generated.go",
+          "sourceHash": "c128df4cc0a8c4dd93679986a31bdf6087aa83e6fb0e9ced4ab8627072684b80",
+          "primaryUnitCount": 6,
+          "unitCoverageHash": "28f3eca48ed3d20d171b0e608ea90cddd14c09e0d2e4e79cc5a268fa2d9675e8"
+        }
+      ],
+      "coverageHash": "1ab017767f1430703638e19d3ad48cc5422bebd6d5f68bcadaf6e2890fa9f5ac"
+    },
+    {
+      "id": "tracked-generated-port",
+      "mode": "tracked",
+      "files": [
+        {
+          "path": "internal/checker/stringer_generated.go",
+          "sourceHash": "653900fcd5ce6316265687c4060cc3f52ef702af7dbd7c4dfb79b01f01e2d2f2",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "cca68dc504a090c16ceb07d9125837aadce23dd639afaf8cb71a773e03c973ac"
+        },
+        {
+          "path": "internal/core/languagevariant_stringer_generated.go",
+          "sourceHash": "02cd1536f34587ef2a4666e59a278da9849a99e31a95bd6d22adde628473f7a8",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "5b9ec8d3c6c01f73c59a5bbc5da8d76e7b74597b0750ae40fbf75c4ba44bee98"
+        },
+        {
+          "path": "internal/core/modulekind_stringer_generated.go",
+          "sourceHash": "72b233eb31e6269983549dad888820e1fb0466f2904b034e659ae9a380266931",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "dc90d0ba4875b382137174997fa3662644c9f2ed0d892bd36a71bba5a2c1cdbe"
+        },
+        {
+          "path": "internal/core/scriptkind_stringer_generated.go",
+          "sourceHash": "00bf09b6c753524d2829af6473273a021d4438177911d145a5042a7518f80665",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "d071e605928789b53f0d7eb9bb297a11e1c91f8be67c64c48ffb00a71339eab8"
+        },
+        {
+          "path": "internal/core/scripttarget_stringer_generated.go",
+          "sourceHash": "c30f60f58280067d1a0322ba93746e53b7fd2e18f9021836fd1765bf0252b298",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "753e50fbf78ede7a311e177ce56788bf0a96cb292aafb60c2ded38408ab81056"
+        },
+        {
+          "path": "internal/core/tristate_stringer_generated.go",
+          "sourceHash": "5df20fff035456af5d27d135c3c8b06335cb11566427cabd2dd487fdb950d744",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "331adf34a01f0ddbbf0861eacdb808a2e39ebd8d9d68665ceaeeb15e24e5efac"
+        },
+        {
+          "path": "internal/diagnostics/stringer_generated.go",
+          "sourceHash": "7223662893665bd9f20ee2f4b749f3aa8c120210b9333510d57b25708001e552",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "9b34bdbf512e5b43ff10c2ad4b11e22bd7f9d09ffb30559eaa7ca4bac794c2e4"
+        },
+        {
+          "path": "internal/vfs/vfsmatch/stringer_generated.go",
+          "sourceHash": "5e1eb5dc575856282e4906d13c5a9ef9979449e31f30fdbf3178da8a74595fd8",
+          "primaryUnitCount": 4,
+          "unitCoverageHash": "133b279fed52f390c6eb83719bb6c94e93a50503c0e3b2a3891222a90655bf0a"
+        },
+        {
+          "path": "internal/vfs/vfsmock/mock_generated.go",
+          "sourceHash": "b44308aeb58991b3b559e07437a925a35ca5cf2d17ae6793903c7e06fb9997a2",
+          "primaryUnitCount": 26,
+          "unitCoverageHash": "8617faef768e6fe3ff417bbc75ac56a03067dd59c87cc034308bcf9df7267624"
+        }
+      ],
+      "coverageHash": "c9f122247dbe2894a478266b6671f77c8178ad633be1a54a9a902ded99b1739a"
+    }
+  ],
+  "coverageHash": "004759973713f39417a07374047f7c62c0b9ee268949fdf0aec29ef2a81b891c"
+}
